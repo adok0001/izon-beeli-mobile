@@ -1,0 +1,208 @@
+import { useState } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  Pressable,
+  TextInput,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useJournalStore } from "@/store/journal-store";
+import type { JournalEntry } from "@/types";
+
+function formatDate(dateStr: string) {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function EntryCard({
+  entry,
+  onPress,
+  onDelete,
+}: {
+  entry: JournalEntry;
+  onPress: () => void;
+  onDelete: (id: string) => void;
+}) {
+  const confirmDelete = () => {
+    Alert.alert("Delete Entry", `Delete "${entry.title}"?`, [
+      { text: "Cancel", style: "cancel" },
+      { text: "Delete", style: "destructive", onPress: () => onDelete(entry.id) },
+    ]);
+  };
+
+  return (
+    <Pressable
+      onPress={onPress}
+      onLongPress={confirmDelete}
+      className="mb-3 rounded-xl bg-neutral-50 p-4 active:opacity-80 dark:bg-neutral-800"
+    >
+      <View className="flex-row items-start justify-between">
+        <View className="flex-1">
+          <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+            {entry.title}
+          </Text>
+          <Text className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">
+            {formatDate(entry.createdAt)}
+            {entry.updatedAt !== entry.createdAt && " · edited"}
+          </Text>
+        </View>
+        <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
+      </View>
+      <Text
+        className="mt-2 text-sm leading-5 text-neutral-700 dark:text-neutral-300"
+        numberOfLines={3}
+      >
+        {entry.content}
+      </Text>
+    </Pressable>
+  );
+}
+
+export default function JournalScreen() {
+  const { entries, addEntry, updateEntry, deleteEntry } = useJournalStore();
+  const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+
+  const isEditing = editingId !== null;
+  const canSave = title.trim().length > 0 && content.trim().length > 0;
+
+  const openNew = () => {
+    setEditingId(null);
+    setTitle("");
+    setContent("");
+    setShowModal(true);
+  };
+
+  const openEdit = (entry: JournalEntry) => {
+    setEditingId(entry.id);
+    setTitle(entry.title);
+    setContent(entry.content);
+    setShowModal(true);
+  };
+
+  const handleSave = () => {
+    if (!canSave) return;
+    if (isEditing) {
+      updateEntry(editingId, title.trim(), content.trim());
+    } else {
+      addEntry(title.trim(), content.trim());
+    }
+    setTitle("");
+    setContent("");
+    setEditingId(null);
+    setShowModal(false);
+  };
+
+  const handleClose = () => {
+    setShowModal(false);
+    setEditingId(null);
+    setTitle("");
+    setContent("");
+  };
+
+  return (
+    <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+      <View className="flex-row items-center justify-between px-5 pb-2 pt-4">
+        <View>
+          <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
+            Journal
+          </Text>
+          <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+            Reflect on your learning
+          </Text>
+        </View>
+        <Pressable
+          onPress={openNew}
+          className="h-10 w-10 items-center justify-center rounded-full bg-blue-500"
+        >
+          <IconSymbol name="plus" size={22} color="#ffffff" />
+        </Pressable>
+      </View>
+
+      {entries.length === 0 ? (
+        <View className="flex-1 items-center justify-center px-8">
+          <IconSymbol name="pencil.and.list.clipboard" size={48} color="#d1d5db" />
+          <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
+            No journal entries yet. Tap + to write your first reflection.
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={entries}
+          keyExtractor={(item) => item.id}
+          contentContainerClassName="px-5 pb-8 pt-2"
+          renderItem={({ item }) => (
+            <EntryCard
+              entry={item}
+              onPress={() => openEdit(item)}
+              onDelete={deleteEntry}
+            />
+          )}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+
+      {/* Create / Edit Modal */}
+      <Modal visible={showModal} animationType="slide" presentationStyle="pageSheet">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          className="flex-1 bg-white dark:bg-neutral-900"
+        >
+          <SafeAreaView className="flex-1">
+            <View className="flex-row items-center justify-between border-b border-neutral-200 px-5 py-3 dark:border-neutral-700">
+              <Pressable onPress={handleClose}>
+                <Text className="text-base text-neutral-500">Cancel</Text>
+              </Pressable>
+              <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+                {isEditing ? "Edit Entry" : "New Entry"}
+              </Text>
+              <Pressable onPress={handleSave} disabled={!canSave}>
+                <Text
+                  className={`text-base font-semibold ${
+                    canSave
+                      ? "text-blue-500"
+                      : "text-neutral-300 dark:text-neutral-600"
+                  }`}
+                >
+                  Save
+                </Text>
+              </Pressable>
+            </View>
+
+            <View className="flex-1 px-5 pt-4">
+              <TextInput
+                value={title}
+                onChangeText={setTitle}
+                placeholder="Title"
+                placeholderTextColor="#9ca3af"
+                className="mb-4 border-b border-neutral-200 pb-3 text-xl font-bold text-neutral-900 dark:border-neutral-700 dark:text-white"
+              />
+              <TextInput
+                value={content}
+                onChangeText={setContent}
+                placeholder="Write your thoughts..."
+                placeholderTextColor="#9ca3af"
+                multiline
+                textAlignVertical="top"
+                className="flex-1 text-base leading-6 text-neutral-700 dark:text-neutral-300"
+                autoFocus={!isEditing}
+              />
+            </View>
+          </SafeAreaView>
+        </KeyboardAvoidingView>
+      </Modal>
+    </SafeAreaView>
+  );
+}

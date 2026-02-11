@@ -1,0 +1,160 @@
+import { useState } from "react";
+import {
+  View,
+  Text,
+  Pressable,
+  ActivityIndicator,
+  type LayoutChangeEvent,
+  type GestureResponderEvent,
+} from "react-native";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useAudioStore } from "@/store/audio-store";
+import { formatDuration } from "@/lib/mock-data";
+
+const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
+
+export function AudioPlayer({ compact = false }: { compact?: boolean }) {
+  const {
+    isPlaying,
+    isLoading,
+    currentTrackId,
+    currentTrackTitle,
+    progress,
+    duration,
+    playbackSpeed,
+    togglePlayback,
+    skipForward,
+    skipBackward,
+    setSpeed,
+    seekTo,
+  } = useAudioStore();
+  const [barWidth, setBarWidth] = useState(0);
+
+  if (!currentTrackId) return null;
+
+  const progressPercent = duration > 0 ? (progress / duration) * 100 : 0;
+
+  const cycleSpeed = () => {
+    const currentIndex = SPEEDS.indexOf(playbackSpeed);
+    const nextIndex = (currentIndex + 1) % SPEEDS.length;
+    setSpeed(SPEEDS[nextIndex]);
+  };
+
+  const handleSeek = (e: GestureResponderEvent) => {
+    if (duration <= 0 || barWidth <= 0) return;
+    const { locationX } = e.nativeEvent;
+    const percent = Math.max(0, Math.min(1, locationX / barWidth));
+    seekTo(percent * duration);
+  };
+
+  const onBarLayout = (e: LayoutChangeEvent) => {
+    setBarWidth(e.nativeEvent.layout.width);
+  };
+
+  if (compact) {
+    return (
+      <View className="border-t border-neutral-200 bg-white px-4 py-2 dark:border-neutral-700 dark:bg-neutral-900">
+        <View className="flex-row items-center">
+          <Pressable onPress={togglePlayback} className="mr-3" hitSlop={8}>
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#3b82f6" />
+            ) : (
+              <IconSymbol
+                name={isPlaying ? "pause.fill" : "play.fill"}
+                size={24}
+                color="#3b82f6"
+              />
+            )}
+          </Pressable>
+          <View className="flex-1">
+            <Text
+              className="text-sm font-medium text-neutral-900 dark:text-white"
+              numberOfLines={1}
+            >
+              {currentTrackTitle ?? "Now Playing"}
+            </Text>
+            <View className="mt-1 h-1 rounded-full bg-neutral-200 dark:bg-neutral-700">
+              <View
+                className="h-1 rounded-full bg-blue-500"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </View>
+          </View>
+          <Text className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">
+            {formatDuration(progress)}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View className="border-t border-neutral-200 bg-white px-4 pb-6 pt-4 dark:border-neutral-700 dark:bg-neutral-900">
+      {/* Track title */}
+      <Text
+        className="mb-3 text-center text-base font-semibold text-neutral-900 dark:text-white"
+        numberOfLines={1}
+      >
+        {currentTrackTitle ?? "Now Playing"}
+      </Text>
+
+      {/* Progress bar */}
+      <Pressable onPress={handleSeek} className="py-2" onLayout={onBarLayout}>
+        <View className="h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-700">
+          <View
+            className="h-1.5 rounded-full bg-blue-500"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </View>
+      </Pressable>
+
+      {/* Time labels */}
+      <View className="mb-4 flex-row justify-between">
+        <Text className="text-xs text-neutral-500 dark:text-neutral-400">
+          {formatDuration(progress)}
+        </Text>
+        <Text className="text-xs text-neutral-500 dark:text-neutral-400">
+          {formatDuration(duration)}
+        </Text>
+      </View>
+
+      {/* Controls */}
+      <View className="flex-row items-center justify-center gap-6">
+        {/* Speed */}
+        <Pressable onPress={cycleSpeed} hitSlop={8} className="min-w-[40px] items-center">
+          <Text className="text-sm font-bold text-blue-500">{playbackSpeed}x</Text>
+        </Pressable>
+
+        {/* Skip backward */}
+        <Pressable onPress={() => skipBackward(10)} hitSlop={8}>
+          <IconSymbol name="backward.fill" size={28} color="#6b7280" />
+        </Pressable>
+
+        {/* Play/Pause */}
+        <Pressable
+          onPress={togglePlayback}
+          className="h-14 w-14 items-center justify-center rounded-full bg-blue-500"
+          hitSlop={4}
+        >
+          {isLoading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <IconSymbol
+              name={isPlaying ? "pause.fill" : "play.fill"}
+              size={28}
+              color="#ffffff"
+            />
+          )}
+        </Pressable>
+
+        {/* Skip forward */}
+        <Pressable onPress={() => skipForward(10)} hitSlop={8}>
+          <IconSymbol name="forward.fill" size={28} color="#6b7280" />
+        </Pressable>
+
+        {/* Spacer to balance speed button */}
+        <View className="min-w-[40px]" />
+      </View>
+    </View>
+  );
+}
