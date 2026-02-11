@@ -9,10 +9,16 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useJournalStore } from "@/store/journal-store";
+import {
+  useJournal,
+  useCreateJournalEntry,
+  useUpdateJournalEntry,
+  useDeleteJournalEntry,
+} from "@/lib/hooks/use-journal";
 import type { JournalEntry } from "@/types";
 
 function formatDate(dateStr: string) {
@@ -69,7 +75,11 @@ function EntryCard({
 }
 
 export default function JournalScreen() {
-  const { entries, addEntry, updateEntry, deleteEntry } = useJournalStore();
+  const { data: entries, isLoading } = useJournal();
+  const createEntry = useCreateJournalEntry();
+  const updateEntry = useUpdateJournalEntry();
+  const deleteEntry = useDeleteJournalEntry();
+
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -95,9 +105,9 @@ export default function JournalScreen() {
   const handleSave = () => {
     if (!canSave) return;
     if (isEditing) {
-      updateEntry(editingId, title.trim(), content.trim());
+      updateEntry.mutate({ id: editingId, title: title.trim(), content: content.trim() });
     } else {
-      addEntry(title.trim(), content.trim());
+      createEntry.mutate({ title: title.trim(), content: content.trim() });
     }
     setTitle("");
     setContent("");
@@ -110,6 +120,10 @@ export default function JournalScreen() {
     setEditingId(null);
     setTitle("");
     setContent("");
+  };
+
+  const handleDelete = (id: string) => {
+    deleteEntry.mutate(id);
   };
 
   return (
@@ -131,7 +145,11 @@ export default function JournalScreen() {
         </Pressable>
       </View>
 
-      {entries.length === 0 ? (
+      {isLoading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#3b82f6" />
+        </View>
+      ) : !entries || entries.length === 0 ? (
         <View className="flex-1 items-center justify-center px-8">
           <IconSymbol name="pencil.and.list.clipboard" size={48} color="#d1d5db" />
           <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
@@ -147,7 +165,7 @@ export default function JournalScreen() {
             <EntryCard
               entry={item}
               onPress={() => openEdit(item)}
-              onDelete={deleteEntry}
+              onDelete={handleDelete}
             />
           )}
           showsVerticalScrollIndicator={false}

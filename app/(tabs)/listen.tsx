@@ -1,11 +1,11 @@
-import { View, Text, FlatList, Pressable } from "react-native";
+import { View, Text, FlatList, Pressable, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LanguagePickerButton } from "@/components/language-picker";
 import { useLanguageStore } from "@/store/language-store";
 import { useAudioStore } from "@/store/audio-store";
-import { useProgressStore } from "@/store/progress-store";
+import { useCompletedLessons } from "@/lib/hooks/use-progress";
 
 import {
   getCoursesByLanguage,
@@ -14,13 +14,11 @@ import {
 } from "@/lib/mock-data";
 import type { Lesson } from "@/types";
 
-function AudioLessonCard({ lesson }: { lesson: Lesson }) {
+function AudioLessonCard({ lesson, completed }: { lesson: Lesson; completed: boolean }) {
   const router = useRouter();
   const { loadAndPlay, currentTrackId, isPlaying, togglePlayback } = useAudioStore();
-  const { isCompleted } = useProgressStore();
 
   const isCurrentTrack = currentTrackId === lesson.id;
-  const completed = isCompleted(lesson.id);
 
   const handlePlay = () => {
     if (isCurrentTrack) {
@@ -79,6 +77,8 @@ function AudioLessonCard({ lesson }: { lesson: Lesson }) {
 
 export default function ListenScreen() {
   const { selectedLanguageId } = useLanguageStore();
+  const { data: completedLessonIds, isLoading } = useCompletedLessons();
+  const completedIds = new Set(completedLessonIds ?? []);
 
   const courses = getCoursesByLanguage(selectedLanguageId);
   const audioLessons = courses.flatMap((c) =>
@@ -99,7 +99,11 @@ export default function ListenScreen() {
         <LanguagePickerButton />
       </View>
 
-      {audioLessons.length === 0 ? (
+      {isLoading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#3b82f6" />
+        </View>
+      ) : audioLessons.length === 0 ? (
         <View className="flex-1 items-center justify-center px-8">
           <IconSymbol name="headphones" size={48} color="#d1d5db" />
           <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
@@ -111,7 +115,9 @@ export default function ListenScreen() {
           data={audioLessons}
           keyExtractor={(item) => item.id}
           contentContainerClassName="px-5 pb-4 pt-2"
-          renderItem={({ item }) => <AudioLessonCard lesson={item} />}
+          renderItem={({ item }) => (
+            <AudioLessonCard lesson={item} completed={completedIds.has(item.id)} />
+          )}
           showsVerticalScrollIndicator={false}
         />
       )}

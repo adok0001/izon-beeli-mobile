@@ -1,10 +1,10 @@
-import { View, Text, FlatList, Pressable } from "react-native";
+import { View, Text, FlatList, Pressable, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LanguagePickerButton } from "@/components/language-picker";
 import { useLanguageStore } from "@/store/language-store";
-import { useProgressStore } from "@/store/progress-store";
+import { useCompletedLessons, useProgressSummary } from "@/lib/hooks/use-progress";
 import {
   getCoursesByLanguage,
   getLessonsByCourse,
@@ -12,11 +12,10 @@ import {
 } from "@/lib/mock-data";
 import type { Course, Lesson } from "@/types";
 
-function CourseCard({ course }: { course: Course }) {
+function CourseCard({ course, completedIds }: { course: Course; completedIds: Set<string> }) {
   const router = useRouter();
-  const { isCompleted } = useProgressStore();
   const lessons = getLessonsByCourse(course.id);
-  const completedCount = lessons.filter((l) => isCompleted(l.id)).length;
+  const completedCount = lessons.filter((l) => completedIds.has(l.id)).length;
   const progressPercent =
     lessons.length > 0 ? (completedCount / lessons.length) * 100 : 0;
 
@@ -55,6 +54,7 @@ function CourseCard({ course }: { course: Course }) {
         <LessonRow
           key={lesson.id}
           lesson={lesson}
+          completed={completedIds.has(lesson.id)}
           onPress={() => router.push(`/lesson/${lesson.id}`)}
         />
       ))}
@@ -62,10 +62,7 @@ function CourseCard({ course }: { course: Course }) {
   );
 }
 
-function LessonRow({ lesson, onPress }: { lesson: Lesson; onPress: () => void }) {
-  const { isCompleted } = useProgressStore();
-  const completed = isCompleted(lesson.id);
-
+function LessonRow({ lesson, completed, onPress }: { lesson: Lesson; completed: boolean; onPress: () => void }) {
   return (
     <Pressable
       onPress={onPress}
@@ -101,6 +98,9 @@ export default function LearnScreen() {
   const router = useRouter();
   const { selectedLanguageId } = useLanguageStore();
   const courses = getCoursesByLanguage(selectedLanguageId);
+  const { data: completedLessonIds, isLoading } = useCompletedLessons();
+  const { data: summary } = useProgressSummary();
+  const completedIds = new Set(completedLessonIds ?? []);
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
@@ -124,7 +124,33 @@ export default function LearnScreen() {
         </View>
       </View>
 
-      {courses.length === 0 ? (
+      {/* Stats bar */}
+      <View className="flex-row items-center gap-4 border-b border-neutral-100 px-5 pb-3 dark:border-neutral-800">
+        <View className="flex-row items-center">
+          <IconSymbol name="flame.fill" size={16} color="#f59e0b" />
+          <Text className="ml-1 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+            {summary?.streak ?? 0}
+          </Text>
+        </View>
+        <View className="flex-row items-center">
+          <IconSymbol name="star.fill" size={16} color="#3b82f6" />
+          <Text className="ml-1 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+            {summary?.points ?? 0}
+          </Text>
+        </View>
+        <View className="flex-row items-center">
+          <IconSymbol name="checkmark.circle.fill" size={16} color="#22c55e" />
+          <Text className="ml-1 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+            {summary?.completedCount ?? 0}
+          </Text>
+        </View>
+      </View>
+
+      {isLoading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#3b82f6" />
+        </View>
+      ) : courses.length === 0 ? (
         <View className="flex-1 items-center justify-center px-8">
           <IconSymbol name="book.fill" size={48} color="#d1d5db" />
           <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
@@ -136,7 +162,7 @@ export default function LearnScreen() {
           data={courses}
           keyExtractor={(item) => item.id}
           contentContainerClassName="px-5 pb-8 pt-2"
-          renderItem={({ item }) => <CourseCard course={item} />}
+          renderItem={({ item }) => <CourseCard course={item} completedIds={completedIds} />}
           showsVerticalScrollIndicator={false}
         />
       )}

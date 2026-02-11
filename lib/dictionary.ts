@@ -1,8 +1,12 @@
 export interface DictionaryEntry {
   id: string;
-  izon: string;
+  word: string;
   english: string;
   category: DictionaryCategory;
+  languageId: string;
+  pronunciation?: string;
+  example?: string;
+  exampleTranslation?: string;
 }
 
 export type DictionaryCategory =
@@ -50,8 +54,8 @@ export const CATEGORY_ICONS: Record<DictionaryCategory, string> = {
 };
 
 let _nextId = 1;
-function entry(izon: string, english: string, category: DictionaryCategory): DictionaryEntry {
-  return { id: `d${_nextId++}`, izon, english, category };
+function entry(word: string, english: string, category: DictionaryCategory): DictionaryEntry {
+  return { id: `d${_nextId++}`, word, english, category, languageId: "izon" };
 }
 
 export const IZON_DICTIONARY: DictionaryEntry[] = [
@@ -397,18 +401,18 @@ export const IZON_DICTIONARY: DictionaryEntry[] = [
   entry("Ongu", "Waterpot", "food"),
 ];
 
-export function searchDictionary(query: string): DictionaryEntry[] {
+export function searchDictionary(query: string, entries: DictionaryEntry[] = IZON_DICTIONARY): DictionaryEntry[] {
   const q = query.toLowerCase().trim();
-  if (!q) return IZON_DICTIONARY;
-  return IZON_DICTIONARY.filter(
+  if (!q) return entries;
+  return entries.filter(
     (e) =>
-      e.izon.toLowerCase().includes(q) ||
+      e.word.toLowerCase().includes(q) ||
       e.english.toLowerCase().includes(q)
   );
 }
 
-export function getDictionaryByCategory(category: DictionaryCategory): DictionaryEntry[] {
-  return IZON_DICTIONARY.filter((e) => e.category === category);
+export function getDictionaryByCategory(category: DictionaryCategory, entries: DictionaryEntry[] = IZON_DICTIONARY): DictionaryEntry[] {
+  return entries.filter((e) => e.category === category);
 }
 
 export const ALL_CATEGORIES: DictionaryCategory[] = Object.keys(CATEGORY_LABELS) as DictionaryCategory[];

@@ -11,80 +11,82 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
-import { useUser } from "@clerk/clerk-expo";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useContributionStore } from "@/store/contribution-store";
-import { useFeedStore } from "@/store/feed-store";
-import { LANGUAGES, formatDuration } from "@/lib/mock-data";
-import type { ContributionType } from "@/types";
+import { useSubmitContribution } from "@/lib/hooks/use-contributions";
+import { LANGUAGES } from "@/lib/mock-data";
+import {
+  ALL_CATEGORIES,
+  CATEGORY_LABELS,
+  type DictionaryCategory,
+} from "@/lib/dictionary";
 
-type Step = "type" | "language" | "record" | "details";
-
-const CONTRIBUTION_TYPES: { type: ContributionType; label: string; icon: string; desc: string }[] = [
-  { type: "audio", label: "Audio Recording", icon: "headphones", desc: "Record a phrase, story, or pronunciation guide" },
-  { type: "text", label: "Text Content", icon: "pencil.and.list.clipboard", desc: "Write a story, phrase list, or lesson content" },
-  { type: "translation", label: "Translation", icon: "book.fill", desc: "Translate existing content into another language" },
-];
+type Step = "language" | "entry" | "details";
 
 export default function ContributeScreen() {
   const router = useRouter();
   const {
     isRecording,
-    recordingDuration,
     recordingUri,
     startRecording,
     stopRecording,
     discardRecording,
-    addContribution,
   } = useContributionStore();
-  const { addContribution: addFeedContribution } = useFeedStore();
-  const { user } = useUser();
+  const submitContribution = useSubmitContribution();
 
-  const [step, setStep] = useState<Step>("type");
-  const [selectedType, setSelectedType] = useState<ContributionType | null>(null);
+  const [step, setStep] = useState<Step>("language");
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [textContent, setTextContent] = useState("");
+  const [word, setWord] = useState("");
+  const [english, setEnglish] = useState("");
+  const [category, setCategory] = useState<DictionaryCategory | null>(null);
+  const [pronunciation, setPronunciation] = useState("");
+  const [example, setExample] = useState("");
+  const [exampleTranslation, setExampleTranslation] = useState("");
+
+  const isPhrase = word.trim().includes(" ");
 
   const handleSubmit = () => {
-    if (!selectedType || !selectedLanguage || !title.trim()) return;
+    if (!selectedLanguage || !word.trim() || !english.trim() || !category) return;
 
-    addContribution(
-      selectedType,
-      selectedLanguage,
-      title.trim(),
-      description.trim(),
-      selectedType === "audio" ? recordingUri ?? undefined : undefined,
-      selectedType !== "audio" ? textContent.trim() || undefined : undefined
+    submitContribution.mutate(
+      {
+        type: isPhrase ? "phrase" : "word",
+        languageId: selectedLanguage,
+        word: word.trim(),
+        english: english.trim(),
+        category,
+        pronunciation: pronunciation.trim() || undefined,
+        example: example.trim() || undefined,
+        exampleTranslation: exampleTranslation.trim() || undefined,
+        audioUri: recordingUri ?? undefined,
+      },
+      {
+        onSuccess: () => {
+          Alert.alert("Submitted!", "Your contribution has been submitted for review.", [
+            { text: "OK", onPress: () => router.back() },
+          ]);
+        },
+        onError: (err) => {
+          console.error("Contribution submit error:", err);
+          Alert.alert("Error", err.message || "Failed to submit contribution. Please try again.");
+        },
+      }
     );
-
-    const userName =
-      user?.firstName && user?.lastName
-        ? `${user.firstName} ${user.lastName.charAt(0)}.`
-        : user?.firstName ?? "You";
-
-    addFeedContribution(
-      title.trim(),
-      description.trim(),
-      userName,
-      selectedType === "audio" ? recordingUri ?? undefined : undefined
-    );
-
-    Alert.alert("Submitted!", "Your contribution has been submitted for review.", [
-      { text: "OK", onPress: () => router.back() },
-    ]);
   };
 
   const canSubmit =
-    selectedType &&
     selectedLanguage &&
-    title.trim() &&
-    (selectedType === "audio" ? !!recordingUri : true);
+    word.trim() &&
+    english.trim() &&
+    category &&
+    !submitContribution.isPending;
+
+  const steps: Step[] = ["language", "entry", "details"];
+  const currentIndex = steps.indexOf(step);
 
   return (
     <>
-      <Stack.Screen options={{ title: "Contribute", presentation: "modal" }} />
+      <Stack.Screen options={{ title: "Contribute a Word", presentation: "modal" }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -92,11 +94,11 @@ export default function ContributeScreen() {
         >
           {/* Progress bar */}
           <View className="flex-row px-5 pt-2">
-            {(["type", "language", "record", "details"] as Step[]).map((s, i) => (
+            {steps.map((s, i) => (
               <View
                 key={s}
                 className={`mr-1 h-1 flex-1 rounded-full ${
-                  (["type", "language", "record", "details"] as Step[]).indexOf(step) >= i
+                  currentIndex >= i
                     ? "bg-blue-500"
                     : "bg-neutral-200 dark:bg-neutral-700"
                 }`}
@@ -105,54 +107,14 @@ export default function ContributeScreen() {
           </View>
 
           <ScrollView className="flex-1 px-5 pt-4" showsVerticalScrollIndicator={false}>
-            {/* Step 1: Type */}
-            {step === "type" && (
-              <View>
-                <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
-                  What would you like to contribute?
-                </Text>
-                <Text className="mb-5 text-sm text-neutral-500 dark:text-neutral-400">
-                  Choose the type of content you want to share
-                </Text>
-
-                {CONTRIBUTION_TYPES.map((ct) => (
-                  <Pressable
-                    key={ct.type}
-                    onPress={() => {
-                      setSelectedType(ct.type);
-                      setStep("language");
-                    }}
-                    className={`mb-3 flex-row items-center rounded-xl border-2 p-4 ${
-                      selectedType === ct.type
-                        ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
-                        : "border-neutral-200 dark:border-neutral-700"
-                    }`}
-                  >
-                    <View className="mr-4 h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-                      <IconSymbol name={ct.icon as any} size={24} color="#3b82f6" />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-base font-semibold text-neutral-900 dark:text-white">
-                        {ct.label}
-                      </Text>
-                      <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
-                        {ct.desc}
-                      </Text>
-                    </View>
-                    <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
-                  </Pressable>
-                ))}
-              </View>
-            )}
-
-            {/* Step 2: Language */}
+            {/* Step 1: Language */}
             {step === "language" && (
               <View>
                 <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
                   Select a language
                 </Text>
                 <Text className="mb-5 text-sm text-neutral-500 dark:text-neutral-400">
-                  Which language is this contribution for?
+                  Which language are you contributing to?
                 </Text>
 
                 {LANGUAGES.map((lang) => (
@@ -160,7 +122,7 @@ export default function ContributeScreen() {
                     key={lang.id}
                     onPress={() => {
                       setSelectedLanguage(lang.id);
-                      setStep(selectedType === "audio" ? "record" : "details");
+                      setStep("entry");
                     }}
                     className={`mb-3 flex-row items-center rounded-xl border-2 p-4 ${
                       selectedLanguage === lang.id
@@ -182,143 +144,169 @@ export default function ContributeScreen() {
               </View>
             )}
 
-            {/* Step 3: Record (audio only) */}
-            {step === "record" && selectedType === "audio" && (
+            {/* Step 2: Word/Phrase Entry */}
+            {step === "entry" && (
               <View>
                 <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
-                  Record your audio
+                  Enter the word or phrase
                 </Text>
-                <Text className="mb-8 text-sm text-neutral-500 dark:text-neutral-400">
-                  Tap the microphone to start recording
+                <Text className="mb-5 text-sm text-neutral-500 dark:text-neutral-400">
+                  Add a word in the selected language with its English translation
                 </Text>
 
-                <View className="items-center py-8">
-                  {/* Timer */}
-                  <Text className="mb-6 text-4xl font-light text-neutral-900 dark:text-white">
-                    {formatDuration(recordingDuration)}
-                  </Text>
+                <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                  Word / Phrase
+                </Text>
+                <TextInput
+                  value={word}
+                  onChangeText={setWord}
+                  placeholder="e.g. Baidẹ"
+                  placeholderTextColor="#9ca3af"
+                  className="mb-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                  autoFocus
+                />
 
-                  {/* Record button */}
-                  {recordingUri ? (
-                    <View className="items-center">
-                      <View className="mb-4 h-20 w-20 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-                        <IconSymbol name="checkmark.circle.fill" size={40} color="#22c55e" />
-                      </View>
-                      <Text className="mb-6 text-sm text-green-600 dark:text-green-400">
-                        Recording saved ({formatDuration(recordingDuration)})
-                      </Text>
-                      <View className="flex-row gap-4">
-                        <Pressable
-                          onPress={() => {
-                            discardRecording();
-                          }}
-                          className="rounded-lg bg-neutral-200 px-5 py-2.5 dark:bg-neutral-700"
-                        >
-                          <Text className="font-semibold text-neutral-700 dark:text-neutral-300">
-                            Re-record
-                          </Text>
-                        </Pressable>
-                        <Pressable
-                          onPress={() => setStep("details")}
-                          className="rounded-lg bg-blue-500 px-5 py-2.5"
-                        >
-                          <Text className="font-semibold text-white">Next</Text>
-                        </Pressable>
-                      </View>
-                    </View>
-                  ) : (
+                <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                  English Translation
+                </Text>
+                <TextInput
+                  value={english}
+                  onChangeText={setEnglish}
+                  placeholder="e.g. Good morning"
+                  placeholderTextColor="#9ca3af"
+                  className="mb-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                />
+
+                <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                  Category
+                </Text>
+                <View className="mb-4 flex-row flex-wrap gap-2">
+                  {ALL_CATEGORIES.map((cat) => (
                     <Pressable
-                      onPress={isRecording ? stopRecording : startRecording}
-                      className={`h-20 w-20 items-center justify-center rounded-full ${
-                        isRecording ? "bg-red-500" : "bg-red-100 dark:bg-red-900"
+                      key={cat}
+                      onPress={() => setCategory(cat)}
+                      className={`rounded-lg px-3 py-2 ${
+                        category === cat
+                          ? "bg-blue-500"
+                          : "bg-neutral-100 dark:bg-neutral-800"
                       }`}
                     >
-                      {isRecording ? (
-                        <View className="h-8 w-8 rounded-sm bg-white" />
-                      ) : (
-                        <View className="h-8 w-8 rounded-full bg-red-500" />
-                      )}
+                      <Text
+                        className={`text-sm font-medium ${
+                          category === cat
+                            ? "text-white"
+                            : "text-neutral-700 dark:text-neutral-300"
+                        }`}
+                      >
+                        {CATEGORY_LABELS[cat]}
+                      </Text>
                     </Pressable>
-                  )}
-
-                  {isRecording && (
-                    <Text className="mt-4 text-sm text-red-500">
-                      Recording... Tap to stop
-                    </Text>
-                  )}
+                  ))}
                 </View>
               </View>
             )}
 
-            {/* Step 4: Details */}
+            {/* Step 3: Optional Details */}
             {step === "details" && (
               <View>
                 <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
-                  Add details
+                  Additional details
                 </Text>
                 <Text className="mb-5 text-sm text-neutral-500 dark:text-neutral-400">
-                  Give your contribution a title and description
+                  Optional — add pronunciation, examples, or audio
                 </Text>
 
+                {/* Summary of what's being submitted */}
+                <View className="mb-4 rounded-xl bg-blue-50 p-4 dark:bg-blue-950">
+                  <Text className="text-lg font-bold text-neutral-900 dark:text-white">
+                    {word}
+                  </Text>
+                  <Text className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">
+                    {english}
+                  </Text>
+                  <Text className="mt-1 text-xs text-blue-600 dark:text-blue-400">
+                    {category ? CATEGORY_LABELS[category] : ""}
+                  </Text>
+                </View>
+
                 <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  Title
+                  Pronunciation Guide
                 </Text>
                 <TextInput
-                  value={title}
-                  onChangeText={setTitle}
-                  placeholder="e.g. Common Izon greetings"
+                  value={pronunciation}
+                  onChangeText={setPronunciation}
+                  placeholder="e.g. bah-ee-DEH"
                   placeholderTextColor="#9ca3af"
                   className="mb-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                 />
 
                 <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  Description
+                  Example Sentence
                 </Text>
                 <TextInput
-                  value={description}
-                  onChangeText={setDescription}
-                  placeholder="Describe what this contribution contains..."
+                  value={example}
+                  onChangeText={setExample}
+                  placeholder="An example sentence using this word..."
                   placeholderTextColor="#9ca3af"
-                  multiline
-                  numberOfLines={3}
-                  textAlignVertical="top"
                   className="mb-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-                  style={{ minHeight: 80 }}
                 />
 
-                {/* Text content field for text/translation types */}
-                {selectedType !== "audio" && (
-                  <>
-                    <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                      {selectedType === "translation" ? "Translation" : "Content"}
-                    </Text>
-                    <TextInput
-                      value={textContent}
-                      onChangeText={setTextContent}
-                      placeholder={
-                        selectedType === "translation"
-                          ? "Enter your translation..."
-                          : "Write your content here..."
-                      }
-                      placeholderTextColor="#9ca3af"
-                      multiline
-                      numberOfLines={6}
-                      textAlignVertical="top"
-                      className="mb-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-                      style={{ minHeight: 140 }}
-                    />
-                  </>
-                )}
+                <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                  Example Translation
+                </Text>
+                <TextInput
+                  value={exampleTranslation}
+                  onChangeText={setExampleTranslation}
+                  placeholder="English translation of the example..."
+                  placeholderTextColor="#9ca3af"
+                  className="mb-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                />
 
-                {/* Audio preview */}
-                {selectedType === "audio" && recordingUri && (
-                  <View className="mb-4 flex-row items-center rounded-xl bg-green-50 p-3 dark:bg-green-950">
-                    <IconSymbol name="checkmark.circle.fill" size={20} color="#22c55e" />
-                    <Text className="ml-2 text-sm text-green-700 dark:text-green-300">
-                      Audio recording attached ({formatDuration(recordingDuration)})
+                {/* Audio recording */}
+                <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                  Audio Pronunciation
+                </Text>
+                <View className="mb-4 items-center rounded-xl border border-neutral-200 p-4 dark:border-neutral-700">
+                  {recordingUri ? (
+                    <View className="items-center">
+                      <IconSymbol name="checkmark.circle.fill" size={32} color="#22c55e" />
+                      <Text className="mt-2 text-sm text-green-600 dark:text-green-400">
+                        Recording saved
+                      </Text>
+                      <Pressable
+                        onPress={() => discardRecording()}
+                        className="mt-2 rounded-lg bg-neutral-200 px-4 py-2 dark:bg-neutral-700"
+                      >
+                        <Text className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                          Re-record
+                        </Text>
+                      </Pressable>
+                    </View>
+                  ) : (
+                    <Pressable
+                      onPress={isRecording ? stopRecording : startRecording}
+                      className={`h-16 w-16 items-center justify-center rounded-full ${
+                        isRecording ? "bg-red-500" : "bg-red-100 dark:bg-red-900"
+                      }`}
+                    >
+                      {isRecording ? (
+                        <View className="h-6 w-6 rounded-sm bg-white" />
+                      ) : (
+                        <IconSymbol name="mic.fill" size={24} color="#ef4444" />
+                      )}
+                    </Pressable>
+                  )}
+                  {isRecording && (
+                    <Text className="mt-2 text-sm text-red-500">
+                      Recording... Tap to stop
                     </Text>
-                  </View>
-                )}
+                  )}
+                  {!recordingUri && !isRecording && (
+                    <Text className="mt-2 text-xs text-neutral-400 dark:text-neutral-500">
+                      Optional — tap to record pronunciation
+                    </Text>
+                  )}
+                </View>
               </View>
             )}
           </ScrollView>
@@ -326,19 +314,32 @@ export default function ContributeScreen() {
           {/* Bottom actions */}
           <View className="border-t border-neutral-200 px-5 py-4 dark:border-neutral-700">
             <View className="flex-row gap-3">
-              {step !== "type" && (
+              {step !== "language" && (
                 <Pressable
                   onPress={() => {
-                    if (step === "language") setStep("type");
-                    else if (step === "record") setStep("language");
-                    else if (step === "details")
-                      setStep(selectedType === "audio" ? "record" : "language");
+                    if (step === "entry") setStep("language");
+                    else if (step === "details") setStep("entry");
                   }}
                   className="flex-1 items-center rounded-xl bg-neutral-100 py-3.5 dark:bg-neutral-800"
                 >
                   <Text className="font-semibold text-neutral-700 dark:text-neutral-300">
                     Back
                   </Text>
+                </Pressable>
+              )}
+              {step === "entry" && (
+                <Pressable
+                  onPress={() => {
+                    if (word.trim() && english.trim() && category) setStep("details");
+                  }}
+                  disabled={!word.trim() || !english.trim() || !category}
+                  className={`flex-1 items-center rounded-xl py-3.5 ${
+                    word.trim() && english.trim() && category
+                      ? "bg-blue-500"
+                      : "bg-blue-300 dark:bg-blue-800"
+                  }`}
+                >
+                  <Text className="font-semibold text-white">Next</Text>
                 </Pressable>
               )}
               {step === "details" && (
@@ -349,7 +350,9 @@ export default function ContributeScreen() {
                     canSubmit ? "bg-blue-500" : "bg-blue-300 dark:bg-blue-800"
                   }`}
                 >
-                  <Text className="font-semibold text-white">Submit</Text>
+                  <Text className="font-semibold text-white">
+                    {submitContribution.isPending ? "Submitting..." : "Submit"}
+                  </Text>
                 </Pressable>
               )}
             </View>

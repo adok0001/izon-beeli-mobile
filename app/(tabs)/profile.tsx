@@ -3,7 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useProgressStore } from "@/store/progress-store";
+import { useProgressSummary } from "@/lib/hooks/use-progress";
 import { useLanguageStore } from "@/store/language-store";
 import { getLanguageName } from "@/lib/mock-data";
 
@@ -67,7 +67,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { signOut } = useAuth();
   const { user } = useUser();
-  const { streak, points, completedCount } = useProgressStore();
+  const { data: summary } = useProgressSummary();
   const { selectedLanguageId } = useLanguageStore();
 
   const displayName =
@@ -102,12 +102,12 @@ export default function ProfileScreen() {
 
         {/* Stats */}
         <View className="flex-row gap-3 px-5 py-5">
-          <StatCard icon="flame.fill" label="Streak" value={String(streak)} />
-          <StatCard icon="star.fill" label="Points" value={String(points)} />
+          <StatCard icon="flame.fill" label="Streak" value={String(summary?.streak ?? 0)} />
+          <StatCard icon="star.fill" label="Points" value={String(summary?.points ?? 0)} />
           <StatCard
             icon="checkmark.circle.fill"
             label="Lessons"
-            value={String(completedCount())}
+            value={String(summary?.completedCount ?? 0)}
           />
         </View>
 
@@ -117,12 +117,7 @@ export default function ProfileScreen() {
             icon="book.fill"
             label="Learning"
             detail={getLanguageName(selectedLanguageId)}
-            onPress={() => router.push("/progress")}
-          />
-          <MenuRow
-            icon="chart.bar.fill"
-            label="My Progress"
-            onPress={() => router.push("/progress")}
+            onPress={() => router.push("/(tabs)/learn")}
           />
           <MenuRow
             icon="character.book.closed"

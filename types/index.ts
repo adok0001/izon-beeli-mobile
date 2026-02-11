@@ -87,16 +87,19 @@ export interface Language {
   region: string;
 }
 
-export type ContributionType = "audio" | "text" | "translation";
+export type ContributionType = "word" | "phrase" | "audio";
 
 export interface Contribution {
   id: string;
   type: ContributionType;
-  language: string;
-  title: string;
-  description: string;
-  audioUri?: string; // local file URI for audio contributions
-  text?: string; // for text/translation contributions
+  languageId: string;
+  word: string;
+  english: string;
+  category: string;
+  pronunciation?: string;
+  example?: string;
+  exampleTranslation?: string;
+  audioUrl?: string;
   status: "draft" | "submitted" | "approved" | "rejected";
   createdAt: string;
 }

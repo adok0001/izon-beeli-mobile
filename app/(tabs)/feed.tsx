@@ -10,13 +10,19 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { useUser } from "@clerk/clerk-expo";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useFeedStore } from "@/store/feed-store";
 import { useAudioStore } from "@/store/audio-store";
+import {
+  useFeed,
+  useCreatePost,
+  useToggleLike,
+  useComments,
+  useAddComment,
+} from "@/lib/hooks/use-feed";
 import type { FeedItem, Comment, AudioSource } from "@/types";
 
 function timeAgo(dateStr: string): string {
@@ -55,7 +61,6 @@ const TYPE_CONFIG: Record<
 function AudioPreview({ audioUrl }: { audioUrl: AudioSource }) {
   const { currentTrackId, isPlaying, loadAndPlay, togglePlayback } =
     useAudioStore();
-  // Use a stable id derived from the source
   const trackId = `feed-${audioUrl}`;
   const isCurrentTrack = currentTrackId === trackId;
 
@@ -102,16 +107,15 @@ function CommentsModal({
   feedItemId: string | null;
   onClose: () => void;
 }) {
-  const { getComments, addComment } = useFeedStore();
-  const { user } = useUser();
+  const { data: commentsData } = useComments(feedItemId);
+  const addComment = useAddComment();
   const [text, setText] = useState("");
 
-  const comments = feedItemId ? getComments(feedItemId) : [];
-  const userName = user?.firstName ?? "You";
+  const comments = commentsData ?? [];
 
   const handleSend = () => {
     if (!text.trim() || !feedItemId) return;
-    addComment(feedItemId, userName, text.trim());
+    addComment.mutate({ feedItemId, text: text.trim() });
     setText("");
   };
 
@@ -209,20 +213,15 @@ function NewPostModal({
   visible: boolean;
   onClose: () => void;
 }) {
-  const { addPost } = useFeedStore();
-  const { user } = useUser();
+  const createPost = useCreatePost();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
-  const userName =
-    user?.firstName && user?.lastName
-      ? `${user.firstName} ${user.lastName.charAt(0)}.`
-      : user?.firstName ?? "You";
   const canPost = title.trim().length > 0 && description.trim().length > 0;
 
   const handlePost = () => {
     if (!canPost) return;
-    addPost(title.trim(), description.trim(), userName);
+    createPost.mutate({ title: title.trim(), description: description.trim() });
     setTitle("");
     setDescription("");
     onClose();
@@ -296,12 +295,12 @@ function FeedCard({
   item,
   onOpenComments,
 }: {
-  item: FeedItem;
+  item: FeedItem & { isLiked?: boolean };
   onOpenComments: (id: string) => void;
 }) {
-  const { toggleLike, isLiked, getLikeCount } = useFeedStore();
+  const toggleLike = useToggleLike();
   const config = TYPE_CONFIG[item.type];
-  const liked = isLiked(item.id);
+  const liked = (item as any).isLiked ?? false;
 
   const handleShare = async () => {
     try {
@@ -358,7 +357,7 @@ function FeedCard({
       {/* Actions */}
       <View className="flex-row items-center border-t border-neutral-200 pt-3 dark:border-neutral-700">
         <Pressable
-          onPress={() => toggleLike(item.id)}
+          onPress={() => toggleLike.mutate(item.id)}
           className="mr-5 flex-row items-center"
           hitSlop={8}
         >
@@ -368,7 +367,7 @@ function FeedCard({
             color={liked ? "#ef4444" : "#9ca3af"}
           />
           <Text className="ml-1.5 text-sm text-neutral-500 dark:text-neutral-400">
-            {getLikeCount(item)}
+            {item.likes}
           </Text>
         </Pressable>
 
@@ -398,15 +397,18 @@ function FeedCard({
 // --- Feed Screen ---
 export default function FeedScreen() {
   const router = useRouter();
-  const { items } = useFeedStore();
-  const [refreshing, setRefreshing] = useState(false);
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } = useFeed();
   const [commentsItemId, setCommentsItemId] = useState<string | null>(null);
   const [showNewPost, setShowNewPost] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const onRefresh = useCallback(() => {
+  const items = data?.pages.flatMap((p) => p.items) ?? [];
+
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
-  }, []);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   return (
     <SafeAreaView
@@ -430,18 +432,33 @@ export default function FeedScreen() {
         </Pressable>
       </View>
 
-      <FlatList
-        data={items}
-        keyExtractor={(item) => item.id}
-        contentContainerClassName="px-5 pb-8 pt-2"
-        renderItem={({ item }) => (
-          <FeedCard item={item} onOpenComments={setCommentsItemId} />
-        )}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      />
+      {isLoading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#3b82f6" />
+        </View>
+      ) : (
+        <FlatList
+          data={items}
+          keyExtractor={(item) => item.id}
+          contentContainerClassName="px-5 pb-8 pt-2"
+          renderItem={({ item }) => (
+            <FeedCard item={item as any} onOpenComments={setCommentsItemId} />
+          )}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          onEndReached={() => {
+            if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+          }}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <ActivityIndicator size="small" color="#3b82f6" className="py-4" />
+            ) : null
+          }
+        />
+      )}
 
       {/* Contribute FAB */}
       <Pressable

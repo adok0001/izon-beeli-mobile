@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { Audio } from "expo-av";
-import type { Contribution, ContributionType } from "@/types";
 
 interface ContributionState {
   // Recording state
@@ -10,24 +9,10 @@ interface ContributionState {
   _recording: Audio.Recording | null;
   _durationInterval: ReturnType<typeof setInterval> | null;
 
-  // Form state
-  contributions: Contribution[];
-
   // Recording actions
   startRecording: () => Promise<void>;
   stopRecording: () => Promise<string | null>;
   discardRecording: () => void;
-
-  // CRUD actions
-  addContribution: (
-    type: ContributionType,
-    language: string,
-    title: string,
-    description: string,
-    audioUri?: string,
-    text?: string
-  ) => void;
-  deleteContribution: (id: string) => void;
 }
 
 export const useContributionStore = create<ContributionState>((set, get) => ({
@@ -36,7 +21,6 @@ export const useContributionStore = create<ContributionState>((set, get) => ({
   recordingUri: null,
   _recording: null,
   _durationInterval: null,
-  contributions: [],
 
   startRecording: async () => {
     try {
@@ -113,29 +97,4 @@ export const useContributionStore = create<ContributionState>((set, get) => ({
       _durationInterval: null,
     });
   },
-
-  addContribution: (type, language, title, description, audioUri, text) =>
-    set((state) => ({
-      contributions: [
-        {
-          id: `contrib-${Date.now()}`,
-          type,
-          language,
-          title,
-          description,
-          audioUri,
-          text,
-          status: "submitted",
-          createdAt: new Date().toISOString(),
-        },
-        ...state.contributions,
-      ],
-      recordingUri: null,
-      recordingDuration: 0,
-    })),
-
-  deleteContribution: (id) =>
-    set((state) => ({
-      contributions: state.contributions.filter((c) => c.id !== id),
-    })),
 }));

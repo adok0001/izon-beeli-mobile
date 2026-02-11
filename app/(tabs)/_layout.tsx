@@ -7,6 +7,7 @@ import { AudioPlayer } from "@/components/audio/audio-player";
 import { useAudioStore } from "@/store/audio-store";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useSyncUser } from "@/lib/hooks/use-sync-user";
 
 function TabBarWithPlayer(props: BottomTabBarProps) {
   const { currentTrackId } = useAudioStore();
@@ -21,6 +22,7 @@ function TabBarWithPlayer(props: BottomTabBarProps) {
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  useSyncUser();
 
   return (
     <Tabs

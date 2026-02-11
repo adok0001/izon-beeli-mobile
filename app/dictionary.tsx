@@ -1,41 +1,40 @@
-import { useState, useMemo } from "react";
-import {
-  View,
-  Text,
-  SectionList,
-  Pressable,
-  TextInput,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useWordBankStore } from "@/store/wordbank-store";
 import {
-  IZON_DICTIONARY,
-  searchDictionary,
   ALL_CATEGORIES,
   CATEGORY_LABELS,
-  type DictionaryEntry,
+  IZON_DICTIONARY,
+  searchDictionary,
   type DictionaryCategory,
+  type DictionaryEntry,
 } from "@/lib/dictionary";
+import { useApprovedWords } from "@/lib/hooks/use-contributions";
+import { useRemoveWord, useSaveWord, useWordBank } from "@/lib/hooks/use-wordbank";
+import { useLanguageStore } from "@/store/language-store";
+import { Stack } from "expo-router";
+import { useMemo, useState } from "react";
+import {
+  Pressable,
+  SectionList,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type ViewMode = "all" | "saved";
 
-function WordRow({ entry }: { entry: DictionaryEntry }) {
-  const { isSaved, toggle } = useWordBankStore();
-  const saved = isSaved(entry.id);
-
+function WordRow({ entry, saved, onToggle }: { entry: DictionaryEntry; saved: boolean; onToggle: () => void }) {
   return (
     <View className="flex-row items-center border-b border-neutral-100 px-5 py-3 dark:border-neutral-800">
       <View className="flex-1">
         <Text className="text-base font-semibold text-neutral-900 dark:text-white">
-          {entry.izon}
+          {entry.word}
         </Text>
         <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
           {entry.english}
         </Text>
       </View>
-      <Pressable onPress={() => toggle(entry.id)} hitSlop={8}>
+      <Pressable onPress={onToggle} hitSlop={8}>
         <IconSymbol
           name={saved ? "star.fill" : "star.fill"}
           size={20}
@@ -49,17 +48,38 @@ function WordRow({ entry }: { entry: DictionaryEntry }) {
 export default function DictionaryScreen() {
   const [query, setQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("all");
-  const { savedIds, count } = useWordBankStore();
+  const { data: savedIds } = useWordBank();
+  const saveWord = useSaveWord();
+  const removeWord = useRemoveWord();
+  const { selectedLanguageId } = useLanguageStore();
+  const { data: approvedWords } = useApprovedWords(selectedLanguageId);
+
+  const savedSet = new Set(savedIds ?? []);
+
+  const handleToggle = (entryId: string) => {
+    if (savedSet.has(entryId)) {
+      removeWord.mutate(entryId);
+    } else {
+      saveWord.mutate(entryId);
+    }
+  };
+
+  // Merge local dictionary (for Izon) with API-sourced approved contributions
+  const allEntries = useMemo(() => {
+    const local = selectedLanguageId === "izon" ? IZON_DICTIONARY : [];
+    const contributed = approvedWords ?? [];
+    return [...local, ...contributed];
+  }, [selectedLanguageId, approvedWords]);
 
   const sections = useMemo(() => {
     const filtered =
       query.trim().length > 0
-        ? searchDictionary(query)
-        : IZON_DICTIONARY;
+        ? searchDictionary(query, allEntries)
+        : allEntries;
 
     const entries =
       viewMode === "saved"
-        ? filtered.filter((e) => savedIds.has(e.id))
+        ? filtered.filter((e) => savedSet.has(e.id))
         : filtered;
 
     // Group by category
@@ -77,9 +97,9 @@ export default function DictionaryScreen() {
         title: CATEGORY_LABELS[cat],
         data: grouped.get(cat)!,
       }));
-  }, [query, viewMode, savedIds]);
+  }, [query, viewMode, savedSet.size]);
 
-  const savedCount = count();
+  const savedCount = savedSet.size;
 
   return (
     <>
@@ -95,7 +115,7 @@ export default function DictionaryScreen() {
             <TextInput
               value={query}
               onChangeText={setQuery}
-              placeholder="Search Izon or English..."
+              placeholder="Search for a word..."
               placeholderTextColor="#9ca3af"
               className="ml-2 flex-1 py-2.5 text-base text-neutral-900 dark:text-white"
               autoCapitalize="none"
@@ -125,7 +145,7 @@ export default function DictionaryScreen() {
                     : "text-neutral-600 dark:text-neutral-400"
                 }`}
               >
-                All Words ({IZON_DICTIONARY.length})
+                All Words ({allEntries.length})
               </Text>
             </Pressable>
             <Pressable
@@ -163,7 +183,13 @@ export default function DictionaryScreen() {
               </Text>
             </View>
           )}
-          renderItem={({ item }) => <WordRow entry={item} />}
+          renderItem={({ item }) => (
+            <WordRow
+              entry={item}
+              saved={savedSet.has(item.id)}
+              onToggle={() => handleToggle(item.id)}
+            />
+          )}
           ListEmptyComponent={
             <View className="items-center px-8 py-16">
               <IconSymbol

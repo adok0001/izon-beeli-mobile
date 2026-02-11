@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { AudioPlayer } from "@/components/audio/audio-player";
 import { InteractiveTranscript } from "@/components/audio/interactive-transcript";
 import { useAudioStore } from "@/store/audio-store";
-import { useProgressStore } from "@/store/progress-store";
+import { useCompletedLessons, useCompleteLesson } from "@/lib/hooks/use-progress";
 import { getLessonById, formatDuration } from "@/lib/mock-data";
 import { playFinishSound } from "@/lib/sounds";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -13,7 +13,8 @@ export default function LessonScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const lesson = getLessonById(id);
   const { loadAndPlay, currentTrackId, isPlaying, togglePlayback } = useAudioStore();
-  const { isCompleted, markComplete } = useProgressStore();
+  const { data: completedLessonIds } = useCompletedLessons();
+  const completeLesson = useCompleteLesson();
 
   if (!lesson) {
     return (
@@ -29,7 +30,7 @@ export default function LessonScreen() {
   }
 
   const isCurrentTrack = currentTrackId === lesson.id;
-  const completed = isCompleted(lesson.id);
+  const completed = completedLessonIds?.includes(lesson.id) ?? false;
 
   const handlePlayAudio = () => {
     if (isCurrentTrack) {
@@ -37,6 +38,11 @@ export default function LessonScreen() {
     } else if (lesson.audioUrl) {
       loadAndPlay(lesson.id, lesson.audioUrl, lesson.title);
     }
+  };
+
+  const handleMarkComplete = () => {
+    completeLesson.mutate(lesson.id);
+    playFinishSound();
   };
 
   return (
@@ -89,10 +95,7 @@ export default function LessonScreen() {
 
             {!completed && (
               <Pressable
-                onPress={() => {
-                  markComplete(lesson.id);
-                  playFinishSound();
-                }}
+                onPress={handleMarkComplete}
                 className="flex-row items-center rounded-full border border-green-500 px-4 py-2.5 active:opacity-80"
               >
                 <IconSymbol name="checkmark.circle.fill" size={16} color="#22c55e" />

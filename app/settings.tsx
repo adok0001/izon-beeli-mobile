@@ -4,7 +4,7 @@ import { Stack } from "expo-router";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useLanguageStore } from "@/store/language-store";
-import { useProgressStore } from "@/store/progress-store";
+import { useProgressSummary } from "@/lib/hooks/use-progress";
 import { getLanguageName } from "@/lib/mock-data";
 
 function SettingsRow({
@@ -43,7 +43,7 @@ function SettingsRow({
 export default function SettingsScreen() {
   const colorScheme = useColorScheme();
   const { selectedLanguageId } = useLanguageStore();
-  const { streak, points } = useProgressStore();
+  const { data: summary } = useProgressSummary();
 
   const handleResetProgress = () => {
     Alert.alert(
@@ -73,12 +73,12 @@ export default function SettingsScreen() {
           <SettingsRow
             icon="flame.fill"
             label="Daily Streak"
-            value={`${streak} days`}
+            value={`${summary?.streak ?? 0} days`}
           />
           <SettingsRow
             icon="star.fill"
             label="Points Earned"
-            value={String(points)}
+            value={String(summary?.points ?? 0)}
           />
 
           {/* App section */}

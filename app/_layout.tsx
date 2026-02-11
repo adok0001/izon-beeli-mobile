@@ -58,11 +58,7 @@ export default function RootLayout() {
                 name="contribute"
                 options={{ presentation: "modal", headerShown: false }}
               />
-              <Stack.Screen
-                name="progress"
-                options={{ headerBackTitle: "Back" }}
-              />
-              <Stack.Screen
+<Stack.Screen
                 name="settings"
                 options={{ headerBackTitle: "Back" }}
               />
