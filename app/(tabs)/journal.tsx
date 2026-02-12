@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -75,7 +76,14 @@ function EntryCard({
 }
 
 export default function JournalScreen() {
-  const { data: entries, isLoading } = useJournal();
+  const { data: entries, isLoading, refetch } = useJournal();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
   const createEntry = useCreateJournalEntry();
   const updateEntry = useUpdateJournalEntry();
   const deleteEntry = useDeleteJournalEntry();
@@ -169,6 +177,9 @@ export default function JournalScreen() {
             />
           )}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         />
       )}
 

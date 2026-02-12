@@ -45,7 +45,8 @@ app-example
 /ios
 /android
 
-# server build artifacts
+# server
 server/node_modules/
 server/dist/
 server/drizzle/
+server/.env

@@ -8,6 +8,7 @@ import {
   timestamp,
   pgEnum,
   uniqueIndex,
+  index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -70,35 +71,47 @@ export const userProgress = pgTable(
 
 // ---------- Journal Entries ----------
 
-export const journalEntries = pgTable("journal_entries", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id")
-    .references(() => users.id)
-    .notNull(),
-  title: varchar("title", { length: 500 }).notNull(),
-  content: text("content").notNull(),
-  lessonId: varchar("lesson_id", { length: 64 }),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+export const journalEntries = pgTable(
+  "journal_entries",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    title: varchar("title", { length: 500 }).notNull(),
+    content: text("content").notNull(),
+    lessonId: varchar("lesson_id", { length: 64 }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("journal_entries_user_id_idx").on(table.userId),
+  ]
+);
 
 // ---------- Feed Items ----------
 
-export const feedItems = pgTable("feed_items", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id")
-    .references(() => users.id)
-    .notNull(),
-  type: feedItemTypeEnum("type").notNull(),
-  title: varchar("title", { length: 500 }).notNull(),
-  description: text("description").notNull(),
-  userName: varchar("user_name", { length: 200 }).notNull(),
-  userAvatarUrl: text("user_avatar_url"),
-  audioUrl: text("audio_url"),
-  likesCount: integer("likes_count").default(0).notNull(),
-  commentsCount: integer("comments_count").default(0).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+export const feedItems = pgTable(
+  "feed_items",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    type: feedItemTypeEnum("type").notNull(),
+    title: varchar("title", { length: 500 }).notNull(),
+    description: text("description").notNull(),
+    userName: varchar("user_name", { length: 200 }).notNull(),
+    userAvatarUrl: text("user_avatar_url"),
+    audioUrl: text("audio_url"),
+    likesCount: integer("likes_count").default(0).notNull(),
+    commentsCount: integer("comments_count").default(0).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("feed_items_created_at_idx").on(table.createdAt),
+  ]
+);
 
 // ---------- Likes ----------
 
@@ -121,38 +134,51 @@ export const likes = pgTable(
 
 // ---------- Comments ----------
 
-export const comments = pgTable("comments", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id")
-    .references(() => users.id)
-    .notNull(),
-  feedItemId: uuid("feed_item_id")
-    .references(() => feedItems.id)
-    .notNull(),
-  userName: varchar("user_name", { length: 200 }).notNull(),
-  text: text("text").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+export const comments = pgTable(
+  "comments",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    feedItemId: uuid("feed_item_id")
+      .references(() => feedItems.id)
+      .notNull(),
+    userName: varchar("user_name", { length: 200 }).notNull(),
+    text: text("text").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("comments_feed_item_id_idx").on(table.feedItemId),
+  ]
+);
 
 // ---------- Contributions ----------
 
-export const contributions = pgTable("contributions", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id")
-    .references(() => users.id)
-    .notNull(),
-  type: contributionTypeEnum("type").notNull(),
-  languageId: varchar("language_id", { length: 32 }).notNull(),
-  word: varchar("word", { length: 500 }).notNull(),
-  english: varchar("english", { length: 500 }).notNull(),
-  category: varchar("category", { length: 32 }).notNull(),
-  pronunciation: varchar("pronunciation", { length: 500 }),
-  example: text("example"),
-  exampleTranslation: text("example_translation"),
-  audioUrl: text("audio_url"),
-  status: contributionStatusEnum("status").default("submitted").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+export const contributions = pgTable(
+  "contributions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    type: contributionTypeEnum("type").notNull(),
+    languageId: varchar("language_id", { length: 32 }).notNull(),
+    word: varchar("word", { length: 500 }).notNull(),
+    english: varchar("english", { length: 500 }).notNull(),
+    category: varchar("category", { length: 32 }).notNull(),
+    pronunciation: varchar("pronunciation", { length: 500 }),
+    example: text("example"),
+    exampleTranslation: text("example_translation"),
+    audioUrl: text("audio_url"),
+    status: contributionStatusEnum("status").default("submitted").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("contributions_user_id_idx").on(table.userId),
+    index("contributions_lang_status_idx").on(table.languageId, table.status),
+  ]
+);
 
 // ---------- Word Bank ----------
 // dictionaryEntryId references local dictionary IDs (e.g. "d1")

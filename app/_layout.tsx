@@ -66,6 +66,10 @@ export default function RootLayout() {
                 name="dictionary"
                 options={{ headerBackTitle: "Back" }}
               />
+              <Stack.Screen
+                name="review"
+                options={{ headerBackTitle: "Back" }}
+              />
             </Stack>
             <StatusBar style="auto" />
           </ThemeProvider>

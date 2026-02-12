@@ -4,6 +4,8 @@ import { db } from "../db/index.js";
 import { feedItems, likes, comments, users } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
 
+const VALID_FEED_TYPES = ["lesson_completed", "achievement", "contribution", "community"] as const;
+
 export const feedRouter = new Hono<AuthEnv>();
 
 feedRouter.use("*", authMiddleware);
@@ -12,9 +14,17 @@ feedRouter.use("*", authMiddleware);
 feedRouter.get("/", async (c) => {
   const userId = c.get("userId");
   const cursor = c.req.query("cursor");
-  const limit = Math.min(parseInt(c.req.query("limit") ?? "20"), 50);
+  const rawLimit = parseInt(c.req.query("limit") ?? "20");
+  const limit = Math.min(Number.isNaN(rawLimit) ? 20 : rawLimit, 50);
 
-  const conditions = cursor ? [lt(feedItems.createdAt, new Date(cursor))] : [];
+  const conditions = [];
+  if (cursor) {
+    const cursorDate = new Date(cursor);
+    if (Number.isNaN(cursorDate.getTime())) {
+      return c.json({ error: "Invalid cursor format" }, 400);
+    }
+    conditions.push(lt(feedItems.createdAt, cursorDate));
+  }
 
   const items = await db
     .select()
@@ -76,6 +86,11 @@ feedRouter.post("/", async (c) => {
     return c.json({ error: "Title and description required" }, 400);
   }
 
+  const feedType = body.type ?? "community";
+  if (!VALID_FEED_TYPES.includes(feedType as any)) {
+    return c.json({ error: `Invalid type. Must be one of: ${VALID_FEED_TYPES.join(", ")}` }, 400);
+  }
+
   // Get user name
   const [user] = await db
     .select({ name: users.name, avatarUrl: users.avatarUrl })
@@ -87,7 +102,7 @@ feedRouter.post("/", async (c) => {
     .insert(feedItems)
     .values({
       userId,
-      type: (body.type as any) ?? "community",
+      type: feedType as (typeof VALID_FEED_TYPES)[number],
       title: body.title.trim(),
       description: body.description.trim(),
       userName: user?.name ?? "User",
@@ -128,7 +143,7 @@ feedRouter.post("/:id/like", async (c) => {
     await db.delete(likes).where(eq(likes.id, existing.id));
     await db
       .update(feedItems)
-      .set({ likesCount: sql`${feedItems.likesCount} - 1` })
+      .set({ likesCount: sql`GREATEST(${feedItems.likesCount} - 1, 0)` })
       .where(eq(feedItems.id, feedItemId));
     return c.json({ liked: false });
   } else {

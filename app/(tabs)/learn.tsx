@@ -1,4 +1,5 @@
-import { View, Text, FlatList, Pressable, ActivityIndicator } from "react-native";
+import { useState, useCallback } from "react";
+import { View, Text, FlatList, Pressable, ActivityIndicator, RefreshControl } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -98,9 +99,16 @@ export default function LearnScreen() {
   const router = useRouter();
   const { selectedLanguageId } = useLanguageStore();
   const courses = getCoursesByLanguage(selectedLanguageId);
-  const { data: completedLessonIds, isLoading } = useCompletedLessons();
-  const { data: summary } = useProgressSummary();
+  const { data: completedLessonIds, isLoading, refetch } = useCompletedLessons();
+  const { data: summary, refetch: refetchSummary } = useProgressSummary();
   const completedIds = new Set(completedLessonIds ?? []);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([refetch(), refetchSummary()]);
+    setRefreshing(false);
+  }, [refetch, refetchSummary]);
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
@@ -164,6 +172,9 @@ export default function LearnScreen() {
           contentContainerClassName="px-5 pb-8 pt-2"
           renderItem={({ item }) => <CourseCard course={item} completedIds={completedIds} />}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         />
       )}
     </SafeAreaView>

@@ -4,6 +4,12 @@ import { eq } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { users } from "../db/schema.js";
 
+if (!process.env.CLERK_SECRET_KEY) {
+  throw new Error("CLERK_SECRET_KEY environment variable is required");
+}
+
+const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+
 export type AuthEnv = {
   Variables: {
     userId: string;
@@ -20,9 +26,7 @@ export const authMiddleware = createMiddleware<AuthEnv>(async (c, next) => {
   const token = authHeader.slice(7);
 
   try {
-    const payload = await verifyToken(token, {
-      secretKey: process.env.CLERK_SECRET_KEY!,
-    });
+    const payload = await verifyToken(token, { secretKey: clerkSecretKey });
 
     const clerkId = payload.sub;
     if (!clerkId) {

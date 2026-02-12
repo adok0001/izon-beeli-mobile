@@ -8,20 +8,38 @@ import { usersRouter } from "./routes/users.js";
 import { progressRouter } from "./routes/progress.js";
 import { journalRouter } from "./routes/journal.js";
 import { feedRouter } from "./routes/feed.js";
-import { contributionsRouter } from "./routes/contributions.js";
+import { contributionsRouter, contributionsPublicRouter } from "./routes/contributions.js";
 import { wordbankRouter } from "./routes/wordbank.js";
+
+const isDev = process.env.NODE_ENV !== "production";
 
 const app = new Hono().basePath("/api");
 
 app.use("*", logger());
-app.use("*", cors());
+app.use(
+  "*",
+  cors({
+    origin: isDev
+      ? "*"
+      : (process.env.ALLOWED_ORIGINS ?? "").split(",").filter(Boolean),
+    allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 app.onError((err, c) => {
   console.error(`[ERROR] ${c.req.method} ${c.req.path}:`, err.message);
-  return c.json({ error: "Internal server error", detail: err.message }, 500);
+  return c.json(
+    { error: "Internal server error", ...(isDev ? { detail: err.message } : {}) },
+    500
+  );
 });
 
-// All routes are authenticated (UGC only)
+// Public routes (no auth required)
+app.route("/contributions", contributionsPublicRouter);
+app.get("/health", (c) => c.json({ status: "ok" }));
+
+// Authenticated routes
 app.route("/users", usersRouter);
 app.route("/progress", progressRouter);
 app.route("/journal", journalRouter);
@@ -29,10 +47,7 @@ app.route("/feed", feedRouter);
 app.route("/contributions", contributionsRouter);
 app.route("/wordbank", wordbankRouter);
 
-// Health check
-app.get("/health", (c) => c.json({ status: "ok" }));
-
-const port = 3000;
-console.log(`Server starting on http://localhost:${port}/api`);
-
-serve({ fetch: app.fetch, port, hostname: "0.0.0.0" });
+const port = parseInt(process.env.PORT ?? "3000");
+serve({ fetch: app.fetch, port, hostname: "0.0.0.0" }, () => {
+  console.log(`Server listening on port ${port}`);
+});

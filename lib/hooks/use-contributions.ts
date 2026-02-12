@@ -77,17 +77,67 @@ export function useSubmitContribution() {
 }
 
 export function useApprovedWords(languageId: string) {
-  const { getToken, isSignedIn } = useAuth();
-
   return useQuery<DictionaryEntry[]>({
     queryKey: ["approved-words", languageId],
+    queryFn: () =>
+      apiFetch<DictionaryEntry[]>(
+        `/contributions/approved?languageId=${languageId}`
+      ),
+    enabled: !!languageId,
+  });
+}
+
+export function usePendingContributions() {
+  const { getToken } = useAuth();
+
+  return useQuery({
+    queryKey: ["pending-contributions"],
     queryFn: async () => {
       const token = await getToken();
-      return apiFetch<DictionaryEntry[]>(
-        `/contributions/approved?languageId=${languageId}`,
-        { token: token! }
-      );
+      return apiFetch<PendingContribution[]>("/contributions/pending", {
+        token: token!,
+      });
     },
-    enabled: !!isSignedIn,
+  });
+}
+
+export interface PendingContribution {
+  id: string;
+  word: string;
+  english: string;
+  category: string;
+  languageId: string;
+  pronunciation: string | null;
+  example: string | null;
+  exampleTranslation: string | null;
+  type: string;
+  status: string;
+  userId: string;
+  createdAt: string;
+}
+
+export function useReviewContribution() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      action,
+    }: {
+      id: string;
+      action: "approve" | "reject";
+    }) => {
+      const token = await getToken();
+      return apiFetch(`/contributions/${id}/review`, {
+        method: "PATCH",
+        token: token!,
+        body: JSON.stringify({ action }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pending-contributions"] });
+      queryClient.invalidateQueries({ queryKey: ["approved-words"] });
+    },
   });
 }

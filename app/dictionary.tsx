@@ -11,9 +11,10 @@ import { useApprovedWords } from "@/lib/hooks/use-contributions";
 import { useRemoveWord, useSaveWord, useWordBank } from "@/lib/hooks/use-wordbank";
 import { useLanguageStore } from "@/store/language-store";
 import { Stack } from "expo-router";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Pressable,
+  RefreshControl,
   SectionList,
   Text,
   TextInput,
@@ -24,24 +25,54 @@ import { SafeAreaView } from "react-native-safe-area-context";
 type ViewMode = "all" | "saved";
 
 function WordRow({ entry, saved, onToggle }: { entry: DictionaryEntry; saved: boolean; onToggle: () => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const hasDetails = !!(entry.pronunciation || entry.example);
+
   return (
-    <View className="flex-row items-center border-b border-neutral-100 px-5 py-3 dark:border-neutral-800">
-      <View className="flex-1">
-        <Text className="text-base font-semibold text-neutral-900 dark:text-white">
-          {entry.word}
-        </Text>
-        <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
-          {entry.english}
-        </Text>
+    <Pressable
+      onPress={hasDetails ? () => setExpanded((v) => !v) : undefined}
+      className="border-b border-neutral-100 px-5 py-3 dark:border-neutral-800"
+    >
+      <View className="flex-row items-center">
+        <View className="flex-1">
+          <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+            {entry.word}
+          </Text>
+          <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
+            {entry.english}
+          </Text>
+        </View>
+        <Pressable onPress={onToggle} hitSlop={8}>
+          <IconSymbol
+            name={saved ? "star.fill" : "star"}
+            size={20}
+            color={saved ? "#f59e0b" : "#d1d5db"}
+          />
+        </Pressable>
       </View>
-      <Pressable onPress={onToggle} hitSlop={8}>
-        <IconSymbol
-          name={saved ? "star.fill" : "star.fill"}
-          size={20}
-          color={saved ? "#f59e0b" : "#d1d5db"}
-        />
-      </Pressable>
-    </View>
+
+      {expanded && (
+        <View className="mt-2">
+          {entry.pronunciation && (
+            <Text className="text-sm italic text-neutral-500 dark:text-neutral-400">
+              /{entry.pronunciation}/
+            </Text>
+          )}
+          {entry.example && (
+            <View className="mt-1.5 rounded-lg bg-neutral-50 px-3 py-2 dark:bg-neutral-800">
+              <Text className="text-sm text-neutral-700 dark:text-neutral-300">
+                {entry.example}
+              </Text>
+              {entry.exampleTranslation && (
+                <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                  {entry.exampleTranslation}
+                </Text>
+              )}
+            </View>
+          )}
+        </View>
+      )}
+    </Pressable>
   );
 }
 
@@ -52,7 +83,14 @@ export default function DictionaryScreen() {
   const saveWord = useSaveWord();
   const removeWord = useRemoveWord();
   const { selectedLanguageId } = useLanguageStore();
-  const { data: approvedWords } = useApprovedWords(selectedLanguageId);
+  const { data: approvedWords, refetch: refetchApproved } = useApprovedWords(selectedLanguageId);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetchApproved();
+    setRefreshing(false);
+  }, [refetchApproved]);
 
   const savedSet = new Set(savedIds ?? []);
 
@@ -176,6 +214,9 @@ export default function DictionaryScreen() {
           stickySectionHeadersEnabled
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
           renderSectionHeader={({ section }) => (
             <View className="bg-neutral-50 px-5 py-2 dark:bg-neutral-800/80">
               <Text className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
