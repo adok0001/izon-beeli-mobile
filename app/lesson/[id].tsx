@@ -1,15 +1,16 @@
-import { View, Text, Pressable } from "react-native";
-import { useLocalSearchParams, Stack } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { AudioPlayer } from "@/components/audio/audio-player";
 import { InteractiveTranscript } from "@/components/audio/interactive-transcript";
-import { useAudioStore } from "@/store/audio-store";
-import { useCompletedLessons, useCompleteLesson } from "@/lib/hooks/use-progress";
-import { getLessonById, formatDuration } from "@/lib/mock-data";
-import { playFinishSound } from "@/lib/sounds";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useCompletedLessons, useCompleteLesson } from "@/lib/hooks/use-progress";
+import { formatDuration, getLessonById } from "@/lib/mock-data";
+import { playFinishSound } from "@/lib/sounds";
+import { useAudioStore } from "@/store/audio-store";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { Pressable, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function LessonScreen() {
+  const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const lesson = getLessonById(id);
   const { loadAndPlay, currentTrackId, isPlaying, togglePlayback } = useAudioStore();
@@ -104,6 +105,21 @@ export default function LessonScreen() {
                 </Text>
               </Pressable>
             )}
+
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: "/quiz",
+                  params: { courseId: lesson.courseId },
+                })
+              }
+              className="flex-row items-center rounded-full border border-blue-500 px-4 py-2.5 active:opacity-80"
+            >
+              <IconSymbol name="trophy.fill" size={16} color="#3b82f6" />
+              <Text className="ml-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400">
+                Practice
+              </Text>
+            </Pressable>
           </View>
         </View>
 

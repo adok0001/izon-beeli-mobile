@@ -70,6 +70,10 @@ export default function RootLayout() {
                 name="review"
                 options={{ headerBackTitle: "Back" }}
               />
+              <Stack.Screen
+                name="quiz"
+                options={{ presentation: "modal", headerShown: false }}
+              />
             </Stack>
             <StatusBar style="auto" />
           </ThemeProvider>

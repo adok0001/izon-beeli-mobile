@@ -103,3 +103,40 @@ export interface Contribution {
   status: "draft" | "submitted" | "approved" | "rejected";
   createdAt: string;
 }
+
+// --- Quiz ---
+
+export type QuestionType =
+  | "word-to-english"
+  | "english-to-word"
+  | "fill-in-the-blank"
+  | "listening";
+
+export interface QuizQuestion {
+  id: string;
+  type: QuestionType;
+  prompt: string;
+  correctAnswer: string;
+  options: string[]; // 4 options, shuffled
+}
+
+export interface QuizConfig {
+  languageId: string;
+  courseId?: string;
+  category?: string;
+  questionCount: number; // default 10
+}
+
+export interface AnsweredQuestion {
+  questionId: string;
+  selectedAnswer: string;
+  correct: boolean;
+}
+
+export interface QuizResult {
+  totalQuestions: number;
+  correctCount: number;
+  accuracy: number; // 0-100
+  timeElapsed: number; // seconds
+  answeredQuestions: AnsweredQuestion[];
+}

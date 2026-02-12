@@ -1,17 +1,17 @@
-import { useState, useCallback } from "react";
-import { View, Text, FlatList, Pressable, ActivityIndicator, RefreshControl } from "react-native";
-import { useRouter } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LanguagePickerButton } from "@/components/language-picker";
-import { useLanguageStore } from "@/store/language-store";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useCompletedLessons, useProgressSummary } from "@/lib/hooks/use-progress";
 import {
+  formatDuration,
   getCoursesByLanguage,
   getLessonsByCourse,
-  formatDuration,
 } from "@/lib/mock-data";
+import { useLanguageStore } from "@/store/language-store";
 import type { Course, Lesson } from "@/types";
+import { useRouter } from "expo-router";
+import { useCallback, useState } from "react";
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 function CourseCard({ course, completedIds }: { course: Course; completedIds: Set<string> }) {
   const router = useRouter();
@@ -59,6 +59,18 @@ function CourseCard({ course, completedIds }: { course: Course; completedIds: Se
           onPress={() => router.push(`/lesson/${lesson.id}`)}
         />
       ))}
+
+      <Pressable
+        onPress={() =>
+          router.push({ pathname: "/quiz", params: { courseId: course.id } })
+        }
+        className="mt-2 flex-row items-center justify-center rounded-lg border border-blue-200 py-2.5 active:opacity-70 dark:border-blue-800"
+      >
+        <IconSymbol name="trophy.fill" size={16} color="#3b82f6" />
+        <Text className="ml-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400">
+          Practice Quiz
+        </Text>
+      </Pressable>
     </View>
   );
 }
@@ -113,20 +125,26 @@ export default function LearnScreen() {
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
       <View className="flex-row items-center justify-between px-5 pb-2 pt-4">
-        <View>
+        <View className="mr-3 shrink">
           <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
             Learn
           </Text>
-          <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            Pick a language and start learning
+          <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
+            Pick a language
           </Text>
         </View>
-        <View className="flex-row items-center gap-2">
+        <View className="flex-row items-center gap-1.5">
+          <Pressable
+            onPress={() => router.push("/quiz")}
+            className="h-9 w-9 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900"
+          >
+            <IconSymbol name="trophy.fill" size={18} color="#3b82f6" />
+          </Pressable>
           <Pressable
             onPress={() => router.push("/dictionary")}
-            className="h-10 w-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900"
+            className="h-9 w-9 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900"
           >
-            <IconSymbol name="character.book.closed" size={20} color="#f59e0b" />
+            <IconSymbol name="character.book.closed" size={18} color="#f59e0b" />
           </Pressable>
           <LanguagePickerButton />
         </View>
