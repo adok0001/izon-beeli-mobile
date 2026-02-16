@@ -1,16 +1,16 @@
 import { useSignUp } from "@clerk/clerk-expo";
+import { Image } from "expo-image";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
-import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const mascot = require("../../public/mascot.jpg");

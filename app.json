@@ -56,6 +56,12 @@
         "projectId": "bfc59466-aa28-4871-b394-23144ac7d4ec"
       }
     },
-    "owner": "tammyado"
+    "owner": "tammyado",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/bfc59466-aa28-4871-b394-23144ac7d4ec"
+    }
   }
 }

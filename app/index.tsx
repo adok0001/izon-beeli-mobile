@@ -1,7 +1,7 @@
-import { View, Text, ActivityIndicator } from "react-native";
-import { Image } from "expo-image";
 import { useAuth } from "@clerk/clerk-expo";
+import { Image } from "expo-image";
 import { Redirect } from "expo-router";
+import { ActivityIndicator, Text, View } from "react-native";
 
 const mascot = require("../public/mascot.jpg");
 
