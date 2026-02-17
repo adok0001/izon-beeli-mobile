@@ -19,6 +19,7 @@ export default function SignUpScreen() {
   const { signUp, setActive, isLoaded } = useSignUp();
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -29,6 +30,7 @@ export default function SignUpScreen() {
     confirmPassword.length > 0 && password !== confirmPassword;
   const canSubmit =
     email.trim().length > 0 &&
+    username.trim().length > 0 &&
     password.length >= 8 &&
     password === confirmPassword &&
     !loading;
@@ -40,11 +42,17 @@ export default function SignUpScreen() {
     try {
       const result = await signUp.create({
         emailAddress: email.trim(),
+        username: username.trim(),
         password,
       });
+      
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
         router.replace("/(tabs)/learn");
+      } else if (result.status === "missing_requirements") {
+        // Email needs to be verified
+        await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+        router.push("/(auth)/verify-email");
       }
     } catch (err: unknown) {
       const clerkErr = err as { errors?: { message: string }[] };
@@ -52,6 +60,7 @@ export default function SignUpScreen() {
         clerkErr.errors?.[0]?.message ??
         (err instanceof Error ? err.message : "Something went wrong");
       setError(message);
+      Alert.alert("Error", message);
     } finally {
       setLoading(false);
     }
@@ -94,6 +103,17 @@ export default function SignUpScreen() {
           autoCapitalize="none"
           keyboardType="email-address"
           autoComplete="email"
+          editable={!loading}
+        />
+
+        <TextInput
+          className="mb-4 rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+          placeholder="Username"
+          placeholderTextColor="#9ca3af"
+          value={username}
+          onChangeText={setUsername}
+          autoCapitalize="none"
+          autoComplete="username"
           editable={!loading}
         />
 

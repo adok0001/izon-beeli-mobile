@@ -18,12 +18,12 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   }
 
   const hasBody = req.method !== "GET" && req.method !== "HEAD";
-  const body = hasBody ? await readBody(req) : undefined;
+  const rawBody = hasBody ? await readBody(req) : undefined;
 
   const request = new Request(url, {
     method: req.method,
     headers,
-    body,
+    body: rawBody ? new Uint8Array(rawBody) : undefined,
   });
 
   const response = await app.fetch(request);
