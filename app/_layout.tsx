@@ -1,25 +1,60 @@
 import "../global.css";
 
-import { ClerkLoaded, ClerkProvider } from "@clerk/clerk-expo";
+import { ClerkLoaded, ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useEffect, useRef } from "react";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { tokenCache } from "@/lib/auth";
 import { queryClient } from "@/lib/api";
+import { useSyncUser } from "@/lib/hooks/use-sync-user";
 
 const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
 export const unstable_settings = {
   anchor: "(tabs)",
 };
+
+/** Reacts to auth state changes: clears cache, syncs user, and redirects. */
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { isSignedIn, isLoaded } = useAuth();
+  const router = useRouter();
+  const segments = useSegments();
+  const prevSignedIn = useRef<boolean | undefined>(undefined);
+
+  // Sync Clerk user to backend DB
+  useSyncUser();
+
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    const wasSignedIn = prevSignedIn.current;
+    prevSignedIn.current = isSignedIn;
+
+    // On auth change, clear stale data from the previous session
+    if (wasSignedIn !== undefined && wasSignedIn !== isSignedIn) {
+      queryClient.clear();
+    }
+
+    // Redirect based on auth state
+    const inAuthGroup = segments[0] === "(auth)";
+    if (isSignedIn && inAuthGroup) {
+      router.replace("/(tabs)/learn");
+    } else if (!isSignedIn && !inAuthGroup) {
+      router.replace("/(auth)/sign-in");
+    }
+  }, [isSignedIn, isLoaded, segments, router]);
+
+  return <>{children}</>;
+}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -40,6 +75,7 @@ export default function RootLayout() {
           <ThemeProvider
             value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
           >
+            <AuthGate>
             <Stack>
               <Stack.Screen name="index" options={{ headerShown: false }} />
               <Stack.Screen
@@ -76,6 +112,7 @@ export default function RootLayout() {
               />
             </Stack>
             <StatusBar style="auto" />
+            </AuthGate>
           </ThemeProvider>
         </QueryClientProvider>
       </ClerkLoaded>

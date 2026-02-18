@@ -11,6 +11,13 @@ export function useSyncUser() {
   const { user } = useUser();
   const synced = useRef(false);
 
+  // Reset sync flag on sign-out so it re-runs for the next session
+  useEffect(() => {
+    if (!isSignedIn) {
+      synced.current = false;
+    }
+  }, [isSignedIn]);
+
   useEffect(() => {
     if (!isSignedIn || !user || synced.current) return;
 

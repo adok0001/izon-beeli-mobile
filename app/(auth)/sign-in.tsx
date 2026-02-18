@@ -79,7 +79,7 @@ export default function SignInScreen() {
 
         <TextInput
           className="mb-4 rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-          placeholder="Email"
+          placeholder="Email or Username"
           placeholderTextColor="#9ca3af"
           value={email}
           onChangeText={setEmail}
