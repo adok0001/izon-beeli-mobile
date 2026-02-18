@@ -1,5 +1,5 @@
 import { createMiddleware } from "hono/factory";
-import { verifyToken } from "@clerk/backend";
+import { createClerkClient, verifyToken } from "@clerk/backend";
 import { eq } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { users } from "../db/schema.js";
@@ -9,6 +9,7 @@ if (!process.env.CLERK_SECRET_KEY) {
 }
 
 const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+const clerkClient = createClerkClient({ secretKey: clerkSecretKey });
 
 export type AuthEnv = {
   Variables: {
@@ -33,24 +34,24 @@ export const authMiddleware = createMiddleware<AuthEnv>(async (c, next) => {
       return c.json({ error: "Invalid token" }, 401);
     }
 
-    // Look up or auto-create internal user
-    let [user] = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.clerkId, clerkId))
-      .limit(1);
+    // Fetch Clerk user for up-to-date username
+    const clerkUser = await clerkClient.users.getUser(clerkId);
+    const username = clerkUser.username ?? clerkUser.id;
 
-    if (!user) {
-      [user] = await db
-        .insert(users)
-        .values({
-          clerkId,
-          name: "Learner",
-          email: "",
-          selectedLanguageId: "izon",
-        })
-        .returning({ id: users.id });
-    }
+    // Upsert internal user, keeping name in sync with Clerk username
+    const [user] = await db
+      .insert(users)
+      .values({
+        clerkId,
+        name: username,
+        email: clerkUser.primaryEmailAddress?.emailAddress ?? "",
+        selectedLanguageId: "izon",
+      })
+      .onConflictDoUpdate({
+        target: users.clerkId,
+        set: { name: username },
+      })
+      .returning({ id: users.id });
 
     c.set("userId", user.id);
     c.set("clerkId", clerkId);

@@ -70,17 +70,9 @@ export default function ProfileScreen() {
   const { data: summary } = useProgressSummary();
   const { selectedLanguageId } = useLanguageStore();
 
-  const displayName =
-    user?.firstName && user?.lastName
-      ? `${user.firstName} ${user.lastName}`
-      : user?.firstName ?? "Learner";
+  const displayName = user?.username ?? "Learner";
   const email = user?.primaryEmailAddress?.emailAddress ?? "";
-  const initials = displayName
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  const initial = displayName[0]?.toUpperCase() ?? "?";
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
@@ -88,7 +80,7 @@ export default function ProfileScreen() {
         {/* Profile header */}
         <View className="items-center border-b border-neutral-100 px-5 pb-6 pt-6 dark:border-neutral-800">
           <View className="mb-3 h-20 w-20 items-center justify-center rounded-full bg-blue-500">
-            <Text className="text-2xl font-bold text-white">{initials}</Text>
+            <Text className="text-2xl font-bold text-white">{initial}</Text>
           </View>
           <Text className="text-xl font-bold text-neutral-900 dark:text-white">
             {displayName}

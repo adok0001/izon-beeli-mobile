@@ -19,16 +19,11 @@ export function useSyncUser() {
         const token = await getToken();
         if (!token) return;
 
-        const name =
-          user.firstName && user.lastName
-            ? `${user.firstName} ${user.lastName}`
-            : user.firstName ?? "Learner";
-
         await apiFetch("/users/sync", {
           method: "POST",
           token,
           body: JSON.stringify({
-            name,
+            name: user.username ?? "Learner",
             email: user.primaryEmailAddress?.emailAddress ?? "",
             avatarUrl: user.imageUrl,
           }),

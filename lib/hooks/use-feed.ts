@@ -62,7 +62,7 @@ export function useCreatePost() {
         type: "community",
         title: input.title,
         description: input.description,
-        userName: user?.firstName ?? "You",
+        userName: user?.username ?? "You",
         likes: 0,
         comments: 0,
         isLiked: false,
@@ -165,7 +165,7 @@ export function useAddComment() {
       const optimistic: Comment = {
         id: `temp-${Date.now()}`,
         feedItemId: input.feedItemId,
-        userName: user?.firstName ?? "You",
+        userName: user?.username ?? "You",
         text: input.text,
         createdAt: new Date().toISOString(),
       };
