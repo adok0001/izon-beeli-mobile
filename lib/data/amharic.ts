@@ -1,0 +1,5 @@
+import type { DictionaryEntry } from "@/lib/dictionary";
+
+// Amharic dictionary entries
+// Categories to fill: greetings, numbers, family, pronouns, time, verbs, body, nouns, phrases, food
+export const AMHARIC_DICTIONARY: DictionaryEntry[] = [];

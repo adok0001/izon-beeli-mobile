@@ -2,11 +2,11 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import {
   ALL_CATEGORIES,
   CATEGORY_LABELS,
-  IZON_DICTIONARY,
   searchDictionary,
   type DictionaryCategory,
   type DictionaryEntry,
 } from "@/lib/dictionary";
+import { getDictionaryForLanguage } from "@/lib/data";
 import { useApprovedWords } from "@/lib/hooks/use-contributions";
 import { useRemoveWord, useSaveWord, useWordBank } from "@/lib/hooks/use-wordbank";
 import { useLanguageStore } from "@/store/language-store";
@@ -104,7 +104,7 @@ export default function DictionaryScreen() {
 
   // Merge local dictionary (for Izon) with API-sourced approved contributions
   const allEntries = useMemo(() => {
-    const local = selectedLanguageId === "izon" ? IZON_DICTIONARY : [];
+    const local = getDictionaryForLanguage(selectedLanguageId);
     const contributed = approvedWords ?? [];
     return [...local, ...contributed];
   }, [selectedLanguageId, approvedWords]);

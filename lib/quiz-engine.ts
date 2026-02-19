@@ -1,5 +1,6 @@
 import type { QuestionType, QuizConfig, QuizQuestion } from "@/types";
-import { IZON_DICTIONARY, type DictionaryEntry } from "@/lib/dictionary";
+import type { DictionaryEntry } from "@/lib/dictionary";
+import { getDictionaryForLanguage } from "@/lib/data";
 import { LESSONS, COURSES, getLessonsByCourse } from "@/lib/mock-data";
 import type { TranscriptSegment } from "@/types";
 
@@ -32,7 +33,7 @@ function gatherDictionaryPool(
   additionalEntries: DictionaryEntry[],
   category?: string
 ): QuizPool[] {
-  const local = languageId === "izon" ? IZON_DICTIONARY : [];
+  const local = getDictionaryForLanguage(languageId);
   const all = [...local, ...additionalEntries].filter(
     (e) => e.languageId === languageId
   );
