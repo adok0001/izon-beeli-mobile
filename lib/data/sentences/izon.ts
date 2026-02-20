@@ -1,0 +1,88 @@
+import type { SentenceTemplate } from "@/types";
+
+export const IZON_SENTENCES: SentenceTemplate[] = [
+  {
+    id: "s-iz-1",
+    languageId: "izon",
+    sentence: "Baidẹ, tụbara?",
+    answer: "Baidẹ",
+    englishSentence: "Good morning, how are you?",
+  },
+  {
+    id: "s-iz-2",
+    languageId: "izon",
+    sentence: "Emi, doo",
+    answer: "Emi",
+    englishSentence: "I am fine, thank you",
+  },
+  {
+    id: "s-iz-3",
+    languageId: "izon",
+    sentence: "Teki ina ẹrẹ?",
+    answer: "ina",
+    englishSentence: "What is your name?",
+  },
+  {
+    id: "s-iz-4",
+    languageId: "izon",
+    sentence: "Mị bịra ke pamẹ",
+    answer: "Dila",
+    englishSentence: "Sorry / I am sorry",
+  },
+  {
+    id: "s-iz-5",
+    languageId: "izon",
+    sentence: "Ụmbana, pasisei",
+    answer: "Ụmbana",
+    englishSentence: "Thank you, please",
+  },
+  {
+    id: "s-iz-6",
+    languageId: "izon",
+    sentence: "Kẹnị naa kẹnị ye mamu",
+    answer: "mamu",
+    englishSentence: "One and one is two",
+  },
+  {
+    id: "s-iz-7",
+    languageId: "izon",
+    sentence: "Mị yẹnị ogbo kiri",
+    answer: "ogbo",
+    englishSentence: "I am going to the market",
+  },
+  {
+    id: "s-iz-8",
+    languageId: "izon",
+    sentence: "Erigha suun alamo",
+    answer: "Erigha",
+    englishSentence: "Long time no see",
+  },
+  {
+    id: "s-iz-9",
+    languageId: "izon",
+    sentence: "Gbasi nimi, ese faa",
+    answer: "Gbasi",
+    englishSentence: "Great, no problem",
+  },
+  {
+    id: "s-iz-10",
+    languageId: "izon",
+    sentence: "Nụa, ebodẹ-a!",
+    answer: "Nụa",
+    englishSentence: "Welcome, welcome!",
+  },
+  {
+    id: "s-iz-11",
+    languageId: "izon",
+    sentence: "Bunuda seri, baịyo",
+    answer: "baịyo",
+    englishSentence: "Good night, good night",
+  },
+  {
+    id: "s-iz-12",
+    languageId: "izon",
+    sentence: "Wẹni mọgha? Kuro nimi",
+    answer: "Kuro",
+    englishSentence: "How are things? I am well",
+  },
+];

@@ -31,7 +31,7 @@ export default function VerifyEmailScreen() {
       });
 
       if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId });
+        await setActive?.({ session: result.createdSessionId });
         router.replace("/(tabs)/learn");
       } else {
         setError("Verification incomplete. Please try again.");

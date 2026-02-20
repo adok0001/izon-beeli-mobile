@@ -1,5 +1,10 @@
 import { LanguagePickerButton } from "@/components/language-picker";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { WordOfTheDay } from "@/components/word-of-the-day";
+import { ProverbOfTheDay } from "@/components/proverb-of-the-day";
+import { CulturalSection } from "@/components/cultural/cultural-section";
+import { SymbolOfTheDay } from "@/components/adinkra/symbol-of-the-day";
+import { NotificationBell } from "@/components/notifications/notification-center";
 import { useCompletedLessons, useProgressSummary } from "@/lib/hooks/use-progress";
 import {
   formatDuration,
@@ -7,6 +12,7 @@ import {
   getLessonsByCourse,
 } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
+import { getStoryForCourse } from "@/lib/data/stories";
 import type { Course, Lesson } from "@/types";
 import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
@@ -60,17 +66,41 @@ function CourseCard({ course, completedIds }: { course: Course; completedIds: Se
         />
       ))}
 
-      <Pressable
-        onPress={() =>
-          router.push({ pathname: "/quiz", params: { courseId: course.id } })
-        }
-        className="mt-2 flex-row items-center justify-center rounded-lg border border-blue-200 py-2.5 active:opacity-70 dark:border-blue-800"
-      >
-        <IconSymbol name="trophy.fill" size={16} color="#3b82f6" />
-        <Text className="ml-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400">
-          Practice Quiz
-        </Text>
-      </Pressable>
+      <View className="mt-2 flex-row gap-2">
+        <Pressable
+          onPress={() =>
+            router.push({ pathname: "/quiz", params: { courseId: course.id } })
+          }
+          className="flex-1 flex-row items-center justify-center rounded-lg border border-blue-200 py-2.5 active:opacity-70 dark:border-blue-800"
+        >
+          <IconSymbol name="trophy.fill" size={16} color="#3b82f6" />
+          <Text className="ml-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400">
+            Practice Quiz
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() =>
+            router.push({ pathname: "/matching-game", params: { courseId: course.id } })
+          }
+          className="flex-1 flex-row items-center justify-center rounded-lg border border-violet-200 py-2.5 active:opacity-70 dark:border-violet-800"
+        >
+          <IconSymbol name="rectangle.grid.2x2" size={16} color="#8b5cf6" />
+          <Text className="ml-1.5 text-sm font-semibold text-violet-600 dark:text-violet-400">
+            Matching Game
+          </Text>
+        </Pressable>
+      </View>
+      {getStoryForCourse(course.id) && (
+        <Pressable
+          onPress={() => router.push(`/story/${course.id}` as any)}
+          className="mt-2 flex-row items-center justify-center rounded-lg border border-amber-200 py-2.5 active:opacity-70 dark:border-amber-800"
+        >
+          <IconSymbol name="book.fill" size={16} color="#f59e0b" />
+          <Text className="ml-1.5 text-sm font-semibold text-amber-600 dark:text-amber-400">
+            Story Mode
+          </Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -134,6 +164,7 @@ export default function LearnScreen() {
           </Text>
         </View>
         <View className="flex-row items-center gap-1.5">
+          <NotificationBell />
           <Pressable
             onPress={() => router.push("/quiz")}
             className="h-9 w-9 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900"
@@ -189,6 +220,64 @@ export default function LearnScreen() {
           keyExtractor={(item) => item.id}
           contentContainerClassName="px-5 pb-8 pt-2"
           renderItem={({ item }) => <CourseCard course={item} completedIds={completedIds} />}
+          ListHeaderComponent={
+            <View className="mb-4 gap-3">
+              <WordOfTheDay languageId={selectedLanguageId} />
+              <ProverbOfTheDay languageId={selectedLanguageId} />
+              <CulturalSection languageId={selectedLanguageId} onViewAll={() => router.push(`/cultural/${selectedLanguageId}` as any)} />
+              {selectedLanguageId === "akan" && <SymbolOfTheDay />}
+              {/* Ge'ez Script — shown for Ethiopic script languages */}
+              {["amharic", "tigrinya", "oromo"].includes(selectedLanguageId) && (
+                <Pressable
+                  onPress={() => router.push("/geez-lesson")}
+                  className="rounded-2xl bg-emerald-50 p-4 active:opacity-70 dark:bg-emerald-950"
+                >
+                  <View className="flex-row items-center">
+                    <View className="mr-3 h-12 w-12 items-center justify-center rounded-xl bg-white dark:bg-neutral-800">
+                      <Text className="text-2xl font-bold text-emerald-600">ሀ</Text>
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
+                        Script Practice
+                      </Text>
+                      <Text className="text-base font-bold text-neutral-900 dark:text-white">
+                        Ge&apos;ez / Fidel
+                      </Text>
+                      <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+                        Learn the Ethiopic alphabet
+                      </Text>
+                    </View>
+                    <IconSymbol name="chevron.right" size={16} color="#10b981" />
+                  </View>
+                </Pressable>
+              )}
+              {/* Adinkra symbols — Ghanaian languages (Akan already has SymbolOfTheDay) */}
+              {["ga", "ewe", "dagbani"].includes(selectedLanguageId) && (
+                <Pressable
+                  onPress={() => router.push("/adinkra")}
+                  className="rounded-2xl bg-violet-50 p-4 active:opacity-70 dark:bg-violet-950"
+                >
+                  <View className="flex-row items-center">
+                    <View className="mr-3 h-12 w-12 items-center justify-center rounded-xl bg-white dark:bg-neutral-800">
+                      <IconSymbol name="sparkles" size={24} color="#7c3aed" />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-xs font-semibold uppercase tracking-wide text-violet-600 dark:text-violet-400">
+                        Cultural Symbols
+                      </Text>
+                      <Text className="text-base font-bold text-neutral-900 dark:text-white">
+                        Adinkra Symbols
+                      </Text>
+                      <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+                        Explore Akan wisdom symbols
+                      </Text>
+                    </View>
+                    <IconSymbol name="chevron.right" size={16} color="#7c3aed" />
+                  </View>
+                </Pressable>
+              )}
+            </View>
+          }
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

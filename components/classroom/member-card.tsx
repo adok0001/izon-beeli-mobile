@@ -1,0 +1,54 @@
+import { View, Text } from "react-native";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import type { GroupMember } from "@/types";
+
+const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
+  teacher: { bg: "bg-blue-100 dark:bg-blue-900/40", text: "text-blue-700 dark:text-blue-300" },
+  parent: { bg: "bg-green-100 dark:bg-green-900/40", text: "text-green-700 dark:text-green-300" },
+  student: { bg: "bg-neutral-100 dark:bg-neutral-800", text: "text-neutral-600 dark:text-neutral-400" },
+};
+
+export function MemberCard({ member }: { member: GroupMember }) {
+  const roleStyle = ROLE_COLORS[member.role] ?? ROLE_COLORS.student;
+  const initial = member.name[0]?.toUpperCase() ?? "?";
+
+  return (
+    <View className="mb-2 flex-row items-center rounded-xl bg-neutral-50 p-3 dark:bg-neutral-800">
+      <View className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-blue-500">
+        <Text className="text-sm font-bold text-white">{initial}</Text>
+      </View>
+      <View className="flex-1">
+        <View className="flex-row items-center">
+          <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+            {member.name}
+          </Text>
+          <View className={`ml-2 rounded-full px-2 py-0.5 ${roleStyle.bg}`}>
+            <Text className={`text-[10px] font-semibold capitalize ${roleStyle.text}`}>
+              {member.role}
+            </Text>
+          </View>
+        </View>
+        <View className="mt-1 flex-row items-center gap-3">
+          <View className="flex-row items-center">
+            <IconSymbol name="checkmark.circle.fill" size={12} color="#22c55e" />
+            <Text className="ml-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+              {member.lessonsCompleted}
+            </Text>
+          </View>
+          <View className="flex-row items-center">
+            <IconSymbol name="flame.fill" size={12} color="#f59e0b" />
+            <Text className="ml-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+              {member.streak}
+            </Text>
+          </View>
+          <View className="flex-row items-center">
+            <IconSymbol name="star.fill" size={12} color="#3b82f6" />
+            <Text className="ml-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+              {member.points}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}

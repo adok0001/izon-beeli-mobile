@@ -13,6 +13,8 @@ import {
   playIncorrectSound,
   playFinishSound,
 } from "@/lib/sounds";
+import { hapticSuccess, hapticError, hapticHeavy } from "@/lib/haptics";
+import { ListeningQuestion } from "@/components/quiz/listening-question";
 import type { QuizQuestion } from "@/types";
 
 const FEEDBACK_DELAY = 1200;
@@ -114,8 +116,10 @@ function ActiveView() {
       const correct = answerQuestion(answer);
       if (correct) {
         playCorrectSound();
+        hapticSuccess();
       } else {
         playIncorrectSound();
+        hapticError();
       }
 
       if (isLastQuestion) {
@@ -174,9 +178,13 @@ function ActiveView() {
 
         <QuestionTypeLabel type={question.type} />
 
-        <Text className="mb-8 text-xl font-bold text-neutral-900 dark:text-white">
-          {question.prompt}
-        </Text>
+        {question.type === "listening" && question.audioSource ? (
+          <ListeningQuestion audioSource={question.audioSource} />
+        ) : (
+          <Text className="mb-8 text-xl font-bold text-neutral-900 dark:text-white">
+            {question.prompt}
+          </Text>
+        )}
 
         {question.options.map((option, idx) => (
           <OptionCard
@@ -195,6 +203,10 @@ function ResultsView() {
   const { getResult, reset, questions } = useQuizStore();
   const router = useRouter();
   const result = getResult();
+
+  useEffect(() => {
+    hapticHeavy();
+  }, []);
 
   const scoreColor =
     result.accuracy >= 80

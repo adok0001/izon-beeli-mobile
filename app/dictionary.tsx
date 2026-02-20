@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { WordAudioButton } from "@/components/dictionary/word-audio-button";
 import {
   ALL_CATEGORIES,
   CATEGORY_LABELS,
@@ -42,6 +43,9 @@ function WordRow({ entry, saved, onToggle }: { entry: DictionaryEntry; saved: bo
             {entry.english}
           </Text>
         </View>
+        {entry.audioUrl && (
+          <WordAudioButton audioSource={entry.audioUrl} />
+        )}
         <Pressable onPress={onToggle} hitSlop={8}>
           <IconSymbol
             name={saved ? "star.fill" : "star"}

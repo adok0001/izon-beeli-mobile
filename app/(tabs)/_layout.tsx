@@ -8,6 +8,10 @@ import { useAudioStore } from "@/store/audio-store";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useSyncUser } from "@/lib/hooks/use-sync-user";
+import { useNotificationStore } from "@/store/notification-store";
+import { useDailyReminder } from "@/lib/hooks/use-daily-reminder";
+import { useLanguageStore } from "@/store/language-store";
+import { useEffect } from "react";
 
 function TabBarWithPlayer(props: BottomTabBarProps) {
   const { currentTrackId } = useAudioStore();
@@ -22,7 +26,14 @@ function TabBarWithPlayer(props: BottomTabBarProps) {
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const { selectedLanguageId } = useLanguageStore();
   useSyncUser();
+  useDailyReminder(selectedLanguageId);
+
+  const hydrateNotifications = useNotificationStore((s) => s.hydrate);
+  useEffect(() => {
+    hydrateNotifications();
+  }, []);
 
   return (
     <Tabs

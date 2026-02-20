@@ -122,6 +122,21 @@ export default function ProfileScreen() {
             onPress={() => router.push("/review")}
           />
           <MenuRow
+            icon="trophy.fill"
+            label="Contributors"
+            onPress={() => router.push("/contributors")}
+          />
+          <MenuRow
+            icon="person.3.fill"
+            label="Classroom"
+            onPress={() => router.push("/classroom")}
+          />
+          <MenuRow
+            icon="bell.fill"
+            label="Notifications"
+            onPress={() => router.push("/notifications")}
+          />
+          <MenuRow
             icon="gearshape.fill"
             label="Settings"
             onPress={() => router.push("/settings")}

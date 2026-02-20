@@ -7,6 +7,9 @@ export interface DictionaryEntry {
   pronunciation?: string;
   example?: string;
   exampleTranslation?: string;
+  audioUrl?: import("@/types").AudioSource;
+  contributorName?: string;
+  contributorId?: string;
 }
 
 export type DictionaryCategory =
@@ -27,7 +30,8 @@ export type DictionaryCategory =
   | "commands"
   | "animals"
   | "phonetics"
-  | "money";
+  | "money"
+  | "proverbs";
 
 export const CATEGORY_LABELS: Record<DictionaryCategory, string> = {
   greetings: "Greetings & Courtesies",
@@ -48,6 +52,7 @@ export const CATEGORY_LABELS: Record<DictionaryCategory, string> = {
   animals: "Animals",
   phonetics: "Phonetics & Spelling",
   money: "Money & Currency",
+  proverbs: "Proverbs & Sayings",
 };
 
 export const CATEGORY_ICONS: Record<DictionaryCategory, string> = {
@@ -69,6 +74,7 @@ export const CATEGORY_ICONS: Record<DictionaryCategory, string> = {
   animals: "pawprint.fill",
   phonetics: "textformat.abc",
   money: "banknote",
+  proverbs: "text.quote",
 };
 
 // Re-export for backward compatibility

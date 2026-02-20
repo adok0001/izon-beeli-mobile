@@ -1,0 +1,108 @@
+import { View, Text, FlatList, Pressable } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Stack } from "expo-router";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useNotificationStore } from "@/store/notification-store";
+import type { InAppNotification, NotificationType } from "@/types";
+
+const TYPE_CONFIG: Record<NotificationType, { icon: string; color: string }> = {
+  word_of_day: { icon: "star.fill", color: "#3b82f6" },
+  streak_reminder: { icon: "flame.fill", color: "#f59e0b" },
+  assignment_due: { icon: "calendar", color: "#8b5cf6" },
+  achievement: { icon: "trophy.fill", color: "#22c55e" },
+};
+
+function timeAgo(dateStr: string): string {
+  const diffMs = Date.now() - new Date(dateStr).getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins < 1) return "just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
+}
+
+function NotificationRow({ item }: { item: InAppNotification }) {
+  const markRead = useNotificationStore((s) => s.markRead);
+  const config = TYPE_CONFIG[item.type];
+
+  return (
+    <Pressable
+      onPress={() => markRead(item.id)}
+      className={`mb-2 rounded-xl p-4 ${
+        item.read
+          ? "bg-neutral-50 dark:bg-neutral-800/50"
+          : "bg-blue-50 dark:bg-blue-900/20"
+      }`}
+    >
+      <View className="flex-row items-start">
+        <View className="mr-3 mt-0.5 h-8 w-8 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-700">
+          <IconSymbol name={config.icon as any} size={16} color={config.color} />
+        </View>
+        <View className="flex-1">
+          <View className="flex-row items-center justify-between">
+            <Text
+              className={`text-sm font-semibold ${
+                item.read
+                  ? "text-neutral-600 dark:text-neutral-400"
+                  : "text-neutral-900 dark:text-white"
+              }`}
+            >
+              {item.title}
+            </Text>
+            {!item.read && (
+              <View className="h-2 w-2 rounded-full bg-blue-500" />
+            )}
+          </View>
+          <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
+            {item.body}
+          </Text>
+          <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">
+            {timeAgo(item.createdAt)}
+          </Text>
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
+export default function NotificationsScreen() {
+  const { notifications, markAllRead, unreadCount } =
+    useNotificationStore();
+
+  return (
+    <>
+      <Stack.Screen
+        options={{
+          title: "Notifications",
+          headerRight: () =>
+            unreadCount > 0 ? (
+              <Pressable onPress={markAllRead} hitSlop={8}>
+                <Text className="text-sm font-medium text-blue-500">
+                  Mark all read
+                </Text>
+              </Pressable>
+            ) : null,
+        }}
+      />
+      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
+        <FlatList
+          data={notifications}
+          keyExtractor={(item) => item.id}
+          contentContainerClassName="px-5 pb-8 pt-4"
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => <NotificationRow item={item} />}
+          ListEmptyComponent={
+            <View className="items-center px-8 py-16">
+              <IconSymbol name="bell" size={48} color="#d1d5db" />
+              <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
+                No notifications yet. You&apos;ll see updates about your learning progress here.
+              </Text>
+            </View>
+          }
+        />
+      </SafeAreaView>
+    </>
+  );
+}

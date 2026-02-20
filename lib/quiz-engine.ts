@@ -1,6 +1,7 @@
-import type { QuestionType, QuizConfig, QuizQuestion } from "@/types";
+import type { AudioSource, MatchingGameConfig, MatchingPair, QuestionType, QuizConfig, QuizQuestion, SentenceTemplate } from "@/types";
 import type { DictionaryEntry } from "@/lib/dictionary";
 import { getDictionaryForLanguage } from "@/lib/data";
+import { getSentencesForLanguage } from "@/lib/data/sentences";
 import { LESSONS, COURSES, getLessonsByCourse } from "@/lib/mock-data";
 import type { TranscriptSegment } from "@/types";
 
@@ -8,6 +9,7 @@ interface QuizPool {
   word: string;
   english: string;
   category?: string;
+  audioSource?: AudioSource;
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -46,6 +48,7 @@ function gatherDictionaryPool(
     word: e.word,
     english: e.english,
     category: e.category,
+    audioSource: (e as any).audioUrl,
   }));
 }
 
@@ -97,17 +100,35 @@ function makeEnglishToWord(
 
 function makeFillInTheBlank(
   item: QuizPool,
-  allWords: string[]
+  allWords: string[],
+  sentences?: SentenceTemplate[]
 ): QuizQuestion | null {
   const distractors = pickDistractors(item.word, allWords, 3);
   if (distractors.length < 3) return null;
+
+  // Try to find a sentence template that uses this word
+  const template = sentences?.find(
+    (s) => s.answer.toLowerCase() === item.word.toLowerCase()
+  );
+
+  const prompt = template
+    ? `Fill in the blank: "${template.sentence.replace(
+        new RegExp(escapeRegex(template.answer), "i"),
+        "______"
+      )}"\n(${template.englishSentence})`
+    : `Fill in the blank: ______ means "${item.english}"`;
+
   return {
     id: `q-${Math.random().toString(36).slice(2, 9)}`,
     type: "fill-in-the-blank",
-    prompt: `Fill in the blank: ______ means "${item.english}"`,
+    prompt,
     correctAnswer: item.word,
     options: shuffle([item.word, ...distractors]),
   };
+}
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function makeListening(
@@ -119,9 +140,12 @@ function makeListening(
   return {
     id: `q-${Math.random().toString(36).slice(2, 9)}`,
     type: "listening",
-    prompt: `What is the English translation of: "${item.word}"?`,
+    prompt: item.audioSource
+      ? "Listen and select the correct English translation"
+      : `What is the English translation of: "${item.word}"?`,
     correctAnswer: item.english,
     options: shuffle([item.english, ...distractors]),
+    audioSource: item.audioSource,
   };
 }
 
@@ -169,6 +193,7 @@ export function generateQuiz(
 
   const allWords = pool.map((p) => p.word);
   const allEnglish = pool.map((p) => p.english);
+  const sentences = getSentencesForLanguage(languageId);
 
   const shuffledPool = shuffle(pool);
   const questions: QuizQuestion[] = [];
@@ -183,17 +208,40 @@ export function generateQuiz(
   for (let i = 0; i < shuffledPool.length && questions.length < questionCount; i++) {
     const item = shuffledPool[i];
     const typeIndex = i % types.length;
-    const makers = [
-      [makeWordToEnglish, allEnglish],
-      [makeEnglishToWord, allWords],
-      [makeFillInTheBlank, allWords],
-      [makeListening, allEnglish],
-    ] as const;
 
-    const [maker, distPool] = makers[typeIndex];
-    const q = maker(item, distPool as string[]);
+    let q: QuizQuestion | null = null;
+    switch (typeIndex) {
+      case 0:
+        q = makeWordToEnglish(item, allEnglish);
+        break;
+      case 1:
+        q = makeEnglishToWord(item, allWords);
+        break;
+      case 2:
+        q = makeFillInTheBlank(item, allWords, sentences);
+        break;
+      case 3:
+        q = makeListening(item, allEnglish);
+        break;
+    }
     if (q) questions.push(q);
   }
 
   return shuffle(questions);
+}
+
+export function generateMatchingPairs(
+  config: MatchingGameConfig,
+  additionalEntries: DictionaryEntry[] = []
+): MatchingPair[] {
+  const { languageId, pairCount } = config;
+  const pool = gatherDictionaryPool(languageId, additionalEntries);
+  if (pool.length < pairCount) return [];
+
+  const selected = shuffle(pool).slice(0, pairCount);
+  return selected.map((item, i) => ({
+    id: `mp-${i}`,
+    word: item.word,
+    english: item.english,
+  }));
 }

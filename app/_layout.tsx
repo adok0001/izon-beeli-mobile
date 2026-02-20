@@ -16,6 +16,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { tokenCache } from "@/lib/auth";
 import { queryClient } from "@/lib/api";
 import { useSyncUser } from "@/lib/hooks/use-sync-user";
+import { useThemeStore } from "@/store/theme-store";
 
 const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -58,6 +59,12 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const hydrateTheme = useThemeStore((s) => s.hydrate);
+  const themeHydrated = useThemeStore((s) => s._hydrated);
+
+  useEffect(() => {
+    hydrateTheme();
+  }, []);
 
   if (!clerkPublishableKey) {
     throw new Error(
@@ -108,6 +115,50 @@ export default function RootLayout() {
               />
               <Stack.Screen
                 name="quiz"
+                options={{ presentation: "modal", headerShown: false }}
+              />
+              <Stack.Screen
+                name="matching-game"
+                options={{ presentation: "modal", headerShown: false }}
+              />
+              <Stack.Screen
+                name="adinkra"
+                options={{ headerBackTitle: "Back" }}
+              />
+              <Stack.Screen
+                name="geez-lesson"
+                options={{ headerBackTitle: "Back" }}
+              />
+              <Stack.Screen
+                name="contributors"
+                options={{ headerBackTitle: "Back" }}
+              />
+              <Stack.Screen
+                name="notifications"
+                options={{ headerBackTitle: "Back" }}
+              />
+              <Stack.Screen
+                name="cultural/[languageId]"
+                options={{ headerBackTitle: "Back" }}
+              />
+              <Stack.Screen
+                name="story/[courseId]"
+                options={{ headerBackTitle: "Back" }}
+              />
+              <Stack.Screen
+                name="classroom/index"
+                options={{ headerBackTitle: "Back" }}
+              />
+              <Stack.Screen
+                name="classroom/[groupId]"
+                options={{ headerBackTitle: "Back" }}
+              />
+              <Stack.Screen
+                name="classroom/create"
+                options={{ presentation: "modal", headerShown: false }}
+              />
+              <Stack.Screen
+                name="classroom/assign"
                 options={{ presentation: "modal", headerShown: false }}
               />
             </Stack>

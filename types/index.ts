@@ -104,6 +104,180 @@ export interface Contribution {
   createdAt: string;
 }
 
+// --- Proverbs ---
+
+export interface Proverb {
+  id: string;
+  languageId: string;
+  text: string;
+  translation: string;
+  meaning: string;
+  literal?: string;
+  context?: string;
+  tags?: string[];
+}
+
+// --- Sentence Templates (for fill-in-the-blank) ---
+
+export interface SentenceTemplate {
+  id: string;
+  languageId: string;
+  /** Sentence with the target word included */
+  sentence: string;
+  /** The word to blank out */
+  answer: string;
+  /** English translation of the full sentence */
+  englishSentence: string;
+}
+
+// --- Story Mode ---
+
+export interface StoryChapter {
+  id: string;
+  lessonId: string;
+  title: string;
+  narrativeIntro: string;
+  narrativeOutro: string;
+  order: number;
+}
+
+export interface StoryArc {
+  id: string;
+  courseId: string;
+  title: string;
+  description: string;
+  chapters: StoryChapter[];
+}
+
+// --- Cultural Content ---
+
+export type CulturalCategory =
+  | "colors"
+  | "naming_ceremonies"
+  | "festivals"
+  | "creation_myths"
+  | "music"
+  | "clothing"
+  | "cuisine"
+  | "greetings_etiquette";
+
+export interface CulturalContent {
+  id: string;
+  languageId: string;
+  category: CulturalCategory;
+  title: string;
+  description: string;
+  imageEmoji: string;
+  keyTerms: { word: string; english: string }[];
+}
+
+// --- Matching Game ---
+
+export interface MatchingPair {
+  id: string;
+  word: string;
+  english: string;
+}
+
+export interface MatchingGameConfig {
+  languageId: string;
+  courseId?: string;
+  pairCount: number; // default 8
+}
+
+export interface MatchingGameResult {
+  totalPairs: number;
+  attempts: number;
+  timeElapsed: number; // seconds
+  accuracy: number; // 0-100
+}
+
+// --- Notifications ---
+
+export type NotificationType =
+  | "word_of_day"
+  | "streak_reminder"
+  | "assignment_due"
+  | "achievement";
+
+export interface InAppNotification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  read: boolean;
+  createdAt: string;
+}
+
+// --- Story Mode ---
+
+export interface StoryChapter {
+  id: string;
+  lessonId: string;
+  title: string;
+  narrativeIntro: string;
+  narrativeOutro: string;
+  order: number;
+}
+
+export interface StoryArc {
+  id: string;
+  courseId: string;
+  title: string;
+  description: string;
+  chapters: StoryChapter[];
+}
+
+// --- Classroom / Groups ---
+
+export type GroupRole = "teacher" | "parent" | "student";
+
+export interface Group {
+  id: string;
+  name: string;
+  inviteCode: string;
+  languageId: string;
+  createdAt: string;
+  members: GroupMember[];
+}
+
+export interface GroupMember {
+  id: string;
+  userId: string;
+  name: string;
+  role: GroupRole;
+  lessonsCompleted: number;
+  streak: number;
+  points: number;
+}
+
+export interface AssignedLesson {
+  id: string;
+  groupId: string;
+  lessonId: string;
+  assignedBy: string;
+  dueDate?: string;
+  createdAt: string;
+}
+
+// --- Institutions ---
+
+export interface Institution {
+  id: string;
+  name: string;
+  adminId: string;
+  groupIds: string[];
+  createdAt: string;
+}
+
+export interface InstitutionDashboard {
+  totalStudents: number;
+  totalGroups: number;
+  activeThisWeek: number;
+  popularLanguages: { languageId: string; count: number }[];
+  weeklyActivity: { day: string; count: number }[];
+}
+
 // --- Quiz ---
 
 export type QuestionType =
@@ -118,6 +292,7 @@ export interface QuizQuestion {
   prompt: string;
   correctAnswer: string;
   options: string[]; // 4 options, shuffled
+  audioSource?: AudioSource; // for listening questions
 }
 
 export interface QuizConfig {

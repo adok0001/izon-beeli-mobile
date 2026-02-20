@@ -6,6 +6,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useLanguageStore } from "@/store/language-store";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
 import { getLanguageName } from "@/lib/mock-data";
+import { useThemeStore } from "@/store/theme-store";
 
 function SettingsRow({
   icon,
@@ -40,10 +41,18 @@ function SettingsRow({
   );
 }
 
+const THEME_OPTIONS = ["system", "light", "dark"] as const;
+const THEME_LABELS: Record<string, string> = {
+  system: "System",
+  light: "Light",
+  dark: "Dark",
+};
+
 export default function SettingsScreen() {
   const colorScheme = useColorScheme();
   const { selectedLanguageId } = useLanguageStore();
   const { data: summary } = useProgressSummary();
+  const { preference, setPreference } = useThemeStore();
 
   const handleResetProgress = () => {
     Alert.alert(
@@ -85,11 +94,32 @@ export default function SettingsScreen() {
           <Text className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
             App
           </Text>
-          <SettingsRow
-            icon="circle"
-            label="Appearance"
-            value={colorScheme === "dark" ? "Dark" : "Light"}
-          />
+          <Text className="mb-1 mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+            Appearance
+          </Text>
+          <View className="flex-row gap-2">
+            {THEME_OPTIONS.map((opt) => (
+              <Pressable
+                key={opt}
+                onPress={() => setPreference(opt)}
+                className={`flex-1 items-center rounded-lg py-2.5 ${
+                  preference === opt
+                    ? "bg-blue-500"
+                    : "bg-neutral-100 dark:bg-neutral-800"
+                }`}
+              >
+                <Text
+                  className={`text-sm font-semibold ${
+                    preference === opt
+                      ? "text-white"
+                      : "text-neutral-600 dark:text-neutral-400"
+                  }`}
+                >
+                  {THEME_LABELS[opt]}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
 
           {/* Danger zone */}
           <Text className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
