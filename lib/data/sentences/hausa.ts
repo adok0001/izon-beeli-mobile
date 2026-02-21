@@ -1,0 +1,88 @@
+import type { SentenceTemplate } from "@/types";
+
+export const HAUSA_SENTENCES: SentenceTemplate[] = [
+  {
+    id: "s-ha-1",
+    languageId: "hausa",
+    sentence: "Ina kwana? Lafiya lau",
+    answer: "Lafiya lau",
+    englishSentence: "How did you sleep? Very well",
+  },
+  {
+    id: "s-ha-2",
+    languageId: "hausa",
+    sentence: "Sannu da zuwa!",
+    answer: "Sannu",
+    englishSentence: "Welcome! (greeting on arrival)",
+  },
+  {
+    id: "s-ha-3",
+    languageId: "hausa",
+    sentence: "Sunana Amina",
+    answer: "Sunana",
+    englishSentence: "My name is Amina",
+  },
+  {
+    id: "s-ha-4",
+    languageId: "hausa",
+    sentence: "Nagode ƙwarai da gaske",
+    answer: "Nagode",
+    englishSentence: "Thank you very much indeed",
+  },
+  {
+    id: "s-ha-5",
+    languageId: "hausa",
+    sentence: "Ina aiki? Aiki ke nan",
+    answer: "Aiki ke nan",
+    englishSentence: "How is the work? Work is going on",
+  },
+  {
+    id: "s-ha-6",
+    languageId: "hausa",
+    sentence: "Zan je kasuwa gobe",
+    answer: "kasuwa",
+    englishSentence: "I will go to the market tomorrow",
+  },
+  {
+    id: "s-ha-7",
+    languageId: "hausa",
+    sentence: "Ruwa ya fado daga sama",
+    answer: "Ruwa",
+    englishSentence: "Water fell from the sky (it rained)",
+  },
+  {
+    id: "s-ha-8",
+    languageId: "hausa",
+    sentence: "Yara suna wasa a waje",
+    answer: "wasa",
+    englishSentence: "The children are playing outside",
+  },
+  {
+    id: "s-ha-9",
+    languageId: "hausa",
+    sentence: "Makaranta tana kusa da gida",
+    answer: "Makaranta",
+    englishSentence: "The school is close to home",
+  },
+  {
+    id: "s-ha-10",
+    languageId: "hausa",
+    sentence: "Ina son suya da tuwo",
+    answer: "suya",
+    englishSentence: "I like suya and tuwo (porridge)",
+  },
+  {
+    id: "s-ha-11",
+    languageId: "hausa",
+    sentence: "Ka yi haƙuri, za ka samu",
+    answer: "haƙuri",
+    englishSentence: "Have patience, you will succeed",
+  },
+  {
+    id: "s-ha-12",
+    languageId: "hausa",
+    sentence: "Allah ya kiyaye mu duka",
+    answer: "kiyaye",
+    englishSentence: "May God protect us all",
+  },
+];

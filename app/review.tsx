@@ -1,7 +1,8 @@
 import { useState, useCallback } from "react";
 import { View, Text, Pressable, FlatList, Alert, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
+import { useUser } from "@clerk/clerk-expo";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import {
   usePendingContributions,
@@ -95,6 +96,10 @@ function ContributionCard({
 }
 
 export default function ReviewScreen() {
+  const router = useRouter();
+  const { user } = useUser();
+  const isAdmin = user?.publicMetadata?.role === "admin";
+
   const { data: pending, isLoading, refetch } = usePendingContributions();
   const review = useReviewContribution();
   const [refreshing, setRefreshing] = useState(false);
@@ -104,6 +109,26 @@ export default function ReviewScreen() {
     await refetch();
     setRefreshing(false);
   }, [refetch]);
+
+  if (!isAdmin) {
+    return (
+      <>
+        <Stack.Screen options={{ title: "Review Contributions" }} />
+        <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-neutral-900" edges={[]}>
+          <IconSymbol name="lock.fill" size={40} color="#9ca3af" />
+          <Text className="mt-4 text-base font-semibold text-neutral-500 dark:text-neutral-400">
+            Admin access required
+          </Text>
+          <Pressable
+            onPress={() => router.back()}
+            className="mt-6 rounded-xl bg-neutral-100 px-6 py-3 dark:bg-neutral-800"
+          >
+            <Text className="font-semibold text-neutral-700 dark:text-neutral-300">Go Back</Text>
+          </Pressable>
+        </SafeAreaView>
+      </>
+    );
+  }
 
   const handleReview = (id: string, action: "approve" | "reject") => {
     const label = action === "approve" ? "Approve" : "Reject";

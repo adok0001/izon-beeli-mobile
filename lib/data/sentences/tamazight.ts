@@ -1,0 +1,88 @@
+import type { SentenceTemplate } from "@/types";
+
+export const TAMAZIGHT_SENTENCES: SentenceTemplate[] = [
+  {
+    id: "s-tzm-1",
+    languageId: "tamazight",
+    sentence: "Azul! Amek tella?",
+    answer: "Azul",
+    englishSentence: "Hello! How are you?",
+  },
+  {
+    id: "s-tzm-2",
+    languageId: "tamazight",
+    sentence: "Labas, tanmirt",
+    answer: "tanmirt",
+    englishSentence: "Fine, thank you",
+  },
+  {
+    id: "s-tzm-3",
+    languageId: "tamazight",
+    sentence: "Isem-iw d Tiziri",
+    answer: "Isem-iw",
+    englishSentence: "My name is Tiziri",
+  },
+  {
+    id: "s-tzm-4",
+    languageId: "tamazight",
+    sentence: "Aselam, ansi tetteddum?",
+    answer: "Aselam",
+    englishSentence: "Greetings, where are you going?",
+  },
+  {
+    id: "s-tzm-5",
+    languageId: "tamazight",
+    sentence: "Ttedugh ɣer taddart",
+    answer: "taddart",
+    englishSentence: "I am going to the village",
+  },
+  {
+    id: "s-tzm-6",
+    languageId: "tamazight",
+    sentence: "Seksu d uḍan d lḥut",
+    answer: "Seksu",
+    englishSentence: "Couscous with meat and fish",
+  },
+  {
+    id: "s-tzm-7",
+    languageId: "tamazight",
+    sentence: "Arraw ttɛalmen deg tɣiwant",
+    answer: "Arraw",
+    englishSentence: "The children learn in school",
+  },
+  {
+    id: "s-tzm-8",
+    languageId: "tamazight",
+    sentence: "Yennayer d asseggas amaynu",
+    answer: "Yennayer",
+    englishSentence: "Yennayer is the new year",
+  },
+  {
+    id: "s-tzm-9",
+    languageId: "tamazight",
+    sentence: "Amur n tmazirt d amur n lqalb",
+    answer: "tmazirt",
+    englishSentence: "The love of the homeland is the love of the heart",
+  },
+  {
+    id: "s-tzm-10",
+    languageId: "tamazight",
+    sentence: "Aman aman, lxir lxir",
+    answer: "Aman",
+    englishSentence: "Water is water, good is good (all things have their nature)",
+  },
+  {
+    id: "s-tzm-11",
+    languageId: "tamazight",
+    sentence: "Tiflilte, ssuter-as",
+    answer: "Tiflilte",
+    englishSentence: "Good night, rest (sleep well)",
+  },
+  {
+    id: "s-tzm-12",
+    languageId: "tamazight",
+    sentence: "Tamazight d tutlayt nnif",
+    answer: "Tamazight",
+    englishSentence: "Tamazight is the language of dignity",
+  },
+];

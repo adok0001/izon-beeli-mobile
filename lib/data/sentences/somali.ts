@@ -1,0 +1,88 @@
+import type { SentenceTemplate } from "@/types";
+
+export const SOMALI_SENTENCES: SentenceTemplate[] = [
+  {
+    id: "s-so-1",
+    languageId: "somali",
+    sentence: "Nabad miyaa? Nabad, alhamdulillah",
+    answer: "Nabad",
+    englishSentence: "Is there peace? Peace, praise be to God",
+  },
+  {
+    id: "s-so-2",
+    languageId: "somali",
+    sentence: "Magacaygu waa Hodan",
+    answer: "Magacaygu",
+    englishSentence: "My name is Hodan",
+  },
+  {
+    id: "s-so-3",
+    languageId: "somali",
+    sentence: "Mahadsanid, saaxiib",
+    answer: "Mahadsanid",
+    englishSentence: "Thank you, friend",
+  },
+  {
+    id: "s-so-4",
+    languageId: "somali",
+    sentence: "Soo dhowow gurigayga",
+    answer: "Soo dhowow",
+    englishSentence: "Welcome to my home",
+  },
+  {
+    id: "s-so-5",
+    languageId: "somali",
+    sentence: "Waxaan tegi doonaa suuqa",
+    answer: "suuqa",
+    englishSentence: "I will go to the market",
+  },
+  {
+    id: "s-so-6",
+    languageId: "somali",
+    sentence: "Canjeero iyo suqaar baa la cuni doonaa",
+    answer: "Canjeero",
+    englishSentence: "Canjeero (flatbread) and suqaar will be eaten",
+  },
+  {
+    id: "s-so-7",
+    languageId: "somali",
+    sentence: "Carruurtu waxay ciyaaraan dibadda",
+    answer: "Carruurtu",
+    englishSentence: "The children are playing outside",
+  },
+  {
+    id: "s-so-8",
+    languageId: "somali",
+    sentence: "Aqoonta waa xoolo dadka",
+    answer: "Aqoonta",
+    englishSentence: "Knowledge is the wealth of people",
+  },
+  {
+    id: "s-so-9",
+    languageId: "somali",
+    sentence: "Biyaha waxaa lagu cabaa",
+    answer: "Biyaha",
+    englishSentence: "Water is for drinking",
+  },
+  {
+    id: "s-so-10",
+    languageId: "somali",
+    sentence: "Subax wanaagsan, aabbo",
+    answer: "Subax wanaagsan",
+    englishSentence: "Good morning, father",
+  },
+  {
+    id: "s-so-11",
+    languageId: "somali",
+    sentence: "Nabad gelyo, si fiican u naso",
+    answer: "Nabad gelyo",
+    englishSentence: "Goodnight, rest well",
+  },
+  {
+    id: "s-so-12",
+    languageId: "somali",
+    sentence: "Waan ku jeclahay, hooyo",
+    answer: "ku jeclahay",
+    englishSentence: "I love you, mother",
+  },
+];

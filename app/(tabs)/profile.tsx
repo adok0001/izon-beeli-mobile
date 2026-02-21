@@ -70,6 +70,7 @@ export default function ProfileScreen() {
   const { data: summary } = useProgressSummary();
   const { selectedLanguageId } = useLanguageStore();
 
+  const isAdmin = user?.publicMetadata?.role === "admin";
   const displayName = user?.username ?? "Learner";
   const email = user?.primaryEmailAddress?.emailAddress ?? "";
   const initial = displayName[0]?.toUpperCase() ?? "?";
@@ -116,11 +117,13 @@ export default function ProfileScreen() {
             label="Dictionary"
             onPress={() => router.push("/dictionary")}
           />
-          <MenuRow
-            icon="checkmark.shield.fill"
-            label="Review Contributions"
-            onPress={() => router.push("/review")}
-          />
+          {isAdmin && (
+            <MenuRow
+              icon="checkmark.shield.fill"
+              label="Review Contributions"
+              onPress={() => router.push("/review")}
+            />
+          )}
           <MenuRow
             icon="trophy.fill"
             label="Contributors"

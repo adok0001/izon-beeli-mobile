@@ -1,0 +1,88 @@
+import type { SentenceTemplate } from "@/types";
+
+export const BAMBARA_SENTENCES: SentenceTemplate[] = [
+  {
+    id: "s-bm-1",
+    languageId: "bambara",
+    sentence: "I ni ce! Aw ni ce!",
+    answer: "I ni ce",
+    englishSentence: "Good day! (greeting - I see you in the work)",
+  },
+  {
+    id: "s-bm-2",
+    languageId: "bambara",
+    sentence: "Tɔgɔ bɛ mun?",
+    answer: "Tɔgɔ",
+    englishSentence: "What is your name?",
+  },
+  {
+    id: "s-bm-3",
+    languageId: "bambara",
+    sentence: "N tɔgɔ bɛ Aminata",
+    answer: "N tɔgɔ",
+    englishSentence: "My name is Aminata",
+  },
+  {
+    id: "s-bm-4",
+    languageId: "bambara",
+    sentence: "Aw ni baara! Nba!",
+    answer: "Aw ni baara",
+    englishSentence: "Thank you for your work! You're welcome!",
+  },
+  {
+    id: "s-bm-5",
+    languageId: "bambara",
+    sentence: "N bɛ duguma taa",
+    answer: "duguma",
+    englishSentence: "I am going to the village (market area)",
+  },
+  {
+    id: "s-bm-6",
+    languageId: "bambara",
+    sentence: "Tô ni tigadèguena nɔgɔn dɔn",
+    answer: "tigadèguena",
+    englishSentence: "Tô and peanut sauce are delicious together",
+  },
+  {
+    id: "s-bm-7",
+    languageId: "bambara",
+    sentence: "Denmisɛnw bɛ laro la",
+    answer: "Denmisɛnw",
+    englishSentence: "The children are at school",
+  },
+  {
+    id: "s-bm-8",
+    languageId: "bambara",
+    sentence: "Aw bɛ sɛgɛn wa? Tɔrɔ si tɛ",
+    answer: "Tɔrɔ si tɛ",
+    englishSentence: "Are you tired? Not at all (no problem)",
+  },
+  {
+    id: "s-bm-9",
+    languageId: "bambara",
+    sentence: "Jiri bɛ sabati kan",
+    answer: "sabati",
+    englishSentence: "The tree stands firm (on its roots)",
+  },
+  {
+    id: "s-bm-10",
+    languageId: "bambara",
+    sentence: "Ne bɛ i kanu",
+    answer: "kanu",
+    englishSentence: "I love you",
+  },
+  {
+    id: "s-bm-11",
+    languageId: "bambara",
+    sentence: "Suu nyuman, i ka sɛgɛn",
+    answer: "Suu nyuman",
+    englishSentence: "Good night, rest well",
+  },
+  {
+    id: "s-bm-12",
+    languageId: "bambara",
+    sentence: "Waati bɛ taa, k'a sɔrɔ",
+    answer: "Waati",
+    englishSentence: "Time passes to find (its place)",
+  },
+];

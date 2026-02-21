@@ -1,0 +1,88 @@
+import type { SentenceTemplate } from "@/types";
+
+export const KINYARWANDA_SENTENCES: SentenceTemplate[] = [
+  {
+    id: "s-rw-1",
+    languageId: "kinyarwanda",
+    sentence: "Muraho! Amakuru?",
+    answer: "Muraho",
+    englishSentence: "Hello! How are things?",
+  },
+  {
+    id: "s-rw-2",
+    languageId: "kinyarwanda",
+    sentence: "Ni meza, murakoze",
+    answer: "murakoze",
+    englishSentence: "It is good, thank you",
+  },
+  {
+    id: "s-rw-3",
+    languageId: "kinyarwanda",
+    sentence: "Nitwa Uwase",
+    answer: "Nitwa",
+    englishSentence: "My name is Uwase",
+  },
+  {
+    id: "s-rw-4",
+    languageId: "kinyarwanda",
+    sentence: "Murakaza neza mu Rwanda",
+    answer: "Murakaza neza",
+    englishSentence: "Welcome to Rwanda",
+  },
+  {
+    id: "s-rw-5",
+    languageId: "kinyarwanda",
+    sentence: "Ndagiye amasoko",
+    answer: "amasoko",
+    englishSentence: "I am going to the market",
+  },
+  {
+    id: "s-rw-6",
+    languageId: "kinyarwanda",
+    sentence: "Isombe ni igihe cyiza",
+    answer: "Isombe",
+    englishSentence: "Isombe (cassava leaves) is a good food",
+  },
+  {
+    id: "s-rw-7",
+    languageId: "kinyarwanda",
+    sentence: "Abana biga ku ishuri",
+    answer: "Abana",
+    englishSentence: "Children study at school",
+  },
+  {
+    id: "s-rw-8",
+    languageId: "kinyarwanda",
+    sentence: "Amahoro n'ubumwe ni byiza",
+    answer: "Amahoro",
+    englishSentence: "Peace and unity are good",
+  },
+  {
+    id: "s-rw-9",
+    languageId: "kinyarwanda",
+    sentence: "Ndagukunda cyane, mama",
+    answer: "Ndagukunda",
+    englishSentence: "I love you very much, mother",
+  },
+  {
+    id: "s-rw-10",
+    languageId: "kinyarwanda",
+    sentence: "Inka ni ubukire bw'umuryango",
+    answer: "Inka",
+    englishSentence: "Cattle are the wealth of the family",
+  },
+  {
+    id: "s-rw-11",
+    languageId: "kinyarwanda",
+    sentence: "Umuganura ni umunsi mukuru",
+    answer: "Umuganura",
+    englishSentence: "Umuganura is a national holiday",
+  },
+  {
+    id: "s-rw-12",
+    languageId: "kinyarwanda",
+    sentence: "Ryamuka neza, usinzire neza",
+    answer: "usinzire neza",
+    englishSentence: "Good morning, sleep well (goodnight)",
+  },
+];

@@ -1,0 +1,88 @@
+import type { SentenceTemplate } from "@/types";
+
+export const IGBO_SENTENCES: SentenceTemplate[] = [
+  {
+    id: "s-ig-1",
+    languageId: "igbo",
+    sentence: "Ụtụtụ ọma, kedụ ka ị mere?",
+    answer: "Ụtụtụ ọma",
+    englishSentence: "Good morning, how are you?",
+  },
+  {
+    id: "s-ig-2",
+    languageId: "igbo",
+    sentence: "Adị m mma, daalu",
+    answer: "mma",
+    englishSentence: "I am fine, thank you",
+  },
+  {
+    id: "s-ig-3",
+    languageId: "igbo",
+    sentence: "Aha m bụ Chidi",
+    answer: "Aha",
+    englishSentence: "My name is Chidi",
+  },
+  {
+    id: "s-ig-4",
+    languageId: "igbo",
+    sentence: "Anọ m n'ụlọ ugbu a",
+    answer: "ụlọ",
+    englishSentence: "I am at home now",
+  },
+  {
+    id: "s-ig-5",
+    languageId: "igbo",
+    sentence: "Oji bụ ihe dị mkpa n'Igbo",
+    answer: "Oji",
+    englishSentence: "Kola nut is important in Igbo culture",
+  },
+  {
+    id: "s-ig-6",
+    languageId: "igbo",
+    sentence: "Ebere chefuo ije ya",
+    answer: "chefuo",
+    englishSentence: "Ebere forgot her journey",
+  },
+  {
+    id: "s-ig-7",
+    languageId: "igbo",
+    sentence: "Ọ na-ere ji n'ahịa",
+    answer: "ji",
+    englishSentence: "He/she is selling yam in the market",
+  },
+  {
+    id: "s-ig-8",
+    languageId: "igbo",
+    sentence: "Anyị ga-aga ụlọ akwụkwọ",
+    answer: "ụlọ akwụkwọ",
+    englishSentence: "We will go to school",
+  },
+  {
+    id: "s-ig-9",
+    languageId: "igbo",
+    sentence: "Nne m nọ n'ime ụlọ",
+    answer: "Nne",
+    englishSentence: "My mother is inside the house",
+  },
+  {
+    id: "s-ig-10",
+    languageId: "igbo",
+    sentence: "Mmiri dị ọcha na ọhịa",
+    answer: "Mmiri",
+    englishSentence: "The water in the forest is clean",
+  },
+  {
+    id: "s-ig-11",
+    languageId: "igbo",
+    sentence: "Onye ọzọ nyere m aka",
+    answer: "aka",
+    englishSentence: "Someone else helped me",
+  },
+  {
+    id: "s-ig-12",
+    languageId: "igbo",
+    sentence: "Ọ bụ eziokwu i kwuru",
+    answer: "eziokwu",
+    englishSentence: "What you said is the truth",
+  },
+];
