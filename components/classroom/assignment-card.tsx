@@ -1,6 +1,6 @@
 import { View, Text, Pressable } from "react-native";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { getLessonById } from "@/lib/mock-data";
+import { useLesson } from "@/lib/hooks/use-courses";
 import type { AssignedLesson } from "@/types";
 
 export function AssignmentCard({
@@ -10,7 +10,7 @@ export function AssignmentCard({
   assignment: AssignedLesson;
   onPress: () => void;
 }) {
-  const lesson = getLessonById(assignment.lessonId);
+  const { data: lesson } = useLesson(assignment.lessonId);
   const isOverdue =
     assignment.dueDate && new Date(assignment.dueDate) < new Date();
   const dueDateStr = assignment.dueDate

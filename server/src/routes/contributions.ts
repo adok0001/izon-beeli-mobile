@@ -28,8 +28,12 @@ contributionsPublicRouter.get("/approved", async (c) => {
       pronunciation: contributions.pronunciation,
       example: contributions.example,
       exampleTranslation: contributions.exampleTranslation,
+      audioUrl: contributions.audioUrl,
+      contributorId: contributions.userId,
+      contributorName: users.name,
     })
     .from(contributions)
+    .leftJoin(users, eq(contributions.userId, users.id))
     .where(
       and(
         eq(contributions.languageId, languageId),

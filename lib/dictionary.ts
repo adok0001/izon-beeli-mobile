@@ -77,11 +77,7 @@ export const CATEGORY_ICONS: Record<DictionaryCategory, string> = {
   proverbs: "text.quote",
 };
 
-// Re-export for backward compatibility
-export { IZON_DICTIONARY } from "@/lib/data/izon";
-import { IZON_DICTIONARY } from "@/lib/data/izon";
-
-export function searchDictionary(query: string, entries: DictionaryEntry[] = IZON_DICTIONARY): DictionaryEntry[] {
+export function searchDictionary(query: string, entries: DictionaryEntry[]): DictionaryEntry[] {
   const q = query.toLowerCase().trim();
   if (!q) return entries;
   return entries.filter(
@@ -91,7 +87,7 @@ export function searchDictionary(query: string, entries: DictionaryEntry[] = IZO
   );
 }
 
-export function getDictionaryByCategory(category: DictionaryCategory, entries: DictionaryEntry[] = IZON_DICTIONARY): DictionaryEntry[] {
+export function getDictionaryByCategory(category: DictionaryCategory, entries: DictionaryEntry[]): DictionaryEntry[] {
   return entries.filter((e) => e.category === category);
 }
 

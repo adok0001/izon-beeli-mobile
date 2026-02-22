@@ -6,11 +6,8 @@ import { CulturalSection } from "@/components/cultural/cultural-section";
 import { SymbolOfTheDay } from "@/components/adinkra/symbol-of-the-day";
 import { NotificationBell } from "@/components/notifications/notification-center";
 import { useCompletedLessons, useProgressSummary } from "@/lib/hooks/use-progress";
-import {
-  formatDuration,
-  getCoursesByLanguage,
-  getLessonsByCourse,
-} from "@/lib/mock-data";
+import { useCourses, useCourseLessons } from "@/lib/hooks/use-courses";
+import { formatDuration } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
 import { getStoryForCourse } from "@/lib/data/stories";
 import type { Course, Lesson } from "@/types";
@@ -21,7 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 function CourseCard({ course, completedIds }: { course: Course; completedIds: Set<string> }) {
   const router = useRouter();
-  const lessons = getLessonsByCourse(course.id);
+  const { data: lessons = [], isLoading: lessonsLoading } = useCourseLessons(course.id);
   const completedCount = lessons.filter((l) => completedIds.has(l.id)).length;
   const progressPercent =
     lessons.length > 0 ? (completedCount / lessons.length) * 100 : 0;
@@ -57,14 +54,18 @@ function CourseCard({ course, completedIds }: { course: Course; completedIds: Se
         </View>
       )}
 
-      {lessons.map((lesson) => (
-        <LessonRow
-          key={lesson.id}
-          lesson={lesson}
-          completed={completedIds.has(lesson.id)}
-          onPress={() => router.push(`/lesson/${lesson.id}`)}
-        />
-      ))}
+      {lessonsLoading ? (
+        <ActivityIndicator size="small" color="#3b82f6" />
+      ) : (
+        lessons.map((lesson) => (
+          <LessonRow
+            key={lesson.id}
+            lesson={lesson}
+            completed={completedIds.has(lesson.id)}
+            onPress={() => router.push(`/lesson/${lesson.id}`)}
+          />
+        ))
+      )}
 
       <View className="mt-2 flex-row gap-2">
         <Pressable
@@ -140,17 +141,19 @@ function LessonRow({ lesson, completed, onPress }: { lesson: Lesson; completed: 
 export default function LearnScreen() {
   const router = useRouter();
   const { selectedLanguageId } = useLanguageStore();
-  const courses = getCoursesByLanguage(selectedLanguageId);
-  const { data: completedLessonIds, isLoading, refetch } = useCompletedLessons();
+  const { data: courses = [], isLoading: coursesLoading, refetch: refetchCourses } = useCourses(selectedLanguageId);
+  const { data: completedLessonIds, isLoading: progressLoading, refetch } = useCompletedLessons();
   const { data: summary, refetch: refetchSummary } = useProgressSummary();
   const completedIds = new Set(completedLessonIds ?? []);
   const [refreshing, setRefreshing] = useState(false);
 
+  const isLoading = coursesLoading || progressLoading;
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([refetch(), refetchSummary()]);
+    await Promise.all([refetch(), refetchSummary(), refetchCourses()]);
     setRefreshing(false);
-  }, [refetch, refetchSummary]);
+  }, [refetch, refetchSummary, refetchCourses]);
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>

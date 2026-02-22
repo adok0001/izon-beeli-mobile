@@ -8,6 +8,13 @@ import { journalRouter } from "./routes/journal.js";
 import { feedRouter } from "./routes/feed.js";
 import { contributionsRouter, contributionsPublicRouter } from "./routes/contributions.js";
 import { wordbankRouter } from "./routes/wordbank.js";
+import { languagesRouter } from "./routes/languages.js";
+import { coursesRouter } from "./routes/courses.js";
+import { lessonsRouter } from "./routes/lessons.js";
+import { dictionaryRouter } from "./routes/dictionary.js";
+import { proverbsRouter } from "./routes/proverbs.js";
+import { culturalRouter } from "./routes/cultural.js";
+import { sentencesRouter } from "./routes/sentences.js";
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -42,6 +49,13 @@ app.onError((err, c) => {
 
 // Public routes (no auth required)
 app.route("/contributions", contributionsPublicRouter);
+app.route("/languages", languagesRouter);
+app.route("/courses", coursesRouter);
+app.route("/lessons", lessonsRouter);
+app.route("/dictionary", dictionaryRouter);
+app.route("/proverbs", proverbsRouter);
+app.route("/cultural", culturalRouter);
+app.route("/sentences", sentencesRouter);
 app.get("/health", (c) => c.json({ status: "ok" }));
 
 // Authenticated routes

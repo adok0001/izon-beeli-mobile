@@ -6,12 +6,8 @@ import { LanguagePickerButton } from "@/components/language-picker";
 import { useLanguageStore } from "@/store/language-store";
 import { useAudioStore } from "@/store/audio-store";
 import { useCompletedLessons } from "@/lib/hooks/use-progress";
-
-import {
-  getCoursesByLanguage,
-  getLessonsByCourse,
-  formatDuration,
-} from "@/lib/mock-data";
+import { useLanguageLessons } from "@/lib/hooks/use-courses";
+import { BUNDLED_AUDIO, formatDuration } from "@/lib/mock-data";
 import type { Lesson } from "@/types";
 
 function AudioLessonCard({ lesson, completed }: { lesson: Lesson; completed: boolean }) {
@@ -19,12 +15,13 @@ function AudioLessonCard({ lesson, completed }: { lesson: Lesson; completed: boo
   const { loadAndPlay, currentTrackId, isPlaying, togglePlayback } = useAudioStore();
 
   const isCurrentTrack = currentTrackId === lesson.id;
+  const audioSource = lesson.audioUrl ?? BUNDLED_AUDIO[lesson.id];
 
   const handlePlay = () => {
     if (isCurrentTrack) {
       togglePlayback();
-    } else if (lesson.audioUrl) {
-      loadAndPlay(lesson.id, lesson.audioUrl, lesson.title);
+    } else if (audioSource) {
+      loadAndPlay(lesson.id, audioSource, lesson.title);
     }
   };
 
@@ -77,13 +74,16 @@ function AudioLessonCard({ lesson, completed }: { lesson: Lesson; completed: boo
 
 export default function ListenScreen() {
   const { selectedLanguageId } = useLanguageStore();
-  const { data: completedLessonIds, isLoading } = useCompletedLessons();
+  const { data: completedLessonIds, isLoading: progressLoading } = useCompletedLessons();
+  const { data: allLessons = [], isLoading: lessonsLoading } = useLanguageLessons(selectedLanguageId);
   const completedIds = new Set(completedLessonIds ?? []);
 
-  const courses = getCoursesByLanguage(selectedLanguageId);
-  const audioLessons = courses.flatMap((c) =>
-    getLessonsByCourse(c.id).filter((l) => l.audioUrl)
+  // Show lessons that have audio (either from API or bundled fallback)
+  const audioLessons = allLessons.filter(
+    (l) => l.audioUrl || BUNDLED_AUDIO[l.id]
   );
+
+  const isLoading = progressLoading || lessonsLoading;
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>

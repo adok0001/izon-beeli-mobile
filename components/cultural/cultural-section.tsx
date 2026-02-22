@@ -1,4 +1,4 @@
-import { getCulturalContent } from "@/lib/data/cultural";
+import { useCultural } from "@/lib/hooks/use-cultural";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { CulturalCard } from "./cultural-card";
@@ -9,7 +9,7 @@ interface Props {
 }
 
 export function CulturalSection({ languageId, onViewAll }: Props) {
-  const content = getCulturalContent(languageId);
+  const { data: content = [] } = useCultural(languageId);
 
   if (content.length === 0) return null;
 

@@ -7,13 +7,13 @@ import {
   type DictionaryCategory,
   type DictionaryEntry,
 } from "@/lib/dictionary";
-import { getDictionaryForLanguage } from "@/lib/data";
-import { useApprovedWords } from "@/lib/hooks/use-contributions";
+import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { useRemoveWord, useSaveWord, useWordBank } from "@/lib/hooks/use-wordbank";
 import { useLanguageStore } from "@/store/language-store";
 import { Stack } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Pressable,
   RefreshControl,
   SectionList,
@@ -87,14 +87,14 @@ export default function DictionaryScreen() {
   const saveWord = useSaveWord();
   const removeWord = useRemoveWord();
   const { selectedLanguageId } = useLanguageStore();
-  const { data: approvedWords, refetch: refetchApproved } = useApprovedWords(selectedLanguageId);
+  const { data: allEntries = [], isLoading, refetch } = useDictionary(selectedLanguageId);
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refetchApproved();
+    await refetch();
     setRefreshing(false);
-  }, [refetchApproved]);
+  }, [refetch]);
 
   const savedSet = new Set(savedIds ?? []);
 
@@ -105,13 +105,6 @@ export default function DictionaryScreen() {
       saveWord.mutate(entryId);
     }
   };
-
-  // Merge local dictionary (for Izon) with API-sourced approved contributions
-  const allEntries = useMemo(() => {
-    const local = getDictionaryForLanguage(selectedLanguageId);
-    const contributed = approvedWords ?? [];
-    return [...local, ...contributed];
-  }, [selectedLanguageId, approvedWords]);
 
   const sections = useMemo(() => {
     const filtered =
@@ -139,7 +132,7 @@ export default function DictionaryScreen() {
         title: CATEGORY_LABELS[cat],
         data: grouped.get(cat)!,
       }));
-  }, [query, viewMode, savedSet.size]);
+  }, [query, viewMode, allEntries, savedSet.size]);
 
   const savedCount = savedSet.size;
 
@@ -211,45 +204,52 @@ export default function DictionaryScreen() {
           </View>
         </View>
 
-        {/* Word list */}
-        <SectionList
-          sections={sections}
-          keyExtractor={(item) => item.id}
-          stickySectionHeadersEnabled
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-          renderSectionHeader={({ section }) => (
-            <View className="bg-neutral-50 px-5 py-2 dark:bg-neutral-800/80">
-              <Text className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-                {section.title}
-              </Text>
-            </View>
-          )}
-          renderItem={({ item }) => (
-            <WordRow
-              entry={item}
-              saved={savedSet.has(item.id)}
-              onToggle={() => handleToggle(item.id)}
-            />
-          )}
-          ListEmptyComponent={
-            <View className="items-center px-8 py-16">
-              <IconSymbol
-                name={viewMode === "saved" ? "star.fill" : "magnifyingglass"}
-                size={40}
-                color="#d1d5db"
+        {/* Loading state */}
+        {isLoading ? (
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator size="large" color="#3b82f6" />
+          </View>
+        ) : (
+          /* Word list */
+          <SectionList
+            sections={sections}
+            keyExtractor={(item) => item.id}
+            stickySectionHeadersEnabled
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+            renderSectionHeader={({ section }) => (
+              <View className="bg-neutral-50 px-5 py-2 dark:bg-neutral-800/80">
+                <Text className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                  {section.title}
+                </Text>
+              </View>
+            )}
+            renderItem={({ item }) => (
+              <WordRow
+                entry={item}
+                saved={savedSet.has(item.id)}
+                onToggle={() => handleToggle(item.id)}
               />
-              <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
-                {viewMode === "saved"
-                  ? "No saved words yet. Tap the star on any word to save it."
-                  : "No results found. Try a different search term."}
-              </Text>
-            </View>
-          }
-        />
+            )}
+            ListEmptyComponent={
+              <View className="items-center px-8 py-16">
+                <IconSymbol
+                  name={viewMode === "saved" ? "star.fill" : "magnifyingglass"}
+                  size={40}
+                  color="#d1d5db"
+                />
+                <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
+                  {viewMode === "saved"
+                    ? "No saved words yet. Tap the star on any word to save it."
+                    : "No results found. Try a different search term."}
+                </Text>
+              </View>
+            }
+          />
+        )}
       </SafeAreaView>
     </>
   );

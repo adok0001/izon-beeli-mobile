@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { getDictionaryForLanguage } from "@/lib/data";
 
 export interface ContributorProfile {
   id: string;

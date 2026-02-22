@@ -1,12 +1,20 @@
-import {
-  getCulturalCategories,
-  getCulturalContent,
-} from "@/lib/data/cultural";
+import { useCultural } from "@/lib/hooks/use-cultural";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import type { CulturalCategory, CulturalContent } from "@/types";
+
+const CULTURAL_CATEGORIES: { id: CulturalCategory; label: string; emoji: string }[] = [
+  { id: "colors", label: "Colors", emoji: "\uD83C\uDFA8" },
+  { id: "naming_ceremonies", label: "Naming", emoji: "\uD83D\uDC76" },
+  { id: "festivals", label: "Festivals", emoji: "\uD83C\uDF89" },
+  { id: "creation_myths", label: "Myths & Stories", emoji: "\uD83C\uDF1F" },
+  { id: "music", label: "Music", emoji: "\uD83C\uDFB5" },
+  { id: "clothing", label: "Clothing", emoji: "\uD83E\udDE3" },
+  { id: "cuisine", label: "Cuisine", emoji: "\uD83C\uDF5C" },
+  { id: "greetings_etiquette", label: "Greetings", emoji: "\uD83D\uDC4B" },
+];
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { FlatList, Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function KeyTermPill({ word, english }: { word: string; english: string }) {
@@ -83,8 +91,8 @@ function getCategoryLabel(category: string): string {
 
 export default function CulturalScreen() {
   const { languageId } = useLocalSearchParams<{ languageId: string }>();
-  const allContent = getCulturalContent(languageId ?? "");
-  const categories = getCulturalCategories();
+  const { data: allContent = [], isLoading } = useCultural(languageId ?? "");
+  const categories = CULTURAL_CATEGORIES;
   const [selectedCategory, setSelectedCategory] =
     useState<CulturalCategory | null>(null);
 
@@ -174,7 +182,11 @@ export default function CulturalScreen() {
         ))}
       </ScrollView>
 
-      {filteredContent.length === 0 ? (
+      {isLoading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#f59e0b" />
+        </View>
+      ) : filteredContent.length === 0 ? (
         <View className="flex-1 items-center justify-center px-8">
           <IconSymbol name="book.fill" size={48} color="#d1d5db" />
           <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">

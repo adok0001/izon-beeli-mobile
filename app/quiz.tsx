@@ -6,7 +6,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useQuizStore } from "@/store/quiz-store";
 import { generateQuiz } from "@/lib/quiz-engine";
 import { useLanguageStore } from "@/store/language-store";
-import { useApprovedWords } from "@/lib/hooks/use-contributions";
+import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { getLanguageName } from "@/lib/mock-data";
 import {
   playCorrectSound,
@@ -314,16 +314,17 @@ export default function QuizScreen() {
     category?: string;
   }>();
   const { selectedLanguageId } = useLanguageStore();
-  const { data: approvedWords } = useApprovedWords(selectedLanguageId);
+  const { data: dictionaryEntries = [], isLoading: isDictLoading } = useDictionary(selectedLanguageId);
   const { phase, startQuiz, reset } = useQuizStore();
   const [isEmpty, setIsEmpty] = useState(false);
   const initialized = useRef(false);
 
   const languageName = getLanguageName(selectedLanguageId);
 
-  // Generate and start quiz on mount
+  // Generate and start quiz once dictionary data has loaded
   useEffect(() => {
     if (initialized.current) return;
+    if (isDictLoading) return;
     initialized.current = true;
 
     const questions = generateQuiz(
@@ -333,7 +334,7 @@ export default function QuizScreen() {
         category: params.category,
         questionCount: 10,
       },
-      approvedWords ?? []
+      dictionaryEntries
     );
 
     if (questions.length === 0) {
@@ -341,7 +342,7 @@ export default function QuizScreen() {
     } else {
       startQuiz(questions);
     }
-  }, []);
+  }, [isDictLoading]);
 
   return (
     <>

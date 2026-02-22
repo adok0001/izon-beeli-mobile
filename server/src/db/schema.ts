@@ -9,6 +9,7 @@ import {
   pgEnum,
   uniqueIndex,
   index,
+  real,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -199,6 +200,132 @@ export const wordBank = pgTable(
       table.dictionaryEntryId
     ),
   ]
+);
+
+// ---------- Content Tables ----------
+
+export const languages = pgTable("languages", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  nativeName: varchar("native_name", { length: 200 }).notNull(),
+  region: varchar("region", { length: 100 }).notNull(),
+});
+
+export const courses = pgTable(
+  "courses",
+  {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    languageId: varchar("language_id", { length: 64 }).notNull(),
+    title: varchar("title", { length: 300 }).notNull(),
+    description: text("description").notNull(),
+    level: varchar("level", { length: 32 }).notNull(),
+    lessonsCount: integer("lessons_count").default(0).notNull(),
+    order: integer("order").default(0).notNull(),
+  },
+  (table) => [index("courses_language_id_idx").on(table.languageId)]
+);
+
+export const lessons = pgTable(
+  "lessons",
+  {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    courseId: varchar("course_id", { length: 64 }).notNull(),
+    title: varchar("title", { length: 300 }).notNull(),
+    description: text("description").notNull(),
+    audioUrl: text("audio_url"),
+    duration: integer("duration"),
+    order: integer("order").default(0).notNull(),
+  },
+  (table) => [index("lessons_course_id_idx").on(table.courseId)]
+);
+
+export const transcriptSegments = pgTable(
+  "transcript_segments",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    lessonId: varchar("lesson_id", { length: 64 }).notNull(),
+    startTime: real("start_time").notNull(),
+    endTime: real("end_time").notNull(),
+    text: text("text").notNull(),
+    translation: text("translation"),
+    order: integer("order").default(0).notNull(),
+  },
+  (table) => [index("transcript_segments_lesson_id_idx").on(table.lessonId)]
+);
+
+export const dictionaryEntries = pgTable(
+  "dictionary_entries",
+  {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    languageId: varchar("language_id", { length: 64 }).notNull(),
+    word: varchar("word", { length: 500 }).notNull(),
+    english: varchar("english", { length: 500 }).notNull(),
+    category: varchar("category", { length: 64 }).notNull(),
+    pronunciation: varchar("pronunciation", { length: 500 }),
+    example: text("example"),
+    exampleTranslation: text("example_translation"),
+    audioUrl: text("audio_url"),
+    contributorName: varchar("contributor_name", { length: 200 }),
+    contributorId: varchar("contributor_id", { length: 64 }),
+  },
+  (table) => [
+    index("dictionary_entries_language_idx").on(table.languageId),
+    index("dictionary_entries_lang_cat_idx").on(table.languageId, table.category),
+  ]
+);
+
+export const proverbs = pgTable(
+  "proverbs",
+  {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    languageId: varchar("language_id", { length: 64 }).notNull(),
+    text: text("text").notNull(),
+    translation: text("translation").notNull(),
+    meaning: text("meaning").notNull(),
+    literal: text("literal"),
+    context: text("context"),
+    tags: text("tags").array(),
+  },
+  (table) => [index("proverbs_language_id_idx").on(table.languageId)]
+);
+
+export const culturalContent = pgTable(
+  "cultural_content",
+  {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    languageId: varchar("language_id", { length: 64 }).notNull(),
+    category: varchar("category", { length: 64 }).notNull(),
+    title: varchar("title", { length: 300 }).notNull(),
+    description: text("description").notNull(),
+    imageEmoji: varchar("image_emoji", { length: 16 }).notNull(),
+  },
+  (table) => [index("cultural_content_language_id_idx").on(table.languageId)]
+);
+
+export const culturalKeyTerms = pgTable(
+  "cultural_key_terms",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    culturalContentId: varchar("cultural_content_id", { length: 64 }).notNull(),
+    word: varchar("word", { length: 200 }).notNull(),
+    english: varchar("english", { length: 200 }).notNull(),
+    order: integer("order").default(0).notNull(),
+  },
+  (table) => [
+    index("cultural_key_terms_content_id_idx").on(table.culturalContentId),
+  ]
+);
+
+export const sentenceTemplates = pgTable(
+  "sentence_templates",
+  {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    languageId: varchar("language_id", { length: 64 }).notNull(),
+    sentence: text("sentence").notNull(),
+    answer: varchar("answer", { length: 300 }).notNull(),
+    englishSentence: text("english_sentence").notNull(),
+  },
+  (table) => [index("sentence_templates_language_id_idx").on(table.languageId)]
 );
 
 // ---------- Relations ----------

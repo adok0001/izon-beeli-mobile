@@ -2,22 +2,34 @@ import { AudioPlayer } from "@/components/audio/audio-player";
 import { InteractiveTranscript } from "@/components/audio/interactive-transcript";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useCompletedLessons, useCompleteLesson } from "@/lib/hooks/use-progress";
-import { formatDuration, getLessonById } from "@/lib/mock-data";
+import { useLesson } from "@/lib/hooks/use-courses";
+import { formatDuration, BUNDLED_AUDIO } from "@/lib/mock-data";
 import { playFinishSound } from "@/lib/sounds";
 import { useAudioStore } from "@/store/audio-store";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function LessonScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const lesson = getLessonById(id);
+  const { data: lesson, isLoading, isError } = useLesson(id ?? "");
   const { loadAndPlay, currentTrackId, isPlaying, togglePlayback } = useAudioStore();
   const { data: completedLessonIds } = useCompletedLessons();
   const completeLesson = useCompleteLesson();
 
-  if (!lesson) {
+  if (isLoading) {
+    return (
+      <>
+        <Stack.Screen options={{ title: "Lesson" }} />
+        <View className="flex-1 items-center justify-center bg-white dark:bg-neutral-900">
+          <ActivityIndicator size="large" color="#3b82f6" />
+        </View>
+      </>
+    );
+  }
+
+  if (isError || !lesson) {
     return (
       <>
         <Stack.Screen options={{ title: "Lesson" }} />
@@ -30,14 +42,17 @@ export default function LessonScreen() {
     );
   }
 
+  // Fall back to bundled audio if no CDN URL yet
+  const audioSource = lesson.audioUrl ?? BUNDLED_AUDIO[lesson.id];
+
   const isCurrentTrack = currentTrackId === lesson.id;
   const completed = completedLessonIds?.includes(lesson.id) ?? false;
 
   const handlePlayAudio = () => {
     if (isCurrentTrack) {
       togglePlayback();
-    } else if (lesson.audioUrl) {
-      loadAndPlay(lesson.id, lesson.audioUrl, lesson.title);
+    } else if (audioSource) {
+      loadAndPlay(lesson.id, audioSource, lesson.title);
     }
   };
 
@@ -73,7 +88,7 @@ export default function LessonScreen() {
 
           {/* Action buttons */}
           <View className="mt-3 flex-row items-center gap-3">
-            {lesson.audioUrl && (
+            {audioSource && (
               <Pressable
                 onPress={handlePlayAudio}
                 className="flex-row items-center rounded-full bg-blue-500 px-5 py-2.5 active:opacity-80"

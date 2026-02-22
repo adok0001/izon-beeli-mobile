@@ -1,9 +1,5 @@
 import type { AudioSource, MatchingGameConfig, MatchingPair, QuestionType, QuizConfig, QuizQuestion, SentenceTemplate } from "@/types";
 import type { DictionaryEntry } from "@/lib/dictionary";
-import { getDictionaryForLanguage } from "@/lib/data";
-import { getSentencesForLanguage } from "@/lib/data/sentences";
-import { LESSONS, COURSES, getLessonsByCourse } from "@/lib/mock-data";
-import type { TranscriptSegment } from "@/types";
 
 interface QuizPool {
   word: string;
@@ -31,18 +27,12 @@ function pickDistractors(
 }
 
 function gatherDictionaryPool(
-  languageId: string,
-  additionalEntries: DictionaryEntry[],
+  entries: DictionaryEntry[],
   category?: string
 ): QuizPool[] {
-  const local = getDictionaryForLanguage(languageId);
-  const all = [...local, ...additionalEntries].filter(
-    (e) => e.languageId === languageId
-  );
-
   const filtered = category
-    ? all.filter((e) => e.category === category)
-    : all;
+    ? entries.filter((e) => e.category === category)
+    : entries;
 
   return filtered.map((e) => ({
     word: e.word,
@@ -50,22 +40,6 @@ function gatherDictionaryPool(
     category: e.category,
     audioSource: (e as any).audioUrl,
   }));
-}
-
-function gatherTranscriptPool(courseId: string): QuizPool[] {
-  const lessons = getLessonsByCourse(courseId);
-  const segments: TranscriptSegment[] = [];
-  for (const lesson of lessons) {
-    if (lesson.transcript) {
-      segments.push(...lesson.transcript);
-    }
-  }
-  return segments
-    .filter((s) => s.translation)
-    .map((s) => ({
-      word: s.text,
-      english: s.translation!,
-    }));
 }
 
 function makeWordToEnglish(
@@ -149,35 +123,14 @@ function makeListening(
   };
 }
 
-const QUESTION_MAKERS = [
-  makeWordToEnglish,
-  makeEnglishToWord,
-  makeFillInTheBlank,
-  makeListening,
-] as const;
-
 export function generateQuiz(
   config: QuizConfig,
-  additionalEntries: DictionaryEntry[] = []
+  entries: DictionaryEntry[] = [],
+  sentences: SentenceTemplate[] = []
 ): QuizQuestion[] {
-  const { languageId, courseId, category, questionCount } = config;
+  const { category, questionCount } = config;
 
-  // Build pool
-  let pool: QuizPool[] = [];
-
-  // Dictionary entries
-  const dictPool = gatherDictionaryPool(
-    languageId,
-    additionalEntries,
-    category
-  );
-  pool.push(...dictPool);
-
-  // Transcript entries (if courseId provided)
-  if (courseId) {
-    const transcriptPool = gatherTranscriptPool(courseId);
-    pool.push(...transcriptPool);
-  }
+  let pool = gatherDictionaryPool(entries, category);
 
   // Deduplicate by word
   const seen = new Set<string>();
@@ -193,7 +146,6 @@ export function generateQuiz(
 
   const allWords = pool.map((p) => p.word);
   const allEnglish = pool.map((p) => p.english);
-  const sentences = getSentencesForLanguage(languageId);
 
   const shuffledPool = shuffle(pool);
   const questions: QuizQuestion[] = [];
@@ -232,10 +184,10 @@ export function generateQuiz(
 
 export function generateMatchingPairs(
   config: MatchingGameConfig,
-  additionalEntries: DictionaryEntry[] = []
+  entries: DictionaryEntry[] = []
 ): MatchingPair[] {
-  const { languageId, pairCount } = config;
-  const pool = gatherDictionaryPool(languageId, additionalEntries);
+  const { pairCount } = config;
+  const pool = gatherDictionaryPool(entries);
   if (pool.length < pairCount) return [];
 
   const selected = shuffle(pool).slice(0, pairCount);

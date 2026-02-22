@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { View, Text, Pressable, FlatList } from "react-native";
+import { View, Text, Pressable, FlatList, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter, useLocalSearchParams } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useClassroomStore } from "@/store/classroom-store";
-import { getLessonsByCourse, getCoursesByLanguage, formatDuration } from "@/lib/mock-data";
+import { useLanguageLessons } from "@/lib/hooks/use-courses";
+import { formatDuration } from "@/lib/mock-data";
 import type { Lesson } from "@/types";
 
 export default function AssignLessonScreen() {
@@ -13,6 +14,8 @@ export default function AssignLessonScreen() {
   const group = useClassroomStore((s) => s.getGroup(groupId));
   const addAssignment = useClassroomStore((s) => s.addAssignment);
   const [selected, setSelected] = useState<string | null>(null);
+
+  const { data: allLessons = [], isLoading } = useLanguageLessons(group?.languageId ?? "");
 
   if (!group) {
     return (
@@ -24,9 +27,6 @@ export default function AssignLessonScreen() {
       </>
     );
   }
-
-  const courses = getCoursesByLanguage(group.languageId);
-  const allLessons = courses.flatMap((c) => getLessonsByCourse(c.id));
 
   const handleAssign = () => {
     if (!selected) return;
@@ -56,46 +56,52 @@ export default function AssignLessonScreen() {
           </Pressable>
         </View>
 
-        <FlatList
-          data={allLessons}
-          keyExtractor={(item) => item.id}
-          contentContainerClassName="px-5 pb-8 pt-4"
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }: { item: Lesson }) => (
-            <Pressable
-              onPress={() => setSelected(item.id)}
-              className={`mb-2 flex-row items-center rounded-xl border-2 p-3 ${
-                selected === item.id
-                  ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                  : "border-neutral-200 dark:border-neutral-700"
-              }`}
-            >
-              <IconSymbol
-                name={selected === item.id ? "checkmark.circle.fill" : "circle"}
-                size={20}
-                color={selected === item.id ? "#3b82f6" : "#d1d5db"}
-              />
-              <View className="ml-3 flex-1">
-                <Text className="text-base font-medium text-neutral-900 dark:text-white">
-                  {item.title}
-                </Text>
-                <Text className="text-xs text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
-                  {item.description}
-                </Text>
-              </View>
-              {item.duration && (
-                <Text className="text-xs text-neutral-400">
-                  {formatDuration(item.duration)}
-                </Text>
-              )}
-            </Pressable>
-          )}
-          ListEmptyComponent={
-            <Text className="py-8 text-center text-neutral-400">
-              No lessons available for this language.
-            </Text>
-          }
-        />
+        {isLoading ? (
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator size="large" color="#3b82f6" />
+          </View>
+        ) : (
+          <FlatList
+            data={allLessons}
+            keyExtractor={(item) => item.id}
+            contentContainerClassName="px-5 pb-8 pt-4"
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item }: { item: Lesson }) => (
+              <Pressable
+                onPress={() => setSelected(item.id)}
+                className={`mb-2 flex-row items-center rounded-xl border-2 p-3 ${
+                  selected === item.id
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                    : "border-neutral-200 dark:border-neutral-700"
+                }`}
+              >
+                <IconSymbol
+                  name={selected === item.id ? "checkmark.circle.fill" : "circle"}
+                  size={20}
+                  color={selected === item.id ? "#3b82f6" : "#d1d5db"}
+                />
+                <View className="ml-3 flex-1">
+                  <Text className="text-base font-medium text-neutral-900 dark:text-white">
+                    {item.title}
+                  </Text>
+                  <Text className="text-xs text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
+                    {item.description}
+                  </Text>
+                </View>
+                {item.duration && (
+                  <Text className="text-xs text-neutral-400">
+                    {formatDuration(item.duration)}
+                  </Text>
+                )}
+              </Pressable>
+            )}
+            ListEmptyComponent={
+              <Text className="py-8 text-center text-neutral-400">
+                No lessons available for this language.
+              </Text>
+            }
+          />
+        )}
       </SafeAreaView>
     </>
   );

@@ -7,7 +7,7 @@ import { MatchingBoard } from "@/components/quiz/matching-board";
 import { useMatchingStore } from "@/store/matching-store";
 import { generateMatchingPairs } from "@/lib/quiz-engine";
 import { useLanguageStore } from "@/store/language-store";
-import { useApprovedWords } from "@/lib/hooks/use-contributions";
+import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { getLanguageName } from "@/lib/mock-data";
 import { hapticHeavy } from "@/lib/haptics";
 import { playFinishSound } from "@/lib/sounds";
@@ -16,7 +16,7 @@ export default function MatchingGameScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ courseId?: string }>();
   const { selectedLanguageId } = useLanguageStore();
-  const { data: approvedWords } = useApprovedWords(selectedLanguageId);
+  const { data: dictionaryEntries = [], isLoading: isDictLoading } = useDictionary(selectedLanguageId);
   const { phase, startGame, getResult, reset } = useMatchingStore();
   const [isEmpty, setIsEmpty] = useState(false);
   const initialized = useRef(false);
@@ -25,6 +25,7 @@ export default function MatchingGameScreen() {
 
   useEffect(() => {
     if (initialized.current) return;
+    if (isDictLoading) return;
     initialized.current = true;
 
     const pairs = generateMatchingPairs(
@@ -33,7 +34,7 @@ export default function MatchingGameScreen() {
         courseId: params.courseId,
         pairCount: 8,
       },
-      approvedWords ?? []
+      dictionaryEntries
     );
 
     if (pairs.length === 0) {
@@ -41,7 +42,7 @@ export default function MatchingGameScreen() {
     } else {
       startGame(pairs);
     }
-  }, []);
+  }, [isDictLoading]);
 
   useEffect(() => {
     if (phase === "results") {
@@ -57,12 +58,12 @@ export default function MatchingGameScreen() {
         courseId: params.courseId,
         pairCount: 8,
       },
-      approvedWords ?? []
+      dictionaryEntries
     );
     if (pairs.length > 0) {
       startGame(pairs);
     }
-  }, [selectedLanguageId, params.courseId, approvedWords, startGame]);
+  }, [selectedLanguageId, params.courseId, dictionaryEntries, startGame]);
 
   const result = phase === "results" ? getResult() : null;
 
