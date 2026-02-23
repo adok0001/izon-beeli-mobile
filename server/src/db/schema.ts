@@ -1,17 +1,17 @@
-import {
-  pgTable,
-  varchar,
-  text,
-  uuid,
-  integer,
-  boolean,
-  timestamp,
-  pgEnum,
-  uniqueIndex,
-  index,
-  real,
-} from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+import {
+  boolean,
+  index,
+  integer,
+  pgEnum,
+  pgTable,
+  real,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core";
 
 // ---------- Enums ----------
 
@@ -33,6 +33,12 @@ export const contributionStatusEnum = pgEnum("contribution_status", [
   "submitted",
   "approved",
   "rejected",
+]);
+
+export const feedbackCategoryEnum = pgEnum("feedback_category", [
+  "bug",
+  "suggestion",
+  "other",
 ]);
 
 // ---------- Users ----------
@@ -327,6 +333,19 @@ export const sentenceTemplates = pgTable(
   },
   (table) => [index("sentence_templates_language_id_idx").on(table.languageId)]
 );
+
+// ---------- Feedback ----------
+
+export const feedback = pgTable("feedback", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").references(() => users.id),
+  category: feedbackCategoryEnum("category").notNull(),
+  message: text("message").notNull(),
+  platform: varchar("platform", { length: 32 }),
+  osVersion: varchar("os_version", { length: 64 }),
+  appVersion: varchar("app_version", { length: 32 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
 // ---------- Relations ----------
 

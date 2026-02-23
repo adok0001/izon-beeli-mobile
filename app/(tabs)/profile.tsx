@@ -1,11 +1,13 @@
 import { View, Text, Pressable, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useState } from "react";
 import { useRouter } from "expo-router";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
 import { useLanguageStore } from "@/store/language-store";
 import { getLanguageName } from "@/lib/mock-data";
+import { FeedbackModal } from "@/components/feedback-modal";
 
 function StatCard({ icon, label, value }: { icon: string; label: string; value: string }) {
   return (
@@ -67,6 +69,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { signOut } = useAuth();
   const { user } = useUser();
+  const [feedbackVisible, setFeedbackVisible] = useState(false);
   const { data: summary } = useProgressSummary();
   const { selectedLanguageId } = useLanguageStore();
 
@@ -140,6 +143,11 @@ export default function ProfileScreen() {
             onPress={() => router.push("/notifications")}
           />
           <MenuRow
+            icon="exclamationmark.bubble"
+            label="Send Feedback"
+            onPress={() => setFeedbackVisible(true)}
+          />
+          <MenuRow
             icon="gearshape.fill"
             label="Settings"
             onPress={() => router.push("/settings")}
@@ -156,6 +164,11 @@ export default function ProfileScreen() {
 
         <View className="h-8" />
       </ScrollView>
+
+      <FeedbackModal
+        visible={feedbackVisible}
+        onClose={() => setFeedbackVisible(false)}
+      />
     </SafeAreaView>
   );
 }

@@ -89,6 +89,8 @@ export interface Language {
 
 export type ContributionType = "word" | "phrase" | "audio";
 
+export type FeedbackCategory = "bug" | "suggestion" | "other";
+
 export interface Contribution {
   id: string;
   type: ContributionType;

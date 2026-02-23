@@ -15,6 +15,7 @@ import { dictionaryRouter } from "./routes/dictionary.js";
 import { proverbsRouter } from "./routes/proverbs.js";
 import { culturalRouter } from "./routes/cultural.js";
 import { sentencesRouter } from "./routes/sentences.js";
+import { feedbackRouter } from "./routes/feedback.js";
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -65,5 +66,6 @@ app.route("/journal", journalRouter);
 app.route("/feed", feedRouter);
 app.route("/contributions", contributionsRouter);
 app.route("/wordbank", wordbankRouter);
+app.route("/feedback", feedbackRouter);
 
 export default app;
