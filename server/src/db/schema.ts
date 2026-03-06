@@ -41,6 +41,12 @@ export const feedbackCategoryEnum = pgEnum("feedback_category", [
   "other",
 ]);
 
+export const lessonContributionStatusEnum = pgEnum("lesson_contribution_status", [
+  "submitted",
+  "approved",
+  "rejected",
+]);
+
 // ---------- Users ----------
 
 export const users = pgTable("users", {
@@ -332,6 +338,48 @@ export const sentenceTemplates = pgTable(
     englishSentence: text("english_sentence").notNull(),
   },
   (table) => [index("sentence_templates_language_id_idx").on(table.languageId)]
+);
+
+// ---------- Lesson Contributions ----------
+
+export const lessonContributions = pgTable(
+  "lesson_contributions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    languageId: varchar("language_id", { length: 32 }).notNull(),
+    courseId: varchar("course_id", { length: 64 }),
+    title: varchar("title", { length: 300 }).notNull(),
+    description: text("description").notNull(),
+    audioUrl: text("audio_url").notNull(),
+    duration: integer("duration"),
+    status: lessonContributionStatusEnum("status").default("submitted").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("lesson_contributions_user_id_idx").on(table.userId),
+    index("lesson_contributions_status_idx").on(table.status),
+  ]
+);
+
+export const lessonContributionSegments = pgTable(
+  "lesson_contribution_segments",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    lessonContributionId: uuid("lesson_contribution_id")
+      .references(() => lessonContributions.id)
+      .notNull(),
+    text: text("text").notNull(),
+    translation: text("translation"),
+    startTime: real("start_time"),
+    endTime: real("end_time"),
+    order: integer("order").default(0).notNull(),
+  },
+  (table) => [
+    index("lesson_contribution_segments_contrib_id_idx").on(table.lessonContributionId),
+  ]
 );
 
 // ---------- Feedback ----------

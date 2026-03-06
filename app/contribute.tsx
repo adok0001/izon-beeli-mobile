@@ -21,7 +21,7 @@ import {
   type DictionaryCategory,
 } from "@/lib/dictionary";
 
-type Step = "language" | "entry" | "details";
+type Step = "type" | "language" | "entry" | "details";
 
 export default function ContributeScreen() {
   const router = useRouter();
@@ -34,7 +34,7 @@ export default function ContributeScreen() {
   } = useContributionStore();
   const submitContribution = useSubmitContribution();
 
-  const [step, setStep] = useState<Step>("language");
+  const [step, setStep] = useState<Step>("type");
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
   const [word, setWord] = useState("");
   const [english, setEnglish] = useState("");
@@ -81,32 +81,89 @@ export default function ContributeScreen() {
     category &&
     !submitContribution.isPending;
 
-  const steps: Step[] = ["language", "entry", "details"];
-  const currentIndex = steps.indexOf(step);
+  // Progress bar steps (excluding the type chooser which is a landing)
+  const wizardSteps: Step[] = ["language", "entry", "details"];
+  const wizardIndex = wizardSteps.indexOf(step);
 
   return (
     <>
-      <Stack.Screen options={{ title: "Contribute a Word", presentation: "modal" }} />
+      <Stack.Screen options={{ title: "Contribute", presentation: "modal" }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           className="flex-1"
         >
-          {/* Progress bar */}
-          <View className="flex-row px-5 pt-2">
-            {steps.map((s, i) => (
-              <View
-                key={s}
-                className={`mr-1 h-1 flex-1 rounded-full ${
-                  currentIndex >= i
-                    ? "bg-blue-500"
-                    : "bg-neutral-200 dark:bg-neutral-700"
-                }`}
-              />
-            ))}
-          </View>
+          {/* Progress bar — hidden on type chooser */}
+          {step !== "type" && (
+            <View className="flex-row px-5 pt-2">
+              {wizardSteps.map((s, i) => (
+                <View
+                  key={s}
+                  className={`mr-1 h-1 flex-1 rounded-full ${
+                    wizardIndex >= i
+                      ? "bg-blue-500"
+                      : "bg-neutral-200 dark:bg-neutral-700"
+                  }`}
+                />
+              ))}
+            </View>
+          )}
 
           <ScrollView className="flex-1 px-5 pt-4" showsVerticalScrollIndicator={false}>
+            {/* Type chooser */}
+            {step === "type" && (
+              <View>
+                <Text className="mb-1 text-2xl font-bold text-neutral-900 dark:text-white">
+                  Contribute
+                </Text>
+                <Text className="mb-6 text-sm text-neutral-500 dark:text-neutral-400">
+                  Help preserve and grow language resources
+                </Text>
+
+                {/* Word / Phrase card */}
+                <Pressable
+                  onPress={() => setStep("language")}
+                  className="mb-3 rounded-2xl bg-blue-50 p-5 active:opacity-80 dark:bg-blue-950"
+                >
+                  <View className="flex-row items-center">
+                    <View className="mr-4 h-12 w-12 items-center justify-center rounded-xl bg-blue-500">
+                      <IconSymbol name="character.book.closed" size={24} color="white" />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-base font-bold text-neutral-900 dark:text-white">
+                        Word or Phrase
+                      </Text>
+                      <Text className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">
+                        Add a dictionary entry with translation, pronunciation, and audio
+                      </Text>
+                    </View>
+                    <IconSymbol name="chevron.right" size={16} color="#3b82f6" />
+                  </View>
+                </Pressable>
+
+                {/* Lesson card */}
+                <Pressable
+                  onPress={() => router.push("/contribute-lesson")}
+                  className="mb-3 rounded-2xl bg-purple-50 p-5 active:opacity-80 dark:bg-purple-950"
+                >
+                  <View className="flex-row items-center">
+                    <View className="mr-4 h-12 w-12 items-center justify-center rounded-xl bg-purple-500">
+                      <IconSymbol name="waveform" size={24} color="white" />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-base font-bold text-neutral-900 dark:text-white">
+                        Full Lesson
+                      </Text>
+                      <Text className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">
+                        Upload lesson audio with a timed transcript for learners
+                      </Text>
+                    </View>
+                    <IconSymbol name="chevron.right" size={16} color="#a855f7" />
+                  </View>
+                </Pressable>
+              </View>
+            )}
+
             {/* Step 1: Language */}
             {step === "language" && (
               <View>
@@ -160,7 +217,7 @@ export default function ContributeScreen() {
                 <TextInput
                   value={word}
                   onChangeText={setWord}
-                  placeholder="e.g. Baidẹ"
+                  placeholder="e.g. Baid\u1EB9"
                   placeholderTextColor="#9ca3af"
                   className="mb-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                   autoFocus
@@ -216,8 +273,8 @@ export default function ContributeScreen() {
                   Optional — add pronunciation, examples, or audio
                 </Text>
 
-                {/* Summary of what's being submitted */}
-                <View className="mb-4 rounded-xl bg-blue-50 p-4 dark:bg-blue-950">
+                {/* Summary card */}
+                <View className="mb-4 rounded-2xl bg-blue-50 p-4 dark:bg-blue-950">
                   <Text className="text-lg font-bold text-neutral-900 dark:text-white">
                     {word}
                   </Text>
@@ -312,12 +369,13 @@ export default function ContributeScreen() {
           </ScrollView>
 
           {/* Bottom actions */}
-          <View className="border-t border-neutral-200 px-5 py-4 dark:border-neutral-700">
-            <View className="flex-row gap-3">
-              {step !== "language" && (
+          {step !== "type" && (
+            <View className="border-t border-neutral-200 px-5 py-4 dark:border-neutral-700">
+              <View className="flex-row gap-3">
                 <Pressable
                   onPress={() => {
-                    if (step === "entry") setStep("language");
+                    if (step === "language") setStep("type");
+                    else if (step === "entry") setStep("language");
                     else if (step === "details") setStep("entry");
                   }}
                   className="flex-1 items-center rounded-xl bg-neutral-100 py-3.5 dark:bg-neutral-800"
@@ -326,37 +384,37 @@ export default function ContributeScreen() {
                     Back
                   </Text>
                 </Pressable>
-              )}
-              {step === "entry" && (
-                <Pressable
-                  onPress={() => {
-                    if (word.trim() && english.trim() && category) setStep("details");
-                  }}
-                  disabled={!word.trim() || !english.trim() || !category}
-                  className={`flex-1 items-center rounded-xl py-3.5 ${
-                    word.trim() && english.trim() && category
-                      ? "bg-blue-500"
-                      : "bg-blue-300 dark:bg-blue-800"
-                  }`}
-                >
-                  <Text className="font-semibold text-white">Next</Text>
-                </Pressable>
-              )}
-              {step === "details" && (
-                <Pressable
-                  onPress={handleSubmit}
-                  disabled={!canSubmit}
-                  className={`flex-1 items-center rounded-xl py-3.5 ${
-                    canSubmit ? "bg-blue-500" : "bg-blue-300 dark:bg-blue-800"
-                  }`}
-                >
-                  <Text className="font-semibold text-white">
-                    {submitContribution.isPending ? "Submitting..." : "Submit"}
-                  </Text>
-                </Pressable>
-              )}
+                {step === "entry" && (
+                  <Pressable
+                    onPress={() => {
+                      if (word.trim() && english.trim() && category) setStep("details");
+                    }}
+                    disabled={!word.trim() || !english.trim() || !category}
+                    className={`flex-1 items-center rounded-xl py-3.5 ${
+                      word.trim() && english.trim() && category
+                        ? "bg-blue-500"
+                        : "bg-blue-300 dark:bg-blue-800"
+                    }`}
+                  >
+                    <Text className="font-semibold text-white">Next</Text>
+                  </Pressable>
+                )}
+                {step === "details" && (
+                  <Pressable
+                    onPress={handleSubmit}
+                    disabled={!canSubmit}
+                    className={`flex-1 items-center rounded-xl py-3.5 ${
+                      canSubmit ? "bg-blue-500" : "bg-blue-300 dark:bg-blue-800"
+                    }`}
+                  >
+                    <Text className="font-semibold text-white">
+                      {submitContribution.isPending ? "Submitting..." : "Submit"}
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
             </View>
-          </View>
+          )}
         </KeyboardAvoidingView>
       </SafeAreaView>
     </>

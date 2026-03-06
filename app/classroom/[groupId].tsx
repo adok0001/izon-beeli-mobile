@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -10,9 +11,12 @@ import { getLanguageName } from "@/lib/mock-data";
 export default function GroupDetailScreen() {
   const router = useRouter();
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
-  const group = useClassroomStore((s) => s.getGroup(groupId));
-  const assignments = useClassroomStore((s) =>
-    s.getAssignmentsForGroup(groupId)
+  const groups = useClassroomStore((s) => s.groups);
+  const allAssignments = useClassroomStore((s) => s.assignments);
+  const group = useMemo(() => groups.find((g) => g.id === groupId), [groups, groupId]);
+  const assignments = useMemo(
+    () => allAssignments.filter((a) => a.groupId === groupId),
+    [allAssignments, groupId]
   );
 
   if (!group) {

@@ -141,3 +141,126 @@ export function useReviewContribution() {
     },
   });
 }
+
+// ---------- Lesson Contributions ----------
+
+export interface LessonContributionSegmentInput {
+  text: string;
+  translation?: string;
+  startTime?: number;
+  endTime?: number;
+  order: number;
+}
+
+export interface LessonContributionInput {
+  languageId: string;
+  courseId?: string;
+  title: string;
+  description: string;
+  audioUri: string;
+  duration?: number;
+  segments: LessonContributionSegmentInput[];
+}
+
+export interface PendingLessonContributionSegment {
+  id: string;
+  lessonContributionId: string;
+  text: string;
+  translation: string | null;
+  startTime: number | null;
+  endTime: number | null;
+  order: number;
+}
+
+export interface PendingLessonContribution {
+  id: string;
+  userId: string;
+  languageId: string;
+  courseId: string | null;
+  title: string;
+  description: string;
+  audioUrl: string;
+  duration: number | null;
+  status: string;
+  createdAt: string;
+  userName: string | null;
+  segments: PendingLessonContributionSegment[];
+}
+
+export function useSubmitLessonContribution() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: LessonContributionInput) => {
+      const token = await getToken();
+      const formData = new FormData();
+
+      formData.append("languageId", input.languageId);
+      if (input.courseId) formData.append("courseId", input.courseId);
+      formData.append("title", input.title);
+      formData.append("description", input.description);
+      if (input.duration != null) formData.append("duration", String(input.duration));
+      formData.append("segments", JSON.stringify(input.segments));
+
+      const filename = input.audioUri.split("/").pop() ?? "lesson.m4a";
+      const ext = filename.split(".").pop()?.toLowerCase() ?? "m4a";
+      const mimeType = ext === "mp3" ? "audio/mpeg" : ext === "wav" ? "audio/wav" : "audio/m4a";
+
+      formData.append("audio", {
+        uri: input.audioUri,
+        type: mimeType,
+        name: filename,
+      } as any);
+
+      const res = await fetch(`${API_BASE_URL}/lesson-contributions`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`API error ${res.status}: ${text}`);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
+      queryClient.invalidateQueries({ queryKey: ["pending-lesson-contributions"] });
+    },
+  });
+}
+
+export function usePendingLessonContributions() {
+  const { getToken } = useAuth();
+
+  return useQuery({
+    queryKey: ["pending-lesson-contributions"],
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch<PendingLessonContribution[]>("/lesson-contributions/pending", {
+        token: token!,
+      });
+    },
+  });
+}
+
+export function useReviewLessonContribution() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, action }: { id: string; action: "approve" | "reject" }) => {
+      const token = await getToken();
+      return apiFetch(`/lesson-contributions/${id}/review`, {
+        method: "PATCH",
+        token: token!,
+        body: JSON.stringify({ action }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pending-lesson-contributions"] });
+    },
+  });
+}

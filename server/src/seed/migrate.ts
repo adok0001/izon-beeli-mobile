@@ -12,6 +12,8 @@ async function migrate() {
   // Drop our tables if they exist (in dependency order)
   console.log("Dropping existing tables...");
   const dropStatements = [
+    "DROP TABLE IF EXISTS lesson_contribution_segments CASCADE",
+    "DROP TABLE IF EXISTS lesson_contributions CASCADE",
     "DROP TABLE IF EXISTS word_bank CASCADE",
     "DROP TABLE IF EXISTS comments CASCADE",
     "DROP TABLE IF EXISTS likes CASCADE",
@@ -23,6 +25,7 @@ async function migrate() {
     "DROP TYPE IF EXISTS feed_item_type CASCADE",
     "DROP TYPE IF EXISTS contribution_type CASCADE",
     "DROP TYPE IF EXISTS contribution_status CASCADE",
+    "DROP TYPE IF EXISTS lesson_contribution_status CASCADE",
   ];
 
   for (const stmt of dropStatements) {

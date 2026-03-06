@@ -160,7 +160,7 @@ const SEED_LANGUAGES = [
 const SEED_COURSES = [
   { id: "course-1", languageId: "izon", title: "Izon Basics", description: "Learn the fundamentals of Izon language — greetings, introductions, and everyday phrases.", level: "beginner", lessonsCount: 5, order: 1 },
   { id: "course-2", languageId: "izon", title: "Izon Stories", description: "Listen to traditional Izon folktales and build your listening comprehension.", level: "intermediate", lessonsCount: 2, order: 2 },
-  { id: "course-3", languageId: "izon", title: "Conversational Izon", description: "Master everyday conversations — markets, family, community, and greetings.", level: "beginner", lessonsCount: 1, order: 3 },
+  { id: "course-3", languageId: "izon", title: "Conversational Izon", description: "Master everyday conversations — markets, family, community, and greetings.", level: "beginner", lessonsCount: 3, order: 3 },
   { id: "course-4", languageId: "yoruba", title: "Yoruba Basics", description: "Start your Yoruba journey with essential greetings and phrases used daily.", level: "beginner", lessonsCount: 3, order: 1 },
   { id: "course-5", languageId: "yoruba", title: "Yoruba Proverbs", description: "Explore Yoruba wisdom through traditional proverbs and their meanings.", level: "intermediate", lessonsCount: 2, order: 2 },
   { id: "course-6", languageId: "igbo", title: "Igbo Basics", description: "Learn fundamental Igbo phrases, greetings, and introductions.", level: "beginner", lessonsCount: 3, order: 1 },
@@ -221,8 +221,36 @@ const SEED_LESSONS: {
     ],
   },
   { id: "lesson-3", courseId: "course-1", title: "Numbers & Counting", description: "Learn to count from 1 to 20 in Izon.", audioUrl: null, duration: 5, order: 3, transcript: [] },
-  { id: "lesson-4", courseId: "course-1", title: "Family Members", description: "Learn Izon words for family members and relationships.", audioUrl: null, duration: 4, order: 4, transcript: [] },
-  { id: "lesson-5", courseId: "course-1", title: "Daily Activities", description: "Describe your daily routine using Izon verbs and phrases.", audioUrl: null, duration: 5, order: 5, transcript: [] },
+  {
+    id: "lesson-4", courseId: "course-1", title: "Family Members",
+    description: "Learn Izon words for family members and relationships — including a conversation about who is at home.",
+    audioUrl: null, duration: 5, order: 4,
+    transcript: [
+      { id: "t4-1", startTime: 0, endTime: 4, text: "E buburudẹ, Erearau Adokeme?", translation: "Good morning, Mrs Adokeme?" },
+      { id: "t4-2", startTime: 4, endTime: 8, text: "E buburudẹ, Kịmịowei Pẹrezi?", translation: "Good morning, Dr Pẹrezi?" },
+      { id: "t4-3", startTime: 8, endTime: 13, text: "Sesei, Tamara warị a emi a?", translation: "Please, is Tamara at home?" },
+      { id: "t4-4", startTime: 13, endTime: 18, text: "Aghaịn o! O warị a fa o, o fun tolumọ yọ ka emi.", translation: "No! He is not at home, he is at school." },
+      { id: "t4-5", startTime: 18, endTime: 23, text: "Vivian kpọ fun tolumọ yọ ka emi a?", translation: "Is Vivian at school too?" },
+      { id: "t4-6", startTime: 23, endTime: 29, text: "Aghaịn o. Amịnị warị ka emi. Amịnị eyifị-okpo ka emi.", translation: "No. She is at home. She is in the dining-room." },
+      { id: "t4-7", startTime: 29, endTime: 34, text: "Fịyaị kị emu koromọmịnị.", translation: "I am laying the table." },
+      { id: "t4-8", startTime: 34, endTime: 40, text: "Emịnị fịyaị koromo o, ereinbiri fịyaị kị emu tụọmịnị.", translation: "I am not laying the table, I am cooking lunch." },
+    ],
+  },
+  {
+    id: "lesson-5", courseId: "course-1", title: "Daily Activities",
+    description: "Describe your daily routine — meals, morning, afternoon, and evening activities — using Izon verbs and phrases.",
+    audioUrl: null, duration: 5, order: 5,
+    transcript: [
+      { id: "t5-1", startTime: 0, endTime: 5, text: "Mị bọ ereịn enị bịna-arau mịnị zii erein teimị.", translation: "My sister celebrated her birthday yesterday." },
+      { id: "t5-2", startTime: 5, endTime: 10, text: "Ọrọsị mọ ofoni mo omu fịmị.", translation: "I ate rice and chicken." },
+      { id: "t5-3", startTime: 10, endTime: 15, text: "Emịnị kenị koku ololo kpo boumị.", translation: "I also took a bottle of Coke." },
+      { id: "t5-4", startTime: 15, endTime: 20, text: "Mị bọ ereịnmị tị eyi kị emu fịma?", translation: "What did you eat yesterday?" },
+      { id: "t5-5", startTime: 20, endTime: 25, text: "Bịredị mọ tii mọ kị e pikei ma mu boumị.", translation: "I took bread and tea in the morning." },
+      { id: "t5-6", startTime: 25, endTime: 30, text: "Ereinbiri mị tị eyi kị emu fịma?", translation: "What did you eat in the afternoon?" },
+      { id: "t5-7", startTime: 30, endTime: 35, text: "Buru mọ ange mọ kị emu fịmị.", translation: "I ate yam and egg." },
+      { id: "t5-8", startTime: 35, endTime: 41, text: "Si oyia miniti feni emu kọn bọnọmị. Eba televisọni dii timi buburu nina lamị.", translation: "I slept for thirty minutes then watched television till 8pm." },
+    ],
+  },
   {
     id: "lesson-6", courseId: "course-2", title: "The Akasa Forest",
     description: "A grandfather tells his grandchild about the sacred Akasa forest and the ancestors who dwell within.",
@@ -306,11 +334,103 @@ const SEED_LESSONS: {
   { id: "lesson-44", courseId: "course-18", title: "Counting Drumbeats", description: "Kofi's teacher helps him keep rhythm by counting beats in Ewe.", audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3", duration: 190, order: 2, transcript: [] },
   { id: "lesson-45", courseId: "course-19", title: "Vowel Harmony", description: "A grandmother teaches her grandchild to read Izon by exploring how vowels work together in the Woyengi creation story.", audioUrl: null, duration: null, order: 1, transcript: [] },
   { id: "lesson-46", courseId: "course-19", title: "Consonants & Digraphs", description: "Grandmother and grandchild explore Izon consonants through a story about the Ekine masquerade preparations.", audioUrl: null, duration: null, order: 2, transcript: [] },
-  { id: "lesson-47", courseId: "course-19", title: "Nasalized & Long Vowels", description: "By the river at dusk, grandmother teaches how nasal sounds and long vowels carry meaning in Izon songs and stories.", audioUrl: null, duration: null, order: 3, transcript: [] },
+  {
+    id: "lesson-47", courseId: "course-19", title: "Nasalized & Long Vowels",
+    description: "By the river at dusk, grandmother teaches how nasal sounds and long vowels carry meaning in Izon songs and stories.",
+    audioUrl: null, duration: null, order: 3,
+    transcript: [
+      { id: "t47-1", startTime: 0, endTime: 5, text: "bụmọụ", translation: "sand bank" },
+      { id: "t47-2", startTime: 5, endTime: 10, text: "dụnọụ", translation: "lake" },
+      { id: "t47-3", startTime: 10, endTime: 15, text: "bingha", translation: "not many; not plenty" },
+      { id: "t47-4", startTime: 15, endTime: 20, text: "pingha", translation: "not congested" },
+    ],
+  },
   { id: "lesson-48", courseId: "course-19", title: "Vowel Sequences", description: "Grandmother and grandchild paddle their canoe while practicing the vowel pairs that make Izon unique.", audioUrl: null, duration: null, order: 4, transcript: [] },
   { id: "lesson-49", courseId: "course-20", title: "Counting 1–20", description: "A father teaches his son to count fish from their catch, using both modern and traditional Izon numbers.", audioUrl: null, duration: null, order: 1, transcript: [] },
-  { id: "lesson-50", courseId: "course-20", title: "Counting 21–100", description: "Father and son count a large catch of fish, learning the traditional Izon system of counting by twenties.", audioUrl: null, duration: null, order: 2, transcript: [] },
+  {
+    id: "lesson-50", courseId: "course-20", title: "Counting 21–100",
+    description: "Father and son count a large catch of fish, learning the traditional Izon system of counting by twenties.",
+    audioUrl: null, duration: null, order: 2,
+    transcript: [
+      { id: "t50-61", startTime: 0, endTime: 2, text: "tará sí mọ kẹnị mọ", translation: "sixty-one" },
+      { id: "t50-62", startTime: 2, endTime: 4, text: "tará sí mọ mamụ mọ", translation: "sixty-two" },
+      { id: "t50-63", startTime: 4, endTime: 6, text: "tará sí mọ taárụ mọ", translation: "sixty-three" },
+      { id: "t50-64", startTime: 6, endTime: 8, text: "tará sí mọ nein mọ", translation: "sixty-four" },
+      { id: "t50-65", startTime: 8, endTime: 10, text: "tará sí mọ sọọnrọn mọ", translation: "sixty-five" },
+      { id: "t50-66", startTime: 10, endTime: 12, text: "tará sí mọ sondie mọ", translation: "sixty-six" },
+      { id: "t50-67", startTime: 12, endTime: 14, text: "tará sí mọ sọnọma mọ", translation: "sixty-seven" },
+      { id: "t50-68", startTime: 14, endTime: 16, text: "tará sí mọ niina mọ", translation: "sixty-eight" },
+      { id: "t50-69", startTime: 16, endTime: 18, text: "tará sí mọ isé mọ", translation: "sixty-nine" },
+      { id: "t50-70", startTime: 18, endTime: 20, text: "tará sí mọ oyi mọ", translation: "seventy (three twenties and ten)" },
+      { id: "t50-71", startTime: 20, endTime: 22, text: "tará sí mọ oyi kẹnị feni mọ", translation: "seventy-one" },
+      { id: "t50-72", startTime: 22, endTime: 24, text: "tará sí mọ oyi mamụ feni mọ", translation: "seventy-two" },
+      { id: "t50-73", startTime: 24, endTime: 26, text: "tará sí mọ oyi taárụ feni mọ", translation: "seventy-three" },
+      { id: "t50-74", startTime: 26, endTime: 28, text: "tará sí mọ oyi nein feni mọ", translation: "seventy-four" },
+      { id: "t50-75", startTime: 28, endTime: 30, text: "tará si mọ oyi sọọnrọn feni mọ", translation: "seventy-five (also: tara si mọ die mọ)" },
+      { id: "t50-76", startTime: 30, endTime: 32, text: "tará sí mọ oyi sondie feni mọ", translation: "seventy-six" },
+      { id: "t50-77", startTime: 32, endTime: 34, text: "tará sí mọ oyi sọnọma feni mọ", translation: "seventy-seven" },
+      { id: "t50-78", startTime: 34, endTime: 36, text: "tará sí mọ oyi niina feni mọ", translation: "seventy-eight" },
+      { id: "t50-79", startTime: 36, endTime: 38, text: "tará sí mọ oyi isé feni mọ", translation: "seventy-nine" },
+      { id: "t50-80", startTime: 38, endTime: 40, text: "níá sí", translation: "eighty (four twenties)" },
+      { id: "t50-81", startTime: 40, endTime: 42, text: "níá si mọ kẹnị mọ", translation: "eighty-one" },
+      { id: "t50-82", startTime: 42, endTime: 44, text: "níá sí mọ mamụ mọ", translation: "eighty-two" },
+      { id: "t50-83", startTime: 44, endTime: 46, text: "níá sí mọ taárụ mọ", translation: "eighty-three" },
+      { id: "t50-84", startTime: 46, endTime: 48, text: "níá sí mọ nein mọ", translation: "eighty-four" },
+      { id: "t50-85", startTime: 48, endTime: 50, text: "níá sí mọ sọọnrọn mọ", translation: "eighty-five" },
+      { id: "t50-86", startTime: 50, endTime: 52, text: "níá sí mọ sondie mọ", translation: "eighty-six" },
+      { id: "t50-87", startTime: 52, endTime: 54, text: "níá sí mọ sọnọma mọ", translation: "eighty-seven" },
+      { id: "t50-88", startTime: 54, endTime: 56, text: "níá sí mọ niina mọ", translation: "eighty-eight" },
+      { id: "t50-89", startTime: 56, endTime: 58, text: "níá sí mọ isé mọ", translation: "eighty-nine" },
+      { id: "t50-90", startTime: 58, endTime: 60, text: "níá sí mọ oyi mọ", translation: "ninety" },
+      { id: "t50-91", startTime: 60, endTime: 62, text: "níá sí mọ oyi kẹnị feni mọ", translation: "ninety-one" },
+      { id: "t50-92", startTime: 62, endTime: 64, text: "níá sí mọ oyi mamụ feni mọ", translation: "ninety-two" },
+      { id: "t50-93", startTime: 64, endTime: 66, text: "níá sí mọ oyi taárụ feni mọ", translation: "ninety-three" },
+      { id: "t50-94", startTime: 66, endTime: 68, text: "níá sí mọ oyi nein feni mọ", translation: "ninety-four" },
+      { id: "t50-95", startTime: 68, endTime: 70, text: "níá sí mọ oyi sọọnrọn feni mọ", translation: "ninety-five (also: níá si mọ die mọ)" },
+      { id: "t50-96", startTime: 70, endTime: 72, text: "níá sí mọ oyi sondie feni mọ", translation: "ninety-six" },
+      { id: "t50-97", startTime: 72, endTime: 74, text: "níá sí mọ oyi sọnọma feni mọ", translation: "ninety-seven" },
+      { id: "t50-98", startTime: 74, endTime: 76, text: "níá sí mọ oyi niina feni mọ", translation: "ninety-eight" },
+      { id: "t50-99", startTime: 76, endTime: 78, text: "níá sí mọ oyi isé feni mọ", translation: "ninety-nine" },
+      { id: "t50-100", startTime: 78, endTime: 80, text: "sọọnran sí", translation: "one hundred (five twenties)" },
+    ],
+  },
   { id: "lesson-51", courseId: "course-20", title: "Money & Market", description: "Father and son take their fish to market, learning the traditional akpa money system and how to bargain.", audioUrl: null, duration: null, order: 3, transcript: [] },
+  {
+    id: "lesson-52", courseId: "course-3", title: "Where Are You From?",
+    description: "Practice asking and answering questions about hometown, nationality, age, and occupation using interrogative pronouns.",
+    audioUrl: null, duration: 5, order: 2,
+    transcript: [
+      { id: "t52-1", startTime: 0, endTime: 4, text: "E baịdẹ, Kịmịowei Adokeme?", translation: "Good afternoon, Mr Adokeme?" },
+      { id: "t52-2", startTime: 4, endTime: 8, text: "E baịdẹ, Kịmịowei Pẹrezi?", translation: "Good afternoon, Mr Pẹrezi?" },
+      { id: "t52-3", startTime: 8, endTime: 13, text: "Teyi ke enị are a?", translation: "What is your name, please?" },
+      { id: "t52-4", startTime: 13, endTime: 17, text: "Enị aremi Pịrịye Adokeme. Enị are ba o.", translation: "My name is Pịrịye Adokeme. Please call me Pịrịye." },
+      { id: "t52-5", startTime: 17, endTime: 22, text: "Emịnị tị ama ye a?", translation: "Where are you from?" },
+      { id: "t52-6", startTime: 22, endTime: 27, text: "Emịnị Isampou ye.", translation: "I am from Isampou." },
+      { id: "t52-7", startTime: 27, endTime: 32, text: "Emịnị tị ibe ye a?", translation: "What country are you from?" },
+      { id: "t52-8", startTime: 32, endTime: 37, text: "Emịnị Naiziria ye. Emịnị Ịzọn ye.", translation: "I am from Nigeria. I am Izon." },
+      { id: "t52-9", startTime: 37, endTime: 42, text: "Endẹ na kurai kị emu baidẹ?", translation: "How old are you?" },
+      { id: "t52-10", startTime: 42, endTime: 47, text: "Emịnị si oyia kurai feni kị baidẹ.", translation: "I am thirty years old." },
+      { id: "t52-11", startTime: 47, endTime: 52, text: "Teyọ kị emu eyerinmịnị ya?", translation: "Where do you work?" },
+      { id: "t52-12", startTime: 52, endTime: 58, text: "Opolo-a Yenagoa Cọmisọna-otu egede kị emu eyerinmịnị.", translation: "I work at the Yenagoa Commissioner's office." },
+    ],
+  },
+  {
+    id: "lesson-53", courseId: "course-3", title: "Introducing Yourself",
+    description: "Learn to introduce yourself fully in Izon — name, hometown, and profession — through a real dialogue and self-introduction phrases.",
+    audioUrl: null, duration: 5, order: 3,
+    transcript: [
+      { id: "t53-1", startTime: 0, endTime: 4, text: "Tị eyọ kị emu duo boma?", translation: "Where are you from?" },
+      { id: "t53-2", startTime: 4, endTime: 9, text: "Ịsampọu kị emu duo bomị. Ịsampọu Bayelsa Siteti ka emi.", translation: "I'm from Isampou, in Bayelsa State." },
+      { id: "t53-3", startTime: 9, endTime: 15, text: "Ịsampọu tị eyo ka emi ya? O Yenagoa mọ naịn emi ya?", translation: "Where is Isampou? Is it near Yenagoa?" },
+      { id: "t53-4", startTime: 15, endTime: 20, text: "Inyo (E). Omịnị tamụ akụ ka emi.", translation: "Yes, it is. It's close to the East." },
+      { id: "t53-5", startTime: 20, endTime: 25, text: "O yalịyalị emi?", translation: "Is it neat?" },
+      { id: "t53-6", startTime: 25, endTime: 30, text: "E o yalịyalị emi. O yalịyalị kụrọmọ emi.", translation: "Yes, it is. It is very clean." },
+      { id: "t53-7", startTime: 30, endTime: 36, text: "Emịnị Erearau Doris Adokeme. Emịnị ogulapẹlẹ-ere.", translation: "I am Mrs Doris Adokeme. I am a judge." },
+      { id: "t53-8", startTime: 36, endTime: 42, text: "Emịnị kịmịowei Tamara Adokeme. Emịnị komputa kịmị.", translation: "I am Mr Tamara Adokeme. I am a computer scientist." },
+      { id: "t53-9", startTime: 42, endTime: 48, text: "Emịnị kịmịowei Pịrịye Adokeme. Emịnị oloo owei.", translation: "I am Mr Pịrịye Adokeme. I am a lawyer." },
+      { id: "t53-10", startTime: 48, endTime: 54, text: "Emịnị Erearau Vivian Adokeme. Emịnị dọnzuọ-ere.", translation: "I am Vivian Adokeme. I am a medical doctor." },
+    ],
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -367,16 +487,42 @@ async function seed() {
   console.log("  Inserting languages...");
   await batchInsert(languages, SEED_LANGUAGES);
 
-  // 2. Courses
+  // 2. Courses — upsert so lessonsCount and descriptions stay current
   console.log("  Inserting courses...");
-  await batchInsert(courses, SEED_COURSES);
+  for (const course of SEED_COURSES) {
+    await db.insert(courses).values(course).onConflictDoUpdate({
+      target: courses.id,
+      set: {
+        title: course.title,
+        description: course.description,
+        level: course.level,
+        lessonsCount: course.lessonsCount,
+        order: course.order,
+      },
+    });
+  }
 
   // 3. Lessons + 4. Transcript segments
+  // Lessons are upserted so content edits are reflected on re-seed.
+  // Transcript segments have no stable natural key (auto UUID), so we
+  // delete and re-insert them to keep them in sync with the lesson data.
   console.log("  Inserting lessons and transcripts...");
   for (const lesson of SEED_LESSONS) {
     const { transcript, ...lessonData } = lesson;
-    await db.insert(lessons).values(lessonData).onConflictDoNothing();
 
+    await db.insert(lessons).values(lessonData).onConflictDoUpdate({
+      target: lessons.id,
+      set: {
+        title: lessonData.title,
+        description: lessonData.description,
+        audioUrl: lessonData.audioUrl,
+        duration: lessonData.duration,
+        order: lessonData.order,
+      },
+    });
+
+    // Always replace transcript segments so edits are reflected
+    await db.delete(transcriptSegments).where(eq(transcriptSegments.lessonId, lesson.id));
     if (transcript.length > 0) {
       const segments = transcript.map((seg, idx) => ({
         lessonId: lesson.id,

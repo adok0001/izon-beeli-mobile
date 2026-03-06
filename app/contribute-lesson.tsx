@@ -1,0 +1,758 @@
+import { useState, useEffect, useCallback } from "react";
+import {
+  View,
+  Text,
+  Pressable,
+  TextInput,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Stack, useRouter } from "expo-router";
+import * as DocumentPicker from "expo-document-picker";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
+import { useLessonContributionStore } from "@/store/lesson-contribution-store";
+import {
+  useSubmitLessonContribution,
+  type LessonContributionSegmentInput,
+} from "@/lib/hooks/use-contributions";
+import { apiFetch } from "@/lib/api";
+
+type Step = "language" | "course" | "details" | "audio" | "transcript";
+
+interface Course {
+  id: string;
+  title: string;
+  level: string;
+}
+
+interface Segment {
+  text: string;
+  translation: string;
+  startTime: string;
+  endTime: string;
+}
+
+const STEP_META: Record<Step, { label: string; icon: string }> = {
+  language: { label: "Language", icon: "globe" },
+  course: { label: "Course", icon: "book.fill" },
+  details: { label: "Details", icon: "pencil" },
+  audio: { label: "Audio", icon: "waveform" },
+  transcript: { label: "Transcript", icon: "text.alignleft" },
+};
+
+const STEPS: Step[] = ["language", "course", "details", "audio", "transcript"];
+
+function formatTime(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = (seconds % 60).toFixed(1);
+  return `${m}:${s.padStart(4, "0")}`;
+}
+
+export default function ContributeLessonScreen() {
+  const router = useRouter();
+  const store = useLessonContributionStore();
+  const submitLesson = useSubmitLessonContribution();
+
+  const [step, setStep] = useState<Step>("language");
+  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [segments, setSegments] = useState<Segment[]>([
+    { text: "", translation: "", startTime: "", endTime: "" },
+  ]);
+
+  const currentIndex = STEPS.indexOf(step);
+
+  useEffect(() => {
+    return () => {
+      store.reset();
+    };
+  }, []);
+
+  const fetchCourses = useCallback(async (langId: string) => {
+    setLoadingCourses(true);
+    try {
+      const data = await apiFetch<Course[]>(`/courses?languageId=${langId}`);
+      setCourses(data);
+    } catch {
+      setCourses([]);
+    } finally {
+      setLoadingCourses(false);
+    }
+  }, []);
+
+  const handlePickAudio = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ["audio/mpeg", "audio/mp4", "audio/m4a", "audio/wav", "audio/x-m4a"],
+        copyToCacheDirectory: true,
+      });
+      if (result.canceled) return;
+      const asset = result.assets[0];
+      await store.loadAudio(asset.uri);
+    } catch {
+      Alert.alert("Error", "Could not pick audio file.");
+    }
+  };
+
+  const handleRecord = async () => {
+    if (store.isRecording) {
+      const uri = await store.stopRecording();
+      if (uri) await store.loadAudio(uri);
+    } else {
+      await store.startRecording();
+    }
+  };
+
+  const handleMarkSegment = (index: number) => {
+    const pos = store.getCurrentPosition();
+    const newSegs = [...segments];
+    newSegs[index] = { ...newSegs[index], startTime: pos.toFixed(1) };
+    if (index > 0) {
+      newSegs[index - 1] = { ...newSegs[index - 1], endTime: pos.toFixed(1) };
+    }
+    setSegments(newSegs);
+  };
+
+  const updateSegment = (index: number, field: keyof Segment, value: string) => {
+    const newSegs = [...segments];
+    newSegs[index] = { ...newSegs[index], [field]: value };
+    setSegments(newSegs);
+  };
+
+  const addSegment = () => {
+    setSegments((prev) => [
+      ...prev,
+      { text: "", translation: "", startTime: "", endTime: "" },
+    ]);
+  };
+
+  const removeSegment = (index: number) => {
+    if (segments.length === 1) return;
+    setSegments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = () => {
+    if (!selectedLanguage || !title.trim() || !description.trim() || !store.audioUri) return;
+
+    const segmentInputs: LessonContributionSegmentInput[] = segments
+      .filter((s) => s.text.trim())
+      .map((s, i) => ({
+        text: s.text.trim(),
+        translation: s.translation.trim() || undefined,
+        startTime: s.startTime ? parseFloat(s.startTime) : undefined,
+        endTime: s.endTime ? parseFloat(s.endTime) : undefined,
+        order: i,
+      }));
+
+    submitLesson.mutate(
+      {
+        languageId: selectedLanguage,
+        courseId: selectedCourse ?? undefined,
+        title: title.trim(),
+        description: description.trim(),
+        audioUri: store.audioUri,
+        duration: store.audioDuration > 0 ? Math.round(store.audioDuration) : undefined,
+        segments: segmentInputs,
+      },
+      {
+        onSuccess: () => {
+          Alert.alert(
+            "Submitted!",
+            "Your lesson has been submitted for review.",
+            [{ text: "OK", onPress: () => router.back() }]
+          );
+        },
+        onError: (err) => {
+          Alert.alert("Error", err.message || "Failed to submit. Please try again.");
+        },
+      }
+    );
+  };
+
+  const canGoNext = () => {
+    switch (step) {
+      case "language": return !!selectedLanguage;
+      case "course": return true;
+      case "details": return title.trim().length > 0 && description.trim().length > 0;
+      case "audio": return !!store.audioUri;
+      case "transcript": return segments.some((s) => s.text.trim().length > 0);
+      default: return false;
+    }
+  };
+
+  const goNext = () => {
+    const nextIndex = currentIndex + 1;
+    if (nextIndex >= STEPS.length) return;
+    if (step === "language" && selectedLanguage) fetchCourses(selectedLanguage);
+    setStep(STEPS[nextIndex]);
+  };
+
+  const goBack = () => {
+    const prevIndex = currentIndex - 1;
+    if (prevIndex < 0) return;
+    setStep(STEPS[prevIndex]);
+  };
+
+  return (
+    <>
+      <Stack.Screen options={{ title: "Contribute a Lesson", presentation: "modal" }} />
+      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          className="flex-1"
+        >
+          {/* Step indicator */}
+          <View className="border-b border-neutral-100 px-5 pb-3 pt-2 dark:border-neutral-800">
+            <View className="flex-row items-center justify-between">
+              {STEPS.map((s, i) => {
+                const meta = STEP_META[s];
+                const isActive = i === currentIndex;
+                const isDone = i < currentIndex;
+                return (
+                  <View key={s} className="items-center" style={{ flex: 1 }}>
+                    <View
+                      className={`h-8 w-8 items-center justify-center rounded-full ${
+                        isActive
+                          ? "bg-blue-500"
+                          : isDone
+                            ? "bg-green-500"
+                            : "bg-neutral-200 dark:bg-neutral-700"
+                      }`}
+                    >
+                      {isDone ? (
+                        <IconSymbol name="checkmark" size={14} color="white" />
+                      ) : (
+                        <IconSymbol
+                          name={meta.icon as any}
+                          size={14}
+                          color={isActive ? "white" : "#9ca3af"}
+                        />
+                      )}
+                    </View>
+                    <Text
+                      className={`mt-1 text-[10px] ${
+                        isActive
+                          ? "font-semibold text-blue-600 dark:text-blue-400"
+                          : isDone
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-neutral-400 dark:text-neutral-500"
+                      }`}
+                    >
+                      {meta.label}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+            {/* Connecting line */}
+            <View className="absolute left-[10%] right-[10%] top-[18px] z-[-1] h-[2px] bg-neutral-200 dark:bg-neutral-700" />
+          </View>
+
+          <ScrollView
+            className="flex-1 px-5 pt-4"
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* ── Step 1: Language ── */}
+            {step === "language" && (
+              <View>
+                <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
+                  Which language?
+                </Text>
+                <Text className="mb-5 text-sm text-neutral-500 dark:text-neutral-400">
+                  Choose the language for this lesson
+                </Text>
+                {LANGUAGES.map((lang) => (
+                  <Pressable
+                    key={lang.id}
+                    onPress={() => setSelectedLanguage(lang.id)}
+                    className={`mb-2.5 flex-row items-center rounded-2xl p-4 ${
+                      selectedLanguage === lang.id
+                        ? "bg-blue-50 dark:bg-blue-950"
+                        : "bg-neutral-50 dark:bg-neutral-800"
+                    }`}
+                  >
+                    <View className={`mr-3 h-10 w-10 items-center justify-center rounded-full ${
+                      selectedLanguage === lang.id
+                        ? "bg-blue-500"
+                        : "bg-neutral-200 dark:bg-neutral-700"
+                    }`}>
+                      <Text className={`text-sm font-bold ${
+                        selectedLanguage === lang.id ? "text-white" : "text-neutral-500 dark:text-neutral-400"
+                      }`}>
+                        {lang.name.slice(0, 2).toUpperCase()}
+                      </Text>
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+                        {lang.name}
+                      </Text>
+                      <Text className="text-xs text-neutral-500 dark:text-neutral-400">
+                        {lang.nativeName} · {lang.region}
+                      </Text>
+                    </View>
+                    {selectedLanguage === lang.id && (
+                      <IconSymbol name="checkmark.circle.fill" size={22} color="#3b82f6" />
+                    )}
+                  </Pressable>
+                ))}
+              </View>
+            )}
+
+            {/* ── Step 2: Course ── */}
+            {step === "course" && (
+              <View>
+                <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
+                  Assign to a course
+                </Text>
+                <Text className="mb-5 text-sm text-neutral-500 dark:text-neutral-400">
+                  Optional — reviewers can assign later
+                </Text>
+
+                {loadingCourses ? (
+                  <View className="items-center py-12">
+                    <ActivityIndicator size="large" color="#3b82f6" />
+                    <Text className="mt-3 text-sm text-neutral-400">Loading courses...</Text>
+                  </View>
+                ) : (
+                  <>
+                    <Pressable
+                      onPress={() => setSelectedCourse(null)}
+                      className={`mb-2.5 flex-row items-center rounded-2xl p-4 ${
+                        selectedCourse === null
+                          ? "bg-blue-50 dark:bg-blue-950"
+                          : "bg-neutral-50 dark:bg-neutral-800"
+                      }`}
+                    >
+                      <View className={`mr-3 h-10 w-10 items-center justify-center rounded-full ${
+                        selectedCourse === null ? "bg-blue-500" : "bg-neutral-200 dark:bg-neutral-700"
+                      }`}>
+                        <IconSymbol name="tray.fill" size={16} color={selectedCourse === null ? "white" : "#9ca3af"} />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+                          Unsorted
+                        </Text>
+                        <Text className="text-xs text-neutral-500 dark:text-neutral-400">
+                          Reviewer will choose the best course
+                        </Text>
+                      </View>
+                      {selectedCourse === null && (
+                        <IconSymbol name="checkmark.circle.fill" size={22} color="#3b82f6" />
+                      )}
+                    </Pressable>
+
+                    {courses.map((course) => (
+                      <Pressable
+                        key={course.id}
+                        onPress={() => setSelectedCourse(course.id)}
+                        className={`mb-2.5 flex-row items-center rounded-2xl p-4 ${
+                          selectedCourse === course.id
+                            ? "bg-blue-50 dark:bg-blue-950"
+                            : "bg-neutral-50 dark:bg-neutral-800"
+                        }`}
+                      >
+                        <View className={`mr-3 h-10 w-10 items-center justify-center rounded-full ${
+                          selectedCourse === course.id ? "bg-blue-500" : "bg-neutral-200 dark:bg-neutral-700"
+                        }`}>
+                          <IconSymbol name="book.fill" size={16} color={selectedCourse === course.id ? "white" : "#9ca3af"} />
+                        </View>
+                        <View className="flex-1">
+                          <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+                            {course.title}
+                          </Text>
+                          <Text className="text-xs text-neutral-500 dark:text-neutral-400">
+                            {course.level}
+                          </Text>
+                        </View>
+                        {selectedCourse === course.id && (
+                          <IconSymbol name="checkmark.circle.fill" size={22} color="#3b82f6" />
+                        )}
+                      </Pressable>
+                    ))}
+                  </>
+                )}
+              </View>
+            )}
+
+            {/* ── Step 3: Details ── */}
+            {step === "details" && (
+              <View>
+                <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
+                  Lesson info
+                </Text>
+                <Text className="mb-5 text-sm text-neutral-500 dark:text-neutral-400">
+                  What will learners get from this lesson?
+                </Text>
+
+                <View className="mb-4">
+                  <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                    Title
+                  </Text>
+                  <TextInput
+                    value={title}
+                    onChangeText={setTitle}
+                    placeholder="e.g. Greetings & Introductions"
+                    placeholderTextColor="#9ca3af"
+                    className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                    autoFocus
+                  />
+                </View>
+
+                <View className="mb-4">
+                  <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                    Description
+                  </Text>
+                  <TextInput
+                    value={description}
+                    onChangeText={setDescription}
+                    placeholder="What will learners learn in this lesson?"
+                    placeholderTextColor="#9ca3af"
+                    multiline
+                    numberOfLines={4}
+                    className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                    style={{ minHeight: 120, textAlignVertical: "top" }}
+                  />
+                </View>
+              </View>
+            )}
+
+            {/* ── Step 4: Audio ── */}
+            {step === "audio" && (
+              <View>
+                <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
+                  Add audio
+                </Text>
+                <Text className="mb-5 text-sm text-neutral-500 dark:text-neutral-400">
+                  Upload an audio file or record directly
+                </Text>
+
+                {store.audioUri ? (
+                  <View className="items-center rounded-2xl bg-green-50 p-8 dark:bg-green-950">
+                    <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
+                      <IconSymbol name="checkmark" size={28} color="#22c55e" />
+                    </View>
+                    <Text className="text-lg font-bold text-green-700 dark:text-green-400">
+                      Audio ready
+                    </Text>
+                    {store.audioDuration > 0 && (
+                      <Text className="mt-1 text-sm text-green-600 dark:text-green-500">
+                        {formatTime(store.audioDuration)}
+                      </Text>
+                    )}
+                    {/* Inline preview */}
+                    <Pressable
+                      onPress={store.isPlaying ? store.pause : store.play}
+                      className="mt-4 flex-row items-center rounded-full bg-green-600 px-5 py-2.5"
+                    >
+                      <IconSymbol
+                        name={store.isPlaying ? "pause.fill" : "play.fill"}
+                        size={14}
+                        color="white"
+                      />
+                      <Text className="ml-2 text-sm font-semibold text-white">
+                        {store.isPlaying ? "Pause" : "Preview"}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => {
+                        store.unload();
+                        store.reset();
+                      }}
+                      className="mt-3"
+                    >
+                      <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+                        Choose different audio
+                      </Text>
+                    </Pressable>
+                  </View>
+                ) : (
+                  <View className="gap-3">
+                    <Pressable
+                      onPress={handlePickAudio}
+                      className="flex-row items-center rounded-2xl bg-blue-50 p-5 active:opacity-80 dark:bg-blue-950"
+                    >
+                      <View className="mr-4 h-12 w-12 items-center justify-center rounded-xl bg-blue-500">
+                        <IconSymbol name="folder.fill" size={22} color="white" />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+                          Choose a file
+                        </Text>
+                        <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
+                          Supports mp3, m4a, wav
+                        </Text>
+                      </View>
+                      <IconSymbol name="chevron.right" size={16} color="#3b82f6" />
+                    </Pressable>
+
+                    <Pressable
+                      onPress={handleRecord}
+                      className={`flex-row items-center rounded-2xl p-5 active:opacity-80 ${
+                        store.isRecording
+                          ? "bg-red-50 dark:bg-red-950"
+                          : "bg-neutral-50 dark:bg-neutral-800"
+                      }`}
+                    >
+                      <View className={`mr-4 h-12 w-12 items-center justify-center rounded-xl ${
+                        store.isRecording ? "bg-red-500" : "bg-red-100 dark:bg-red-900"
+                      }`}>
+                        {store.isRecording ? (
+                          <View className="h-5 w-5 rounded-sm bg-white" />
+                        ) : (
+                          <IconSymbol name="mic.fill" size={22} color="#ef4444" />
+                        )}
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+                          {store.isRecording ? "Stop recording" : "Record audio"}
+                        </Text>
+                        <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
+                          {store.isRecording
+                            ? `Recording... ${store.recordingDuration}s`
+                            : "Tap to start recording"}
+                        </Text>
+                      </View>
+                      {store.isRecording && (
+                        <View className="h-3 w-3 rounded-full bg-red-500" />
+                      )}
+                    </Pressable>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* ── Step 5: Transcript ── */}
+            {step === "transcript" && (
+              <View>
+                <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
+                  Add transcript
+                </Text>
+                <Text className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
+                  Type what&apos;s said in the audio. Use Mark to sync timing while playing.
+                </Text>
+
+                {/* Playback controls */}
+                <View className="mb-5 rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
+                  <View className="flex-row items-center">
+                    <Pressable
+                      onPress={store.isPlaying ? store.pause : store.play}
+                      className="mr-4 h-12 w-12 items-center justify-center rounded-full bg-blue-500 active:opacity-80"
+                    >
+                      <IconSymbol
+                        name={store.isPlaying ? "pause.fill" : "play.fill"}
+                        size={18}
+                        color="white"
+                      />
+                    </Pressable>
+                    <View className="flex-1">
+                      <View className="flex-row items-center justify-between">
+                        <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
+                          {formatTime(store.playbackPosition)}
+                        </Text>
+                        <Text className="text-xs text-neutral-400 dark:text-neutral-500">
+                          {formatTime(store.audioDuration)}
+                        </Text>
+                      </View>
+                      <View className="mt-1.5 h-2 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
+                        <View
+                          className="h-2 rounded-full bg-blue-500"
+                          style={{
+                            width: store.audioDuration > 0
+                              ? `${(store.playbackPosition / store.audioDuration) * 100}%`
+                              : "0%",
+                          }}
+                        />
+                      </View>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Segments */}
+                {segments.map((seg, index) => (
+                  <View
+                    key={index}
+                    className="mb-3 overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-700"
+                  >
+                    {/* Segment header */}
+                    <View className="flex-row items-center justify-between bg-neutral-50 px-4 py-2.5 dark:bg-neutral-800">
+                      <View className="flex-row items-center">
+                        <View className="mr-2 h-6 w-6 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
+                          <Text className="text-xs font-bold text-blue-700 dark:text-blue-300">
+                            {index + 1}
+                          </Text>
+                        </View>
+                        {seg.startTime ? (
+                          <Text className="text-xs text-neutral-500 dark:text-neutral-400">
+                            {seg.startTime}s — {seg.endTime || "..."}s
+                          </Text>
+                        ) : (
+                          <Text className="text-xs text-neutral-400 dark:text-neutral-500">
+                            No timing set
+                          </Text>
+                        )}
+                      </View>
+                      <View className="flex-row items-center gap-1.5">
+                        <Pressable
+                          onPress={() => handleMarkSegment(index)}
+                          className="flex-row items-center rounded-full bg-blue-500 px-3 py-1.5 active:opacity-80"
+                        >
+                          <IconSymbol name="hand.tap.fill" size={12} color="white" />
+                          <Text className="ml-1 text-xs font-semibold text-white">
+                            Mark
+                          </Text>
+                        </Pressable>
+                        {segments.length > 1 && (
+                          <Pressable
+                            onPress={() => removeSegment(index)}
+                            className="rounded-full bg-neutral-200 p-1.5 dark:bg-neutral-700"
+                          >
+                            <IconSymbol name="xmark" size={10} color="#9ca3af" />
+                          </Pressable>
+                        )}
+                      </View>
+                    </View>
+
+                    {/* Segment body */}
+                    <View className="p-3">
+                      <TextInput
+                        value={seg.text}
+                        onChangeText={(v) => updateSegment(index, "text", v)}
+                        placeholder="Spoken text in the language..."
+                        placeholderTextColor="#9ca3af"
+                        multiline
+                        className="mb-2 min-h-[40px] rounded-xl bg-neutral-50 px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-800 dark:text-white"
+                      />
+                      <TextInput
+                        value={seg.translation}
+                        onChangeText={(v) => updateSegment(index, "translation", v)}
+                        placeholder="English translation (optional)"
+                        placeholderTextColor="#9ca3af"
+                        multiline
+                        className="mb-2 min-h-[36px] rounded-xl bg-neutral-50 px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-800 dark:text-white"
+                      />
+
+                      {/* Time inputs row */}
+                      <View className="flex-row gap-2">
+                        <View className="flex-1 flex-row items-center rounded-xl bg-neutral-50 px-3 dark:bg-neutral-800">
+                          <Text className="mr-2 text-xs text-neutral-400">Start</Text>
+                          <TextInput
+                            value={seg.startTime}
+                            onChangeText={(v) => updateSegment(index, "startTime", v)}
+                            placeholder="0.0"
+                            placeholderTextColor="#9ca3af"
+                            keyboardType="decimal-pad"
+                            className="flex-1 py-2 text-sm text-neutral-900 dark:text-white"
+                          />
+                        </View>
+                        <View className="flex-1 flex-row items-center rounded-xl bg-neutral-50 px-3 dark:bg-neutral-800">
+                          <Text className="mr-2 text-xs text-neutral-400">End</Text>
+                          <TextInput
+                            value={seg.endTime}
+                            onChangeText={(v) => updateSegment(index, "endTime", v)}
+                            placeholder="0.0"
+                            placeholderTextColor="#9ca3af"
+                            keyboardType="decimal-pad"
+                            className="flex-1 py-2 text-sm text-neutral-900 dark:text-white"
+                          />
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                ))}
+
+                <Pressable
+                  onPress={addSegment}
+                  className="mb-8 flex-row items-center justify-center rounded-2xl border-2 border-dashed border-neutral-200 py-4 active:opacity-70 dark:border-neutral-700"
+                >
+                  <IconSymbol name="plus.circle.fill" size={18} color="#3b82f6" />
+                  <Text className="ml-2 text-sm font-semibold text-blue-600 dark:text-blue-400">
+                    Add segment
+                  </Text>
+                </Pressable>
+              </View>
+            )}
+          </ScrollView>
+
+          {/* Bottom bar */}
+          <View className="border-t border-neutral-100 px-5 py-4 dark:border-neutral-800">
+            {/* Summary chips */}
+            {step === "transcript" && selectedLanguage && (
+              <View className="mb-3 flex-row flex-wrap gap-2">
+                <View className="rounded-full bg-neutral-100 px-3 py-1 dark:bg-neutral-800">
+                  <Text className="text-xs text-neutral-600 dark:text-neutral-400">
+                    {getLanguageName(selectedLanguage)}
+                  </Text>
+                </View>
+                <View className="rounded-full bg-neutral-100 px-3 py-1 dark:bg-neutral-800">
+                  <Text className="text-xs text-neutral-600 dark:text-neutral-400">
+                    {title || "Untitled"}
+                  </Text>
+                </View>
+                <View className="rounded-full bg-neutral-100 px-3 py-1 dark:bg-neutral-800">
+                  <Text className="text-xs text-neutral-600 dark:text-neutral-400">
+                    {segments.filter((s) => s.text.trim()).length} segments
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            <View className="flex-row gap-3">
+              {currentIndex > 0 && (
+                <Pressable
+                  onPress={goBack}
+                  className="flex-row items-center justify-center rounded-2xl bg-neutral-100 px-5 py-3.5 active:opacity-80 dark:bg-neutral-800"
+                >
+                  <IconSymbol name="chevron.left" size={14} color="#6b7280" />
+                  <Text className="ml-1 font-semibold text-neutral-700 dark:text-neutral-300">
+                    Back
+                  </Text>
+                </Pressable>
+              )}
+              {step !== "transcript" ? (
+                <Pressable
+                  onPress={goNext}
+                  disabled={!canGoNext()}
+                  className={`flex-1 flex-row items-center justify-center rounded-2xl py-3.5 active:opacity-80 ${
+                    canGoNext() ? "bg-blue-500" : "bg-blue-200 dark:bg-blue-900"
+                  }`}
+                >
+                  <Text className="font-semibold text-white">Continue</Text>
+                  <IconSymbol name="chevron.right" size={14} color="white" />
+                </Pressable>
+              ) : (
+                <Pressable
+                  onPress={handleSubmit}
+                  disabled={submitLesson.isPending || !segments.some((s) => s.text.trim())}
+                  className={`flex-1 flex-row items-center justify-center rounded-2xl py-3.5 active:opacity-80 ${
+                    !submitLesson.isPending && segments.some((s) => s.text.trim())
+                      ? "bg-blue-500"
+                      : "bg-blue-200 dark:bg-blue-900"
+                  }`}
+                >
+                  {submitLesson.isPending ? (
+                    <ActivityIndicator size="small" color="white" />
+                  ) : (
+                    <>
+                      <IconSymbol name="paperplane.fill" size={14} color="white" />
+                      <Text className="ml-2 font-semibold text-white">Submit Lesson</Text>
+                    </>
+                  )}
+                </Pressable>
+              )}
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </>
+  );
+}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { View, Text, Pressable, FlatList, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter, useLocalSearchParams } from "expo-router";
@@ -11,8 +11,9 @@ import type { Lesson } from "@/types";
 export default function AssignLessonScreen() {
   const router = useRouter();
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
-  const group = useClassroomStore((s) => s.getGroup(groupId));
+  const groups = useClassroomStore((s) => s.groups);
   const addAssignment = useClassroomStore((s) => s.addAssignment);
+  const group = useMemo(() => groups.find((g) => g.id === groupId), [groups, groupId]);
   const [selected, setSelected] = useState<string | null>(null);
 
   const { data: allLessons = [], isLoading } = useLanguageLessons(group?.languageId ?? "");

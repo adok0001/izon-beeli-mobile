@@ -101,7 +101,11 @@ export default function RootLayout() {
                 name="contribute"
                 options={{ presentation: "modal", headerShown: false }}
               />
-<Stack.Screen
+              <Stack.Screen
+                name="contribute-lesson"
+                options={{ presentation: "modal", headerShown: false }}
+              />
+              <Stack.Screen
                 name="settings"
                 options={{ headerBackTitle: "Back" }}
               />
