@@ -1,0 +1,10 @@
+{
+  "$schema": "https://www.partykit.io/schema.json",
+  "name": "izon-beeli-multiplayer",
+  "compatibilityDate": "2026-03-08",
+  "main": "src/quiz-battle.ts",
+  "parties": {
+    "paired_lesson": "src/paired-lesson.ts",
+    "matchmaking": "src/matchmaking.ts"
+  }
+}

@@ -1,15 +1,15 @@
+import { SymbolOfTheDay } from "@/components/adinkra/symbol-of-the-day";
+import { CulturalSection } from "@/components/cultural/cultural-section";
 import { LanguagePickerButton } from "@/components/language-picker";
+import { NotificationBell } from "@/components/notifications/notification-center";
+import { ProverbOfTheDay } from "@/components/proverb-of-the-day";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { WordOfTheDay } from "@/components/word-of-the-day";
-import { ProverbOfTheDay } from "@/components/proverb-of-the-day";
-import { CulturalSection } from "@/components/cultural/cultural-section";
-import { SymbolOfTheDay } from "@/components/adinkra/symbol-of-the-day";
-import { NotificationBell } from "@/components/notifications/notification-center";
+import { getStoryForCourse } from "@/lib/data/stories";
+import { useCourseLessons, useCourses } from "@/lib/hooks/use-courses";
 import { useCompletedLessons, useProgressSummary } from "@/lib/hooks/use-progress";
-import { useCourses, useCourseLessons } from "@/lib/hooks/use-courses";
 import { formatDuration } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
-import { getStoryForCourse } from "@/lib/data/stories";
 import type { Course, Lesson } from "@/types";
 import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
@@ -225,6 +225,29 @@ export default function LearnScreen() {
           renderItem={({ item }) => <CourseCard course={item} completedIds={completedIds} />}
           ListHeaderComponent={
             <View className="mb-4 gap-3">
+              <Pressable
+                onPress={() => router.push("/multiplayer")}
+                className="rounded-2xl bg-gradient-to-r from-blue-50 to-purple-50 p-4 active:opacity-70 dark:from-blue-950 dark:to-purple-950"
+                style={{ backgroundColor: '#123499' }}
+              >
+                <View className="flex-row items-center">
+                  <View className="mr-3 h-12 w-12 items-center justify-center rounded-xl bg-blue-500">
+                    <IconSymbol name="trophy.fill" size={24} color="#fff" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+                      Multiplayer
+                    </Text>
+                    <Text className="text-base font-bold text-neutral-900 dark:text-white">
+                      Quiz Battle & Paired Lessons
+                    </Text>
+                    <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+                      Challenge friends or find an opponent
+                    </Text>
+                  </View>
+                  <IconSymbol name="chevron.right" size={16} color="#3b82f6" />
+                </View>
+              </Pressable>
               <WordOfTheDay languageId={selectedLanguageId} />
               <ProverbOfTheDay languageId={selectedLanguageId} />
               <CulturalSection languageId={selectedLanguageId} onViewAll={() => router.push(`/cultural/${selectedLanguageId}` as any)} />

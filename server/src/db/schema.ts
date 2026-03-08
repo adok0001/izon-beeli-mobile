@@ -382,6 +382,94 @@ export const lessonContributionSegments = pgTable(
   ]
 );
 
+// ---------- Multiplayer ----------
+
+export const gameSessionTypeEnum = pgEnum("game_session_type", [
+  "quiz_battle",
+  "paired_lesson",
+]);
+
+export const gameSessionStatusEnum = pgEnum("game_session_status", [
+  "waiting",
+  "active",
+  "completed",
+  "abandoned",
+]);
+
+export const matchmakingStatusEnum = pgEnum("matchmaking_status", [
+  "queued",
+  "matched",
+  "cancelled",
+]);
+
+export const gameSessions = pgTable("game_sessions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  type: gameSessionTypeEnum("type").notNull(),
+  status: gameSessionStatusEnum("status").default("waiting").notNull(),
+  inviteCode: varchar("invite_code", { length: 8 }).unique(),
+  languageId: varchar("language_id", { length: 64 }).notNull(),
+  courseId: varchar("course_id", { length: 64 }),
+  lessonId: varchar("lesson_id", { length: 64 }),
+  partyRoomId: varchar("party_room_id", { length: 128 }).notNull(),
+  createdBy: uuid("created_by")
+    .references(() => users.id)
+    .notNull(),
+  questionCount: integer("question_count").default(10).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+});
+
+export const gameSessionPlayers = pgTable(
+  "game_session_players",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    sessionId: uuid("session_id")
+      .references(() => gameSessions.id)
+      .notNull(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    score: integer("score").default(0).notNull(),
+    correctAnswers: integer("correct_answers").default(0).notNull(),
+    totalAnswers: integer("total_answers").default(0).notNull(),
+    finishedAt: timestamp("finished_at"),
+    joinedAt: timestamp("joined_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("game_session_players_session_user_idx").on(
+      table.sessionId,
+      table.userId
+    ),
+  ]
+);
+
+export const matchmakingQueue = pgTable(
+  "matchmaking_queue",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull()
+      .unique(),
+    type: gameSessionTypeEnum("type").notNull(),
+    languageId: varchar("language_id", { length: 64 }).notNull(),
+    courseId: varchar("course_id", { length: 64 }),
+    status: matchmakingStatusEnum("status").default("queued").notNull(),
+    matchedSessionId: uuid("matched_session_id").references(
+      () => gameSessions.id
+    ),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("matchmaking_queue_type_lang_status_idx").on(
+      table.type,
+      table.languageId,
+      table.status
+    ),
+  ]
+);
+
 // ---------- Feedback ----------
 
 export const feedback = pgTable("feedback", {
@@ -431,3 +519,25 @@ export const commentsRelations = relations(comments, ({ one }) => ({
     references: [feedItems.id],
   }),
 }));
+
+export const gameSessionsRelations = relations(gameSessions, ({ one, many }) => ({
+  createdByUser: one(users, {
+    fields: [gameSessions.createdBy],
+    references: [users.id],
+  }),
+  players: many(gameSessionPlayers),
+}));
+
+export const gameSessionPlayersRelations = relations(
+  gameSessionPlayers,
+  ({ one }) => ({
+    session: one(gameSessions, {
+      fields: [gameSessionPlayers.sessionId],
+      references: [gameSessions.id],
+    }),
+    user: one(users, {
+      fields: [gameSessionPlayers.userId],
+      references: [users.id],
+    }),
+  })
+);

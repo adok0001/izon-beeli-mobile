@@ -17,6 +17,7 @@ import { culturalRouter } from "./routes/cultural.js";
 import { sentencesRouter } from "./routes/sentences.js";
 import { feedbackRouter } from "./routes/feedback.js";
 import { lessonContributionsRouter } from "./routes/lesson-contributions.js";
+import { multiplayerRouter, multiplayerInternalRouter } from "./routes/multiplayer.js";
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -69,5 +70,7 @@ app.route("/contributions", contributionsRouter);
 app.route("/lesson-contributions", lessonContributionsRouter);
 app.route("/wordbank", wordbankRouter);
 app.route("/feedback", feedbackRouter);
+app.route("/multiplayer", multiplayerRouter);
+app.route("/multiplayer", multiplayerInternalRouter);
 
 export default app;

@@ -165,6 +165,10 @@ export default function RootLayout() {
                 name="classroom/assign"
                 options={{ presentation: "modal", headerShown: false }}
               />
+              <Stack.Screen
+                name="multiplayer"
+                options={{ headerShown: false }}
+              />
             </Stack>
             <StatusBar style="auto" />
             </AuthGate>

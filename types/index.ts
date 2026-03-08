@@ -317,3 +317,49 @@ export interface QuizResult {
   timeElapsed: number; // seconds
   answeredQuestions: AnsweredQuestion[];
 }
+
+// --- Multiplayer ---
+
+export type GameSessionType = "quiz_battle" | "paired_lesson";
+export type GameSessionStatus = "waiting" | "active" | "completed" | "abandoned";
+
+export interface GameSession {
+  id: string;
+  type: GameSessionType;
+  status: GameSessionStatus;
+  inviteCode: string | null;
+  languageId: string;
+  courseId: string | null;
+  lessonId: string | null;
+  partyRoomId: string;
+  createdBy: string;
+  questionCount: number;
+  createdAt: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  players?: GameSessionPlayer[];
+}
+
+export interface GameSessionPlayer {
+  id: string;
+  userId: string;
+  userName?: string;
+  userAvatarUrl?: string | null;
+  score: number;
+  correctAnswers: number;
+  totalAnswers: number;
+  joinedAt: string;
+  finishedAt: string | null;
+}
+
+export interface MultiplayerMessage {
+  type: string;
+  [key: string]: any;
+}
+
+export type MultiplayerPhase =
+  | "lobby"
+  | "countdown"
+  | "playing"
+  | "between_questions"
+  | "results";
