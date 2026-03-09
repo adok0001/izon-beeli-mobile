@@ -1,5 +1,5 @@
 import { View } from "react-native";
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { BottomTabBarProps, BottomTabBar } from "@react-navigation/bottom-tabs";
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -11,7 +11,9 @@ import { useSyncUser } from "@/lib/hooks/use-sync-user";
 import { useNotificationStore } from "@/store/notification-store";
 import { useDailyReminder } from "@/lib/hooks/use-daily-reminder";
 import { useLanguageStore } from "@/store/language-store";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ONBOARDING_KEY } from "@/app/(onboarding)/index";
 
 function TabBarWithPlayer(props: BottomTabBarProps) {
   const { currentTrackId } = useAudioStore();
@@ -25,14 +27,26 @@ function TabBarWithPlayer(props: BottomTabBarProps) {
 }
 
 export default function TabLayout() {
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const { selectedLanguageId } = useLanguageStore();
   useSyncUser();
   useDailyReminder(selectedLanguageId);
 
   const hydrateNotifications = useNotificationStore((s) => s.hydrate);
+  const onboardingChecked = useRef(false);
+
   useEffect(() => {
     hydrateNotifications();
+  }, []);
+
+  // One-time onboarding gate: redirect to onboarding if not yet completed
+  useEffect(() => {
+    if (onboardingChecked.current) return;
+    onboardingChecked.current = true;
+    AsyncStorage.getItem(ONBOARDING_KEY).then((val) => {
+      if (!val) router.replace("/(onboarding)");
+    }).catch(() => {});
   }, []);
 
   return (

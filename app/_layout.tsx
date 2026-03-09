@@ -11,7 +11,6 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef } from "react";
 import "react-native-reanimated";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { tokenCache } from "@/lib/auth";
@@ -26,7 +25,6 @@ import {
   addNotificationListener,
 } from "@/lib/push-notifications";
 import { useNotificationStore } from "@/store/notification-store";
-import { ONBOARDING_KEY } from "./(onboarding)/index";
 
 const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -71,28 +69,20 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       queryClient.clear();
     }
 
-    const inAuthGroup = segments[0] === "(auth)";
-    const inOnboarding = segments[0] === "(onboarding)";
+    // Cast away typed-routes narrowing so we can detect the root index
+    // screen, where segments[0] is undefined at runtime.
+    const seg0 = (segments as readonly string[])[0];
+    const inAuthGroup = seg0 === "(auth)";
+    const inDeepRoute = !!seg0 && seg0 !== "(auth)";
 
     if (!isSignedIn) {
       if (!inAuthGroup) router.replace("/(auth)/sign-in");
       return;
     }
 
-    // Signed in — check onboarding then redirect
-    if (inAuthGroup) {
-      AsyncStorage.getItem(ONBOARDING_KEY)
-        .then((val) => {
-          router.replace(val ? "/(tabs)/learn" : "/(onboarding)");
-        })
-        .catch(() => router.replace("/(tabs)/learn"));
-    } else if (!inOnboarding && segments[0] === "index") {
-      // index screen rendered; redirect to appropriate destination
-      AsyncStorage.getItem(ONBOARDING_KEY)
-        .then((val) => {
-          router.replace(val ? "/(tabs)/learn" : "/(onboarding)");
-        })
-        .catch(() => router.replace("/(tabs)/learn"));
+    // Signed in: redirect from auth screens OR the root index (seg0 is empty)
+    if (inAuthGroup || !inDeepRoute) {
+      router.replace("/(tabs)/learn");
     }
   }, [isSignedIn, isLoaded, segments, router]);
 
@@ -102,7 +92,6 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const hydrateTheme = useThemeStore((s) => s.hydrate);
-  const themeHydrated = useThemeStore((s) => s._hydrated);
   const hydrateLanguage = useLanguageStore((s) => s.hydrate);
 
   useEffect(() => {
@@ -132,7 +121,7 @@ export default function RootLayout() {
             <Stack>
               <Stack.Screen name="index" options={{ headerShown: false }} />
               <Stack.Screen
-                name="(onboarding)"
+                name="(onboarding)/index"
                 options={{ headerShown: false }}
               />
               <Stack.Screen
