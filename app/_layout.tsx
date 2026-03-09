@@ -220,6 +220,10 @@ export default function RootLayout() {
                 name="multiplayer"
                 options={{ headerShown: false }}
               />
+              <Stack.Screen
+                name="dashboard"
+                options={{ headerBackTitle: "Back" }}
+              />
             </Stack>
             <StatusBar style="auto" />
             </AuthGate>

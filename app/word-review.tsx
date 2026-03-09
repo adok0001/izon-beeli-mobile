@@ -6,7 +6,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useWordsDueForReview, useReviewWord } from "@/lib/hooks/use-wordbank";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { useLanguageStore } from "@/store/language-store";
-import { hapticSuccess, hapticError } from "@/lib/haptics";
+import { hapticSuccess, hapticError, hapticTap } from "@/lib/haptics";
+import { playCorrectSound, playIncorrectSound } from "@/lib/sounds";
 import type { DictionaryEntry } from "@/lib/dictionary";
 
 type CardFace = "question" | "answer";
@@ -134,8 +135,15 @@ export default function WordReviewScreen() {
   const handleRate = useCallback(
     (confidence: "easy" | "hard" | "again") => {
       if (!currentEntry) return;
-      if (confidence === "easy") hapticSuccess();
-      else hapticError();
+      if (confidence === "easy") {
+        hapticSuccess();
+        playCorrectSound().catch(() => {});
+      } else if (confidence === "hard") {
+        hapticTap();
+      } else {
+        hapticError();
+        playIncorrectSound().catch(() => {});
+      }
 
       reviewWord.mutate(
         { dictionaryEntryId: currentEntry.id, confidence },

@@ -3,6 +3,8 @@ import { eq, and, lte } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { wordBank } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
+import { awardXP } from "../lib/award-xp.js";
+import { incrementDailyChallenge } from "../lib/daily-challenge.js";
 
 export const wordbankRouter = new Hono<AuthEnv>();
 
@@ -148,7 +150,17 @@ wordbankRouter.post("/:entryId/review", async (c) => {
     .set({ confidence: newConfidence, reviewCount, lastReviewedAt: now, nextReviewAt })
     .where(and(eq(wordBank.userId, userId), eq(wordBank.dictionaryEntryId, entryId)));
 
-  return c.json({ nextReviewAt: nextReviewAt.toISOString() });
+  // Award XP + increment daily challenge (fire-and-forget)
+  const xpResult = await awardXP(userId, 5, "word_review").catch(() => null);
+  incrementDailyChallenge(userId, "review_words").catch(() => {});
+
+  return c.json({
+    nextReviewAt: nextReviewAt.toISOString(),
+    xpEarned: 5,
+    totalPoints: xpResult?.totalPoints,
+    leveledUp: xpResult?.leveledUp ?? false,
+    newLevel: xpResult?.newLevel,
+  });
 });
 
 // DELETE /api/wordbank/:entryId - remove a saved word

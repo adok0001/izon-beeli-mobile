@@ -15,6 +15,14 @@ import {
 
 // ---------- Enums ----------
 
+export const challengeTypeEnum = pgEnum("challenge_type", [
+  "complete_quiz",
+  "review_words",
+  "listen_lesson",
+  "complete_lesson",
+  "save_words",
+]);
+
 export const feedItemTypeEnum = pgEnum("feed_item_type", [
   "lesson_completed",
   "achievement",
@@ -59,6 +67,7 @@ export const users = pgTable("users", {
   points: integer("points").default(0).notNull(),
   lastActiveDate: varchar("last_active_date", { length: 10 }), // YYYY-MM-DD
   selectedLanguageId: varchar("selected_language_id", { length: 32 }),
+  dailyGoal: varchar("daily_goal", { length: 16 }), // "casual" | "steady" | "intensive"
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -573,6 +582,32 @@ export const pushTokens = pgTable(
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (t) => [uniqueIndex("push_tokens_user_token_idx").on(t.userId, t.token)]
+);
+
+// ---------- Daily Challenges ----------
+
+export const dailyChallenges = pgTable(
+  "daily_challenges",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD
+    challengeType: challengeTypeEnum("challenge_type").notNull(),
+    title: varchar("title", { length: 200 }).notNull(),
+    description: text("description").notNull(),
+    target: integer("target").notNull(),
+    progress: integer("progress").default(0).notNull(),
+    completed: boolean("completed").default(false).notNull(),
+    xpReward: integer("xp_reward").notNull(),
+    completedAt: timestamp("completed_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("daily_challenges_user_date_idx").on(table.userId, table.date),
+    index("daily_challenges_user_id_idx").on(table.userId),
+  ]
 );
 
 // ---------- Relations ----------

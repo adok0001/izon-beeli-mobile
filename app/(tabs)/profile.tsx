@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "expo-router";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { XpLevelBadge } from "@/components/xp-level-badge";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
 import { useLanguageStore } from "@/store/language-store";
 import { getLanguageName } from "@/lib/mock-data";
@@ -97,18 +98,27 @@ export default function ProfileScreen() {
         </View>
 
         {/* Stats */}
-        <View className="flex-row gap-3 px-5 py-5">
-          <StatCard icon="flame.fill" label="Streak" value={String(summary?.streak ?? 0)} />
-          <StatCard icon="star.fill" label="Points" value={String(summary?.points ?? 0)} />
-          <StatCard
-            icon="checkmark.circle.fill"
-            label="Lessons"
-            value={String(summary?.completedCount ?? 0)}
-          />
+        <View className="px-5 pt-4 pb-2">
+          <View className="items-center mb-4">
+            <XpLevelBadge points={summary?.points ?? 0} variant="full" />
+          </View>
+          <View className="flex-row gap-3">
+            <StatCard icon="flame.fill" label="Streak" value={String(summary?.streak ?? 0)} />
+            <StatCard
+              icon="checkmark.circle.fill"
+              label="Lessons"
+              value={String(summary?.completedCount ?? 0)}
+            />
+          </View>
         </View>
 
         {/* Menu */}
         <View className="px-5">
+          <MenuRow
+            icon="chart.bar.fill"
+            label="Progress Dashboard"
+            onPress={() => router.push("/dashboard")}
+          />
           <MenuRow
             icon="book.fill"
             label="Learning"

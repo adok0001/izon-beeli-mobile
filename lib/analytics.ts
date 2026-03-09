@@ -14,7 +14,9 @@ type EventName =
   | "quiz_finished"
   | "word_saved"
   | "contribution_submitted"
-  | "multiplayer_joined";
+  | "multiplayer_joined"
+  | "daily_challenge_completed"
+  | "level_up";
 
 type EventProperties = Record<string, string | number | boolean | null | undefined>;
 
@@ -42,4 +44,8 @@ export const analytics = {
     __sendEvent("contribution_submitted", { languageId, type }),
   multiplayerJoined: (sessionId: string, type: string) =>
     __sendEvent("multiplayer_joined", { sessionId, type }),
+  dailyChallengeCompleted: (challengeType: string, xpReward: number) =>
+    __sendEvent("daily_challenge_completed", { challengeType, xpReward }),
+  levelUp: (level: number, title: string) =>
+    __sendEvent("level_up", { level, title }),
 };

@@ -16,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useAudioStore } from "@/store/audio-store";
+import { hapticSuccess } from "@/lib/haptics";
 import {
   useFeed,
   useCreatePost,
@@ -222,7 +223,10 @@ function NewPostModal({
 
   const handlePost = () => {
     if (!canPost) return;
-    createPost.mutate({ title: title.trim(), description: description.trim() });
+    createPost.mutate(
+      { title: title.trim(), description: description.trim() },
+      { onSuccess: () => hapticSuccess() }
+    );
     setTitle("");
     setDescription("");
     onClose();

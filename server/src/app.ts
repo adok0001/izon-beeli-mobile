@@ -22,6 +22,8 @@ import { quizResultsRouter } from "./routes/quiz-results.js";
 import { contributorsRouter } from "./routes/contributors.js";
 import { pushTokensRouter } from "./routes/push-tokens.js";
 import { classroomRouter } from "./routes/classroom.js";
+import { dailyChallengesRouter } from "./routes/daily-challenges.js";
+import { dashboardRouter } from "./routes/dashboard.js";
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -80,5 +82,7 @@ app.route("/multiplayer", multiplayerInternalRouter);
 app.route("/quiz-results", quizResultsRouter);
 app.route("/push-tokens", pushTokensRouter);
 app.route("/classroom", classroomRouter);
+app.route("/daily-challenges", dailyChallengesRouter);
+app.route("/dashboard", dashboardRouter);
 
 export default app;

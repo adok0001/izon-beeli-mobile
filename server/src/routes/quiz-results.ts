@@ -2,6 +2,8 @@ import { Hono } from "hono";
 import { db } from "../db/index.js";
 import { quizResults } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
+import { awardXP } from "../lib/award-xp.js";
+import { incrementDailyChallenge } from "../lib/daily-challenge.js";
 
 export const quizResultsRouter = new Hono<AuthEnv>();
 
@@ -30,5 +32,22 @@ quizResultsRouter.post("/", async (c) => {
     })
     .returning({ id: quizResults.id });
 
-  return c.json({ id: row.id }, 201);
+  // Award XP based on accuracy × questionCount
+  const xpEarned = Math.max(1, Math.round((body.accuracy / 100) * body.questionCount * 0.3));
+  const xpResult = await awardXP(userId, xpEarned, "quiz");
+
+  // Fire-and-forget: increment daily challenge
+  incrementDailyChallenge(userId, "complete_quiz").catch(() => {});
+
+  return c.json(
+    {
+      id: row.id,
+      xpEarned,
+      totalPoints: xpResult.totalPoints,
+      leveledUp: xpResult.leveledUp,
+      newLevel: xpResult.newLevel,
+      newTitle: xpResult.newTitle,
+    },
+    201
+  );
 });

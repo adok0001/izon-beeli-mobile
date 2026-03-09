@@ -92,6 +92,7 @@ usersRouter.patch("/me", authMiddleware, async (c) => {
   const body = await c.req.json<{
     name?: string;
     selectedLanguageId?: string;
+    dailyGoal?: string;
   }>();
 
   await db
@@ -101,6 +102,7 @@ usersRouter.patch("/me", authMiddleware, async (c) => {
       ...(body.selectedLanguageId
         ? { selectedLanguageId: body.selectedLanguageId }
         : {}),
+      ...(body.dailyGoal ? { dailyGoal: body.dailyGoal } : {}),
     })
     .where(eq(users.id, userId));
 

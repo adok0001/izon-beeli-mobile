@@ -1,10 +1,12 @@
 import { SymbolOfTheDay } from "@/components/adinkra/symbol-of-the-day";
 import { CulturalSection } from "@/components/cultural/cultural-section";
+import { DailyChallengeCard } from "@/components/daily-challenge-card";
 import { LanguagePickerButton } from "@/components/language-picker";
 import { NotificationBell } from "@/components/notifications/notification-center";
 import { ProverbOfTheDay } from "@/components/proverb-of-the-day";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { WordOfTheDay } from "@/components/word-of-the-day";
+import { XpLevelBadge } from "@/components/xp-level-badge";
 import { getStoryForCourse } from "@/lib/data/stories";
 import { useCourseLessons, useCourses, useLesson } from "@/lib/hooks/use-courses";
 import { useCompletedLessons, useProgressSummary } from "@/lib/hooks/use-progress";
@@ -248,12 +250,7 @@ export default function LearnScreen() {
             {summary?.streak ?? 0}
           </Text>
         </View>
-        <View className="flex-row items-center">
-          <IconSymbol name="star.fill" size={16} color="#3b82f6" />
-          <Text className="ml-1 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-            {summary?.points ?? 0}
-          </Text>
-        </View>
+        <XpLevelBadge points={summary?.points ?? 0} variant="compact" />
         <View className="flex-row items-center">
           <IconSymbol name="checkmark.circle.fill" size={16} color="#22c55e" />
           <Text className="ml-1 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
@@ -287,10 +284,10 @@ export default function LearnScreen() {
                   positionSeconds={resumeState.positionSeconds}
                 />
               )}
+              <DailyChallengeCard />
               <Pressable
                 onPress={() => router.push("/multiplayer")}
-                className="rounded-2xl bg-gradient-to-r from-blue-50 to-purple-50 p-4 active:opacity-70 dark:from-blue-950 dark:to-purple-950"
-                style={{ backgroundColor: '#123499' }}
+                className="rounded-2xl bg-[#123499] p-4 active:opacity-70 dark:bg-[#0f2670]"
               >
                 <View className="flex-row items-center">
                   <View className="mr-3 h-12 w-12 items-center justify-center rounded-xl bg-blue-500">

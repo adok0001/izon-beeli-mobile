@@ -344,3 +344,58 @@ export type MultiplayerPhase =
   | "playing"
   | "between_questions"
   | "results";
+
+// --- XP / Levels ---
+
+export interface LevelInfo {
+  level: number;
+  title: string;
+  currentXP: number;
+  xpForNextLevel: number;
+  totalXP: number;
+  progress: number; // 0-1
+}
+
+// --- Daily Challenges ---
+
+export type ChallengeType =
+  | "complete_quiz"
+  | "review_words"
+  | "listen_lesson"
+  | "complete_lesson"
+  | "save_words";
+
+export interface DailyChallenge {
+  id: string;
+  userId: string;
+  date: string; // YYYY-MM-DD
+  challengeType: ChallengeType;
+  title: string;
+  description: string;
+  target: number;
+  progress: number;
+  completed: boolean;
+  xpReward: number;
+  completedAt: string | null;
+  createdAt: string;
+}
+
+// --- Dashboard Stats ---
+
+export interface DayActivity {
+  date: string; // YYYY-MM-DD
+  lessonsCompleted: number;
+  quizAccuracy: number | null; // 0-100 or null if no quiz
+  wordsReviewed: number;
+}
+
+export interface DashboardStats {
+  weeklyActivity: DayActivity[];
+  totalLessonsThisWeek: number;
+  avgQuizAccuracyThisWeek: number | null;
+  totalWordsReviewedThisWeek: number;
+}
+
+export interface StreakCalendar {
+  activeDays: string[]; // YYYY-MM-DD
+}

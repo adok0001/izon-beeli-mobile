@@ -1,14 +1,17 @@
 import { AudioPlayer } from "@/components/audio/audio-player";
 import { InteractiveTranscript } from "@/components/audio/interactive-transcript";
+import { LevelUpModal } from "@/components/level-up-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useCompletedLessons, useCompleteLesson } from "@/lib/hooks/use-progress";
 import { useLesson } from "@/lib/hooks/use-courses";
 import { formatDuration, BUNDLED_AUDIO } from "@/lib/mock-data";
 import { playFinishSound } from "@/lib/sounds";
+import { hapticHeavy } from "@/lib/haptics";
 import { useAudioStore } from "@/store/audio-store";
 import { analytics } from "@/lib/analytics";
 import { useLanguageStore } from "@/store/language-store";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -19,7 +22,13 @@ export default function LessonScreen() {
   const { loadAndPlay, currentTrackId, isPlaying, togglePlayback } = useAudioStore();
   const { data: completedLessonIds } = useCompletedLessons();
   const { selectedLanguageId } = useLanguageStore();
-  const completeLesson = useCompleteLesson();
+  const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
+  const completeLesson = useCompleteLesson({
+    onLevelUp: (level, title) => {
+      analytics.levelUp(level, title);
+      setLevelUp({ level, title });
+    },
+  });
 
   if (isLoading) {
     return (
@@ -63,6 +72,7 @@ export default function LessonScreen() {
   const handleMarkComplete = () => {
     completeLesson.mutate(lesson.id);
     playFinishSound();
+    hapticHeavy();
     analytics.lessonCompleted(lesson.id, selectedLanguageId);
   };
 
@@ -163,6 +173,13 @@ export default function LessonScreen() {
         {/* Full audio player at bottom */}
         {isCurrentTrack && <AudioPlayer />}
       </SafeAreaView>
+
+      <LevelUpModal
+        visible={!!levelUp}
+        level={levelUp?.level ?? 1}
+        title={levelUp?.title ?? ""}
+        onDismiss={() => setLevelUp(null)}
+      />
     </>
   );
 }
