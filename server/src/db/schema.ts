@@ -470,6 +470,28 @@ export const matchmakingQueue = pgTable(
   ]
 );
 
+// ---------- Quiz Results ----------
+
+export const quizResults = pgTable(
+  "quiz_results",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    languageId: varchar("language_id", { length: 32 }).notNull(),
+    score: integer("score").notNull(),
+    accuracy: integer("accuracy").notNull(), // 0-100
+    durationMs: integer("duration_ms").notNull(),
+    questionCount: integer("question_count").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("quiz_results_user_id_idx").on(table.userId),
+    index("quiz_results_lang_id_idx").on(table.languageId),
+  ]
+);
+
 // ---------- Feedback ----------
 
 export const feedback = pgTable("feedback", {

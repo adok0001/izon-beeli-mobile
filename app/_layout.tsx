@@ -17,6 +17,8 @@ import { tokenCache } from "@/lib/auth";
 import { queryClient } from "@/lib/api";
 import { useSyncUser } from "@/lib/hooks/use-sync-user";
 import { useThemeStore } from "@/store/theme-store";
+import { useLanguageStore } from "@/store/language-store";
+import { analytics } from "@/lib/analytics";
 
 const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -61,9 +63,12 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const hydrateTheme = useThemeStore((s) => s.hydrate);
   const themeHydrated = useThemeStore((s) => s._hydrated);
+  const hydrateLanguage = useLanguageStore((s) => s.hydrate);
 
   useEffect(() => {
     hydrateTheme();
+    hydrateLanguage();
+    analytics.appOpen();
   }, []);
 
   if (!clerkPublishableKey) {
@@ -85,6 +90,10 @@ export default function RootLayout() {
             <AuthGate>
             <Stack>
               <Stack.Screen name="index" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="(onboarding)"
+                options={{ headerShown: false }}
+              />
               <Stack.Screen
                 name="(auth)"
                 options={{ headerShown: false }}

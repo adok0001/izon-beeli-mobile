@@ -1,8 +1,16 @@
 import { create } from "zustand";
 import { Audio, AVPlaybackStatus, AVPlaybackSource } from "expo-av";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { AudioSource } from "@/types";
 
 type PlaybackSpeed = 0.5 | 0.75 | 1 | 1.25 | 1.5 | 2;
+
+const RESUME_KEY = "audio-store-resume";
+
+interface ResumeState {
+  lessonId: string;
+  positionSeconds: number;
+}
 
 interface AudioState {
   // Playback state
@@ -13,6 +21,9 @@ interface AudioState {
   progress: number; // seconds
   duration: number; // seconds
   playbackSpeed: PlaybackSpeed;
+
+  // Resume state (persisted)
+  resumeState: ResumeState | null;
 
   // Internal
   _sound: Audio.Sound | null;
@@ -27,6 +38,8 @@ interface AudioState {
   skipBackward: (seconds?: number) => Promise<void>;
   setSpeed: (speed: PlaybackSpeed) => void;
   reset: () => Promise<void>;
+  loadResumeState: () => Promise<void>;
+  saveResumeState: (lessonId: string, positionSeconds: number) => void;
 }
 
 export const useAudioStore = create<AudioState>((set, get) => ({
@@ -37,6 +50,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
   progress: 0,
   duration: 0,
   playbackSpeed: 1,
+  resumeState: null,
   _sound: null,
 
   loadAndPlay: async (trackId, source, title) => {
@@ -71,11 +85,15 @@ export const useAudioStore = create<AudioState>((set, get) => ({
         { shouldPlay: true, rate: get().playbackSpeed },
         (status: AVPlaybackStatus) => {
           if (!status.isLoaded) return;
+          const positionSeconds = (status.positionMillis ?? 0) / 1000;
           set({
-            progress: (status.positionMillis ?? 0) / 1000,
+            progress: positionSeconds,
             duration: (status.durationMillis ?? 0) / 1000,
             isPlaying: status.isPlaying,
           });
+          if (status.isPlaying) {
+            get().saveResumeState(trackId, positionSeconds);
+          }
           if (status.didJustFinish) {
             set({ isPlaying: false, progress: 0 });
           }
@@ -98,10 +116,13 @@ export const useAudioStore = create<AudioState>((set, get) => ({
   },
 
   pause: async () => {
-    const { _sound } = get();
+    const { _sound, currentTrackId, progress } = get();
     if (_sound) {
       await _sound.pauseAsync();
       set({ isPlaying: false });
+      if (currentTrackId) {
+        get().saveResumeState(currentTrackId, progress);
+      }
     }
   },
 
@@ -156,5 +177,22 @@ export const useAudioStore = create<AudioState>((set, get) => ({
       duration: 0,
       _sound: null,
     });
+  },
+
+  loadResumeState: async () => {
+    try {
+      const stored = await AsyncStorage.getItem(RESUME_KEY);
+      if (stored) {
+        set({ resumeState: JSON.parse(stored) });
+      }
+    } catch {
+      // ignore
+    }
+  },
+
+  saveResumeState: (lessonId, positionSeconds) => {
+    const state: ResumeState = { lessonId, positionSeconds };
+    set({ resumeState: state });
+    AsyncStorage.setItem(RESUME_KEY, JSON.stringify(state)).catch(() => {});
   },
 }));

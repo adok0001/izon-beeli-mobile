@@ -6,6 +6,8 @@ import { useLesson } from "@/lib/hooks/use-courses";
 import { formatDuration, BUNDLED_AUDIO } from "@/lib/mock-data";
 import { playFinishSound } from "@/lib/sounds";
 import { useAudioStore } from "@/store/audio-store";
+import { analytics } from "@/lib/analytics";
+import { useLanguageStore } from "@/store/language-store";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -16,6 +18,7 @@ export default function LessonScreen() {
   const { data: lesson, isLoading, isError } = useLesson(id ?? "");
   const { loadAndPlay, currentTrackId, isPlaying, togglePlayback } = useAudioStore();
   const { data: completedLessonIds } = useCompletedLessons();
+  const { selectedLanguageId } = useLanguageStore();
   const completeLesson = useCompleteLesson();
 
   if (isLoading) {
@@ -53,12 +56,14 @@ export default function LessonScreen() {
       togglePlayback();
     } else if (audioSource) {
       loadAndPlay(lesson.id, audioSource, lesson.title);
+      analytics.lessonStarted(lesson.id, selectedLanguageId);
     }
   };
 
   const handleMarkComplete = () => {
     completeLesson.mutate(lesson.id);
     playFinishSound();
+    analytics.lessonCompleted(lesson.id, selectedLanguageId);
   };
 
   return (

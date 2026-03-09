@@ -211,25 +211,6 @@ export interface InAppNotification {
   createdAt: string;
 }
 
-// --- Story Mode ---
-
-export interface StoryChapter {
-  id: string;
-  lessonId: string;
-  title: string;
-  narrativeIntro: string;
-  narrativeOutro: string;
-  order: number;
-}
-
-export interface StoryArc {
-  id: string;
-  courseId: string;
-  title: string;
-  description: string;
-  chapters: StoryChapter[];
-}
-
 // --- Classroom / Groups ---
 
 export type GroupRole = "teacher" | "parent" | "student";

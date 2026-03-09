@@ -1,14 +1,30 @@
 import { useAuth } from "@clerk/clerk-expo";
 import { Image } from "expo-image";
 import { Redirect } from "expo-router";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ONBOARDING_KEY } from "./(onboarding)/index";
 
 const mascot = require("../public/mascot.jpg");
 
 export default function Index() {
   const { isSignedIn, isLoaded } = useAuth();
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
+  const [onboardingDone, setOnboardingDone] = useState(false);
 
-  if (!isLoaded) {
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+    AsyncStorage.getItem(ONBOARDING_KEY).then((val) => {
+      setOnboardingDone(!!val);
+      setOnboardingChecked(true);
+    }).catch(() => {
+      setOnboardingDone(true);
+      setOnboardingChecked(true);
+    });
+  }, [isLoaded, isSignedIn]);
+
+  if (!isLoaded || (isSignedIn && !onboardingChecked)) {
     return (
       <View className="flex-1 items-center justify-center bg-white dark:bg-neutral-900">
         <Image
@@ -28,6 +44,9 @@ export default function Index() {
   }
 
   if (isSignedIn) {
+    if (!onboardingDone) {
+      return <Redirect href="/(onboarding)" />;
+    }
     return <Redirect href="/(tabs)/learn" />;
   }
 

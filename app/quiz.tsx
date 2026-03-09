@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import { useRouter, useLocalSearchParams, Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "@clerk/clerk-expo";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useQuizStore } from "@/store/quiz-store";
 import { generateQuiz } from "@/lib/quiz-engine";
@@ -15,6 +16,8 @@ import {
 } from "@/lib/sounds";
 import { hapticSuccess, hapticError, hapticHeavy } from "@/lib/haptics";
 import { ListeningQuestion } from "@/components/quiz/listening-question";
+import { apiFetch } from "@/lib/api";
+import { analytics } from "@/lib/analytics";
 import type { QuizQuestion } from "@/types";
 
 const FEEDBACK_DELAY = 1200;
@@ -199,13 +202,37 @@ function ActiveView() {
   );
 }
 
-function ResultsView() {
+function ResultsView({ languageId }: { languageId: string }) {
   const { getResult, reset, questions } = useQuizStore();
   const router = useRouter();
+  const { getToken } = useAuth();
   const result = getResult();
+  const startTime = useQuizStore((s) => s.startTime);
 
   useEffect(() => {
     hapticHeavy();
+    // Post results to backend (fire-and-forget)
+    const post = async () => {
+      try {
+        const token = await getToken();
+        const durationMs = Date.now() - startTime;
+        await apiFetch("/quiz-results", {
+          method: "POST",
+          token: token ?? undefined,
+          body: JSON.stringify({
+            languageId,
+            score: result.correctCount,
+            accuracy: result.accuracy,
+            durationMs,
+            questionCount: result.totalQuestions,
+          }),
+        });
+        analytics.quizFinished(languageId, result.accuracy, durationMs);
+      } catch {
+        // non-blocking — results display even if save fails
+      }
+    };
+    post();
   }, []);
 
   const scoreColor =
@@ -341,6 +368,7 @@ export default function QuizScreen() {
       setIsEmpty(true);
     } else {
       startQuiz(questions);
+      analytics.quizStarted(selectedLanguageId, questions.length);
     }
   }, [isDictLoading]);
 
@@ -371,7 +399,7 @@ export default function QuizScreen() {
         {isEmpty ? (
           <EmptyView />
         ) : phase === "results" ? (
-          <ResultsView />
+          <ResultsView languageId={selectedLanguageId} />
         ) : phase === "active" ? (
           <ActiveView />
         ) : null}

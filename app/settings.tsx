@@ -1,12 +1,15 @@
 import { View, Text, Pressable, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
+import Constants from "expo-constants";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useLanguageStore } from "@/store/language-store";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
 import { getLanguageName } from "@/lib/mock-data";
 import { useThemeStore } from "@/store/theme-store";
+import { apiFetch } from "@/lib/api";
+import { useAuth } from "@clerk/clerk-expo";
 
 function SettingsRow({
   icon,
@@ -53,12 +56,31 @@ export default function SettingsScreen() {
   const { selectedLanguageId } = useLanguageStore();
   const { data: summary } = useProgressSummary();
   const { preference, setPreference } = useThemeStore();
+  const { getToken } = useAuth();
 
   const handleResetProgress = () => {
     Alert.alert(
       "Reset Progress",
-      "This would reset all your learning progress. This feature is not yet available.",
-      [{ text: "OK" }]
+      "Are you sure you want to reset all your learning progress? This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Reset",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const token = await getToken();
+              await apiFetch("/progress", {
+                method: "DELETE",
+                token: token ?? undefined,
+              });
+              Alert.alert("Done", "Your progress has been reset.");
+            } catch {
+              Alert.alert("Error", "Failed to reset progress. Please try again.");
+            }
+          },
+        },
+      ]
     );
   };
 
@@ -141,7 +163,7 @@ export default function SettingsScreen() {
               Izon Beeli
             </Text>
             <Text className="mt-1 text-sm text-neutral-400 dark:text-neutral-500">
-              Version 1.0.0
+              Version {Constants.expoConfig?.version ?? "1.0.0"}
             </Text>
           </View>
         </View>

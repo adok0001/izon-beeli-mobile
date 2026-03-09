@@ -6,15 +6,66 @@ import { ProverbOfTheDay } from "@/components/proverb-of-the-day";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { WordOfTheDay } from "@/components/word-of-the-day";
 import { getStoryForCourse } from "@/lib/data/stories";
-import { useCourseLessons, useCourses } from "@/lib/hooks/use-courses";
+import { useCourseLessons, useCourses, useLesson } from "@/lib/hooks/use-courses";
 import { useCompletedLessons, useProgressSummary } from "@/lib/hooks/use-progress";
-import { formatDuration } from "@/lib/mock-data";
+import { formatDuration, BUNDLED_AUDIO } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
+import { useAudioStore } from "@/store/audio-store";
 import type { Course, Lesson } from "@/types";
 import { useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+function ContinueCard({ lessonId, positionSeconds }: { lessonId: string; positionSeconds: number }) {
+  const router = useRouter();
+  const { data: lesson } = useLesson(lessonId);
+  const { loadAndPlay, seekTo, currentTrackId } = useAudioStore();
+
+  if (!lesson) return null;
+
+  const audioSource = lesson.audioUrl ?? BUNDLED_AUDIO[lesson.id];
+  const mins = Math.floor(positionSeconds / 60);
+  const secs = Math.floor(positionSeconds % 60);
+  const posLabel = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+
+  const handleResume = async () => {
+    if (audioSource) {
+      if (currentTrackId !== lessonId) {
+        await loadAndPlay(lessonId, audioSource, lesson.title);
+        await seekTo(positionSeconds);
+      } else {
+        await seekTo(positionSeconds);
+      }
+    }
+    router.push(`/lesson/${lessonId}`);
+  };
+
+  return (
+    <Pressable
+      onPress={handleResume}
+      className="mb-3 rounded-2xl bg-emerald-50 p-4 active:opacity-70 dark:bg-emerald-950"
+    >
+      <View className="flex-row items-center">
+        <View className="mr-3 h-12 w-12 items-center justify-center rounded-xl bg-emerald-500">
+          <IconSymbol name="play.fill" size={22} color="#fff" />
+        </View>
+        <View className="flex-1">
+          <Text className="text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
+            Continue Listening
+          </Text>
+          <Text className="text-base font-bold text-neutral-900 dark:text-white" numberOfLines={1}>
+            {lesson.title}
+          </Text>
+          <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+            Paused at {posLabel}
+          </Text>
+        </View>
+        <IconSymbol name="chevron.right" size={16} color="#10b981" />
+      </View>
+    </Pressable>
+  );
+}
 
 function CourseCard({ course, completedIds }: { course: Course; completedIds: Set<string> }) {
   const router = useRouter();
@@ -146,6 +197,11 @@ export default function LearnScreen() {
   const { data: summary, refetch: refetchSummary } = useProgressSummary();
   const completedIds = new Set(completedLessonIds ?? []);
   const [refreshing, setRefreshing] = useState(false);
+  const { resumeState, loadResumeState } = useAudioStore();
+
+  useEffect(() => {
+    loadResumeState();
+  }, []);
 
   const isLoading = coursesLoading || progressLoading;
 
@@ -225,6 +281,12 @@ export default function LearnScreen() {
           renderItem={({ item }) => <CourseCard course={item} completedIds={completedIds} />}
           ListHeaderComponent={
             <View className="mb-4 gap-3">
+              {resumeState && resumeState.positionSeconds > 5 && (
+                <ContinueCard
+                  lessonId={resumeState.lessonId}
+                  positionSeconds={resumeState.positionSeconds}
+                />
+              )}
               <Pressable
                 onPress={() => router.push("/multiplayer")}
                 className="rounded-2xl bg-gradient-to-r from-blue-50 to-purple-50 p-4 active:opacity-70 dark:from-blue-950 dark:to-purple-950"

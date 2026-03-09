@@ -4,6 +4,7 @@ import { db } from "../db/index.js";
 import { userProgress, users } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
 
+
 export const progressRouter = new Hono<AuthEnv>();
 
 progressRouter.use("*", authMiddleware);
@@ -121,4 +122,17 @@ progressRouter.post("/:lessonId/complete", async (c) => {
     totalPoints: (user?.points ?? 0) + pointsEarned,
     streak: newStreak,
   });
+});
+
+// DELETE /api/progress - reset all progress for the current user
+progressRouter.delete("/", async (c) => {
+  const userId = c.get("userId");
+
+  await db.delete(userProgress).where(eq(userProgress.userId, userId));
+  await db
+    .update(users)
+    .set({ points: 0, streak: 0, lastActiveDate: null })
+    .where(eq(users.id, userId));
+
+  return c.json({ reset: true });
 });

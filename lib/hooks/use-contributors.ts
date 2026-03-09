@@ -36,7 +36,7 @@ const MOCK_CONTRIBUTORS: ContributorProfile[] = [
   },
   {
     id: "contrib-2",
-    name: "Tamara A.",
+    name: "Ebiowe M.",
     approvedCount: 34,
     audioCount: 8,
     badges: ["first_contribution", "ten_words", "audio_contributor"],
