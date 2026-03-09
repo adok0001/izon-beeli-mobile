@@ -191,6 +191,72 @@ contributionsRouter.get("/pending", async (c) => {
   return c.json(result);
 });
 
+// POST /api/contributions/bulk - submit multiple word/phrase entries at once (no audio)
+contributionsRouter.post("/bulk", async (c) => {
+  const userId = c.get("userId");
+  const body = await c.req.json<{
+    languageId: string;
+    entries: {
+      word: string;
+      english: string;
+      category: string;
+      pronunciation?: string;
+      example?: string;
+      exampleTranslation?: string;
+    }[];
+  }>();
+
+  const { languageId, entries } = body;
+
+  if (!languageId || languageId.length > 32) {
+    return c.json({ error: "Valid languageId is required" }, 400);
+  }
+
+  if (!Array.isArray(entries) || entries.length === 0) {
+    return c.json({ error: "entries array must not be empty" }, 400);
+  }
+
+  if (entries.length > 100) {
+    return c.json({ error: "Maximum 100 entries per bulk submission" }, 400);
+  }
+
+  const invalid = entries.find((e) => !e.word?.trim() || !e.english?.trim() || !e.category);
+  if (invalid) {
+    return c.json({ error: "Each entry must have word, english, and category" }, 400);
+  }
+
+  const rows = entries.map((e) => ({
+    userId,
+    type: e.word.trim().includes(" ") ? ("phrase" as const) : ("word" as const),
+    languageId,
+    word: e.word.trim(),
+    english: e.english.trim(),
+    category: e.category,
+    pronunciation: e.pronunciation?.trim() || null,
+    example: e.example?.trim() || null,
+    exampleTranslation: e.exampleTranslation?.trim() || null,
+  }));
+
+  const inserted = await db.insert(contributions).values(rows).returning();
+
+  const [user] = await db
+    .select({ name: users.name, avatarUrl: users.avatarUrl })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  await db.insert(feedItems).values({
+    userId,
+    type: "contribution",
+    title: `${inserted.length} new ${languageId} entries`,
+    description: `Contributed ${inserted.length} words and phrases to the ${languageId} dictionary`,
+    userName: user?.name ?? "User",
+    userAvatarUrl: user?.avatarUrl,
+  });
+
+  return c.json({ inserted: inserted.length, contributions: inserted }, 201);
+});
+
 // PATCH /api/contributions/:id/review - approve or reject a contribution
 contributionsRouter.patch("/:id/review", async (c) => {
   const { id } = c.req.param();

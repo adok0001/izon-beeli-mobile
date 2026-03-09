@@ -106,6 +106,10 @@ export default function RootLayout() {
                 options={{ presentation: "modal", headerShown: false }}
               />
               <Stack.Screen
+                name="contribute-bulk"
+                options={{ presentation: "modal", headerShown: false }}
+              />
+              <Stack.Screen
                 name="settings"
                 options={{ headerBackTitle: "Back" }}
               />

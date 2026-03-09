@@ -76,6 +76,39 @@ export function useSubmitContribution() {
   });
 }
 
+export interface BulkContributionEntry {
+  word: string;
+  english: string;
+  category: DictionaryCategory;
+  pronunciation?: string;
+}
+
+export function useBulkSubmitContribution() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      languageId,
+      entries,
+    }: {
+      languageId: string;
+      entries: BulkContributionEntry[];
+    }) => {
+      const token = await getToken();
+      return apiFetch<{ inserted: number }>("/contributions/bulk", {
+        method: "POST",
+        token: token!,
+        body: JSON.stringify({ languageId, entries }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
+      queryClient.invalidateQueries({ queryKey: ["approved-words"] });
+    },
+  });
+}
+
 export function useApprovedWords(languageId: string) {
   return useQuery<DictionaryEntry[]>({
     queryKey: ["approved-words", languageId],

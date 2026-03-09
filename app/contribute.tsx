@@ -141,6 +141,27 @@ export default function ContributeScreen() {
                   </View>
                 </Pressable>
 
+                {/* Bulk words card */}
+                <Pressable
+                  onPress={() => router.push("/contribute-bulk")}
+                  className="mb-3 rounded-2xl bg-green-50 p-5 active:opacity-80 dark:bg-green-950"
+                >
+                  <View className="flex-row items-center">
+                    <View className="mr-4 h-12 w-12 items-center justify-center rounded-xl bg-green-500">
+                      <IconSymbol name="list.bullet.clipboard" size={24} color="white" />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-base font-bold text-neutral-900 dark:text-white">
+                        Bulk Words
+                      </Text>
+                      <Text className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">
+                        Add many words or phrases at once in a fast table view
+                      </Text>
+                    </View>
+                    <IconSymbol name="chevron.right" size={16} color="#22c55e" />
+                  </View>
+                </Pressable>
+
                 {/* Lesson card */}
                 <Pressable
                   onPress={() => router.push("/contribute-lesson")}
