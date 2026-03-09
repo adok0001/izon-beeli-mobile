@@ -4,6 +4,7 @@ import { DailyChallengeCard } from "@/components/daily-challenge-card";
 import { LanguagePickerButton } from "@/components/language-picker";
 import { NotificationBell } from "@/components/notifications/notification-center";
 import { ProverbOfTheDay } from "@/components/proverb-of-the-day";
+import { StreakFreezeModal } from "@/components/streak-freeze-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { WordOfTheDay } from "@/components/word-of-the-day";
 import { XpLevelBadge } from "@/components/xp-level-badge";
@@ -15,7 +16,7 @@ import { useLanguageStore } from "@/store/language-store";
 import { useAudioStore } from "@/store/audio-store";
 import type { Course, Lesson } from "@/types";
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -199,11 +200,25 @@ export default function LearnScreen() {
   const { data: summary, refetch: refetchSummary } = useProgressSummary();
   const completedIds = new Set(completedLessonIds ?? []);
   const [refreshing, setRefreshing] = useState(false);
+  const [freezeModalVisible, setFreezeModalVisible] = useState(false);
+  const freezeModalShown = useRef(false);
   const { resumeState, loadResumeState } = useAudioStore();
 
   useEffect(() => {
     loadResumeState();
   }, []);
+
+  // Show freeze modal once when we detect a broken streak
+  useEffect(() => {
+    if (
+      summary?.streakBroken &&
+      !freezeModalShown.current &&
+      summary.streak > 0
+    ) {
+      freezeModalShown.current = true;
+      setFreezeModalVisible(true);
+    }
+  }, [summary?.streakBroken, summary?.streak]);
 
   const isLoading = coursesLoading || progressLoading;
 
@@ -244,12 +259,27 @@ export default function LearnScreen() {
 
       {/* Stats bar */}
       <View className="flex-row items-center gap-4 border-b border-neutral-100 px-5 pb-3 dark:border-neutral-800">
-        <View className="flex-row items-center">
-          <IconSymbol name="flame.fill" size={16} color="#f59e0b" />
-          <Text className="ml-1 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+        <Pressable
+          onPress={() => summary?.streakBroken && summary.streak > 0 && setFreezeModalVisible(true)}
+          className="flex-row items-center gap-1"
+        >
+          <IconSymbol
+            name="flame.fill"
+            size={16}
+            color={summary?.streakBroken ? "#9ca3af" : "#f59e0b"}
+          />
+          <Text className={`text-sm font-semibold ${summary?.streakBroken ? "text-neutral-400 line-through dark:text-neutral-500" : "text-neutral-700 dark:text-neutral-300"}`}>
             {summary?.streak ?? 0}
           </Text>
-        </View>
+          {(summary?.freezeCount ?? 0) > 0 && (
+            <View className="ml-0.5 flex-row items-center rounded-full bg-blue-100 px-1.5 dark:bg-blue-900">
+              <IconSymbol name="snowflake" size={10} color="#3b82f6" />
+              <Text className="ml-0.5 text-xs font-bold text-blue-600 dark:text-blue-400">
+                {summary!.freezeCount}
+              </Text>
+            </View>
+          )}
+        </Pressable>
         <XpLevelBadge points={summary?.points ?? 0} variant="compact" />
         <View className="flex-row items-center">
           <IconSymbol name="checkmark.circle.fill" size={16} color="#22c55e" />
@@ -369,6 +399,13 @@ export default function LearnScreen() {
           }
         />
       )}
+
+      <StreakFreezeModal
+        visible={freezeModalVisible}
+        streak={summary?.streak ?? 0}
+        freezeCount={summary?.freezeCount ?? 0}
+        onDismiss={() => setFreezeModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }

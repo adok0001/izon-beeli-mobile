@@ -105,6 +105,11 @@ export default function ProfileScreen() {
           <View className="flex-row gap-3">
             <StatCard icon="flame.fill" label="Streak" value={String(summary?.streak ?? 0)} />
             <StatCard
+              icon="snowflake"
+              label="Freezes"
+              value={String(summary?.freezeCount ?? 0)}
+            />
+            <StatCard
               icon="checkmark.circle.fill"
               label="Lessons"
               value={String(summary?.completedCount ?? 0)}

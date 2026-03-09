@@ -68,6 +68,8 @@ export const users = pgTable("users", {
   lastActiveDate: varchar("last_active_date", { length: 10 }), // YYYY-MM-DD
   selectedLanguageId: varchar("selected_language_id", { length: 32 }),
   dailyGoal: varchar("daily_goal", { length: 16 }), // "casual" | "steady" | "intensive"
+  streakFreezes: integer("streak_freezes").default(0).notNull(),
+  lastFreezeUsedDate: varchar("last_freeze_used_date", { length: 10 }), // YYYY-MM-DD
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

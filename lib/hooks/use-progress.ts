@@ -4,10 +4,12 @@ import { Alert } from "react-native";
 import { apiFetch } from "@/lib/api";
 import { hapticHeavy } from "@/lib/haptics";
 
-interface ProgressSummary {
+export interface ProgressSummary {
   points: number;
   streak: number;
   completedCount: number;
+  freezeCount: number;
+  streakBroken: boolean;
 }
 
 interface CompleteLessonResponse {
@@ -20,6 +22,8 @@ interface CompleteLessonResponse {
   newLevel?: number;
   newTitle?: string;
   streakMilestone?: number | null;
+  freezeGranted?: number | null;
+  freezeCount?: number;
 }
 
 export function useProgressSummary() {
@@ -86,6 +90,28 @@ export function useCompleteLesson(callbacks?: {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["progress"] });
+    },
+  });
+}
+
+export function useUseFreeze() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const token = await getToken();
+      return apiFetch<{ restored: boolean; streak: number; freezesRemaining: number }>(
+        "/progress/freeze",
+        { method: "POST", token: token! }
+      );
+    },
+    onSuccess: () => {
+      hapticHeavy();
+      queryClient.invalidateQueries({ queryKey: ["progress", "summary"] });
+    },
+    onError: (err: any) => {
+      Alert.alert("Error", err?.message ?? "Could not use freeze.");
     },
   });
 }
