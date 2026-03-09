@@ -82,6 +82,40 @@ lessonContributionsRouter.post("/", async (c) => {
     .returning();
 
   if (segments.length > 0) {
+    // Validate segments: sorted by startTime, no overlaps, endTime >= startTime
+    const timedSegs = segments.filter(
+      (s) => s.startTime != null && s.endTime != null
+    );
+
+    if (timedSegs.length > 0) {
+      for (const seg of timedSegs) {
+        if (seg.endTime! < seg.startTime!) {
+          return c.json(
+            { error: `Segment "${seg.text.slice(0, 20)}..." has endTime before startTime` },
+            400
+          );
+        }
+        if (duration != null && seg.endTime! > duration) {
+          return c.json(
+            { error: `Segment endTime ${seg.endTime} exceeds lesson duration ${duration}` },
+            400
+          );
+        }
+      }
+
+      const sorted = [...timedSegs].sort((a, b) => a.startTime! - b.startTime!);
+      for (let i = 1; i < sorted.length; i++) {
+        if (sorted[i].startTime! < sorted[i - 1].endTime!) {
+          return c.json(
+            {
+              error: `Segments overlap: "${sorted[i - 1].text.slice(0, 20)}..." and "${sorted[i].text.slice(0, 20)}..."`,
+            },
+            400
+          );
+        }
+      }
+    }
+
     await db.insert(lessonContributionSegments).values(
       segments.map((seg) => ({
         lessonContributionId: contribution.id,
@@ -162,8 +196,9 @@ lessonContributionsRouter.get("/pending", async (c) => {
 
 // PATCH /api/lesson-contributions/:id/review
 lessonContributionsRouter.patch("/:id/review", async (c) => {
+  const reviewerId = c.get("userId");
   const { id } = c.req.param();
-  const body = await c.req.json<{ action: string }>();
+  const body = await c.req.json<{ action: string; note?: string }>();
   const action = body.action;
 
   if (!VALID_REVIEW_ACTIONS.includes(action as any)) {
@@ -183,7 +218,12 @@ lessonContributionsRouter.patch("/:id/review", async (c) => {
   if (action === "reject") {
     const [updated] = await db
       .update(lessonContributions)
-      .set({ status: "rejected" })
+      .set({
+        status: "rejected",
+        reviewNote: body.note?.trim() || null,
+        reviewedBy: reviewerId,
+        reviewedAt: new Date(),
+      })
       .where(eq(lessonContributions.id, id))
       .returning();
     return c.json(updated);
@@ -252,7 +292,12 @@ lessonContributionsRouter.patch("/:id/review", async (c) => {
 
   const [updated] = await db
     .update(lessonContributions)
-    .set({ status: "approved" })
+    .set({
+      status: "approved",
+      reviewNote: body.note?.trim() || null,
+      reviewedBy: reviewerId,
+      reviewedAt: new Date(),
+    })
     .where(eq(lessonContributions.id, id))
     .returning();
 

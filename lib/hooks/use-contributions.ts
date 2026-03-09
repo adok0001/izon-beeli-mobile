@@ -157,15 +157,17 @@ export function useReviewContribution() {
     mutationFn: async ({
       id,
       action,
+      note,
     }: {
       id: string;
       action: "approve" | "reject";
+      note?: string;
     }) => {
       const token = await getToken();
       return apiFetch(`/contributions/${id}/review`, {
         method: "PATCH",
         token: token!,
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action, note }),
       });
     },
     onSuccess: () => {
@@ -284,16 +286,48 @@ export function useReviewLessonContribution() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, action }: { id: string; action: "approve" | "reject" }) => {
+    mutationFn: async ({
+      id,
+      action,
+      note,
+    }: {
+      id: string;
+      action: "approve" | "reject";
+      note?: string;
+    }) => {
       const token = await getToken();
       return apiFetch(`/lesson-contributions/${id}/review`, {
         method: "PATCH",
         token: token!,
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action, note }),
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pending-lesson-contributions"] });
+    },
+  });
+}
+
+export interface MyContribution {
+  id: string;
+  word: string;
+  english: string;
+  category: string;
+  languageId: string;
+  type: string;
+  status: string;
+  reviewNote: string | null;
+  createdAt: string;
+}
+
+export function useMyContributions() {
+  const { getToken } = useAuth();
+
+  return useQuery({
+    queryKey: ["my-contributions"],
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch<MyContribution[]>("/contributions", { token: token! });
     },
   });
 }

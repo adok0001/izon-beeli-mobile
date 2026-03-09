@@ -131,6 +131,10 @@ export default function RootLayout() {
                 options={{ headerBackTitle: "Back" }}
               />
               <Stack.Screen
+                name="my-contributions"
+                options={{ headerBackTitle: "Back" }}
+              />
+              <Stack.Screen
                 name="review"
                 options={{ headerBackTitle: "Back" }}
               />

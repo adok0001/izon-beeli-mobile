@@ -385,38 +385,48 @@ export default function ReviewScreen() {
 
   const handleReviewWord = (id: string, action: "approve" | "reject") => {
     const label = action === "approve" ? "Approve" : "Reject";
-    Alert.alert(
-      `${label} this contribution?`,
-      action === "approve"
-        ? "This word will be added to the dictionary."
-        : "This contribution will be rejected.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: label,
-          style: action === "reject" ? "destructive" : "default",
-          onPress: () => reviewWord.mutate({ id, action }),
-        },
-      ]
-    );
+    if (action === "reject") {
+      Alert.prompt(
+        "Reject this contribution?",
+        "Optional: leave a note for the contributor explaining why.",
+        (note) => reviewWord.mutate({ id, action, note: note?.trim() || undefined }),
+        "plain-text",
+        "",
+        "default"
+      );
+    } else {
+      Alert.alert(
+        "Approve this contribution?",
+        "This word will be added to the dictionary.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: label, onPress: () => reviewWord.mutate({ id, action }) },
+        ]
+      );
+    }
   };
 
   const handleReviewLesson = (id: string, action: "approve" | "reject") => {
     const label = action === "approve" ? "Approve" : "Reject";
-    Alert.alert(
-      `${label} this lesson?`,
-      action === "approve"
-        ? "This lesson will be published and added to the course."
-        : "This lesson will be rejected.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: label,
-          style: action === "reject" ? "destructive" : "default",
-          onPress: () => reviewLesson.mutate({ id, action }),
-        },
-      ]
-    );
+    if (action === "reject") {
+      Alert.prompt(
+        "Reject this lesson?",
+        "Optional: leave a note for the contributor explaining why.",
+        (note) => reviewLesson.mutate({ id, action, note: note?.trim() || undefined }),
+        "plain-text",
+        "",
+        "default"
+      );
+    } else {
+      Alert.alert(
+        "Approve this lesson?",
+        "This lesson will be published and added to the course.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: label, onPress: () => reviewLesson.mutate({ id, action }) },
+        ]
+      );
+    }
   };
 
   const emptyIcon = activeTab === "words" ? "character.book.closed" : "waveform";

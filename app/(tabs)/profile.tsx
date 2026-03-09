@@ -128,6 +128,11 @@ export default function ProfileScreen() {
             />
           )}
           <MenuRow
+            icon="doc.text.fill"
+            label="My Contributions"
+            onPress={() => router.push("/my-contributions")}
+          />
+          <MenuRow
             icon="trophy.fill"
             label="Contributors"
             onPress={() => router.push("/contributors")}

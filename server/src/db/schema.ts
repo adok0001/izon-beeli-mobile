@@ -185,6 +185,9 @@ export const contributions = pgTable(
     exampleTranslation: text("example_translation"),
     audioUrl: text("audio_url"),
     status: contributionStatusEnum("status").default("submitted").notNull(),
+    reviewNote: text("review_note"),
+    reviewedBy: uuid("reviewed_by").references(() => users.id),
+    reviewedAt: timestamp("reviewed_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
@@ -361,6 +364,9 @@ export const lessonContributions = pgTable(
     audioUrl: text("audio_url").notNull(),
     duration: integer("duration"),
     status: lessonContributionStatusEnum("status").default("submitted").notNull(),
+    reviewNote: text("review_note"),
+    reviewedBy: uuid("reviewed_by").references(() => users.id),
+    reviewedAt: timestamp("reviewed_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [

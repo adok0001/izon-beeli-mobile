@@ -299,6 +299,7 @@ function FeedCard({
   item: FeedItem & { isLiked?: boolean };
   onOpenComments: (id: string) => void;
 }) {
+  const router = useRouter();
   const toggleLike = useToggleLike();
   const config = TYPE_CONFIG[item.type];
   const liked = (item as any).isLiked ?? false;
@@ -353,6 +354,19 @@ function FeedCard({
       {/* Audio preview for contributions */}
       {item.type === "contribution" && item.audioUrl && (
         <AudioPreview audioUrl={item.audioUrl} />
+      )}
+
+      {/* Practice CTA for contributions */}
+      {item.type === "contribution" && (
+        <Pressable
+          onPress={() => router.push("/quiz")}
+          className="mb-3 flex-row items-center justify-center rounded-lg bg-emerald-50 py-2 active:opacity-70 dark:bg-emerald-900/20"
+        >
+          <IconSymbol name="brain.head.profile" size={14} color="#10b981" />
+          <Text className="ml-1.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+            Practice this word
+          </Text>
+        </Pressable>
       )}
 
       {/* Actions */}

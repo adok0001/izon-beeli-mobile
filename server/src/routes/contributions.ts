@@ -293,8 +293,9 @@ contributionsRouter.post("/bulk", async (c) => {
 
 // PATCH /api/contributions/:id/review - approve or reject a contribution
 contributionsRouter.patch("/:id/review", async (c) => {
+  const reviewerId = c.get("userId");
   const { id } = c.req.param();
-  const body = await c.req.json<{ action: string }>();
+  const body = await c.req.json<{ action: string; note?: string }>();
   const action = body.action;
 
   if (!VALID_REVIEW_ACTIONS.includes(action as any)) {
@@ -305,7 +306,12 @@ contributionsRouter.patch("/:id/review", async (c) => {
 
   const [updated] = await db
     .update(contributions)
-    .set({ status: newStatus as "approved" | "rejected" })
+    .set({
+      status: newStatus as "approved" | "rejected",
+      reviewNote: body.note?.trim() || null,
+      reviewedBy: reviewerId,
+      reviewedAt: new Date(),
+    })
     .where(eq(contributions.id, id))
     .returning();
 
