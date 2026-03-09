@@ -56,3 +56,4 @@ server/.env
 build/
 *.ipa
 *.xcarchive
+partykit/.env
