@@ -115,7 +115,7 @@ classroomRouter.post("/groups", async (c) => {
 classroomRouter.post("/groups/:id/join", async (c) => {
   const userId = c.get("userId");
   const { id } = c.req.param();
-  const body = await c.req.json<{ inviteCode?: string; role?: string }>().catch(() => ({}));
+  const body = await c.req.json<{ inviteCode?: string; role?: string }>().catch(() => ({ inviteCode: undefined as string | undefined, role: undefined as string | undefined }));
 
   const [group] = await db
     .select()
@@ -230,18 +230,19 @@ classroomRouter.get("/groups/:id/progress", async (c) => {
   const progress = await db
     .select({
       userId: userProgress.userId,
-      streak: userProgress.streak,
-      points: userProgress.points,
+      streak: users.streak,
+      points: users.points,
       completedCount: count(userProgress.id),
     })
     .from(userProgress)
+    .leftJoin(users, eq(userProgress.userId, users.id))
     .where(
       and(
         inArray(userProgress.userId, memberUserIds),
         eq(userProgress.completed, true)
       )
     )
-    .groupBy(userProgress.userId, userProgress.streak, userProgress.points);
+    .groupBy(userProgress.userId, users.streak, users.points);
 
   const progressByUser = progress.reduce<Record<string, (typeof progress)[0]>>(
     (acc, p) => { acc[p.userId] = p; return acc; },
