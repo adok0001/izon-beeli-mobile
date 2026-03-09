@@ -97,6 +97,7 @@ export default function PairedLessonScreen() {
     chatMessages,
     lastAnswerCorrect,
     lastCorrectAnswer,
+    connectionStatus,
     sendAnswer,
     sendReaction,
     sendChat,
@@ -204,6 +205,15 @@ export default function PairedLessonScreen() {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           className="flex-1"
         >
+          {/* Reconnecting banner */}
+          {connectionStatus === "reconnecting" && (
+            <View className="flex-row items-center justify-center bg-amber-500 px-5 py-2">
+              <Text className="text-xs font-semibold text-white">
+                Reconnecting...
+              </Text>
+            </View>
+          )}
+
           {/* Header */}
           <View className="flex-row items-center justify-between border-b border-neutral-100 px-5 py-3 dark:border-neutral-800">
             <View className="flex-row items-center">

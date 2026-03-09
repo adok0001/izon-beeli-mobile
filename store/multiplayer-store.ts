@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { QuizQuestion, MultiplayerPhase } from "@/types";
 
-type ConnectionStatus = "disconnected" | "connecting" | "connected";
+type ConnectionStatus = "disconnected" | "connecting" | "connected" | "reconnecting";
 
 interface PlayerInfo {
   id: string;
@@ -26,6 +26,16 @@ interface MultiplayerState {
   inviteCode: string | null;
   players: PlayerInfo[];
   myPlayerId: string;
+
+  // Reconnect params (kept so we can rejoin after a drop)
+  _roomUrl: string;
+  _token: string;
+  _params: Record<string, string>;
+  _reconnectAttempts: number;
+
+  // Rematch
+  rematchRequested: boolean;
+  partnerWantsRematch: boolean;
 
   // Quiz battle
   currentQuestion: QuizQuestion | null;
@@ -65,6 +75,7 @@ interface MultiplayerState {
   sendAnswer: (questionId: string, answer: string) => void;
   sendReaction: (emoji: string) => void;
   sendChat: (text: string) => void;
+  sendRematch: () => void;
   reset: () => void;
 }
 
@@ -76,6 +87,12 @@ const initialState = {
   inviteCode: null as string | null,
   players: [] as PlayerInfo[],
   myPlayerId: "",
+  _roomUrl: "",
+  _token: "",
+  _params: {} as Record<string, string>,
+  _reconnectAttempts: 0,
+  rematchRequested: false,
+  partnerWantsRematch: false,
   currentQuestion: null,
   questionIndex: 0,
   totalQuestions: 0,
@@ -101,46 +118,22 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
     const { socket: existing } = get();
     if (existing) existing.close();
 
-    set({ connectionStatus: "connecting" });
+    set({
+      connectionStatus: "connecting",
+      _roomUrl: roomUrl,
+      _token: token,
+      _params: params,
+      _reconnectAttempts: 0,
+    });
 
-    const url = new URL(roomUrl);
-    url.searchParams.set("token", token);
-    for (const [k, v] of Object.entries(params)) {
-      url.searchParams.set(k, v);
-    }
-
-    const ws = new WebSocket(url.toString());
-
-    ws.onopen = () => {
-      set({ socket: ws, connectionStatus: "connected" });
-    };
-
-    ws.onclose = () => {
-      set({ socket: null, connectionStatus: "disconnected" });
-    };
-
-    ws.onerror = () => {
-      set({ socket: null, connectionStatus: "disconnected" });
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data);
-        handleMessage(msg, set, get);
-      } catch {
-        // ignore parse errors
-      }
-    };
-
-    set({ socket: ws });
+    _openSocket(roomUrl, token, params, set, get);
   },
 
   disconnect: () => {
+    _clearReconnectTimer();
     const { socket } = get();
-    if (socket) {
-      socket.close();
-    }
-    set({ socket: null, connectionStatus: "disconnected" });
+    if (socket) socket.close();
+    set({ socket: null, connectionStatus: "disconnected", _reconnectAttempts: 0 });
   },
 
   sendReady: () => {
@@ -163,12 +156,80 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
     socket?.send(JSON.stringify({ type: "chat", text }));
   },
 
+  sendRematch: () => {
+    const { socket } = get();
+    socket?.send(JSON.stringify({ type: "rematch" }));
+    set({ rematchRequested: true });
+  },
+
   reset: () => {
+    _clearReconnectTimer();
     const { socket } = get();
     if (socket) socket.close();
     set({ ...initialState });
   },
 }));
+
+let _reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+function _clearReconnectTimer() {
+  if (_reconnectTimer) {
+    clearTimeout(_reconnectTimer);
+    _reconnectTimer = null;
+  }
+}
+
+function _openSocket(
+  roomUrl: string,
+  token: string,
+  params: Record<string, string>,
+  set: (state: Partial<MultiplayerState>) => void,
+  get: () => MultiplayerState
+) {
+  const url = new URL(roomUrl);
+  url.searchParams.set("token", token);
+  for (const [k, v] of Object.entries(params)) {
+    url.searchParams.set(k, v);
+  }
+
+  const ws = new WebSocket(url.toString());
+
+  ws.onopen = () => {
+    set({ socket: ws, connectionStatus: "connected", _reconnectAttempts: 0 });
+  };
+
+  ws.onclose = () => {
+    set({ socket: null });
+    const { phase, _reconnectAttempts } = get();
+    // Don't reconnect if the game has ended or we've tried too many times
+    if (phase === "results" || _reconnectAttempts >= 5) {
+      set({ connectionStatus: "disconnected" });
+      return;
+    }
+    const delay = Math.min(1000 * Math.pow(2, _reconnectAttempts), 30000);
+    set({ connectionStatus: "reconnecting", _reconnectAttempts: _reconnectAttempts + 1 });
+    _clearReconnectTimer();
+    _reconnectTimer = setTimeout(() => {
+      const state = get();
+      _openSocket(state._roomUrl, state._token, state._params, set, get);
+    }, delay);
+  };
+
+  ws.onerror = () => {
+    // onclose will fire after onerror, so reconnect logic lives there
+  };
+
+  ws.onmessage = (event) => {
+    try {
+      const msg = JSON.parse(event.data);
+      handleMessage(msg, set, get);
+    } catch {
+      // ignore parse errors
+    }
+  };
+
+  set({ socket: ws });
+}
 
 function handleMessage(
   msg: any,
@@ -269,6 +330,32 @@ function handleMessage(
           winner: null,
           players: msg.players,
         },
+      });
+      break;
+
+    case "partner_rematch":
+      // Partner has clicked rematch
+      set({ partnerWantsRematch: true });
+      break;
+
+    case "rematch_starting":
+      // Both players accepted — reset game state but keep connection
+      set({
+        phase: "lobby",
+        gameResults: null,
+        rematchRequested: false,
+        partnerWantsRematch: false,
+        currentQuestion: null,
+        questionIndex: 0,
+        totalQuestions: 0,
+        myScore: 0,
+        opponentScore: 0,
+        lastAnswerCorrect: null,
+        lastCorrectAnswer: null,
+        currentExercise: null,
+        exerciseIndex: 0,
+        totalExercises: 0,
+        chatMessages: [],
       });
       break;
 
