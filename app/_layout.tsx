@@ -11,7 +11,7 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef } from "react";
 import "react-native-reanimated";
-import * as Notifications from "expo-notifications";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { tokenCache } from "@/lib/auth";
@@ -20,8 +20,13 @@ import { useSyncUser } from "@/lib/hooks/use-sync-user";
 import { useThemeStore } from "@/store/theme-store";
 import { useLanguageStore } from "@/store/language-store";
 import { analytics } from "@/lib/analytics";
-import { configurePushNotifications, registerPushToken } from "@/lib/push-notifications";
+import {
+  configurePushNotifications,
+  registerPushToken,
+  addNotificationListener,
+} from "@/lib/push-notifications";
 import { useNotificationStore } from "@/store/notification-store";
+import { ONBOARDING_KEY } from "./(onboarding)/index";
 
 const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -48,16 +53,11 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     });
   }, [isSignedIn]);
 
-  // Listen for incoming push notifications while app is foregrounded
+  // Listen for foreground push notifications (no-op in Expo Go)
   useEffect(() => {
-    const sub = Notifications.addNotificationReceivedListener((notification) => {
-      const { title, body, data } = notification.request.content;
-      if (title) {
-        const type = (data?.type as any) ?? "achievement";
-        addNotification(type, title, body ?? "");
-      }
+    return addNotificationListener((title, body, type) => {
+      addNotification(type as any, title, body);
     });
-    return () => sub.remove();
   }, [addNotification]);
 
   useEffect(() => {
@@ -71,12 +71,28 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       queryClient.clear();
     }
 
-    // Redirect based on auth state
     const inAuthGroup = segments[0] === "(auth)";
-    if (isSignedIn && inAuthGroup) {
-      router.replace("/(tabs)/learn");
-    } else if (!isSignedIn && !inAuthGroup) {
-      router.replace("/(auth)/sign-in");
+    const inOnboarding = segments[0] === "(onboarding)";
+
+    if (!isSignedIn) {
+      if (!inAuthGroup) router.replace("/(auth)/sign-in");
+      return;
+    }
+
+    // Signed in — check onboarding then redirect
+    if (inAuthGroup) {
+      AsyncStorage.getItem(ONBOARDING_KEY)
+        .then((val) => {
+          router.replace(val ? "/(tabs)/learn" : "/(onboarding)");
+        })
+        .catch(() => router.replace("/(tabs)/learn"));
+    } else if (!inOnboarding && segments[0] === "index") {
+      // index screen rendered; redirect to appropriate destination
+      AsyncStorage.getItem(ONBOARDING_KEY)
+        .then((val) => {
+          router.replace(val ? "/(tabs)/learn" : "/(onboarding)");
+        })
+        .catch(() => router.replace("/(tabs)/learn"));
     }
   }, [isSignedIn, isLoaded, segments, router]);
 

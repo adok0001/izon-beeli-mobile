@@ -1,13 +1,28 @@
-import * as Notifications from "expo-notifications";
+/**
+ * Push notification helpers.
+ *
+ * expo-notifications requires a native development build and is NOT available
+ * in Expo Go.  All functions silently no-op when the native module is absent,
+ * so the rest of the app still works in Expo Go.
+ */
 import * as Device from "expo-device";
 import { Platform } from "react-native";
 import { apiFetch } from "@/lib/api";
 
-/**
- * Configure how incoming notifications are handled when the app is in the foreground.
- */
+// Lazy-load Notifications so a missing native module doesn't crash the bundle.
+function getNotifications() {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    return require("expo-notifications") as typeof import("expo-notifications");
+  } catch {
+    return null;
+  }
+}
+
 export function configurePushNotifications() {
-  Notifications.setNotificationHandler({
+  const N = getNotifications();
+  if (!N) return;
+  N.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowAlert: true,
       shouldPlaySound: true,
@@ -19,34 +34,52 @@ export function configurePushNotifications() {
 }
 
 /**
- * Request permission and register the Expo push token with our backend.
- * Safe to call on every sign-in — the server upserts the token.
+ * Subscribe to foreground push notifications.
+ * Returns an unsubscribe function — call it in a useEffect cleanup.
  */
-export async function registerPushToken(authToken: string): Promise<void> {
-  // Push tokens only work on physical devices
-  if (!Device.isDevice) return;
-
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
-
-  if (existingStatus !== "granted") {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-
-  if (finalStatus !== "granted") return;
-
-  // Android needs a notification channel
-  if (Platform.OS === "android") {
-    await Notifications.setNotificationChannelAsync("default", {
-      name: "Default",
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
+export function addNotificationListener(
+  onReceive: (title: string, body: string, type: string) => void
+): () => void {
+  const N = getNotifications();
+  if (!N) return () => {};
+  try {
+    const sub = N.addNotificationReceivedListener((notification) => {
+      const { title, body, data } = notification.request.content;
+      if (title) {
+        onReceive(title, body ?? "", (data?.type as string) ?? "achievement");
+      }
     });
+    return () => sub.remove();
+  } catch {
+    return () => {};
   }
+}
+
+export async function registerPushToken(authToken: string): Promise<void> {
+  if (!Device.isDevice) return;
+  const N = getNotifications();
+  if (!N) return;
 
   try {
-    const tokenData = await Notifications.getExpoPushTokenAsync();
+    const { status: existingStatus } = await N.getPermissionsAsync();
+    let finalStatus = existingStatus;
+
+    if (existingStatus !== "granted") {
+      const { status } = await N.requestPermissionsAsync();
+      finalStatus = status;
+    }
+
+    if (finalStatus !== "granted") return;
+
+    if (Platform.OS === "android") {
+      await N.setNotificationChannelAsync("default", {
+        name: "Default",
+        importance: N.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+      });
+    }
+
+    const tokenData = await N.getExpoPushTokenAsync();
     const platform = Platform.OS === "ios" ? "ios" : "android";
 
     await apiFetch("/push-tokens", {
@@ -59,13 +92,12 @@ export async function registerPushToken(authToken: string): Promise<void> {
   }
 }
 
-/**
- * Unregister the current device's push token on sign-out.
- */
 export async function unregisterPushToken(authToken: string): Promise<void> {
   if (!Device.isDevice) return;
+  const N = getNotifications();
+  if (!N) return;
   try {
-    const tokenData = await Notifications.getExpoPushTokenAsync();
+    const tokenData = await N.getExpoPushTokenAsync();
     await apiFetch("/push-tokens", {
       method: "DELETE",
       token: authToken,

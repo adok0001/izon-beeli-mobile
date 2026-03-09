@@ -1,54 +1,28 @@
-import { useAuth } from "@clerk/clerk-expo";
 import { Image } from "expo-image";
-import { Redirect } from "expo-router";
-import { useEffect, useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { ONBOARDING_KEY } from "./(onboarding)/index";
 
 const mascot = require("../public/mascot.jpg");
 
+/**
+ * Splash / loading screen shown while AuthGate (in _layout.tsx) resolves
+ * auth state and decides where to redirect.  No hooks needed here — all
+ * auth and onboarding routing logic lives in AuthGate.
+ */
 export default function Index() {
-  const { isSignedIn, isLoaded } = useAuth();
-  const [onboardingChecked, setOnboardingChecked] = useState(false);
-  const [onboardingDone, setOnboardingDone] = useState(false);
-
-  useEffect(() => {
-    if (!isLoaded || !isSignedIn) return;
-    AsyncStorage.getItem(ONBOARDING_KEY).then((val) => {
-      setOnboardingDone(!!val);
-      setOnboardingChecked(true);
-    }).catch(() => {
-      setOnboardingDone(true);
-      setOnboardingChecked(true);
-    });
-  }, [isLoaded, isSignedIn]);
-
-  if (!isLoaded || (isSignedIn && !onboardingChecked)) {
-    return (
-      <View className="flex-1 items-center justify-center bg-white dark:bg-neutral-900">
-        <Image
-          source={mascot}
-          style={{ width: 120, height: 80 }}
-          contentFit="contain"
-        />
-        <Text className="mb-1 mt-4 text-3xl font-bold text-blue-600">
-          Izon Beeli
-        </Text>
-        <Text className="mb-8 text-sm text-neutral-500 dark:text-neutral-400">
-          Learn African Languages
-        </Text>
-        <ActivityIndicator size="large" color="#3b82f6" />
-      </View>
-    );
-  }
-
-  if (isSignedIn) {
-    if (!onboardingDone) {
-      return <Redirect href="/(onboarding)" />;
-    }
-    return <Redirect href="/(tabs)/learn" />;
-  }
-
-  return <Redirect href="/(auth)/sign-in" />;
+  return (
+    <View className="flex-1 items-center justify-center bg-white dark:bg-neutral-900">
+      <Image
+        source={mascot}
+        style={{ width: 120, height: 80 }}
+        contentFit="contain"
+      />
+      <Text className="mb-1 mt-4 text-3xl font-bold text-blue-600">
+        Izon Beeli
+      </Text>
+      <Text className="mb-8 text-sm text-neutral-500 dark:text-neutral-400">
+        Learn African Languages
+      </Text>
+      <ActivityIndicator size="large" color="#3b82f6" />
+    </View>
+  );
 }
