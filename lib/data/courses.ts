@@ -18,7 +18,7 @@ export type CourseEntry = {
 
 export const COURSES: CourseEntry[] = [
   { id: "course-1", languageId: "izon", title: "Izon Basics", description: "Learn the fundamentals of Izon language — greetings, introductions, and everyday phrases.", level: "beginner", lessonsCount: 5, order: 1 },
-  { id: "course-2", languageId: "izon", title: "Izon Stories", description: "Listen to traditional Izon folktales and build your listening comprehension.", level: "intermediate", lessonsCount: 2, order: 2 },
+  { id: "course-2", languageId: "izon", title: "Izon Stories", description: "Listen to traditional Izon folktales and cultural narratives rooted in the rivers, forests, and spiritual memory of the Niger Delta.", level: "intermediate", lessonsCount: 5, order: 2 },
   { id: "course-3", languageId: "izon", title: "Conversational Izon", description: "Master everyday conversations — markets, family, community, and greetings.", level: "beginner", lessonsCount: 3, order: 3 },
   { id: "course-4", languageId: "yoruba", title: "Yoruba Basics", description: "Start your Yoruba journey with essential greetings and phrases used daily.", level: "beginner", lessonsCount: 3, order: 1 },
   { id: "course-5", languageId: "yoruba", title: "Yoruba Proverbs", description: "Explore Yoruba wisdom through traditional proverbs and their meanings.", level: "intermediate", lessonsCount: 2, order: 2 },
