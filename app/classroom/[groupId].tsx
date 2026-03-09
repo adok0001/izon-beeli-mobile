@@ -1,23 +1,35 @@
-import { useMemo } from "react";
-import { View, Text, ScrollView, Pressable } from "react-native";
+import { View, Text, ScrollView, Pressable, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { MemberCard } from "@/components/classroom/member-card";
 import { AssignmentCard } from "@/components/classroom/assignment-card";
-import { useClassroomStore } from "@/store/classroom-store";
+import {
+  useClassroomGroups,
+  useGroupAssignments,
+  useGroupProgress,
+} from "@/lib/hooks/use-classroom";
 import { getLanguageName } from "@/lib/mock-data";
 
 export default function GroupDetailScreen() {
   const router = useRouter();
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
-  const groups = useClassroomStore((s) => s.groups);
-  const allAssignments = useClassroomStore((s) => s.assignments);
-  const group = useMemo(() => groups.find((g) => g.id === groupId), [groups, groupId]);
-  const assignments = useMemo(
-    () => allAssignments.filter((a) => a.groupId === groupId),
-    [allAssignments, groupId]
-  );
+  const { data: groups = [], isLoading: loadingGroups } = useClassroomGroups();
+  const { data: assignments = [], isLoading: loadingAssignments } = useGroupAssignments(groupId);
+  const { data: progress = [] } = useGroupProgress(groupId);
+
+  const group = groups.find((g) => g.id === groupId);
+
+  if (loadingGroups) {
+    return (
+      <>
+        <Stack.Screen options={{ title: "Group" }} />
+        <View className="flex-1 items-center justify-center bg-white dark:bg-neutral-900">
+          <ActivityIndicator size="large" color="#3b82f6" />
+        </View>
+      </>
+    );
+  }
 
   if (!group) {
     return (
@@ -31,6 +43,17 @@ export default function GroupDetailScreen() {
       </>
     );
   }
+
+  // Merge progress data into members
+  const enrichedMembers = group.members.map((m) => {
+    const p = progress.find((pr) => pr.userId === m.userId);
+    return {
+      ...m,
+      lessonsCompleted: p?.lessonsCompleted ?? m.lessonsCompleted,
+      streak: p?.streak ?? m.streak,
+      points: p?.points ?? m.points,
+    };
+  });
 
   return (
     <>
@@ -74,17 +97,25 @@ export default function GroupDetailScreen() {
 
           {/* Members */}
           <Text className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-            Members ({group.members.length})
+            Members ({enrichedMembers.length})
           </Text>
-          {group.members.map((member) => (
-            <MemberCard key={member.id} member={member} />
-          ))}
+          {enrichedMembers.length === 0 ? (
+            <Text className="py-4 text-center text-sm text-neutral-400 dark:text-neutral-500">
+              No members yet. Share the invite code to add people.
+            </Text>
+          ) : (
+            enrichedMembers.map((member) => (
+              <MemberCard key={member.id} member={member} />
+            ))
+          )}
 
           {/* Assignments */}
           <Text className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
             Assignments ({assignments.length})
           </Text>
-          {assignments.length === 0 ? (
+          {loadingAssignments ? (
+            <ActivityIndicator size="small" color="#3b82f6" className="py-4" />
+          ) : assignments.length === 0 ? (
             <Text className="py-4 text-center text-sm text-neutral-400 dark:text-neutral-500">
               No assignments yet. Tap + to assign a lesson.
             </Text>
@@ -92,7 +123,7 @@ export default function GroupDetailScreen() {
             assignments.map((a) => (
               <AssignmentCard
                 key={a.id}
-                assignment={a}
+                assignment={{ ...a, assignedBy: a.assignedBy, dueDate: a.dueDate ?? undefined }}
                 onPress={() => router.push(`/lesson/${a.lessonId}`)}
               />
             ))

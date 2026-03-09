@@ -1,8 +1,9 @@
-import { View, Text, FlatList, Pressable } from "react-native";
+import { View, Text, FlatList, Pressable, RefreshControl, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useClassroomStore } from "@/store/classroom-store";
+import { useClassroomGroups } from "@/lib/hooks/use-classroom";
 import { getLanguageName } from "@/lib/mock-data";
 import type { Group } from "@/types";
 
@@ -47,7 +48,14 @@ function GroupCard({ group }: { group: Group }) {
 
 export default function ClassroomScreen() {
   const router = useRouter();
-  const { groups } = useClassroomStore();
+  const { data: groups = [], isLoading, refetch } = useClassroomGroups();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   return (
     <>
@@ -65,26 +73,33 @@ export default function ClassroomScreen() {
         }}
       />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
-        <FlatList
-          data={groups}
-          keyExtractor={(item) => item.id}
-          contentContainerClassName="px-5 pb-8 pt-4"
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => <GroupCard group={item} />}
-          ListEmptyComponent={
-            <View className="items-center px-8 py-16">
-              <IconSymbol name="person.3.fill" size={48} color="#d1d5db" />
-              <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
-                No groups yet. Create a group or join one with an invite code.
+        {isLoading ? (
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator size="large" color="#3b82f6" />
+          </View>
+        ) : (
+          <FlatList
+            data={groups}
+            keyExtractor={(item) => item.id}
+            contentContainerClassName="px-5 pb-8 pt-4"
+            showsVerticalScrollIndicator={false}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            renderItem={({ item }) => <GroupCard group={item} />}
+            ListEmptyComponent={
+              <View className="items-center px-8 py-16">
+                <IconSymbol name="person.3.fill" size={48} color="#d1d5db" />
+                <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
+                  No groups yet. Create a group or join one with an invite code.
+                </Text>
+              </View>
+            }
+            ListHeaderComponent={
+              <Text className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
+                Manage your learning groups and track member progress.
               </Text>
-            </View>
-          }
-          ListHeaderComponent={
-            <Text className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
-              Manage your learning groups and track member progress.
-            </Text>
-          }
-        />
+            }
+          />
+        )}
       </SafeAreaView>
     </>
   );

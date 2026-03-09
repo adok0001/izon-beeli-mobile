@@ -21,6 +21,7 @@ import { multiplayerRouter, multiplayerInternalRouter } from "./routes/multiplay
 import { quizResultsRouter } from "./routes/quiz-results.js";
 import { contributorsRouter } from "./routes/contributors.js";
 import { pushTokensRouter } from "./routes/push-tokens.js";
+import { classroomRouter } from "./routes/classroom.js";
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -78,5 +79,6 @@ app.route("/multiplayer", multiplayerRouter);
 app.route("/multiplayer", multiplayerInternalRouter);
 app.route("/quiz-results", quizResultsRouter);
 app.route("/push-tokens", pushTokensRouter);
+app.route("/classroom", classroomRouter);
 
 export default app;

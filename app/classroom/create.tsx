@@ -1,15 +1,16 @@
 import { useState } from "react";
-import { View, Text, TextInput, Pressable } from "react-native";
+import { View, Text, TextInput, Pressable, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
-import { useClassroomStore } from "@/store/classroom-store";
+import { useCreateGroup, useJoinGroupByCode } from "@/lib/hooks/use-classroom";
 import { useLanguageStore } from "@/store/language-store";
 import { getLanguageName } from "@/lib/mock-data";
 
 export default function CreateGroupScreen() {
   const router = useRouter();
   const { selectedLanguageId } = useLanguageStore();
-  const { createGroup, joinGroup } = useClassroomStore();
+  const createGroup = useCreateGroup();
+  const joinGroup = useJoinGroupByCode();
   const [mode, setMode] = useState<"create" | "join">("create");
   const [name, setName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
@@ -17,19 +18,24 @@ export default function CreateGroupScreen() {
 
   const handleCreate = () => {
     if (!name.trim()) return;
-    const group = createGroup(name.trim(), selectedLanguageId);
-    router.replace(`/classroom/${group.id}`);
+    createGroup.mutate(
+      { name: name.trim(), languageId: selectedLanguageId },
+      {
+        onSuccess: (group) => router.replace(`/classroom/${group.id}`),
+        onError: (err) => Alert.alert("Error", err.message),
+      }
+    );
   };
 
   const handleJoin = () => {
-    if (!inviteCode.trim()) return;
-    const group = joinGroup(inviteCode.trim());
-    if (group) {
-      router.replace(`/classroom/${group.id}`);
-    } else {
-      setError("No group found with that invite code.");
-    }
+    if (inviteCode.length < 6) return;
+    joinGroup.mutate(inviteCode.trim(), {
+      onSuccess: (group) => router.replace(`/classroom/${group.id}`),
+      onError: () => setError("No group found with that invite code."),
+    });
   };
+
+  const isPending = createGroup.isPending || joinGroup.isPending;
 
   return (
     <>
@@ -92,15 +98,15 @@ export default function CreateGroupScreen() {
               </Text>
               <Pressable
                 onPress={handleCreate}
-                disabled={!name.trim()}
+                disabled={!name.trim() || isPending}
                 className={`items-center rounded-xl py-4 ${
-                  name.trim() ? "bg-blue-500 active:opacity-80" : "bg-neutral-200 dark:bg-neutral-700"
+                  name.trim() && !isPending ? "bg-blue-500 active:opacity-80" : "bg-neutral-200 dark:bg-neutral-700"
                 }`}
               >
                 <Text className={`text-base font-semibold ${
-                  name.trim() ? "text-white" : "text-neutral-400"
+                  name.trim() && !isPending ? "text-white" : "text-neutral-400"
                 }`}>
-                  Create Group
+                  {isPending ? "Creating..." : "Create Group"}
                 </Text>
               </Pressable>
             </>
@@ -124,15 +130,15 @@ export default function CreateGroupScreen() {
               ) : null}
               <Pressable
                 onPress={handleJoin}
-                disabled={inviteCode.length < 6}
+                disabled={inviteCode.length < 6 || isPending}
                 className={`mt-2 items-center rounded-xl py-4 ${
-                  inviteCode.length >= 6 ? "bg-blue-500 active:opacity-80" : "bg-neutral-200 dark:bg-neutral-700"
+                  inviteCode.length >= 6 && !isPending ? "bg-blue-500 active:opacity-80" : "bg-neutral-200 dark:bg-neutral-700"
                 }`}
               >
                 <Text className={`text-base font-semibold ${
-                  inviteCode.length >= 6 ? "text-white" : "text-neutral-400"
+                  inviteCode.length >= 6 && !isPending ? "text-white" : "text-neutral-400"
                 }`}>
-                  Join Group
+                  {isPending ? "Joining..." : "Join Group"}
                 </Text>
               </Pressable>
             </>

@@ -1,9 +1,9 @@
-import { useState, useMemo } from "react";
-import { View, Text, Pressable, FlatList, ActivityIndicator } from "react-native";
+import { useState } from "react";
+import { View, Text, Pressable, FlatList, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter, useLocalSearchParams } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useClassroomStore } from "@/store/classroom-store";
+import { useClassroomGroups, useCreateAssignment } from "@/lib/hooks/use-classroom";
 import { useLanguageLessons } from "@/lib/hooks/use-courses";
 import { formatDuration } from "@/lib/mock-data";
 import type { Lesson } from "@/types";
@@ -11,9 +11,9 @@ import type { Lesson } from "@/types";
 export default function AssignLessonScreen() {
   const router = useRouter();
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
-  const groups = useClassroomStore((s) => s.groups);
-  const addAssignment = useClassroomStore((s) => s.addAssignment);
-  const group = useMemo(() => groups.find((g) => g.id === groupId), [groups, groupId]);
+  const { data: groups = [] } = useClassroomGroups();
+  const group = groups.find((g) => g.id === groupId);
+  const createAssignment = useCreateAssignment();
   const [selected, setSelected] = useState<string | null>(null);
 
   const { data: allLessons = [], isLoading } = useLanguageLessons(group?.languageId ?? "");
@@ -31,8 +31,13 @@ export default function AssignLessonScreen() {
 
   const handleAssign = () => {
     if (!selected) return;
-    addAssignment(groupId, selected, "You");
-    router.back();
+    createAssignment.mutate(
+      { groupId, lessonId: selected },
+      {
+        onSuccess: () => router.back(),
+        onError: (err) => Alert.alert("Error", err.message),
+      }
+    );
   };
 
   return (
@@ -46,13 +51,15 @@ export default function AssignLessonScreen() {
           <Text className="text-base font-semibold text-neutral-900 dark:text-white">
             Assign Lesson
           </Text>
-          <Pressable onPress={handleAssign} disabled={!selected}>
+          <Pressable onPress={handleAssign} disabled={!selected || createAssignment.isPending}>
             <Text
               className={`text-base font-semibold ${
-                selected ? "text-blue-500" : "text-neutral-300 dark:text-neutral-600"
+                selected && !createAssignment.isPending
+                  ? "text-blue-500"
+                  : "text-neutral-300 dark:text-neutral-600"
               }`}
             >
-              Assign
+              {createAssignment.isPending ? "Assigning..." : "Assign"}
             </Text>
           </Pressable>
         </View>

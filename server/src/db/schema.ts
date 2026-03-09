@@ -393,6 +393,50 @@ export const lessonContributionSegments = pgTable(
   ]
 );
 
+// ---------- Classroom ----------
+
+export const groupRoleEnum = pgEnum("group_role", ["teacher", "parent", "student"]);
+
+export const classroomGroups = pgTable("classroom_groups", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: varchar("name", { length: 120 }).notNull(),
+  inviteCode: varchar("invite_code", { length: 8 }).notNull().unique(),
+  languageId: varchar("language_id", { length: 32 }).notNull(),
+  createdBy: uuid("created_by")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const classroomMembers = pgTable(
+  "classroom_members",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => classroomGroups.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    role: groupRoleEnum("role").default("student").notNull(),
+    joinedAt: timestamp("joined_at").defaultNow().notNull(),
+  },
+  (t) => [uniqueIndex("classroom_members_group_user_idx").on(t.groupId, t.userId)]
+);
+
+export const classroomAssignments = pgTable("classroom_assignments", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  groupId: uuid("group_id")
+    .notNull()
+    .references(() => classroomGroups.id, { onDelete: "cascade" }),
+  lessonId: varchar("lesson_id", { length: 255 }).notNull(),
+  assignedBy: uuid("assigned_by")
+    .notNull()
+    .references(() => users.id),
+  dueDate: timestamp("due_date"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // ---------- Multiplayer ----------
 
 export const gameSessionTypeEnum = pgEnum("game_session_type", [
