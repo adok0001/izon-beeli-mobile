@@ -516,6 +516,21 @@ export const feedback = pgTable("feedback", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const pushTokens = pgTable(
+  "push_tokens",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    token: text("token").notNull(),
+    platform: varchar("platform", { length: 16 }).notNull(), // "ios" | "android"
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (t) => [uniqueIndex("push_tokens_user_token_idx").on(t.userId, t.token)]
+);
+
 // ---------- Relations ----------
 
 export const usersRelations = relations(users, ({ many }) => ({

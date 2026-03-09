@@ -11,6 +11,7 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef } from "react";
 import "react-native-reanimated";
+import * as Notifications from "expo-notifications";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { tokenCache } from "@/lib/auth";
@@ -19,6 +20,8 @@ import { useSyncUser } from "@/lib/hooks/use-sync-user";
 import { useThemeStore } from "@/store/theme-store";
 import { useLanguageStore } from "@/store/language-store";
 import { analytics } from "@/lib/analytics";
+import { configurePushNotifications, registerPushToken } from "@/lib/push-notifications";
+import { useNotificationStore } from "@/store/notification-store";
 
 const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -28,13 +31,34 @@ export const unstable_settings = {
 
 /** Reacts to auth state changes: clears cache, syncs user, and redirects. */
 function AuthGate({ children }: { children: React.ReactNode }) {
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isSignedIn, isLoaded, getToken } = useAuth();
   const router = useRouter();
   const segments = useSegments();
   const prevSignedIn = useRef<boolean | undefined>(undefined);
+  const addNotification = useNotificationStore((s) => s.addNotification);
 
   // Sync Clerk user to backend DB
   useSyncUser();
+
+  // Register push token when user signs in
+  useEffect(() => {
+    if (!isSignedIn) return;
+    getToken().then((token) => {
+      if (token) registerPushToken(token).catch(() => {});
+    });
+  }, [isSignedIn]);
+
+  // Listen for incoming push notifications while app is foregrounded
+  useEffect(() => {
+    const sub = Notifications.addNotificationReceivedListener((notification) => {
+      const { title, body, data } = notification.request.content;
+      if (title) {
+        const type = (data?.type as any) ?? "achievement";
+        addNotification(type, title, body ?? "");
+      }
+    });
+    return () => sub.remove();
+  }, [addNotification]);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -66,6 +90,7 @@ export default function RootLayout() {
   const hydrateLanguage = useLanguageStore((s) => s.hydrate);
 
   useEffect(() => {
+    configurePushNotifications();
     hydrateTheme();
     hydrateLanguage();
     analytics.appOpen();
