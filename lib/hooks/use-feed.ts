@@ -23,15 +23,18 @@ interface FeedPage {
   nextCursor: string | null;
 }
 
-export function useFeed() {
+export type FeedTypeFilter = "all" | "achievement" | "contribution" | "community";
+
+export function useFeed(typeFilter?: FeedTypeFilter) {
   const { getToken, isSignedIn } = useAuth();
 
   return useInfiniteQuery<FeedPage>({
-    queryKey: ["feed"],
+    queryKey: ["feed", typeFilter ?? "all"],
     queryFn: async ({ pageParam }) => {
       const token = await getToken();
       const params = new URLSearchParams({ limit: "20" });
       if (pageParam) params.set("cursor", pageParam as string);
+      if (typeFilter && typeFilter !== "all") params.set("type", typeFilter);
       return apiFetch<FeedPage>(`/feed?${params}`, { token: token! });
     },
     initialPageParam: null as string | null,

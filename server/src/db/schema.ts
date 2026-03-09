@@ -205,6 +205,11 @@ export const wordBank = pgTable(
       .notNull(),
     dictionaryEntryId: varchar("dictionary_entry_id", { length: 64 }).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
+    // Spaced-repetition review fields
+    nextReviewAt: timestamp("next_review_at"),
+    confidence: integer("confidence").default(0).notNull(), // 0-5 SM-2 ease factor proxy
+    reviewCount: integer("review_count").default(0).notNull(),
+    lastReviewedAt: timestamp("last_reviewed_at"),
   },
   (table) => [
     uniqueIndex("word_bank_user_entry_idx").on(

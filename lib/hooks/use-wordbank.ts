@@ -2,6 +2,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/clerk-expo";
 import { apiFetch } from "@/lib/api";
 
+export interface WordBankEntry {
+  dictionaryEntryId: string;
+  confidence: number;
+  reviewCount: number;
+  nextReviewAt: string | null;
+}
+
 export function useWordBank() {
   const { getToken, isSignedIn } = useAuth();
 
@@ -43,6 +50,44 @@ export function useSaveWord() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["wordbank"] });
+    },
+  });
+}
+
+export function useWordsDueForReview() {
+  const { getToken, isSignedIn } = useAuth();
+
+  return useQuery<WordBankEntry[]>({
+    queryKey: ["wordbank", "due"],
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch<WordBankEntry[]>("/wordbank/due", { token: token! });
+    },
+    enabled: !!isSignedIn,
+  });
+}
+
+export function useReviewWord() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      dictionaryEntryId,
+      confidence,
+    }: {
+      dictionaryEntryId: string;
+      confidence: "easy" | "hard" | "again";
+    }) => {
+      const token = await getToken();
+      return apiFetch<{ nextReviewAt: string }>(`/wordbank/${dictionaryEntryId}/review`, {
+        method: "POST",
+        token: token!,
+        body: JSON.stringify({ confidence }),
+      });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["wordbank", "due"] });
     },
   });
 }

@@ -19,6 +19,7 @@ import { feedbackRouter } from "./routes/feedback.js";
 import { lessonContributionsRouter } from "./routes/lesson-contributions.js";
 import { multiplayerRouter, multiplayerInternalRouter } from "./routes/multiplayer.js";
 import { quizResultsRouter } from "./routes/quiz-results.js";
+import { contributorsRouter } from "./routes/contributors.js";
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -53,6 +54,7 @@ app.onError((err, c) => {
 
 // Public routes (no auth required)
 app.route("/contributions", contributionsPublicRouter);
+app.route("/contributors", contributorsRouter);
 app.route("/languages", languagesRouter);
 app.route("/courses", coursesRouter);
 app.route("/lessons", lessonsRouter);

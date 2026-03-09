@@ -22,6 +22,7 @@ import {
   useToggleLike,
   useComments,
   useAddComment,
+  type FeedTypeFilter,
 } from "@/lib/hooks/use-feed";
 import type { FeedItem, Comment, AudioSource } from "@/types";
 
@@ -394,10 +395,18 @@ function FeedCard({
   );
 }
 
+const FILTER_OPTIONS: { id: FeedTypeFilter; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "achievement", label: "Achievements" },
+  { id: "contribution", label: "Contributions" },
+  { id: "community", label: "Community" },
+];
+
 // --- Feed Screen ---
 export default function FeedScreen() {
   const router = useRouter();
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } = useFeed();
+  const [activeFilter, setActiveFilter] = useState<FeedTypeFilter>("all");
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } = useFeed(activeFilter);
   const [commentsItemId, setCommentsItemId] = useState<string | null>(null);
   const [showNewPost, setShowNewPost] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -430,6 +439,31 @@ export default function FeedScreen() {
         >
           <IconSymbol name="plus" size={22} color="#ffffff" />
         </Pressable>
+      </View>
+
+      {/* Filter bar */}
+      <View className="flex-row gap-2 px-5 pb-2">
+        {FILTER_OPTIONS.map((opt) => (
+          <Pressable
+            key={opt.id}
+            onPress={() => setActiveFilter(opt.id)}
+            className={`rounded-full px-3.5 py-1.5 active:opacity-70 ${
+              activeFilter === opt.id
+                ? "bg-blue-500"
+                : "bg-neutral-100 dark:bg-neutral-800"
+            }`}
+          >
+            <Text
+              className={`text-xs font-semibold ${
+                activeFilter === opt.id
+                  ? "text-white"
+                  : "text-neutral-600 dark:text-neutral-400"
+              }`}
+            >
+              {opt.label}
+            </Text>
+          </Pressable>
+        ))}
       </View>
 
       {isLoading ? (

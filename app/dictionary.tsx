@@ -10,7 +10,7 @@ import {
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { useRemoveWord, useSaveWord, useWordBank } from "@/lib/hooks/use-wordbank";
 import { useLanguageStore } from "@/store/language-store";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -81,6 +81,7 @@ function WordRow({ entry, saved, onToggle }: { entry: DictionaryEntry; saved: bo
 }
 
 export default function DictionaryScreen() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("all");
   const { data: savedIds } = useWordBank();
@@ -202,6 +203,19 @@ export default function DictionaryScreen() {
               </Text>
             </Pressable>
           </View>
+
+          {/* Review CTA — visible when viewing saved words */}
+          {viewMode === "saved" && savedCount > 0 && (
+            <Pressable
+              onPress={() => router.push("/word-review")}
+              className="mt-3 flex-row items-center justify-center rounded-xl bg-emerald-500 py-2.5 active:opacity-80"
+            >
+              <IconSymbol name="brain.head.profile" size={16} color="#fff" />
+              <Text className="ml-2 text-sm font-semibold text-white">
+                Review Saved Words
+              </Text>
+            </Pressable>
+          )}
         </View>
 
         {/* Loading state */}

@@ -1,8 +1,8 @@
 import { Hono } from "hono";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, or, ilike } from "drizzle-orm";
 import { put } from "@vercel/blob";
 import { db } from "../db/index.js";
-import { contributions, feedItems, users } from "../db/schema.js";
+import { contributions, dictionaryEntries, feedItems, users } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
 
 const VALID_TYPES = ["word", "phrase", "audio"] as const;
@@ -116,6 +116,40 @@ contributionsRouter.post("/", async (c) => {
 
   if (!VALID_TYPES.includes(type as any)) {
     return c.json({ error: `type must be one of: ${VALID_TYPES.join(", ")}` }, 400);
+  }
+
+  // Duplicate detection — check dictionaryEntries and contributions
+  const wordNorm = word.trim().toLowerCase();
+  const [existingDict] = await db
+    .select({ id: dictionaryEntries.id, word: dictionaryEntries.word, english: dictionaryEntries.english })
+    .from(dictionaryEntries)
+    .where(and(eq(dictionaryEntries.languageId, languageId), ilike(dictionaryEntries.word, wordNorm)))
+    .limit(1);
+
+  if (existingDict) {
+    return c.json(
+      { error: "This word already exists in the dictionary", existing: existingDict },
+      409
+    );
+  }
+
+  const [existingContrib] = await db
+    .select({ id: contributions.id, word: contributions.word, status: contributions.status })
+    .from(contributions)
+    .where(
+      and(
+        eq(contributions.languageId, languageId),
+        ilike(contributions.word, wordNorm),
+        or(eq(contributions.status, "submitted"), eq(contributions.status, "approved"))
+      )
+    )
+    .limit(1);
+
+  if (existingContrib) {
+    return c.json(
+      { error: "A contribution for this word already exists", existing: existingContrib },
+      409
+    );
   }
 
   const [contribution] = await db

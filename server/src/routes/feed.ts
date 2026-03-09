@@ -10,10 +10,11 @@ export const feedRouter = new Hono<AuthEnv>();
 
 feedRouter.use("*", authMiddleware);
 
-// GET /api/feed?cursor=&limit=20 - paginated feed with isLiked
+// GET /api/feed?cursor=&limit=20&type= - paginated feed with isLiked, optional type filter
 feedRouter.get("/", async (c) => {
   const userId = c.get("userId");
   const cursor = c.req.query("cursor");
+  const typeFilter = c.req.query("type");
   const rawLimit = parseInt(c.req.query("limit") ?? "20");
   const limit = Math.min(Number.isNaN(rawLimit) ? 20 : rawLimit, 50);
 
@@ -24,6 +25,9 @@ feedRouter.get("/", async (c) => {
       return c.json({ error: "Invalid cursor format" }, 400);
     }
     conditions.push(lt(feedItems.createdAt, cursorDate));
+  }
+  if (typeFilter && VALID_FEED_TYPES.includes(typeFilter as any)) {
+    conditions.push(eq(feedItems.type, typeFilter as (typeof VALID_FEED_TYPES)[number]));
   }
 
   const items = await db

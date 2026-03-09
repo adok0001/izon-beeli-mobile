@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq, and } from "drizzle-orm";
+import { eq, and, lte } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { wordBank } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
@@ -18,6 +18,55 @@ wordbankRouter.get("/", async (c) => {
     .where(eq(wordBank.userId, userId));
 
   return c.json(rows.map((r) => r.dictionaryEntryId));
+});
+
+// GET /api/wordbank/due - list word IDs due for review (nextReviewAt <= now or never reviewed)
+wordbankRouter.get("/due", async (c) => {
+  const userId = c.get("userId");
+  const now = new Date();
+
+  const rows = await db
+    .select({
+      dictionaryEntryId: wordBank.dictionaryEntryId,
+      confidence: wordBank.confidence,
+      reviewCount: wordBank.reviewCount,
+      nextReviewAt: wordBank.nextReviewAt,
+    })
+    .from(wordBank)
+    .where(
+      and(
+        eq(wordBank.userId, userId),
+        lte(wordBank.nextReviewAt, now)
+      )
+    )
+    .limit(20);
+
+  // Also include words never scheduled for review
+  const neverReviewed = await db
+    .select({
+      dictionaryEntryId: wordBank.dictionaryEntryId,
+      confidence: wordBank.confidence,
+      reviewCount: wordBank.reviewCount,
+      nextReviewAt: wordBank.nextReviewAt,
+    })
+    .from(wordBank)
+    .where(
+      and(
+        eq(wordBank.userId, userId),
+        eq(wordBank.reviewCount, 0)
+      )
+    )
+    .limit(20);
+
+  const combined = [...rows, ...neverReviewed];
+  const seen = new Set<string>();
+  const unique = combined.filter((r) => {
+    if (seen.has(r.dictionaryEntryId)) return false;
+    seen.add(r.dictionaryEntryId);
+    return true;
+  }).slice(0, 20);
+
+  return c.json(unique);
 });
 
 // POST /api/wordbank - save a word
@@ -51,6 +100,55 @@ wordbankRouter.post("/", async (c) => {
   });
 
   return c.json({ saved: true }, 201);
+});
+
+// POST /api/wordbank/:entryId/review - record review outcome and update schedule
+wordbankRouter.post("/:entryId/review", async (c) => {
+  const userId = c.get("userId");
+  const entryId = c.req.param("entryId");
+  const body = await c.req.json<{ confidence: "easy" | "hard" | "again" }>();
+
+  if (!["easy", "hard", "again"].includes(body.confidence)) {
+    return c.json({ error: "confidence must be 'easy', 'hard', or 'again'" }, 400);
+  }
+
+  const [entry] = await db
+    .select()
+    .from(wordBank)
+    .where(and(eq(wordBank.userId, userId), eq(wordBank.dictionaryEntryId, entryId)))
+    .limit(1);
+
+  if (!entry) {
+    return c.json({ error: "Word not found in bank" }, 404);
+  }
+
+  const now = new Date();
+  const reviewCount = entry.reviewCount + 1;
+  let newConfidence = entry.confidence;
+  let nextReviewMs: number;
+
+  if (body.confidence === "easy") {
+    newConfidence = Math.min(newConfidence + 1, 5);
+    // Interval roughly doubles: 4d, 8d, 16d... capped at 30d
+    const days = Math.min(4 * Math.pow(2, newConfidence - 1), 30);
+    nextReviewMs = now.getTime() + days * 24 * 60 * 60 * 1000;
+  } else if (body.confidence === "hard") {
+    newConfidence = Math.max(newConfidence - 1, 0);
+    nextReviewMs = now.getTime() + 24 * 60 * 60 * 1000; // 1 day
+  } else {
+    // again — very soon
+    newConfidence = 0;
+    nextReviewMs = now.getTime() + 10 * 60 * 1000; // 10 minutes
+  }
+
+  const nextReviewAt = new Date(nextReviewMs);
+
+  await db
+    .update(wordBank)
+    .set({ confidence: newConfidence, reviewCount, lastReviewedAt: now, nextReviewAt })
+    .where(and(eq(wordBank.userId, userId), eq(wordBank.dictionaryEntryId, entryId)));
+
+  return c.json({ nextReviewAt: nextReviewAt.toISOString() });
 });
 
 // DELETE /api/wordbank/:entryId - remove a saved word

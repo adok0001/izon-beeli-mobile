@@ -10,6 +10,18 @@ export const queryClient = new QueryClient({
   },
 });
 
+export class ApiError extends Error {
+  status: number;
+  body: unknown;
+
+  constructor(status: number, message: string, body?: unknown) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.body = body;
+  }
+}
+
 export async function apiFetch<T>(
   path: string,
   options?: RequestInit & { token?: string }
@@ -25,7 +37,15 @@ export async function apiFetch<T>(
   });
 
   if (!res.ok) {
-    throw new Error(`API error ${res.status}: ${res.statusText}`);
+    let body: unknown;
+    try {
+      body = await res.json();
+    } catch {
+      body = undefined;
+    }
+    const message =
+      (body as any)?.error ?? `API error ${res.status}: ${res.statusText}`;
+    throw new ApiError(res.status, message, body);
   }
 
   return res.json() as Promise<T>;

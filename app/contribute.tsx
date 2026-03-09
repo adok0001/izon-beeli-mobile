@@ -14,6 +14,7 @@ import { Stack, useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useContributionStore } from "@/store/contribution-store";
 import { useSubmitContribution } from "@/lib/hooks/use-contributions";
+import { ApiError } from "@/lib/api";
 import { LANGUAGES } from "@/lib/mock-data";
 import {
   ALL_CATEGORIES,
@@ -68,7 +69,14 @@ export default function ContributeScreen() {
         },
         onError: (err) => {
           console.error("Contribution submit error:", err);
-          Alert.alert("Error", err.message || "Failed to submit contribution. Please try again.");
+          if (err instanceof ApiError && err.status === 409) {
+            Alert.alert(
+              "Already Exists",
+              err.message + "\n\nTry contributing a different word or refine this one."
+            );
+          } else {
+            Alert.alert("Error", err.message || "Failed to submit contribution. Please try again.");
+          }
         },
       }
     );

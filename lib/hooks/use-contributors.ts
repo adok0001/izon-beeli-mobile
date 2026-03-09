@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api";
 
 export interface ContributorProfile {
   id: string;
@@ -25,50 +26,34 @@ const BADGE_LABELS: Record<ContributorBadgeType, { label: string; icon: string }
 
 export { BADGE_LABELS };
 
-// Mock contributor profiles for local phase
-const MOCK_CONTRIBUTORS: ContributorProfile[] = [
-  {
-    id: "contrib-1",
-    name: "Ebiere T.",
-    approvedCount: 52,
-    audioCount: 15,
-    badges: ["first_contribution", "ten_words", "fifty_words", "audio_contributor"],
-  },
-  {
-    id: "contrib-2",
-    name: "Ebiowe M.",
-    approvedCount: 34,
-    audioCount: 8,
-    badges: ["first_contribution", "ten_words", "audio_contributor"],
-  },
-  {
-    id: "contrib-3",
-    name: "Diepreye O.",
-    approvedCount: 21,
-    audioCount: 3,
-    badges: ["first_contribution", "ten_words"],
-  },
-  {
-    id: "contrib-4",
-    name: "Mieibi K.",
-    approvedCount: 12,
-    audioCount: 0,
-    badges: ["first_contribution", "ten_words"],
-  },
-  {
-    id: "contrib-5",
-    name: "Seiyefa B.",
-    approvedCount: 5,
-    audioCount: 2,
-    badges: ["first_contribution", "audio_contributor"],
-  },
-];
+interface RawContributor {
+  id: string;
+  name: string;
+  approvedCount: number;
+}
 
-export function useContributors() {
-  const contributors = useMemo(
-    () => [...MOCK_CONTRIBUTORS].sort((a, b) => b.approvedCount - a.approvedCount),
-    []
-  );
+function deriveBadges(approvedCount: number): ContributorBadgeType[] {
+  const badges: ContributorBadgeType[] = ["first_contribution"];
+  if (approvedCount >= 10) badges.push("ten_words");
+  if (approvedCount >= 50) badges.push("fifty_words");
+  return badges;
+}
 
-  return { data: contributors };
+export function useContributors(languageId?: string) {
+  return useQuery<ContributorProfile[]>({
+    queryKey: ["contributors", languageId ?? null],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (languageId) params.set("languageId", languageId);
+      const raw = await apiFetch<RawContributor[]>(`/contributors?${params}`);
+      return raw.map((r) => ({
+        id: r.id,
+        name: r.name,
+        approvedCount: r.approvedCount,
+        audioCount: 0, // not tracked per-language in v1
+        badges: deriveBadges(r.approvedCount),
+      }));
+    },
+    staleTime: 1000 * 60 * 5,
+  });
 }
