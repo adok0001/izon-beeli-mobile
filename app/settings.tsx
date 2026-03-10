@@ -1,11 +1,11 @@
-import { View, Text, Pressable, Alert } from "react-native";
+import { View, Text, Pressable, Alert, Switch } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 import Constants from "expo-constants";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useLanguageStore } from "@/store/language-store";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
+import { useNotificationPrefs, useUpdateNotificationPrefs } from "@/lib/hooks/use-notification-prefs";
 import { getLanguageName } from "@/lib/mock-data";
 import { useThemeStore } from "@/store/theme-store";
 import { apiFetch } from "@/lib/api";
@@ -44,6 +44,38 @@ function SettingsRow({
   );
 }
 
+function ToggleRow({
+  icon,
+  label,
+  detail,
+  value,
+  onToggle,
+}: {
+  icon: string;
+  label: string;
+  detail?: string;
+  value: boolean;
+  onToggle: (v: boolean) => void;
+}) {
+  return (
+    <View className="flex-row items-center border-b border-neutral-100 py-3.5 dark:border-neutral-800">
+      <IconSymbol name={icon as any} size={20} color="#6b7280" />
+      <View className="ml-3 flex-1">
+        <Text className="text-base text-neutral-900 dark:text-white">{label}</Text>
+        {detail && (
+          <Text className="text-xs text-neutral-500 dark:text-neutral-400">{detail}</Text>
+        )}
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onToggle}
+        trackColor={{ false: "#d1d5db", true: "#3b82f6" }}
+        thumbColor="#ffffff"
+      />
+    </View>
+  );
+}
+
 const THEME_OPTIONS = ["system", "light", "dark"] as const;
 const THEME_LABELS: Record<string, string> = {
   system: "System",
@@ -52,11 +84,12 @@ const THEME_LABELS: Record<string, string> = {
 };
 
 export default function SettingsScreen() {
-  const colorScheme = useColorScheme();
   const { selectedLanguageId } = useLanguageStore();
   const { data: summary } = useProgressSummary();
   const { preference, setPreference } = useThemeStore();
   const { getToken } = useAuth();
+  const { data: prefs } = useNotificationPrefs();
+  const updatePrefs = useUpdateNotificationPrefs();
 
   const handleResetProgress = () => {
     Alert.alert(
@@ -110,6 +143,25 @@ export default function SettingsScreen() {
             icon="star.fill"
             label="Points Earned"
             value={String(summary?.points ?? 0)}
+          />
+
+          {/* Notifications section */}
+          <Text className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+            Notifications
+          </Text>
+          <ToggleRow
+            icon="star.fill"
+            label="Word of the Day"
+            detail="Daily push with a new word"
+            value={prefs?.pushWotdEnabled ?? true}
+            onToggle={(v) => updatePrefs.mutate({ pushWotdEnabled: v })}
+          />
+          <ToggleRow
+            icon="flame.fill"
+            label="Streak Reminder"
+            detail="Evening reminder if you haven't practiced"
+            value={prefs?.pushStreakReminderEnabled ?? true}
+            onToggle={(v) => updatePrefs.mutate({ pushStreakReminderEnabled: v })}
           />
 
           {/* App section */}

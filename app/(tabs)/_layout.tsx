@@ -11,6 +11,7 @@ import { useSyncUser } from "@/lib/hooks/use-sync-user";
 import { useNotificationStore } from "@/store/notification-store";
 import { useDailyReminder } from "@/lib/hooks/use-daily-reminder";
 import { useLanguageStore } from "@/store/language-store";
+import { useProgressSummary } from "@/lib/hooks/use-progress";
 import { useEffect, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ONBOARDING_KEY } from "@/app/(onboarding)/index";
@@ -30,8 +31,9 @@ export default function TabLayout() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const { selectedLanguageId } = useLanguageStore();
+  const { data: summary } = useProgressSummary();
   useSyncUser();
-  useDailyReminder(selectedLanguageId);
+  useDailyReminder(selectedLanguageId, summary?.streak ?? 0);
 
   const hydrateNotifications = useNotificationStore((s) => s.hydrate);
   const onboardingChecked = useRef(false);

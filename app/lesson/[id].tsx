@@ -7,6 +7,7 @@ import { useLesson } from "@/lib/hooks/use-courses";
 import { formatDuration, BUNDLED_AUDIO } from "@/lib/mock-data";
 import { playFinishSound } from "@/lib/sounds";
 import { hapticHeavy } from "@/lib/haptics";
+import { cancelDailyStreakReminder } from "@/lib/hooks/use-daily-reminder";
 import { useAudioStore } from "@/store/audio-store";
 import { analytics } from "@/lib/analytics";
 import { useLanguageStore } from "@/store/language-store";
@@ -74,6 +75,7 @@ export default function LessonScreen() {
     playFinishSound();
     hapticHeavy();
     analytics.lessonCompleted(lesson.id, selectedLanguageId);
+    cancelDailyStreakReminder().catch(() => {});
   };
 
   return (

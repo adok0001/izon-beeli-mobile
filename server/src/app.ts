@@ -24,6 +24,7 @@ import { pushTokensRouter } from "./routes/push-tokens.js";
 import { classroomRouter } from "./routes/classroom.js";
 import { dailyChallengesRouter } from "./routes/daily-challenges.js";
 import { dashboardRouter } from "./routes/dashboard.js";
+import { notificationsRouter, notificationsAdminRouter } from "./routes/notifications.js";
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -84,5 +85,7 @@ app.route("/push-tokens", pushTokensRouter);
 app.route("/classroom", classroomRouter);
 app.route("/daily-challenges", dailyChallengesRouter);
 app.route("/dashboard", dashboardRouter);
+app.route("/notifications", notificationsRouter);
+app.route("/notifications/admin", notificationsAdminRouter);
 
 export default app;

@@ -70,6 +70,8 @@ export const users = pgTable("users", {
   dailyGoal: varchar("daily_goal", { length: 16 }), // "casual" | "steady" | "intensive"
   streakFreezes: integer("streak_freezes").default(0).notNull(),
   lastFreezeUsedDate: varchar("last_freeze_used_date", { length: 10 }), // YYYY-MM-DD
+  pushWotdEnabled: boolean("push_wotd_enabled").default(true).notNull(),
+  pushStreakReminderEnabled: boolean("push_streak_reminder_enabled").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
