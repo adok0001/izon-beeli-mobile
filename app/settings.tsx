@@ -10,6 +10,7 @@ import { getLanguageName } from "@/lib/mock-data";
 import { useThemeStore } from "@/store/theme-store";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@clerk/clerk-expo";
+import { useQueryClient } from "@tanstack/react-query";
 
 function SettingsRow({
   icon,
@@ -88,6 +89,7 @@ export default function SettingsScreen() {
   const { data: summary } = useProgressSummary();
   const { preference, setPreference } = useThemeStore();
   const { getToken } = useAuth();
+  const queryClient = useQueryClient();
   const { data: prefs } = useNotificationPrefs();
   const updatePrefs = useUpdateNotificationPrefs();
 
@@ -107,6 +109,7 @@ export default function SettingsScreen() {
                 method: "DELETE",
                 token: token ?? undefined,
               });
+              queryClient.invalidateQueries({ queryKey: ["progress"] });
               Alert.alert("Done", "Your progress has been reset.");
             } catch {
               Alert.alert("Error", "Failed to reset progress. Please try again.");

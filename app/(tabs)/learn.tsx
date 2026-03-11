@@ -1,6 +1,7 @@
 import { SymbolOfTheDay } from "@/components/adinkra/symbol-of-the-day";
 import { CulturalSection } from "@/components/cultural/cultural-section";
 import { DailyChallengeCard } from "@/components/daily-challenge-card";
+import { UpNextCard } from "@/components/up-next-card";
 import { LanguagePickerButton } from "@/components/language-picker";
 import { NotificationBell } from "@/components/notifications/notification-center";
 import { ProverbOfTheDay } from "@/components/proverb-of-the-day";
@@ -14,6 +15,7 @@ import { useCompletedLessons, useProgressSummary } from "@/lib/hooks/use-progres
 import { formatDuration, BUNDLED_AUDIO } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
 import { useAudioStore } from "@/store/audio-store";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import type { Course, Lesson } from "@/types";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -72,6 +74,7 @@ function ContinueCard({ lessonId, positionSeconds }: { lessonId: string; positio
 
 function CourseCard({ course, completedIds }: { course: Course; completedIds: Set<string> }) {
   const router = useRouter();
+  const colorScheme = useColorScheme();
   const { data: lessons = [], isLoading: lessonsLoading } = useCourseLessons(course.id);
   const completedCount = lessons.filter((l) => completedIds.has(l.id)).length;
   const progressPercent =
@@ -99,12 +102,32 @@ function CourseCard({ course, completedIds }: { course: Course; completedIds: Se
 
       {progressPercent > 0 && (
         <View className="mb-3">
-          <View className="h-2 rounded-full bg-neutral-200 dark:bg-neutral-700">
+          <View className="relative h-2 rounded-full bg-neutral-200 dark:bg-neutral-700">
             <View
               className="h-2 rounded-full bg-blue-500"
               style={{ width: `${progressPercent}%` }}
             />
+            {[25, 50, 75].map((pct) => (
+              <View
+                key={pct}
+                className="absolute top-0 h-2 w-0.5"
+                style={{
+                  left: `${pct}%`,
+                  backgroundColor:
+                    progressPercent >= pct
+                      ? "#93c5fd"
+                      : colorScheme === "dark"
+                        ? "#4b5563"
+                        : "#d1d5db",
+                }}
+              />
+            ))}
           </View>
+          {progressPercent >= 100 && (
+            <Text className="mt-1 text-right text-xs font-semibold text-green-600 dark:text-green-400">
+              Complete!
+            </Text>
+          )}
         </View>
       )}
 
@@ -315,6 +338,7 @@ export default function LearnScreen() {
                 />
               )}
               <DailyChallengeCard />
+              <UpNextCard />
               <Pressable
                 onPress={() => router.push("/multiplayer")}
                 className="rounded-2xl bg-[#123499] p-4 active:opacity-70 dark:bg-[#0f2670]"
