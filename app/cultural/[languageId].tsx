@@ -1,6 +1,10 @@
 import { useCultural } from "@/lib/hooks/use-cultural";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import type { CulturalCategory, CulturalContent } from "@/types";
+import { Stack, useLocalSearchParams } from "expo-router";
+import { useCallback, useMemo, useState } from "react";
+import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const CULTURAL_CATEGORIES: { id: CulturalCategory; label: string; emoji: string }[] = [
   { id: "colors", label: "Colors", emoji: "\uD83C\uDFA8" },
@@ -12,10 +16,6 @@ const CULTURAL_CATEGORIES: { id: CulturalCategory; label: string; emoji: string 
   { id: "cuisine", label: "Cuisine", emoji: "\uD83C\uDF5C" },
   { id: "greetings_etiquette", label: "Greetings", emoji: "\uD83D\uDC4B" },
 ];
-import { Stack, useLocalSearchParams } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 function KeyTermPill({ word, english }: { word: string; english: string }) {
   return (

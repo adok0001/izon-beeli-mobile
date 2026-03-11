@@ -1,3 +1,4 @@
+import "react-native-reanimated";
 import "../global.css";
 
 import { ClerkLoaded, ClerkProvider, useAuth } from "@clerk/clerk-expo";
@@ -10,7 +11,7 @@ import {
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef } from "react";
-import "react-native-reanimated";
+import { Text, View } from "react-native";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { tokenCache } from "@/lib/auth";
@@ -102,8 +103,12 @@ export default function RootLayout() {
   }, []);
 
   if (!clerkPublishableKey) {
-    throw new Error(
-      "Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in environment variables"
+    return (
+      <View className="flex-1 items-center justify-center bg-white px-8">
+        <Text className="text-center text-base font-semibold text-red-500">
+          Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY.{"\n"}Check your EAS build profile environment variables.
+        </Text>
+      </View>
     );
   }
 
@@ -194,6 +199,10 @@ export default function RootLayout() {
               />
               <Stack.Screen
                 name="cultural/[languageId]"
+                options={{ headerBackTitle: "Back" }}
+              />
+              <Stack.Screen
+                name="proverbs/[languageId]"
                 options={{ headerBackTitle: "Back" }}
               />
               <Stack.Screen

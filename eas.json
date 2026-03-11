@@ -5,24 +5,12 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal",
-      "env": {
-        "EXPO_PUBLIC_API_URL": "http://localhost:3000/api"
-      }
+      "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal",
-      "env": {
-        "EXPO_PUBLIC_API_URL": "https://izon-beeli-mobile.vercel.app/api",
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsuaXpvbi1iZWVsaS5jb20k"
-      }
+      "distribution": "internal"
     },
-    "production": {
-      "env": {
-        "EXPO_PUBLIC_API_URL": "https://izon-beeli-mobile.vercel.app/api",
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsuaXpvbi1iZWVsaS5jb20k"
-      }
-    },
+    "production": {},
     "development-simulator": {
       "developmentClient": true,
       "distribution": "internal",
