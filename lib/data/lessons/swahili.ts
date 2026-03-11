@@ -1,5 +1,5 @@
 /**
- * Swahili lessons — courses 8 (Basics) & 9 (Proverbs)
+ * Swahili lessons — course-8 (First Words) · course-9 (Oral Tradition)
  */
 import type { LessonData } from "./types";
 

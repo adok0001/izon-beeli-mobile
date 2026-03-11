@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
+import { ACTIVE_LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
 import type { Language } from "@/types";
 
@@ -75,13 +75,13 @@ function LanguagePickerModal({
   const sections = useMemo(() => {
     const query = search.trim().toLowerCase();
     const filtered = query
-      ? LANGUAGES.filter(
+      ? ACTIVE_LANGUAGES.filter(
           (l) =>
             l.name.toLowerCase().includes(query) ||
             l.nativeName.toLowerCase().includes(query) ||
             l.region.toLowerCase().includes(query)
         )
-      : LANGUAGES;
+      : ACTIVE_LANGUAGES;
     return groupByRegion(filtered);
   }, [search]);
 

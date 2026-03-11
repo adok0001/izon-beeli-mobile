@@ -1,10 +1,10 @@
 /**
- * Izon Stories — course-2
- * Traditional folktales and cultural narratives for listening comprehension.
+ * Teme Gba — The Old Stories — course-2
+ * Folktales, praise poetry, and proverbs from the Niger Delta oral tradition.
  */
 import type { LessonData } from "./types";
 
-export const IZON_STORIES_LESSONS: LessonData[] = [
+export const IZON_ORAL_TRADITION_LESSONS: LessonData[] = [
   {
     id: "lesson-6",
     courseId: "course-2",

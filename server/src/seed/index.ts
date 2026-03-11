@@ -128,7 +128,16 @@ async function seed() {
   // 2. Courses — upsert so lessonsCount and descriptions stay current
   console.log("  Inserting courses...");
   for (const course of COURSES) {
-    await db.insert(courses).values(course).onConflictDoUpdate({
+    await db.insert(courses).values({
+      id: course.id,
+      languageId: course.languageId,
+      title: course.title,
+      description: course.description,
+      level: course.level,
+      lessonsCount: course.lessonsCount,
+      order: course.order,
+      // courseType excluded until DB migration
+    }).onConflictDoUpdate({
       target: courses.id,
       set: {
         title: course.title,

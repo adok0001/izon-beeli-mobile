@@ -1,5 +1,5 @@
 /**
- * Amharic lessons — course-10 (Basics)
+ * Amharic lessons — course-10 (First Words)
  */
 import type { LessonData } from "./types";
 

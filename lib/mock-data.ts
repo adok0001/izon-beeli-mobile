@@ -1,7 +1,7 @@
 import type { AudioSource } from "@/types";
 
 // Re-export languages + helper from single source of truth
-export { getLanguageName, LANGUAGES } from "@/lib/data/languages";
+export { getLanguageName, LANGUAGES, ACTIVE_LANGUAGES } from "@/lib/data/languages";
 
 // Local Izon audio recordings (bundled in app — used as fallback until CDN upload)
 const AUDIO_IZON_BAI = require("../public/izon_bai.m4a");

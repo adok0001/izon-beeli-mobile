@@ -1,5 +1,5 @@
 /**
- * Kinyarwanda lessons — course-17 (Basics)
+ * Kinyarwanda lessons — course-17 (First Words)
  */
 import type { LessonData } from "./types";
 

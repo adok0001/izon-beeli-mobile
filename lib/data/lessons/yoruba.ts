@@ -1,5 +1,5 @@
 /**
- * Yoruba lessons — courses 4 (Basics) & 5 (Proverbs)
+ * Yoruba lessons — course-4 (First Words) · course-5 (Oral Tradition)
  */
 import type { LessonData } from "./types";
 

@@ -1,5 +1,5 @@
 /**
- * Ewe lessons — course-18 (Basics)
+ * Ewe lessons — course-18 (First Words)
  */
 import type { LessonData } from "./types";
 

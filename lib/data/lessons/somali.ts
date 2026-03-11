@@ -1,5 +1,5 @@
 /**
- * Somali lessons — course-14 (Basics)
+ * Somali lessons — course-14 (First Words)
  */
 import type { LessonData } from "./types";
 

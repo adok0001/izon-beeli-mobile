@@ -15,11 +15,11 @@ import { BAMBARA_LESSONS } from "./bambara";
 import { EWE_LESSONS } from "./ewe";
 import { HAUSA_LESSONS } from "./hausa";
 import { IGBO_LESSONS } from "./igbo";
-import { IZON_BASICS_LESSONS } from "./izon-basics";
-import { IZON_CONVERSATIONAL_LESSONS } from "./izon-conversational";
-import { IZON_NUMBERS_LESSONS } from "./izon-numbers";
-import { IZON_PHONETICS_LESSONS } from "./izon-phonetics";
-import { IZON_STORIES_LESSONS } from "./izon-stories";
+import { IZON_FIRST_WORDS_LESSONS } from "./izon-first-words";
+import { IZON_SOUND_SCRIPT_LESSONS } from "./izon-sound-script";
+import { IZON_NUMBERS_TRADE_LESSONS } from "./izon-numbers-trade";
+import { IZON_COMMUNICATIVE_LESSONS } from "./izon-communicative";
+import { IZON_ORAL_TRADITION_LESSONS } from "./izon-oral-tradition";
 import { KINYARWANDA_LESSONS } from "./kinyarwanda";
 import { SOMALI_LESSONS } from "./somali";
 import { SWAHILI_LESSONS } from "./swahili";
@@ -30,11 +30,11 @@ import { YORUBA_LESSONS } from "./yoruba";
 export type { LessonData, TranscriptSegment } from "./types";
 
 export const ALL_LESSONS: LessonData[] = [
-  ...IZON_BASICS_LESSONS,
-  ...IZON_STORIES_LESSONS,
-  ...IZON_CONVERSATIONAL_LESSONS,
-  ...IZON_PHONETICS_LESSONS,
-  ...IZON_NUMBERS_LESSONS,
+  ...IZON_FIRST_WORDS_LESSONS,
+  ...IZON_SOUND_SCRIPT_LESSONS,
+  ...IZON_NUMBERS_TRADE_LESSONS,
+  ...IZON_COMMUNICATIVE_LESSONS,
+  ...IZON_ORAL_TRADITION_LESSONS,
   ...YORUBA_LESSONS,
   ...IGBO_LESSONS,
   ...HAUSA_LESSONS,

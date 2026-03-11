@@ -1,5 +1,5 @@
 /**
- * Egyptian Arabic lessons — course-13 (Basics)
+ * Egyptian Arabic lessons — course-13 (First Words)
  */
 import type { LessonData } from "./types";
 

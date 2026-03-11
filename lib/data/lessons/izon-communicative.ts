@@ -1,10 +1,10 @@
 /**
- * Conversational Izon — course-3
- * Market, introductions, and everyday dialogue practice.
+ * Izọn Gba — Speaking Izon Well — course-3
+ * Extended dialogues, social registers, politeness formulas, and identity expressions.
  */
 import type { LessonData } from "./types";
 
-export const IZON_CONVERSATIONAL_LESSONS: LessonData[] = [
+export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
   {
     id: "lesson-8",
     courseId: "course-3",

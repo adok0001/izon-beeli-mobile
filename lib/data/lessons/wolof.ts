@@ -1,5 +1,5 @@
 /**
- * Wolof lessons — course-12 (Basics)
+ * Wolof lessons — course-12 (First Words)
  */
 import type { LessonData } from "./types";
 

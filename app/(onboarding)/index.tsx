@@ -12,7 +12,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "@clerk/clerk-expo";
 import { Audio } from "expo-av";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { LANGUAGES } from "@/lib/mock-data";
+import { ACTIVE_ACTIVE_LANGUAGES } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
 import { apiFetch } from "@/lib/api";
 import { hapticSuccess } from "@/lib/haptics";
@@ -155,7 +155,7 @@ export default function OnboardingScreen() {
             contentContainerStyle={{ paddingBottom: 16 }}
             showsVerticalScrollIndicator={false}
           >
-            {LANGUAGES.map((lang) => {
+            {ACTIVE_LANGUAGES.map((lang) => {
               const selected = lang.id === selectedLangId;
               return (
                 <Pressable
@@ -215,7 +215,7 @@ export default function OnboardingScreen() {
             </Text>
             <Text className="mt-2 text-base text-neutral-500 dark:text-neutral-400">
               Here&apos;s your first word in{" "}
-              {LANGUAGES.find((l) => l.id === selectedLangId)?.name ?? "your language"}.
+              {ACTIVE_LANGUAGES.find((l) => l.id === selectedLangId)?.name ?? "your language"}.
             </Text>
           </View>
 

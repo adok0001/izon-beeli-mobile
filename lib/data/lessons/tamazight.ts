@@ -1,5 +1,5 @@
 /**
- * Tamazight lessons — course-16 (Basics)
+ * Tamazight lessons — course-16 (First Words)
  */
 import type { LessonData } from "./types";
 

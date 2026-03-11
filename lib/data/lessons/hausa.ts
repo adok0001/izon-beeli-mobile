@@ -1,5 +1,5 @@
 /**
- * Hausa lessons — course-7 (Basics)
+ * Hausa lessons — course-7 (First Words)
  */
 import type { LessonData } from "./types";
 

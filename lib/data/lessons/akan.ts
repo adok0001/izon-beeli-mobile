@@ -1,5 +1,5 @@
 /**
- * Akan (Twi) lessons — course-11 (Basics)
+ * Akan (Twi) lessons — course-11 (First Words)
  */
 import type { LessonData } from "./types";
 

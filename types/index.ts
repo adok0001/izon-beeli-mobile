@@ -1,3 +1,12 @@
+export type CourseType =
+  | "first_words"
+  | "sound_script"
+  | "everyday_life"
+  | "numbers_trade"
+  | "oral_tradition"
+  | "communicative"
+  | "contemporary";
+
 export interface Course {
   id: string;
   title: string;
@@ -7,6 +16,7 @@ export interface Course {
   lessonsCount: number;
   imageUrl?: string;
   progress?: number; // 0-100
+  courseType?: CourseType;
 }
 
 export type AudioSource = string | number; // URI string or require() module ID

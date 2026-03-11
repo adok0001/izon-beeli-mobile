@@ -96,6 +96,18 @@ export const LANGUAGES: LanguageEntry[] = [
   { id: "malagasy", name: "Malagasy", nativeName: "Malagasy", region: "Southern Africa" },
 ];
 
+/** Languages that have at least one course with real content. */
+const LANGUAGES_WITH_CONTENT = new Set([
+  "izon", "yoruba", "igbo", "hausa", "swahili", "amharic",
+  "akan", "wolof", "arabic-egyptian", "somali", "bambara",
+  "tamazight", "kinyarwanda", "ewe",
+]);
+
+/** Filtered to only languages that have courses — used in learning UI. */
+export const ACTIVE_LANGUAGES = LANGUAGES.filter((l) =>
+  LANGUAGES_WITH_CONTENT.has(l.id)
+);
+
 /** Look up a language's display name by its id. Returns the id if not found. */
 export function getLanguageName(id: string): string {
   return LANGUAGES.find((l) => l.id === id)?.name ?? id;

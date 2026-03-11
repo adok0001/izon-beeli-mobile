@@ -1,5 +1,5 @@
 /**
- * Bambara lessons — course-15 (Basics)
+ * Bambara lessons — course-15 (First Words)
  */
 import type { LessonData } from "./types";
 
