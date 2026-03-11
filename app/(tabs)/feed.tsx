@@ -308,6 +308,13 @@ function FeedCard({
   const config = TYPE_CONFIG[item.type];
   const liked = (item as any).isLiked ?? false;
 
+  // Parse "word → english" from single-word contribution titles
+  const wordParts = item.type === "contribution" && item.title.includes(" → ")
+    ? item.title.split(" → ")
+    : null;
+  const focusWord = wordParts?.[0]?.trim();
+  const focusEnglish = wordParts?.[1]?.trim();
+
   const handleShare = async () => {
     try {
       await Share.share({
@@ -360,15 +367,26 @@ function FeedCard({
         <AudioPreview audioUrl={item.audioUrl} />
       )}
 
-      {/* Practice CTA for contributions */}
-      {item.type === "contribution" && (
+      {/* Practice CTA — only for single-word contributions */}
+      {focusWord && focusEnglish && (
         <Pressable
-          onPress={() => router.push("/quiz")}
+          onPress={() =>
+            router.push({
+              pathname: "/quiz",
+              params: {
+                focusWord,
+                focusEnglish,
+                ...(typeof item.audioUrl === "string" && item.audioUrl
+                  ? { focusAudio: item.audioUrl }
+                  : {}),
+              },
+            })
+          }
           className="mb-3 flex-row items-center justify-center rounded-lg bg-emerald-50 py-2 active:opacity-70 dark:bg-emerald-900/20"
         >
           <IconSymbol name="brain.head.profile" size={14} color="#10b981" />
           <Text className="ml-1.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-            Practice this word
+            Practice: {focusWord}
           </Text>
         </Pressable>
       )}

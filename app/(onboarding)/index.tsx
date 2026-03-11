@@ -1,22 +1,22 @@
-import { useState, useRef } from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  ScrollView,
-  ActivityIndicator,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useAuth } from "@clerk/clerk-expo";
-import { Audio } from "expo-av";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { ACTIVE_ACTIVE_LANGUAGES } from "@/lib/mock-data";
-import { useLanguageStore } from "@/store/language-store";
 import { apiFetch } from "@/lib/api";
 import { hapticSuccess } from "@/lib/haptics";
+import { ACTIVE_LANGUAGES } from "@/lib/mock-data";
 import { playCorrectSound } from "@/lib/sounds";
+import { useLanguageStore } from "@/store/language-store";
+import { useAuth } from "@clerk/clerk-expo";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Audio } from "expo-av";
+import { useRouter } from "expo-router";
+import { useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export const ONBOARDING_KEY = "onboarding-completed-v1";
 

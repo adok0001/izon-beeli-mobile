@@ -182,6 +182,45 @@ export function generateQuiz(
   return shuffle(questions);
 }
 
+/**
+ * Generates a focused 3-question mini-quiz about a single specific word.
+ * The target word is always the subject; other dictionary entries supply distractors.
+ */
+export function generateFocusedQuiz(
+  word: string,
+  english: string,
+  audioSource: AudioSource | undefined,
+  entries: DictionaryEntry[] = []
+): QuizQuestion[] {
+  const pool = gatherDictionaryPool(entries);
+  // Filter out the focus word itself from distractor lists
+  const distWords = pool.map((p) => p.word).filter((w) => w !== word);
+  const distEnglish = pool.map((p) => p.english).filter((e) => e !== english);
+
+  // Need at least 3 distractors for each question
+  if (distWords.length < 3 || distEnglish.length < 3) return [];
+
+  const focus: QuizPool = { word, english, audioSource };
+  const questions: QuizQuestion[] = [];
+
+  const q1 = makeWordToEnglish(focus, distEnglish);
+  if (q1) questions.push(q1);
+
+  const q2 = makeEnglishToWord(focus, distWords);
+  if (q2) questions.push(q2);
+
+  // Listening if audio available, otherwise fill-in-the-blank
+  if (audioSource) {
+    const q3 = makeListening(focus, distEnglish);
+    if (q3) questions.push(q3);
+  } else {
+    const q3 = makeFillInTheBlank(focus, distWords);
+    if (q3) questions.push(q3);
+  }
+
+  return questions;
+}
+
 export function generateMatchingPairs(
   config: MatchingGameConfig,
   entries: DictionaryEntry[] = []

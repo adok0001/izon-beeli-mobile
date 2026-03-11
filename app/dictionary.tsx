@@ -25,14 +25,21 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 type ViewMode = "all" | "saved";
 
-function WordRow({ entry, saved, onToggle }: { entry: DictionaryEntry; saved: boolean; onToggle: () => void }) {
-  const [expanded, setExpanded] = useState(false);
-  const hasDetails = !!(entry.pronunciation || entry.example);
-
+function WordRow({
+  entry,
+  saved,
+  onToggle,
+  onPress,
+}: {
+  entry: DictionaryEntry;
+  saved: boolean;
+  onToggle: () => void;
+  onPress: () => void;
+}) {
   return (
     <Pressable
-      onPress={hasDetails ? () => setExpanded((v) => !v) : undefined}
-      className="border-b border-neutral-100 px-5 py-3 dark:border-neutral-800"
+      onPress={onPress}
+      className="border-b border-neutral-100 px-5 py-3 active:bg-neutral-50 dark:border-neutral-800 dark:active:bg-neutral-800/60"
     >
       <View className="flex-row items-center">
         <View className="flex-1">
@@ -43,10 +50,8 @@ function WordRow({ entry, saved, onToggle }: { entry: DictionaryEntry; saved: bo
             {entry.english}
           </Text>
         </View>
-        {entry.audioUrl && (
-          <WordAudioButton audioSource={entry.audioUrl} />
-        )}
-        <Pressable onPress={onToggle} hitSlop={8}>
+        <WordAudioButton audioSource={entry.audioUrl} word={entry.word} />
+        <Pressable onPress={onToggle} hitSlop={8} className="ml-1">
           <IconSymbol
             name={saved ? "star.fill" : "star"}
             size={20}
@@ -54,28 +59,6 @@ function WordRow({ entry, saved, onToggle }: { entry: DictionaryEntry; saved: bo
           />
         </Pressable>
       </View>
-
-      {expanded && (
-        <View className="mt-2">
-          {entry.pronunciation && (
-            <Text className="text-sm italic text-neutral-500 dark:text-neutral-400">
-              /{entry.pronunciation}/
-            </Text>
-          )}
-          {entry.example && (
-            <View className="mt-1.5 rounded-lg bg-neutral-50 px-3 py-2 dark:bg-neutral-800">
-              <Text className="text-sm text-neutral-700 dark:text-neutral-300">
-                {entry.example}
-              </Text>
-              {entry.exampleTranslation && (
-                <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-                  {entry.exampleTranslation}
-                </Text>
-              )}
-            </View>
-          )}
-        </View>
-      )}
     </Pressable>
   );
 }
@@ -246,6 +229,12 @@ export default function DictionaryScreen() {
                 entry={item}
                 saved={savedSet.has(item.id)}
                 onToggle={() => handleToggle(item.id)}
+                onPress={() =>
+                  router.push({
+                    pathname: "/word/[id]",
+                    params: { id: item.id, languageId: item.languageId },
+                  })
+                }
               />
             )}
             ListEmptyComponent={

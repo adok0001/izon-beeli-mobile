@@ -5,18 +5,20 @@ import { useWordAudio } from "@/lib/hooks/use-word-audio";
 import type { AudioSource } from "@/types";
 
 interface Props {
-  audioSource: AudioSource;
+  /** Recorded audio — played when present; TTS used otherwise. */
+  audioSource?: AudioSource;
+  /** Spoken word for TTS fallback when no audioSource is provided. */
+  word?: string;
   size?: number;
 }
 
-export function WordAudioButton({ audioSource, size = 20 }: Props) {
+export function WordAudioButton({ audioSource, word, size = 20 }: Props) {
   const { play } = useWordAudio();
   const [playing, setPlaying] = useState(false);
 
   const handlePress = async () => {
     setPlaying(true);
-    await play(audioSource);
-    // Reset after a short delay (audio is typically short)
+    await play(audioSource, word);
     setTimeout(() => setPlaying(false), 1500);
   };
 
@@ -25,7 +27,7 @@ export function WordAudioButton({ audioSource, size = 20 }: Props) {
       <IconSymbol
         name={playing ? "speaker.wave.3.fill" : "speaker.wave.2.fill"}
         size={size}
-        color={playing ? "#3b82f6" : "#9ca3af"}
+        color={playing ? "#3b82f6" : audioSource ? "#6b7280" : "#d1d5db"}
       />
     </Pressable>
   );

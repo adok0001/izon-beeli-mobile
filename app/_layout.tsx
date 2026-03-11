@@ -233,6 +233,10 @@ export default function RootLayout() {
                 name="dashboard"
                 options={{ headerBackTitle: "Back" }}
               />
+              <Stack.Screen
+                name="word/[id]"
+                options={{ headerBackTitle: "Back" }}
+              />
             </Stack>
             <StatusBar style="auto" />
             </AuthGate>

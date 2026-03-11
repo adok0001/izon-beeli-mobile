@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 import {
   comments,
@@ -216,7 +216,17 @@ async function seed() {
     contributorName: e.contributorName ?? null,
     contributorId: e.contributorId ?? null,
   }));
-  await batchInsert(dictionaryEntries, dictRows);
+  for (let i = 0; i < dictRows.length; i += 100) {
+    const chunk = dictRows.slice(i, i + 100);
+    await db.insert(dictionaryEntries).values(chunk).onConflictDoUpdate({
+      target: dictionaryEntries.id,
+      set: {
+        pronunciation: sql`excluded.pronunciation`,
+        example: sql`excluded.example`,
+        exampleTranslation: sql`excluded.example_translation`,
+      },
+    });
+  }
 
   // 6. Proverbs — delete then re-insert so edits are reflected on reseed
   console.log("  Inserting proverbs...");

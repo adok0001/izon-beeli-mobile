@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@clerk/clerk-expo";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useQuizStore } from "@/store/quiz-store";
-import { generateQuiz } from "@/lib/quiz-engine";
+import { generateQuiz, generateFocusedQuiz } from "@/lib/quiz-engine";
 import { useLanguageStore } from "@/store/language-store";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { getLanguageName } from "@/lib/mock-data";
@@ -339,6 +339,9 @@ export default function QuizScreen() {
   const params = useLocalSearchParams<{
     courseId?: string;
     category?: string;
+    focusWord?: string;
+    focusEnglish?: string;
+    focusAudio?: string;
   }>();
   const { selectedLanguageId } = useLanguageStore();
   const { data: dictionaryEntries = [], isLoading: isDictLoading } = useDictionary(selectedLanguageId);
@@ -346,7 +349,11 @@ export default function QuizScreen() {
   const [isEmpty, setIsEmpty] = useState(false);
   const initialized = useRef(false);
 
+  const isFocused = !!params.focusWord && !!params.focusEnglish;
   const languageName = getLanguageName(selectedLanguageId);
+  const quizTitle = isFocused
+    ? `Practice: ${params.focusWord}`
+    : `${languageName} Quiz`;
 
   // Generate and start quiz once dictionary data has loaded
   useEffect(() => {
@@ -354,15 +361,22 @@ export default function QuizScreen() {
     if (isDictLoading) return;
     initialized.current = true;
 
-    const questions = generateQuiz(
-      {
-        languageId: selectedLanguageId,
-        courseId: params.courseId,
-        category: params.category,
-        questionCount: 10,
-      },
-      dictionaryEntries
-    );
+    const questions = isFocused
+      ? generateFocusedQuiz(
+          params.focusWord!,
+          params.focusEnglish!,
+          params.focusAudio || undefined,
+          dictionaryEntries
+        )
+      : generateQuiz(
+          {
+            languageId: selectedLanguageId,
+            courseId: params.courseId,
+            category: params.category,
+            questionCount: 10,
+          },
+          dictionaryEntries
+        );
 
     if (questions.length === 0) {
       setIsEmpty(true);
@@ -376,7 +390,7 @@ export default function QuizScreen() {
     <>
       <Stack.Screen
         options={{
-          title: `${languageName} Quiz`,
+          title: quizTitle,
           headerShown: true,
           presentation: "modal",
           headerLeft: () => (
