@@ -4,9 +4,9 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useNextLesson } from "@/lib/hooks/use-next-lesson";
 import { formatDuration } from "@/lib/mock-data";
 
-export function UpNextCard() {
+export function UpNextCard({ languageId }: { languageId?: string }) {
   const router = useRouter();
-  const { data, isLoading } = useNextLesson();
+  const { data, isLoading } = useNextLesson(languageId);
 
   if (isLoading || !data?.lesson) return null;
 

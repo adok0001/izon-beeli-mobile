@@ -227,6 +227,7 @@ progressRouter.post("/freeze", async (c) => {
 // GET /api/progress/next-lesson - next uncompleted lesson in path order
 progressRouter.get("/next-lesson", async (c) => {
   const userId = c.get("userId");
+  const queryLangId = c.req.query("languageId");
 
   const [user] = await db
     .select({ selectedLanguageId: users.selectedLanguageId })
@@ -234,7 +235,7 @@ progressRouter.get("/next-lesson", async (c) => {
     .where(eq(users.id, userId))
     .limit(1);
 
-  const languageId = user?.selectedLanguageId;
+  const languageId = queryLangId ?? user?.selectedLanguageId;
   if (!languageId) return c.json(null);
 
   // Courses + completed progress in parallel (both only need languageId/userId)

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import { Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -26,9 +26,7 @@ function TabSegment({
     <Pressable
       onPress={onPress}
       className={`flex-1 items-center rounded-lg py-2 ${
-        active
-          ? "bg-blue-500"
-          : "bg-transparent"
+        active ? "bg-blue-500" : "bg-transparent"
       }`}
     >
       <Text
@@ -45,6 +43,9 @@ function TabSegment({
 export default function GeezLessonScreen() {
   const [tab, setTab] = useState<Tab>("chart");
   const [selectedChar, setSelectedChar] = useState<GeezCharacter | null>(null);
+  // Pinned character: set when user taps "Practice tracing" from the detail modal.
+  // null = auto-pick next unlearned.
+  const [pinnedChar, setPinnedChar] = useState<GeezCharacter | null>(null);
   const { learnedIds, markLearned, hydrate, _hydrated } = useGeezStore();
 
   useEffect(() => {
@@ -53,22 +54,60 @@ export default function GeezLessonScreen() {
 
   const learnedCount = learnedIds.size;
 
-  // Pick a random unlearned character for practice
+  // Ordered list of all unlearned characters
+  const unlearnedChars = useMemo(
+    () => FIDEL_CHART.filter((c) => !learnedIds.has(c.id)),
+    [learnedIds]
+  );
+
+  // The character currently being practiced
   const practiceChar = useMemo(() => {
-    const unlearned = FIDEL_CHART.filter((c) => !learnedIds.has(c.id));
-    if (unlearned.length === 0) return FIDEL_CHART[0];
-    return unlearned[Math.floor(Math.random() * unlearned.length)];
-    // Re-pick when learnedIds changes
-  }, [learnedIds]);
+    if (pinnedChar) return pinnedChar;
+    return unlearnedChars[0] ?? FIDEL_CHART[0];
+  }, [pinnedChar, unlearnedChars]);
+
+  // Index within unlearned list (for Next navigation)
+  const practiceIndex = useMemo(
+    () => unlearnedChars.findIndex((c) => c.id === practiceChar.id),
+    [unlearnedChars, practiceChar]
+  );
 
   const handleMarkLearned = useCallback(() => {
     if (selectedChar) {
       markLearned(selectedChar.id);
       hapticSuccess();
+      setSelectedChar(null);
     }
   }, [selectedChar, markLearned]);
 
+  const handlePracticeFromDetail = useCallback(() => {
+    if (selectedChar) {
+      setPinnedChar(selectedChar);
+      setSelectedChar(null);
+      setTab("practice");
+    }
+  }, [selectedChar]);
+
+  const handleMarkPracticeLearned = useCallback(() => {
+    markLearned(practiceChar.id);
+    hapticSuccess();
+    // Advance to next unlearned
+    setPinnedChar(null);
+  }, [practiceChar, markLearned]);
+
+  const handleNext = useCallback(() => {
+    const next = unlearnedChars[practiceIndex + 1] ?? unlearnedChars[0];
+    if (next) setPinnedChar(next);
+  }, [unlearnedChars, practiceIndex]);
+
+  const handlePrev = useCallback(() => {
+    if (practiceIndex <= 0) return;
+    setPinnedChar(unlearnedChars[practiceIndex - 1]);
+  }, [unlearnedChars, practiceIndex]);
+
   if (!_hydrated) return null;
+
+  const allLearned = unlearnedChars.length === 0;
 
   return (
     <>
@@ -82,23 +121,21 @@ export default function GeezLessonScreen() {
         className="flex-1 bg-white dark:bg-neutral-900"
         edges={[]}
       >
-        {/* Progress indicator */}
+        {/* Progress bar */}
         <View className="px-5 pt-4 pb-2">
           <View className="flex-row items-center justify-between">
             <Text className="text-sm text-neutral-500 dark:text-neutral-400">
               Progress
             </Text>
             <Text className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-              {learnedCount}/{TOTAL_CHARS} characters learned
+              {learnedCount}/{TOTAL_CHARS} learned
             </Text>
           </View>
           <View className="mt-2 h-2 rounded-full bg-neutral-200 dark:bg-neutral-700">
             <View
               className="h-2 rounded-full bg-green-500"
               style={{
-                width: `${
-                  TOTAL_CHARS > 0 ? (learnedCount / TOTAL_CHARS) * 100 : 0
-                }%`,
+                width: `${TOTAL_CHARS > 0 ? (learnedCount / TOTAL_CHARS) * 100 : 0}%`,
               }}
             />
           </View>
@@ -109,12 +146,16 @@ export default function GeezLessonScreen() {
           <TabSegment
             active={tab === "chart"}
             onPress={() => setTab("chart")}
-            label="Chart"
+            label={`Chart (${TOTAL_CHARS})`}
           />
           <TabSegment
             active={tab === "practice"}
             onPress={() => setTab("practice")}
-            label="Practice"
+            label={
+              allLearned
+                ? "Practice ✓"
+                : `Practice (${unlearnedChars.length} left)`
+            }
           />
         </View>
 
@@ -122,8 +163,84 @@ export default function GeezLessonScreen() {
         {tab === "chart" ? (
           <FidelGrid learnedIds={learnedIds} onSelect={setSelectedChar} />
         ) : (
-          <View className="flex-1 items-center justify-center px-5">
-            <TracingCanvas character={practiceChar} />
+          <View className="flex-1 px-5">
+            {allLearned ? (
+              <View className="flex-1 items-center justify-center gap-3">
+                <Text className="text-5xl">🎉</Text>
+                <Text className="text-xl font-bold text-neutral-900 dark:text-white">
+                  All {TOTAL_CHARS} characters learned!
+                </Text>
+                <Pressable
+                  onPress={() => setTab("chart")}
+                  className="mt-2 rounded-xl bg-blue-500 px-6 py-3 active:opacity-80"
+                >
+                  <Text className="font-semibold text-white">Back to Chart</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <View className="flex-1">
+                {/* Navigation header */}
+                <View className="flex-row items-center justify-between py-3">
+                  <Pressable
+                    onPress={handlePrev}
+                    disabled={practiceIndex <= 0}
+                    className={`rounded-lg px-4 py-2 ${
+                      practiceIndex <= 0
+                        ? "opacity-30"
+                        : "bg-neutral-100 active:opacity-70 dark:bg-neutral-800"
+                    }`}
+                  >
+                    <Text className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+                      ← Prev
+                    </Text>
+                  </Pressable>
+
+                  <Text className="text-xs text-neutral-500 dark:text-neutral-400">
+                    {practiceIndex + 1} of {unlearnedChars.length} remaining
+                  </Text>
+
+                  <Pressable
+                    onPress={handleNext}
+                    disabled={unlearnedChars.length <= 1}
+                    className={`rounded-lg px-4 py-2 ${
+                      unlearnedChars.length <= 1
+                        ? "opacity-30"
+                        : "bg-neutral-100 active:opacity-70 dark:bg-neutral-800"
+                    }`}
+                  >
+                    <Text className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+                      Next →
+                    </Text>
+                  </Pressable>
+                </View>
+
+                {/* Tracing canvas */}
+                <View className="flex-1 items-center justify-center">
+                  <TracingCanvas character={practiceChar} />
+                </View>
+
+                {/* Actions */}
+                <View className="gap-2 pb-6 pt-2">
+                  <Pressable
+                    onPress={handleMarkPracticeLearned}
+                    className="items-center rounded-2xl bg-green-500 py-4 active:opacity-80"
+                  >
+                    <Text className="text-base font-bold text-white">
+                      Got it! Mark as learned
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={handleNext}
+                    disabled={unlearnedChars.length <= 1}
+                    className="items-center rounded-2xl border border-neutral-200 py-3 active:opacity-70 dark:border-neutral-700"
+                  >
+                    <Text className="text-sm font-semibold text-neutral-600 dark:text-neutral-400">
+                      Skip — practice next
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            )}
           </View>
         )}
 
@@ -132,6 +249,7 @@ export default function GeezLessonScreen() {
           character={selectedChar}
           isLearned={selectedChar ? learnedIds.has(selectedChar.id) : false}
           onMarkLearned={handleMarkLearned}
+          onPractice={handlePracticeFromDetail}
           onClose={() => setSelectedChar(null)}
         />
       </SafeAreaView>

@@ -218,7 +218,7 @@ async function seed() {
   }));
   await batchInsert(dictionaryEntries, dictRows);
 
-  // 6. Proverbs
+  // 6. Proverbs — delete then re-insert so edits are reflected on reseed
   console.log("  Inserting proverbs...");
   const allProverbs = [
     ...IZON_PROVERBS,
@@ -236,6 +236,10 @@ async function seed() {
     ...KINYARWANDA_PROVERBS,
     ...EWE_PROVERBS,
   ];
+  const proverbIds = allProverbs.map((p) => p.id);
+  if (proverbIds.length > 0) {
+    await db.delete(proverbs).where(inArray(proverbs.id, proverbIds));
+  }
   const proverbRows = allProverbs.map((p) => ({
     id: p.id,
     languageId: p.languageId,
@@ -249,6 +253,8 @@ async function seed() {
   await batchInsert(proverbs, proverbRows);
 
   // 7. Cultural content + key terms
+  // Delete before re-inserting: culturalKeyTerms has no stable ID so
+  // onConflictDoNothing can't deduplicate it — every reseed appended new rows.
   console.log("  Inserting cultural content...");
   const allCultural = [
     ...IZON_CULTURAL,
@@ -266,6 +272,14 @@ async function seed() {
     ...KINYARWANDA_CULTURAL,
     ...EWE_CULTURAL,
   ];
+  const culturalIds = allCultural.map((c) => c.id);
+
+  // Remove key terms first (FK references culturalContent), then content rows
+  if (culturalIds.length > 0) {
+    await db.delete(culturalKeyTerms).where(inArray(culturalKeyTerms.culturalContentId, culturalIds));
+    await db.delete(culturalContent).where(inArray(culturalContent.id, culturalIds));
+  }
+
   const culturalRows = allCultural.map((c) => ({
     id: c.id,
     languageId: c.languageId,

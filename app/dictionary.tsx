@@ -135,7 +135,7 @@ export default function DictionaryScreen() {
       }));
   }, [query, viewMode, allEntries, savedSet.size]);
 
-  const savedCount = savedSet.size;
+  const savedCount = allEntries.filter((e) => savedSet.has(e.id)).length;
 
   return (
     <>

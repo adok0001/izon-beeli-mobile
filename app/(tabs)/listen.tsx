@@ -1,127 +1,184 @@
-import { View, Text, FlatList, Pressable, ActivityIndicator } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import { IconSymbol } from "@/components/ui/icon-symbol";
+import { SymbolOfTheDay } from "@/components/adinkra/symbol-of-the-day";
+import { CulturalSection } from "@/components/cultural/cultural-section";
+import { DailyChallengeCard } from "@/components/daily-challenge-card";
 import { LanguagePickerButton } from "@/components/language-picker";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { WordOfTheDay } from "@/components/word-of-the-day";
+import { useProverbs } from "@/lib/hooks/use-proverbs";
 import { useLanguageStore } from "@/store/language-store";
-import { useAudioStore } from "@/store/audio-store";
-import { useCompletedLessons } from "@/lib/hooks/use-progress";
-import { useLanguageLessons } from "@/lib/hooks/use-courses";
-import { BUNDLED_AUDIO, formatDuration } from "@/lib/mock-data";
-import type { Lesson } from "@/types";
+import { useRouter } from "expo-router";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
-function AudioLessonCard({ lesson, completed }: { lesson: Lesson; completed: boolean }) {
+import { SafeAreaView } from "react-native-safe-area-context";
+
+function ProverbsCard({ languageId }: { languageId: string }) {
   const router = useRouter();
-  const { loadAndPlay, currentTrackId, isPlaying, togglePlayback } = useAudioStore();
+  const { data: proverbs = [] } = useProverbs(languageId);
 
-  const isCurrentTrack = currentTrackId === lesson.id;
-  const audioSource = lesson.audioUrl ?? BUNDLED_AUDIO[lesson.id];
-
-  const handlePlay = () => {
-    if (isCurrentTrack) {
-      togglePlayback();
-    } else if (audioSource) {
-      loadAndPlay(lesson.id, audioSource, lesson.title);
-    }
-  };
+  if (proverbs.length === 0) return null;
 
   return (
     <Pressable
-      onPress={() => router.push(`/lesson/${lesson.id}`)}
-      className="mb-3 flex-row items-center rounded-xl bg-neutral-50 p-4 active:opacity-70 dark:bg-neutral-800"
+      onPress={() => router.push(`/proverbs/${languageId}` as any)}
+      className="rounded-2xl bg-amber-50 p-4 active:opacity-70 dark:bg-amber-900/20"
     >
-      <Pressable
-        onPress={handlePlay}
-        className={`mr-4 h-12 w-12 items-center justify-center rounded-full ${
-          isCurrentTrack ? "bg-blue-500" : "bg-blue-100 dark:bg-blue-900"
-        }`}
-        hitSlop={4}
-      >
-        <IconSymbol
-          name={isCurrentTrack && isPlaying ? "pause.fill" : "play.fill"}
-          size={20}
-          color={isCurrentTrack ? "#ffffff" : "#3b82f6"}
-        />
-      </Pressable>
-
-      <View className="flex-1">
-        <Text
-          className="text-base font-semibold text-neutral-900 dark:text-white"
-          numberOfLines={1}
-        >
-          {lesson.title}
-        </Text>
-        <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
-          {lesson.description}
-        </Text>
-        <View className="mt-1 flex-row items-center">
-          <IconSymbol name="clock" size={12} color="#9ca3af" />
-          <Text className="ml-1 text-xs text-neutral-400 dark:text-neutral-500">
-            {lesson.duration ? formatDuration(lesson.duration) : "—"}
-          </Text>
-          {completed && (
-            <>
-              <Text className="mx-2 text-neutral-300 dark:text-neutral-600">·</Text>
-              <IconSymbol name="checkmark.circle.fill" size={12} color="#22c55e" />
-              <Text className="ml-1 text-xs text-green-600 dark:text-green-400">Completed</Text>
-            </>
-          )}
+      <View className="flex-row items-center">
+        <View className="mr-3 h-12 w-12 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/40">
+          <IconSymbol name="text.quote" size={22} color="#d97706" />
         </View>
+        <View className="flex-1">
+          <Text className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+            Proverbs
+          </Text>
+          <Text className="text-sm text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
+            &ldquo;{proverbs[0].text}&rdquo;
+          </Text>
+        </View>
+        <IconSymbol name="chevron.right" size={16} color="#d97706" />
       </View>
     </Pressable>
   );
 }
 
-export default function ListenScreen() {
+export default function PracticeScreen() {
+  const router = useRouter();
   const { selectedLanguageId } = useLanguageStore();
-  const { data: completedLessonIds, isLoading: progressLoading } = useCompletedLessons();
-  const { data: allLessons = [], isLoading: lessonsLoading } = useLanguageLessons(selectedLanguageId);
-  const completedIds = new Set(completedLessonIds ?? []);
-
-  // Show lessons that have audio (either from API or bundled fallback)
-  const audioLessons = allLessons.filter(
-    (l) => l.audioUrl || BUNDLED_AUDIO[l.id]
-  );
-
-  const isLoading = progressLoading || lessonsLoading;
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
       <View className="flex-row items-center justify-between px-5 pb-2 pt-4">
         <View>
           <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
-            Listen
+            Practice
           </Text>
           <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            Audio lessons and stories
+            Challenges, words & culture
           </Text>
         </View>
         <LanguagePickerButton />
       </View>
 
-      {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#3b82f6" />
-        </View>
-      ) : audioLessons.length === 0 ? (
-        <View className="flex-1 items-center justify-center px-8">
-          <IconSymbol name="headphones" size={48} color="#d1d5db" />
-          <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
-            No audio lessons available for this language yet.
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={audioLessons}
-          keyExtractor={(item) => item.id}
-          contentContainerClassName="px-5 pb-4 pt-2"
-          renderItem={({ item }) => (
-            <AudioLessonCard lesson={item} completed={completedIds.has(item.id)} />
-          )}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="px-5 pb-8 pt-2 gap-3"
+        showsVerticalScrollIndicator={false}
+      >
+        <DailyChallengeCard />
 
+        {/* Quick-access practice */}
+        <View className="flex-row gap-3">
+          <Pressable
+            onPress={() => router.push("/word-review")}
+            className="flex-1 items-center rounded-2xl bg-emerald-50 py-4 active:opacity-70 dark:bg-emerald-950"
+          >
+            <IconSymbol name="brain.head.profile" size={24} color="#10b981" />
+            <Text className="mt-1.5 text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+              Word Review
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => router.push("/quiz")}
+            className="flex-1 items-center rounded-2xl bg-blue-50 py-4 active:opacity-70 dark:bg-blue-950"
+          >
+            <IconSymbol name="trophy.fill" size={24} color="#3b82f6" />
+            <Text className="mt-1.5 text-sm font-semibold text-blue-700 dark:text-blue-300">
+              Quiz
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => router.push("/matching-game")}
+            className="flex-1 items-center rounded-2xl bg-violet-50 py-4 active:opacity-70 dark:bg-violet-950"
+          >
+            <IconSymbol name="rectangle.grid.2x2" size={24} color="#8b5cf6" />
+            <Text className="mt-1.5 text-sm font-semibold text-violet-700 dark:text-violet-300">
+              Match
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* Multiplayer */}
+        <Pressable
+          onPress={() => router.push("/multiplayer")}
+          className="rounded-2xl bg-[#123499] p-4 active:opacity-70 dark:bg-[#0f2670]"
+        >
+          <View className="flex-row items-center">
+            <View className="mr-3 h-12 w-12 items-center justify-center rounded-xl bg-blue-500">
+              <IconSymbol name="trophy.fill" size={24} color="#fff" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-xs font-semibold uppercase tracking-wide text-blue-300">
+                Multiplayer
+              </Text>
+              <Text className="text-base font-bold text-white">
+                Quiz Battle & Paired Lessons
+              </Text>
+              <Text className="text-sm text-blue-200">
+                Challenge friends or find an opponent
+              </Text>
+            </View>
+            <IconSymbol name="chevron.right" size={16} color="#93c5fd" />
+          </View>
+        </Pressable>
+
+        <WordOfTheDay languageId={selectedLanguageId} />
+        <ProverbsCard languageId={selectedLanguageId} />
+        <CulturalSection
+          languageId={selectedLanguageId}
+          onViewAll={() => router.push(`/cultural/${selectedLanguageId}` as any)}
+        />
+
+        {selectedLanguageId === "akan" && <SymbolOfTheDay />}
+
+        {["amharic", "tigrinya", "oromo"].includes(selectedLanguageId) && (
+          <Pressable
+            onPress={() => router.push("/geez-lesson")}
+            className="rounded-2xl bg-emerald-50 p-4 active:opacity-70 dark:bg-emerald-950"
+          >
+            <View className="flex-row items-center">
+              <View className="mr-3 h-12 w-12 items-center justify-center rounded-xl bg-white dark:bg-neutral-800">
+                <Text className="text-2xl font-bold text-emerald-600">ሀ</Text>
+              </View>
+              <View className="flex-1">
+                <Text className="text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
+                  Script Practice
+                </Text>
+                <Text className="text-base font-bold text-neutral-900 dark:text-white">
+                  Ge&apos;ez / Fidel
+                </Text>
+                <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+                  Learn the Ethiopic alphabet
+                </Text>
+              </View>
+              <IconSymbol name="chevron.right" size={16} color="#10b981" />
+            </View>
+          </Pressable>
+        )}
+
+        {["ga", "ewe", "dagbani"].includes(selectedLanguageId) && (
+          <Pressable
+            onPress={() => router.push("/adinkra")}
+            className="rounded-2xl bg-violet-50 p-4 active:opacity-70 dark:bg-violet-950"
+          >
+            <View className="flex-row items-center">
+              <View className="mr-3 h-12 w-12 items-center justify-center rounded-xl bg-white dark:bg-neutral-800">
+                <IconSymbol name="sparkles" size={24} color="#7c3aed" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-xs font-semibold uppercase tracking-wide text-violet-600 dark:text-violet-400">
+                  Cultural Symbols
+                </Text>
+                <Text className="text-base font-bold text-neutral-900 dark:text-white">
+                  Adinkra Symbols
+                </Text>
+                <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+                  Explore Akan wisdom symbols
+                </Text>
+              </View>
+              <IconSymbol name="chevron.right" size={16} color="#7c3aed" />
+            </View>
+          </Pressable>
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 }

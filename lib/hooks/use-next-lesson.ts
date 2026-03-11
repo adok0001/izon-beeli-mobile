@@ -20,14 +20,17 @@ export interface NextLessonResponse {
   };
 }
 
-export function useNextLesson() {
+export function useNextLesson(languageId?: string) {
   const { getToken, isSignedIn } = useAuth();
 
   return useQuery<NextLessonResponse | null>({
-    queryKey: ["progress", "next-lesson"],
+    queryKey: ["progress", "next-lesson", languageId],
     queryFn: async () => {
       const token = await getToken();
-      return apiFetch("/progress/next-lesson", { token: token! });
+      const url = languageId
+        ? `/progress/next-lesson?languageId=${languageId}`
+        : "/progress/next-lesson";
+      return apiFetch(url, { token: token! });
     },
     enabled: !!isSignedIn,
   });
