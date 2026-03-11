@@ -62,5 +62,8 @@
     "nativewind": "^4.2.1",
     "typescript": "~5.9.2"
   },
+  "optionalDependencies": {
+    "lightningcss-linux-x64-gnu": "1.27.0"
+  },
   "private": true
 }
