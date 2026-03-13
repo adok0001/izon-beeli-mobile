@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 
 const mascot = require("../../public/mascot.jpg");
 
@@ -22,6 +23,7 @@ export default function SignInScreen() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
   const canSubmit = email.trim().length > 0 && password.length > 0 && !loading;
 
@@ -66,7 +68,7 @@ export default function SignInScreen() {
           Izon Beeli
         </Text>
         <Text className="mb-8 text-center text-sm text-neutral-500 dark:text-neutral-400">
-          Sign in to continue learning
+          {t("auth.signInSubtitle")}
         </Text>
 
         {error ? (
@@ -79,7 +81,7 @@ export default function SignInScreen() {
 
         <TextInput
           className="mb-4 rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-          placeholder="Email or Username"
+          placeholder={t("auth.emailOrUsername")}
           placeholderTextColor="#9ca3af"
           value={email}
           onChangeText={setEmail}
@@ -91,7 +93,7 @@ export default function SignInScreen() {
 
         <TextInput
           className="mb-6 rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-          placeholder="Password"
+          placeholder={t("auth.password")}
           placeholderTextColor="#9ca3af"
           value={password}
           onChangeText={setPassword}
@@ -112,14 +114,14 @@ export default function SignInScreen() {
           {loading ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (
-            <Text className="font-semibold text-white">Sign In</Text>
+            <Text className="font-semibold text-white">{t("auth.signInButton")}</Text>
           )}
         </Pressable>
 
         <Link href="/(auth)/sign-up" asChild>
           <Pressable disabled={loading}>
             <Text className="text-center text-blue-600 dark:text-blue-400">
-              Don&apos;t have an account? Sign Up
+              {t("auth.noAccount")}
             </Text>
           </Pressable>
         </Link>

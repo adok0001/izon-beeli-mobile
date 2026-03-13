@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { UpNextCard } from "@/components/up-next-card";
 import { LanguagePickerButton } from "@/components/language-picker";
 import { NotificationBell } from "@/components/notifications/notification-center";
@@ -10,6 +11,8 @@ import { useCompletedLessons, useProgressSummary } from "@/lib/hooks/use-progres
 import { useBounties } from "@/lib/hooks/use-bounties";
 import { formatDuration, BUNDLED_AUDIO } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
+import { useUiLanguageStore } from "@/store/ui-language-store";
+import { localizeField } from "@/lib/localize";
 import { useAudioStore } from "@/store/audio-store";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import type { Course, Lesson } from "@/types";
@@ -19,6 +22,7 @@ import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } fr
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function ContinueCard({ lessonId, positionSeconds }: { lessonId: string; positionSeconds: number }) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { data: lesson } = useLesson(lessonId);
   const { loadAndPlay, seekTo, currentTrackId } = useAudioStore();
@@ -53,13 +57,13 @@ function ContinueCard({ lessonId, positionSeconds }: { lessonId: string; positio
         </View>
         <View className="flex-1">
           <Text className="text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
-            Continue Listening
+            {t("learn.continueListening")}
           </Text>
           <Text className="text-base font-bold text-neutral-900 dark:text-white" numberOfLines={1}>
             {lesson.title}
           </Text>
           <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-            Paused at {posLabel}
+            {t("learn.pausedAt", { time: posLabel })}
           </Text>
         </View>
         <IconSymbol name="chevron.right" size={16} color="#10b981" />
@@ -69,8 +73,10 @@ function ContinueCard({ lessonId, positionSeconds }: { lessonId: string; positio
 }
 
 function CourseCard({ course, completedIds }: { course: Course; completedIds: Set<string> }) {
+  const { t } = useTranslation();
   const router = useRouter();
   const colorScheme = useColorScheme();
+  const { uiLanguage } = useUiLanguageStore();
   const { data: lessons = [], isLoading: lessonsLoading } = useCourseLessons(course.id);
   const completedCount = lessons.filter((l) => completedIds.has(l.id)).length;
   const progressPercent =
@@ -85,15 +91,15 @@ function CourseCard({ course, completedIds }: { course: Course; completedIds: Se
           </Text>
         </View>
         <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-          {completedCount}/{lessons.length} lessons
+          {t("learn.lessonsCount", { done: completedCount, total: lessons.length })}
         </Text>
       </View>
 
       <Text className="mb-1 text-lg font-bold text-neutral-900 dark:text-white">
-        {course.title}
+        {localizeField(course.title, course.titleFr, uiLanguage)}
       </Text>
       <Text className="mb-3 text-sm text-neutral-600 dark:text-neutral-400" numberOfLines={2}>
-        {course.description}
+        {localizeField(course.description, course.descriptionFr, uiLanguage)}
       </Text>
 
       {progressPercent > 0 && (
@@ -121,7 +127,7 @@ function CourseCard({ course, completedIds }: { course: Course; completedIds: Se
           </View>
           {progressPercent >= 100 && (
             <Text className="mt-1 text-right text-xs font-semibold text-green-600 dark:text-green-400">
-              Complete!
+              {t("learn.complete")}
             </Text>
           )}
         </View>
@@ -149,7 +155,7 @@ function CourseCard({ course, completedIds }: { course: Course; completedIds: Se
         >
           <IconSymbol name="trophy.fill" size={16} color="#3b82f6" />
           <Text className="ml-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400">
-            Practice Quiz
+            {t("learn.practiceQuiz")}
           </Text>
         </Pressable>
         <Pressable
@@ -160,7 +166,7 @@ function CourseCard({ course, completedIds }: { course: Course; completedIds: Se
         >
           <IconSymbol name="rectangle.grid.2x2" size={16} color="#8b5cf6" />
           <Text className="ml-1.5 text-sm font-semibold text-violet-600 dark:text-violet-400">
-            Matching Game
+            {t("learn.matchingGame")}
           </Text>
         </Pressable>
       </View>
@@ -171,7 +177,7 @@ function CourseCard({ course, completedIds }: { course: Course; completedIds: Se
         >
           <IconSymbol name="book.fill" size={16} color="#f59e0b" />
           <Text className="ml-1.5 text-sm font-semibold text-amber-600 dark:text-amber-400">
-            Story Mode
+            {t("learn.storyMode")}
           </Text>
         </Pressable>
       )}
@@ -180,6 +186,7 @@ function CourseCard({ course, completedIds }: { course: Course; completedIds: Se
 }
 
 function LessonRow({ lesson, completed, onPress }: { lesson: Lesson; completed: boolean; onPress: () => void }) {
+  const { uiLanguage } = useUiLanguageStore();
   return (
     <Pressable
       onPress={onPress}
@@ -195,10 +202,10 @@ function LessonRow({ lesson, completed, onPress }: { lesson: Lesson; completed: 
           className="text-sm font-medium text-neutral-900 dark:text-white"
           numberOfLines={1}
         >
-          {lesson.title}
+          {localizeField(lesson.title, lesson.titleFr, uiLanguage)}
         </Text>
         <Text className="text-xs text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
-          {lesson.description}
+          {localizeField(lesson.description, lesson.descriptionFr, uiLanguage)}
         </Text>
       </View>
       {lesson.duration && (
@@ -212,6 +219,7 @@ function LessonRow({ lesson, completed, onPress }: { lesson: Lesson; completed: 
 }
 
 function BountyTeaser({ languageId }: { languageId: string }) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { data: bounties } = useBounties(languageId);
   const topBounty = bounties?.[0]; // highest xpReward
@@ -230,7 +238,7 @@ function BountyTeaser({ languageId }: { languageId: string }) {
         <View className="flex-1">
           <View className="flex-row items-center gap-2">
             <Text className="text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
-              Bounty
+              {t("learn.bountyLabel")}
             </Text>
             <View className="rounded-full bg-amber-200 px-2 py-0.5 dark:bg-amber-800">
               <Text className="text-xs font-bold text-amber-700 dark:text-amber-300">
@@ -249,6 +257,7 @@ function BountyTeaser({ languageId }: { languageId: string }) {
 }
 
 export default function LearnScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { selectedLanguageId } = useLanguageStore();
   const { data: courses = [], isLoading: coursesLoading, refetch: refetchCourses } = useCourses(selectedLanguageId);
@@ -289,10 +298,10 @@ export default function LearnScreen() {
       <View className="flex-row items-center justify-between px-5 pb-2 pt-4">
         <View className="mr-3 shrink">
           <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
-            Learn
+            {t("learn.title")}
           </Text>
           <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
-            Pick a language
+            {t("learn.subtitle")}
           </Text>
         </View>
         <View className="flex-row items-center gap-1.5">
@@ -353,7 +362,7 @@ export default function LearnScreen() {
         <View className="flex-1 items-center justify-center px-8">
           <IconSymbol name="book.fill" size={48} color="#d1d5db" />
           <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
-            No courses available for this language yet. Check back soon!
+            {t("learn.noCourses")}
           </Text>
         </View>
       ) : (

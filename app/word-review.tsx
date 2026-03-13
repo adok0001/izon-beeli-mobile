@@ -9,6 +9,7 @@ import { useLanguageStore } from "@/store/language-store";
 import { hapticSuccess, hapticError, hapticTap } from "@/lib/haptics";
 import { playCorrectSound, playIncorrectSound } from "@/lib/sounds";
 import type { DictionaryEntry } from "@/lib/dictionary";
+import { useTranslation } from "react-i18next";
 
 type CardFace = "question" | "answer";
 
@@ -21,6 +22,7 @@ function ReviewCard({
   onRate: (confidence: "easy" | "hard" | "again") => void;
   isSubmitting: boolean;
 }) {
+  const { t } = useTranslation();
   const [face, setFace] = useState<CardFace>("question");
 
   return (
@@ -33,7 +35,7 @@ function ReviewCard({
         {face === "question" ? (
           <>
             <Text className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-              Translate to English
+              {t("wordReview.translateToEnglish")}
             </Text>
             <Text className="text-center text-4xl font-bold text-neutral-900 dark:text-white">
               {entry.word}
@@ -46,14 +48,14 @@ function ReviewCard({
             <View className="mt-6 flex-row items-center gap-1">
               <IconSymbol name="hand.tap" size={16} color="#9ca3af" />
               <Text className="text-sm text-neutral-400 dark:text-neutral-500">
-                Tap to reveal
+                {t("wordReview.tapToReveal")}
               </Text>
             </View>
           </>
         ) : (
           <>
             <Text className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-              English
+              {t("wordReview.english")}
             </Text>
             <Text className="text-center text-4xl font-bold text-neutral-900 dark:text-white">
               {entry.english}
@@ -82,7 +84,7 @@ function ReviewCard({
           >
             <IconSymbol name="arrow.counterclockwise" size={20} color="#ef4444" />
             <Text className="mt-1 text-xs font-semibold text-red-600 dark:text-red-400">
-              Again
+              {t("wordReview.again")}
             </Text>
           </Pressable>
           <Pressable
@@ -92,7 +94,7 @@ function ReviewCard({
           >
             <IconSymbol name="minus.circle" size={20} color="#f59e0b" />
             <Text className="mt-1 text-xs font-semibold text-amber-600 dark:text-amber-400">
-              Hard
+              {t("wordReview.hard")}
             </Text>
           </Pressable>
           <Pressable
@@ -102,7 +104,7 @@ function ReviewCard({
           >
             <IconSymbol name="checkmark.circle" size={20} color="#22c55e" />
             <Text className="mt-1 text-xs font-semibold text-green-600 dark:text-green-400">
-              Easy
+              {t("wordReview.easy")}
             </Text>
           </Pressable>
         </View>
@@ -120,6 +122,7 @@ export default function WordReviewScreen() {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [reviewed, setReviewed] = useState(0);
+  const { t } = useTranslation();
 
   const isLoading = isDueLoading || isDictLoading;
 
@@ -160,7 +163,7 @@ export default function WordReviewScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: "Word Review", headerShown: true }} />
+      <Stack.Screen options={{ title: t("wordReview.title"), headerShown: true }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
         {isLoading ? (
           <View className="flex-1 items-center justify-center">
@@ -170,32 +173,32 @@ export default function WordReviewScreen() {
           <View className="flex-1 items-center justify-center px-8">
             <IconSymbol name="checkmark.circle.fill" size={56} color="#22c55e" />
             <Text className="mt-4 text-center text-xl font-bold text-neutral-900 dark:text-white">
-              All caught up!
+              {t("wordReview.allCaughtUp")}
             </Text>
             <Text className="mt-2 text-center text-sm text-neutral-500 dark:text-neutral-400">
-              No words due for review right now. Save more words from the dictionary to grow your review queue.
+              {t("wordReview.noWordsDue")}
             </Text>
             <Pressable
               onPress={() => router.back()}
               className="mt-6 rounded-xl bg-blue-500 px-8 py-3 active:opacity-80"
             >
-              <Text className="font-semibold text-white">Done</Text>
+              <Text className="font-semibold text-white">{t("wordReview.done")}</Text>
             </Pressable>
           </View>
         ) : isFinished ? (
           <View className="flex-1 items-center justify-center px-8">
             <IconSymbol name="checkmark.seal.fill" size={56} color="#3b82f6" />
             <Text className="mt-4 text-center text-xl font-bold text-neutral-900 dark:text-white">
-              Session complete!
+              {t("wordReview.sessionComplete")}
             </Text>
             <Text className="mt-2 text-center text-sm text-neutral-500 dark:text-neutral-400">
-              You reviewed {reviewed} word{reviewed !== 1 ? "s" : ""}. Keep it up!
+              {reviewed !== 1 ? t("wordReview.sessionReviewedPlural", { count: reviewed }) : t("wordReview.sessionReviewed", { count: reviewed })}
             </Text>
             <Pressable
               onPress={() => router.back()}
               className="mt-6 rounded-xl bg-blue-500 px-8 py-3 active:opacity-80"
             >
-              <Text className="font-semibold text-white">Done</Text>
+              <Text className="font-semibold text-white">{t("wordReview.done")}</Text>
             </Pressable>
           </View>
         ) : (
@@ -204,10 +207,10 @@ export default function WordReviewScreen() {
             <View className="mx-5 mt-3">
               <View className="flex-row items-center justify-between mb-1">
                 <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-                  {currentIndex + 1} of {reviewQueue.length}
+                  {t("wordReview.of", { current: currentIndex + 1, total: reviewQueue.length })}
                 </Text>
                 <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-                  Reviewed: {reviewed}
+                  {t("wordReview.reviewed", { count: reviewed })}
                 </Text>
               </View>
               <View className="h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-700">

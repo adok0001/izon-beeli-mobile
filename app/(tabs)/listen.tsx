@@ -8,12 +8,14 @@ import { useProverbs } from "@/lib/hooks/use-proverbs";
 import { useLanguageStore } from "@/store/language-store";
 import { useRouter } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function ProverbsCard({ languageId }: { languageId: string }) {
   const router = useRouter();
   const { data: proverbs = [] } = useProverbs(languageId);
+  const { t } = useTranslation();
 
   if (proverbs.length === 0) return null;
 
@@ -28,7 +30,7 @@ function ProverbsCard({ languageId }: { languageId: string }) {
         </View>
         <View className="flex-1">
           <Text className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
-            Proverbs
+            {t("practice.proverbs")}
           </Text>
           <Text className="text-sm text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
             &ldquo;{proverbs[0].text}&rdquo;
@@ -43,16 +45,17 @@ function ProverbsCard({ languageId }: { languageId: string }) {
 export default function PracticeScreen() {
   const router = useRouter();
   const { selectedLanguageId } = useLanguageStore();
+  const { t } = useTranslation();
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
       <View className="flex-row items-center justify-between px-5 pb-2 pt-4">
         <View>
           <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
-            Practice
+            {t("practice.title")}
           </Text>
           <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            Challenges, words & culture
+            {t("practice.subtitle")}
           </Text>
         </View>
         <LanguagePickerButton />
@@ -73,7 +76,7 @@ export default function PracticeScreen() {
           >
             <IconSymbol name="brain.head.profile" size={24} color="#10b981" />
             <Text className="mt-1.5 text-sm font-semibold text-emerald-700 dark:text-emerald-300">
-              Word Review
+              {t("practice.wordReview")}
             </Text>
           </Pressable>
           <Pressable
@@ -82,7 +85,7 @@ export default function PracticeScreen() {
           >
             <IconSymbol name="trophy.fill" size={24} color="#3b82f6" />
             <Text className="mt-1.5 text-sm font-semibold text-blue-700 dark:text-blue-300">
-              Quiz
+              {t("practice.quiz")}
             </Text>
           </Pressable>
           <Pressable
@@ -91,7 +94,7 @@ export default function PracticeScreen() {
           >
             <IconSymbol name="rectangle.grid.2x2" size={24} color="#8b5cf6" />
             <Text className="mt-1.5 text-sm font-semibold text-violet-700 dark:text-violet-300">
-              Match
+              {t("practice.match")}
             </Text>
           </Pressable>
         </View>
@@ -107,13 +110,13 @@ export default function PracticeScreen() {
             </View>
             <View className="flex-1">
               <Text className="text-xs font-semibold uppercase tracking-wide text-blue-300">
-                Multiplayer
+                {t("practice.multiplayer")}
               </Text>
               <Text className="text-base font-bold text-white">
-                Quiz Battle & Paired Lessons
+                {t("practice.multiplayerTitle")}
               </Text>
               <Text className="text-sm text-blue-200">
-                Challenge friends or find an opponent
+                {t("practice.multiplayerSubtitle")}
               </Text>
             </View>
             <IconSymbol name="chevron.right" size={16} color="#93c5fd" />
@@ -140,13 +143,13 @@ export default function PracticeScreen() {
               </View>
               <View className="flex-1">
                 <Text className="text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
-                  Script Practice
+                  {t("practice.scriptPractice")}
                 </Text>
                 <Text className="text-base font-bold text-neutral-900 dark:text-white">
-                  Ge&apos;ez / Fidel
+                  {t("practice.geezTitle")}
                 </Text>
                 <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-                  Learn the Ethiopic alphabet
+                  {t("practice.geezSubtitle")}
                 </Text>
               </View>
               <IconSymbol name="chevron.right" size={16} color="#10b981" />
@@ -165,13 +168,13 @@ export default function PracticeScreen() {
               </View>
               <View className="flex-1">
                 <Text className="text-xs font-semibold uppercase tracking-wide text-violet-600 dark:text-violet-400">
-                  Cultural Symbols
+                  {t("practice.culturalSymbols")}
                 </Text>
                 <Text className="text-base font-bold text-neutral-900 dark:text-white">
-                  Adinkra Symbols
+                  {t("practice.adinkraTitle")}
                 </Text>
                 <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-                  Explore Akan wisdom symbols
+                  {t("practice.adinkraSubtitle")}
                 </Text>
               </View>
               <IconSymbol name="chevron.right" size={16} color="#7c3aed" />

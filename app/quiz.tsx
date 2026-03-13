@@ -19,6 +19,7 @@ import { ListeningQuestion } from "@/components/quiz/listening-question";
 import { apiFetch } from "@/lib/api";
 import { analytics } from "@/lib/analytics";
 import type { QuizQuestion } from "@/types";
+import { useTranslation } from "react-i18next";
 
 const FEEDBACK_DELAY = 1200;
 
@@ -41,11 +42,12 @@ function ProgressBar({
 }
 
 function QuestionTypeLabel({ type }: { type: QuizQuestion["type"] }) {
+  const { t } = useTranslation();
   const labels: Record<string, string> = {
-    "word-to-english": "Translate to English",
-    "english-to-word": "Translate from English",
-    "fill-in-the-blank": "Fill in the Blank",
-    listening: "Listening Comprehension",
+    "word-to-english": t("quiz.wordToEnglish"),
+    "english-to-word": t("quiz.englishToWord"),
+    "fill-in-the-blank": t("quiz.fillInBlank"),
+    listening: t("quiz.listening"),
   };
   return (
     <View className="mb-2 self-start rounded-full bg-blue-100 px-3 py-1 dark:bg-blue-900">
@@ -91,6 +93,7 @@ function OptionCard({
 }
 
 function ActiveView() {
+  const { t } = useTranslation();
   const {
     questions,
     currentIndex,
@@ -156,7 +159,7 @@ function ActiveView() {
       <View className="flex-1 px-5 pt-6">
         <View className="flex-row items-center justify-between">
           <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-            Question {currentIndex + 1} of {questions.length}
+            {t("quiz.questionOf", { current: currentIndex + 1, total: questions.length })}
           </Text>
           {lastAnswerCorrect !== null && locked && (
             <View
@@ -173,7 +176,7 @@ function ActiveView() {
                     : "text-red-700 dark:text-red-300"
                 }`}
               >
-                {lastAnswerCorrect ? "Correct!" : "Incorrect"}
+                {lastAnswerCorrect ? t("quiz.correct") : t("quiz.incorrect")}
               </Text>
             </View>
           )}
@@ -203,6 +206,7 @@ function ActiveView() {
 }
 
 function ResultsView({ languageId }: { languageId: string }) {
+  const { t } = useTranslation();
   const { getResult, reset, questions } = useQuizStore();
   const router = useRouter();
   const { getToken } = useAuth();
@@ -280,7 +284,7 @@ function ResultsView({ languageId }: { languageId: string }) {
         {result.accuracy}%
       </Text>
       <Text className="mb-6 text-base text-neutral-500 dark:text-neutral-400">
-        Completed in {timeStr}
+        {t("quiz.completedIn", { time: timeStr })}
       </Text>
 
       <View className="w-full gap-3">
@@ -288,7 +292,7 @@ function ResultsView({ languageId }: { languageId: string }) {
           onPress={handleTryAgain}
           className="items-center rounded-xl bg-blue-500 py-4 active:opacity-80"
         >
-          <Text className="text-base font-semibold text-white">Try Again</Text>
+          <Text className="text-base font-semibold text-white">{t("quiz.tryAgain")}</Text>
         </Pressable>
 
         <Pressable
@@ -299,7 +303,7 @@ function ResultsView({ languageId }: { languageId: string }) {
           className="items-center rounded-xl border-2 border-neutral-200 py-4 active:opacity-80 dark:border-neutral-700"
         >
           <Text className="text-base font-semibold text-neutral-700 dark:text-neutral-300">
-            Back to Learn
+            {t("quiz.backToLearn")}
           </Text>
         </Pressable>
       </View>
@@ -308,6 +312,7 @@ function ResultsView({ languageId }: { languageId: string }) {
 }
 
 function EmptyView() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { reset } = useQuizStore();
 
@@ -315,11 +320,10 @@ function EmptyView() {
     <View className="flex-1 items-center justify-center px-8">
       <IconSymbol name="character.book.closed" size={56} color="#d1d5db" />
       <Text className="mt-4 text-center text-lg font-semibold text-neutral-700 dark:text-neutral-300">
-        Not enough vocabulary yet
+        {t("quiz.notEnoughVocab")}
       </Text>
       <Text className="mt-2 text-center text-sm text-neutral-500 dark:text-neutral-400">
-        This language needs at least 4 dictionary entries to generate a quiz. Try
-        contributing words or switching to a language with more content.
+        {t("quiz.notEnoughVocabDesc")}
       </Text>
       <Pressable
         onPress={() => {
@@ -328,13 +332,14 @@ function EmptyView() {
         }}
         className="mt-6 rounded-xl bg-blue-500 px-8 py-3 active:opacity-80"
       >
-        <Text className="font-semibold text-white">Go Back</Text>
+        <Text className="font-semibold text-white">{t("common.goBack")}</Text>
       </Pressable>
     </View>
   );
 }
 
 export default function QuizScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{
     courseId?: string;
@@ -352,8 +357,8 @@ export default function QuizScreen() {
   const isFocused = !!params.focusWord && !!params.focusEnglish;
   const languageName = getLanguageName(selectedLanguageId);
   const quizTitle = isFocused
-    ? `Practice: ${params.focusWord}`
-    : `${languageName} Quiz`;
+    ? t("quiz.practiceTitle", { word: params.focusWord })
+    : t("quiz.quizTitle", { language: languageName });
 
   // Generate and start quiz once dictionary data has loaded
   useEffect(() => {

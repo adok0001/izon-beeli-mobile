@@ -9,13 +9,16 @@ export interface TranscriptSegment {
   endTime: number;
   text: string;
   translation?: string;
+  translationFr?: string;
 }
 
 export interface LessonData {
   id: string;
   courseId: string;
   title: string;
+  titleFr?: string;
   description: string;
+  descriptionFr?: string;
   /** null = bundled/local audio (app uses BUNDLED_AUDIO map) */
   audioUrl: string | null;
   /** Duration in minutes; null = not yet timed */

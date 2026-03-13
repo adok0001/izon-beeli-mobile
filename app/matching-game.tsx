@@ -11,6 +11,7 @@ import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { getLanguageName } from "@/lib/mock-data";
 import { hapticHeavy } from "@/lib/haptics";
 import { playFinishSound } from "@/lib/sounds";
+import { useTranslation } from "react-i18next";
 
 export default function MatchingGameScreen() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function MatchingGameScreen() {
   const initialized = useRef(false);
 
   const languageName = getLanguageName(selectedLanguageId);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (initialized.current) return;
@@ -71,7 +73,7 @@ export default function MatchingGameScreen() {
     <>
       <Stack.Screen
         options={{
-          title: `${languageName} Matching`,
+          title: `${languageName} ${t("matching.titleSuffix")}`,
           headerShown: true,
           presentation: "modal",
           headerLeft: () => (
@@ -92,10 +94,10 @@ export default function MatchingGameScreen() {
           <View className="flex-1 items-center justify-center px-8">
             <IconSymbol name="rectangle.grid.2x2" size={56} color="#d1d5db" />
             <Text className="mt-4 text-center text-lg font-semibold text-neutral-700 dark:text-neutral-300">
-              Not enough vocabulary yet
+              {t("matching.notEnoughVocab")}
             </Text>
             <Text className="mt-2 text-center text-sm text-neutral-500 dark:text-neutral-400">
-              This language needs at least 8 dictionary entries to play the matching game.
+              {t("matching.notEnoughVocabDesc")}
             </Text>
             <Pressable
               onPress={() => {
@@ -104,7 +106,7 @@ export default function MatchingGameScreen() {
               }}
               className="mt-6 rounded-xl bg-blue-500 px-8 py-3 active:opacity-80"
             >
-              <Text className="font-semibold text-white">Go Back</Text>
+              <Text className="font-semibold text-white">{t("matching.goBack")}</Text>
             </Pressable>
           </View>
         ) : phase === "results" && result ? (
@@ -116,13 +118,13 @@ export default function MatchingGameScreen() {
             </View>
 
             <Text className="mb-2 text-2xl font-bold text-neutral-900 dark:text-white">
-              All Matched!
+              {t("matching.allMatched")}
             </Text>
             <Text className="mb-1 text-base text-neutral-500 dark:text-neutral-400">
-              {result.totalPairs} pairs in {result.attempts} attempts
+              {t("matching.pairsAttempts", { total: result.totalPairs, attempts: result.attempts })}
             </Text>
             <Text className="mb-6 text-base text-neutral-500 dark:text-neutral-400">
-              Time: {result.timeElapsed}s
+              {t("matching.time", { time: result.timeElapsed })}
             </Text>
 
             <View className="w-full gap-3">
@@ -131,7 +133,7 @@ export default function MatchingGameScreen() {
                 className="items-center rounded-xl bg-blue-500 py-4 active:opacity-80"
               >
                 <Text className="text-base font-semibold text-white">
-                  Play Again
+                  {t("matching.playAgain")}
                 </Text>
               </Pressable>
               <Pressable
@@ -142,7 +144,7 @@ export default function MatchingGameScreen() {
                 className="items-center rounded-xl border-2 border-neutral-200 py-4 active:opacity-80 dark:border-neutral-700"
               >
                 <Text className="text-base font-semibold text-neutral-700 dark:text-neutral-300">
-                  Back to Learn
+                  {t("matching.backToLearn")}
                 </Text>
               </Pressable>
             </View>
@@ -150,7 +152,7 @@ export default function MatchingGameScreen() {
         ) : (
           <View className="flex-1 px-5 pt-4">
             <Text className="mb-4 text-center text-base text-neutral-600 dark:text-neutral-400">
-              Match each word with its English translation
+              {t("matching.instruction")}
             </Text>
             <MatchingBoard />
           </View>

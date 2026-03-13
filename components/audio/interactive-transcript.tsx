@@ -1,6 +1,7 @@
 import { useRef, useEffect } from "react";
 import { View, Text, Pressable, ScrollView } from "react-native";
 import { useAudioStore } from "@/store/audio-store";
+import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { TranscriptSegment } from "@/types";
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 
 export function InteractiveTranscript({ segments, onSegmentPress }: Props) {
   const { progress, seekTo, currentTrackId } = useAudioStore();
+  const { uiLanguage } = useUiLanguageStore();
   const scrollRef = useRef<ScrollView>(null);
 
   const activeIndex = segments.findIndex(
@@ -66,7 +68,7 @@ export function InteractiveTranscript({ segments, onSegmentPress }: Props) {
             >
               {segment.text}
             </Text>
-            {segment.translation && (
+            {(segment.translation || segment.translationFr) && (
               <Text
                 className={`mt-1 text-sm ${
                   isActive
@@ -74,7 +76,9 @@ export function InteractiveTranscript({ segments, onSegmentPress }: Props) {
                     : "text-neutral-500 dark:text-neutral-400"
                 }`}
               >
-                {segment.translation}
+                {uiLanguage === "fr"
+                  ? (segment.translationFr ?? segment.translation)
+                  : segment.translation}
               </Text>
             )}
           </Pressable>

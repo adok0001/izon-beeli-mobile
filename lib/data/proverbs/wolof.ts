@@ -6,7 +6,9 @@ export const WOLOF_PROVERBS: Proverb[] = [
     languageId: "wolof",
     text: "Ku amul xam-xam, amul dëkk",
     translation: "One who has no knowledge has no homeland",
+    translationFr: "Celui qui n'a pas de savoir n'a pas de patrie",
     meaning: "Knowledge connects you to your identity and roots",
+    meaningFr: "Le savoir vous relie à votre identité et à vos racines",
     tags: ["knowledge", "identity"],
   },
   {
@@ -14,7 +16,9 @@ export const WOLOF_PROVERBS: Proverb[] = [
     languageId: "wolof",
     text: "Mbokk mooy dëkk",
     translation: "Family is one's true home",
+    translationFr: "La famille, c'est le vrai chez-soi",
     meaning: "Your people and community are where you truly belong",
+    meaningFr: "Les vôtres et votre communauté sont là où vous appartenez vraiment",
     tags: ["family", "community"],
   },
   {
@@ -22,7 +26,9 @@ export const WOLOF_PROVERBS: Proverb[] = [
     languageId: "wolof",
     text: "Xale bu baax dafa tàng ca kanam",
     translation: "A good child shines ahead",
+    translationFr: "Un bon enfant brille devant lui",
     meaning: "Well-raised children bring honor and light to their family's future",
+    meaningFr: "Les enfants bien élevés apportent honneur et lumière à l'avenir de leur famille",
     tags: ["parenting", "children"],
   },
   {
@@ -30,7 +36,9 @@ export const WOLOF_PROVERBS: Proverb[] = [
     languageId: "wolof",
     text: "Doom u nit mooy nit",
     translation: "A human's child is a human",
+    translationFr: "L'enfant d'un être humain est un être humain",
     meaning: "Children inherit humanity and dignity; treat all children with respect",
+    meaningFr: "Les enfants héritent de l'humanité et de la dignité ; traitez tous les enfants avec respect",
     tags: ["humanity", "respect"],
   },
   {
@@ -38,7 +46,9 @@ export const WOLOF_PROVERBS: Proverb[] = [
     languageId: "wolof",
     text: "Lu tàng du mën a tax ker bu mat",
     translation: "What is hot cannot make a good dwelling",
+    translationFr: "Ce qui est chaud ne peut pas bâtir un bon foyer",
     meaning: "Anger and haste cannot build a lasting, peaceful home",
+    meaningFr: "La colère et la précipitation ne peuvent pas bâtir un foyer durable et paisible",
     tags: ["peace", "family"],
   },
   {
@@ -46,7 +56,9 @@ export const WOLOF_PROVERBS: Proverb[] = [
     languageId: "wolof",
     text: "Nit ku neex du dem rekk",
     translation: "A sweet person does not just leave",
+    translationFr: "Une personne de bonne nature ne part pas simplement",
     meaning: "Those with good character and relationships do not abandon others",
+    meaningFr: "Ceux qui ont bon caractère et de bonnes relations n'abandonnent pas les autres",
     tags: ["loyalty", "character"],
   },
   {
@@ -54,7 +66,9 @@ export const WOLOF_PROVERBS: Proverb[] = [
     languageId: "wolof",
     text: "Ay nit ñi mooy góor",
     translation: "People make the man",
+    translationFr: "Ce sont les gens qui font l'homme",
     meaning: "Community and relationships shape a person's identity and worth",
+    meaningFr: "La communauté et les relations façonnent l'identité et la valeur d'une personne",
     tags: ["community", "identity"],
   },
   {
@@ -62,7 +76,9 @@ export const WOLOF_PROVERBS: Proverb[] = [
     languageId: "wolof",
     text: "Ku jël xaj, dafa dem fenn",
     translation: "One who takes a dog goes somewhere",
+    translationFr: "Celui qui prend un chien va quelque part",
     meaning: "Your companions and choices determine where you end up",
+    meaningFr: "Vos compagnons et vos choix déterminent où vous arrivez",
     tags: ["choices", "relationships"],
   },
   {
@@ -70,7 +86,9 @@ export const WOLOF_PROVERBS: Proverb[] = [
     languageId: "wolof",
     text: "Liggéey yi am solo",
     translation: "Work that is done has value",
+    translationFr: "Le travail accompli a de la valeur",
     meaning: "Only completed work has worth; action matters more than intentions",
+    meaningFr: "Seul le travail achevé a de la valeur ; l'action compte plus que les intentions",
     tags: ["work", "effort"],
   },
   {
@@ -78,7 +96,9 @@ export const WOLOF_PROVERBS: Proverb[] = [
     languageId: "wolof",
     text: "Yëgël nit ñu dëkk nit",
     translation: "Know people where people live",
+    translationFr: "Connais les gens là où les gens vivent",
     meaning: "Understand people in their own context and environment",
+    meaningFr: "Comprenez les gens dans leur propre contexte et environnement",
     tags: ["understanding", "empathy"],
   },
   {
@@ -86,7 +106,9 @@ export const WOLOF_PROVERBS: Proverb[] = [
     languageId: "wolof",
     text: "Teranga mooy àddina",
     translation: "Hospitality is the world",
+    translationFr: "L'hospitalité, c'est le monde entier",
     meaning: "Generosity and welcoming others is the foundation of civilization",
+    meaningFr: "La générosité et l'accueil de l'autre sont le fondement de la civilisation",
     tags: ["hospitality", "generosity"],
   },
   {
@@ -94,7 +116,9 @@ export const WOLOF_PROVERBS: Proverb[] = [
     languageId: "wolof",
     text: "Xam-xam amul sëriñ",
     translation: "Knowledge has no master",
+    translationFr: "Le savoir n'a pas de maître",
     meaning: "True knowledge cannot be owned or restricted by any person",
+    meaningFr: "Le vrai savoir ne peut être possédé ni limité par personne",
     tags: ["knowledge", "freedom"],
   },
   {
@@ -102,7 +126,9 @@ export const WOLOF_PROVERBS: Proverb[] = [
     languageId: "wolof",
     text: "Ku tàng, dafa xam ne it mu doon",
     translation: "One who is burned knows fire from experience",
+    translationFr: "Celui qui s'est brûlé connaît le feu par expérience",
     meaning: "Experience is the most powerful teacher",
+    meaningFr: "L'expérience est le maître le plus puissant",
     tags: ["experience", "wisdom"],
   },
   {
@@ -110,7 +136,9 @@ export const WOLOF_PROVERBS: Proverb[] = [
     languageId: "wolof",
     text: "Nit nit mooy garabu nit",
     translation: "A person is the medicine of another person",
+    translationFr: "L'être humain est le remède de l'être humain",
     meaning: "Humans heal each other through community, care, and love",
+    meaningFr: "Les êtres humains se guérissent mutuellement par la communauté, la bienveillance et l'amour",
     tags: ["community", "healing"],
   },
   {
@@ -118,7 +146,9 @@ export const WOLOF_PROVERBS: Proverb[] = [
     languageId: "wolof",
     text: "Bakkan baax la te bàkkante baax lañu",
     translation: "Being helpful is good, and helping each other is even better",
+    translationFr: "Être utile est bien, et s'entraider est encore mieux",
     meaning: "Mutual aid and reciprocity are the highest form of community",
+    meaningFr: "L'entraide et la réciprocité sont la forme la plus élevée de communauté",
     tags: ["mutual aid", "cooperation"],
   },
 ];

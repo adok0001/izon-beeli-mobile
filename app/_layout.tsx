@@ -1,5 +1,6 @@
 import "react-native-reanimated";
 import "../global.css";
+import "@/lib/i18n";
 
 import { ClerkLoaded, ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -19,6 +20,7 @@ import { queryClient } from "@/lib/api";
 import { useSyncUser } from "@/lib/hooks/use-sync-user";
 import { useThemeStore } from "@/store/theme-store";
 import { useLanguageStore } from "@/store/language-store";
+import { useUiLanguageStore } from "@/store/ui-language-store";
 import { analytics } from "@/lib/analytics";
 import {
   configurePushNotifications,
@@ -94,11 +96,13 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const hydrateTheme = useThemeStore((s) => s.hydrate);
   const hydrateLanguage = useLanguageStore((s) => s.hydrate);
+  const hydrateUiLanguage = useUiLanguageStore((s) => s.hydrate);
 
   useEffect(() => {
     configurePushNotifications();
     hydrateTheme();
     hydrateLanguage();
+    hydrateUiLanguage();
     analytics.appOpen();
   }, []);
 

@@ -80,6 +80,7 @@ lessonsRouter.get("/:id", async (c) => {
       endTime: s.endTime,
       text: s.text,
       translation: s.translation,
+      translationFr: s.translationFr,
     })),
   });
 });

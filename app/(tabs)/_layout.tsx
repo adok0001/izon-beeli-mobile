@@ -15,6 +15,7 @@ import { useProgressSummary } from "@/lib/hooks/use-progress";
 import { useEffect, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ONBOARDING_KEY } from "@/app/(onboarding)/index";
+import { useTranslation } from "react-i18next";
 
 function TabBarWithPlayer(props: BottomTabBarProps) {
   const { currentTrackId } = useAudioStore();
@@ -37,6 +38,7 @@ export default function TabLayout() {
 
   const hydrateNotifications = useNotificationStore((s) => s.hydrate);
   const onboardingChecked = useRef(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     hydrateNotifications();
@@ -63,7 +65,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="learn"
         options={{
-          title: "Learn",
+          title: t("tabs.learn"),
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="book.fill" color={color} />
           ),
@@ -72,7 +74,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="listen"
         options={{
-          title: "Practice",
+          title: t("tabs.practice"),
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="sparkles" color={color} />
           ),
@@ -81,7 +83,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="journal"
         options={{
-          title: "Journal",
+          title: t("tabs.journal"),
           tabBarIcon: ({ color }) => (
             <IconSymbol
               size={28}
@@ -94,7 +96,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="feed"
         options={{
-          title: "Feed",
+          title: t("tabs.feed"),
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="newspaper.fill" color={color} />
           ),
@@ -103,7 +105,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
+          title: t("tabs.profile"),
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="person.fill" color={color} />
           ),

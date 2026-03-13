@@ -4,6 +4,8 @@ import { Stack } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useNotificationStore } from "@/store/notification-store";
 import type { InAppNotification, NotificationType } from "@/types";
+import { useTranslation } from "react-i18next";
+import i18n from "@/lib/i18n";
 
 const TYPE_CONFIG: Record<NotificationType, { icon: string; color: string }> = {
   word_of_day: { icon: "star.fill", color: "#3b82f6" },
@@ -15,12 +17,12 @@ const TYPE_CONFIG: Record<NotificationType, { icon: string; color: string }> = {
 function timeAgo(dateStr: string): string {
   const diffMs = Date.now() - new Date(dateStr).getTime();
   const diffMins = Math.floor(diffMs / 60000);
-  if (diffMins < 1) return "just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffMins < 1) return i18n.t("time.justNow");
+  if (diffMins < 60) return i18n.t("time.minutesAgo", { count: diffMins });
   const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffHours < 24) return i18n.t("time.hoursAgo", { count: diffHours });
   const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays}d ago`;
+  return i18n.t("time.daysAgo", { count: diffDays });
 }
 
 function NotificationRow({ item }: { item: InAppNotification }) {
@@ -70,17 +72,18 @@ function NotificationRow({ item }: { item: InAppNotification }) {
 export default function NotificationsScreen() {
   const { notifications, markAllRead, unreadCount } =
     useNotificationStore();
+  const { t } = useTranslation();
 
   return (
     <>
       <Stack.Screen
         options={{
-          title: "Notifications",
+          title: t("notifications.title"),
           headerRight: () =>
             unreadCount > 0 ? (
               <Pressable onPress={markAllRead} hitSlop={8}>
                 <Text className="text-sm font-medium text-blue-500">
-                  Mark all read
+                  {t("notifications.markAllRead")}
                 </Text>
               </Pressable>
             ) : null,
@@ -97,7 +100,7 @@ export default function NotificationsScreen() {
             <View className="items-center px-8 py-16">
               <IconSymbol name="bell" size={48} color="#d1d5db" />
               <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
-                No notifications yet. You&apos;ll see updates about your learning progress here.
+                {t("notifications.noNotifications")}
               </Text>
             </View>
           }

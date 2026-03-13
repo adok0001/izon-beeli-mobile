@@ -133,16 +133,19 @@ async function seed() {
       id: course.id,
       languageId: course.languageId,
       title: course.title,
+      titleFr: course.titleFr ?? null,
       description: course.description,
+      descriptionFr: course.descriptionFr ?? null,
       level: course.level,
       lessonsCount: course.lessonsCount,
       order: course.order,
-      // courseType excluded until DB migration
     }).onConflictDoUpdate({
       target: courses.id,
       set: {
         title: course.title,
+        titleFr: course.titleFr ?? null,
         description: course.description,
+        descriptionFr: course.descriptionFr ?? null,
         level: course.level,
         lessonsCount: course.lessonsCount,
         order: course.order,
@@ -158,11 +161,17 @@ async function seed() {
   for (const lesson of ALL_LESSONS) {
     const { transcript, ...lessonData } = lesson;
 
-    await db.insert(lessons).values(lessonData).onConflictDoUpdate({
+    await db.insert(lessons).values({
+      ...lessonData,
+      titleFr: lessonData.titleFr ?? null,
+      descriptionFr: lessonData.descriptionFr ?? null,
+    }).onConflictDoUpdate({
       target: lessons.id,
       set: {
         title: lessonData.title,
+        titleFr: lessonData.titleFr ?? null,
         description: lessonData.description,
+        descriptionFr: lessonData.descriptionFr ?? null,
         audioUrl: lessonData.audioUrl,
         duration: lessonData.duration,
         order: lessonData.order,
@@ -178,6 +187,7 @@ async function seed() {
         endTime: seg.endTime,
         text: seg.text,
         translation: seg.translation ?? null,
+        translationFr: seg.translationFr ?? null,
         order: idx,
       }));
       await batchInsert(transcriptSegments, segments);
@@ -256,7 +266,9 @@ async function seed() {
     languageId: p.languageId,
     text: p.text,
     translation: p.translation,
+    translationFr: p.translationFr ?? null,
     meaning: p.meaning,
+    meaningFr: p.meaningFr ?? null,
     literal: p.literal ?? null,
     context: p.context ?? null,
     tags: p.tags ?? null,
@@ -296,7 +308,9 @@ async function seed() {
     languageId: c.languageId,
     category: c.category,
     title: c.title,
+    titleFr: (c as any).titleFr ?? null,
     description: c.description,
+    descriptionFr: (c as any).descriptionFr ?? null,
     imageEmoji: c.imageEmoji,
   }));
   await batchInsert(culturalContent, culturalRows);

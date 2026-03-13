@@ -6,6 +6,7 @@ import { useProgressSummary } from "@/lib/hooks/use-progress";
 import { getLanguageName } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
 import { useAuth, useUser } from "@clerk/clerk-expo";
+import { useTranslation } from "react-i18next";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -75,6 +76,7 @@ export default function ProfileScreen() {
   const [feedbackVisible, setFeedbackVisible] = useState(false);
   const { data: summary } = useProgressSummary();
   const { selectedLanguageId } = useLanguageStore();
+  const { t } = useTranslation();
 
   const isAdmin = currentUser?.isAdmin ?? false;
   const displayName = user?.username ?? "Learner";
@@ -105,15 +107,15 @@ export default function ProfileScreen() {
             <XpLevelBadge points={summary?.points ?? 0} variant="full" />
           </View>
           <View className="flex-row gap-3">
-            <StatCard icon="flame.fill" label="Streak" value={String(summary?.streak ?? 0)} />
+            <StatCard icon="flame.fill" label={t("profile.streak")} value={String(summary?.streak ?? 0)} />
             <StatCard
               icon="snowflake"
-              label="Freezes"
+              label={t("profile.freezes")}
               value={String(summary?.freezeCount ?? 0)}
             />
             <StatCard
               icon="checkmark.circle.fill"
-              label="Lessons"
+              label={t("profile.lessons")}
               value={String(summary?.completedCount ?? 0)}
             />
           </View>
@@ -123,66 +125,66 @@ export default function ProfileScreen() {
         <View className="px-5">
           <MenuRow
             icon="chart.bar.fill"
-            label="Progress Dashboard"
+            label={t("profile.progressDashboard")}
             onPress={() => router.push("/dashboard")}
           />
           <MenuRow
             icon="book.fill"
-            label="Learning"
+            label={t("profile.learning")}
             detail={getLanguageName(selectedLanguageId)}
             onPress={() => router.push("/(tabs)/learn")}
           />
           <MenuRow
             icon="character.book.closed"
-            label="Dictionary"
+            label={t("profile.dictionary")}
             onPress={() => router.push("/dictionary")}
           />
           {isAdmin && (
             <MenuRow
               icon="checkmark.shield.fill"
-              label="Review Contributions"
+              label={t("profile.reviewContributions")}
               onPress={() => router.push("/review")}
             />
           )}
           <MenuRow
             icon="doc.text.fill"
-            label="My Contributions"
+            label={t("profile.myContributions")}
             onPress={() => router.push("/my-contributions")}
           />
           <MenuRow
             icon="star.fill"
-            label="Bounties"
+            label={t("profile.bounties")}
             onPress={() => router.push("/bounties")}
           />
           <MenuRow
             icon="trophy.fill"
-            label="Contributors"
+            label={t("profile.contributors")}
             onPress={() => router.push("/contributors")}
           />
           <MenuRow
             icon="person.3.fill"
-            label="Classroom"
+            label={t("profile.classroom")}
             onPress={() => router.push("/classroom")}
           />
           <MenuRow
             icon="bell.fill"
-            label="Notifications"
+            label={t("profile.notifications")}
             onPress={() => router.push("/notifications")}
           />
           <MenuRow
             icon="exclamationmark.bubble"
-            label="Send Feedback"
+            label={t("profile.sendFeedback")}
             onPress={() => setFeedbackVisible(true)}
           />
           <MenuRow
             icon="gearshape.fill"
-            label="Settings"
+            label={t("profile.settings")}
             onPress={() => router.push("/settings")}
           />
           <View className="mt-4">
             <MenuRow
               icon="xmark"
-              label="Sign Out"
+              label={t("profile.signOut")}
               onPress={() => signOut()}
               danger
             />

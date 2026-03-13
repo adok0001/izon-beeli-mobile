@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 
 const mascot = require("../../public/mascot.jpg");
 
@@ -25,6 +26,7 @@ export default function SignUpScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
   const passwordTooShort = password.length > 0 && password.length < 8;
   const passwordsMismatch =
@@ -61,7 +63,7 @@ export default function SignUpScreen() {
         clerkErr.errors?.[0]?.message ??
         (err instanceof Error ? err.message : "Something went wrong");
       setError(message);
-      Alert.alert("Error", message);
+      Alert.alert(t("common.error"), message);
     } finally {
       setLoading(false);
     }
@@ -81,10 +83,10 @@ export default function SignUpScreen() {
           />
         </View>
         <Text className="mb-2 text-center text-3xl font-bold text-neutral-900 dark:text-white">
-          Create Account
+          {t("auth.createAccount")}
         </Text>
         <Text className="mb-8 text-center text-sm text-neutral-500 dark:text-neutral-400">
-          Start your language learning journey
+          {t("auth.createAccountSubtitle")}
         </Text>
 
         {error ? (
@@ -97,7 +99,7 @@ export default function SignUpScreen() {
 
         <TextInput
           className="mb-4 rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-          placeholder="Email"
+          placeholder={t("auth.email")}
           placeholderTextColor="#9ca3af"
           value={email}
           onChangeText={setEmail}
@@ -109,7 +111,7 @@ export default function SignUpScreen() {
 
         <TextInput
           className="mb-4 rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-          placeholder="Username"
+          placeholder={t("auth.username")}
           placeholderTextColor="#9ca3af"
           value={username}
           onChangeText={setUsername}
@@ -124,7 +126,7 @@ export default function SignUpScreen() {
               ? "border-amber-400 dark:border-amber-600"
               : "border-neutral-300 dark:border-neutral-700"
           }`}
-          placeholder="Password"
+          placeholder={t("auth.password")}
           placeholderTextColor="#9ca3af"
           value={password}
           onChangeText={setPassword}
@@ -134,7 +136,7 @@ export default function SignUpScreen() {
         />
         {passwordTooShort ? (
           <Text className="mb-3 ml-1 text-xs text-amber-600 dark:text-amber-400">
-            Password must be at least 8 characters
+            {t("auth.passwordTooShort")}
           </Text>
         ) : (
           <View className="mb-3" />
@@ -146,7 +148,7 @@ export default function SignUpScreen() {
               ? "border-red-400 dark:border-red-600"
               : "border-neutral-300 dark:border-neutral-700"
           }`}
-          placeholder="Confirm Password"
+          placeholder={t("auth.confirmPassword")}
           placeholderTextColor="#9ca3af"
           value={confirmPassword}
           onChangeText={setConfirmPassword}
@@ -157,7 +159,7 @@ export default function SignUpScreen() {
         />
         {passwordsMismatch ? (
           <Text className="mb-5 ml-1 text-xs text-red-500">
-            Passwords do not match
+            {t("auth.passwordsMismatch")}
           </Text>
         ) : (
           <View className="mb-5" />
@@ -173,14 +175,14 @@ export default function SignUpScreen() {
           {loading ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (
-            <Text className="font-semibold text-white">Create Account</Text>
+            <Text className="font-semibold text-white">{t("auth.createAccount")}</Text>
           )}
         </Pressable>
 
         <Link href="/(auth)/sign-in" asChild>
           <Pressable disabled={loading}>
             <Text className="text-center text-blue-600 dark:text-blue-400">
-              Already have an account? Sign In
+              {t("auth.alreadyHaveAccount")}
             </Text>
           </Pressable>
         </Link>

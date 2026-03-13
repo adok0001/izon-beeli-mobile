@@ -11,6 +11,8 @@ import { useThemeStore } from "@/store/theme-store";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@clerk/clerk-expo";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+import { useUiLanguageStore, type UiLanguage } from "@/store/ui-language-store";
 
 function SettingsRow({
   icon,
@@ -78,29 +80,28 @@ function ToggleRow({
 }
 
 const THEME_OPTIONS = ["system", "light", "dark"] as const;
-const THEME_LABELS: Record<string, string> = {
-  system: "System",
-  light: "Light",
-  dark: "Dark",
-};
+const LANG_OPTIONS: UiLanguage[] = ["en", "fr"];
+const LANG_LABELS: Record<UiLanguage, string> = { en: "English", fr: "Français" };
 
 export default function SettingsScreen() {
   const { selectedLanguageId } = useLanguageStore();
   const { data: summary } = useProgressSummary();
   const { preference, setPreference } = useThemeStore();
+  const { uiLanguage, setUiLanguage } = useUiLanguageStore();
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
   const { data: prefs } = useNotificationPrefs();
   const updatePrefs = useUpdateNotificationPrefs();
+  const { t } = useTranslation();
 
   const handleResetProgress = () => {
     Alert.alert(
-      "Reset Progress",
-      "Are you sure you want to reset all your learning progress? This cannot be undone.",
+      t("settings.resetProgressTitle"),
+      t("settings.resetProgressMessage"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Reset",
+          text: t("settings.resetButton"),
           style: "destructive",
           onPress: async () => {
             try {
@@ -110,9 +111,9 @@ export default function SettingsScreen() {
                 token: token ?? undefined,
               });
               queryClient.invalidateQueries({ queryKey: ["progress"] });
-              Alert.alert("Done", "Your progress has been reset.");
+              Alert.alert(t("settings.resetSuccess"), t("settings.resetSuccessMessage"));
             } catch {
-              Alert.alert("Error", "Failed to reset progress. Please try again.");
+              Alert.alert(t("common.error"), t("settings.resetError"));
             }
           },
         },
@@ -122,7 +123,7 @@ export default function SettingsScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: "Settings" }} />
+      <Stack.Screen options={{ title: t("settings.title") }} />
       <SafeAreaView
         className="flex-1 bg-white dark:bg-neutral-900"
         edges={[]}
@@ -130,49 +131,49 @@ export default function SettingsScreen() {
         <View className="px-5 pt-4">
           {/* Learning section */}
           <Text className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-            Learning
+            {t("settings.learning")}
           </Text>
           <SettingsRow
             icon="book.fill"
-            label="Current Language"
+            label={t("settings.currentLanguage")}
             value={getLanguageName(selectedLanguageId)}
           />
           <SettingsRow
             icon="flame.fill"
-            label="Daily Streak"
-            value={`${summary?.streak ?? 0} days`}
+            label={t("settings.dailyStreak")}
+            value={t("settings.daysCount", { count: summary?.streak ?? 0 })}
           />
           <SettingsRow
             icon="star.fill"
-            label="Points Earned"
+            label={t("settings.pointsEarned")}
             value={String(summary?.points ?? 0)}
           />
 
           {/* Notifications section */}
           <Text className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-            Notifications
+            {t("settings.notifications")}
           </Text>
           <ToggleRow
             icon="star.fill"
-            label="Word of the Day"
-            detail="Daily push with a new word"
+            label={t("settings.wordOfDay")}
+            detail={t("settings.wordOfDayDetail")}
             value={prefs?.pushWotdEnabled ?? true}
             onToggle={(v) => updatePrefs.mutate({ pushWotdEnabled: v })}
           />
           <ToggleRow
             icon="flame.fill"
-            label="Streak Reminder"
-            detail="Evening reminder if you haven't practiced"
+            label={t("settings.streakReminder")}
+            detail={t("settings.streakReminderDetail")}
             value={prefs?.pushStreakReminderEnabled ?? true}
             onToggle={(v) => updatePrefs.mutate({ pushStreakReminderEnabled: v })}
           />
 
           {/* App section */}
           <Text className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-            App
+            {t("settings.app")}
           </Text>
           <Text className="mb-1 mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            Appearance
+            {t("settings.appearance")}
           </Text>
           <View className="flex-row gap-2">
             {THEME_OPTIONS.map((opt) => (
@@ -192,7 +193,35 @@ export default function SettingsScreen() {
                       : "text-neutral-600 dark:text-neutral-400"
                   }`}
                 >
-                  {THEME_LABELS[opt]}
+                  {t(`settings.theme${opt.charAt(0).toUpperCase() + opt.slice(1)}` as any)}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {/* Interface language */}
+          <Text className="mb-1 mt-4 text-sm text-neutral-500 dark:text-neutral-400">
+            {t("settings.uiLanguage")}
+          </Text>
+          <View className="flex-row gap-2">
+            {LANG_OPTIONS.map((lang) => (
+              <Pressable
+                key={lang}
+                onPress={() => setUiLanguage(lang)}
+                className={`flex-1 items-center rounded-lg py-2.5 ${
+                  uiLanguage === lang
+                    ? "bg-blue-500"
+                    : "bg-neutral-100 dark:bg-neutral-800"
+                }`}
+              >
+                <Text
+                  className={`text-sm font-semibold ${
+                    uiLanguage === lang
+                      ? "text-white"
+                      : "text-neutral-600 dark:text-neutral-400"
+                  }`}
+                >
+                  {LANG_LABELS[lang]}
                 </Text>
               </Pressable>
             ))}
@@ -200,7 +229,7 @@ export default function SettingsScreen() {
 
           {/* Danger zone */}
           <Text className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-            Data
+            {t("settings.data")}
           </Text>
           <Pressable
             onPress={handleResetProgress}
@@ -208,7 +237,7 @@ export default function SettingsScreen() {
           >
             <IconSymbol name="xmark" size={20} color="#ef4444" />
             <Text className="ml-3 text-base font-semibold text-red-500">
-              Reset Progress
+              {t("settings.resetProgress")}
             </Text>
           </Pressable>
 

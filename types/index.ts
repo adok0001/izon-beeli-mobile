@@ -10,7 +10,9 @@ export type CourseType =
 export interface Course {
   id: string;
   title: string;
+  titleFr?: string | null;
   description: string;
+  descriptionFr?: string | null;
   language: string;
   level: "beginner" | "intermediate" | "advanced";
   lessonsCount: number;
@@ -25,7 +27,9 @@ export interface Lesson {
   id: string;
   courseId: string;
   title: string;
+  titleFr?: string | null;
   description: string;
+  descriptionFr?: string | null;
   audioUrl?: AudioSource;
   duration?: number; // seconds
   order: number;
@@ -38,7 +42,8 @@ export interface TranscriptSegment {
   startTime: number; // seconds
   endTime: number; // seconds
   text: string;
-  translation?: string;
+  translation?: string | null;
+  translationFr?: string | null;
 }
 
 export interface JournalEntry {
@@ -123,7 +128,9 @@ export interface Proverb {
   languageId: string;
   text: string;
   translation: string;
+  translationFr?: string | null;
   meaning: string;
+  meaningFr?: string | null;
   literal?: string;
   context?: string;
   tags?: string[];
@@ -178,9 +185,11 @@ export interface CulturalContent {
   languageId: string;
   category: CulturalCategory;
   title: string;
+  titleFr?: string | null;
   description: string;
+  descriptionFr?: string | null;
   imageEmoji: string;
-  keyTerms: { word: string; english: string }[];
+  keyTerms: { word: string; english: string; french?: string | null }[];
 }
 
 // --- Matching Game ---

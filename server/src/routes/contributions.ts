@@ -323,6 +323,17 @@ contributionsRouter.patch("/:id/review", adminMiddleware, async (c) => {
 
   const newStatus = action === "approve" ? "approved" : "rejected";
 
+  if (action === "reject") {
+    // Supprimer le feedItem créé lors de la soumission
+    await db.delete(feedItems).where(
+      and(
+        eq(feedItems.userId, existing.userId),
+        eq(feedItems.type, "contribution"),
+        ilike(feedItems.title, `${existing.word.trim()} →%`)
+      )
+    );
+  }
+
   let xpAwarded: number | null = null;
   let bountyXpAwarded: number | null = null;
   let matchedBountyId: string | null = null;

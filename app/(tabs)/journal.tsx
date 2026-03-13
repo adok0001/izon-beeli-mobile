@@ -21,10 +21,12 @@ import {
   useDeleteJournalEntry,
 } from "@/lib/hooks/use-journal";
 import type { JournalEntry } from "@/types";
+import { useTranslation } from "react-i18next";
+import i18n from "@/lib/i18n";
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
-  return d.toLocaleDateString("en-US", {
+  return d.toLocaleDateString(i18n.language, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -40,10 +42,11 @@ function EntryCard({
   onPress: () => void;
   onDelete: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const confirmDelete = () => {
-    Alert.alert("Delete Entry", `Delete "${entry.title}"?`, [
-      { text: "Cancel", style: "cancel" },
-      { text: "Delete", style: "destructive", onPress: () => onDelete(entry.id) },
+    Alert.alert(t("journal.deleteTitle"), t("journal.deleteConfirm", { title: entry.title }), [
+      { text: t("common.cancel"), style: "cancel" },
+      { text: t("common.delete"), style: "destructive", onPress: () => onDelete(entry.id) },
     ]);
   };
 
@@ -60,7 +63,7 @@ function EntryCard({
           </Text>
           <Text className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">
             {formatDate(entry.createdAt)}
-            {entry.updatedAt !== entry.createdAt && " · edited"}
+            {entry.updatedAt !== entry.createdAt && ` · ${t("journal.edited")}`}
           </Text>
         </View>
         <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
@@ -95,6 +98,7 @@ export default function JournalScreen() {
 
   const isEditing = editingId !== null;
   const canSave = title.trim().length > 0 && content.trim().length > 0;
+  const { t } = useTranslation();
 
   const openNew = () => {
     setEditingId(null);
@@ -139,10 +143,10 @@ export default function JournalScreen() {
       <View className="flex-row items-center justify-between px-5 pb-2 pt-4">
         <View>
           <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
-            Journal
+            {t("journal.title")}
           </Text>
           <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            Reflect on your learning
+            {t("journal.subtitle")}
           </Text>
         </View>
         <Pressable
@@ -161,7 +165,7 @@ export default function JournalScreen() {
         <View className="flex-1 items-center justify-center px-8">
           <IconSymbol name="pencil.and.list.clipboard" size={48} color="#d1d5db" />
           <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
-            No journal entries yet. Tap + to write your first reflection.
+            {t("journal.noEntries")}
           </Text>
         </View>
       ) : (
@@ -192,10 +196,10 @@ export default function JournalScreen() {
           <SafeAreaView className="flex-1">
             <View className="flex-row items-center justify-between border-b border-neutral-200 px-5 py-3 dark:border-neutral-700">
               <Pressable onPress={handleClose}>
-                <Text className="text-base text-neutral-500">Cancel</Text>
+                <Text className="text-base text-neutral-500">{t("common.cancel")}</Text>
               </Pressable>
               <Text className="text-base font-semibold text-neutral-900 dark:text-white">
-                {isEditing ? "Edit Entry" : "New Entry"}
+                {isEditing ? t("journal.editEntry") : t("journal.newEntry")}
               </Text>
               <Pressable onPress={handleSave} disabled={!canSave}>
                 <Text
@@ -205,7 +209,7 @@ export default function JournalScreen() {
                       : "text-neutral-300 dark:text-neutral-600"
                   }`}
                 >
-                  Save
+                  {t("common.save")}
                 </Text>
               </Pressable>
             </View>
@@ -214,14 +218,14 @@ export default function JournalScreen() {
               <TextInput
                 value={title}
                 onChangeText={setTitle}
-                placeholder="Title"
+                placeholder={t("journal.titlePlaceholder")}
                 placeholderTextColor="#9ca3af"
                 className="mb-4 border-b border-neutral-200 pb-3 text-xl font-bold text-neutral-900 dark:border-neutral-700 dark:text-white"
               />
               <TextInput
                 value={content}
                 onChangeText={setContent}
-                placeholder="Write your thoughts..."
+                placeholder={t("journal.contentPlaceholder")}
                 placeholderTextColor="#9ca3af"
                 multiline
                 textAlignVertical="top"

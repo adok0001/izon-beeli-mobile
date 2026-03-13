@@ -26,6 +26,8 @@ import {
   type FeedTypeFilter,
 } from "@/lib/hooks/use-feed";
 import type { FeedItem, Comment, AudioSource } from "@/types";
+import { useTranslation } from "react-i18next";
+import i18n from "@/lib/i18n";
 
 function timeAgo(dateStr: string): string {
   const now = Date.now();
@@ -33,13 +35,13 @@ function timeAgo(dateStr: string): string {
   const diffMs = now - then;
   const diffMins = Math.floor(diffMs / 60000);
 
-  if (diffMins < 1) return "just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffMins < 1) return i18n.t("time.justNow");
+  if (diffMins < 60) return i18n.t("time.minutesAgo", { count: diffMins });
   const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffHours < 24) return i18n.t("time.hoursAgo", { count: diffHours });
   const diffDays = Math.floor(diffHours / 24);
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return new Date(dateStr).toLocaleDateString("en-US", {
+  if (diffDays < 7) return i18n.t("time.daysAgo", { count: diffDays });
+  return new Date(dateStr).toLocaleDateString(i18n.language, {
     month: "short",
     day: "numeric",
   });
@@ -52,15 +54,16 @@ const TYPE_CONFIG: Record<
   lesson_completed: {
     icon: "checkmark.circle.fill",
     color: "#22c55e",
-    label: "Lesson",
+    label: "feed.typeLesson",
   },
-  achievement: { icon: "trophy.fill", color: "#f59e0b", label: "Achievement" },
-  contribution: { icon: "mic.fill", color: "#3b82f6", label: "Contribution" },
-  community: { icon: "text.bubble", color: "#8b5cf6", label: "Community" },
+  achievement: { icon: "trophy.fill", color: "#f59e0b", label: "feed.typeAchievement" },
+  contribution: { icon: "mic.fill", color: "#3b82f6", label: "feed.typeContribution" },
+  community: { icon: "text.bubble", color: "#8b5cf6", label: "feed.typeCommunity" },
 };
 
 // --- Audio preview for contribution cards ---
 function AudioPreview({ audioUrl }: { audioUrl: AudioSource }) {
+  const { t } = useTranslation();
   const { currentTrackId, isPlaying, loadAndPlay, togglePlayback } =
     useAudioStore();
   const trackId = `feed-${audioUrl}`;
@@ -93,7 +96,7 @@ function AudioPreview({ audioUrl }: { audioUrl: AudioSource }) {
       </View>
       <IconSymbol name="waveform" size={18} color="#3b82f6" />
       <Text className="ml-2 flex-1 text-sm font-medium text-blue-600 dark:text-blue-400">
-        {isCurrentTrack && isPlaying ? "Playing..." : "Play audio"}
+        {isCurrentTrack && isPlaying ? t("feed.playing") : t("feed.playAudio")}
       </Text>
     </Pressable>
   );
@@ -109,6 +112,7 @@ function CommentsModal({
   feedItemId: string | null;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const { data: commentsData } = useComments(feedItemId);
   const addComment = useAddComment();
   const [text, setText] = useState("");
@@ -136,7 +140,7 @@ function CommentsModal({
           {/* Header */}
           <View className="flex-row items-center justify-between border-b border-neutral-200 px-5 py-3 dark:border-neutral-700">
             <Text className="text-lg font-bold text-neutral-900 dark:text-white">
-              Comments
+              {t("feed.comments")}
             </Text>
             <Pressable onPress={onClose} hitSlop={8}>
               <IconSymbol name="xmark" size={20} color="#9ca3af" />
@@ -154,7 +158,7 @@ function CommentsModal({
               <View className="items-center py-12">
                 <IconSymbol name="message" size={36} color="#d1d5db" />
                 <Text className="mt-3 text-sm text-neutral-400 dark:text-neutral-500">
-                  No comments yet. Be the first!
+                  {t("feed.noComments")}
                 </Text>
               </View>
             }
@@ -180,7 +184,7 @@ function CommentsModal({
             <TextInput
               value={text}
               onChangeText={setText}
-              placeholder="Add a comment..."
+              placeholder={t("feed.addComment")}
               placeholderTextColor="#9ca3af"
               className="mr-2 flex-1 rounded-full bg-neutral-100 px-4 py-2.5 text-sm text-neutral-900 dark:bg-neutral-800 dark:text-white"
               returnKeyType="send"
@@ -215,6 +219,7 @@ function NewPostModal({
   visible: boolean;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const createPost = useCreatePost();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -252,10 +257,10 @@ function NewPostModal({
         <SafeAreaView className="flex-1">
           <View className="flex-row items-center justify-between border-b border-neutral-200 px-5 py-3 dark:border-neutral-700">
             <Pressable onPress={handleClose}>
-              <Text className="text-base text-neutral-500">Cancel</Text>
+              <Text className="text-base text-neutral-500">{t("feed.cancel")}</Text>
             </Pressable>
             <Text className="text-base font-semibold text-neutral-900 dark:text-white">
-              New Post
+              {t("feed.newPost")}
             </Text>
             <Pressable onPress={handlePost} disabled={!canPost}>
               <Text
@@ -265,7 +270,7 @@ function NewPostModal({
                     : "text-neutral-300 dark:text-neutral-600"
                 }`}
               >
-                Post
+                {t("feed.post")}
               </Text>
             </Pressable>
           </View>
@@ -274,14 +279,14 @@ function NewPostModal({
             <TextInput
               value={title}
               onChangeText={setTitle}
-              placeholder="Title"
+              placeholder={t("feed.titlePlaceholder")}
               placeholderTextColor="#9ca3af"
               className="mb-4 border-b border-neutral-200 pb-3 text-xl font-bold text-neutral-900 dark:border-neutral-700 dark:text-white"
             />
             <TextInput
               value={description}
               onChangeText={setDescription}
-              placeholder="Share something with the community..."
+              placeholder={t("feed.contentPlaceholder")}
               placeholderTextColor="#9ca3af"
               multiline
               textAlignVertical="top"
@@ -303,6 +308,7 @@ function FeedCard({
   item: FeedItem & { isLiked?: boolean };
   onOpenComments: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const router = useRouter();
   const toggleLike = useToggleLike();
   const config = TYPE_CONFIG[item.type];
@@ -349,7 +355,7 @@ function FeedCard({
             color={config.color}
           />
           <Text className="ml-1 text-xs text-neutral-500 dark:text-neutral-400">
-            {config.label}
+            {t(config.label as any)}
           </Text>
         </View>
       </View>
@@ -386,7 +392,7 @@ function FeedCard({
         >
           <IconSymbol name="brain.head.profile" size={14} color="#10b981" />
           <Text className="ml-1.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-            Practice: {focusWord}
+            {t("feed.practice", { word: focusWord })}
           </Text>
         </Pressable>
       )}
@@ -432,10 +438,10 @@ function FeedCard({
 }
 
 const FILTER_OPTIONS: { id: FeedTypeFilter; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "achievement", label: "Achievements" },
-  { id: "contribution", label: "Contributions" },
-  { id: "community", label: "Community" },
+  { id: "all", label: "feed.filterAll" },
+  { id: "achievement", label: "feed.filterAchievements" },
+  { id: "contribution", label: "feed.filterContributions" },
+  { id: "community", label: "feed.filterCommunity" },
 ];
 
 // --- Feed Screen ---
@@ -447,6 +453,7 @@ export default function FeedScreen() {
   const [showNewPost, setShowNewPost] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
+  const { t } = useTranslation();
   const items = data?.pages.flatMap((p) => p.items) ?? [];
 
   const onRefresh = useCallback(async () => {
@@ -463,10 +470,10 @@ export default function FeedScreen() {
       <View className="flex-row items-center justify-between px-5 pb-2 pt-4">
         <View>
           <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
-            Feed
+            {t("feed.title")}
           </Text>
           <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            Community updates and activity
+            {t("feed.subtitle")}
           </Text>
         </View>
         <Pressable
@@ -496,7 +503,7 @@ export default function FeedScreen() {
                   : "text-neutral-600 dark:text-neutral-400"
               }`}
             >
-              {opt.label}
+              {t(opt.label as any)}
             </Text>
           </Pressable>
         ))}

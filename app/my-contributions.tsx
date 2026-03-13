@@ -6,14 +6,16 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useMyContributions, type MyContribution } from "@/lib/hooks/use-contributions";
 import { CATEGORY_LABELS, type DictionaryCategory } from "@/lib/dictionary";
 import { getLanguageName } from "@/lib/mock-data";
+import { useTranslation } from "react-i18next";
 
 const STATUS_CONFIG = {
-  submitted: { label: "Pending", color: "#f59e0b", bg: "bg-amber-100 dark:bg-amber-900" },
-  approved: { label: "Approved", color: "#22c55e", bg: "bg-green-100 dark:bg-green-900" },
-  rejected: { label: "Rejected", color: "#ef4444", bg: "bg-red-100 dark:bg-red-900" },
+  submitted: { label: "myContributions.statusPending", color: "#f59e0b", bg: "bg-amber-100 dark:bg-amber-900" },
+  approved: { label: "myContributions.statusApproved", color: "#22c55e", bg: "bg-green-100 dark:bg-green-900" },
+  rejected: { label: "myContributions.statusRejected", color: "#ef4444", bg: "bg-red-100 dark:bg-red-900" },
 } as const;
 
 function ContributionRow({ item }: { item: MyContribution }) {
+  const { t } = useTranslation();
   const config = STATUS_CONFIG[item.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.submitted;
   const categoryLabel = CATEGORY_LABELS[item.category as DictionaryCategory] ?? item.category;
 
@@ -43,7 +45,7 @@ function ContributionRow({ item }: { item: MyContribution }) {
         <View className="items-end gap-1">
           <View className={`rounded-full px-2.5 py-1 ${config.bg}`}>
             <Text className="text-xs font-semibold" style={{ color: config.color }}>
-              {config.label}
+              {t(config.label as any)}
             </Text>
           </View>
           {item.status === "approved" && item.xpAwarded != null && (
@@ -56,7 +58,7 @@ function ContributionRow({ item }: { item: MyContribution }) {
               {item.bountyXpAwarded != null && item.bountyXpAwarded > 0 && (
                 <View className="rounded-full bg-amber-100 px-2 py-0.5 dark:bg-amber-900">
                   <Text className="text-xs font-bold text-amber-600 dark:text-amber-400">
-                    +{item.bountyXpAwarded} bounty
+                    +{item.bountyXpAwarded} {t("myContributions.bountyLabel")}
                   </Text>
                 </View>
               )}
@@ -68,7 +70,7 @@ function ContributionRow({ item }: { item: MyContribution }) {
       {item.status === "rejected" && item.reviewNote && (
         <View className="mt-2.5 rounded-xl bg-red-50 px-3 py-2 dark:bg-red-900/20">
           <Text className="text-xs font-semibold uppercase tracking-wider text-red-400 dark:text-red-500">
-            Reviewer note
+            {t("myContributions.reviewerNote")}
           </Text>
           <Text className="mt-1 text-sm text-red-700 dark:text-red-300">
             {item.reviewNote}
@@ -82,6 +84,7 @@ function ContributionRow({ item }: { item: MyContribution }) {
 export default function MyContributionsScreen() {
   const { data, isLoading, refetch } = useMyContributions();
   const [refreshing, setRefreshing] = useState(false);
+  const { t } = useTranslation();
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -99,33 +102,33 @@ export default function MyContributionsScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: "My Contributions", headerBackTitle: "Back" }} />
+      <Stack.Screen options={{ title: t("myContributions.title"), headerBackTitle: "Back" }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
         {/* Stats row */}
         {submissions.length > 0 && (
           <View className="flex-row border-b border-neutral-100 px-5 py-3 dark:border-neutral-800">
             <View className="flex-1 items-center">
               <Text className="text-xl font-bold text-green-500">{approvedCount}</Text>
-              <Text className="text-xs text-neutral-400 dark:text-neutral-500">Approved</Text>
+              <Text className="text-xs text-neutral-400 dark:text-neutral-500">{t("myContributions.approvedLabel")}</Text>
             </View>
             <View className="w-[1px] bg-neutral-100 dark:bg-neutral-800" />
             <View className="flex-1 items-center">
               <Text className="text-xl font-bold text-amber-500">{pendingCount}</Text>
-              <Text className="text-xs text-neutral-400 dark:text-neutral-500">Pending</Text>
+              <Text className="text-xs text-neutral-400 dark:text-neutral-500">{t("myContributions.pendingLabel")}</Text>
             </View>
             <View className="w-[1px] bg-neutral-100 dark:bg-neutral-800" />
             <View className="flex-1 items-center">
               <Text className="text-xl font-bold text-neutral-700 dark:text-neutral-300">
                 {submissions.length}
               </Text>
-              <Text className="text-xs text-neutral-400 dark:text-neutral-500">Total</Text>
+              <Text className="text-xs text-neutral-400 dark:text-neutral-500">{t("myContributions.totalLabel")}</Text>
             </View>
             {totalXp > 0 && (
               <>
                 <View className="w-[1px] bg-neutral-100 dark:bg-neutral-800" />
                 <View className="flex-1 items-center">
                   <Text className="text-xl font-bold text-blue-500">{totalXp}</Text>
-                  <Text className="text-xs text-neutral-400 dark:text-neutral-500">XP Earned</Text>
+                  <Text className="text-xs text-neutral-400 dark:text-neutral-500">{t("myContributions.xpEarned")}</Text>
                 </View>
               </>
             )}
@@ -144,11 +147,11 @@ export default function MyContributionsScreen() {
                 <IconSymbol name="doc.text" size={28} color="#9ca3af" />
               </View>
               <Text className="text-center text-base font-semibold text-neutral-500 dark:text-neutral-400">
-                {isLoading ? "Loading..." : "No contributions yet"}
+                {isLoading ? t("common.loading") : t("myContributions.noContributions")}
               </Text>
               {!isLoading && (
                 <Text className="mt-1 text-center text-sm text-neutral-400 dark:text-neutral-500">
-                  Submit words or phrases from the Contribute tab to see them here.
+                  {t("myContributions.submitMore")}
                 </Text>
               )}
             </View>

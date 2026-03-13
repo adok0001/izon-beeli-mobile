@@ -17,17 +17,35 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 
 export const ONBOARDING_KEY = "onboarding-completed-v1";
 
 type DailyGoal = "casual" | "steady" | "intensive";
 type Step = "language" | "tryit" | "goal";
 
-const GOAL_OPTIONS: { id: DailyGoal; label: string; detail: string; icon: string }[] = [
-  { id: "casual", label: "Casual", detail: "5 min / day", icon: "leaf.fill" },
-  { id: "steady", label: "Steady", detail: "10 min / day", icon: "flame.fill" },
-  { id: "intensive", label: "Intensive", detail: "20 min / day", icon: "bolt.fill" },
+const GOAL_OPTIONS: { id: DailyGoal; icon: string }[] = [
+  { id: "casual", icon: "leaf.fill" },
+  { id: "steady", icon: "flame.fill" },
+  { id: "intensive", icon: "bolt.fill" },
 ];
+
+const GOAL_LABEL_KEYS: Record<DailyGoal, "onboarding.goalCasual" | "onboarding.goalSteady" | "onboarding.goalIntensive"> = {
+  casual: "onboarding.goalCasual",
+  steady: "onboarding.goalSteady",
+  intensive: "onboarding.goalIntensive",
+};
+
+const GOAL_DETAIL_KEYS: Record<
+  DailyGoal,
+  | "onboarding.goalCasualDetail"
+  | "onboarding.goalSteadyDetail"
+  | "onboarding.goalIntensiveDetail"
+> = {
+  casual: "onboarding.goalCasualDetail",
+  steady: "onboarding.goalSteadyDetail",
+  intensive: "onboarding.goalIntensiveDetail",
+};
 
 interface DictionaryEntry {
   id: string;
@@ -50,6 +68,7 @@ export default function OnboardingScreen() {
   const [selectedLangId, setSelectedLangId] = useState("izon");
   const [selectedGoal, setSelectedGoal] = useState<DailyGoal>("steady");
   const [saving, setSaving] = useState(false);
+  const { t } = useTranslation();
 
   // Tryit step state
   const [tryItEntry, setTryItEntry] = useState<DictionaryEntry | null>(null);
@@ -143,10 +162,10 @@ export default function OnboardingScreen() {
         <>
           <View className="px-6 pt-8 pb-4">
             <Text className="text-3xl font-bold text-neutral-900 dark:text-white">
-              Welcome to{"\n"}Izon Beeli
+              {t("onboarding.welcome")}
             </Text>
             <Text className="mt-2 text-base text-neutral-500 dark:text-neutral-400">
-              Which language would you like to learn first?
+              {t("onboarding.whichLanguage")}
             </Text>
           </View>
 
@@ -202,7 +221,7 @@ export default function OnboardingScreen() {
               {tryItLoading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text className="text-base font-bold text-white">Continue</Text>
+                <Text className="text-base font-bold text-white">{t("onboarding.continue")}</Text>
               )}
             </Pressable>
           </View>
@@ -211,11 +230,11 @@ export default function OnboardingScreen() {
         <>
           <View className="px-6 pt-8 pb-6">
             <Text className="text-3xl font-bold text-neutral-900 dark:text-white">
-              Try a word!
+              {t("onboarding.tryWord")}
             </Text>
             <Text className="mt-2 text-base text-neutral-500 dark:text-neutral-400">
-              Here&apos;s your first word in{" "}
-              {ACTIVE_LANGUAGES.find((l) => l.id === selectedLangId)?.name ?? "your language"}.
+              {t("onboarding.firstWordIn")}{" "}
+              {ACTIVE_LANGUAGES.find((l) => l.id === selectedLangId)?.name ?? t("onboarding.yourLanguage")}.
             </Text>
           </View>
 
@@ -238,7 +257,7 @@ export default function OnboardingScreen() {
                   >
                     <IconSymbol name="speaker.wave.2.fill" size={18} color="#3b82f6" />
                     <Text className="font-semibold text-blue-600 dark:text-blue-400">
-                      Tap to hear
+                      {t("onboarding.tapToHear")}
                     </Text>
                   </Pressable>
                 )}
@@ -250,7 +269,7 @@ export default function OnboardingScreen() {
                         {tryItEntry.english}
                       </Text>
                       <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-                        English translation
+                        {t("onboarding.englishTranslation")}
                       </Text>
                     </View>
                   ) : (
@@ -259,7 +278,7 @@ export default function OnboardingScreen() {
                       className="rounded-xl bg-neutral-100 px-8 py-3 active:opacity-70 dark:bg-neutral-800"
                     >
                       <Text className="font-semibold text-neutral-700 dark:text-neutral-300">
-                        Reveal translation
+                        {t("onboarding.revealTranslation")}
                       </Text>
                     </Pressable>
                   )}
@@ -269,7 +288,7 @@ export default function OnboardingScreen() {
               <View className="items-center gap-3">
                 <IconSymbol name="book.fill" size={48} color="#d1d5db" />
                 <Text className="text-center text-neutral-400 dark:text-neutral-500">
-                  No word available yet for this language.
+                  {t("onboarding.noWordYet")}
                 </Text>
               </View>
             )}
@@ -280,13 +299,13 @@ export default function OnboardingScreen() {
               onPress={() => setStep("goal")}
               className="items-center rounded-2xl bg-blue-500 py-4 active:opacity-80"
             >
-              <Text className="text-base font-bold text-white">Continue</Text>
+              <Text className="text-base font-bold text-white">{t("onboarding.continue")}</Text>
             </Pressable>
             <Pressable
               onPress={() => setStep("language")}
               className="items-center py-2"
             >
-              <Text className="text-sm text-neutral-500 dark:text-neutral-400">Back</Text>
+              <Text className="text-sm text-neutral-500 dark:text-neutral-400">{t("onboarding.back")}</Text>
             </Pressable>
           </View>
         </>
@@ -294,10 +313,10 @@ export default function OnboardingScreen() {
         <>
           <View className="px-6 pt-8 pb-6">
             <Text className="text-3xl font-bold text-neutral-900 dark:text-white">
-              Set your daily goal
+              {t("onboarding.setGoal")}
             </Text>
             <Text className="mt-2 text-base text-neutral-500 dark:text-neutral-400">
-              How much time can you dedicate each day?
+              {t("onboarding.howMuchTime")}
             </Text>
           </View>
 
@@ -333,10 +352,10 @@ export default function OnboardingScreen() {
                           : "text-neutral-900 dark:text-white"
                       }`}
                     >
-                      {opt.label}
+                      {t(GOAL_LABEL_KEYS[opt.id])}
                     </Text>
                     <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-                      {opt.detail}
+                      {t(GOAL_DETAIL_KEYS[opt.id])}
                     </Text>
                   </View>
                   {selected && (
@@ -361,7 +380,7 @@ export default function OnboardingScreen() {
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text className="text-base font-bold text-white">
-                  Start Learning
+                  {t("onboarding.startLearning")}
                 </Text>
               )}
             </Pressable>
@@ -370,7 +389,7 @@ export default function OnboardingScreen() {
               className="items-center py-2"
             >
               <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-                Back
+                {t("onboarding.back")}
               </Text>
             </Pressable>
           </View>
