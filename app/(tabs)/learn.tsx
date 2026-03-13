@@ -7,6 +7,7 @@ import { XpLevelBadge } from "@/components/xp-level-badge";
 import { getStoryForCourse } from "@/lib/data/stories";
 import { useCourseLessons, useCourses, useLesson } from "@/lib/hooks/use-courses";
 import { useCompletedLessons, useProgressSummary } from "@/lib/hooks/use-progress";
+import { useBounties } from "@/lib/hooks/use-bounties";
 import { formatDuration, BUNDLED_AUDIO } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
 import { useAudioStore } from "@/store/audio-store";
@@ -210,6 +211,43 @@ function LessonRow({ lesson, completed, onPress }: { lesson: Lesson; completed: 
   );
 }
 
+function BountyTeaser({ languageId }: { languageId: string }) {
+  const router = useRouter();
+  const { data: bounties } = useBounties(languageId);
+  const topBounty = bounties?.[0]; // highest xpReward
+
+  if (!topBounty) return null;
+
+  return (
+    <Pressable
+      onPress={() => router.push("/bounties")}
+      className="rounded-2xl bg-amber-50 p-4 active:opacity-70 dark:bg-amber-950"
+    >
+      <View className="flex-row items-center">
+        <View className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-amber-500">
+          <IconSymbol name="star.fill" size={18} color="#fff" />
+        </View>
+        <View className="flex-1">
+          <View className="flex-row items-center gap-2">
+            <Text className="text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+              Bounty
+            </Text>
+            <View className="rounded-full bg-amber-200 px-2 py-0.5 dark:bg-amber-800">
+              <Text className="text-xs font-bold text-amber-700 dark:text-amber-300">
+                +{topBounty.xpReward} XP
+              </Text>
+            </View>
+          </View>
+          <Text className="text-sm font-medium text-neutral-900 dark:text-white" numberOfLines={1}>
+            {topBounty.title}
+          </Text>
+        </View>
+        <IconSymbol name="chevron.right" size={16} color="#f59e0b" />
+      </View>
+    </Pressable>
+  );
+}
+
 export default function LearnScreen() {
   const router = useRouter();
   const { selectedLanguageId } = useLanguageStore();
@@ -333,6 +371,7 @@ export default function LearnScreen() {
                 />
               )}
               <UpNextCard languageId={selectedLanguageId} />
+              <BountyTeaser languageId={selectedLanguageId} />
             </View>
           }
           showsVerticalScrollIndicator={false}

@@ -1,6 +1,6 @@
-import { Hono } from "hono";
-import { eq } from "drizzle-orm";
 import { verifyToken } from "@clerk/backend";
+import { eq } from "drizzle-orm";
+import { Hono } from "hono";
 import { db } from "../db/index.js";
 import { users } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
@@ -82,6 +82,7 @@ usersRouter.get("/me", authMiddleware, async (c) => {
     streak: user.streak,
     points: user.points,
     selectedLanguageId: user.selectedLanguageId,
+    isAdmin: user.isAdmin,
     createdAt: user.createdAt,
   });
 });

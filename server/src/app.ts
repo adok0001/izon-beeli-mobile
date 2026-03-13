@@ -25,6 +25,7 @@ import { classroomRouter } from "./routes/classroom.js";
 import { dailyChallengesRouter } from "./routes/daily-challenges.js";
 import { dashboardRouter } from "./routes/dashboard.js";
 import { notificationsRouter, notificationsAdminRouter } from "./routes/notifications.js";
+import { bountiesRouter, bountiesAdminRouter } from "./routes/bounties.js";
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -87,5 +88,7 @@ app.route("/daily-challenges", dailyChallengesRouter);
 app.route("/dashboard", dashboardRouter);
 app.route("/notifications", notificationsRouter);
 app.route("/notifications/admin", notificationsAdminRouter);
+app.route("/bounties", bountiesRouter);
+app.route("/bounties/admin", bountiesAdminRouter);
 
 export default app;

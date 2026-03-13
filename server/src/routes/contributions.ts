@@ -1,9 +1,10 @@
-import { Hono } from "hono";
-import { eq, and, desc, or, ilike } from "drizzle-orm";
 import { put } from "@vercel/blob";
+import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { Hono } from "hono";
 import { db } from "../db/index.js";
-import { contributions, dictionaryEntries, feedItems, users } from "../db/schema.js";
-import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
+import { bounties, contributions, dictionaryEntries, feedItems, users } from "../db/schema.js";
+import { awardXP, CONTRIBUTION_BASE_XP } from "../lib/award-xp.js";
+import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
 
 const VALID_TYPES = ["word", "phrase", "audio"] as const;
 const VALID_REVIEW_ACTIONS = ["approve", "reject"] as const;
@@ -216,9 +217,12 @@ contributionsRouter.get("/pending", async (c) => {
       type: contributions.type,
       status: contributions.status,
       userId: contributions.userId,
+      submitterName: users.name,
+      audioUrl: contributions.audioUrl,
       createdAt: contributions.createdAt,
     })
     .from(contributions)
+    .leftJoin(users, eq(contributions.userId, users.id))
     .where(eq(contributions.status, "submitted"))
     .orderBy(desc(contributions.createdAt));
 
@@ -291,8 +295,8 @@ contributionsRouter.post("/bulk", async (c) => {
   return c.json({ inserted: inserted.length, contributions: inserted }, 201);
 });
 
-// PATCH /api/contributions/:id/review - approve or reject a contribution
-contributionsRouter.patch("/:id/review", async (c) => {
+// PATCH /api/contributions/:id/review - approve or reject a contribution (admin only)
+contributionsRouter.patch("/:id/review", adminMiddleware, async (c) => {
   const reviewerId = c.get("userId");
   const { id } = c.req.param();
   const body = await c.req.json<{ action: string; note?: string }>();
@@ -302,7 +306,68 @@ contributionsRouter.patch("/:id/review", async (c) => {
     return c.json({ error: "action must be 'approve' or 'reject'" }, 400);
   }
 
+  // Fetch current contribution to guard against double-approval
+  const [existing] = await db
+    .select()
+    .from(contributions)
+    .where(eq(contributions.id, id))
+    .limit(1);
+
+  if (!existing) {
+    return c.json({ error: "Contribution not found" }, 404);
+  }
+
+  if (existing.status === "approved") {
+    return c.json({ error: "Contribution already approved" }, 409);
+  }
+
   const newStatus = action === "approve" ? "approved" : "rejected";
+
+  let xpAwarded: number | null = null;
+  let bountyXpAwarded: number | null = null;
+  let matchedBountyId: string | null = null;
+
+  if (action === "approve") {
+    // Award base XP
+    const contribType = existing.type as keyof typeof CONTRIBUTION_BASE_XP;
+    const baseXp = CONTRIBUTION_BASE_XP[contribType] ?? 15;
+    await awardXP(existing.userId, baseXp, "contribution");
+    xpAwarded = baseXp;
+
+    // Find matching active bounty (highest xpReward wins)
+    const [matchingBounty] = await db
+      .select()
+      .from(bounties)
+      .where(
+        and(
+          eq(bounties.status, "active"),
+          eq(bounties.languageId, existing.languageId),
+          sql`(${bounties.category} IS NULL OR ${bounties.category} = ${existing.category})`,
+          sql`(${bounties.contributionType} IS NULL OR ${bounties.contributionType} = ${existing.type})`,
+          sql`(${bounties.expiresAt} IS NULL OR ${bounties.expiresAt} > NOW())`,
+          sql`${bounties.currentCount} < ${bounties.targetCount}`
+        )
+      )
+      .orderBy(desc(bounties.xpReward))
+      .limit(1);
+
+    if (matchingBounty) {
+      await awardXP(existing.userId, matchingBounty.xpReward, "contribution");
+      bountyXpAwarded = matchingBounty.xpReward;
+      matchedBountyId = matchingBounty.id;
+
+      // Atomic increment to prevent race conditions
+      await db
+        .update(bounties)
+        .set({
+          currentCount: sql`${bounties.currentCount} + 1`,
+          ...(matchingBounty.currentCount + 1 >= matchingBounty.targetCount
+            ? { status: "completed" as const }
+            : {}),
+        })
+        .where(eq(bounties.id, matchingBounty.id));
+    }
+  }
 
   const [updated] = await db
     .update(contributions)
@@ -311,13 +376,12 @@ contributionsRouter.patch("/:id/review", async (c) => {
       reviewNote: body.note?.trim() || null,
       reviewedBy: reviewerId,
       reviewedAt: new Date(),
+      xpAwarded,
+      bountyId: matchedBountyId,
+      bountyXpAwarded,
     })
     .where(eq(contributions.id, id))
     .returning();
-
-  if (!updated) {
-    return c.json({ error: "Contribution not found" }, 404);
-  }
 
   return c.json(updated);
 });

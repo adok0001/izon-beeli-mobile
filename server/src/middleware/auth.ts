@@ -1,6 +1,6 @@
-import { createMiddleware } from "hono/factory";
 import { createClerkClient, verifyToken } from "@clerk/backend";
 import { eq } from "drizzle-orm";
+import { createMiddleware } from "hono/factory";
 import { db } from "../db/index.js";
 import { users } from "../db/schema.js";
 
@@ -59,4 +59,23 @@ export const authMiddleware = createMiddleware<AuthEnv>(async (c, next) => {
   } catch {
     return c.json({ error: "Invalid or expired token" }, 401);
   }
+});
+
+/**
+ * Requires authMiddleware to have already run (userId set in context).
+ * Rejects with 403 if the user does not have isAdmin = true.
+ */
+export const adminMiddleware = createMiddleware<AuthEnv>(async (c, next) => {
+  const userId = c.get("userId");
+  if (!userId) return c.json({ error: "Unauthorized" }, 401);
+
+  const [user] = await db
+    .select({ isAdmin: users.isAdmin })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (!user?.isAdmin) return c.json({ error: "Forbidden" }, 403);
+
+  await next();
 });

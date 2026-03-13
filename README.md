@@ -9,10 +9,13 @@ Izon Beeli is an Expo + React Native language-learning app focused on Izon and o
 - Lesson playback with transcript support and resume-state tracking
 - Quiz, matching game, story mode, cultural content, word of the day, and proverb of the day
 - Dictionary with saved words and contribution-driven growth
+- Adinkra cultural symbols browser and Geez script learning module
+- Bounties system rewarding community vocabulary contributions with XP
+- Dashboard with learner stats, streaks, and progress overview
 - Journal, feed, notifications, contributor review, and feedback flows
 - Classroom and institution-oriented learning features
 - Real-time multiplayer backed by PartyKit
-- Hono + Drizzle backend API for progress, content, feed, contributions, and quiz results
+- Hono + Drizzle backend API for progress, content, feed, contributions, bounties, and quiz results
 
 ## Stack
 
@@ -61,10 +64,17 @@ userio-docs/   Product and planning docs
 - **Journal:** learner reflection entries
 - **Feed:** social posts, comments, likes, contribution audio previews
 - **Profile / Settings:** stats, notifications, theme, feedback, progress reset
+- **Dashboard:** learner stats, XP progress, streak summary, and next lesson prompt
+- **Dictionary:** full word browser with audio, examples, and saved-word management
+- **Word Review:** spaced-repetition review flow for saved words
 - **Contribute:** submit words, phrases, bulk vocabulary, and full lesson audio
+- **My Contributions:** personal contribution history and status tracking
+- **Bounties:** community-driven vocabulary targets with XP rewards
 - **Review:** approve or reject pending community submissions
+- **Cultural:** Adinkra symbol browser and Geez script learning module
 - **Classroom:** groups, assignments, and institution-facing flows
 - **Multiplayer:** quiz battle and paired lesson sessions
+- **Proverbs:** browsable proverb collection with translations
 
 ## Environment variables
 
@@ -315,8 +325,23 @@ Use OTA updates only for JavaScript and asset changes that do not require native
 - [app/(tabs)/learn.tsx](app/%28tabs%29/learn.tsx) is the main learning hub, including resume support
 - [app/lesson/[id].tsx](app/lesson/%5Bid%5D.tsx) drives lesson playback and completion
 - [app/quiz.tsx](app/quiz.tsx) generates quizzes from dictionary data and records results
+- [app/dashboard.tsx](app/dashboard.tsx) learner stats, XP, and streak overview
+- [app/dictionary.tsx](app/dictionary.tsx) full dictionary browser with saved-word management
+- [app/bounties.tsx](app/bounties.tsx) community bounty listings and contribution prompts
+- [app/word-review.tsx](app/word-review.tsx) spaced-repetition review flow
+- [app/my-contributions.tsx](app/my-contributions.tsx) personal contribution history
+- [app/adinkra.tsx](app/adinkra.tsx) Adinkra cultural symbols browser
+- [app/geez-lesson.tsx](app/geez-lesson.tsx) Geez script learning module
 - [store/audio-store.ts](store/audio-store.ts) manages playback state and persisted resume position
 - [store/language-store.ts](store/language-store.ts) persists selected language locally
+- [store/theme-store.ts](store/theme-store.ts) persists user theme preference
+- [store/notification-store.ts](store/notification-store.ts) manages in-app notification state
+- [store/quiz-store.ts](store/quiz-store.ts) active quiz session state
+- [store/story-store.ts](store/story-store.ts) story mode playback state
+- [store/geez-store.ts](store/geez-store.ts) Geez script session state
+- [store/classroom-store.ts](store/classroom-store.ts) classroom session and group state
+- [store/contribution-store.ts](store/contribution-store.ts) word/phrase contribution form state
+- [store/matching-store.ts](store/matching-store.ts) matching game session state
 - [server/src/app.ts](server/src/app.ts) mounts the API routers
 - [server/src/db/schema.ts](server/src/db/schema.ts) defines the Drizzle schema
 
@@ -326,11 +351,17 @@ The backend currently includes routes for:
 
 - user sync and preferences
 - learning progress and streaks
+- dashboard stats
 - journal entries
 - feed, likes, and comments
 - contributions and lesson contributions
-- dictionary, courses, lessons, proverbs, and cultural content
+- contributor listings and leaderboards
+- bounties (creation, progress tracking, XP rewards)
+- dictionary, courses, lessons, sentences, proverbs, and cultural content
 - word bank
+- daily challenges
+- notifications and push token management
+- languages
 - feedback
 - multiplayer session APIs
 - quiz result recording

@@ -40,10 +40,28 @@ function ContributionRow({ item }: { item: MyContribution }) {
             </View>
           </View>
         </View>
-        <View className={`rounded-full px-2.5 py-1 ${config.bg}`}>
-          <Text className="text-xs font-semibold" style={{ color: config.color }}>
-            {config.label}
-          </Text>
+        <View className="items-end gap-1">
+          <View className={`rounded-full px-2.5 py-1 ${config.bg}`}>
+            <Text className="text-xs font-semibold" style={{ color: config.color }}>
+              {config.label}
+            </Text>
+          </View>
+          {item.status === "approved" && item.xpAwarded != null && (
+            <View className="flex-row gap-1">
+              <View className="rounded-full bg-blue-100 px-2 py-0.5 dark:bg-blue-900">
+                <Text className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                  +{item.xpAwarded} XP
+                </Text>
+              </View>
+              {item.bountyXpAwarded != null && item.bountyXpAwarded > 0 && (
+                <View className="rounded-full bg-amber-100 px-2 py-0.5 dark:bg-amber-900">
+                  <Text className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                    +{item.bountyXpAwarded} bounty
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
         </View>
       </View>
 
@@ -74,6 +92,10 @@ export default function MyContributionsScreen() {
   const submissions = data ?? [];
   const approvedCount = submissions.filter((c) => c.status === "approved").length;
   const pendingCount = submissions.filter((c) => c.status === "submitted").length;
+  const totalXp = submissions.reduce(
+    (sum, c) => sum + (c.xpAwarded ?? 0) + (c.bountyXpAwarded ?? 0),
+    0
+  );
 
   return (
     <>
@@ -98,6 +120,15 @@ export default function MyContributionsScreen() {
               </Text>
               <Text className="text-xs text-neutral-400 dark:text-neutral-500">Total</Text>
             </View>
+            {totalXp > 0 && (
+              <>
+                <View className="w-[1px] bg-neutral-100 dark:bg-neutral-800" />
+                <View className="flex-1 items-center">
+                  <Text className="text-xl font-bold text-blue-500">{totalXp}</Text>
+                  <Text className="text-xs text-neutral-400 dark:text-neutral-500">XP Earned</Text>
+                </View>
+              </>
+            )}
           </View>
         )}
 

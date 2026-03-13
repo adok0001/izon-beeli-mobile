@@ -1,20 +1,20 @@
-import { useState, useCallback, useRef } from "react";
-import { View, Text, Pressable, FlatList, Alert, RefreshControl, ScrollView } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack, useRouter } from "expo-router";
-import { useUser } from "@clerk/clerk-expo";
-import { Audio } from "expo-av";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { CATEGORY_LABELS, type DictionaryCategory } from "@/lib/dictionary";
 import {
   usePendingContributions,
-  useReviewContribution,
   usePendingLessonContributions,
+  useReviewContribution,
   useReviewLessonContribution,
   type PendingContribution,
   type PendingLessonContribution,
 } from "@/lib/hooks/use-contributions";
-import { CATEGORY_LABELS, type DictionaryCategory } from "@/lib/dictionary";
+import { useCurrentUser } from "@/lib/hooks/use-current-user";
 import { getLanguageName } from "@/lib/mock-data";
+import { Audio } from "expo-av";
+import { Stack, useRouter } from "expo-router";
+import { useCallback, useRef, useState } from "react";
+import { Alert, FlatList, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // ---------- Tab pill ----------
 
@@ -86,6 +86,11 @@ function ContributionCard({
             <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
               {item.english}
             </Text>
+            {item.submitterName && (
+              <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">
+                Submitted by {item.submitterName}
+              </Text>
+            )}
           </View>
           <View className="rounded-full bg-blue-100 px-2.5 py-1 dark:bg-blue-900">
             <Text className="text-xs font-semibold text-blue-700 dark:text-blue-300">
@@ -340,8 +345,8 @@ function LessonContributionCard({
 
 export default function ReviewScreen() {
   const router = useRouter();
-  const { user } = useUser();
-  const isAdmin = user?.publicMetadata?.role === "admin";
+  const { data: currentUser } = useCurrentUser();
+  const isAdmin = currentUser?.isAdmin ?? false;
 
   const [activeTab, setActiveTab] = useState<"words" | "lessons">("words");
   const [refreshing, setRefreshing] = useState(false);

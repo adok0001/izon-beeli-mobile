@@ -1,18 +1,18 @@
-import { Hono } from "hono";
-import { eq, desc, inArray } from "drizzle-orm";
 import { put } from "@vercel/blob";
 import { randomUUID } from "crypto";
+import { desc, eq, inArray } from "drizzle-orm";
+import { Hono } from "hono";
 import { db } from "../db/index.js";
 import {
-  lessonContributions,
-  lessonContributionSegments,
-  lessons,
-  transcriptSegments,
-  courses,
-  feedItems,
-  users,
+    courses,
+    feedItems,
+    lessonContributions,
+    lessonContributionSegments,
+    lessons,
+    transcriptSegments,
+    users,
 } from "../db/schema.js";
-import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
+import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
 
 const VALID_REVIEW_ACTIONS = ["approve", "reject"] as const;
 
@@ -194,8 +194,8 @@ lessonContributionsRouter.get("/pending", async (c) => {
   return c.json(result);
 });
 
-// PATCH /api/lesson-contributions/:id/review
-lessonContributionsRouter.patch("/:id/review", async (c) => {
+// PATCH /api/lesson-contributions/:id/review (admin only)
+lessonContributionsRouter.patch("/:id/review", adminMiddleware, async (c) => {
   const reviewerId = c.get("userId");
   const { id } = c.req.param();
   const body = await c.req.json<{ action: string; note?: string }>();
@@ -213,6 +213,10 @@ lessonContributionsRouter.patch("/:id/review", async (c) => {
 
   if (!contribution) {
     return c.json({ error: "Lesson contribution not found" }, 404);
+  }
+
+  if (contribution.status === "approved") {
+    return c.json({ error: "Lesson contribution already approved" }, 409);
   }
 
   if (action === "reject") {

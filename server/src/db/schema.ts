@@ -43,6 +43,12 @@ export const contributionStatusEnum = pgEnum("contribution_status", [
   "rejected",
 ]);
 
+export const bountyStatusEnum = pgEnum("bounty_status", [
+  "active",
+  "completed",
+  "cancelled",
+]);
+
 export const feedbackCategoryEnum = pgEnum("feedback_category", [
   "bug",
   "suggestion",
@@ -72,6 +78,7 @@ export const users = pgTable("users", {
   lastFreezeUsedDate: varchar("last_freeze_used_date", { length: 10 }), // YYYY-MM-DD
   pushWotdEnabled: boolean("push_wotd_enabled").default(true).notNull(),
   pushStreakReminderEnabled: boolean("push_streak_reminder_enabled").default(true).notNull(),
+  isAdmin: boolean("is_admin").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -201,6 +208,9 @@ export const contributions = pgTable(
     reviewNote: text("review_note"),
     reviewedBy: uuid("reviewed_by").references(() => users.id),
     reviewedAt: timestamp("reviewed_at"),
+    xpAwarded: integer("xp_awarded"),
+    bountyId: uuid("bounty_id"),
+    bountyXpAwarded: integer("bounty_xp_awarded"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
@@ -614,6 +624,28 @@ export const dailyChallenges = pgTable(
   ]
 );
 
+// ---------- Bounties ----------
+
+export const bounties = pgTable(
+  "bounties",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    title: varchar("title", { length: 300 }).notNull(),
+    description: text("description").notNull(),
+    languageId: varchar("language_id", { length: 32 }).notNull(),
+    category: varchar("category", { length: 32 }),
+    contributionType: contributionTypeEnum("contribution_type"),
+    targetCount: integer("target_count").notNull(),
+    currentCount: integer("current_count").default(0).notNull(),
+    xpReward: integer("xp_reward").notNull(),
+    status: bountyStatusEnum("status").default("active").notNull(),
+    expiresAt: timestamp("expires_at"),
+    createdBy: uuid("created_by").references(() => users.id),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [index("bounties_lang_status_idx").on(t.languageId, t.status)]
+);
+
 // ---------- Relations ----------
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -624,6 +656,14 @@ export const usersRelations = relations(users, ({ many }) => ({
   comments: many(comments),
   contributions: many(contributions),
   wordBank: many(wordBank),
+  bountiesCreated: many(bounties),
+}));
+
+export const bountiesRelations = relations(bounties, ({ one }) => ({
+  creator: one(users, {
+    fields: [bounties.createdBy],
+    references: [users.id],
+  }),
 }));
 
 export const feedItemsRelations = relations(feedItems, ({ one, many }) => ({

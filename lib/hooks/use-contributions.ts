@@ -1,8 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@clerk/clerk-expo";
 import { apiFetch } from "@/lib/api";
 import { API_BASE_URL } from "@/lib/constants";
-import type { DictionaryEntry, DictionaryCategory } from "@/lib/dictionary";
+import type { DictionaryCategory, DictionaryEntry } from "@/lib/dictionary";
+import { useAuth } from "@clerk/clerk-expo";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export interface ContributionInput {
   type: "word" | "phrase";
@@ -146,6 +146,8 @@ export interface PendingContribution {
   type: string;
   status: string;
   userId: string;
+  submitterName: string | null;
+  audioUrl: string | null;
   createdAt: string;
 }
 
@@ -317,6 +319,8 @@ export interface MyContribution {
   type: string;
   status: string;
   reviewNote: string | null;
+  xpAwarded: number | null;
+  bountyXpAwarded: number | null;
   createdAt: string;
 }
 

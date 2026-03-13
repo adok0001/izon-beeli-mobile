@@ -3,10 +3,12 @@ import { db } from "../db/index.js";
 import { users, feedItems } from "../db/schema.js";
 import { getLevelInfo } from "./xp-levels.js";
 
+export const CONTRIBUTION_BASE_XP = { word: 15, phrase: 20, audio: 25 } as const;
+
 export async function awardXP(
   userId: string,
   amount: number,
-  _source: "lesson" | "quiz" | "word_review" | "daily_challenge"
+  _source: "lesson" | "quiz" | "word_review" | "daily_challenge" | "contribution"
 ): Promise<{ totalPoints: number; leveledUp: boolean; newLevel: number; newTitle: string }> {
   const [user] = await db
     .select({ points: users.points, name: users.name })

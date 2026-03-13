@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { XpLevelBadge } from "@/components/xp-level-badge";
+import { useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
 import { useLanguageStore } from "@/store/language-store";
 import { getLanguageName } from "@/lib/mock-data";
@@ -70,11 +71,12 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { signOut } = useAuth();
   const { user } = useUser();
+  const { data: currentUser } = useCurrentUser();
   const [feedbackVisible, setFeedbackVisible] = useState(false);
   const { data: summary } = useProgressSummary();
   const { selectedLanguageId } = useLanguageStore();
 
-  const isAdmin = user?.publicMetadata?.role === "admin";
+  const isAdmin = currentUser?.isAdmin ?? false;
   const displayName = user?.username ?? "Learner";
   const email = user?.primaryEmailAddress?.emailAddress ?? "";
   const initial = displayName[0]?.toUpperCase() ?? "?";
@@ -146,6 +148,11 @@ export default function ProfileScreen() {
             icon="doc.text.fill"
             label="My Contributions"
             onPress={() => router.push("/my-contributions")}
+          />
+          <MenuRow
+            icon="star.fill"
+            label="Bounties"
+            onPress={() => router.push("/bounties")}
           />
           <MenuRow
             icon="trophy.fill"

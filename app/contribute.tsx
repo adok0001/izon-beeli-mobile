@@ -10,10 +10,11 @@ import {
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useRouter, useLocalSearchParams } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useContributionStore } from "@/store/contribution-store";
 import { useSubmitContribution } from "@/lib/hooks/use-contributions";
+import { useBounties } from "@/lib/hooks/use-bounties";
 import { ApiError } from "@/lib/api";
 import { LANGUAGES } from "@/lib/mock-data";
 import {
@@ -26,6 +27,7 @@ type Step = "type" | "language" | "entry" | "details";
 
 export default function ContributeScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ languageId?: string; category?: string }>();
   const {
     isRecording,
     recordingUri,
@@ -35,16 +37,25 @@ export default function ContributeScreen() {
   } = useContributionStore();
   const submitContribution = useSubmitContribution();
 
-  const [step, setStep] = useState<Step>("type");
-  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
+  const [step, setStep] = useState<Step>(params.languageId ? "entry" : "type");
+  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(params.languageId ?? null);
   const [word, setWord] = useState("");
   const [english, setEnglish] = useState("");
-  const [category, setCategory] = useState<DictionaryCategory | null>(null);
+  const [category, setCategory] = useState<DictionaryCategory | null>(
+    params.category ? (params.category as DictionaryCategory) : null
+  );
   const [pronunciation, setPronunciation] = useState("");
   const [example, setExample] = useState("");
   const [exampleTranslation, setExampleTranslation] = useState("");
 
   const isPhrase = word.trim().includes(" ");
+
+  // Bounty matching
+  const { data: matchingBounties } = useBounties(
+    selectedLanguage ?? undefined,
+    category ?? undefined
+  );
+  const activeBounty = matchingBounties?.[0]; // highest xpReward first
 
   const handleSubmit = () => {
     if (!selectedLanguage || !word.trim() || !english.trim() || !category) return;
@@ -190,6 +201,27 @@ export default function ContributeScreen() {
                     <IconSymbol name="chevron.right" size={16} color="#a855f7" />
                   </View>
                 </Pressable>
+
+                {/* Active Bounties card */}
+                <Pressable
+                  onPress={() => router.push("/bounties")}
+                  className="mb-3 rounded-2xl bg-amber-50 p-5 active:opacity-80 dark:bg-amber-950"
+                >
+                  <View className="flex-row items-center">
+                    <View className="mr-4 h-12 w-12 items-center justify-center rounded-xl bg-amber-500">
+                      <IconSymbol name="star.fill" size={24} color="white" />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-base font-bold text-neutral-900 dark:text-white">
+                        Active Bounties
+                      </Text>
+                      <Text className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">
+                        Earn bonus XP by contributing to specific content needs
+                      </Text>
+                    </View>
+                    <IconSymbol name="chevron.right" size={16} color="#f59e0b" />
+                  </View>
+                </Pressable>
               </View>
             )}
 
@@ -239,6 +271,26 @@ export default function ContributeScreen() {
                 <Text className="mb-5 text-sm text-neutral-500 dark:text-neutral-400">
                   Add a word in the selected language with its English translation
                 </Text>
+
+                {/* Bounty banner */}
+                {activeBounty && (
+                  <Pressable
+                    onPress={() => router.push("/bounties")}
+                    className="mb-4 rounded-xl bg-amber-50 px-4 py-3 active:opacity-80 dark:bg-amber-950"
+                  >
+                    <View className="flex-row items-center justify-between">
+                      <Text className="text-xs font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                        Active Bounty: +{activeBounty.xpReward} XP
+                      </Text>
+                      <Text className="text-xs text-amber-500 dark:text-amber-400">
+                        {activeBounty.currentCount}/{activeBounty.targetCount}
+                      </Text>
+                    </View>
+                    <Text className="mt-0.5 text-sm font-medium text-neutral-700 dark:text-neutral-300" numberOfLines={1}>
+                      {activeBounty.title}
+                    </Text>
+                  </Pressable>
+                )}
 
                 <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
                   Word / Phrase
