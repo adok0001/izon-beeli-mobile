@@ -1,15 +1,15 @@
-import { View, Text, Pressable, ScrollView } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useState } from "react";
-import { useRouter } from "expo-router";
-import { useAuth, useUser } from "@clerk/clerk-expo";
+import { FeedbackModal } from "@/components/feedback-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { XpLevelBadge } from "@/components/xp-level-badge";
 import { useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
-import { useLanguageStore } from "@/store/language-store";
 import { getLanguageName } from "@/lib/mock-data";
-import { FeedbackModal } from "@/components/feedback-modal";
+import { useLanguageStore } from "@/store/language-store";
+import { useAuth, useUser } from "@clerk/clerk-expo";
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 function StatCard({ icon, label, value }: { icon: string; label: string; value: string }) {
   return (
