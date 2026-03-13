@@ -5,6 +5,7 @@ import { useAuth, useUser, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { apiFetch } from "@/lib/api";
 import { useLanguageStore } from "@/store/language-store";
+import { useTourStore } from "@/store/tour-store";
 import type { UserProfile } from "@/types";
 
 function StatCard({ emoji, label, value }: { emoji: string; label: string; value: string | number }) {
@@ -60,6 +61,7 @@ export default function ProfilePage() {
   const { getToken, signOut } = useAuth();
   const { user } = useUser();
   const { selectedLanguageId } = useLanguageStore();
+  const { reset: resetTour, start: startTour } = useTourStore();
 
   const { data: profile } = useQuery<UserProfile>({
     queryKey: ["profile"],
@@ -105,6 +107,14 @@ export default function ProfilePage() {
       <div>
         <MenuRow href="/dictionary" emoji="📖" label="Dictionary" />
         <MenuRow href="/settings" emoji="⚙️" label="Settings" />
+        <button
+          onClick={() => { resetTour(); startTour(); }}
+          className="flex items-center gap-3 py-3.5 w-full text-left text-neutral-900 dark:text-white border-b border-neutral-100 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors rounded px-1"
+        >
+          <span className="text-lg shrink-0">🗺️</span>
+          <span className="flex-1 text-sm font-medium">Restart Welcome Tour</span>
+          <span className="text-neutral-300 dark:text-neutral-600 text-sm">›</span>
+        </button>
         <button
           onClick={() => signOut({ redirectUrl: "/sign-in" })}
           className="flex items-center gap-3 py-3.5 w-full text-left text-red-500 border-b border-neutral-100 dark:border-neutral-800 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors rounded px-1"

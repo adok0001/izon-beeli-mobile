@@ -6,16 +6,17 @@ import { UserButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { href: "/learn", label: "Learn", icon: "📚" },
-  { href: "/listen", label: "Listen", icon: "🎧" },
-  { href: "/journal", label: "Journal", icon: "📓" },
-  { href: "/feed", label: "Community", icon: "🌍" },
-  { href: "/profile", label: "Profile", icon: "👤" },
+  { href: "/learn", label: "Learn", icon: "📚", tourId: "nav-learn" },
+  { href: "/listen", label: "Listen", icon: "🎧", tourId: "nav-listen" },
+  { href: "/journal", label: "Journal", icon: "📓", tourId: "nav-journal" },
+  { href: "/feed", label: "Community", icon: "🌍", tourId: "nav-feed" },
+  { href: "/profile", label: "Profile", icon: "👤", tourId: "nav-profile" },
 ] as const;
 
 const SECONDARY_NAV = [
-  { href: "/dictionary", label: "Dictionary", icon: "📖" },
-  { href: "/settings", label: "Settings", icon: "⚙️" },
+  { href: "/quiz", label: "Quiz", icon: "🧠", tourId: "nav-quiz" },
+  { href: "/dictionary", label: "Dictionary", icon: "📖", tourId: undefined },
+  { href: "/settings", label: "Settings", icon: "⚙️", tourId: undefined },
 ] as const;
 
 export function Sidebar() {
@@ -35,12 +36,13 @@ export function Sidebar() {
 
       {/* Primary nav */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {NAV_ITEMS.map(({ href, label, icon }) => {
+        {NAV_ITEMS.map(({ href, label, icon, tourId }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           return (
             <Link
               key={href}
               href={href}
+              data-tour={tourId}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                 active
@@ -60,12 +62,13 @@ export function Sidebar() {
           </p>
         </div>
 
-        {SECONDARY_NAV.map(({ href, label, icon }) => {
+        {SECONDARY_NAV.map(({ href, label, icon, tourId }) => {
           const active = pathname === href;
           return (
             <Link
               key={href}
               href={href}
+              {...(tourId ? { "data-tour": tourId } : {})}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                 active
