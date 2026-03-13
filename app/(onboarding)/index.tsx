@@ -19,10 +19,33 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
-export const ONBOARDING_KEY = "onboarding-completed-v1";
+export const ONBOARDING_KEY = "onboarding-completed-v2";
 
 type DailyGoal = "casual" | "steady" | "intensive";
-type Step = "language" | "tryit" | "goal";
+type Step =
+  | "language"
+  | "tryit"
+  | "goal"
+  | "learnTour"
+  | "practiceTour"
+  | "journalTour"
+  | "feedTour"
+  | "profileTour"
+  | "ready";
+
+const ALL_STEPS: Step[] = [
+  "language",
+  "tryit",
+  "goal",
+  "learnTour",
+  "practiceTour",
+  "journalTour",
+  "feedTour",
+  "profileTour",
+  "ready",
+];
+
+const TOTAL_STEPS = ALL_STEPS.length;
 
 const GOAL_OPTIONS: { id: DailyGoal; icon: string }[] = [
   { id: "casual", icon: "leaf.fill" },
@@ -55,9 +78,231 @@ interface DictionaryEntry {
   audioUrl?: string;
 }
 
-function stepIndex(step: Step): number {
-  return { language: 0, tryit: 1, goal: 2 }[step];
+interface FeatureItem {
+  icon: string;
+  color: string;
+  bgColor: string;
+  darkBgColor: string;
+  titleKey: string;
+  detailKey: string;
 }
+
+function stepIndex(step: Step): number {
+  return ALL_STEPS.indexOf(step);
+}
+
+/* ── Feature tour card ── */
+function FeatureCard({ item, t }: { item: FeatureItem; t: (k: string) => string }) {
+  return (
+    <View className="flex-row items-start rounded-2xl border border-neutral-100 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800">
+      <View
+        className="mr-4 h-11 w-11 items-center justify-center rounded-xl"
+        style={{ backgroundColor: item.bgColor }}
+      >
+        <IconSymbol name={item.icon as any} size={20} color={item.color} />
+      </View>
+      <View className="flex-1">
+        <Text className="text-base font-bold text-neutral-900 dark:text-white">
+          {t(item.titleKey)}
+        </Text>
+        <Text className="mt-1 text-sm leading-5 text-neutral-500 dark:text-neutral-400">
+          {t(item.detailKey)}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+/* ── Feature tour step (generic) ── */
+function FeatureTourStep({
+  heroIcon,
+  heroColor,
+  heroBg,
+  titleKey,
+  subtitleKey,
+  features,
+  t,
+}: {
+  heroIcon: string;
+  heroColor: string;
+  heroBg: string;
+  titleKey: string;
+  subtitleKey: string;
+  features: FeatureItem[];
+  t: (k: string) => string;
+}) {
+  return (
+    <ScrollView
+      className="flex-1"
+      contentContainerStyle={{ paddingBottom: 16 }}
+      showsVerticalScrollIndicator={false}
+    >
+      <View className="items-center px-6 pt-8 pb-6">
+        <View
+          className="mb-5 h-20 w-20 items-center justify-center rounded-3xl"
+          style={{ backgroundColor: heroBg }}
+        >
+          <IconSymbol name={heroIcon as any} size={36} color={heroColor} />
+        </View>
+        <Text className="text-3xl font-bold text-neutral-900 dark:text-white text-center">
+          {t(titleKey)}
+        </Text>
+        <Text className="mt-2 text-base text-neutral-500 dark:text-neutral-400 text-center">
+          {t(subtitleKey)}
+        </Text>
+      </View>
+      <View className="px-6 gap-3">
+        {features.map((f) => (
+          <FeatureCard key={f.titleKey} item={f} t={t} />
+        ))}
+      </View>
+    </ScrollView>
+  );
+}
+
+/* ── Feature data per tour step ── */
+const LEARN_FEATURES: FeatureItem[] = [
+  {
+    icon: "book.fill",
+    color: "#3b82f6",
+    bgColor: "#dbeafe",
+    darkBgColor: "#1e3a5f",
+    titleKey: "onboarding.learnTourCourses",
+    detailKey: "onboarding.learnTourCoursesDetail",
+  },
+  {
+    icon: "speaker.wave.2.fill",
+    color: "#10b981",
+    bgColor: "#d1fae5",
+    darkBgColor: "#064e3b",
+    titleKey: "onboarding.learnTourAudio",
+    detailKey: "onboarding.learnTourAudioDetail",
+  },
+  {
+    icon: "chart.bar.fill",
+    color: "#f59e0b",
+    bgColor: "#fef3c7",
+    darkBgColor: "#78350f",
+    titleKey: "onboarding.learnTourProgress",
+    detailKey: "onboarding.learnTourProgressDetail",
+  },
+];
+
+const PRACTICE_FEATURES: FeatureItem[] = [
+  {
+    icon: "trophy.fill",
+    color: "#3b82f6",
+    bgColor: "#dbeafe",
+    darkBgColor: "#1e3a5f",
+    titleKey: "onboarding.practiceTourQuiz",
+    detailKey: "onboarding.practiceTourQuizDetail",
+  },
+  {
+    icon: "rectangle.grid.2x2",
+    color: "#8b5cf6",
+    bgColor: "#ede9fe",
+    darkBgColor: "#4c1d95",
+    titleKey: "onboarding.practiceTourMatching",
+    detailKey: "onboarding.practiceTourMatchingDetail",
+  },
+  {
+    icon: "flame.fill",
+    color: "#f59e0b",
+    bgColor: "#fef3c7",
+    darkBgColor: "#78350f",
+    titleKey: "onboarding.practiceTourDaily",
+    detailKey: "onboarding.practiceTourDailyDetail",
+  },
+  {
+    icon: "person.2.fill",
+    color: "#ef4444",
+    bgColor: "#fee2e2",
+    darkBgColor: "#7f1d1d",
+    titleKey: "onboarding.practiceTourMultiplayer",
+    detailKey: "onboarding.practiceTourMultiplayerDetail",
+  },
+];
+
+const JOURNAL_FEATURES: FeatureItem[] = [
+  {
+    icon: "pencil.and.list.clipboard",
+    color: "#3b82f6",
+    bgColor: "#dbeafe",
+    darkBgColor: "#1e3a5f",
+    titleKey: "onboarding.journalTourWrite",
+    detailKey: "onboarding.journalTourWriteDetail",
+  },
+  {
+    icon: "clock.arrow.circlepath",
+    color: "#10b981",
+    bgColor: "#d1fae5",
+    darkBgColor: "#064e3b",
+    titleKey: "onboarding.journalTourRevisit",
+    detailKey: "onboarding.journalTourRevisitDetail",
+  },
+];
+
+const FEED_FEATURES: FeatureItem[] = [
+  {
+    icon: "newspaper.fill",
+    color: "#8b5cf6",
+    bgColor: "#ede9fe",
+    darkBgColor: "#4c1d95",
+    titleKey: "onboarding.feedTourActivity",
+    detailKey: "onboarding.feedTourActivityDetail",
+  },
+  {
+    icon: "heart.fill",
+    color: "#ef4444",
+    bgColor: "#fee2e2",
+    darkBgColor: "#7f1d1d",
+    titleKey: "onboarding.feedTourInteract",
+    detailKey: "onboarding.feedTourInteractDetail",
+  },
+  {
+    icon: "mic.fill",
+    color: "#3b82f6",
+    bgColor: "#dbeafe",
+    darkBgColor: "#1e3a5f",
+    titleKey: "onboarding.feedTourContribute",
+    detailKey: "onboarding.feedTourContributeDetail",
+  },
+];
+
+const PROFILE_FEATURES: FeatureItem[] = [
+  {
+    icon: "flame.fill",
+    color: "#f59e0b",
+    bgColor: "#fef3c7",
+    darkBgColor: "#78350f",
+    titleKey: "onboarding.profileTourStats",
+    detailKey: "onboarding.profileTourStatsDetail",
+  },
+  {
+    icon: "chart.bar.fill",
+    color: "#3b82f6",
+    bgColor: "#dbeafe",
+    darkBgColor: "#1e3a5f",
+    titleKey: "onboarding.profileTourDashboard",
+    detailKey: "onboarding.profileTourDashboardDetail",
+  },
+  {
+    icon: "person.3.fill",
+    color: "#10b981",
+    bgColor: "#d1fae5",
+    darkBgColor: "#064e3b",
+    titleKey: "onboarding.profileTourClassroom",
+    detailKey: "onboarding.profileTourClassroomDetail",
+  },
+  {
+    icon: "star.fill",
+    color: "#f59e0b",
+    bgColor: "#fef3c7",
+    darkBgColor: "#78350f",
+    titleKey: "onboarding.profileTourBounties",
+    detailKey: "onboarding.profileTourBountiesDetail",
+  },
+];
 
 export default function OnboardingScreen() {
   const router = useRouter();
@@ -76,6 +321,22 @@ export default function OnboardingScreen() {
   const [revealed, setRevealed] = useState(false);
   const soundRef = useRef<Audio.Sound | null>(null);
 
+  const currentIdx = stepIndex(step);
+
+  const goNext = () => {
+    const nextIdx = currentIdx + 1;
+    if (nextIdx < TOTAL_STEPS) {
+      setStep(ALL_STEPS[nextIdx]);
+    }
+  };
+
+  const goBack = () => {
+    const prevIdx = currentIdx - 1;
+    if (prevIdx >= 0) {
+      setStep(ALL_STEPS[prevIdx]);
+    }
+  };
+
   const handleLanguageContinue = async () => {
     setTryItLoading(true);
     setRevealed(false);
@@ -90,7 +351,6 @@ export default function OnboardingScreen() {
     } finally {
       setTryItLoading(false);
     }
-    // Skip tryit if no entry
     setStep("tryit");
   };
 
@@ -142,23 +402,48 @@ export default function OnboardingScreen() {
     }
   };
 
-  const currentStepIndex = stepIndex(step);
+  const handleSkipTour = () => {
+    setStep("ready");
+  };
+
+  /* ── Navigation footer (for tour steps) ── */
+  const renderTourFooter = (opts?: { showSkip?: boolean }) => (
+    <View className="px-6 pb-6 pt-4 gap-3">
+      <Pressable
+        onPress={goNext}
+        className="items-center rounded-2xl bg-blue-500 py-4 active:opacity-80"
+      >
+        <Text className="text-base font-bold text-white">{t("onboarding.continue")}</Text>
+      </Pressable>
+      <View className="flex-row items-center justify-center gap-6">
+        <Pressable onPress={goBack} className="py-2">
+          <Text className="text-sm text-neutral-500 dark:text-neutral-400">{t("onboarding.back")}</Text>
+        </Pressable>
+        {opts?.showSkip && (
+          <Pressable onPress={handleSkipTour} className="py-2">
+            <Text className="text-sm text-neutral-500 dark:text-neutral-400">{t("onboarding.skip")}</Text>
+          </Pressable>
+        )}
+      </View>
+    </View>
+  );
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top", "bottom"]}>
-      {/* Progress dots */}
-      <View className="flex-row items-center justify-center gap-2 pt-4">
-        {[0, 1, 2].map((i) => (
+      {/* Progress bar */}
+      <View className="flex-row items-center justify-center gap-1.5 px-6 pt-4">
+        {ALL_STEPS.map((_, i) => (
           <View
             key={i}
-            className={`h-2 w-8 rounded-full ${
-              i <= currentStepIndex ? "bg-blue-500" : "bg-neutral-200 dark:bg-neutral-700"
+            className={`h-1.5 flex-1 rounded-full ${
+              i <= currentIdx ? "bg-blue-500" : "bg-neutral-200 dark:bg-neutral-700"
             }`}
           />
         ))}
       </View>
 
-      {step === "language" ? (
+      {/* ── Step: Language selection ── */}
+      {step === "language" && (
         <>
           <View className="px-6 pt-8 pb-4">
             <Text className="text-3xl font-bold text-neutral-900 dark:text-white">
@@ -226,7 +511,10 @@ export default function OnboardingScreen() {
             </Pressable>
           </View>
         </>
-      ) : step === "tryit" ? (
+      )}
+
+      {/* ── Step: Try a word ── */}
+      {step === "tryit" && (
         <>
           <View className="px-6 pt-8 pb-6">
             <Text className="text-3xl font-bold text-neutral-900 dark:text-white">
@@ -296,20 +584,23 @@ export default function OnboardingScreen() {
 
           <View className="px-6 pb-6 pt-2 gap-3">
             <Pressable
-              onPress={() => setStep("goal")}
+              onPress={goNext}
               className="items-center rounded-2xl bg-blue-500 py-4 active:opacity-80"
             >
               <Text className="text-base font-bold text-white">{t("onboarding.continue")}</Text>
             </Pressable>
             <Pressable
-              onPress={() => setStep("language")}
+              onPress={goBack}
               className="items-center py-2"
             >
               <Text className="text-sm text-neutral-500 dark:text-neutral-400">{t("onboarding.back")}</Text>
             </Pressable>
           </View>
         </>
-      ) : (
+      )}
+
+      {/* ── Step: Daily goal ── */}
+      {step === "goal" && (
         <>
           <View className="px-6 pt-8 pb-6">
             <Text className="text-3xl font-bold text-neutral-900 dark:text-white">
@@ -372,20 +663,134 @@ export default function OnboardingScreen() {
 
           <View className="px-6 pb-6 pt-6 gap-3">
             <Pressable
+              onPress={goNext}
+              className="items-center rounded-2xl bg-blue-500 py-4 active:opacity-80"
+            >
+              <Text className="text-base font-bold text-white">{t("onboarding.continue")}</Text>
+            </Pressable>
+            <Pressable
+              onPress={goBack}
+              className="items-center py-2"
+            >
+              <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+                {t("onboarding.back")}
+              </Text>
+            </Pressable>
+          </View>
+        </>
+      )}
+
+      {/* ── Step: Learn tab tour ── */}
+      {step === "learnTour" && (
+        <>
+          <FeatureTourStep
+            heroIcon="book.fill"
+            heroColor="#3b82f6"
+            heroBg="#dbeafe"
+            titleKey="onboarding.learnTourTitle"
+            subtitleKey="onboarding.learnTourSubtitle"
+            features={LEARN_FEATURES}
+            t={t}
+          />
+          {renderTourFooter({ showSkip: true })}
+        </>
+      )}
+
+      {/* ── Step: Practice tab tour ── */}
+      {step === "practiceTour" && (
+        <>
+          <FeatureTourStep
+            heroIcon="sparkles"
+            heroColor="#8b5cf6"
+            heroBg="#ede9fe"
+            titleKey="onboarding.practiceTourTitle"
+            subtitleKey="onboarding.practiceTourSubtitle"
+            features={PRACTICE_FEATURES}
+            t={t}
+          />
+          {renderTourFooter({ showSkip: true })}
+        </>
+      )}
+
+      {/* ── Step: Journal tab tour ── */}
+      {step === "journalTour" && (
+        <>
+          <FeatureTourStep
+            heroIcon="pencil.and.list.clipboard"
+            heroColor="#3b82f6"
+            heroBg="#dbeafe"
+            titleKey="onboarding.journalTourTitle"
+            subtitleKey="onboarding.journalTourSubtitle"
+            features={JOURNAL_FEATURES}
+            t={t}
+          />
+          {renderTourFooter({ showSkip: true })}
+        </>
+      )}
+
+      {/* ── Step: Feed tab tour ── */}
+      {step === "feedTour" && (
+        <>
+          <FeatureTourStep
+            heroIcon="newspaper.fill"
+            heroColor="#8b5cf6"
+            heroBg="#ede9fe"
+            titleKey="onboarding.feedTourTitle"
+            subtitleKey="onboarding.feedTourSubtitle"
+            features={FEED_FEATURES}
+            t={t}
+          />
+          {renderTourFooter({ showSkip: true })}
+        </>
+      )}
+
+      {/* ── Step: Profile tab tour ── */}
+      {step === "profileTour" && (
+        <>
+          <FeatureTourStep
+            heroIcon="person.fill"
+            heroColor="#10b981"
+            heroBg="#d1fae5"
+            titleKey="onboarding.profileTourTitle"
+            subtitleKey="onboarding.profileTourSubtitle"
+            features={PROFILE_FEATURES}
+            t={t}
+          />
+          {renderTourFooter()}
+        </>
+      )}
+
+      {/* ── Step: Ready / Celebration ── */}
+      {step === "ready" && (
+        <>
+          <View className="flex-1 items-center justify-center px-6">
+            <View className="mb-6 h-24 w-24 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+              <IconSymbol name="checkmark.seal.fill" size={48} color="#22c55e" />
+            </View>
+            <Text className="text-3xl font-bold text-neutral-900 dark:text-white text-center">
+              {t("onboarding.readyTitle")}
+            </Text>
+            <Text className="mt-3 text-base text-neutral-500 dark:text-neutral-400 text-center leading-6 px-4">
+              {t("onboarding.readySubtitle")}
+            </Text>
+          </View>
+
+          <View className="px-6 pb-6 pt-4 gap-3">
+            <Pressable
               onPress={handleFinish}
               disabled={saving}
-              className="items-center rounded-2xl bg-blue-500 py-4 active:opacity-80"
+              className="items-center rounded-2xl bg-green-500 py-4 active:opacity-80"
             >
               {saving ? (
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text className="text-base font-bold text-white">
-                  {t("onboarding.startLearning")}
+                  {t("onboarding.letsGo")}
                 </Text>
               )}
             </Pressable>
             <Pressable
-              onPress={() => setStep("tryit")}
+              onPress={goBack}
               className="items-center py-2"
             >
               <Text className="text-sm text-neutral-500 dark:text-neutral-400">
