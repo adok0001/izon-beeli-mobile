@@ -95,6 +95,7 @@ import { SOMALI_SENTENCES } from "../../../lib/data/sentences/somali.js";
 import { SWAHILI_SENTENCES } from "../../../lib/data/sentences/swahili.js";
 import { TAMAZIGHT_SENTENCES } from "../../../lib/data/sentences/tamazight.js";
 import { WOLOF_SENTENCES } from "../../../lib/data/sentences/wolof.js";
+import { YORUBA_SENTENCES } from "../../../lib/data/sentences/yoruba.js";
 
 // ---------------------------------------------------------------------------
 // UGC placeholder user
@@ -325,6 +326,7 @@ async function seed() {
     ...TAMAZIGHT_SENTENCES,
     ...KINYARWANDA_SENTENCES,
     ...EWE_SENTENCES,
+    ...YORUBA_SENTENCES,
   ];
   const sentenceRows = allSentences.map((s) => ({
     id: s.id,
