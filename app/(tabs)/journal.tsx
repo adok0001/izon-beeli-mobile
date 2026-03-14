@@ -20,6 +20,8 @@ import {
   useUpdateJournalEntry,
   useDeleteJournalEntry,
 } from "@/lib/hooks/use-journal";
+import { useTourStore } from "@/store/tour-store";
+import { FeatureTourModal } from "@/components/feature-tour-modal";
 import type { JournalEntry } from "@/types";
 import { useTranslation } from "react-i18next";
 import i18n from "@/lib/i18n";
@@ -99,6 +101,8 @@ export default function JournalScreen() {
   const isEditing = editingId !== null;
   const canSave = title.trim().length > 0 && content.trim().length > 0;
   const { t } = useTranslation();
+  const showTour = useTourStore((s) => s.showTour);
+  const hasSeen = useTourStore((s) => s.hasSeen);
 
   const openNew = () => {
     setEditingId(null);
@@ -120,6 +124,10 @@ export default function JournalScreen() {
       updateEntry.mutate({ id: editingId, title: title.trim(), content: content.trim() });
     } else {
       createEntry.mutate({ title: title.trim(), content: content.trim() });
+      // Show feed tour after first journal entry
+      if (!hasSeen("feed")) {
+        setTimeout(() => showTour("feed"), 1000);
+      }
     }
     setTitle("");
     setContent("");
@@ -236,6 +244,8 @@ export default function JournalScreen() {
           </SafeAreaView>
         </KeyboardAvoidingView>
       </Modal>
+
+      <FeatureTourModal />
     </SafeAreaView>
   );
 }

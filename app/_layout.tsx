@@ -28,6 +28,7 @@ import {
   addNotificationListener,
 } from "@/lib/push-notifications";
 import { useNotificationStore } from "@/store/notification-store";
+import { useTourStore } from "@/store/tour-store";
 
 const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -97,12 +98,14 @@ export default function RootLayout() {
   const hydrateTheme = useThemeStore((s) => s.hydrate);
   const hydrateLanguage = useLanguageStore((s) => s.hydrate);
   const hydrateUiLanguage = useUiLanguageStore((s) => s.hydrate);
+  const hydrateTours = useTourStore((s) => s.hydrate);
 
   useEffect(() => {
     configurePushNotifications();
     hydrateTheme();
     hydrateLanguage();
     hydrateUiLanguage();
+    hydrateTours();
     analytics.appOpen();
   }, []);
 

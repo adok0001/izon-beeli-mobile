@@ -193,6 +193,7 @@ export const fr = {
     readyTitle: "Vous êtes prêt !",
     readySubtitle: "Vous savez maintenant tout ce qu'il faut pour commencer. Lancez-vous !",
     letsGo: "C'est parti !",
+    gotIt: "Compris",
   },
   lesson: {
     title: "Leçon",

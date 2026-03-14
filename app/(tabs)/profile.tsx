@@ -7,8 +7,10 @@ import { getLanguageName } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useTranslation } from "react-i18next";
+import { useTourStore } from "@/store/tour-store";
+import { FeatureTourModal } from "@/components/feature-tour-modal";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -77,6 +79,16 @@ export default function ProfileScreen() {
   const { data: summary } = useProgressSummary();
   const { selectedLanguageId } = useLanguageStore();
   const { t } = useTranslation();
+  const showTour = useTourStore((s) => s.showTour);
+  const hasSeen = useTourStore((s) => s.hasSeen);
+
+  // Show profile tour on first visit
+  useEffect(() => {
+    if (!hasSeen("profile")) {
+      const timer = setTimeout(() => showTour("profile"), 600);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   const isAdmin = currentUser?.isAdmin ?? false;
   const displayName = user?.username ?? "Learner";
@@ -198,6 +210,8 @@ export default function ProfileScreen() {
         visible={feedbackVisible}
         onClose={() => setFeedbackVisible(false)}
       />
+
+      <FeatureTourModal />
     </SafeAreaView>
   );
 }

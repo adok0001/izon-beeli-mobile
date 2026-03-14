@@ -193,6 +193,7 @@ export const en = {
     readyTitle: "You're all set!",
     readySubtitle: "You now know everything you need to start learning. Dive in!",
     letsGo: "Let's Go!",
+    gotIt: "Got It",
   },
   lesson: {
     title: "Lesson",
