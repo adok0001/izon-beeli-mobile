@@ -374,10 +374,29 @@ function handleMessage(
       break;
 
     case "player_disconnected":
+      set({ connectionStatus: "reconnecting" });
+      break;
+
     case "player_reconnected":
+      set({ connectionStatus: "connected" });
+      break;
+
     case "opponent_forfeited":
     case "partner_forfeited":
-      // These could trigger UI indicators
+      // Opponent left — end game with current results
+      set({
+        phase: "results",
+        gameResults: get().gameResults ?? {
+          winner: get().myPlayerId,
+          players: get().players.map((p) => ({
+            id: p.id,
+            name: p.name,
+            score: p.id === get().myPlayerId ? get().myScore : get().opponentScore,
+            correctAnswers: 0,
+            totalAnswers: 0,
+          })),
+        },
+      });
       break;
 
     case "error":

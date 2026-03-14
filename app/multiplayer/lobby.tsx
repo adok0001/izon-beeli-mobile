@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -24,7 +24,7 @@ const PARTYKIT_HOST =
 export default function LobbyScreen() {
   const router = useRouter();
   const { user } = useUser();
-  const { getToken } = useAuth();
+  const { getToken, userId } = useAuth();
   const params = useLocalSearchParams<{
     sessionId?: string;
     inviteCode?: string;
@@ -44,9 +44,12 @@ export default function LobbyScreen() {
   } = useMultiplayerStore();
 
   const isMatchmaking = params.matchmaking === "true";
+  const hasSessionInfo = !!params.sessionId && !!params.partyRoomId;
   const leaveMatchmaking = useLeaveMatchmaking();
-  const { data: matchStatus } = useMatchmakingStatus(isMatchmaking);
+  // Only poll while still in matchmaking mode (no session yet)
+  const { data: matchStatus } = useMatchmakingStatus(isMatchmaking && !hasSessionInfo);
   const [ready, setReady] = useState(false);
+  const matchHandled = useRef(false);
 
   // Connect to PartyKit room when we have session info
   useEffect(() => {
@@ -65,7 +68,7 @@ export default function LobbyScreen() {
         name: user?.username ?? user?.firstName ?? "Player",
         sessionId: params.sessionId!,
         languageId: params.languageId ?? "",
-        playerId: params.sessionId!, // Will be set by session
+        playerId: userId ?? params.sessionId!,
       });
     };
 
@@ -76,9 +79,11 @@ export default function LobbyScreen() {
     };
   }, [params.partyRoomId, params.sessionId]);
 
-  // Handle matchmaking result
+  // Handle matchmaking result — guard against double navigation
   useEffect(() => {
+    if (matchHandled.current) return;
     if (matchStatus?.status === "matched" && matchStatus.session) {
+      matchHandled.current = true;
       const session = matchStatus.session;
       router.replace({
         pathname: "/multiplayer/lobby",

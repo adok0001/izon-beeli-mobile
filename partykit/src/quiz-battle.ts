@@ -230,6 +230,9 @@ export default class QuizBattleRoom implements Party.Server {
       case "answer":
         this.handleAnswer(player, msg.questionId, msg.selectedAnswer);
         break;
+      case "rematch":
+        this.handleRematch(player);
+        break;
     }
   }
 
@@ -349,6 +352,45 @@ export default class QuizBattleRoom implements Party.Server {
     // Check if both players answered
     if (this.state.answeredThisRound.size >= this.state.players.size) {
       this.advanceQuestion();
+    }
+  }
+
+  private handleRematch(player: Player) {
+    if (this.state.phase !== "results") return;
+
+    // Track rematch requests per player
+    if (!(this.state as any)._rematchVotes) {
+      (this.state as any)._rematchVotes = new Set<string>();
+    }
+    const votes = (this.state as any)._rematchVotes as Set<string>;
+    votes.add(player.id);
+
+    // Notify the other player
+    const opponent = this.getOpponent(player.id);
+    if (opponent) {
+      const oppConn = this.getConnectionForPlayer(opponent);
+      if (oppConn) {
+        oppConn.send(JSON.stringify({ type: "partner_rematch" }));
+      }
+    }
+
+    // If both players want a rematch, reset and restart
+    if (votes.size >= this.state.players.size) {
+      votes.clear();
+      // Reset player state
+      for (const p of this.state.players.values()) {
+        p.score = 0;
+        p.correctAnswers = 0;
+        p.totalAnswers = 0;
+        p.ready = false;
+      }
+      this.state.currentQuestionIndex = 0;
+      this.state.questions = [];
+      this.state.answeredThisRound = new Set();
+      this.state.phase = "lobby";
+
+      this.broadcast(JSON.stringify({ type: "rematch_starting" }));
+      this.broadcastLobbyState();
     }
   }
 
