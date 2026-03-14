@@ -12,7 +12,9 @@ import { useAudioStore } from "@/store/audio-store";
 import { analytics } from "@/lib/analytics";
 import { useLanguageStore } from "@/store/language-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
+import { useTourStore } from "@/store/tour-store";
 import { localizeField } from "@/lib/localize";
+import { FeatureTourModal } from "@/components/feature-tour-modal";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
@@ -29,6 +31,8 @@ export default function LessonScreen() {
   const { uiLanguage } = useUiLanguageStore();
   const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
   const { t } = useTranslation();
+  const showTour = useTourStore((s) => s.showTour);
+  const hasSeen = useTourStore((s) => s.hasSeen);
   const completeLesson = useCompleteLesson({
     onLevelUp: (level, title) => {
       analytics.levelUp(level, title);
@@ -84,6 +88,16 @@ export default function LessonScreen() {
     hapticHeavy();
     analytics.lessonCompleted(lesson.id, selectedLanguageId);
     cancelDailyStreakReminder().catch(() => {});
+
+    // Contextual tours: show journal tour after first lesson complete,
+    // then practice tour on subsequent completions
+    setTimeout(() => {
+      if (!hasSeen("journal")) {
+        showTour("journal");
+      } else if (!hasSeen("practice")) {
+        showTour("practice");
+      }
+    }, 1500);
   };
 
   return (
@@ -190,6 +204,8 @@ export default function LessonScreen() {
         title={levelUp?.title ?? ""}
         onDismiss={() => setLevelUp(null)}
       />
+
+      <FeatureTourModal />
     </>
   );
 }

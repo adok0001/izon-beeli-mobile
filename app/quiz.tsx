@@ -18,6 +18,8 @@ import { hapticSuccess, hapticError, hapticHeavy } from "@/lib/haptics";
 import { ListeningQuestion } from "@/components/quiz/listening-question";
 import { apiFetch } from "@/lib/api";
 import { analytics } from "@/lib/analytics";
+import { useTourStore } from "@/store/tour-store";
+import { FeatureTourModal } from "@/components/feature-tour-modal";
 import type { QuizQuestion } from "@/types";
 import { useTranslation } from "react-i18next";
 
@@ -212,6 +214,8 @@ function ResultsView({ languageId }: { languageId: string }) {
   const { getToken } = useAuth();
   const result = getResult();
   const startTime = useQuizStore((s) => s.startTime);
+  const showTour = useTourStore((s) => s.showTour);
+  const hasSeen = useTourStore((s) => s.hasSeen);
 
   useEffect(() => {
     hapticHeavy();
@@ -237,6 +241,11 @@ function ResultsView({ languageId }: { languageId: string }) {
       }
     };
     post();
+
+    // Show feed tour after first quiz completion
+    if (!hasSeen("feed")) {
+      setTimeout(() => showTour("feed"), 2000);
+    }
   }, []);
 
   const scoreColor =
@@ -423,6 +432,7 @@ export default function QuizScreen() {
           <ActiveView />
         ) : null}
       </SafeAreaView>
+      <FeatureTourModal />
     </>
   );
 }
