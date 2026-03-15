@@ -5,7 +5,6 @@ import { useAuth } from "@clerk/nextjs";
 import { useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
-import { cn } from "@/lib/utils";
 import type { JournalEntry } from "@/types";
 
 function EntryCard({
