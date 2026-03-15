@@ -5,6 +5,7 @@ import { useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
 import { getLanguageName } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
+import { useTourStore } from "@/store/tour-store";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useTranslation } from "react-i18next";
 import { useTourStore } from "@/store/tour-store";
@@ -90,6 +91,7 @@ export default function ProfileScreen() {
     }
   }, []);
 
+  const { reset: resetTour, start: startTour } = useTourStore();
   const isAdmin = currentUser?.isAdmin ?? false;
   const displayName = user?.username ?? "Learner";
   const email = user?.primaryEmailAddress?.emailAddress ?? "";
@@ -187,6 +189,11 @@ export default function ProfileScreen() {
             icon="exclamationmark.bubble"
             label={t("profile.sendFeedback")}
             onPress={() => setFeedbackVisible(true)}
+          />
+          <MenuRow
+            icon="map.fill"
+            label={t("profile.restartTour", "Restart App Tour")}
+            onPress={async () => { await resetTour(); startTour(); }}
           />
           <MenuRow
             icon="gearshape.fill"
