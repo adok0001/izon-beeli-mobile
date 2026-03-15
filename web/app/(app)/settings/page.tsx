@@ -21,7 +21,10 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const saved = localStorage.getItem("theme") as typeof theme | null;
-    if (saved) setTheme(saved);
+    if (saved) {
+      // Apply saved theme to state and document root on mount
+      handleTheme(saved);
+    }
   }, []);
 
   const handleTheme = (t: typeof theme) => {
