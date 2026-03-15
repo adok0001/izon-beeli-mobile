@@ -19,10 +19,13 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
-export const ONBOARDING_KEY = "onboarding-completed-v1";
+export const ONBOARDING_KEY = "onboarding-completed-v2";
 
 type DailyGoal = "casual" | "steady" | "intensive";
-type Step = "language" | "tryit" | "goal";
+type Step = "language" | "tryit" | "goal" | "ready";
+
+const ALL_STEPS: Step[] = ["language", "tryit", "goal", "ready"];
+const TOTAL_STEPS = ALL_STEPS.length;
 
 const GOAL_OPTIONS: { id: DailyGoal; icon: string }[] = [
   { id: "casual", icon: "leaf.fill" },
@@ -56,7 +59,7 @@ interface DictionaryEntry {
 }
 
 function stepIndex(step: Step): number {
-  return { language: 0, tryit: 1, goal: 2 }[step];
+  return ALL_STEPS.indexOf(step);
 }
 
 export default function OnboardingScreen() {
@@ -76,6 +79,22 @@ export default function OnboardingScreen() {
   const [revealed, setRevealed] = useState(false);
   const soundRef = useRef<Audio.Sound | null>(null);
 
+  const currentIdx = stepIndex(step);
+
+  const goNext = () => {
+    const nextIdx = currentIdx + 1;
+    if (nextIdx < TOTAL_STEPS) {
+      setStep(ALL_STEPS[nextIdx]);
+    }
+  };
+
+  const goBack = () => {
+    const prevIdx = currentIdx - 1;
+    if (prevIdx >= 0) {
+      setStep(ALL_STEPS[prevIdx]);
+    }
+  };
+
   const handleLanguageContinue = async () => {
     setTryItLoading(true);
     setRevealed(false);
@@ -90,7 +109,6 @@ export default function OnboardingScreen() {
     } finally {
       setTryItLoading(false);
     }
-    // Skip tryit if no entry
     setStep("tryit");
   };
 
@@ -142,23 +160,22 @@ export default function OnboardingScreen() {
     }
   };
 
-  const currentStepIndex = stepIndex(step);
-
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top", "bottom"]}>
-      {/* Progress dots */}
-      <View className="flex-row items-center justify-center gap-2 pt-4">
-        {[0, 1, 2].map((i) => (
+      {/* Progress bar */}
+      <View className="flex-row items-center justify-center gap-1.5 px-6 pt-4">
+        {ALL_STEPS.map((_, i) => (
           <View
             key={i}
-            className={`h-2 w-8 rounded-full ${
-              i <= currentStepIndex ? "bg-blue-500" : "bg-neutral-200 dark:bg-neutral-700"
+            className={`h-1.5 flex-1 rounded-full ${
+              i <= currentIdx ? "bg-blue-500" : "bg-neutral-200 dark:bg-neutral-700"
             }`}
           />
         ))}
       </View>
 
-      {step === "language" ? (
+      {/* ── Step: Language selection ── */}
+      {step === "language" && (
         <>
           <View className="px-6 pt-8 pb-4">
             <Text className="text-3xl font-bold text-neutral-900 dark:text-white">
@@ -226,7 +243,10 @@ export default function OnboardingScreen() {
             </Pressable>
           </View>
         </>
-      ) : step === "tryit" ? (
+      )}
+
+      {/* ── Step: Try a word ── */}
+      {step === "tryit" && (
         <>
           <View className="px-6 pt-8 pb-6">
             <Text className="text-3xl font-bold text-neutral-900 dark:text-white">
@@ -296,20 +316,23 @@ export default function OnboardingScreen() {
 
           <View className="px-6 pb-6 pt-2 gap-3">
             <Pressable
-              onPress={() => setStep("goal")}
+              onPress={goNext}
               className="items-center rounded-2xl bg-blue-500 py-4 active:opacity-80"
             >
               <Text className="text-base font-bold text-white">{t("onboarding.continue")}</Text>
             </Pressable>
             <Pressable
-              onPress={() => setStep("language")}
+              onPress={goBack}
               className="items-center py-2"
             >
               <Text className="text-sm text-neutral-500 dark:text-neutral-400">{t("onboarding.back")}</Text>
             </Pressable>
           </View>
         </>
-      ) : (
+      )}
+
+      {/* ── Step: Daily goal ── */}
+      {step === "goal" && (
         <>
           <View className="px-6 pt-8 pb-6">
             <Text className="text-3xl font-bold text-neutral-900 dark:text-white">
@@ -372,20 +395,54 @@ export default function OnboardingScreen() {
 
           <View className="px-6 pb-6 pt-6 gap-3">
             <Pressable
+              onPress={goNext}
+              className="items-center rounded-2xl bg-blue-500 py-4 active:opacity-80"
+            >
+              <Text className="text-base font-bold text-white">{t("onboarding.continue")}</Text>
+            </Pressable>
+            <Pressable
+              onPress={goBack}
+              className="items-center py-2"
+            >
+              <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+                {t("onboarding.back")}
+              </Text>
+            </Pressable>
+          </View>
+        </>
+      )}
+
+      {/* ── Step: Ready / Celebration ── */}
+      {step === "ready" && (
+        <>
+          <View className="flex-1 items-center justify-center px-6">
+            <View className="mb-6 h-24 w-24 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+              <IconSymbol name="checkmark.seal.fill" size={48} color="#22c55e" />
+            </View>
+            <Text className="text-3xl font-bold text-neutral-900 dark:text-white text-center">
+              {t("onboarding.readyTitle")}
+            </Text>
+            <Text className="mt-3 text-base text-neutral-500 dark:text-neutral-400 text-center leading-6 px-4">
+              {t("onboarding.readySubtitle")}
+            </Text>
+          </View>
+
+          <View className="px-6 pb-6 pt-4 gap-3">
+            <Pressable
               onPress={handleFinish}
               disabled={saving}
-              className="items-center rounded-2xl bg-blue-500 py-4 active:opacity-80"
+              className="items-center rounded-2xl bg-green-500 py-4 active:opacity-80"
             >
               {saving ? (
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text className="text-base font-bold text-white">
-                  {t("onboarding.startLearning")}
+                  {t("onboarding.letsGo")}
                 </Text>
               )}
             </Pressable>
             <Pressable
-              onPress={() => setStep("tryit")}
+              onPress={goBack}
               className="items-center py-2"
             >
               <Text className="text-sm text-neutral-500 dark:text-neutral-400">

@@ -128,6 +128,52 @@ export const useTourStore = create<TourState>()((set, get) => ({
   reset: async () => {
     await AsyncStorage.removeItem(TOUR_STORAGE_KEY).catch(() => {});
     set({ completed: false, active: false, stepIndex: 0 });
+import AsyncStorage from "@/lib/storage";
+
+export type TourId =
+  | "learn"
+  | "practice"
+  | "journal"
+  | "feed"
+  | "profile";
+
+interface TourState {
+  /** Set of tour IDs that have been dismissed */
+  seen: Record<string, boolean>;
+  /** The tour currently being shown (only one at a time) */
+  activeTour: TourId | null;
+
+  hasSeen: (id: TourId) => boolean;
+  showTour: (id: TourId) => void;
+  dismissTour: () => void;
+  hydrate: () => Promise<void>;
+  _hydrated: boolean;
+}
+
+const STORAGE_KEY = "izon-beeli-tours-seen";
+
+function persist(seen: Record<string, boolean>) {
+  AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(seen)).catch(() => {});
+}
+
+export const useTourStore = create<TourState>((set, get) => ({
+  seen: {},
+  activeTour: null,
+  _hydrated: false,
+
+  hasSeen: (id) => !!get().seen[id],
+
+  showTour: (id) => {
+    if (get().seen[id] || get().activeTour) return;
+    set({ activeTour: id });
+  },
+
+  dismissTour: () => {
+    const { activeTour, seen } = get();
+    if (!activeTour) return;
+    const updated = { ...seen, [activeTour]: true };
+    set({ activeTour: null, seen: updated });
+    persist(updated);
   },
 
   hydrate: async () => {
@@ -136,6 +182,14 @@ export const useTourStore = create<TourState>()((set, get) => ({
       if (val) set({ completed: true });
     } catch {
       // ignore
+      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        set({ seen: JSON.parse(stored), _hydrated: true });
+      } else {
+        set({ _hydrated: true });
+      }
+    } catch {
+      set({ _hydrated: true });
     }
   },
 }));

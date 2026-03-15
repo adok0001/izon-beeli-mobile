@@ -46,7 +46,8 @@ type ClientMessage =
   | { type: "ready" }
   | { type: "answer"; exerciseId: string; answer: string }
   | { type: "react"; emoji: string }
-  | { type: "chat"; text: string };
+  | { type: "chat"; text: string }
+  | { type: "rematch" };
 
 export default class PairedLessonRoom implements Party.Server {
   state: GameState;
@@ -204,6 +205,9 @@ export default class PairedLessonRoom implements Party.Server {
       case "chat":
         this.handleChat(player, msg.text);
         break;
+      case "rematch":
+        this.handleRematch(player);
+        break;
     }
   }
 
@@ -329,6 +333,43 @@ export default class PairedLessonRoom implements Party.Server {
       type: "chat",
       message: chatMsg,
     }));
+  }
+
+  private handleRematch(player: Player) {
+    if (this.state.phase !== "results") return;
+
+    if (!(this.state as any)._rematchVotes) {
+      (this.state as any)._rematchVotes = new Set<string>();
+    }
+    const votes = (this.state as any)._rematchVotes as Set<string>;
+    votes.add(player.id);
+
+    // Notify the partner
+    for (const [id, p] of this.state.players) {
+      if (id !== player.id) {
+        const conn = this.getConnectionForPlayer(p);
+        if (conn) {
+          conn.send(JSON.stringify({ type: "partner_rematch" }));
+        }
+      }
+    }
+
+    // If both want a rematch, reset and restart
+    if (votes.size >= this.state.players.size) {
+      votes.clear();
+      for (const p of this.state.players.values()) {
+        p.correctAnswers = 0;
+        p.totalAnswers = 0;
+        p.ready = false;
+      }
+      this.state.currentExerciseIndex = 0;
+      this.state.exercises = [];
+      this.state.chatMessages = [];
+      this.state.phase = "lobby";
+
+      this.broadcast(JSON.stringify({ type: "rematch_starting" }));
+      this.broadcastLobbyState();
+    }
   }
 
   private async endLesson() {

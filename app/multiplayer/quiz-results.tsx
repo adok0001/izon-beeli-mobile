@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, ActivityIndicator } from "react-native";
 import { useRouter, Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -8,11 +8,27 @@ import { hapticHeavy } from "@/lib/haptics";
 
 export default function QuizResultsScreen() {
   const router = useRouter();
-  const { gameResults, myPlayerId, reset } = useMultiplayerStore();
+  const {
+    gameResults,
+    myPlayerId,
+    reset,
+    sendRematch,
+    rematchRequested,
+    partnerWantsRematch,
+    phase,
+  } = useMultiplayerStore();
 
   useEffect(() => {
     hapticHeavy();
   }, []);
+
+  // When rematch accepted by both sides, server sends rematch_starting
+  // which resets phase to "lobby" — navigate back to quiz battle lobby
+  useEffect(() => {
+    if (phase === "lobby" && !gameResults) {
+      router.replace("/multiplayer/quiz-battle");
+    }
+  }, [phase, gameResults]);
 
   if (!gameResults) {
     return (
@@ -140,15 +156,40 @@ export default function QuizResultsScreen() {
 
           {/* Actions */}
           <View className="w-full gap-3">
+            {/* Rematch with same opponent */}
+            <Pressable
+              onPress={sendRematch}
+              disabled={rematchRequested}
+              className={`flex-row items-center justify-center rounded-xl py-4 active:opacity-80 ${
+                rematchRequested ? "bg-blue-300" : "bg-blue-500"
+              }`}
+            >
+              {rematchRequested ? (
+                <>
+                  <ActivityIndicator size="small" color="#fff" />
+                  <Text className="ml-2 text-base font-semibold text-white">
+                    {partnerWantsRematch ? "Starting rematch..." : "Waiting for opponent..."}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <IconSymbol name="arrow.clockwise" size={16} color="#fff" />
+                  <Text className="ml-2 text-base font-semibold text-white">
+                    Rematch{partnerWantsRematch ? " (Opponent ready!)" : ""}
+                  </Text>
+                </>
+              )}
+            </Pressable>
+
             <Pressable
               onPress={() => {
                 reset();
                 router.replace("/multiplayer");
               }}
-              className="items-center rounded-xl bg-blue-500 py-4 active:opacity-80"
+              className="items-center rounded-xl border-2 border-blue-200 py-4 active:opacity-80 dark:border-blue-800"
             >
-              <Text className="text-base font-semibold text-white">
-                Play Again
+              <Text className="text-base font-semibold text-blue-600 dark:text-blue-400">
+                New Match
               </Text>
             </Pressable>
 
@@ -157,9 +198,9 @@ export default function QuizResultsScreen() {
                 reset();
                 router.replace("/(tabs)/learn");
               }}
-              className="items-center rounded-xl border-2 border-neutral-200 py-4 active:opacity-80 dark:border-neutral-700"
+              className="items-center rounded-xl border-2 border-neutral-200 py-3 active:opacity-80 dark:border-neutral-700"
             >
-              <Text className="text-base font-semibold text-neutral-700 dark:text-neutral-300">
+              <Text className="text-sm font-semibold text-neutral-600 dark:text-neutral-400">
                 Back to Learn
               </Text>
             </Pressable>

@@ -15,6 +15,8 @@ import { useUiLanguageStore } from "@/store/ui-language-store";
 import { localizeField } from "@/lib/localize";
 import { useAudioStore } from "@/store/audio-store";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useTourStore } from "@/store/tour-store";
+import { FeatureTourModal } from "@/components/feature-tour-modal";
 import type { Course, Lesson } from "@/types";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -268,9 +270,19 @@ export default function LearnScreen() {
   const [freezeModalVisible, setFreezeModalVisible] = useState(false);
   const freezeModalShown = useRef(false);
   const { resumeState, loadResumeState } = useAudioStore();
+  const showTour = useTourStore((s) => s.showTour);
+  const hasSeen = useTourStore((s) => s.hasSeen);
 
   useEffect(() => {
     loadResumeState();
+  }, []);
+
+  // Show learn tour on first visit to the Learn tab
+  useEffect(() => {
+    if (!hasSeen("learn")) {
+      const timer = setTimeout(() => showTour("learn"), 600);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   // Show freeze modal once when we detect a broken streak
@@ -396,6 +408,8 @@ export default function LearnScreen() {
         freezeCount={summary?.freezeCount ?? 0}
         onDismiss={() => setFreezeModalVisible(false)}
       />
+
+      <FeatureTourModal />
     </SafeAreaView>
   );
 }
