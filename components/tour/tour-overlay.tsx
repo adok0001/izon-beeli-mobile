@@ -128,7 +128,6 @@ function TooltipCard({
   onSkip: () => void;
 }) {
   const isLast = stepIndex === total - 1;
-  const { width: sw } = Dimensions.get("window");
   const insets = useSafeAreaInsets();
 
   const card = (
