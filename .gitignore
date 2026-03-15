@@ -38,19 +38,22 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
-lib/**/*.d.ts
+mobile/lib/**/*.d.ts
 
-app-example
-
-# generated native folders
+# generated native folders (Expo prebuild)
 /ios
 /android
+/mobile/ios
+/mobile/android
 
 # server
 server/node_modules/
 server/dist/
 server/drizzle/
 server/.env
+
+# web
+web/.next/
 
 # local builds
 build/

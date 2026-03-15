@@ -15,7 +15,5 @@
     "expo-env.d.ts",
     "nativewind-env.d.ts"
   ],
-  "exclude": [
-    "partykit"
-  ]
+  "exclude": []
 }
