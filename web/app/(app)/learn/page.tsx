@@ -3,11 +3,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
-import { useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { useLanguageStore } from "@/store/language-store";
 import { cn } from "@/lib/utils";
-import type { Course, Lesson } from "@/types";
+import type { Course } from "@/types";
 
 const LANGUAGES = [
   { id: "izon", name: "Izon" },
