@@ -12,31 +12,18 @@ import { useNotificationStore } from "@/store/notification-store";
 import { useDailyReminder } from "@/lib/hooks/use-daily-reminder";
 import { useLanguageStore } from "@/store/language-store";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ONBOARDING_KEY } from "@/app/(onboarding)/index";
 import { useTranslation } from "react-i18next";
 import { useTourStore } from "@/store/tour-store";
 import { TourOverlay } from "@/components/tour/tour-overlay";
-import { Dimensions } from "react-native";
 
 function TabBarWithPlayer(props: BottomTabBarProps) {
   const { currentTrackId } = useAudioStore();
-  const setTabBarLayout = useTourStore((s) => s.setTabBarLayout);
-  const viewRef = useRef<View>(null);
-
-  const handleLayout = useCallback(() => {
-    viewRef.current?.measure((_fx, _fy, width, height, _px, py) => {
-      setTabBarLayout({
-        y: py,
-        height,
-        screenWidth: Dimensions.get("window").width,
-      });
-    });
-  }, [setTabBarLayout]);
 
   return (
-    <View ref={viewRef} onLayout={handleLayout}>
+    <View>
       {currentTrackId && <AudioPlayer compact />}
       <BottomTabBar {...props} />
     </View>
@@ -54,7 +41,7 @@ export default function TabLayout() {
   const hydrateNotifications = useNotificationStore((s) => s.hydrate);
   const onboardingChecked = useRef(false);
   const { t } = useTranslation();
-  const { hydrate: hydrateTour, completed: tourCompleted, active: tourActive, start: startTour } = useTourStore();
+  const { hydrate: hydrateTour, activeTour, start: startTour, hasSeen, _hydrated } = useTourStore();
 
   useEffect(() => {
     hydrateNotifications();
@@ -70,12 +57,12 @@ export default function TabLayout() {
     }).catch(() => {});
   }, []);
 
-  // Auto-start feature tour for first-time users (after onboarding)
+  // Auto-start feature tour for first-time users (after store is hydrated)
   useEffect(() => {
-    if (tourCompleted || tourActive) return;
+    if (!_hydrated || activeTour || hasSeen("profile")) return;
     const id = setTimeout(startTour, 800);
     return () => clearTimeout(id);
-  }, [tourCompleted]);
+  }, [_hydrated]);
 
   return (
     <>
