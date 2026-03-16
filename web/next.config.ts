@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "images.clerk.dev" },
     ],
   },
+  webpack(config) {
+    config.resolve.alias["@mobile"] = path.join(__dirname, "../mobile");
+    return config;
+  },
 };
 
 export default nextConfig;
