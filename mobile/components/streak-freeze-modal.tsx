@@ -1,6 +1,7 @@
-import { View, Text, Pressable, Modal, ActivityIndicator } from "react-native";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useUseFreeze } from "@/lib/hooks/use-progress";
+import { useTranslation } from "react-i18next";
+import { ActivityIndicator, Modal, Pressable, Text, View } from "react-native";
 
 interface StreakFreezeModalProps {
   visible: boolean;
@@ -15,6 +16,7 @@ export function StreakFreezeModal({
   freezeCount,
   onDismiss,
 }: StreakFreezeModalProps) {
+  const { t } = useTranslation();
   const useFreeze = useUseFreeze();
 
   const handleUseFreeze = async () => {
@@ -39,10 +41,10 @@ export function StreakFreezeModal({
 
           {/* Title */}
           <Text className="text-center text-2xl font-bold text-neutral-900 dark:text-white">
-            Streak Broken
+            {t("streak.brokenTitle")}
           </Text>
           <Text className="mt-2 text-center text-sm text-neutral-500 dark:text-neutral-400">
-            You missed a day and lost your {streak}-day streak.
+            {t("streak.brokenMessage", { streak })}
           </Text>
 
           {/* Freeze option */}
@@ -55,10 +57,10 @@ export function StreakFreezeModal({
                   </View>
                   <View className="flex-1">
                     <Text className="text-sm font-bold text-blue-700 dark:text-blue-300">
-                      Use a Streak Freeze
+                      {t("streak.useFreezeTitle")}
                     </Text>
                     <Text className="text-xs text-blue-600 dark:text-blue-400">
-                      Restore your streak — you have {freezeCount} freeze{freezeCount !== 1 ? "s" : ""}
+                      {t("streak.useFreezeDescription", { count: freezeCount })}
                     </Text>
                   </View>
                 </View>
@@ -73,27 +75,27 @@ export function StreakFreezeModal({
                   <ActivityIndicator color="#fff" />
                 ) : (
                   <Text className="text-base font-bold text-white">
-                    Restore Streak
+                    {t("streak.restoreButton")}
                   </Text>
                 )}
               </Pressable>
 
               <Pressable onPress={onDismiss} className="mt-3 items-center py-2">
                 <Text className="text-sm text-neutral-400 dark:text-neutral-500">
-                  Start fresh instead
+                  {t("streak.startFreshLink")}
                 </Text>
               </Pressable>
             </>
           ) : (
             <>
               <Text className="mt-4 text-center text-sm text-neutral-500 dark:text-neutral-400">
-                Complete lessons to earn Streak Freezes and protect future streaks.
+                {t("streak.noFreezesMessage")}
               </Text>
               <Pressable
                 onPress={onDismiss}
                 className="mt-5 items-center rounded-2xl bg-blue-500 py-4 active:opacity-80"
               >
-                <Text className="text-base font-bold text-white">Start Fresh</Text>
+                <Text className="text-base font-bold text-white">{t("streak.startFreshButton")}</Text>
               </Pressable>
             </>
           )}

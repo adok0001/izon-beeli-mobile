@@ -1,4 +1,5 @@
 import { forwardRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 
 interface WordCardProps {
@@ -25,6 +26,8 @@ interface AchievementCardProps {
 type Props = WordCardProps | ProverbCardProps | AchievementCardProps;
 
 export const ShareCardPreview = forwardRef<View, Props>((props, ref) => {
+  const { t } = useTranslation();
+
   return (
     <View
       ref={ref}
@@ -88,7 +91,7 @@ export const ShareCardPreview = forwardRef<View, Props>((props, ref) => {
 
       {/* Footer */}
       <Text className="mt-6 text-center text-[10px] text-neutral-300">
-        Learn African languages · izonbeeli.app
+        {t("share.tagline")}
       </Text>
     </View>
   );

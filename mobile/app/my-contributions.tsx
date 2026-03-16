@@ -1,12 +1,11 @@
-import { View, Text, FlatList, RefreshControl } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack } from "expo-router";
-import { useCallback, useState } from "react";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useMyContributions, type MyContribution } from "@/lib/hooks/use-contributions";
-import { CATEGORY_LABELS, type DictionaryCategory } from "@/lib/dictionary";
 import { getLanguageName } from "@/lib/mock-data";
+import { Stack } from "expo-router";
+import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { FlatList, RefreshControl, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const STATUS_CONFIG = {
   submitted: { label: "myContributions.statusPending", color: "#f59e0b", bg: "bg-amber-100 dark:bg-amber-900" },
@@ -17,7 +16,9 @@ const STATUS_CONFIG = {
 function ContributionRow({ item }: { item: MyContribution }) {
   const { t } = useTranslation();
   const config = STATUS_CONFIG[item.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.submitted;
-  const categoryLabel = CATEGORY_LABELS[item.category as DictionaryCategory] ?? item.category;
+  const categoryLabel = item.category
+    ? t(`dictionaryPage.categoryLabels.${item.category}` as any, { defaultValue: item.category })
+    : null;
 
   return (
     <View className="border-b border-neutral-100 px-5 py-4 dark:border-neutral-800">
@@ -30,11 +31,13 @@ function ContributionRow({ item }: { item: MyContribution }) {
             {item.english}
           </Text>
           <View className="mt-1.5 flex-row flex-wrap gap-1.5">
-            <View className="rounded-full bg-neutral-100 px-2 py-0.5 dark:bg-neutral-800">
-              <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-                {categoryLabel}
-              </Text>
-            </View>
+            {categoryLabel && (
+              <View className="rounded-full bg-neutral-100 px-2 py-0.5 dark:bg-neutral-800">
+                <Text className="text-xs text-neutral-500 dark:text-neutral-400">
+                  {categoryLabel}
+                </Text>
+              </View>
+            )}
             <View className="rounded-full bg-neutral-100 px-2 py-0.5 dark:bg-neutral-800">
               <Text className="text-xs text-neutral-500 dark:text-neutral-400">
                 {getLanguageName(item.languageId)}

@@ -1,12 +1,14 @@
-import { useProverbs } from "@/lib/hooks/use-proverbs";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useProverbs } from "@/lib/hooks/use-proverbs";
 import type { Proverb } from "@/types";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, FlatList, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function ProverbCard({ proverb }: { proverb: Proverb }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -44,6 +46,7 @@ function ProverbCard({ proverb }: { proverb: Proverb }) {
 }
 
 export default function ProverbsScreen() {
+  const { t } = useTranslation();
   const { languageId } = useLocalSearchParams<{ languageId: string }>();
   const { data: proverbs = [], isLoading } = useProverbs(languageId ?? "");
 
@@ -54,7 +57,7 @@ export default function ProverbsScreen() {
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["bottom"]}>
       <Stack.Screen
         options={{
-          title: `${languageTitle} Proverbs`,
+          title: `${languageTitle} ${t("proverbs.titleSuffix")}`,
           headerBackTitle: "Back",
         }}
       />
@@ -67,7 +70,7 @@ export default function ProverbsScreen() {
         <View className="flex-1 items-center justify-center px-8">
           <IconSymbol name="text.quote" size={48} color="#d1d5db" />
           <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
-            No proverbs available for this language yet.
+            {t("proverbs.noProverbs")}
           </Text>
         </View>
       ) : (

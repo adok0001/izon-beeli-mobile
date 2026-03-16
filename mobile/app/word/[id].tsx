@@ -6,6 +6,7 @@ import { WordAudioButton } from "@/components/dictionary/word-audio-button";
 import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/lib/dictionary";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { useSaveWord, useRemoveWord, useWordBank } from "@/lib/hooks/use-wordbank";
+import { useTranslation } from "react-i18next";
 
 export default function WordDetailScreen() {
   const { id, languageId } = useLocalSearchParams<{
@@ -13,6 +14,7 @@ export default function WordDetailScreen() {
     languageId: string;
   }>();
   const router = useRouter();
+  const { t } = useTranslation();
 
   const { data: entries = [], isLoading } = useDictionary(languageId);
   const entry = entries.find((e) => e.id === id);
@@ -71,7 +73,7 @@ export default function WordDetailScreen() {
         >
           <IconSymbol name="questionmark.circle" size={48} color="#d1d5db" />
           <Text className="mt-4 text-center text-base text-neutral-400">
-            Word not found.
+            {t("wordDetail.notFound")}
           </Text>
         </SafeAreaView>
       </>
@@ -119,7 +121,7 @@ export default function WordDetailScreen() {
               />
               {!entry.audioUrl && (
                 <Text className="text-xs text-neutral-400 dark:text-neutral-500">
-                  Text-to-speech
+                  {t("wordDetail.textToSpeech")}
                 </Text>
               )}
             </View>
@@ -144,7 +146,7 @@ export default function WordDetailScreen() {
           {entry.example && (
             <View className="mx-5 mt-5 rounded-xl bg-neutral-50 px-4 py-4 dark:bg-neutral-800">
               <Text className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-                Example
+                {t("wordDetail.example")}
               </Text>
               <Text className="text-base text-neutral-800 dark:text-neutral-200">
                 {entry.example}
@@ -162,7 +164,7 @@ export default function WordDetailScreen() {
             <View className="mx-5 mt-4 flex-row items-center">
               <IconSymbol name="person.fill" size={13} color="#9ca3af" />
               <Text className="ml-1.5 text-sm text-neutral-400 dark:text-neutral-500">
-                Contributed by {entry.contributorName}
+                {t("wordDetail.contributedBy", { name: entry.contributorName })}
               </Text>
             </View>
           )}
@@ -175,7 +177,7 @@ export default function WordDetailScreen() {
             >
               <IconSymbol name="brain.head.profile" size={18} color="#fff" />
               <Text className="ml-2 text-base font-semibold text-white">
-                Practice this word
+                {t("wordDetail.practiceWord")}
               </Text>
             </Pressable>
 
@@ -199,7 +201,7 @@ export default function WordDetailScreen() {
                     : "text-neutral-700 dark:text-neutral-300"
                 }`}
               >
-                {saved ? "Saved to Word Bank" : "Save to Word Bank"}
+                {saved ? t("wordDetail.savedToWordBank") : t("wordDetail.saveToWordBank")}
               </Text>
             </Pressable>
           </View>

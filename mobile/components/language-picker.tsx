@@ -1,22 +1,35 @@
-import { useState, useMemo } from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  TextInput,
-  SectionList,
-  Modal,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ACTIVE_LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
 import type { Language } from "@/types";
+import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+    Modal,
+    Pressable,
+    SectionList,
+    Text,
+    TextInput,
+    View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface Section {
   title: string;
   data: Language[];
 }
+
+const REGION_KEY_MAP: Record<string, string> = {
+  "Niger Delta": "regions.nigerDelta",
+  "Southwest": "regions.southwest",
+  "Southeast": "regions.southeast",
+  "North Central": "regions.northCentral",
+  "North": "regions.north",
+  "West Africa": "regions.westAfrica",
+  "East Africa": "regions.eastAfrica",
+  "North Africa": "regions.northAfrica",
+  "Southern Africa": "regions.southernAfrica",
+};
 
 function groupByRegion(languages: Language[]): Section[] {
   const map = new Map<string, Language[]>();
@@ -70,6 +83,7 @@ function LanguagePickerModal({
   onSelect: (id: string) => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
 
   const sections = useMemo(() => {
@@ -91,7 +105,7 @@ function LanguagePickerModal({
         {/* Header */}
         <View className="flex-row items-center justify-between border-b border-neutral-200 px-5 py-3 dark:border-neutral-700">
           <Text className="text-lg font-bold text-neutral-900 dark:text-white">
-            Choose Language
+            {t("languagePicker.title")}
           </Text>
           <Pressable onPress={onClose} hitSlop={8}>
             <IconSymbol name="xmark" size={20} color="#6b7280" />
@@ -105,7 +119,7 @@ function LanguagePickerModal({
             <TextInput
               value={search}
               onChangeText={setSearch}
-              placeholder="Search languages..."
+              placeholder={t("languagePicker.searchPlaceholder")}
               placeholderTextColor="#9ca3af"
               autoCorrect={false}
               className="ml-2 flex-1 text-base text-neutral-900 dark:text-white"
@@ -127,7 +141,7 @@ function LanguagePickerModal({
           renderSectionHeader={({ section }) => (
             <View className="bg-neutral-50 px-5 py-2 dark:bg-neutral-800/80">
               <Text className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-                {section.title}
+                {REGION_KEY_MAP[section.title] ? t(REGION_KEY_MAP[section.title] as any) : section.title}
               </Text>
             </View>
           )}
@@ -164,7 +178,7 @@ function LanguagePickerModal({
             <View className="items-center py-12">
               <IconSymbol name="magnifyingglass" size={32} color="#d1d5db" />
               <Text className="mt-3 text-sm text-neutral-400 dark:text-neutral-500">
-                No languages found for &ldquo;{search}&rdquo;
+                {t("languagePicker.noResults", { query: search })}
               </Text>
             </View>
           }

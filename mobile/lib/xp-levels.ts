@@ -1,6 +1,8 @@
 export interface LevelInfo {
   level: number;
   title: string;
+  titleKey: string;
+  legendNumeral?: string;
   currentXP: number; // XP earned within the current level
   xpForNextLevel: number; // XP needed to finish this level
   totalXP: number;
@@ -11,19 +13,20 @@ interface LevelThreshold {
   level: number;
   cumulativeXP: number;
   title: string;
+  titleKey: string;
 }
 
 const LEVELS: LevelThreshold[] = [
-  { level: 1, cumulativeXP: 0, title: "Newcomer" },
-  { level: 2, cumulativeXP: 100, title: "Explorer" },
-  { level: 3, cumulativeXP: 300, title: "Listener" },
-  { level: 4, cumulativeXP: 600, title: "Speaker" },
-  { level: 5, cumulativeXP: 1000, title: "Scholar" },
-  { level: 6, cumulativeXP: 1500, title: "Storyteller" },
-  { level: 7, cumulativeXP: 2200, title: "Elder" },
-  { level: 8, cumulativeXP: 3000, title: "Master" },
-  { level: 9, cumulativeXP: 4000, title: "Guardian" },
-  { level: 10, cumulativeXP: 5500, title: "Legend" },
+  { level: 1, cumulativeXP: 0, title: "Newcomer", titleKey: "newcomer" },
+  { level: 2, cumulativeXP: 100, title: "Explorer", titleKey: "explorer" },
+  { level: 3, cumulativeXP: 300, title: "Listener", titleKey: "listener" },
+  { level: 4, cumulativeXP: 600, title: "Speaker", titleKey: "speaker" },
+  { level: 5, cumulativeXP: 1000, title: "Scholar", titleKey: "scholar" },
+  { level: 6, cumulativeXP: 1500, title: "Storyteller", titleKey: "storyteller" },
+  { level: 7, cumulativeXP: 2200, title: "Elder", titleKey: "elder" },
+  { level: 8, cumulativeXP: 3000, title: "Master", titleKey: "master" },
+  { level: 9, cumulativeXP: 4000, title: "Guardian", titleKey: "guardian" },
+  { level: 10, cumulativeXP: 5500, title: "Legend", titleKey: "legend" },
 ];
 
 const XP_PER_LEGEND_LEVEL = 2000;
@@ -45,6 +48,8 @@ export function getLevelInfo(points: number): LevelInfo {
     return {
       level,
       title,
+      titleKey: "legend",
+      legendNumeral: extraLevels > 0 ? toRoman(extraLevels + 1) : undefined,
       currentXP,
       xpForNextLevel: XP_PER_LEGEND_LEVEL,
       totalXP,
@@ -72,6 +77,7 @@ export function getLevelInfo(points: number): LevelInfo {
   return {
     level: currentLevel.level,
     title: currentLevel.title,
+    titleKey: currentLevel.titleKey,
     currentXP: xpIntoLevel,
     xpForNextLevel: xpForLevel,
     totalXP,

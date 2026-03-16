@@ -19,83 +19,83 @@ import {
 // ---------------------------------------------------------------------------
 // Shared data (single source of truth lives in lib/data/)
 // ---------------------------------------------------------------------------
-import { COURSES } from "../../../lib/data/courses.js";
-import { SEED_COMMENTS, SEED_FEED } from "../../../lib/data/feed.js";
-import { LANGUAGES } from "../../../lib/data/languages.js";
-import { ALL_LESSONS } from "../../../lib/data/lessons/index.js";
+import { COURSES } from "../../../mobile/lib/data/courses.js";
+import { SEED_COMMENTS, SEED_FEED } from "../../../mobile/lib/data/feed.js";
+import { LANGUAGES } from "../../../mobile/lib/data/languages.js";
+import { ALL_LESSONS } from "../../../mobile/lib/data/lessons/index.js";
 
 // ---------------------------------------------------------------------------
 // Dictionaries
 // ---------------------------------------------------------------------------
-import { AKAN_DICTIONARY } from "../../../lib/data/akan.js";
-import { AMHARIC_DICTIONARY } from "../../../lib/data/amharic.js";
-import { ARABIC_EGYPTIAN_DICTIONARY } from "../../../lib/data/arabic-egyptian.js";
-import { BAMBARA_DICTIONARY } from "../../../lib/data/bambara.js";
-import { EWE_DICTIONARY } from "../../../lib/data/ewe.js";
-import { HAUSA_DICTIONARY } from "../../../lib/data/hausa.js";
-import { IGBO_DICTIONARY } from "../../../lib/data/igbo.js";
-import { IZON_DICTIONARY } from "../../../lib/data/izon.js";
-import { KINYARWANDA_DICTIONARY } from "../../../lib/data/kinyarwanda.js";
-import { OROMO_DICTIONARY } from "../../../lib/data/oromo.js";
-import { SHONA_DICTIONARY } from "../../../lib/data/shona.js";
-import { SOMALI_DICTIONARY } from "../../../lib/data/somali.js";
-import { SWAHILI_DICTIONARY } from "../../../lib/data/swahili.js";
-import { TAMAZIGHT_DICTIONARY } from "../../../lib/data/tamazight.js";
-import { WOLOF_DICTIONARY } from "../../../lib/data/wolof.js";
-import { YORUBA_DICTIONARY } from "../../../lib/data/yoruba.js";
+import { AKAN_DICTIONARY } from "../../../mobile/lib/data/akan.js";
+import { AMHARIC_DICTIONARY } from "../../../mobile/lib/data/amharic.js";
+import { ARABIC_EGYPTIAN_DICTIONARY } from "../../../mobile/lib/data/arabic-egyptian.js";
+import { BAMBARA_DICTIONARY } from "../../../mobile/lib/data/bambara.js";
+import { EWE_DICTIONARY } from "../../../mobile/lib/data/ewe.js";
+import { HAUSA_DICTIONARY } from "../../../mobile/lib/data/hausa.js";
+import { IGBO_DICTIONARY } from "../../../mobile/lib/data/igbo.js";
+import { IZON_DICTIONARY } from "../../../mobile/lib/data/izon.js";
+import { KINYARWANDA_DICTIONARY } from "../../../mobile/lib/data/kinyarwanda.js";
+import { OROMO_DICTIONARY } from "../../../mobile/lib/data/oromo.js";
+import { SHONA_DICTIONARY } from "../../../mobile/lib/data/shona.js";
+import { SOMALI_DICTIONARY } from "../../../mobile/lib/data/somali.js";
+import { SWAHILI_DICTIONARY } from "../../../mobile/lib/data/swahili.js";
+import { TAMAZIGHT_DICTIONARY } from "../../../mobile/lib/data/tamazight.js";
+import { WOLOF_DICTIONARY } from "../../../mobile/lib/data/wolof.js";
+import { YORUBA_DICTIONARY } from "../../../mobile/lib/data/yoruba.js";
 
 // ---------------------------------------------------------------------------
 // Proverbs
 // ---------------------------------------------------------------------------
-import { AKAN_PROVERBS } from "../../../lib/data/proverbs/akan.js";
-import { AMHARIC_PROVERBS } from "../../../lib/data/proverbs/amharic.js";
-import { ARABIC_EGYPTIAN_PROVERBS } from "../../../lib/data/proverbs/arabic-egyptian.js";
-import { BAMBARA_PROVERBS } from "../../../lib/data/proverbs/bambara.js";
-import { EWE_PROVERBS } from "../../../lib/data/proverbs/ewe.js";
-import { HAUSA_PROVERBS } from "../../../lib/data/proverbs/hausa.js";
-import { IGBO_PROVERBS } from "../../../lib/data/proverbs/igbo.js";
-import { IZON_PROVERBS } from "../../../lib/data/proverbs/izon.js";
-import { KINYARWANDA_PROVERBS } from "../../../lib/data/proverbs/kinyarwanda.js";
-import { SOMALI_PROVERBS } from "../../../lib/data/proverbs/somali.js";
-import { SWAHILI_PROVERBS } from "../../../lib/data/proverbs/swahili.js";
-import { TAMAZIGHT_PROVERBS } from "../../../lib/data/proverbs/tamazight.js";
-import { WOLOF_PROVERBS } from "../../../lib/data/proverbs/wolof.js";
-import { YORUBA_PROVERBS } from "../../../lib/data/proverbs/yoruba.js";
+import { AKAN_PROVERBS } from "../../../mobile/lib/data/proverbs/akan.js";
+import { AMHARIC_PROVERBS } from "../../../mobile/lib/data/proverbs/amharic.js";
+import { ARABIC_EGYPTIAN_PROVERBS } from "../../../mobile/lib/data/proverbs/arabic-egyptian.js";
+import { BAMBARA_PROVERBS } from "../../../mobile/lib/data/proverbs/bambara.js";
+import { EWE_PROVERBS } from "../../../mobile/lib/data/proverbs/ewe.js";
+import { HAUSA_PROVERBS } from "../../../mobile/lib/data/proverbs/hausa.js";
+import { IGBO_PROVERBS } from "../../../mobile/lib/data/proverbs/igbo.js";
+import { IZON_PROVERBS } from "../../../mobile/lib/data/proverbs/izon.js";
+import { KINYARWANDA_PROVERBS } from "../../../mobile/lib/data/proverbs/kinyarwanda.js";
+import { SOMALI_PROVERBS } from "../../../mobile/lib/data/proverbs/somali.js";
+import { SWAHILI_PROVERBS } from "../../../mobile/lib/data/proverbs/swahili.js";
+import { TAMAZIGHT_PROVERBS } from "../../../mobile/lib/data/proverbs/tamazight.js";
+import { WOLOF_PROVERBS } from "../../../mobile/lib/data/proverbs/wolof.js";
+import { YORUBA_PROVERBS } from "../../../mobile/lib/data/proverbs/yoruba.js";
 
 // ---------------------------------------------------------------------------
 // Cultural content
 // ---------------------------------------------------------------------------
-import { AKAN_CULTURAL } from "../../../lib/data/cultural/akan.js";
-import { AMHARIC_CULTURAL } from "../../../lib/data/cultural/amharic.js";
-import { ARABIC_EGYPTIAN_CULTURAL } from "../../../lib/data/cultural/arabic-egyptian.js";
-import { BAMBARA_CULTURAL } from "../../../lib/data/cultural/bambara.js";
-import { EWE_CULTURAL } from "../../../lib/data/cultural/ewe.js";
-import { HAUSA_CULTURAL } from "../../../lib/data/cultural/hausa.js";
-import { IGBO_CULTURAL } from "../../../lib/data/cultural/igbo.js";
-import { IZON_CULTURAL } from "../../../lib/data/cultural/izon.js";
-import { KINYARWANDA_CULTURAL } from "../../../lib/data/cultural/kinyarwanda.js";
-import { SOMALI_CULTURAL } from "../../../lib/data/cultural/somali.js";
-import { SWAHILI_CULTURAL } from "../../../lib/data/cultural/swahili.js";
-import { TAMAZIGHT_CULTURAL } from "../../../lib/data/cultural/tamazight.js";
-import { WOLOF_CULTURAL } from "../../../lib/data/cultural/wolof.js";
-import { YORUBA_CULTURAL } from "../../../lib/data/cultural/yoruba.js";
+import { AKAN_CULTURAL } from "../../../mobile/lib/data/cultural/akan.js";
+import { AMHARIC_CULTURAL } from "../../../mobile/lib/data/cultural/amharic.js";
+import { ARABIC_EGYPTIAN_CULTURAL } from "../../../mobile/lib/data/cultural/arabic-egyptian.js";
+import { BAMBARA_CULTURAL } from "../../../mobile/lib/data/cultural/bambara.js";
+import { EWE_CULTURAL } from "../../../mobile/lib/data/cultural/ewe.js";
+import { HAUSA_CULTURAL } from "../../../mobile/lib/data/cultural/hausa.js";
+import { IGBO_CULTURAL } from "../../../mobile/lib/data/cultural/igbo.js";
+import { IZON_CULTURAL } from "../../../mobile/lib/data/cultural/izon.js";
+import { KINYARWANDA_CULTURAL } from "../../../mobile/lib/data/cultural/kinyarwanda.js";
+import { SOMALI_CULTURAL } from "../../../mobile/lib/data/cultural/somali.js";
+import { SWAHILI_CULTURAL } from "../../../mobile/lib/data/cultural/swahili.js";
+import { TAMAZIGHT_CULTURAL } from "../../../mobile/lib/data/cultural/tamazight.js";
+import { WOLOF_CULTURAL } from "../../../mobile/lib/data/cultural/wolof.js";
+import { YORUBA_CULTURAL } from "../../../mobile/lib/data/cultural/yoruba.js";
 
 // ---------------------------------------------------------------------------
 // Sentence templates
 // ---------------------------------------------------------------------------
-import { AMHARIC_SENTENCES } from "../../../lib/data/sentences/amharic.js";
-import { ARABIC_EGYPTIAN_SENTENCES } from "../../../lib/data/sentences/arabic-egyptian.js";
-import { BAMBARA_SENTENCES } from "../../../lib/data/sentences/bambara.js";
-import { EWE_SENTENCES } from "../../../lib/data/sentences/ewe.js";
-import { HAUSA_SENTENCES } from "../../../lib/data/sentences/hausa.js";
-import { IGBO_SENTENCES } from "../../../lib/data/sentences/igbo.js";
-import { IZON_SENTENCES } from "../../../lib/data/sentences/izon.js";
-import { KINYARWANDA_SENTENCES } from "../../../lib/data/sentences/kinyarwanda.js";
-import { SOMALI_SENTENCES } from "../../../lib/data/sentences/somali.js";
-import { SWAHILI_SENTENCES } from "../../../lib/data/sentences/swahili.js";
-import { TAMAZIGHT_SENTENCES } from "../../../lib/data/sentences/tamazight.js";
-import { WOLOF_SENTENCES } from "../../../lib/data/sentences/wolof.js";
-import { YORUBA_SENTENCES } from "../../../lib/data/sentences/yoruba.js";
+import { AMHARIC_SENTENCES } from "../../../mobile/lib/data/sentences/amharic.js";
+import { ARABIC_EGYPTIAN_SENTENCES } from "../../../mobile/lib/data/sentences/arabic-egyptian.js";
+import { BAMBARA_SENTENCES } from "../../../mobile/lib/data/sentences/bambara.js";
+import { EWE_SENTENCES } from "../../../mobile/lib/data/sentences/ewe.js";
+import { HAUSA_SENTENCES } from "../../../mobile/lib/data/sentences/hausa.js";
+import { IGBO_SENTENCES } from "../../../mobile/lib/data/sentences/igbo.js";
+import { IZON_SENTENCES } from "../../../mobile/lib/data/sentences/izon.js";
+import { KINYARWANDA_SENTENCES } from "../../../mobile/lib/data/sentences/kinyarwanda.js";
+import { SOMALI_SENTENCES } from "../../../mobile/lib/data/sentences/somali.js";
+import { SWAHILI_SENTENCES } from "../../../mobile/lib/data/sentences/swahili.js";
+import { TAMAZIGHT_SENTENCES } from "../../../mobile/lib/data/sentences/tamazight.js";
+import { WOLOF_SENTENCES } from "../../../mobile/lib/data/sentences/wolof.js";
+import { YORUBA_SENTENCES } from "../../../mobile/lib/data/sentences/yoruba.js";
 
 // ---------------------------------------------------------------------------
 // UGC placeholder user

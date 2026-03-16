@@ -1,14 +1,16 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAuth, useUser } from "@clerk/clerk-expo";
-import { Alert } from "react-native";
 import { apiFetch } from "@/lib/api";
-import type { FeedItem, Comment } from "@/types";
+import type { Comment, FeedItem } from "@/types";
+import { useAuth, useUser } from "@clerk/clerk-expo";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Alert } from "react-native";
 
 interface FeedItemResponse {
   id: string;
   type: FeedItem["type"];
   title: string;
+  titleFr?: string | null;
   description: string;
+  descriptionFr?: string | null;
   userName: string;
   userAvatarUrl?: string;
   audioUrl?: string;

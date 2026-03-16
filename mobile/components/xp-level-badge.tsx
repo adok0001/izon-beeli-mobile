@@ -1,5 +1,6 @@
-import { View, Text } from "react-native";
 import { getLevelInfo } from "@/lib/xp-levels";
+import { useTranslation } from "react-i18next";
+import { Text, View } from "react-native";
 
 interface XpLevelBadgeProps {
   points: number;
@@ -7,13 +8,17 @@ interface XpLevelBadgeProps {
 }
 
 export function XpLevelBadge({ points, variant = "compact" }: XpLevelBadgeProps) {
+  const { t } = useTranslation();
   const info = getLevelInfo(points);
+  const translatedTitle = info.legendNumeral
+    ? t("xp.levels.legendNumeral", { numeral: info.legendNumeral })
+    : t(`xp.levels.${info.titleKey}` as any);
 
   if (variant === "compact") {
     return (
       <View className="flex-row items-center gap-1.5">
         <View className="rounded-full bg-blue-500 px-2 py-0.5">
-          <Text className="text-xs font-bold text-white">Lv.{info.level}</Text>
+          <Text className="text-xs font-bold text-white">{t("xp.levelShort", { level: info.level })}</Text>
         </View>
         <View className="h-1.5 w-16 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
           <View
@@ -34,10 +39,10 @@ export function XpLevelBadge({ points, variant = "compact" }: XpLevelBadgeProps)
         </Text>
       </View>
       <Text className="text-base font-bold text-neutral-900 dark:text-white">
-        {info.title}
+        {translatedTitle}
       </Text>
       <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-        {info.currentXP} / {info.xpForNextLevel} XP
+        {t("xp.progressLabel", { current: info.currentXP, needed: info.xpForNextLevel })}
       </Text>
       <View className="mt-2 h-2 w-48 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
         <View
@@ -46,7 +51,7 @@ export function XpLevelBadge({ points, variant = "compact" }: XpLevelBadgeProps)
         />
       </View>
       <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">
-        Total XP: {info.totalXP}
+        {t("xp.totalXP", { total: info.totalXP })}
       </Text>
     </View>
   );

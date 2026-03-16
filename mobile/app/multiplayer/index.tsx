@@ -19,6 +19,7 @@ import {
   useRecentSessions,
 } from "@/lib/hooks/use-multiplayer";
 import type { GameSessionType } from "@/types";
+import { useTranslation } from "react-i18next";
 
 function ModeCard({
   title,
@@ -37,6 +38,9 @@ function ModeCard({
   onInvite: () => void;
   loading: boolean;
 }) {
+  const { t } = useTranslation();
+  const quickPlayLabel = t("multiplayer.quickPlay");
+  const inviteFriendLabel = t("multiplayer.inviteFriend");
   const bg = color === "blue" ? "bg-blue-500" : "bg-purple-500";
   const bgLight =
     color === "blue"
@@ -72,7 +76,7 @@ function ModeCard({
           {loading ? (
             <ActivityIndicator color="#fff" size="small" />
           ) : (
-            <Text className="font-semibold text-white">Quick Play</Text>
+            <Text className="font-semibold text-white">{quickPlayLabel}</Text>
           )}
         </Pressable>
         <Pressable
@@ -81,7 +85,7 @@ function ModeCard({
           className="flex-1 items-center rounded-xl border-2 border-neutral-200 py-3.5 active:opacity-80 dark:border-neutral-700"
         >
           <Text className="font-semibold text-neutral-700 dark:text-neutral-300">
-            Invite Friend
+            {inviteFriendLabel}
           </Text>
         </Pressable>
       </View>
@@ -91,6 +95,7 @@ function ModeCard({
 
 export default function MultiplayerHubScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { selectedLanguageId } = useLanguageStore();
   const createSession = useCreateSession();
   const joinSession = useJoinSession();
@@ -116,7 +121,7 @@ export default function MultiplayerHubScreen() {
         },
       });
     } catch (err: any) {
-      Alert.alert("Session Error", err?.message ?? "Failed to create session. Please try again.");
+      Alert.alert(t("multiplayer.sessionError"), err?.message ?? t("multiplayer.failedCreateSession"));
     }
   };
 
@@ -149,7 +154,7 @@ export default function MultiplayerHubScreen() {
         });
       }
     } catch (err: any) {
-      Alert.alert("Matchmaking Error", err?.message ?? "Failed to join matchmaking. Please try again.");
+      Alert.alert(t("multiplayer.matchmakingError"), err?.message ?? t("multiplayer.failedJoinMatchmaking"));
     }
   };
 
@@ -169,7 +174,7 @@ export default function MultiplayerHubScreen() {
         },
       });
     } catch {
-      Alert.alert("Invalid Code", "Could not find a game with that invite code.");
+      Alert.alert(t("multiplayer.invalidCode"), t("multiplayer.codeNotFound"));
     } finally {
       setJoining(false);
     }
@@ -177,7 +182,7 @@ export default function MultiplayerHubScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: "Multiplayer" }} />
+      <Stack.Screen options={{ title: t("multiplayer.title") }} />
       <SafeAreaView
         className="flex-1 bg-white dark:bg-neutral-900"
         edges={[]}
@@ -187,8 +192,8 @@ export default function MultiplayerHubScreen() {
           showsVerticalScrollIndicator={false}
         >
           <ModeCard
-            title="Quiz Battle"
-            subtitle="Race to answer questions fastest"
+            title={t("multiplayer.quizBattle")}
+            subtitle={t("multiplayer.quizBattleSubtitle")}
             color="blue"
             icon="trophy.fill"
             onQuickPlay={() => handleQuickPlay("quiz_battle")}
@@ -199,8 +204,8 @@ export default function MultiplayerHubScreen() {
           />
 
           <ModeCard
-            title="Paired Lesson"
-            subtitle="Learn together, take turns on exercises"
+            title={t("multiplayer.pairedLesson")}
+            subtitle={t("multiplayer.pairedLessonSubtitle")}
             color="purple"
             icon="person.2.fill"
             onQuickPlay={() => handleQuickPlay("paired_lesson")}
@@ -213,13 +218,13 @@ export default function MultiplayerHubScreen() {
           {/* Join with code */}
           <View className="mb-6 rounded-2xl bg-neutral-50 p-5 dark:bg-neutral-800">
             <Text className="mb-3 text-base font-bold text-neutral-900 dark:text-white">
-              Have an invite code?
+              {t("multiplayer.haveInviteCode")}
             </Text>
             <View className="flex-row gap-3">
               <TextInput
                 value={joinCode}
-                onChangeText={(t) => setJoinCode(t.toUpperCase())}
-                placeholder="Enter code"
+                onChangeText={(v) => setJoinCode(v.toUpperCase())}
+                placeholder={t("multiplayer.enterCode")}
                 placeholderTextColor="#9ca3af"
                 maxLength={6}
                 autoCapitalize="characters"
@@ -233,7 +238,7 @@ export default function MultiplayerHubScreen() {
                 {joining ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
-                  <Text className="font-semibold text-white">Join</Text>
+                  <Text className="font-semibold text-white">{t("multiplayer.join")}</Text>
                 )}
               </Pressable>
             </View>
@@ -243,7 +248,7 @@ export default function MultiplayerHubScreen() {
           {recentSessions.length > 0 && (
             <View>
               <Text className="mb-3 text-base font-bold text-neutral-900 dark:text-white">
-                Recent Matches
+                {t("multiplayer.recentMatches")}
               </Text>
               {recentSessions.slice(0, 5).map((session) => (
                 <Pressable
@@ -273,8 +278,8 @@ export default function MultiplayerHubScreen() {
                   <View className="ml-3 flex-1">
                     <Text className="text-sm font-medium text-neutral-900 dark:text-white">
                       {session.type === "quiz_battle"
-                        ? "Quiz Battle"
-                        : "Paired Lesson"}
+                        ? t("multiplayer.quizBattle")
+                        : t("multiplayer.pairedLesson")}
                     </Text>
                     <Text className="text-xs text-neutral-500 dark:text-neutral-400">
                       {session.status} &middot;{" "}

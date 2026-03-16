@@ -15,7 +15,9 @@ type DailyGoal = "casual" | "steady" | "intensive";
 interface ChallengeTemplate {
   challengeType: ChallengeType;
   title: string;
+  title_fr?: string;
   description: string;
+  description_fr?: string;
   xpReward: number;
   targets: { casual: number; steady: number; intensive: number };
 }
@@ -24,35 +26,45 @@ const CHALLENGE_POOL: ChallengeTemplate[] = [
   {
     challengeType: "complete_quiz",
     title: "Quiz Champion",
+    title_fr: "Champion du Quiz",
     description: "Complete a quiz session",
+    description_fr: "Terminez une session de quiz",
     xpReward: 30,
     targets: { casual: 1, steady: 1, intensive: 2 },
   },
   {
     challengeType: "review_words",
     title: "Word Reviewer",
+    title_fr: "Réviseur de Mots",
     description: "Review words from your word bank",
+    description_fr: "Révisez les mots de votre banque de mots",
     xpReward: 20,
     targets: { casual: 3, steady: 5, intensive: 10 },
   },
   {
     challengeType: "listen_lesson",
     title: "Active Listener",
+    title_fr: "Auditeur Actif",
     description: "Listen to a lesson",
+    description_fr: "Écoutez une leçon",
     xpReward: 25,
     targets: { casual: 1, steady: 1, intensive: 2 },
   },
   {
     challengeType: "complete_lesson",
     title: "Lesson Complete",
+    title_fr: "Leçon Terminée",
     description: "Mark a lesson as complete",
+    description_fr: "Marquez une leçon comme terminée",
     xpReward: 35,
     targets: { casual: 1, steady: 2, intensive: 3 },
   },
   {
     challengeType: "save_words",
     title: "Word Collector",
+    title_fr: "Collectionneur de Mots",
     description: "Save new words to your word bank",
+    description_fr: "Enregistrez de nouveaux mots dans votre banque de mots",
     xpReward: 15,
     targets: { casual: 2, steady: 3, intensive: 5 },
   },
@@ -126,7 +138,9 @@ export async function getOrCreateTodayChallenges(
       slot,
       challengeType: tpl.challengeType,
       title: tpl.title,
+      title_fr: tpl.title_fr,
       description: tpl.description,
+      description_fr: tpl.description_fr,
       target: tpl.targets[goal],
       xpReward: tpl.xpReward,
     };

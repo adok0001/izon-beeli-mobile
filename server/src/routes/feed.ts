@@ -1,7 +1,7 @@
+import { and, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import { Hono } from "hono";
-import { eq, and, desc, lt, sql, inArray } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { feedItems, likes, comments, users } from "../db/schema.js";
+import { comments, feedItems, likes, users } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
 
 const VALID_FEED_TYPES = ["lesson_completed", "achievement", "contribution", "community"] as const;
@@ -60,7 +60,9 @@ feedRouter.get("/", async (c) => {
     id: item.id,
     type: item.type,
     title: item.title,
+    titleFr: item.titleFr ?? null,
     description: item.description,
+    descriptionFr: item.descriptionFr ?? null,
     userName: item.userName,
     userAvatarUrl: item.userAvatarUrl,
     audioUrl: item.audioUrl,
@@ -120,7 +122,9 @@ feedRouter.post("/", async (c) => {
       id: item.id,
       type: item.type,
       title: item.title,
+      titleFr: item.titleFr ?? null,
       description: item.description,
+      descriptionFr: item.descriptionFr ?? null,
       userName: item.userName,
       likes: 0,
       comments: 0,

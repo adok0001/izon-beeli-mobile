@@ -8,6 +8,7 @@ import { TracingCanvas } from "@/components/geez/tracing-canvas";
 import { useGeezStore } from "@/store/geez-store";
 import { FIDEL_CHART, type GeezCharacter } from "@/lib/data/geez";
 import { hapticSuccess } from "@/lib/haptics";
+import { useTranslation } from "react-i18next";
 
 type Tab = "chart" | "practice";
 
@@ -41,6 +42,7 @@ function TabSegment({
 }
 
 export default function GeezLessonScreen() {
+  const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>("chart");
   const [selectedChar, setSelectedChar] = useState<GeezCharacter | null>(null);
   // Pinned character: set when user taps "Practice tracing" from the detail modal.
@@ -113,8 +115,8 @@ export default function GeezLessonScreen() {
     <>
       <Stack.Screen
         options={{
-          title: "Learn Ge'ez Script",
-          headerBackTitle: "Back",
+          title: t("geez.title"),
+          headerBackTitle: t("common.back"),
         }}
       />
       <SafeAreaView
@@ -125,10 +127,10 @@ export default function GeezLessonScreen() {
         <View className="px-5 pt-4 pb-2">
           <View className="flex-row items-center justify-between">
             <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-              Progress
+              {t("geez.progress")}
             </Text>
             <Text className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-              {learnedCount}/{TOTAL_CHARS} learned
+              {t("geez.learnedCount", { count: learnedCount, total: TOTAL_CHARS })}
             </Text>
           </View>
           <View className="mt-2 h-2 rounded-full bg-neutral-200 dark:bg-neutral-700">
@@ -146,15 +148,15 @@ export default function GeezLessonScreen() {
           <TabSegment
             active={tab === "chart"}
             onPress={() => setTab("chart")}
-            label={`Chart (${TOTAL_CHARS})`}
+            label={t("geez.chart", { count: TOTAL_CHARS })}
           />
           <TabSegment
             active={tab === "practice"}
             onPress={() => setTab("practice")}
             label={
               allLearned
-                ? "Practice ✓"
-                : `Practice (${unlearnedChars.length} left)`
+                ? t("geez.practiceComplete")
+                : t("geez.practiceTab", { remaining: unlearnedChars.length })
             }
           />
         </View>
@@ -168,13 +170,13 @@ export default function GeezLessonScreen() {
               <View className="flex-1 items-center justify-center gap-3">
                 <Text className="text-5xl">🎉</Text>
                 <Text className="text-xl font-bold text-neutral-900 dark:text-white">
-                  All {TOTAL_CHARS} characters learned!
+                  {t("geez.allLearned", { count: TOTAL_CHARS })}
                 </Text>
                 <Pressable
                   onPress={() => setTab("chart")}
                   className="mt-2 rounded-xl bg-blue-500 px-6 py-3 active:opacity-80"
                 >
-                  <Text className="font-semibold text-white">Back to Chart</Text>
+                  <Text className="font-semibold text-white">{t("geez.backToChart")}</Text>
                 </Pressable>
               </View>
             ) : (
@@ -191,12 +193,12 @@ export default function GeezLessonScreen() {
                     }`}
                   >
                     <Text className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-                      ← Prev
+                      {t("geez.prev")}
                     </Text>
                   </Pressable>
 
                   <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-                    {practiceIndex + 1} of {unlearnedChars.length} remaining
+                    {t("geez.remaining", { current: practiceIndex + 1, remaining: unlearnedChars.length })}
                   </Text>
 
                   <Pressable
@@ -209,7 +211,7 @@ export default function GeezLessonScreen() {
                     }`}
                   >
                     <Text className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-                      Next →
+                      {t("geez.next")}
                     </Text>
                   </Pressable>
                 </View>
@@ -226,7 +228,7 @@ export default function GeezLessonScreen() {
                     className="items-center rounded-2xl bg-green-500 py-4 active:opacity-80"
                   >
                     <Text className="text-base font-bold text-white">
-                      Got it! Mark as learned
+                      {t("geez.gotItMarkLearned")}
                     </Text>
                   </Pressable>
                   <Pressable
@@ -235,7 +237,7 @@ export default function GeezLessonScreen() {
                     className="items-center rounded-2xl border border-neutral-200 py-3 active:opacity-70 dark:border-neutral-700"
                   >
                     <Text className="text-sm font-semibold text-neutral-600 dark:text-neutral-400">
-                      Skip — practice next
+                      {t("geez.skipNext")}
                     </Text>
                   </Pressable>
                 </View>

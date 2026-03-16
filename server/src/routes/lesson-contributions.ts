@@ -4,13 +4,13 @@ import { desc, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index.js";
 import {
-    courses,
-    feedItems,
-    lessonContributions,
-    lessonContributionSegments,
-    lessons,
-    transcriptSegments,
-    users,
+  courses,
+  feedItems,
+  lessonContributions,
+  lessonContributionSegments,
+  lessons,
+  transcriptSegments,
+  users,
 } from "../db/schema.js";
 import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
 
@@ -138,7 +138,9 @@ lessonContributionsRouter.post("/", async (c) => {
     userId,
     type: "contribution",
     title: `New lesson: ${title.trim()}`,
+    titleFr: `Nouvelle leçon : ${title.trim()}`,
     description: `Submitted a lesson contribution for ${languageId}`,
+    descriptionFr: `A soumis une contribution de leçon pour le ${languageId}`,
     userName: user?.name ?? "User",
     userAvatarUrl: user?.avatarUrl,
     audioUrl,

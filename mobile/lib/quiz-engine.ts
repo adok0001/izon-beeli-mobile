@@ -1,5 +1,8 @@
-import type { AudioSource, MatchingGameConfig, MatchingPair, QuestionType, QuizConfig, QuizQuestion, SentenceTemplate } from "@/types";
 import type { DictionaryEntry } from "@/lib/dictionary";
+import type { AudioSource, MatchingGameConfig, MatchingPair, QuestionType, QuizConfig, QuizQuestion, SentenceTemplate } from "@/types";
+
+/** Optional translate function passed from a React component via useTranslation(). */
+export type QuizTranslateFn = (key: string, opts?: Record<string, unknown>) => string;
 
 interface QuizPool {
   word: string;
@@ -44,14 +47,17 @@ function gatherDictionaryPool(
 
 function makeWordToEnglish(
   item: QuizPool,
-  allEnglish: string[]
+  allEnglish: string[],
+  translate?: QuizTranslateFn
 ): QuizQuestion | null {
   const distractors = pickDistractors(item.english, allEnglish, 3);
   if (distractors.length < 3) return null;
   return {
     id: `q-${Math.random().toString(36).slice(2, 9)}`,
     type: "word-to-english",
-    prompt: `What does "${item.word}" mean in English?`,
+    prompt: translate
+      ? translate("quiz.promptWordToEnglish", { word: item.word })
+      : `What does "${item.word}" mean in English?`,
     correctAnswer: item.english,
     options: shuffle([item.english, ...distractors]),
   };
@@ -59,14 +65,17 @@ function makeWordToEnglish(
 
 function makeEnglishToWord(
   item: QuizPool,
-  allWords: string[]
+  allWords: string[],
+  translate?: QuizTranslateFn
 ): QuizQuestion | null {
   const distractors = pickDistractors(item.word, allWords, 3);
   if (distractors.length < 3) return null;
   return {
     id: `q-${Math.random().toString(36).slice(2, 9)}`,
     type: "english-to-word",
-    prompt: `How do you say "${item.english}"?`,
+    prompt: translate
+      ? translate("quiz.promptEnglishToWord", { english: item.english })
+      : `How do you say "${item.english}"?`,
     correctAnswer: item.word,
     options: shuffle([item.word, ...distractors]),
   };
@@ -75,7 +84,8 @@ function makeEnglishToWord(
 function makeFillInTheBlank(
   item: QuizPool,
   allWords: string[],
-  sentences?: SentenceTemplate[]
+  sentences?: SentenceTemplate[],
+  translate?: QuizTranslateFn
 ): QuizQuestion | null {
   const distractors = pickDistractors(item.word, allWords, 3);
   if (distractors.length < 3) return null;
@@ -85,12 +95,20 @@ function makeFillInTheBlank(
     (s) => s.answer.toLowerCase() === item.word.toLowerCase()
   );
 
-  const prompt = template
-    ? `Fill in the blank: "${template.sentence.replace(
+  const maskedSentence = template
+    ? template.sentence.replace(
         new RegExp(escapeRegex(template.answer), "i"),
         "______"
-      )}"\n(${template.englishSentence})`
-    : `Fill in the blank: ______ means "${item.english}"`;
+      )
+    : null;
+
+  const prompt = template && maskedSentence
+    ? translate
+      ? translate("quiz.promptFillInBlankSentence", { sentence: maskedSentence, translation: template.englishSentence })
+      : `Fill in the blank: "${maskedSentence}"\n(${template.englishSentence})`
+    : translate
+      ? translate("quiz.promptFillInBlankSimple", { english: item.english })
+      : `Fill in the blank: ______ means "${item.english}"`;
 
   return {
     id: `q-${Math.random().toString(36).slice(2, 9)}`,
@@ -107,7 +125,8 @@ function escapeRegex(s: string): string {
 
 function makeListening(
   item: QuizPool,
-  allEnglish: string[]
+  allEnglish: string[],
+  translate?: QuizTranslateFn
 ): QuizQuestion | null {
   const distractors = pickDistractors(item.english, allEnglish, 3);
   if (distractors.length < 3) return null;
@@ -115,8 +134,12 @@ function makeListening(
     id: `q-${Math.random().toString(36).slice(2, 9)}`,
     type: "listening",
     prompt: item.audioSource
-      ? "Listen and select the correct English translation"
-      : `What is the English translation of: "${item.word}"?`,
+      ? translate
+        ? translate("quiz.promptListening")
+        : "Listen and select the correct English translation"
+      : translate
+        ? translate("quiz.promptTranslationOf", { word: item.word })
+        : `What is the English translation of: "${item.word}"?`,
     correctAnswer: item.english,
     options: shuffle([item.english, ...distractors]),
     audioSource: item.audioSource,
@@ -126,7 +149,8 @@ function makeListening(
 export function generateQuiz(
   config: QuizConfig,
   entries: DictionaryEntry[] = [],
-  sentences: SentenceTemplate[] = []
+  sentences: SentenceTemplate[] = [],
+  translate?: QuizTranslateFn
 ): QuizQuestion[] {
   const { category, questionCount } = config;
 
@@ -164,16 +188,16 @@ export function generateQuiz(
     let q: QuizQuestion | null = null;
     switch (typeIndex) {
       case 0:
-        q = makeWordToEnglish(item, allEnglish);
+        q = makeWordToEnglish(item, allEnglish, translate);
         break;
       case 1:
-        q = makeEnglishToWord(item, allWords);
+        q = makeEnglishToWord(item, allWords, translate);
         break;
       case 2:
-        q = makeFillInTheBlank(item, allWords, sentences);
+        q = makeFillInTheBlank(item, allWords, sentences, translate);
         break;
       case 3:
-        q = makeListening(item, allEnglish);
+        q = makeListening(item, allEnglish, translate);
         break;
     }
     if (q) questions.push(q);
@@ -190,7 +214,8 @@ export function generateFocusedQuiz(
   word: string,
   english: string,
   audioSource: AudioSource | undefined,
-  entries: DictionaryEntry[] = []
+  entries: DictionaryEntry[] = [],
+  translate?: QuizTranslateFn
 ): QuizQuestion[] {
   const pool = gatherDictionaryPool(entries);
   // Filter out the focus word itself from distractor lists
@@ -203,18 +228,18 @@ export function generateFocusedQuiz(
   const focus: QuizPool = { word, english, audioSource };
   const questions: QuizQuestion[] = [];
 
-  const q1 = makeWordToEnglish(focus, distEnglish);
+  const q1 = makeWordToEnglish(focus, distEnglish, translate);
   if (q1) questions.push(q1);
 
-  const q2 = makeEnglishToWord(focus, distWords);
+  const q2 = makeEnglishToWord(focus, distWords, translate);
   if (q2) questions.push(q2);
 
   // Listening if audio available, otherwise fill-in-the-blank
   if (audioSource) {
-    const q3 = makeListening(focus, distEnglish);
+    const q3 = makeListening(focus, distEnglish, translate);
     if (q3) questions.push(q3);
   } else {
-    const q3 = makeFillInTheBlank(focus, distWords);
+    const q3 = makeFillInTheBlank(focus, distWords, undefined, translate);
     if (q3) questions.push(q3);
   }
 

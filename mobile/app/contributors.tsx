@@ -1,13 +1,14 @@
-import { View, Text, FlatList } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import {
-  useContributors,
   BADGE_LABELS,
-  type ContributorProfile,
+  useContributors,
   type ContributorBadgeType,
+  type ContributorProfile,
 } from "@/lib/hooks/use-contributors";
+import { Stack } from "expo-router";
+import { useTranslation } from "react-i18next";
+import { FlatList, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 function BadgePill({ badge }: { badge: ContributorBadgeType }) {
   const info = BADGE_LABELS[badge];
@@ -28,6 +29,7 @@ function ContributorRow({
   contributor: ContributorProfile;
   rank: number;
 }) {
+  const { t } = useTranslation();
   const medalColor =
     rank === 1 ? "#f59e0b" : rank === 2 ? "#9ca3af" : rank === 3 ? "#cd7f32" : undefined;
 
@@ -52,8 +54,8 @@ function ContributorRow({
             {contributor.name}
           </Text>
           <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
-            {contributor.approvedCount} words
-            {contributor.audioCount > 0 ? ` · ${contributor.audioCount} audio` : ""}
+            {t("contributors.wordsCount", { count: contributor.approvedCount })}
+            {contributor.audioCount > 0 ? ` ${t("contributors.audioCount", { count: contributor.audioCount })}` : ""}
           </Text>
         </View>
       </View>
@@ -70,11 +72,12 @@ function ContributorRow({
 }
 
 export default function ContributorsScreen() {
+  const { t } = useTranslation();
   const { data: contributors } = useContributors();
 
   return (
     <>
-      <Stack.Screen options={{ title: "Contributors" }} />
+      <Stack.Screen options={{ title: t("contributors.title") }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
         <FlatList
           data={contributors}
@@ -84,7 +87,7 @@ export default function ContributorsScreen() {
           ListHeaderComponent={
             <View className="mb-4">
               <Text className="text-center text-sm text-neutral-500 dark:text-neutral-400">
-                Thank you to everyone helping build our language dictionary!
+                {t("contributors.thankYou")}
               </Text>
             </View>
           }

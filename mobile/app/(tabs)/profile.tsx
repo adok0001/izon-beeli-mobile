@@ -191,7 +191,7 @@ export default function ProfileScreen() {
           />
           <MenuRow
             icon="map.fill"
-            label={t("profile.restartTour", "Restart App Tour")}
+            label={t("profile.restartWelcomeTour")}
             onPress={async () => { await resetTour(); startTour(); }}
           />
           <MenuRow

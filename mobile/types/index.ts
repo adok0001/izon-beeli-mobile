@@ -67,7 +67,9 @@ export interface FeedItem {
   id: string;
   type: "lesson_completed" | "achievement" | "contribution" | "community";
   title: string;
+  titleFr?: string | null;
   description: string;
+  descriptionFr?: string | null;
   userName: string;
   userAvatarUrl?: string;
   createdAt: string;

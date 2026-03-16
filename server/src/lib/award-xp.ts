@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { users, feedItems } from "../db/schema.js";
+import { feedItems, users } from "../db/schema.js";
 import { getLevelInfo } from "./xp-levels.js";
 
 export const CONTRIBUTION_BASE_XP = { word: 15, phrase: 20, audio: 25 } as const;
@@ -36,7 +36,9 @@ export async function awardXP(
       userId,
       type: "achievement",
       title: `Reached Level ${newLevelInfo.level}: ${newLevelInfo.title}`,
+      titleFr: `Niveau ${newLevelInfo.level} atteint : ${newLevelInfo.titleFr}`,
       description: `${user.name} leveled up to ${newLevelInfo.title}!`,
+      descriptionFr: `${user.name} est passé au niveau ${newLevelInfo.titleFr} !`,
       userName: user.name,
     }).catch(() => {}); // fire-and-forget, don't fail if feed insert errors
   }

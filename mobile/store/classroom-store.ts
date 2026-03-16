@@ -1,8 +1,4 @@
 import { create } from "zustand";
-import {
-  MOCK_GROUPS,
-  MOCK_ASSIGNMENTS,
-} from "@/lib/data/mock-classroom";
 import type { Group, AssignedLesson } from "@/types";
 
 interface ClassroomState {
@@ -27,8 +23,8 @@ function generateCode(): string {
 }
 
 export const useClassroomStore = create<ClassroomState>((set, get) => ({
-  groups: MOCK_GROUPS,
-  assignments: MOCK_ASSIGNMENTS,
+  groups: [],
+  assignments: [],
 
   getGroup: (id) => get().groups.find((g) => g.id === id),
 

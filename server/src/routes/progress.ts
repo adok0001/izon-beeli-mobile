@@ -1,10 +1,10 @@
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
-import { eq, and, sql, asc, inArray } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { userProgress, users, courses, lessons } from "../db/schema.js";
-import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
+import { courses, lessons, userProgress, users } from "../db/schema.js";
 import { awardXP } from "../lib/award-xp.js";
 import { incrementDailyChallenge } from "../lib/daily-challenge.js";
+import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
 
 const STREAK_MILESTONES = new Set([3, 7, 14, 30, 60, 100]);
 // Milestones that grant a freeze bonus
@@ -241,7 +241,7 @@ progressRouter.get("/next-lesson", async (c) => {
   // Courses + completed progress in parallel (both only need languageId/userId)
   const [langCourses, completedRows] = await Promise.all([
     db
-      .select({ id: courses.id, title: courses.title, order: courses.order })
+      .select({ id: courses.id, title: courses.title, titleFr: courses.titleFr, order: courses.order })
       .from(courses)
       .where(eq(courses.languageId, languageId))
       .orderBy(asc(courses.order)),
@@ -260,7 +260,9 @@ progressRouter.get("/next-lesson", async (c) => {
     .select({
       id: lessons.id,
       title: lessons.title,
+      titleFr: lessons.titleFr,
       description: lessons.description,
+      descriptionFr: lessons.descriptionFr,
       duration: lessons.duration,
       courseId: lessons.courseId,
       order: lessons.order,
@@ -299,13 +301,16 @@ progressRouter.get("/next-lesson", async (c) => {
     lesson: {
       id: next.id,
       title: next.title,
+      titleFr: next.titleFr ?? null,
       description: next.description,
+      descriptionFr: next.descriptionFr ?? null,
       duration: next.duration,
       courseId: next.courseId,
     },
     course: {
       id: course?.id ?? next.courseId,
       title: course?.title ?? "",
+      titleFr: course?.titleFr ?? null,
     },
     overallProgress: { completed, total },
   });

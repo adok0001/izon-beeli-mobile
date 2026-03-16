@@ -1,25 +1,25 @@
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { WordAudioButton } from "@/components/dictionary/word-audio-button";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import {
-  ALL_CATEGORIES,
-  CATEGORY_LABELS,
-  searchDictionary,
-  type DictionaryCategory,
-  type DictionaryEntry,
+    ALL_CATEGORIES,
+    searchDictionary,
+    type DictionaryCategory,
+    type DictionaryEntry,
 } from "@/lib/dictionary";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { useRemoveWord, useSaveWord, useWordBank } from "@/lib/hooks/use-wordbank";
 import { useLanguageStore } from "@/store/language-store";
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
-  ActivityIndicator,
-  Pressable,
-  RefreshControl,
-  SectionList,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Pressable,
+    RefreshControl,
+    SectionList,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -64,6 +64,7 @@ function WordRow({
 }
 
 export default function DictionaryScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("all");
@@ -113,10 +114,10 @@ export default function DictionaryScreen() {
     return ALL_CATEGORIES
       .filter((cat) => grouped.has(cat))
       .map((cat) => ({
-        title: CATEGORY_LABELS[cat],
+        title: t(`dictionaryPage.categoryLabels.${cat}` as any),
         data: grouped.get(cat)!,
       }));
-  }, [query, viewMode, allEntries, savedSet.size]);
+  }, [query, viewMode, allEntries, savedSet.size, t]);
 
   const savedCount = allEntries.filter((e) => savedSet.has(e.id)).length;
 
@@ -134,7 +135,7 @@ export default function DictionaryScreen() {
             <TextInput
               value={query}
               onChangeText={setQuery}
-              placeholder="Search for a word..."
+              placeholder={t("dictionaryPage.searchPlaceholderMobile")}
               placeholderTextColor="#9ca3af"
               className="ml-2 flex-1 py-2.5 text-base text-neutral-900 dark:text-white"
               autoCapitalize="none"
@@ -164,7 +165,7 @@ export default function DictionaryScreen() {
                     : "text-neutral-600 dark:text-neutral-400"
                 }`}
               >
-                All Words ({allEntries.length})
+                {t("dictionaryPage.allWordsCount", { count: allEntries.length })}
               </Text>
             </Pressable>
             <Pressable
@@ -182,7 +183,7 @@ export default function DictionaryScreen() {
                     : "text-neutral-600 dark:text-neutral-400"
                 }`}
               >
-                My Words ({savedCount})
+                {t("dictionaryPage.myWordsCount", { count: savedCount })}
               </Text>
             </Pressable>
           </View>
@@ -195,7 +196,7 @@ export default function DictionaryScreen() {
             >
               <IconSymbol name="brain.head.profile" size={16} color="#fff" />
               <Text className="ml-2 text-sm font-semibold text-white">
-                Review Saved Words
+                {t("dictionaryPage.reviewSavedWords")}
               </Text>
             </Pressable>
           )}
@@ -246,8 +247,8 @@ export default function DictionaryScreen() {
                 />
                 <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
                   {viewMode === "saved"
-                    ? "No saved words yet. Tap the star on any word to save it."
-                    : "No results found. Try a different search term."}
+                    ? t("dictionaryPage.noSavedWords")
+                    : t("dictionaryPage.noResults")}
                 </Text>
               </View>
             }

@@ -1,13 +1,18 @@
-import { View, Text, Pressable } from "react-native";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useWordOfTheDay } from "@/lib/hooks/use-word-of-the-day";
 import { useSaveWord, useWordBank } from "@/lib/hooks/use-wordbank";
+import { localizeField } from "@/lib/localize";
+import { useUiLanguageStore } from "@/store/ui-language-store";
+import { useTranslation } from "react-i18next";
+import { Pressable, Text, View } from "react-native";
 
 interface Props {
   languageId: string;
 }
 
 export function WordOfTheDay({ languageId }: Props) {
+  const { t } = useTranslation();
+  const { uiLanguage } = useUiLanguageStore();
   const word = useWordOfTheDay(languageId);
   const { data: savedIds } = useWordBank();
   const saveWord = useSaveWord();
@@ -22,7 +27,7 @@ export function WordOfTheDay({ languageId }: Props) {
         <View className="flex-row items-center">
           <IconSymbol name="star.fill" size={16} color="#3b82f6" />
           <Text className="ml-1.5 text-xs font-semibold uppercase tracking-wider text-blue-700 dark:text-blue-400">
-            Word of the Day
+            {t("wordOfTheDay.title")}
           </Text>
         </View>
         <Pressable
@@ -50,7 +55,7 @@ export function WordOfTheDay({ languageId }: Props) {
       )}
 
       <Text className="mt-1 text-base text-neutral-700 dark:text-neutral-300">
-        {word.english}
+        {localizeField(word.english, word.french, uiLanguage)}
       </Text>
 
       {word.example && (
@@ -60,7 +65,7 @@ export function WordOfTheDay({ languageId }: Props) {
           </Text>
           {word.exampleTranslation && (
             <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-              {word.exampleTranslation}
+              {localizeField(word.exampleTranslation, word.exampleTranslationFr, uiLanguage)}
             </Text>
           )}
         </View>

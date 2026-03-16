@@ -1,19 +1,18 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { CATEGORY_LABELS, type DictionaryCategory } from "@/lib/dictionary";
+
 import { useBounties, type Bounty } from "@/lib/hooks/use-bounties";
 import { useCurrentUser } from "@/lib/hooks/use-current-user";
 import { getLanguageName } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { FlatList, Pressable, RefreshControl, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function BountyCard({ bounty }: { bounty: Bounty }) {
+  const { t } = useTranslation();
   const router = useRouter();
-  const categoryLabel = bounty.category
-    ? CATEGORY_LABELS[bounty.category as DictionaryCategory] ?? bounty.category
-    : null;
 
   return (
     <View className="mb-3 rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
@@ -24,17 +23,17 @@ function BountyCard({ bounty }: { bounty: Bounty }) {
               {getLanguageName(bounty.languageId)}
             </Text>
           </View>
-          {categoryLabel && (
+          {bounty.category && (
             <View className="rounded-full bg-neutral-200 px-2.5 py-0.5 dark:bg-neutral-700">
               <Text className="text-xs text-neutral-600 dark:text-neutral-400">
-                {categoryLabel}
+                {t(`dictionaryPage.categoryLabels.${bounty.category}`, { defaultValue: bounty.category })}
               </Text>
             </View>
           )}
         </View>
         <View className="rounded-full bg-amber-100 px-2.5 py-1 dark:bg-amber-900">
           <Text className="text-xs font-bold text-amber-700 dark:text-amber-300">
-            +{bounty.xpReward} XP bonus
+            {t("bounties.xpBonus", { xp: bounty.xpReward })}
           </Text>
         </View>
       </View>
@@ -48,7 +47,7 @@ function BountyCard({ bounty }: { bounty: Bounty }) {
 
       {bounty.createdByName && (
         <Text className="mb-3 text-xs text-neutral-400 dark:text-neutral-500">
-          Created by {bounty.createdByName}
+          {t("bounties.createdBy", { name: bounty.createdByName })}
         </Text>
       )}
 
@@ -82,13 +81,14 @@ function BountyCard({ bounty }: { bounty: Bounty }) {
         }
         className="items-center rounded-xl bg-amber-500 py-3 active:opacity-80"
       >
-        <Text className="font-semibold text-white">Contribute</Text>
+        <Text className="font-semibold text-white">{t("bounties.contribute")}</Text>
       </Pressable>
     </View>
   );
 }
 
 export default function BountiesScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { selectedLanguageId } = useLanguageStore();
   const { data, isLoading, refetch } = useBounties(selectedLanguageId);
@@ -103,7 +103,7 @@ export default function BountiesScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: "Bounties", headerBackTitle: "Back" }} />
+      <Stack.Screen options={{ title: t("bounties.title"), headerBackTitle: t("common.goBack") }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
         <FlatList
           data={data ?? []}
@@ -118,11 +118,11 @@ export default function BountiesScreen() {
                 <IconSymbol name="star.fill" size={28} color="#f59e0b" />
               </View>
               <Text className="text-center text-base font-semibold text-neutral-500 dark:text-neutral-400">
-                {isLoading ? "Loading..." : "No active bounties"}
+                {isLoading ? t("bounties.loading") : t("bounties.noActive")}
               </Text>
               {!isLoading && (
                 <Text className="mt-1 text-center text-sm text-neutral-400 dark:text-neutral-500">
-                  Check back later for content bounties with bonus XP rewards.
+                  {t("bounties.noActiveDesc")}
                 </Text>
               )}
             </View>

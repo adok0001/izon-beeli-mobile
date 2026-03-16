@@ -1,18 +1,21 @@
-import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@clerk/clerk-expo";
 import { apiFetch } from "@/lib/api";
+import { useAuth } from "@clerk/clerk-expo";
+import { useQuery } from "@tanstack/react-query";
 
 export interface NextLessonResponse {
   lesson?: {
     id: string;
     title: string;
+    titleFr?: string | null;
     description: string;
+    descriptionFr?: string | null;
     duration: number | null;
     courseId: string;
   };
   course?: {
     id: string;
     title: string;
+    titleFr?: string | null;
   };
   overallProgress: {
     completed: number;

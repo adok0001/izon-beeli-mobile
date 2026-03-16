@@ -1,8 +1,9 @@
-import { useCultural } from "@/lib/hooks/use-cultural";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useCultural } from "@/lib/hooks/use-cultural";
 import type { CulturalCategory, CulturalContent } from "@/types";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -34,6 +35,7 @@ function KeyTermPill({ word, english }: { word: string; english: string }) {
 }
 
 function ExpandedCulturalCard({ item }: { item: CulturalContent }) {
+  const { t } = useTranslation();
   return (
     <View className="mb-4 rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
       <View className="flex-row items-start">
@@ -41,7 +43,7 @@ function ExpandedCulturalCard({ item }: { item: CulturalContent }) {
         <View className="ml-3 flex-1">
           <View className="self-start rounded-full bg-amber-100 px-2.5 py-0.5 dark:bg-amber-900/40">
             <Text className="text-xs font-medium text-amber-700 dark:text-amber-400">
-              {getCategoryLabel(item.category)}
+              {t(`cultural.categories.${item.category}` as any)}
             </Text>
           </View>
           <Text className="mt-1.5 text-lg font-bold text-neutral-900 dark:text-white">
@@ -57,7 +59,7 @@ function ExpandedCulturalCard({ item }: { item: CulturalContent }) {
       {item.keyTerms.length > 0 && (
         <View className="mt-3">
           <Text className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-            Key Terms
+            {t("cultural.keyTerms")}
           </Text>
           <View className="flex-row flex-wrap">
             {item.keyTerms.map((term) => (
@@ -90,6 +92,7 @@ function getCategoryLabel(category: string): string {
 }
 
 export default function CulturalScreen() {
+  const { t } = useTranslation();
   const { languageId } = useLocalSearchParams<{ languageId: string }>();
   const { data: allContent = [], isLoading } = useCultural(languageId ?? "");
   const categories = CULTURAL_CATEGORIES;
@@ -124,7 +127,7 @@ export default function CulturalScreen() {
     >
       <Stack.Screen
         options={{
-          title: `${languageTitle} Cultural Heritage`,
+          title: `${languageTitle} ${t("cultural.titleSuffix")}`,
           headerBackTitle: "Back",
         }}
       />
@@ -151,7 +154,7 @@ export default function CulturalScreen() {
                 : "text-neutral-700 dark:text-neutral-300"
             }`}
           >
-            All
+            {t("cultural.all")}
           </Text>
         </Pressable>
 
@@ -176,7 +179,7 @@ export default function CulturalScreen() {
                   : "text-neutral-700 dark:text-neutral-300"
               }`}
             >
-              {cat.emoji} {cat.label}
+              {cat.emoji} {t(`cultural.categories.${cat.id}` as any)}
             </Text>
           </Pressable>
         ))}
@@ -190,7 +193,7 @@ export default function CulturalScreen() {
         <View className="flex-1 items-center justify-center px-8">
           <IconSymbol name="book.fill" size={48} color="#d1d5db" />
           <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
-            No cultural content available for this category yet.
+            {t("cultural.noContent")}
           </Text>
         </View>
       ) : (

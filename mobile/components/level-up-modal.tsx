@@ -1,8 +1,9 @@
-import { useEffect, useRef } from "react";
-import { View, Text, Pressable, Animated, Modal } from "react-native";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { playFinishSound } from "@/lib/sounds";
 import { hapticHeavy } from "@/lib/haptics";
+import { playFinishSound } from "@/lib/sounds";
+import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
+import { Animated, Modal, Pressable, Text, View } from "react-native";
 
 interface LevelUpModalProps {
   visible: boolean;
@@ -12,6 +13,7 @@ interface LevelUpModalProps {
 }
 
 export function LevelUpModal({ visible, level, title, onDismiss }: LevelUpModalProps) {
+  const { t } = useTranslation();
   const scale = useRef(new Animated.Value(0.5)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
@@ -60,16 +62,16 @@ export function LevelUpModal({ visible, level, title, onDismiss }: LevelUpModalP
             <IconSymbol name="star.fill" size={40} color="#f59e0b" />
           </View>
           <Text className="text-xs font-semibold uppercase tracking-widest text-blue-500">
-            Level Up!
+            {t("xp.levelUp")}
           </Text>
           <Text className="mt-1 text-3xl font-bold text-neutral-900 dark:text-white">
-            Level {level}
+            {t("xp.levelLabel", { level })}
           </Text>
           <Text className="mt-1 text-lg font-semibold text-blue-600 dark:text-blue-400">
             {title}
           </Text>
           <Text className="mt-3 text-center text-sm text-neutral-500 dark:text-neutral-400">
-            Keep learning to reach the next level!
+            {t("xp.levelUpEncouragement")}
           </Text>
         </Animated.View>
       </Pressable>

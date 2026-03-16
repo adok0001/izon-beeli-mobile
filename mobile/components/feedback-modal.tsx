@@ -1,28 +1,29 @@
-import {
-  ActivityIndicator,
-  Alert,
-  Linking,
-  Modal,
-  Platform,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
-import { useState } from "react";
-import { useAuth } from "@clerk/clerk-expo";
-import Constants from "expo-constants";
 import { apiFetch } from "@/lib/api";
 import type { FeedbackCategory } from "@/types";
+import { useAuth } from "@clerk/clerk-expo";
+import Constants from "expo-constants";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+    ActivityIndicator,
+    Alert,
+    Linking,
+    Modal,
+    Platform,
+    Pressable,
+    Text,
+    TextInput,
+    View,
+} from "react-native";
 
 const platform = Platform.OS;
 const osVersion = String(Platform.Version);
 const appVersion = Constants.expoConfig?.version ?? "unknown";
 
-const CATEGORIES: { value: FeedbackCategory; label: string }[] = [
-  { value: "bug", label: "Bug" },
-  { value: "suggestion", label: "Suggestion" },
-  { value: "other", label: "Other" },
+const CATEGORY_KEYS: { value: FeedbackCategory; labelKey: string }[] = [
+  { value: "bug", labelKey: "feedback.categoryBug" },
+  { value: "suggestion", labelKey: "feedback.categorySuggestion" },
+  { value: "other", labelKey: "feedback.categoryOther" },
 ];
 
 interface FeedbackModalProps {
@@ -32,6 +33,7 @@ interface FeedbackModalProps {
 
 export function FeedbackModal({ visible, onClose }: FeedbackModalProps) {
   const { getToken } = useAuth();
+  const { t } = useTranslation();
   const [category, setCategory] = useState<FeedbackCategory>("bug");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -59,7 +61,7 @@ export function FeedbackModal({ visible, onClose }: FeedbackModalProps) {
 
   async function handleSubmit() {
     if (!message.trim()) {
-      Alert.alert("Required", "Please describe the issue or idea.");
+      Alert.alert(t("feedback.requiredTitle"), t("feedback.requiredMessage"));
       return;
     }
     setLoading(true);
@@ -70,16 +72,16 @@ export function FeedbackModal({ visible, onClose }: FeedbackModalProps) {
         token: token ?? undefined,
         body: JSON.stringify({ category, message, platform, osVersion, appVersion }),
       });
-      Alert.alert("Thank you!", "Your feedback was sent.", [
-        { text: "OK", onPress: handleClose },
+      Alert.alert(t("feedback.successTitle"), t("feedback.successMessage"), [
+        { text: t("common.done"), onPress: handleClose },
       ]);
     } catch {
       Alert.alert(
-        "Submission failed",
-        "We couldn't send your feedback right now.",
+        t("feedback.failedTitle"),
+        t("feedback.failedMessage"),
         [
-          { text: "Cancel", style: "cancel" },
-          { text: "Send via email instead", onPress: openEmailFallback },
+          { text: t("common.cancel"), style: "cancel" },
+          { text: t("feedback.emailFallback"), onPress: openEmailFallback },
         ]
       );
     } finally {
@@ -98,19 +100,19 @@ export function FeedbackModal({ visible, onClose }: FeedbackModalProps) {
         {/* Header */}
         <View className="mb-6 flex-row items-center justify-between">
           <Text className="text-xl font-bold text-neutral-900 dark:text-white">
-            Send Feedback
+            {t("feedback.title")}
           </Text>
           <Pressable onPress={handleClose} className="p-1 active:opacity-60">
-            <Text className="text-base text-blue-500">Cancel</Text>
+            <Text className="text-base text-blue-500">{t("common.cancel")}</Text>
           </Pressable>
         </View>
 
         {/* Category chips */}
         <Text className="mb-2 text-sm font-semibold text-neutral-500 dark:text-neutral-400">
-          CATEGORY
+          {t("feedback.categoryLabel")}
         </Text>
         <View className="mb-5 flex-row gap-2">
-          {CATEGORIES.map((c) => {
+          {CATEGORY_KEYS.map((c) => {
             const active = category === c.value;
             return (
               <Pressable
@@ -129,7 +131,7 @@ export function FeedbackModal({ visible, onClose }: FeedbackModalProps) {
                       : "text-neutral-700 dark:text-neutral-300"
                   }`}
                 >
-                  {c.label}
+                  {t(c.labelKey as any)}
                 </Text>
               </Pressable>
             );
@@ -138,11 +140,11 @@ export function FeedbackModal({ visible, onClose }: FeedbackModalProps) {
 
         {/* Message input */}
         <Text className="mb-2 text-sm font-semibold text-neutral-500 dark:text-neutral-400">
-          DESCRIPTION
+          {t("feedback.descriptionLabel")}
         </Text>
         <TextInput
           className="min-h-[120px] rounded-xl border border-neutral-200 bg-neutral-50 p-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-          placeholder="Describe the issue or idea…"
+          placeholder={t("feedback.descriptionPlaceholder")}
           placeholderTextColor="#9ca3af"
           multiline
           numberOfLines={5}
@@ -169,7 +171,7 @@ export function FeedbackModal({ visible, onClose }: FeedbackModalProps) {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text className="text-base font-semibold text-white">Submit</Text>
+            <Text className="text-base font-semibold text-white">{t("feedback.submit")}</Text>
           )}
         </Pressable>
       </View>

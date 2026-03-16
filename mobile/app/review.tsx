@@ -15,6 +15,7 @@ import { Stack, useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { Alert, FlatList, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 
 // ---------- Tab pill ----------
 
@@ -75,6 +76,7 @@ function ContributionCard({
   onReject: () => void;
   isPending: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <View className="mx-5 mb-3 overflow-hidden rounded-2xl bg-neutral-50 dark:bg-neutral-800">
       <View className="p-4">
@@ -88,7 +90,7 @@ function ContributionCard({
             </Text>
             {item.submitterName && (
               <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">
-                Submitted by {item.submitterName}
+                {t("review.submittedBy", { name: item.submitterName })}
               </Text>
             )}
           </View>
@@ -140,7 +142,7 @@ function ContributionCard({
           className="flex-1 flex-row items-center justify-center py-3 active:opacity-70"
         >
           <IconSymbol name="xmark.circle.fill" size={16} color="#ef4444" />
-          <Text className="ml-1.5 text-sm font-semibold text-red-500">Reject</Text>
+          <Text className="ml-1.5 text-sm font-semibold text-red-500">{t("common.reject")}</Text>
         </Pressable>
         <View className="w-[1px] bg-neutral-200 dark:bg-neutral-700" />
         <Pressable
@@ -150,7 +152,7 @@ function ContributionCard({
         >
           <IconSymbol name="checkmark.circle.fill" size={16} color="#22c55e" />
           <Text className="ml-1.5 text-sm font-semibold text-green-600 dark:text-green-400">
-            Approve
+            {t("common.approve")}
           </Text>
         </Pressable>
       </View>
@@ -171,6 +173,7 @@ function LessonContributionCard({
   onReject: () => void;
   isPending: boolean;
 }) {
+  const { t } = useTranslation();
   const soundRef = useRef<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [transcriptExpanded, setTranscriptExpanded] = useState(false);
@@ -231,13 +234,13 @@ function LessonContributionCard({
               {item.title}
             </Text>
             <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
-              by {item.userName ?? "Unknown"}
+              {t("review.submittedBy", { name: item.userName ?? t("review.unknown") })}
             </Text>
           </View>
 
           <View className="rounded-full bg-purple-100 px-2.5 py-1 dark:bg-purple-900">
             <Text className="text-xs font-semibold text-purple-700 dark:text-purple-300">
-              lesson
+              {t("review.lessonBadge")}
             </Text>
           </View>
         </View>
@@ -258,7 +261,7 @@ function LessonContributionCard({
           )}
           <View className="rounded-full bg-white px-2.5 py-1 dark:bg-neutral-700">
             <Text className="text-xs text-neutral-600 dark:text-neutral-400">
-              {segmentCount} segments {timedCount > 0 ? `(${timedCount} timed)` : ""}
+              {t("review.segments", { count: segmentCount })}{timedCount > 0 ? ` ${t("review.timedSegments", { count: timedCount })}` : ""}
             </Text>
           </View>
         </View>
@@ -276,7 +279,7 @@ function LessonContributionCard({
           >
             <View className="flex-row items-center justify-between">
               <Text className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-                Transcript
+                {t("review.transcript")}
               </Text>
               <IconSymbol
                 name={transcriptExpanded ? "chevron.up" : "chevron.down"}
@@ -308,7 +311,7 @@ function LessonContributionCard({
             ) : (
               <Text className="mt-1.5 text-xs text-neutral-500 dark:text-neutral-400" numberOfLines={2}>
                 {item.segments.slice(0, 2).map((s) => s.text).join(" · ")}
-                {segmentCount > 2 ? ` +${segmentCount - 2} more` : ""}
+                {segmentCount > 2 ? ` ${t("review.moreSegments", { count: segmentCount - 2 })}` : ""}
               </Text>
             )}
           </Pressable>
@@ -323,7 +326,7 @@ function LessonContributionCard({
           className="flex-1 flex-row items-center justify-center py-3 active:opacity-70"
         >
           <IconSymbol name="xmark.circle.fill" size={16} color="#ef4444" />
-          <Text className="ml-1.5 text-sm font-semibold text-red-500">Reject</Text>
+          <Text className="ml-1.5 text-sm font-semibold text-red-500">{t("common.reject")}</Text>
         </Pressable>
         <View className="w-[1px] bg-neutral-200 dark:bg-neutral-700" />
         <Pressable
@@ -333,7 +336,7 @@ function LessonContributionCard({
         >
           <IconSymbol name="checkmark.circle.fill" size={16} color="#22c55e" />
           <Text className="ml-1.5 text-sm font-semibold text-green-600 dark:text-green-400">
-            Approve
+            {t("common.approve")}
           </Text>
         </Pressable>
       </View>
@@ -345,6 +348,7 @@ function LessonContributionCard({
 
 export default function ReviewScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { data: currentUser } = useCurrentUser();
   const isAdmin = currentUser?.isAdmin ?? false;
 
@@ -369,19 +373,19 @@ export default function ReviewScreen() {
   if (!isAdmin) {
     return (
       <>
-        <Stack.Screen options={{ title: "Review" }} />
+        <Stack.Screen options={{ title: t("review.title") }} />
         <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-neutral-900" edges={[]}>
           <View className="h-16 w-16 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
             <IconSymbol name="lock.fill" size={28} color="#9ca3af" />
           </View>
           <Text className="mt-4 text-base font-semibold text-neutral-500 dark:text-neutral-400">
-            Admin access required
+            {t("review.adminRequired")}
           </Text>
           <Pressable
             onPress={() => router.back()}
             className="mt-6 rounded-2xl bg-neutral-100 px-6 py-3 active:opacity-80 dark:bg-neutral-800"
           >
-            <Text className="font-semibold text-neutral-700 dark:text-neutral-300">Go Back</Text>
+            <Text className="font-semibold text-neutral-700 dark:text-neutral-300">{t("common.goBack")}</Text>
           </Pressable>
         </SafeAreaView>
       </>
@@ -389,11 +393,11 @@ export default function ReviewScreen() {
   }
 
   const handleReviewWord = (id: string, action: "approve" | "reject") => {
-    const label = action === "approve" ? "Approve" : "Reject";
+    const label = action === "approve" ? t("common.approve") : t("common.reject");
     if (action === "reject") {
       Alert.prompt(
-        "Reject this contribution?",
-        "Optional: leave a note for the contributor explaining why.",
+        t("review.rejectWordTitle"),
+        t("review.rejectWordMsg"),
         (note) => reviewWord.mutate({ id, action, note: note?.trim() || undefined }),
         "plain-text",
         "",
@@ -401,10 +405,10 @@ export default function ReviewScreen() {
       );
     } else {
       Alert.alert(
-        "Approve this contribution?",
-        "This word will be added to the dictionary.",
+        t("review.approveWordTitle"),
+        t("review.approveWordMsg"),
         [
-          { text: "Cancel", style: "cancel" },
+          { text: t("common.cancel"), style: "cancel" },
           { text: label, onPress: () => reviewWord.mutate({ id, action }) },
         ]
       );
@@ -412,11 +416,11 @@ export default function ReviewScreen() {
   };
 
   const handleReviewLesson = (id: string, action: "approve" | "reject") => {
-    const label = action === "approve" ? "Approve" : "Reject";
+    const label = action === "approve" ? t("common.approve") : t("common.reject");
     if (action === "reject") {
       Alert.prompt(
-        "Reject this lesson?",
-        "Optional: leave a note for the contributor explaining why.",
+        t("review.rejectLessonTitle"),
+        t("review.rejectLessonMsg"),
         (note) => reviewLesson.mutate({ id, action, note: note?.trim() || undefined }),
         "plain-text",
         "",
@@ -424,10 +428,10 @@ export default function ReviewScreen() {
       );
     } else {
       Alert.alert(
-        "Approve this lesson?",
-        "This lesson will be published and added to the course.",
+        t("review.approveLessonTitle"),
+        t("review.approveLessonMsg"),
         [
-          { text: "Cancel", style: "cancel" },
+          { text: t("common.cancel"), style: "cancel" },
           { text: label, onPress: () => reviewLesson.mutate({ id, action }) },
         ]
       );
@@ -436,33 +440,33 @@ export default function ReviewScreen() {
 
   const emptyIcon = activeTab === "words" ? "character.book.closed" : "waveform";
   const emptyLabel = activeTab === "words"
-    ? (loadingWords ? "Loading..." : "No pending words")
-    : (loadingLessons ? "Loading..." : "No pending lessons");
+    ? (loadingWords ? t("common.loading") : t("review.noPendingWords"))
+    : (loadingLessons ? t("common.loading") : t("review.noPendingLessons"));
 
   return (
     <>
-      <Stack.Screen options={{ title: "Review" }} />
+      <Stack.Screen options={{ title: t("review.title") }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
         {/* Header */}
         <View className="px-5 pb-3 pt-2">
           <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
-            Review
+            {t("review.title")}
           </Text>
           <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            {wordCount + lessonCount} pending contributions
+            {t("review.pendingCount", { count: wordCount + lessonCount })}
           </Text>
         </View>
 
         {/* Tab pills */}
         <View className="flex-row px-5 pb-3">
           <TabPill
-            label="Words"
+            label={t("review.tabWords")}
             count={wordCount}
             active={activeTab === "words"}
             onPress={() => setActiveTab("words")}
           />
           <TabPill
-            label="Lessons"
+            label={t("review.tabLessons")}
             count={lessonCount}
             active={activeTab === "lessons"}
             onPress={() => setActiveTab("lessons")}

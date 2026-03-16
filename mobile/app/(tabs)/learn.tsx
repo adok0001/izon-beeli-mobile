@@ -1,31 +1,32 @@
-import { useTranslation } from "react-i18next";
-import { UpNextCard } from "@/components/up-next-card";
+import { FeatureTourModal } from "@/components/feature-tour-modal";
 import { LanguagePickerButton } from "@/components/language-picker";
 import { NotificationBell } from "@/components/notifications/notification-center";
 import { StreakFreezeModal } from "@/components/streak-freeze-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { UpNextCard } from "@/components/up-next-card";
 import { XpLevelBadge } from "@/components/xp-level-badge";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { getStoryForCourse } from "@/lib/data/stories";
+import { useBounties } from "@/lib/hooks/use-bounties";
 import { useCourseLessons, useCourses, useLesson } from "@/lib/hooks/use-courses";
 import { useCompletedLessons, useProgressSummary } from "@/lib/hooks/use-progress";
-import { useBounties } from "@/lib/hooks/use-bounties";
-import { formatDuration, BUNDLED_AUDIO } from "@/lib/mock-data";
-import { useLanguageStore } from "@/store/language-store";
-import { useUiLanguageStore } from "@/store/ui-language-store";
 import { localizeField } from "@/lib/localize";
+import { BUNDLED_AUDIO, formatDuration } from "@/lib/mock-data";
 import { useAudioStore } from "@/store/audio-store";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useLanguageStore } from "@/store/language-store";
 import { useTourStore } from "@/store/tour-store";
-import { FeatureTourModal } from "@/components/feature-tour-modal";
+import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course, Lesson } from "@/types";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function ContinueCard({ lessonId, positionSeconds }: { lessonId: string; positionSeconds: number }) {
   const { t } = useTranslation();
   const router = useRouter();
+  const { uiLanguage } = useUiLanguageStore();
   const { data: lesson } = useLesson(lessonId);
   const { loadAndPlay, seekTo, currentTrackId } = useAudioStore();
 
@@ -62,7 +63,7 @@ function ContinueCard({ lessonId, positionSeconds }: { lessonId: string; positio
             {t("learn.continueListening")}
           </Text>
           <Text className="text-base font-bold text-neutral-900 dark:text-white" numberOfLines={1}>
-            {lesson.title}
+            {localizeField(lesson.title, lesson.titleFr, uiLanguage)}
           </Text>
           <Text className="text-sm text-neutral-500 dark:text-neutral-400">
             {t("learn.pausedAt", { time: posLabel })}
@@ -89,7 +90,7 @@ function CourseCard({ course, completedIds }: { course: Course; completedIds: Se
       <View className="mb-2 flex-row items-center justify-between">
         <View className="rounded-full bg-blue-100 px-3 py-1 dark:bg-blue-900">
           <Text className="text-xs font-semibold capitalize text-blue-700 dark:text-blue-300">
-            {course.level}
+            {t(`levels.${course.level}`, { defaultValue: course.level })}
           </Text>
         </View>
         <Text className="text-xs text-neutral-500 dark:text-neutral-400">
@@ -307,6 +308,7 @@ export default function LearnScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+      {/* Header */}
       <View className="flex-row items-center justify-between px-5 pb-2 pt-4">
         <View className="mr-3 shrink">
           <Text className="text-2xl font-bold text-neutral-900 dark:text-white">

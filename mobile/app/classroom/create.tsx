@@ -5,9 +5,11 @@ import { Stack, useRouter } from "expo-router";
 import { useCreateGroup, useJoinGroupByCode } from "@/lib/hooks/use-classroom";
 import { useLanguageStore } from "@/store/language-store";
 import { getLanguageName } from "@/lib/mock-data";
+import { useTranslation } from "react-i18next";
 
 export default function CreateGroupScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { selectedLanguageId } = useLanguageStore();
   const createGroup = useCreateGroup();
   const joinGroup = useJoinGroupByCode();
@@ -31,7 +33,7 @@ export default function CreateGroupScreen() {
     if (inviteCode.length < 6) return;
     joinGroup.mutate(inviteCode.trim(), {
       onSuccess: (group) => router.replace(`/classroom/${group.id}`),
-      onError: () => setError("No group found with that invite code."),
+      onError: () => setError(t("classroom.notFound")),
     });
   };
 
@@ -43,10 +45,10 @@ export default function CreateGroupScreen() {
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900">
         <View className="flex-row items-center justify-between border-b border-neutral-200 px-5 py-3 dark:border-neutral-700">
           <Pressable onPress={() => router.back()}>
-            <Text className="text-base text-neutral-500">Cancel</Text>
+            <Text className="text-base text-neutral-500">{t("common.cancel")}</Text>
           </Pressable>
           <Text className="text-base font-semibold text-neutral-900 dark:text-white">
-            {mode === "create" ? "New Group" : "Join Group"}
+            {mode === "create" ? t("classroom.newGroup") : t("classroom.joinGroup")}
           </Text>
           <View className="w-14" />
         </View>
@@ -63,7 +65,7 @@ export default function CreateGroupScreen() {
               <Text className={`text-sm font-semibold ${
                 mode === "create" ? "text-white" : "text-neutral-600 dark:text-neutral-400"
               }`}>
-                Create
+                {t("classroom.create")}
               </Text>
             </Pressable>
             <Pressable
@@ -75,7 +77,7 @@ export default function CreateGroupScreen() {
               <Text className={`text-sm font-semibold ${
                 mode === "join" ? "text-white" : "text-neutral-600 dark:text-neutral-400"
               }`}>
-                Join
+                {t("classroom.join")}
               </Text>
             </Pressable>
           </View>
@@ -83,18 +85,18 @@ export default function CreateGroupScreen() {
           {mode === "create" ? (
             <>
               <Text className="mb-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                Group Name
+                {t("classroom.groupName")}
               </Text>
               <TextInput
                 value={name}
                 onChangeText={setName}
-                placeholder="e.g., Izon Language Club"
+                placeholder={t("classroom.groupNamePlaceholder")}
                 placeholderTextColor="#9ca3af"
                 className="mb-4 rounded-xl bg-neutral-100 px-4 py-3 text-base text-neutral-900 dark:bg-neutral-800 dark:text-white"
                 autoFocus
               />
               <Text className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
-                Language: {getLanguageName(selectedLanguageId)}
+                {t("classroom.language", { name: getLanguageName(selectedLanguageId) })}
               </Text>
               <Pressable
                 onPress={handleCreate}
@@ -106,19 +108,19 @@ export default function CreateGroupScreen() {
                 <Text className={`text-base font-semibold ${
                   name.trim() && !isPending ? "text-white" : "text-neutral-400"
                 }`}>
-                  {isPending ? "Creating..." : "Create Group"}
+                  {isPending ? t("classroom.creating") : t("classroom.createGroup")}
                 </Text>
               </Pressable>
             </>
           ) : (
             <>
               <Text className="mb-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                Invite Code
+                {t("classroom.inviteCode")}
               </Text>
               <TextInput
                 value={inviteCode}
-                onChangeText={(t) => { setInviteCode(t.toUpperCase()); setError(""); }}
-                placeholder="Enter 6-character code"
+                onChangeText={(v) => { setInviteCode(v.toUpperCase()); setError(""); }}
+                placeholder={t("classroom.inviteCodePlaceholder")}
                 placeholderTextColor="#9ca3af"
                 className="mb-2 rounded-xl bg-neutral-100 px-4 py-3 text-center text-xl font-mono tracking-widest text-neutral-900 dark:bg-neutral-800 dark:text-white"
                 autoCapitalize="characters"
@@ -138,7 +140,7 @@ export default function CreateGroupScreen() {
                 <Text className={`text-base font-semibold ${
                   inviteCode.length >= 6 && !isPending ? "text-white" : "text-neutral-400"
                 }`}>
-                  {isPending ? "Joining..." : "Join Group"}
+                  {isPending ? t("classroom.joining") : t("classroom.joinGroup")}
                 </Text>
               </Pressable>
             </>

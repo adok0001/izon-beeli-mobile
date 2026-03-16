@@ -1,11 +1,16 @@
-import { View, Text, Pressable } from "react-native";
-import { useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useNextLesson } from "@/lib/hooks/use-next-lesson";
+import { localizeField } from "@/lib/localize";
 import { formatDuration } from "@/lib/mock-data";
+import { useUiLanguageStore } from "@/store/ui-language-store";
+import { useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
+import { Pressable, Text, View } from "react-native";
 
 export function UpNextCard({ languageId }: { languageId?: string }) {
+  const { t } = useTranslation();
   const router = useRouter();
+  const { uiLanguage } = useUiLanguageStore();
   const { data, isLoading } = useNextLesson(languageId);
 
   if (isLoading || !data?.lesson) return null;
@@ -25,10 +30,10 @@ export function UpNextCard({ languageId }: { languageId?: string }) {
       <View className="mb-3">
         <View className="mb-1 flex-row items-center justify-between">
           <Text className="text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
-            Your Path · {course?.title}
+            {t("learn.yourPath")} · {localizeField(course!.title, course!.titleFr, uiLanguage)}
           </Text>
           <Text className="text-xs font-semibold text-blue-500">
-            {overallProgress.completed}/{overallProgress.total} lessons
+            {t("learn.lessonsCount", { done: overallProgress.completed, total: overallProgress.total })}
           </Text>
         </View>
         <View className="h-1.5 overflow-hidden rounded-full bg-blue-200 dark:bg-blue-800">
@@ -46,19 +51,19 @@ export function UpNextCard({ languageId }: { languageId?: string }) {
         </View>
         <View className="flex-1">
           <Text className="text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
-            Up Next
+            {t("learn.upNext")}
           </Text>
           <Text
             className="text-base font-bold text-neutral-900 dark:text-white"
             numberOfLines={1}
           >
-            {lesson.title}
+            {localizeField(lesson.title, lesson.titleFr, uiLanguage)}
           </Text>
           <Text
             className="text-sm text-neutral-500 dark:text-neutral-400"
             numberOfLines={1}
           >
-            {lesson.description}
+            {localizeField(lesson.description, lesson.descriptionFr, uiLanguage)}
           </Text>
         </View>
         <View className="ml-2 items-end gap-1">

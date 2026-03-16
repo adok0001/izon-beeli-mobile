@@ -543,4 +543,30 @@ export const IZON_DICTIONARY: DictionaryEntry[] = [
   // --- Food (new) ---
   e(484, "ago", "Orange (fruit)", "food", undefined, "Ago mẹlịmẹlị emi", "The orange is sweet"),
   e(485, "wuru", "Gin (drink)", "food", undefined, "Wuru fii mọgha", "Do not drink too much gin"),
+
+  // =============================================
+  // New entries d486+ (from lesson note: Owo Warị Part 2 & More Verbs, 16 March 2026)
+  // =============================================
+
+  // --- Verbs (Mịẹbịbị contd) ---
+  e(486, "fịrịmọ", "to send", "verbs", undefined, "Erị arị fịrịmọ", "He sent me"),
+  e(487, "fie", "to speak", "verbs", undefined, "Ịzọn fie!", "Speak Izon!"),
+  e(488, "efin", "to fly", "verbs", undefined, "Ofoni efin wẹnị", "The bird is flying"),
+  e(489, "pịrị", "to give", "verbs", undefined, "Pịrị arị beni!", "Give me water!"),
+  e(490, "sụụ", "to fight", "verbs", undefined, "Sụụ mịẹgha!", "Do not fight!"),
+  e(491, "dọụ", "to search", "verbs", undefined, "Dọụ mọ bemi!", "Search for it now!"),
+  e(492, "tein", "to shoot", "verbs", undefined, "Tein mọgha!", "Do not shoot!"),
+  e(493, "serimọ", "to raise", "verbs", undefined, "Ina tubou serimọ", "Mother is raising the child"),
+  e(494, "kpa", "to strap; to tie", "verbs", undefined, "Kpa mọ daa!", "Tie it well!"),
+  e(495, "gbalị", "to feed", "verbs", undefined, "Ina arị gbalị", "Mother feeds me"),
+
+  // --- Nouns (Owo Warị Part 2 vocabulary) ---
+  e(496, "okpomị", "room", "nouns", undefined, "Okpomị arị emi daa", "My room is fine"),
+  e(497, "otuturubiri", "middle / centre", "nouns", undefined, "Mẹzẹ otuturubiri ka emi", "The table is in the middle"),
+  e(498, "tịbị-seriye", "pillow", "nouns", undefined, "Tịbị-seriye arị emi daa", "My pillow is fine"),
+  e(499, "dịba", "cabinet / furniture unit", "nouns", undefined, "Dịba tẹlẹvisonị farịye mọ emi", "The cabinet is where the television is"),
+  e(500, "tẹlẹvisonị", "television", "nouns", undefined, "Tẹlẹvisonị di fiyaị bo!", "Come and watch television!"),
+  e(501, "firizi", "freezer", "nouns", undefined, "Firizi eyitụọyọ mọ emi", "The freezer is in the kitchen"),
+  e(502, "eyerinmịnị", "living room", "nouns", undefined, "Eyerinmịnị owo warịmị dẹịn emi", "The living room is the largest in the house"),
+  e(503, "eyitụọyọmị", "kitchen", "nouns", undefined, "Ina eyitụọyọmị mọ tụọ wẹnị", "Mother is cooking in the kitchen"),
 ];

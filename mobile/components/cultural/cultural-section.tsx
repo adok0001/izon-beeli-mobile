@@ -2,6 +2,7 @@ import { useCultural } from "@/lib/hooks/use-cultural";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { CulturalCard } from "./cultural-card";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   languageId: string;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function CulturalSection({ languageId, onViewAll }: Props) {
+  const { t } = useTranslation();
   const { data: content = [] } = useCultural(languageId);
 
   if (content.length === 0) return null;
@@ -19,13 +21,13 @@ export function CulturalSection({ languageId, onViewAll }: Props) {
         <View className="flex-row items-center">
           <IconSymbol name="star.fill" size={16} color="#f59e0b" />
           <Text className="ml-1.5 text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
-            Cultural Heritage
+            {t("cultural.heritage")}
           </Text>
         </View>
         {onViewAll && (
           <Pressable onPress={onViewAll} hitSlop={8}>
             <Text className="text-sm font-medium text-blue-600 dark:text-blue-400">
-              View All
+              {t("cultural.viewAll")}
             </Text>
           </Pressable>
         )}

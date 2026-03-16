@@ -1,31 +1,33 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { hapticSuccess } from "@/lib/haptics";
 import {
-  useAddComment,
-  useComments,
-  useCreatePost,
-  useFeed,
-  useToggleLike,
-  type FeedTypeFilter,
+    useAddComment,
+    useComments,
+    useCreatePost,
+    useFeed,
+    useToggleLike,
+    type FeedTypeFilter,
 } from "@/lib/hooks/use-feed";
 import i18n from "@/lib/i18n";
+import { localizeField } from "@/lib/localize";
 import { useAudioStore } from "@/store/audio-store";
+import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { AudioSource, Comment, FeedItem } from "@/types";
 import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  ActivityIndicator,
-  FlatList,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  RefreshControl,
-  Share,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    FlatList,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    RefreshControl,
+    Share,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -311,8 +313,12 @@ function FeedCard({
   const { t } = useTranslation();
   const router = useRouter();
   const toggleLike = useToggleLike();
+  const { uiLanguage } = useUiLanguageStore();
   const config = TYPE_CONFIG[item.type];
   const liked = (item as any).isLiked ?? false;
+
+  const localTitle = localizeField(item.title, item.titleFr, uiLanguage);
+  const localDescription = localizeField(item.description, item.descriptionFr, uiLanguage);
 
   // Parse "word → english" from single-word contribution titles
   const wordParts = item.type === "contribution" && item.title.includes(" → ")
@@ -324,7 +330,7 @@ function FeedCard({
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `${item.title}\n\n${item.description}\n\n— ${item.userName} on Beeli`,
+        message: `${localTitle}\n\n${localDescription}\n\n${t("feed.shareOnBeeli", { userName: item.userName })}`,
       });
     } catch {
       // user cancelled
@@ -362,10 +368,10 @@ function FeedCard({
 
       {/* Content */}
       <Text className="mb-1 text-base font-semibold text-neutral-900 dark:text-white">
-        {item.title}
+        {localTitle}
       </Text>
       <Text className="mb-3 text-sm text-neutral-600 dark:text-neutral-400">
-        {item.description}
+        {localDescription}
       </Text>
 
       {/* Audio preview for contributions */}

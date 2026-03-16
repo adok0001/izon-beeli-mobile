@@ -1,27 +1,27 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { View, Text, Pressable } from "react-native";
-import { useRouter, useLocalSearchParams, Stack } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "@clerk/clerk-expo";
+import { FeatureTourModal } from "@/components/feature-tour-modal";
+import { ListeningQuestion } from "@/components/quiz/listening-question";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useQuizStore } from "@/store/quiz-store";
-import { generateQuiz, generateFocusedQuiz } from "@/lib/quiz-engine";
-import { useLanguageStore } from "@/store/language-store";
+import { analytics } from "@/lib/analytics";
+import { apiFetch } from "@/lib/api";
+import { hapticError, hapticHeavy, hapticSuccess } from "@/lib/haptics";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { getLanguageName } from "@/lib/mock-data";
+import { generateFocusedQuiz, generateQuiz } from "@/lib/quiz-engine";
 import {
-  playCorrectSound,
-  playIncorrectSound,
-  playFinishSound,
+    playCorrectSound,
+    playFinishSound,
+    playIncorrectSound,
 } from "@/lib/sounds";
-import { hapticSuccess, hapticError, hapticHeavy } from "@/lib/haptics";
-import { ListeningQuestion } from "@/components/quiz/listening-question";
-import { apiFetch } from "@/lib/api";
-import { analytics } from "@/lib/analytics";
+import { useLanguageStore } from "@/store/language-store";
+import { useQuizStore } from "@/store/quiz-store";
 import { useTourStore } from "@/store/tour-store";
-import { FeatureTourModal } from "@/components/feature-tour-modal";
 import type { QuizQuestion } from "@/types";
+import { useAuth } from "@clerk/clerk-expo";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Pressable, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const FEEDBACK_DELAY = 1200;
 
@@ -375,12 +375,17 @@ export default function QuizScreen() {
     if (isDictLoading) return;
     initialized.current = true;
 
+    // Wrap t() so it matches QuizTranslateFn signature — always inject language name
+    const tq: (key: string, opts?: Record<string, unknown>) => string =
+      (key, opts) => t(key as any, { language: languageName, ...opts } as any);
+
     const questions = isFocused
       ? generateFocusedQuiz(
           params.focusWord!,
           params.focusEnglish!,
           params.focusAudio || undefined,
-          dictionaryEntries
+          dictionaryEntries,
+          tq
         )
       : generateQuiz(
           {
@@ -389,7 +394,9 @@ export default function QuizScreen() {
             category: params.category,
             questionCount: 10,
           },
-          dictionaryEntries
+          dictionaryEntries,
+          undefined,
+          tq
         );
 
     if (questions.length === 0) {

@@ -2,11 +2,13 @@ export interface DictionaryEntry {
   id: string;
   word: string;
   english: string;
+  french?: string;
   category: DictionaryCategory;
   languageId: string;
   pronunciation?: string;
   example?: string;
   exampleTranslation?: string;
+  exampleTranslationFr?: string;
   audioUrl?: import("@/types").AudioSource;
   contributorName?: string;
   contributorId?: string;

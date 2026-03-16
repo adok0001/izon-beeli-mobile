@@ -6,9 +6,11 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useClassroomGroups } from "@/lib/hooks/use-classroom";
 import { getLanguageName } from "@/lib/mock-data";
 import type { Group } from "@/types";
+import { useTranslation } from "react-i18next";
 
 function GroupCard({ group }: { group: Group }) {
   const router = useRouter();
+  const { t } = useTranslation();
   const memberCount = group.members.length;
 
   return (
@@ -26,7 +28,7 @@ function GroupCard({ group }: { group: Group }) {
         <View className="flex-row items-center">
           <IconSymbol name="person.2.fill" size={14} color="#6b7280" />
           <Text className="ml-1 text-sm text-neutral-500 dark:text-neutral-400">
-            {memberCount} members
+            {t("classroom.memberCount", { count: memberCount })}
           </Text>
         </View>
         <View className="flex-row items-center">
@@ -48,6 +50,7 @@ function GroupCard({ group }: { group: Group }) {
 
 export default function ClassroomScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { data: groups = [], isLoading, refetch } = useClassroomGroups();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -61,7 +64,7 @@ export default function ClassroomScreen() {
     <>
       <Stack.Screen
         options={{
-          title: "Classroom",
+          title: t("profile.classroom"),
           headerRight: () => (
             <Pressable
               onPress={() => router.push("/classroom/create")}
@@ -89,13 +92,13 @@ export default function ClassroomScreen() {
               <View className="items-center px-8 py-16">
                 <IconSymbol name="person.3.fill" size={48} color="#d1d5db" />
                 <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
-                  No groups yet. Create a group or join one with an invite code.
+                  {t("classroom.noGroups")}
                 </Text>
               </View>
             }
             ListHeaderComponent={
               <Text className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
-                Manage your learning groups and track member progress.
+                {t("classroom.subtitle")}
               </Text>
             }
           />

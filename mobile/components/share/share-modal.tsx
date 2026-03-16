@@ -1,5 +1,6 @@
 import { captureAndShare } from "@/lib/share-card";
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Modal, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ShareCardPreview } from "./share-card-preview";
@@ -29,6 +30,7 @@ interface Props {
 }
 
 export function ShareModal({ visible, onClose, data }: Props) {
+  const { t } = useTranslation();
   const cardRef = useRef<View>(null);
   const [sharing, setSharing] = useState(false);
 
@@ -36,11 +38,11 @@ export function ShareModal({ visible, onClose, data }: Props) {
     setSharing(true);
     let msg = "";
     if (data.template === "word") {
-      msg = `${data.word} — ${data.translation}\n\nLearning ${data.language} with Beeli`;
+      msg = `${data.word} — ${data.translation}\n\n${t("share.learningWith", { language: data.language })}`;
     } else if (data.template === "proverb") {
-      msg = `"${data.text}"\n${data.translation}\n\nLearning ${data.language} with Beeli`;
+      msg = `"${data.text}"\n${data.translation}\n\n${t("share.learningWith", { language: data.language })}`;
     } else {
-      msg = `${data.title}: ${data.detail}\n\nLearning with Beeli`;
+      msg = `${data.title}: ${data.detail}\n\n${t("share.learningGeneric")}`;
     }
     await captureAndShare(cardRef, msg);
     setSharing(false);
@@ -56,10 +58,10 @@ export function ShareModal({ visible, onClose, data }: Props) {
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900">
         <View className="flex-row items-center justify-between border-b border-neutral-200 px-5 py-3 dark:border-neutral-700">
           <Pressable onPress={onClose}>
-            <Text className="text-base text-neutral-500">Cancel</Text>
+            <Text className="text-base text-neutral-500">{t("common.cancel")}</Text>
           </Pressable>
           <Text className="text-base font-semibold text-neutral-900 dark:text-white">
-            Share Card
+            {t("share.cardTitle")}
           </Text>
           <Pressable onPress={handleShare} disabled={sharing}>
             <Text
@@ -67,7 +69,7 @@ export function ShareModal({ visible, onClose, data }: Props) {
                 sharing ? "text-neutral-300" : "text-blue-500"
               }`}
             >
-              Share
+              {t("share.shareButton")}
             </Text>
           </Pressable>
         </View>
@@ -76,7 +78,7 @@ export function ShareModal({ visible, onClose, data }: Props) {
           <ShareCardPreview ref={cardRef} {...data} />
 
           <Text className="mt-6 text-center text-sm text-neutral-400 dark:text-neutral-500">
-            Tap Share to send this card
+            {t("share.tapToSend")}
           </Text>
         </View>
       </SafeAreaView>

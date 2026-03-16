@@ -1,12 +1,13 @@
-import { View, Text, ScrollView, ActivityIndicator } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack } from "expo-router";
-import { XpLevelBadge } from "@/components/xp-level-badge";
-import { useProgressSummary } from "@/lib/hooks/use-progress";
-import { useWeeklyStats, useStreakCalendar } from "@/lib/hooks/use-dashboard";
-import { useChallengeHistory } from "@/lib/hooks/use-daily-challenge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { XpLevelBadge } from "@/components/xp-level-badge";
+import { useChallengeHistory } from "@/lib/hooks/use-daily-challenge";
+import { useStreakCalendar, useWeeklyStats } from "@/lib/hooks/use-dashboard";
+import { useProgressSummary } from "@/lib/hooks/use-progress";
 import type { DayActivity } from "@/types";
+import { Stack } from "expo-router";
+import { useTranslation } from "react-i18next";
+import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -53,6 +54,7 @@ export default function DashboardScreen() {
   const { data: weeklyStats, isLoading: statsLoading } = useWeeklyStats();
   const { data: calendar, isLoading: calendarLoading } = useStreakCalendar();
   const { data: history = [] } = useChallengeHistory();
+  const { t } = useTranslation();
 
   // Build 30-day grid
   const calendarDays: string[] = [];
@@ -78,7 +80,7 @@ export default function DashboardScreen() {
 
           {/* Weekly Activity */}
           <Text className="mb-3 text-base font-bold text-neutral-900 dark:text-white">
-            This Week
+            {t("dashboard.thisWeek")}
           </Text>
           {statsLoading ? (
             <ActivityIndicator size="small" color="#3b82f6" />
@@ -93,11 +95,11 @@ export default function DashboardScreen() {
                 <View className="mt-3 flex-row gap-4">
                   <View className="flex-row items-center gap-1">
                     <View className="h-3 w-3 rounded-sm bg-blue-500" />
-                    <Text className="text-xs text-neutral-500 dark:text-neutral-400">Lessons</Text>
+                    <Text className="text-xs text-neutral-500 dark:text-neutral-400">{t("dashboard.lessonsLabel")}</Text>
                   </View>
                   <View className="flex-row items-center gap-1">
                     <View className="h-3 w-3 rounded-sm bg-violet-400" />
-                    <Text className="text-xs text-neutral-500 dark:text-neutral-400">Words</Text>
+                    <Text className="text-xs text-neutral-500 dark:text-neutral-400">{t("dashboard.wordsLabel")}</Text>
                   </View>
                 </View>
               </View>
@@ -109,7 +111,7 @@ export default function DashboardScreen() {
                     {weeklyStats.totalLessonsThisWeek}
                   </Text>
                   <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-                    Lessons
+                    {t("dashboard.lessonsLabel")}
                   </Text>
                 </View>
                 <View className="flex-1 items-center rounded-xl bg-neutral-50 py-3 dark:bg-neutral-800">
@@ -119,7 +121,7 @@ export default function DashboardScreen() {
                       : "—"}
                   </Text>
                   <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-                    Avg Quiz
+                    {t("dashboard.avgQuizShort")}
                   </Text>
                 </View>
                 <View className="flex-1 items-center rounded-xl bg-neutral-50 py-3 dark:bg-neutral-800">
@@ -127,7 +129,7 @@ export default function DashboardScreen() {
                     {weeklyStats.totalWordsReviewedThisWeek}
                   </Text>
                   <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-                    Words
+                    {t("dashboard.wordsLabel")}
                   </Text>
                 </View>
               </View>
@@ -136,7 +138,7 @@ export default function DashboardScreen() {
 
           {/* Streak Calendar */}
           <Text className="mb-3 text-base font-bold text-neutral-900 dark:text-white">
-            30-Day Activity
+            {t("dashboard.thirtyDayActivity")}
           </Text>
           <View className="mb-6 rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
             {calendarLoading ? (
@@ -161,7 +163,7 @@ export default function DashboardScreen() {
           {history.length > 0 && (
             <>
               <Text className="mb-3 text-base font-bold text-neutral-900 dark:text-white">
-                Recent Challenges
+                {t("dashboard.recentChallenges")}
               </Text>
               <View className="rounded-2xl bg-neutral-50 dark:bg-neutral-800">
                 {history.map((c, i) => (
