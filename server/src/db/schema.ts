@@ -140,6 +140,7 @@ export const feedItems = pgTable(
     userName: varchar("user_name", { length: 200 }).notNull(),
     userAvatarUrl: text("user_avatar_url"),
     audioUrl: text("audio_url"),
+    contributionId: uuid("contribution_id"),
     likesCount: integer("likes_count").default(0).notNull(),
     commentsCount: integer("comments_count").default(0).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),

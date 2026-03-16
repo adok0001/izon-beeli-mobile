@@ -4,22 +4,28 @@ import { apiFetch } from "@/lib/api";
 import { useTourStore } from "@/store/tour-store";
 import type { UserProfile } from "@/types";
 import { useAuth, useUser } from "@clerk/nextjs";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
     BookOpen,
     BookText,
     ChevronRight,
+    FileText,
     Flame,
     LayoutDashboard,
+    Loader2,
     LogOut,
     Map,
+    MessageSquare,
     Settings,
     Star,
+    Users,
     UserRound,
+    X,
     type LucideIcon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 function StatCard({ icon: Icon, label, value }: Readonly<{ icon: LucideIcon; label: string; value: string | number }>) {
@@ -38,12 +44,14 @@ function MenuRow({
   label,
   detail,
   danger,
+  onClick,
 }: Readonly<{
   href?: string;
   icon: LucideIcon;
   label: string;
   detail?: string;
   danger?: boolean;
+  onClick?: () => void;
 }>) {
   const cls = `flex items-center gap-3 py-3.5 border-b border-neutral-100 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors rounded px-1 ${
     danger ? "text-red-500" : "text-neutral-900 dark:text-white"
@@ -53,22 +61,95 @@ function MenuRow({
     <>
       <Icon className="h-5 w-5 shrink-0" />
       <span className="flex-1 text-sm font-medium">{label}</span>
-      {detail && (
-        <span className="text-sm text-neutral-400 dark:text-neutral-500">{detail}</span>
-      )}
+      {detail && <span className="text-sm text-neutral-400 dark:text-neutral-500">{detail}</span>}
       <ChevronRight className="h-4 w-4 text-neutral-300 dark:text-neutral-600" />
     </>
   );
 
-  if (href) {
-    return (
-      <Link href={href} className={cls}>
-        {content}
-      </Link>
-    );
-  }
+  if (href) return <Link href={href} className={cls}>{content}</Link>;
+  return <button onClick={onClick} className={`w-full text-left ${cls}`}>{content}</button>;
+}
 
-  return <div className={cls}>{content}</div>;
+function FeedbackModal({ onClose }: Readonly<{ onClose: () => void }>) {
+  const { getToken } = useAuth();
+  const { t } = useTranslation();
+  const [category, setCategory] = useState<"bug" | "suggestion" | "other">("suggestion");
+  const [message, setMessage] = useState("");
+  const [done, setDone] = useState(false);
+
+  const submit = useMutation({
+    mutationFn: async () => {
+      const token = await getToken();
+      return apiFetch("/feedback", {
+        method: "POST",
+        body: JSON.stringify({ category, message: message.trim(), platform: "web" }),
+        token: token ?? undefined,
+      });
+    },
+    onSuccess: () => setDone(true),
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+      <div className="w-full max-w-md rounded-2xl bg-white dark:bg-neutral-900 p-6 shadow-xl">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-bold text-neutral-900 dark:text-white">{t("profile.sendFeedback")}</h2>
+          <button onClick={onClose} className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {done ? (
+          <div className="py-6 text-center">
+            <p className="text-2xl mb-2">🙏</p>
+            <p className="font-semibold text-neutral-900 dark:text-white">Thanks for your feedback!</p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">We read every message.</p>
+            <button onClick={onClose} className="mt-4 px-6 py-2 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors">
+              {t("common.close")}
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="flex gap-2 mb-4">
+              {(["bug", "suggestion", "other"] as const).map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setCategory(cat)}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium border capitalize transition-colors ${
+                    category === cat
+                      ? "bg-brand-600 text-white border-brand-600"
+                      : "border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:border-brand-400"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+            <textarea
+              className="w-full rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm px-3 py-2 text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+              rows={5}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Tell us what's on your mind…"
+              maxLength={2000}
+              autoFocus
+            />
+            <p className="text-xs text-neutral-400 text-right mt-1">{message.length}/2000</p>
+            {submit.isError && (
+              <p className="text-xs text-red-500 mt-1">{(submit.error as Error).message}</p>
+            )}
+            <button
+              onClick={() => submit.mutate()}
+              disabled={!message.trim() || submit.isPending}
+              className="mt-3 w-full py-2.5 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+            >
+              {submit.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</> : t("common.submit")}
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function ProfilePage() {
@@ -76,6 +157,7 @@ export default function ProfilePage() {
   const { user } = useUser();
   const { reset: resetTour, start: startTour } = useTourStore();
   const { t } = useTranslation();
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const { data: profile } = useQuery<UserProfile>({
     queryKey: ["profile"],
@@ -120,16 +202,16 @@ export default function ProfilePage() {
       {/* Menu */}
       <div>
         <MenuRow href="/dashboard" icon={LayoutDashboard} label={t("profile.progressDashboard")} />
+        <MenuRow href="/my-contributions" icon={FileText} label={t("profile.myContributions")} />
+        <MenuRow href="/classroom" icon={Users} label={t("profile.classroom")} />
         <MenuRow href="/dictionary" icon={BookText} label={t("profile.dictionary")} />
         <MenuRow href="/settings" icon={Settings} label={t("profile.settings")} />
-        <button
+        <MenuRow icon={MessageSquare} label={t("profile.sendFeedback")} onClick={() => setFeedbackOpen(true)} />
+        <MenuRow
+          icon={Map}
+          label={t("profile.restartWelcomeTour")}
           onClick={() => { resetTour(); startTour(); }}
-          className="flex items-center gap-3 py-3.5 w-full text-left text-neutral-900 dark:text-white border-b border-neutral-100 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors rounded px-1"
-        >
-          <Map className="h-5 w-5 shrink-0" />
-          <span className="flex-1 text-sm font-medium">{t("profile.restartWelcomeTour")}</span>
-          <ChevronRight className="h-4 w-4 text-neutral-300 dark:text-neutral-600" />
-        </button>
+        />
         <button
           onClick={() => signOut({ redirectUrl: "/sign-in" })}
           className="flex items-center gap-3 py-3.5 w-full text-left text-red-500 border-b border-neutral-100 dark:border-neutral-800 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors rounded px-1"
@@ -138,6 +220,8 @@ export default function ProfilePage() {
           <span className="flex-1 text-sm font-medium">{t("profile.signOut")}</span>
         </button>
       </div>
+
+      {feedbackOpen && <FeedbackModal onClose={() => setFeedbackOpen(false)} />}
     </div>
   );
 }

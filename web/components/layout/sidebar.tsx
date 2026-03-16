@@ -6,6 +6,7 @@ import {
     BookOpen,
     BookText,
     Brain,
+    FileText,
     Globe2,
     Headphones,
     Languages,
@@ -15,6 +16,7 @@ import {
     Settings,
     Trophy,
     UserRound,
+    Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -34,6 +36,8 @@ const SECONDARY_NAV = [
   { href: "/leaderboard", labelKey: "leaderboard.title", icon: Trophy, tourId: undefined },
   { href: "/dictionary", labelKey: "dictionaryPage.title", icon: BookText, tourId: undefined },
   { href: "/contribute", labelKey: "contribute.title", icon: Plus, tourId: undefined },
+  { href: "/my-contributions", labelKey: "myContributions.title", icon: FileText, tourId: undefined },
+  { href: "/classroom", labelKey: "profile.classroom", icon: Users, tourId: undefined },
   { href: "/settings", labelKey: "settings.title", icon: Settings, tourId: undefined },
 ] as const;
 

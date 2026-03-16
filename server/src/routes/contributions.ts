@@ -184,6 +184,7 @@ contributionsRouter.post("/", async (c) => {
     userName: user?.name ?? "User",
     userAvatarUrl: user?.avatarUrl,
     audioUrl,
+    contributionId: contribution.id,
   });
 
   return c.json(contribution, 201);
@@ -290,6 +291,7 @@ contributionsRouter.post("/bulk", async (c) => {
     description: `Contributed ${inserted.length} words and phrases to the ${languageId} dictionary`,
     userName: user?.name ?? "User",
     userAvatarUrl: user?.avatarUrl,
+    contributionId: inserted[0]?.id,
   });
 
   return c.json({ inserted: inserted.length, contributions: inserted }, 201);
@@ -324,13 +326,8 @@ contributionsRouter.patch("/:id/review", adminMiddleware, async (c) => {
   const newStatus = action === "approve" ? "approved" : "rejected";
 
   if (action === "reject") {
-    // Supprimer le feedItem créé lors de la soumission
     await db.delete(feedItems).where(
-      and(
-        eq(feedItems.userId, existing.userId),
-        eq(feedItems.type, "contribution"),
-        ilike(feedItems.title, `${existing.word.trim()} →%`)
-      )
+      eq(feedItems.contributionId, id)
     );
   }
 
