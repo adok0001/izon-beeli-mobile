@@ -22,10 +22,12 @@ import {
   CATEGORY_LABELS,
   type DictionaryCategory,
 } from "@/lib/dictionary";
+import { useTranslation } from "react-i18next";
 
 type Step = "type" | "language" | "entry" | "details";
 
 export default function ContributeScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{ languageId?: string; category?: string }>();
   const {
@@ -74,7 +76,7 @@ export default function ContributeScreen() {
       },
       {
         onSuccess: () => {
-          Alert.alert("Submitted!", "Your contribution has been submitted for review.", [
+          Alert.alert(t("contribute.submitted"), t("contribute.submittedWordDesc"), [
             { text: "OK", onPress: () => router.back() },
           ]);
         },
@@ -82,11 +84,11 @@ export default function ContributeScreen() {
           console.error("Contribution submit error:", err);
           if (err instanceof ApiError && err.status === 409) {
             Alert.alert(
-              "Already Exists",
+              t("contribute.alreadyExists"),
               err.message + "\n\nTry contributing a different word or refine this one."
             );
           } else {
-            Alert.alert("Error", err.message || "Failed to submit contribution. Please try again.");
+            Alert.alert(t("common.error"), err.message || t("common.tryAgain"));
           }
         },
       }
@@ -106,7 +108,7 @@ export default function ContributeScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: "Contribute", presentation: "modal" }} />
+      <Stack.Screen options={{ title: t("contribute.title"), presentation: "modal" }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -133,10 +135,10 @@ export default function ContributeScreen() {
             {step === "type" && (
               <View>
                 <Text className="mb-1 text-2xl font-bold text-neutral-900 dark:text-white">
-                  Contribute
+                  {t("contribute.title")}
                 </Text>
                 <Text className="mb-6 text-sm text-neutral-500 dark:text-neutral-400">
-                  Help preserve and grow language resources
+                  {t("contribute.subtitle")}
                 </Text>
 
                 {/* Word / Phrase card */}
@@ -150,10 +152,10 @@ export default function ContributeScreen() {
                     </View>
                     <View className="flex-1">
                       <Text className="text-base font-bold text-neutral-900 dark:text-white">
-                        Word or Phrase
+                        {t("contribute.wordOrPhrase")}
                       </Text>
                       <Text className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">
-                        Add a dictionary entry with translation, pronunciation, and audio
+                        {t("contribute.wordOrPhraseDesc")}
                       </Text>
                     </View>
                     <IconSymbol name="chevron.right" size={16} color="#3b82f6" />
@@ -171,10 +173,10 @@ export default function ContributeScreen() {
                     </View>
                     <View className="flex-1">
                       <Text className="text-base font-bold text-neutral-900 dark:text-white">
-                        Bulk Words
+                        {t("contribute.bulkWords")}
                       </Text>
                       <Text className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">
-                        Add many words or phrases at once in a fast table view
+                        {t("contribute.bulkWordsDesc")}
                       </Text>
                     </View>
                     <IconSymbol name="chevron.right" size={16} color="#22c55e" />
@@ -192,10 +194,10 @@ export default function ContributeScreen() {
                     </View>
                     <View className="flex-1">
                       <Text className="text-base font-bold text-neutral-900 dark:text-white">
-                        Full Lesson
+                        {t("contribute.fullLesson")}
                       </Text>
                       <Text className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">
-                        Upload lesson audio with a timed transcript for learners
+                        {t("contribute.fullLessonDesc")}
                       </Text>
                     </View>
                     <IconSymbol name="chevron.right" size={16} color="#a855f7" />
@@ -213,10 +215,10 @@ export default function ContributeScreen() {
                     </View>
                     <View className="flex-1">
                       <Text className="text-base font-bold text-neutral-900 dark:text-white">
-                        Active Bounties
+                        {t("contribute.activeBounties")}
                       </Text>
                       <Text className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">
-                        Earn bonus XP by contributing to specific content needs
+                        {t("contribute.activeBountiesDesc")}
                       </Text>
                     </View>
                     <IconSymbol name="chevron.right" size={16} color="#f59e0b" />
@@ -229,10 +231,10 @@ export default function ContributeScreen() {
             {step === "language" && (
               <View>
                 <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
-                  Select a language
+                  {t("contribute.selectLanguage")}
                 </Text>
                 <Text className="mb-5 text-sm text-neutral-500 dark:text-neutral-400">
-                  Which language are you contributing to?
+                  {t("contribute.selectLanguageDesc")}
                 </Text>
 
                 {LANGUAGES.map((lang) => (
@@ -266,10 +268,10 @@ export default function ContributeScreen() {
             {step === "entry" && (
               <View>
                 <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
-                  Enter the word or phrase
+                  {t("contribute.enterWord")}
                 </Text>
                 <Text className="mb-5 text-sm text-neutral-500 dark:text-neutral-400">
-                  Add a word in the selected language with its English translation
+                  {t("contribute.enterWordDesc")}
                 </Text>
 
                 {/* Bounty banner */}
@@ -280,7 +282,7 @@ export default function ContributeScreen() {
                   >
                     <View className="flex-row items-center justify-between">
                       <Text className="text-xs font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400">
-                        Active Bounty: +{activeBounty.xpReward} XP
+                        {t("contribute.activeBountyBanner", { xp: activeBounty.xpReward })}
                       </Text>
                       <Text className="text-xs text-amber-500 dark:text-amber-400">
                         {activeBounty.currentCount}/{activeBounty.targetCount}
@@ -293,7 +295,7 @@ export default function ContributeScreen() {
                 )}
 
                 <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  Word / Phrase
+                  {t("contribute.wordPhrase")}
                 </Text>
                 <TextInput
                   value={word}
@@ -305,7 +307,7 @@ export default function ContributeScreen() {
                 />
 
                 <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  English Translation
+                  {t("dictionaryPage.fieldEnglish")}
                 </Text>
                 <TextInput
                   value={english}
@@ -316,7 +318,7 @@ export default function ContributeScreen() {
                 />
 
                 <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  Category
+                  {t("dictionaryPage.fieldCategory")}
                 </Text>
                 <View className="mb-4 flex-row flex-wrap gap-2">
                   {ALL_CATEGORIES.map((cat) => (
@@ -348,10 +350,10 @@ export default function ContributeScreen() {
             {step === "details" && (
               <View>
                 <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
-                  Additional details
+                  {t("contribute.additionalDetails")}
                 </Text>
                 <Text className="mb-5 text-sm text-neutral-500 dark:text-neutral-400">
-                  Optional — add pronunciation, examples, or audio
+                  {t("contribute.additionalDetailsDesc")}
                 </Text>
 
                 {/* Summary card */}
@@ -368,7 +370,7 @@ export default function ContributeScreen() {
                 </View>
 
                 <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  Pronunciation Guide
+                  {t("dictionaryPage.fieldPronunciation")}
                 </Text>
                 <TextInput
                   value={pronunciation}
@@ -379,7 +381,7 @@ export default function ContributeScreen() {
                 />
 
                 <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  Example Sentence
+                  {t("dictionaryPage.fieldExample")}
                 </Text>
                 <TextInput
                   value={example}
@@ -390,7 +392,7 @@ export default function ContributeScreen() {
                 />
 
                 <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  Example Translation
+                  {t("dictionaryPage.fieldExampleTranslation")}
                 </Text>
                 <TextInput
                   value={exampleTranslation}
@@ -402,21 +404,21 @@ export default function ContributeScreen() {
 
                 {/* Audio recording */}
                 <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  Audio Pronunciation
+                  {t("contribute.audioPronunciation")}
                 </Text>
                 <View className="mb-4 items-center rounded-xl border border-neutral-200 p-4 dark:border-neutral-700">
                   {recordingUri ? (
                     <View className="items-center">
                       <IconSymbol name="checkmark.circle.fill" size={32} color="#22c55e" />
                       <Text className="mt-2 text-sm text-green-600 dark:text-green-400">
-                        Recording saved
+                        {t("contribute.recordingSaved")}
                       </Text>
                       <Pressable
                         onPress={() => discardRecording()}
                         className="mt-2 rounded-lg bg-neutral-200 px-4 py-2 dark:bg-neutral-700"
                       >
                         <Text className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                          Re-record
+                          {t("contribute.reRecord")}
                         </Text>
                       </Pressable>
                     </View>
@@ -436,12 +438,12 @@ export default function ContributeScreen() {
                   )}
                   {isRecording && (
                     <Text className="mt-2 text-sm text-red-500">
-                      Recording... Tap to stop
+                      {t("contribute.recordingTapToStop")}
                     </Text>
                   )}
                   {!recordingUri && !isRecording && (
                     <Text className="mt-2 text-xs text-neutral-400 dark:text-neutral-500">
-                      Optional — tap to record pronunciation
+                      {t("contribute.recordingHint")}
                     </Text>
                   )}
                 </View>
@@ -462,7 +464,7 @@ export default function ContributeScreen() {
                   className="flex-1 items-center rounded-xl bg-neutral-100 py-3.5 dark:bg-neutral-800"
                 >
                   <Text className="font-semibold text-neutral-700 dark:text-neutral-300">
-                    Back
+                    {t("common.back")}
                   </Text>
                 </Pressable>
                 {step === "entry" && (
@@ -477,7 +479,7 @@ export default function ContributeScreen() {
                         : "bg-blue-300 dark:bg-blue-800"
                     }`}
                   >
-                    <Text className="font-semibold text-white">Next</Text>
+                    <Text className="font-semibold text-white">{t("common.next")}</Text>
                   </Pressable>
                 )}
                 {step === "details" && (
@@ -489,7 +491,7 @@ export default function ContributeScreen() {
                     }`}
                   >
                     <Text className="font-semibold text-white">
-                      {submitContribution.isPending ? "Submitting..." : "Submit"}
+                      {submitContribution.isPending ? t("contribute.submitting") : t("common.submit")}
                     </Text>
                   </Pressable>
                 )}

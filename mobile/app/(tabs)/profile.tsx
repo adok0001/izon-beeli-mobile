@@ -1,3 +1,4 @@
+import { FeatureTourModal } from "@/components/feature-tour-modal";
 import { FeedbackModal } from "@/components/feedback-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { XpLevelBadge } from "@/components/xp-level-badge";
@@ -7,11 +8,9 @@ import { getLanguageName } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
 import { useTourStore } from "@/store/tour-store";
 import { useAuth, useUser } from "@clerk/clerk-expo";
-import { useTranslation } from "react-i18next";
-import { useTourStore } from "@/store/tour-store";
-import { FeatureTourModal } from "@/components/feature-tour-modal";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 

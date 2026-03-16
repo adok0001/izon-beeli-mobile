@@ -395,6 +395,7 @@ export interface DailyChallenge {
   progress: number;
   completed: boolean;
   xpReward: number;
+  slot: number; // 0 | 1 | 2
   completedAt: string | null;
   createdAt: string;
 }

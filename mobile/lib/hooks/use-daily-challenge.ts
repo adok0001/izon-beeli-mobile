@@ -3,10 +3,10 @@ import { useAuth } from "@clerk/clerk-expo";
 import { apiFetch } from "@/lib/api";
 import type { DailyChallenge } from "@/types";
 
-export function useTodayChallenge() {
+export function useTodayChallenges() {
   const { getToken, isSignedIn } = useAuth();
 
-  return useQuery<DailyChallenge>({
+  return useQuery<DailyChallenge[]>({
     queryKey: ["daily-challenges", "today"],
     queryFn: async () => {
       const token = await getToken();

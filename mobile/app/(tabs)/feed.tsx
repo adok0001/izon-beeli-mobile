@@ -1,33 +1,33 @@
-import { useState, useCallback } from "react";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { hapticSuccess } from "@/lib/haptics";
 import {
-  View,
-  Text,
+  useAddComment,
+  useComments,
+  useCreatePost,
+  useFeed,
+  useToggleLike,
+  type FeedTypeFilter,
+} from "@/lib/hooks/use-feed";
+import i18n from "@/lib/i18n";
+import { useAudioStore } from "@/store/audio-store";
+import type { AudioSource, Comment, FeedItem } from "@/types";
+import { useRouter } from "expo-router";
+import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  ActivityIndicator,
   FlatList,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   Pressable,
   RefreshControl,
   Share,
-  Modal,
+  Text,
   TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useAudioStore } from "@/store/audio-store";
-import { hapticSuccess } from "@/lib/haptics";
-import {
-  useFeed,
-  useCreatePost,
-  useToggleLike,
-  useComments,
-  useAddComment,
-  type FeedTypeFilter,
-} from "@/lib/hooks/use-feed";
-import type { FeedItem, Comment, AudioSource } from "@/types";
-import { useTranslation } from "react-i18next";
-import i18n from "@/lib/i18n";
 
 function timeAgo(dateStr: string): string {
   const now = Date.now();
@@ -324,7 +324,7 @@ function FeedCard({
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `${item.title}\n\n${item.description}\n\n— ${item.userName} on Izon Beeli`,
+        message: `${item.title}\n\n${item.description}\n\n— ${item.userName} on Beeli`,
       });
     } catch {
       // user cancelled

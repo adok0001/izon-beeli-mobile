@@ -1,22 +1,22 @@
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import {
+    useLeaveMatchmaking,
+    useMatchmakingStatus,
+} from "@/lib/hooks/use-multiplayer";
+import { useMultiplayerStore } from "@/store/multiplayer-store";
+import { useAuth, useUser } from "@clerk/clerk-expo";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-  View,
-  Text,
-  Pressable,
-  ActivityIndicator,
-  Alert,
-  Share,
-  Platform,
+    ActivityIndicator,
+    Alert,
+    Platform,
+    Pressable,
+    Share,
+    Text,
+    View,
 } from "react-native";
-import { useRouter, useLocalSearchParams, Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth, useUser } from "@clerk/clerk-expo";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useMultiplayerStore } from "@/store/multiplayer-store";
-import {
-  useMatchmakingStatus,
-  useLeaveMatchmaking,
-} from "@/lib/hooks/use-multiplayer";
 
 const PARTYKIT_HOST =
   process.env.EXPO_PUBLIC_PARTYKIT_HOST ?? "localhost:1999";
@@ -134,7 +134,7 @@ export default function LobbyScreen() {
         await Share.share({
           message: `Join my ${
             params.type === "quiz_battle" ? "Quiz Battle" : "Paired Lesson"
-          } on Izon Beeli! Use invite code: ${code}`,
+          } on Beeli! Use invite code: ${code}`,
         });
       }
     } catch {

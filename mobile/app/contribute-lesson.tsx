@@ -21,6 +21,7 @@ import {
   type LessonContributionSegmentInput,
 } from "@/lib/hooks/use-contributions";
 import { apiFetch } from "@/lib/api";
+import { useTranslation } from "react-i18next";
 
 type Step = "language" | "course" | "details" | "audio" | "transcript";
 
@@ -37,13 +38,15 @@ interface Segment {
   endTime: string;
 }
 
-const STEP_META: Record<Step, { label: string; icon: string }> = {
-  language: { label: "Language", icon: "globe" },
-  course: { label: "Course", icon: "book.fill" },
-  details: { label: "Details", icon: "pencil" },
-  audio: { label: "Audio", icon: "waveform" },
-  transcript: { label: "Transcript", icon: "text.alignleft" },
-};
+function useStepMeta(t: (key: string) => string): Record<Step, { label: string; icon: string }> {
+  return {
+    language: { label: t("contribute.stepLanguage"), icon: "globe" },
+    course: { label: t("contribute.stepCourse"), icon: "book.fill" },
+    details: { label: t("contribute.stepDetails"), icon: "pencil" },
+    audio: { label: t("contribute.stepAudio"), icon: "waveform" },
+    transcript: { label: t("contribute.stepTranscript"), icon: "text.alignleft" },
+  };
+}
 
 const STEPS: Step[] = ["language", "course", "details", "audio", "transcript"];
 
@@ -54,6 +57,8 @@ function formatTime(seconds: number): string {
 }
 
 export default function ContributeLessonScreen() {
+  const { t } = useTranslation();
+  const STEP_META = useStepMeta(t);
   const router = useRouter();
   const store = useLessonContributionStore();
   const submitLesson = useSubmitLessonContribution();
@@ -165,14 +170,12 @@ export default function ContributeLessonScreen() {
       },
       {
         onSuccess: () => {
-          Alert.alert(
-            "Submitted!",
-            "Your lesson has been submitted for review.",
-            [{ text: "OK", onPress: () => router.back() }]
-          );
+          Alert.alert(t("contribute.submitted"), t("contribute.submittedLessonDesc"), [
+            { text: "OK", onPress: () => router.back() },
+          ]);
         },
         onError: (err) => {
-          Alert.alert("Error", err.message || "Failed to submit. Please try again.");
+          Alert.alert(t("common.error"), err.message || t("common.tryAgain"));
         },
       }
     );
@@ -204,7 +207,7 @@ export default function ContributeLessonScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: "Contribute a Lesson", presentation: "modal" }} />
+      <Stack.Screen options={{ title: t("contribute.lessonTitle"), presentation: "modal" }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -266,10 +269,10 @@ export default function ContributeLessonScreen() {
             {step === "language" && (
               <View>
                 <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
-                  Which language?
+                  {t("contribute.whichLanguage")}
                 </Text>
                 <Text className="mb-5 text-sm text-neutral-500 dark:text-neutral-400">
-                  Choose the language for this lesson
+                  {t("contribute.chooseLanguageDesc")}
                 </Text>
                 {LANGUAGES.map((lang) => (
                   <Pressable
@@ -312,16 +315,16 @@ export default function ContributeLessonScreen() {
             {step === "course" && (
               <View>
                 <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
-                  Assign to a course
+                  {t("contribute.assignCourse")}
                 </Text>
                 <Text className="mb-5 text-sm text-neutral-500 dark:text-neutral-400">
-                  Optional — reviewers can assign later
+                  {t("contribute.assignCourseDesc")}
                 </Text>
 
                 {loadingCourses ? (
                   <View className="items-center py-12">
                     <ActivityIndicator size="large" color="#3b82f6" />
-                    <Text className="mt-3 text-sm text-neutral-400">Loading courses...</Text>
+                    <Text className="mt-3 text-sm text-neutral-400">{t("contribute.loadingCourses")}</Text>
                   </View>
                 ) : (
                   <>
@@ -340,10 +343,10 @@ export default function ContributeLessonScreen() {
                       </View>
                       <View className="flex-1">
                         <Text className="text-base font-semibold text-neutral-900 dark:text-white">
-                          Unsorted
+                          {t("contribute.unsorted")}
                         </Text>
                         <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-                          Reviewer will choose the best course
+                          {t("contribute.unsortedDesc")}
                         </Text>
                       </View>
                       {selectedCourse === null && (
@@ -388,20 +391,20 @@ export default function ContributeLessonScreen() {
             {step === "details" && (
               <View>
                 <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
-                  Lesson info
+                  {t("contribute.lessonInfo")}
                 </Text>
                 <Text className="mb-5 text-sm text-neutral-500 dark:text-neutral-400">
-                  What will learners get from this lesson?
+                  {t("contribute.lessonInfoDesc")}
                 </Text>
 
                 <View className="mb-4">
                   <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                    Title
+                    {t("journal.titleLabel")}
                   </Text>
                   <TextInput
                     value={title}
                     onChangeText={setTitle}
-                    placeholder="e.g. Greetings & Introductions"
+                    placeholder={t("contribute.lessonTitlePlaceholder")}
                     placeholderTextColor="#9ca3af"
                     className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                     autoFocus
@@ -410,12 +413,12 @@ export default function ContributeLessonScreen() {
 
                 <View className="mb-4">
                   <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                    Description
+                    {t("contribute.descriptionLabel")}
                   </Text>
                   <TextInput
                     value={description}
                     onChangeText={setDescription}
-                    placeholder="What will learners learn in this lesson?"
+                    placeholder={t("contribute.lessonDescPlaceholder")}
                     placeholderTextColor="#9ca3af"
                     multiline
                     numberOfLines={4}
@@ -430,10 +433,10 @@ export default function ContributeLessonScreen() {
             {step === "audio" && (
               <View>
                 <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
-                  Add audio
+                  {t("contribute.addAudio")}
                 </Text>
                 <Text className="mb-5 text-sm text-neutral-500 dark:text-neutral-400">
-                  Upload an audio file or record directly
+                  {t("contribute.addAudioDesc")}
                 </Text>
 
                 {store.audioUri ? (
@@ -442,7 +445,7 @@ export default function ContributeLessonScreen() {
                       <IconSymbol name="checkmark" size={28} color="#22c55e" />
                     </View>
                     <Text className="text-lg font-bold text-green-700 dark:text-green-400">
-                      Audio ready
+                      {t("contribute.audioReady")}
                     </Text>
                     {store.audioDuration > 0 && (
                       <Text className="mt-1 text-sm text-green-600 dark:text-green-500">
@@ -460,7 +463,7 @@ export default function ContributeLessonScreen() {
                         color="white"
                       />
                       <Text className="ml-2 text-sm font-semibold text-white">
-                        {store.isPlaying ? "Pause" : "Preview"}
+                        {store.isPlaying ? t("lesson.pause") : t("contribute.preview")}
                       </Text>
                     </Pressable>
                     <Pressable
@@ -471,7 +474,7 @@ export default function ContributeLessonScreen() {
                       className="mt-3"
                     >
                       <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-                        Choose different audio
+                        {t("contribute.chooseDifferentAudio")}
                       </Text>
                     </Pressable>
                   </View>
@@ -486,10 +489,10 @@ export default function ContributeLessonScreen() {
                       </View>
                       <View className="flex-1">
                         <Text className="text-base font-semibold text-neutral-900 dark:text-white">
-                          Choose a file
+                          {t("contribute.chooseFile")}
                         </Text>
                         <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
-                          Supports mp3, m4a, wav
+                          {t("contribute.chooseFileFormats")}
                         </Text>
                       </View>
                       <IconSymbol name="chevron.right" size={16} color="#3b82f6" />
@@ -514,12 +517,12 @@ export default function ContributeLessonScreen() {
                       </View>
                       <View className="flex-1">
                         <Text className="text-base font-semibold text-neutral-900 dark:text-white">
-                          {store.isRecording ? "Stop recording" : "Record audio"}
+                          {store.isRecording ? t("contribute.stopRecording") : t("contribute.recordAudio")}
                         </Text>
                         <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
                           {store.isRecording
-                            ? `Recording... ${store.recordingDuration}s`
-                            : "Tap to start recording"}
+                            ? t("contribute.recordingProgress", { duration: store.recordingDuration })
+                            : t("contribute.tapToStartRecording")}
                         </Text>
                       </View>
                       {store.isRecording && (
@@ -535,10 +538,10 @@ export default function ContributeLessonScreen() {
             {step === "transcript" && (
               <View>
                 <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
-                  Add transcript
+                  {t("contribute.addTranscript")}
                 </Text>
                 <Text className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
-                  Type what&apos;s said in the audio. Use Mark to sync timing while playing.
+                  {t("contribute.addTranscriptDesc")}
                 </Text>
 
                 {/* Playback controls */}
@@ -597,7 +600,7 @@ export default function ContributeLessonScreen() {
                           </Text>
                         ) : (
                           <Text className="text-xs text-neutral-400 dark:text-neutral-500">
-                            No timing set
+                            {t("contribute.noTimingSet")}
                           </Text>
                         )}
                       </View>
@@ -608,7 +611,7 @@ export default function ContributeLessonScreen() {
                         >
                           <IconSymbol name="hand.tap.fill" size={12} color="white" />
                           <Text className="ml-1 text-xs font-semibold text-white">
-                            Mark
+                            {t("contribute.mark")}
                           </Text>
                         </Pressable>
                         {segments.length > 1 && (
@@ -676,7 +679,7 @@ export default function ContributeLessonScreen() {
                 >
                   <IconSymbol name="plus.circle.fill" size={18} color="#3b82f6" />
                   <Text className="ml-2 text-sm font-semibold text-blue-600 dark:text-blue-400">
-                    Add segment
+                    {t("contribute.addSegment")}
                   </Text>
                 </Pressable>
               </View>
@@ -695,12 +698,12 @@ export default function ContributeLessonScreen() {
                 </View>
                 <View className="rounded-full bg-neutral-100 px-3 py-1 dark:bg-neutral-800">
                   <Text className="text-xs text-neutral-600 dark:text-neutral-400">
-                    {title || "Untitled"}
+                    {title || t("contribute.untitled")}
                   </Text>
                 </View>
                 <View className="rounded-full bg-neutral-100 px-3 py-1 dark:bg-neutral-800">
                   <Text className="text-xs text-neutral-600 dark:text-neutral-400">
-                    {segments.filter((s) => s.text.trim()).length} segments
+                    {t("contribute.segmentsCount", { count: segments.filter((s) => s.text.trim()).length })}
                   </Text>
                 </View>
               </View>
@@ -714,7 +717,7 @@ export default function ContributeLessonScreen() {
                 >
                   <IconSymbol name="chevron.left" size={14} color="#6b7280" />
                   <Text className="ml-1 font-semibold text-neutral-700 dark:text-neutral-300">
-                    Back
+                    {t("common.back")}
                   </Text>
                 </Pressable>
               )}
@@ -726,7 +729,7 @@ export default function ContributeLessonScreen() {
                     canGoNext() ? "bg-blue-500" : "bg-blue-200 dark:bg-blue-900"
                   }`}
                 >
-                  <Text className="font-semibold text-white">Continue</Text>
+                  <Text className="font-semibold text-white">{t("common.continue")}</Text>
                   <IconSymbol name="chevron.right" size={14} color="white" />
                 </Pressable>
               ) : (
@@ -744,7 +747,7 @@ export default function ContributeLessonScreen() {
                   ) : (
                     <>
                       <IconSymbol name="paperplane.fill" size={14} color="white" />
-                      <Text className="ml-2 font-semibold text-white">Submit Lesson</Text>
+                      <Text className="ml-2 font-semibold text-white">{t("contribute.submitLesson")}</Text>
                     </>
                   )}
                 </Pressable>

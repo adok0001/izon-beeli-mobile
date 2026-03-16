@@ -16,6 +16,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LANGUAGES } from "@/lib/mock-data";
 import { ALL_CATEGORIES, CATEGORY_LABELS, type DictionaryCategory } from "@/lib/dictionary";
 import { useBulkSubmitContribution, type BulkContributionEntry } from "@/lib/hooks/use-contributions";
+import { useTranslation } from "react-i18next";
 
 type Step = "language" | "category" | "entries";
 
@@ -28,6 +29,7 @@ interface EntryRow {
 const EMPTY_ROW = (): EntryRow => ({ word: "", english: "", pronunciation: "" });
 
 export default function ContributeBulkScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const submitBulk = useBulkSubmitContribution();
 
@@ -96,14 +98,15 @@ export default function ContributeBulkScreen() {
       { languageId: selectedLanguage, entries },
       {
         onSuccess: (data) => {
+          const label = data.inserted === 1 ? t("contribute.submitEntry") : t("contribute.submitEntries");
           Alert.alert(
-            "Submitted!",
-            `${data.inserted} ${data.inserted === 1 ? "entry" : "entries"} submitted for review.`,
+            t("contribute.submitted"),
+            t("contribute.submittedBulkDesc", { inserted: data.inserted, label }),
             [{ text: "OK", onPress: () => router.back() }]
           );
         },
         onError: (err) => {
-          Alert.alert("Error", err.message || "Failed to submit. Please try again.");
+          Alert.alert(t("common.error"), err.message || t("common.tryAgain"));
         },
       }
     );
@@ -115,7 +118,7 @@ export default function ContributeBulkScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: "Bulk Contribute", presentation: "modal" }} />
+      <Stack.Screen options={{ title: t("contribute.bulkTitle"), presentation: "modal" }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -142,10 +145,10 @@ export default function ContributeBulkScreen() {
             {step === "language" && (
               <View>
                 <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
-                  Select a language
+                  {t("contribute.selectLanguage")}
                 </Text>
                 <Text className="mb-5 text-sm text-neutral-500 dark:text-neutral-400">
-                  All entries will be added to this language
+                  {t("contribute.allEntriesLanguageDesc")}
                 </Text>
                 {LANGUAGES.map((lang) => (
                   <Pressable
@@ -214,7 +217,7 @@ export default function ContributeBulkScreen() {
                 <View className="mb-4 flex-row items-start justify-between">
                   <View className="flex-1">
                     <Text className="text-xl font-bold text-neutral-900 dark:text-white">
-                      Add entries
+                      {t("contribute.addEntries")}
                     </Text>
                     <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
                       {languageName} · {selectedCategory ? CATEGORY_LABELS[selectedCategory] : ""}
@@ -222,7 +225,7 @@ export default function ContributeBulkScreen() {
                   </View>
                   <View className="rounded-full bg-green-100 px-3 py-1 dark:bg-green-900">
                     <Text className="text-sm font-semibold text-green-700 dark:text-green-400">
-                      {filledRows.length} ready
+                      {t("contribute.readyCount", { count: filledRows.length })}
                     </Text>
                   </View>
                 </View>
@@ -230,13 +233,13 @@ export default function ContributeBulkScreen() {
                 {/* Column headers */}
                 <View className="mb-1.5 flex-row gap-2 px-1">
                   <Text className="flex-[2] text-xs font-semibold uppercase tracking-wide text-neutral-400">
-                    Native word
+                    {t("contribute.nativeWord")}
                   </Text>
                   <Text className="flex-[2] text-xs font-semibold uppercase tracking-wide text-neutral-400">
-                    English
+                    {t("wordReview.english")}
                   </Text>
                   <Text className="flex-[1] text-xs font-semibold uppercase tracking-wide text-neutral-400">
-                    Pronunc.
+                    {t("contribute.pronunciationShort")}
                   </Text>
                   <View className="w-7" />
                 </View>
@@ -247,7 +250,7 @@ export default function ContributeBulkScreen() {
                       ref={(r) => { inputRefs.current[refKey(i, 0)] = r; }}
                       value={row.word}
                       onChangeText={(v) => updateRow(i, "word", v)}
-                      placeholder="Word…"
+                      placeholder={t("contribute.wordPlaceholder")}
                       placeholderTextColor="#9ca3af"
                       returnKeyType="next"
                       onSubmitEditing={() => focusNext(i, 0)}
@@ -258,7 +261,7 @@ export default function ContributeBulkScreen() {
                       ref={(r) => { inputRefs.current[refKey(i, 1)] = r; }}
                       value={row.english}
                       onChangeText={(v) => updateRow(i, "english", v)}
-                      placeholder="Translation…"
+                      placeholder={t("contribute.translationPlaceholder")}
                       placeholderTextColor="#9ca3af"
                       returnKeyType="next"
                       onSubmitEditing={() => focusNext(i, 1)}
@@ -295,7 +298,7 @@ export default function ContributeBulkScreen() {
                 >
                   <IconSymbol name="plus.circle.fill" size={16} color="#22c55e" />
                   <Text className="ml-2 text-sm font-semibold text-green-600 dark:text-green-400">
-                    Add row
+                    {t("contribute.addRow")}
                   </Text>
                 </Pressable>
               </View>
@@ -312,7 +315,7 @@ export default function ContributeBulkScreen() {
                 >
                   <IconSymbol name="chevron.left" size={14} color="#6b7280" />
                   <Text className="ml-1 font-semibold text-neutral-700 dark:text-neutral-300">
-                    Back
+                    {t("common.back")}
                   </Text>
                 </Pressable>
                 <Pressable
@@ -330,8 +333,8 @@ export default function ContributeBulkScreen() {
                     <>
                       <IconSymbol name="paperplane.fill" size={14} color="white" />
                       <Text className="ml-2 font-semibold text-white">
-                        Submit {filledRows.length > 0 ? `${filledRows.length} ` : ""}
-                        {filledRows.length === 1 ? "Entry" : "Entries"}
+                        {t("common.submit")}{filledRows.length > 0 ? ` ${filledRows.length} ` : " "}
+                        {filledRows.length === 1 ? t("contribute.submitEntry") : t("contribute.submitEntries")}
                       </Text>
                     </>
                   )}

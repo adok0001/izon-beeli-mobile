@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Izon Beeli is a React Native/Expo (SDK 54) mobile learning platform with tabs for learning, listening to audio lessons, journaling, community feed, and user profile. It targets iOS, Android, and web.
+Beeli is a React Native/Expo (SDK 54) mobile learning platform with tabs for learning, listening to audio lessons, journaling, community feed, and user profile. It targets iOS, Android, and web.
 
 ## Development Commands
 

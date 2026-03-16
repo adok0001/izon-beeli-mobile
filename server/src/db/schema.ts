@@ -6,6 +6,7 @@ import {
   pgEnum,
   pgTable,
   real,
+  smallint,
   text,
   timestamp,
   uniqueIndex,
@@ -114,6 +115,8 @@ export const journalEntries = pgTable(
     title: varchar("title", { length: 500 }).notNull(),
     content: text("content").notNull(),
     lessonId: varchar("lesson_id", { length: 64 }),
+    languageId: varchar("language_id", { length: 64 }),
+    isPublic: boolean("is_public").default(false).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
@@ -619,6 +622,7 @@ export const dailyChallenges = pgTable(
       .references(() => users.id)
       .notNull(),
     date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD
+    slot: smallint("slot").default(0).notNull(),     // 0 | 1 | 2
     challengeType: challengeTypeEnum("challenge_type").notNull(),
     title: varchar("title", { length: 200 }).notNull(),
     description: text("description").notNull(),
@@ -630,7 +634,7 @@ export const dailyChallenges = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
-    uniqueIndex("daily_challenges_user_date_idx").on(table.userId, table.date),
+    uniqueIndex("daily_challenges_user_date_slot_idx").on(table.userId, table.date, table.slot),
     index("daily_challenges_user_id_idx").on(table.userId),
   ]
 );

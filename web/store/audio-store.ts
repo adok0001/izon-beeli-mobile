@@ -1,11 +1,15 @@
-import { create } from "zustand";
 import type { Lesson } from "@/types";
+import { create } from "zustand";
+
+export type PlaybackSpeed = 0.5 | 0.75 | 1 | 1.25 | 1.5 | 2;
+export const SPEED_OPTIONS: PlaybackSpeed[] = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
 interface AudioState {
   currentLesson: Lesson | null;
   isPlaying: boolean;
   position: number; // seconds
   duration: number; // seconds
+  speed: PlaybackSpeed;
   audioElement: HTMLAudioElement | null;
 
   // Actions
@@ -14,6 +18,9 @@ interface AudioState {
   pause: () => void;
   resume: () => void;
   seek: (seconds: number) => void;
+  skipForward: (seconds?: number) => void;
+  skipBackward: (seconds?: number) => void;
+  setSpeed: (speed: PlaybackSpeed) => void;
   setPosition: (seconds: number) => void;
   setDuration: (seconds: number) => void;
   stop: () => void;
@@ -24,10 +31,11 @@ export const useAudioStore = create<AudioState>((set, get) => ({
   isPlaying: false,
   position: 0,
   duration: 0,
+  speed: 1,
   audioElement: null,
 
   load: (lesson: Lesson) => {
-    const { audioElement: existing } = get();
+    const { audioElement: existing, speed } = get();
     if (existing) {
       existing.pause();
       existing.src = "";
@@ -39,6 +47,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
     }
 
     const audio = new Audio(lesson.audioUrl);
+    audio.playbackRate = speed;
 
     audio.addEventListener("timeupdate", () => {
       set({ position: audio.currentTime });
@@ -83,6 +92,32 @@ export const useAudioStore = create<AudioState>((set, get) => ({
       audioElement.currentTime = seconds;
       set({ position: seconds });
     }
+  },
+
+  skipForward: (seconds = 10) => {
+    const { audioElement, duration } = get();
+    if (audioElement) {
+      const next = Math.min(duration, audioElement.currentTime + seconds);
+      audioElement.currentTime = next;
+      set({ position: next });
+    }
+  },
+
+  skipBackward: (seconds = 10) => {
+    const { audioElement } = get();
+    if (audioElement) {
+      const next = Math.max(0, audioElement.currentTime - seconds);
+      audioElement.currentTime = next;
+      set({ position: next });
+    }
+  },
+
+  setSpeed: (speed: PlaybackSpeed) => {
+    const { audioElement } = get();
+    if (audioElement) {
+      audioElement.playbackRate = speed;
+    }
+    set({ speed });
   },
 
   setPosition: (seconds: number) => set({ position: seconds }),

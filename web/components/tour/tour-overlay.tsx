@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { useTourStore, TOUR_STEPS } from "@/store/tour-store";
 import { cn } from "@/lib/utils";
+import { TOUR_STEPS, useTourStore } from "@/store/tour-store";
+import { type CSSProperties, useEffect, useLayoutEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 
 interface Rect {
   top: number;
@@ -12,7 +13,7 @@ interface Rect {
   height: number;
 }
 
-const PADDING = 8; // spotlight padding around target
+const PADDING = 8;
 
 function useTargetRect(targetId: string | null, stepIndex: number): Rect | null {
   const [rect, setRect] = useState<Rect | null>(null);
@@ -29,6 +30,7 @@ function useTargetRect(targetId: string | null, stepIndex: number): Rect | null 
         setRect(null);
         return;
       }
+
       const r = el.getBoundingClientRect();
       setRect({
         top: r.top - PADDING,
@@ -38,9 +40,9 @@ function useTargetRect(targetId: string | null, stepIndex: number): Rect | null 
       });
     };
 
-    // Small delay so the DOM has settled (e.g. after route change)
     const id = setTimeout(measure, 60);
     window.addEventListener("resize", measure);
+
     return () => {
       clearTimeout(id);
       window.removeEventListener("resize", measure);
@@ -59,7 +61,7 @@ function TooltipCard({
   rect,
   onNext,
   onSkip,
-}: {
+}: Readonly<{
   title: string;
   description: string;
   stepIndex: number;
@@ -68,11 +70,9 @@ function TooltipCard({
   rect: Rect | null;
   onNext: () => void;
   onSkip: () => void;
-}) {
+}>) {
   const isLast = stepIndex === total - 1;
-  const isFirst = stepIndex === 0;
 
-  // For centered steps (no target) render a modal card
   if (!rect) {
     return (
       <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 pointer-events-none">
@@ -83,7 +83,7 @@ function TooltipCard({
             stepIndex={stepIndex}
             total={total}
             isLast={isLast}
-            isFirst={isFirst}
+
             onNext={onNext}
             onSkip={onSkip}
           />
@@ -92,10 +92,9 @@ function TooltipCard({
     );
   }
 
-  // Positioned tooltip relative to spotlight rect
   const GAP = 12;
-  let style: React.CSSProperties = {};
   const CARD_WIDTH = 280;
+  let style: CSSProperties;
 
   switch (placement) {
     case "right":
@@ -136,7 +135,6 @@ function TooltipCard({
       className="fixed z-[60] pointer-events-auto bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-neutral-200 dark:border-neutral-700 p-5"
       style={style}
     >
-      {/* Arrow pointing toward spotlight */}
       {placement === "right" && (
         <span
           className="absolute -left-2 top-1/2 -translate-y-1/2 w-0 h-0"
@@ -153,7 +151,6 @@ function TooltipCard({
         stepIndex={stepIndex}
         total={total}
         isLast={isLast}
-        isFirst={isFirst}
         onNext={onNext}
         onSkip={onSkip}
       />
@@ -167,19 +164,20 @@ function CardBody({
   stepIndex,
   total,
   isLast,
-  isFirst,
   onNext,
   onSkip,
-}: {
+}: Readonly<{
   title: string;
   description: string;
   stepIndex: number;
   total: number;
   isLast: boolean;
-  isFirst: boolean;
   onNext: () => void;
   onSkip: () => void;
-}) {
+}>) {
+  const { t } = useTranslation();
+  const progressDots = Array.from({ length: total }, (_, stepNumber) => stepNumber + 1);
+
   return (
     <>
       <p className="font-bold text-neutral-900 dark:text-white text-base leading-snug mb-1.5">
@@ -189,14 +187,13 @@ function CardBody({
         {description}
       </p>
 
-      {/* Dot progress */}
       <div className="flex items-center gap-1 mb-4">
-        {Array.from({ length: total }).map((_, i) => (
+        {progressDots.map((stepNumber, index) => (
           <span
-            key={i}
+            key={`tour-dot-${stepNumber}`}
             className={cn(
               "rounded-full transition-all",
-              i === stepIndex
+              index === stepIndex
                 ? "w-4 h-1.5 bg-brand-500"
                 : "w-1.5 h-1.5 bg-neutral-200 dark:bg-neutral-700"
             )}
@@ -210,14 +207,14 @@ function CardBody({
             onClick={onSkip}
             className="text-sm text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
           >
-            Skip tour
+            {t("tour.skip")}
           </button>
         )}
         <button
           onClick={onNext}
           className="ml-auto px-4 py-2 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors"
         >
-          {isLast ? "Get started →" : "Next →"}
+          {isLast ? `${t("tour.getStarted")} →` : `${t("common.next")} →`}
         </button>
       </div>
     </>
@@ -225,6 +222,7 @@ function CardBody({
 }
 
 export function TourOverlay() {
+  const { t } = useTranslation();
   const { active, stepIndex, next, skip } = useTourStore();
   const [mounted, setMounted] = useState(false);
 
@@ -235,13 +233,13 @@ export function TourOverlay() {
   const step = TOUR_STEPS[stepIndex];
   const rect = useTargetRect(step?.target ?? null, stepIndex);
 
-  // Lock scroll while tour is active
   useEffect(() => {
     if (active) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
     }
+
     return () => {
       document.body.style.overflow = "";
     };
@@ -251,14 +249,14 @@ export function TourOverlay() {
 
   return createPortal(
     <>
-      {/* Dark scrim — punchout handled by the spotlight box */}
-      <div
+      <button
+        type="button"
         className="fixed inset-0 z-50 transition-all duration-300"
         style={{ background: "rgba(0,0,0,0.55)" }}
         onClick={next}
+        aria-label={t("common.next")}
       />
 
-      {/* Spotlight cutout */}
       {rect && (
         <div
           className="fixed z-50 rounded-xl pointer-events-none transition-all duration-300"
@@ -273,10 +271,9 @@ export function TourOverlay() {
         />
       )}
 
-      {/* Tooltip */}
       <TooltipCard
-        title={step.title}
-        description={step.description}
+        title={t(step.titleKey)}
+        description={t(step.descriptionKey)}
         stepIndex={stepIndex}
         total={TOUR_STEPS.length}
         placement={step.placement}

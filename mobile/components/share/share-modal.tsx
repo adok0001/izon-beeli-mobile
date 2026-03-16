@@ -1,8 +1,8 @@
+import { captureAndShare } from "@/lib/share-card";
 import { useRef, useState } from "react";
-import { View, Text, Pressable, Modal } from "react-native";
+import { Modal, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ShareCardPreview } from "./share-card-preview";
-import { captureAndShare } from "@/lib/share-card";
 
 interface Props {
   visible: boolean;
@@ -36,11 +36,11 @@ export function ShareModal({ visible, onClose, data }: Props) {
     setSharing(true);
     let msg = "";
     if (data.template === "word") {
-      msg = `${data.word} — ${data.translation}\n\nLearning ${data.language} with Izon Beeli`;
+      msg = `${data.word} — ${data.translation}\n\nLearning ${data.language} with Beeli`;
     } else if (data.template === "proverb") {
-      msg = `"${data.text}"\n${data.translation}\n\nLearning ${data.language} with Izon Beeli`;
+      msg = `"${data.text}"\n${data.translation}\n\nLearning ${data.language} with Beeli`;
     } else {
-      msg = `${data.title}: ${data.detail}\n\nLearning with Izon Beeli`;
+      msg = `${data.title}: ${data.detail}\n\nLearning with Beeli`;
     }
     await captureAndShare(cardRef, msg);
     setSharing(false);

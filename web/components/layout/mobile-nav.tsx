@@ -1,23 +1,32 @@
 "use client";
 
+import { cn } from "@/lib/utils";
+import {
+    BookOpen,
+    Globe2,
+    Headphones,
+    NotebookPen,
+    UserRound,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 const NAV_ITEMS = [
-  { href: "/learn", label: "Learn", icon: "📚" },
-  { href: "/listen", label: "Listen", icon: "🎧" },
-  { href: "/journal", label: "Journal", icon: "📓" },
-  { href: "/feed", label: "Feed", icon: "🌍" },
-  { href: "/profile", label: "Profile", icon: "👤" },
+  { href: "/learn", labelKey: "tabs.learn", icon: BookOpen },
+  { href: "/listen", labelKey: "tabs.listen", icon: Headphones },
+  { href: "/journal", labelKey: "tabs.journal", icon: NotebookPen },
+  { href: "/feed", labelKey: "tabs.feed", icon: Globe2 },
+  { href: "/profile", labelKey: "tabs.profile", icon: UserRound },
 ] as const;
 
 export function MobileNav() {
   const pathname = usePathname();
+  const { t } = useTranslation();
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-neutral-950 border-t border-neutral-200 dark:border-neutral-800 flex">
-      {NAV_ITEMS.map(({ href, label, icon }) => {
+      {NAV_ITEMS.map(({ href, labelKey, icon: Icon }) => {
         const active = pathname === href || pathname.startsWith(href + "/");
         return (
           <Link
@@ -30,8 +39,8 @@ export function MobileNav() {
                 : "text-neutral-400 dark:text-neutral-500"
             )}
           >
-            <span className="text-xl leading-none">{icon}</span>
-            {label}
+            <Icon className="h-5 w-5" />
+            {t(labelKey)}
           </Link>
         );
       })}

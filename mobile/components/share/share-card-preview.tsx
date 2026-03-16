@@ -1,5 +1,5 @@
 import { forwardRef } from "react";
-import { View, Text } from "react-native";
+import { Text, View } from "react-native";
 
 interface WordCardProps {
   template: "word";
@@ -34,7 +34,7 @@ export const ShareCardPreview = forwardRef<View, Props>((props, ref) => {
       {/* Brand header */}
       <View className="mb-4 flex-row items-center justify-between">
         <Text className="text-xs font-bold tracking-wider text-blue-500">
-          IZON BEELI
+          Beeli
         </Text>
         {props.template !== "achievement" && (
           <Text className="text-xs text-neutral-400">

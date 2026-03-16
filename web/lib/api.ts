@@ -17,10 +17,15 @@ export async function apiFetch<T>(
   options?: RequestInit & { token?: string }
 ): Promise<T> {
   const { token, ...init } = options ?? {};
+  // For FormData bodies the browser must set Content-Type (with boundary) itself,
+  // so only set it explicitly for non-FormData requests.
+  const contentTypeHeader: Record<string, string> = init.body instanceof FormData
+    ? {}
+    : { "Content-Type": "application/json" };
   const res = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers: {
-      "Content-Type": "application/json",
+      ...contentTypeHeader,
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...init.headers,
     },

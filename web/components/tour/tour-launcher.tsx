@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
 import { useTourStore } from "@/store/tour-store";
+import { useEffect } from "react";
 
 /** Auto-starts the tour on first visit. Mount inside the app layout. */
 export function TourLauncher() {
@@ -13,7 +13,7 @@ export function TourLauncher() {
       const id = setTimeout(start, 400);
       return () => clearTimeout(id);
     }
-  }, []); // run once on mount
+  }, [active, completed, start]);
 
   return null;
 }

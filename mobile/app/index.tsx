@@ -17,7 +17,7 @@ export default function Index() {
         contentFit="contain"
       />
       <Text className="mb-1 mt-4 text-3xl font-bold text-blue-600">
-        Izon Beeli
+        Beeli
       </Text>
       <Text className="mb-8 text-sm text-neutral-500 dark:text-neutral-400">
         Learn African Languages

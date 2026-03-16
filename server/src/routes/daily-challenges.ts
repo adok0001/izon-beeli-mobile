@@ -3,7 +3,7 @@ import { and, eq, gte } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { dailyChallenges } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
-import { getOrCreateTodayChallenge } from "../lib/daily-challenge.js";
+import { getOrCreateTodayChallenges } from "../lib/daily-challenge.js";
 
 export const dailyChallengesRouter = new Hono<AuthEnv>();
 
@@ -12,8 +12,8 @@ dailyChallengesRouter.use("*", authMiddleware);
 // GET /api/daily-challenges/today
 dailyChallengesRouter.get("/today", async (c) => {
   const userId = c.get("userId");
-  const challenge = await getOrCreateTodayChallenge(userId);
-  return c.json(challenge);
+  const challenges = await getOrCreateTodayChallenges(userId);
+  return c.json(challenges);
 });
 
 // GET /api/daily-challenges/history - last 7 days

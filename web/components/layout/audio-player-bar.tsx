@@ -1,10 +1,13 @@
 "use client";
 
-import { useAudioStore } from "@/store/audio-store";
 import { formatDuration } from "@/lib/utils";
+import { SPEED_OPTIONS, useAudioStore, type PlaybackSpeed } from "@/store/audio-store";
+import { FastForward, Pause, Play, Rewind, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export function AudioPlayerBar() {
-  const { currentLesson, isPlaying, position, duration, pause, resume, seek } =
+  const { t } = useTranslation();
+  const { currentLesson, isPlaying, position, duration, speed, pause, resume, seek, skipForward, skipBackward, setSpeed, stop } =
     useAudioStore();
 
   if (!currentLesson) return null;
@@ -41,27 +44,48 @@ export function AudioPlayerBar() {
         </div>
 
         {/* Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <button
-            onClick={() => seek(Math.max(0, position - 10))}
-            className="p-2 text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-            aria-label="Rewind 10s"
+            onClick={() => skipBackward(10)}
+            className="p-2 text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+            aria-label={t("lesson.rewind10")}
           >
-            ⏪
+            <Rewind className="h-4 w-4" />
           </button>
           <button
             onClick={isPlaying ? pause : resume}
             className="w-9 h-9 flex items-center justify-center rounded-full bg-brand-600 text-white hover:bg-brand-700 transition-colors"
-            aria-label={isPlaying ? "Pause" : "Play"}
+            aria-label={isPlaying ? t("lesson.pause") : t("lesson.play")}
           >
-            {isPlaying ? "⏸" : "▶️"}
+            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </button>
           <button
-            onClick={() => seek(Math.min(duration, position + 10))}
-            className="p-2 text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-            aria-label="Forward 10s"
+            onClick={() => skipForward(10)}
+            className="p-2 text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+            aria-label={t("lesson.forward10")}
           >
-            ⏩
+            <FastForward className="h-4 w-4" />
+          </button>
+
+          {/* Speed selector */}
+          <select
+            value={speed}
+            onChange={(e) => setSpeed(Number(e.target.value) as PlaybackSpeed)}
+            className="ml-1 text-xs font-medium px-2 py-1 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-none outline-none cursor-pointer hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+            aria-label={t("lesson.playbackSpeed")}
+          >
+            {SPEED_OPTIONS.map((s) => (
+              <option key={s} value={s}>{s}×</option>
+            ))}
+          </select>
+
+          {/* Close / stop */}
+          <button
+            onClick={stop}
+            className="ml-1 p-2 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+            aria-label={t("common.close")}
+          >
+            <X className="h-4 w-4" />
           </button>
         </div>
       </div>

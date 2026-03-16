@@ -1,8 +1,9 @@
 import { View, Text, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useTodayChallenge } from "@/lib/hooks/use-daily-challenge";
-import type { ChallengeType } from "@/types";
+import { useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
+import { useTranslation } from "react-i18next";
+import type { ChallengeType, DailyChallenge } from "@/types";
 
 const CHALLENGE_CONFIG: Record<
   ChallengeType,
@@ -15,11 +16,9 @@ const CHALLENGE_CONFIG: Record<
   save_words: { icon: "bookmark.fill", color: "#ec4899", route: "/dictionary" },
 };
 
-export function DailyChallengeCard() {
+function ChallengeItem({ challenge }: { challenge: DailyChallenge }) {
   const router = useRouter();
-  const { data: challenge, isLoading } = useTodayChallenge();
-
-  if (isLoading || !challenge) return null;
+  const { t } = useTranslation();
 
   const config = CHALLENGE_CONFIG[challenge.challengeType] ?? {
     icon: "star.fill",
@@ -29,14 +28,10 @@ export function DailyChallengeCard() {
 
   const progress = Math.min(challenge.progress / challenge.target, 1);
 
-  const handlePress = () => {
-    router.push(config.route as any);
-  };
-
   return (
     <Pressable
-      onPress={handlePress}
-      className="mb-3 rounded-2xl bg-neutral-50 p-4 active:opacity-70 dark:bg-neutral-800"
+      onPress={() => router.push(config.route as any)}
+      className="rounded-2xl bg-neutral-50 p-4 active:opacity-70 dark:bg-neutral-800"
     >
       <View className="flex-row items-center">
         <View
@@ -48,7 +43,7 @@ export function DailyChallengeCard() {
         <View className="flex-1">
           <View className="flex-row items-center justify-between">
             <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
-              Daily Challenge
+              {t("dashboard.dailyChallenges")}
             </Text>
             <Text className="text-xs font-semibold" style={{ color: config.color }}>
               +{challenge.xpReward} XP
@@ -76,7 +71,7 @@ export function DailyChallengeCard() {
           </Text>
           {challenge.completed && (
             <Text className="text-xs font-semibold text-green-500">
-              Complete!
+              {t("learn.complete")}
             </Text>
           )}
         </View>
@@ -91,5 +86,19 @@ export function DailyChallengeCard() {
         </View>
       </View>
     </Pressable>
+  );
+}
+
+export function DailyChallengeCards() {
+  const { data: challenges, isLoading } = useTodayChallenges();
+
+  if (isLoading || !challenges?.length) return null;
+
+  return (
+    <View className="gap-3">
+      {challenges.map((challenge) => (
+        <ChallengeItem key={challenge.id} challenge={challenge} />
+      ))}
+    </View>
   );
 }

@@ -1,6 +1,6 @@
 import { SymbolOfTheDay } from "@/components/adinkra/symbol-of-the-day";
 import { CulturalSection } from "@/components/cultural/cultural-section";
-import { DailyChallengeCard } from "@/components/daily-challenge-card";
+import { DailyChallengeCards } from "@/components/daily-challenge-card";
 import { LanguagePickerButton } from "@/components/language-picker";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { WordOfTheDay } from "@/components/word-of-the-day";
@@ -66,7 +66,7 @@ export default function PracticeScreen() {
         contentContainerClassName="px-5 pb-8 pt-2 gap-3"
         showsVerticalScrollIndicator={false}
       >
-        <DailyChallengeCard />
+        <DailyChallengeCards />
 
         {/* Quick-access practice */}
         <View className="flex-row gap-3">

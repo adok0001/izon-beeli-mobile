@@ -2,17 +2,17 @@ import { useSignIn } from "@clerk/clerk-expo";
 import { Image } from "expo-image";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTranslation } from "react-i18next";
 
 const mascot = require("../../public/mascot.jpg");
 
@@ -65,7 +65,7 @@ export default function SignInScreen() {
           />
         </View>
         <Text className="mb-2 text-center text-3xl font-bold text-neutral-900 dark:text-white">
-          Izon Beeli
+          Beeli
         </Text>
         <Text className="mb-8 text-center text-sm text-neutral-500 dark:text-neutral-400">
           {t("auth.signInSubtitle")}

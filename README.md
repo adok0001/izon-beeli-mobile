@@ -1,6 +1,6 @@
-# Izon Beeli Mobile
+# Beeli Mobile
 
-Izon Beeli is an Expo + React Native language-learning app focused on Izon and other African languages. It combines guided lessons, audio playback, quizzes, journaling, social learning, contributions, classroom tools, and real-time multiplayer.
+Beeli is an Expo + React Native language-learning app focused on Izon and other African languages. It combines guided lessons, audio playback, quizzes, journaling, social learning, contributions, classroom tools, and real-time multiplayer.
 
 ## Highlights
 

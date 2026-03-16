@@ -58,6 +58,8 @@ const CHALLENGE_POOL: ChallengeTemplate[] = [
   },
 ];
 
+const SLOTS = [0, 1, 2] as const;
+
 function hashCode(str: string): number {
   let h = 0;
   for (let i = 0; i < str.length; i++) {
@@ -66,95 +68,43 @@ function hashCode(str: string): number {
   return Math.abs(h);
 }
 
-export async function generateDailyChallenge(
+/** Pick 3 distinct templates for the day, one per slot. */
+function pickTemplatesForDay(
   userId: string,
-  date: string,
-  goal: DailyGoal = "steady"
-): Promise<typeof dailyChallenges.$inferSelect> {
-  // Pick deterministically using hash of userId + date
-  const idx = hashCode(userId + date) % CHALLENGE_POOL.length;
-  const template = CHALLENGE_POOL[idx];
-  const target = template.targets[goal];
+  date: string
+): [ChallengeTemplate, ChallengeTemplate, ChallengeTemplate] {
+  const base = hashCode(userId + date);
+  const picks: ChallengeTemplate[] = [];
+  const used = new Set<number>();
 
-  const [row] = await db
-    .insert(dailyChallenges)
-    .values({
-      userId,
-      date,
-      challengeType: template.challengeType,
-      title: template.title,
-      description: template.description,
-      target,
-      xpReward: template.xpReward,
-    })
-    .onConflictDoNothing()
-    .returning();
-
-  if (!row) {
-    // Already exists — fetch it
-    const [existing] = await db
-      .select()
-      .from(dailyChallenges)
-      .where(
-        and(eq(dailyChallenges.userId, userId), eq(dailyChallenges.date, date))
-      )
-      .limit(1);
-    return existing;
+  for (let slot = 0; slot < 3; slot++) {
+    let idx = (base + slot * 7) % CHALLENGE_POOL.length;
+    // Ensure no duplicates
+    let attempts = 0;
+    while (used.has(idx) && attempts < CHALLENGE_POOL.length) {
+      idx = (idx + 1) % CHALLENGE_POOL.length;
+      attempts++;
+    }
+    used.add(idx);
+    picks.push(CHALLENGE_POOL[idx]);
   }
 
-  return row;
+  return picks as [ChallengeTemplate, ChallengeTemplate, ChallengeTemplate];
 }
 
-export async function incrementDailyChallenge(
-  userId: string,
-  type: ChallengeType,
-  amount = 1
-): Promise<void> {
-  const today = new Date().toISOString().slice(0, 10);
-
-  const [challenge] = await db
-    .select()
-    .from(dailyChallenges)
-    .where(
-      and(eq(dailyChallenges.userId, userId), eq(dailyChallenges.date, today))
-    )
-    .limit(1);
-
-  if (!challenge || challenge.completed || challenge.challengeType !== type) {
-    return;
-  }
-
-  const newProgress = Math.min(challenge.progress + amount, challenge.target);
-  const completed = newProgress >= challenge.target;
-
-  await db
-    .update(dailyChallenges)
-    .set({
-      progress: newProgress,
-      completed,
-      completedAt: completed ? new Date() : null,
-    })
-    .where(eq(dailyChallenges.id, challenge.id));
-
-  if (completed) {
-    await awardXP(userId, challenge.xpReward, "daily_challenge").catch(() => {});
-  }
-}
-
-export async function getOrCreateTodayChallenge(
+export async function getOrCreateTodayChallenges(
   userId: string
-): Promise<typeof dailyChallenges.$inferSelect> {
+): Promise<(typeof dailyChallenges.$inferSelect)[]> {
   const today = new Date().toISOString().slice(0, 10);
 
-  const [existing] = await db
+  const existing = await db
     .select()
     .from(dailyChallenges)
     .where(
       and(eq(dailyChallenges.userId, userId), eq(dailyChallenges.date, today))
-    )
-    .limit(1);
+    );
 
-  if (existing) return existing;
+  if (existing.length === 3) return existing;
 
   // Look up goal from user
   const [user] = await db
@@ -164,5 +114,67 @@ export async function getOrCreateTodayChallenge(
     .limit(1);
 
   const goal = (user?.dailyGoal as DailyGoal | null) ?? "steady";
-  return generateDailyChallenge(userId, today, goal);
+  const templates = pickTemplatesForDay(userId, today);
+
+  // Determine which slots are missing and insert only those
+  const existingSlots = new Set(existing.map((r) => r.slot));
+  const toInsert = SLOTS.filter((s) => !existingSlots.has(s)).map((slot) => {
+    const tpl = templates[slot];
+    return {
+      userId,
+      date: today,
+      slot,
+      challengeType: tpl.challengeType,
+      title: tpl.title,
+      description: tpl.description,
+      target: tpl.targets[goal],
+      xpReward: tpl.xpReward,
+    };
+  });
+
+  if (toInsert.length > 0) {
+    await db.insert(dailyChallenges).values(toInsert).onConflictDoNothing();
+  }
+
+  return db
+    .select()
+    .from(dailyChallenges)
+    .where(
+      and(eq(dailyChallenges.userId, userId), eq(dailyChallenges.date, today))
+    );
+}
+
+export async function incrementDailyChallenge(
+  userId: string,
+  type: ChallengeType,
+  amount = 1
+): Promise<void> {
+  const today = new Date().toISOString().slice(0, 10);
+
+  const rows = await db
+    .select()
+    .from(dailyChallenges)
+    .where(
+      and(eq(dailyChallenges.userId, userId), eq(dailyChallenges.date, today))
+    );
+
+  for (const challenge of rows) {
+    if (challenge.completed || challenge.challengeType !== type) continue;
+
+    const newProgress = Math.min(challenge.progress + amount, challenge.target);
+    const completed = newProgress >= challenge.target;
+
+    await db
+      .update(dailyChallenges)
+      .set({
+        progress: newProgress,
+        completed,
+        completedAt: completed ? new Date() : null,
+      })
+      .where(eq(dailyChallenges.id, challenge.id));
+
+    if (completed) {
+      await awardXP(userId, challenge.xpReward, "daily_challenge").catch(() => {});
+    }
+  }
 }

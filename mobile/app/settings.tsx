@@ -1,18 +1,18 @@
-import { View, Text, Pressable, Alert, Switch } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack } from "expo-router";
-import Constants from "expo-constants";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useLanguageStore } from "@/store/language-store";
-import { useProgressSummary } from "@/lib/hooks/use-progress";
-import { useNotificationPrefs, useUpdateNotificationPrefs } from "@/lib/hooks/use-notification-prefs";
-import { getLanguageName } from "@/lib/mock-data";
-import { useThemeStore } from "@/store/theme-store";
 import { apiFetch } from "@/lib/api";
+import { useNotificationPrefs, useUpdateNotificationPrefs } from "@/lib/hooks/use-notification-prefs";
+import { useProgressSummary } from "@/lib/hooks/use-progress";
+import { getLanguageName } from "@/lib/mock-data";
+import { useLanguageStore } from "@/store/language-store";
+import { useThemeStore } from "@/store/theme-store";
+import { useUiLanguageStore, type UiLanguage } from "@/store/ui-language-store";
 import { useAuth } from "@clerk/clerk-expo";
 import { useQueryClient } from "@tanstack/react-query";
+import Constants from "expo-constants";
+import { Stack } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { useUiLanguageStore, type UiLanguage } from "@/store/ui-language-store";
+import { Alert, Pressable, Switch, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 function SettingsRow({
   icon,
@@ -244,7 +244,7 @@ export default function SettingsScreen() {
           {/* App info */}
           <View className="mt-8 items-center">
             <Text className="text-lg font-bold text-neutral-900 dark:text-white">
-              Izon Beeli
+              Beeli
             </Text>
             <Text className="mt-1 text-sm text-neutral-400 dark:text-neutral-500">
               Version {Constants.expoConfig?.version ?? "1.0.0"}
