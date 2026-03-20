@@ -198,7 +198,7 @@ export default function GeezLessonScreen() {
                   </Pressable>
 
                   <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-                    {t("geez.remaining", { current: practiceIndex + 1, remaining: unlearnedChars.length })}
+                    {t("geez.remaining", { current: practiceIndex + 1, total: unlearnedChars.length })}
                   </Text>
 
                   <Pressable

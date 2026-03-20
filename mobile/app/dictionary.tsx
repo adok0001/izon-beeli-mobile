@@ -111,13 +111,14 @@ export default function DictionaryScreen() {
     }
 
     // Sort categories by predefined order
+    type CategoryI18nKey = `dictionaryPage.categoryLabels.${DictionaryCategory}`;
     return ALL_CATEGORIES
       .filter((cat) => grouped.has(cat))
       .map((cat) => ({
-        title: t(`dictionaryPage.categoryLabels.${cat}` as any),
+        title: t(`dictionaryPage.categoryLabels.${cat}` as CategoryI18nKey),
         data: grouped.get(cat)!,
       }));
-  }, [query, viewMode, allEntries, savedSet.size, t]);
+  }, [query, viewMode, allEntries, savedIds, t]);
 
   const savedCount = allEntries.filter((e) => savedSet.has(e.id)).length;
 

@@ -19,6 +19,7 @@ import { IZON_FIRST_WORDS_LESSONS } from "./izon-first-words";
 import { IZON_SOUND_SCRIPT_LESSONS } from "./izon-sound-script";
 import { IZON_NUMBERS_TRADE_LESSONS } from "./izon-numbers-trade";
 import { IZON_COMMUNICATIVE_LESSONS } from "./izon-communicative";
+import { IZON_COLOURS_LESSONS } from "./izon-colours";
 import { IZON_ORAL_TRADITION_LESSONS } from "./izon-oral-tradition";
 import { KINYARWANDA_LESSONS } from "./kinyarwanda";
 import { SOMALI_LESSONS } from "./somali";
@@ -34,6 +35,7 @@ export const ALL_LESSONS: LessonData[] = [
   ...IZON_SOUND_SCRIPT_LESSONS,
   ...IZON_NUMBERS_TRADE_LESSONS,
   ...IZON_COMMUNICATIVE_LESSONS,
+  ...IZON_COLOURS_LESSONS,
   ...IZON_ORAL_TRADITION_LESSONS,
   ...YORUBA_LESSONS,
   ...IGBO_LESSONS,

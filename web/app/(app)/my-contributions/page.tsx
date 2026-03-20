@@ -26,14 +26,14 @@ const STATUS_CONFIG = {
   submitted: { label: "myContributions.statusPending", cls: "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400" },
   approved: { label: "myContributions.statusApproved", cls: "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400" },
   rejected: { label: "myContributions.statusRejected", cls: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400" },
-  draft: { label: "common.save", cls: "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400" },
+  draft: { label: "myContributions.statusDraft", cls: "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400" },
 } as const;
 
 export default function MyContributionsPage() {
   const { getToken } = useAuth();
   const { t } = useTranslation();
 
-  const { data: contributions = [], isLoading } = useQuery<Contribution[]>({
+  const { data: contributions = [], isLoading, isError, error } = useQuery<Contribution[]>({
     queryKey: ["my-contributions"],
     queryFn: async () => {
       const token = await getToken();
@@ -87,6 +87,12 @@ export default function MyContributionsPage() {
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="h-20 rounded-2xl bg-neutral-100 dark:bg-neutral-800 animate-pulse" />
           ))}
+        </div>
+      ) : isError ? (
+        <div className="flex flex-col items-center py-20 text-red-400 dark:text-red-500">
+          <FileText className="mb-3 h-10 w-10" />
+          <p className="font-medium">{t("common.error")}</p>
+          <p className="text-sm mt-1 text-center max-w-xs text-neutral-500">{(error as Error)?.message}</p>
         </div>
       ) : contributions.length === 0 ? (
         <div className="flex flex-col items-center py-20 text-neutral-400 dark:text-neutral-500">

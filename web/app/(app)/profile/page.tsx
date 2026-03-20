@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 function StatCard({ icon: Icon, label, value }: Readonly<{ icon: LucideIcon; label: string; value: string | number }>) {
@@ -76,6 +76,54 @@ function FeedbackModal({ onClose }: Readonly<{ onClose: () => void }>) {
   const [category, setCategory] = useState<"bug" | "suggestion" | "other">("suggestion");
   const [message, setMessage] = useState("");
   const [done, setDone] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<Element | null>(null);
+
+  useEffect(() => {
+    previousFocusRef.current = document.activeElement;
+    const firstFocusable = containerRef.current?.querySelector<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    firstFocusable?.focus();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key === "Tab") {
+        const focusable = containerRef.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (!focusable || focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      (previousFocusRef.current as HTMLElement | null)?.focus();
+    };
+  }, [onClose]);
+
+  const CATEGORY_LABELS: Record<"bug" | "suggestion" | "other", string> = {
+    bug: t("profile.categoryBug"),
+    suggestion: t("profile.categorySuggestion"),
+    other: t("profile.categoryOther"),
+  };
 
   const submit = useMutation({
     mutationFn: async () => {
@@ -91,9 +139,15 @@ function FeedbackModal({ onClose }: Readonly<{ onClose: () => void }>) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-md rounded-2xl bg-white dark:bg-neutral-900 p-6 shadow-xl">
+      <div
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="profile-modal-title"
+        className="w-full max-w-md rounded-2xl bg-white dark:bg-neutral-900 p-6 shadow-xl"
+      >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-bold text-neutral-900 dark:text-white">{t("profile.sendFeedback")}</h2>
+          <h2 id="profile-modal-title" className="font-bold text-neutral-900 dark:text-white">{t("profile.sendFeedback")}</h2>
           <button onClick={onClose} className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200">
             <X className="h-5 w-5" />
           </button>
@@ -102,8 +156,8 @@ function FeedbackModal({ onClose }: Readonly<{ onClose: () => void }>) {
         {done ? (
           <div className="py-6 text-center">
             <p className="text-2xl mb-2">🙏</p>
-            <p className="font-semibold text-neutral-900 dark:text-white">Thanks for your feedback!</p>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">We read every message.</p>
+            <p className="font-semibold text-neutral-900 dark:text-white">{t("profile.thanks")}</p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{t("profile.feedbackHint")}</p>
             <button onClick={onClose} className="mt-4 px-6 py-2 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors">
               {t("common.close")}
             </button>
@@ -115,13 +169,13 @@ function FeedbackModal({ onClose }: Readonly<{ onClose: () => void }>) {
                 <button
                   key={cat}
                   onClick={() => setCategory(cat)}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium border capitalize transition-colors ${
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                     category === cat
                       ? "bg-brand-600 text-white border-brand-600"
                       : "border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:border-brand-400"
                   }`}
                 >
-                  {cat}
+                  {CATEGORY_LABELS[cat]}
                 </button>
               ))}
             </div>
@@ -130,7 +184,7 @@ function FeedbackModal({ onClose }: Readonly<{ onClose: () => void }>) {
               rows={5}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Tell us what's on your mind…"
+              placeholder={t("profile.feedbackPlaceholder")}
               maxLength={2000}
               autoFocus
             />
@@ -143,7 +197,7 @@ function FeedbackModal({ onClose }: Readonly<{ onClose: () => void }>) {
               disabled={!message.trim() || submit.isPending}
               className="mt-3 w-full py-2.5 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
             >
-              {submit.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</> : t("common.submit")}
+              {submit.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> {t("profile.sending")}</> : t("common.submit")}
             </button>
           </>
         )}

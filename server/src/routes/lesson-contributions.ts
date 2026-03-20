@@ -16,6 +16,23 @@ import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/aut
 
 const VALID_REVIEW_ACTIONS = ["approve", "reject"] as const;
 
+const LANGUAGE_DISPLAY_NAME_FR: Record<string, string> = {
+  izon: "izon",
+  igbo: "igbo",
+  yoruba: "yoruba",
+  hausa: "haoussa",
+  oromo: "oromo",
+  amharic: "amharique",
+  geez: "gue'ez",
+  swahili: "swahili",
+  wolof: "wolof",
+  zulu: "zoulou",
+};
+
+function getLanguageNameFr(languageId: string): string {
+  return LANGUAGE_DISPLAY_NAME_FR[languageId] ?? languageId;
+}
+
 interface SegmentInput {
   text: string;
   translation?: string;
@@ -140,7 +157,7 @@ lessonContributionsRouter.post("/", async (c) => {
     title: `New lesson: ${title.trim()}`,
     titleFr: `Nouvelle leçon : ${title.trim()}`,
     description: `Submitted a lesson contribution for ${languageId}`,
-    descriptionFr: `A soumis une contribution de leçon pour le ${languageId}`,
+    descriptionFr: `A soumis une contribution de leçon en ${getLanguageNameFr(languageId)}`,
     userName: user?.name ?? "User",
     userAvatarUrl: user?.avatarUrl,
     audioUrl,

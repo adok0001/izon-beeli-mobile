@@ -40,10 +40,13 @@ export function TourOverlay() {
   const content = TOUR_CONTENT[activeTour];
 
   return (
-    <Modal transparent animationType="fade" visible statusBarTranslucent>
+    <Modal transparent animationType="fade" visible statusBarTranslucent accessibilityViewIsModal>
       <Pressable
         style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "flex-end" }}
         onPress={dismissTour}
+        accessibilityLabel="Dismiss tour"
+        accessibilityHint="Tap to close the tour overlay"
+        accessibilityRole="button"
       >
         <Pressable
           style={{
@@ -59,6 +62,7 @@ export function TourOverlay() {
             elevation: 12,
           }}
           onPress={(e) => e.stopPropagation()}
+          accessible={false}
         >
           <Text
             style={{ fontSize: 18, fontWeight: "700", color: "#111827", marginBottom: 8 }}
@@ -72,6 +76,9 @@ export function TourOverlay() {
           </Text>
           <Pressable
             onPress={dismissTour}
+            accessibilityRole="button"
+            accessibilityLabel="Got it, close tour"
+            accessibilityHint="Closes the welcome tour overlay"
             style={{
               backgroundColor: "#3b82f6",
               paddingVertical: 12,

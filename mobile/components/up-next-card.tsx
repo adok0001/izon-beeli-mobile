@@ -13,7 +13,7 @@ export function UpNextCard({ languageId }: { languageId?: string }) {
   const { uiLanguage } = useUiLanguageStore();
   const { data, isLoading } = useNextLesson(languageId);
 
-  if (isLoading || !data?.lesson) return null;
+  if (isLoading || !data?.lesson || !data?.course) return null;
 
   const { lesson, course, overallProgress } = data;
   const progressPct =
@@ -30,7 +30,7 @@ export function UpNextCard({ languageId }: { languageId?: string }) {
       <View className="mb-3">
         <View className="mb-1 flex-row items-center justify-between">
           <Text className="text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
-            {t("learn.yourPath")} · {localizeField(course!.title, course!.titleFr, uiLanguage)}
+            {t("learn.yourPath")} · {localizeField(course.title, course.titleFr, uiLanguage)}
           </Text>
           <Text className="text-xs font-semibold text-blue-500">
             {t("learn.lessonsCount", { done: overallProgress.completed, total: overallProgress.total })}

@@ -182,7 +182,7 @@ contributionsRouter.post("/", async (c) => {
     title: `${word.trim()} → ${english.trim()}`,
     titleFr: `${word.trim()} → ${english.trim()}`,
     description: `Added a new ${type} to the ${languageId} dictionary`,
-    descriptionFr: `A ajouté un nouveau ${type === "word" ? "mot" : "expression"} au dictionnaire ${languageId}`,
+    descriptionFr: `A ajouté un nouveau ${type === "word" ? "mot" : type === "expression" ? "expression" : "fichier audio"} au dictionnaire ${languageId}`,
     userName: user?.name ?? "User",
     userAvatarUrl: user?.avatarUrl,
     audioUrl,
@@ -295,7 +295,7 @@ contributionsRouter.post("/bulk", async (c) => {
     descriptionFr: `A contribué ${inserted.length} mots et expressions au dictionnaire ${languageId}`,
     userName: user?.name ?? "User",
     userAvatarUrl: user?.avatarUrl,
-    contributionId: inserted[0]?.id,
+    contributionId: null,
   });
 
   return c.json({ inserted: inserted.length, contributions: inserted }, 201);

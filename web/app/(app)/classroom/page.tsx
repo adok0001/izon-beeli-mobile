@@ -6,7 +6,7 @@ import { LANGUAGES } from "@mobile/lib/data/languages";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronRight, Copy, Loader2, Users, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 interface GroupMember { userId: string; name: string; role: string; }
@@ -23,10 +23,22 @@ const ROLE_COLORS: Record<string, string> = {
 
 function CopyButton({ text }: Readonly<{ text: string }>) {
   const [copied, setCopied] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
   const copy = () => {
     void navigator.clipboard.writeText(text);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    timeoutRef.current = setTimeout(() => {
+      setCopied(false);
+      timeoutRef.current = null;
+    }, 1500);
   };
   return (
     <button onClick={copy} className="p-1 rounded text-neutral-400 hover:text-brand-600 transition-colors">
@@ -202,7 +214,7 @@ export default function ClassroomPage() {
   const { t } = useTranslation();
   const [modal, setModal] = useState<"create" | "join" | null>(null);
 
-  const { data: groups = [], isLoading } = useQuery<Group[]>({
+  const { data: groups = [], isLoading, isError, error } = useQuery<Group[]>({
     queryKey: ["classroom-groups"],
     queryFn: async () => {
       const token = await getToken();
@@ -242,6 +254,11 @@ export default function ClassroomPage() {
           {[1, 2].map((i) => (
             <div key={i} className="h-20 rounded-2xl bg-neutral-100 dark:bg-neutral-800 animate-pulse" />
           ))}
+        </div>
+      ) : isError ? (
+        <div className="flex flex-col items-center py-20 text-red-400">
+          <p className="font-medium">{t("common.error")}</p>
+          <p className="text-sm mt-1 text-neutral-500">{(error as Error)?.message}</p>
         </div>
       ) : groups.length === 0 ? (
         <div className="flex flex-col items-center py-20 text-neutral-400 dark:text-neutral-500">

@@ -181,7 +181,7 @@ const TOUR_CONFIGS: Record<TourId, TourConfig> = {
   },
 };
 
-function FeatureCard({ item, t }: { item: FeatureItem; t: (k: string) => string }) {
+function FeatureCard({ item, t }: { item: FeatureItem; t: (k: any) => string }) {
   return (
     <View className="flex-row items-start rounded-2xl border border-neutral-100 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800">
       <View
@@ -243,10 +243,10 @@ export function FeatureTourModal() {
               <IconSymbol name={config.heroIcon as any} size={36} color={config.heroColor} />
             </View>
             <Text className="text-3xl font-bold text-neutral-900 dark:text-white text-center">
-              {t(config.titleKey)}
+              {t(config.titleKey as any)}
             </Text>
             <Text className="mt-2 text-base text-neutral-500 dark:text-neutral-400 text-center">
-              {t(config.subtitleKey)}
+              {t(config.subtitleKey as any)}
             </Text>
           </View>
 

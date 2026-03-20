@@ -38,7 +38,7 @@ interface Segment {
   endTime: string;
 }
 
-function useStepMeta(t: (key: string) => string): Record<Step, { label: string; icon: string }> {
+function useStepMeta(t: (key: any) => string): Record<Step, { label: string; icon: string }> {
   return {
     language: { label: t("contribute.stepLanguage"), icon: "globe" },
     course: { label: t("contribute.stepCourse"), icon: "book.fill" },

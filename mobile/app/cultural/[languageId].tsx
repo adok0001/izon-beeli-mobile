@@ -128,7 +128,7 @@ export default function CulturalScreen() {
       <Stack.Screen
         options={{
           title: `${languageTitle} ${t("cultural.titleSuffix")}`,
-          headerBackTitle: "Back",
+          headerBackTitle: t("common.back"),
         }}
       />
 
