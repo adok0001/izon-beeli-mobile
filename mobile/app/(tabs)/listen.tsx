@@ -4,9 +4,12 @@ import { DailyChallengeCards } from "@/components/daily-challenge-card";
 import { LanguagePickerButton } from "@/components/language-picker";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { WordOfTheDay } from "@/components/word-of-the-day";
+import { ALL_LESSONS } from "@/lib/data/lessons";
 import { useProverbs } from "@/lib/hooks/use-proverbs";
 import { useLanguageStore } from "@/store/language-store";
+import { useCourses } from "@/lib/hooks/use-courses";
 import { useRouter } from "expo-router";
+import { useMemo } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
@@ -37,6 +40,49 @@ function ProverbsCard({ languageId }: { languageId: string }) {
           </Text>
         </View>
         <IconSymbol name="chevron.right" size={16} color="#d97706" />
+      </View>
+    </Pressable>
+  );
+}
+
+function SongsCard({ languageId }: { languageId: string }) {
+  const router = useRouter();
+  const { t } = useTranslation();
+  const { data: courses = [] } = useCourses(languageId);
+
+  const songs = useMemo(() => {
+    // Find song courses for this language
+    const songCourseIds = courses
+      .filter((c) => c.courseType === "songs")
+      .map((c) => c.id);
+    if (songCourseIds.length === 0) return [];
+    return ALL_LESSONS.filter(
+      (l) => l.type === "song" && songCourseIds.includes(l.courseId)
+    );
+  }, [courses]);
+
+  if (songs.length === 0) return null;
+
+  const first = songs[0];
+
+  return (
+    <Pressable
+      onPress={() => router.push(`/lesson/${first.id}` as any)}
+      className="rounded-2xl bg-pink-50 p-4 active:opacity-70 dark:bg-pink-900/20"
+    >
+      <View className="flex-row items-center">
+        <View className="mr-3 h-12 w-12 items-center justify-center rounded-xl bg-pink-100 dark:bg-pink-900/40">
+          <IconSymbol name="music.note" size={22} color="#db2777" />
+        </View>
+        <View className="flex-1">
+          <Text className="text-xs font-semibold uppercase tracking-wide text-pink-700 dark:text-pink-400">
+            {t("songs.title")} · {songs.length}
+          </Text>
+          <Text className="text-sm text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
+            {first.title}
+          </Text>
+        </View>
+        <IconSymbol name="chevron.right" size={16} color="#db2777" />
       </View>
     </Pressable>
   );
@@ -124,6 +170,7 @@ export default function PracticeScreen() {
         </Pressable>
 
         <WordOfTheDay languageId={selectedLanguageId} />
+        <SongsCard languageId={selectedLanguageId} />
         <ProverbsCard languageId={selectedLanguageId} />
         <CulturalSection
           languageId={selectedLanguageId}

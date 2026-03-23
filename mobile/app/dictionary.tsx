@@ -1,10 +1,10 @@
 import { WordAudioButton } from "@/components/dictionary/word-audio-button";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import {
-    ALL_CATEGORIES,
-    searchDictionary,
-    type DictionaryCategory,
-    type DictionaryEntry,
+  ALL_CATEGORIES,
+  searchDictionary,
+  type DictionaryCategory,
+  type DictionaryEntry,
 } from "@/lib/dictionary";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { useRemoveWord, useSaveWord, useWordBank } from "@/lib/hooks/use-wordbank";
@@ -13,13 +13,13 @@ import { Stack, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    ActivityIndicator,
-    Pressable,
-    RefreshControl,
-    SectionList,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Pressable,
+  RefreshControl,
+  SectionList,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 

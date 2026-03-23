@@ -1,7 +1,9 @@
 /**
  * Ẹwiri — Colours & Symbolism — course-21
  * The three sacred Izon colour categories, their cultural meanings, and use in traditional art.
- * Source: Warekoromor, M. (2018). "Exploration of Izon Traditional Colours in Contemporary Nigerian Art Practice."
+ * Sources:
+ *  - Warekoromor, M. (2018). "Exploration of Izon Traditional Colours in Contemporary Nigerian Art Practice."
+ *  - Ịzọn Lesson Note, Wednesday 18 March 2026
  */
 import type { LessonData } from "./types";
 
@@ -81,6 +83,67 @@ export const IZON_COLOURS_LESSONS: LessonData[] = [
       { id: "t82-9",  startTime: 63, endTime: 71, text: "Anị ẹwiri nemi mọ, anị teme nemi mọ.",
                                                    translation: "To know their colours is to know their culture.",
                                                    translationFr: "Connaître leurs couleurs, c'est connaître leur culture." },
+    ],
+  },
+  {
+    id: "lesson-83",
+    courseId: "course-21",
+    title: "Ẹwiri Ịndị — All the Colour Words",
+    titleFr: "Ẹwiri Ịndị — Tous les Mots de Couleur",
+    description: "Learn the full Izon colour vocabulary — specific words for red, orange, green, yellow, blue, black, white, brown, pink, grey, and purple — plus ten adjectives for describing the world around you.",
+    descriptionFr: "Apprenez le vocabulaire complet des couleurs en izon — des mots spécifiques pour le rouge, l'orange, le vert, le jaune, le bleu, le noir, le blanc, le brun, le rose, le gris et le violet — plus dix adjectifs pour décrire le monde autour de vous.",
+    audioUrl: null,
+    duration: null,
+    order: 3,
+    transcript: [
+      { id: "t83-1",  startTime: 0,  endTime: 4,  text: "kuekue; wowo; yereyere",         translation: "Red (three variants — kuekue is most common)",                          translationFr: "Rouge (trois variantes — kuekue est la plus courante)" },
+      { id: "t83-2",  startTime: 4,  endTime: 8,  text: "iselebeni",                      translation: "Orange",                                                                  translationFr: "Orange" },
+      { id: "t83-3",  startTime: 8,  endTime: 12, text: "ago; vilii",                     translation: "Green (ago = general green; vilii = vivid green)",                       translationFr: "Vert (ago = vert général ; vilii = vert vif)" },
+      { id: "t83-4",  startTime: 12, endTime: 16, text: "balabala; odoon; ope",            translation: "Yellow (three variants)",                                                 translationFr: "Jaune (trois variantes)" },
+      { id: "t83-5",  startTime: 16, endTime: 20, text: "nou; bulo",                      translation: "Blue (nou = native term; bulo = loanword)",                              translationFr: "Bleu (nou = terme natif ; bulo = emprunt)" },
+      { id: "t83-6",  startTime: 20, endTime: 24, text: "dirimo; kpilikpili",              translation: "Black (kpilikpili = very black, intensifier)",                           translationFr: "Noir (kpilikpili = très noir, intensificateur)" },
+      { id: "t83-7",  startTime: 24, endTime: 28, text: "pina; alo",                      translation: "White (pina = general white; alo = white cloth)",                        translationFr: "Blanc (pina = blanc général ; alo = tissu blanc)" },
+      { id: "t83-8",  startTime: 28, endTime: 32, text: "kelekele; dakii",                 translation: "Brown",                                                                   translationFr: "Brun / Marron" },
+      { id: "t83-9",  startTime: 32, endTime: 36, text: "kimi ebimo erein",                translation: "Pink (lit. 'colour of a baby's skin')",                                   translationFr: "Rose (litt. « couleur de la peau d'un bébé »)" },
+      { id: "t83-10", startTime: 36, endTime: 40, text: "founburoubeni",                   translation: "Grey",                                                                    translationFr: "Gris" },
+      { id: "t83-11", startTime: 40, endTime: 44, text: "agun-agun",                      translation: "Purple",                                                                  translationFr: "Violet" },
+      { id: "t83-12", startTime: 44, endTime: 48, text: "duu",                            translation: "Cold (adjective)",                                                        translationFr: "Froid (adjectif)" },
+      { id: "t83-13", startTime: 48, endTime: 52, text: "dawain",                         translation: "Long",                                                                    translationFr: "Long" },
+      { id: "t83-14", startTime: 52, endTime: 56, text: "gbaburu",                        translation: "Narrow",                                                                  translationFr: "Étroit" },
+      { id: "t83-15", startTime: 56, endTime: 60, text: "owa",                            translation: "Old",                                                                     translationFr: "Vieux / Ancien" },
+      { id: "t83-16", startTime: 60, endTime: 64, text: "ombu",                           translation: "Sharp",                                                                   translationFr: "Tranchant / Pointu" },
+      { id: "t83-17", startTime: 64, endTime: 68, text: "koli",                           translation: "Short",                                                                   translationFr: "Court" },
+      { id: "t83-18", startTime: 68, endTime: 72, text: "bou",                            translation: "Soft",                                                                    translationFr: "Doux / Mou" },
+      { id: "t83-19", startTime: 72, endTime: 76, text: "embele",                         translation: "Sweet",                                                                   translationFr: "Sucré / Doux" },
+      { id: "t83-20", startTime: 76, endTime: 80, text: "finii",                          translation: "Wide",                                                                    translationFr: "Large" },
+      { id: "t83-21", startTime: 80, endTime: 84, text: "kelekele",                       translation: "Clever",                                                                  translationFr: "Intelligent / Malin" },
+    ],
+  },
+  {
+    id: "lesson-84",
+    courseId: "course-3",
+    title: "Cliticization, Demonstratives & Collective Nouns",
+    titleFr: "Cliticisation, Démonstratifs et Noms Collectifs",
+    description: "Discover how Izon numerals change form when used as adjectives (the =a suffix), learn the demonstratives mí (this) and aní (that), and master collective nouns like kịmị-sẹ (everyone).",
+    descriptionFr: "Découvrez comment les nombres izon changent de forme quand ils sont utilisés comme adjectifs (le suffixe =a), apprenez les démonstratifs mí (ceci) et aní (cela), et maîtrisez les noms collectifs comme kịmị-sẹ (tout le monde).",
+    audioUrl: null,
+    duration: null,
+    order: 11,
+    transcript: [
+      { id: "t84-1",  startTime: 0,  endTime: 6,  text: "kẹnị fun",                                 translation: "One book (kẹnị does not change — the only exception)",                    translationFr: "Un livre (kẹnị ne change pas — la seule exception)" },
+      { id: "t84-2",  startTime: 6,  endTime: 12, text: "maamù → maa fun",                          translation: "Two → two books (numeral loses final syllable, adds context)",            translationFr: "Deux → deux livres (le nombre perd la syllabe finale)" },
+      { id: "t84-3",  startTime: 12, endTime: 18, text: "táárụ́ → táára fun",                        translation: "Three → three books (=a suffix replaces final vowel)",                    translationFr: "Trois → trois livres (le suffixe =a remplace la voyelle finale)" },
+      { id: "t84-4",  startTime: 18, endTime: 24, text: "neín → neía fun",                           translation: "Four → four books",                                                      translationFr: "Quatre → quatre livres" },
+      { id: "t84-5",  startTime: 24, endTime: 30, text: "sọ́ọ́nrọ́n → sọ́ọ́nran fun",                 translation: "Five → five books",                                                      translationFr: "Cinq → cinq livres" },
+      { id: "t84-6",  startTime: 30, endTime: 36, text: "sóndíe → sóndía fun",                      translation: "Six → six books",                                                        translationFr: "Six → six livres" },
+      { id: "t84-7",  startTime: 36, endTime: 42, text: "isé → iséna fun; óyí → óyía fun",          translation: "Nine → nine books; Ten → ten books",                                     translationFr: "Neuf → neuf livres ; Dix → dix livres" },
+      { id: "t84-8",  startTime: 42, endTime: 48, text: "die → dia fun; síí → síía fun",            translation: "Fifteen → fifteen books; Twenty → twenty books",                         translationFr: "Quinze → quinze livres ; Vingt → vingt livres" },
+      { id: "t84-9",  startTime: 48, endTime: 54, text: "mí",                                        translation: "This (demonstrative — near the speaker)",                                translationFr: "Ceci / Ce (démonstratif — proche du locuteur)" },
+      { id: "t84-10", startTime: 54, endTime: 60, text: "aní",                                       translation: "That (demonstrative — away from the speaker)",                           translationFr: "Cela / Ce (démonstratif — éloigné du locuteur)" },
+      { id: "t84-11", startTime: 60, endTime: 66, text: "mí(yaị)bo",                                 translation: "These (plural of mí)",                                                   translationFr: "Ceux-ci / Celles-ci (pluriel de mí)" },
+      { id: "t84-12", startTime: 66, endTime: 72, text: "aníyaịbo",                                  translation: "Those (plural of aní)",                                                  translationFr: "Ceux-là / Celles-là (pluriel de aní)" },
+      { id: "t84-13", startTime: 72, endTime: 78, text: "kịmị-sẹ",                                   translation: "Everyone / Everybody",                                                   translationFr: "Tout le monde" },
+      { id: "t84-14", startTime: 78, endTime: 84, text: "o-sẹ",                                      translation: "All of us / We all",                                                     translationFr: "Nous tous" },
     ],
   },
 ];

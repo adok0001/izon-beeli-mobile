@@ -281,6 +281,7 @@ export const lessons = pgTable(
   {
     id: varchar("id", { length: 64 }).primaryKey(),
     courseId: varchar("course_id", { length: 64 }).notNull(),
+    type: varchar("type", { length: 16 }).default("lesson").notNull(),
     title: varchar("title", { length: 300 }).notNull(),
     titleFr: varchar("title_fr", { length: 300 }),
     description: text("description").notNull(),
@@ -288,6 +289,8 @@ export const lessons = pgTable(
     audioUrl: text("audio_url"),
     duration: integer("duration"),
     order: integer("order").default(0).notNull(),
+    artist: varchar("artist", { length: 300 }),
+    genre: varchar("genre", { length: 100 }),
   },
   (table) => [index("lessons_course_id_idx").on(table.courseId)]
 );
@@ -399,10 +402,13 @@ export const lessonContributions = pgTable(
       .notNull(),
     languageId: varchar("language_id", { length: 32 }).notNull(),
     courseId: varchar("course_id", { length: 64 }),
+    type: varchar("type", { length: 16 }).default("lesson").notNull(),
     title: varchar("title", { length: 300 }).notNull(),
     description: text("description").notNull(),
     audioUrl: text("audio_url").notNull(),
     duration: integer("duration"),
+    artist: varchar("artist", { length: 300 }),
+    genre: varchar("genre", { length: 100 }),
     status: lessonContributionStatusEnum("status").default("submitted").notNull(),
     reviewNote: text("review_note"),
     reviewedBy: uuid("reviewed_by").references(() => users.id),

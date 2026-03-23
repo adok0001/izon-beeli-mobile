@@ -163,11 +163,15 @@ async function seed() {
 
     await db.insert(lessons).values({
       ...lessonData,
+      type: lessonData.type ?? "lesson",
       titleFr: lessonData.titleFr ?? null,
       descriptionFr: lessonData.descriptionFr ?? null,
+      artist: lessonData.artist ?? null,
+      genre: lessonData.genre ?? null,
     }).onConflictDoUpdate({
       target: lessons.id,
       set: {
+        type: lessonData.type ?? "lesson",
         title: lessonData.title,
         titleFr: lessonData.titleFr ?? null,
         description: lessonData.description,
@@ -175,6 +179,8 @@ async function seed() {
         audioUrl: lessonData.audioUrl,
         duration: lessonData.duration,
         order: lessonData.order,
+        artist: lessonData.artist ?? null,
+        genre: lessonData.genre ?? null,
       },
     });
 

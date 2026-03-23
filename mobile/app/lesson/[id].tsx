@@ -70,6 +70,7 @@ export default function LessonScreen() {
   const isCurrentTrack = currentTrackId === lesson.id;
   const completed = completedLessonIds?.includes(lesson.id) ?? false;
 
+  const isSong = lesson.type === "song";
   const lessonTitle = localizeField(lesson.title, lesson.titleFr, uiLanguage);
   const lessonDescription = localizeField(lesson.description, lesson.descriptionFr, uiLanguage);
 
@@ -114,6 +115,11 @@ export default function LessonScreen() {
               <Text className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
                 {lessonDescription}
               </Text>
+              {isSong && lesson.artist && (
+                <Text className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                  {lesson.artist}{lesson.genre ? ` · ${t(`songs.genre_${lesson.genre}`, { defaultValue: lesson.genre })}` : ""}
+                </Text>
+              )}
             </View>
             {completed && (
               <View className="ml-3 mt-1 flex-row items-center rounded-full bg-green-100 px-2.5 py-1 dark:bg-green-900">
@@ -155,7 +161,7 @@ export default function LessonScreen() {
               >
                 <IconSymbol name="checkmark.circle.fill" size={16} color="#22c55e" />
                 <Text className="ml-1.5 text-sm font-semibold text-green-600 dark:text-green-400">
-                  {t("lesson.markComplete")}
+                  {isSong ? t("songs.listened") : t("lesson.markComplete")}
                 </Text>
               </Pressable>
             )}
@@ -181,7 +187,7 @@ export default function LessonScreen() {
         {lesson.transcript && lesson.transcript.length > 0 ? (
           <View className="flex-1 px-1">
             <Text className="px-4 pb-2 pt-4 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-              {t("lesson.transcript")}
+              {isSong ? t("songs.lyrics") : t("lesson.transcript")}
             </Text>
             <InteractiveTranscript segments={lesson.transcript} />
           </View>

@@ -1,27 +1,27 @@
-import { useState, useEffect, useCallback } from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  TextInput,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-  ActivityIndicator,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack, useRouter } from "expo-router";
-import * as DocumentPicker from "expo-document-picker";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { apiFetch } from "@/lib/api";
+import {
+    useSubmitLessonContribution,
+    type LessonContributionSegmentInput,
+} from "@/lib/hooks/use-contributions";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useLessonContributionStore } from "@/store/lesson-contribution-store";
-import {
-  useSubmitLessonContribution,
-  type LessonContributionSegmentInput,
-} from "@/lib/hooks/use-contributions";
-import { apiFetch } from "@/lib/api";
+import * as DocumentPicker from "expo-document-picker";
+import { Stack, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import {
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type Step = "language" | "course" | "details" | "audio" | "transcript";
 

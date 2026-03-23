@@ -18,8 +18,8 @@ import {
     MessageSquare,
     Settings,
     Star,
-    Users,
     UserRound,
+    Users,
     X,
     type LucideIcon,
 } from "lucide-react";

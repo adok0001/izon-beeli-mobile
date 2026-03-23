@@ -58,8 +58,22 @@ export const COURSES: CourseEntry[] = [
     description: "Listen to traditional Izon folktales, praise poetry, and proverbs rooted in the rivers, forests, and spiritual memory of the Niger Delta.",
     descriptionFr: "Écoutez les contes traditionnels Izon, la poésie élogieuse et les proverbes enracinés dans les rivières, les forêts et la mémoire spirituelle du delta du Niger.",
   },
+  {
+    id: "course-22", languageId: "izon", order: 6, level: "beginner", lessonsCount: 3, courseType: "songs",
+    title: "Ịzọn Tịnmọ — Songs & Sing-Along",
+    titleFr: "Ịzọn Tịnmọ — Chansons et Karaoké",
+    description: "Learn Izon through traditional and community songs — lullabies, praise songs, and festival music with sing-along lyrics.",
+    descriptionFr: "Apprenez l'Izon à travers des chansons traditionnelles et communautaires — berceuses, chants de louange et musique de festival avec paroles à chanter.",
+  },
 
   // Yoruba
+  {
+    id: "course-23", languageId: "yoruba", order: 3, level: "beginner", lessonsCount: 3, courseType: "songs",
+    title: "Orin Yorùbá — Songs & Sing-Along",
+    titleFr: "Orin Yorùbá — Chansons et Karaoké",
+    description: "Learn Yorùbá through traditional songs — lullabies, praise songs, and festival music with sing-along lyrics and tonal practice.",
+    descriptionFr: "Apprenez le Yorùbá à travers des chansons traditionnelles — berceuses, chants de louange et musique de festival avec paroles à chanter et pratique tonale.",
+  },
   {
     id: "course-4",  languageId: "yoruba", order: 1, level: "beginner", lessonsCount: 3, courseType: "first_words",
     title: "Yoruba — First Words",
@@ -77,6 +91,13 @@ export const COURSES: CourseEntry[] = [
 
   // Igbo
   {
+    id: "course-24", languageId: "igbo", order: 2, level: "beginner", lessonsCount: 3, courseType: "songs",
+    title: "Egwu Igbo — Songs & Sing-Along",
+    titleFr: "Egwu Igbo — Chansons et Karaoké",
+    description: "Learn Igbo through traditional songs — lullabies, masquerade chants, and harvest songs with sing-along lyrics.",
+    descriptionFr: "Apprenez l'Igbo à travers des chansons traditionnelles — berceuses, chants de mascarade et chansons de récolte avec paroles à chanter.",
+  },
+  {
     id: "course-6",  languageId: "igbo", order: 1, level: "beginner", lessonsCount: 3, courseType: "first_words",
     title: "Igbo — First Words",
     titleFr: "Igbo — Premiers Mots",
@@ -86,6 +107,13 @@ export const COURSES: CourseEntry[] = [
 
   // Hausa
   {
+    id: "course-25", languageId: "hausa", order: 2, level: "beginner", lessonsCount: 3, courseType: "songs",
+    title: "Waƙoƙi — Songs & Sing-Along",
+    titleFr: "Waƙoƙi — Chansons et Karaoké",
+    description: "Learn Hausa through traditional songs — lullabies, praise songs for emirs, and wedding celebration music with sing-along lyrics.",
+    descriptionFr: "Apprenez le Hausa à travers des chansons traditionnelles — berceuses, chants de louange pour les émirs et musique de mariage avec paroles à chanter.",
+  },
+  {
     id: "course-7",  languageId: "hausa", order: 1, level: "beginner", lessonsCount: 2, courseType: "first_words",
     title: "Hausa — First Words",
     titleFr: "Hausa — Premiers Mots",
@@ -94,6 +122,13 @@ export const COURSES: CourseEntry[] = [
   },
 
   // Swahili
+  {
+    id: "course-26", languageId: "swahili", order: 3, level: "beginner", lessonsCount: 3, courseType: "songs",
+    title: "Nyimbo — Songs & Sing-Along",
+    titleFr: "Nyimbo — Chansons et Karaoké",
+    description: "Learn Kiswahili through traditional songs — lullabies, taarab melodies, and bongo flava rhythms with sing-along lyrics.",
+    descriptionFr: "Apprenez le Kiswahili à travers des chansons traditionnelles — berceuses, mélodies taarab et rythmes bongo flava avec paroles à chanter.",
+  },
   {
     id: "course-8",  languageId: "swahili", order: 1, level: "beginner", lessonsCount: 3, courseType: "first_words",
     title: "Kiswahili — First Words",
@@ -111,6 +146,13 @@ export const COURSES: CourseEntry[] = [
 
   // Amharic
   {
+    id: "course-27", languageId: "amharic", order: 2, level: "beginner", lessonsCount: 3, courseType: "songs",
+    title: "ዘፈኖች — Songs & Sing-Along",
+    titleFr: "ዘፈኖች — Chansons et Karaoké",
+    description: "Learn Amharic through traditional songs — lullabies, church hymns, and Eskista dance music with sing-along lyrics in Ge'ez script.",
+    descriptionFr: "Apprenez l'Amharic à travers des chansons traditionnelles — berceuses, hymnes liturgiques et musique de danse Eskista avec paroles à chanter en écriture guèze.",
+  },
+  {
     id: "course-10", languageId: "amharic", order: 1, level: "beginner", lessonsCount: 3, courseType: "first_words",
     title: "Amharic — First Words",
     titleFr: "Amharic — Premiers Mots",
@@ -119,6 +161,13 @@ export const COURSES: CourseEntry[] = [
   },
 
   // Akan (Twi)
+  {
+    id: "course-28", languageId: "akan", order: 2, level: "beginner", lessonsCount: 3, courseType: "songs",
+    title: "Nnwom — Songs & Sing-Along",
+    titleFr: "Nnwom — Chansons et Karaoké",
+    description: "Learn Twi through traditional Akan songs — lullabies, highlife classics, and festival music with sing-along lyrics.",
+    descriptionFr: "Apprenez le Twi à travers des chansons traditionnelles akan — berceuses, classiques du highlife et musique de festival avec paroles à chanter.",
+  },
   {
     id: "course-11", languageId: "akan", order: 1, level: "beginner", lessonsCount: 3, courseType: "first_words",
     title: "Twi — First Words",
@@ -129,6 +178,13 @@ export const COURSES: CourseEntry[] = [
 
   // Wolof
   {
+    id: "course-29", languageId: "wolof", order: 2, level: "beginner", lessonsCount: 3, courseType: "songs",
+    title: "Woy — Songs & Sing-Along",
+    titleFr: "Woy — Chansons et Karaoké",
+    description: "Learn Wolof through traditional songs — griot praise songs, mbalax rhythms, and Senegalese lullabies with sing-along lyrics.",
+    descriptionFr: "Apprenez le Wolof à travers des chansons traditionnelles — chants de griots, rythmes mbalax et berceuses sénégalaises avec paroles à chanter.",
+  },
+  {
     id: "course-12", languageId: "wolof", order: 1, level: "beginner", lessonsCount: 2, courseType: "first_words",
     title: "Wolof — First Words",
     titleFr: "Wolof — Premiers Mots",
@@ -137,6 +193,13 @@ export const COURSES: CourseEntry[] = [
   },
 
   // Egyptian Arabic
+  {
+    id: "course-30", languageId: "arabic-egyptian", order: 2, level: "beginner", lessonsCount: 3, courseType: "songs",
+    title: "أغاني — Songs & Sing-Along",
+    titleFr: "أغاني — Chansons et Karaoké",
+    description: "Learn Egyptian Arabic through classic songs — Umm Kulthum-style ballads, shaabi street music, and children's songs with sing-along lyrics.",
+    descriptionFr: "Apprenez l'arabe égyptien à travers des chansons classiques — ballades à la Oum Kalthoum, musique chaabi de rue et comptines avec paroles à chanter.",
+  },
   {
     id: "course-13", languageId: "arabic-egyptian", order: 1, level: "beginner", lessonsCount: 3, courseType: "first_words",
     title: "Egyptian Arabic — First Words",
@@ -147,6 +210,13 @@ export const COURSES: CourseEntry[] = [
 
   // Somali
   {
+    id: "course-31", languageId: "somali", order: 2, level: "beginner", lessonsCount: 3, courseType: "songs",
+    title: "Heeso — Songs & Sing-Along",
+    titleFr: "Heeso — Chansons et Karaoké",
+    description: "Learn Somali through traditional songs — pastoral poetry chants, oud-accompanied ballads, and lullabies with sing-along lyrics.",
+    descriptionFr: "Apprenez le Somali à travers des chansons traditionnelles — chants de poésie pastorale, ballades accompagnées au oud et berceuses avec paroles à chanter.",
+  },
+  {
     id: "course-14", languageId: "somali", order: 1, level: "beginner", lessonsCount: 2, courseType: "first_words",
     title: "Soomaali — First Words",
     titleFr: "Soomaali — Premiers Mots",
@@ -155,6 +225,13 @@ export const COURSES: CourseEntry[] = [
   },
 
   // Bambara
+  {
+    id: "course-32", languageId: "bambara", order: 2, level: "beginner", lessonsCount: 3, courseType: "songs",
+    title: "Dɔnkili — Songs & Sing-Along",
+    titleFr: "Dɔnkili — Chansons et Karaoké",
+    description: "Learn Bambara through traditional songs — griot epics, wassoulou rhythms, and Malian lullabies with sing-along lyrics.",
+    descriptionFr: "Apprenez le Bambara à travers des chansons traditionnelles — épopées de griots, rythmes wassoulou et berceuses maliennes avec paroles à chanter.",
+  },
   {
     id: "course-15", languageId: "bambara", order: 1, level: "beginner", lessonsCount: 2, courseType: "first_words",
     title: "Bambara — First Words",
@@ -165,6 +242,13 @@ export const COURSES: CourseEntry[] = [
 
   // Tamazight
   {
+    id: "course-33", languageId: "tamazight", order: 2, level: "beginner", lessonsCount: 3, courseType: "songs",
+    title: "Izlan — Songs & Sing-Along",
+    titleFr: "Izlan — Chansons et Karaoké",
+    description: "Learn Tamazight through traditional songs — Amazigh ahwash chants, wedding songs, and Atlas mountain lullabies with sing-along lyrics.",
+    descriptionFr: "Apprenez le Tamazight à travers des chansons traditionnelles — chants ahwash amazighes, chansons de mariage et berceuses de l'Atlas avec paroles à chanter.",
+  },
+  {
     id: "course-16", languageId: "tamazight", order: 1, level: "beginner", lessonsCount: 2, courseType: "first_words",
     title: "Tamazight — First Words",
     titleFr: "Tamazight — Premiers Mots",
@@ -174,6 +258,13 @@ export const COURSES: CourseEntry[] = [
 
   // Kinyarwanda
   {
+    id: "course-34", languageId: "kinyarwanda", order: 2, level: "beginner", lessonsCount: 3, courseType: "songs",
+    title: "Indirimbo — Songs & Sing-Along",
+    titleFr: "Indirimbo — Chansons et Karaoké",
+    description: "Learn Kinyarwanda through traditional songs — Intore dance chants, pastoral lullabies, and celebration songs with sing-along lyrics.",
+    descriptionFr: "Apprenez le Kinyarwanda à travers des chansons traditionnelles — chants de danse Intore, berceuses pastorales et chansons de fête avec paroles à chanter.",
+  },
+  {
     id: "course-17", languageId: "kinyarwanda", order: 1, level: "beginner", lessonsCount: 2, courseType: "first_words",
     title: "Kinyarwanda — First Words",
     titleFr: "Kinyarwanda — Premiers Mots",
@@ -182,6 +273,13 @@ export const COURSES: CourseEntry[] = [
   },
 
   // Ewe
+  {
+    id: "course-35", languageId: "ewe", order: 2, level: "beginner", lessonsCount: 3, courseType: "songs",
+    title: "Hadzigbalẽ — Songs & Sing-Along",
+    titleFr: "Hadzigbalẽ — Chansons et Karaoké",
+    description: "Learn Eʋegbe through traditional songs — agbadza drum songs, lullabies, and festival chants with sing-along lyrics.",
+    descriptionFr: "Apprenez l'Eʋegbe à travers des chansons traditionnelles — chansons de tambour agbadza, berceuses et chants de festival avec paroles à chanter.",
+  },
   {
     id: "course-18", languageId: "ewe", order: 1, level: "beginner", lessonsCount: 2, courseType: "first_words",
     title: "Eʋegbe — First Words",

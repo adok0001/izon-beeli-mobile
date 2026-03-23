@@ -12,9 +12,13 @@ export interface TranscriptSegment {
   translationFr?: string;
 }
 
+export type LessonType = "lesson" | "song";
+
 export interface LessonData {
   id: string;
   courseId: string;
+  /** @default "lesson" */
+  type?: LessonType;
   title: string;
   titleFr?: string;
   description: string;
@@ -24,5 +28,9 @@ export interface LessonData {
   /** Duration in minutes; null = not yet timed */
   duration: number | null;
   order: number;
+  /** Artist or traditional source (songs only) */
+  artist?: string;
+  /** e.g. "lullaby", "praise", "work_song", "festival", "contemporary" */
+  genre?: string;
   transcript: TranscriptSegment[];
 }

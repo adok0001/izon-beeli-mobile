@@ -51,8 +51,11 @@ lessonContributionsRouter.post("/", async (c) => {
 
   const languageId = (formData.get("languageId") as string) ?? "";
   const courseId = (formData.get("courseId") as string) || undefined;
+  const contentType = (formData.get("type") as string) || "lesson";
   const title = (formData.get("title") as string) ?? "";
   const description = (formData.get("description") as string) ?? "";
+  const artist = (formData.get("artist") as string) || undefined;
+  const genre = (formData.get("genre") as string) || undefined;
   const durationStr = formData.get("duration") as string | null;
   const duration = durationStr ? parseInt(durationStr, 10) : undefined;
   const segmentsJson = (formData.get("segments") as string) ?? "[]";
@@ -91,10 +94,13 @@ lessonContributionsRouter.post("/", async (c) => {
       userId,
       languageId,
       courseId: courseId || null,
+      type: contentType,
       title: title.trim(),
       description: description.trim(),
       audioUrl,
       duration: duration && !isNaN(duration) ? duration : null,
+      artist: artist?.trim() || null,
+      genre: genre?.trim() || null,
     })
     .returning();
 
@@ -273,11 +279,14 @@ lessonContributionsRouter.patch("/:id/review", adminMiddleware, async (c) => {
   await db.insert(lessons).values({
     id: lessonId,
     courseId,
+    type: contribution.type ?? "lesson",
     title: contribution.title,
     description: contribution.description,
     audioUrl: contribution.audioUrl,
     duration: contribution.duration,
     order: 999,
+    artist: contribution.artist,
+    genre: contribution.genre,
   });
 
   const segs = await db

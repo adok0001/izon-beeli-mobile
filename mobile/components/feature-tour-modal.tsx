@@ -1,8 +1,8 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useTourStore, type TourId } from "@/store/tour-store";
+import { useTranslation } from "react-i18next";
 import { Modal, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTranslation } from "react-i18next";
 
 interface FeatureItem {
   icon: string;

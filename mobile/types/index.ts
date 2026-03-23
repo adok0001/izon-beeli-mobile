@@ -5,7 +5,8 @@ export type CourseType =
   | "numbers_trade"
   | "oral_tradition"
   | "communicative"
-  | "contemporary";
+  | "contemporary"
+  | "songs";
 
 export interface Course {
   id: string;
@@ -23,9 +24,13 @@ export interface Course {
 
 export type AudioSource = string | number; // URI string or require() module ID
 
+export type LessonType = "lesson" | "song";
+
 export interface Lesson {
   id: string;
   courseId: string;
+  /** @default "lesson" */
+  type?: LessonType | null;
   title: string;
   titleFr?: string | null;
   description: string;
@@ -34,6 +39,10 @@ export interface Lesson {
   duration?: number; // seconds
   order: number;
   completed?: boolean;
+  /** Artist or traditional source (songs only) */
+  artist?: string | null;
+  /** e.g. "lullaby", "praise", "work_song", "festival", "contemporary" */
+  genre?: string | null;
   transcript?: TranscriptSegment[];
 }
 

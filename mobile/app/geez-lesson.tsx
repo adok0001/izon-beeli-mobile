@@ -1,14 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { View, Text, Pressable } from "react-native";
-import { Stack } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { FidelGrid } from "@/components/geez/fidel-grid";
 import { CharacterDetail } from "@/components/geez/character-detail";
+import { FidelGrid } from "@/components/geez/fidel-grid";
 import { TracingCanvas } from "@/components/geez/tracing-canvas";
-import { useGeezStore } from "@/store/geez-store";
 import { FIDEL_CHART, type GeezCharacter } from "@/lib/data/geez";
 import { hapticSuccess } from "@/lib/haptics";
+import { useGeezStore } from "@/store/geez-store";
+import { Stack } from "expo-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Pressable, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type Tab = "chart" | "practice";
 
