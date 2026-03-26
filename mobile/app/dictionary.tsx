@@ -23,7 +23,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type ViewMode = "all" | "saved";
+type ViewMode = "all" | "saved" | "needs_audio";
 
 function WordRow({
   entry,
@@ -36,6 +36,9 @@ function WordRow({
   onToggle: () => void;
   onPress: () => void;
 }) {
+  const { t } = useTranslation();
+  const hasAudio = !!entry.audioUrl;
+
   return (
     <Pressable
       onPress={onPress}
@@ -43,11 +46,22 @@ function WordRow({
     >
       <View className="flex-row items-center">
         <View className="flex-1">
-          <Text className="text-base font-semibold text-neutral-900 dark:text-white">
-            {entry.word}
-          </Text>
+          <View className="flex-row items-center gap-1.5">
+            <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+              {entry.word}
+            </Text>
+            {!hasAudio && (
+              <View className="rounded bg-orange-100 px-1.5 py-0.5 dark:bg-orange-900/30">
+                <Text className="text-[10px] font-semibold text-orange-600 dark:text-orange-400">
+                  {t("dictionaryPage.needsAudio")}
+                </Text>
+              </View>
+            )}
+          </View>
           <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
-            {entry.english}
+            {entry.english.includes(";")
+              ? entry.english.split(";").map((m) => m.trim()).filter(Boolean).join(" · ")
+              : entry.english}
           </Text>
         </View>
         <WordAudioButton audioSource={entry.audioUrl} word={entry.word} />
@@ -100,7 +114,9 @@ export default function DictionaryScreen() {
     const entries =
       viewMode === "saved"
         ? filtered.filter((e) => savedSet.has(e.id))
-        : filtered;
+        : viewMode === "needs_audio"
+          ? filtered.filter((e) => !e.audioUrl)
+          : filtered;
 
     // Group by category
     const grouped = new Map<DictionaryCategory, DictionaryEntry[]>();
@@ -121,6 +137,7 @@ export default function DictionaryScreen() {
   }, [query, viewMode, allEntries, savedIds, t]);
 
   const savedCount = allEntries.filter((e) => savedSet.has(e.id)).length;
+  const needsAudioCount = allEntries.filter((e) => !e.audioUrl).length;
 
   return (
     <>
@@ -187,6 +204,26 @@ export default function DictionaryScreen() {
                 {t("dictionaryPage.myWordsCount", { count: savedCount })}
               </Text>
             </Pressable>
+            {needsAudioCount > 0 && (
+              <Pressable
+                onPress={() => setViewMode("needs_audio")}
+                className={`flex-1 items-center rounded-lg py-2 ${
+                  viewMode === "needs_audio"
+                    ? "bg-orange-500"
+                    : "bg-neutral-100 dark:bg-neutral-800"
+                }`}
+              >
+                <Text
+                  className={`text-sm font-semibold ${
+                    viewMode === "needs_audio"
+                      ? "text-white"
+                      : "text-neutral-600 dark:text-neutral-400"
+                  }`}
+                >
+                  {t("dictionaryPage.needsAudioCount", { count: needsAudioCount })}
+                </Text>
+              </Pressable>
+            )}
           </View>
 
           {/* Review CTA — visible when viewing saved words */}
@@ -200,6 +237,18 @@ export default function DictionaryScreen() {
                 {t("dictionaryPage.reviewSavedWords")}
               </Text>
             </Pressable>
+          )}
+
+          {/* Contribute CTA — visible when viewing needs_audio */}
+          {viewMode === "needs_audio" && needsAudioCount > 0 && (
+            <View className="mt-3 rounded-xl bg-orange-50 px-4 py-3 dark:bg-orange-900/20">
+              <Text className="text-sm font-medium text-orange-800 dark:text-orange-200">
+                {t("dictionaryPage.needsAudioCta", { count: needsAudioCount })}
+              </Text>
+              <Text className="mt-0.5 text-xs text-orange-600 dark:text-orange-400">
+                {t("dictionaryPage.needsAudioCtaDesc")}
+              </Text>
+            </View>
           )}
         </View>
 

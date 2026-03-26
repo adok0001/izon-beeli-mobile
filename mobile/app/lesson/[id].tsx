@@ -4,6 +4,7 @@ import { LevelUpModal } from "@/components/level-up-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useCompletedLessons, useCompleteLesson } from "@/lib/hooks/use-progress";
 import { useLesson } from "@/lib/hooks/use-courses";
+import { useNextLesson } from "@/lib/hooks/use-next-lesson";
 import { formatDuration, BUNDLED_AUDIO } from "@/lib/mock-data";
 import { playFinishSound } from "@/lib/sounds";
 import { hapticHeavy } from "@/lib/haptics";
@@ -14,10 +15,9 @@ import { useLanguageStore } from "@/store/language-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useTourStore } from "@/store/tour-store";
 import { localizeField } from "@/lib/localize";
-import { FeatureTourModal } from "@/components/feature-tour-modal";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
@@ -30,7 +30,9 @@ export default function LessonScreen() {
   const { selectedLanguageId } = useLanguageStore();
   const { uiLanguage } = useUiLanguageStore();
   const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
+  const [showSummary, setShowSummary] = useState(false);
   const { t } = useTranslation();
+  const { data: nextLessonData } = useNextLesson(selectedLanguageId);
   const showTour = useTourStore((s) => s.showTour);
   const hasSeen = useTourStore((s) => s.hasSeen);
   const completeLesson = useCompleteLesson({
@@ -89,6 +91,7 @@ export default function LessonScreen() {
     hapticHeavy();
     analytics.lessonCompleted(lesson.id, selectedLanguageId);
     cancelDailyStreakReminder().catch(() => {});
+    setShowSummary(true);
 
     // Contextual tours: show journal tour after first lesson complete,
     // then practice tour on subsequent completions
@@ -183,8 +186,115 @@ export default function LessonScreen() {
           </View>
         </View>
 
-        {/* Transcript */}
-        {lesson.transcript && lesson.transcript.length > 0 ? (
+        {/* Post-lesson summary */}
+        {showSummary ? (
+          <ScrollView className="flex-1" contentContainerClassName="px-5 py-6" showsVerticalScrollIndicator={false}>
+            <View className="items-center mb-6">
+              <View className="h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+                <IconSymbol name="checkmark.circle.fill" size={36} color="#22c55e" />
+              </View>
+              <Text className="mt-3 text-xl font-bold text-neutral-900 dark:text-white">
+                {t("lesson.summary")}
+              </Text>
+            </View>
+
+            {/* Stats */}
+            <View className="flex-row gap-3 mb-6">
+              {lesson.transcript && lesson.transcript.length > 0 && (
+                <View className="flex-1 items-center rounded-2xl bg-blue-50 py-4 dark:bg-blue-950">
+                  <Text className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    {new Set(
+                      lesson.transcript
+                        .flatMap((s) => s.text.split(/\s+/))
+                        .map((w) => w.toLowerCase().replace(/[.,!?;:'"]/g, ""))
+                        .filter(Boolean)
+                    ).size}
+                  </Text>
+                  <Text className="mt-1 text-xs text-blue-500 dark:text-blue-400">
+                    {t("lesson.wordsLearned")}
+                  </Text>
+                </View>
+              )}
+              {lesson.duration && (
+                <View className="flex-1 items-center rounded-2xl bg-violet-50 py-4 dark:bg-violet-950">
+                  <Text className="text-2xl font-bold text-violet-600 dark:text-violet-400">
+                    {formatDuration(lesson.duration)}
+                  </Text>
+                  <Text className="mt-1 text-xs text-violet-500 dark:text-violet-400">
+                    {t("lesson.timeSpent")}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* What's next actions */}
+            <Text className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+              {t("lesson.whatsNext")}
+            </Text>
+            <View className="gap-3">
+              <Pressable
+                onPress={() =>
+                  router.push({
+                    pathname: "/quiz",
+                    params: { courseId: lesson.courseId },
+                  })
+                }
+                className="flex-row items-center rounded-2xl bg-blue-500 px-4 py-4 active:opacity-80"
+              >
+                <IconSymbol name="trophy.fill" size={18} color="#fff" />
+                <Text className="ml-2 text-base font-semibold text-white">
+                  {t("lesson.takeQuiz")}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => router.push("/word-review")}
+                className="flex-row items-center rounded-2xl border border-emerald-200 px-4 py-4 active:opacity-80 dark:border-emerald-800"
+              >
+                <IconSymbol name="brain.head.profile" size={18} color="#10b981" />
+                <Text className="ml-2 text-base font-semibold text-emerald-600 dark:text-emerald-400">
+                  {t("lesson.reviewWords")}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => router.push("/(tabs)/journal" as any)}
+                className="flex-row items-center rounded-2xl border border-neutral-200 px-4 py-4 active:opacity-80 dark:border-neutral-700"
+              >
+                <IconSymbol name="pencil.and.list.clipboard" size={18} color="#9ca3af" />
+                <Text className="ml-2 text-base font-semibold text-neutral-600 dark:text-neutral-300">
+                  {t("lesson.writeReflection")}
+                </Text>
+              </Pressable>
+
+              {nextLessonData?.lesson && nextLessonData.lesson.id !== lesson.id && (
+                <Pressable
+                  onPress={() => {
+                    setShowSummary(false);
+                    router.replace(`/lesson/${nextLessonData.lesson!.id}`);
+                  }}
+                  className="flex-row items-center rounded-2xl border border-blue-200 px-4 py-4 active:opacity-80 dark:border-blue-800"
+                >
+                  <IconSymbol name="play.fill" size={18} color="#3b82f6" />
+                  <Text className="ml-2 text-base font-semibold text-blue-600 dark:text-blue-400">
+                    {t("lesson.continueToNext")}
+                  </Text>
+                </Pressable>
+              )}
+
+              <Pressable
+                onPress={() => setShowSummary(false)}
+                className="items-center py-3"
+              >
+                <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+                  {isSong ? t("songs.lyrics") : t("lesson.transcript")}
+                </Text>
+              </Pressable>
+            </View>
+          </ScrollView>
+        ) : (
+        /* Transcript */
+        lesson.transcript && lesson.transcript.length > 0 ? (
           <View className="flex-1 px-1">
             <Text className="px-4 pb-2 pt-4 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
               {isSong ? t("songs.lyrics") : t("lesson.transcript")}
@@ -198,7 +308,7 @@ export default function LessonScreen() {
               {t("lesson.noTranscript")}
             </Text>
           </View>
-        )}
+        ))}
 
         {/* Full audio player at bottom */}
         {isCurrentTrack && <AudioPlayer />}
@@ -211,7 +321,6 @@ export default function LessonScreen() {
         onDismiss={() => setLevelUp(null)}
       />
 
-      <FeatureTourModal />
     </>
   );
 }

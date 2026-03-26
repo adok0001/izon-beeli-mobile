@@ -6,7 +6,7 @@ import { bounties, contributions, dictionaryEntries, feedItems, users } from "..
 import { awardXP, CONTRIBUTION_BASE_XP } from "../lib/award-xp.js";
 import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
 
-const VALID_TYPES = ["word", "phrase", "audio"] as const;
+const VALID_TYPES = ["word", "phrase", "audio", "entry_audio", "entry_meaning"] as const;
 const VALID_REVIEW_ACTIONS = ["approve", "reject"] as const;
 
 // Public routes (no auth required)
@@ -65,6 +65,7 @@ contributionsRouter.post("/", async (c) => {
   let example: string | undefined;
   let exampleTranslation: string | undefined;
   let audioUrl: string | undefined;
+  let dictionaryEntryId: string | undefined;
 
   if (contentType.includes("multipart/form-data")) {
     const formData = await c.req.formData();
@@ -76,6 +77,7 @@ contributionsRouter.post("/", async (c) => {
     pronunciation = (formData.get("pronunciation") as string) || undefined;
     example = (formData.get("example") as string) || undefined;
     exampleTranslation = (formData.get("exampleTranslation") as string) || undefined;
+    dictionaryEntryId = (formData.get("dictionaryEntryId") as string) || undefined;
 
     const audioFile = formData.get("audio") as File | null;
     if (audioFile) {
@@ -86,8 +88,9 @@ contributionsRouter.post("/", async (c) => {
           { access: "public", token: process.env.BLOB_READ_WRITE_TOKEN! }
         );
         audioUrl = blob.url;
-      } catch (err) {
-        return c.json({ error: "Failed to upload audio file" }, 500);
+      } catch (err: any) {
+        console.error("Blob upload error:", err?.message ?? err);
+        return c.json({ error: `Failed to upload audio file: ${err?.message ?? "unknown"}` }, 500);
       }
     }
   } else {
@@ -100,6 +103,7 @@ contributionsRouter.post("/", async (c) => {
       pronunciation?: string;
       example?: string;
       exampleTranslation?: string;
+      dictionaryEntryId?: string;
     }>();
     type = body.type ?? "";
     languageId = body.languageId ?? "";
@@ -109,87 +113,150 @@ contributionsRouter.post("/", async (c) => {
     pronunciation = body.pronunciation;
     example = body.example;
     exampleTranslation = body.exampleTranslation;
+    dictionaryEntryId = body.dictionaryEntryId;
   }
 
-  if (!type || !languageId || !word?.trim() || !english?.trim() || !category) {
-    return c.json({ error: "type, languageId, word, english, and category are required" }, 400);
+  // entry_audio and entry_meaning target an existing dictionary entry
+  const isEntryContribution = type === "entry_audio" || type === "entry_meaning";
+
+  if (isEntryContribution) {
+    if (!dictionaryEntryId || !languageId) {
+      return c.json({ error: "dictionaryEntryId and languageId are required for entry contributions" }, 400);
+    }
+    if (type === "entry_audio" && !audioUrl) {
+      return c.json({ error: "Audio file is required for entry_audio contributions" }, 400);
+    }
+    if (type === "entry_meaning" && !english?.trim()) {
+      return c.json({ error: "english (new meaning) is required for entry_meaning contributions" }, 400);
+    }
+
+    // Fetch the existing entry to populate word/category
+    const [existingEntry] = await db
+      .select()
+      .from(dictionaryEntries)
+      .where(eq(dictionaryEntries.id, dictionaryEntryId))
+      .limit(1);
+
+    if (!existingEntry) {
+      return c.json({ error: "Dictionary entry not found" }, 404);
+    }
+
+    // Use the existing entry's word and category
+    word = word.trim() || existingEntry.word;
+    category = category || existingEntry.category;
+  } else {
+    if (!type || !languageId || !word?.trim() || !english?.trim() || !category) {
+      return c.json({ error: "type, languageId, word, english, and category are required" }, 400);
+    }
   }
 
   if (!VALID_TYPES.includes(type as any)) {
     return c.json({ error: `type must be one of: ${VALID_TYPES.join(", ")}` }, 400);
   }
 
-  // Duplicate detection — check dictionaryEntries and contributions
-  const wordNorm = word.trim().toLowerCase();
-  const [existingDict] = await db
-    .select({ id: dictionaryEntries.id, word: dictionaryEntries.word, english: dictionaryEntries.english })
-    .from(dictionaryEntries)
-    .where(and(eq(dictionaryEntries.languageId, languageId), ilike(dictionaryEntries.word, wordNorm)))
-    .limit(1);
+  // Duplicate detection — skip for entry contributions (they enhance existing entries)
+  if (!isEntryContribution) {
+    const wordNorm = word.trim().toLowerCase();
+    const [existingDict] = await db
+      .select({ id: dictionaryEntries.id, word: dictionaryEntries.word, english: dictionaryEntries.english })
+      .from(dictionaryEntries)
+      .where(and(eq(dictionaryEntries.languageId, languageId), ilike(dictionaryEntries.word, wordNorm)))
+      .limit(1);
 
-  if (existingDict) {
-    return c.json(
-      { error: "This word already exists in the dictionary", existing: existingDict },
-      409
-    );
-  }
+    if (existingDict) {
+      return c.json(
+        { error: "This word already exists in the dictionary", existing: existingDict },
+        409
+      );
+    }
 
-  const [existingContrib] = await db
-    .select({ id: contributions.id, word: contributions.word, status: contributions.status })
-    .from(contributions)
-    .where(
-      and(
-        eq(contributions.languageId, languageId),
-        ilike(contributions.word, wordNorm),
-        or(eq(contributions.status, "submitted"), eq(contributions.status, "approved"))
+    const [existingContrib] = await db
+      .select({ id: contributions.id, word: contributions.word, status: contributions.status })
+      .from(contributions)
+      .where(
+        and(
+          eq(contributions.languageId, languageId),
+          ilike(contributions.word, wordNorm),
+          or(eq(contributions.status, "submitted"), eq(contributions.status, "approved"))
+        )
       )
-    )
-    .limit(1);
+      .limit(1);
 
-  if (existingContrib) {
-    return c.json(
-      { error: "A contribution for this word already exists", existing: existingContrib },
-      409
-    );
+    if (existingContrib) {
+      return c.json(
+        { error: "A contribution for this word already exists", existing: existingContrib },
+        409
+      );
+    }
   }
 
-  const [contribution] = await db
-    .insert(contributions)
-    .values({
+  try {
+    const [contribution] = await db
+      .insert(contributions)
+      .values({
+        userId,
+        type: type as (typeof VALID_TYPES)[number],
+        languageId,
+        word: word.trim(),
+        english: english?.trim() || word.trim(),
+        category,
+        pronunciation: pronunciation?.trim() || null,
+        example: example?.trim() || null,
+        exampleTranslation: exampleTranslation?.trim() || null,
+        audioUrl: audioUrl ?? null,
+        dictionaryEntryId: dictionaryEntryId || null,
+      })
+      .returning();
+
+    // Create a feed item
+    const [user] = await db
+      .select({ name: users.name, avatarUrl: users.avatarUrl })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    const feedTitle = isEntryContribution
+      ? type === "entry_audio"
+        ? `Audio for: ${word.trim()}`
+        : `New meaning for: ${word.trim()}`
+      : `${word.trim()} → ${english.trim()}`;
+
+    const feedDesc = isEntryContribution
+      ? type === "entry_audio"
+        ? `Recorded pronunciation for "${word.trim()}" in ${languageId}`
+        : `Suggested a new meaning for "${word.trim()}" in ${languageId}: ${english.trim()}`
+      : `Added a new ${type} to the ${languageId} dictionary`;
+
+    const feedTitleFr = isEntryContribution
+      ? type === "entry_audio"
+        ? `Audio pour : ${word.trim()}`
+        : `Nouveau sens pour : ${word.trim()}`
+      : `${word.trim()} → ${english.trim()}`;
+
+    const feedDescFr = isEntryContribution
+      ? type === "entry_audio"
+        ? `A enregistré la prononciation de « ${word.trim()} » en ${languageId}`
+        : `A suggéré un nouveau sens pour « ${word.trim()} » en ${languageId} : ${english.trim()}`
+      : `A ajouté un nouveau ${type === "word" ? "mot" : type === "phrase" ? "expression" : "fichier audio"} au dictionnaire ${languageId}`;
+
+    await db.insert(feedItems).values({
       userId,
-      type: type as (typeof VALID_TYPES)[number],
-      languageId,
-      word: word.trim(),
-      english: english.trim(),
-      category,
-      pronunciation: pronunciation?.trim() || null,
-      example: example?.trim() || null,
-      exampleTranslation: exampleTranslation?.trim() || null,
-      audioUrl,
-    })
-    .returning();
+      type: "contribution",
+      title: feedTitle,
+      titleFr: feedTitleFr,
+      description: feedDesc,
+      descriptionFr: feedDescFr,
+      userName: user?.name ?? "User",
+      userAvatarUrl: user?.avatarUrl,
+      audioUrl: audioUrl ?? null,
+      contributionId: contribution.id,
+    });
 
-  // Create a feed item
-  const [user] = await db
-    .select({ name: users.name, avatarUrl: users.avatarUrl })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-
-  await db.insert(feedItems).values({
-    userId,
-    type: "contribution",
-    title: `${word.trim()} → ${english.trim()}`,
-    titleFr: `${word.trim()} → ${english.trim()}`,
-    description: `Added a new ${type} to the ${languageId} dictionary`,
-    descriptionFr: `A ajouté un nouveau ${type === "word" ? "mot" : type === "expression" ? "expression" : "fichier audio"} au dictionnaire ${languageId}`,
-    userName: user?.name ?? "User",
-    userAvatarUrl: user?.avatarUrl,
-    audioUrl,
-    contributionId: contribution.id,
-  });
-
-  return c.json(contribution, 201);
+    return c.json(contribution, 201);
+  } catch (err: any) {
+    console.error("POST /contributions error:", err);
+    return c.json({ error: err.message ?? "Internal server error" }, 500);
+  }
 });
 
 // GET /api/contributions - list user's contributions
@@ -222,6 +289,7 @@ contributionsRouter.get("/pending", async (c) => {
       userId: contributions.userId,
       submitterName: users.name,
       audioUrl: contributions.audioUrl,
+      dictionaryEntryId: contributions.dictionaryEntryId,
       createdAt: contributions.createdAt,
     })
     .from(contributions)
@@ -340,6 +408,32 @@ contributionsRouter.patch("/:id/review", adminMiddleware, async (c) => {
   let matchedBountyId: string | null = null;
 
   if (action === "approve") {
+    // Apply entry contributions to the dictionary entry
+    if (existing.dictionaryEntryId) {
+      if (existing.type === "entry_audio" && existing.audioUrl) {
+        await db
+          .update(dictionaryEntries)
+          .set({ audioUrl: existing.audioUrl })
+          .where(eq(dictionaryEntries.id, existing.dictionaryEntryId));
+      } else if (existing.type === "entry_meaning" && existing.english) {
+        // Append the new meaning to the existing english field
+        const [entry] = await db
+          .select({ english: dictionaryEntries.english })
+          .from(dictionaryEntries)
+          .where(eq(dictionaryEntries.id, existing.dictionaryEntryId))
+          .limit(1);
+        if (entry) {
+          const updatedEnglish = entry.english.includes(existing.english)
+            ? entry.english
+            : `${entry.english}; ${existing.english}`;
+          await db
+            .update(dictionaryEntries)
+            .set({ english: updatedEnglish })
+            .where(eq(dictionaryEntries.id, existing.dictionaryEntryId));
+        }
+      }
+    }
+
     // Award base XP
     const contribType = existing.type as keyof typeof CONTRIBUTION_BASE_XP;
     const baseXp = CONTRIBUTION_BASE_XP[contribType] ?? 15;

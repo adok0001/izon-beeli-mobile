@@ -32,10 +32,13 @@ export default function ContributeScreen() {
   const params = useLocalSearchParams<{ languageId?: string; category?: string }>();
   const {
     isRecording,
+    isPlaying,
     recordingUri,
     startRecording,
     stopRecording,
     discardRecording,
+    playRecording,
+    stopPlayback,
   } = useContributionStore();
   const submitContribution = useSubmitContribution();
 
@@ -409,7 +412,18 @@ export default function ContributeScreen() {
                 <View className="mb-4 items-center rounded-xl border border-neutral-200 p-4 dark:border-neutral-700">
                   {recordingUri ? (
                     <View className="items-center">
-                      <IconSymbol name="checkmark.circle.fill" size={32} color="#22c55e" />
+                      <Pressable
+                        onPress={isPlaying ? stopPlayback : playRecording}
+                        className={`h-16 w-16 items-center justify-center rounded-full ${
+                          isPlaying ? "bg-blue-500" : "bg-emerald-100 dark:bg-emerald-900"
+                        }`}
+                      >
+                        <IconSymbol
+                          name={isPlaying ? "stop.fill" : "play.fill"}
+                          size={24}
+                          color={isPlaying ? "#fff" : "#10b981"}
+                        />
+                      </Pressable>
                       <Text className="mt-2 text-sm text-green-600 dark:text-green-400">
                         {t("contribute.recordingSaved")}
                       </Text>

@@ -1,4 +1,3 @@
-import { FeatureTourModal } from "@/components/feature-tour-modal";
 import { LanguagePickerButton } from "@/components/language-picker";
 import { NotificationBell } from "@/components/notifications/notification-center";
 import { StreakFreezeModal } from "@/components/streak-freeze-modal";
@@ -9,7 +8,9 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { getStoryForCourse } from "@/lib/data/stories";
 import { useBounties } from "@/lib/hooks/use-bounties";
 import { useCourseLessons, useCourses, useLesson } from "@/lib/hooks/use-courses";
+import { useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
 import { useCompletedLessons, useProgressSummary } from "@/lib/hooks/use-progress";
+import { useWordsDueForReview } from "@/lib/hooks/use-wordbank";
 import { localizeField } from "@/lib/localize";
 import { BUNDLED_AUDIO, formatDuration } from "@/lib/mock-data";
 import { useAudioStore } from "@/store/audio-store";
@@ -18,10 +19,12 @@ import { useTourStore } from "@/store/tour-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course, Lesson } from "@/types";
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Svg, { Circle } from "react-native-svg";
 
 function ContinueCard({ lessonId, positionSeconds }: { lessonId: string; positionSeconds: number }) {
   const { t } = useTranslation();
@@ -259,6 +262,78 @@ function BountyTeaser({ languageId }: { languageId: string }) {
   );
 }
 
+function ReviewBanner() {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const { data: dueWords = [] } = useWordsDueForReview();
+
+  if (dueWords.length === 0) return null;
+
+  return (
+    <Pressable
+      onPress={() => router.push("/word-review")}
+      className="flex-row items-center rounded-2xl bg-violet-50 p-4 active:opacity-70 dark:bg-violet-950"
+    >
+      <View className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-violet-500">
+        <IconSymbol name="brain.head.profile" size={18} color="#fff" />
+      </View>
+      <View className="flex-1">
+        <Text className="text-sm font-semibold text-violet-700 dark:text-violet-300">
+          {t("learn.reviewBanner", { count: dueWords.length })}
+        </Text>
+        <Text className="text-xs text-violet-500 dark:text-violet-400">
+          {t("learn.reviewBannerCta")}
+        </Text>
+      </View>
+      <IconSymbol name="chevron.right" size={16} color="#8b5cf6" />
+    </Pressable>
+  );
+}
+
+function DailyGoalRing({ completedToday }: { completedToday: number }) {
+  const target = 3;
+  const pct = Math.min(completedToday / target, 1);
+  const size = 36;
+  const strokeWidth = 3.5;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference * (1 - pct);
+  const color = pct >= 1 ? "#22c55e" : "#3b82f6";
+
+  if (completedToday === 0) return null;
+
+  return (
+    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
+      <Svg width={size} height={size} style={{ position: "absolute" }}>
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="#e5e7eb"
+          strokeWidth={strokeWidth}
+          fill="none"
+        />
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={color}
+          strokeWidth={strokeWidth}
+          fill="none"
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          rotation={-90}
+          origin={`${size / 2}, ${size / 2}`}
+        />
+      </Svg>
+      <Text style={{ fontSize: 11, fontWeight: "700", color }}>
+        {completedToday}
+      </Text>
+    </View>
+  );
+}
+
 export default function LearnScreen() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -266,13 +341,19 @@ export default function LearnScreen() {
   const { data: courses = [], isLoading: coursesLoading, refetch: refetchCourses } = useCourses(selectedLanguageId);
   const { data: completedLessonIds, isLoading: progressLoading, refetch } = useCompletedLessons();
   const { data: summary, refetch: refetchSummary } = useProgressSummary();
+  const { data: todayChallenges = [] } = useTodayChallenges();
   const completedIds = new Set(completedLessonIds ?? []);
+  const completedToday = useMemo(
+    () => todayChallenges.filter((c) => c.completed).length,
+    [todayChallenges]
+  );
   const [refreshing, setRefreshing] = useState(false);
   const [freezeModalVisible, setFreezeModalVisible] = useState(false);
-  const freezeModalShown = useRef(false);
+  const freezeChecked = useRef(false);
   const { resumeState, loadResumeState } = useAudioStore();
   const showTour = useTourStore((s) => s.showTour);
   const hasSeen = useTourStore((s) => s.hasSeen);
+  const activeTour = useTourStore((s) => s.activeTour);
 
   useEffect(() => {
     loadResumeState();
@@ -286,17 +367,24 @@ export default function LearnScreen() {
     }
   }, []);
 
-  // Show freeze modal once when we detect a broken streak
+  // Show freeze modal once per day when we detect a broken streak (wait for any tour to finish)
   useEffect(() => {
     if (
-      summary?.streakBroken &&
-      !freezeModalShown.current &&
-      summary.streak > 0
-    ) {
-      freezeModalShown.current = true;
+      !summary?.streakBroken ||
+      summary.streak <= 0 ||
+      activeTour ||
+      freezeChecked.current
+    )
+      return;
+
+    freezeChecked.current = true;
+    const today = new Date().toISOString().slice(0, 10);
+    AsyncStorage.getItem("streak-freeze-shown").then((lastShown) => {
+      if (lastShown === today) return;
+      AsyncStorage.setItem("streak-freeze-shown", today).catch(() => {});
       setFreezeModalVisible(true);
-    }
-  }, [summary?.streakBroken, summary?.streak]);
+    }).catch(() => {});
+  }, [summary?.streakBroken, summary?.streak, activeTour]);
 
   const isLoading = coursesLoading || progressLoading;
 
@@ -366,6 +454,7 @@ export default function LearnScreen() {
             {summary?.completedCount ?? 0}
           </Text>
         </View>
+        <DailyGoalRing completedToday={completedToday} />
       </View>
 
       {isLoading ? (
@@ -387,6 +476,7 @@ export default function LearnScreen() {
           renderItem={({ item }) => <CourseCard course={item} completedIds={completedIds} />}
           ListHeaderComponent={
             <View className="mb-4 gap-3">
+              <ReviewBanner />
               {resumeState && resumeState.positionSeconds > 5 && (
                 <ContinueCard
                   lessonId={resumeState.lessonId}
@@ -411,7 +501,6 @@ export default function LearnScreen() {
         onDismiss={() => setFreezeModalVisible(false)}
       />
 
-      <FeatureTourModal />
     </SafeAreaView>
   );
 }

@@ -113,7 +113,7 @@ export interface Language {
   region: string;
 }
 
-export type ContributionType = "word" | "phrase" | "audio";
+export type ContributionType = "word" | "phrase" | "audio" | "entry_audio" | "entry_meaning";
 
 export type FeedbackCategory = "bug" | "suggestion" | "other";
 

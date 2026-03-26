@@ -17,7 +17,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ONBOARDING_KEY } from "@/app/(onboarding)/index";
 import { useTranslation } from "react-i18next";
 import { useTourStore } from "@/store/tour-store";
-import { TourOverlay } from "@/components/tour/tour-overlay";
+import { FeatureTourModal } from "@/components/feature-tour-modal";
 
 function TabBarWithPlayer(props: BottomTabBarProps) {
   const { currentTrackId } = useAudioStore();
@@ -124,7 +124,7 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
-      <TourOverlay />
+      <FeatureTourModal />
     </>
   );
 }

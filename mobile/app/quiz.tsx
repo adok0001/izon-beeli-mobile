@@ -1,4 +1,3 @@
-import { FeatureTourModal } from "@/components/feature-tour-modal";
 import { ListeningQuestion } from "@/components/quiz/listening-question";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { analytics } from "@/lib/analytics";
@@ -439,7 +438,6 @@ export default function QuizScreen() {
           <ActiveView />
         ) : null}
       </SafeAreaView>
-      <FeatureTourModal />
     </>
   );
 }

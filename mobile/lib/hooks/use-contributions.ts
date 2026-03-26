@@ -76,6 +76,73 @@ export function useSubmitContribution() {
   });
 }
 
+export interface EntryContributionInput {
+  type: "entry_audio" | "entry_meaning";
+  languageId: string;
+  dictionaryEntryId: string;
+  word: string;
+  english?: string; // new meaning (for entry_meaning)
+  category: string;
+  audioUri?: string; // local file URI (for entry_audio)
+}
+
+export function useSubmitEntryContribution() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: EntryContributionInput) => {
+      const token = await getToken();
+
+      if (input.type === "entry_audio" && input.audioUri) {
+        const formData = new FormData();
+        formData.append("type", "entry_audio");
+        formData.append("languageId", input.languageId);
+        formData.append("dictionaryEntryId", input.dictionaryEntryId);
+        formData.append("word", input.word);
+        formData.append("english", input.english ?? input.word);
+        formData.append("category", input.category);
+
+        formData.append("audio", {
+          uri: input.audioUri,
+          type: "audio/m4a",
+          name: "pronunciation.m4a",
+        } as any);
+
+        const res = await fetch(`${API_BASE_URL}/contributions`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`API error ${res.status}: ${text}`);
+        }
+        return res.json();
+      } else {
+        return apiFetch("/contributions", {
+          method: "POST",
+          token: token!,
+          body: JSON.stringify({
+            type: input.type,
+            languageId: input.languageId,
+            dictionaryEntryId: input.dictionaryEntryId,
+            word: input.word,
+            english: input.english ?? "",
+            category: input.category,
+          }),
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
+      queryClient.invalidateQueries({ queryKey: ["dictionary"] });
+      queryClient.invalidateQueries({ queryKey: ["approved-words"] });
+    },
+  });
+}
+
 export interface BulkContributionEntry {
   word: string;
   english: string;
@@ -318,6 +385,7 @@ export interface MyContribution {
   languageId: string;
   type: string;
   status: string;
+  audioUrl: string | null;
   reviewNote: string | null;
   xpAwarded: number | null;
   bountyXpAwarded: number | null;

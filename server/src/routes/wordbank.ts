@@ -101,6 +101,9 @@ wordbankRouter.post("/", async (c) => {
     dictionaryEntryId: body.dictionaryEntryId,
   });
 
+  // Track "Word Collector" daily challenge
+  incrementDailyChallenge(userId, "save_words").catch(() => {});
+
   return c.json({ saved: true }, 201);
 });
 

@@ -6,14 +6,50 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { WordOfTheDay } from "@/components/word-of-the-day";
 import { ALL_LESSONS } from "@/lib/data/lessons";
 import { useProverbs } from "@/lib/hooks/use-proverbs";
+import { useWordsDueForReview } from "@/lib/hooks/use-wordbank";
 import { useLanguageStore } from "@/store/language-store";
 import { useCourses } from "@/lib/hooks/use-courses";
 import { useRouter } from "expo-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { SafeAreaView } from "react-native-safe-area-context";
+
+/* ---------- Collapsible section ---------- */
+
+function Section({
+  title,
+  defaultOpen = true,
+  children,
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <View>
+      <Pressable
+        onPress={() => setOpen((v) => !v)}
+        className="flex-row items-center justify-between pb-2 pt-3"
+      >
+        <Text className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+          {title}
+        </Text>
+        <IconSymbol
+          name={open ? "chevron.up" : "chevron.down"}
+          size={14}
+          color="#9ca3af"
+        />
+      </Pressable>
+      {open && <View className="gap-3">{children}</View>}
+    </View>
+  );
+}
+
+/* ---------- Inline cards ---------- */
 
 function ProverbsCard({ languageId }: { languageId: string }) {
   const router = useRouter();
@@ -51,7 +87,6 @@ function SongsCard({ languageId }: { languageId: string }) {
   const { data: courses = [] } = useCourses(languageId);
 
   const songs = useMemo(() => {
-    // Find song courses for this language
     const songCourseIds = courses
       .filter((c) => c.courseType === "songs")
       .map((c) => c.id);
@@ -88,10 +123,18 @@ function SongsCard({ languageId }: { languageId: string }) {
   );
 }
 
+/* ---------- Main screen ---------- */
+
 export default function PracticeScreen() {
   const router = useRouter();
   const { selectedLanguageId } = useLanguageStore();
   const { t } = useTranslation();
+  const { data: dueWords = [] } = useWordsDueForReview();
+
+  const hasScriptPractice =
+    ["amharic", "tigrinya", "oromo"].includes(selectedLanguageId);
+  const hasAdinkra = ["ga", "ewe", "dagbani"].includes(selectedLanguageId);
+  const hasAkan = selectedLanguageId === "akan";
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
@@ -109,125 +152,141 @@ export default function PracticeScreen() {
 
       <ScrollView
         className="flex-1"
-        contentContainerClassName="px-5 pb-8 pt-2 gap-3"
+        contentContainerClassName="px-5 pb-8 pt-2"
         showsVerticalScrollIndicator={false}
       >
-        <DailyChallengeCards />
+        {/* ── Today ── */}
+        <Section title={t("practice.sectionToday")} defaultOpen>
+          <DailyChallengeCards />
+          <WordOfTheDay languageId={selectedLanguageId} />
+        </Section>
 
-        {/* Quick-access practice */}
-        <View className="flex-row gap-3">
-          <Pressable
-            onPress={() => router.push("/word-review")}
-            className="flex-1 items-center rounded-2xl bg-emerald-50 py-4 active:opacity-70 dark:bg-emerald-950"
-          >
-            <IconSymbol name="brain.head.profile" size={24} color="#10b981" />
-            <Text className="mt-1.5 text-sm font-semibold text-emerald-700 dark:text-emerald-300">
-              {t("practice.wordReview")}
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => router.push("/quiz")}
-            className="flex-1 items-center rounded-2xl bg-blue-50 py-4 active:opacity-70 dark:bg-blue-950"
-          >
-            <IconSymbol name="trophy.fill" size={24} color="#3b82f6" />
-            <Text className="mt-1.5 text-sm font-semibold text-blue-700 dark:text-blue-300">
-              {t("practice.quiz")}
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => router.push("/matching-game")}
-            className="flex-1 items-center rounded-2xl bg-violet-50 py-4 active:opacity-70 dark:bg-violet-950"
-          >
-            <IconSymbol name="rectangle.grid.2x2" size={24} color="#8b5cf6" />
-            <Text className="mt-1.5 text-sm font-semibold text-violet-700 dark:text-violet-300">
-              {t("practice.match")}
-            </Text>
-          </Pressable>
-        </View>
-
-        {/* Multiplayer */}
-        <Pressable
-          onPress={() => router.push("/multiplayer")}
-          className="rounded-2xl bg-[#123499] p-4 active:opacity-70 dark:bg-[#0f2670]"
-        >
-          <View className="flex-row items-center">
-            <View className="mr-3 h-12 w-12 items-center justify-center rounded-xl bg-blue-500">
-              <IconSymbol name="trophy.fill" size={24} color="#fff" />
-            </View>
-            <View className="flex-1">
-              <Text className="text-xs font-semibold uppercase tracking-wide text-blue-300">
-                {t("practice.multiplayer")}
+        {/* ── Activities ── */}
+        <Section title={t("practice.sectionActivities")} defaultOpen>
+          {/* Quick-access grid */}
+          <View className="flex-row gap-3">
+            <Pressable
+              onPress={() => router.push("/word-review")}
+              className="flex-1 items-center rounded-2xl bg-emerald-50 py-4 active:opacity-70 dark:bg-emerald-950"
+            >
+              <View>
+                <IconSymbol name="brain.head.profile" size={24} color="#10b981" />
+                {dueWords.length > 0 && (
+                  <View className="absolute -right-2 -top-1 min-w-[18px] items-center rounded-full bg-red-500 px-1">
+                    <Text className="text-[10px] font-bold text-white">{dueWords.length}</Text>
+                  </View>
+                )}
+              </View>
+              <Text className="mt-1.5 text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+                {t("practice.wordReview")}
               </Text>
-              <Text className="text-base font-bold text-white">
-                {t("practice.multiplayerTitle")}
+            </Pressable>
+            <Pressable
+              onPress={() => router.push("/quiz")}
+              className="flex-1 items-center rounded-2xl bg-blue-50 py-4 active:opacity-70 dark:bg-blue-950"
+            >
+              <IconSymbol name="trophy.fill" size={24} color="#3b82f6" />
+              <Text className="mt-1.5 text-sm font-semibold text-blue-700 dark:text-blue-300">
+                {t("practice.quiz")}
               </Text>
-              <Text className="text-sm text-blue-200">
-                {t("practice.multiplayerSubtitle")}
+            </Pressable>
+            <Pressable
+              onPress={() => router.push("/matching-game")}
+              className="flex-1 items-center rounded-2xl bg-violet-50 py-4 active:opacity-70 dark:bg-violet-950"
+            >
+              <IconSymbol name="rectangle.grid.2x2" size={24} color="#8b5cf6" />
+              <Text className="mt-1.5 text-sm font-semibold text-violet-700 dark:text-violet-300">
+                {t("practice.match")}
               </Text>
-            </View>
-            <IconSymbol name="chevron.right" size={16} color="#93c5fd" />
+            </Pressable>
           </View>
-        </Pressable>
 
-        <WordOfTheDay languageId={selectedLanguageId} />
-        <SongsCard languageId={selectedLanguageId} />
-        <ProverbsCard languageId={selectedLanguageId} />
-        <CulturalSection
-          languageId={selectedLanguageId}
-          onViewAll={() => router.push(`/cultural/${selectedLanguageId}` as any)}
-        />
-
-        {selectedLanguageId === "akan" && <SymbolOfTheDay />}
-
-        {["amharic", "tigrinya", "oromo"].includes(selectedLanguageId) && (
+          {/* Multiplayer */}
           <Pressable
-            onPress={() => router.push("/geez-lesson")}
-            className="rounded-2xl bg-emerald-50 p-4 active:opacity-70 dark:bg-emerald-950"
+            onPress={() => router.push("/multiplayer")}
+            className="rounded-2xl bg-[#123499] p-4 active:opacity-70 dark:bg-[#0f2670]"
           >
             <View className="flex-row items-center">
-              <View className="mr-3 h-12 w-12 items-center justify-center rounded-xl bg-white dark:bg-neutral-800">
-                <Text className="text-2xl font-bold text-emerald-600">ሀ</Text>
+              <View className="mr-3 h-12 w-12 items-center justify-center rounded-xl bg-blue-500">
+                <IconSymbol name="trophy.fill" size={24} color="#fff" />
               </View>
               <View className="flex-1">
-                <Text className="text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
-                  {t("practice.scriptPractice")}
+                <Text className="text-xs font-semibold uppercase tracking-wide text-blue-300">
+                  {t("practice.multiplayer")}
                 </Text>
-                <Text className="text-base font-bold text-neutral-900 dark:text-white">
-                  {t("practice.geezTitle")}
+                <Text className="text-base font-bold text-white">
+                  {t("practice.multiplayerTitle")}
                 </Text>
-                <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-                  {t("practice.geezSubtitle")}
+                <Text className="text-sm text-blue-200">
+                  {t("practice.multiplayerSubtitle")}
                 </Text>
               </View>
-              <IconSymbol name="chevron.right" size={16} color="#10b981" />
+              <IconSymbol name="chevron.right" size={16} color="#93c5fd" />
             </View>
           </Pressable>
-        )}
+        </Section>
 
-        {["ga", "ewe", "dagbani"].includes(selectedLanguageId) && (
-          <Pressable
-            onPress={() => router.push("/adinkra")}
-            className="rounded-2xl bg-violet-50 p-4 active:opacity-70 dark:bg-violet-950"
-          >
-            <View className="flex-row items-center">
-              <View className="mr-3 h-12 w-12 items-center justify-center rounded-xl bg-white dark:bg-neutral-800">
-                <IconSymbol name="sparkles" size={24} color="#7c3aed" />
+        {/* ── Culture & Music ── */}
+        <Section title={t("practice.sectionCulture")} defaultOpen={false}>
+          <SongsCard languageId={selectedLanguageId} />
+          <ProverbsCard languageId={selectedLanguageId} />
+          <CulturalSection
+            languageId={selectedLanguageId}
+            onViewAll={() => router.push(`/cultural/${selectedLanguageId}` as any)}
+          />
+
+          {hasAkan && <SymbolOfTheDay />}
+
+          {hasScriptPractice && (
+            <Pressable
+              onPress={() => router.push("/geez-lesson")}
+              className="rounded-2xl bg-emerald-50 p-4 active:opacity-70 dark:bg-emerald-950"
+            >
+              <View className="flex-row items-center">
+                <View className="mr-3 h-12 w-12 items-center justify-center rounded-xl bg-white dark:bg-neutral-800">
+                  <Text className="text-2xl font-bold text-emerald-600">ሀ</Text>
+                </View>
+                <View className="flex-1">
+                  <Text className="text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
+                    {t("practice.scriptPractice")}
+                  </Text>
+                  <Text className="text-base font-bold text-neutral-900 dark:text-white">
+                    {t("practice.geezTitle")}
+                  </Text>
+                  <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+                    {t("practice.geezSubtitle")}
+                  </Text>
+                </View>
+                <IconSymbol name="chevron.right" size={16} color="#10b981" />
               </View>
-              <View className="flex-1">
-                <Text className="text-xs font-semibold uppercase tracking-wide text-violet-600 dark:text-violet-400">
-                  {t("practice.culturalSymbols")}
-                </Text>
-                <Text className="text-base font-bold text-neutral-900 dark:text-white">
-                  {t("practice.adinkraTitle")}
-                </Text>
-                <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-                  {t("practice.adinkraSubtitle")}
-                </Text>
+            </Pressable>
+          )}
+
+          {hasAdinkra && (
+            <Pressable
+              onPress={() => router.push("/adinkra")}
+              className="rounded-2xl bg-violet-50 p-4 active:opacity-70 dark:bg-violet-950"
+            >
+              <View className="flex-row items-center">
+                <View className="mr-3 h-12 w-12 items-center justify-center rounded-xl bg-white dark:bg-neutral-800">
+                  <IconSymbol name="sparkles" size={24} color="#7c3aed" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-xs font-semibold uppercase tracking-wide text-violet-600 dark:text-violet-400">
+                    {t("practice.culturalSymbols")}
+                  </Text>
+                  <Text className="text-base font-bold text-neutral-900 dark:text-white">
+                    {t("practice.adinkraTitle")}
+                  </Text>
+                  <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+                    {t("practice.adinkraSubtitle")}
+                  </Text>
+                </View>
+                <IconSymbol name="chevron.right" size={16} color="#7c3aed" />
               </View>
-              <IconSymbol name="chevron.right" size={16} color="#7c3aed" />
-            </View>
-          </Pressable>
-        )}
+            </Pressable>
+          )}
+        </Section>
       </ScrollView>
     </SafeAreaView>
   );

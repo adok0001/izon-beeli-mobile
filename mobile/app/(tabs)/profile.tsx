@@ -1,4 +1,3 @@
-import { FeatureTourModal } from "@/components/feature-tour-modal";
 import { FeedbackModal } from "@/components/feedback-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { XpLevelBadge } from "@/components/xp-level-badge";
@@ -217,7 +216,6 @@ export default function ProfileScreen() {
         onClose={() => setFeedbackVisible(false)}
       />
 
-      <FeatureTourModal />
     </SafeAreaView>
   );
 }

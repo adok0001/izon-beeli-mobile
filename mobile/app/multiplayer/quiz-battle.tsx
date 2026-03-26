@@ -12,8 +12,10 @@ import {
   playFinishSound,
 } from "@/lib/sounds";
 import { hapticSuccess, hapticError, hapticHeavy } from "@/lib/haptics";
+import { useTranslation } from "react-i18next";
 
 function ScoreBar() {
+  const { t } = useTranslation();
   const { myScore, opponentScore, players, myPlayerId } =
     useMultiplayerStore();
 
@@ -24,16 +26,16 @@ function ScoreBar() {
     <View className="flex-row items-center justify-between px-5 py-3">
       <View className="items-center">
         <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-          {me?.name ?? "You"}
+          {me?.name ?? t("multiplayer.you")}
         </Text>
         <Text className="text-2xl font-bold text-blue-500">{myScore}</Text>
       </View>
       <View className="items-center">
-        <Text className="text-xs font-semibold text-neutral-400">VS</Text>
+        <Text className="text-xs font-semibold text-neutral-400">{t("multiplayer.vs")}</Text>
       </View>
       <View className="items-center">
         <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-          {opponent?.name ?? "Opponent"}
+          {opponent?.name ?? t("multiplayer.opponent")}
         </Text>
         <Text className="text-2xl font-bold text-red-500">
           {opponentScore}
@@ -44,19 +46,21 @@ function ScoreBar() {
 }
 
 function CountdownView() {
+  const { t } = useTranslation();
   const { timeRemaining } = useMultiplayerStore();
 
   return (
     <View className="flex-1 items-center justify-center">
       <Text className="text-8xl font-bold text-blue-500">{timeRemaining}</Text>
       <Text className="mt-4 text-lg text-neutral-500 dark:text-neutral-400">
-        Get ready!
+        {t("multiplayer.getReady")}
       </Text>
     </View>
   );
 }
 
 function QuestionView() {
+  const { t } = useTranslation();
   const {
     currentQuestion,
     questionIndex,
@@ -134,13 +138,13 @@ function QuestionView() {
       <View className="flex-1 px-5 pt-4">
         <View className="flex-row items-center justify-between">
           <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-            Question {questionIndex + 1} of {totalQuestions}
+            {t("quiz.questionOf", { current: questionIndex + 1, total: totalQuestions })}
           </Text>
           <View className="flex-row items-center gap-3">
             {opponentAnswered && !lastCorrectAnswer && (
               <View className="rounded-full bg-amber-100 px-2 py-0.5 dark:bg-amber-900">
                 <Text className="text-xs font-semibold text-amber-700 dark:text-amber-300">
-                  Opponent answered
+                  {t("multiplayer.opponentAnswered")}
                 </Text>
               </View>
             )}
@@ -185,7 +189,7 @@ function QuestionView() {
                     : "text-red-700 dark:text-red-300"
                 }`}
               >
-                {lastAnswerCorrect ? "Correct!" : "Incorrect"}
+                {lastAnswerCorrect ? t("quiz.correct") : t("quiz.incorrect")}
               </Text>
             </View>
           </View>

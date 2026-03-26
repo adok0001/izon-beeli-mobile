@@ -26,6 +26,7 @@ interface PendingContribution {
   type: string;
   status: string;
   audioUrl?: string | null;
+  dictionaryEntryId?: string | null;
   submitterName?: string | null;
   createdAt: string;
 }
@@ -35,11 +36,15 @@ function TypeBadge({ type }: Readonly<{ type: string }>) {
     word: "text-blue-700 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400",
     phrase: "text-purple-700 bg-purple-50 dark:bg-purple-900/20 dark:text-purple-400",
     audio: "text-orange-700 bg-orange-50 dark:bg-orange-900/20 dark:text-orange-400",
+    entry_audio: "text-orange-700 bg-orange-50 dark:bg-orange-900/20 dark:text-orange-400",
+    entry_meaning: "text-teal-700 bg-teal-50 dark:bg-teal-900/20 dark:text-teal-400",
   };
+  const hasAudio = type === "audio" || type === "entry_audio";
+  const label = type.replace("entry_", "");
   return (
     <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1", styles[type] ?? "text-neutral-600 bg-neutral-100")}>
-      {type === "audio" ? <Mic className="h-2.5 w-2.5" /> : null}
-      {type}
+      {hasAudio ? <Mic className="h-2.5 w-2.5" /> : null}
+      {label}
     </span>
   );
 }
@@ -159,7 +164,7 @@ export default function AdminReviewPage() {
     queryKey: ["admin", "contributions", "pending"],
     queryFn: async () => {
       const token = await getToken();
-      return apiFetch<PendingContribution[]>("/admin/contributions/pending", { token: token ?? undefined });
+      return apiFetch<PendingContribution[]>("/contributions/pending", { token: token ?? undefined });
     },
     staleTime: 15_000,
   });

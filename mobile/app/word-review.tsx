@@ -1,9 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { View, Text, Pressable, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useWordsDueForReview, useReviewWord } from "@/lib/hooks/use-wordbank";
+import { useWordsDueForReview, useReviewWord, useInvalidateReviewQueue } from "@/lib/hooks/use-wordbank";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { useLanguageStore } from "@/store/language-store";
 import { hapticSuccess, hapticError, hapticTap } from "@/lib/haptics";
@@ -119,21 +119,34 @@ export default function WordReviewScreen() {
   const { data: dueEntries = [], isLoading: isDueLoading } = useWordsDueForReview();
   const { data: dictionary = [], isLoading: isDictLoading } = useDictionary(selectedLanguageId);
   const reviewWord = useReviewWord();
+  const invalidateReviewQueue = useInvalidateReviewQueue();
 
+  // Invalidate the review queue when leaving the screen
+  useEffect(() => {
+    return () => { invalidateReviewQueue(); };
+  }, [invalidateReviewQueue]);
+
+  // Local queue — built once from server data, then managed in-memory
+  const [queue, setQueue] = useState<DictionaryEntry[]>([]);
+  const [queueBuilt, setQueueBuilt] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [reviewed, setReviewed] = useState(0);
   const { t } = useTranslation();
 
   const isLoading = isDueLoading || isDictLoading;
 
-  // Resolve dictionary entries for due words
-  const dictMap = new Map(dictionary.map((e) => [e.id, e]));
-  const reviewQueue = dueEntries
-    .map((e) => dictMap.get(e.dictionaryEntryId))
-    .filter(Boolean) as DictionaryEntry[];
+  // Build the local queue once when data arrives
+  if (!queueBuilt && !isLoading && dueEntries.length > 0 && dictionary.length > 0) {
+    const dictMap = new Map(dictionary.map((e) => [e.id, e]));
+    const resolved = dueEntries
+      .map((e) => dictMap.get(e.dictionaryEntryId))
+      .filter(Boolean) as DictionaryEntry[];
+    setQueue(resolved);
+    setQueueBuilt(true);
+  }
 
-  const currentEntry = reviewQueue[currentIndex];
-  const isFinished = currentIndex >= reviewQueue.length;
+  const currentEntry = queue[currentIndex];
+  const isFinished = queueBuilt && currentIndex >= queue.length;
 
   const handleRate = useCallback(
     (confidence: "easy" | "hard" | "again") => {
@@ -148,17 +161,23 @@ export default function WordReviewScreen() {
         playIncorrectSound().catch(() => {});
       }
 
-      reviewWord.mutate(
-        { dictionaryEntryId: currentEntry.id, confidence },
-        {
-          onSettled: () => {
-            setReviewed((n) => n + 1);
-            setCurrentIndex((i) => i + 1);
-          },
-        }
-      );
+      // Send review to server (fire-and-forget, don't refetch during session)
+      reviewWord.mutate({ dictionaryEntryId: currentEntry.id, confidence });
+
+      setReviewed((n) => n + 1);
+
+      if (confidence === "again") {
+        // Put the word back at the end of the queue
+        setQueue((prev) => {
+          const next = [...prev];
+          next.push(next[currentIndex]);
+          return next;
+        });
+      }
+
+      setCurrentIndex((i) => i + 1);
     },
-    [currentEntry, reviewWord]
+    [currentEntry, currentIndex, reviewWord]
   );
 
   return (
@@ -169,7 +188,7 @@ export default function WordReviewScreen() {
           <View className="flex-1 items-center justify-center">
             <ActivityIndicator size="large" color="#3b82f6" />
           </View>
-        ) : reviewQueue.length === 0 ? (
+        ) : queue.length === 0 ? (
           <View className="flex-1 items-center justify-center px-8">
             <IconSymbol name="checkmark.circle.fill" size={56} color="#22c55e" />
             <Text className="mt-4 text-center text-xl font-bold text-neutral-900 dark:text-white">
@@ -207,7 +226,7 @@ export default function WordReviewScreen() {
             <View className="mx-5 mt-3">
               <View className="flex-row items-center justify-between mb-1">
                 <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-                  {t("wordReview.of", { current: currentIndex + 1, total: reviewQueue.length })}
+                  {t("wordReview.of", { current: currentIndex + 1, total: queue.length })}
                 </Text>
                 <Text className="text-xs text-neutral-500 dark:text-neutral-400">
                   {t("wordReview.reviewed", { count: reviewed })}
@@ -216,7 +235,7 @@ export default function WordReviewScreen() {
               <View className="h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-700">
                 <View
                   className="h-1.5 rounded-full bg-blue-500"
-                  style={{ width: `${((currentIndex) / reviewQueue.length) * 100}%` }}
+                  style={{ width: `${((currentIndex) / queue.length) * 100}%` }}
                 />
               </View>
             </View>

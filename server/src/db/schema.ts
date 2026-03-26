@@ -35,6 +35,8 @@ export const contributionTypeEnum = pgEnum("contribution_type", [
   "word",
   "phrase",
   "audio",
+  "entry_audio",
+  "entry_meaning",
 ]);
 
 export const contributionStatusEnum = pgEnum("contribution_status", [
@@ -210,6 +212,7 @@ export const contributions = pgTable(
     example: text("example"),
     exampleTranslation: text("example_translation"),
     audioUrl: text("audio_url"),
+    dictionaryEntryId: varchar("dictionary_entry_id", { length: 64 }),
     status: contributionStatusEnum("status").default("submitted").notNull(),
     reviewNote: text("review_note"),
     reviewedBy: uuid("reviewed_by").references(() => users.id),

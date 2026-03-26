@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/clerk-expo";
+import { useCallback } from "react";
 import { apiFetch } from "@/lib/api";
 
 export interface WordBankEntry {
@@ -69,7 +70,6 @@ export function useWordsDueForReview() {
 
 export function useReviewWord() {
   const { getToken } = useAuth();
-  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
@@ -86,10 +86,17 @@ export function useReviewWord() {
         body: JSON.stringify({ confidence }),
       });
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["wordbank", "due"] });
-    },
+    // Don't invalidate during session — the review screen manages its own queue.
+    // Invalidation happens when leaving the screen.
   });
+}
+
+export function useInvalidateReviewQueue() {
+  const queryClient = useQueryClient();
+  return useCallback(
+    () => queryClient.invalidateQueries({ queryKey: ["wordbank", "due"] }),
+    [queryClient]
+  );
 }
 
 export function useRemoveWord() {

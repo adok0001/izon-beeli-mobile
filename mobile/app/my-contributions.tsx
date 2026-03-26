@@ -1,3 +1,4 @@
+import { WordAudioButton } from "@/components/dictionary/word-audio-button";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useMyContributions, type MyContribution } from "@/lib/hooks/use-contributions";
 import { getLanguageName } from "@/lib/mock-data";
@@ -20,17 +21,31 @@ function ContributionRow({ item }: { item: MyContribution }) {
     ? t(`dictionaryPage.categoryLabels.${item.category}` as any, { defaultValue: item.category })
     : null;
 
+  const hasAudio = item.type === "entry_audio" || item.type === "audio" || !!item.audioUrl;
+
   return (
     <View className="border-b border-neutral-100 px-5 py-4 dark:border-neutral-800">
       <View className="flex-row items-start justify-between">
         <View className="flex-1 pr-3">
-          <Text className="text-base font-semibold text-neutral-900 dark:text-white">
-            {item.word}
-          </Text>
+          <View className="flex-row items-center gap-2">
+            <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+              {item.word}
+            </Text>
+            {hasAudio && (
+              <WordAudioButton audioSource={item.audioUrl ?? undefined} word={item.word} size={18} />
+            )}
+          </View>
           <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
             {item.english}
           </Text>
           <View className="mt-1.5 flex-row flex-wrap gap-1.5">
+            {(item.type === "entry_audio" || item.type === "entry_meaning") && (
+              <View className={`rounded-full px-2 py-0.5 ${item.type === "entry_audio" ? "bg-orange-100 dark:bg-orange-900/30" : "bg-teal-100 dark:bg-teal-900/30"}`}>
+                <Text className={`text-xs font-semibold ${item.type === "entry_audio" ? "text-orange-600 dark:text-orange-400" : "text-teal-600 dark:text-teal-400"}`}>
+                  {item.type === "entry_audio" ? t("myContributions.typeAudio") : t("myContributions.typeMeaning")}
+                </Text>
+              </View>
+            )}
             {categoryLabel && (
               <View className="rounded-full bg-neutral-100 px-2 py-0.5 dark:bg-neutral-800">
                 <Text className="text-xs text-neutral-500 dark:text-neutral-400">

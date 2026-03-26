@@ -24,7 +24,7 @@ export type CourseEntry = {
 export const COURSES: CourseEntry[] = [
   // Izon (ordered: first_words → sound_script → numbers_trade → communicative → oral_tradition)
   {
-    id: "course-1",  languageId: "izon", order: 1, level: "beginner", lessonsCount: 5, courseType: "first_words",
+    id: "course-1",  languageId: "izon", order: 1, level: "beginner", lessonsCount: 11, courseType: "first_words",
     title: "Emi — First Words",
     titleFr: "Emi — Premiers Mots",
     description: "Begin with greetings, names, and introductions — the words that open doors and build belonging in Izon community.",
@@ -38,7 +38,7 @@ export const COURSES: CourseEntry[] = [
     descriptionFr: "Maîtrisez l'inventaire phonémique de l'Izon — harmonie vocalique, contrastes tonaux, digrammes consonantiques et les conventions orthographiques de l'Izon écrit.",
   },
   {
-    id: "course-20", languageId: "izon", order: 3, level: "beginner", lessonsCount: 3, courseType: "numbers_trade",
+    id: "course-20", languageId: "izon", order: 3, level: "beginner", lessonsCount: 8, courseType: "numbers_trade",
     title: "Kịẹn mọ Okubo — Counting & Trade",
     titleFr: "Kịẹn mọ Okubo — Chiffres et Commerce",
     description: "Learn the traditional Izon vigesimal counting system, market numerals, money vocabulary, and the akpa unit used in trade.",

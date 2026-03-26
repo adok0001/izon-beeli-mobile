@@ -21,7 +21,6 @@ import {
   useDeleteJournalEntry,
 } from "@/lib/hooks/use-journal";
 import { useTourStore } from "@/store/tour-store";
-import { FeatureTourModal } from "@/components/feature-tour-modal";
 import type { JournalEntry } from "@/types";
 import { useTranslation } from "react-i18next";
 import i18n from "@/lib/i18n";
@@ -245,7 +244,6 @@ export default function JournalScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
-      <FeatureTourModal />
     </SafeAreaView>
   );
 }

@@ -56,6 +56,7 @@ export const useTourStore = create<TourState>((set, get) => ({
   },
 
   start: () => {
+    if (get().activeTour) return;
     set({ activeTour: "profile" });
   },
 

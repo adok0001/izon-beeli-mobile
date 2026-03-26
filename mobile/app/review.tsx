@@ -77,26 +77,90 @@ function ContributionCard({
   isPending: boolean;
 }) {
   const { t } = useTranslation();
+  const soundRef = useRef<Audio.Sound | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const hasAudio = item.type === "entry_audio" || item.type === "audio" || !!item.audioUrl;
+  const typeBg = item.type === "entry_audio"
+    ? "bg-orange-100 dark:bg-orange-900"
+    : item.type === "entry_meaning"
+      ? "bg-teal-100 dark:bg-teal-900"
+      : "bg-blue-100 dark:bg-blue-900";
+  const typeColor = item.type === "entry_audio"
+    ? "text-orange-700 dark:text-orange-300"
+    : item.type === "entry_meaning"
+      ? "text-teal-700 dark:text-teal-300"
+      : "text-blue-700 dark:text-blue-300";
+  const typeLabel = item.type.replace("entry_", "");
+
+  const togglePlay = async () => {
+    if (!item.audioUrl) return;
+    try {
+      if (isPlaying) {
+        await soundRef.current?.pauseAsync();
+        setIsPlaying(false);
+      } else {
+        if (!soundRef.current) {
+          await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true });
+          const { sound } = await Audio.Sound.createAsync(
+            { uri: item.audioUrl },
+            { shouldPlay: true }
+          );
+          sound.setOnPlaybackStatusUpdate((s) => {
+            if (s.isLoaded && s.didJustFinish) {
+              setIsPlaying(false);
+              sound.unloadAsync();
+              soundRef.current = null;
+            }
+          });
+          soundRef.current = sound;
+        } else {
+          await soundRef.current.playAsync();
+        }
+        setIsPlaying(true);
+      }
+    } catch (err) {
+      console.error("Playback error:", err);
+    }
+  };
+
   return (
     <View className="mx-5 mb-3 overflow-hidden rounded-2xl bg-neutral-50 dark:bg-neutral-800">
       <View className="p-4">
         <View className="flex-row items-start justify-between">
-          <View className="flex-1">
-            <Text className="text-lg font-bold text-neutral-900 dark:text-white">
-              {item.word}
-            </Text>
-            <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
-              {item.english}
-            </Text>
-            {item.submitterName && (
-              <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">
-                {t("review.submittedBy", { name: item.submitterName })}
+          <View className="flex-1 flex-row items-center gap-3">
+            {/* Play button for audio contributions */}
+            {hasAudio && item.audioUrl ? (
+              <Pressable
+                onPress={togglePlay}
+                className={`h-12 w-12 items-center justify-center rounded-xl ${
+                  isPlaying ? "bg-blue-500" : "bg-orange-100 dark:bg-orange-900"
+                }`}
+              >
+                <IconSymbol
+                  name={isPlaying ? "pause.fill" : "play.fill"}
+                  size={18}
+                  color={isPlaying ? "white" : "#f97316"}
+                />
+              </Pressable>
+            ) : null}
+            <View className="flex-1">
+              <Text className="text-lg font-bold text-neutral-900 dark:text-white">
+                {item.word}
               </Text>
-            )}
+              <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
+                {item.english}
+              </Text>
+              {item.submitterName && (
+                <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">
+                  {t("review.submittedBy", { name: item.submitterName })}
+                </Text>
+              )}
+            </View>
           </View>
-          <View className="rounded-full bg-blue-100 px-2.5 py-1 dark:bg-blue-900">
-            <Text className="text-xs font-semibold text-blue-700 dark:text-blue-300">
-              {item.type}
+          <View className={`rounded-full px-2.5 py-1 ${typeBg}`}>
+            <Text className={`text-xs font-semibold ${typeColor}`}>
+              {typeLabel}
             </Text>
           </View>
         </View>
