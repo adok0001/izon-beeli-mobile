@@ -1,20 +1,28 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth, useUser } from "@clerk/clerk-expo";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, ApiError } from "@/lib/api";
+
+export interface DeletionPending {
+  restoreBy: string;
+}
 
 /**
  * Syncs the Clerk user to the backend on app open.
+ * Returns { restoreBy } when the account is scheduled for deletion so the
+ * caller can redirect to the restore-account screen.
  * Call this once at the app root (e.g. in _layout or index).
  */
-export function useSyncUser() {
+export function useSyncUser(): DeletionPending | null {
   const { isSignedIn, getToken } = useAuth();
   const { user } = useUser();
   const synced = useRef(false);
+  const [deletionPending, setDeletionPending] = useState<DeletionPending | null>(null);
 
   // Reset sync flag on sign-out so it re-runs for the next session
   useEffect(() => {
     if (!isSignedIn) {
       synced.current = false;
+      setDeletionPending(null);
     }
   }, [isSignedIn]);
 
@@ -37,9 +45,18 @@ export function useSyncUser() {
         });
         synced.current = true;
       } catch (err) {
+        if (err instanceof ApiError && err.status === 403) {
+          const body = err.body as { error?: string; restoreBy?: string };
+          if (body?.error === "account_scheduled_for_deletion" && body.restoreBy) {
+            setDeletionPending({ restoreBy: body.restoreBy });
+            return;
+          }
+        }
         console.warn("User sync failed:", err);
         // Don't set synced = true so it retries on next render
       }
     })();
   }, [isSignedIn, user, getToken]);
+
+  return deletionPending;
 }

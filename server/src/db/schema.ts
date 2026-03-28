@@ -83,6 +83,8 @@ export const users = pgTable("users", {
   pushStreakReminderEnabled: boolean("push_streak_reminder_enabled").default(true).notNull(),
   isAdmin: boolean("is_admin").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  // Soft-delete: set when user requests deletion; hard purge runs after 30 days
+  deletedAt: timestamp("deleted_at"),
 });
 
 // ---------- User Progress ----------

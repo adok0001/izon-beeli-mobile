@@ -370,6 +370,21 @@ export const en = {
     resetError: "Failed to reset progress. Please try again.",
     uiLanguage: "Interface Language",
     learningLanguage: "Learning Language",
+    account: "Account",
+    deleteAccount: "Delete Account",
+    deleteAccountTitle: "Delete Account",
+    deleteAccountMessage:
+      "Your account will be scheduled for deletion. You have 30 days to sign back in and restore it. After that, all your data is permanently deleted.",
+    deleteAccountButton: "Delete My Account",
+    deleteAccountError: "Failed to delete account. Please try again or contact support.",
+  },
+  restoreAccount: {
+    title: "Account Scheduled for Deletion",
+    body: "Your account is pending deletion. You can restore it before the deadline and pick up exactly where you left off.",
+    deadline: "Restore by {{date}}",
+    restoreButton: "Restore My Account",
+    continueDeletion: "No thanks, continue deletion",
+    restoreError: "Failed to restore account. Please try again or contact support.",
   },
   myContributions: {
     title: "My Contributions",

@@ -44,8 +44,18 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const prevSignedIn = useRef<boolean | undefined>(undefined);
   const addNotification = useNotificationStore((s) => s.addNotification);
 
-  // Sync Clerk user to backend DB
-  useSyncUser();
+  // Sync Clerk user to backend DB; returns non-null when account is pending deletion
+  const deletionPending = useSyncUser();
+
+  // Redirect to restore screen when account is scheduled for deletion
+  useEffect(() => {
+    if (deletionPending) {
+      router.replace({
+        pathname: "/restore-account",
+        params: { restoreBy: deletionPending.restoreBy },
+      });
+    }
+  }, [deletionPending, router]);
 
   // Register push token when user signs in
   useEffect(() => {
@@ -84,11 +94,14 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // Don't redirect if the deletion-restore redirect is pending or active
+    if (deletionPending || seg0 === "restore-account") return;
+
     // Signed in: redirect from auth screens OR the root index (seg0 is empty)
     if (inAuthGroup || !inDeepRoute) {
       router.replace("/(tabs)/learn");
     }
-  }, [isSignedIn, isLoaded, segments, router]);
+  }, [isSignedIn, isLoaded, segments, router, deletionPending]);
 
   return <>{children}</>;
 }

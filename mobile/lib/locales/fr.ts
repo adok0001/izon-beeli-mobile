@@ -373,6 +373,21 @@ export const fr = {
     resetError: "Échec de la réinitialisation. Veuillez réessayer.",
     uiLanguage: "Langue de l'interface",
     learningLanguage: "Langue d'apprentissage",
+    account: "Compte",
+    deleteAccount: "Supprimer le compte",
+    deleteAccountTitle: "Supprimer le compte",
+    deleteAccountMessage:
+      "Votre compte sera programmé pour suppression. Vous avez 30 jours pour vous reconnecter et le restaurer. Passé ce délai, toutes vos données sont définitivement supprimées.",
+    deleteAccountButton: "Supprimer mon compte",
+    deleteAccountError: "Échec de la suppression du compte. Veuillez réessayer ou contacter le support.",
+  },
+  restoreAccount: {
+    title: "Compte programmé pour suppression",
+    body: "Votre compte est en attente de suppression. Vous pouvez le restaurer avant la date limite et reprendre exactement là où vous en étiez.",
+    deadline: "Restaurer avant le {{date}}",
+    restoreButton: "Restaurer mon compte",
+    continueDeletion: "Non merci, continuer la suppression",
+    restoreError: "Échec de la restauration du compte. Veuillez réessayer ou contacter le support.",
   },
   myContributions: {
     title: "Mes contributions",

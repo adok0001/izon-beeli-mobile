@@ -1,5 +1,11 @@
 {
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" }
+  ],
+  "crons": [
+    {
+      "path": "/api/internal/purge-deleted-users",
+      "schedule": "0 3 * * *"
+    }
   ]
 }

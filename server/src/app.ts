@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
-import { usersRouter } from "./routes/users.js";
+import { usersRouter, purgeExpiredDeletedUsers } from "./routes/users.js";
 import { progressRouter } from "./routes/progress.js";
 import { journalRouter } from "./routes/journal.js";
 import { feedRouter } from "./routes/feed.js";
@@ -90,5 +90,16 @@ app.route("/notifications", notificationsRouter);
 app.route("/notifications/admin", notificationsAdminRouter);
 app.route("/bounties", bountiesRouter);
 app.route("/bounties/admin", bountiesAdminRouter);
+
+// POST /api/internal/purge-deleted-users
+// Called daily by Vercel cron (see vercel.json). Protected by CRON_SECRET header.
+app.post("/internal/purge-deleted-users", async (c) => {
+  const secret = c.req.header("x-cron-secret");
+  if (!secret || secret !== process.env.CRON_SECRET) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+  const purged = await purgeExpiredDeletedUsers();
+  return c.json({ purged });
+});
 
 export default app;

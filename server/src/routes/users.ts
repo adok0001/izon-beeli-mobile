@@ -1,9 +1,34 @@
-import { verifyToken } from "@clerk/backend";
-import { eq } from "drizzle-orm";
+import { createClerkClient, verifyToken } from "@clerk/backend";
+import { and, eq, inArray, isNotNull, lt } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index.js";
-import { users } from "../db/schema.js";
+import {
+  classroomAssignments,
+  classroomGroups,
+  classroomMembers,
+  comments,
+  contributions,
+  dailyChallenges,
+  feedback,
+  feedItems,
+  gameSessionPlayers,
+  gameSessions,
+  journalEntries,
+  lessonContributions,
+  lessonContributionSegments,
+  likes,
+  matchmakingQueue,
+  pushTokens,
+  quizResults,
+  users,
+  userProgress,
+  wordBank,
+} from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
+
+const clerkClient = createClerkClient({
+  secretKey: process.env.CLERK_SECRET_KEY!,
+});
 
 export const usersRouter = new Hono<AuthEnv>();
 
@@ -109,3 +134,124 @@ usersRouter.patch("/me", authMiddleware, async (c) => {
 
   return c.json({ updated: true });
 });
+
+// DELETE /api/users/me
+// Soft-delete: stamps deletedAt, signs the user out client-side.
+// All data is preserved for 30 days so the user can restore.
+// A scheduled purge (POST /api/internal/purge-deleted-users) does the hard delete.
+usersRouter.delete("/me", authMiddleware, async (c) => {
+  const userId = c.get("userId");
+
+  await db
+    .update(users)
+    .set({ deletedAt: new Date() })
+    .where(eq(users.id, userId));
+
+  // Push tokens removed immediately so no more notifications are sent
+  await db.delete(pushTokens).where(eq(pushTokens.userId, userId));
+
+  return c.json({ scheduled: true });
+});
+
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
+// POST /api/users/me/restore
+// Cancels a pending soft-delete if still within the 30-day window.
+// The auth middleware passes this path through even when deletedAt is set.
+usersRouter.post("/me/restore", authMiddleware, async (c) => {
+  const userId = c.get("userId");
+
+  const [user] = await db
+    .select({ deletedAt: users.deletedAt })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (!user) return c.json({ error: "User not found" }, 404);
+  if (!user.deletedAt) return c.json({ restored: true }); // nothing to undo
+
+  const restoreBy = new Date(user.deletedAt.getTime() + THIRTY_DAYS_MS);
+  if (Date.now() > restoreBy.getTime()) {
+    return c.json({ error: "Restore window has expired" }, 410);
+  }
+
+  await db.update(users).set({ deletedAt: null }).where(eq(users.id, userId));
+
+  return c.json({ restored: true });
+});
+
+/**
+ * Hard-purge all users whose 30-day restore window has elapsed.
+ * Called by POST /api/internal/purge-deleted-users (see app.ts).
+ * Exported so it can be invoked from the cron route without duplicating logic.
+ */
+export async function purgeExpiredDeletedUsers(): Promise<number> {
+  const cutoff = new Date(Date.now() - THIRTY_DAYS_MS);
+
+  const expired = await db
+    .select({ id: users.id, clerkId: users.clerkId })
+    .from(users)
+    .where(and(isNotNull(users.deletedAt), lt(users.deletedAt, cutoff)));
+
+  if (expired.length === 0) return 0;
+
+  const expiredIds = expired.map((u) => u.id);
+
+  await db.transaction(async (tx) => {
+    await tx.delete(matchmakingQueue).where(inArray(matchmakingQueue.userId, expiredIds));
+    await tx.delete(gameSessionPlayers).where(inArray(gameSessionPlayers.userId, expiredIds));
+
+    const ownedSessions = await tx
+      .select({ id: gameSessions.id })
+      .from(gameSessions)
+      .where(inArray(gameSessions.createdBy, expiredIds));
+    if (ownedSessions.length > 0) {
+      const sessionIds = ownedSessions.map((s) => s.id);
+      await tx.delete(gameSessionPlayers).where(inArray(gameSessionPlayers.sessionId, sessionIds));
+      await tx.delete(gameSessions).where(inArray(gameSessions.id, sessionIds));
+    }
+
+    await tx.delete(classroomAssignments).where(inArray(classroomAssignments.assignedBy, expiredIds));
+    await tx.delete(classroomMembers).where(inArray(classroomMembers.userId, expiredIds));
+    await tx.delete(classroomGroups).where(inArray(classroomGroups.createdBy, expiredIds));
+    await tx.delete(quizResults).where(inArray(quizResults.userId, expiredIds));
+
+    const userLessonContribIds = await tx
+      .select({ id: lessonContributions.id })
+      .from(lessonContributions)
+      .where(inArray(lessonContributions.userId, expiredIds));
+    if (userLessonContribIds.length > 0) {
+      const ids = userLessonContribIds.map((r) => r.id);
+      await tx.delete(lessonContributionSegments).where(
+        inArray(lessonContributionSegments.lessonContributionId, ids)
+      );
+    }
+    await tx.delete(lessonContributions).where(inArray(lessonContributions.userId, expiredIds));
+    await tx.delete(contributions).where(inArray(contributions.userId, expiredIds));
+    await tx.delete(wordBank).where(inArray(wordBank.userId, expiredIds));
+    await tx.delete(dailyChallenges).where(inArray(dailyChallenges.userId, expiredIds));
+    await tx.delete(likes).where(inArray(likes.userId, expiredIds));
+    await tx.delete(comments).where(inArray(comments.userId, expiredIds));
+
+    const userFeedItemIds = await tx
+      .select({ id: feedItems.id })
+      .from(feedItems)
+      .where(inArray(feedItems.userId, expiredIds));
+    if (userFeedItemIds.length > 0) {
+      const ids = userFeedItemIds.map((r) => r.id);
+      await tx.delete(likes).where(inArray(likes.feedItemId, ids));
+      await tx.delete(comments).where(inArray(comments.feedItemId, ids));
+    }
+    await tx.delete(feedItems).where(inArray(feedItems.userId, expiredIds));
+    await tx.delete(journalEntries).where(inArray(journalEntries.userId, expiredIds));
+    await tx.delete(userProgress).where(inArray(userProgress.userId, expiredIds));
+    await tx.delete(feedback).where(inArray(feedback.userId, expiredIds));
+    await tx.delete(users).where(inArray(users.id, expiredIds));
+  });
+
+  // Delete Clerk accounts after DB transaction succeeds
+  const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY! });
+  await Promise.allSettled(expired.map((u) => clerkClient.users.deleteUser(u.clerkId)));
+
+  return expired.length;
+}

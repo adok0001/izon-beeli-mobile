@@ -18,6 +18,8 @@ export type AuthEnv = {
   };
 };
 
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
 export const authMiddleware = createMiddleware<AuthEnv>(async (c, next) => {
   const authHeader = c.req.header("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
@@ -51,7 +53,28 @@ export const authMiddleware = createMiddleware<AuthEnv>(async (c, next) => {
         target: users.clerkId,
         set: { name: username },
       })
-      .returning({ id: users.id });
+      .returning({ id: users.id, deletedAt: users.deletedAt });
+
+    // Block access if the account is soft-deleted but within the 30-day window.
+    // The /restore endpoint bypasses this check via its own inline auth.
+    if (user.deletedAt) {
+      const restoreBy = new Date(user.deletedAt.getTime() + THIRTY_DAYS_MS);
+      const isExpired = Date.now() > restoreBy.getTime();
+      if (isExpired) {
+        // Grace period elapsed — treat as fully gone
+        return c.json({ error: "Account not found" }, 404);
+      }
+      // Allow requests only to the restore endpoint
+      if (!c.req.path.endsWith("/me/restore")) {
+        return c.json(
+          {
+            error: "account_scheduled_for_deletion",
+            restoreBy: restoreBy.toISOString(),
+          },
+          403
+        );
+      }
+    }
 
     c.set("userId", user.id);
     c.set("clerkId", clerkId);

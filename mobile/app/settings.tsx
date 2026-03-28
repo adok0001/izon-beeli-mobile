@@ -6,10 +6,10 @@ import { getLanguageName } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
 import { useThemeStore } from "@/store/theme-store";
 import { useUiLanguageStore, type UiLanguage } from "@/store/ui-language-store";
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth, useClerk } from "@clerk/clerk-expo";
 import { useQueryClient } from "@tanstack/react-query";
 import Constants from "expo-constants";
-import { Stack } from "expo-router";
+import { router, Stack } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Alert, Pressable, Switch, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -89,6 +89,7 @@ export default function SettingsScreen() {
   const { preference, setPreference } = useThemeStore();
   const { uiLanguage, setUiLanguage } = useUiLanguageStore();
   const { getToken } = useAuth();
+  const { signOut } = useClerk();
   const queryClient = useQueryClient();
   const { data: prefs } = useNotificationPrefs();
   const updatePrefs = useUpdateNotificationPrefs();
@@ -114,6 +115,33 @@ export default function SettingsScreen() {
               Alert.alert(t("settings.resetSuccess"), t("settings.resetSuccessMessage"));
             } catch {
               Alert.alert(t("common.error"), t("settings.resetError"));
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      t("settings.deleteAccountTitle"),
+      t("settings.deleteAccountMessage"),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("settings.deleteAccountButton"),
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const token = await getToken();
+              await apiFetch("/users/me", {
+                method: "DELETE",
+                token: token ?? undefined,
+              });
+              await signOut();
+              router.replace("/(auth)/sign-in");
+            } catch {
+              Alert.alert(t("common.error"), t("settings.deleteAccountError"));
             }
           },
         },
@@ -238,6 +266,20 @@ export default function SettingsScreen() {
             <IconSymbol name="xmark" size={20} color="#ef4444" />
             <Text className="ml-3 text-base font-semibold text-red-500">
               {t("settings.resetProgress")}
+            </Text>
+          </Pressable>
+
+          {/* Account */}
+          <Text className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+            {t("settings.account")}
+          </Text>
+          <Pressable
+            onPress={handleDeleteAccount}
+            className="flex-row items-center border-b border-neutral-100 py-4 active:opacity-70 dark:border-neutral-800"
+          >
+            <IconSymbol name="trash" size={20} color="#ef4444" />
+            <Text className="ml-3 text-base font-semibold text-red-500">
+              {t("settings.deleteAccount")}
             </Text>
           </Pressable>
 
