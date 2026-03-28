@@ -1,34 +1,34 @@
+import "@/lib/i18n";
 import "react-native-reanimated";
 import "../global.css";
-import "@/lib/i18n";
 
 import { ClerkLoaded, ClerkProvider, useAuth } from "@clerk/clerk-expo";
-import { QueryClientProvider } from "@tanstack/react-query";
 import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
+    DarkTheme,
+    DefaultTheme,
+    ThemeProvider,
 } from "@react-navigation/native";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef } from "react";
 import { Text, View } from "react-native";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { tokenCache } from "@/lib/auth";
-import { queryClient } from "@/lib/api";
-import { useSyncUser } from "@/lib/hooks/use-sync-user";
-import { useThemeStore } from "@/store/theme-store";
-import { useLanguageStore } from "@/store/language-store";
-import { useUiLanguageStore } from "@/store/ui-language-store";
 import { analytics } from "@/lib/analytics";
+import { queryClient } from "@/lib/api";
+import { tokenCache } from "@/lib/auth";
+import { useSyncUser } from "@/lib/hooks/use-sync-user";
 import {
-  configurePushNotifications,
-  registerPushToken,
-  addNotificationListener,
+    addNotificationListener,
+    configurePushNotifications,
+    registerPushToken,
 } from "@/lib/push-notifications";
+import { useLanguageStore } from "@/store/language-store";
 import { useNotificationStore } from "@/store/notification-store";
+import { useThemeStore } from "@/store/theme-store";
 import { useTourStore } from "@/store/tour-store";
+import { useUiLanguageStore } from "@/store/ui-language-store";
 
 const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 

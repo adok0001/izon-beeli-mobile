@@ -20,8 +20,8 @@ import {
   matchmakingQueue,
   pushTokens,
   quizResults,
-  users,
   userProgress,
+  users,
   wordBank,
 } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";

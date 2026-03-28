@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { ApiError, apiFetch } from "@/lib/api";
 import { useAuth, useUser } from "@clerk/clerk-expo";
-import { apiFetch, ApiError } from "@/lib/api";
+import { useEffect, useRef, useState } from "react";
 
 export interface DeletionPending {
   restoreBy: string;

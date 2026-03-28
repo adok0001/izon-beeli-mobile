@@ -1,16 +1,16 @@
+import { apiFetch } from "@/lib/api";
 import { useAuth, useClerk } from "@clerk/clerk-expo";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  Text,
-  View,
+    ActivityIndicator,
+    Alert,
+    Pressable,
+    Text,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { apiFetch } from "@/lib/api";
 
 export default function RestoreAccountScreen() {
   const { restoreBy } = useLocalSearchParams<{ restoreBy: string }>();
