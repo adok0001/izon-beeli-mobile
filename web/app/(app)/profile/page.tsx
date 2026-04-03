@@ -256,9 +256,11 @@ export default function ProfilePage() {
       {/* Menu */}
       <div>
         <MenuRow href="/dashboard" icon={LayoutDashboard} label={t("profile.progressDashboard")} />
+        <MenuRow href="/bounties" icon={Star} label={t("bounties.title", { defaultValue: "Bounties" })} />
         <MenuRow href="/my-contributions" icon={FileText} label={t("profile.myContributions")} />
         <MenuRow href="/classroom" icon={Users} label={t("profile.classroom")} />
         <MenuRow href="/dictionary" icon={BookText} label={t("profile.dictionary")} />
+        <MenuRow href="/leaderboard" icon={Map} label={t("leaderboard.title", { defaultValue: "Leaderboard" })} />
         <MenuRow href="/settings" icon={Settings} label={t("profile.settings")} />
         <MenuRow icon={MessageSquare} label={t("profile.sendFeedback")} onClick={() => setFeedbackOpen(true)} />
         <MenuRow

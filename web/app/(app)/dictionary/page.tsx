@@ -3,10 +3,11 @@
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useLanguageStore } from "@/store/language-store";
-import { useAuth } from "@clerk/nextjs";
+import { SignInButton, useAuth, useUser } from "@clerk/nextjs";
+import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookText, ChevronDown, ChevronUp, Mic, Plus, Search, Volume2, X } from "lucide-react";
-import { useState } from "react";
+import { BookText, CheckCircle2, ChevronDown, ChevronUp, Mic, Plus, Search, Square, Volume2, X } from "lucide-react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 interface DictionaryWord {
@@ -37,11 +38,117 @@ const CATEGORIES = [
   "nature", "colors", "time", "verbs", "adjectives", "other",
 ];
 
+// ── Sign-in modal ─────────────────────────────────────────────────────────────
+
+function SignInModal({ onClose }: Readonly<{ onClose: () => void }>) {
+  const { t } = useTranslation();
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={onClose}>
+      <div
+        className="w-full max-w-sm rounded-2xl bg-white dark:bg-neutral-900 p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-bold text-neutral-900 dark:text-white">{t("common.signInToInteract")}</h2>
+          <button onClick={onClose} className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-6">
+          {t("common.signInDictionaryDesc")}
+        </p>
+        <div className="flex flex-col gap-3">
+          <SignInButton mode="redirect">
+            <button className="w-full py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors">
+              {t("common.signIn")}
+            </button>
+          </SignInButton>
+          <Link
+            href="/sign-up"
+            onClick={onClose}
+            className="block w-full py-2.5 rounded-xl border border-neutral-300 dark:border-neutral-700 text-sm font-semibold text-neutral-700 dark:text-neutral-300 text-center hover:border-brand-400 transition-colors"
+          >
+            {t("common.createAccount")}
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Word card ─────────────────────────────────────────────────────────────────
 
-function WordCard({ word }: Readonly<{ word: DictionaryWord }>) {
+function WordCard({ word, languageId, onSignInRequired }: Readonly<{ word: DictionaryWord; languageId: string; onSignInRequired: () => void }>) {
+  const { t } = useTranslation();
+  const { getToken } = useAuth();
+  const { isSignedIn } = useUser();
+  const qc = useQueryClient();
+
   const [expanded, setExpanded] = useState(false);
   const hasExtra = !!(word.example || word.audioUrl);
+
+  // Inline audio recorder state
+  const [showRecorder, setShowRecorder] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      mediaRecorderRef.current = mr;
+      chunksRef.current = [];
+      mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+      mr.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        setAudioBlob(blob);
+        if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
+        setAudioPreviewUrl(URL.createObjectURL(blob));
+        stream.getTracks().forEach((t) => t.stop());
+      };
+      mr.start();
+      setIsRecording(true);
+    } catch {
+      // silently fail — user denied mic
+    }
+  };
+
+  const stopRecording = () => {
+    mediaRecorderRef.current?.stop();
+    setIsRecording(false);
+  };
+
+  const submitAudio = useMutation({
+    mutationFn: async () => {
+      const token = await getToken();
+      const fd = new FormData();
+      fd.append("type", "entry_audio");
+      fd.append("dictionaryEntryId", word.id);
+      fd.append("languageId", languageId);
+      fd.append("audio", new File([audioBlob!], "pronunciation.webm", { type: "audio/webm" }));
+      return apiFetch("/contributions", { method: "POST", body: fd, token: token ?? undefined });
+    },
+    onSuccess: () => {
+      if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
+      setAudioBlob(null);
+      setAudioPreviewUrl(null);
+      setShowRecorder(false);
+      setSubmitted(true);
+      void qc.invalidateQueries({ queryKey: ["dictionary", languageId] });
+    },
+  });
+
+  const cancelRecorder = () => {
+    if (isRecording) stopRecording();
+    if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
+    setAudioBlob(null);
+    setAudioPreviewUrl(null);
+    setShowRecorder(false);
+  };
 
   return (
     <div className="py-3 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
@@ -79,6 +186,62 @@ function WordCard({ word }: Readonly<{ word: DictionaryWord }>) {
               )}
             </div>
           )}
+
+          {/* Inline audio recorder */}
+          {showRecorder && (
+            <div className="mt-3 flex items-center gap-2 flex-wrap">
+              {!isRecording && !audioBlob && (
+                <button
+                  type="button"
+                  onClick={startRecording}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-600 text-white text-xs font-medium hover:bg-brand-700 transition-colors"
+                >
+                  <Mic className="h-3.5 w-3.5" />
+                  {t("dictionaryPage.recordAudio")}
+                </button>
+              )}
+              {isRecording && (
+                <button
+                  type="button"
+                  onClick={stopRecording}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500 text-white text-xs font-medium hover:bg-red-600 transition-colors animate-pulse"
+                >
+                  <Square className="h-3 w-3 fill-current" />
+                  {t("dictionaryPage.stopRecording")}
+                </button>
+              )}
+              {audioBlob && audioPreviewUrl && !isRecording && (
+                <>
+                  <audio controls src={audioPreviewUrl} className="h-7" />
+                  <button
+                    type="button"
+                    onClick={() => submitAudio.mutate()}
+                    disabled={submitAudio.isPending}
+                    className="px-3 py-1.5 rounded-lg bg-brand-600 text-white text-xs font-medium hover:bg-brand-700 disabled:opacity-50 transition-colors"
+                  >
+                    {submitAudio.isPending
+                      ? t("common.saveInProgress")
+                      : t("common.submit")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={startRecording}
+                    className="px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:border-brand-400 transition-colors"
+                  >
+                    {t("dictionaryPage.reRecord")}
+                  </button>
+                </>
+              )}
+              <button
+                type="button"
+                onClick={cancelRecorder}
+                className="p-1 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors"
+                aria-label="Cancel"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
@@ -87,6 +250,22 @@ function WordCard({ word }: Readonly<{ word: DictionaryWord }>) {
           </span>
           {word.audioUrl && (
             <span title="Has audio"><Mic className="h-3.5 w-3.5 text-brand-400" /></span>
+          )}
+          {/* Add audio button for words without audio */}
+          {!word.audioUrl && !submitted && !showRecorder && (
+            <button
+              type="button"
+              onClick={() => isSignedIn ? setShowRecorder(true) : onSignInRequired()}
+              title={t("dictionaryPage.addAudio")}
+              className="p-1 text-neutral-300 hover:text-brand-500 dark:text-neutral-600 dark:hover:text-brand-400 transition-colors"
+            >
+              <Mic className="h-3.5 w-3.5" />
+            </button>
+          )}
+          {submitted && (
+            <span title="Audio submitted for review">
+              <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+            </span>
           )}
           {hasExtra && (
             <button
@@ -121,9 +300,58 @@ function ContributeModal({
   const [exampleTranslation, setExampleTranslation] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  // Audio recording
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      mediaRecorderRef.current = mr;
+      chunksRef.current = [];
+      mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+      mr.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        setAudioBlob(blob);
+        if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
+        setAudioPreviewUrl(URL.createObjectURL(blob));
+        stream.getTracks().forEach((t) => t.stop());
+      };
+      mr.start();
+      setIsRecording(true);
+      setError(null);
+    } catch {
+      setError("Microphone access denied. Please allow microphone permissions.");
+    }
+  };
+
+  const stopRecording = () => {
+    mediaRecorderRef.current?.stop();
+    setIsRecording(false);
+  };
+
+  const clearRecording = () => {
+    if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
+    setAudioBlob(null);
+    setAudioPreviewUrl(null);
+  };
+
   const submit = useMutation({
     mutationFn: async () => {
       const token = await getToken();
+      let audioUrl: string | undefined;
+      if (audioBlob) {
+        audioUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(audioBlob);
+        });
+      }
       return apiFetch("/contributions", {
         method: "POST",
         body: JSON.stringify({
@@ -135,6 +363,7 @@ function ContributeModal({
           pronunciation: pronunciation.trim() || undefined,
           example: example.trim() || undefined,
           exampleTranslation: exampleTranslation.trim() || undefined,
+          audioUrl,
         }),
         token: token ?? undefined,
       });
@@ -239,6 +468,56 @@ function ContributeModal({
             />
           </div>
 
+          {/* Audio recording */}
+          <div>
+            <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-2 block">
+              {t("dictionaryPage.fieldAudio")}
+            </label>
+            <div className="flex items-center gap-3">
+              {!isRecording && !audioBlob && (
+                <button
+                  type="button"
+                  onClick={startRecording}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:border-brand-400 dark:hover:border-brand-600 transition-colors"
+                >
+                  <Mic className="h-4 w-4 text-brand-500" />
+                  {t("dictionaryPage.recordAudio")}
+                </button>
+              )}
+              {isRecording && (
+                <button
+                  type="button"
+                  onClick={stopRecording}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition-colors animate-pulse"
+                >
+                  <span className="w-2 h-2 rounded-full bg-white shrink-0" />
+                  {t("dictionaryPage.stopRecording")}
+                </button>
+              )}
+              {audioBlob && audioPreviewUrl && !isRecording && (
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <audio controls src={audioPreviewUrl} className="h-8 flex-1 min-w-0" />
+                  <button
+                    type="button"
+                    onClick={clearRecording}
+                    className="p-1 text-neutral-400 hover:text-red-500 transition-colors shrink-0"
+                    aria-label="Remove recording"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={startRecording}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:border-brand-400 transition-colors shrink-0"
+                  >
+                    <Mic className="h-3.5 w-3.5" />
+                    {t("dictionaryPage.reRecord")}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
           {error && (
             <p className="text-xs text-red-500 dark:text-red-400">{error}</p>
           )}
@@ -278,6 +557,7 @@ export default function DictionaryPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [contributing, setContributing] = useState(false);
+  const [signInModalOpen, setSignInModalOpen] = useState(false);
 
   const { data: words = [], isLoading } = useQuery<DictionaryWord[]>({
     queryKey: ["dictionary", selectedLanguageId],
@@ -395,7 +675,7 @@ export default function DictionaryPage() {
         )}
 
         {filtered.map((word) => (
-          <WordCard key={word.id} word={word} />
+          <WordCard key={word.id} word={word} languageId={selectedLanguageId} onSignInRequired={() => setSignInModalOpen(true)} />
         ))}
       </div>
 
@@ -406,6 +686,7 @@ export default function DictionaryPage() {
           onClose={() => setContributing(false)}
         />
       )}
+      {signInModalOpen && <SignInModal onClose={() => setSignInModalOpen(false)} />}
     </div>
   );
 }

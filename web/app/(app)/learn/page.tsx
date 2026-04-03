@@ -6,12 +6,81 @@ import { cn } from "@/lib/utils";
 import { useLanguageStore } from "@/store/language-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course } from "@/types";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Brain, Star } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+
+interface Bounty { id: string; title: string; xpReward: number; }
+interface DueEntry { dictionaryEntryId: string; }
+
+function BountyTeaser({ languageId }: Readonly<{ languageId: string }>) {
+  const { t } = useTranslation();
+  const { data: bounties = [] } = useQuery<Bounty[]>({
+    queryKey: ["bounties", languageId],
+    queryFn: () => apiFetch<Bounty[]>(`/bounties?languageId=${languageId}`),
+  });
+  const top = bounties[0];
+  if (!top) return null;
+  return (
+    <Link
+      href="/bounties"
+      className="flex items-center gap-3 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/50 hover:border-amber-300 dark:hover:border-amber-700 transition-colors"
+    >
+      <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
+        <Star className="h-5 w-5 text-white" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+            {t("learn.bountyLabel")}
+          </span>
+          <span className="px-2 py-0.5 rounded-full bg-amber-200 dark:bg-amber-800 text-xs font-bold text-amber-700 dark:text-amber-300">
+            +{top.xpReward} XP
+          </span>
+        </div>
+        <p className="text-sm font-medium text-neutral-900 dark:text-white truncate">{top.title}</p>
+      </div>
+      <span className="text-amber-400 text-lg">›</span>
+    </Link>
+  );
+}
+
+function ReviewBanner() {
+  const { t } = useTranslation();
+  const { getToken } = useAuth();
+  const { isSignedIn } = useUser();
+  const { data: dueWords = [] } = useQuery<DueEntry[]>({
+    queryKey: ["wordbank-due"],
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch<DueEntry[]>("/wordbank/due", { token: token ?? undefined });
+    },
+    enabled: !!isSignedIn,
+  });
+  if (dueWords.length === 0) return null;
+  return (
+    <Link
+      href="/word-review"
+      className="flex items-center gap-3 p-4 rounded-2xl bg-violet-50 dark:bg-violet-950/30 border border-violet-100 dark:border-violet-900/50 hover:border-violet-300 dark:hover:border-violet-700 transition-colors"
+    >
+      <div className="w-10 h-10 rounded-xl bg-violet-500 flex items-center justify-center shrink-0">
+        <Brain className="h-5 w-5 text-white" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-violet-700 dark:text-violet-300">
+          {t("learn.reviewBanner", { count: dueWords.length })}
+        </p>
+        <p className="text-xs text-violet-500 dark:text-violet-400">
+          {t("learn.reviewBannerCta")}
+        </p>
+      </div>
+      <span className="text-violet-400 text-lg">›</span>
+    </Link>
+  );
+}
 
 const LEVELS = ["all", "beginner", "intermediate", "advanced"] as const;
 type Level = (typeof LEVELS)[number];
@@ -177,6 +246,12 @@ export default function LearnPage() {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Banners */}
+      <div className="max-w-4xl mx-auto px-4 mb-6 space-y-3">
+        <ReviewBanner />
+        <BountyTeaser languageId={selectedLanguageId} />
       </div>
 
       {/* Courses grid */}
