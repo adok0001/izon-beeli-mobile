@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin/
 Disallow: /api/
 
-Sitemap: https://izonbeeli.com/sitemap.xml
+Sitemap: https://izon-beeli.com/sitemap.xml

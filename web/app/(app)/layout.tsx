@@ -3,7 +3,6 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { AudioPlayerBar } from "@/components/layout/audio-player-bar";
 import { TourOverlay } from "@/components/tour/tour-overlay";
 import { TourLauncher } from "@/components/tour/tour-launcher";
-
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen bg-neutral-50 dark:bg-neutral-950">

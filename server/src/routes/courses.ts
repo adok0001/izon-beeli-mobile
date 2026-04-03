@@ -20,3 +20,20 @@ coursesRouter.get("/", async (c) => {
 
   return c.json(result);
 });
+
+// GET /api/courses/:id
+coursesRouter.get("/:id", async (c) => {
+  const { id } = c.req.param();
+
+  const [course] = await db
+    .select()
+    .from(courses)
+    .where(eq(courses.id, id))
+    .limit(1);
+
+  if (!course) {
+    return c.json({ error: "Course not found" }, 404);
+  }
+
+  return c.json(course);
+});

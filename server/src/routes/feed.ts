@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, lt, sql } from "drizzle-orm";
+import { and, desc, eq, lt, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index.js";
 import { comments, feedItems, likes, users } from "../db/schema.js";
@@ -6,13 +6,11 @@ import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
 
 const VALID_FEED_TYPES = ["lesson_completed", "achievement", "contribution", "community"] as const;
 
-export const feedRouter = new Hono<AuthEnv>();
+// Public read-only feed router (no auth required)
+export const feedPublicRouter = new Hono();
 
-feedRouter.use("*", authMiddleware);
-
-// GET /api/feed?cursor=&limit=20&type= - paginated feed with isLiked, optional type filter
-feedRouter.get("/", async (c) => {
-  const userId = c.get("userId");
+// GET /api/feed?cursor=&limit=20&type= - paginated feed, isLiked always false for guests
+feedPublicRouter.get("/", async (c) => {
   const cursor = c.req.query("cursor");
   const typeFilter = c.req.query("type");
   const rawLimit = parseInt(c.req.query("limit") ?? "20");
@@ -40,22 +38,6 @@ feedRouter.get("/", async (c) => {
   const hasMore = items.length > limit;
   const page = hasMore ? items.slice(0, limit) : items;
 
-  // Get user's likes for these items
-  const itemIds = page.map((i) => i.id);
-  let userLikes: string[] = [];
-  if (itemIds.length > 0) {
-    const likeRows = await db
-      .select({ feedItemId: likes.feedItemId })
-      .from(likes)
-      .where(
-        and(
-          eq(likes.userId, userId),
-          inArray(likes.feedItemId, itemIds)
-        )
-      );
-    userLikes = likeRows.map((r) => r.feedItemId);
-  }
-
   const result = page.map((item) => ({
     id: item.id,
     type: item.type,
@@ -68,7 +50,7 @@ feedRouter.get("/", async (c) => {
     audioUrl: item.audioUrl,
     likes: item.likesCount,
     comments: item.commentsCount,
-    isLiked: userLikes.includes(item.id),
+    isLiked: false,
     createdAt: item.createdAt.toISOString(),
   }));
 
@@ -77,6 +59,32 @@ feedRouter.get("/", async (c) => {
     nextCursor: hasMore ? page[page.length - 1].createdAt.toISOString() : null,
   });
 });
+
+// GET /api/feed/:id/comments - public read
+feedPublicRouter.get("/:id/comments", async (c) => {
+  const feedItemId = c.req.param("id");
+
+  const result = await db
+    .select()
+    .from(comments)
+    .where(eq(comments.feedItemId, feedItemId))
+    .orderBy(comments.createdAt);
+
+  return c.json(
+    result.map((r) => ({
+      id: r.id,
+      feedItemId: r.feedItemId,
+      userName: r.userName,
+      text: r.text,
+      createdAt: r.createdAt.toISOString(),
+    }))
+  );
+});
+
+// Authenticated write router
+export const feedRouter = new Hono<AuthEnv>();
+
+feedRouter.use("*", authMiddleware);
 
 // POST /api/feed - create community post
 feedRouter.post("/", async (c) => {
@@ -163,27 +171,6 @@ feedRouter.post("/:id/like", async (c) => {
       .where(eq(feedItems.id, feedItemId));
     return c.json({ liked: true });
   }
-});
-
-// GET /api/feed/:id/comments - list comments
-feedRouter.get("/:id/comments", async (c) => {
-  const feedItemId = c.req.param("id");
-
-  const result = await db
-    .select()
-    .from(comments)
-    .where(eq(comments.feedItemId, feedItemId))
-    .orderBy(comments.createdAt);
-
-  return c.json(
-    result.map((r) => ({
-      id: r.id,
-      feedItemId: r.feedItemId,
-      userName: r.userName,
-      text: r.text,
-      createdAt: r.createdAt.toISOString(),
-    }))
-  );
 });
 
 // POST /api/feed/:id/comments - add comment

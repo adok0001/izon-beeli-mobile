@@ -1,20 +1,8 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { clerkMiddleware } from "@clerk/nextjs/server";
 
-const isPublicRoute = createRouteMatcher([
-  "/sign-in(.*)",
-  "/sign-up(.*)",
-  "/privacy",
-  "/support",
-]);
-
-export default clerkMiddleware(async (auth, request) => {
-  if (!isPublicRoute(request)) {
-    await auth.protect();
-  }
-});
-
-// Note: admin role verification happens in app/admin/layout.tsx via /api/users/me.
-// The middleware guarantees authentication for all non-public routes.
+// All routes are public — auth is handled client-side in AuthGate.
+// This allows Google to index all pages.
+export default clerkMiddleware();
 
 export const config = {
   matcher: [

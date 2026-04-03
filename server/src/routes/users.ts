@@ -1,5 +1,5 @@
 import { createClerkClient, verifyToken } from "@clerk/backend";
-import { and, eq, inArray, isNotNull, lt } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, lt } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index.js";
 import {
@@ -31,6 +31,36 @@ const clerkClient = createClerkClient({
 });
 
 export const usersRouter = new Hono<AuthEnv>();
+
+// GET /api/users/leaderboard - public top 100 by points
+usersRouter.get("/leaderboard", async (c) => {
+  const top = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      avatarUrl: users.avatarUrl,
+      points: users.points,
+      streak: users.streak,
+      selectedLanguageId: users.selectedLanguageId,
+    })
+    .from(users)
+    .where(isNotNull(users.name))
+    .orderBy(desc(users.points), asc(users.createdAt))
+    .limit(100);
+
+  const result = top.map((u, i) => ({
+    id: u.id,
+    rank: i + 1,
+    name: u.name,
+    avatarUrl: u.avatarUrl ?? null,
+    points: u.points ?? 0,
+    streak: u.streak ?? 0,
+    selectedLanguageId: u.selectedLanguageId ?? null,
+    isCurrentUser: false,
+  }));
+
+  return c.json(result);
+});
 
 // POST /api/users/sync - sync Clerk profile on app open (called before other auth routes)
 usersRouter.post("/sync", async (c) => {

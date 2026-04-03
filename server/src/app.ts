@@ -11,7 +11,7 @@ import { culturalRouter } from "./routes/cultural.js";
 import { dailyChallengesRouter } from "./routes/daily-challenges.js";
 import { dashboardRouter } from "./routes/dashboard.js";
 import { dictionaryRouter } from "./routes/dictionary.js";
-import { feedRouter } from "./routes/feed.js";
+import { feedPublicRouter, feedRouter } from "./routes/feed.js";
 import { feedbackRouter } from "./routes/feedback.js";
 import { journalRouter } from "./routes/journal.js";
 import { languagesRouter } from "./routes/languages.js";
@@ -22,6 +22,7 @@ import { notificationsAdminRouter, notificationsRouter } from "./routes/notifica
 import { progressRouter } from "./routes/progress.js";
 import { proverbsRouter } from "./routes/proverbs.js";
 import { pushTokensRouter } from "./routes/push-tokens.js";
+import { quizRouter } from "./routes/quiz.js";
 import { quizResultsRouter } from "./routes/quiz-results.js";
 import { sentencesRouter } from "./routes/sentences.js";
 import { purgeExpiredDeletedUsers, usersRouter } from "./routes/users.js";
@@ -59,6 +60,8 @@ app.onError((err, c) => {
 });
 
 // Public routes (no auth required)
+app.route("/quiz", quizRouter);
+app.route("/feed", feedPublicRouter);
 app.route("/contributions", contributionsPublicRouter);
 app.route("/contributors", contributorsRouter);
 app.route("/languages", languagesRouter);
