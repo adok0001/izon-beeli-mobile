@@ -6,6 +6,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookOpen, ChevronDown, ChevronRight, Edit2, Layers, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface AdminCourse {
   id: string;
@@ -58,16 +59,17 @@ function CourseForm({
   const [order, setOrder] = useState(initial?.order ?? 0);
 
   const fieldCls = "w-full rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm px-3 py-2 text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500";
+  const { t } = useTranslation();
 
   return (
     <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-200 dark:border-neutral-700 p-4 space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">ID *</label>
+          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.courses.formId")} *</label>
           <input className={fieldCls} value={id} onChange={(e) => setId(e.target.value)} placeholder="e.g. izon-beginner-1" disabled={!!initial?.id} />
         </div>
         <div>
-          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Language *</label>
+          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.courses.formLanguage")} *</label>
           <select className={fieldCls} value={languageId} onChange={(e) => setLanguageId(e.target.value)}>
             {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
           </select>
@@ -75,42 +77,42 @@ function CourseForm({
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Title (EN) *</label>
+          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.courses.formTitleEn")} *</label>
           <input className={fieldCls} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Course title" />
         </div>
         <div>
-          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Title (FR)</label>
+          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.courses.formTitleFr")}</label>
           <input className={fieldCls} value={titleFr} onChange={(e) => setTitleFr(e.target.value)} placeholder="Titre du cours" />
         </div>
       </div>
       <div>
-        <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Description (EN) *</label>
+        <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.courses.formDescEn")} *</label>
         <textarea className={cn(fieldCls, "resize-none")} rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Course description" />
       </div>
       <div>
-        <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Description (FR)</label>
+        <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.courses.formDescFr")}</label>
         <textarea className={cn(fieldCls, "resize-none")} rows={2} value={descriptionFr} onChange={(e) => setDescriptionFr(e.target.value)} placeholder="Description en français" />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Level *</label>
+          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.courses.formLevel")} *</label>
           <select className={fieldCls} value={level} onChange={(e) => setLevel(e.target.value)}>
             {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
           </select>
         </div>
         <div>
-          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Order</label>
+          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.courses.formOrder")}</label>
           <input type="number" className={fieldCls} value={order} onChange={(e) => setOrder(Number(e.target.value))} />
         </div>
       </div>
       <div className="flex justify-end gap-2 pt-1">
-        <button onClick={onCancel} className="px-3 py-1.5 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">Cancel</button>
+        <button onClick={onCancel} className="px-3 py-1.5 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">{t("admin.courses.cancel")}</button>
         <button
           onClick={() => onSave({ id, languageId, title, titleFr: titleFr || null, description, descriptionFr: descriptionFr || null, level, order })}
           disabled={saving || !id || !title || !description}
           className="px-4 py-1.5 text-sm font-medium rounded-lg bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-50 transition-colors"
         >
-          {saving ? "Saving…" : "Save"}
+          {saving ? t("admin.courses.saving") : t("admin.courses.save")}
         </button>
       </div>
     </div>
@@ -139,51 +141,52 @@ function LessonForm({
   const [order, setOrder] = useState(initial?.order ?? 0);
 
   const fieldCls = "w-full rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm px-3 py-2 text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500";
+  const { t } = useTranslation();
 
   return (
     <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-dashed border-neutral-300 dark:border-neutral-600 p-4 ml-4 space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Lesson ID *</label>
+          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.courses.formLessonId")} *</label>
           <input className={fieldCls} value={id} onChange={(e) => setId(e.target.value)} placeholder={`${courseId}-lesson-1`} disabled={!!initial?.id} />
         </div>
         <div>
-          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Order</label>
+          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.courses.formOrder")}</label>
           <input type="number" className={fieldCls} value={order} onChange={(e) => setOrder(Number(e.target.value))} />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Title (EN) *</label>
+          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.courses.formTitleEn")} *</label>
           <input className={fieldCls} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Lesson title" />
         </div>
         <div>
-          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Title (FR)</label>
+          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.courses.formTitleFr")}</label>
           <input className={fieldCls} value={titleFr} onChange={(e) => setTitleFr(e.target.value)} placeholder="Titre de la leçon" />
         </div>
       </div>
       <div>
-        <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Description (EN) *</label>
+        <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.courses.formDescEn")} *</label>
         <textarea className={cn(fieldCls, "resize-none")} rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Audio URL</label>
+          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.courses.formAudioUrl")}</label>
           <input className={fieldCls} value={audioUrl} onChange={(e) => setAudioUrl(e.target.value)} placeholder="https://…/audio.mp3" />
         </div>
         <div>
-          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Duration (seconds)</label>
+          <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.courses.formDuration")}</label>
           <input type="number" className={fieldCls} value={duration} onChange={(e) => setDuration(e.target.value)} />
         </div>
       </div>
       <div className="flex justify-end gap-2 pt-1">
-        <button onClick={onCancel} className="px-3 py-1.5 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">Cancel</button>
+        <button onClick={onCancel} className="px-3 py-1.5 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">{t("admin.courses.cancel")}</button>
         <button
           onClick={() => onSave({ id, title, titleFr: titleFr || null, description, audioUrl: audioUrl || null, duration: duration ? Number(duration) : null, order })}
           disabled={saving || !id || !title || !description}
           className="px-4 py-1.5 text-sm font-medium rounded-lg bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-50 transition-colors"
         >
-          {saving ? "Saving…" : "Save Lesson"}
+          {saving ? t("admin.courses.saving") : t("admin.courses.saveLesson")}
         </button>
       </div>
     </div>
@@ -196,6 +199,7 @@ function LessonsPanel({ courseId, token }: Readonly<{ courseId: string; token: s
   const qc = useQueryClient();
   const [addingLesson, setAddingLesson] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const { data: lessons = [], isLoading } = useQuery<AdminLesson[]>({
     queryKey: ["admin", "lessons", courseId],
@@ -276,7 +280,7 @@ function LessonsPanel({ courseId, token }: Readonly<{ courseId: string; token: s
           onClick={() => setAddingLesson(true)}
           className="flex items-center gap-1.5 text-xs text-brand-600 dark:text-brand-400 hover:underline px-1"
         >
-          <Plus className="h-3.5 w-3.5" /> Add lesson
+          <Plus className="h-3.5 w-3.5" /> {t("admin.courses.addLesson")}
         </button>
       )}
     </div>
@@ -338,6 +342,7 @@ function CourseRow({
 export default function AdminCoursesPage() {
   const { getToken } = useAuth();
   const qc = useQueryClient();
+  const { t } = useTranslation();
   const [token, setToken] = useState<string | null>(null);
   const [addingCourse, setAddingCourse] = useState(false);
   const [editingCourse, setEditingCourse] = useState<AdminCourse | null>(null);
@@ -382,14 +387,14 @@ export default function AdminCoursesPage() {
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-1">Courses</h2>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">{courses.length} total courses</p>
+          <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-1">{t("admin.courses.title")}</h2>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">{t("admin.courses.totalCount", { count: courses.length })}</p>
         </div>
         <button
           onClick={() => { setAddingCourse(true); setEditingCourse(null); }}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors"
         >
-          <Plus className="h-4 w-4" /> New Course
+          <Plus className="h-4 w-4" /> {t("admin.courses.newCourse")}
         </button>
       </div>
 
@@ -424,7 +429,7 @@ export default function AdminCoursesPage() {
       {editingCourse && (
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-            <Edit2 className="h-4 w-4" /> Editing: {editingCourse.title}
+            <Edit2 className="h-4 w-4" /> {t("admin.courses.editing")}: {editingCourse.title}
             <button onClick={() => setEditingCourse(null)} className="ml-auto"><X className="h-4 w-4" /></button>
           </div>
           <CourseForm
@@ -452,7 +457,7 @@ export default function AdminCoursesPage() {
         {!isLoading && filtered.length === 0 && (
           <div className="text-center py-12 text-neutral-400 dark:text-neutral-500">
             <BookOpen className="mx-auto h-8 w-8 mb-2" />
-            <p className="text-sm">No courses yet. Add one above.</p>
+            <p className="text-sm">{t("admin.courses.noCourses")}</p>
           </div>
         )}
       </div>

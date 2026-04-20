@@ -8,12 +8,13 @@ import { BarChart2, BookOpen, ClipboardList, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 const ADMIN_NAV = [
-  { href: "/admin", label: "Overview", icon: BarChart2, exact: true },
-  { href: "/admin/users", label: "Users", icon: Users },
-  { href: "/admin/courses", label: "Courses", icon: BookOpen },
-  { href: "/admin/review", label: "Review", icon: ClipboardList },
+  { href: "/admin", labelKey: "admin.nav.overview", icon: BarChart2, exact: true },
+  { href: "/admin/users", labelKey: "admin.nav.users", icon: Users },
+  { href: "/admin/courses", labelKey: "admin.nav.courses", icon: BookOpen },
+  { href: "/admin/review", labelKey: "admin.nav.review", icon: ClipboardList },
 ] as const;
 
 interface Me {
@@ -24,6 +25,7 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
   const { getToken, isLoaded, isSignedIn } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useTranslation();
 
   const { data: me, isPending } = useQuery<Me>({
     queryKey: ["me"],
@@ -60,16 +62,16 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
       <header className="border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-bold text-neutral-900 dark:text-white">Admin Panel</h1>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">Beeli — internal tools</p>
+            <h1 className="text-lg font-bold text-neutral-900 dark:text-white">{t("admin.panelTitle")}</h1>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">{t("admin.internalTools")}</p>
           </div>
           <a href="/learn" className="text-sm text-brand-600 dark:text-brand-400 hover:underline">
-            ← Back to app
+            {t("admin.backToApp")}
           </a>
         </div>
         {/* Tab navigation */}
         <div className="max-w-7xl mx-auto mt-4 flex gap-1">
-          {ADMIN_NAV.map(({ href, label, icon: Icon, ...rest }) => {
+          {ADMIN_NAV.map(({ href, labelKey, icon: Icon, ...rest }) => {
             const exact = "exact" in rest && rest.exact;
             const active = exact ? pathname === href : pathname.startsWith(href);
             return (
@@ -84,7 +86,7 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
                 )}
               >
                 <Icon className="h-3.5 w-3.5" />
-                {label}
+                {t(labelKey)}
               </Link>
             );
           })}

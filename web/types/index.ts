@@ -73,7 +73,20 @@ export interface FeedItem {
   createdAt: string;
   likes: number;
   comments: number;
+  isLiked?: boolean;
   audioUrl?: AudioSource; // for contribution cards with audio
+}
+
+export interface UserMe {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl?: string | null;
+  streak: number;
+  points: number;
+  selectedLanguageId?: string | null;
+  isAdmin: boolean;
+  createdAt: string;
 }
 
 export interface UserProfile {

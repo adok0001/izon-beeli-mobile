@@ -18,8 +18,8 @@ import { useLanguageStore } from "@/store/language-store";
 import { useTourStore } from "@/store/tour-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course, Lesson } from "@/types";
-import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from "react-native";
@@ -341,6 +341,7 @@ export default function LearnScreen() {
   const { data: courses = [], isLoading: coursesLoading, refetch: refetchCourses } = useCourses(selectedLanguageId);
   const { data: completedLessonIds, isLoading: progressLoading, refetch } = useCompletedLessons();
   const { data: summary, refetch: refetchSummary } = useProgressSummary();
+  const { refetch: refetchDue } = useWordsDueForReview();
   const { data: todayChallenges = [] } = useTodayChallenges();
   const completedIds = new Set(completedLessonIds ?? []);
   const completedToday = useMemo(
@@ -390,9 +391,9 @@ export default function LearnScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([refetch(), refetchSummary(), refetchCourses()]);
+    await Promise.all([refetch(), refetchSummary(), refetchCourses(), refetchDue()]);
     setRefreshing(false);
-  }, [refetch, refetchSummary, refetchCourses]);
+  }, [refetch, refetchSummary, refetchCourses, refetchDue]);
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>

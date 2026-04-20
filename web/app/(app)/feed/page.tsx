@@ -14,12 +14,15 @@ import {
     Heart,
     MessageCircle,
     Mic,
+    Send,
     Trophy,
     type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
+import { toast } from "sonner";
+import { EmptyState } from "@/components/ui/empty-state";
 
 function SignInModal({ onClose }: Readonly<{ onClose: () => void }>) {
   const { t } = useTranslation();
@@ -115,6 +118,7 @@ function FeedCard({ item, onSignInRequired }: Readonly<{ item: FeedItem; onSignI
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["comments", item.id] });
       setCommentText("");
+      toast.success(t("feed.commentPosted", { defaultValue: "Comment posted" }));
     },
   });
 
@@ -123,7 +127,17 @@ function FeedCard({ item, onSignInRequired }: Readonly<{ item: FeedItem; onSignI
       const token = await getToken();
       return apiFetch(`/feed/${item.id}/like`, { method: "POST", token: token ?? undefined });
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["feed"] }),
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: ["feed"] });
+      qc.setQueriesData<FeedItem[]>({ queryKey: ["feed"] }, (old) =>
+        old?.map((i) =>
+          i.id === item.id
+            ? { ...i, likes: i.isLiked ? i.likes - 1 : i.likes + 1, isLiked: !i.isLiked }
+            : i
+        )
+      );
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["feed"] }),
   });
 
   return (
@@ -217,9 +231,28 @@ function FeedCard({ item, onSignInRequired }: Readonly<{ item: FeedItem; onSignI
 
 export default function FeedPage() {
   const { getToken } = useAuth();
+  const { isSignedIn } = useUser();
   const { t } = useTranslation();
   const [filter, setFilter] = useState<FilterType>("all");
   const [signInModalOpen, setSignInModalOpen] = useState(false);
+  const [postText, setPostText] = useState("");
+  const qc = useQueryClient();
+
+  const createPost = useMutation({
+    mutationFn: async () => {
+      const token = await getToken();
+      return apiFetch("/feed", {
+        method: "POST",
+        body: JSON.stringify({ title: postText.split("\n")[0]?.trim() || postText.trim(), description: postText.trim(), type: "community" }),
+        token: token ?? undefined,
+      });
+    },
+    onSuccess: () => {
+      setPostText("");
+      void qc.invalidateQueries({ queryKey: ["feed"] });
+      toast.success(t("feed.postPublished", { defaultValue: "Post published!" }));
+    },
+  });
 
   const filters: { value: FilterType; label: string }[] = [
     { value: "all", label: t("feed.filterAll") },
@@ -251,11 +284,7 @@ export default function FeedPage() {
     );
   } else if (items.length === 0) {
     feedContent = (
-      <div className="text-center py-16 text-neutral-400 dark:text-neutral-500">
-        <Globe2 className="mx-auto mb-3 h-10 w-10" />
-        <p className="font-medium">{t("feed.emptyTitle")}</p>
-        <p className="text-sm mt-1">{t("feed.emptyDescription")}</p>
-      </div>
+      <EmptyState variant="feed" title={t("feed.emptyTitle")} description={t("feed.emptyDescription")} />
     );
   } else {
     feedContent = (
@@ -275,6 +304,29 @@ export default function FeedPage() {
           {t("feed.subtitle")}
         </p>
       </div>
+
+      {/* Compose */}
+      {isSignedIn && (
+        <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 mb-5">
+          <textarea
+            value={postText}
+            onChange={(e) => setPostText(e.target.value)}
+            placeholder={t("feed.contentPlaceholder")}
+            rows={2}
+            className="w-full resize-none text-sm text-neutral-900 dark:text-white placeholder-neutral-400 bg-transparent focus:outline-none"
+          />
+          <div className="flex justify-end mt-2">
+            <button
+              onClick={() => postText.trim() && createPost.mutate()}
+              disabled={!postText.trim() || createPost.isPending}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 disabled:opacity-40 transition-colors"
+            >
+              <Send className="h-3.5 w-3.5" />
+              {t("feed.post")}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide">

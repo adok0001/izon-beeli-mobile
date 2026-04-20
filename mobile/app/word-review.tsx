@@ -1,15 +1,15 @@
-import { useState, useCallback, useEffect } from "react";
-import { View, Text, Pressable, ActivityIndicator } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack, useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useWordsDueForReview, useReviewWord, useInvalidateReviewQueue } from "@/lib/hooks/use-wordbank";
-import { useDictionary } from "@/lib/hooks/use-dictionary";
-import { useLanguageStore } from "@/store/language-store";
-import { hapticSuccess, hapticError, hapticTap } from "@/lib/haptics";
-import { playCorrectSound, playIncorrectSound } from "@/lib/sounds";
+import { apiFetch } from "@/lib/api";
 import type { DictionaryEntry } from "@/lib/dictionary";
+import { hapticError, hapticSuccess, hapticTap } from "@/lib/haptics";
+import { useInvalidateReviewQueue, useReviewWord, useWordsDueForReview } from "@/lib/hooks/use-wordbank";
+import { playCorrectSound, playIncorrectSound } from "@/lib/sounds";
+import { useQueries } from "@tanstack/react-query";
+import { Stack, useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type CardFace = "question" | "answer";
 
@@ -115,9 +115,19 @@ function ReviewCard({
 
 export default function WordReviewScreen() {
   const router = useRouter();
-  const { selectedLanguageId } = useLanguageStore();
   const { data: dueEntries = [], isLoading: isDueLoading } = useWordsDueForReview();
-  const { data: dictionary = [], isLoading: isDictLoading } = useDictionary(selectedLanguageId);
+  const languageIds = useMemo(
+    () => [...new Set(dueEntries.map((e) => e.languageId))],
+    [dueEntries]
+  );
+  const dictionaryQueries = useQueries({
+    queries: languageIds.map((langId) => ({
+      queryKey: ["dictionary", langId, null],
+      queryFn: () => apiFetch<DictionaryEntry[]>(`/dictionary?languageId=${encodeURIComponent(langId)}`),
+    })),
+  });
+  const isDictLoading = dictionaryQueries.some((q) => q.isLoading);
+  const dictionary = dictionaryQueries.flatMap((q) => q.data ?? []);
   const reviewWord = useReviewWord();
   const invalidateReviewQueue = useInvalidateReviewQueue();
 

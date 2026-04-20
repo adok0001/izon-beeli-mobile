@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getLocales } from "expo-localization";
 import i18n from "@/lib/i18n";
 
-export type UiLanguage = "en" | "fr";
+export type UiLanguage = "en" | "fr" | "pcm";
 
 const STORAGE_KEY = "ui-language-store-lang";
 
@@ -25,7 +25,7 @@ export const useUiLanguageStore = create<UiLanguageState>((set) => ({
   hydrate: async () => {
     try {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      if (stored === "en" || stored === "fr") {
+      if (stored === "en" || stored === "fr" || stored === "pcm") {
         set({ uiLanguage: stored, _hydrated: true });
         i18n.changeLanguage(stored).catch(() => {});
       } else {

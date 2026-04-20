@@ -5,13 +5,14 @@ import { localizeField } from "@/lib/localize";
 import { cn } from "@/lib/utils";
 import { useLanguageStore } from "@/store/language-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
-import type { Course } from "@/types";
+import type { Course, UserMe } from "@/types";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, Brain, Star } from "lucide-react";
+import { BookOpen, Brain, Flame, Star, Zap } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface Bounty { id: string; title: string; xpReward: number; }
 interface DueEntry { dictionaryEntryId: string; }
@@ -152,9 +153,19 @@ function CourseCard({ course }: Readonly<{ course: Course }>) {
 
 export default function LearnPage() {
   const { getToken } = useAuth();
+  const { isSignedIn } = useUser();
   const { selectedLanguageId, setLanguage } = useLanguageStore();
   const { t } = useTranslation();
   const [level, setLevel] = useState<Level>("all");
+
+  const { data: me } = useQuery<UserMe>({
+    queryKey: ["me"],
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch<UserMe>("/users/me", { token: token ?? undefined });
+    },
+    enabled: !!isSignedIn,
+  });
 
   const { data: allCourses = [], isLoading } = useQuery<Course[]>({
     queryKey: ["courses", selectedLanguageId],
@@ -182,11 +193,11 @@ export default function LearnPage() {
     );
   } else if (courses.length === 0) {
     content = (
-      <div className="text-center py-16 text-neutral-400 dark:text-neutral-500">
-        <BookOpen className="mx-auto mb-3 h-10 w-10" />
-        <p className="font-medium">{t("learn.emptyTitle")}</p>
-        <p className="text-sm mt-1">{t("learn.emptyDescription")}</p>
-      </div>
+      <EmptyState
+        variant="courses"
+        title={t("learn.emptyTitle")}
+        description={t("learn.emptyDescription")}
+      />
     );
   } else {
     content = (
@@ -201,11 +212,29 @@ export default function LearnPage() {
   return (
     <div className="py-6">
       {/* Header */}
-      <div className="max-w-4xl mx-auto px-4 mb-6">
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t("learn.title")}</h1>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
-          {t("learn.webSubtitle")}
-        </p>
+      <div className="max-w-4xl mx-auto px-4 mb-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t("learn.title")}</h1>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
+              {t("learn.webSubtitle")}
+            </p>
+          </div>
+          {me && (
+            <div className="flex items-center gap-2 shrink-0">
+              {me.streak > 0 && (
+                <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-orange-50 dark:bg-orange-950/30 border border-orange-100 dark:border-orange-900/40">
+                  <Flame className="h-3.5 w-3.5 text-orange-500" />
+                  <span className="text-xs font-bold text-orange-600 dark:text-orange-400">{me.streak}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-brand-50 dark:bg-brand-950/30 border border-brand-100 dark:border-brand-900/40">
+                <Zap className="h-3.5 w-3.5 text-brand-500" />
+                <span className="text-xs font-bold text-brand-600 dark:text-brand-400">{me.points} XP</span>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Language picker — full-width scrollable row */}

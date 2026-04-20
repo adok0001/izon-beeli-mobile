@@ -1,18 +1,18 @@
 "use client";
 
 import { apiFetch } from "@/lib/api";
-import { useLanguageStore } from "@/store/language-store";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { CheckCircle2, RotateCcw, X } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 interface DueEntry {
   dictionaryEntryId: string;
   confidence: number;
   reviewCount: number;
+  languageId: string;
 }
 
 interface DictEntry {
@@ -38,6 +38,20 @@ function ReviewCard({
   const { t } = useTranslation();
   const [face, setFace] = useState<CardFace>("question");
 
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.code === "Space") { e.preventDefault(); setFace((f) => (f === "question" ? "answer" : "question")); return; }
+      if (face === "answer" && !isPending) {
+        if (e.key === "1") onRate("again");
+        if (e.key === "2") onRate("hard");
+        if (e.key === "3") onRate("easy");
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [face, isPending, onRate]);
+
   return (
     <div className="flex flex-col gap-4">
       {/* Flip card */}
@@ -61,6 +75,7 @@ function ReviewCard({
             )}
             <p className="text-sm text-neutral-400 dark:text-neutral-500 mt-2">
               {t("wordReview.tapToReveal")}
+              <span className="ml-2 hidden md:inline text-xs font-mono bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded">Space</span>
             </p>
           </>
         ) : (
@@ -95,9 +110,8 @@ function ReviewCard({
             className="flex flex-col items-center gap-1.5 py-4 rounded-2xl border-2 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors disabled:opacity-50"
           >
             <RotateCcw className="h-5 w-5 text-red-500" />
-            <span className="text-xs font-semibold text-red-600 dark:text-red-400">
-              {t("wordReview.again")}
-            </span>
+            <span className="text-xs font-semibold text-red-600 dark:text-red-400">{t("wordReview.again")}</span>
+            <span className="text-[10px] text-red-400 dark:text-red-600 font-mono">1</span>
           </button>
           <button
             type="button"
@@ -106,9 +120,8 @@ function ReviewCard({
             className="flex flex-col items-center gap-1.5 py-4 rounded-2xl border-2 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-950/50 transition-colors disabled:opacity-50"
           >
             <X className="h-5 w-5 text-amber-500" />
-            <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
-              {t("wordReview.hard")}
-            </span>
+            <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">{t("wordReview.hard")}</span>
+            <span className="text-[10px] text-amber-400 dark:text-amber-600 font-mono">2</span>
           </button>
           <button
             type="button"
@@ -117,9 +130,8 @@ function ReviewCard({
             className="flex flex-col items-center gap-1.5 py-4 rounded-2xl border-2 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/30 hover:bg-green-100 dark:hover:bg-green-950/50 transition-colors disabled:opacity-50"
           >
             <CheckCircle2 className="h-5 w-5 text-green-500" />
-            <span className="text-xs font-semibold text-green-600 dark:text-green-400">
-              {t("wordReview.easy")}
-            </span>
+            <span className="text-xs font-semibold text-green-600 dark:text-green-400">{t("wordReview.easy")}</span>
+            <span className="text-[10px] text-green-400 dark:text-green-600 font-mono">3</span>
           </button>
         </div>
       )}
@@ -130,7 +142,6 @@ function ReviewCard({
 export default function WordReviewPage() {
   const { t } = useTranslation();
   const { getToken } = useAuth();
-  const { selectedLanguageId } = useLanguageStore();
 
   const { data: dueEntries = [], isLoading: isDueLoading } = useQuery<DueEntry[]>({
     queryKey: ["wordbank-due"],
@@ -140,9 +151,23 @@ export default function WordReviewPage() {
     },
   });
 
+  const dueLanguages = useMemo(
+    () => Array.from(new Set(dueEntries.map((e) => e.languageId).filter(Boolean))),
+    [dueEntries]
+  );
+
   const { data: dictionary = [], isLoading: isDictLoading } = useQuery<DictEntry[]>({
-    queryKey: ["dictionary", selectedLanguageId],
-    queryFn: () => apiFetch<DictEntry[]>(`/dictionary?languageId=${selectedLanguageId}`),
+    queryKey: ["dictionary-due", dueLanguages],
+    queryFn: async () => {
+      if (dueLanguages.length === 0) return [];
+      const results = await Promise.all(
+        dueLanguages.map((lang) =>
+          apiFetch<DictEntry[]>(`/dictionary?languageId=${lang}`)
+        )
+      );
+      return results.flat();
+    },
+    enabled: dueLanguages.length > 0,
   });
 
   const reviewMutation = useMutation({

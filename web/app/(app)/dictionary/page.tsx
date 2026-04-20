@@ -6,9 +6,11 @@ import { useLanguageStore } from "@/store/language-store";
 import { SignInButton, useAuth, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookText, CheckCircle2, ChevronDown, ChevronUp, Mic, Plus, Search, Square, Volume2, X } from "lucide-react";
+import { Bookmark, BookmarkCheck, BookText, CheckCircle2, ChevronDown, ChevronUp, Mic, Plus, Search, Square, Volume2, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface DictionaryWord {
   id: string;
@@ -78,11 +80,28 @@ function SignInModal({ onClose }: Readonly<{ onClose: () => void }>) {
 
 // ── Word card ─────────────────────────────────────────────────────────────────
 
-function WordCard({ word, languageId, onSignInRequired }: Readonly<{ word: DictionaryWord; languageId: string; onSignInRequired: () => void }>) {
+function WordCard({ word, languageId, isSaved, onSignInRequired }: Readonly<{ word: DictionaryWord; languageId: string; isSaved: boolean; onSignInRequired: () => void }>) {
   const { t } = useTranslation();
   const { getToken } = useAuth();
   const { isSignedIn } = useUser();
   const qc = useQueryClient();
+
+  const toggleSave = useMutation({
+    mutationFn: async () => {
+      const token = await getToken();
+      if (isSaved) {
+        return apiFetch(`/wordbank/${word.id}`, { method: "DELETE", token: token ?? undefined });
+      }
+      return apiFetch("/wordbank", { method: "POST", body: JSON.stringify({ dictionaryEntryId: word.id }), token: token ?? undefined });
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["wordbank"] });
+      toast.success(isSaved
+        ? t("dictionaryPage.wordUnsaved", { defaultValue: "Removed from saved" })
+        : t("dictionaryPage.wordSaved", { defaultValue: "Word saved!" })
+      );
+    },
+  });
 
   const [expanded, setExpanded] = useState(false);
   const hasExtra = !!(word.example || word.audioUrl);
@@ -251,6 +270,16 @@ function WordCard({ word, languageId, onSignInRequired }: Readonly<{ word: Dicti
           {word.audioUrl && (
             <span title="Has audio"><Mic className="h-3.5 w-3.5 text-brand-400" /></span>
           )}
+          {/* Save to wordbank */}
+          <button
+            type="button"
+            onClick={() => isSignedIn ? toggleSave.mutate() : onSignInRequired()}
+            disabled={toggleSave.isPending}
+            title={isSaved ? t("dictionaryPage.unsaveWord", { defaultValue: "Remove from saved" }) : t("dictionaryPage.saveWord", { defaultValue: "Save word" })}
+            className={cn("p-0.5 transition-colors", isSaved ? "text-brand-500" : "text-neutral-300 hover:text-brand-500 dark:text-neutral-600 dark:hover:text-brand-400")}
+          >
+            {isSaved ? <BookmarkCheck className="h-3.5 w-3.5" /> : <Bookmark className="h-3.5 w-3.5" />}
+          </button>
           {/* Add audio button for words without audio */}
           {!word.audioUrl && !submitted && !showRecorder && (
             <button
@@ -370,6 +399,7 @@ function ContributeModal({
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["dictionary", languageId] });
+      toast.success(t("contribute.submittedSuccess", { defaultValue: "Submitted for review. Thank you!" }));
       onClose();
     },
     onError: (err: Error) => {
@@ -552,12 +582,23 @@ function ContributeModal({
 
 export default function DictionaryPage() {
   const { getToken } = useAuth();
+  const { isSignedIn } = useUser();
   const { selectedLanguageId, setLanguage } = useLanguageStore();
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [contributing, setContributing] = useState(false);
   const [signInModalOpen, setSignInModalOpen] = useState(false);
+
+  const { data: savedEntries = [] } = useQuery<{ dictionaryEntryId: string }[]>({
+    queryKey: ["wordbank"],
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch("/wordbank", { token: token ?? undefined });
+    },
+    enabled: !!isSignedIn,
+  });
+  const savedIds = new Set(savedEntries.map((e) => e.dictionaryEntryId));
 
   const { data: words = [], isLoading } = useQuery<DictionaryWord[]>({
     queryKey: ["dictionary", selectedLanguageId],
@@ -668,14 +709,11 @@ export default function DictionaryPage() {
         )}
 
         {!isLoading && filtered.length === 0 && (
-          <div className="text-center py-16 text-neutral-400 dark:text-neutral-500">
-            <BookText className="mx-auto mb-3 h-10 w-10" />
-            <p className="font-medium">{t("dictionaryPage.emptyTitle")}</p>
-          </div>
+          <EmptyState variant="words" title={t("dictionaryPage.emptyTitle")} />
         )}
 
         {filtered.map((word) => (
-          <WordCard key={word.id} word={word} languageId={selectedLanguageId} onSignInRequired={() => setSignInModalOpen(true)} />
+          <WordCard key={word.id} word={word} languageId={selectedLanguageId} isSaved={savedIds.has(word.id)} onSignInRequired={() => setSignInModalOpen(true)} />
         ))}
       </div>
 

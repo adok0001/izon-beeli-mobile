@@ -80,8 +80,8 @@ function ToggleRow({
 }
 
 const THEME_OPTIONS = ["system", "light", "dark"] as const;
-const LANG_OPTIONS: UiLanguage[] = ["en", "fr"];
-const LANG_LABELS: Record<UiLanguage, string> = { en: "English", fr: "Français" };
+const LANG_OPTIONS: UiLanguage[] = ["en", "fr", "pcm"];
+const LANG_LABELS: Record<UiLanguage, string> = { en: "English", fr: "Français", pcm: "Naija" };
 
 export default function SettingsScreen() {
   const { selectedLanguageId } = useLanguageStore();

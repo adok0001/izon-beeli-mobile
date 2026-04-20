@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { eq, and, lte } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { wordBank } from "../db/schema.js";
+import { wordBank, dictionaryEntries } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
 import { awardXP } from "../lib/award-xp.js";
 import { incrementDailyChallenge } from "../lib/daily-challenge.js";
@@ -33,8 +33,10 @@ wordbankRouter.get("/due", async (c) => {
       confidence: wordBank.confidence,
       reviewCount: wordBank.reviewCount,
       nextReviewAt: wordBank.nextReviewAt,
+      languageId: dictionaryEntries.languageId,
     })
     .from(wordBank)
+    .innerJoin(dictionaryEntries, eq(wordBank.dictionaryEntryId, dictionaryEntries.id))
     .where(
       and(
         eq(wordBank.userId, userId),
@@ -50,8 +52,10 @@ wordbankRouter.get("/due", async (c) => {
       confidence: wordBank.confidence,
       reviewCount: wordBank.reviewCount,
       nextReviewAt: wordBank.nextReviewAt,
+      languageId: dictionaryEntries.languageId,
     })
     .from(wordBank)
+    .innerJoin(dictionaryEntries, eq(wordBank.dictionaryEntryId, dictionaryEntries.id))
     .where(
       and(
         eq(wordBank.userId, userId),

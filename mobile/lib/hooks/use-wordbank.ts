@@ -1,13 +1,14 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@clerk/clerk-expo";
-import { useCallback } from "react";
 import { apiFetch } from "@/lib/api";
+import { useAuth } from "@clerk/clerk-expo";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 
 export interface WordBankEntry {
   dictionaryEntryId: string;
   confidence: number;
   reviewCount: number;
   nextReviewAt: string | null;
+  languageId: string;
 }
 
 export function useWordBank() {
@@ -126,6 +127,7 @@ export function useRemoveWord() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["wordbank"] });
+      queryClient.invalidateQueries({ queryKey: ["wordbank", "due"] });
     },
   });
 }

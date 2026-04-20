@@ -13,6 +13,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface PendingContribution {
   id: string;
@@ -60,6 +61,7 @@ function ContributionCard({
 }>) {
   const [note, setNote] = useState("");
   const [showNote, setShowNote] = useState(false);
+  const { t } = useTranslation();
 
   return (
     <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-5">
@@ -84,19 +86,19 @@ function ContributionCard({
       <div className="grid grid-cols-2 gap-3 text-sm mb-3">
         {item.category && (
           <div>
-            <span className="text-xs font-medium text-neutral-400 uppercase tracking-wide">Category</span>
+            <span className="text-xs font-medium text-neutral-400 uppercase tracking-wide">{t("admin.review.fieldCategory")}</span>
             <p className="text-neutral-700 dark:text-neutral-300">{item.category}</p>
           </div>
         )}
         {item.pronunciation && (
           <div>
-            <span className="text-xs font-medium text-neutral-400 uppercase tracking-wide">Pronunciation</span>
+            <span className="text-xs font-medium text-neutral-400 uppercase tracking-wide">{t("admin.review.fieldPronunciation")}</span>
             <p className="text-neutral-700 dark:text-neutral-300 font-mono">{item.pronunciation}</p>
           </div>
         )}
         {item.example && (
           <div className="col-span-2">
-            <span className="text-xs font-medium text-neutral-400 uppercase tracking-wide">Example</span>
+            <span className="text-xs font-medium text-neutral-400 uppercase tracking-wide">{t("admin.review.fieldExample")}</span>
             <p className="text-neutral-700 dark:text-neutral-300 italic">{item.example}</p>
             {item.exampleTranslation && (
               <p className="text-neutral-500 dark:text-neutral-400 text-xs mt-0.5">{item.exampleTranslation}</p>
@@ -119,7 +121,7 @@ function ContributionCard({
           <textarea
             rows={2}
             className="w-full rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-sm px-3 py-2 text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
-            placeholder="Optional reviewer note…"
+            placeholder={t("admin.review.notePlaceholder")}
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
@@ -133,7 +135,7 @@ function ContributionCard({
           className="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors"
         >
           <MessageSquare className="h-3.5 w-3.5" />
-          {showNote ? "Hide note" : "Add note"}
+          {showNote ? t("admin.review.hideNote") : t("admin.review.addNote")}
         </button>
         <div className="flex gap-2">
           <button
@@ -141,14 +143,14 @@ function ContributionCard({
             disabled={busy}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 disabled:opacity-50 transition-colors"
           >
-            <XCircle className="h-4 w-4" /> Reject
+            <XCircle className="h-4 w-4" /> {t("admin.review.reject")}
           </button>
           <button
             onClick={() => onAction(item.id, "approve", note)}
             disabled={busy}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 disabled:opacity-50 transition-colors"
           >
-            <CheckCircle2 className="h-4 w-4" /> Approve
+            <CheckCircle2 className="h-4 w-4" /> {t("admin.review.approve")}
           </button>
         </div>
       </div>
@@ -159,6 +161,7 @@ function ContributionCard({
 export default function AdminReviewPage() {
   const { getToken } = useAuth();
   const qc = useQueryClient();
+  const { t } = useTranslation();
 
   const { data: pending = [], isLoading } = useQuery<PendingContribution[]>({
     queryKey: ["admin", "contributions", "pending"],
@@ -187,9 +190,9 @@ export default function AdminReviewPage() {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-1">Review Contributions</h2>
+        <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-1">{t("admin.review.title")}</h2>
         <p className="text-sm text-neutral-500 dark:text-neutral-400">
-          {pending.length} pending {pending.length === 1 ? "submission" : "submissions"}
+          {t("admin.review.pendingCount", { count: pending.length })}
         </p>
       </div>
 
@@ -204,8 +207,8 @@ export default function AdminReviewPage() {
       {!isLoading && pending.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <ClipboardList className="h-10 w-10 text-neutral-300 dark:text-neutral-600 mb-3" />
-          <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">All caught up!</p>
-          <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">No pending contributions to review.</p>
+          <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">{t("admin.review.allCaughtUp")}</p>
+          <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">{t("admin.review.noPending")}</p>
         </div>
       )}
 

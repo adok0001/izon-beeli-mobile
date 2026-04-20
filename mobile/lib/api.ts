@@ -1,5 +1,14 @@
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient, focusManager } from "@tanstack/react-query";
+import { AppState, Platform } from "react-native";
 import { API_BASE_URL } from "./constants";
+
+// React Query's default focus detection uses browser events, which don't fire in React Native.
+// Wire it up to AppState so queries refetch when the app comes back to the foreground.
+if (Platform.OS !== "web") {
+  AppState.addEventListener("change", (status) => {
+    focusManager.setFocused(status === "active");
+  });
+}
 
 export const queryClient = new QueryClient({
   defaultOptions: {

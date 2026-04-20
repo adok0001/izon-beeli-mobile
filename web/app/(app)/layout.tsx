@@ -1,6 +1,7 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { AudioPlayerBar } from "@/components/layout/audio-player-bar";
+import { OnboardingModal } from "@/components/onboarding-modal";
 import { TourOverlay } from "@/components/tour/tour-overlay";
 import { TourLauncher } from "@/components/tour/tour-launcher";
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -22,6 +23,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Welcome tour */}
       <TourLauncher />
       <TourOverlay />
+
+      {/* First-visit language picker */}
+      <OnboardingModal />
     </div>
   );
 }

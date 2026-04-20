@@ -6,6 +6,7 @@ import { apiFetch } from "@/lib/api";
 import { Shield, ShieldOff } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface AdminUser {
   id: string;
@@ -34,6 +35,7 @@ function UserAvatar({ name, avatarUrl }: Readonly<{ name: string; avatarUrl?: st
 export default function AdminUsersPage() {
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const { data: users = [], isLoading } = useQuery<AdminUser[]>({
     queryKey: ["admin", "users"],
@@ -61,18 +63,18 @@ export default function AdminUsersPage() {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-1">Users</h2>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">{users.length} registered users</p>
+        <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-1">{t("admin.users.title")}</h2>
+        <p className="text-sm text-neutral-500 dark:text-neutral-400">{t("admin.users.registeredCount", { count: users.length })}</p>
       </div>
 
       <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60">
-              <th className="text-left px-4 py-3 font-semibold text-neutral-600 dark:text-neutral-400">User</th>
-              <th className="text-left px-4 py-3 font-semibold text-neutral-600 dark:text-neutral-400 hidden md:table-cell">Email</th>
-              <th className="text-right px-4 py-3 font-semibold text-neutral-600 dark:text-neutral-400">Points</th>
-              <th className="text-center px-4 py-3 font-semibold text-neutral-600 dark:text-neutral-400">Admin</th>
+              <th className="text-left px-4 py-3 font-semibold text-neutral-600 dark:text-neutral-400">{t("admin.users.colUser")}</th>
+              <th className="text-left px-4 py-3 font-semibold text-neutral-600 dark:text-neutral-400 hidden md:table-cell">{t("admin.users.colEmail")}</th>
+              <th className="text-right px-4 py-3 font-semibold text-neutral-600 dark:text-neutral-400">{t("admin.users.colPoints")}</th>
+              <th className="text-center px-4 py-3 font-semibold text-neutral-600 dark:text-neutral-400">{t("admin.users.colAdmin")}</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -108,7 +110,7 @@ export default function AdminUsersPage() {
                 <td className="px-4 py-3 text-center">
                   {user.isAdmin ? (
                     <span className="inline-flex items-center gap-1 text-xs font-semibold text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-2 py-0.5 rounded-full">
-                      <Shield className="h-3 w-3" /> Admin
+                      <Shield className="h-3 w-3" /> {t("admin.users.colAdmin")}
                     </span>
                   ) : (
                     <span className="text-xs text-neutral-400 dark:text-neutral-500">—</span>
@@ -126,9 +128,9 @@ export default function AdminUsersPage() {
                     )}
                   >
                     {user.isAdmin ? (
-                      <><ShieldOff className="h-3 w-3" /> Demote</>
+                      <><ShieldOff className="h-3 w-3" /> {t("admin.users.demote")}</>
                     ) : (
-                      <><Shield className="h-3 w-3" /> Promote</>
+                      <><Shield className="h-3 w-3" /> {t("admin.users.promote")}</>
                     )}
                   </button>
                 </td>

@@ -1,5 +1,6 @@
 import { en } from "@mobile/lib/locales/en";
 import { fr } from "@mobile/lib/locales/fr";
+import { pcm } from "@mobile/lib/locales/pcm";
 import i18next from "i18next";
 import { initReactI18next } from "react-i18next";
 
@@ -14,6 +15,7 @@ void i18n.use(initReactI18next).init({
   resources: {
     en: { translation: en },
     fr: { translation: fr },
+    pcm: { translation: pcm },
   },
   interpolation: { escapeValue: false },
   react: { useSuspense: false },
