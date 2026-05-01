@@ -20,12 +20,21 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-function pickDistractors(
-  correct: string,
-  pool: string[],
-  count: number
-): string[] {
-  const candidates = pool.filter((s) => s !== correct);
+/**
+ * Picks `count` distractors from `pool`, excluding the correct answer.
+ * Deduplicates case-insensitively so "Run" and "run" don't both appear.
+ */
+function pickDistractors(correct: string, pool: string[], count: number): string[] {
+  const correctNorm = correct.toLowerCase().trim();
+  const seen = new Set<string>([correctNorm]);
+  const candidates: string[] = [];
+  for (const s of pool) {
+    const norm = s.toLowerCase().trim();
+    if (!seen.has(norm)) {
+      seen.add(norm);
+      candidates.push(s);
+    }
+  }
   return shuffle(candidates).slice(0, count);
 }
 
@@ -128,22 +137,63 @@ function makeListening(
   allEnglish: string[],
   translate?: QuizTranslateFn
 ): QuizQuestion | null {
+  if (!item.audioSource) return null; // listening requires audio
   const distractors = pickDistractors(item.english, allEnglish, 3);
   if (distractors.length < 3) return null;
   return {
     id: `q-${Math.random().toString(36).slice(2, 9)}`,
     type: "listening",
-    prompt: item.audioSource
-      ? translate
-        ? translate("quiz.promptListening")
-        : "Listen and select the correct English translation"
-      : translate
-        ? translate("quiz.promptTranslationOf", { word: item.word })
-        : `What is the English translation of: "${item.word}"?`,
+    prompt: translate
+      ? translate("quiz.promptListening")
+      : "Listen and select the correct English translation",
     correctAnswer: item.english,
     options: shuffle([item.english, ...distractors]),
     audioSource: item.audioSource,
   };
+}
+
+type Candidate = { item: QuizPool; type: QuestionType };
+
+/**
+ * Builds an interleaved list of (item, type) candidates that:
+ *   - Only assigns "listening" to items that have audio
+ *   - Cycles through question types evenly before repeating any type
+ *   - Allows questionCount to exceed pool size by reusing items with different types
+ */
+function buildCandidates(pool: QuizPool[]): Candidate[] {
+  const baseTypes: QuestionType[] = ["word-to-english", "english-to-word", "fill-in-the-blank"];
+  const hasAudioItems = pool.filter((p) => p.audioSource);
+
+  // Group candidates by type, shuffled independently
+  const byType = new Map<QuestionType, Candidate[]>();
+  for (const type of baseTypes) {
+    byType.set(type, shuffle(pool).map((item) => ({ item, type })));
+  }
+  if (hasAudioItems.length > 0) {
+    byType.set("listening", shuffle(hasAudioItems).map((item) => ({ item, type: "listening" })));
+  }
+
+  // Interleave: take one from each type bucket per round, cycling through
+  // types in a freshly-shuffled order each round for even distribution.
+  const typeKeys = [...byType.keys()];
+  const indices = new Map(typeKeys.map((k) => [k, 0]));
+  const interleaved: Candidate[] = [];
+
+  while (true) {
+    let anyAdded = false;
+    for (const type of shuffle(typeKeys)) {
+      const group = byType.get(type)!;
+      const idx = indices.get(type)!;
+      if (idx < group.length) {
+        interleaved.push(group[idx]);
+        indices.set(type, idx + 1);
+        anyAdded = true;
+      }
+    }
+    if (!anyAdded) break;
+  }
+
+  return interleaved;
 }
 
 export function generateQuiz(
@@ -156,10 +206,10 @@ export function generateQuiz(
 
   let pool = gatherDictionaryPool(entries, category);
 
-  // Deduplicate by word
+  // Deduplicate by word (case-insensitive)
   const seen = new Set<string>();
   pool = pool.filter((p) => {
-    const key = p.word.toLowerCase();
+    const key = p.word.toLowerCase().trim();
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
@@ -171,32 +221,26 @@ export function generateQuiz(
   const allWords = pool.map((p) => p.word);
   const allEnglish = pool.map((p) => p.english);
 
-  const shuffledPool = shuffle(pool);
-  const questions: QuizQuestion[] = [];
-  const types: QuestionType[] = [
-    "word-to-english",
-    "english-to-word",
-    "fill-in-the-blank",
-    "listening",
-  ];
+  // Build interleaved (item, type) candidates with type balance and audio awareness
+  const candidates = buildCandidates(pool);
 
-  // Distribute question types evenly across the pool
-  for (let i = 0; i < shuffledPool.length && questions.length < questionCount; i++) {
-    const item = shuffledPool[i];
-    const typeIndex = i % types.length;
+  // Generate question objects from the first questionCount valid candidates
+  const questions: QuizQuestion[] = [];
+  for (const { item, type } of candidates) {
+    if (questions.length >= questionCount) break;
 
     let q: QuizQuestion | null = null;
-    switch (typeIndex) {
-      case 0:
+    switch (type) {
+      case "word-to-english":
         q = makeWordToEnglish(item, allEnglish, translate);
         break;
-      case 1:
+      case "english-to-word":
         q = makeEnglishToWord(item, allWords, translate);
         break;
-      case 2:
+      case "fill-in-the-blank":
         q = makeFillInTheBlank(item, allWords, sentences, translate);
         break;
-      case 3:
+      case "listening":
         q = makeListening(item, allEnglish, translate);
         break;
     }
@@ -219,8 +263,8 @@ export function generateFocusedQuiz(
 ): QuizQuestion[] {
   const pool = gatherDictionaryPool(entries);
   // Filter out the focus word itself from distractor lists
-  const distWords = pool.map((p) => p.word).filter((w) => w !== word);
-  const distEnglish = pool.map((p) => p.english).filter((e) => e !== english);
+  const distWords = pool.map((p) => p.word).filter((w) => w.toLowerCase().trim() !== word.toLowerCase().trim());
+  const distEnglish = pool.map((p) => p.english).filter((e) => e.toLowerCase().trim() !== english.toLowerCase().trim());
 
   // Need at least 3 distractors for each question
   if (distWords.length < 3 || distEnglish.length < 3) return [];
