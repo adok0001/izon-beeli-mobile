@@ -24,7 +24,13 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "output": "static",
@@ -68,15 +74,15 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "bfc59466-aa28-4871-b394-23144ac7d4ec"
+        "projectId": "f58ed9fc-5836-4660-9c9d-2e73f96b0c8d"
       }
     },
     "owner": "tammyado",
     "runtimeVersion": {
-      "policy": "appVersion"
+      "policy": "fingerprint"
     },
     "updates": {
-      "url": "https://u.expo.dev/bfc59466-aa28-4871-b394-23144ac7d4ec"
+      "url": "https://u.expo.dev/f58ed9fc-5836-4660-9c9d-2e73f96b0c8d"
     }
   }
 }
