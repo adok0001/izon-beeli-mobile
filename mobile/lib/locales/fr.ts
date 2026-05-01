@@ -322,6 +322,8 @@ export const fr = {
     accuracySummary: "{{correct}} / {{total}} correctes ({{accuracy}}%)",
     correctLabel: "Correct",
     wrongLabel: "Incorrect",
+    xpEarned: "+{{xp}} XP",
+    leveledUp: "Niveau supérieur !",
   },
   wordReview: {
     title: "Révision",
@@ -353,6 +355,10 @@ export const fr = {
     playAgain: "Rejouer",
     backToLearn: "Retour à l'apprentissage",
     instruction: "Associez chaque mot à sa traduction anglaise",
+    wordLabel: "Mot",
+    englishLabel: "Anglais",
+    matched: "Associés : {{matched}}/{{total}}",
+    attempts: "Tentatives : {{count}}",
   },
   settings: {
     title: "Paramètres",

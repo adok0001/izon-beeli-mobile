@@ -22,6 +22,8 @@ import { useTranslation } from "react-i18next";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+const QUESTION_COUNTS = [5, 10, 15, 20] as const;
+
 const FEEDBACK_DELAY = 1200;
 
 function ProgressBar({
@@ -90,6 +92,55 @@ function OptionCard({
     >
       <Text className={`text-base font-medium ${textClass}`}>{label}</Text>
     </Pressable>
+  );
+}
+
+function ConfigView({ onStart }: { onStart: (count: number) => void }) {
+  const { t } = useTranslation();
+  const [count, setCount] = useState(10);
+
+  return (
+    <View className="flex-1 items-center justify-center px-8">
+      <IconSymbol name="trophy.fill" size={56} color="#3b82f6" />
+      <Text className="mt-4 text-xl font-bold text-neutral-900 dark:text-white">
+        {t("quiz.title")}
+      </Text>
+      <Text className="mt-2 mb-8 text-center text-sm text-neutral-500 dark:text-neutral-400">
+        {t("quiz.subtitle")}
+      </Text>
+
+      <Text className="mb-3 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+        {t("quiz.numberOfQuestions")}
+      </Text>
+      <View className="mb-8 flex-row gap-3">
+        {QUESTION_COUNTS.map((n) => (
+          <Pressable
+            key={n}
+            onPress={() => setCount(n)}
+            className={`h-14 w-14 items-center justify-center rounded-xl border-2 ${
+              count === n
+                ? "border-blue-500 bg-blue-500"
+                : "border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800"
+            }`}
+          >
+            <Text
+              className={`text-base font-bold ${
+                count === n ? "text-white" : "text-neutral-700 dark:text-neutral-300"
+              }`}
+            >
+              {n}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <Pressable
+        onPress={() => onStart(count)}
+        className="w-full items-center rounded-xl bg-blue-500 py-4 active:opacity-80"
+      >
+        <Text className="text-base font-semibold text-white">{t("quiz.startQuiz")}</Text>
+      </Pressable>
+    </View>
   );
 }
 
@@ -208,22 +259,22 @@ function ActiveView() {
 
 function ResultsView({ languageId }: { languageId: string }) {
   const { t } = useTranslation();
-  const { getResult, reset, questions } = useQuizStore();
+  const { getResult, reset, startQuiz, questions } = useQuizStore();
   const router = useRouter();
   const { getToken } = useAuth();
   const result = getResult();
   const startTime = useQuizStore((s) => s.startTime);
   const showTour = useTourStore((s) => s.showTour);
   const hasSeen = useTourStore((s) => s.hasSeen);
+  const [xpResult, setXpResult] = useState<{ xpEarned: number; leveledUp: boolean } | null>(null);
 
   useEffect(() => {
     hapticHeavy();
-    // Post results to backend (fire-and-forget)
     const post = async () => {
       try {
         const token = await getToken();
         const durationMs = Date.now() - startTime;
-        await apiFetch("/quiz-results", {
+        const res = await apiFetch<{ xpEarned: number; leveledUp: boolean; newLevel?: number }>("/quiz-results", {
           method: "POST",
           token: token ?? undefined,
           body: JSON.stringify({
@@ -234,9 +285,11 @@ function ResultsView({ languageId }: { languageId: string }) {
             questionCount: result.totalQuestions,
           }),
         });
+        setXpResult({ xpEarned: res.xpEarned, leveledUp: res.leveledUp });
         analytics.quizFinished(languageId, result.accuracy, durationMs);
       } catch {
         // non-blocking — results display even if save fails
+        analytics.quizFinished(languageId, result.accuracy, 0);
       }
     };
     post();
@@ -266,18 +319,14 @@ function ResultsView({ languageId }: { languageId: string }) {
   const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
 
   const handleTryAgain = () => {
-    // Re-start with same question set but reshuffled
     const reshuffled = [...questions].sort(() => Math.random() - 0.5);
-    // Also reshuffle each question's options
     const reshuffledQuestions = reshuffled.map((q) => ({
       ...q,
       options: [...q.options].sort(() => Math.random() - 0.5),
     }));
-    reset();
-    // small delay so reset clears before starting
-    setTimeout(() => {
-      useQuizStore.getState().startQuiz(reshuffledQuestions);
-    }, 0);
+    // Call startQuiz directly — transitions from "results" → "active" without
+    // passing through "idle" (which would briefly flash the config screen).
+    startQuiz(reshuffledQuestions);
   };
 
   return (
@@ -291,6 +340,22 @@ function ResultsView({ languageId }: { languageId: string }) {
       <Text className={`mb-2 text-4xl font-bold ${scoreColor}`}>
         {result.accuracy}%
       </Text>
+      {xpResult && (
+        <View className="mb-3 flex-row items-center gap-2">
+          <View className="rounded-full bg-amber-100 px-4 py-1.5 dark:bg-amber-900/40">
+            <Text className="text-sm font-bold text-amber-700 dark:text-amber-300">
+              {t("quiz.xpEarned", { xp: xpResult.xpEarned })}
+            </Text>
+          </View>
+          {xpResult.leveledUp && (
+            <View className="rounded-full bg-purple-100 px-4 py-1.5 dark:bg-purple-900/40">
+              <Text className="text-sm font-bold text-purple-700 dark:text-purple-300">
+                {t("quiz.leveledUp")}
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
       <Text className="mb-6 text-base text-neutral-500 dark:text-neutral-400">
         {t("quiz.completedIn", { time: timeStr })}
       </Text>
@@ -360,6 +425,7 @@ export default function QuizScreen() {
   const { data: dictionaryEntries = [], isLoading: isDictLoading } = useDictionary(selectedLanguageId);
   const { phase, startQuiz, reset } = useQuizStore();
   const [isEmpty, setIsEmpty] = useState(false);
+  const [configReady, setConfigReady] = useState(false);
   const initialized = useRef(false);
 
   const isFocused = !!params.focusWord && !!params.focusEnglish;
@@ -368,43 +434,73 @@ export default function QuizScreen() {
     ? t("quiz.practiceTitle", { word: params.focusWord })
     : t("quiz.quizTitle", { language: languageName });
 
-  // Generate and start quiz once dictionary data has loaded
+  const makeTq = useCallback(
+    () => (key: string, opts?: Record<string, unknown>) =>
+      t(key as any, { language: languageName, ...opts } as any),
+    [t, languageName]
+  );
+
+  // Once dictionary data loads: auto-start focused quizzes, show config for regular quizzes
   useEffect(() => {
     if (initialized.current) return;
     if (isDictLoading) return;
     initialized.current = true;
 
-    // Wrap t() so it matches QuizTranslateFn signature — always inject language name
-    const tq: (key: string, opts?: Record<string, unknown>) => string =
-      (key, opts) => t(key as any, { language: languageName, ...opts } as any);
+    const tq = makeTq();
 
-    const questions = isFocused
-      ? generateFocusedQuiz(
-          params.focusWord!,
-          params.focusEnglish!,
-          params.focusAudio || undefined,
-          dictionaryEntries,
-          tq
-        )
-      : generateQuiz(
-          {
-            languageId: selectedLanguageId,
-            courseId: params.courseId,
-            category: params.category,
-            questionCount: 10,
-          },
-          dictionaryEntries,
-          undefined,
-          tq
-        );
-
-    if (questions.length === 0) {
-      setIsEmpty(true);
+    if (isFocused) {
+      const questions = generateFocusedQuiz(
+        params.focusWord!,
+        params.focusEnglish!,
+        params.focusAudio || undefined,
+        dictionaryEntries,
+        tq
+      );
+      if (questions.length === 0) {
+        setIsEmpty(true);
+      } else {
+        startQuiz(questions);
+        analytics.quizStarted(selectedLanguageId, questions.length);
+      }
     } else {
-      startQuiz(questions);
-      analytics.quizStarted(selectedLanguageId, questions.length);
+      // Check there's enough vocabulary before showing the config screen
+      const test = generateQuiz(
+        { languageId: selectedLanguageId, courseId: params.courseId, category: params.category, questionCount: 5 },
+        dictionaryEntries,
+        undefined,
+        tq
+      );
+      if (test.length === 0) {
+        setIsEmpty(true);
+      } else {
+        setConfigReady(true);
+      }
     }
   }, [isDictLoading]);
+
+  const handleStart = useCallback(
+    (count: number) => {
+      const tq = makeTq();
+      const questions = generateQuiz(
+        {
+          languageId: selectedLanguageId,
+          courseId: params.courseId,
+          category: params.category,
+          questionCount: count,
+        },
+        dictionaryEntries,
+        undefined,
+        tq
+      );
+      if (questions.length === 0) {
+        setIsEmpty(true);
+      } else {
+        startQuiz(questions);
+        analytics.quizStarted(selectedLanguageId, questions.length);
+      }
+    },
+    [selectedLanguageId, params.courseId, params.category, dictionaryEntries, makeTq, startQuiz]
+  );
 
   return (
     <>
@@ -436,6 +532,8 @@ export default function QuizScreen() {
           <ResultsView languageId={selectedLanguageId} />
         ) : phase === "active" ? (
           <ActiveView />
+        ) : configReady ? (
+          <ConfigView onStart={handleStart} />
         ) : null}
       </SafeAreaView>
     </>

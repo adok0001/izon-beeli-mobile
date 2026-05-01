@@ -319,6 +319,8 @@ export const en = {
     accuracySummary: "{{correct}} / {{total}} correct ({{accuracy}}%)",
     correctLabel: "Correct",
     wrongLabel: "Incorrect",
+    xpEarned: "+{{xp}} XP",
+    leveledUp: "Level Up!",
   },
   wordReview: {
     title: "Word Review",
@@ -350,6 +352,10 @@ export const en = {
     playAgain: "Play Again",
     backToLearn: "Back to Learn",
     instruction: "Match each word with its English translation",
+    wordLabel: "Word",
+    englishLabel: "English",
+    matched: "Matched: {{matched}}/{{total}}",
+    attempts: "Attempts: {{count}}",
   },
   settings: {
     title: "Settings",

@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from "react";
 import { View, Text, Pressable, Dimensions } from "react-native";
+import { useTranslation } from "react-i18next";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -70,6 +71,7 @@ function MatchingTile({ tile, onPress }: { tile: Tile; onPress: () => void }) {
 }
 
 export function MatchingBoard() {
+  const { t } = useTranslation();
   const { tiles, selectTile, clearFlash, matchedCount, totalPairs, attempts } =
     useMatchingStore();
 
@@ -94,10 +96,10 @@ export function MatchingBoard() {
     <View>
       <View className="mb-3 flex-row items-center justify-between px-1">
         <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-          Matched: {matchedCount}/{totalPairs}
+          {t("matching.matched", { matched: matchedCount, total: totalPairs })}
         </Text>
         <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-          Attempts: {attempts}
+          {t("matching.attempts", { count: attempts })}
         </Text>
       </View>
 
@@ -115,13 +117,13 @@ export function MatchingBoard() {
         <View className="flex-row items-center">
           <View className="mr-1.5 h-3 w-3 rounded bg-violet-300 dark:bg-violet-700" />
           <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-            Word
+            {t("matching.wordLabel")}
           </Text>
         </View>
         <View className="flex-row items-center">
           <View className="mr-1.5 h-3 w-3 rounded bg-amber-300 dark:bg-amber-700" />
           <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-            English
+            {t("matching.englishLabel")}
           </Text>
         </View>
       </View>
