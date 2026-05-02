@@ -428,6 +428,11 @@ export default function QuizScreen() {
   const [configReady, setConfigReady] = useState(false);
   const initialized = useRef(false);
 
+  // Reset quiz state on unmount so a dismissed mid-quiz doesn't persist into the next visit
+  useEffect(() => {
+    return () => { reset(); };
+  }, [reset]);
+
   const isFocused = !!params.focusWord && !!params.focusEnglish;
   const languageName = getLanguageName(selectedLanguageId);
   const quizTitle = isFocused
