@@ -1,7 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/clerk-expo";
 import { apiFetch } from "@/lib/api";
 import type { DailyChallenge } from "@/types";
+import { useCallback } from "react";
 
 export function useTodayChallenges() {
   const { getToken, isSignedIn } = useAuth();
@@ -15,6 +16,14 @@ export function useTodayChallenges() {
     enabled: !!isSignedIn,
     staleTime: 60 * 1000, // 1 min
   });
+}
+
+export function useInvalidateDailyChallenges() {
+  const queryClient = useQueryClient();
+  return useCallback(
+    () => queryClient.invalidateQueries({ queryKey: ["daily-challenges", "today"] }),
+    [queryClient]
+  );
 }
 
 export function useChallengeHistory() {

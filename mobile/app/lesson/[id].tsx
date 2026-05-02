@@ -2,7 +2,7 @@ import { AudioPlayer } from "@/components/audio/audio-player";
 import { InteractiveTranscript } from "@/components/audio/interactive-transcript";
 import { LevelUpModal } from "@/components/level-up-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useCompletedLessons, useCompleteLesson } from "@/lib/hooks/use-progress";
+import { useCompletedLessons, useCompleteLesson, useTrackListen } from "@/lib/hooks/use-progress";
 import { useLesson } from "@/lib/hooks/use-courses";
 import { useNextLesson } from "@/lib/hooks/use-next-lesson";
 import { formatDuration, BUNDLED_AUDIO } from "@/lib/mock-data";
@@ -41,6 +41,7 @@ export default function LessonScreen() {
       setLevelUp({ level, title });
     },
   });
+  const trackListen = useTrackListen();
 
   if (isLoading) {
     return (
@@ -81,6 +82,7 @@ export default function LessonScreen() {
       togglePlayback();
     } else if (audioSource) {
       loadAndPlay(lesson.id, audioSource, lessonTitle);
+      trackListen.mutate(lesson.id);
       analytics.lessonStarted(lesson.id, selectedLanguageId);
     }
   };

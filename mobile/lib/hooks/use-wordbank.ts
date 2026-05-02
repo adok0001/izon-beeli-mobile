@@ -2,6 +2,7 @@ import { apiFetch } from "@/lib/api";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
+import { useInvalidateDailyChallenges } from "./use-daily-challenge";
 
 export interface WordBankEntry {
   dictionaryEntryId: string;
@@ -27,6 +28,7 @@ export function useWordBank() {
 export function useSaveWord() {
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
+  const invalidateDailyChallenges = useInvalidateDailyChallenges();
 
   return useMutation({
     mutationFn: async (dictionaryEntryId: string) => {
@@ -52,6 +54,7 @@ export function useSaveWord() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["wordbank"] });
+      invalidateDailyChallenges();
     },
   });
 }

@@ -2,6 +2,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { apiFetch } from "@/lib/api";
 import type { DictionaryEntry } from "@/lib/dictionary";
 import { hapticError, hapticSuccess, hapticTap } from "@/lib/haptics";
+import { useInvalidateDailyChallenges } from "@/lib/hooks/use-daily-challenge";
 import { useInvalidateReviewQueue, useReviewWord, useWordsDueForReview } from "@/lib/hooks/use-wordbank";
 import { playCorrectSound, playIncorrectSound } from "@/lib/sounds";
 import type { AudioSource } from "@/types";
@@ -179,11 +180,15 @@ export default function WordReviewScreen() {
   const dictionary = dictionaryQueries.flatMap((q) => q.data ?? []);
   const reviewWord = useReviewWord();
   const invalidateReviewQueue = useInvalidateReviewQueue();
+  const invalidateDailyChallenges = useInvalidateDailyChallenges();
   const { t } = useTranslation();
 
   useEffect(() => {
-    return () => { invalidateReviewQueue(); };
-  }, [invalidateReviewQueue]);
+    return () => {
+      invalidateReviewQueue();
+      invalidateDailyChallenges();
+    };
+  }, [invalidateReviewQueue, invalidateDailyChallenges]);
 
   const isLoading = isDueLoading || isDictLoading;
 

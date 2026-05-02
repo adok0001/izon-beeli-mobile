@@ -153,9 +153,7 @@ progressRouter.post("/:lessonId/complete", async (c) => {
   // Award XP (updates points in DB)
   const xpResult = await awardXP(userId, 50, "lesson");
 
-  // Fire-and-forget: increment daily challenge
   incrementDailyChallenge(userId, "complete_lesson").catch(() => {});
-  incrementDailyChallenge(userId, "listen_lesson").catch(() => {});
 
   const streakMilestone = STREAK_MILESTONES.has(newStreak) ? newStreak : null;
 
@@ -171,6 +169,13 @@ progressRouter.post("/:lessonId/complete", async (c) => {
     freezeGranted: totalFreezeGrant > 0 ? totalFreezeGrant : null,
     freezeCount: (user?.streakFreezes ?? 0) + totalFreezeGrant,
   });
+});
+
+// POST /api/progress/:lessonId/listen - track that user started listening to a lesson
+progressRouter.post("/:lessonId/listen", async (c) => {
+  const userId = c.get("userId");
+  incrementDailyChallenge(userId, "listen_lesson").catch(() => {});
+  return c.json({ tracked: true });
 });
 
 // POST /api/progress/freeze - spend a freeze to restore broken streak

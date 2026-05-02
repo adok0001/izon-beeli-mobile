@@ -15,6 +15,7 @@ import { useLanguageStore } from "@/store/language-store";
 import { useQuizStore } from "@/store/quiz-store";
 import { useTourStore } from "@/store/tour-store";
 import type { QuizQuestion } from "@/types";
+import { useInvalidateDailyChallenges } from "@/lib/hooks/use-daily-challenge";
 import { useAuth } from "@clerk/clerk-expo";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -262,6 +263,7 @@ function ResultsView({ languageId }: { languageId: string }) {
   const { getResult, reset, startQuiz, questions } = useQuizStore();
   const router = useRouter();
   const { getToken } = useAuth();
+  const invalidateDailyChallenges = useInvalidateDailyChallenges();
   const result = getResult();
   const startTime = useQuizStore((s) => s.startTime);
   const showTour = useTourStore((s) => s.showTour);
@@ -286,6 +288,7 @@ function ResultsView({ languageId }: { languageId: string }) {
           }),
         });
         setXpResult({ xpEarned: res.xpEarned, leveledUp: res.leveledUp });
+        invalidateDailyChallenges();
         analytics.quizFinished(languageId, result.accuracy, durationMs);
       } catch {
         // non-blocking — results display even if save fails

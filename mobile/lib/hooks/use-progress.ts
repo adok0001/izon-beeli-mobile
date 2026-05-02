@@ -3,6 +3,7 @@ import { useAuth } from "@clerk/clerk-expo";
 import { Alert } from "react-native";
 import { apiFetch } from "@/lib/api";
 import { hapticHeavy } from "@/lib/haptics";
+import { useInvalidateDailyChallenges } from "./use-daily-challenge";
 
 export interface ProgressSummary {
   points: number;
@@ -57,6 +58,7 @@ export function useCompleteLesson(callbacks?: {
 }) {
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
+  const invalidateDailyChallenges = useInvalidateDailyChallenges();
 
   return useMutation({
     mutationFn: async (lessonId: string) => {
@@ -90,6 +92,25 @@ export function useCompleteLesson(callbacks?: {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["progress"] });
+      invalidateDailyChallenges();
+    },
+  });
+}
+
+export function useTrackListen() {
+  const { getToken } = useAuth();
+  const invalidateDailyChallenges = useInvalidateDailyChallenges();
+
+  return useMutation({
+    mutationFn: async (lessonId: string) => {
+      const token = await getToken();
+      return apiFetch(`/progress/${lessonId}/listen`, {
+        method: "POST",
+        token: token!,
+      });
+    },
+    onSuccess: () => {
+      invalidateDailyChallenges();
     },
   });
 }
