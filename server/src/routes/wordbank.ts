@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq, and, lte } from "drizzle-orm";
+import { eq, and, lte, or, isNull, asc } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { wordBank, dictionaryEntries } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
@@ -22,9 +22,10 @@ wordbankRouter.get("/", async (c) => {
   return c.json(rows.map((r) => r.dictionaryEntryId));
 });
 
-// GET /api/wordbank/due - list word IDs due for review (nextReviewAt <= now or never reviewed)
+// GET /api/wordbank/due - list word IDs due for review (nextReviewAt <= now or null)
 wordbankRouter.get("/due", async (c) => {
   const userId = c.get("userId");
+  const languageId = c.req.query("languageId");
   const now = new Date();
 
   const rows = await db
@@ -40,39 +41,14 @@ wordbankRouter.get("/due", async (c) => {
     .where(
       and(
         eq(wordBank.userId, userId),
-        lte(wordBank.nextReviewAt, now)
+        languageId ? eq(dictionaryEntries.languageId, languageId) : undefined,
+        or(isNull(wordBank.nextReviewAt), lte(wordBank.nextReviewAt, now))
       )
     )
+    .orderBy(asc(wordBank.nextReviewAt))
     .limit(20);
 
-  // Also include words never scheduled for review
-  const neverReviewed = await db
-    .select({
-      dictionaryEntryId: wordBank.dictionaryEntryId,
-      confidence: wordBank.confidence,
-      reviewCount: wordBank.reviewCount,
-      nextReviewAt: wordBank.nextReviewAt,
-      languageId: dictionaryEntries.languageId,
-    })
-    .from(wordBank)
-    .innerJoin(dictionaryEntries, eq(wordBank.dictionaryEntryId, dictionaryEntries.id))
-    .where(
-      and(
-        eq(wordBank.userId, userId),
-        eq(wordBank.reviewCount, 0)
-      )
-    )
-    .limit(20);
-
-  const combined = [...rows, ...neverReviewed];
-  const seen = new Set<string>();
-  const unique = combined.filter((r) => {
-    if (seen.has(r.dictionaryEntryId)) return false;
-    seen.add(r.dictionaryEntryId);
-    return true;
-  }).slice(0, 20);
-
-  return c.json(unique);
+  return c.json(rows);
 });
 
 // POST /api/wordbank - save a word

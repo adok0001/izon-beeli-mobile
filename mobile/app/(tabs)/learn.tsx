@@ -277,10 +277,10 @@ function BountyTeaser({ languageId }: { languageId: string }) {
   );
 }
 
-function ReviewBanner() {
+function ReviewBanner({ languageId }: Readonly<{ languageId?: string | null }>) {
   const { t } = useTranslation();
   const router = useRouter();
-  const { data: dueWords = [] } = useWordsDueForReview();
+  const { data: dueWords = [] } = useWordsDueForReview(languageId);
 
   if (dueWords.length === 0) return null;
 
@@ -356,7 +356,7 @@ export default function LearnScreen() {
   const { data: courses = [], isLoading: coursesLoading, refetch: refetchCourses } = useCourses(selectedLanguageId);
   const { data: completedLessonIds, isLoading: progressLoading, refetch } = useCompletedLessons();
   const { data: summary, refetch: refetchSummary } = useProgressSummary();
-  const { refetch: refetchDue } = useWordsDueForReview();
+  const { refetch: refetchDue } = useWordsDueForReview(selectedLanguageId);
   const { data: todayChallenges = [] } = useTodayChallenges();
   const completedIds = new Set(completedLessonIds ?? []);
   const completedToday = useMemo(
@@ -492,7 +492,7 @@ export default function LearnScreen() {
           renderItem={({ item }) => <CourseCard course={item} completedIds={completedIds} />}
           ListHeaderComponent={
             <View className="mb-4 gap-3">
-              <ReviewBanner />
+              <ReviewBanner languageId={selectedLanguageId} />
               {resumeState && resumeState.positionSeconds > 5 && (
                 <ContinueCard
                   lessonId={resumeState.lessonId}

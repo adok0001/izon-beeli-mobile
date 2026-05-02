@@ -59,14 +59,15 @@ export function useSaveWord() {
   });
 }
 
-export function useWordsDueForReview() {
+export function useWordsDueForReview(languageId?: string | null) {
   const { getToken, isSignedIn } = useAuth();
 
   return useQuery<WordBankEntry[]>({
-    queryKey: ["wordbank", "due"],
+    queryKey: ["wordbank", "due", languageId ?? null],
     queryFn: async () => {
       const token = await getToken();
-      return apiFetch<WordBankEntry[]>("/wordbank/due", { token: token! });
+      const qs = languageId ? `?languageId=${encodeURIComponent(languageId)}` : "";
+      return apiFetch<WordBankEntry[]>(`/wordbank/due${qs}`, { token: token! });
     },
     enabled: !!isSignedIn,
   });
@@ -102,6 +103,7 @@ export function useInvalidateReviewQueue() {
     [queryClient]
   );
 }
+
 
 export function useRemoveWord() {
   const { getToken } = useAuth();

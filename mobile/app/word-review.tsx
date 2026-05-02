@@ -5,6 +5,7 @@ import { hapticError, hapticSuccess, hapticTap } from "@/lib/haptics";
 import { useInvalidateDailyChallenges } from "@/lib/hooks/use-daily-challenge";
 import { useInvalidateReviewQueue, useReviewWord, useWordsDueForReview } from "@/lib/hooks/use-wordbank";
 import { playCorrectSound, playIncorrectSound } from "@/lib/sounds";
+import { useLanguageStore } from "@/store/language-store";
 import type { AudioSource } from "@/types";
 import { useQueries } from "@tanstack/react-query";
 import { Audio } from "expo-av";
@@ -165,7 +166,8 @@ function ReviewCard({
 
 export default function WordReviewScreen() {
   const router = useRouter();
-  const { data: dueEntries = [], isLoading: isDueLoading } = useWordsDueForReview();
+  const { selectedLanguageId } = useLanguageStore();
+  const { data: dueEntries = [], isLoading: isDueLoading } = useWordsDueForReview(selectedLanguageId);
   const languageIds = useMemo(
     () => [...new Set(dueEntries.map((e) => e.languageId))],
     [dueEntries]
