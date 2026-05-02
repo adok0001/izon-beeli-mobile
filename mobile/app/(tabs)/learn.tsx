@@ -87,105 +87,120 @@ function CourseCard({ course, completedIds }: { course: Course; completedIds: Se
   const completedCount = lessons.filter((l) => completedIds.has(l.id)).length;
   const progressPercent =
     lessons.length > 0 ? (completedCount / lessons.length) * 100 : 0;
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <View className="mb-4 rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
-      <View className="mb-2 flex-row items-center justify-between">
-        <View className="rounded-full bg-blue-100 px-3 py-1 dark:bg-blue-900">
-          <Text className="text-xs font-semibold capitalize text-blue-700 dark:text-blue-300">
-            {t(`levels.${course.level}`, { defaultValue: course.level })}
-          </Text>
-        </View>
-        <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-          {t("learn.lessonsCount", { done: completedCount, total: lessons.length })}
-        </Text>
-      </View>
-
-      <Text className="mb-1 text-lg font-bold text-neutral-900 dark:text-white">
-        {localizeField(course.title, course.titleFr, uiLanguage)}
-      </Text>
-      <Text className="mb-3 text-sm text-neutral-600 dark:text-neutral-400" numberOfLines={2}>
-        {localizeField(course.description, course.descriptionFr, uiLanguage)}
-      </Text>
-
-      {progressPercent > 0 && (
-        <View className="mb-3">
-          <View className="relative h-2 rounded-full bg-neutral-200 dark:bg-neutral-700">
-            <View
-              className="h-2 rounded-full bg-blue-500"
-              style={{ width: `${progressPercent}%` }}
-            />
-            {[25, 50, 75].map((pct) => (
-              <View
-                key={pct}
-                className="absolute top-0 h-2 w-0.5"
-                style={{
-                  left: `${pct}%`,
-                  backgroundColor:
-                    progressPercent >= pct
-                      ? "#93c5fd"
-                      : colorScheme === "dark"
-                        ? "#4b5563"
-                        : "#d1d5db",
-                }}
-              />
-            ))}
-          </View>
-          {progressPercent >= 100 && (
-            <Text className="mt-1 text-right text-xs font-semibold text-green-600 dark:text-green-400">
-              {t("learn.complete")}
+    <View className="mb-4 overflow-hidden rounded-2xl bg-neutral-50 dark:bg-neutral-800">
+      {/* Tappable header — always visible */}
+      <Pressable
+        onPress={() => setCollapsed((c) => !c)}
+        className="p-4 active:opacity-70"
+      >
+        <View className="mb-2 flex-row items-center justify-between">
+          <View className="rounded-full bg-blue-100 px-3 py-1 dark:bg-blue-900">
+            <Text className="text-xs font-semibold capitalize text-blue-700 dark:text-blue-300">
+              {t(`levels.${course.level}`, { defaultValue: course.level })}
             </Text>
+          </View>
+          <View className="flex-row items-center gap-2">
+            <Text className="text-xs text-neutral-500 dark:text-neutral-400">
+              {t("learn.lessonsCount", { done: completedCount, total: lessons.length })}
+            </Text>
+            <IconSymbol
+              name={collapsed ? "chevron.right" : "chevron.down"}
+              size={13}
+              color="#9ca3af"
+            />
+          </View>
+        </View>
+
+        <Text className="mb-1 text-lg font-bold text-neutral-900 dark:text-white">
+          {localizeField(course.title, course.titleFr, uiLanguage)}
+        </Text>
+        <Text className="text-sm text-neutral-600 dark:text-neutral-400" numberOfLines={2}>
+          {localizeField(course.description, course.descriptionFr, uiLanguage)}
+        </Text>
+
+        {progressPercent > 0 && (
+          <View className="mt-3">
+            <View className="relative h-2 rounded-full bg-neutral-200 dark:bg-neutral-700">
+              <View
+                className="h-2 rounded-full bg-blue-500"
+                style={{ width: `${progressPercent}%` }}
+              />
+              {[25, 50, 75].map((pct) => {
+                const inactiveColor = colorScheme === "dark" ? "#4b5563" : "#d1d5db";
+                const tickColor = progressPercent >= pct ? "#93c5fd" : inactiveColor;
+                return (
+                  <View
+                    key={pct}
+                    className="absolute top-0 h-2 w-0.5"
+                    style={{ left: `${pct}%`, backgroundColor: tickColor }}
+                  />
+                );
+              })}
+            </View>
+            {progressPercent >= 100 && (
+              <Text className="mt-1 text-right text-xs font-semibold text-green-600 dark:text-green-400">
+                {t("learn.complete")}
+              </Text>
+            )}
+          </View>
+        )}
+      </Pressable>
+
+      {/* Collapsible: lessons + actions */}
+      {!collapsed && (
+        <View className="px-4 pb-4">
+          {lessonsLoading ? (
+            <ActivityIndicator size="small" color="#3b82f6" />
+          ) : (
+            lessons.map((lesson) => (
+              <LessonRow
+                key={lesson.id}
+                lesson={lesson}
+                completed={completedIds.has(lesson.id)}
+                onPress={() => router.push(`/lesson/${lesson.id}`)}
+              />
+            ))
+          )}
+
+          <View className="mt-2 flex-row gap-2">
+            <Pressable
+              onPress={() =>
+                router.push({ pathname: "/quiz", params: { courseId: course.id } })
+              }
+              className="flex-1 flex-row items-center justify-center rounded-lg border border-blue-200 py-2.5 active:opacity-70 dark:border-blue-800"
+            >
+              <IconSymbol name="trophy.fill" size={16} color="#3b82f6" />
+              <Text className="ml-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400">
+                {t("learn.practiceQuiz")}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() =>
+                router.push({ pathname: "/matching-game", params: { courseId: course.id } })
+              }
+              className="flex-1 flex-row items-center justify-center rounded-lg border border-violet-200 py-2.5 active:opacity-70 dark:border-violet-800"
+            >
+              <IconSymbol name="rectangle.grid.2x2" size={16} color="#8b5cf6" />
+              <Text className="ml-1.5 text-sm font-semibold text-violet-600 dark:text-violet-400">
+                {t("learn.matchingGame")}
+              </Text>
+            </Pressable>
+          </View>
+          {getStoryForCourse(course.id) && (
+            <Pressable
+              onPress={() => router.push(`/story/${course.id}` as any)}
+              className="mt-2 flex-row items-center justify-center rounded-lg border border-amber-200 py-2.5 active:opacity-70 dark:border-amber-800"
+            >
+              <IconSymbol name="book.fill" size={16} color="#f59e0b" />
+              <Text className="ml-1.5 text-sm font-semibold text-amber-600 dark:text-amber-400">
+                {t("learn.storyMode")}
+              </Text>
+            </Pressable>
           )}
         </View>
-      )}
-
-      {lessonsLoading ? (
-        <ActivityIndicator size="small" color="#3b82f6" />
-      ) : (
-        lessons.map((lesson) => (
-          <LessonRow
-            key={lesson.id}
-            lesson={lesson}
-            completed={completedIds.has(lesson.id)}
-            onPress={() => router.push(`/lesson/${lesson.id}`)}
-          />
-        ))
-      )}
-
-      <View className="mt-2 flex-row gap-2">
-        <Pressable
-          onPress={() =>
-            router.push({ pathname: "/quiz", params: { courseId: course.id } })
-          }
-          className="flex-1 flex-row items-center justify-center rounded-lg border border-blue-200 py-2.5 active:opacity-70 dark:border-blue-800"
-        >
-          <IconSymbol name="trophy.fill" size={16} color="#3b82f6" />
-          <Text className="ml-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400">
-            {t("learn.practiceQuiz")}
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() =>
-            router.push({ pathname: "/matching-game", params: { courseId: course.id } })
-          }
-          className="flex-1 flex-row items-center justify-center rounded-lg border border-violet-200 py-2.5 active:opacity-70 dark:border-violet-800"
-        >
-          <IconSymbol name="rectangle.grid.2x2" size={16} color="#8b5cf6" />
-          <Text className="ml-1.5 text-sm font-semibold text-violet-600 dark:text-violet-400">
-            {t("learn.matchingGame")}
-          </Text>
-        </Pressable>
-      </View>
-      {getStoryForCourse(course.id) && (
-        <Pressable
-          onPress={() => router.push(`/story/${course.id}` as any)}
-          className="mt-2 flex-row items-center justify-center rounded-lg border border-amber-200 py-2.5 active:opacity-70 dark:border-amber-800"
-        >
-          <IconSymbol name="book.fill" size={16} color="#f59e0b" />
-          <Text className="ml-1.5 text-sm font-semibold text-amber-600 dark:text-amber-400">
-            {t("learn.storyMode")}
-          </Text>
-        </Pressable>
       )}
     </View>
   );
