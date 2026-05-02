@@ -81,7 +81,7 @@ export function useReviewWord() {
       confidence: "easy" | "hard" | "again";
     }) => {
       const token = await getToken();
-      return apiFetch<{ nextReviewAt: string }>(`/wordbank/${dictionaryEntryId}/review`, {
+      return apiFetch<{ nextReviewAt: string; xpEarned: number; leveledUp: boolean; newLevel?: number; totalPoints?: number }>(`/wordbank/${dictionaryEntryId}/review`, {
         method: "POST",
         token: token!,
         body: JSON.stringify({ confidence }),

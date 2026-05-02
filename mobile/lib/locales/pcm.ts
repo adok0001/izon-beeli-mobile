@@ -342,6 +342,8 @@ export const pcm = {
     sessionReviewedPlural: "You review {{count}} words. Keep am up!",
     reviewed: "Reviewed: {{count}}",
     of: "{{current}} of {{total}}",
+    playAudio: "Play audio",
+    playing: "E dey play…",
   },
   matching: {
     titleSuffix: "Matching",

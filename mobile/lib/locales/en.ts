@@ -339,6 +339,8 @@ export const en = {
     sessionReviewedPlural: "You reviewed {{count}} words. Keep it up!",
     reviewed: "Reviewed: {{count}}",
     of: "{{current}} of {{total}}",
+    playAudio: "Play audio",
+    playing: "Playing…",
   },
   matching: {
     titleSuffix: "Matching",

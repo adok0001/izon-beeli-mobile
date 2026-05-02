@@ -342,6 +342,8 @@ export const fr = {
     sessionReviewedPlural: "Vous avez révisé {{count}} mots. Continuez ainsi !",
     reviewed: "Révisés : {{count}}",
     of: "{{current}} sur {{total}}",
+    playAudio: "Écouter",
+    playing: "Lecture…",
   },
   matching: {
     titleSuffix: "Association",
