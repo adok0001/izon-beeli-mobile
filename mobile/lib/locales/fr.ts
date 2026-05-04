@@ -429,6 +429,7 @@ export const fr = {
     statusDraft: "Brouillon",
     typeAudio: "Audio",
     typeMeaning: "Sens",
+    typeImage: "Image",
   },
   notifications: {
     title: "Notifications",
@@ -755,6 +756,9 @@ export const fr = {
     recordingSaved: "Enregistrement sauvegardé",
     reRecord: "Réenregistrer",
     recordingHint: "Optionnel — appuyez pour enregistrer la prononciation",
+    imagePicker: "Photo",
+    imageHint: "Optionnel — appuyez pour ajouter une photo",
+    changeImage: "Changer de photo",
     recordingTapToStop: "Enregistrement… Appuyez pour arrêter",
     submittedWordDesc: "Votre contribution a été soumise pour examen.",
     // Lesson flow
@@ -923,6 +927,10 @@ export const fr = {
     submitted: "Soumis !",
     audioSubmittedDesc: "Votre enregistrement audio a été soumis pour examen.",
     meaningSubmittedDesc: "Votre suggestion de sens a été soumise pour examen.",
+    addImage: "Ajouter une image",
+    addImageDesc: "Téléversez une photo pour aider les apprenants à visualiser ce mot.",
+    tapToPickImage: "Appuyez pour choisir une image",
+    imageSubmittedDesc: "Votre image a été soumise pour examen.",
   },
   admin: {
     panelTitle: "Panneau d'administration",

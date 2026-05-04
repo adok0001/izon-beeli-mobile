@@ -426,6 +426,7 @@ export const en = {
     statusDraft: "Draft",
     typeAudio: "Audio",
     typeMeaning: "Meaning",
+    typeImage: "Image",
   },
   notifications: {
     title: "Notifications",
@@ -752,6 +753,9 @@ export const en = {
     recordingSaved: "Recording saved",
     reRecord: "Re-record",
     recordingHint: "Optional — tap to record pronunciation",
+    imagePicker: "Photo",
+    imageHint: "Optional — tap to add a photo",
+    changeImage: "Change photo",
     recordingTapToStop: "Recording… Tap to stop",
     submittedWordDesc: "Your contribution has been submitted for review.",
     // Lesson flow
@@ -920,6 +924,10 @@ export const en = {
     submitted: "Submitted!",
     audioSubmittedDesc: "Your audio recording has been submitted for review.",
     meaningSubmittedDesc: "Your suggested meaning has been submitted for review.",
+    addImage: "Add an Image",
+    addImageDesc: "Upload a photo to help learners visualize this word.",
+    tapToPickImage: "Tap to choose an image",
+    imageSubmittedDesc: "Your image has been submitted for review.",
   },
   admin: {
     panelTitle: "Admin Panel",

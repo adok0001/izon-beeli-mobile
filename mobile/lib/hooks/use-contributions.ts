@@ -13,7 +13,8 @@ export interface ContributionInput {
   pronunciation?: string;
   example?: string;
   exampleTranslation?: string;
-  audioUri?: string; // local file URI for audio pronunciation
+  audioUri?: string;
+  imageUri?: string;
 }
 
 export function useSubmitContribution() {
@@ -24,7 +25,7 @@ export function useSubmitContribution() {
     mutationFn: async (input: ContributionInput) => {
       const token = await getToken();
 
-      if (input.audioUri) {
+      if (input.audioUri || input.imageUri) {
         const formData = new FormData();
         formData.append("type", input.type);
         formData.append("languageId", input.languageId);
@@ -35,11 +36,20 @@ export function useSubmitContribution() {
         if (input.example) formData.append("example", input.example);
         if (input.exampleTranslation) formData.append("exampleTranslation", input.exampleTranslation);
 
-        formData.append("audio", {
-          uri: input.audioUri,
-          type: "audio/m4a",
-          name: "pronunciation.m4a",
-        } as any);
+        if (input.audioUri) {
+          formData.append("audio", {
+            uri: input.audioUri,
+            type: "audio/m4a",
+            name: "pronunciation.m4a",
+          } as any);
+        }
+
+        if (input.imageUri) {
+          const filename = input.imageUri.split("/").pop() ?? "image.jpg";
+          const ext = filename.split(".").pop()?.toLowerCase() ?? "jpg";
+          const mimeType = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+          formData.append("image", { uri: input.imageUri, type: mimeType, name: filename } as any);
+        }
 
         const res = await fetch(`${API_BASE_URL}/contributions`, {
           method: "POST",
@@ -77,13 +87,14 @@ export function useSubmitContribution() {
 }
 
 export interface EntryContributionInput {
-  type: "entry_audio" | "entry_meaning";
+  type: "entry_audio" | "entry_meaning" | "entry_image";
   languageId: string;
   dictionaryEntryId: string;
   word: string;
   english?: string; // new meaning (for entry_meaning)
   category: string;
   audioUri?: string; // local file URI (for entry_audio)
+  imageUri?: string; // local file URI (for entry_image)
 }
 
 export function useSubmitEntryContribution() {
@@ -107,6 +118,36 @@ export function useSubmitEntryContribution() {
           uri: input.audioUri,
           type: "audio/m4a",
           name: "pronunciation.m4a",
+        } as any);
+
+        const res = await fetch(`${API_BASE_URL}/contributions`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`API error ${res.status}: ${text}`);
+        }
+        return res.json();
+      } else if (input.type === "entry_image" && input.imageUri) {
+        const formData = new FormData();
+        formData.append("type", "entry_image");
+        formData.append("languageId", input.languageId);
+        formData.append("dictionaryEntryId", input.dictionaryEntryId);
+        formData.append("word", input.word);
+        formData.append("english", input.english ?? input.word);
+        formData.append("category", input.category);
+
+        const filename = input.imageUri.split("/").pop() ?? "image.jpg";
+        const ext = filename.split(".").pop()?.toLowerCase() ?? "jpg";
+        const mimeType = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+
+        formData.append("image", {
+          uri: input.imageUri,
+          type: mimeType,
+          name: filename,
         } as any);
 
         const res = await fetch(`${API_BASE_URL}/contributions`, {
@@ -215,6 +256,7 @@ export interface PendingContribution {
   userId: string;
   submitterName: string | null;
   audioUrl: string | null;
+  imageUrl: string | null;
   createdAt: string;
 }
 
@@ -386,6 +428,7 @@ export interface MyContribution {
   type: string;
   status: string;
   audioUrl: string | null;
+  imageUrl: string | null;
   reviewNote: string | null;
   xpAwarded: number | null;
   bountyXpAwarded: number | null;

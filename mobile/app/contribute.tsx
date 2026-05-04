@@ -8,7 +8,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Image,
 } from "react-native";
+import * as DocumentPicker from "expo-document-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter, useLocalSearchParams } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -52,6 +54,7 @@ export default function ContributeScreen() {
   const [pronunciation, setPronunciation] = useState("");
   const [example, setExample] = useState("");
   const [exampleTranslation, setExampleTranslation] = useState("");
+  const [imageUri, setImageUri] = useState<string | null>(null);
 
   const isPhrase = word.trim().includes(" ");
 
@@ -61,6 +64,16 @@ export default function ContributeScreen() {
     category ?? undefined
   );
   const activeBounty = matchingBounties?.[0]; // highest xpReward first
+
+  const handlePickImage = async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ["image/*"],
+      copyToCacheDirectory: true,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setImageUri(result.assets[0].uri);
+    }
+  };
 
   const handleSubmit = () => {
     if (!selectedLanguage || !word.trim() || !english.trim() || !category) return;
@@ -76,6 +89,7 @@ export default function ContributeScreen() {
         example: example.trim() || undefined,
         exampleTranslation: exampleTranslation.trim() || undefined,
         audioUri: recordingUri ?? undefined,
+        imageUri: imageUri ?? undefined,
       },
       {
         onSuccess: () => {
@@ -461,7 +475,36 @@ export default function ContributeScreen() {
                     </Text>
                   )}
                 </View>
-              </View>
+
+              {/* Image */}
+              <Text className="mb-1.5 mt-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                {t("contribute.imagePicker")}
+              </Text>
+              {imageUri ? (
+                <View className="mb-4 overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
+                  <Image source={{ uri: imageUri }} className="h-44 w-full" resizeMode="cover" />
+                  <Pressable
+                    onPress={handlePickImage}
+                    className="flex-row items-center justify-center gap-2 py-2.5"
+                  >
+                    <IconSymbol name="photo" size={15} color="#3b82f6" />
+                    <Text className="text-sm font-medium text-blue-500">
+                      {t("contribute.changeImage")}
+                    </Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <Pressable
+                  onPress={handlePickImage}
+                  className="mb-4 items-center gap-2 rounded-xl border border-dashed border-neutral-300 py-6 dark:border-neutral-600"
+                >
+                  <IconSymbol name="photo.badge.plus" size={28} color="#9ca3af" />
+                  <Text className="text-xs text-neutral-400 dark:text-neutral-500">
+                    {t("contribute.imageHint")}
+                  </Text>
+                </Pressable>
+              )}
+            </View>
             )}
           </ScrollView>
 

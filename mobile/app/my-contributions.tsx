@@ -5,7 +5,7 @@ import { getLanguageName } from "@/lib/mock-data";
 import { Stack } from "expo-router";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FlatList, RefreshControl, Text, View } from "react-native";
+import { FlatList, Image, RefreshControl, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const STATUS_CONFIG = {
@@ -22,9 +22,17 @@ function ContributionRow({ item }: { item: MyContribution }) {
     : null;
 
   const hasAudio = item.type === "entry_audio" || item.type === "audio" || !!item.audioUrl;
+  const hasImage = item.type === "entry_image" || !!item.imageUrl;
 
   return (
     <View className="border-b border-neutral-100 px-5 py-4 dark:border-neutral-800">
+      {hasImage && item.imageUrl && (
+        <Image
+          source={{ uri: item.imageUrl }}
+          className="mb-3 h-36 w-full rounded-xl"
+          resizeMode="cover"
+        />
+      )}
       <View className="flex-row items-start justify-between">
         <View className="flex-1 pr-3">
           <View className="flex-row items-center gap-2">
@@ -39,10 +47,26 @@ function ContributionRow({ item }: { item: MyContribution }) {
             {item.english}
           </Text>
           <View className="mt-1.5 flex-row flex-wrap gap-1.5">
-            {(item.type === "entry_audio" || item.type === "entry_meaning") && (
-              <View className={`rounded-full px-2 py-0.5 ${item.type === "entry_audio" ? "bg-orange-100 dark:bg-orange-900/30" : "bg-teal-100 dark:bg-teal-900/30"}`}>
-                <Text className={`text-xs font-semibold ${item.type === "entry_audio" ? "text-orange-600 dark:text-orange-400" : "text-teal-600 dark:text-teal-400"}`}>
-                  {item.type === "entry_audio" ? t("myContributions.typeAudio") : t("myContributions.typeMeaning")}
+            {(item.type === "entry_audio" || item.type === "entry_meaning" || item.type === "entry_image") && (
+              <View className={`rounded-full px-2 py-0.5 ${
+                item.type === "entry_audio"
+                  ? "bg-orange-100 dark:bg-orange-900/30"
+                  : item.type === "entry_image"
+                  ? "bg-violet-100 dark:bg-violet-900/30"
+                  : "bg-teal-100 dark:bg-teal-900/30"
+              }`}>
+                <Text className={`text-xs font-semibold ${
+                  item.type === "entry_audio"
+                    ? "text-orange-600 dark:text-orange-400"
+                    : item.type === "entry_image"
+                    ? "text-violet-600 dark:text-violet-400"
+                    : "text-teal-600 dark:text-teal-400"
+                }`}>
+                  {item.type === "entry_audio"
+                    ? t("myContributions.typeAudio")
+                    : item.type === "entry_image"
+                    ? t("myContributions.typeImage")
+                    : t("myContributions.typeMeaning")}
                 </Text>
               </View>
             )}

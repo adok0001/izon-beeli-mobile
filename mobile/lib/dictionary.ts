@@ -10,6 +10,7 @@ export interface DictionaryEntry {
   exampleTranslation?: string;
   exampleTranslationFr?: string;
   audioUrl?: import("@/types").AudioSource;
+  imageUrl?: string;
   contributorName?: string;
   contributorId?: string;
 }

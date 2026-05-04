@@ -6,7 +6,7 @@ import { bounties, contributions, dictionaryEntries, feedItems, users } from "..
 import { awardXP, CONTRIBUTION_BASE_XP } from "../lib/award-xp.js";
 import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
 
-const VALID_TYPES = ["word", "phrase", "audio", "entry_audio", "entry_meaning"] as const;
+const VALID_TYPES = ["word", "phrase", "audio", "entry_audio", "entry_meaning", "entry_image"] as const;
 const VALID_REVIEW_ACTIONS = ["approve", "reject"] as const;
 
 // Public routes (no auth required)
@@ -30,6 +30,7 @@ contributionsPublicRouter.get("/approved", async (c) => {
       example: contributions.example,
       exampleTranslation: contributions.exampleTranslation,
       audioUrl: contributions.audioUrl,
+      imageUrl: contributions.imageUrl,
       contributorId: contributions.userId,
       contributorName: users.name,
     })
@@ -65,6 +66,7 @@ contributionsRouter.post("/", async (c) => {
   let example: string | undefined;
   let exampleTranslation: string | undefined;
   let audioUrl: string | undefined;
+  let imageUrl: string | undefined;
   let dictionaryEntryId: string | undefined;
 
   if (contentType.includes("multipart/form-data")) {
@@ -93,6 +95,21 @@ contributionsRouter.post("/", async (c) => {
         return c.json({ error: `Failed to upload audio file: ${err?.message ?? "unknown"}` }, 500);
       }
     }
+
+    const imageFile = formData.get("image") as File | null;
+    if (imageFile) {
+      try {
+        const blob = await put(
+          `contributions/${userId}/${Date.now()}-${imageFile.name}`,
+          imageFile,
+          { access: "public", token: process.env.BLOB_READ_WRITE_TOKEN! }
+        );
+        imageUrl = blob.url;
+      } catch (err: any) {
+        console.error("Blob upload error:", err?.message ?? err);
+        return c.json({ error: `Failed to upload image file: ${err?.message ?? "unknown"}` }, 500);
+      }
+    }
   } else {
     const body = await c.req.json<{
       type: string;
@@ -116,8 +133,8 @@ contributionsRouter.post("/", async (c) => {
     dictionaryEntryId = body.dictionaryEntryId;
   }
 
-  // entry_audio and entry_meaning target an existing dictionary entry
-  const isEntryContribution = type === "entry_audio" || type === "entry_meaning";
+  // entry_audio, entry_meaning, entry_image target an existing dictionary entry
+  const isEntryContribution = type === "entry_audio" || type === "entry_meaning" || type === "entry_image";
 
   if (isEntryContribution) {
     if (!dictionaryEntryId || !languageId) {
@@ -128,6 +145,9 @@ contributionsRouter.post("/", async (c) => {
     }
     if (type === "entry_meaning" && !english?.trim()) {
       return c.json({ error: "english (new meaning) is required for entry_meaning contributions" }, 400);
+    }
+    if (type === "entry_image" && !imageUrl) {
+      return c.json({ error: "Image file is required for entry_image contributions" }, 400);
     }
 
     // Fetch the existing entry to populate word/category
@@ -204,6 +224,7 @@ contributionsRouter.post("/", async (c) => {
         example: example?.trim() || null,
         exampleTranslation: exampleTranslation?.trim() || null,
         audioUrl: audioUrl ?? null,
+        imageUrl: imageUrl ?? null,
         dictionaryEntryId: dictionaryEntryId || null,
       })
       .returning();
@@ -289,6 +310,7 @@ contributionsRouter.get("/pending", async (c) => {
       userId: contributions.userId,
       submitterName: users.name,
       audioUrl: contributions.audioUrl,
+      imageUrl: contributions.imageUrl,
       dictionaryEntryId: contributions.dictionaryEntryId,
       createdAt: contributions.createdAt,
     })
@@ -414,6 +436,11 @@ contributionsRouter.patch("/:id/review", adminMiddleware, async (c) => {
         await db
           .update(dictionaryEntries)
           .set({ audioUrl: existing.audioUrl })
+          .where(eq(dictionaryEntries.id, existing.dictionaryEntryId));
+      } else if (existing.type === "entry_image" && existing.imageUrl) {
+        await db
+          .update(dictionaryEntries)
+          .set({ imageUrl: existing.imageUrl })
           .where(eq(dictionaryEntries.id, existing.dictionaryEntryId));
       } else if (existing.type === "entry_meaning" && existing.english) {
         // Append the new meaning to the existing english field

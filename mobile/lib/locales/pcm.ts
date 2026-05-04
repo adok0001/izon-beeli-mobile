@@ -429,6 +429,7 @@ export const pcm = {
     statusDraft: "Draft",
     typeAudio: "Audio",
     typeMeaning: "Meaning",
+    typeImage: "Image",
   },
   notifications: {
     title: "Notifications",
@@ -755,6 +756,9 @@ export const pcm = {
     recordingSaved: "Recording don save",
     reRecord: "Re-record",
     recordingHint: "Optional — press to record pronunciation",
+    imagePicker: "Photo",
+    imageHint: "Optional — press to add photo",
+    changeImage: "Change photo",
     recordingTapToStop: "E dey record… Press to stop",
     submittedWordDesc: "Your contribution don submit for review.",
     // Lesson flow
@@ -923,6 +927,10 @@ export const pcm = {
     submitted: "Submitted!",
     audioSubmittedDesc: "Your audio recording don submit for review.",
     meaningSubmittedDesc: "Your suggested meaning don submit for review.",
+    addImage: "Add Picture",
+    addImageDesc: "Upload picture to help learners see wetin this word mean.",
+    tapToPickImage: "Press to choose picture",
+    imageSubmittedDesc: "Your picture don submit for review.",
   },
   admin: {
     panelTitle: "Admin Panel",

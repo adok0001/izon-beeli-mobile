@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { View, Text, Pressable, ScrollView, ActivityIndicator, TextInput, Alert } from "react-native";
+import { View, Text, Pressable, ScrollView, ActivityIndicator, TextInput, Alert, Image } from "react-native";
+import * as DocumentPicker from "expo-document-picker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -40,6 +41,7 @@ export default function WordDetailScreen() {
   } = useContributionStore();
   const [showMeaningInput, setShowMeaningInput] = useState(false);
   const [newMeaning, setNewMeaning] = useState("");
+  const [imageUri, setImageUri] = useState<string | null>(null);
 
   const saved = entry ? savedSet.has(entry.id) : false;
 
@@ -59,6 +61,40 @@ export default function WordDetailScreen() {
         onSuccess: () => {
           discardRecording();
           Alert.alert(t("entryContribute.submitted"), t("entryContribute.audioSubmittedDesc"));
+        },
+        onError: (err) => {
+          Alert.alert(t("common.error"), err.message || t("common.tryAgain"));
+        },
+      }
+    );
+  };
+
+  const handlePickImage = async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ["image/*"],
+      copyToCacheDirectory: true,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setImageUri(result.assets[0].uri);
+    }
+  };
+
+  const handleSubmitImage = () => {
+    if (!entry || !imageUri) return;
+    submitEntry.mutate(
+      {
+        type: "entry_image",
+        languageId: entry.languageId,
+        dictionaryEntryId: entry.id,
+        word: entry.word,
+        english: entry.english,
+        category: entry.category,
+        imageUri,
+      },
+      {
+        onSuccess: () => {
+          setImageUri(null);
+          Alert.alert(t("entryContribute.submitted"), t("entryContribute.imageSubmittedDesc"));
         },
         onError: (err) => {
           Alert.alert(t("common.error"), err.message || t("common.tryAgain"));
@@ -163,6 +199,13 @@ export default function WordDetailScreen() {
         >
           {/* Hero section */}
           <View className="items-center px-6 pb-6 pt-10">
+            {entry.imageUrl && (
+              <Image
+                source={{ uri: entry.imageUrl }}
+                className="mb-5 h-48 w-full rounded-2xl"
+                resizeMode="cover"
+              />
+            )}
             <Text className="text-center text-6xl font-bold text-neutral-900 dark:text-white">
               {entry.word}
             </Text>
@@ -377,6 +420,56 @@ export default function WordDetailScreen() {
                     </>
                   )}
                 </View>
+              </View>
+            )}
+
+            {/* Add Image */}
+            {!entry.imageUrl && (
+              <View className="mb-3 rounded-2xl border border-neutral-200 p-4 dark:border-neutral-700">
+                <Text className="mb-1 text-sm font-semibold text-neutral-900 dark:text-white">
+                  {t("entryContribute.addImage")}
+                </Text>
+                <Text className="mb-3 text-xs text-neutral-500 dark:text-neutral-400">
+                  {t("entryContribute.addImageDesc")}
+                </Text>
+                {imageUri ? (
+                  <View className="items-center gap-3">
+                    <Image
+                      source={{ uri: imageUri }}
+                      className="h-40 w-full rounded-xl"
+                      resizeMode="cover"
+                    />
+                    <View className="flex-row gap-2">
+                      <Pressable
+                        onPress={() => setImageUri(null)}
+                        className="rounded-lg bg-neutral-200 px-4 py-2 dark:bg-neutral-700"
+                      >
+                        <Text className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                          {t("common.cancel")}
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={handleSubmitImage}
+                        disabled={submitEntry.isPending}
+                        className="rounded-lg bg-blue-500 px-4 py-2"
+                      >
+                        <Text className="text-sm font-medium text-white">
+                          {submitEntry.isPending ? t("contribute.submitting") : t("common.submit")}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                ) : (
+                  <Pressable
+                    onPress={handlePickImage}
+                    className="items-center gap-2 rounded-xl border border-dashed border-neutral-300 py-6 dark:border-neutral-600"
+                  >
+                    <IconSymbol name="photo.badge.plus" size={28} color="#9ca3af" />
+                    <Text className="text-sm text-neutral-400 dark:text-neutral-500">
+                      {t("entryContribute.tapToPickImage")}
+                    </Text>
+                  </Pressable>
+                )}
               </View>
             )}
 
