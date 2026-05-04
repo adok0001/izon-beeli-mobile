@@ -485,6 +485,11 @@ export const en = {
     title: "Choose Language",
     searchPlaceholder: "Search languages...",
     noResults: "No languages found for \"{{query}}\"",
+    addLanguage: "Add language",
+    allEnrolled: "You're enrolled in all available languages",
+    removeTitle: "Remove language",
+    removeDesc: "Remove {{name}} from your languages?",
+    remove: "Remove",
   },
   feedback: {
     title: "Send Feedback",

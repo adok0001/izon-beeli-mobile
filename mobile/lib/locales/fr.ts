@@ -488,6 +488,11 @@ export const fr = {
     title: "Choisir la langue",
     searchPlaceholder: "Rechercher des langues…",
     noResults: "Aucune langue trouvée pour \"{{query}}\"",
+    addLanguage: "Ajouter une langue",
+    allEnrolled: "Vous êtes inscrit(e) dans toutes les langues disponibles",
+    removeTitle: "Retirer la langue",
+    removeDesc: "Retirer {{name}} de vos langues ?",
+    remove: "Retirer",
   },
   feedback: {
     title: "Envoyer des retours",

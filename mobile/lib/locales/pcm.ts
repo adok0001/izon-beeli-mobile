@@ -488,6 +488,11 @@ export const pcm = {
     title: "Choose Language",
     searchPlaceholder: "Search languages...",
     noResults: "No language dey for \"{{query}}\"",
+    addLanguage: "Add language",
+    allEnrolled: "You don enter all the languages wey dey",
+    removeTitle: "Remove language",
+    removeDesc: "Remove {{name}} from your languages?",
+    remove: "Remove",
   },
   feedback: {
     title: "Send Feedback",

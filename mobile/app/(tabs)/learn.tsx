@@ -1,4 +1,4 @@
-import { LanguagePickerButton } from "@/components/language-picker";
+import { EnrolledLanguageBar } from "@/components/language-picker";
 import { NotificationBell } from "@/components/notifications/notification-center";
 import { StreakFreezeModal } from "@/components/streak-freeze-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -436,9 +436,10 @@ export default function LearnScreen() {
           >
             <IconSymbol name="character.book.closed" size={18} color="#f59e0b" />
           </Pressable>
-          <LanguagePickerButton />
         </View>
       </View>
+
+      <EnrolledLanguageBar />
 
       {/* Stats bar */}
       <View className="flex-row items-center gap-4 border-b border-neutral-100 px-5 pb-3 dark:border-neutral-800">
