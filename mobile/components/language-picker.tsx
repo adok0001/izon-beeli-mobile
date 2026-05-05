@@ -249,6 +249,23 @@ function AddLanguageModal({
               </Text>
             </View>
           }
+          ListFooterComponent={
+            search.trim().length > 0 ? (
+              <Pressable
+                onPress={() => { onAdd(search.trim()); }}
+                className="flex-row items-center border-t-2 border-dashed border-violet-200 px-5 py-4 active:opacity-70 dark:border-violet-800"
+              >
+                <View className="mr-4 h-9 w-9 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900">
+                  <IconSymbol name="plus.circle" size={20} color="#8b5cf6" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-base text-violet-700 dark:text-violet-300">
+                    {t("languagePicker.useCustomLanguage", { name: search.trim() })}
+                  </Text>
+                </View>
+              </Pressable>
+            ) : null
+          }
         />
       </SafeAreaView>
     </Modal>
@@ -365,6 +382,34 @@ function LanguagePickerModal({
                 {t("languagePicker.noResults", { query: search })}
               </Text>
             </View>
+          }
+          ListFooterComponent={
+            search.trim().length > 0 ? (
+              <Pressable
+                onPress={() => { onSelect(search.trim()); }}
+                className={`flex-row items-center border-t-2 border-dashed px-5 py-4 active:opacity-70 ${
+                  selectedId === search.trim()
+                    ? "border-violet-400 bg-violet-50 dark:bg-violet-950"
+                    : "border-violet-200 dark:border-violet-800"
+                }`}
+              >
+                <View className="mr-4 h-9 w-9 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900">
+                  <IconSymbol name="plus.circle" size={20} color="#8b5cf6" />
+                </View>
+                <View className="flex-1">
+                  <Text className={`text-base ${
+                    selectedId === search.trim()
+                      ? "font-semibold text-violet-700 dark:text-violet-300"
+                      : "text-violet-700 dark:text-violet-300"
+                  }`}>
+                    {t("languagePicker.useCustomLanguage", { name: search.trim() })}
+                  </Text>
+                </View>
+                {selectedId === search.trim() && (
+                  <IconSymbol name="checkmark.circle.fill" size={22} color="#8b5cf6" />
+                )}
+              </Pressable>
+            ) : null
           }
         />
       </SafeAreaView>

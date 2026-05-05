@@ -14,6 +14,7 @@ import {
   Pressable,
   ScrollView,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -69,6 +70,7 @@ export default function OnboardingScreen() {
 
   const [step, setStep] = useState<Step>("language");
   const [selectedLangId, setSelectedLangId] = useState("izon");
+  const [langSearch, setLangSearch] = useState("");
   const [selectedGoal, setSelectedGoal] = useState<DailyGoal>("steady");
   const [saving, setSaving] = useState(false);
   const { t } = useTranslation();
@@ -190,8 +192,39 @@ export default function OnboardingScreen() {
             className="flex-1 px-4"
             contentContainerStyle={{ paddingBottom: 16 }}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           >
-            {ACTIVE_LANGUAGES.map((lang) => {
+            {/* Search */}
+            <View className="mb-3 flex-row items-center rounded-xl border border-neutral-200 bg-neutral-50 px-3 dark:border-neutral-700 dark:bg-neutral-800">
+              <IconSymbol name="magnifyingglass" size={16} color="#9ca3af" />
+              <TextInput
+                value={langSearch}
+                onChangeText={setLangSearch}
+                placeholder={t("contribute.searchLanguage")}
+                placeholderTextColor="#9ca3af"
+                autoCorrect={false}
+                autoCapitalize="none"
+                returnKeyType="search"
+                className="ml-2 flex-1 py-3 text-sm text-neutral-900 dark:text-white"
+              />
+              {langSearch.length > 0 && (
+                <Pressable onPress={() => setLangSearch("")} hitSlop={8}>
+                  <IconSymbol name="xmark.circle.fill" size={16} color="#9ca3af" />
+                </Pressable>
+              )}
+            </View>
+
+            {(langSearch.trim()
+              ? ACTIVE_LANGUAGES.filter((l) => {
+                  const q = langSearch.toLowerCase();
+                  return (
+                    l.name.toLowerCase().includes(q) ||
+                    l.nativeName?.toLowerCase().includes(q) ||
+                    l.region?.toLowerCase().includes(q)
+                  );
+                })
+              : ACTIVE_LANGUAGES
+            ).map((lang) => {
               const selected = lang.id === selectedLangId;
               return (
                 <Pressable
@@ -227,9 +260,35 @@ export default function OnboardingScreen() {
                 </Pressable>
               );
             })}
+
+            {langSearch.trim().length > 0 && (
+              <Pressable
+                onPress={() => setSelectedLangId(langSearch.trim())}
+                className={`mb-2 flex-row items-center rounded-xl border-2 border-dashed px-4 py-3.5 active:opacity-70 ${
+                  selectedLangId === langSearch.trim()
+                    ? "border-violet-500 bg-violet-50 dark:bg-violet-950"
+                    : "border-violet-300 dark:border-violet-700"
+                }`}
+              >
+                <View className="flex-1">
+                  <Text
+                    className={`text-base font-semibold ${
+                      selectedLangId === langSearch.trim()
+                        ? "text-violet-700 dark:text-violet-300"
+                        : "text-neutral-600 dark:text-neutral-300"
+                    }`}
+                  >
+                    {t("contribute.useCustomLanguage", { name: langSearch.trim() })}
+                  </Text>
+                </View>
+                {selectedLangId === langSearch.trim() && (
+                  <IconSymbol name="checkmark.circle.fill" size={22} color="#8b5cf6" />
+                )}
+              </Pressable>
+            )}
           </ScrollView>
 
-          <View className="px-6 pb-6 pt-2">
+          <View className="px-6 pb-6 pt-2 gap-3">
             <Pressable
               onPress={handleLanguageContinue}
               disabled={tryItLoading}
@@ -240,6 +299,15 @@ export default function OnboardingScreen() {
               ) : (
                 <Text className="text-base font-bold text-white">{t("onboarding.continue")}</Text>
               )}
+            </Pressable>
+            <Pressable
+              onPress={() => router.push("/contribute")}
+              className="flex-row items-center justify-center gap-2 rounded-2xl border-2 border-emerald-500 py-4 active:opacity-80"
+            >
+              <IconSymbol name="person.badge.plus" size={18} color="#10b981" />
+              <Text className="text-base font-bold text-emerald-600 dark:text-emerald-400">
+                {t("onboarding.applyContributor")}
+              </Text>
             </Pressable>
           </View>
         </>

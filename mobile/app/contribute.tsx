@@ -46,6 +46,7 @@ export default function ContributeScreen() {
 
   const [step, setStep] = useState<Step>(params.languageId ? "entry" : "type");
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(params.languageId ?? null);
+  const [langSearch, setLangSearch] = useState("");
   const [word, setWord] = useState("");
   const [english, setEnglish] = useState("");
   const [category, setCategory] = useState<DictionaryCategory | null>(
@@ -250,34 +251,106 @@ export default function ContributeScreen() {
                 <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
                   {t("contribute.selectLanguage")}
                 </Text>
-                <Text className="mb-5 text-sm text-neutral-500 dark:text-neutral-400">
+                <Text className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
                   {t("contribute.selectLanguageDesc")}
                 </Text>
 
-                {LANGUAGES.map((lang) => (
-                  <Pressable
-                    key={lang.id}
-                    onPress={() => {
-                      setSelectedLanguage(lang.id);
-                      setStep("entry");
-                    }}
-                    className={`mb-3 flex-row items-center rounded-xl border-2 p-4 ${
-                      selectedLanguage === lang.id
-                        ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
-                        : "border-neutral-200 dark:border-neutral-700"
-                    }`}
-                  >
-                    <View className="flex-1">
-                      <Text className="text-base font-semibold text-neutral-900 dark:text-white">
-                        {lang.name}
-                      </Text>
-                      <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
-                        {lang.nativeName} · {lang.region}
-                      </Text>
+                {/* Search */}
+                <View className="mb-4 flex-row items-center rounded-xl border border-neutral-200 bg-neutral-50 px-3 dark:border-neutral-700 dark:bg-neutral-800">
+                  <IconSymbol name="magnifyingglass" size={16} color="#9ca3af" />
+                  <TextInput
+                    value={langSearch}
+                    onChangeText={setLangSearch}
+                    placeholder={t("contribute.searchLanguage")}
+                    placeholderTextColor="#9ca3af"
+                    autoCorrect={false}
+                    autoCapitalize="none"
+                    returnKeyType="search"
+                    className="ml-2 flex-1 py-3 text-sm text-neutral-900 dark:text-white"
+                  />
+                  {langSearch.length > 0 && (
+                    <Pressable onPress={() => setLangSearch("")} hitSlop={8}>
+                      <IconSymbol name="xmark.circle.fill" size={16} color="#9ca3af" />
+                    </Pressable>
+                  )}
+                </View>
+
+                {(() => {
+                  const q = langSearch.toLowerCase();
+                  const filtered = LANGUAGES.filter(
+                    (lang) =>
+                      !q ||
+                      lang.name.toLowerCase().includes(q) ||
+                      lang.nativeName?.toLowerCase().includes(q) ||
+                      lang.region?.toLowerCase().includes(q)
+                  );
+
+                  const customName = langSearch.trim();
+                  const customLangButton = customName.length > 0 && (
+                    <Pressable
+                      key="custom"
+                      onPress={() => {
+                        setSelectedLanguage(customName);
+                        setStep("entry");
+                      }}
+                      className="mt-1 mb-4 flex-row items-center rounded-xl border-2 border-dashed border-violet-300 p-4 active:opacity-70 dark:border-violet-700"
+                    >
+                      <View className="mr-3 h-9 w-9 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900">
+                        <IconSymbol name="plus.circle" size={20} color="#8b5cf6" />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-sm font-semibold text-violet-700 dark:text-violet-300">
+                          {t("contribute.useCustomLanguage", { name: customName })}
+                        </Text>
+                      </View>
+                      <IconSymbol name="chevron.right" size={16} color="#8b5cf6" />
+                    </Pressable>
+                  );
+
+                  if (filtered.length === 0) {
+                    return (
+                      <View>
+                        <View className="mb-4 items-center py-6">
+                          <IconSymbol name="magnifyingglass" size={32} color="#d1d5db" />
+                          <Text className="mt-2 text-sm text-neutral-400 dark:text-neutral-500">
+                            {t("contribute.noLanguageFound")}
+                          </Text>
+                        </View>
+                        {customLangButton}
+                      </View>
+                    );
+                  }
+
+                  return (
+                    <View>
+                      {filtered.map((lang) => (
+                        <Pressable
+                          key={lang.id}
+                          onPress={() => {
+                            setSelectedLanguage(lang.id);
+                            setStep("entry");
+                          }}
+                          className={`mb-3 flex-row items-center rounded-xl border-2 p-4 ${
+                            selectedLanguage === lang.id
+                              ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
+                              : "border-neutral-200 dark:border-neutral-700"
+                          }`}
+                        >
+                          <View className="flex-1">
+                            <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+                              {lang.name}
+                            </Text>
+                            <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
+                              {lang.nativeName} · {lang.region}
+                            </Text>
+                          </View>
+                          <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
+                        </Pressable>
+                      ))}
+                      {customLangButton}
                     </View>
-                    <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
-                  </Pressable>
-                ))}
+                  );
+                })()}
               </View>
             )}
 

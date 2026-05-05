@@ -277,6 +277,31 @@ function BountyTeaser({ languageId }: { languageId: string }) {
   );
 }
 
+function ContributorBanner() {
+  const { t } = useTranslation();
+  const router = useRouter();
+
+  return (
+    <Pressable
+      onPress={() => router.push("/contribute")}
+      className="flex-row items-center rounded-2xl bg-emerald-50 p-4 active:opacity-70 dark:bg-emerald-950"
+    >
+      <View className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-emerald-500">
+        <IconSymbol name="person.badge.plus" size={18} color="#fff" />
+      </View>
+      <View className="flex-1">
+        <Text className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+          {t("learn.contributorBannerTitle")}
+        </Text>
+        <Text className="text-xs text-emerald-600 dark:text-emerald-400">
+          {t("learn.contributorBannerCta")}
+        </Text>
+      </View>
+      <IconSymbol name="chevron.right" size={16} color="#10b981" />
+    </Pressable>
+  );
+}
+
 function ReviewBanner({ languageId }: Readonly<{ languageId?: string | null }>) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -502,6 +527,7 @@ export default function LearnScreen() {
               )}
               <UpNextCard languageId={selectedLanguageId} />
               <BountyTeaser languageId={selectedLanguageId} />
+              <ContributorBanner />
             </View>
           }
           showsVerticalScrollIndicator={false}

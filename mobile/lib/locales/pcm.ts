@@ -62,6 +62,8 @@ export const pcm = {
     webSubtitle: "Pick course and begin learn",
     reviewBanner: "{{count}} words dey wait for review",
     reviewBannerCta: "Review now",
+    contributorBannerTitle: "Help language grow",
+    contributorBannerCta: "Apply to be Contributor",
     dailyGoal: "Daily Goal",
     goalProgress: "{{done}}/{{target}}",
   },
@@ -199,6 +201,7 @@ export const pcm = {
     goalIntensive: "Intensive",
     goalIntensiveDetail: "20 min / day",
     startLearning: "Start Learning",
+    applyContributor: "Apply to be Contributor",
     skip: "Skip Tour",
     // Learn tab tour
     learnTourTitle: "Structured Lessons",
@@ -493,6 +496,7 @@ export const pcm = {
     removeTitle: "Remove language",
     removeDesc: "Remove {{name}} from your languages?",
     remove: "Remove",
+    useCustomLanguage: "Use \"​{{name}}​\" as custom language",
   },
   feedback: {
     title: "Send Feedback",
@@ -747,6 +751,9 @@ export const pcm = {
     // Shared
     selectLanguage: "Select language",
     selectLanguageDesc: "Which language you dey contribute to?",
+    searchLanguage: "Search language…",
+    useCustomLanguage: "Use \"​{{name}}​\" as custom language",
+    noLanguageFound: "No language found",
     submitting: "E dey submit…",
     submitted: "Don submit!",
     alreadyExists: "Already Exists",

@@ -61,6 +61,8 @@ export const en = {
     webSubtitle: "Pick a course and start learning",
     reviewBanner: "{{count}} words due for review",
     reviewBannerCta: "Review now",
+    contributorBannerTitle: "Help grow the language",
+    contributorBannerCta: "Apply to be a Contributor",
     dailyGoal: "Daily Goal",
     goalProgress: "{{done}}/{{target}}",
   },
@@ -198,6 +200,7 @@ export const en = {
     goalIntensive: "Intensive",
     goalIntensiveDetail: "20 min / day",
     startLearning: "Start Learning",
+    applyContributor: "Apply to be a Contributor",
     skip: "Skip Tour",
     // Learn tab tour
     learnTourTitle: "Structured Lessons",
@@ -490,6 +493,7 @@ export const en = {
     removeTitle: "Remove language",
     removeDesc: "Remove {{name}} from your languages?",
     remove: "Remove",
+    useCustomLanguage: "Use \"​{{name}}​\" as custom language",
   },
   feedback: {
     title: "Send Feedback",
@@ -744,6 +748,9 @@ export const en = {
     // Shared
     selectLanguage: "Select a language",
     selectLanguageDesc: "Which language are you contributing to?",
+    searchLanguage: "Search languages…",
+    useCustomLanguage: "Use \"​{{name}}​\" as custom language",
+    noLanguageFound: "No language found",
     submitting: "Submitting…",
     submitted: "Submitted!",
     alreadyExists: "Already Exists",
