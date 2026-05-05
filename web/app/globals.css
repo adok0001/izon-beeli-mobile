@@ -13,6 +13,11 @@
 
   body {
     @apply bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  ::selection {
+    @apply bg-brand-500/20 text-brand-900 dark:text-brand-100;
   }
 }
 
@@ -23,5 +28,20 @@
   }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Frosted glass surface */
+  .glass {
+    @apply bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl backdrop-saturate-150;
+  }
+
+  /* Gradient brand text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-brand-500 to-purple-400 bg-clip-text text-transparent;
+  }
+
+  /* Standard card surface */
+  .surface {
+    @apply bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl;
   }
 }

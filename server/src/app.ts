@@ -25,7 +25,7 @@ import { pushTokensRouter } from "./routes/push-tokens.js";
 import { quizRouter } from "./routes/quiz.js";
 import { quizResultsRouter } from "./routes/quiz-results.js";
 import { sentencesRouter } from "./routes/sentences.js";
-import { purgeExpiredDeletedUsers, usersRouter } from "./routes/users.js";
+import { adminUsersRouter, purgeExpiredDeletedUsers, usersRouter } from "./routes/users.js";
 import { wordbankRouter } from "./routes/wordbank.js";
 
 const isDev = process.env.NODE_ENV !== "production";
@@ -93,6 +93,7 @@ app.route("/notifications", notificationsRouter);
 app.route("/notifications/admin", notificationsAdminRouter);
 app.route("/bounties", bountiesRouter);
 app.route("/bounties/admin", bountiesAdminRouter);
+app.route("/admin/users", adminUsersRouter);
 
 // POST /api/internal/purge-deleted-users
 // Called daily by Vercel cron (see vercel.json). Protected by CRON_SECRET header.

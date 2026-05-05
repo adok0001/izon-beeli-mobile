@@ -1,30 +1,30 @@
-import { useState } from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  TextInput,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-  Image,
-} from "react-native";
-import * as DocumentPicker from "expo-document-picker";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack, useRouter, useLocalSearchParams } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useContributionStore } from "@/store/contribution-store";
-import { useSubmitContribution } from "@/lib/hooks/use-contributions";
-import { useBounties } from "@/lib/hooks/use-bounties";
 import { ApiError } from "@/lib/api";
-import { LANGUAGES } from "@/lib/mock-data";
 import {
   ALL_CATEGORIES,
   CATEGORY_LABELS,
   type DictionaryCategory,
 } from "@/lib/dictionary";
+import { useBounties } from "@/lib/hooks/use-bounties";
+import { useSubmitContribution } from "@/lib/hooks/use-contributions";
+import { LANGUAGES } from "@/lib/mock-data";
+import { useContributionStore } from "@/store/contribution-store";
+import * as DocumentPicker from "expo-document-picker";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type Step = "type" | "language" | "entry" | "details";
 

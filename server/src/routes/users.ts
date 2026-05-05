@@ -24,7 +24,7 @@ import {
   users,
   wordBank,
 } from "../db/schema.js";
-import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
+import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
 
 const clerkClient = createClerkClient({
   secretKey: process.env.CLERK_SECRET_KEY!,
@@ -208,6 +208,53 @@ usersRouter.post("/me/restore", authMiddleware, async (c) => {
   await db.update(users).set({ deletedAt: null }).where(eq(users.id, userId));
 
   return c.json({ restored: true });
+});
+
+// ---- Admin users router ----
+
+export const adminUsersRouter = new Hono<AuthEnv>();
+adminUsersRouter.use("*", authMiddleware);
+adminUsersRouter.use("*", adminMiddleware);
+
+// GET /api/admin/users?limit=100
+adminUsersRouter.get("/", async (c) => {
+  const limit = Math.min(parseInt(c.req.query("limit") ?? "100", 10), 500);
+
+  const rows = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      avatarUrl: users.avatarUrl,
+      points: users.points,
+      streak: users.streak,
+      isAdmin: users.isAdmin,
+      selectedLanguageId: users.selectedLanguageId,
+      createdAt: users.createdAt,
+    })
+    .from(users)
+    .where(isNotNull(users.id))
+    .orderBy(desc(users.createdAt))
+    .limit(limit);
+
+  return c.json(rows);
+});
+
+// PATCH /api/admin/users/:id — toggle isAdmin
+adminUsersRouter.patch("/:id", async (c) => {
+  const targetId = c.req.param("id");
+  const body = await c.req.json<{ isAdmin: boolean }>();
+
+  if (typeof body.isAdmin !== "boolean") {
+    return c.json({ error: "isAdmin must be a boolean" }, 400);
+  }
+
+  await db
+    .update(users)
+    .set({ isAdmin: body.isAdmin })
+    .where(eq(users.id, targetId));
+
+  return c.json({ updated: true });
 });
 
 /**
