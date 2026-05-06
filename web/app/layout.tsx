@@ -7,6 +7,7 @@ import {
 } from "@/lib/ui-language";
 import { en } from "@mobile/lib/locales/en";
 import { fr } from "@mobile/lib/locales/fr";
+import { pcm } from "@mobile/lib/locales/pcm";
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { cookies } from "next/headers";
@@ -19,7 +20,7 @@ const jakarta = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-const TRANSLATIONS = { en, fr } as const;
+const TRANSLATIONS = { en, fr, pcm } as const;
 
 async function getUiLanguage(): Promise<UiLanguage> {
   const cookieStore = await cookies();

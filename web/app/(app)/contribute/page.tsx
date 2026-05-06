@@ -886,9 +886,9 @@ function ReviewerFlow({ onBack }: Readonly<{ onBack: () => void }>) {
         <div className="rounded-2xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-6 flex flex-col items-center text-center gap-3">
           <Clock className="h-10 w-10 text-amber-500" />
           <h3 className="font-bold text-neutral-900 dark:text-white">Application Under Review</h3>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400 max-w-xs">
-            Your application as a <strong>{existing.role}</strong> is being reviewed. We'll notify you once a decision has been made.
-          </p>
+            <p className="text-sm text-neutral-600 dark:text-neutral-400 max-w-xs">
+              Your application as a <strong>{existing.role}</strong> is being reviewed. We&apos;ll notify you once a decision has been made.
+            </p>
           <p className="text-xs text-neutral-400">
             Submitted {new Date(existing.createdAt).toLocaleDateString()}
           </p>
@@ -903,7 +903,7 @@ function ReviewerFlow({ onBack }: Readonly<{ onBack: () => void }>) {
         {header}
         <div className="rounded-2xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/30 p-6 flex flex-col items-center text-center gap-3">
           <CheckCircle2 className="h-10 w-10 text-green-500" />
-          <h3 className="font-bold text-neutral-900 dark:text-white">You're a Reviewer!</h3>
+          <h3 className="font-bold text-neutral-900 dark:text-white">You&apos;re a Reviewer!</h3>
           <p className="text-sm text-neutral-600 dark:text-neutral-400 max-w-xs">
             Your application was approved. You can now access the educator panel to review contributions.
           </p>
@@ -1028,7 +1028,7 @@ function ReviewerForm({
             onClick={() => { toggleLang(customLangName); setLangSearch(""); }}
             className="mt-2 flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
           >
-            <Plus className="h-3.5 w-3.5" /> Add "{customLangName}"
+            <Plus className="h-3.5 w-3.5" /> Add &quot;{customLangName}&quot;
           </button>
         )}
         {selectedLangs.length > 0 && (
