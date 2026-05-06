@@ -290,7 +290,7 @@ export default function LessonPage({ params }: Readonly<{ params: Promise<{ id: 
                     <CheckCircle2 className="h-3.5 w-3.5" />{t("lesson.markComplete")}
                   </button>
                 )}
-                <Link href={`/quiz?courseId=${lesson.courseId}`}
+                <Link href={`/quiz?courseId=${lesson.courseId}&lessonId=${lesson.id}`}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-brand-500 text-brand-600 dark:text-brand-400 text-sm font-medium hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors">
                   <Trophy className="h-3.5 w-3.5" />{t("lesson.practice")}
                 </Link>
@@ -309,7 +309,7 @@ export default function LessonPage({ params }: Readonly<{ params: Promise<{ id: 
                   <CheckCircle2 className="h-3.5 w-3.5" />{t("lesson.markComplete")}
                 </button>
               )}
-              <Link href={`/quiz?courseId=${lesson.courseId}`}
+              <Link href={`/quiz?courseId=${lesson.courseId}&lessonId=${lesson.id}`}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-brand-500 text-brand-600 dark:text-brand-400 text-sm font-medium hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors">
                 <Trophy className="h-3.5 w-3.5" />{t("lesson.practice")}
               </Link>

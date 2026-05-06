@@ -8,6 +8,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useMutation } from "@tanstack/react-query";
 import type { TFunction } from "i18next";
 import { Brain, Heart, Target, Trophy } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -365,6 +366,9 @@ export default function QuizPage() {
   const { getToken } = useAuth();
   const { t } = useTranslation();
   const { selectedLanguageId } = useLanguageStore();
+  const searchParams = useSearchParams();
+  const lessonId = searchParams.get("lessonId")?.trim();
+  const courseId = searchParams.get("courseId")?.trim();
   const [phase, setPhase] = useState<Phase>("config");
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [result, setResult] = useState<QuizResult | null>(null);
@@ -373,8 +377,19 @@ export default function QuizPage() {
   const fetchQuiz = useMutation({
     mutationFn: async (count: number) => {
       const token = await getToken();
+      const query = new URLSearchParams({
+        languageId: selectedLanguageId,
+        count: String(count),
+      });
+      if (lessonId) {
+        query.set("lessonId", lessonId);
+      }
+      if (courseId) {
+        query.set("courseId", courseId);
+      }
+
       return apiFetch<QuizQuestion[]>(
-        `/quiz/questions?languageId=${selectedLanguageId}&count=${count}`,
+        `/quiz/questions?${query.toString()}`,
         { token: token ?? undefined }
       );
     },

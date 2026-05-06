@@ -284,7 +284,7 @@ export default function ListenPage() {
             badge={dueWords.length}
           />
           <ActivityCard
-            href="/quiz"
+            href={activeCourse ? `/quiz?courseId=${activeCourse.id}` : "/quiz"}
             icon={Trophy}
             iconBg="bg-brand-500"
             label={t("practice.quiz")}
