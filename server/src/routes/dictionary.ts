@@ -31,7 +31,10 @@ dictionaryRouter.get("/", async (c) => {
       : undefined,
   ].filter((c): c is NonNullable<typeof c> => c !== undefined);
 
-  const staticEntries = await db
+  const limitParam = c.req.query("limit");
+  const limit = limitParam ? Math.min(parseInt(limitParam, 10) || 500, 500) : undefined;
+
+  const staticQuery = db
     .select()
     .from(dictionaryEntries)
     .where(and(...entryConditions))
@@ -41,6 +44,8 @@ dictionaryRouter.get("/", async (c) => {
         : asc(dictionaryEntries.word),
       asc(dictionaryEntries.word)
     );
+
+  const staticEntries = limit ? await staticQuery.limit(limit) : await staticQuery;
 
   // Also merge approved contributions for this language
   const contribConditions = [
@@ -75,7 +80,8 @@ dictionaryRouter.get("/", async (c) => {
     .where(and(...contribConditions))
     .orderBy(contributions.word);
 
-  return c.json([...staticEntries, ...approvedContribs]);
+  const merged = [...staticEntries, ...approvedContribs];
+  return c.json(limit ? merged.slice(0, limit) : merged);
 });
 
 // ── Admin CRUD ─────────────────────────────────────────────────────────────────
