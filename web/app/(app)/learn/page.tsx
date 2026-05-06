@@ -1,6 +1,7 @@
 "use client";
 
 import { EmptyState } from "@/components/ui/empty-state";
+import { LanguageSelector } from "@/components/ui/language-selector";
 import { apiFetch } from "@/lib/api";
 import { localizeField } from "@/lib/localize";
 import { cn } from "@/lib/utils";
@@ -86,16 +87,6 @@ function ReviewBanner() {
 const LEVELS = ["all", "beginner", "intermediate", "advanced"] as const;
 type Level = (typeof LEVELS)[number];
 
-const LANGUAGES = [
-  { id: "izon", name: "Izon" },
-  { id: "akan", name: "Akan" },
-  { id: "amharic", name: "Amharic" },
-  { id: "yoruba", name: "Yoruba" },
-  { id: "swahili", name: "Swahili" },
-  { id: "hausa", name: "Hausa" },
-  { id: "igbo", name: "Igbo" },
-  { id: "oromo", name: "Oromo" },
-] as const;
 
 function CourseCard({ course }: Readonly<{ course: Course }>) {
   const { t } = useTranslation();
@@ -239,23 +230,13 @@ export default function LearnPage() {
       </div>
 
       {/* Language picker */}
-      <div className="overflow-x-auto scrollbar-hide mb-2">
-        <div className="flex gap-2 px-4 pb-2 w-max">
-          {LANGUAGES.map((lang) => (
-            <button
-              key={lang.id}
-              onClick={() => { setLanguage(lang.id); setLevel("all"); }}
-              className={cn(
-                "shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold border transition-all duration-150",
-                selectedLanguageId === lang.id
-                  ? "bg-brand-600 text-white border-brand-600 shadow-glow-xs"
-                  : "border-neutral-200 dark:border-white/[0.1] text-neutral-600 dark:text-neutral-400 hover:border-brand-400/50 dark:hover:border-brand-500/40 hover:text-brand-600 dark:hover:text-brand-300"
-              )}
-            >
-              {lang.name}
-            </button>
-          ))}
-        </div>
+      <div className="px-4 mb-4">
+        <LanguageSelector
+          value={selectedLanguageId}
+          onChange={(id) => { setLanguage(id); setLevel("all"); }}
+          allowCustom={false}
+          className="w-52"
+        />
       </div>
 
       {/* Level filter */}

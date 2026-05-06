@@ -2,6 +2,7 @@
 
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { LanguageSelector } from "@/components/ui/language-selector";
 import { useAuth } from "@clerk/nextjs";
 import { LANGUAGES } from "@mobile/lib/data/languages";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -138,9 +139,11 @@ function CreateGroupModal({ onClose }: Readonly<{ onClose: () => void }>) {
           </div>
           <div>
             <label className="block text-xs font-medium text-neutral-500 mb-1">Language</label>
-            <select className={fieldCls} value={langId} onChange={(e) => setLangId(e.target.value)}>
-              {LANGUAGES.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-            </select>
+            <LanguageSelector
+              value={langId}
+              onChange={setLangId}
+              allowCustom={true}
+            />
           </div>
           {error && <p className="text-xs text-red-500">{error}</p>}
         </div>

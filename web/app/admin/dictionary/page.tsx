@@ -4,7 +4,9 @@ import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { LanguageSelector } from "@/components/ui/language-selector";
 import { BookText, CheckCircle2, Edit2, ImageIcon, Mic, Plus, Search, Trash2, Upload, Volume2, X, XCircle } from "lucide-react";
+import { LANGUAGES as LANGUAGES_DATA } from "@mobile/lib/data/languages";
 import Image from "next/image";
 import React, { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -183,7 +185,11 @@ function EntryModal({
               <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">
                 {t("admin.dictionary.fieldLanguage")} *
               </label>
-              <input className={fieldCls} value={form.languageId} onChange={set("languageId")} placeholder="e.g. izon" />
+              <LanguageSelector
+                value={form.languageId}
+                onChange={(v) => setForm((f) => ({ ...f, languageId: v }))}
+                allowCustom={true}
+              />
             </div>
             <div>
               <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">
@@ -398,6 +404,9 @@ export default function AdminDictionaryPage() {
   });
 
   const effectiveLanguage = selectedLanguage || languages[0]?.id || "";
+  const enrichedLanguages = languages.map(
+    (l) => LANGUAGES_DATA.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.name, region: "Other" },
+  );
 
   const { data: entries = [], isLoading } = useQuery<DictEntry[]>({
     queryKey: ["admin", "dictionary", effectiveLanguage],
@@ -519,18 +528,13 @@ export default function AdminDictionaryPage() {
 
       {/* Controls */}
       <div className="flex gap-3 mb-4 flex-wrap">
-        <select
+        <LanguageSelector
           value={effectiveLanguage}
-          onChange={(e) => {
-            setSelectedLanguage(e.target.value);
-            setCategoryFilter("all");
-          }}
-          className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm px-3 py-2 text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/40"
-        >
-          {languages.map((l) => (
-            <option key={l.id} value={l.id}>{l.name}</option>
-          ))}
-        </select>
+          onChange={(v) => { setSelectedLanguage(v); setCategoryFilter("all"); }}
+          languages={enrichedLanguages}
+          allowCustom={false}
+          className="w-52"
+        />
 
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />

@@ -4,6 +4,7 @@ import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { LanguageSelector } from "@/components/ui/language-selector";
 import { BookOpen, ChevronDown, ChevronRight, Edit2, Layers, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -31,9 +32,6 @@ interface AdminLesson {
   order: number;
 }
 
-const LANGUAGES = [
-  "izon", "akan", "amharic", "yoruba", "swahili", "hausa", "igbo", "oromo",
-];
 const LEVELS = ["beginner", "intermediate", "advanced"];
 
 // ── Inline Form ───────────────────────────────────────────────────────────────
@@ -70,9 +68,11 @@ function CourseForm({
         </div>
         <div>
           <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.courses.formLanguage")} *</label>
-          <select className={fieldCls} value={languageId} onChange={(e) => setLanguageId(e.target.value)}>
-            {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
-          </select>
+          <LanguageSelector
+            value={languageId}
+            onChange={setLanguageId}
+            allowCustom={true}
+          />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -346,7 +346,7 @@ export default function AdminCoursesPage() {
   const [token, setToken] = useState<string | null>(null);
   const [addingCourse, setAddingCourse] = useState(false);
   const [editingCourse, setEditingCourse] = useState<AdminCourse | null>(null);
-  const [filterLang, setFilterLang] = useState("all");
+  const [filterLang, setFilterLang] = useState("");
 
   // Eagerly get token once
   useState(() => {
@@ -381,7 +381,7 @@ export default function AdminCoursesPage() {
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ["admin", "courses"] }); },
   });
 
-  const filtered = filterLang === "all" ? courses : courses.filter((c) => c.languageId === filterLang);
+  const filtered = !filterLang ? courses : courses.filter((c) => c.languageId === filterLang);
 
   return (
     <div>
@@ -399,21 +399,14 @@ export default function AdminCoursesPage() {
       </div>
 
       {/* Language filter */}
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
-        {["all", ...LANGUAGES].map((l) => (
-          <button
-            key={l}
-            onClick={() => setFilterLang(l)}
-            className={cn(
-              "shrink-0 px-3 py-1 rounded-full text-xs font-medium border transition-colors capitalize",
-              filterLang === l
-                ? "bg-brand-600 text-white border-brand-600"
-                : "border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:border-brand-400"
-            )}
-          >
-            {l}
-          </button>
-        ))}
+      <div className="mb-4">
+        <LanguageSelector
+          value={filterLang}
+          onChange={setFilterLang}
+          allowCustom={false}
+          placeholder="All languages"
+          className="w-52"
+        />
       </div>
 
       {addingCourse && (

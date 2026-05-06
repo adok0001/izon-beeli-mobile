@@ -1,20 +1,9 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { LanguageSelector } from "@/components/ui/language-selector";
 import { useLanguageStore } from "@/store/language-store";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-
-const LANGUAGES = [
-  { id: "izon",    name: "Izon",    flag: "🇳🇬" },
-  { id: "yoruba",  name: "Yoruba",  flag: "🇳🇬" },
-  { id: "igbo",    name: "Igbo",    flag: "🇳🇬" },
-  { id: "hausa",   name: "Hausa",   flag: "🇳🇬" },
-  { id: "akan",    name: "Akan",    flag: "🇬🇭" },
-  { id: "swahili", name: "Swahili", flag: "🇰🇪" },
-  { id: "amharic", name: "Amharic", flag: "🇪🇹" },
-  { id: "oromo",   name: "Oromo",   flag: "🇪🇹" },
-] as const;
 
 const STORAGE_KEY = "beeli_onboarded";
 
@@ -52,24 +41,15 @@ export function OnboardingModal() {
           </p>
         </div>
 
-        {/* Language grid */}
-        <div className="grid grid-cols-2 gap-2 mb-6">
-          {LANGUAGES.map((lang) => (
-            <button
-              key={lang.id}
-              type="button"
-              onClick={() => setPicked(lang.id)}
-              className={cn(
-                "flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-colors text-left",
-                picked === lang.id
-                  ? "border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300"
-                  : "border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:border-brand-300 dark:hover:border-brand-700"
-              )}
-            >
-              <span className="text-base">{lang.flag}</span>
-              {lang.name}
-            </button>
-          ))}
+        {/* Language selector */}
+        <div className="mb-6">
+          <LanguageSelector
+            value={picked}
+            onChange={setPicked}
+            allowCustom={true}
+            placeholder="Choose a language…"
+            className="w-full"
+          />
         </div>
 
         <button

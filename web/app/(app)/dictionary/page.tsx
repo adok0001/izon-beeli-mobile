@@ -2,6 +2,7 @@
 
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { LanguageSelector } from "@/components/ui/language-selector";
 import { useLanguageStore } from "@/store/language-store";
 import { SignInButton, useAuth, useUser } from "@clerk/nextjs";
 import Link from "next/link";
@@ -23,17 +24,6 @@ interface DictionaryWord {
   exampleTranslation?: string | null;
   audioUrl?: string | null;
 }
-
-const LANGUAGES = [
-  { id: "izon", name: "Izon" },
-  { id: "akan", name: "Akan" },
-  { id: "amharic", name: "Amharic" },
-  { id: "yoruba", name: "Yoruba" },
-  { id: "swahili", name: "Swahili" },
-  { id: "hausa", name: "Hausa" },
-  { id: "igbo", name: "Igbo" },
-  { id: "oromo", name: "Oromo" },
-] as const;
 
 const CATEGORIES = [
   "greetings", "family", "numbers", "food", "body", "animals",
@@ -642,22 +632,14 @@ export default function DictionaryPage() {
         </button>
       </div>
 
-      {/* Language pills */}
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-3 scrollbar-hide">
-        {LANGUAGES.map((lang) => (
-          <button
-            key={lang.id}
-            onClick={() => { setLanguage(lang.id); setCategory("all"); setSearch(""); }}
-            className={cn(
-              "shrink-0 px-3 py-1 rounded-full text-xs font-medium border transition-colors",
-              selectedLanguageId === lang.id
-                ? "bg-brand-600 text-white border-brand-600"
-                : "border-neutral-200 text-neutral-600 hover:border-brand-400 dark:border-neutral-700 dark:text-neutral-400"
-            )}
-          >
-            {lang.name}
-          </button>
-        ))}
+      {/* Language selector */}
+      <div className="mb-3">
+        <LanguageSelector
+          value={selectedLanguageId}
+          onChange={(id) => { setLanguage(id); setCategory("all"); setSearch(""); }}
+          allowCustom={false}
+          className="w-52"
+        />
       </div>
 
       {/* Search */}

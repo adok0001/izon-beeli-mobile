@@ -2,6 +2,7 @@
 
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { LanguageSelector } from "@/components/ui/language-selector";
 import { useLanguageStore } from "@/store/language-store";
 import { useAuth } from "@clerk/nextjs";
 import { LANGUAGES } from "@mobile/lib/data/languages";
@@ -86,23 +87,12 @@ function LanguagePicker({ value, onChange }: Readonly<{ value: string; onChange:
   return (
     <div className="space-y-2">
       <Label>{t("contribute.languageRequired")}</Label>
-      <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto pr-1">
-        {LANGUAGES.map((lang) => (
-          <button
-            key={lang.id}
-            onClick={() => onChange(lang.id)}
-            className={cn(
-              "py-3 rounded-xl border text-sm font-medium transition-colors text-left px-4",
-              value === lang.id
-                ? "bg-brand-600 text-white border-brand-600"
-                : "border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:border-brand-400"
-            )}
-          >
-            <span className="block font-semibold">{lang.name}</span>
-            <span className="block text-xs opacity-70">{lang.nativeName} · {lang.region}</span>
-          </button>
-        ))}
-      </div>
+      <LanguageSelector
+        value={value}
+        onChange={onChange}
+        allowCustom={true}
+        className="w-full"
+      />
     </div>
   );
 }

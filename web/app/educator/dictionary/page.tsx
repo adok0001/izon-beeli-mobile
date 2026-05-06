@@ -2,9 +2,11 @@
 
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { LanguageSelector } from "@/components/ui/language-selector";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookText, CheckCircle2, Edit2, ImageIcon, Mic, Plus, Search, Trash2, Upload, Volume2, X, XCircle } from "lucide-react";
+import { LANGUAGES } from "@mobile/lib/data/languages";
 import Image from "next/image";
 import React, { useRef, useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -127,6 +129,10 @@ function EntryModal({
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
       setForm((f) => ({ ...f, [key]: e.target.value }));
 
+  const enrichedLanguages = languages.map(
+    (l) => LANGUAGES.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.nativeName, region: "Other" },
+  );
+
   const isValid = form.word.trim() && form.english.trim() && form.languageId.trim();
 
   return (
@@ -142,9 +148,12 @@ function EntryModal({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.dictionary.fieldLanguage")} *</label>
-              <select className={fieldCls} value={form.languageId} onChange={set("languageId")}>
-                {languages.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-              </select>
+              <LanguageSelector
+                value={form.languageId}
+                onChange={(v) => setForm((f) => ({ ...f, languageId: v }))}
+                languages={enrichedLanguages}
+                allowCustom={true}
+              />
             </div>
             <div>
               <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.dictionary.fieldCategory")} *</label>
@@ -324,6 +333,9 @@ export default function EducatorDictionaryPage() {
 
   const languages = me?.languages ?? [];
   const effectiveLanguage = selectedLanguage || languages[0]?.id || "";
+  const enrichedLanguages = languages.map(
+    (l) => LANGUAGES.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.name, region: "Other" },
+  );
 
   const { data: entries = [], isLoading } = useQuery<DictEntry[]>({
     queryKey: ["educator", "dictionary", effectiveLanguage],
@@ -439,13 +451,13 @@ export default function EducatorDictionaryPage() {
 
       <div className="flex gap-3 mb-4 flex-wrap">
         {languages.length > 1 && (
-          <select
+          <LanguageSelector
             value={effectiveLanguage}
-            onChange={(e) => { setSelectedLanguage(e.target.value); setCategoryFilter("all"); }}
-            className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm px-3 py-2 text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/40"
-          >
-            {languages.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-          </select>
+            onChange={(v) => { setSelectedLanguage(v); setCategoryFilter("all"); }}
+            languages={enrichedLanguages}
+            allowCustom={false}
+            className="w-52"
+          />
         )}
         {languages.length === 1 && (
           <span className="px-3 py-1.5 text-sm font-medium text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/20 rounded-lg border border-brand-200 dark:border-brand-800">

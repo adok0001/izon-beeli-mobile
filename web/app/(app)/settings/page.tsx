@@ -13,23 +13,13 @@ import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { FeedbackCategory } from "@/types";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation } from "@tanstack/react-query";
+import { LanguageSelector } from "@/components/ui/language-selector";
 import { ExternalLink, HelpCircle, MessageSquare, Shield } from "lucide-react";
 import { Monitor, Moon, Sun } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-
-const LANGUAGES = [
-  { id: "izon", name: "Izon" },
-  { id: "akan", name: "Akan" },
-  { id: "amharic", name: "Amharic" },
-  { id: "yoruba", name: "Yoruba" },
-  { id: "swahili", name: "Swahili" },
-  { id: "hausa", name: "Hausa" },
-  { id: "igbo", name: "Igbo" },
-  { id: "oromo", name: "Oromo" },
-] as const;
 
 const FEEDBACK_CATEGORY_KEYS: Record<FeedbackCategory, string> = {
   bug:        "feedback.categoryBug",
@@ -108,25 +98,12 @@ export default function SettingsPage() {
         <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500 mb-3">
           {t("settings.learningLanguage")}
         </h2>
-        <div className="grid grid-cols-2 gap-2">
-          {LANGUAGES.map((lang) => (
-            <button
-              key={lang.id}
-              onClick={() => setLanguage(lang.id)}
-              className={cn(
-                "px-4 py-3 rounded-xl text-sm font-medium border text-left transition-colors",
-                selectedLanguageId === lang.id
-                  ? "bg-brand-50 border-brand-400 text-brand-700 dark:bg-brand-950/40 dark:border-brand-700 dark:text-brand-300"
-                  : "border-neutral-200 text-neutral-700 dark:border-neutral-700 dark:text-neutral-400 hover:border-brand-300"
-              )}
-            >
-              {lang.name}
-              {selectedLanguageId === lang.id && (
-                <span className="float-right text-brand-500">✓</span>
-              )}
-            </button>
-          ))}
-        </div>
+        <LanguageSelector
+          value={selectedLanguageId}
+          onChange={setLanguage}
+          allowCustom={true}
+          className="w-full"
+        />
       </section>
 
       {/* Theme */}

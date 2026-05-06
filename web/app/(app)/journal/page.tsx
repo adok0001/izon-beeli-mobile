@@ -5,20 +5,11 @@ import { cn, formatDate } from "@/lib/utils";
 import type { JournalEntry } from "@/types";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { LanguageSelector } from "@/components/ui/language-selector";
 import { Globe2, NotebookPen, Pencil, Plus, Trash2, X } from "lucide-react";
+import { LANGUAGES } from "@mobile/lib/data/languages";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-
-const LANGUAGES = [
-  { id: "izon", name: "Izon" },
-  { id: "akan", name: "Akan" },
-  { id: "amharic", name: "Amharic" },
-  { id: "yoruba", name: "Yoruba" },
-  { id: "swahili", name: "Swahili" },
-  { id: "hausa", name: "Hausa" },
-  { id: "igbo", name: "Igbo" },
-  { id: "oromo", name: "Oromo" },
-] as const;
 
 const LANG_NAME: Record<string, string> = Object.fromEntries(LANGUAGES.map((l) => [l.id, l.name]));
 
@@ -201,16 +192,12 @@ function EntryModal({
             <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 block mb-1">
               Language (optional)
             </label>
-            <select
+            <LanguageSelector
               value={languageId}
-              onChange={(e) => setLanguageId(e.target.value)}
-              className={inputCls}
-            >
-              <option value="">— None —</option>
-              {LANGUAGES.map((l) => (
-                <option key={l.id} value={l.id}>{l.name}</option>
-              ))}
-            </select>
+              onChange={setLanguageId}
+              placeholder="None"
+              allowCustom={true}
+            />
           </div>
 
           {/* Post to feed toggle */}

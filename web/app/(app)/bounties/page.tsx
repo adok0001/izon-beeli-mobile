@@ -1,23 +1,13 @@
 "use client";
 
 import { apiFetch } from "@/lib/api";
-import { cn } from "@/lib/utils";
+import { LanguageSelector } from "@/components/ui/language-selector";
 import { useLanguageStore } from "@/store/language-store";
 import { useQuery } from "@tanstack/react-query";
 import { Star } from "lucide-react";
+import { LANGUAGES } from "@mobile/lib/data/languages";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-
-const LANGUAGES = [
-  { id: "izon", name: "Izon" },
-  { id: "akan", name: "Akan" },
-  { id: "amharic", name: "Amharic" },
-  { id: "yoruba", name: "Yoruba" },
-  { id: "swahili", name: "Swahili" },
-  { id: "hausa", name: "Hausa" },
-  { id: "igbo", name: "Igbo" },
-  { id: "oromo", name: "Oromo" },
-];
 
 interface Bounty {
   id: string;
@@ -117,23 +107,13 @@ export default function BountiesPage() {
       </div>
 
       {/* Language filter */}
-      <div className="overflow-x-auto scrollbar-hide mb-6">
-        <div className="flex gap-2 pb-2 w-max">
-          {LANGUAGES.map((lang) => (
-            <button
-              key={lang.id}
-              onClick={() => setLanguage(lang.id)}
-              className={cn(
-                "shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-colors",
-                selectedLanguageId === lang.id
-                  ? "bg-brand-600 text-white border-brand-600"
-                  : "border-neutral-200 text-neutral-600 hover:border-brand-400 dark:border-neutral-700 dark:text-neutral-400"
-              )}
-            >
-              {lang.name}
-            </button>
-          ))}
-        </div>
+      <div className="mb-6">
+        <LanguageSelector
+          value={selectedLanguageId}
+          onChange={setLanguage}
+          allowCustom={false}
+          className="w-52"
+        />
       </div>
 
       {/* List */}
