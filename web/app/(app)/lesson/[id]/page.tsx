@@ -10,15 +10,15 @@ import type { Lesson, TranscriptSegment } from "@/types";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-    ArrowLeft,
-    BookOpen,
-    BookText,
-    CheckCircle2,
-    FastForward,
-    Pause,
-    Play,
-    Rewind,
-    Trophy, Volume2,
+  ArrowLeft,
+  BookOpen,
+  BookText,
+  CheckCircle2,
+  FastForward,
+  Pause,
+  Play,
+  Rewind,
+  Trophy, Volume2,
 } from "lucide-react";
 import Link from "next/link";
 import { use, useCallback, useEffect, useRef, useState, type ReactNode } from "react";

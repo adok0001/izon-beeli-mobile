@@ -10,19 +10,19 @@ import type { Course, Lesson } from "@/types";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import {
-  BookMarked,
-  Brain,
-  CheckCircle2,
-  ChevronDown,
-  ChevronRight,
-  ChevronUp,
-  Globe2,
-  Headphones,
-  Pause,
-  Play,
-  Quote,
-  Trophy,
-  Users,
+    BookMarked,
+    Brain,
+    CheckCircle2,
+    ChevronDown,
+    ChevronRight,
+    ChevronUp,
+    Globe2,
+    Headphones,
+    Pause,
+    Play,
+    Quote,
+    Trophy,
+    Users,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
