@@ -15,13 +15,13 @@ import {
     FlipHorizontal2,
     Globe2,
     GraduationCap,
-    Headphones,
     Languages,
     LayoutDashboard,
     NotebookPen,
     Plus,
     Settings,
     ShieldCheck,
+    Sparkles,
     Star,
     Trophy,
     UserRound,
@@ -46,7 +46,7 @@ const EDUCATOR_NAV = [
 
 const NAV_ITEMS = [
   { href: "/learn",   labelKey: "tabs.learn",   icon: BookOpen,    tourId: "nav-learn" },
-  { href: "/listen",  labelKey: "tabs.listen",  icon: Headphones,  tourId: "nav-listen" },
+  { href: "/listen",  labelKey: "tabs.practice", icon: Sparkles,   tourId: "nav-listen" },
   { href: "/journal", labelKey: "tabs.journal", icon: NotebookPen, tourId: "nav-journal" },
   { href: "/feed",    labelKey: "tabs.feed",    icon: Globe2,      tourId: "nav-feed" },
   { href: "/profile", labelKey: "tabs.profile", icon: UserRound,   tourId: "nav-profile" },
@@ -176,89 +176,93 @@ export function Sidebar() {
             </div>
           </div>
         ))}
+
+        {/* Educator section — inside scroll area */}
+        {me?.isReviewer && (
+          <div className="pt-5">
+            <div className="mb-1.5 px-3 flex items-center gap-2">
+              <span className="h-px flex-1 bg-white/[0.05]" />
+              <GraduationCap className={cn(
+                "h-3 w-3",
+                me.reviewerRole === "elder" ? "text-teal-400" : me.reviewerRole === "professor" ? "text-indigo-400" : "text-blue-400"
+              )} />
+              <span className={cn(
+                "text-[9px] font-bold uppercase tracking-[0.15em]",
+                me.reviewerRole === "elder" ? "text-teal-400" : me.reviewerRole === "professor" ? "text-indigo-400" : "text-blue-400"
+              )}>
+                {me.reviewerRole === "elder" ? t("reviewerApplication.roleElder")
+                  : me.reviewerRole === "professor" ? t("reviewerApplication.roleProfessor")
+                  : me.reviewerRole === "teacher" ? t("reviewerApplication.roleTeacher")
+                  : t("educator.panelTitle")}
+              </span>
+              <span className="h-px flex-1 bg-white/[0.05]" />
+            </div>
+            <div className="space-y-0.5">
+              {EDUCATOR_NAV.map(({ href, labelKey, icon: Icon, exact }) => {
+                const active = exact ? pathname === href : pathname.startsWith(href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150",
+                      active
+                        ? me?.reviewerRole === "elder"
+                          ? "bg-teal-500/[0.12] text-teal-300 ring-1 ring-inset ring-teal-500/[0.2]"
+                          : me?.reviewerRole === "professor"
+                          ? "bg-indigo-500/[0.12] text-indigo-300 ring-1 ring-inset ring-indigo-500/[0.2]"
+                          : "bg-blue-500/[0.12] text-blue-300 ring-1 ring-inset ring-blue-500/[0.2]"
+                        : "text-neutral-500 hover:text-neutral-200 hover:bg-white/[0.05]"
+                    )}
+                  >
+                    <Icon className={cn(
+                      "h-4 w-4 shrink-0",
+                      active
+                        ? me?.reviewerRole === "elder" ? "text-teal-400" : me?.reviewerRole === "professor" ? "text-indigo-400" : "text-blue-400"
+                        : "text-neutral-600"
+                    )} />
+                    {t(labelKey)}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Admin section — inside scroll area */}
+        {me?.isAdmin && (
+          <div className="pt-5 pb-2">
+            <div className="mb-1.5 px-3 flex items-center gap-2">
+              <span className="h-px flex-1 bg-white/[0.05]" />
+              <ShieldCheck className="h-3 w-3 text-gold-400" />
+              <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-gold-400">
+                {t("admin.panelTitle")}
+              </span>
+              <span className="h-px flex-1 bg-white/[0.05]" />
+            </div>
+            <div className="space-y-0.5">
+              {ADMIN_NAV.map(({ href, labelKey, icon: Icon, exact }) => {
+                const active = exact ? pathname === href : pathname.startsWith(href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150",
+                      active
+                        ? "bg-gold-500/[0.14] text-gold-300 ring-1 ring-inset ring-gold-500/[0.22] shadow-glow-gold"
+                        : "text-neutral-500 hover:text-gold-300 hover:bg-gold-500/[0.07]"
+                    )}
+                  >
+                    <Icon className={cn("h-4 w-4 shrink-0", active ? "text-gold-400" : "text-neutral-600")} />
+                    {t(labelKey)}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </nav>
-
-      {/* Educator section */}
-      {me?.isReviewer && (
-        <div className="px-3 pt-3 pb-3 border-t border-white/[0.055]">
-          <div className="mb-1.5 px-3 flex items-center gap-2">
-            <GraduationCap className={cn(
-              "h-3 w-3",
-              me.reviewerRole === "elder" ? "text-teal-400" : me.reviewerRole === "professor" ? "text-indigo-400" : "text-blue-400"
-            )} />
-            <span className={cn(
-              "text-[9px] font-bold uppercase tracking-[0.15em]",
-              me.reviewerRole === "elder" ? "text-teal-400" : me.reviewerRole === "professor" ? "text-indigo-400" : "text-blue-400"
-            )}>
-              {me.reviewerRole === "elder" ? t("reviewerApplication.roleElder")
-                : me.reviewerRole === "professor" ? t("reviewerApplication.roleProfessor")
-                : me.reviewerRole === "teacher" ? t("reviewerApplication.roleTeacher")
-                : t("educator.panelTitle")}
-            </span>
-          </div>
-          <div className="space-y-0.5">
-            {EDUCATOR_NAV.map(({ href, labelKey, icon: Icon, exact }) => {
-              const active = exact ? pathname === href : pathname.startsWith(href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150",
-                    active
-                      ? me?.reviewerRole === "elder"
-                        ? "bg-teal-500/[0.12] text-teal-300 ring-1 ring-inset ring-teal-500/[0.2]"
-                        : me?.reviewerRole === "professor"
-                        ? "bg-indigo-500/[0.12] text-indigo-300 ring-1 ring-inset ring-indigo-500/[0.2]"
-                        : "bg-blue-500/[0.12] text-blue-300 ring-1 ring-inset ring-blue-500/[0.2]"
-                      : "text-neutral-500 hover:text-neutral-200 hover:bg-white/[0.05]"
-                  )}
-                >
-                  <Icon className={cn(
-                    "h-4 w-4 shrink-0",
-                    active
-                      ? me?.reviewerRole === "elder" ? "text-teal-400" : me?.reviewerRole === "professor" ? "text-indigo-400" : "text-blue-400"
-                      : "text-neutral-600"
-                  )} />
-                  {t(labelKey)}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Admin section */}
-      {me?.isAdmin && (
-        <div className="px-3 pt-3 pb-3 border-t border-white/[0.055]">
-          <div className="mb-1.5 px-3 flex items-center gap-2">
-            <ShieldCheck className="h-3 w-3 text-gold-400" />
-            <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-gold-400">
-              {t("admin.panelTitle")}
-            </span>
-          </div>
-          <div className="space-y-0.5">
-            {ADMIN_NAV.map(({ href, labelKey, icon: Icon, exact }) => {
-              const active = exact ? pathname === href : pathname.startsWith(href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150",
-                    active
-                      ? "bg-gold-500/[0.14] text-gold-300 ring-1 ring-inset ring-gold-500/[0.22] shadow-glow-gold"
-                      : "text-neutral-500 hover:text-gold-300 hover:bg-gold-500/[0.07]"
-                  )}
-                >
-                  <Icon className={cn("h-4 w-4 shrink-0", active ? "text-gold-400" : "text-neutral-600")} />
-                  {t(labelKey)}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* User account */}
       <div className="px-4 py-4 border-t border-white/[0.055]">

@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 import {
     BookOpen,
     Globe2,
-    Headphones,
     NotebookPen,
+    Sparkles,
     UserRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -14,7 +14,7 @@ import { useTranslation } from "react-i18next";
 
 const NAV_ITEMS = [
   { href: "/learn", labelKey: "tabs.learn", icon: BookOpen },
-  { href: "/listen", labelKey: "tabs.listen", icon: Headphones },
+  { href: "/listen", labelKey: "tabs.practice", icon: Sparkles },
   { href: "/journal", labelKey: "tabs.journal", icon: NotebookPen },
   { href: "/feed", labelKey: "tabs.feed", icon: Globe2 },
   { href: "/profile", labelKey: "tabs.profile", icon: UserRound },

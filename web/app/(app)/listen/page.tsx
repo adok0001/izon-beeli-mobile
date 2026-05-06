@@ -149,7 +149,10 @@ function ProverbsCard({ languageId }: Readonly<{ languageId: string }>) {
   if (proverbs.length === 0) return null;
   const first = proverbs[0];
   return (
-    <div className="flex items-center gap-3 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/40">
+    <Link
+      href={`/proverbs/${languageId}`}
+      className="flex items-center gap-3 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/40 hover:border-amber-300 dark:hover:border-amber-700 transition-colors"
+    >
       <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
         <Quote className="h-5 w-5 text-amber-700 dark:text-amber-400" />
       </div>
@@ -161,7 +164,8 @@ function ProverbsCard({ languageId }: Readonly<{ languageId: string }>) {
           &ldquo;{first.text}&rdquo;
         </p>
       </div>
-    </div>
+      <ChevronRight className="h-4 w-4 text-amber-400 shrink-0" />
+    </Link>
   );
 }
 
@@ -267,9 +271,9 @@ export default function ListenPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t("tabs.listen")}</h1>
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t("practice.title")}</h1>
         <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
-          {t("listenPage.subtitle")}
+          {t("practice.subtitle")}
         </p>
       </div>
 

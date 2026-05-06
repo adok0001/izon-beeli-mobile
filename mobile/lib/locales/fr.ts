@@ -1103,6 +1103,7 @@ export const fr = {
       review: "Révision",
       dictionary: "Dictionnaire",
       lessons: "Leçons",
+      culture: "Culture & Musique",
     },
     overview: {
       welcome: "Bienvenue, {{name}}",

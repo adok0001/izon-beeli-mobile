@@ -1103,6 +1103,7 @@ export const pcm = {
       review: "Review",
       dictionary: "Dictionary",
       lessons: "Lessons",
+      culture: "Culture & Music",
     },
     overview: {
       welcome: "Welcome, {{name}}",
