@@ -11,7 +11,17 @@ export interface CurrentUser {
   points: number;
   selectedLanguageId: string | null;
   isAdmin: boolean;
+  isReviewer: boolean;
+  reviewerRole: "teacher" | "professor" | "elder" | null;
   createdAt: string;
+}
+
+export function canManageBounties(user: CurrentUser) {
+  return user.isAdmin || user.reviewerRole === "professor" || user.reviewerRole === "elder";
+}
+
+export function canReviewApplications(user: CurrentUser) {
+  return user.isAdmin || user.reviewerRole === "elder";
 }
 
 export function useCurrentUser() {

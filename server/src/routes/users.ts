@@ -1,28 +1,31 @@
 import { createClerkClient, verifyToken } from "@clerk/backend";
-import { and, asc, desc, eq, inArray, isNotNull, lt } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, isNotNull, isNull, lt } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index.js";
 import {
-  classroomAssignments,
-  classroomGroups,
-  classroomMembers,
-  comments,
-  contributions,
-  dailyChallenges,
-  feedback,
-  feedItems,
-  gameSessionPlayers,
-  gameSessions,
-  journalEntries,
-  lessonContributions,
-  lessonContributionSegments,
-  likes,
-  matchmakingQueue,
-  pushTokens,
-  quizResults,
-  userProgress,
-  users,
-  wordBank,
+    classroomAssignments,
+    classroomGroups,
+    classroomMembers,
+    comments,
+    contributions,
+    courses,
+    dailyChallenges,
+    dictionaryEntries,
+    feedback,
+    feedItems,
+    gameSessionPlayers,
+    gameSessions,
+    journalEntries,
+    lessonContributions,
+    lessonContributionSegments,
+    lessons,
+    likes,
+    matchmakingQueue,
+    pushTokens,
+    quizResults,
+    userProgress,
+    users,
+    wordBank,
 } from "../db/schema.js";
 import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
 
@@ -138,6 +141,9 @@ usersRouter.get("/me", authMiddleware, async (c) => {
     points: user.points,
     selectedLanguageId: user.selectedLanguageId,
     isAdmin: user.isAdmin,
+    isReviewer: user.isReviewer,
+    reviewerLanguages: user.reviewerLanguages,
+    reviewerRole: user.reviewerRole,
     createdAt: user.createdAt,
   });
 });
@@ -229,6 +235,9 @@ adminUsersRouter.get("/", async (c) => {
       points: users.points,
       streak: users.streak,
       isAdmin: users.isAdmin,
+      isReviewer: users.isReviewer,
+      reviewerLanguages: users.reviewerLanguages,
+      reviewerRole: users.reviewerRole,
       selectedLanguageId: users.selectedLanguageId,
       createdAt: users.createdAt,
     })
@@ -240,21 +249,66 @@ adminUsersRouter.get("/", async (c) => {
   return c.json(rows);
 });
 
-// PATCH /api/admin/users/:id — toggle isAdmin
+// PATCH /api/admin/users/:id — toggle isAdmin or set reviewer role
 adminUsersRouter.patch("/:id", async (c) => {
   const targetId = c.req.param("id");
-  const body = await c.req.json<{ isAdmin: boolean }>();
+  const body = await c.req.json<{ isAdmin?: boolean; isReviewer?: boolean; reviewerLanguages?: string[]; reviewerRole?: string | null }>();
 
-  if (typeof body.isAdmin !== "boolean") {
-    return c.json({ error: "isAdmin must be a boolean" }, 400);
+  const updates: Record<string, unknown> = {};
+  if (typeof body.isAdmin === "boolean") updates.isAdmin = body.isAdmin;
+  if (typeof body.isReviewer === "boolean") updates.isReviewer = body.isReviewer;
+  if (Array.isArray(body.reviewerLanguages)) updates.reviewerLanguages = body.reviewerLanguages;
+  if (body.reviewerRole !== undefined) updates.reviewerRole = body.reviewerRole ?? null;
+
+  if (Object.keys(updates).length === 0) {
+    return c.json({ error: "No valid fields to update" }, 400);
   }
 
-  await db
-    .update(users)
-    .set({ isAdmin: body.isAdmin })
-    .where(eq(users.id, targetId));
-
+  await db.update(users).set(updates).where(eq(users.id, targetId));
   return c.json({ updated: true });
+});
+
+// ── Admin Stats ───────────────────────────────────────────────────────────────
+
+export const adminStatsRouter = new Hono<AuthEnv>();
+adminStatsRouter.use("*", authMiddleware);
+adminStatsRouter.use("*", adminMiddleware);
+
+// GET /api/admin/stats
+adminStatsRouter.get("/stats", async (c) => {
+  const [
+    [userCount],
+    [lessonCount],
+    [courseCount],
+    [contributionCount],
+    [pendingCount],
+    [completedCount],
+    [quizCount],
+    [dictCount],
+    [feedbackCount],
+  ] = await Promise.all([
+    db.select({ value: count() }).from(users).where(isNull(users.deletedAt)),
+    db.select({ value: count() }).from(lessons),
+    db.select({ value: count() }).from(courses),
+    db.select({ value: count() }).from(contributions),
+    db.select({ value: count() }).from(contributions).where(eq(contributions.status, "submitted")),
+    db.select({ value: count() }).from(userProgress).where(eq(userProgress.completed, true)),
+    db.select({ value: count() }).from(quizResults),
+    db.select({ value: count() }).from(dictionaryEntries),
+    db.select({ value: count() }).from(feedback),
+  ]);
+
+  return c.json({
+    users: userCount.value,
+    lessons: lessonCount.value,
+    courses: courseCount.value,
+    contributions: contributionCount.value,
+    pendingContributions: pendingCount.value,
+    lessonsCompleted: completedCount.value,
+    quizzesTaken: quizCount.value,
+    dictionaryEntries: dictCount.value,
+    feedbackReceived: feedbackCount.value,
+  });
 });
 
 /**

@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq, and } from "drizzle-orm";
+import { eq, and, ne } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { pushTokens } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
@@ -16,6 +16,11 @@ pushTokensRouter.post("/", async (c) => {
   if (!token || !platform || !["ios", "android"].includes(platform)) {
     return c.json({ error: "token and platform (ios|android) are required" }, 400);
   }
+
+  // Remove this token from any other user (same device, different account)
+  await db
+    .delete(pushTokens)
+    .where(and(eq(pushTokens.token, token), ne(pushTokens.userId, userId)));
 
   // Upsert: if this (userId, token) pair already exists, update updatedAt
   const [existing] = await db

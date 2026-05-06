@@ -10,9 +10,10 @@ import { coursesRouter } from "./routes/courses.js";
 import { culturalRouter } from "./routes/cultural.js";
 import { dailyChallengesRouter } from "./routes/daily-challenges.js";
 import { dashboardRouter } from "./routes/dashboard.js";
-import { dictionaryRouter } from "./routes/dictionary.js";
+import { dictionaryAdminRouter, dictionaryRouter } from "./routes/dictionary.js";
+import { educatorRouter } from "./routes/educator.js";
 import { feedPublicRouter, feedRouter } from "./routes/feed.js";
-import { feedbackRouter } from "./routes/feedback.js";
+import { feedbackAdminRouter, feedbackRouter } from "./routes/feedback.js";
 import { journalRouter } from "./routes/journal.js";
 import { languagesRouter } from "./routes/languages.js";
 import { lessonContributionsRouter } from "./routes/lesson-contributions.js";
@@ -22,10 +23,11 @@ import { notificationsAdminRouter, notificationsRouter } from "./routes/notifica
 import { progressRouter } from "./routes/progress.js";
 import { proverbsRouter } from "./routes/proverbs.js";
 import { pushTokensRouter } from "./routes/push-tokens.js";
-import { quizRouter } from "./routes/quiz.js";
 import { quizResultsRouter } from "./routes/quiz-results.js";
+import { quizRouter } from "./routes/quiz.js";
+import { reviewerApplicationsAdminRouter, reviewerApplicationsRouter } from "./routes/reviewer-applications.js";
 import { sentencesRouter } from "./routes/sentences.js";
-import { adminUsersRouter, purgeExpiredDeletedUsers, usersRouter } from "./routes/users.js";
+import { adminStatsRouter, adminUsersRouter, purgeExpiredDeletedUsers, usersRouter } from "./routes/users.js";
 import { wordbankRouter } from "./routes/wordbank.js";
 
 const isDev = process.env.NODE_ENV !== "production";
@@ -68,6 +70,7 @@ app.route("/languages", languagesRouter);
 app.route("/courses", coursesRouter);
 app.route("/lessons", lessonsRouter);
 app.route("/dictionary", dictionaryRouter);
+app.route("/dictionary/admin", dictionaryAdminRouter);
 app.route("/proverbs", proverbsRouter);
 app.route("/cultural", culturalRouter);
 app.route("/sentences", sentencesRouter);
@@ -82,6 +85,7 @@ app.route("/contributions", contributionsRouter);
 app.route("/lesson-contributions", lessonContributionsRouter);
 app.route("/wordbank", wordbankRouter);
 app.route("/feedback", feedbackRouter);
+app.route("/feedback/admin", feedbackAdminRouter);
 app.route("/multiplayer", multiplayerRouter);
 app.route("/multiplayer", multiplayerInternalRouter);
 app.route("/quiz-results", quizResultsRouter);
@@ -94,6 +98,10 @@ app.route("/notifications/admin", notificationsAdminRouter);
 app.route("/bounties", bountiesRouter);
 app.route("/bounties/admin", bountiesAdminRouter);
 app.route("/admin/users", adminUsersRouter);
+app.route("/admin", adminStatsRouter);
+app.route("/educator", educatorRouter);
+app.route("/reviewer-applications", reviewerApplicationsRouter);
+app.route("/reviewer-applications/admin", reviewerApplicationsAdminRouter);
 
 // POST /api/internal/purge-deleted-users
 // Called daily by Vercel cron (see vercel.json). Protected by CRON_SECRET header.

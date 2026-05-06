@@ -1,7 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ALL_CATEGORIES, CATEGORY_LABELS, type DictionaryCategory } from "@/lib/dictionary";
 import { useCreateBounty, type CreateBountyInput } from "@/lib/hooks/use-bounties";
-import { useCurrentUser } from "@/lib/hooks/use-current-user";
+import { canManageBounties, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { ACTIVE_LANGUAGES } from "@/lib/mock-data";
 import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
@@ -64,8 +64,8 @@ export default function BountyCreateScreen() {
   const [xpReward, setXpReward] = useState("25");
   const [expiresAt, setExpiresAt] = useState("");
 
-  // Guard: non-admins should never reach this screen
-  if (currentUser && !currentUser.isAdmin) {
+  // Guard: only professor+ can create bounties
+  if (currentUser && !canManageBounties(currentUser)) {
     return (
       <>
         <Stack.Screen options={{ title: "Create Bounty" }} />

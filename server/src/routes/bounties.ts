@@ -2,7 +2,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index.js";
 import { bounties, users } from "../db/schema.js";
-import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
+import { professorMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
 
 const bountySelectFields = {
   id: bounties.id,
@@ -78,7 +78,7 @@ bountiesRouter.get("/:id", async (c) => {
 export const bountiesAdminRouter = new Hono<AuthEnv>();
 
 bountiesAdminRouter.use("*", authMiddleware);
-bountiesAdminRouter.use("*", adminMiddleware);
+bountiesAdminRouter.use("*", professorMiddleware);
 
 // GET /api/bounties/admin — all bounties (all statuses) for management
 bountiesAdminRouter.get("/", async (c) => {

@@ -1,7 +1,7 @@
 import { FeedbackModal } from "@/components/feedback-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { XpLevelBadge } from "@/components/xp-level-badge";
-import { useCurrentUser } from "@/lib/hooks/use-current-user";
+import { canManageBounties, canReviewApplications, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
 import { getLanguageName } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
@@ -91,6 +91,7 @@ export default function ProfileScreen() {
 
   const { reset: resetTour, start: startTour } = useTourStore();
   const isAdmin = currentUser?.isAdmin ?? false;
+  const reviewerRole = currentUser?.reviewerRole ?? null;
   const displayName = user?.username ?? "Learner";
   const email = user?.primaryEmailAddress?.emailAddress ?? "";
   const initial = displayName[0]?.toUpperCase() ?? "?";
@@ -111,6 +112,36 @@ export default function ProfileScreen() {
               {email}
             </Text>
           ) : null}
+          <View className="mt-2 flex-row gap-2">
+            {isAdmin && (
+              <View className="rounded-full bg-amber-100 px-3 py-1 dark:bg-amber-900/40">
+                <Text className="text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+                  Admin
+                </Text>
+              </View>
+            )}
+            {reviewerRole === "elder" && (
+              <View className="rounded-full bg-teal-100 px-3 py-1 dark:bg-teal-900/40">
+                <Text className="text-xs font-bold uppercase tracking-wide text-teal-700 dark:text-teal-400">
+                  {t("reviewerApplication.roleElder")}
+                </Text>
+              </View>
+            )}
+            {reviewerRole === "professor" && (
+              <View className="rounded-full bg-indigo-100 px-3 py-1 dark:bg-indigo-900/40">
+                <Text className="text-xs font-bold uppercase tracking-wide text-indigo-700 dark:text-indigo-400">
+                  {t("reviewerApplication.roleProfessor")}
+                </Text>
+              </View>
+            )}
+            {reviewerRole === "teacher" && (
+              <View className="rounded-full bg-blue-100 px-3 py-1 dark:bg-blue-900/40">
+                <Text className="text-xs font-bold uppercase tracking-wide text-blue-700 dark:text-blue-400">
+                  {t("reviewerApplication.roleTeacher")}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
 
         {/* Stats */}
@@ -151,11 +182,18 @@ export default function ProfileScreen() {
             label={t("profile.dictionary")}
             onPress={() => router.push("/dictionary")}
           />
-          {isAdmin && (
+          {(isAdmin || currentUser?.isReviewer) && (
             <MenuRow
               icon="checkmark.shield.fill"
               label={t("profile.reviewContributions")}
               onPress={() => router.push("/review")}
+            />
+          )}
+          {currentUser && canReviewApplications(currentUser) && (
+            <MenuRow
+              icon="person.badge.clock.fill"
+              label={t("profile.reviewApplications")}
+              onPress={() => router.push("/reviewer-applications-admin" as any)}
             />
           )}
           <MenuRow

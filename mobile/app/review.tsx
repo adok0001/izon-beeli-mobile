@@ -415,6 +415,7 @@ export default function ReviewScreen() {
   const { t } = useTranslation();
   const { data: currentUser } = useCurrentUser();
   const isAdmin = currentUser?.isAdmin ?? false;
+  const canReview = isAdmin || (currentUser?.isReviewer ?? false);
 
   const [activeTab, setActiveTab] = useState<"words" | "lessons">("words");
   const [refreshing, setRefreshing] = useState(false);
@@ -434,7 +435,7 @@ export default function ReviewScreen() {
     setRefreshing(false);
   }, [refetchWords, refetchLessons]);
 
-  if (!isAdmin) {
+  if (!canReview) {
     return (
       <>
         <Stack.Screen options={{ title: t("review.title") }} />

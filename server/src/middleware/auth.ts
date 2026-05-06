@@ -15,6 +15,9 @@ export type AuthEnv = {
   Variables: {
     userId: string;
     clerkId: string;
+    reviewerLanguages: string[];
+    isAdmin: boolean;
+    reviewerRole: string | null;
   };
 };
 
@@ -99,6 +102,64 @@ export const adminMiddleware = createMiddleware<AuthEnv>(async (c, next) => {
     .limit(1);
 
   if (!user?.isAdmin) return c.json({ error: "Forbidden" }, 403);
+
+  await next();
+});
+
+/**
+ * Allows access for admins OR reviewers.
+ * Sets `reviewerLanguages` and `isAdmin` context vars for downstream route use.
+ * Admins get an empty reviewerLanguages array (they can see all languages).
+ */
+export const reviewerMiddleware = createMiddleware<AuthEnv>(async (c, next) => {
+  const userId = c.get("userId");
+  if (!userId) return c.json({ error: "Unauthorized" }, 401);
+
+  const [user] = await db
+    .select({ isAdmin: users.isAdmin, isReviewer: users.isReviewer, reviewerLanguages: users.reviewerLanguages, reviewerRole: users.reviewerRole })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (!user?.isAdmin && !user?.isReviewer) return c.json({ error: "Forbidden" }, 403);
+
+  c.set("isAdmin", user.isAdmin);
+  c.set("reviewerLanguages", user.isAdmin ? [] : (user.reviewerLanguages ?? []));
+  c.set("reviewerRole", user.isAdmin ? null : (user.reviewerRole ?? null));
+
+  await next();
+});
+
+/** Allows access for admins, professors, or elders (professor+). */
+export const professorMiddleware = createMiddleware<AuthEnv>(async (c, next) => {
+  const userId = c.get("userId");
+  if (!userId) return c.json({ error: "Unauthorized" }, 401);
+
+  const [user] = await db
+    .select({ isAdmin: users.isAdmin, reviewerRole: users.reviewerRole })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  const allowed = user?.isAdmin || user?.reviewerRole === "professor" || user?.reviewerRole === "elder";
+  if (!allowed) return c.json({ error: "Forbidden" }, 403);
+
+  await next();
+});
+
+/** Allows access for admins or elders only. */
+export const elderMiddleware = createMiddleware<AuthEnv>(async (c, next) => {
+  const userId = c.get("userId");
+  if (!userId) return c.json({ error: "Unauthorized" }, 401);
+
+  const [user] = await db
+    .select({ isAdmin: users.isAdmin, reviewerRole: users.reviewerRole })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  const allowed = user?.isAdmin || user?.reviewerRole === "elder";
+  if (!allowed) return c.json({ error: "Forbidden" }, 403);
 
   await next();
 });

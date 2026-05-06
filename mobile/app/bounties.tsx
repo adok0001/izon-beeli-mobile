@@ -1,7 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 
 import { useBounties, type Bounty } from "@/lib/hooks/use-bounties";
-import { useCurrentUser } from "@/lib/hooks/use-current-user";
+import { canManageBounties, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { getLanguageName } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
 import { Stack, useRouter } from "expo-router";
@@ -130,7 +130,7 @@ export default function BountiesScreen() {
         />
 
         {/* Admin FAB */}
-        {currentUser?.isAdmin && (
+        {currentUser && canManageBounties(currentUser) && (
           <Pressable
             onPress={() => router.push("/bounty-create" as any)}
             className="absolute bottom-8 right-5 h-14 w-14 items-center justify-center rounded-full bg-amber-500 shadow-md active:opacity-80"

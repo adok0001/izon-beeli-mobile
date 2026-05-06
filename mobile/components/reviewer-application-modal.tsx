@@ -3,14 +3,14 @@ import { useAuth } from "@clerk/clerk-expo";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  ActivityIndicator,
-  Alert,
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Alert,
+    Modal,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 
 type ReviewerRole = "teacher" | "professor" | "elder";
@@ -32,12 +32,14 @@ export function ReviewerApplicationModal({ visible, onClose }: ReviewerApplicati
   const [role, setRole] = useState<ReviewerRole>("teacher");
   const [background, setBackground] = useState("");
   const [reason, setReason] = useState("");
+  const [languagesInput, setLanguagesInput] = useState("");
   const [loading, setLoading] = useState(false);
 
   function reset() {
     setRole("teacher");
     setBackground("");
     setReason("");
+    setLanguagesInput("");
     setLoading(false);
   }
 
@@ -57,19 +59,25 @@ export function ReviewerApplicationModal({ visible, onClose }: ReviewerApplicati
     setLoading(true);
     try {
       const token = await getToken();
-      const message = `REVIEWER APPLICATION\nRole: ${role}\n\nBackground:\n${background.trim()}\n\nReason:\n${reason.trim()}`;
-      await apiFetch("/feedback", {
+      const languages = languagesInput
+        .split(",")
+        .map((l) => l.trim().toLowerCase())
+        .filter(Boolean);
+      await apiFetch("/reviewer-applications", {
         method: "POST",
         token: token ?? undefined,
-        body: JSON.stringify({ category: "suggestion", message }),
+        body: JSON.stringify({ role, background: background.trim(), reason: reason.trim(), languages }),
       });
       Alert.alert(
         t("reviewerApplication.successTitle"),
         t("reviewerApplication.successMessage"),
         [{ text: t("common.done"), onPress: handleClose }]
       );
-    } catch {
-      Alert.alert(t("reviewerApplication.failedTitle"), t("reviewerApplication.failedMessage"));
+    } catch (err: any) {
+      const msg = err?.message?.includes("pending")
+        ? t("reviewerApplication.alreadyPending")
+        : t("reviewerApplication.failedMessage");
+      Alert.alert(t("reviewerApplication.failedTitle"), msg);
     } finally {
       setLoading(false);
     }
@@ -165,6 +173,19 @@ export function ReviewerApplicationModal({ visible, onClose }: ReviewerApplicati
         <Text className="mb-6 text-right text-xs text-neutral-400">
           {reason.length}/1000
         </Text>
+
+        {/* Languages */}
+        <Text className="mb-2 text-sm font-semibold text-neutral-500 dark:text-neutral-400">
+          {t("reviewerApplication.languagesLabel")}
+        </Text>
+        <TextInput
+          className="mb-6 rounded-xl border border-neutral-200 bg-neutral-50 p-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+          placeholder={t("reviewerApplication.languagesPlaceholder")}
+          placeholderTextColor="#9ca3af"
+          autoCapitalize="none"
+          value={languagesInput}
+          onChangeText={setLanguagesInput}
+        />
 
         {/* Submit */}
         <Pressable
