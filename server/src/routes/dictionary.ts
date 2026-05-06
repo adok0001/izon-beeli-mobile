@@ -1,5 +1,5 @@
 import { put } from "@vercel/blob";
-import { and, asc, eq, ilike, notInArray, or } from "drizzle-orm";
+import { and, asc, eq, ilike, notInArray, or, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
 import { db } from "../db/index.js";
@@ -8,40 +8,53 @@ import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/aut
 
 export const dictionaryRouter = new Hono();
 
-// GET /api/dictionary?languageId=&category= (optional)
+// GET /api/dictionary?languageId=&category=&search= (all optional except languageId)
 // Merges dictionary_entries (static) + approved contributions
 dictionaryRouter.get("/", async (c) => {
   const languageId = c.req.query("languageId");
   const category = c.req.query("category");
+  const search = c.req.query("search")?.trim();
 
   if (!languageId || languageId.length > 64) {
     return c.json({ error: "Valid languageId query param required" }, 400);
   }
 
-  const conditions = category
-    ? and(
-        eq(dictionaryEntries.languageId, languageId),
-        eq(dictionaryEntries.category, category)
-      )
-    : eq(dictionaryEntries.languageId, languageId);
+  const entryConditions = [
+    eq(dictionaryEntries.languageId, languageId),
+    category ? eq(dictionaryEntries.category, category) : undefined,
+    search
+      ? or(
+          ilike(dictionaryEntries.word, search),
+          ilike(dictionaryEntries.word, `${search}-%`),
+          ilike(dictionaryEntries.word, `%${search}%`)
+        )
+      : undefined,
+  ].filter((c): c is NonNullable<typeof c> => c !== undefined);
 
   const staticEntries = await db
     .select()
     .from(dictionaryEntries)
-    .where(conditions)
-    .orderBy(asc(dictionaryEntries.word));
+    .where(and(...entryConditions))
+    .orderBy(
+      search
+        ? sql`LOWER(${dictionaryEntries.word}) = LOWER(${search}) DESC`
+        : asc(dictionaryEntries.word),
+      asc(dictionaryEntries.word)
+    );
 
   // Also merge approved contributions for this language
-  const contribConditions = category
-    ? and(
-        eq(contributions.languageId, languageId),
-        eq(contributions.status, "approved"),
-        eq(contributions.category, category)
-      )
-    : and(
-        eq(contributions.languageId, languageId),
-        eq(contributions.status, "approved")
-      );
+  const contribConditions = [
+    eq(contributions.languageId, languageId),
+    eq(contributions.status, "approved"),
+    category ? eq(contributions.category, category) : undefined,
+    search
+      ? or(
+          ilike(contributions.word, search),
+          ilike(contributions.word, `${search}-%`),
+          ilike(contributions.word, `%${search}%`)
+        )
+      : undefined,
+  ].filter((c): c is NonNullable<typeof c> => c !== undefined);
 
   const approvedContribs = await db
     .select({
@@ -59,7 +72,7 @@ dictionaryRouter.get("/", async (c) => {
     })
     .from(contributions)
     .leftJoin(users, eq(contributions.userId, users.id))
-    .where(contribConditions)
+    .where(and(...contribConditions))
     .orderBy(contributions.word);
 
   return c.json([...staticEntries, ...approvedContribs]);
