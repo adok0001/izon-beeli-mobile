@@ -1,8 +1,8 @@
 "use client";
 
+import { LanguageSelector } from "@/components/ui/language-selector";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { LanguageSelector } from "@/components/ui/language-selector";
 import { useLanguageStore } from "@/store/language-store";
 import { useAuth } from "@clerk/nextjs";
 import { LANGUAGES } from "@mobile/lib/data/languages";
