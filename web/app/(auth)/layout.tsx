@@ -35,7 +35,7 @@ export default function AuthLayout({
             </div>
           </div>
 
-          <h1 className="text-4xl font-extrabold text-white tracking-tight">Beeli</h1>
+          <h1 className="text-4xl font-extrabold text-white tracking-tight">Beeli (Aurufie)</h1>
           <p className="text-neutral-500 mt-2 text-sm font-medium">{t("auth.brandSubtitle")}</p>
         </div>
 

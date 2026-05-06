@@ -1,9 +1,9 @@
-import { Sidebar } from "@/components/layout/sidebar";
-import { MobileNav } from "@/components/layout/mobile-nav";
 import { AudioPlayerBar } from "@/components/layout/audio-player-bar";
+import { MobileNav } from "@/components/layout/mobile-nav";
+import { Sidebar } from "@/components/layout/sidebar";
 import { OnboardingModal } from "@/components/onboarding-modal";
-import { TourOverlay } from "@/components/tour/tour-overlay";
 import { TourLauncher } from "@/components/tour/tour-launcher";
+import { TourOverlay } from "@/components/tour/tour-overlay";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (

@@ -1,10 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+const APP_NAME = "Beeli (Aurufie)";
+
 export const metadata: Metadata = {
-  title: "Privacy Policy | Beeli",
+  title: `Privacy Policy | ${APP_NAME}`,
   description:
     "Learn how Beeli collects, uses, and protects your personal data.",
+  alternates: {
+    canonical: "/privacy",
+  },
+  openGraph: {
+    title: `Privacy Policy | ${APP_NAME}`,
+    description: "Learn how Beeli collects, uses, and protects your personal data.",
+    url: "/privacy",
+    type: "article",
+  },
 };
 
 const LAST_UPDATED = "27 March 2026";
@@ -17,7 +28,7 @@ export default function PrivacyPage() {
           href="/learn"
           className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
         >
-          ← Back to Beeli
+          ← Back to Beeli (Aurufie)
         </Link>
 
         <h1 className="mt-8 text-4xl font-bold tracking-tight">
@@ -34,10 +45,10 @@ export default function PrivacyPage() {
               1. Who We Are
             </h2>
             <p>
-              Beeli (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;)
+              Beeli (Aurufie) (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;)
               is a language-learning platform dedicated to the preservation and
               revitalisation of African languages. Our services are available
-              via the Beeli mobile app (iOS and Android) and the Beeli web
+              via the Beeli (Aurufie) mobile app (iOS and Android) and the Beeli (Aurufie) web
               application at{" "}
               <a href="https://izon-beeli.com" className="text-blue-600 dark:text-blue-400 hover:underline">izon-beeli.com</a>.
             </p>
@@ -53,7 +64,7 @@ export default function PrivacyPage() {
               2. Age Requirement
             </h2>
             <p>
-              Beeli is intended for users aged 13 and over. We do not knowingly
+              Beeli (Aurufie) is intended for users aged 13 and over. We do not knowingly
               collect personal information from children under 13. If you
               believe a child under 13 has provided us with personal data,
               please contact us immediately and we will delete it.

@@ -1,10 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Script from "next/script";
+
+const APP_NAME = "Beeli (Aurufie)";
 
 export const metadata: Metadata = {
-  title: "Support | Beeli",
+  title: `Support | ${APP_NAME}`,
   description:
-    "Get help with Beeli — the African language learning app.",
+    "Get help with Beeli (Aurufie) — the African language learning app.",
+  alternates: {
+    canonical: "/support",
+  },
+  openGraph: {
+    title: `Support | ${APP_NAME}`,
+    description: "Get help with Beeli (Aurufie) — the African language learning app.",
+    url: "/support",
+    type: "article",
+  },
 };
 
 const FAQS = [
@@ -47,14 +59,30 @@ const FAQS = [
 ];
 
 export default function SupportPage() {
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQS.map(({ q, a }) => ({
+      "@type": "Question",
+      name: q,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: a,
+      },
+    })),
+  };
+
   return (
     <main className="min-h-screen bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100">
+      <Script id="ld-support-faq" type="application/ld+json">
+        {JSON.stringify(faqJsonLd)}
+      </Script>
       <div className="max-w-3xl mx-auto px-6 py-16">
         <Link
           href="/learn"
           className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
         >
-          ← Back to Beeli
+          ← Back to Beeli (Aurufie)
         </Link>
 
         <h1 className="mt-8 text-4xl font-bold tracking-tight">Support</h1>
@@ -99,7 +127,7 @@ export default function SupportPage() {
         </div>
 
         <div className="mt-16 pt-8 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-sm text-neutral-400 dark:text-neutral-500">
-          <span>© {new Date().getFullYear()} Beeli. All rights reserved.</span>
+          <span>© {new Date().getFullYear()} Beeli (Aurufie). All rights reserved.</span>
           <Link
             href="/privacy"
             className="text-blue-600 dark:text-blue-400 hover:underline"
