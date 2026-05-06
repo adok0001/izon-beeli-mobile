@@ -21,6 +21,7 @@ import {
     Pause,
     Play,
     Quote,
+    Swords,
     Trophy,
     Users,
 } from "lucide-react";
@@ -296,6 +297,12 @@ export default function ListenPage() {
             label={t("practice.quiz")}
           />
           <ActivityCard
+            href="/battle"
+            icon={Swords}
+            iconBg="bg-blue-500"
+            label={t("multiplayer.quizBattle")}
+          />
+          <ActivityCard
             href="/leaderboard"
             icon={Users}
             iconBg="bg-violet-500"
@@ -305,7 +312,7 @@ export default function ListenPage() {
       </Section>
 
       {/* ── Audio Lessons ── */}
-      <Section title={t("tabs.listen")}>
+      <Section title={t("practice.audioLessons", { defaultValue: "Audio Lessons" })}>
         {/* Course tabs */}
         {!coursesLoading && courses.length > 0 && (
           <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">

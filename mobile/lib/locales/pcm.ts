@@ -86,6 +86,7 @@ export const pcm = {
     sectionToday: "Today",
     sectionActivities: "Activities",
     sectionCulture: "Culture & Music",
+    audioLessons: "Audio Lessons",
     reviewDue: "{{count}} words to review",
     reviewDueCta: "Review now",
     bestAccuracy: "Best: {{pct}}%",

@@ -86,6 +86,7 @@ export const fr = {
     sectionToday: "Aujourd'hui",
     sectionActivities: "Activités",
     sectionCulture: "Culture & Musique",
+    audioLessons: "Leçons audio",
     reviewDue: "{{count}} mots à réviser",
     reviewDueCta: "Réviser",
     bestAccuracy: "Meilleur : {{pct}}%",
