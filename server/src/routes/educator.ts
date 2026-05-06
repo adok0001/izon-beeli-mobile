@@ -11,9 +11,13 @@ import { randomUUID } from "node:crypto";
 import { db } from "../db/index.js";
 import {
   contributions,
+  courses,
   dictionaryEntries,
   languages,
   lessonContributions,
+  lessonContributionSegments,
+  lessons,
+  transcriptSegments,
   users,
 } from "../db/schema.js";
 import { AuthEnv, authMiddleware, reviewerMiddleware } from "../middleware/auth.js";
@@ -279,6 +283,8 @@ educatorRouter.get("/lesson-contributions", async (c) => {
 
 educatorRouter.post("/lesson-contributions/:id/review", async (c) => {
   const reviewerId = c.get("userId");
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
   const { id } = c.req.param();
   const { action, note } = await c.req.json<{ action: "approve" | "reject"; note?: string }>();
 
@@ -286,19 +292,91 @@ educatorRouter.post("/lesson-contributions/:id/review", async (c) => {
     return c.json({ error: "action must be approve or reject" }, 400);
   }
 
+  const [contribution] = await db
+    .select()
+    .from(lessonContributions)
+    .where(eq(lessonContributions.id, id))
+    .limit(1);
+
+  if (!contribution) return c.json({ error: "Not found" }, 404);
+  if (!isAdmin && !reviewerLanguages.includes(contribution.languageId)) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+  if (contribution.status === "approved") {
+    return c.json({ error: "Already approved" }, 409);
+  }
+
+  if (action === "reject") {
+    const [updated] = await db
+      .update(lessonContributions)
+      .set({ status: "rejected", reviewNote: note?.trim() || null, reviewedBy: reviewerId, reviewedAt: new Date() })
+      .where(eq(lessonContributions.id, id))
+      .returning({ id: lessonContributions.id, status: lessonContributions.status });
+    return c.json(updated);
+  }
+
+  // Approval: create actual lesson + copy segments into transcript_segments
+  let courseId = contribution.courseId;
+  if (!courseId) {
+    const [firstCourse] = await db
+      .select({ id: courses.id })
+      .from(courses)
+      .where(eq(courses.languageId, contribution.languageId))
+      .limit(1);
+    courseId = firstCourse?.id ?? null;
+  }
+  if (!courseId) {
+    return c.json({ error: "No course found for this language — assign a courseId first" }, 400);
+  }
+
+  const lessonId = `lesson-contrib-${randomUUID()}`;
+
+  await db.insert(lessons).values({
+    id: lessonId,
+    courseId,
+    type: contribution.type ?? "lesson",
+    title: contribution.title,
+    description: contribution.description,
+    audioUrl: contribution.audioUrl,
+    duration: contribution.duration,
+    order: 999,
+    artist: contribution.artist,
+    genre: contribution.genre,
+  });
+
+  const segs = await db
+    .select()
+    .from(lessonContributionSegments)
+    .where(eq(lessonContributionSegments.lessonContributionId, id))
+    .orderBy(lessonContributionSegments.order);
+
+  if (segs.length > 0) {
+    await db.insert(transcriptSegments).values(
+      segs.map((seg) => ({
+        lessonId,
+        text: seg.text,
+        translation: seg.translation,
+        startTime: seg.startTime ?? 0,
+        endTime: seg.endTime ?? 0,
+        order: seg.order,
+      }))
+    );
+  }
+
+  const [course] = await db
+    .select({ lessonsCount: courses.lessonsCount })
+    .from(courses).where(eq(courses.id, courseId)).limit(1);
+  if (course) {
+    await db.update(courses).set({ lessonsCount: course.lessonsCount + 1 }).where(eq(courses.id, courseId));
+  }
+
   const [updated] = await db
     .update(lessonContributions)
-    .set({
-      status: action === "approve" ? "approved" : "rejected",
-      reviewNote: note?.trim() || null,
-      reviewedBy: reviewerId,
-      reviewedAt: new Date(),
-    })
+    .set({ status: "approved", reviewNote: note?.trim() || null, reviewedBy: reviewerId, reviewedAt: new Date() })
     .where(eq(lessonContributions.id, id))
     .returning({ id: lessonContributions.id, status: lessonContributions.status });
 
-  if (!updated) return c.json({ error: "Not found" }, 404);
-  return c.json(updated);
+  return c.json({ ...updated, lessonId });
 });
 
 // ─── DICTIONARY CRUD ──────────────────────────────────────────────────────────
@@ -534,5 +612,335 @@ educatorRouter.delete("/dictionary/:id", async (c) => {
   }
 
   await db.delete(dictionaryEntries).where(eq(dictionaryEntries.id, id));
+  return c.json({ deleted: true });
+});
+
+// ─── LESSONS CRUD ─────────────────────────────────────────────────────────────
+
+// GET /educator/courses — available courses in educator's language scope
+educatorRouter.get("/courses", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+
+  const rows = await db
+    .select({ id: courses.id, title: courses.title, languageId: courses.languageId, level: courses.level })
+    .from(courses)
+    .where(!isAdmin && reviewerLanguages.length > 0 ? inArray(courses.languageId, reviewerLanguages) : undefined)
+    .orderBy(courses.languageId, courses.order);
+
+  return c.json(rows);
+});
+
+// GET /educator/lessons
+educatorRouter.get("/lessons", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+
+  const rows = await db
+    .select({
+      id: lessons.id,
+      courseId: lessons.courseId,
+      courseTitle: courses.title,
+      languageId: courses.languageId,
+      title: lessons.title,
+      description: lessons.description,
+      type: lessons.type,
+      audioUrl: lessons.audioUrl,
+      duration: lessons.duration,
+      order: lessons.order,
+      artist: lessons.artist,
+      genre: lessons.genre,
+    })
+    .from(lessons)
+    .innerJoin(courses, eq(lessons.courseId, courses.id))
+    .where(!isAdmin && reviewerLanguages.length > 0 ? inArray(courses.languageId, reviewerLanguages) : undefined)
+    .orderBy(courses.languageId, lessons.order);
+
+  return c.json(rows);
+});
+
+// POST /educator/lessons — create a lesson directly (bypasses contribution review)
+educatorRouter.post("/lessons", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+
+  const formData = await c.req.formData();
+  const languageId = (formData.get("languageId") as string)?.trim() ?? "";
+  const courseId = (formData.get("courseId") as string) || null;
+  const title = (formData.get("title") as string)?.trim() ?? "";
+  const description = (formData.get("description") as string)?.trim() ?? "";
+  const type = (formData.get("type") as string) || "lesson";
+  const artist = (formData.get("artist") as string)?.trim() || null;
+  const genre = (formData.get("genre") as string)?.trim() || null;
+  const durationStr = formData.get("duration") as string | null;
+  const duration = durationStr ? parseInt(durationStr, 10) : null;
+  const orderStr = formData.get("order") as string | null;
+  const order = orderStr ? parseInt(orderStr, 10) : 999;
+  const segmentsJson = (formData.get("segments") as string) ?? "[]";
+
+  if (!languageId || !title || !description) {
+    return c.json({ error: "languageId, title, and description are required" }, 400);
+  }
+  if (!isAdmin && !reviewerLanguages.includes(languageId)) {
+    return c.json({ error: "Forbidden: not assigned to this language" }, 403);
+  }
+
+  let segments: { text: string; translation?: string; startTime?: number; endTime?: number; order: number }[] = [];
+  try { segments = JSON.parse(segmentsJson); } catch { /* no segments */ }
+
+  // Resolve courseId
+  let resolvedCourseId = courseId;
+  if (!resolvedCourseId) {
+    const [firstCourse] = await db.select({ id: courses.id }).from(courses)
+      .where(eq(courses.languageId, languageId)).limit(1);
+    resolvedCourseId = firstCourse?.id ?? null;
+  }
+  if (!resolvedCourseId) {
+    return c.json({ error: "No course found for this language. Create a course first." }, 400);
+  }
+
+  let audioUrl: string | null = null;
+  const audioFile = formData.get("audio") as File | null;
+  if (audioFile?.size) {
+    try {
+      const blob = await put(
+        `educator-lessons/${Date.now()}-${audioFile.name}`,
+        audioFile,
+        { access: "public", token: process.env.BLOB_READ_WRITE_TOKEN! }
+      );
+      audioUrl = blob.url;
+    } catch {
+      return c.json({ error: "Failed to upload audio" }, 500);
+    }
+  }
+
+  const lessonId = `edu-${randomUUID()}`;
+
+  await db.insert(lessons).values({
+    id: lessonId,
+    courseId: resolvedCourseId,
+    type,
+    title,
+    description,
+    audioUrl,
+    duration: duration && !isNaN(duration) ? duration : null,
+    order: isNaN(order) ? 999 : order,
+    artist,
+    genre,
+  });
+
+  if (segments.length > 0) {
+    await db.insert(transcriptSegments).values(
+      segments.map((seg) => ({
+        lessonId,
+        text: seg.text,
+        translation: seg.translation || null,
+        startTime: seg.startTime ?? 0,
+        endTime: seg.endTime ?? 0,
+        order: seg.order,
+      }))
+    );
+  }
+
+  const [course] = await db.select({ lessonsCount: courses.lessonsCount })
+    .from(courses).where(eq(courses.id, resolvedCourseId)).limit(1);
+  if (course) {
+    await db.update(courses).set({ lessonsCount: course.lessonsCount + 1 })
+      .where(eq(courses.id, resolvedCourseId));
+  }
+
+  return c.json({ id: lessonId }, 201);
+});
+
+// PATCH /educator/lessons/:id
+educatorRouter.patch("/lessons/:id", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const { id } = c.req.param();
+
+  const [existing] = await db
+    .select({ languageId: courses.languageId })
+    .from(lessons)
+    .innerJoin(courses, eq(lessons.courseId, courses.id))
+    .where(eq(lessons.id, id))
+    .limit(1);
+
+  if (!existing) return c.json({ error: "Not found" }, 404);
+  if (!isAdmin && !reviewerLanguages.includes(existing.languageId)) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  const body = await c.req.json<{
+    title?: string; description?: string; type?: string;
+    artist?: string | null; genre?: string | null; order?: number;
+  }>();
+
+  const updates: Record<string, unknown> = {};
+  if (body.title !== undefined) updates.title = body.title.trim();
+  if (body.description !== undefined) updates.description = body.description.trim();
+  if (body.type !== undefined) updates.type = body.type;
+  if (body.artist !== undefined) updates.artist = body.artist?.trim() || null;
+  if (body.genre !== undefined) updates.genre = body.genre?.trim() || null;
+  if (body.order !== undefined) updates.order = body.order;
+
+  await db.update(lessons).set(updates).where(eq(lessons.id, id));
+  return c.json({ success: true });
+});
+
+// GET /educator/lessons/:id — lesson detail with transcript segments
+educatorRouter.get("/lessons/:id", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const { id } = c.req.param();
+
+  const [lesson] = await db
+    .select({
+      id: lessons.id,
+      courseId: lessons.courseId,
+      courseTitle: courses.title,
+      languageId: courses.languageId,
+      title: lessons.title,
+      description: lessons.description,
+      type: lessons.type,
+      audioUrl: lessons.audioUrl,
+      duration: lessons.duration,
+      order: lessons.order,
+      artist: lessons.artist,
+      genre: lessons.genre,
+    })
+    .from(lessons)
+    .innerJoin(courses, eq(lessons.courseId, courses.id))
+    .where(eq(lessons.id, id))
+    .limit(1);
+
+  if (!lesson) return c.json({ error: "Not found" }, 404);
+  if (!isAdmin && !reviewerLanguages.includes(lesson.languageId)) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  const segs = await db
+    .select()
+    .from(transcriptSegments)
+    .where(eq(transcriptSegments.lessonId, id))
+    .orderBy(transcriptSegments.order);
+
+  return c.json({ ...lesson, segments: segs });
+});
+
+// PUT /educator/lessons/:id/segments — replace all transcript segments
+educatorRouter.put("/lessons/:id/segments", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const { id } = c.req.param();
+
+  const [lesson] = await db
+    .select({ languageId: courses.languageId })
+    .from(lessons)
+    .innerJoin(courses, eq(lessons.courseId, courses.id))
+    .where(eq(lessons.id, id))
+    .limit(1);
+
+  if (!lesson) return c.json({ error: "Not found" }, 404);
+  if (!isAdmin && !reviewerLanguages.includes(lesson.languageId)) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  const { segments } = await c.req.json<{
+    segments: { text: string; translation?: string; startTime: number; endTime: number; order: number }[];
+  }>();
+
+  for (const seg of segments) {
+    if (!seg.text?.trim()) return c.json({ error: "Every segment must have text" }, 400);
+    if (seg.endTime < seg.startTime) {
+      return c.json({ error: `Segment "${seg.text.slice(0, 30)}" has endTime before startTime` }, 400);
+    }
+  }
+
+  await db.delete(transcriptSegments).where(eq(transcriptSegments.lessonId, id));
+
+  if (segments.length > 0) {
+    await db.insert(transcriptSegments).values(
+      segments.map((seg, i) => ({
+        lessonId: id,
+        text: seg.text.trim(),
+        translation: seg.translation?.trim() || null,
+        startTime: seg.startTime,
+        endTime: seg.endTime,
+        order: seg.order ?? i,
+      }))
+    );
+  }
+
+  return c.json({ success: true, count: segments.length });
+});
+
+// POST /educator/lessons/:id/audio — replace audio file
+educatorRouter.post("/lessons/:id/audio", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const { id } = c.req.param();
+
+  const [lesson] = await db
+    .select({ languageId: courses.languageId })
+    .from(lessons)
+    .innerJoin(courses, eq(lessons.courseId, courses.id))
+    .where(eq(lessons.id, id))
+    .limit(1);
+
+  if (!lesson) return c.json({ error: "Not found" }, 404);
+  if (!isAdmin && !reviewerLanguages.includes(lesson.languageId)) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  const formData = await c.req.formData();
+  const audioFile = formData.get("audio") as File | null;
+  const durationStr = formData.get("duration") as string | null;
+
+  if (!audioFile?.size) return c.json({ error: "audio file is required" }, 400);
+
+  try {
+    const blob = await put(
+      `educator-lessons/${id}/${Date.now()}-${audioFile.name}`,
+      audioFile,
+      { access: "public", token: process.env.BLOB_READ_WRITE_TOKEN! }
+    );
+    await db.update(lessons).set({
+      audioUrl: blob.url,
+      ...(durationStr ? { duration: parseInt(durationStr, 10) } : {}),
+    }).where(eq(lessons.id, id));
+    return c.json({ audioUrl: blob.url });
+  } catch {
+    return c.json({ error: "Failed to upload audio" }, 500);
+  }
+});
+
+// DELETE /educator/lessons/:id
+educatorRouter.delete("/lessons/:id", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const { id } = c.req.param();
+
+  const [existing] = await db
+    .select({ languageId: courses.languageId, courseId: lessons.courseId })
+    .from(lessons)
+    .innerJoin(courses, eq(lessons.courseId, courses.id))
+    .where(eq(lessons.id, id))
+    .limit(1);
+
+  if (!existing) return c.json({ error: "Not found" }, 404);
+  if (!isAdmin && !reviewerLanguages.includes(existing.languageId)) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  await db.delete(transcriptSegments).where(eq(transcriptSegments.lessonId, id));
+  await db.delete(lessons).where(eq(lessons.id, id));
+
+  const [course] = await db.select({ lessonsCount: courses.lessonsCount })
+    .from(courses).where(eq(courses.id, existing.courseId)).limit(1);
+  if (course && course.lessonsCount > 0) {
+    await db.update(courses).set({ lessonsCount: course.lessonsCount - 1 })
+      .where(eq(courses.id, existing.courseId));
+  }
+
   return c.json({ deleted: true });
 });
