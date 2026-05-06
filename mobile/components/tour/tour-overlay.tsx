@@ -1,43 +1,40 @@
 import { useTourStore, type TourId } from "@/store/tour-store";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Modal, Pressable, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-interface TourContent {
-  title: string;
-  description: string;
-}
-
-const TOUR_CONTENT: Record<TourId, TourContent> = {
+const TOUR_KEYS: Record<TourId, { titleKey: string; descriptionKey: string }> = {
   learn: {
-    title: "Welcome to Lessons",
-    description: "Browse and complete bite-sized lessons to build your vocabulary and grammar.",
+    titleKey: "onboarding.learnTourTitle",
+    descriptionKey: "onboarding.learnTourSubtitle",
   },
   practice: {
-    title: "Listen & Practice",
-    description: "Listen to audio lessons and daily challenges to sharpen your listening skills.",
+    titleKey: "onboarding.practiceTourTitle",
+    descriptionKey: "onboarding.practiceTourSubtitle",
   },
   journal: {
-    title: "Your Journal",
-    description: "Write journal entries in the language you're learning and track your progress.",
+    titleKey: "onboarding.journalTourTitle",
+    descriptionKey: "onboarding.journalTourSubtitle",
   },
   feed: {
-    title: "Community Feed",
-    description: "See what other learners are contributing and stay motivated together.",
+    titleKey: "onboarding.feedTourTitle",
+    descriptionKey: "onboarding.feedTourSubtitle",
   },
   profile: {
-    title: "Welcome to Beeli!",
-    description: "Track your streak, points, and lessons here. You can also contribute words, join groups, and more.",
+    titleKey: "onboarding.profileTourTitle",
+    descriptionKey: "onboarding.profileTourSubtitle",
   },
 };
 
 export function TourOverlay() {
   const { activeTour, dismissTour } = useTourStore();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   if (!activeTour) return null;
 
-  const content = TOUR_CONTENT[activeTour];
+  const keys = TOUR_KEYS[activeTour];
 
   return (
     <Modal transparent animationType="fade" visible statusBarTranslucent accessibilityViewIsModal>
@@ -67,12 +64,12 @@ export function TourOverlay() {
           <Text
             style={{ fontSize: 18, fontWeight: "700", color: "#111827", marginBottom: 8 }}
           >
-            {content.title}
+            {t(keys.titleKey)}
           </Text>
           <Text
             style={{ fontSize: 14, color: "#6b7280", lineHeight: 22, marginBottom: 20 }}
           >
-            {content.description}
+            {t(keys.descriptionKey)}
           </Text>
           <Pressable
             onPress={dismissTour}
@@ -87,7 +84,7 @@ export function TourOverlay() {
             }}
           >
             <Text style={{ color: "white", fontWeight: "700", fontSize: 15 }}>
-              Got it →
+              {t("onboarding.gotIt")} →
             </Text>
           </Pressable>
         </Pressable>
