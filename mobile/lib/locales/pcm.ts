@@ -527,6 +527,8 @@ export const pcm = {
     label: "Proverb",
     titleSuffix: "Proverbs",
     noProverbs: "No proverbs available for this language yet.",
+    noResults: "No proverbs match your search.",
+    searchPlaceholder: "Search {{language}} proverbs…",
     literal: "Literal:",
   },
   dashboard: {

@@ -527,6 +527,8 @@ export const fr = {
     label: "Proverbe",
     titleSuffix: "Proverbes",
     noProverbs: "Aucun proverbe disponible pour cette langue.",
+    noResults: "Aucun proverbe ne correspond à votre recherche.",
+    searchPlaceholder: "Rechercher des proverbes {{language}}…",
     literal: "Littéral :",
   },
   dashboard: {

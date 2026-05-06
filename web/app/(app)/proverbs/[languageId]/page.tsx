@@ -4,6 +4,7 @@ import { apiFetch } from "@/lib/api";
 import { localizeField } from "@/lib/localize";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Proverb } from "@/types";
+import { LANGUAGES } from "@mobile/lib/data/languages";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronLeft, ChevronUp, Quote, Search } from "lucide-react";
 import Link from "next/link";
@@ -21,6 +22,7 @@ function ProverbCard({ proverb }: Readonly<{ proverb: Proverb }>) {
   return (
     <button
       type="button"
+      aria-expanded={expanded}
       onClick={() => setExpanded((v) => !v)}
       className="w-full text-left rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/40 p-4 hover:border-amber-300 dark:hover:border-amber-700 transition-colors"
     >
@@ -88,7 +90,8 @@ export default function ProverbsPage() {
   });
 
   const languageTitle =
-    (languageId ?? "").charAt(0).toUpperCase() + (languageId ?? "").slice(1);
+    LANGUAGES.find((l) => l.id === languageId)?.name ??
+    ((languageId ?? "").charAt(0).toUpperCase() + (languageId ?? "").slice(1));
 
   const filtered = query.trim()
     ? proverbs.filter((p) => {
@@ -124,14 +127,14 @@ export default function ProverbsPage() {
       </div>
 
       {/* Search */}
-      {proverbs.length > 3 && (
+      {proverbs.length > 0 && (
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={`Search ${languageTitle.toLowerCase()} proverbs…`}
+            placeholder={t("proverbs.searchPlaceholder", { language: languageTitle })}
             className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 dark:focus:border-amber-600 transition-colors"
           />
         </div>
@@ -151,7 +154,7 @@ export default function ProverbsPage() {
         <div className="text-center py-16">
           <Quote className="mx-auto mb-3 h-10 w-10 text-neutral-200 dark:text-neutral-700" />
           <p className="font-medium text-neutral-400 dark:text-neutral-500">
-            {query ? "No proverbs match your search" : t("proverbs.noProverbs")}
+            {query ? t("proverbs.noResults") : t("proverbs.noProverbs")}
           </p>
         </div>
       ) : (

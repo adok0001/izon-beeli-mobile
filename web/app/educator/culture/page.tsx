@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 import React, { useState, useMemo } from "react";
+import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -52,10 +53,87 @@ interface CulturalItem {
 interface ScopedLanguage { id: string; name: string; nativeName: string; }
 interface EducatorMe { languages: ScopedLanguage[]; isAdmin: boolean; }
 
+const CULTURAL_CATEGORIES = [
+  "colors",
+  "naming_ceremonies",
+  "festivals",
+  "creation_myths",
+  "music",
+  "clothing",
+  "cuisine",
+  "greetings_etiquette",
+] as const;
+
 // ── Shared field style ─────────────────────────────────────────────────────────
 
 const fieldCls =
   "w-full rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm px-3 py-2 text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40";
+
+// ── Tag input with live preview ───────────────────────────────────────────────
+
+function TagInput({
+  value, onChange,
+}: Readonly<{ value: string; onChange: (v: string) => void }>) {
+  const tags = value.split(",").map((t) => t.trim()).filter(Boolean);
+
+  return (
+    <div className="space-y-2">
+      <input
+        className={fieldCls}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="wisdom, family, patience"
+      />
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {tags.map((tag, i) => (
+            <span key={i} className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Inline delete confirmation ────────────────────────────────────────────────
+
+function DeleteButton({
+  onConfirm, disabled,
+}: Readonly<{ onConfirm: () => void; disabled: boolean }>) {
+  const [confirming, setConfirming] = useState(false);
+
+  if (confirming) {
+    return (
+      <div className="flex items-center gap-1">
+        <button
+          onClick={() => { onConfirm(); setConfirming(false); }}
+          disabled={disabled}
+          className="px-2 py-1 rounded-md text-[11px] font-semibold bg-red-500 text-white hover:bg-red-600 disabled:opacity-40 transition-colors"
+        >
+          Delete
+        </button>
+        <button
+          onClick={() => setConfirming(false)}
+          className="px-2 py-1 rounded-md text-[11px] font-medium text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => setConfirming(true)}
+      disabled={disabled}
+      className="p-1.5 rounded-lg text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+    >
+      <Trash2 className="h-3.5 w-3.5" />
+    </button>
+  );
+}
 
 // ── Proverb Modal ─────────────────────────────────────────────────────────────
 
@@ -158,8 +236,10 @@ function ProverbModal({
             </div>
           </div>
           <div>
-            <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Tags <span className="font-normal text-neutral-400">(comma-separated)</span></label>
-            <input className={fieldCls} value={tagInput} onChange={(e) => setTagInput(e.target.value)} placeholder="wisdom, family, patience" />
+            <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">
+              Tags <span className="font-normal text-neutral-400">(comma-separated)</span>
+            </label>
+            <TagInput value={tagInput} onChange={setTagInput} />
           </div>
         </div>
         <div className="flex items-center justify-end gap-2 p-5 border-t border-neutral-200 dark:border-neutral-800">
@@ -182,7 +262,7 @@ type CulturalForm = Omit<CulturalItem, "id">;
 
 const EMPTY_CULTURAL: CulturalForm = {
   languageId: "",
-  category: "",
+  category: "festivals",
   title: "",
   titleFr: "",
   description: "",
@@ -207,7 +287,7 @@ function CulturalModal({
 
   const set =
     (key: keyof CulturalForm) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
       setForm((f) => ({ ...f, [key]: e.target.value }));
 
   const setTerm = (i: number, field: keyof KeyTerm, value: string) =>
@@ -253,7 +333,11 @@ function CulturalModal({
             </div>
             <div>
               <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Category *</label>
-              <input className={fieldCls} value={form.category} onChange={set("category")} placeholder="e.g. festival, tradition, proverb" />
+              <select className={fieldCls} value={form.category} onChange={set("category")}>
+                {CULTURAL_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>{cat.replace(/_/g, " ")}</option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="grid grid-cols-[auto_1fr] gap-3 items-end">
@@ -361,23 +445,22 @@ export default function EducatorCulturePage() {
     (l) => LANGUAGES.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.name, region: "Other" }
   );
 
-  // Proverbs
-  const { data: proverbs = [], isLoading: proverbsLoading } = useQuery<Proverb[]>({
+  const { data: proverbs = [], isLoading: proverbsLoading, isFetching: proverbsFetching } = useQuery<Proverb[]>({
     queryKey: ["educator", "proverbs", effectiveLanguage],
     queryFn: () => apiFetch<Proverb[]>(`/proverbs?languageId=${encodeURIComponent(effectiveLanguage)}`),
     enabled: !!effectiveLanguage && tab === "proverbs",
     staleTime: 30_000,
   });
 
-  // Cultural content
-  const { data: culturalItems = [], isLoading: culturalLoading } = useQuery<CulturalItem[]>({
+  const { data: culturalItems = [], isLoading: culturalLoading, isFetching: culturalFetching } = useQuery<CulturalItem[]>({
     queryKey: ["educator", "cultural", effectiveLanguage],
     queryFn: () => apiFetch<CulturalItem[]>(`/cultural?languageId=${encodeURIComponent(effectiveLanguage)}`),
     enabled: !!effectiveLanguage && tab === "cultural",
     staleTime: 30_000,
   });
 
-  // Proverb mutations
+  // ── Proverb mutations ──────────────────────────────────────────────────────
+
   const createProverb = useMutation({
     mutationFn: async (data: ProverbForm) => {
       const token = await getToken();
@@ -387,6 +470,7 @@ export default function EducatorCulturePage() {
       void queryClient.invalidateQueries({ queryKey: ["educator", "proverbs"] });
       setProverbModal(null);
     },
+    onError: () => toast.error("Failed to save proverb. Please try again."),
   });
 
   const updateProverb = useMutation({
@@ -398,6 +482,7 @@ export default function EducatorCulturePage() {
       void queryClient.invalidateQueries({ queryKey: ["educator", "proverbs"] });
       setProverbModal(null);
     },
+    onError: () => toast.error("Failed to update proverb. Please try again."),
   });
 
   const deleteProverb = useMutation({
@@ -406,9 +491,11 @@ export default function EducatorCulturePage() {
       return apiFetch(`/proverbs/admin/${id}`, { method: "DELETE", token: token ?? undefined });
     },
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["educator", "proverbs"] }),
+    onError: () => toast.error("Failed to delete proverb."),
   });
 
-  // Cultural mutations
+  // ── Cultural mutations ─────────────────────────────────────────────────────
+
   const createCultural = useMutation({
     mutationFn: async (data: CulturalForm) => {
       const token = await getToken();
@@ -418,6 +505,7 @@ export default function EducatorCulturePage() {
       void queryClient.invalidateQueries({ queryKey: ["educator", "cultural"] });
       setCulturalModal(null);
     },
+    onError: () => toast.error("Failed to save cultural item. Please try again."),
   });
 
   const updateCultural = useMutation({
@@ -429,6 +517,7 @@ export default function EducatorCulturePage() {
       void queryClient.invalidateQueries({ queryKey: ["educator", "cultural"] });
       setCulturalModal(null);
     },
+    onError: () => toast.error("Failed to update cultural item. Please try again."),
   });
 
   const deleteCultural = useMutation({
@@ -437,7 +526,10 @@ export default function EducatorCulturePage() {
       return apiFetch(`/cultural/admin/${id}`, { method: "DELETE", token: token ?? undefined });
     },
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["educator", "cultural"] }),
+    onError: () => toast.error("Failed to delete cultural item."),
   });
+
+  // ── Filtering ──────────────────────────────────────────────────────────────
 
   const q = search.trim().toLowerCase();
 
@@ -453,7 +545,9 @@ export default function EducatorCulturePage() {
 
   const isProverbSaving = createProverb.isPending || updateProverb.isPending;
   const isCulturalSaving = createCultural.isPending || updateCultural.isPending;
-  const isLoading = tab === "proverbs" ? proverbsLoading : culturalLoading;
+  const isLoading = tab === "proverbs"
+    ? (proverbsLoading || proverbsFetching)
+    : (culturalLoading || culturalFetching);
   const totalCount = tab === "proverbs" ? proverbs.length : culturalItems.length;
 
   return (
@@ -542,7 +636,7 @@ export default function EducatorCulturePage() {
                 <th className="text-left px-4 py-3 font-semibold text-neutral-600 dark:text-neutral-400">Proverb</th>
                 <th className="text-left px-4 py-3 font-semibold text-neutral-600 dark:text-neutral-400 hidden md:table-cell">Translation</th>
                 <th className="text-left px-4 py-3 font-semibold text-neutral-600 dark:text-neutral-400 hidden lg:table-cell">Tags</th>
-                <th className="px-4 py-3 w-24" />
+                <th className="px-4 py-3 w-28" />
               </tr>
             </thead>
             <tbody>
@@ -606,13 +700,10 @@ export default function EducatorCulturePage() {
                           >
                             <Edit2 className="h-3.5 w-3.5" />
                           </button>
-                          <button
-                            onClick={() => { if (globalThis.confirm("Delete this proverb?")) deleteProverb.mutate(proverb.id); }}
+                          <DeleteButton
+                            onConfirm={() => deleteProverb.mutate(proverb.id)}
                             disabled={deleteProverb.isPending}
-                            className="p-1.5 rounded-lg text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
+                          />
                         </div>
                       </td>
                     </tr>
@@ -647,7 +738,7 @@ export default function EducatorCulturePage() {
                 <th className="text-left px-4 py-3 font-semibold text-neutral-600 dark:text-neutral-400">Item</th>
                 <th className="text-left px-4 py-3 font-semibold text-neutral-600 dark:text-neutral-400 hidden md:table-cell">Category</th>
                 <th className="text-left px-4 py-3 font-semibold text-neutral-600 dark:text-neutral-400 hidden lg:table-cell">Key terms</th>
-                <th className="px-4 py-3 w-24" />
+                <th className="px-4 py-3 w-28" />
               </tr>
             </thead>
             <tbody>
@@ -691,7 +782,7 @@ export default function EducatorCulturePage() {
                       </td>
                       <td className="px-4 py-3 hidden md:table-cell">
                         <span className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full">
-                          {item.category}
+                          {item.category.replace(/_/g, " ")}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-neutral-500 dark:text-neutral-400 hidden lg:table-cell">
@@ -714,13 +805,10 @@ export default function EducatorCulturePage() {
                           >
                             <Edit2 className="h-3.5 w-3.5" />
                           </button>
-                          <button
-                            onClick={() => { if (globalThis.confirm("Delete this cultural item and its key terms?")) deleteCultural.mutate(item.id); }}
+                          <DeleteButton
+                            onConfirm={() => deleteCultural.mutate(item.id)}
                             disabled={deleteCultural.isPending}
-                            className="p-1.5 rounded-lg text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
+                          />
                         </div>
                       </td>
                     </tr>

@@ -79,7 +79,7 @@ function ActivityCard({
       </div>
       {badge != null && badge > 0 && (
         <span className="absolute top-2 right-2 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white px-1">
-          {badge}
+          {badge > 99 ? "99+" : badge}
         </span>
       )}
       <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">{label}</span>
@@ -145,6 +145,7 @@ function ProverbsCard({ languageId }: Readonly<{ languageId: string }>) {
   const { data: proverbs = [] } = useQuery<Proverb[]>({
     queryKey: ["proverbs", languageId],
     queryFn: () => apiFetch<Proverb[]>(`/proverbs?languageId=${languageId}`),
+    staleTime: 5 * 60 * 1000,
   });
   if (proverbs.length === 0) return null;
   const first = proverbs[0];
@@ -176,6 +177,7 @@ function CulturalCard({ languageId }: Readonly<{ languageId: string }>) {
   const { data: items = [] } = useQuery<CulturalItem[]>({
     queryKey: ["cultural", languageId],
     queryFn: () => apiFetch<CulturalItem[]>(`/cultural?languageId=${languageId}`),
+    staleTime: 5 * 60 * 1000,
   });
   if (items.length === 0) return null;
   const first = items[0];
@@ -224,7 +226,7 @@ export default function ListenPage() {
     queryKey: ["lessons", activeCourse?.id],
     queryFn: async () => {
       const token = await getToken();
-      return apiFetch<Lesson[]>(`/lessons?courseId=${activeCourse!.id}`, { token: token ?? undefined });
+      return apiFetch<Lesson[]>(`/lessons?courseId=${activeCourse?.id ?? ""}`, { token: token ?? undefined });
     },
     enabled: !!activeCourse,
   });
