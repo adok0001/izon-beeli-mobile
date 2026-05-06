@@ -137,7 +137,12 @@ export default function LessonScreen() {
           </View>
 
           {/* Action buttons */}
-          <View className="mt-3 flex-row items-center gap-3">
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="mt-3"
+            contentContainerClassName="flex-row items-center gap-3"
+          >
             {audioSource && (
               <Pressable
                 onPress={handlePlayAudio}
@@ -185,7 +190,7 @@ export default function LessonScreen() {
                 {t("lesson.practice")}
               </Text>
             </Pressable>
-          </View>
+          </ScrollView>
         </View>
 
         {/* Post-lesson summary */}
