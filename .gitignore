@@ -60,3 +60,4 @@ build/
 *.ipa
 *.xcarchive
 partykit/.env
+.swp
