@@ -1071,6 +1071,7 @@ export const en = {
       overview: "Overview",
       review: "Review",
       dictionary: "Dictionary",
+      lessons: "Lessons",
     },
     overview: {
       welcome: "Welcome, {{name}}",

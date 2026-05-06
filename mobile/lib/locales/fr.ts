@@ -1111,6 +1111,7 @@ export const fr = {
       overview: "Vue d'ensemble",
       review: "Révision",
       dictionary: "Dictionnaire",
+      lessons: "Leçons",
     },
     overview: {
       welcome: "Bienvenue, {{name}}",

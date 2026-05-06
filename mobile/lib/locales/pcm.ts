@@ -1111,6 +1111,7 @@ export const pcm = {
       overview: "Overview",
       review: "Review",
       dictionary: "Dictionary",
+      lessons: "Lessons",
     },
     overview: {
       welcome: "Welcome, {{name}}",
