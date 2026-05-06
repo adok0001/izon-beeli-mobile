@@ -518,3 +518,32 @@ contributionsRouter.patch("/:id/review", adminMiddleware, async (c) => {
 
   return c.json(updated);
 });
+
+// PATCH /api/contributions/:id - edit contribution fields (admin only)
+contributionsRouter.patch("/:id", adminMiddleware, async (c) => {
+  const { id } = c.req.param();
+  const body = await c.req.json<{
+    word?: string;
+    english?: string;
+    pronunciation?: string | null;
+    example?: string | null;
+    exampleTranslation?: string | null;
+    category?: string;
+  }>();
+
+  const [existing] = await db.select({ id: contributions.id }).from(contributions).where(eq(contributions.id, id)).limit(1);
+  if (!existing) return c.json({ error: "Not found" }, 404);
+
+  const updates: Record<string, unknown> = {};
+  if (body.word?.trim()) updates.word = body.word.trim();
+  if (body.english?.trim()) updates.english = body.english.trim();
+  if ("pronunciation" in body) updates.pronunciation = body.pronunciation?.trim() || null;
+  if ("example" in body) updates.example = body.example?.trim() || null;
+  if ("exampleTranslation" in body) updates.exampleTranslation = body.exampleTranslation?.trim() || null;
+  if (body.category) updates.category = body.category;
+
+  if (Object.keys(updates).length === 0) return c.json({ error: "Nothing to update" }, 400);
+
+  const [updated] = await db.update(contributions).set(updates).where(eq(contributions.id, id)).returning();
+  return c.json(updated);
+});

@@ -1,19 +1,23 @@
 import { Providers } from "@/components/providers";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import {
-    normalizeUiLanguage,
-    UI_LANGUAGE_COOKIE,
-    type UiLanguage,
+  normalizeUiLanguage,
+  UI_LANGUAGE_COOKIE,
+  type UiLanguage,
 } from "@/lib/ui-language";
 import { en } from "@mobile/lib/locales/en";
 import { fr } from "@mobile/lib/locales/fr";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { cookies } from "next/headers";
 import Script from "next/script";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-jakarta",
+  display: "swap",
+});
 
 const TRANSLATIONS = { en, fr } as const;
 
@@ -33,7 +37,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: copy.metadataDescription,
     metadataBase: new URL(
-      process.env.NEXT_PUBLIC_APP_URL ?? "https://izonbeeli.com"
+      process.env.NEXT_PUBLIC_APP_URL ?? "https://izon-beeli.com"
     ),
     icons: {
       icon: "/favicon.svg",
@@ -62,7 +66,7 @@ export default async function RootLayout({
 
   return (
     <html lang={lang} suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={`${jakarta.variable} font-sans`}>
         <Script id="theme-init" strategy="beforeInteractive">
           {THEME_INIT_SCRIPT}
         </Script>

@@ -1,4 +1,4 @@
-import { ReviewerApplicationModal } from "@/components/reviewer-application-modal";
+
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { apiFetch } from "@/lib/api";
 import { hapticSuccess } from "@/lib/haptics";
@@ -12,12 +12,12 @@ import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -80,7 +80,7 @@ export default function OnboardingScreen() {
   const [tryItEntry, setTryItEntry] = useState<DictionaryEntry | null>(null);
   const [tryItLoading, setTryItLoading] = useState(false);
   const [revealed, setRevealed] = useState(false);
-  const [reviewerModalVisible, setReviewerModalVisible] = useState(false);
+
   const soundRef = useRef<Audio.Sound | null>(null);
 
   const currentIdx = stepIndex(step);
@@ -303,7 +303,7 @@ export default function OnboardingScreen() {
               )}
             </Pressable>
             <Pressable
-              onPress={() => setReviewerModalVisible(true)}
+              onPress={() => router.push("/reviewer-application")}
               className="flex-row items-center justify-center gap-2 rounded-2xl border-2 border-emerald-500 py-4 active:opacity-80"
             >
               <IconSymbol name="person.badge.plus" size={18} color="#10b981" />
@@ -522,10 +522,7 @@ export default function OnboardingScreen() {
           </View>
         </>
       )}
-      <ReviewerApplicationModal
-        visible={reviewerModalVisible}
-        onClose={() => setReviewerModalVisible(false)}
-      />
+
     </SafeAreaView>
   );
 }

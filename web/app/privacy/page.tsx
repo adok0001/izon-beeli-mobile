@@ -39,7 +39,7 @@ export default function PrivacyPage() {
               revitalisation of African languages. Our services are available
               via the Beeli mobile app (iOS and Android) and the Beeli web
               application at{" "}
-              <a href="https://izonbeeli.com" className="text-blue-600 dark:text-blue-400 hover:underline">izonbeeli.com</a>.
+              <a href="https://izon-beeli.com" className="text-blue-600 dark:text-blue-400 hover:underline">izon-beeli.com</a>.
             </p>
             <p className="mt-3">
               For privacy-related questions or data requests, contact us at:{" "}
@@ -406,7 +406,7 @@ export default function PrivacyPage() {
               <br />
               <a href="mailto:support@izon-beeli.com" className="text-blue-600 dark:text-blue-400 hover:underline">support@izon-beeli.com</a>
               <br />
-              <a href="https://izonbeeli.com" className="text-blue-600 dark:text-blue-400 hover:underline">izonbeeli.com</a>
+              <a href="https://izon-beeli.com" className="text-blue-600 dark:text-blue-400 hover:underline">izon-beeli.com</a>
             </p>
           </section>
         </div>

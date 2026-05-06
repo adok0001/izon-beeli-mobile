@@ -5,15 +5,15 @@ import Constants from "expo-constants";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    ActivityIndicator,
-    Alert,
-    Linking,
-    Modal,
-    Platform,
-    Pressable,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Alert,
+  Linking,
+  Modal,
+  Platform,
+  Pressable,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 
 const platform = Platform.OS;
@@ -55,7 +55,7 @@ export function FeedbackModal({ visible, onClose }: FeedbackModalProps) {
       `Category: ${category}\n\n${message}\n\n---\nPlatform: ${platform}\nOS: ${osVersion}\nApp: ${appVersion}`
     );
     await Linking.openURL(
-      `mailto:support@izonbeeli.com?subject=${subject}&body=${body}`
+      `mailto:support@izon-beeli.com?subject=${subject}&body=${body}`
     );
   }
 

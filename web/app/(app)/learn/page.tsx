@@ -1,5 +1,6 @@
 "use client";
 
+import { EmptyState } from "@/components/ui/empty-state";
 import { apiFetch } from "@/lib/api";
 import { localizeField } from "@/lib/localize";
 import { cn } from "@/lib/utils";
@@ -8,11 +9,10 @@ import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course, UserMe } from "@/types";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, Brain, Flame, Star, Zap } from "lucide-react";
+import { ArrowRight, Brain, Flame, Star, Zap } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { EmptyState } from "@/components/ui/empty-state";
 
 interface Bounty { id: string; title: string; xpReward: number; }
 interface DueEntry { dictionaryEntryId: string; }
@@ -28,23 +28,23 @@ function BountyTeaser({ languageId }: Readonly<{ languageId: string }>) {
   return (
     <Link
       href="/bounties"
-      className="flex items-center gap-3 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/50 hover:border-amber-300 dark:hover:border-amber-700 transition-colors"
+      className="group flex items-center gap-4 p-4 rounded-2xl bg-amber-500/[0.06] dark:bg-amber-500/[0.06] border border-amber-500/[0.15] dark:border-amber-500/[0.18] hover:border-amber-400/40 dark:hover:border-amber-400/35 hover:bg-amber-500/[0.1] transition-all duration-200"
     >
-      <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
+      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shrink-0 shadow-md shadow-amber-500/25 group-hover:shadow-amber-500/40 transition-shadow">
         <Star className="h-5 w-5 text-white" />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+        <div className="flex items-center gap-2 mb-0.5">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">
             {t("learn.bountyLabel")}
           </span>
-          <span className="px-2 py-0.5 rounded-full bg-amber-200 dark:bg-amber-800 text-xs font-bold text-amber-700 dark:text-amber-300">
+          <span className="px-1.5 py-0.5 rounded-full bg-amber-500/[0.15] text-[10px] font-bold text-amber-600 dark:text-amber-400">
             +{top.xpReward} XP
           </span>
         </div>
-        <p className="text-sm font-medium text-neutral-900 dark:text-white truncate">{top.title}</p>
+        <p className="text-sm font-semibold text-neutral-900 dark:text-white truncate">{top.title}</p>
       </div>
-      <span className="text-amber-400 text-lg">›</span>
+      <ArrowRight className="h-4 w-4 text-amber-500 dark:text-amber-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
     </Link>
   );
 }
@@ -65,20 +65,20 @@ function ReviewBanner() {
   return (
     <Link
       href="/word-review"
-      className="flex items-center gap-3 p-4 rounded-2xl bg-violet-50 dark:bg-violet-950/30 border border-violet-100 dark:border-violet-900/50 hover:border-violet-300 dark:hover:border-violet-700 transition-colors"
+      className="group flex items-center gap-4 p-4 rounded-2xl bg-brand-500/[0.06] border border-brand-500/[0.15] dark:border-brand-500/[0.2] hover:border-brand-400/40 hover:bg-brand-500/[0.1] transition-all duration-200"
     >
-      <div className="w-10 h-10 rounded-xl bg-violet-500 flex items-center justify-center shrink-0">
+      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shrink-0 shadow-glow-xs group-hover:shadow-glow-sm transition-shadow">
         <Brain className="h-5 w-5 text-white" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-violet-700 dark:text-violet-300">
+        <p className="text-sm font-semibold text-brand-700 dark:text-brand-300">
           {t("learn.reviewBanner", { count: dueWords.length })}
         </p>
-        <p className="text-xs text-violet-500 dark:text-violet-400">
+        <p className="text-xs text-brand-500/70 dark:text-brand-500 mt-0.5">
           {t("learn.reviewBannerCta")}
         </p>
       </div>
-      <span className="text-violet-400 text-lg">›</span>
+      <ArrowRight className="h-4 w-4 text-brand-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
     </Link>
   );
 }
@@ -102,18 +102,20 @@ function CourseCard({ course }: Readonly<{ course: Course }>) {
   const uiLanguage = useUiLanguageStore((s) => s.uiLanguage);
 
   return (
-    <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden hover:shadow-md transition-shadow">
-      <div className="h-2 bg-gradient-to-r from-brand-500 to-purple-500" />
+    <div className="group relative bg-white dark:bg-white/[0.03] rounded-2xl border border-neutral-100 dark:border-white/[0.07] overflow-hidden hover:border-brand-300/60 dark:hover:border-brand-500/30 hover:shadow-card-hover dark:hover:shadow-glow-xs transition-all duration-200">
+      {/* Top gradient accent */}
+      <div className="h-[2px] bg-gradient-to-r from-brand-500 via-purple-400 to-brand-400" />
+
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <span className="inline-block text-xs font-semibold uppercase tracking-wider text-brand-600 dark:text-brand-400 mb-1">
+            <span className="inline-block text-[10px] font-bold uppercase tracking-widest text-brand-500 dark:text-brand-400 mb-2">
               {t(`levels.${course.level}`)}
             </span>
             <h3 className="font-bold text-neutral-900 dark:text-white text-base leading-snug">
               {localizeField(course.title, course.titleFr, uiLanguage)}
             </h3>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-2">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1.5 line-clamp-2 leading-relaxed">
               {localizeField(course.description, course.descriptionFr, uiLanguage)}
             </p>
           </div>
@@ -122,13 +124,13 @@ function CourseCard({ course }: Readonly<{ course: Course }>) {
         {/* Progress */}
         {course.progress !== undefined && (
           <div className="mt-4">
-            <div className="flex justify-between text-xs text-neutral-500 dark:text-neutral-400 mb-1">
-              <span>{t("learn.progress")}</span>
-              <span>{course.progress}%</span>
+            <div className="flex justify-between text-xs mb-1.5">
+              <span className="text-neutral-400 dark:text-neutral-500">{t("learn.progress")}</span>
+              <span className="font-semibold text-neutral-600 dark:text-neutral-400">{course.progress}%</span>
             </div>
-            <div className="h-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+            <div className="h-1 bg-neutral-100 dark:bg-white/[0.07] rounded-full overflow-hidden">
               <div
-                className="h-full bg-brand-500 rounded-full transition-all"
+                className="h-full bg-gradient-to-r from-brand-600 to-brand-400 rounded-full transition-all"
                 style={{ width: `${course.progress}%` }}
               />
             </div>
@@ -141,9 +143,9 @@ function CourseCard({ course }: Readonly<{ course: Course }>) {
           </span>
           <Link
             href={`/course/${course.id}`}
-            className="text-sm font-medium text-brand-600 dark:text-brand-400 hover:underline"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 group-hover:gap-2 transition-all"
           >
-            {t("common.start")} →
+            {t("common.start")} <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
       </div>
@@ -184,10 +186,7 @@ export default function LearnPage() {
     content = (
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {loadingCards.map((cardKey) => (
-          <div
-            key={cardKey}
-            className="bg-neutral-100 dark:bg-neutral-800 rounded-2xl h-44 animate-pulse"
-          />
+          <div key={cardKey} className="skeleton rounded-2xl h-44" />
         ))}
       </div>
     );
@@ -212,23 +211,25 @@ export default function LearnPage() {
   return (
     <div className="py-6">
       {/* Header */}
-      <div className="max-w-4xl mx-auto px-4 mb-4">
+      <div className="max-w-4xl mx-auto px-4 mb-6">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t("learn.title")}</h1>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
+            <h1 className="text-2xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
+              {t("learn.title")}
+            </h1>
+            <p className="text-sm text-neutral-500 dark:text-neutral-500 mt-1">
               {t("learn.webSubtitle")}
             </p>
           </div>
           {me && (
             <div className="flex items-center gap-2 shrink-0">
               {me.streak > 0 && (
-                <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-orange-50 dark:bg-orange-950/30 border border-orange-100 dark:border-orange-900/40">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/[0.1] border border-orange-500/[0.2] dark:border-orange-500/[0.2]">
                   <Flame className="h-3.5 w-3.5 text-orange-500" />
                   <span className="text-xs font-bold text-orange-600 dark:text-orange-400">{me.streak}</span>
                 </div>
               )}
-              <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-brand-50 dark:bg-brand-950/30 border border-brand-100 dark:border-brand-900/40">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-500/[0.1] border border-brand-500/[0.2]">
                 <Zap className="h-3.5 w-3.5 text-brand-500" />
                 <span className="text-xs font-bold text-brand-600 dark:text-brand-400">{me.points} XP</span>
               </div>
@@ -237,7 +238,7 @@ export default function LearnPage() {
         </div>
       </div>
 
-      {/* Language picker — full-width scrollable row */}
+      {/* Language picker */}
       <div className="overflow-x-auto scrollbar-hide mb-2">
         <div className="flex gap-2 px-4 pb-2 w-max">
           {LANGUAGES.map((lang) => (
@@ -245,10 +246,10 @@ export default function LearnPage() {
               key={lang.id}
               onClick={() => { setLanguage(lang.id); setLevel("all"); }}
               className={cn(
-                "shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-colors",
+                "shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold border transition-all duration-150",
                 selectedLanguageId === lang.id
-                  ? "bg-brand-600 text-white border-brand-600"
-                  : "border-neutral-200 text-neutral-600 hover:border-brand-400 dark:border-neutral-700 dark:text-neutral-400"
+                  ? "bg-brand-600 text-white border-brand-600 shadow-glow-xs"
+                  : "border-neutral-200 dark:border-white/[0.1] text-neutral-600 dark:text-neutral-400 hover:border-brand-400/50 dark:hover:border-brand-500/40 hover:text-brand-600 dark:hover:text-brand-300"
               )}
             >
               {lang.name}
@@ -257,7 +258,7 @@ export default function LearnPage() {
         </div>
       </div>
 
-      {/* Level filter — full-width scrollable row */}
+      {/* Level filter */}
       <div className="overflow-x-auto scrollbar-hide mb-6">
         <div className="flex gap-2 px-4 pb-2 w-max">
           {LEVELS.map((l) => (
@@ -265,10 +266,10 @@ export default function LearnPage() {
               key={l}
               onClick={() => setLevel(l)}
               className={cn(
-                "shrink-0 px-3 py-1 rounded-full text-xs font-medium border capitalize transition-colors",
+                "shrink-0 px-3 py-1 rounded-full text-xs font-semibold border capitalize transition-all duration-150",
                 level === l
-                  ? "bg-neutral-900 text-white border-neutral-900 dark:bg-neutral-100 dark:text-neutral-900 dark:border-neutral-100"
-                  : "border-neutral-200 text-neutral-500 hover:border-neutral-400 dark:border-neutral-700 dark:text-neutral-400"
+                  ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 border-neutral-900 dark:border-white"
+                  : "border-neutral-200 dark:border-white/[0.1] text-neutral-500 dark:text-neutral-400 hover:border-neutral-400 dark:hover:border-white/[0.25] hover:text-neutral-700 dark:hover:text-neutral-200"
               )}
             >
               {l === "all" ? t("learn.allLevels") : t(`levels.${l}`)}

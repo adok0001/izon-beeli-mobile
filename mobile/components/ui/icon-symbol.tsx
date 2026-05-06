@@ -51,6 +51,14 @@ const MAPPING = {
   'text.bubble': 'forum',
   'character.book.closed': 'auto-stories',
   'trophy.fill': 'quiz',
+  'shield.fill': 'verified-user',
+  'clock.fill': 'access-time',
+  'checkmark.seal.fill': 'verified',
+  'xmark.circle.fill': 'cancel',
+  'list.bullet.clipboard': 'edit-note',
+  'photo': 'photo',
+  'photo.badge.plus': 'add-photo-alternate',
+  'plus.circle': 'add-circle-outline',
 } as IconMapping;
 
 /**

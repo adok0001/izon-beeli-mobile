@@ -1,9 +1,9 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ApiError } from "@/lib/api";
 import {
-  ALL_CATEGORIES,
-  CATEGORY_LABELS,
-  type DictionaryCategory,
+    ALL_CATEGORIES,
+    CATEGORY_LABELS,
+    type DictionaryCategory,
 } from "@/lib/dictionary";
 import { useBounties } from "@/lib/hooks/use-bounties";
 import { useSubmitContribution } from "@/lib/hooks/use-contributions";
@@ -14,15 +14,15 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Alert,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
+    Alert,
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -240,6 +240,27 @@ export default function ContributeScreen() {
                       </Text>
                     </View>
                     <IconSymbol name="chevron.right" size={16} color="#f59e0b" />
+                  </View>
+                </Pressable>
+
+                {/* Become a Reviewer card */}
+                <Pressable
+                  onPress={() => router.push("/reviewer-application")}
+                  className="mb-3 rounded-2xl bg-indigo-50 p-5 active:opacity-80 dark:bg-indigo-950"
+                >
+                  <View className="flex-row items-center">
+                    <View className="mr-4 h-12 w-12 items-center justify-center rounded-xl bg-indigo-500">
+                      <IconSymbol name="shield.fill" size={24} color="white" />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-base font-bold text-neutral-900 dark:text-white">
+                        Become a Reviewer
+                      </Text>
+                      <Text className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">
+                        Apply to review contributions and help maintain content quality.
+                      </Text>
+                    </View>
+                    <IconSymbol name="chevron.right" size={16} color="#6366f1" />
                   </View>
                 </Pressable>
               </View>

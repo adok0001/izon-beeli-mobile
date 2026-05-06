@@ -4,22 +4,23 @@ import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
-import { BarChart2, BookOpen, ClipboardList, Users } from "lucide-react";
+import { BarChart2, BookOpen, BookText, ClipboardList, MessageSquare, UserCheck, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
 const ADMIN_NAV = [
-  { href: "/admin", labelKey: "admin.nav.overview", icon: BarChart2, exact: true },
-  { href: "/admin/users", labelKey: "admin.nav.users", icon: Users },
-  { href: "/admin/courses", labelKey: "admin.nav.courses", icon: BookOpen },
-  { href: "/admin/review", labelKey: "admin.nav.review", icon: ClipboardList },
+  { href: "/admin",              labelKey: "admin.nav.overview",     icon: BarChart2,     exact: true },
+  { href: "/admin/users",        labelKey: "admin.nav.users",        icon: Users },
+  { href: "/admin/courses",      labelKey: "admin.nav.courses",      icon: BookOpen },
+  { href: "/admin/dictionary",   labelKey: "admin.nav.dictionary",   icon: BookText },
+  { href: "/admin/review",       labelKey: "admin.nav.review",       icon: ClipboardList },
+  { href: "/admin/applications", labelKey: "admin.nav.applications", icon: UserCheck },
+  { href: "/admin/feedback",     labelKey: "admin.nav.feedback",     icon: MessageSquare },
 ] as const;
 
-interface Me {
-  isAdmin: boolean;
-}
+interface Me { isAdmin: boolean }
 
 export default function AdminLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const { getToken, isLoaded, isSignedIn } = useAuth();
@@ -38,19 +39,14 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
 
   useEffect(() => {
     if (!isLoaded) return;
-    if (!isSignedIn) {
-      router.replace("/sign-in");
-      return;
-    }
-    if (me !== undefined && !me.isAdmin) {
-      router.replace("/learn");
-    }
+    if (!isSignedIn) { router.replace("/sign-in"); return; }
+    if (me !== undefined && !me.isAdmin) router.replace("/learn");
   }, [isLoaded, isSignedIn, me, router]);
 
   if (!isLoaded || isPending || me === undefined) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="w-8 h-8 rounded-full border-2 border-brand-600 border-t-transparent animate-spin" />
+      <div className="flex items-center justify-center min-h-screen bg-[#07070f]">
+        <div className="w-8 h-8 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -58,19 +54,21 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
   if (!me.isAdmin) return null;
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
-      <header className="border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+    <div className="min-h-screen bg-neutral-50 dark:bg-[#07070f]">
+      <header className="sticky top-0 z-30 border-b border-neutral-200/60 dark:border-white/[0.07] bg-white/90 dark:bg-[#0b0b16]/95 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-bold text-neutral-900 dark:text-white">{t("admin.panelTitle")}</h1>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">{t("admin.internalTools")}</p>
+            <h1 className="text-base font-bold text-neutral-900 dark:text-white tracking-tight">
+              {t("admin.panelTitle")}
+            </h1>
+            <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-0.5">{t("admin.internalTools")}</p>
           </div>
-          <a href="/learn" className="text-sm text-brand-600 dark:text-brand-400 hover:underline">
+          <Link href="/learn" className="text-sm font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 transition-colors">
             {t("admin.backToApp")}
-          </a>
+          </Link>
         </div>
-        {/* Tab navigation */}
-        <div className="max-w-7xl mx-auto mt-4 flex gap-1">
+        {/* Tab nav */}
+        <div className="max-w-7xl mx-auto px-6 pb-0 flex gap-0.5 overflow-x-auto scrollbar-hide">
           {ADMIN_NAV.map(({ href, labelKey, icon: Icon, ...rest }) => {
             const exact = "exact" in rest && rest.exact;
             const active = exact ? pathname === href : pathname.startsWith(href);
@@ -79,10 +77,10 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
                 key={href}
                 href={href}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+                  "flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold border-b-2 -mb-px whitespace-nowrap transition-all",
                   active
-                    ? "bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300"
-                    : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    ? "border-brand-500 text-brand-600 dark:text-brand-400"
+                    : "border-transparent text-neutral-500 dark:text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-700"
                 )}
               >
                 <Icon className="h-3.5 w-3.5" />

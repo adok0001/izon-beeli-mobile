@@ -166,6 +166,10 @@ export default function RootLayout() {
                 options={{ presentation: "modal", headerShown: false }}
               />
               <Stack.Screen
+                name="reviewer-application"
+                options={{ presentation: "modal", headerShown: false }}
+              />
+              <Stack.Screen
                 name="contribute-lesson"
                 options={{ presentation: "modal", headerShown: false }}
               />

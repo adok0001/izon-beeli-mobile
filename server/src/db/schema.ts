@@ -1,17 +1,17 @@
 import { relations } from "drizzle-orm";
 import {
-    boolean,
-    index,
-    integer,
-    pgEnum,
-    pgTable,
-    real,
-    smallint,
-    text,
-    timestamp,
-    uniqueIndex,
-    uuid,
-    varchar,
+  boolean,
+  index,
+  integer,
+  pgEnum,
+  pgTable,
+  real,
+  smallint,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
 } from "drizzle-orm/pg-core";
 
 // ---------- Enums ----------
@@ -83,6 +83,9 @@ export const users = pgTable("users", {
   pushWotdEnabled: boolean("push_wotd_enabled").default(true).notNull(),
   pushStreakReminderEnabled: boolean("push_streak_reminder_enabled").default(true).notNull(),
   isAdmin: boolean("is_admin").default(false).notNull(),
+  isReviewer: boolean("is_reviewer").default(false).notNull(),
+  reviewerLanguages: text("reviewer_languages").array().default([]).notNull(),
+  reviewerRole: varchar("reviewer_role", { length: 32 }), // "teacher" | "professor" | "elder"
   createdAt: timestamp("created_at").defaultNow().notNull(),
   // Soft-delete: set when user requests deletion; hard purge runs after 30 days
   deletedAt: timestamp("deleted_at"),
@@ -600,6 +603,30 @@ export const quizResults = pgTable(
     index("quiz_results_lang_id_idx").on(table.languageId),
   ]
 );
+
+// ---------- Reviewer Applications ----------
+
+export const reviewerApplicationStatusEnum = pgEnum("reviewer_application_status", [
+  "pending",
+  "approved",
+  "rejected",
+]);
+
+export const reviewerApplications = pgTable("reviewer_applications", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  role: varchar("role", { length: 32 }).notNull(), // "teacher" | "professor" | "elder"
+  background: text("background").notNull(),
+  reason: text("reason").notNull(),
+  languages: text("languages").array().default([]).notNull(),
+  status: reviewerApplicationStatusEnum("status").default("pending").notNull(),
+  reviewerNote: text("reviewer_note"),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedBy: uuid("reviewed_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
 // ---------- Feedback ----------
 

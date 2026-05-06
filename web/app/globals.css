@@ -12,36 +12,152 @@
   }
 
   body {
-    @apply bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50;
+    @apply bg-white text-neutral-900 dark:bg-[#07070f] dark:text-neutral-50;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
   ::selection {
-    @apply bg-brand-500/20 text-brand-900 dark:text-brand-100;
+    @apply bg-brand-500/25 text-brand-100;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-500/70 ring-offset-2 ring-offset-white dark:ring-offset-[#07070f];
   }
 }
 
 @layer utilities {
+  /* ── Scrollbar ───────────────────────────────────────── */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
 
-  /* Frosted glass surface */
+  /* ── Glass surfaces ──────────────────────────────────── */
   .glass {
-    @apply bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl backdrop-saturate-150;
+    @apply bg-white/80 dark:bg-white/[0.04] backdrop-blur-xl backdrop-saturate-150
+           border border-neutral-200/70 dark:border-white/[0.07];
+  }
+  .glass-dark {
+    @apply bg-[#07070f]/85 backdrop-blur-2xl backdrop-saturate-150
+           border border-white/[0.07];
+  }
+  .glass-elevated {
+    @apply bg-white/[0.06] backdrop-blur-2xl
+           border border-white/[0.1] shadow-lift;
   }
 
-  /* Gradient brand text */
-  .gradient-text {
-    @apply bg-gradient-to-r from-brand-500 to-purple-400 bg-clip-text text-transparent;
-  }
-
-  /* Standard card surface */
+  /* ── Card surfaces ───────────────────────────────────── */
   .surface {
-    @apply bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl;
+    @apply bg-white dark:bg-white/[0.03] border border-neutral-100 dark:border-white/[0.06] rounded-2xl;
+  }
+  .surface-raised {
+    @apply bg-white dark:bg-white/[0.05] border border-neutral-100 dark:border-white/[0.08] rounded-2xl shadow-float;
+  }
+  .surface-brand {
+    @apply bg-white dark:bg-brand-500/[0.05] border border-brand-200 dark:border-brand-500/[0.22] rounded-2xl shadow-glow-sm;
+  }
+  .surface-dark {
+    @apply bg-[#0d0d18] border border-white/[0.06] rounded-2xl;
+  }
+
+  /* ── Text gradients ──────────────────────────────────── */
+  .gradient-text {
+    @apply bg-gradient-to-r from-brand-300 via-brand-400 to-purple-400 bg-clip-text text-transparent;
+  }
+  .gradient-text-bold {
+    @apply bg-gradient-to-br from-white via-brand-200 to-brand-400 bg-clip-text text-transparent;
+  }
+  .gradient-text-gold {
+    @apply bg-gradient-to-r from-gold-300 to-gold-500 bg-clip-text text-transparent;
+  }
+  .gradient-text-aurora {
+    @apply bg-gradient-to-r from-brand-300 via-indigo-400 to-cyan-400 bg-clip-text text-transparent;
+  }
+
+  /* ── Badge ───────────────────────────────────────────── */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+
+  /* ── Loading skeleton ────────────────────────────────── */
+  .skeleton {
+    @apply bg-gradient-to-r
+           from-neutral-100 via-neutral-200 to-neutral-100
+           dark:from-white/[0.04] dark:via-white/[0.08] dark:to-white/[0.04];
+    background-size: 400% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+
+  /* ── Mesh gradient bg ────────────────────────────────── */
+  .mesh-bg {
+    background-image:
+      radial-gradient(at 28% 14%, rgba(168,85,247,0.16) 0px, transparent 52%),
+      radial-gradient(at 82%  6%, rgba(99,102,241,0.11) 0px, transparent 48%),
+      radial-gradient(at  6% 64%, rgba(124,58,237,0.09) 0px, transparent 50%),
+      radial-gradient(at 78% 78%, rgba(168,85,247,0.08) 0px, transparent 48%);
+  }
+
+  /* ── Grid line pattern ───────────────────────────────── */
+  .grid-bg {
+    background-image:
+      linear-gradient(rgba(255,255,255,0.027) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.027) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+
+  /* ── Top accent line (::after) ───────────────────────── */
+  .highlight-top {
+    position: relative;
+  }
+  .highlight-top::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 12%; right: 12%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(168,85,247,0.6), transparent);
+    border-radius: 999px;
+  }
+
+  /* ── Noise texture overlay (::before) ───────────────── */
+  .texture-noise {
+    position: relative;
+    isolation: isolate;
+  }
+  .texture-noise::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Waveform bars ───────────────────────────────────── */
+  .waveform-bar {
+    transform-origin: bottom;
+    animation: wave-bar 0.7s ease-in-out infinite;
+  }
+}
+
+@keyframes wave-bar {
+  0%, 100% { transform: scaleY(0.3); }
+  50%       { transform: scaleY(1);   }
+}
+
+@layer utilities {
+  /* ── Button base ─────────────────────────────────────── */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
+           bg-brand-600 hover:bg-brand-500 text-white font-semibold text-sm
+           shadow-glow-sm hover:shadow-glow transition-all duration-200
+           focus-visible:ring-2 focus-visible:ring-brand-500/70;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl
+           text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white
+           hover:bg-neutral-100 dark:hover:bg-white/[0.06]
+           font-medium text-sm transition-all duration-150;
   }
 }

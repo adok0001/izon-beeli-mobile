@@ -14,9 +14,10 @@ import {
     FileText,
     FlipHorizontal2,
     Globe2,
+    GraduationCap,
     Headphones,
-    LayoutDashboard,
     Languages,
+    LayoutDashboard,
     NotebookPen,
     Plus,
     Settings,
@@ -37,6 +38,12 @@ const ADMIN_NAV = [
   { href: "/admin/courses", labelKey: "admin.nav.courses",  icon: BookOpen,      exact: false },
 ] as const;
 
+const EDUCATOR_NAV = [
+  { href: "/educator",            labelKey: "educator.nav.overview",   icon: LayoutDashboard, exact: true },
+  { href: "/educator/review",     labelKey: "educator.nav.review",     icon: ClipboardList,   exact: false },
+  { href: "/educator/dictionary", labelKey: "educator.nav.dictionary", icon: BookText,        exact: false },
+] as const;
+
 const NAV_ITEMS = [
   { href: "/learn",   labelKey: "tabs.learn",   icon: BookOpen,    tourId: "nav-learn" },
   { href: "/listen",  labelKey: "tabs.listen",  icon: Headphones,  tourId: "nav-listen" },
@@ -49,31 +56,31 @@ const SECONDARY_GROUPS = [
   {
     labelKey: "common.practiceSection",
     items: [
-      { href: "/quiz",        labelKey: "quiz.title",            icon: Brain,            tourId: "nav-quiz" },
-      { href: "/word-review", labelKey: "wordReview.title",      icon: FlipHorizontal2,  tourId: undefined },
-      { href: "/leaderboard", labelKey: "leaderboard.title",     icon: Trophy,           tourId: undefined },
+      { href: "/quiz",        labelKey: "quiz.title",        icon: Brain,           tourId: "nav-quiz" },
+      { href: "/word-review", labelKey: "wordReview.title",  icon: FlipHorizontal2, tourId: undefined },
+      { href: "/leaderboard", labelKey: "leaderboard.title", icon: Trophy,          tourId: undefined },
     ],
   },
   {
     labelKey: "common.exploreSection",
     items: [
-      { href: "/dictionary",  labelKey: "dictionaryPage.title",  icon: BookText,         tourId: undefined },
-      { href: "/bounties",    labelKey: "bounties.title",        icon: Star,             tourId: undefined },
+      { href: "/dictionary", labelKey: "dictionaryPage.title", icon: BookText, tourId: undefined },
+      { href: "/bounties",   labelKey: "bounties.title",       icon: Star,     tourId: undefined },
     ],
   },
   {
     labelKey: "common.contributeSection",
     items: [
-      { href: "/contribute",        labelKey: "contribute.title",       icon: Plus,      tourId: undefined },
-      { href: "/my-contributions",  labelKey: "myContributions.title",  icon: FileText,  tourId: undefined },
+      { href: "/contribute",       labelKey: "contribute.title",      icon: Plus,     tourId: undefined },
+      { href: "/my-contributions", labelKey: "myContributions.title", icon: FileText, tourId: undefined },
     ],
   },
   {
     labelKey: "common.accountSection",
     items: [
-      { href: "/dashboard",  labelKey: "profile.progressDashboard", icon: LayoutDashboard, tourId: undefined },
-      { href: "/classroom",  labelKey: "profile.classroom",         icon: Users,           tourId: undefined },
-      { href: "/settings",   labelKey: "settings.title",            icon: Settings,        tourId: undefined },
+      { href: "/dashboard", labelKey: "profile.progressDashboard", icon: LayoutDashboard, tourId: undefined },
+      { href: "/classroom", labelKey: "profile.classroom",         icon: Users,           tourId: undefined },
+      { href: "/settings",  labelKey: "settings.title",            icon: Settings,        tourId: undefined },
     ],
   },
 ] as const;
@@ -93,17 +100,30 @@ export function Sidebar() {
   });
 
   return (
-    <aside className="hidden md:flex flex-col w-60 shrink-0 border-r border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 h-screen sticky top-0">
+    <aside
+      className="hidden md:flex flex-col w-60 shrink-0 h-screen sticky top-0 border-r border-white/[0.055]"
+      style={{
+        background: "linear-gradient(180deg, #0b0b16 0%, #07070f 100%)",
+      }}
+    >
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-neutral-100 dark:border-neutral-800">
-        <Link href="/learn" className="flex items-center gap-2">
-          <Languages className="h-6 w-6 text-brand-700 dark:text-brand-400" />
-          <span className="font-bold text-lg text-brand-700 dark:text-brand-400">Beeli</span>
+      <div className="px-5 py-[18px] border-b border-white/[0.055]">
+        <Link href="/learn" className="flex items-center gap-3 group">
+          <div className="relative w-9 h-9 rounded-xl overflow-hidden shrink-0 shadow-glow-xs">
+            <div className="absolute inset-0 bg-gradient-to-br from-brand-400 via-brand-500 to-brand-800" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Languages className="h-[18px] w-[18px] text-white relative z-10 drop-shadow" />
+            </div>
+            <div className="absolute inset-0 shadow-inner-bright rounded-xl" />
+          </div>
+          <span className="font-extrabold text-[18px] text-white tracking-tight group-hover:text-brand-200 transition-colors">
+            Beeli
+          </span>
         </Link>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-1">
+      <nav className="flex-1 px-3 py-4 overflow-y-auto scrollbar-hide space-y-0.5">
         {/* Primary */}
         {NAV_ITEMS.map(({ href, labelKey, icon: Icon, tourId }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
@@ -113,13 +133,13 @@ export function Sidebar() {
               href={href}
               data-tour={tourId}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150",
                 active
-                  ? "bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300"
-                  : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
+                  ? "bg-brand-500/[0.14] text-brand-200 ring-1 ring-inset ring-brand-500/[0.22] shadow-glow-xs"
+                  : "text-neutral-400 hover:text-neutral-100 hover:bg-white/[0.05]"
               )}
             >
-              <Icon className="h-4 w-4 shrink-0" />
+              <Icon className={cn("h-4 w-4 shrink-0 transition-colors", active ? "text-brand-400" : "text-neutral-500 group-hover:text-neutral-300")} />
               {t(labelKey)}
             </Link>
           );
@@ -127,67 +147,127 @@ export function Sidebar() {
 
         {/* Secondary — grouped */}
         {SECONDARY_GROUPS.map((group) => (
-          <div key={group.labelKey} className="pt-4">
-            <p className="px-3 text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-600 mb-1">
+          <div key={group.labelKey} className="pt-5">
+            <p className="px-3 mb-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-neutral-600 flex items-center gap-2">
+              <span className="h-px flex-1 bg-white/[0.05]" />
               {t(group.labelKey)}
+              <span className="h-px flex-1 bg-white/[0.05]" />
             </p>
-            {group.items.map(({ href, labelKey, icon: Icon, tourId }) => {
-              const active = pathname === href || pathname.startsWith(href + "/");
+            <div className="space-y-0.5">
+              {group.items.map(({ href, labelKey, icon: Icon, tourId }) => {
+                const active = pathname === href || pathname.startsWith(href + "/");
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    {...(tourId ? { "data-tour": tourId } : {})}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150",
+                      active
+                        ? "bg-brand-500/[0.11] text-brand-300 ring-1 ring-inset ring-brand-500/[0.16]"
+                        : "text-neutral-500 hover:text-neutral-200 hover:bg-white/[0.05]"
+                    )}
+                  >
+                    <Icon className={cn("h-4 w-4 shrink-0", active ? "text-brand-400" : "text-neutral-600")} />
+                    {t(labelKey)}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </nav>
+
+      {/* Educator section */}
+      {me?.isReviewer && (
+        <div className="px-3 pt-3 pb-3 border-t border-white/[0.055]">
+          <div className="mb-1.5 px-3 flex items-center gap-2">
+            <GraduationCap className={cn(
+              "h-3 w-3",
+              me.reviewerRole === "elder" ? "text-teal-400" : me.reviewerRole === "professor" ? "text-indigo-400" : "text-blue-400"
+            )} />
+            <span className={cn(
+              "text-[9px] font-bold uppercase tracking-[0.15em]",
+              me.reviewerRole === "elder" ? "text-teal-400" : me.reviewerRole === "professor" ? "text-indigo-400" : "text-blue-400"
+            )}>
+              {me.reviewerRole === "elder" ? t("reviewerApplication.roleElder")
+                : me.reviewerRole === "professor" ? t("reviewerApplication.roleProfessor")
+                : me.reviewerRole === "teacher" ? t("reviewerApplication.roleTeacher")
+                : t("educator.panelTitle")}
+            </span>
+          </div>
+          <div className="space-y-0.5">
+            {EDUCATOR_NAV.map(({ href, labelKey, icon: Icon, exact }) => {
+              const active = exact ? pathname === href : pathname.startsWith(href);
               return (
                 <Link
                   key={href}
                   href={href}
-                  {...(tourId ? { "data-tour": tourId } : {})}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                    "flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150",
                     active
-                      ? "bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300"
-                      : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
+                      ? me?.reviewerRole === "elder"
+                        ? "bg-teal-500/[0.12] text-teal-300 ring-1 ring-inset ring-teal-500/[0.2]"
+                        : me?.reviewerRole === "professor"
+                        ? "bg-indigo-500/[0.12] text-indigo-300 ring-1 ring-inset ring-indigo-500/[0.2]"
+                        : "bg-blue-500/[0.12] text-blue-300 ring-1 ring-inset ring-blue-500/[0.2]"
+                      : "text-neutral-500 hover:text-neutral-200 hover:bg-white/[0.05]"
                   )}
                 >
-                  <Icon className="h-4 w-4 shrink-0" />
+                  <Icon className={cn(
+                    "h-4 w-4 shrink-0",
+                    active
+                      ? me?.reviewerRole === "elder" ? "text-teal-400" : me?.reviewerRole === "professor" ? "text-indigo-400" : "text-blue-400"
+                      : "text-neutral-600"
+                  )} />
                   {t(labelKey)}
                 </Link>
               );
             })}
           </div>
-        ))}
-      </nav>
+        </div>
+      )}
 
       {/* Admin section */}
       {me?.isAdmin && (
-        <div className="px-3 pb-3 border-t border-neutral-100 dark:border-neutral-800 pt-3">
-          <p className="px-3 text-[10px] font-bold uppercase tracking-widest text-amber-500 dark:text-amber-600 mb-1 flex items-center gap-1.5">
-            <ShieldCheck className="h-3 w-3" />
-            {t("admin.panelTitle")}
-          </p>
-          {ADMIN_NAV.map(({ href, labelKey, icon: Icon, exact }) => {
-            const active = exact ? pathname === href : pathname.startsWith(href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                  active
-                    ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
-                    : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
-                )}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                {t(labelKey)}
-              </Link>
-            );
-          })}
+        <div className="px-3 pt-3 pb-3 border-t border-white/[0.055]">
+          <div className="mb-1.5 px-3 flex items-center gap-2">
+            <ShieldCheck className="h-3 w-3 text-gold-400" />
+            <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-gold-400">
+              {t("admin.panelTitle")}
+            </span>
+          </div>
+          <div className="space-y-0.5">
+            {ADMIN_NAV.map(({ href, labelKey, icon: Icon, exact }) => {
+              const active = exact ? pathname === href : pathname.startsWith(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150",
+                    active
+                      ? "bg-gold-500/[0.14] text-gold-300 ring-1 ring-inset ring-gold-500/[0.22] shadow-glow-gold"
+                      : "text-neutral-500 hover:text-gold-300 hover:bg-gold-500/[0.07]"
+                  )}
+                >
+                  <Icon className={cn("h-4 w-4 shrink-0", active ? "text-gold-400" : "text-neutral-600")} />
+                  {t(labelKey)}
+                </Link>
+              );
+            })}
+          </div>
         </div>
       )}
 
       {/* User account */}
-      <div className="px-4 py-4 border-t border-neutral-100 dark:border-neutral-800 flex items-center gap-3">
-        <UserButton />
-        <span className="text-sm text-neutral-600 dark:text-neutral-400 truncate">
-          {t("common.myAccount")}
-        </span>
+      <div className="px-4 py-4 border-t border-white/[0.055]">
+        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.07] hover:bg-white/[0.06] transition-colors cursor-pointer">
+          <UserButton />
+          <span className="text-sm text-neutral-400 truncate font-medium">
+            {t("common.myAccount")}
+          </span>
+        </div>
       </div>
     </aside>
   );

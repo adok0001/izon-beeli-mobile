@@ -2,7 +2,8 @@
 
 import { apiFetch } from "@/lib/api";
 import { cn, formatRelativeTime } from "@/lib/utils";
-import type { Comment, FeedItem } from "@/types";
+import { useAudioStore } from "@/store/audio-store";
+import type { Comment, FeedItem, Lesson } from "@/types";
 import { SignInButton, useAuth, useUser } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TFunction } from "i18next";
@@ -14,15 +15,20 @@ import {
     Heart,
     MessageCircle,
     Mic,
+    Pause,
+    Play,
     Send,
     Trophy,
     type LucideIcon,
+    X,
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { X } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/ui/empty-state";
+
+// Fixed heights for the waveform bars (avoids hydration mismatch from Math.random)
+const WAVEFORM_HEIGHTS = [6, 12, 8, 16, 10, 14, 7, 11, 9, 13];
 
 function SignInModal({ onClose }: Readonly<{ onClose: () => void }>) {
   const { t } = useTranslation();
@@ -87,6 +93,81 @@ function getTypeConfig(t: TFunction) {
   } satisfies Record<FeedItem["type"], { icon: LucideIcon; color: string; label: string }>;
 }
 
+function AudioStrip({ item }: Readonly<{ item: FeedItem }>) {
+  const { t } = useTranslation();
+  const { load, currentLesson, isPlaying, pause } = useAudioStore();
+  const isActive = currentLesson?.id === item.id;
+  const isThisPlaying = isActive && isPlaying;
+
+  const handlePlay = () => {
+    if (!item.audioUrl || typeof item.audioUrl !== "string") return;
+    if (isThisPlaying) {
+      pause();
+    } else {
+      // Construct a minimal Lesson shape to feed into the audio store
+      const syntheticLesson: Lesson = {
+        id: item.id,
+        courseId: "feed",
+        title: item.title,
+        description: item.description ?? "",
+        audioUrl: item.audioUrl,
+        order: 0,
+      };
+      load(syntheticLesson);
+    }
+  };
+
+  return (
+    <div
+      className={cn(
+        "mt-3 flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all",
+        isThisPlaying
+          ? "bg-brand-500/[0.07] dark:bg-brand-500/[0.1] border-brand-500/[0.2]"
+          : "bg-neutral-50 dark:bg-white/[0.04] border-neutral-100 dark:border-white/[0.06]"
+      )}
+    >
+      {/* Play / Pause button */}
+      <button
+        onClick={handlePlay}
+        className={cn(
+          "w-9 h-9 flex items-center justify-center rounded-full shrink-0 transition-all",
+          isThisPlaying
+            ? "bg-brand-600 text-white shadow-glow-xs hover:bg-brand-500"
+            : "bg-neutral-200 dark:bg-white/[0.08] text-neutral-600 dark:text-neutral-300 hover:bg-brand-100 dark:hover:bg-brand-500/[0.15] hover:text-brand-600 dark:hover:text-brand-400"
+        )}
+        aria-label={isThisPlaying ? t("lesson.pause") : t("feed.playAudio")}
+      >
+        {isThisPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 fill-current" />}
+      </button>
+
+      {/* Waveform */}
+      <div className="flex items-end gap-[3px] h-5 flex-1">
+        {WAVEFORM_HEIGHTS.map((maxH, i) => (
+          <div
+            key={i}
+            className={cn(
+              "w-[3px] rounded-full transition-colors",
+              isThisPlaying ? "bg-brand-500 waveform-bar" : "bg-neutral-300 dark:bg-white/[0.15]"
+            )}
+            style={{
+              height: isThisPlaying ? `${maxH}px` : `${Math.round(maxH * 0.45)}px`,
+              animationDelay: isThisPlaying ? `${i * 0.07}s` : undefined,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Label */}
+      <span className={cn(
+        "text-xs font-medium shrink-0",
+        isThisPlaying ? "text-brand-500 dark:text-brand-400" : "text-neutral-400 dark:text-neutral-500"
+      )}>
+        {isThisPlaying ? t("feed.playing") : t("feed.playAudio")}
+      </span>
+    </div>
+  );
+}
+
 function FeedCard({ item, onSignInRequired }: Readonly<{ item: FeedItem; onSignInRequired: () => void }>) {
   const { t } = useTranslation();
   const { getToken } = useAuth();
@@ -96,6 +177,8 @@ function FeedCard({ item, onSignInRequired }: Readonly<{ item: FeedItem; onSignI
   const TypeIcon = cfg.icon;
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
+
+  const hasAudio = typeof item.audioUrl === "string" && !!item.audioUrl;
 
   const { data: comments = [] } = useQuery<Comment[]>({
     queryKey: ["comments", item.id],
@@ -116,7 +199,7 @@ function FeedCard({ item, onSignInRequired }: Readonly<{ item: FeedItem; onSignI
       });
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["comments", item.id] });
+      void qc.invalidateQueries({ queryKey: ["comments", item.id] });
       setCommentText("");
       toast.success(t("feed.commentPosted", { defaultValue: "Comment posted" }));
     },
@@ -137,14 +220,14 @@ function FeedCard({ item, onSignInRequired }: Readonly<{ item: FeedItem; onSignI
         )
       );
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: ["feed"] }),
+    onSettled: () => void qc.invalidateQueries({ queryKey: ["feed"] }),
   });
 
   return (
-    <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-5">
+    <div className="bg-white dark:bg-white/[0.03] rounded-xl border border-neutral-200 dark:border-white/[0.07] p-5 hover:border-neutral-300 dark:hover:border-white/[0.1] transition-colors">
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
-        <div className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden shrink-0 flex items-center justify-center text-lg">
+        <div className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-white/[0.08] overflow-hidden shrink-0 flex items-center justify-center text-sm font-bold text-neutral-500 dark:text-neutral-400">
           {item.userAvatarUrl ? (
             <Image src={item.userAvatarUrl} alt={item.userName} width={40} height={40} className="w-full h-full object-cover" />
           ) : (
@@ -160,6 +243,11 @@ function FeedCard({ item, onSignInRequired }: Readonly<{ item: FeedItem; onSignI
               <TypeIcon className="h-3.5 w-3.5" />
               {cfg.label}
             </span>
+            {hasAudio && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-brand-500/[0.1] text-brand-600 dark:text-brand-400 border border-brand-500/[0.18]">
+                AUDIO
+              </span>
+            )}
           </div>
           <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5">
             {formatRelativeTime(item.createdAt)}
@@ -169,21 +257,31 @@ function FeedCard({ item, onSignInRequired }: Readonly<{ item: FeedItem; onSignI
 
       {/* Content */}
       <p className="font-medium text-neutral-900 dark:text-white text-sm">{item.title}</p>
-      <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">{item.description}</p>
+      {item.description && (
+        <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">{item.description}</p>
+      )}
+
+      {/* Audio player strip */}
+      {hasAudio && <AudioStrip item={item} />}
 
       {/* Actions */}
-      <div className="flex items-center gap-4 mt-4 pt-3 border-t border-neutral-100 dark:border-neutral-800">
+      <div className="flex items-center gap-4 mt-4 pt-3 border-t border-neutral-100 dark:border-white/[0.06]">
         <button
           onClick={() => isSignedIn ? toggleLike.mutate() : onSignInRequired()}
-          className="flex items-center gap-1.5 text-sm text-neutral-500 hover:text-red-500 transition-colors"
+          className={cn(
+            "flex items-center gap-1.5 text-sm transition-colors",
+            item.isLiked ? "text-red-500" : "text-neutral-400 dark:text-neutral-500 hover:text-red-500"
+          )}
         >
-          <Heart className="h-4 w-4" /> <span>{item.likes}</span>
+          <Heart className={cn("h-4 w-4", item.isLiked && "fill-current")} />
+          <span>{item.likes}</span>
         </button>
         <button
           onClick={() => isSignedIn ? setShowComments(!showComments) : onSignInRequired()}
-          className="flex items-center gap-1.5 text-sm text-neutral-500 hover:text-brand-500 transition-colors"
+          className="flex items-center gap-1.5 text-sm text-neutral-400 dark:text-neutral-500 hover:text-brand-500 transition-colors"
         >
-          <MessageCircle className="h-4 w-4" /> <span>{item.comments}</span>
+          <MessageCircle className="h-4 w-4" />
+          <span>{item.comments}</span>
         </button>
       </div>
 
@@ -192,13 +290,11 @@ function FeedCard({ item, onSignInRequired }: Readonly<{ item: FeedItem; onSignI
         <div className="mt-4 space-y-3">
           {comments.map((c) => (
             <div key={c.id} className="flex gap-2">
-              <span className="w-7 h-7 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center text-xs shrink-0">
+              <span className="w-7 h-7 rounded-full bg-neutral-200 dark:bg-white/[0.08] flex items-center justify-center text-xs font-bold shrink-0 text-neutral-500 dark:text-neutral-400">
                 {c.userName?.[0]?.toUpperCase() ?? "?"}
               </span>
-              <div className="bg-neutral-50 dark:bg-neutral-800 rounded-lg px-3 py-2 flex-1">
-                <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
-                  {c.userName}
-                </p>
+              <div className="bg-neutral-50 dark:bg-white/[0.04] rounded-lg px-3 py-2 flex-1">
+                <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">{c.userName}</p>
                 <p className="text-sm text-neutral-600 dark:text-neutral-400">{c.text}</p>
               </div>
             </div>
@@ -210,7 +306,7 @@ function FeedCard({ item, onSignInRequired }: Readonly<{ item: FeedItem; onSignI
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               placeholder={t("feed.addComment")}
-              className="flex-1 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 px-3 py-2 text-sm placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="flex-1 rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-neutral-50 dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && commentText.trim()) addComment.mutate();
               }}
@@ -218,9 +314,9 @@ function FeedCard({ item, onSignInRequired }: Readonly<{ item: FeedItem; onSignI
             <button
               onClick={() => addComment.mutate()}
               disabled={!commentText.trim() || addComment.isPending}
-              className="px-3 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 disabled:opacity-50 transition-colors"
+              className="px-3 py-2 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-500 disabled:opacity-40 transition-colors"
             >
-              {t("common.post")}
+              <Send className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -243,7 +339,11 @@ export default function FeedPage() {
       const token = await getToken();
       return apiFetch("/feed", {
         method: "POST",
-        body: JSON.stringify({ title: postText.split("\n")[0]?.trim() || postText.trim(), description: postText.trim(), type: "community" }),
+        body: JSON.stringify({
+          title: postText.split("\n")[0]?.trim() || postText.trim(),
+          description: postText.trim(),
+          type: "community",
+        }),
         token: token ?? undefined,
       });
     },
@@ -255,10 +355,11 @@ export default function FeedPage() {
   });
 
   const filters: { value: FilterType; label: string }[] = [
-    { value: "all", label: t("feed.filterAll") },
+    { value: "all",              label: t("feed.filterAll") },
     { value: "lesson_completed", label: t("feed.filterLessons") },
-    { value: "achievement", label: t("feed.filterAchievements") },
-    { value: "contribution", label: t("feed.filterContributions") },
+    { value: "achievement",      label: t("feed.filterAchievements") },
+    { value: "contribution",     label: t("feed.filterContributions") },
+    { value: "community",        label: t("feed.typeCommunity") },
   ];
 
   const { data: items = [], isLoading } = useQuery<FeedItem[]>({
@@ -278,7 +379,7 @@ export default function FeedPage() {
     feedContent = (
       <div className="space-y-4">
         {loadingCards.map((cardKey) => (
-          <div key={cardKey} className="h-32 bg-neutral-100 dark:bg-neutral-800 rounded-xl animate-pulse" />
+          <div key={cardKey} className="h-32 skeleton rounded-xl" />
         ))}
       </div>
     );
@@ -299,27 +400,27 @@ export default function FeedPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{t("feed.title")}</h1>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
+        <h1 className="text-2xl font-extrabold text-neutral-900 dark:text-white tracking-tight">{t("feed.title")}</h1>
+        <p className="text-sm text-neutral-500 dark:text-neutral-500 mt-0.5">
           {t("feed.subtitle")}
         </p>
       </div>
 
       {/* Compose */}
       {isSignedIn && (
-        <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 mb-5">
+        <div className="bg-white dark:bg-white/[0.03] rounded-xl border border-neutral-200 dark:border-white/[0.07] p-4 mb-5">
           <textarea
             value={postText}
             onChange={(e) => setPostText(e.target.value)}
             placeholder={t("feed.contentPlaceholder")}
             rows={2}
-            className="w-full resize-none text-sm text-neutral-900 dark:text-white placeholder-neutral-400 bg-transparent focus:outline-none"
+            className="w-full resize-none text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 bg-transparent focus:outline-none"
           />
           <div className="flex justify-end mt-2">
             <button
               onClick={() => postText.trim() && createPost.mutate()}
               disabled={!postText.trim() || createPost.isPending}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 disabled:opacity-40 transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-500 disabled:opacity-40 transition-colors"
             >
               <Send className="h-3.5 w-3.5" />
               {t("feed.post")}
@@ -335,10 +436,10 @@ export default function FeedPage() {
             key={value}
             onClick={() => setFilter(value)}
             className={cn(
-              "shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-colors",
+              "shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold border transition-all duration-150",
               filter === value
-                ? "bg-brand-600 text-white border-brand-600"
-                : "border-neutral-200 text-neutral-600 hover:border-brand-400 dark:border-neutral-700 dark:text-neutral-400"
+                ? "bg-brand-600 text-white border-brand-600 shadow-glow-xs"
+                : "border-neutral-200 dark:border-white/[0.1] text-neutral-600 dark:text-neutral-400 hover:border-brand-400/50 dark:hover:border-brand-500/40 hover:text-brand-600 dark:hover:text-brand-300"
             )}
           >
             {label}

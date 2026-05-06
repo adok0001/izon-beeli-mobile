@@ -86,6 +86,9 @@ export interface UserMe {
   points: number;
   selectedLanguageId?: string | null;
   isAdmin: boolean;
+  isReviewer: boolean;
+  reviewerLanguages: string[];
+  reviewerRole?: string | null;
   createdAt: string;
 }
 

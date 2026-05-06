@@ -4,9 +4,10 @@ import { AudioPlayerBar } from "@/components/layout/audio-player-bar";
 import { OnboardingModal } from "@/components/onboarding-modal";
 import { TourOverlay } from "@/components/tour/tour-overlay";
 import { TourLauncher } from "@/components/tour/tour-launcher";
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen bg-neutral-50 dark:bg-neutral-950">
+    <div className="flex h-screen bg-neutral-50 dark:bg-[#07070f]">
       <Sidebar />
 
       {/* Main content */}
@@ -14,7 +15,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
-      {/* Persistent audio player (above bottom nav on mobile) */}
+      {/* Persistent audio player */}
       <AudioPlayerBar />
 
       {/* Mobile bottom navigation */}
