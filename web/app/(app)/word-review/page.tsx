@@ -1,11 +1,12 @@
 "use client";
 
 import { apiFetch } from "@/lib/api";
+import { useLanguageStore } from "@/store/language-store";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { CheckCircle2, RotateCcw, X } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 interface DueEntry {
@@ -142,32 +143,20 @@ function ReviewCard({
 export default function WordReviewPage() {
   const { t } = useTranslation();
   const { getToken } = useAuth();
+  const { selectedLanguageId } = useLanguageStore();
 
   const { data: dueEntries = [], isLoading: isDueLoading } = useQuery<DueEntry[]>({
-    queryKey: ["wordbank-due"],
+    queryKey: ["wordbank-due", selectedLanguageId],
     queryFn: async () => {
       const token = await getToken();
       return apiFetch<DueEntry[]>("/wordbank/due", { token: token ?? undefined });
     },
   });
 
-  const dueLanguages = useMemo(
-    () => Array.from(new Set(dueEntries.map((e) => e.languageId).filter(Boolean))),
-    [dueEntries]
-  );
-
   const { data: dictionary = [], isLoading: isDictLoading } = useQuery<DictEntry[]>({
-    queryKey: ["dictionary-due", dueLanguages],
-    queryFn: async () => {
-      if (dueLanguages.length === 0) return [];
-      const results = await Promise.all(
-        dueLanguages.map((lang) =>
-          apiFetch<DictEntry[]>(`/dictionary?languageId=${lang}`)
-        )
-      );
-      return results.flat();
-    },
-    enabled: dueLanguages.length > 0,
+    queryKey: ["dictionary-due", selectedLanguageId],
+    queryFn: () => apiFetch<DictEntry[]>(`/dictionary?languageId=${selectedLanguageId}`),
+    enabled: dueEntries.length > 0,
   });
 
   const reviewMutation = useMutation({
