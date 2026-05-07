@@ -624,7 +624,7 @@ educatorRouter.get("/courses", async (c) => {
   const reviewerLanguages = c.get("reviewerLanguages");
 
   const rows = await db
-    .select({ id: courses.id, title: courses.title, languageId: courses.languageId, level: courses.level })
+    .select({ id: courses.id, title: courses.title, description: courses.description, languageId: courses.languageId, level: courses.level, order: courses.order })
     .from(courses)
     .where(!isAdmin && reviewerLanguages.length > 0 ? inArray(courses.languageId, reviewerLanguages) : undefined)
     .orderBy(courses.languageId, courses.order);
