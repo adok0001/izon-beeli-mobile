@@ -1090,7 +1090,7 @@ export const en = {
       overview: "Overview",
       review: "Review",
       dictionary: "Dictionary",
-      lessons: "Lessons",
+      lessons: "Courses",
       culture: "Culture & Music",
     },
     overview: {

@@ -1105,7 +1105,7 @@ export const fr = {
       overview: "Vue d'ensemble",
       review: "Révision",
       dictionary: "Dictionnaire",
-      lessons: "Leçons",
+      lessons: "Cours",
       culture: "Culture & Musique",
     },
     overview: {

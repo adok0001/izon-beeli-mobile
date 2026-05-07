@@ -4,7 +4,7 @@ import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
-import { BookText, ClipboardList, Globe2, LayoutDashboard, Music2 } from "lucide-react";
+import { BookOpen, BookText, ClipboardList, Globe2, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -14,7 +14,7 @@ const EDUCATOR_NAV = [
   { href: "/educator",            labelKey: "educator.nav.overview",   icon: LayoutDashboard, exact: true },
   { href: "/educator/review",     labelKey: "educator.nav.review",     icon: ClipboardList },
   { href: "/educator/dictionary", labelKey: "educator.nav.dictionary", icon: BookText },
-  { href: "/educator/lessons",    labelKey: "educator.nav.lessons",    icon: Music2 },
+  { href: "/educator/lessons",    labelKey: "educator.nav.lessons",    icon: BookOpen },
   { href: "/educator/culture",    labelKey: "educator.nav.culture",    icon: Globe2 },
 ] as const;
 
