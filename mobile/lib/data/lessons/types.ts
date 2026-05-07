@@ -32,5 +32,7 @@ export interface LessonData {
   artist?: string;
   /** e.g. "lullaby", "praise", "work_song", "festival", "contemporary" */
   genre?: string;
+  /** @default true — false for stub/template lessons pending educator content */
+  isActive?: boolean;
   transcript: TranscriptSegment[];
 }

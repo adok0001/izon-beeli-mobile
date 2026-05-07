@@ -1,43 +1,12 @@
 /**
- * stub.ts — Template data generator for every unlaunched language.
+ * Server-side lesson stub generator.
+ * Mirrors the template data from mobile/lib/data/lessons/stub.ts but lives
+ * inside server/src so it can be compiled and imported from route handlers.
  *
- * This is a developer artifact.  It seeds placeholder courses and lessons
- * for languages that do not yet have hand-crafted content so that educators
- * can immediately start filling in native-language phrases through the web
- * educator portal at /educator/lessons.
- *
- * HOW EDUCATORS FILL IN CONTENT
- * ──────────────────────────────
- * Every transcript segment has:
- *   text        — bracketed placeholder: "[Good morning!]"  ← educator fills this
- *   translation — the English reference phrase              ← already correct
- *
- * Educators log in to /educator, click a lesson, and replace each bracketed
- * placeholder with the real native-language phrase.  No files required.
- *
- * WHEN A LANGUAGE IS FULLY CURATED
- * ─────────────────────────────────
- * 1. Add the language to LAUNCHED_IDS in this file.
- * 2. Create a hand-crafted  lib/data/lessons/{lang-id}.ts  file.
- * 3. Import it in  lib/data/lessons/index.ts  alongside the other languages.
- * 4. Remove the language from LAUNCHED_IDS here — ACTIVE_LANGUAGES in
- *    lib/data/languages.ts already includes every language automatically.
- * The stub entry is then automatically removed (the language is no longer
- * generated here because it's in LAUNCHED_IDS).
+ * When the template content changes, keep both files in sync.
  */
 
-import type { CourseType } from "../../../types/index";
-import { LANGUAGES } from "../languages";
-import type { LessonData } from "./types";
-
-// ─── Already-launched languages (excluded from stub generation) ───────────
-export const LAUNCHED_IDS = new Set([
-  "izon", "yoruba", "igbo", "hausa", "swahili", "amharic",
-  "akan", "wolof", "arabic-egyptian", "somali", "bambara",
-  "tamazight", "kinyarwanda", "ewe",
-]);
-
-// ─── Internal types ────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type Phrase = { text: string; en: string; fr: string };
 
@@ -51,9 +20,8 @@ type LessonDef = {
   phrases: Phrase[];
 };
 
-// courseType, title suffix, description, level, order, lessons
 type CourseDef = {
-  type: CourseType;
+  type: string;
   abbrev: string;
   titleEn: string;
   titleFr: string;
@@ -64,11 +32,7 @@ type CourseDef = {
   lessons: LessonDef[];
 };
 
-// ─── Template content ──────────────────────────────────────────────────────
-// Each phrase has:
-//   text  — bracketed English placeholder (educator replaces with native language)
-//   en    — English translation (already correct reference)
-//   fr    — French translation (already correct reference)
+// ─── Template content ─────────────────────────────────────────────────────────
 
 const FIRST_WORDS: LessonDef[] = [
   {
@@ -438,8 +402,6 @@ const SONGS_DEF: LessonDef[] = [
   },
 ];
 
-// ─── Course definitions ────────────────────────────────────────────────────
-
 const COURSE_DEFS: CourseDef[] = [
   {
     type: "first_words", abbrev: "fw", order: 1, level: "beginner",
@@ -485,7 +447,7 @@ const COURSE_DEFS: CourseDef[] = [
   },
 ];
 
-// ─── Generators ────────────────────────────────────────────────────────────
+// ─── Builders ─────────────────────────────────────────────────────────────────
 
 function buildCourses(languageId: string, nativeName: string) {
   return COURSE_DEFS.map((def) => ({
@@ -502,16 +464,44 @@ function buildCourses(languageId: string, nativeName: string) {
   }));
 }
 
-function buildLessons(languageId: string, def: CourseDef): LessonData[] {
+type SegmentRow = {
+  lessonId: string;
+  startTime: number;
+  endTime: number;
+  text: string;
+  translation: string | null;
+  translationFr: string | null;
+  order: number;
+};
+
+type LessonRow = {
+  id: string;
+  courseId: string;
+  type: string;
+  title: string;
+  titleFr: string;
+  description: string;
+  descriptionFr: string;
+  audioUrl: null;
+  duration: null;
+  order: number;
+  artist: string | null;
+  genre: string | null;
+  isActive: false;
+  segments: SegmentRow[];
+};
+
+function buildLessons(languageId: string, def: CourseDef): LessonRow[] {
   const courseId = `course-${languageId}-${def.abbrev}`;
   const isSong = def.type === "songs";
 
   return def.lessons.map((lesson, li) => {
     const n = li + 1;
+    const lessonId = `${languageId}-${def.abbrev}-${n}`;
     return {
-      id: `${languageId}-${def.abbrev}-${n}`,
+      id: lessonId,
       courseId,
-      type: isSong ? ("song" as const) : ("lesson" as const),
+      type: isSong ? "song" : "lesson",
       title: lesson.title,
       titleFr: lesson.titleFr,
       description: lesson.description,
@@ -519,38 +509,27 @@ function buildLessons(languageId: string, def: CourseDef): LessonData[] {
       audioUrl: null,
       duration: null,
       order: n,
-      isActive: false,
-      ...(isSong ? { artist: "Traditional", genre: li === 0 ? "lullaby" : "praise" } : {}),
-      transcript: lesson.phrases.map((p, pi) => ({
-        id: `${languageId}-${def.abbrev}-${n}-${pi + 1}`,
+      artist: isSong ? "Traditional" : null,
+      genre: isSong ? (li === 0 ? "lullaby" : "praise") : null,
+      isActive: false as const,
+      segments: lesson.phrases.map((p, pi) => ({
+        lessonId,
         startTime: lesson.isOralOrSong ? 0 : pi * 4,
         endTime: lesson.isOralOrSong ? 0 : (pi + 1) * 4,
         text: p.text,
         translation: p.en,
         translationFr: p.fr,
+        order: pi,
       })),
     };
   });
 }
 
-// ─── Exports ───────────────────────────────────────────────────────────────
+// ─── Export ───────────────────────────────────────────────────────────────────
 
-const stubLanguages = LANGUAGES.filter((l) => !LAUNCHED_IDS.has(l.id));
-
-/** All stub CourseEntry objects — spread into COURSES in lib/data/courses.ts */
-export const STUB_COURSES = stubLanguages.flatMap((lang) =>
-  buildCourses(lang.id, lang.nativeName),
-);
-
-/** All stub LessonData — spread into ALL_LESSONS in lib/data/lessons/index.ts */
-export const STUB_LESSONS: LessonData[] = stubLanguages.flatMap((lang) =>
-  COURSE_DEFS.flatMap((def) => buildLessons(lang.id, def)),
-);
-
-/** Generate stub courses + lessons for a single language on demand. */
 export function stubForLanguage(lang: { id: string; nativeName: string }) {
   return {
     courses: buildCourses(lang.id, lang.nativeName),
-    lessons: COURSE_DEFS.flatMap((def) => buildLessons(lang.id, def)) as LessonData[],
+    lessons: COURSE_DEFS.flatMap((def) => buildLessons(lang.id, def)),
   };
 }

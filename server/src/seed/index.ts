@@ -168,6 +168,7 @@ async function seed() {
       descriptionFr: lessonData.descriptionFr ?? null,
       artist: lessonData.artist ?? null,
       genre: lessonData.genre ?? null,
+      isActive: lessonData.isActive ?? true,
     }).onConflictDoUpdate({
       target: lessons.id,
       set: {
@@ -181,6 +182,7 @@ async function seed() {
         order: lessonData.order,
         artist: lessonData.artist ?? null,
         genre: lessonData.genre ?? null,
+        isActive: lessonData.isActive ?? true,
       },
     });
 

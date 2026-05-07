@@ -21,6 +21,7 @@ import {
   users,
 } from "../db/schema.js";
 import { AuthEnv, authMiddleware, reviewerMiddleware } from "../middleware/auth.js";
+import { stubForLanguage } from "../lib/lesson-stubs.js";
 
 export const educatorRouter = new Hono<AuthEnv>();
 educatorRouter.use("*", authMiddleware);
@@ -650,6 +651,7 @@ educatorRouter.get("/lessons", async (c) => {
       order: lessons.order,
       artist: lessons.artist,
       genre: lessons.genre,
+      isActive: lessons.isActive,
     })
     .from(lessons)
     .innerJoin(courses, eq(lessons.courseId, courses.id))
@@ -772,7 +774,7 @@ educatorRouter.patch("/lessons/:id", async (c) => {
 
   const body = await c.req.json<{
     title?: string; description?: string; type?: string;
-    artist?: string | null; genre?: string | null; order?: number;
+    artist?: string | null; genre?: string | null; order?: number; isActive?: boolean;
   }>();
 
   const updates: Record<string, unknown> = {};
@@ -782,6 +784,7 @@ educatorRouter.patch("/lessons/:id", async (c) => {
   if (body.artist !== undefined) updates.artist = body.artist?.trim() || null;
   if (body.genre !== undefined) updates.genre = body.genre?.trim() || null;
   if (body.order !== undefined) updates.order = body.order;
+  if (body.isActive !== undefined) updates.isActive = body.isActive;
 
   await db.update(lessons).set(updates).where(eq(lessons.id, id));
   return c.json({ success: true });
@@ -807,6 +810,7 @@ educatorRouter.get("/lessons/:id", async (c) => {
       order: lessons.order,
       artist: lessons.artist,
       genre: lessons.genre,
+      isActive: lessons.isActive,
     })
     .from(lessons)
     .innerJoin(courses, eq(lessons.courseId, courses.id))
@@ -943,4 +947,88 @@ educatorRouter.delete("/lessons/:id", async (c) => {
   }
 
   return c.json({ deleted: true });
+});
+
+// ─── POST /educator/generate-stubs ───────────────────────────────────────────
+// Seeds template courses + lessons for a language that has no content yet.
+// All generated lessons start as isActive=false so educators review before publish.
+
+educatorRouter.post("/generate-stubs", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+
+  const { languageId } = await c.req.json<{ languageId: string }>();
+  if (!languageId?.trim()) return c.json({ error: "languageId is required" }, 400);
+
+  if (!isAdmin && !reviewerLanguages.includes(languageId)) {
+    return c.json({ error: "Forbidden: not assigned to this language" }, 403);
+  }
+
+  const [lang] = await db
+    .select({ id: languages.id, nativeName: languages.nativeName })
+    .from(languages)
+    .where(eq(languages.id, languageId))
+    .limit(1);
+  if (!lang) return c.json({ error: "Unknown language" }, 400);
+
+  // Block if courses already exist — don't overwrite educator work
+  const [existing] = await db
+    .select({ id: courses.id })
+    .from(courses)
+    .where(eq(courses.languageId, languageId))
+    .limit(1);
+  if (existing) {
+    return c.json({ error: "Content already exists for this language. Delete existing courses first." }, 409);
+  }
+
+  const { courses: stubCourses, lessons: stubLessons } = stubForLanguage(lang);
+
+  for (const course of stubCourses) {
+    await db.insert(courses).values({
+      id: course.id,
+      languageId: course.languageId,
+      title: course.title,
+      titleFr: course.titleFr ?? null,
+      description: course.description,
+      descriptionFr: course.descriptionFr ?? null,
+      level: course.level,
+      lessonsCount: course.lessonsCount,
+      order: course.order,
+    }).onConflictDoNothing();
+  }
+
+  for (const lesson of stubLessons) {
+    const { segments, ...lessonData } = lesson;
+    await db.insert(lessons).values({
+      id: lessonData.id,
+      courseId: lessonData.courseId,
+      type: lessonData.type,
+      title: lessonData.title,
+      titleFr: lessonData.titleFr,
+      description: lessonData.description,
+      descriptionFr: lessonData.descriptionFr,
+      audioUrl: null,
+      duration: null,
+      order: lessonData.order,
+      artist: lessonData.artist,
+      genre: lessonData.genre,
+      isActive: false,
+    }).onConflictDoNothing();
+
+    if (segments.length > 0) {
+      await db.insert(transcriptSegments).values(
+        segments.map((seg) => ({
+          lessonId: lessonData.id,
+          startTime: seg.startTime,
+          endTime: seg.endTime,
+          text: seg.text,
+          translation: seg.translation,
+          translationFr: seg.translationFr,
+          order: seg.order,
+        }))
+      ).onConflictDoNothing();
+    }
+  }
+
+  return c.json({ courses: stubCourses.length, lessons: stubLessons.length });
 });

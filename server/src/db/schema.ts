@@ -301,6 +301,7 @@ export const lessons = pgTable(
     order: integer("order").default(0).notNull(),
     artist: varchar("artist", { length: 300 }),
     genre: varchar("genre", { length: 100 }),
+    isActive: boolean("is_active").default(true).notNull(),
   },
   (table) => [index("lessons_course_id_idx").on(table.courseId)]
 );

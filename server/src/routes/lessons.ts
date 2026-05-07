@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq, asc, inArray } from "drizzle-orm";
+import { eq, asc, and, inArray } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { lessons, transcriptSegments, courses } from "../db/schema.js";
 
@@ -17,7 +17,7 @@ lessonsRouter.get("/", async (c) => {
     const result = await db
       .select()
       .from(lessons)
-      .where(eq(lessons.courseId, courseId))
+      .where(and(eq(lessons.courseId, courseId), eq(lessons.isActive, true)))
       .orderBy(asc(lessons.order));
     return c.json(result);
   }
@@ -40,7 +40,7 @@ lessonsRouter.get("/", async (c) => {
     const result = await db
       .select()
       .from(lessons)
-      .where(inArray(lessons.courseId, courseIds))
+      .where(and(inArray(lessons.courseId, courseIds), eq(lessons.isActive, true)))
       .orderBy(asc(lessons.courseId), asc(lessons.order));
 
     return c.json(result);
@@ -59,7 +59,7 @@ lessonsRouter.get("/:id", async (c) => {
   const [lesson] = await db
     .select()
     .from(lessons)
-    .where(eq(lessons.id, id))
+    .where(and(eq(lessons.id, id), eq(lessons.isActive, true)))
     .limit(1);
 
   if (!lesson) {

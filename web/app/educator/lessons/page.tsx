@@ -6,10 +6,13 @@ import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronRight,
+  EyeOff,
+  Eye,
   Music2,
   Pencil,
   Play,
   Plus,
+  Sparkles,
   Trash2,
   X,
 } from "lucide-react";
@@ -32,6 +35,7 @@ interface Lesson {
   order: number;
   artist: string | null;
   genre: string | null;
+  isActive: boolean;
 }
 
 interface Course {
@@ -362,6 +366,33 @@ export default function EducatorLessonsPage() {
     },
   });
 
+  const toggleActiveMutation = useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      const token = await getToken();
+      return apiFetch(`/educator/lessons/${id}`, {
+        method: "PATCH",
+        token: token!,
+        body: JSON.stringify({ isActive }),
+      });
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["educator-lessons"] }),
+  });
+
+  const generateStubsMutation = useMutation({
+    mutationFn: async (languageId: string) => {
+      const token = await getToken();
+      return apiFetch<{ courses: number; lessons: number }>("/educator/generate-stubs", {
+        method: "POST",
+        token: token!,
+        body: JSON.stringify({ languageId }),
+      });
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["educator-lessons"] });
+      void qc.invalidateQueries({ queryKey: ["educator-courses"] });
+    },
+  });
+
   const filtered = lessons.filter((l) => !effectiveLanguage || l.languageId === effectiveLanguage);
 
   if (!me) return null;
@@ -407,7 +438,23 @@ export default function EducatorLessonsPage() {
             <Music2 className="h-6 w-6 text-neutral-400" />
           </div>
           <p className="text-sm font-semibold text-neutral-500 dark:text-neutral-400">No lessons yet</p>
-          <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">Create your first lesson to get started.</p>
+          <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1 mb-5">Create your first lesson, or generate a starter set.</p>
+          <button
+            onClick={() => effectiveLanguage && generateStubsMutation.mutate(effectiveLanguage)}
+            disabled={!effectiveLanguage || generateStubsMutation.isPending}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-500 text-white text-sm font-semibold hover:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            <Sparkles className="h-4 w-4" />
+            {generateStubsMutation.isPending ? "Generating…" : "Generate starter lessons"}
+          </button>
+          {generateStubsMutation.isError && (
+            <p className="mt-3 text-xs text-red-500">{(generateStubsMutation.error as Error).message}</p>
+          )}
+          {generateStubsMutation.isSuccess && (
+            <p className="mt-3 text-xs text-green-600 dark:text-green-400">
+              Generated {generateStubsMutation.data.courses} courses · {generateStubsMutation.data.lessons} lessons — all inactive until you review them.
+            </p>
+          )}
         </div>
       ) : (
         <div className="rounded-xl border border-neutral-200 dark:border-white/[0.07] overflow-hidden">
@@ -417,6 +464,7 @@ export default function EducatorLessonsPage() {
                 <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">Title</th>
                 <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">Course</th>
                 <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">Type</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">Status</th>
                 <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">Duration</th>
                 <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">Order</th>
                 <th className="px-4 py-2.5" />
@@ -448,6 +496,15 @@ export default function EducatorLessonsPage() {
                       {lesson.type}
                     </span>
                   </td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
+                      lesson.isActive
+                        ? "bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400"
+                        : "bg-neutral-100 dark:bg-white/[0.06] text-neutral-500 dark:text-neutral-400"
+                    }`}>
+                      {lesson.isActive ? "Active" : "Inactive"}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-neutral-500 dark:text-neutral-400 text-xs tabular-nums">
                     {fmtDuration(lesson.duration)}
                   </td>
@@ -465,6 +522,16 @@ export default function EducatorLessonsPage() {
                           <Play className={`h-3.5 w-3.5 ${playUrl === lesson.audioUrl ? "text-brand-500" : "text-neutral-400"}`} />
                         </button>
                       )}
+                      <button
+                        onClick={() => toggleActiveMutation.mutate({ id: lesson.id, isActive: !lesson.isActive })}
+                        className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors"
+                        title={lesson.isActive ? "Deactivate" : "Activate"}
+                      >
+                        {lesson.isActive
+                          ? <EyeOff className="h-3.5 w-3.5 text-neutral-400" />
+                          : <Eye className="h-3.5 w-3.5 text-green-500" />
+                        }
+                      </button>
                       <button
                         onClick={() => setModal(lesson)}
                         className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors"
