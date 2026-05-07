@@ -41,6 +41,7 @@ import { WOLOF_LESSONS } from "./wolof";
 import { WOLOF_SONGS } from "./wolof-songs";
 import { YORUBA_LESSONS } from "./yoruba";
 import { YORUBA_SONGS } from "./yoruba-songs";
+import { STUB_LESSONS } from "./stub";
 
 export type { LessonData, LessonType, TranscriptSegment } from "./types";
 
@@ -78,4 +79,7 @@ export const ALL_LESSONS: LessonData[] = [
   ...KINYARWANDA_SONGS,
   ...EWE_LESSONS,
   ...EWE_SONGS,
+  // Template stub lessons for all unlaunched languages.
+  // Educators fill in native-language phrases through the /educator portal.
+  ...STUB_LESSONS,
 ];
