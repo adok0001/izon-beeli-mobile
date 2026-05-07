@@ -14,7 +14,7 @@ const EDUCATOR_NAV = [
   { href: "/educator",            labelKey: "educator.nav.overview",   icon: LayoutDashboard, exact: true },
   { href: "/educator/review",     labelKey: "educator.nav.review",     icon: ClipboardList },
   { href: "/educator/dictionary", labelKey: "educator.nav.dictionary", icon: BookText },
-  { href: "/educator/lessons",    labelKey: "educator.nav.lessons",    icon: BookOpen },
+  { href: "/educator/courses",    labelKey: "educator.nav.lessons",    icon: BookOpen },
   { href: "/educator/culture",    labelKey: "educator.nav.culture",    icon: Globe2 },
 ] as const;
 

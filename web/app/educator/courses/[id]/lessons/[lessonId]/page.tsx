@@ -318,7 +318,7 @@ export default function LessonDetailPage() {
   return (
     <div className="max-w-4xl">
       <Link
-        href={`/educator/lessons/${courseId}`}
+        href={`/educator/courses/${courseId}`}
         className="inline-flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 transition-colors mb-6"
       >
         <ArrowLeft className="h-4 w-4" />

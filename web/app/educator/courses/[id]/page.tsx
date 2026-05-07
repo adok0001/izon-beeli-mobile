@@ -308,7 +308,7 @@ export default function CourseDetailPage() {
   return (
     <div>
       <Link
-        href="/educator/lessons"
+        href="/educator/courses"
         className="inline-flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 transition-colors mb-6"
       >
         <ArrowLeft className="h-4 w-4" />
@@ -394,7 +394,7 @@ export default function CourseDetailPage() {
                   <td className="px-4 py-3 text-xs text-neutral-400 tabular-nums">{lesson.order}</td>
                   <td className="px-4 py-3">
                     <Link
-                      href={`/educator/lessons/${courseId}/lessons/${lesson.id}`}
+                      href={`/educator/courses/${courseId}/lessons/${lesson.id}`}
                       className="font-medium text-neutral-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 flex items-center gap-1 group"
                     >
                       {lesson.title}

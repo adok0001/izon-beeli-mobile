@@ -178,7 +178,7 @@ export default function EducatorCoursesPage() {
                   >
                     <td className="px-4 py-3">
                       <Link
-                        href={`/educator/lessons/${course.id}`}
+                        href={`/educator/courses/${course.id}`}
                         className="font-medium text-neutral-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 flex items-center gap-1 group"
                       >
                         {shortTitle}
@@ -211,7 +211,7 @@ export default function EducatorCoursesPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Link
-                        href={`/educator/lessons/${course.id}`}
+                        href={`/educator/courses/${course.id}`}
                         className="inline-flex items-center gap-1 text-xs text-brand-500 hover:text-brand-600 dark:hover:text-brand-400 font-semibold transition-colors"
                       >
                         Open <ChevronRight className="h-3.5 w-3.5" />
