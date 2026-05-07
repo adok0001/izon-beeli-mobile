@@ -4,10 +4,18 @@ import { apiFetch } from "@/lib/api";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, ChevronRight, Sparkles } from "lucide-react";
+import {
+  ArrowUpDown,
+  BookOpen,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Filter,
+  Sparkles,
+} from "lucide-react";
 import { LANGUAGES } from "@mobile/lib/data/languages";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,12 +41,158 @@ interface EducatorMe {
   languages: { id: string; name: string }[];
 }
 
+// Stub course types available for generation
+const STUB_COURSE_TYPES = [
+  { type: "first_words",    label: "First Words" },
+  { type: "sound_script",   label: "Sounds & Script" },
+  { type: "numbers_trade",  label: "Counting & Trade" },
+  { type: "communicative",  label: "Speaking Well" },
+  { type: "oral_tradition", label: "Oral Tradition" },
+  { type: "songs",          label: "Songs & Sing-Along" },
+  { type: "everyday_life",  label: "Everyday Life" },
+  { type: "contemporary",   label: "Contemporary World" },
+] as const;
+
+type SortKey = "order" | "title" | "level" | "total" | "active";
+type LevelFilter = "all" | "beginner" | "intermediate" | "advanced";
+
+// ─── Generate Dropdown ────────────────────────────────────────────────────────
+
+function GenerateDropdown({
+  languageId,
+  existingCourseTypes,
+  hasAnyCourses,
+}: {
+  languageId: string;
+  existingCourseTypes: Set<string>;
+  hasAnyCourses: boolean;
+}) {
+  const { getToken } = useAuth();
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [generating, setGenerating] = useState<string | null>(null);
+  const [result, setResult] = useState<string | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const missingTypes = STUB_COURSE_TYPES.filter((t) => !existingCourseTypes.has(t.type));
+
+  async function generate(courseType?: string) {
+    setGenerating(courseType ?? "all");
+    setResult(null);
+    try {
+      const token = await getToken();
+      const res = await apiFetch<{ courses: number; lessons: number }>("/educator/generate-stubs", {
+        method: "POST",
+        token: token!,
+        body: JSON.stringify({ languageId, courseType }),
+      });
+      setResult(`Generated ${res.courses} course${res.courses !== 1 ? "s" : ""} · ${res.lessons} lessons`);
+      void qc.invalidateQueries({ queryKey: ["educator-courses"] });
+      void qc.invalidateQueries({ queryKey: ["educator-lessons"] });
+    } catch (e) {
+      setResult((e as Error).message);
+    } finally {
+      setGenerating(null);
+      setOpen(false);
+    }
+  }
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => (hasAnyCourses ? setOpen((o) => !o) : generate())}
+        disabled={!!generating}
+        className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/[0.08] text-sm font-semibold text-neutral-700 dark:text-neutral-300 bg-white dark:bg-white/[0.04] hover:bg-neutral-50 dark:hover:bg-white/[0.06] disabled:opacity-50 transition-colors"
+      >
+        <Sparkles className="h-4 w-4" />
+        {generating ? "Generating…" : "Generate course"}
+        {hasAnyCourses && <ChevronDown className="h-3.5 w-3.5 ml-0.5" />}
+      </button>
+
+      {open && missingTypes.length > 0 && (
+        <div className="absolute right-0 top-full mt-1.5 z-20 w-52 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#0f0f1a] shadow-xl overflow-hidden">
+          <p className="px-3 py-2 text-[10px] font-semibold text-neutral-400 uppercase tracking-wide border-b border-neutral-100 dark:border-white/[0.06]">
+            Stub course types
+          </p>
+          {missingTypes.map((t) => (
+            <button
+              key={t.type}
+              onClick={() => generate(t.type)}
+              className="w-full text-left px-3 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/[0.05] transition-colors"
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {open && missingTypes.length === 0 && (
+        <div className="absolute right-0 top-full mt-1.5 z-20 w-52 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#0f0f1a] shadow-xl px-3 py-3">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">All stub course types are already generated.</p>
+        </div>
+      )}
+
+      {result && (
+        <p className={`absolute right-0 top-full mt-10 text-xs whitespace-nowrap ${result.includes("course") ? "text-green-600 dark:text-green-400" : "text-red-500"}`}>
+          {result}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ─── Sort header cell ─────────────────────────────────────────────────────────
+
+function SortTh({
+  label,
+  sortKey,
+  current,
+  dir,
+  onClick,
+}: {
+  label: string;
+  sortKey: SortKey;
+  current: SortKey;
+  dir: "asc" | "desc";
+  onClick: (k: SortKey) => void;
+}) {
+  const active = current === sortKey;
+  return (
+    <th className="text-left px-4 py-2.5">
+      <button
+        onClick={() => onClick(sortKey)}
+        className={`flex items-center gap-1 text-xs font-semibold transition-colors ${
+          active ? "text-brand-600 dark:text-brand-400" : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
+        }`}
+      >
+        {label}
+        {active ? (
+          dir === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />
+        ) : (
+          <ArrowUpDown className="h-3 w-3 opacity-40" />
+        )}
+      </button>
+    </th>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function EducatorCoursesPage() {
   const { getToken } = useAuth();
-  const qc = useQueryClient();
   const [selectedLanguage, setSelectedLanguage] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("order");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [levelFilter, setLevelFilter] = useState<LevelFilter>("all");
+  const [emptyOnly, setEmptyOnly] = useState(false);
 
   const { data: me } = useQuery<EducatorMe>({
     queryKey: ["educator-me"],
@@ -64,30 +218,11 @@ export default function EducatorCoursesPage() {
     },
   });
 
-  const generateStubsMutation = useMutation({
-    mutationFn: async (languageId: string) => {
-      const token = await getToken();
-      return apiFetch<{ courses: number; lessons: number }>("/educator/generate-stubs", {
-        method: "POST",
-        token: token!,
-        body: JSON.stringify({ languageId }),
-      });
-    },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["educator-lessons"] });
-      void qc.invalidateQueries({ queryKey: ["educator-courses"] });
-    },
-  });
-
   const languages = me?.languages ?? [];
   const effectiveLanguage = selectedLanguage || languages[0]?.id || "";
   const enrichedLanguages = languages.map(
     (l) => LANGUAGES.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.name, region: "Other" }
   );
-
-  const filtered = courses
-    .filter((c) => !effectiveLanguage || c.languageId === effectiveLanguage)
-    .sort((a, b) => a.order - b.order);
 
   // Lesson counts per course
   const countsByCourse = lessons.reduce<Record<string, { total: number; active: number }>>((acc, l) => {
@@ -97,71 +232,128 @@ export default function EducatorCoursesPage() {
     return acc;
   }, {});
 
+  // Course types already generated for this language
+  const existingCourseTypes = new Set(
+    courses
+      .filter((c) => c.languageId === effectiveLanguage && c.courseType)
+      .map((c) => c.courseType!)
+  );
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortKey(key); setSortDir("asc"); }
+  }
+
+  const filtered = courses
+    .filter((c) => !effectiveLanguage || c.languageId === effectiveLanguage)
+    .filter((c) => levelFilter === "all" || c.level === levelFilter)
+    .filter((c) => !emptyOnly || (countsByCourse[c.id]?.total ?? 0) === 0)
+    .sort((a, b) => {
+      const sign = sortDir === "asc" ? 1 : -1;
+      if (sortKey === "order") return (a.order - b.order) * sign;
+      if (sortKey === "title") return a.title.localeCompare(b.title) * sign;
+      if (sortKey === "level") return a.level.localeCompare(b.level) * sign;
+      if (sortKey === "total") return ((countsByCourse[a.id]?.total ?? 0) - (countsByCourse[b.id]?.total ?? 0)) * sign;
+      if (sortKey === "active") return ((countsByCourse[a.id]?.active ?? 0) - (countsByCourse[b.id]?.active ?? 0)) * sign;
+      return 0;
+    });
+
+  const hasAnyCourses = courses.some((c) => c.languageId === effectiveLanguage);
+
   if (!me) return null;
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-5">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-5">
         <div>
           <h2 className="text-lg font-bold text-neutral-900 dark:text-white">Courses</h2>
           <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
             Select a course to view and manage its lessons.
           </p>
         </div>
+        {effectiveLanguage && (
+          <GenerateDropdown
+            languageId={effectiveLanguage}
+            existingCourseTypes={existingCourseTypes}
+            hasAnyCourses={hasAnyCourses}
+          />
+        )}
       </div>
 
-      {/* Language selector */}
-      {languages.length > 1 && (
-        <div className="mb-5">
+      {/* Toolbar: language + filters */}
+      <div className="flex flex-wrap items-center gap-3 mb-5">
+        {languages.length > 1 && (
           <LanguageSelector
             value={effectiveLanguage}
             onChange={setSelectedLanguage}
             languages={enrichedLanguages}
             allowCustom={false}
-            className="w-52"
+            className="w-48"
           />
+        )}
+
+        {/* Level filter */}
+        <div className="flex items-center gap-1 rounded-lg border border-neutral-200 dark:border-white/[0.08] overflow-hidden">
+          {(["all", "beginner", "intermediate", "advanced"] as LevelFilter[]).map((lvl) => (
+            <button
+              key={lvl}
+              onClick={() => setLevelFilter(lvl)}
+              className={`px-2.5 py-1.5 text-xs font-semibold capitalize transition-colors ${
+                levelFilter === lvl
+                  ? "bg-brand-500 text-white"
+                  : "text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-white/[0.05]"
+              }`}
+            >
+              {lvl === "all" ? "All levels" : lvl}
+            </button>
+          ))}
         </div>
-      )}
+
+        {/* Empty-only toggle */}
+        <button
+          onClick={() => setEmptyOnly((v) => !v)}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-colors ${
+            emptyOnly
+              ? "border-brand-400 bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400"
+              : "border-neutral-200 dark:border-white/[0.08] text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-white/[0.05]"
+          }`}
+        >
+          <Filter className="h-3 w-3" />
+          Empty only
+        </button>
+      </div>
 
       {coursesLoading ? (
         <div className="flex items-center justify-center py-20">
           <div className="h-6 w-6 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" />
         </div>
-      ) : filtered.length === 0 ? (
+      ) : filtered.length === 0 && !hasAnyCourses ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="h-14 w-14 rounded-2xl bg-neutral-100 dark:bg-white/[0.04] flex items-center justify-center mb-4">
             <BookOpen className="h-6 w-6 text-neutral-400" />
           </div>
           <p className="text-sm font-semibold text-neutral-500 dark:text-neutral-400">No courses yet</p>
-          <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1 mb-5">
-            Generate a starter set of courses and template lessons.
+          <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">
+            Use the Generate course button to create a starter set.
           </p>
-          <button
-            onClick={() => effectiveLanguage && generateStubsMutation.mutate(effectiveLanguage)}
-            disabled={!effectiveLanguage || generateStubsMutation.isPending}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-500 text-white text-sm font-semibold hover:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            <Sparkles className="h-4 w-4" />
-            {generateStubsMutation.isPending ? "Generating…" : "Generate starter courses"}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">No courses match the current filters.</p>
+          <button onClick={() => { setLevelFilter("all"); setEmptyOnly(false); }} className="mt-2 text-xs text-brand-500 hover:underline">
+            Clear filters
           </button>
-          {generateStubsMutation.isError && (
-            <p className="mt-3 text-xs text-red-500">{(generateStubsMutation.error as Error).message}</p>
-          )}
-          {generateStubsMutation.isSuccess && (
-            <p className="mt-3 text-xs text-green-600 dark:text-green-400">
-              Generated {generateStubsMutation.data.courses} courses · {generateStubsMutation.data.lessons} lessons — all inactive until reviewed.
-            </p>
-          )}
         </div>
       ) : (
         <div className="rounded-xl border border-neutral-200 dark:border-white/[0.07] overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-100 dark:border-white/[0.06] bg-neutral-50 dark:bg-white/[0.02]">
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">Course</th>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">Level</th>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">Lessons</th>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">Active</th>
+                <SortTh label="Course" sortKey="title" current={sortKey} dir={sortDir} onClick={toggleSort} />
+                <SortTh label="Level" sortKey="level" current={sortKey} dir={sortDir} onClick={toggleSort} />
+                <SortTh label="Lessons" sortKey="total" current={sortKey} dir={sortDir} onClick={toggleSort} />
+                <SortTh label="Active" sortKey="active" current={sortKey} dir={sortDir} onClick={toggleSort} />
                 <th className="px-4 py-2.5" />
               </tr>
             </thead>
@@ -194,7 +386,7 @@ export default function EducatorCoursesPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-neutral-500 dark:text-neutral-400 tabular-nums text-xs">
-                      {counts.total}
+                      {counts.total || <span className="text-neutral-300 dark:text-neutral-600">—</span>}
                     </td>
                     <td className="px-4 py-3">
                       {counts.total > 0 ? (
@@ -206,7 +398,7 @@ export default function EducatorCoursesPage() {
                           {counts.active}/{counts.total}
                         </span>
                       ) : (
-                        <span className="text-xs text-neutral-400">—</span>
+                        <span className="text-xs text-neutral-300 dark:text-neutral-600">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
