@@ -21,7 +21,7 @@ import {
   users,
 } from "../db/schema.js";
 import { AuthEnv, authMiddleware, reviewerMiddleware } from "../middleware/auth.js";
-import { stubForLanguage } from "../lib/lesson-stubs.js";
+import { stubForCourse, stubForLanguage, STUB_COURSE_TYPES } from "../lib/lesson-stubs.js";
 
 export const educatorRouter = new Hono<AuthEnv>();
 educatorRouter.use("*", authMiddleware);
@@ -629,7 +629,16 @@ educatorRouter.get("/courses", async (c) => {
     .where(!isAdmin && reviewerLanguages.length > 0 ? inArray(courses.languageId, reviewerLanguages) : undefined)
     .orderBy(courses.languageId, courses.order);
 
-  return c.json(rows);
+  const abbrevToType = Object.fromEntries(STUB_COURSE_TYPES.map((c) => [c.abbrev, c.type]));
+
+  return c.json(
+    rows.map((row) => {
+      const suffix = row.id.startsWith(`course-${row.languageId}-`)
+        ? row.id.slice(`course-${row.languageId}-`.length)
+        : null;
+      return { ...row, courseType: suffix ? (abbrevToType[suffix] ?? null) : null };
+    })
+  );
 });
 
 // GET /educator/lessons
@@ -957,7 +966,7 @@ educatorRouter.post("/generate-stubs", async (c) => {
   const isAdmin = c.get("isAdmin");
   const reviewerLanguages = c.get("reviewerLanguages");
 
-  const { languageId } = await c.req.json<{ languageId: string }>();
+  const { languageId, courseType } = await c.req.json<{ languageId: string; courseType?: string }>();
   if (!languageId?.trim()) return c.json({ error: "languageId is required" }, 400);
 
   if (!isAdmin && !reviewerLanguages.includes(languageId)) {
@@ -971,14 +980,68 @@ educatorRouter.post("/generate-stubs", async (c) => {
     .limit(1);
   if (!lang) return c.json({ error: "Unknown language" }, 400);
 
-  // Block if courses already exist — don't overwrite educator work
+  // ── Per-course seed ────────────────────────────────────────────────────────
+  if (courseType) {
+    const stub = stubForCourse(lang, courseType);
+    if (!stub) return c.json({ error: "Unknown course type" }, 400);
+
+    const { course, lessons: stubLessons } = stub;
+
+    // Block only if this specific course already has lessons
+    const [existingLesson] = await db
+      .select({ id: lessons.id })
+      .from(lessons)
+      .where(eq(lessons.courseId, course.id))
+      .limit(1);
+    if (existingLesson) {
+      return c.json({ error: "This course already has lessons." }, 409);
+    }
+
+    await db.insert(courses).values({
+      id: course.id,
+      languageId: course.languageId,
+      title: course.title,
+      titleFr: course.titleFr ?? null,
+      description: course.description,
+      descriptionFr: course.descriptionFr ?? null,
+      level: course.level,
+      lessonsCount: course.lessonsCount,
+      order: course.order,
+    }).onConflictDoNothing();
+
+    for (const lesson of stubLessons) {
+      const { segments, ...lessonData } = lesson;
+      await db.insert(lessons).values({
+        id: lessonData.id, courseId: lessonData.courseId, type: lessonData.type,
+        title: lessonData.title, titleFr: lessonData.titleFr,
+        description: lessonData.description, descriptionFr: lessonData.descriptionFr,
+        audioUrl: null, duration: null, order: lessonData.order,
+        artist: lessonData.artist, genre: lessonData.genre, isActive: false,
+      }).onConflictDoNothing();
+
+      if (segments.length > 0) {
+        await db.insert(transcriptSegments).values(
+          segments.map((seg) => ({
+            lessonId: lessonData.id, startTime: seg.startTime, endTime: seg.endTime,
+            text: seg.text, translation: seg.translation, translationFr: seg.translationFr,
+            order: seg.order,
+          }))
+        ).onConflictDoNothing();
+      }
+    }
+
+    return c.json({ courses: 1, lessons: stubLessons.length });
+  }
+
+  // ── Full language seed (no courseType) ────────────────────────────────────
+  // Block if any courses already exist — use the per-course path for add-ons
   const [existing] = await db
     .select({ id: courses.id })
     .from(courses)
     .where(eq(courses.languageId, languageId))
     .limit(1);
   if (existing) {
-    return c.json({ error: "Content already exists for this language. Delete existing courses first." }, 409);
+    return c.json({ error: "Content already exists for this language. Use per-course generation to add missing courses." }, 409);
   }
 
   const { courses: stubCourses, lessons: stubLessons } = stubForLanguage(lang);
@@ -1000,30 +1063,18 @@ educatorRouter.post("/generate-stubs", async (c) => {
   for (const lesson of stubLessons) {
     const { segments, ...lessonData } = lesson;
     await db.insert(lessons).values({
-      id: lessonData.id,
-      courseId: lessonData.courseId,
-      type: lessonData.type,
-      title: lessonData.title,
-      titleFr: lessonData.titleFr,
-      description: lessonData.description,
-      descriptionFr: lessonData.descriptionFr,
-      audioUrl: null,
-      duration: null,
-      order: lessonData.order,
-      artist: lessonData.artist,
-      genre: lessonData.genre,
-      isActive: false,
+      id: lessonData.id, courseId: lessonData.courseId, type: lessonData.type,
+      title: lessonData.title, titleFr: lessonData.titleFr,
+      description: lessonData.description, descriptionFr: lessonData.descriptionFr,
+      audioUrl: null, duration: null, order: lessonData.order,
+      artist: lessonData.artist, genre: lessonData.genre, isActive: false,
     }).onConflictDoNothing();
 
     if (segments.length > 0) {
       await db.insert(transcriptSegments).values(
         segments.map((seg) => ({
-          lessonId: lessonData.id,
-          startTime: seg.startTime,
-          endTime: seg.endTime,
-          text: seg.text,
-          translation: seg.translation,
-          translationFr: seg.translationFr,
+          lessonId: lessonData.id, startTime: seg.startTime, endTime: seg.endTime,
+          text: seg.text, translation: seg.translation, translationFr: seg.translationFr,
           order: seg.order,
         }))
       ).onConflictDoNothing();

@@ -43,6 +43,7 @@ interface Course {
   title: string;
   languageId: string;
   level: string;
+  courseType: string | null;
 }
 
 interface EducatorMe {
@@ -379,12 +380,12 @@ export default function EducatorLessonsPage() {
   });
 
   const generateStubsMutation = useMutation({
-    mutationFn: async (languageId: string) => {
+    mutationFn: async ({ languageId, courseType }: { languageId: string; courseType?: string }) => {
       const token = await getToken();
       return apiFetch<{ courses: number; lessons: number }>("/educator/generate-stubs", {
         method: "POST",
         token: token!,
-        body: JSON.stringify({ languageId }),
+        body: JSON.stringify({ languageId, courseType }),
       });
     },
     onSuccess: () => {
@@ -394,6 +395,12 @@ export default function EducatorLessonsPage() {
   });
 
   const filtered = lessons.filter((l) => !effectiveLanguage || l.languageId === effectiveLanguage);
+
+  // Courses for the selected language that have a stub type but no lessons yet
+  const lessonCourseIds = new Set(filtered.map((l) => l.courseId));
+  const seedableCourses = courses.filter(
+    (c) => c.languageId === effectiveLanguage && c.courseType !== null && !lessonCourseIds.has(c.id)
+  );
 
   if (!me) return null;
 
@@ -440,7 +447,7 @@ export default function EducatorLessonsPage() {
           <p className="text-sm font-semibold text-neutral-500 dark:text-neutral-400">No lessons yet</p>
           <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1 mb-5">Create your first lesson, or generate a starter set.</p>
           <button
-            onClick={() => effectiveLanguage && generateStubsMutation.mutate(effectiveLanguage)}
+            onClick={() => effectiveLanguage && generateStubsMutation.mutate({ languageId: effectiveLanguage })}
             disabled={!effectiveLanguage || generateStubsMutation.isPending}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-500 text-white text-sm font-semibold hover:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
@@ -457,6 +464,38 @@ export default function EducatorLessonsPage() {
           )}
         </div>
       ) : (
+        <>
+        {seedableCourses.length > 0 && (
+          <div className="mb-5 rounded-xl border border-dashed border-neutral-200 dark:border-white/[0.08] p-4">
+            <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-3">
+              Courses with no lessons yet — seed stubs to get started:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {seedableCourses.map((course) => {
+                const isPending = generateStubsMutation.isPending && generateStubsMutation.variables?.courseType === course.courseType;
+                return (
+                  <button
+                    key={course.id}
+                    onClick={() => generateStubsMutation.mutate({ languageId: effectiveLanguage, courseType: course.courseType! })}
+                    disabled={generateStubsMutation.isPending}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-neutral-200 dark:border-white/[0.08] text-neutral-600 dark:text-neutral-300 bg-white dark:bg-white/[0.03] hover:border-brand-300 hover:text-brand-600 dark:hover:border-brand-700 dark:hover:text-brand-400 disabled:opacity-50 transition-colors"
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    {isPending ? "Seeding…" : course.title.split(" — ")[1] ?? course.title}
+                  </button>
+                );
+              })}
+            </div>
+            {generateStubsMutation.isError && (
+              <p className="mt-2 text-xs text-red-500">{(generateStubsMutation.error as Error).message}</p>
+            )}
+            {generateStubsMutation.isSuccess && generateStubsMutation.variables?.courseType && (
+              <p className="mt-2 text-xs text-green-600 dark:text-green-400">
+                Seeded {generateStubsMutation.data.lessons} lessons — all inactive until reviewed.
+              </p>
+            )}
+          </div>
+        )}
         <div className="rounded-xl border border-neutral-200 dark:border-white/[0.07] overflow-hidden">
           <table className="w-full text-sm">
             <thead>
@@ -553,6 +592,7 @@ export default function EducatorLessonsPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {/* Inline audio player */}

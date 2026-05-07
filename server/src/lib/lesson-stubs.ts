@@ -730,9 +730,23 @@ function buildLessons(languageId: string, def: CourseDef): LessonRow[] {
 
 // ─── Export ───────────────────────────────────────────────────────────────────
 
+export const STUB_COURSE_TYPES = COURSE_DEFS.map((d) => ({
+  type: d.type,
+  abbrev: d.abbrev,
+  titleEn: d.titleEn,
+  order: d.order,
+}));
+
 export function stubForLanguage(lang: { id: string; nativeName: string }) {
   return {
     courses: buildCourses(lang.id, lang.nativeName),
     lessons: COURSE_DEFS.flatMap((def) => buildLessons(lang.id, def)),
   };
+}
+
+export function stubForCourse(lang: { id: string; nativeName: string }, courseType: string) {
+  const def = COURSE_DEFS.find((d) => d.type === courseType);
+  if (!def) return null;
+  const [course] = buildCourses(lang.id, lang.nativeName).filter((c) => c.courseType === courseType);
+  return { course, lessons: buildLessons(lang.id, def) };
 }
