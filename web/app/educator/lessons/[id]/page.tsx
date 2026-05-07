@@ -6,6 +6,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   CheckCircle2,
+  Eye,
+  EyeOff,
   GripVertical,
   Mic,
   Plus,
@@ -41,6 +43,7 @@ interface LessonDetail {
   order: number;
   artist: string | null;
   genre: string | null;
+  isActive: boolean;
   segments: Segment[];
 }
 
@@ -286,6 +289,22 @@ export default function LessonDetailPage() {
     onError: (e: Error) => setAudioError(e.message),
   });
 
+  // ── Toggle active ──────────────────────────────────────────────────────────
+  const toggleActive = useMutation({
+    mutationFn: async () => {
+      const token = await getToken();
+      return apiFetch(`/educator/lessons/${id}`, {
+        method: "PATCH",
+        token: token!,
+        body: JSON.stringify({ isActive: !lesson?.isActive }),
+      });
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["educator-lesson", id] });
+      void qc.invalidateQueries({ queryKey: ["educator-lessons"] });
+    },
+  });
+
   // ── Segment helpers ────────────────────────────────────────────────────────
   function updateSegment(i: number, updated: Segment) {
     setSegments((prev) => prev.map((s, j) => (j === i ? updated : s)));
@@ -348,12 +367,21 @@ export default function LessonDetailPage() {
             </p>
           )}
         </div>
-        <Link
-          href={`/educator/lessons`}
-          className="shrink-0 text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+        <button
+          onClick={() => toggleActive.mutate()}
+          disabled={toggleActive.isPending}
+          className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors disabled:opacity-50 ${
+            lesson.isActive
+              ? "border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30 hover:bg-green-100 dark:hover:bg-green-900/30"
+              : "border-neutral-200 dark:border-white/[0.08] text-neutral-500 dark:text-neutral-400 bg-white dark:bg-white/[0.04] hover:bg-neutral-50 dark:hover:bg-white/[0.06]"
+          }`}
         >
-          ← back
-        </Link>
+          {lesson.isActive ? (
+            <><Eye className="h-3.5 w-3.5" /> Active</>
+          ) : (
+            <><EyeOff className="h-3.5 w-3.5" /> Inactive</>
+          )}
+        </button>
       </div>
 
       {/* Audio section */}
