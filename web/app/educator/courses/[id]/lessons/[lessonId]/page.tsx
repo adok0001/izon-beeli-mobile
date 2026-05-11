@@ -12,6 +12,7 @@ import {
   Mic,
   Plus,
   Save,
+  Square,
   Trash2,
   Upload,
 } from "lucide-react";
@@ -43,6 +44,22 @@ interface LessonDetail {
   genre: string | null;
   isActive: boolean;
   segments: Segment[];
+}
+
+const AUDIO_FILE_ACCEPT = "audio/*,.mp3,.wav,.m4a,.aac,.ogg,.oga,.webm,.mp4,.mpeg";
+
+function isAudioFile(file: File): boolean {
+  if (file.type.toLowerCase().startsWith("audio/")) return true;
+  return /\.(mp3|wav|m4a|aac|ogg|oga|webm|mp4|mpeg)$/i.test(file.name);
+}
+
+function extensionFromMimeType(mimeType: string): string {
+  const normalized = mimeType.toLowerCase();
+  if (normalized.includes("wav")) return "wav";
+  if (normalized.includes("mpeg") || normalized.includes("mp3")) return "mp3";
+  if (normalized.includes("mp4") || normalized.includes("m4a")) return "m4a";
+  if (normalized.includes("ogg")) return "ogg";
+  return "webm";
 }
 
 function toSeconds(str: string): number {
@@ -192,10 +209,24 @@ export default function LessonDetailPage() {
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const recordingChunksRef = useRef<BlobPart[]>([]);
+  const pendingAudioUrlRef = useRef<string | null>(null);
   const [segments, setSegments] = useState<Segment[]>([]);
   const [segmentsDirty, setSegmentsDirty] = useState(false);
   const [saveOk, setSaveOk] = useState(false);
   const [audioError, setAudioError] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingError, setRecordingError] = useState("");
+  const [pendingAudioFile, setPendingAudioFile] = useState<File | null>(null);
+  const [pendingAudioPreviewUrl, setPendingAudioPreviewUrl] = useState<string | null>(null);
+
+  const canRecordAudio =
+    typeof window !== "undefined" &&
+    typeof navigator !== "undefined" &&
+    typeof MediaRecorder !== "undefined" &&
+    !!navigator.mediaDevices?.getUserMedia;
 
   const { data: lesson, isLoading } = useQuery<LessonDetail>({
     queryKey: ["educator-lesson", lessonId],
@@ -260,12 +291,35 @@ export default function LessonDetailPage() {
       });
     },
     onSuccess: () => {
+      if (pendingAudioUrlRef.current) {
+        URL.revokeObjectURL(pendingAudioUrlRef.current);
+        pendingAudioUrlRef.current = null;
+      }
+      setPendingAudioFile(null);
+      setPendingAudioPreviewUrl(null);
       void qc.invalidateQueries({ queryKey: ["educator-lesson", lessonId] });
       void qc.invalidateQueries({ queryKey: ["educator-lessons"] });
       setAudioError("");
+      setRecordingError("");
     },
     onError: (e: Error) => setAudioError(e.message),
   });
+
+  useEffect(() => {
+    return () => {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        mediaRecorderRef.current.stop();
+      }
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+      }
+      if (pendingAudioUrlRef.current) {
+        URL.revokeObjectURL(pendingAudioUrlRef.current);
+        pendingAudioUrlRef.current = null;
+      }
+    };
+  }, []);
 
   const toggleActive = useMutation({
     mutationFn: async () => {
@@ -305,6 +359,97 @@ export default function LessonDetailPage() {
   function captureTime(i: number, field: "startTime" | "endTime") {
     const t = audioRef.current?.currentTime ?? 0;
     updateSegment(i, { ...segments[i], [field]: Math.round(t * 10) / 10 });
+  }
+
+  function setPendingAudio(file: File) {
+    if (!isAudioFile(file)) {
+      setAudioError("Please select a valid audio file.");
+      return;
+    }
+    if (pendingAudioUrlRef.current) {
+      URL.revokeObjectURL(pendingAudioUrlRef.current);
+      pendingAudioUrlRef.current = null;
+    }
+    const previewUrl = URL.createObjectURL(file);
+    pendingAudioUrlRef.current = previewUrl;
+    setPendingAudioFile(file);
+    setPendingAudioPreviewUrl(previewUrl);
+    setAudioError("");
+    setRecordingError("");
+  }
+
+  function discardPendingAudio() {
+    if (pendingAudioUrlRef.current) {
+      URL.revokeObjectURL(pendingAudioUrlRef.current);
+      pendingAudioUrlRef.current = null;
+    }
+    setPendingAudioFile(null);
+    setPendingAudioPreviewUrl(null);
+    setAudioError("");
+    setRecordingError("");
+  }
+
+  function savePendingAudio() {
+    if (!pendingAudioFile) return;
+    uploadAudio.mutate(pendingAudioFile);
+  }
+
+  async function startRecording() {
+    if (!canRecordAudio) {
+      setRecordingError("Recording is not supported in this browser.");
+      return;
+    }
+
+    try {
+      setRecordingError("");
+      setAudioError("");
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+
+      const preferredTypes = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
+      const mimeType = preferredTypes.find((type) => MediaRecorder.isTypeSupported(type));
+      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+
+      recordingChunksRef.current = [];
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) recordingChunksRef.current.push(event.data);
+      };
+      recorder.onerror = () => setRecordingError("Recording failed. Please try again.");
+      recorder.onstop = () => {
+        setIsRecording(false);
+        if (mediaStreamRef.current) {
+          mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+          mediaStreamRef.current = null;
+        }
+
+        const blobType = recorder.mimeType || "audio/webm";
+        const blob = new Blob(recordingChunksRef.current, { type: blobType });
+        if (!blob.size) {
+          setRecordingError("No audio was captured. Please record again.");
+          return;
+        }
+
+        const extension = extensionFromMimeType(blobType);
+        const recordedFile = new File(
+          [blob],
+          `lesson-${lessonId}-${Date.now()}.${extension}`,
+          { type: blobType }
+        );
+        setPendingAudio(recordedFile);
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setIsRecording(true);
+    } catch {
+      setRecordingError("Microphone permission denied or unavailable.");
+    }
+  }
+
+  function stopRecording() {
+    const recorder = mediaRecorderRef.current;
+    if (!recorder) return;
+    if (recorder.state !== "inactive") recorder.stop();
   }
 
   if (isLoading || !lesson) {
@@ -358,34 +503,73 @@ export default function LessonDetailPage() {
       <div className="mb-8 rounded-2xl border border-neutral-200 dark:border-white/[0.07] bg-neutral-50 dark:bg-white/[0.02] p-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-bold text-neutral-700 dark:text-neutral-200">Audio</h2>
-          <button
-            onClick={() => audioInputRef.current?.click()}
-            disabled={uploadAudio.isPending}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-neutral-200 dark:border-white/[0.08] text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/[0.06] disabled:opacity-50 transition-colors"
-          >
-            <Upload className="h-3.5 w-3.5" />
-            {uploadAudio.isPending ? "Uploading…" : lesson.audioUrl ? "Replace audio" : "Upload audio"}
-          </button>
+          <div className="flex items-center gap-2">
+            {canRecordAudio && (
+              <button
+                onClick={() => (isRecording ? stopRecording() : startRecording())}
+                disabled={uploadAudio.isPending}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors disabled:opacity-50 ${
+                  isRecording
+                    ? "border-red-300 text-red-600 bg-red-50 hover:bg-red-100 dark:border-red-800 dark:text-red-400 dark:bg-red-950/30 dark:hover:bg-red-900/30"
+                    : "border-neutral-200 dark:border-white/[0.08] text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/[0.06]"
+                }`}
+              >
+                {isRecording ? <Square className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+                {isRecording ? "Stop recording" : "Record audio"}
+              </button>
+            )}
+            <button
+              onClick={() => audioInputRef.current?.click()}
+              disabled={uploadAudio.isPending || isRecording}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-neutral-200 dark:border-white/[0.08] text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/[0.06] disabled:opacity-50 transition-colors"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              {pendingAudioFile ? "Change draft audio" : lesson.audioUrl ? "Choose replacement" : "Choose audio"}
+            </button>
+            <button
+              onClick={savePendingAudio}
+              disabled={!pendingAudioFile || uploadAudio.isPending || isRecording}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-brand-300 text-brand-700 bg-brand-50 hover:bg-brand-100 dark:border-brand-700 dark:text-brand-300 dark:bg-brand-950/30 dark:hover:bg-brand-900/30 disabled:opacity-50 transition-colors"
+            >
+              <Save className="h-3.5 w-3.5" />
+              {uploadAudio.isPending ? "Saving…" : lesson.audioUrl ? "Update audio" : "Save audio"}
+            </button>
+            {pendingAudioFile && (
+              <button
+                onClick={discardPendingAudio}
+                disabled={uploadAudio.isPending || isRecording}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-neutral-200 dark:border-white/[0.08] text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/[0.06] disabled:opacity-50 transition-colors"
+              >
+                Discard draft
+              </button>
+            )}
+          </div>
           <input
             ref={audioInputRef}
             type="file"
-            accept="audio/*"
+            accept={AUDIO_FILE_ACCEPT}
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
-              if (f) uploadAudio.mutate(f);
+              if (f) setPendingAudio(f);
               e.target.value = "";
             }}
           />
         </div>
-        {lesson.audioUrl ? (
-          <audio ref={audioRef} src={lesson.audioUrl} controls className="w-full h-10" />
+        {pendingAudioFile && (
+          <p className="mb-2 text-xs text-amber-600 dark:text-amber-400">
+            Draft audio selected: {pendingAudioFile.name}. Click Save audio to update this lesson.
+          </p>
+        )}
+        {pendingAudioPreviewUrl || lesson.audioUrl ? (
+          <audio ref={audioRef} src={pendingAudioPreviewUrl ?? lesson.audioUrl ?? undefined} controls className="w-full h-10" />
         ) : (
           <div className="flex items-center justify-center h-10 rounded-xl border-2 border-dashed border-neutral-200 dark:border-white/[0.08]">
-            <p className="text-xs text-neutral-400">No audio yet — upload above</p>
+            <p className="text-xs text-neutral-400">No audio yet — choose audio or record above</p>
           </div>
         )}
         {audioError && <p className="mt-2 text-xs text-red-500">{audioError}</p>}
+        {recordingError && <p className="mt-2 text-xs text-red-500">{recordingError}</p>}
       </div>
 
       {/* Segments */}
