@@ -441,7 +441,8 @@ export default function LessonDetailPage() {
       mediaRecorderRef.current = recorder;
       recorder.start();
       setIsRecording(true);
-    } catch {
+    } catch (err) {
+      console.error("Failed to start recording:", err);
       setRecordingError("Microphone permission denied or unavailable.");
     }
   }
