@@ -1,4 +1,3 @@
-import { FeatureTourModal } from "@/components/feature-tour-modal";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { analytics } from "@/lib/analytics";
 import { queryClient } from "@/lib/api";
@@ -156,7 +155,6 @@ export default function RootLayout() {
                   <Stack.Screen name="bounty-create" options={{ presentation: "modal", headerShown: false }} />
                   <Stack.Screen name="word/[id]" options={{ headerBackTitle: "Back" }} />
                 </Stack>
-                <FeatureTourModal />
               </View>
               <StatusBar style="auto" />
             </AuthGate>

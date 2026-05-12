@@ -1,15 +1,15 @@
 "use client";
 
+import { apiFetch } from "@/lib/api";
 import { WEB_TOUR_REGISTRY, type WebTourAudience, type WebTourId } from "@/lib/tours/web-tour-registry";
 import { useTourStore } from "@/store/tour-store";
 import type { UserMe } from "@/types";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Circle, ChevronDown, ExternalLink, X } from "lucide-react";
+import { Check, ChevronDown, Circle, ExternalLink, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { apiFetch } from "@/lib/api";
 
 interface ChecklistStep {
   id: WebTourId;
@@ -27,7 +27,8 @@ function canSeeAudience(audience: WebTourAudience, me?: UserMe): boolean {
   if (audience === "all") return true;
   if (!me) return false;
   if (audience === "admin") return me.isAdmin;
-  return me.isAdmin || me.isReviewer;
+      if (audience === "educator") return me.isReviewer; // educators are reviewers
+  return false;
 }
 
 function routeToHref(route: string, id: WebTourId): string {

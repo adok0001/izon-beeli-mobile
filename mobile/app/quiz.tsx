@@ -13,6 +13,7 @@ import {
 } from "@/lib/sounds";
 import { useLanguageStore } from "@/store/language-store";
 import { useQuizStore } from "@/store/quiz-store";
+// TODO: Legacy tour import (soft-retired) — remove after full deprecation
 import { useTourStore } from "@/store/tour-store";
 import type { QuizQuestion } from "@/types";
 import { useInvalidateDailyChallenges } from "@/lib/hooks/use-daily-challenge";
@@ -297,10 +298,8 @@ function ResultsView({ languageId }: { languageId: string }) {
     };
     post();
 
-    // Show feed tour after first quiz completion
-    if (!hasSeen("feed")) {
-      setTimeout(() => showTour("feed"), 2000);
-    }
+    // TODO: Legacy tour trigger (soft-retired) — remove after full deprecation
+    // showTour('feed') is disabled; welcome checklist now handles onboarding
   }, []);
 
   const scoreColor =

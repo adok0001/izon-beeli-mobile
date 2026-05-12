@@ -32,6 +32,7 @@ export const useTourStore = create<TourState>((set, get) => ({
   hasSeen: (id) => !!get().seen[id],
 
   showTour: (id) => {
+    if (id !== "welcome") return;
     if (!MOBILE_TOUR_REGISTRY[id]) return;
     if (get().seen[id] || get().activeTour) return;
     set({ activeTour: id });
@@ -48,6 +49,10 @@ export const useTourStore = create<TourState>((set, get) => ({
   reset: async () => {
     await AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
     set({ seen: {}, activeTour: null });
+    // After reset, show welcome tour immediately
+    setTimeout(() => {
+      get().showTour("welcome");
+    }, 0);
   },
 
   start: () => {

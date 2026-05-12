@@ -1,8 +1,8 @@
 "use client";
 
+import { TourFloatingButton } from "@/components/tour/tour-floating-button";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { TourFloatingButton } from "@/components/tour/tour-floating-button";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, BookText, ClipboardList, Globe2, LayoutDashboard } from "lucide-react";

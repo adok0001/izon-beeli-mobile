@@ -6,15 +6,15 @@ import { useProgressSummary } from "@/lib/hooks/use-progress";
 import { getLanguageName } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
 import { useTourStore } from "@/store/tour-store";
+import { useWelcomeChecklistStore } from "@/store/welcome-checklist-store";
 import { useAuth, useUser } from "@clerk/clerk-expo";
-import { useIsFocused } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-function StatCard({ icon, label, value }: { icon: string; label: string; value: string }) {
+function StatCard({ icon, label, value }: Readonly<{ icon: string; label: string; value: string }>) {
   return (
     <View className="flex-1 items-center rounded-xl bg-neutral-50 px-2 py-4 dark:bg-neutral-800">
       <IconSymbol name={icon as any} size={22} color="#3b82f6" />
@@ -34,13 +34,13 @@ function MenuRow({
   detail,
   onPress,
   danger,
-}: {
+}: Readonly<{
   icon: string;
   label: string;
   detail?: string;
   onPress: () => void;
   danger?: boolean;
-}) {
+}>) {
   return (
     <Pressable
       onPress={onPress}
@@ -60,7 +60,7 @@ function MenuRow({
       >
         {label}
       </Text>
-      {detail && (
+      {!!detail && (
         <Text className="mr-2 text-sm text-neutral-400 dark:text-neutral-500">
           {detail}
         </Text>
@@ -80,18 +80,9 @@ export default function ProfileScreen() {
   const { selectedLanguageId } = useLanguageStore();
   const { t } = useTranslation();
   const showTour = useTourStore((s) => s.showTour);
-  const hasSeen = useTourStore((s) => s.hasSeen);
-  const activeTour = useTourStore((s) => s.activeTour);
-  const isFocused = useIsFocused();
 
-  // Show profile tour when the Profile screen is opened and no other tour is active.
-  useEffect(() => {
-    if (!isFocused || activeTour || hasSeen("profile")) return;
-    const timer = setTimeout(() => showTour("profile"), 250);
-    return () => clearTimeout(timer);
-  }, [isFocused, activeTour, hasSeen, showTour]);
-
-  const { reset: resetTour, start: startTour } = useTourStore();
+  const resetChecklist = useWelcomeChecklistStore((s) => s.reset);
+  const resetTours = useTourStore((s) => s.reset);
   const isAdmin = currentUser?.isAdmin ?? false;
   const reviewerRole = currentUser?.reviewerRole ?? null;
   const displayName = user?.username ?? "Learner";
@@ -231,7 +222,11 @@ export default function ProfileScreen() {
           <MenuRow
             icon="map.fill"
             label={t("profile.restartWelcomeTour")}
-            onPress={async () => { await resetTour(); startTour(); }}
+            onPress={async () => {
+              await resetChecklist();
+              await resetTours();
+              showTour("welcome");
+            }}
           />
           <MenuRow
             icon="gearshape.fill"

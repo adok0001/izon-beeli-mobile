@@ -9,6 +9,7 @@ import { useCourses } from "@/lib/hooks/use-courses";
 import { useProverbs } from "@/lib/hooks/use-proverbs";
 import { useWordsDueForReview } from "@/lib/hooks/use-wordbank";
 import { useLanguageStore } from "@/store/language-store";
+// TODO: Legacy tour import (soft-retired) — remove after full deprecation
 import { useTourStore } from "@/store/tour-store";
 import { useIsFocused } from "@react-navigation/native";
 import { useRouter } from "expo-router";
@@ -142,11 +143,8 @@ export default function PracticeScreen() {
   const hasAdinkra = ["ga", "ewe", "dagbani"].includes(selectedLanguageId);
   const hasAkan = selectedLanguageId === "akan";
 
-  useEffect(() => {
-    if (!isFocused || activeTour || hasSeen("practice")) return;
-    const timer = setTimeout(() => showTour("practice"), 250);
-    return () => clearTimeout(timer);
-  }, [isFocused, activeTour, hasSeen, showTour]);
+  // TODO: Legacy tour trigger (soft-retired) — remove after full deprecation
+  // showTour('practice') is disabled; welcome checklist now handles onboarding
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>

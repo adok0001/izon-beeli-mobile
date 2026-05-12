@@ -9,22 +9,18 @@ interface FeatureItem {
   icon: string;
   color: string;
   bgColor: string;
-  titleKey?: string;
-  detailKey?: string;
-  title?: string;
-  detail?: string;
+  titleKey: string;
+  detailKey: string;
 }
 
 const resolveText = (
   t: (key: string) => string,
-  key?: string,
-  fallback?: string
+  key: string
 ) => {
-  if (key) return t(key);
-  return fallback ?? "";
+  return t(key);
 };
 
-function FeatureCard({ item, t }: Readonly<{ item: FeatureItem; t: (k: string) => string }>) {
+function FeatureCard({ item, t }: Readonly<{ item: FeatureItem; t: (key: string) => string }>) {
   return (
     <View className="flex-row items-start rounded-2xl border border-neutral-100 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800">
       <View
@@ -35,10 +31,10 @@ function FeatureCard({ item, t }: Readonly<{ item: FeatureItem; t: (k: string) =
       </View>
       <View className="flex-1">
         <Text className="text-base font-bold text-neutral-900 dark:text-white">
-          {resolveText(t, item.titleKey, item.title)}
+          {resolveText(t, item.titleKey)}
         </Text>
         <Text className="mt-1 text-sm leading-5 text-neutral-500 dark:text-neutral-400">
-          {resolveText(t, item.detailKey, item.detail)}
+          {resolveText(t, item.detailKey)}
         </Text>
       </View>
     </View>
@@ -48,6 +44,7 @@ function FeatureCard({ item, t }: Readonly<{ item: FeatureItem; t: (k: string) =
 export function FeatureTourModal() {
   const { activeTour, dismissTour } = useTourStore();
   const { t } = useTranslation();
+  const tr = (key: string) => t(key as any) as string;
 
   if (!activeTour) return null;
 
@@ -87,18 +84,27 @@ export function FeatureTourModal() {
               <IconSymbol name={config.heroIcon as any} size={36} color={config.heroColor} />
             </View>
             <Text className="text-3xl font-bold text-neutral-900 dark:text-white text-center">
-              {resolveText(t, config.titleKey, config.title)}
+              {resolveText(tr, config.titleKey)}
             </Text>
             <Text className="mt-2 text-base text-neutral-500 dark:text-neutral-400 text-center">
-              {resolveText(t, config.subtitleKey, config.subtitle)}
+              {resolveText(tr, config.subtitleKey)}
             </Text>
           </View>
 
           {/* Feature cards */}
           <View className="px-6 gap-3">
-            {config.features.map((f) => (
-              <FeatureCard key={f.titleKey} item={f} t={t} />
+            {config.features.map((f, index) => (
+              <FeatureCard key={`${f.titleKey}-${index}`} item={f} t={tr} />
             ))}
+          </View>
+
+          <View className="mx-6 mt-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/40">
+            <Text className="text-sm font-semibold text-blue-700 dark:text-blue-300">
+              {t("onboarding.floatingChecklistTitle")}
+            </Text>
+            <Text className="mt-1 text-sm leading-5 text-blue-700/90 dark:text-blue-300/90">
+              {t("onboarding.floatingChecklistDetail")}
+            </Text>
           </View>
         </ScrollView>
 

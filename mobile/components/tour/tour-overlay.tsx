@@ -15,8 +15,8 @@ export function TourOverlay() {
   const config = MOBILE_TOUR_REGISTRY[activeTour];
   if (!config) return null;
 
-  const title = config.titleKey ? t(config.titleKey) : config.title;
-  const subtitle = config.subtitleKey ? t(config.subtitleKey) : config.subtitle;
+  const title = t(config.titleKey);
+  const subtitle = t(config.subtitleKey);
 
   return (
     <Modal transparent animationType="fade" visible statusBarTranslucent accessibilityViewIsModal>

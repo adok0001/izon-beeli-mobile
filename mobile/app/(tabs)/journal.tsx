@@ -6,6 +6,7 @@ import {
     useUpdateJournalEntry,
 } from "@/lib/hooks/use-journal";
 import i18n from "@/lib/i18n";
+// TODO: Legacy tour import (soft-retired) — remove after full deprecation
 import { useTourStore } from "@/store/tour-store";
 import type { JournalEntry } from "@/types";
 import { useIsFocused } from "@react-navigation/native";
@@ -106,11 +107,8 @@ export default function JournalScreen() {
   const activeTour = useTourStore((s) => s.activeTour);
   const isFocused = useIsFocused();
 
-  useEffect(() => {
-    if (!isFocused || activeTour || hasSeen("journal")) return;
-    const timer = setTimeout(() => showTour("journal"), 250);
-    return () => clearTimeout(timer);
-  }, [isFocused, activeTour, hasSeen, showTour]);
+  // TODO: Legacy tour trigger (soft-retired) — remove after full deprecation
+  // showTour('journal') is disabled; welcome checklist now handles onboarding
 
   const openNew = () => {
     setEditingId(null);

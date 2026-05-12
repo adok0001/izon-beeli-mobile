@@ -16,6 +16,7 @@ import { localizeField } from "@/lib/localize";
 import { BUNDLED_AUDIO, formatDuration } from "@/lib/mock-data";
 import { useAudioStore } from "@/store/audio-store";
 import { useLanguageStore } from "@/store/language-store";
+// TODO: Legacy tour import (soft-retired) — remove after full deprecation
 import { useTourStore } from "@/store/tour-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course, Lesson } from "@/types";
@@ -403,12 +404,8 @@ export default function LearnScreen() {
     loadResumeState();
   }, []);
 
-  // Show learn tour when the Learn screen is opened and no other tour is active.
-  useEffect(() => {
-    if (!isFocused || activeTour || hasSeen("learn")) return;
-    const timer = setTimeout(() => showTour("learn"), 250);
-    return () => clearTimeout(timer);
-  }, [isFocused, activeTour, hasSeen, showTour]);
+  // TODO: Legacy tour trigger (soft-retired) — remove after full deprecation
+  // showTour('learn') is disabled; welcome checklist now handles onboarding
 
   // Show freeze modal once per day when we detect a broken streak (wait for any tour to finish)
   useEffect(() => {

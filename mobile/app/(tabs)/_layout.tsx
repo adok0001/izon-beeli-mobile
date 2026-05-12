@@ -3,6 +3,7 @@ import { AudioPlayer } from "@/components/audio/audio-player";
 import { FeatureTourModal } from "@/components/feature-tour-modal";
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { WelcomeChecklistFab } from "@/components/welcome-checklist-fab";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useDailyReminder } from "@/lib/hooks/use-daily-reminder";
@@ -12,6 +13,7 @@ import { useAudioStore } from "@/store/audio-store";
 import { useLanguageStore } from "@/store/language-store";
 import { useNotificationStore } from "@/store/notification-store";
 import { useTourStore } from "@/store/tour-store";
+import { useWelcomeChecklistStore } from "@/store/welcome-checklist-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BottomTabBar, BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Tabs, useRouter } from "expo-router";
@@ -19,7 +21,7 @@ import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { View } from "react-native";
 
-function TabBarWithPlayer(props: BottomTabBarProps) {
+function TabBarWithPlayer(props: Readonly<BottomTabBarProps>) {
   const { currentTrackId } = useAudioStore();
 
   return (
@@ -39,14 +41,19 @@ export default function TabLayout() {
   useDailyReminder(selectedLanguageId, summary?.streak ?? 0);
 
   const hydrateNotifications = useNotificationStore((s) => s.hydrate);
+  const hydrateChecklist = useWelcomeChecklistStore((s) => s.hydrate);
+  const hasSeenWelcome = useTourStore((s) => s.hasSeen("welcome"));
+  const activeTour = useTourStore((s) => s.activeTour);
+  const startWelcomeTour = useTourStore((s) => s.start);
+  const toursHydrated = useTourStore((s) => s._hydrated);
   const onboardingChecked = useRef(false);
+  const welcomeChecked = useRef(false);
   const { t } = useTranslation();
-  const { hydrate: hydrateTour, activeTour, start: startTour, hasSeen, _hydrated } = useTourStore();
 
   useEffect(() => {
     hydrateNotifications();
-    hydrateTour();
-  }, []);
+    hydrateChecklist();
+  }, [hydrateNotifications, hydrateChecklist]);
 
   // One-time onboarding gate: redirect to onboarding if not yet completed
   useEffect(() => {
@@ -55,14 +62,19 @@ export default function TabLayout() {
     AsyncStorage.getItem(ONBOARDING_KEY).then((val) => {
       if (!val) router.replace("/(onboarding)");
     }).catch(() => {});
-  }, []);
+  }, [router]);
 
-  // Fallback auto-start for users who still have not seen the welcome tour.
   useEffect(() => {
-    if (!_hydrated || activeTour || hasSeen("welcome")) return;
-    const id = setTimeout(startTour, 800);
-    return () => clearTimeout(id);
-  }, [_hydrated]);
+    if (!toursHydrated || welcomeChecked.current || activeTour || hasSeenWelcome) return;
+
+    AsyncStorage.getItem(ONBOARDING_KEY)
+      .then((val) => {
+        if (!val || welcomeChecked.current) return;
+        welcomeChecked.current = true;
+        startWelcomeTour();
+      })
+      .catch(() => {});
+  }, [activeTour, hasSeenWelcome, startWelcomeTour, toursHydrated]);
 
   return (
     <>
@@ -125,6 +137,7 @@ export default function TabLayout() {
         />
       </Tabs>
       <FeatureTourModal />
+      <WelcomeChecklistFab />
     </>
   );
 }
