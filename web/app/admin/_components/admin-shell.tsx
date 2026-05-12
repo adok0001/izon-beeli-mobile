@@ -2,6 +2,7 @@
 
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { TourFloatingButton } from "@/components/tour/tour-floating-button";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { BarChart2, BookOpen, BookText, ClipboardList, MessageSquare, UserCheck, Users } from "lucide-react";
@@ -11,13 +12,13 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
 const ADMIN_NAV = [
-  { href: "/admin",              labelKey: "admin.nav.overview",     icon: BarChart2,     exact: true },
-  { href: "/admin/users",        labelKey: "admin.nav.users",        icon: Users },
-  { href: "/admin/courses",      labelKey: "admin.nav.courses",      icon: BookOpen },
-  { href: "/admin/dictionary",   labelKey: "admin.nav.dictionary",   icon: BookText },
-  { href: "/admin/review",       labelKey: "admin.nav.review",       icon: ClipboardList },
-  { href: "/admin/applications", labelKey: "admin.nav.applications", icon: UserCheck },
-  { href: "/admin/feedback",     labelKey: "admin.nav.feedback",     icon: MessageSquare },
+  { href: "/admin",              labelKey: "admin.nav.overview",     icon: BarChart2,     exact: true, tourId: "admin-nav-overview" },
+  { href: "/admin/users",        labelKey: "admin.nav.users",        icon: Users, tourId: "admin-nav-users" },
+  { href: "/admin/courses",      labelKey: "admin.nav.courses",      icon: BookOpen, tourId: "admin-nav-courses" },
+  { href: "/admin/dictionary",   labelKey: "admin.nav.dictionary",   icon: BookText, tourId: "admin-nav-dictionary" },
+  { href: "/admin/review",       labelKey: "admin.nav.review",       icon: ClipboardList, tourId: "admin-nav-review" },
+  { href: "/admin/applications", labelKey: "admin.nav.applications", icon: UserCheck, tourId: "admin-nav-applications" },
+  { href: "/admin/feedback",     labelKey: "admin.nav.feedback",     icon: MessageSquare, tourId: "admin-nav-feedback" },
 ] as const;
 
 interface Me { isAdmin: boolean }
@@ -68,13 +69,14 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
         <div className="max-w-7xl mx-auto px-6 pb-0 flex gap-0.5 overflow-x-auto scrollbar-hide">
-          {ADMIN_NAV.map(({ href, labelKey, icon: Icon, ...rest }) => {
+          {ADMIN_NAV.map(({ href, labelKey, icon: Icon, tourId, ...rest }) => {
             const exact = "exact" in rest && rest.exact;
             const active = exact ? pathname === href : pathname.startsWith(href);
             return (
               <Link
                 key={href}
                 href={href}
+                data-tour={tourId}
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold border-b-2 -mb-px whitespace-nowrap transition-all",
                   active
@@ -90,6 +92,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
       <main className="max-w-7xl mx-auto px-6 py-8">{children}</main>
+      {/* Welcome checklist floating button */}
+      <TourFloatingButton />
     </div>
   );
 }

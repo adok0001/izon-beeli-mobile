@@ -265,7 +265,7 @@ export default function ProfilePage() {
         <MenuRow icon={MessageSquare} label={t("profile.sendFeedback")} onClick={() => setFeedbackOpen(true)} />
         <MenuRow
           icon={Map}
-          label={t("profile.restartWelcomeTour")}
+          label={t("profile.restartWelcomeTour", { defaultValue: "Restart Welcome Checklist" })}
           onClick={() => { resetTour(); startTour(); }}
         />
         <button

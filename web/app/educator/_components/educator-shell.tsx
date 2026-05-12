@@ -2,6 +2,7 @@
 
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { TourFloatingButton } from "@/components/tour/tour-floating-button";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, BookText, ClipboardList, Globe2, LayoutDashboard } from "lucide-react";
@@ -11,11 +12,11 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
 const EDUCATOR_NAV = [
-  { href: "/educator",            labelKey: "educator.nav.overview",   icon: LayoutDashboard, exact: true },
-  { href: "/educator/review",     labelKey: "educator.nav.review",     icon: ClipboardList },
-  { href: "/educator/dictionary", labelKey: "educator.nav.dictionary", icon: BookText },
-  { href: "/educator/courses",    labelKey: "educator.nav.lessons",    icon: BookOpen },
-  { href: "/educator/culture",    labelKey: "educator.nav.culture",    icon: Globe2 },
+  { href: "/educator",            labelKey: "educator.nav.overview",   icon: LayoutDashboard, exact: true, tourId: "educator-nav-overview" },
+  { href: "/educator/review",     labelKey: "educator.nav.review",     icon: ClipboardList, tourId: "educator-nav-review" },
+  { href: "/educator/dictionary", labelKey: "educator.nav.dictionary", icon: BookText, tourId: "educator-nav-dictionary" },
+  { href: "/educator/courses",    labelKey: "educator.nav.lessons",    icon: BookOpen, tourId: "educator-nav-courses" },
+  { href: "/educator/culture",    labelKey: "educator.nav.culture",    icon: Globe2, tourId: "educator-nav-culture" },
 ] as const;
 
 interface Me {
@@ -96,13 +97,14 @@ export function EducatorShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-6 pb-0 flex gap-0.5 overflow-x-auto scrollbar-hide">
-          {EDUCATOR_NAV.map(({ href, labelKey, icon: Icon, ...rest }) => {
+          {EDUCATOR_NAV.map(({ href, labelKey, icon: Icon, tourId, ...rest }) => {
             const exact = "exact" in rest && rest.exact;
             const active = exact ? pathname === href : pathname.startsWith(href);
             return (
               <Link
                 key={href}
                 href={href}
+                data-tour={tourId}
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold border-b-2 -mb-px whitespace-nowrap transition-all",
                   active
@@ -118,6 +120,8 @@ export function EducatorShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
       <main className="max-w-7xl mx-auto px-6 py-8">{children}</main>
+      {/* Welcome checklist floating button */}
+      <TourFloatingButton />
     </div>
   );
 }
