@@ -1,31 +1,9 @@
-import { useTourStore, type TourId } from "@/store/tour-store";
+import { MOBILE_TOUR_REGISTRY } from "@/lib/tours/mobile-tour-registry";
+import { useTourStore } from "@/store/tour-store";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Modal, Pressable, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-const TOUR_KEYS: Record<TourId, { titleKey: string; descriptionKey: string }> = {
-  learn: {
-    titleKey: "onboarding.learnTourTitle",
-    descriptionKey: "onboarding.learnTourSubtitle",
-  },
-  practice: {
-    titleKey: "onboarding.practiceTourTitle",
-    descriptionKey: "onboarding.practiceTourSubtitle",
-  },
-  journal: {
-    titleKey: "onboarding.journalTourTitle",
-    descriptionKey: "onboarding.journalTourSubtitle",
-  },
-  feed: {
-    titleKey: "onboarding.feedTourTitle",
-    descriptionKey: "onboarding.feedTourSubtitle",
-  },
-  profile: {
-    titleKey: "onboarding.profileTourTitle",
-    descriptionKey: "onboarding.profileTourSubtitle",
-  },
-};
 
 export function TourOverlay() {
   const { activeTour, dismissTour } = useTourStore();
@@ -34,7 +12,11 @@ export function TourOverlay() {
 
   if (!activeTour) return null;
 
-  const keys = TOUR_KEYS[activeTour];
+  const config = MOBILE_TOUR_REGISTRY[activeTour];
+  if (!config) return null;
+
+  const title = config.titleKey ? t(config.titleKey) : config.title;
+  const subtitle = config.subtitleKey ? t(config.subtitleKey) : config.subtitle;
 
   return (
     <Modal transparent animationType="fade" visible statusBarTranslucent accessibilityViewIsModal>
@@ -64,12 +46,12 @@ export function TourOverlay() {
           <Text
             style={{ fontSize: 18, fontWeight: "700", color: "#111827", marginBottom: 8 }}
           >
-            {t(keys.titleKey)}
+            {title}
           </Text>
           <Text
             style={{ fontSize: 14, color: "#6b7280", lineHeight: 22, marginBottom: 20 }}
           >
-            {t(keys.descriptionKey)}
+            {subtitle}
           </Text>
           <Pressable
             onPress={dismissTour}

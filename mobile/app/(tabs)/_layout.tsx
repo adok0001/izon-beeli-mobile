@@ -1,23 +1,23 @@
-import { View } from "react-native";
-import { Tabs, useRouter } from "expo-router";
-import { BottomTabBarProps, BottomTabBar } from "@react-navigation/bottom-tabs";
+import { ONBOARDING_KEY } from "@/app/(onboarding)/index";
+import { AudioPlayer } from "@/components/audio/audio-player";
+import { FeatureTourModal } from "@/components/feature-tour-modal";
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { AudioPlayer } from "@/components/audio/audio-player";
-import { useAudioStore } from "@/store/audio-store";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useSyncUser } from "@/lib/hooks/use-sync-user";
-import { useNotificationStore } from "@/store/notification-store";
 import { useDailyReminder } from "@/lib/hooks/use-daily-reminder";
-import { useLanguageStore } from "@/store/language-store";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
-import { useEffect, useRef } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { ONBOARDING_KEY } from "@/app/(onboarding)/index";
-import { useTranslation } from "react-i18next";
+import { useSyncUser } from "@/lib/hooks/use-sync-user";
+import { useAudioStore } from "@/store/audio-store";
+import { useLanguageStore } from "@/store/language-store";
+import { useNotificationStore } from "@/store/notification-store";
 import { useTourStore } from "@/store/tour-store";
-import { FeatureTourModal } from "@/components/feature-tour-modal";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { BottomTabBar, BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import { Tabs, useRouter } from "expo-router";
+import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
+import { View } from "react-native";
 
 function TabBarWithPlayer(props: BottomTabBarProps) {
   const { currentTrackId } = useAudioStore();
@@ -57,9 +57,9 @@ export default function TabLayout() {
     }).catch(() => {});
   }, []);
 
-  // Auto-start feature tour for first-time users (after store is hydrated)
+  // Fallback auto-start for users who still have not seen the welcome tour.
   useEffect(() => {
-    if (!_hydrated || activeTour || hasSeen("profile")) return;
+    if (!_hydrated || activeTour || hasSeen("welcome")) return;
     const id = setTimeout(startTour, 800);
     return () => clearTimeout(id);
   }, [_hydrated]);

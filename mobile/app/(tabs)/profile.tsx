@@ -1,12 +1,13 @@
 import { FeedbackModal } from "@/components/feedback-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { XpLevelBadge } from "@/components/xp-level-badge";
-import { canManageBounties, canReviewApplications, useCurrentUser } from "@/lib/hooks/use-current-user";
+import { canReviewApplications, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
 import { getLanguageName } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
 import { useTourStore } from "@/store/tour-store";
 import { useAuth, useUser } from "@clerk/clerk-expo";
+import { useIsFocused } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -80,14 +81,15 @@ export default function ProfileScreen() {
   const { t } = useTranslation();
   const showTour = useTourStore((s) => s.showTour);
   const hasSeen = useTourStore((s) => s.hasSeen);
+  const activeTour = useTourStore((s) => s.activeTour);
+  const isFocused = useIsFocused();
 
-  // Show profile tour on first visit
+  // Show profile tour when the Profile screen is opened and no other tour is active.
   useEffect(() => {
-    if (!hasSeen("profile")) {
-      const timer = setTimeout(() => showTour("profile"), 600);
-      return () => clearTimeout(timer);
-    }
-  }, []);
+    if (!isFocused || activeTour || hasSeen("profile")) return;
+    const timer = setTimeout(() => showTour("profile"), 250);
+    return () => clearTimeout(timer);
+  }, [isFocused, activeTour, hasSeen, showTour]);
 
   const { reset: resetTour, start: startTour } = useTourStore();
   const isAdmin = currentUser?.isAdmin ?? false;

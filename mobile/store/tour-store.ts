@@ -1,12 +1,6 @@
-import { create } from "zustand";
 import AsyncStorage from "@/lib/storage";
-
-export type TourId =
-  | "learn"
-  | "practice"
-  | "journal"
-  | "feed"
-  | "profile";
+import { MOBILE_TOUR_REGISTRY, type TourId } from "@/lib/tours/mobile-tour-registry";
+import { create } from "zustand";
 
 interface TourState {
   /** Set of tour IDs that have been dismissed */
@@ -38,6 +32,7 @@ export const useTourStore = create<TourState>((set, get) => ({
   hasSeen: (id) => !!get().seen[id],
 
   showTour: (id) => {
+    if (!MOBILE_TOUR_REGISTRY[id]) return;
     if (get().seen[id] || get().activeTour) return;
     set({ activeTour: id });
   },
@@ -56,8 +51,7 @@ export const useTourStore = create<TourState>((set, get) => ({
   },
 
   start: () => {
-    if (get().activeTour) return;
-    set({ activeTour: "profile" });
+    get().showTour("welcome");
   },
 
   hydrate: async () => {

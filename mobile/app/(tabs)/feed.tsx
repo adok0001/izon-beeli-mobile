@@ -11,10 +11,12 @@ import {
 import i18n from "@/lib/i18n";
 import { localizeField } from "@/lib/localize";
 import { useAudioStore } from "@/store/audio-store";
+import { useTourStore } from "@/store/tour-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { AudioSource, Comment, FeedItem } from "@/types";
+import { useIsFocused } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
@@ -458,9 +460,19 @@ export default function FeedScreen() {
   const [commentsItemId, setCommentsItemId] = useState<string | null>(null);
   const [showNewPost, setShowNewPost] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const showTour = useTourStore((s) => s.showTour);
+  const hasSeen = useTourStore((s) => s.hasSeen);
+  const activeTour = useTourStore((s) => s.activeTour);
+  const isFocused = useIsFocused();
 
   const { t } = useTranslation();
   const items = data?.pages.flatMap((p) => p.items) ?? [];
+
+  useEffect(() => {
+    if (!isFocused || activeTour || hasSeen("feed")) return;
+    const timer = setTimeout(() => showTour("feed"), 250);
+    return () => clearTimeout(timer);
+  }, [isFocused, activeTour, hasSeen, showTour]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

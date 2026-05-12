@@ -1,5 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useTourStore, type TourId } from "@/store/tour-store";
+import { MOBILE_TOUR_REGISTRY } from "@/lib/tours/mobile-tour-registry";
+import { useTourStore } from "@/store/tour-store";
 import { useTranslation } from "react-i18next";
 import { Modal, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -8,180 +9,22 @@ interface FeatureItem {
   icon: string;
   color: string;
   bgColor: string;
-  titleKey: string;
-  detailKey: string;
+  titleKey?: string;
+  detailKey?: string;
+  title?: string;
+  detail?: string;
 }
 
-interface TourConfig {
-  heroIcon: string;
-  heroColor: string;
-  heroBg: string;
-  titleKey: string;
-  subtitleKey: string;
-  features: FeatureItem[];
-}
-
-const TOUR_CONFIGS: Record<TourId, TourConfig> = {
-  learn: {
-    heroIcon: "book.fill",
-    heroColor: "#3b82f6",
-    heroBg: "#dbeafe",
-    titleKey: "onboarding.learnTourTitle",
-    subtitleKey: "onboarding.learnTourSubtitle",
-    features: [
-      {
-        icon: "book.fill",
-        color: "#3b82f6",
-        bgColor: "#dbeafe",
-        titleKey: "onboarding.learnTourCourses",
-        detailKey: "onboarding.learnTourCoursesDetail",
-      },
-      {
-        icon: "speaker.wave.2.fill",
-        color: "#10b981",
-        bgColor: "#d1fae5",
-        titleKey: "onboarding.learnTourAudio",
-        detailKey: "onboarding.learnTourAudioDetail",
-      },
-      {
-        icon: "chart.bar.fill",
-        color: "#f59e0b",
-        bgColor: "#fef3c7",
-        titleKey: "onboarding.learnTourProgress",
-        detailKey: "onboarding.learnTourProgressDetail",
-      },
-    ],
-  },
-  practice: {
-    heroIcon: "sparkles",
-    heroColor: "#8b5cf6",
-    heroBg: "#ede9fe",
-    titleKey: "onboarding.practiceTourTitle",
-    subtitleKey: "onboarding.practiceTourSubtitle",
-    features: [
-      {
-        icon: "trophy.fill",
-        color: "#3b82f6",
-        bgColor: "#dbeafe",
-        titleKey: "onboarding.practiceTourQuiz",
-        detailKey: "onboarding.practiceTourQuizDetail",
-      },
-      {
-        icon: "rectangle.grid.2x2",
-        color: "#8b5cf6",
-        bgColor: "#ede9fe",
-        titleKey: "onboarding.practiceTourMatching",
-        detailKey: "onboarding.practiceTourMatchingDetail",
-      },
-      {
-        icon: "flame.fill",
-        color: "#f59e0b",
-        bgColor: "#fef3c7",
-        titleKey: "onboarding.practiceTourDaily",
-        detailKey: "onboarding.practiceTourDailyDetail",
-      },
-      {
-        icon: "person.2.fill",
-        color: "#ef4444",
-        bgColor: "#fee2e2",
-        titleKey: "onboarding.practiceTourMultiplayer",
-        detailKey: "onboarding.practiceTourMultiplayerDetail",
-      },
-    ],
-  },
-  journal: {
-    heroIcon: "pencil.and.list.clipboard",
-    heroColor: "#3b82f6",
-    heroBg: "#dbeafe",
-    titleKey: "onboarding.journalTourTitle",
-    subtitleKey: "onboarding.journalTourSubtitle",
-    features: [
-      {
-        icon: "pencil.and.list.clipboard",
-        color: "#3b82f6",
-        bgColor: "#dbeafe",
-        titleKey: "onboarding.journalTourWrite",
-        detailKey: "onboarding.journalTourWriteDetail",
-      },
-      {
-        icon: "clock.arrow.circlepath",
-        color: "#10b981",
-        bgColor: "#d1fae5",
-        titleKey: "onboarding.journalTourRevisit",
-        detailKey: "onboarding.journalTourRevisitDetail",
-      },
-    ],
-  },
-  feed: {
-    heroIcon: "newspaper.fill",
-    heroColor: "#8b5cf6",
-    heroBg: "#ede9fe",
-    titleKey: "onboarding.feedTourTitle",
-    subtitleKey: "onboarding.feedTourSubtitle",
-    features: [
-      {
-        icon: "newspaper.fill",
-        color: "#8b5cf6",
-        bgColor: "#ede9fe",
-        titleKey: "onboarding.feedTourActivity",
-        detailKey: "onboarding.feedTourActivityDetail",
-      },
-      {
-        icon: "heart.fill",
-        color: "#ef4444",
-        bgColor: "#fee2e2",
-        titleKey: "onboarding.feedTourInteract",
-        detailKey: "onboarding.feedTourInteractDetail",
-      },
-      {
-        icon: "mic.fill",
-        color: "#3b82f6",
-        bgColor: "#dbeafe",
-        titleKey: "onboarding.feedTourContribute",
-        detailKey: "onboarding.feedTourContributeDetail",
-      },
-    ],
-  },
-  profile: {
-    heroIcon: "person.fill",
-    heroColor: "#10b981",
-    heroBg: "#d1fae5",
-    titleKey: "onboarding.profileTourTitle",
-    subtitleKey: "onboarding.profileTourSubtitle",
-    features: [
-      {
-        icon: "flame.fill",
-        color: "#f59e0b",
-        bgColor: "#fef3c7",
-        titleKey: "onboarding.profileTourStats",
-        detailKey: "onboarding.profileTourStatsDetail",
-      },
-      {
-        icon: "chart.bar.fill",
-        color: "#3b82f6",
-        bgColor: "#dbeafe",
-        titleKey: "onboarding.profileTourDashboard",
-        detailKey: "onboarding.profileTourDashboardDetail",
-      },
-      {
-        icon: "person.3.fill",
-        color: "#10b981",
-        bgColor: "#d1fae5",
-        titleKey: "onboarding.profileTourClassroom",
-        detailKey: "onboarding.profileTourClassroomDetail",
-      },
-      {
-        icon: "star.fill",
-        color: "#f59e0b",
-        bgColor: "#fef3c7",
-        titleKey: "onboarding.profileTourBounties",
-        detailKey: "onboarding.profileTourBountiesDetail",
-      },
-    ],
-  },
+const resolveText = (
+  t: (key: string) => string,
+  key?: string,
+  fallback?: string
+) => {
+  if (key) return t(key);
+  return fallback ?? "";
 };
 
-function FeatureCard({ item, t }: { item: FeatureItem; t: (k: any) => string }) {
+function FeatureCard({ item, t }: Readonly<{ item: FeatureItem; t: (k: string) => string }>) {
   return (
     <View className="flex-row items-start rounded-2xl border border-neutral-100 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800">
       <View
@@ -192,10 +35,10 @@ function FeatureCard({ item, t }: { item: FeatureItem; t: (k: any) => string }) 
       </View>
       <View className="flex-1">
         <Text className="text-base font-bold text-neutral-900 dark:text-white">
-          {t(item.titleKey)}
+          {resolveText(t, item.titleKey, item.title)}
         </Text>
         <Text className="mt-1 text-sm leading-5 text-neutral-500 dark:text-neutral-400">
-          {t(item.detailKey)}
+          {resolveText(t, item.detailKey, item.detail)}
         </Text>
       </View>
     </View>
@@ -208,7 +51,8 @@ export function FeatureTourModal() {
 
   if (!activeTour) return null;
 
-  const config = TOUR_CONFIGS[activeTour];
+  const config = MOBILE_TOUR_REGISTRY[activeTour];
+  if (!config) return null;
 
   return (
     <Modal
@@ -243,10 +87,10 @@ export function FeatureTourModal() {
               <IconSymbol name={config.heroIcon as any} size={36} color={config.heroColor} />
             </View>
             <Text className="text-3xl font-bold text-neutral-900 dark:text-white text-center">
-              {t(config.titleKey as any)}
+              {resolveText(t, config.titleKey, config.title)}
             </Text>
             <Text className="mt-2 text-base text-neutral-500 dark:text-neutral-400 text-center">
-              {t(config.subtitleKey as any)}
+              {resolveText(t, config.subtitleKey, config.subtitle)}
             </Text>
           </View>
 

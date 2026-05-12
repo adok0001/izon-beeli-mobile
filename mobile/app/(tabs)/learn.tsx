@@ -20,6 +20,7 @@ import { useTourStore } from "@/store/tour-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course, Lesson } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useIsFocused } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -396,18 +397,18 @@ export default function LearnScreen() {
   const showTour = useTourStore((s) => s.showTour);
   const hasSeen = useTourStore((s) => s.hasSeen);
   const activeTour = useTourStore((s) => s.activeTour);
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     loadResumeState();
   }, []);
 
-  // Show learn tour on first visit to the Learn tab
+  // Show learn tour when the Learn screen is opened and no other tour is active.
   useEffect(() => {
-    if (!hasSeen("learn")) {
-      const timer = setTimeout(() => showTour("learn"), 600);
-      return () => clearTimeout(timer);
-    }
-  }, []);
+    if (!isFocused || activeTour || hasSeen("learn")) return;
+    const timer = setTimeout(() => showTour("learn"), 250);
+    return () => clearTimeout(timer);
+  }, [isFocused, activeTour, hasSeen, showTour]);
 
   // Show freeze modal once per day when we detect a broken streak (wait for any tour to finish)
   useEffect(() => {
