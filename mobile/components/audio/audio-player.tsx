@@ -66,20 +66,24 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
               />
             )}
           </Pressable>
-          <Pressable className="flex-1" onPress={onPress} disabled={!onPress}>
-            <Text
-              className="text-sm font-medium text-neutral-900 dark:text-white"
-              numberOfLines={1}
-            >
-              {currentTrackTitle ?? "Now Playing"}
-            </Text>
-            <View className="mt-1 h-1 rounded-full bg-neutral-200 dark:bg-neutral-700">
-              <View
-                className="h-1 rounded-full bg-blue-500"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </View>
-          </Pressable>
+          <View className="flex-1">
+            <Pressable onPress={onPress} disabled={!onPress}>
+              <Text
+                className="text-sm font-medium text-neutral-900 dark:text-white"
+                numberOfLines={1}
+              >
+                {currentTrackTitle ?? "Now Playing"}
+              </Text>
+            </Pressable>
+            <Pressable onPress={handleSeek} onLayout={onBarLayout} className="mt-1 py-1">
+              <View className="h-1 rounded-full bg-neutral-200 dark:bg-neutral-700">
+                <View
+                  className="h-1 rounded-full bg-blue-500"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </View>
+            </Pressable>
+          </View>
           <Text className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">
             {formatDuration(progress)}
           </Text>
