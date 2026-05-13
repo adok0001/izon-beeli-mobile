@@ -25,7 +25,7 @@ export default function LessonScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: lesson, isLoading, isError } = useLesson(id ?? "");
-  const { loadAndPlay, currentTrackId, isPlaying, togglePlayback } = useAudioStore();
+  const { loadAndPlay, currentTrackId, isPlaying, togglePlayback, progress } = useAudioStore();
   const { data: completedLessonIds } = useCompletedLessons();
   const { selectedLanguageId } = useLanguageStore();
   const { uiLanguage } = useUiLanguageStore();
@@ -156,9 +156,9 @@ export default function LessonScreen() {
                 <Text className="ml-2 font-semibold text-white">
                   {isCurrentTrack && isPlaying ? t("lesson.pause") : isCurrentTrack ? t("lesson.resume") : t("lesson.play")}
                 </Text>
-                {lesson.duration && (
+                {(isCurrentTrack || lesson.duration) && (
                   <Text className="ml-2 text-sm text-blue-200">
-                    {formatDuration(lesson.duration)}
+                    {isCurrentTrack ? formatDuration(progress) : formatDuration(lesson.duration!)}
                   </Text>
                 )}
               </Pressable>
