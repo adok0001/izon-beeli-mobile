@@ -5,7 +5,7 @@ import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
-import { BarChart2, BookOpen, BookText, ClipboardList, MessageSquare, UserCheck, Users } from "lucide-react";
+import { BarChart2, BookOpen, BookText, ClipboardList, GraduationCap, MessageSquare, UserCheck, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -17,13 +17,14 @@ const ADMIN_NAV = [
   { href: "/admin/courses",      labelKey: "admin.nav.courses",      icon: BookOpen, tourId: "admin-nav-courses" },
   { href: "/admin/dictionary",   labelKey: "admin.nav.dictionary",   icon: BookText, tourId: "admin-nav-dictionary" },
   { href: "/admin/review",       labelKey: "admin.nav.review",       icon: ClipboardList, tourId: "admin-nav-review" },
+  { href: "/educator",           labelKey: "educator.panelTitle",    icon: GraduationCap, tourId: "admin-nav-educator" },
   { href: "/admin/applications", labelKey: "admin.nav.applications", icon: UserCheck, tourId: "admin-nav-applications" },
   { href: "/admin/feedback",     labelKey: "admin.nav.feedback",     icon: MessageSquare, tourId: "admin-nav-feedback" },
 ] as const;
 
 interface Me { isAdmin: boolean }
 
-export function AdminShell({ children }: { children: React.ReactNode }) {
+export function AdminShell({ children }: Readonly<{ children: React.ReactNode }>) {
   const { getToken, isLoaded, isSignedIn } = useAuth();
   const router = useRouter();
   const pathname = usePathname();

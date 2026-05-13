@@ -18,6 +18,7 @@ import { useTourStore } from "@/store/tour-store";
 import type { QuizQuestion } from "@/types";
 import { useInvalidateDailyChallenges } from "@/lib/hooks/use-daily-challenge";
 import { useAuth } from "@clerk/clerk-expo";
+import { useQueryClient } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -264,6 +265,7 @@ function ResultsView({ languageId }: { languageId: string }) {
   const { getResult, reset, startQuiz, questions } = useQuizStore();
   const router = useRouter();
   const { getToken } = useAuth();
+  const queryClient = useQueryClient();
   const invalidateDailyChallenges = useInvalidateDailyChallenges();
   const result = getResult();
   const startTime = useQuizStore((s) => s.startTime);
@@ -289,6 +291,7 @@ function ResultsView({ languageId }: { languageId: string }) {
           }),
         });
         setXpResult({ xpEarned: res.xpEarned, leveledUp: res.leveledUp });
+        queryClient.invalidateQueries({ queryKey: ["progress"] });
         invalidateDailyChallenges();
         analytics.quizFinished(languageId, result.accuracy, durationMs);
       } catch {

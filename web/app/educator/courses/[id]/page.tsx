@@ -4,20 +4,21 @@ import { apiFetch } from "@/lib/api";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowLeft,
-  ChevronRight,
-  Eye,
-  EyeOff,
-  Pencil,
-  Play,
-  Plus,
-  Sparkles,
-  Trash2,
-  X,
+    ArrowLeft,
+    ChevronRight,
+    Eye,
+    EyeOff,
+    Pencil,
+    Play,
+    Plus,
+    Sparkles,
+    Trash2,
+    X,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useRef, useState } from "react";
+import { toast } from "sonner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -114,6 +115,7 @@ function LessonModal({
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["educator-lessons"] });
+      toast.success(isEdit ? "Lesson updated" : "Lesson created");
       onClose();
     },
     onError: (e: Error) => setError(e.message),
@@ -129,13 +131,13 @@ function LessonModal({
             {isEdit ? "Edit Lesson" : "New Lesson"}
           </h2>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors">
-            <X className="h-4 w-4 text-neutral-500" />
+            <X className="h-4 w-4 text-neutral-500 dark:text-neutral-300" />
           </button>
         </div>
 
         <div className="px-6 py-5 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-400 mb-1.5">Type</label>
+            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">Type</label>
             <div className="flex gap-2 flex-wrap">
               {LESSON_TYPES.map((t) => (
                 <button
@@ -145,7 +147,7 @@ function LessonModal({
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize transition-colors ${
                     type === t
                       ? "bg-brand-500 text-white"
-                      : "bg-neutral-100 dark:bg-white/[0.06] text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-white/[0.1]"
+                      : "bg-neutral-100 dark:bg-white/[0.06] text-neutral-600 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-white/[0.1]"
                   }`}
                 >
                   {t}
@@ -155,7 +157,7 @@ function LessonModal({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-400 mb-1.5">Title <span className="text-red-400">*</span></label>
+            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">Title <span className="text-red-400">*</span></label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -165,7 +167,7 @@ function LessonModal({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-400 mb-1.5">Description <span className="text-red-400">*</span></label>
+            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">Description <span className="text-red-400">*</span></label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -177,37 +179,37 @@ function LessonModal({
 
           {!isEdit && (
             <div>
-              <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-400 mb-1.5">Audio file</label>
+              <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">Audio file</label>
               <input
                 ref={audioRef}
                 type="file"
                 accept="audio/*"
                 onChange={(e) => setAudioFile(e.target.files?.[0] ?? null)}
-                className="block w-full text-sm text-neutral-500 dark:text-neutral-400
+                className="block w-full text-sm text-neutral-500 dark:text-neutral-300
                   file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0
                   file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700
                   dark:file:bg-brand-900/30 dark:file:text-brand-300
                   hover:file:bg-brand-100 dark:hover:file:bg-brand-900/50"
               />
               {audioFile && (
-                <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">{audioFile.name} · {(audioFile.size / 1024 / 1024).toFixed(1)} MB</p>
+                <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-300">{audioFile.name} · {(audioFile.size / 1024 / 1024).toFixed(1)} MB</p>
               )}
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-400 mb-1.5">Artist</label>
+              <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">Artist</label>
               <input value={artist} onChange={(e) => setArtist(e.target.value)} placeholder="Optional" className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-400 mb-1.5">Genre</label>
+              <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">Genre</label>
               <input value={genre} onChange={(e) => setGenre(e.target.value)} placeholder="Optional" className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500" />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-400 mb-1.5">Order</label>
+            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">Order</label>
             <input type="number" value={order} onChange={(e) => setOrder(e.target.value)} className="w-24 rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500" />
           </div>
 
@@ -215,7 +217,7 @@ function LessonModal({
         </div>
 
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-neutral-100 dark:border-white/[0.06]">
-          <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors">
+          <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors">
             Cancel
           </button>
           <button
@@ -272,7 +274,9 @@ export default function CourseDetailPage() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["educator-lessons"] });
       setDeleteId(null);
+      toast.success("Lesson deleted");
     },
+    onError: (e: Error) => toast.error("Failed to delete lesson", { description: e.message }),
   });
 
   const toggleActiveMutation = useMutation({
@@ -284,7 +288,11 @@ export default function CourseDetailPage() {
         body: JSON.stringify({ isActive }),
       });
     },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["educator-lessons"] }),
+    onSuccess: (_, variables) => {
+      void qc.invalidateQueries({ queryKey: ["educator-lessons"] });
+      toast.success(variables.isActive ? "Lesson published" : "Lesson hidden");
+    },
+    onError: (e: Error) => toast.error("Failed to update lesson", { description: e.message }),
   });
 
   const generateStubsMutation = useMutation({
@@ -296,10 +304,12 @@ export default function CourseDetailPage() {
         body: JSON.stringify({ languageId, courseType: course?.courseType }),
       });
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       void qc.invalidateQueries({ queryKey: ["educator-lessons"] });
       void qc.invalidateQueries({ queryKey: ["educator-courses"] });
+      toast.success("Stubs generated", { description: `${result.courses} course · ${result.lessons} lessons created.` });
     },
+    onError: (e: Error) => toast.error("Stub generation failed", { description: e.message }),
   });
 
   const courseTitle = course?.title ?? lessons[0]?.courseTitle ?? "Course";
@@ -309,7 +319,7 @@ export default function CourseDetailPage() {
     <div>
       <Link
         href="/educator/courses"
-        className="inline-flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 transition-colors mb-6"
+        className="inline-flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-300 hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors mb-6"
       >
         <ArrowLeft className="h-4 w-4" />
         All courses
@@ -325,14 +335,14 @@ export default function CourseDetailPage() {
               </span>
             )}
             {course?.courseType && (
-              <span className="text-xs text-neutral-400 dark:text-neutral-500 capitalize">
+              <span className="text-xs text-neutral-500 dark:text-neutral-300 capitalize">
                 {course.courseType.replace(/_/g, " ")}
               </span>
             )}
           </div>
           <h1 className="text-xl font-bold text-neutral-900 dark:text-white">{courseTitle}</h1>
           {course?.description && (
-            <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400 max-w-2xl">{course.description}</p>
+            <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-300 max-w-2xl">{course.description}</p>
           )}
         </div>
         <button
@@ -351,8 +361,8 @@ export default function CourseDetailPage() {
         </div>
       ) : lessons.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <p className="text-sm font-semibold text-neutral-500 dark:text-neutral-400">No lessons yet</p>
-          <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1 mb-5">Create a lesson manually, or seed the stub template.</p>
+          <p className="text-sm font-semibold text-neutral-600 dark:text-neutral-200">No lessons yet</p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-300 mt-1 mb-5">Create a lesson manually, or seed the stub template.</p>
           {course?.courseType && (
             <button
               onClick={() => generateStubsMutation.mutate()}
@@ -377,11 +387,11 @@ export default function CourseDetailPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-100 dark:border-white/[0.06] bg-neutral-50 dark:bg-white/[0.02]">
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400 w-8">#</th>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">Title</th>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">Type</th>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">Status</th>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">Duration</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-300 w-8">#</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-300">Title</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-300">Type</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-300">Status</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-300">Duration</th>
                 <th className="px-4 py-2.5" />
               </tr>
             </thead>
@@ -391,7 +401,7 @@ export default function CourseDetailPage() {
                   key={lesson.id}
                   className={`${i < lessons.length - 1 ? "border-b border-neutral-100 dark:border-white/[0.04]" : ""} hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition-colors`}
                 >
-                  <td className="px-4 py-3 text-xs text-neutral-400 tabular-nums">{lesson.order}</td>
+                  <td className="px-4 py-3 text-xs text-neutral-400 dark:text-neutral-300 tabular-nums">{lesson.order}</td>
                   <td className="px-4 py-3">
                     <Link
                       href={`/educator/courses/${courseId}/lessons/${lesson.id}`}
@@ -400,7 +410,7 @@ export default function CourseDetailPage() {
                       {lesson.title}
                       <ChevronRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-brand-500" />
                     </Link>
-                    {lesson.artist && <p className="text-xs text-neutral-400 mt-0.5">{lesson.artist}</p>}
+                    {lesson.artist && <p className="text-xs text-neutral-500 dark:text-neutral-300 mt-0.5">{lesson.artist}</p>}
                   </td>
                   <td className="px-4 py-3">
                     <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-neutral-100 dark:bg-white/[0.06] text-neutral-600 dark:text-neutral-300 capitalize">
@@ -411,12 +421,12 @@ export default function CourseDetailPage() {
                     <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
                       lesson.isActive
                         ? "bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400"
-                        : "bg-neutral-100 dark:bg-white/[0.06] text-neutral-500 dark:text-neutral-400"
+                        : "bg-neutral-100 dark:bg-white/[0.06] text-neutral-500 dark:text-neutral-300"
                     }`}>
                       {lesson.isActive ? "Active" : "Inactive"}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-neutral-500 dark:text-neutral-400 text-xs tabular-nums">
+                  <td className="px-4 py-3 text-neutral-500 dark:text-neutral-300 text-xs tabular-nums">
                     {fmtDuration(lesson.duration)}
                   </td>
                   <td className="px-4 py-3">
@@ -427,7 +437,7 @@ export default function CourseDetailPage() {
                           className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors"
                           title="Play audio"
                         >
-                          <Play className={`h-3.5 w-3.5 ${playUrl === lesson.audioUrl ? "text-brand-500" : "text-neutral-400"}`} />
+                          <Play className={`h-3.5 w-3.5 ${playUrl === lesson.audioUrl ? "text-brand-500" : "text-neutral-400 dark:text-neutral-300"}`} />
                         </button>
                       )}
                       <button
@@ -436,7 +446,7 @@ export default function CourseDetailPage() {
                         title={lesson.isActive ? "Deactivate" : "Activate"}
                       >
                         {lesson.isActive
-                          ? <EyeOff className="h-3.5 w-3.5 text-neutral-400" />
+                          ? <EyeOff className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-300" />
                           : <Eye className="h-3.5 w-3.5 text-green-500" />}
                       </button>
                       <button
@@ -444,14 +454,14 @@ export default function CourseDetailPage() {
                         className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors"
                         title="Edit"
                       >
-                        <Pencil className="h-3.5 w-3.5 text-neutral-400" />
+                        <Pencil className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-300" />
                       </button>
                       <button
                         onClick={() => setDeleteId(lesson.id)}
                         className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/[0.1] transition-colors"
                         title="Delete"
                       >
-                        <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                        <Trash2 className="h-3.5 w-3.5 text-red-500 dark:text-red-400" />
                       </button>
                     </div>
                   </td>
@@ -467,7 +477,7 @@ export default function CourseDetailPage() {
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 bg-white dark:bg-[#0f0f1a] border border-neutral-200 dark:border-white/[0.08] rounded-2xl shadow-xl px-4 py-3">
           <audio src={playUrl} controls autoPlay className="h-8 w-64" />
           <button onClick={() => setPlayUrl(null)} className="p-1 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/[0.06]">
-            <X className="h-4 w-4 text-neutral-400" />
+            <X className="h-4 w-4 text-neutral-500 dark:text-neutral-300" />
           </button>
         </div>
       )}
@@ -487,11 +497,11 @@ export default function CourseDetailPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-2xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#0f0f1a] shadow-2xl p-6">
             <h3 className="text-base font-bold text-neutral-900 dark:text-white mb-2">Delete lesson?</h3>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-6">
+            <p className="text-sm text-neutral-500 dark:text-neutral-300 mb-6">
               This will permanently remove the lesson and all its transcript segments.
             </p>
             <div className="flex gap-3 justify-end">
-              <button onClick={() => setDeleteId(null)} className="px-4 py-2 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors">
+              <button onClick={() => setDeleteId(null)} className="px-4 py-2 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors">
                 Cancel
               </button>
               <button

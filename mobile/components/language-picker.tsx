@@ -159,12 +159,12 @@ function AddLanguageModal({
   enrolledIds,
   onAdd,
   onClose,
-}: {
+}: Readonly<{
   visible: boolean;
   enrolledIds: string[];
   onAdd: (id: string) => void;
   onClose: () => void;
-}) {
+}>) {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
 
@@ -274,32 +274,38 @@ function AddLanguageModal({
 
 // ─── LanguagePickerModal (kept for LanguagePickerButton) ─────────────────────
 
-function LanguagePickerModal({
+export function LanguagePickerModal({
   visible,
   selectedId,
   onSelect,
   onClose,
-}: {
+  allowedIds,
+}: Readonly<{
   visible: boolean;
   selectedId: string;
   onSelect: (id: string) => void;
   onClose: () => void;
-}) {
+  allowedIds?: string[];
+}>) {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
 
   const sections = useMemo(() => {
     const query = search.trim().toLowerCase();
+    const base =
+      allowedIds && allowedIds.length > 0
+        ? ACTIVE_LANGUAGES.filter((l) => allowedIds.includes(l.id))
+        : ACTIVE_LANGUAGES;
     const filtered = query
-      ? ACTIVE_LANGUAGES.filter(
+      ? base.filter(
           (l) =>
             l.name.toLowerCase().includes(query) ||
             l.nativeName.toLowerCase().includes(query) ||
             l.region.toLowerCase().includes(query)
         )
-      : ACTIVE_LANGUAGES;
+      : base;
     return groupByRegion(filtered);
-  }, [search]);
+  }, [search, allowedIds]);
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
@@ -384,7 +390,7 @@ function LanguagePickerModal({
             </View>
           }
           ListFooterComponent={
-            search.trim().length > 0 ? (
+            search.trim().length > 0 && !allowedIds ? (
               <Pressable
                 onPress={() => { onSelect(search.trim()); }}
                 className={`flex-row items-center border-t-2 border-dashed px-5 py-4 active:opacity-70 ${

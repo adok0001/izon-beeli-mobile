@@ -12,8 +12,17 @@ export interface CurrentUser {
   selectedLanguageId: string | null;
   isAdmin: boolean;
   isReviewer: boolean;
+  reviewerLanguages: string[];
   reviewerRole: "teacher" | "professor" | "elder" | null;
   createdAt: string;
+}
+
+export function canAccessEducatorPanel(user: CurrentUser) {
+  return user.isAdmin || user.isReviewer;
+}
+
+export function canModerateContent(user: CurrentUser) {
+  return canAccessEducatorPanel(user);
 }
 
 export function canManageBounties(user: CurrentUser) {

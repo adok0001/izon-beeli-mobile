@@ -1,7 +1,7 @@
 import { FeedbackModal } from "@/components/feedback-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { XpLevelBadge } from "@/components/xp-level-badge";
-import { canReviewApplications, useCurrentUser } from "@/lib/hooks/use-current-user";
+import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
 import { getLanguageName } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
@@ -84,6 +84,7 @@ export default function ProfileScreen() {
   const resetChecklist = useWelcomeChecklistStore((s) => s.reset);
   const resetTours = useTourStore((s) => s.reset);
   const isAdmin = currentUser?.isAdmin ?? false;
+  const canAccessEducator = currentUser ? canAccessEducatorPanel(currentUser) : false;
   const reviewerRole = currentUser?.reviewerRole ?? null;
   const displayName = user?.username ?? "Learner";
   const email = user?.primaryEmailAddress?.emailAddress ?? "";
@@ -175,18 +176,32 @@ export default function ProfileScreen() {
             label={t("profile.dictionary")}
             onPress={() => router.push("/dictionary")}
           />
+          {currentUser?.isAdmin ? (
+            <>
+              <MenuRow
+                icon="shield.fill"
+                label={t("educator.panelTitle")}
+                onPress={() => router.push("/(tabs)/educator")}
+              />
+              <MenuRow
+                icon="gearshape.fill"
+                label={t("educator.adminPanel")}
+                onPress={() => router.push("/(tabs)/admin")}
+              />
+            </>
+          ) : null}
+          {!isAdmin && canAccessEducator ? (
+            <MenuRow
+              icon="shield.fill"
+              label={t("educator.panelTitle")}
+              onPress={() => router.push("/(tabs)/educator")}
+            />
+          ) : null}
           {(isAdmin || currentUser?.isReviewer) && (
             <MenuRow
               icon="checkmark.shield.fill"
               label={t("profile.reviewContributions")}
               onPress={() => router.push("/review")}
-            />
-          )}
-          {currentUser && canReviewApplications(currentUser) && (
-            <MenuRow
-              icon="person.badge.clock.fill"
-              label={t("profile.reviewApplications")}
-              onPress={() => router.push("/reviewer-applications-admin" as any)}
             />
           )}
           <MenuRow

@@ -327,6 +327,7 @@ export default function EducatorCoursesScreen() {
         <LanguagePickerModal
           visible={languagePickerVisible}
           selectedId={activeLanguageId}
+          allowedIds={allowedLanguages.length > 0 ? allowedLanguages : undefined}
           onSelect={(languageId) => {
             setSelectedLanguageId(languageId);
             setLanguagePickerVisible(false);
