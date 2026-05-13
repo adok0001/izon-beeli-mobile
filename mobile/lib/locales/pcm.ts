@@ -307,12 +307,18 @@ export const pcm = {
     exploreFeedDetail: "Browse activity and engage with the community.",
     openDictionaryTitle: "Search dictionary",
     openDictionaryDetail: "Look up one word for dictionary.",
+    exploreCultureMusicTitle: "Explore Culture & Music",
+    exploreCultureMusicDetail: "Discover songs, proverbs, and cultural content.",
     reviewDashboardTitle: "Review your dashboard",
     reviewDashboardDetail: "Check your streak, XP, and progress trend.",
     reviewerModerateTitle: "Review contributions",
     reviewerModerateDetail: "Moderate pending content submissions.",
     adminReviewerApplicationsTitle: "Review reviewer applications",
     adminReviewerApplicationsDetail: "Review moderation queue and pending reviewer decisions.",
+    allCompleteTitle: "You don finish all tasks!",
+    allCompleteBody: "You don explore everything wey Beeli get. Keep learning!",
+    allCompleteBonus: "+100 XP Bonus",
+    allCompleteDismiss: "Make we go",
   },
   lesson: {
     title: "Lesson",
@@ -1019,7 +1025,7 @@ export const pcm = {
     imageSubmittedDesc: "Your picture don submit for review.",
   },
   admin: {
-    panelTitle: "Admin Panel",
+    panelTitle: "Chair",
     internalTools: "Beeli — internal tools",
     backToApp: "← Back to app",
     nav: {
@@ -1152,10 +1158,10 @@ export const pcm = {
     },
   },
   educator: {
-    panelTitle: "Educator Panel",
+    panelTitle: "Teacher",
     subtitleAdmin: "All languages",
     subtitleReviewer: "Languages: {{languages}}",
-    adminPanel: "Admin Panel",
+    adminPanel: "Admin",
     nav: {
       overview: "Overview",
       review: "Review",
@@ -1239,5 +1245,8 @@ export const pcm = {
     withdrawConfirmMessage: "You sure? You go need apply again to become reviewer.",
     cancelSuccessTitle: "Application Don Cancel",
     cancelSuccessMessage: "Your application don cancel.",
+  },
+  dailyChallenge: {
+    refresh: "Refresh",
   },
 } as const;

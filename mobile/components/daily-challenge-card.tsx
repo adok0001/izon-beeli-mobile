@@ -1,5 +1,6 @@
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
 import { useTranslation } from "react-i18next";
@@ -31,66 +32,63 @@ function ChallengeItem({ challenge }: { challenge: DailyChallenge }) {
   return (
     <Pressable
       onPress={() => router.push(config.route as any)}
-      className="rounded-2xl bg-neutral-50 p-4 active:opacity-70 dark:bg-neutral-800"
+      className="rounded-xl bg-neutral-50 px-3 py-2.5 active:opacity-70 dark:bg-neutral-800"
     >
       <View className="flex-row items-center">
         <View
-          className="mr-3 h-12 w-12 items-center justify-center rounded-xl"
+          className="mr-2.5 h-9 w-9 items-center justify-center rounded-lg"
           style={{ backgroundColor: `${config.color}20` }}
         >
-          <IconSymbol name={config.icon as any} size={22} color={config.color} />
+          <IconSymbol name={config.icon as any} size={17} color={config.color} />
         </View>
         <View className="flex-1">
           <View className="flex-row items-center justify-between">
-            <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
-              {t("dashboard.dailyChallenges")}
+            <Text className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+              {challenge.title}
             </Text>
-            <Text className="text-xs font-semibold" style={{ color: config.color }}>
+            <Text className="text-[10px] font-semibold" style={{ color: config.color }}>
               +{challenge.xpReward} XP
             </Text>
           </View>
-          <Text className="text-base font-bold text-neutral-900 dark:text-white">
-            {challenge.title}
-          </Text>
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
-            {challenge.description}
+          <View className="mt-1 h-1 rounded-full bg-neutral-200 dark:bg-neutral-700">
+            <View
+              className="h-full rounded-full"
+              style={{
+                width: `${Math.round(progress * 100)}%`,
+                backgroundColor: challenge.completed ? "#22c55e" : config.color,
+              }}
+            />
+          </View>
+          <Text className="mt-0.5 text-[10px] text-neutral-400 dark:text-neutral-500">
+            {challenge.progress} / {challenge.target}
+            {challenge.completed && (
+              <Text className="font-semibold text-green-500"> · {t("learn.complete")}</Text>
+            )}
           </Text>
         </View>
         {challenge.completed ? (
-          <IconSymbol name="checkmark.circle.fill" size={24} color="#22c55e" />
+          <IconSymbol name="checkmark.circle.fill" size={18} color="#22c55e" className="ml-2" />
         ) : (
-          <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
+          <IconSymbol name="chevron.right" size={14} color="#9ca3af" className="ml-2" />
         )}
-      </View>
-
-      {/* Progress bar */}
-      <View className="mt-3">
-        <View className="mb-1 flex-row items-center justify-between">
-          <Text className="text-xs text-neutral-400 dark:text-neutral-500">
-            {challenge.progress} / {challenge.target}
-          </Text>
-          {challenge.completed && (
-            <Text className="text-xs font-semibold text-green-500">
-              {t("learn.complete")}
-            </Text>
-          )}
-        </View>
-        <View className="h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-700">
-          <View
-            className="h-full rounded-full"
-            style={{
-              width: `${Math.round(progress * 100)}%`,
-              backgroundColor: challenge.completed ? "#22c55e" : config.color,
-            }}
-          />
-        </View>
       </View>
     </Pressable>
   );
 }
 
 export function DailyChallengeCards() {
-  const { data: challenges, isLoading } = useTodayChallenges();
+  const { t } = useTranslation();
+  const { data: challenges, isLoading, refetch } = useTodayChallenges();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   if (isLoading || !challenges?.length) return null;
 
@@ -99,6 +97,23 @@ export function DailyChallengeCards() {
       {challenges.map((challenge) => (
         <ChallengeItem key={challenge.id} challenge={challenge} />
       ))}
+      <Pressable
+        onPress={handleRefresh}
+        disabled={isRefreshing}
+        className="flex-row items-center justify-center gap-1.5 py-1 active:opacity-60"
+        style={{ opacity: isRefreshing ? 0.5 : 1 }}
+      >
+        {isRefreshing ? (
+          <ActivityIndicator size="small" color="#9ca3af" />
+        ) : (
+          <>
+            <IconSymbol name="arrow.clockwise" size={13} color="#9ca3af" />
+            <Text className="text-xs text-neutral-400 dark:text-neutral-500">
+              {t("dailyChallenge.refresh")}
+            </Text>
+          </>
+        )}
+      </Pressable>
     </View>
   );
 }

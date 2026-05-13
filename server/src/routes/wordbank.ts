@@ -81,8 +81,7 @@ wordbankRouter.post("/", async (c) => {
     dictionaryEntryId: body.dictionaryEntryId,
   });
 
-  // Track "Word Collector" daily challenge
-  incrementDailyChallenge(userId, "save_words").catch(() => {});
+  await incrementDailyChallenge(userId, "save_words").catch(() => {});
 
   return c.json({ saved: true }, 201);
 });
@@ -135,7 +134,7 @@ wordbankRouter.post("/:entryId/review", async (c) => {
 
   // Award XP + increment daily challenge (fire-and-forget)
   const xpResult = await awardXP(userId, 5, "word_review").catch(() => null);
-  incrementDailyChallenge(userId, "review_words").catch(() => {});
+  await incrementDailyChallenge(userId, "review_words").catch(() => {});
 
   return c.json({
     nextReviewAt: nextReviewAt.toISOString(),

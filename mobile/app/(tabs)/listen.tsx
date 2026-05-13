@@ -237,7 +237,7 @@ export default function PracticeScreen() {
         </Section>
 
         {/* ── Culture & Music ── */}
-        <Section title={t("practice.sectionCulture")} defaultOpen={false}>
+        <Section title={t("practice.sectionCulture")} defaultOpen>
           <SongsCard languageId={selectedLanguageId} />
           <ProverbsCard languageId={selectedLanguageId} />
           <CulturalSection

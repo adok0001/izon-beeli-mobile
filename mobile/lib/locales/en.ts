@@ -305,12 +305,18 @@ export const en = {
     exploreFeedDetail: "Browse activity and engage with the community.",
     openDictionaryTitle: "Search dictionary",
     openDictionaryDetail: "Look up one word in the dictionary.",
+    exploreCultureMusicTitle: "Explore Culture & Music",
+    exploreCultureMusicDetail: "Discover songs, proverbs, and cultural content.",
     reviewDashboardTitle: "Review your dashboard",
     reviewDashboardDetail: "Check your streak, XP, and progress trends.",
     reviewerModerateTitle: "Review contributions",
     reviewerModerateDetail: "Moderate pending content submissions.",
     adminReviewerApplicationsTitle: "Review reviewer applications",
     adminReviewerApplicationsDetail: "Review moderation queues and pending reviewer decisions.",
+    allCompleteTitle: "All tasks complete!",
+    allCompleteBody: "You've explored everything Beeli has to offer. Keep learning!",
+    allCompleteBonus: "+100 XP Bonus",
+    allCompleteDismiss: "Let's go",
   },
   lesson: {
     title: "Lesson",
@@ -1017,7 +1023,7 @@ export const en = {
     imageSubmittedDesc: "Your image has been submitted for review.",
   },
   admin: {
-    panelTitle: "Admin Panel",
+    panelTitle: "Admin",
     internalTools: "Beeli — internal tools",
     backToApp: "← Back to app",
     nav: {
@@ -1137,10 +1143,10 @@ export const en = {
     },
   },
   educator: {
-    panelTitle: "Educator Panel",
+    panelTitle: "Educator",
     subtitleAdmin: "All languages",
     subtitleReviewer: "Languages: {{languages}}",
-    adminPanel: "Admin Panel",
+    adminPanel: "Admin",
     nav: {
       overview: "Overview",
       review: "Review",
@@ -1224,5 +1230,8 @@ export const en = {
     withdrawConfirmMessage: "Are you sure? You'll need to reapply to become a reviewer again.",
     cancelSuccessTitle: "Application Cancelled",
     cancelSuccessMessage: "Your application has been cancelled.",
+  },
+  dailyChallenge: {
+    refresh: "Refresh",
   },
 } as const;

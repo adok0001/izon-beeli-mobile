@@ -36,8 +36,7 @@ quizResultsRouter.post("/", async (c) => {
   const xpEarned = Math.max(1, Math.round((body.accuracy / 100) * body.questionCount * 0.3));
   const xpResult = await awardXP(userId, xpEarned, "quiz");
 
-  // Fire-and-forget: increment daily challenge
-  incrementDailyChallenge(userId, "complete_quiz").catch(() => {});
+  await incrementDailyChallenge(userId, "complete_quiz").catch(() => {});
 
   return c.json(
     {

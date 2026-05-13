@@ -9,6 +9,7 @@ export interface ProgressSummary {
   points: number;
   streak: number;
   completedCount: number;
+  quizCount: number;
   freezeCount: number;
   streakBroken: boolean;
 }
@@ -111,6 +112,28 @@ export function useTrackListen() {
     },
     onSuccess: () => {
       invalidateDailyChallenges();
+    },
+  });
+}
+
+export function useAwardChecklistBonus() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const token = await getToken();
+      return apiFetch<{
+        pointsEarned: number;
+        totalPoints: number;
+        leveledUp: boolean;
+        newLevel: number;
+        newTitle: string;
+      }>("/progress/checklist-bonus", { method: "POST", token: token! });
+    },
+    onSuccess: () => {
+      hapticHeavy();
+      queryClient.invalidateQueries({ queryKey: ["progress", "summary"] });
     },
   });
 }

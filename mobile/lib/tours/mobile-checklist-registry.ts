@@ -58,6 +58,13 @@ export const MOBILE_CHECKLIST_REGISTRY = {
     descriptionKey: "welcomeChecklist.openDictionaryDetail",
     icon: "character.book.closed",
   },
+  exploreCultureMusic: {
+    route: "/(tabs)/listen",
+    audience: "all",
+    titleKey: "welcomeChecklist.exploreCultureMusicTitle",
+    descriptionKey: "welcomeChecklist.exploreCultureMusicDetail",
+    icon: "music.note",
+  },
   reviewDashboard: {
     route: "/dashboard",
     audience: "all",

@@ -307,12 +307,18 @@ export const fr = {
     exploreFeedDetail: "Parcourez l'activité et échangez avec la communauté.",
     openDictionaryTitle: "Chercher dans le dictionnaire",
     openDictionaryDetail: "Recherchez un mot dans le dictionnaire.",
+    exploreCultureMusicTitle: "Explorer Culture & Musique",
+    exploreCultureMusicDetail: "Découvrez des chansons, proverbes et contenus culturels.",
     reviewDashboardTitle: "Consulter votre tableau de bord",
     reviewDashboardDetail: "Vérifiez votre série, vos XP et vos tendances de progression.",
     reviewerModerateTitle: "Examiner les contributions",
     reviewerModerateDetail: "Modérez les contenus en attente.",
     adminReviewerApplicationsTitle: "Examiner les candidatures de modérateur",
     adminReviewerApplicationsDetail: "Consultez les files de modération et les décisions en attente.",
+    allCompleteTitle: "Toutes les tâches terminées !",
+    allCompleteBody: "Vous avez exploré tout ce que Beeli a à offrir. Continuez à apprendre !",
+    allCompleteBonus: "+100 XP Bonus",
+    allCompleteDismiss: "C'est parti",
   },
   lesson: {
     title: "Leçon",
@@ -1019,7 +1025,7 @@ export const fr = {
     imageSubmittedDesc: "Votre image a été soumise pour examen.",
   },
   admin: {
-    panelTitle: "Panneau d'administration",
+    panelTitle: "Administration",
     internalTools: "Beeli — outils internes",
     backToApp: "← Retour à l'application",
     nav: {
@@ -1152,10 +1158,10 @@ export const fr = {
     },
   },
   educator: {
-    panelTitle: "Espace Éducateur",
+    panelTitle: "Éducateur",
     subtitleAdmin: "Toutes les langues",
     subtitleReviewer: "Langues : {{languages}}",
-    adminPanel: "Panneau Admin",
+    adminPanel: "Administration",
     nav: {
       overview: "Vue d'ensemble",
       review: "Révision",
@@ -1239,5 +1245,8 @@ export const fr = {
     withdrawConfirmMessage: "Êtes-vous sûr(e) ? Vous devrez soumettre une nouvelle candidature pour redevenir relecteur.",
     cancelSuccessTitle: "Candidature annulée",
     cancelSuccessMessage: "Votre candidature a été annulée.",
+  },
+  dailyChallenge: {
+    refresh: "Actualiser",
   },
 } as const;
