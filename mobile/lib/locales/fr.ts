@@ -662,6 +662,8 @@ export const fr = {
     needsAudioCount: "Sans audio ({{count}})",
     needsAudioCta: "{{count}} mots ont besoin d'un enregistrement audio",
     needsAudioCtaDesc: "Appuyez sur un mot pour enregistrer sa prononciation et aider la communauté",
+    recentlyViewed: "Consultés récemment",
+    savedProgress: "{{saved}} sur {{total}} mots sauvegardés",
   },
   leaderboard: {
     title: "Classement",
@@ -814,7 +816,10 @@ export const fr = {
     practiceWord: "Pratiquer ce mot",
     saveToWordBank: "Ajouter à la banque",
     savedToWordBank: "Dans la banque",
-    communityLearning: "{{count}} apprenants ont étudié ce mot aujourd'hui",
+    french: "Français",
+    prevWord: "Précédent",
+    nextWord: "Suivant",
+    contributeExpand: "Améliorer ce mot",
   },
   contribute: {
     // Landing

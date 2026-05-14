@@ -2,6 +2,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { analytics } from "@/lib/analytics";
 import { queryClient } from "@/lib/api";
 import { tokenCache } from "@/lib/auth";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSyncUser } from "@/lib/hooks/use-sync-user";
 import "@/lib/i18n";
 import {
@@ -120,7 +121,7 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
             <AuthGate>
-              <View className="flex-1">
+              <GestureHandlerRootView style={{ flex: 1 }}>
                 <Stack>
                   <Stack.Screen name="index" options={{ headerShown: false }} />
                   <Stack.Screen name="(onboarding)/index" options={{ headerShown: false }} />
@@ -155,7 +156,7 @@ export default function RootLayout() {
                   <Stack.Screen name="bounty-create" options={{ presentation: "modal", headerShown: false }} />
                   <Stack.Screen name="word/[id]" options={{ headerBackTitle: "Back" }} />
                 </Stack>
-              </View>
+              </GestureHandlerRootView>
               <StatusBar style="auto" />
             </AuthGate>
           </ThemeProvider>

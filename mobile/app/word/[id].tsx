@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { View, Text, Pressable, ScrollView, ActivityIndicator, TextInput, Alert, Image } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -9,7 +9,9 @@ import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/lib/dictionary";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { useSubmitEntryContribution } from "@/lib/hooks/use-contributions";
 import { useContributionStore } from "@/store/contribution-store";
+import { useDictionaryNavStore } from "@/store/dictionary-nav-store";
 import { useSaveWord, useRemoveWord, useWordBank } from "@/lib/hooks/use-wordbank";
+import { addRecentlyViewed } from "@/lib/hooks/use-recently-viewed";
 import { useTranslation } from "react-i18next";
 
 export default function WordDetailScreen() {
@@ -28,6 +30,12 @@ export default function WordDetailScreen() {
   const saveWord = useSaveWord();
   const removeWord = useRemoveWord();
 
+  const { entryIds, languageId: navLanguageId } = useDictionaryNavStore();
+  const currentIndex = entryIds.indexOf(id);
+  const prevId = currentIndex > 0 ? entryIds[currentIndex - 1] : null;
+  const nextId = currentIndex < entryIds.length - 1 ? entryIds[currentIndex + 1] : null;
+  const hasNavContext = entryIds.length > 0;
+
   const submitEntry = useSubmitEntryContribution();
   const {
     isRecording,
@@ -42,6 +50,15 @@ export default function WordDetailScreen() {
   const [showMeaningInput, setShowMeaningInput] = useState(false);
   const [newMeaning, setNewMeaning] = useState("");
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [showContribute, setShowContribute] = useState(false);
+
+  const entryId = entry?.id;
+  const entryLanguageId = entry?.languageId;
+  useEffect(() => {
+    if (entryId && entryLanguageId) {
+      addRecentlyViewed(entryId, entryLanguageId);
+    }
+  }, [entryId, entryLanguageId]);
 
   const saved = entry ? savedSet.has(entry.id) : false;
 
@@ -150,6 +167,13 @@ export default function WordDetailScreen() {
     });
   };
 
+  const navigateTo = (targetId: string) => {
+    router.replace({
+      pathname: "/word/[id]",
+      params: { id: targetId, languageId: navLanguageId || languageId },
+    });
+  };
+
   if (isLoading) {
     return (
       <>
@@ -183,6 +207,7 @@ export default function WordDetailScreen() {
 
   const categoryLabel = CATEGORY_LABELS[entry.category];
   const categoryIcon = CATEGORY_ICONS[entry.category];
+  const hasContributable = !entry.audioUrl || !entry.imageUrl;
 
   return (
     <>
@@ -241,7 +266,21 @@ export default function WordDetailScreen() {
               );
             })()}
 
-            {/* Audio button — always shown; TTS when no recording */}
+            {/* French translation */}
+            {!!entry.french && (
+              <View className="mt-2 flex-row items-center gap-2">
+                <View className="rounded-full bg-blue-50 px-2 py-0.5 dark:bg-blue-900/30">
+                  <Text className="text-[10px] font-semibold text-blue-500 dark:text-blue-400">
+                    {t("wordDetail.french")}
+                  </Text>
+                </View>
+                <Text className="text-base text-neutral-500 dark:text-neutral-400">
+                  {entry.french}
+                </Text>
+              </View>
+            )}
+
+            {/* Audio button */}
             <View className="mt-5 flex-row items-center gap-3">
               <WordAudioButton
                 audioSource={entry.audioUrl}
@@ -298,16 +337,6 @@ export default function WordDetailScreen() {
             </View>
           )}
 
-          {/* Community learning indicator */}
-          <View className="mx-5 mt-4 flex-row items-center rounded-xl bg-blue-50 px-4 py-3 dark:bg-blue-900/20">
-            <IconSymbol name="person.2.fill" size={16} color="#3b82f6" />
-            <Text className="ml-2 text-sm text-blue-600 dark:text-blue-400">
-              {t("wordDetail.communityLearning", {
-                count: ((entry.word.charCodeAt(0) * 7 + entry.word.length * 3) % 15) + 2,
-              })}
-            </Text>
-          </View>
-
           {/* Actions */}
           <View className="mx-5 mt-8 gap-3">
             <Pressable
@@ -345,190 +374,247 @@ export default function WordDetailScreen() {
             </Pressable>
           </View>
 
-          {/* Contribute section */}
-          <View className="mx-5 mt-8">
-            <Text className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-              {t("entryContribute.title")}
-            </Text>
+          {/* Prev / Next navigation */}
+          {hasNavContext && (
+            <View className="mx-5 mt-5 flex-row gap-3">
+              <Pressable
+                onPress={() => prevId && navigateTo(prevId)}
+                disabled={!prevId}
+                className={`flex-1 flex-row items-center justify-center rounded-xl py-3 ${
+                  prevId
+                    ? "bg-neutral-100 active:opacity-70 dark:bg-neutral-800"
+                    : "opacity-30 bg-neutral-100 dark:bg-neutral-800"
+                }`}
+              >
+                <IconSymbol name="chevron.left" size={14} color="#6b7280" />
+                <Text className="ml-1 text-sm font-medium text-neutral-600 dark:text-neutral-400">
+                  {t("wordDetail.prevWord")}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => nextId && navigateTo(nextId)}
+                disabled={!nextId}
+                className={`flex-1 flex-row items-center justify-center rounded-xl py-3 ${
+                  nextId
+                    ? "bg-neutral-100 active:opacity-70 dark:bg-neutral-800"
+                    : "opacity-30 bg-neutral-100 dark:bg-neutral-800"
+                }`}
+              >
+                <Text className="mr-1 text-sm font-medium text-neutral-600 dark:text-neutral-400">
+                  {t("wordDetail.nextWord")}
+                </Text>
+                <IconSymbol name="chevron.right" size={14} color="#6b7280" />
+              </Pressable>
+            </View>
+          )}
 
-            {/* Record Audio */}
-            {!entry.audioUrl && (
-              <View className="mb-3 rounded-2xl border border-neutral-200 p-4 dark:border-neutral-700">
-                <Text className="mb-1 text-sm font-semibold text-neutral-900 dark:text-white">
-                  {t("entryContribute.recordAudio")}
-                </Text>
-                <Text className="mb-3 text-xs text-neutral-500 dark:text-neutral-400">
-                  {t("entryContribute.recordAudioDesc")}
-                </Text>
-                <View className="items-center">
-                  {recordingUri ? (
-                    <View className="items-center gap-2">
-                      <Pressable
-                        onPress={isPlaying ? stopPlayback : playRecording}
-                        className={`h-14 w-14 items-center justify-center rounded-full ${
-                          isPlaying ? "bg-blue-500" : "bg-emerald-100 dark:bg-emerald-900"
-                        }`}
-                      >
-                        <IconSymbol
-                          name={isPlaying ? "stop.fill" : "play.fill"}
-                          size={22}
-                          color={isPlaying ? "#fff" : "#10b981"}
-                        />
-                      </Pressable>
-                      <Text className="text-sm text-green-600 dark:text-green-400">
-                        {t("contribute.recordingSaved")}
+          {/* Contribute section — collapsible */}
+          {hasContributable && (
+            <View className="mx-5 mt-8">
+              <Pressable
+                onPress={() => setShowContribute((v) => !v)}
+                className="flex-row items-center justify-between rounded-2xl border border-neutral-200 px-4 py-3.5 active:opacity-80 dark:border-neutral-700"
+              >
+                <View className="flex-row items-center">
+                  <IconSymbol name="plus.circle.fill" size={18} color="#3b82f6" />
+                  <Text className="ml-2 text-base font-medium text-blue-600 dark:text-blue-400">
+                    {t("wordDetail.contributeExpand")}
+                  </Text>
+                </View>
+                <IconSymbol
+                  name={showContribute ? "chevron.up" : "chevron.down"}
+                  size={14}
+                  color="#9ca3af"
+                />
+              </Pressable>
+
+              {showContribute && (
+                <View className="mt-3 gap-3">
+                  <Text className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                    {t("entryContribute.title")}
+                  </Text>
+
+                  {/* Record Audio */}
+                  {!entry.audioUrl && (
+                    <View className="rounded-2xl border border-neutral-200 p-4 dark:border-neutral-700">
+                      <Text className="mb-1 text-sm font-semibold text-neutral-900 dark:text-white">
+                        {t("entryContribute.recordAudio")}
                       </Text>
+                      <Text className="mb-3 text-xs text-neutral-500 dark:text-neutral-400">
+                        {t("entryContribute.recordAudioDesc")}
+                      </Text>
+                      <View className="items-center">
+                        {recordingUri ? (
+                          <View className="items-center gap-2">
+                            <Pressable
+                              onPress={isPlaying ? stopPlayback : playRecording}
+                              className={`h-14 w-14 items-center justify-center rounded-full ${
+                                isPlaying ? "bg-blue-500" : "bg-emerald-100 dark:bg-emerald-900"
+                              }`}
+                            >
+                              <IconSymbol
+                                name={isPlaying ? "stop.fill" : "play.fill"}
+                                size={22}
+                                color={isPlaying ? "#fff" : "#10b981"}
+                              />
+                            </Pressable>
+                            <Text className="text-sm text-green-600 dark:text-green-400">
+                              {t("contribute.recordingSaved")}
+                            </Text>
+                            <View className="flex-row gap-2">
+                              <Pressable
+                                onPress={() => discardRecording()}
+                                className="rounded-lg bg-neutral-200 px-4 py-2 dark:bg-neutral-700"
+                              >
+                                <Text className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                                  {t("contribute.reRecord")}
+                                </Text>
+                              </Pressable>
+                              <Pressable
+                                onPress={handleSubmitAudio}
+                                disabled={submitEntry.isPending}
+                                className="rounded-lg bg-blue-500 px-4 py-2"
+                              >
+                                <Text className="text-sm font-medium text-white">
+                                  {submitEntry.isPending ? t("contribute.submitting") : t("common.submit")}
+                                </Text>
+                              </Pressable>
+                            </View>
+                          </View>
+                        ) : (
+                          <>
+                            <Pressable
+                              onPress={isRecording ? stopRecording : startRecording}
+                              className={`h-14 w-14 items-center justify-center rounded-full ${
+                                isRecording ? "bg-red-500" : "bg-red-100 dark:bg-red-900"
+                              }`}
+                            >
+                              {isRecording ? (
+                                <View className="h-5 w-5 rounded-sm bg-white" />
+                              ) : (
+                                <IconSymbol name="mic.fill" size={22} color="#ef4444" />
+                              )}
+                            </Pressable>
+                            <Text className="mt-2 text-xs text-neutral-400 dark:text-neutral-500">
+                              {isRecording
+                                ? t("contribute.recordingTapToStop")
+                                : t("entryContribute.tapToRecord")}
+                            </Text>
+                          </>
+                        )}
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Add Image */}
+                  {!entry.imageUrl && (
+                    <View className="rounded-2xl border border-neutral-200 p-4 dark:border-neutral-700">
+                      <Text className="mb-1 text-sm font-semibold text-neutral-900 dark:text-white">
+                        {t("entryContribute.addImage")}
+                      </Text>
+                      <Text className="mb-3 text-xs text-neutral-500 dark:text-neutral-400">
+                        {t("entryContribute.addImageDesc")}
+                      </Text>
+                      {imageUri ? (
+                        <View className="items-center gap-3">
+                          <Image
+                            source={{ uri: imageUri }}
+                            className="h-40 w-full rounded-xl"
+                            resizeMode="cover"
+                          />
+                          <View className="flex-row gap-2">
+                            <Pressable
+                              onPress={() => setImageUri(null)}
+                              className="rounded-lg bg-neutral-200 px-4 py-2 dark:bg-neutral-700"
+                            >
+                              <Text className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                                {t("common.cancel")}
+                              </Text>
+                            </Pressable>
+                            <Pressable
+                              onPress={handleSubmitImage}
+                              disabled={submitEntry.isPending}
+                              className="rounded-lg bg-blue-500 px-4 py-2"
+                            >
+                              <Text className="text-sm font-medium text-white">
+                                {submitEntry.isPending ? t("contribute.submitting") : t("common.submit")}
+                              </Text>
+                            </Pressable>
+                          </View>
+                        </View>
+                      ) : (
+                        <Pressable
+                          onPress={handlePickImage}
+                          className="items-center gap-2 rounded-xl border border-dashed border-neutral-300 py-6 dark:border-neutral-600"
+                        >
+                          <IconSymbol name="photo.badge.plus" size={28} color="#9ca3af" />
+                          <Text className="text-sm text-neutral-400 dark:text-neutral-500">
+                            {t("entryContribute.tapToPickImage")}
+                          </Text>
+                        </Pressable>
+                      )}
+                    </View>
+                  )}
+
+                  {/* Add Meaning */}
+                  {showMeaningInput ? (
+                    <View className="rounded-2xl border border-neutral-200 p-4 dark:border-neutral-700">
+                      <Text className="mb-1 text-sm font-semibold text-neutral-900 dark:text-white">
+                        {t("entryContribute.addMeaning")}
+                      </Text>
+                      <Text className="mb-3 text-xs text-neutral-500 dark:text-neutral-400">
+                        {t("entryContribute.addMeaningDesc")}
+                      </Text>
+                      <TextInput
+                        value={newMeaning}
+                        onChangeText={setNewMeaning}
+                        placeholder={t("entryContribute.meaningPlaceholder")}
+                        placeholderTextColor="#9ca3af"
+                        className="mb-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                        autoFocus
+                      />
                       <View className="flex-row gap-2">
                         <Pressable
-                          onPress={() => discardRecording()}
-                          className="rounded-lg bg-neutral-200 px-4 py-2 dark:bg-neutral-700"
+                          onPress={() => {
+                            setShowMeaningInput(false);
+                            setNewMeaning("");
+                          }}
+                          className="flex-1 items-center rounded-xl bg-neutral-100 py-3 dark:bg-neutral-800"
                         >
-                          <Text className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                            {t("contribute.reRecord")}
+                          <Text className="font-semibold text-neutral-700 dark:text-neutral-300">
+                            {t("common.cancel")}
                           </Text>
                         </Pressable>
                         <Pressable
-                          onPress={handleSubmitAudio}
-                          disabled={submitEntry.isPending}
-                          className="rounded-lg bg-blue-500 px-4 py-2"
+                          onPress={handleSubmitMeaning}
+                          disabled={!newMeaning.trim() || submitEntry.isPending}
+                          className={`flex-1 items-center rounded-xl py-3 ${
+                            newMeaning.trim() && !submitEntry.isPending
+                              ? "bg-blue-500"
+                              : "bg-blue-300 dark:bg-blue-800"
+                          }`}
                         >
-                          <Text className="text-sm font-medium text-white">
+                          <Text className="font-semibold text-white">
                             {submitEntry.isPending ? t("contribute.submitting") : t("common.submit")}
                           </Text>
                         </Pressable>
                       </View>
                     </View>
                   ) : (
-                    <>
-                      <Pressable
-                        onPress={isRecording ? stopRecording : startRecording}
-                        className={`h-14 w-14 items-center justify-center rounded-full ${
-                          isRecording ? "bg-red-500" : "bg-red-100 dark:bg-red-900"
-                        }`}
-                      >
-                        {isRecording ? (
-                          <View className="h-5 w-5 rounded-sm bg-white" />
-                        ) : (
-                          <IconSymbol name="mic.fill" size={22} color="#ef4444" />
-                        )}
-                      </Pressable>
-                      <Text className="mt-2 text-xs text-neutral-400 dark:text-neutral-500">
-                        {isRecording
-                          ? t("contribute.recordingTapToStop")
-                          : t("entryContribute.tapToRecord")}
+                    <Pressable
+                      onPress={() => setShowMeaningInput(true)}
+                      className="flex-row items-center rounded-2xl border border-neutral-200 px-4 py-3.5 active:opacity-80 dark:border-neutral-700"
+                    >
+                      <IconSymbol name="plus.circle.fill" size={20} color="#3b82f6" />
+                      <Text className="ml-2 text-base font-medium text-blue-600 dark:text-blue-400">
+                        {t("entryContribute.addMeaning")}
                       </Text>
-                    </>
+                    </Pressable>
                   )}
                 </View>
-              </View>
-            )}
-
-            {/* Add Image */}
-            {!entry.imageUrl && (
-              <View className="mb-3 rounded-2xl border border-neutral-200 p-4 dark:border-neutral-700">
-                <Text className="mb-1 text-sm font-semibold text-neutral-900 dark:text-white">
-                  {t("entryContribute.addImage")}
-                </Text>
-                <Text className="mb-3 text-xs text-neutral-500 dark:text-neutral-400">
-                  {t("entryContribute.addImageDesc")}
-                </Text>
-                {imageUri ? (
-                  <View className="items-center gap-3">
-                    <Image
-                      source={{ uri: imageUri }}
-                      className="h-40 w-full rounded-xl"
-                      resizeMode="cover"
-                    />
-                    <View className="flex-row gap-2">
-                      <Pressable
-                        onPress={() => setImageUri(null)}
-                        className="rounded-lg bg-neutral-200 px-4 py-2 dark:bg-neutral-700"
-                      >
-                        <Text className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                          {t("common.cancel")}
-                        </Text>
-                      </Pressable>
-                      <Pressable
-                        onPress={handleSubmitImage}
-                        disabled={submitEntry.isPending}
-                        className="rounded-lg bg-blue-500 px-4 py-2"
-                      >
-                        <Text className="text-sm font-medium text-white">
-                          {submitEntry.isPending ? t("contribute.submitting") : t("common.submit")}
-                        </Text>
-                      </Pressable>
-                    </View>
-                  </View>
-                ) : (
-                  <Pressable
-                    onPress={handlePickImage}
-                    className="items-center gap-2 rounded-xl border border-dashed border-neutral-300 py-6 dark:border-neutral-600"
-                  >
-                    <IconSymbol name="photo.badge.plus" size={28} color="#9ca3af" />
-                    <Text className="text-sm text-neutral-400 dark:text-neutral-500">
-                      {t("entryContribute.tapToPickImage")}
-                    </Text>
-                  </Pressable>
-                )}
-              </View>
-            )}
-
-            {/* Add Meaning */}
-            {showMeaningInput ? (
-              <View className="mb-3 rounded-2xl border border-neutral-200 p-4 dark:border-neutral-700">
-                <Text className="mb-1 text-sm font-semibold text-neutral-900 dark:text-white">
-                  {t("entryContribute.addMeaning")}
-                </Text>
-                <Text className="mb-3 text-xs text-neutral-500 dark:text-neutral-400">
-                  {t("entryContribute.addMeaningDesc")}
-                </Text>
-                <TextInput
-                  value={newMeaning}
-                  onChangeText={setNewMeaning}
-                  placeholder={t("entryContribute.meaningPlaceholder")}
-                  placeholderTextColor="#9ca3af"
-                  className="mb-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-                  autoFocus
-                />
-                <View className="flex-row gap-2">
-                  <Pressable
-                    onPress={() => {
-                      setShowMeaningInput(false);
-                      setNewMeaning("");
-                    }}
-                    className="flex-1 items-center rounded-xl bg-neutral-100 py-3 dark:bg-neutral-800"
-                  >
-                    <Text className="font-semibold text-neutral-700 dark:text-neutral-300">
-                      {t("common.cancel")}
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={handleSubmitMeaning}
-                    disabled={!newMeaning.trim() || submitEntry.isPending}
-                    className={`flex-1 items-center rounded-xl py-3 ${
-                      newMeaning.trim() && !submitEntry.isPending
-                        ? "bg-blue-500"
-                        : "bg-blue-300 dark:bg-blue-800"
-                    }`}
-                  >
-                    <Text className="font-semibold text-white">
-                      {submitEntry.isPending ? t("contribute.submitting") : t("common.submit")}
-                    </Text>
-                  </Pressable>
-                </View>
-              </View>
-            ) : (
-              <Pressable
-                onPress={() => setShowMeaningInput(true)}
-                className="mb-3 flex-row items-center rounded-2xl border border-neutral-200 px-4 py-3.5 active:opacity-80 dark:border-neutral-700"
-              >
-                <IconSymbol name="plus.circle.fill" size={20} color="#3b82f6" />
-                <Text className="ml-2 text-base font-medium text-blue-600 dark:text-blue-400">
-                  {t("entryContribute.addMeaning")}
-                </Text>
-              </Pressable>
-            )}
-          </View>
+              )}
+            </View>
+          )}
         </ScrollView>
       </SafeAreaView>
     </>

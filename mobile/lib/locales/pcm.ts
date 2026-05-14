@@ -662,6 +662,8 @@ export const pcm = {
     needsAudioCount: "Needs Audio ({{count}})",
     needsAudioCta: "{{count}} words need pronunciation audio",
     needsAudioCtaDesc: "Press any word to record its pronunciation and help community",
+    recentlyViewed: "Recently Viewed",
+    savedProgress: "{{saved}} of {{total}} words saved",
   },
   leaderboard: {
     title: "Leaderboard",
@@ -814,7 +816,10 @@ export const pcm = {
     practiceWord: "Practice this word",
     saveToWordBank: "Save to Word Bank",
     savedToWordBank: "Saved to Word Bank",
-    communityLearning: "{{count}} learners study this word today",
+    french: "French",
+    prevWord: "Previous",
+    nextWord: "Next",
+    contributeExpand: "Help improve this word",
   },
   contribute: {
     // Landing

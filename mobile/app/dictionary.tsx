@@ -6,74 +6,180 @@ import {
   type DictionaryCategory,
   type DictionaryEntry,
 } from "@/lib/dictionary";
+import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
+import { useRecentlyViewed } from "@/lib/hooks/use-recently-viewed";
 import { useRemoveWord, useSaveWord, useWordBank } from "@/lib/hooks/use-wordbank";
+import { useDictionaryNavStore } from "@/store/dictionary-nav-store";
 import { useLanguageStore } from "@/store/language-store";
 import { Stack, useRouter } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Pressable,
   RefreshControl,
+  ScrollView,
   SectionList,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type ViewMode = "all" | "saved" | "needs_audio";
 
+type Section = {
+  title: string;
+  category: DictionaryCategory;
+  data: DictionaryEntry[];
+};
+
+function SwipeActions({
+  saved,
+  onToggle,
+  side,
+}: {
+  saved: boolean;
+  onToggle: () => void;
+  side: "left" | "right";
+}) {
+  if (side === "right" && saved) return null;
+  if (side === "left" && !saved) return null;
+
+  return (
+    <Pressable
+      onPress={onToggle}
+      className={`w-16 items-center justify-center ${
+        side === "right" ? "bg-amber-400" : "bg-neutral-200 dark:bg-neutral-700"
+      }`}
+    >
+      <IconSymbol
+        name={side === "right" ? "star.fill" : "star.slash"}
+        size={22}
+        color={side === "right" ? "#fff" : "#9ca3af"}
+      />
+    </Pressable>
+  );
+}
+
 function WordRow({
   entry,
   saved,
+  isEducator,
   onToggle,
   onPress,
 }: {
   entry: DictionaryEntry;
   saved: boolean;
+  isEducator: boolean;
   onToggle: () => void;
   onPress: () => void;
 }) {
   const { t } = useTranslation();
   const hasAudio = !!entry.audioUrl;
+  const swipeRef = useRef<Swipeable>(null);
+
+  const handleToggle = () => {
+    onToggle();
+    swipeRef.current?.close();
+  };
 
   return (
-    <Pressable
-      onPress={onPress}
-      className="border-b border-neutral-100 px-5 py-3 active:bg-neutral-50 dark:border-neutral-800 dark:active:bg-neutral-800/60"
+    <Swipeable
+      ref={swipeRef}
+      renderRightActions={() =>
+        !saved ? (
+          <SwipeActions saved={saved} onToggle={handleToggle} side="right" />
+        ) : null
+      }
+      renderLeftActions={() =>
+        saved ? (
+          <SwipeActions saved={saved} onToggle={handleToggle} side="left" />
+        ) : null
+      }
+      overshootRight={false}
+      overshootLeft={false}
+      onSwipeableOpen={(direction) => {
+        if (direction === "right" && !saved) handleToggle();
+        if (direction === "left" && saved) handleToggle();
+      }}
     >
-      <View className="flex-row items-center">
-        <View className="flex-1">
-          <View className="flex-row items-center gap-1.5">
-            <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+      <Pressable
+        onPress={onPress}
+        className="border-b border-neutral-100 bg-white px-5 py-3 active:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:active:bg-neutral-800/60"
+      >
+        <View className="flex-row items-center">
+          <View className="flex-1">
+            <View className="flex-row items-center gap-1.5">
+              <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+                {entry.word}
+              </Text>
+              {isEducator && !hasAudio && (
+                <View className="rounded bg-orange-100 px-1.5 py-0.5 dark:bg-orange-900/30">
+                  <Text className="text-[10px] font-semibold text-orange-600 dark:text-orange-400">
+                    {t("dictionaryPage.needsAudio")}
+                  </Text>
+                </View>
+              )}
+            </View>
+            <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
+              {entry.english.includes(";")
+                ? entry.english.split(";").map((m) => m.trim()).filter(Boolean).join(" · ")
+                : entry.english}
+            </Text>
+          </View>
+          <WordAudioButton audioSource={entry.audioUrl} word={entry.word} />
+          <Pressable onPress={onToggle} hitSlop={8} className="ml-1">
+            <IconSymbol
+              name={saved ? "star.fill" : "star"}
+              size={20}
+              color={saved ? "#f59e0b" : "#d1d5db"}
+            />
+          </Pressable>
+        </View>
+      </Pressable>
+    </Swipeable>
+  );
+}
+
+function RecentlyViewedStrip({
+  entries,
+  onPress,
+}: {
+  entries: DictionaryEntry[];
+  onPress: (entry: DictionaryEntry) => void;
+}) {
+  const { t } = useTranslation();
+  if (entries.length === 0) return null;
+
+  return (
+    <View className="border-b border-neutral-100 py-3 dark:border-neutral-800">
+      <Text className="mb-2 px-5 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+        {t("dictionaryPage.recentlyViewed")}
+      </Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
+      >
+        {entries.map((entry) => (
+          <Pressable
+            key={entry.id}
+            onPress={() => onPress(entry)}
+            className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 active:opacity-70 dark:border-neutral-700 dark:bg-neutral-800"
+          >
+            <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
               {entry.word}
             </Text>
-            {!hasAudio && (
-              <View className="rounded bg-orange-100 px-1.5 py-0.5 dark:bg-orange-900/30">
-                <Text className="text-[10px] font-semibold text-orange-600 dark:text-orange-400">
-                  {t("dictionaryPage.needsAudio")}
-                </Text>
-              </View>
-            )}
-          </View>
-          <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
-            {entry.english.includes(";")
-              ? entry.english.split(";").map((m) => m.trim()).filter(Boolean).join(" · ")
-              : entry.english}
-          </Text>
-        </View>
-        <WordAudioButton audioSource={entry.audioUrl} word={entry.word} />
-        <Pressable onPress={onToggle} hitSlop={8} className="ml-1">
-          <IconSymbol
-            name={saved ? "star.fill" : "star"}
-            size={20}
-            color={saved ? "#f59e0b" : "#d1d5db"}
-          />
-        </Pressable>
-      </View>
-    </Pressable>
+            <Text className="text-xs text-neutral-500 dark:text-neutral-400">
+              {entry.english.split(";")[0].trim()}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+    </View>
   );
 }
 
@@ -82,12 +188,17 @@ export default function DictionaryScreen() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("all");
+  const [selectedCategory, setSelectedCategory] = useState<DictionaryCategory | null>(null);
   const { data: savedIds } = useWordBank();
   const saveWord = useSaveWord();
   const removeWord = useRemoveWord();
   const { selectedLanguageId } = useLanguageStore();
   const { data: allEntries = [], isLoading, refetch } = useDictionary(selectedLanguageId);
   const [refreshing, setRefreshing] = useState(false);
+  const { data: currentUser } = useCurrentUser();
+  const isEducator = !!(currentUser && canAccessEducatorPanel(currentUser));
+  const setNavContext = useDictionaryNavStore((s) => s.setContext);
+  const recentIds = useRecentlyViewed();
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -95,7 +206,7 @@ export default function DictionaryScreen() {
     setRefreshing(false);
   }, [refetch]);
 
-  const savedSet = new Set(savedIds ?? []);
+  const savedSet = useMemo(() => new Set(savedIds ?? []), [savedIds]);
 
   const handleToggle = (entryId: string) => {
     if (savedSet.has(entryId)) {
@@ -105,11 +216,9 @@ export default function DictionaryScreen() {
     }
   };
 
-  const sections = useMemo(() => {
+  const sections = useMemo<Section[]>(() => {
     const filtered =
-      query.trim().length > 0
-        ? searchDictionary(query, allEntries)
-        : allEntries;
+      query.trim().length > 0 ? searchDictionary(query, allEntries) : allEntries;
 
     const entries =
       viewMode === "saved"
@@ -118,41 +227,63 @@ export default function DictionaryScreen() {
           ? filtered.filter((e) => !e.audioUrl)
           : filtered;
 
-    // Group by category
+    const categoryFiltered =
+      selectedCategory ? entries.filter((e) => e.category === selectedCategory) : entries;
+
     const grouped = new Map<DictionaryCategory, DictionaryEntry[]>();
-    for (const e of entries) {
+    for (const e of categoryFiltered) {
       const existing = grouped.get(e.category) ?? [];
       existing.push(e);
       grouped.set(e.category, existing);
     }
 
-    // Sort categories by predefined order
     type CategoryI18nKey = `dictionaryPage.categoryLabels.${DictionaryCategory}`;
-    return ALL_CATEGORIES
-      .filter((cat) => grouped.has(cat))
-      .map((cat) => ({
-        title: t(`dictionaryPage.categoryLabels.${cat}` as CategoryI18nKey),
-        data: grouped.get(cat)!,
-      }));
-  }, [query, viewMode, allEntries, savedIds, t]);
+    return ALL_CATEGORIES.filter((cat) => grouped.has(cat)).map((cat) => ({
+      title: t(`dictionaryPage.categoryLabels.${cat}` as CategoryI18nKey),
+      category: cat,
+      data: grouped.get(cat)!,
+    }));
+  }, [query, viewMode, selectedCategory, allEntries, savedSet, t]);
 
   const savedCount = allEntries.filter((e) => savedSet.has(e.id)).length;
   const needsAudioCount = allEntries.filter((e) => !e.audioUrl).length;
 
+  const recentEntries = useMemo(() => {
+    return recentIds
+      .map(({ id }) => allEntries.find((e) => e.id === id))
+      .filter((e): e is DictionaryEntry => !!e)
+      .slice(0, 5);
+  }, [recentIds, allEntries]);
+
+  const presentCategories = useMemo(
+    () => sections.map((s) => ({ category: s.category, title: s.title })),
+    [sections]
+  );
+
+  const handleWordPress = useCallback(
+    (item: DictionaryEntry) => {
+      const allIds = sections.flatMap((s) => s.data.map((e) => e.id));
+      setNavContext(allIds, item.id, item.languageId);
+      router.push({ pathname: "/word/[id]", params: { id: item.id, languageId: item.languageId } });
+    },
+    [sections, setNavContext, router]
+  );
+
+  const handleCategoryChip = (cat: DictionaryCategory) => {
+    setSelectedCategory((prev) => (prev === cat ? null : cat));
+  };
+
   return (
     <>
       <Stack.Screen options={{ title: "Dictionary", headerBackTitle: "Back" }} />
-      <SafeAreaView
-        className="flex-1 bg-white dark:bg-neutral-900"
-        edges={[]}
-      >
+      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
         {/* Search bar */}
         <View className="border-b border-neutral-200 px-5 pb-3 pt-2 dark:border-neutral-700">
           <View className="flex-row items-center rounded-xl bg-neutral-100 px-3 dark:bg-neutral-800">
             <IconSymbol name="magnifyingglass" size={18} color="#9ca3af" />
             <TextInput
               value={query}
-              onChangeText={setQuery}
+              onChangeText={(v) => { setQuery(v); setSelectedCategory(null); }}
               placeholder={t("dictionaryPage.searchPlaceholderMobile")}
               placeholderTextColor="#9ca3af"
               className="ml-2 flex-1 py-2.5 text-base text-neutral-900 dark:text-white"
@@ -166,21 +297,17 @@ export default function DictionaryScreen() {
             )}
           </View>
 
-          {/* View toggle */}
+          {/* View toggle — All / My Words / Needs Audio (educator only) */}
           <View className="mt-3 flex-row gap-2">
             <Pressable
               onPress={() => setViewMode("all")}
               className={`flex-1 items-center rounded-lg py-2 ${
-                viewMode === "all"
-                  ? "bg-blue-500"
-                  : "bg-neutral-100 dark:bg-neutral-800"
+                viewMode === "all" ? "bg-blue-500" : "bg-neutral-100 dark:bg-neutral-800"
               }`}
             >
               <Text
                 className={`text-sm font-semibold ${
-                  viewMode === "all"
-                    ? "text-white"
-                    : "text-neutral-600 dark:text-neutral-400"
+                  viewMode === "all" ? "text-white" : "text-neutral-600 dark:text-neutral-400"
                 }`}
               >
                 {t("dictionaryPage.allWordsCount", { count: allEntries.length })}
@@ -189,22 +316,18 @@ export default function DictionaryScreen() {
             <Pressable
               onPress={() => setViewMode("saved")}
               className={`flex-1 items-center rounded-lg py-2 ${
-                viewMode === "saved"
-                  ? "bg-amber-500"
-                  : "bg-neutral-100 dark:bg-neutral-800"
+                viewMode === "saved" ? "bg-amber-500" : "bg-neutral-100 dark:bg-neutral-800"
               }`}
             >
               <Text
                 className={`text-sm font-semibold ${
-                  viewMode === "saved"
-                    ? "text-white"
-                    : "text-neutral-600 dark:text-neutral-400"
+                  viewMode === "saved" ? "text-white" : "text-neutral-600 dark:text-neutral-400"
                 }`}
               >
                 {t("dictionaryPage.myWordsCount", { count: savedCount })}
               </Text>
             </Pressable>
-            {needsAudioCount > 0 && (
+            {isEducator && needsAudioCount > 0 && (
               <Pressable
                 onPress={() => setViewMode("needs_audio")}
                 className={`flex-1 items-center rounded-lg py-2 ${
@@ -226,7 +349,7 @@ export default function DictionaryScreen() {
             )}
           </View>
 
-          {/* Review CTA — visible when viewing saved words */}
+          {/* Review CTA */}
           {viewMode === "saved" && savedCount > 0 && (
             <Pressable
               onPress={() => router.push("/word-review")}
@@ -239,8 +362,8 @@ export default function DictionaryScreen() {
             </Pressable>
           )}
 
-          {/* Contribute CTA — visible when viewing needs_audio */}
-          {viewMode === "needs_audio" && needsAudioCount > 0 && (
+          {/* Contribute CTA — educator only */}
+          {isEducator && viewMode === "needs_audio" && needsAudioCount > 0 && (
             <View className="mt-3 rounded-xl bg-orange-50 px-4 py-3 dark:bg-orange-900/20">
               <Text className="text-sm font-medium text-orange-800 dark:text-orange-200">
                 {t("dictionaryPage.needsAudioCta", { count: needsAudioCount })}
@@ -252,13 +375,64 @@ export default function DictionaryScreen() {
           )}
         </View>
 
+        {/* Category chip row */}
+        {!isLoading && presentCategories.length > 0 && (
+          <View className="border-b border-neutral-100 dark:border-neutral-800">
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}
+            >
+              <Pressable
+                key="all"
+                onPress={() => setSelectedCategory(null)}
+                className={`rounded-full px-3.5 py-1.5 ${
+                  selectedCategory === null
+                    ? "bg-blue-500"
+                    : "bg-neutral-100 dark:bg-neutral-800"
+                }`}
+              >
+                <Text
+                  className={`text-xs font-semibold ${
+                    selectedCategory === null
+                      ? "text-white"
+                      : "text-neutral-600 dark:text-neutral-400"
+                  }`}
+                >
+                  {t("dictionaryPage.allCategory")}
+                </Text>
+              </Pressable>
+              {presentCategories.map(({ category, title }) => (
+                <Pressable
+                  key={category}
+                  onPress={() => handleCategoryChip(category)}
+                  className={`rounded-full px-3.5 py-1.5 ${
+                    selectedCategory === category
+                      ? "bg-blue-500"
+                      : "bg-neutral-100 dark:bg-neutral-800"
+                  }`}
+                >
+                  <Text
+                    className={`text-xs font-semibold ${
+                      selectedCategory === category
+                        ? "text-white"
+                        : "text-neutral-600 dark:text-neutral-400"
+                    }`}
+                  >
+                    {title}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
         {/* Loading state */}
         {isLoading ? (
           <View className="flex-1 items-center justify-center">
             <ActivityIndicator size="large" color="#3b82f6" />
           </View>
         ) : (
-          /* Word list */
           <SectionList
             sections={sections}
             keyExtractor={(item) => item.id}
@@ -267,6 +441,21 @@ export default function DictionaryScreen() {
             keyboardShouldPersistTaps="handled"
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+            ListHeaderComponent={
+              query === "" && viewMode === "all" && recentEntries.length > 0 ? (
+                <RecentlyViewedStrip
+                  entries={recentEntries}
+                  onPress={(entry) => {
+                    const allIds = sections.flatMap((s) => s.data.map((e) => e.id));
+                    setNavContext(allIds, entry.id, entry.languageId);
+                    router.push({
+                      pathname: "/word/[id]",
+                      params: { id: entry.id, languageId: entry.languageId },
+                    });
+                  }}
+                />
+              ) : null
             }
             renderSectionHeader={({ section }) => (
               <View className="bg-neutral-50 px-5 py-2 dark:bg-neutral-800/80">
@@ -279,13 +468,9 @@ export default function DictionaryScreen() {
               <WordRow
                 entry={item}
                 saved={savedSet.has(item.id)}
+                isEducator={isEducator}
                 onToggle={() => handleToggle(item.id)}
-                onPress={() =>
-                  router.push({
-                    pathname: "/word/[id]",
-                    params: { id: item.id, languageId: item.languageId },
-                  })
-                }
+                onPress={() => handleWordPress(item)}
               />
             )}
             ListEmptyComponent={
