@@ -13,7 +13,7 @@ import { formatDuration } from "@/lib/mock-data";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 
-export function AudioPlayer({ compact = false }: { compact?: boolean }) {
+export function AudioPlayer({ compact = false, position = "bottom", onPress }: { compact?: boolean; position?: "top" | "bottom"; onPress?: () => void }) {
   const {
     isPlaying,
     isLoading,
@@ -53,7 +53,7 @@ export function AudioPlayer({ compact = false }: { compact?: boolean }) {
 
   if (compact) {
     return (
-      <View className="border-t border-neutral-200 bg-white px-4 py-2 dark:border-neutral-700 dark:bg-neutral-900">
+      <View className={`bg-white px-4 py-2 dark:bg-neutral-900 ${position === "top" ? "border-b border-neutral-200 dark:border-neutral-700" : "border-t border-neutral-200 dark:border-neutral-700"}`}>
         <View className="flex-row items-center">
           <Pressable onPress={togglePlayback} className="mr-3" hitSlop={8}>
             {isLoading ? (
@@ -67,18 +67,22 @@ export function AudioPlayer({ compact = false }: { compact?: boolean }) {
             )}
           </Pressable>
           <View className="flex-1">
-            <Text
-              className="text-sm font-medium text-neutral-900 dark:text-white"
-              numberOfLines={1}
-            >
-              {currentTrackTitle ?? "Now Playing"}
-            </Text>
-            <View className="mt-1 h-1 rounded-full bg-neutral-200 dark:bg-neutral-700">
-              <View
-                className="h-1 rounded-full bg-blue-500"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </View>
+            <Pressable onPress={onPress} disabled={!onPress}>
+              <Text
+                className="text-sm font-medium text-neutral-900 dark:text-white"
+                numberOfLines={1}
+              >
+                {currentTrackTitle ?? "Now Playing"}
+              </Text>
+            </Pressable>
+            <Pressable onPress={handleSeek} onLayout={onBarLayout} className="mt-1 py-1">
+              <View className="h-1 rounded-full bg-neutral-200 dark:bg-neutral-700">
+                <View
+                  className="h-1 rounded-full bg-blue-500"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </View>
+            </Pressable>
           </View>
           <Text className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">
             {formatDuration(progress)}

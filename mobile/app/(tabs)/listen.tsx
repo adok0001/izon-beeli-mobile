@@ -5,14 +5,17 @@ import { LanguagePickerButton } from "@/components/language-picker";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { WordOfTheDay } from "@/components/word-of-the-day";
 import { ALL_LESSONS } from "@/lib/data/lessons";
+import { useCourses } from "@/lib/hooks/use-courses";
 import { useProverbs } from "@/lib/hooks/use-proverbs";
 import { useWordsDueForReview } from "@/lib/hooks/use-wordbank";
 import { useLanguageStore } from "@/store/language-store";
-import { useCourses } from "@/lib/hooks/use-courses";
+// TODO: Legacy tour import (soft-retired) — remove after full deprecation
+import { useTourStore } from "@/store/tour-store";
+import { useIsFocused } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -130,11 +133,18 @@ export default function PracticeScreen() {
   const { selectedLanguageId } = useLanguageStore();
   const { t } = useTranslation();
   const { data: dueWords = [] } = useWordsDueForReview();
+  const showTour = useTourStore((s) => s.showTour);
+  const hasSeen = useTourStore((s) => s.hasSeen);
+  const activeTour = useTourStore((s) => s.activeTour);
+  const isFocused = useIsFocused();
 
   const hasScriptPractice =
     ["amharic", "tigrinya", "oromo"].includes(selectedLanguageId);
   const hasAdinkra = ["ga", "ewe", "dagbani"].includes(selectedLanguageId);
   const hasAkan = selectedLanguageId === "akan";
+
+  // TODO: Legacy tour trigger (soft-retired) — remove after full deprecation
+  // showTour('practice') is disabled; welcome checklist now handles onboarding
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
@@ -227,7 +237,7 @@ export default function PracticeScreen() {
         </Section>
 
         {/* ── Culture & Music ── */}
-        <Section title={t("practice.sectionCulture")} defaultOpen={false}>
+        <Section title={t("practice.sectionCulture")} defaultOpen>
           <SongsCard languageId={selectedLanguageId} />
           <ProverbsCard languageId={selectedLanguageId} />
           <CulturalSection

@@ -5,6 +5,7 @@ import { hapticSuccess } from "@/lib/haptics";
 import { ACTIVE_LANGUAGES } from "@/lib/mock-data";
 import { playCorrectSound } from "@/lib/sounds";
 import { useLanguageStore } from "@/store/language-store";
+import { useTourStore } from "@/store/tour-store";
 import { useAuth } from "@clerk/clerk-expo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Audio } from "expo-av";
@@ -68,6 +69,7 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const { getToken } = useAuth();
   const { setLanguage } = useLanguageStore();
+  const showTour = useTourStore((s) => s.showTour);
 
   const [step, setStep] = useState<Step>("language");
   const [selectedLangId, setSelectedLangId] = useState("izon");
@@ -155,9 +157,11 @@ export default function OnboardingScreen() {
         }).catch(() => {});
       }
       await AsyncStorage.setItem(ONBOARDING_KEY, "1");
+      showTour("welcome");
       router.replace("/(tabs)/learn");
     } catch {
       await AsyncStorage.setItem(ONBOARDING_KEY, "1");
+      showTour("welcome");
       router.replace("/(tabs)/learn");
     } finally {
       setSaving(false);

@@ -19,14 +19,32 @@ export const metadata: Metadata = {
   },
 };
 
-const FAQS = [
+type FaqItem = {
+  q: string;
+  a: string | string[];
+};
+
+const FAQS: FaqItem[] = [
   {
     q: "How do I reset my learning progress?",
     a: "Go to Profile → Settings → Data → Reset Progress. This will clear all lesson completions, XP, and streaks. This action cannot be undone.",
   },
   {
     q: "How does the streak system work?",
-    a: "Your streak increases by 1 each day you complete at least one lesson or quiz. Missing a day resets the streak to 0. You can use a Streak Freeze (earned via XP) to protect your streak for one missed day.",
+    a: [
+      "Your streak increases by 1 for each day you complete at least one qualifying action.",
+      "Qualifying actions are completing a lesson or completing a quiz.",
+      "Listening to lesson audio without completing the lesson does not count.",
+      "Multiple completions on the same day still count as one streak day only.",
+      "If you miss a day, your streak resets to 0 unless a Streak Freeze is applied.",
+    ],
+  },
+  {
+    q: "What is the simplest way to keep my streak alive every day?",
+    a: [
+      "Complete at least one lesson or one quiz before your device’s local day ends.",
+      "If you are short on time, do a quick quiz and then check your streak count on the Learn or Profile screen.",
+    ],
   },
   {
     q: "How do I contribute vocabulary?",
@@ -62,14 +80,14 @@ export default function SupportPage() {
   const faqJsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: FAQS.map(({ q, a }) => ({
-      "@type": "Question",
-      name: q,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: a,
-      },
-    })),
+      mainEntity: FAQS.map(({ q, a }) => ({
+        "@type": "Question",
+        name: q,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: Array.isArray(a) ? a.join(" ") : a,
+        },
+      })),
   };
 
   return (
@@ -119,9 +137,17 @@ export default function SupportPage() {
                   ▾
                 </span>
               </summary>
-              <p className="mt-3 text-neutral-600 dark:text-neutral-400 text-sm leading-relaxed">
-                {a}
-              </p>
+              {Array.isArray(a) ? (
+                <ul className="mt-3 list-disc pl-5 space-y-2 text-neutral-600 dark:text-neutral-400 text-sm leading-relaxed">
+                  {a.map((line, index) => (
+                    <li key={`${q}-line-${index}`}>{line}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-3 text-neutral-600 dark:text-neutral-400 text-sm leading-relaxed">
+                  {a}
+                </p>
+              )}
             </details>
           ))}
         </div>

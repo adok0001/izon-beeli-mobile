@@ -40,8 +40,7 @@ quizResultsRouter.post("/", async (c) => {
     updateStreak(userId),
   ]);
 
-  // Fire-and-forget: increment daily challenge
-  incrementDailyChallenge(userId, "complete_quiz").catch(() => {});
+  await incrementDailyChallenge(userId, "complete_quiz").catch(() => {});
 
   return c.json(
     {

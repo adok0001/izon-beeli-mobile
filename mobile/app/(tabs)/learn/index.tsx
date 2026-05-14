@@ -16,10 +16,12 @@ import { localizeField } from "@/lib/localize";
 import { BUNDLED_AUDIO, formatDuration } from "@/lib/mock-data";
 import { useAudioStore } from "@/store/audio-store";
 import { useLanguageStore } from "@/store/language-store";
+// TODO: Legacy tour import (soft-retired) — remove after full deprecation
 import { useTourStore } from "@/store/tour-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course, Lesson } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useIsFocused } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -396,18 +398,14 @@ export default function LearnScreen() {
   const showTour = useTourStore((s) => s.showTour);
   const hasSeen = useTourStore((s) => s.hasSeen);
   const activeTour = useTourStore((s) => s.activeTour);
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     loadResumeState();
   }, []);
 
-  // Show learn tour on first visit to the Learn tab
-  useEffect(() => {
-    if (!hasSeen("learn")) {
-      const timer = setTimeout(() => showTour("learn"), 600);
-      return () => clearTimeout(timer);
-    }
-  }, []);
+  // TODO: Legacy tour trigger (soft-retired) — remove after full deprecation
+  // showTour('learn') is disabled; welcome checklist now handles onboarding
 
   // Show freeze modal once per day when we detect a broken streak (wait for any tour to finish)
   useEffect(() => {

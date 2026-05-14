@@ -1,15 +1,16 @@
 "use client";
 
+import { LanguageSelector } from "@/components/ui/language-selector";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { LanguageSelector } from "@/components/ui/language-selector";
 import { useAuth } from "@clerk/nextjs";
+import { LANGUAGES } from "@mobile/lib/data/languages";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookText, CheckCircle2, Edit2, ImageIcon, Mic, Plus, Search, Trash2, Upload, Volume2, X, XCircle } from "lucide-react";
-import { LANGUAGES } from "@mobile/lib/data/languages";
 import Image from "next/image";
-import React, { useRef, useState, useMemo } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 interface DictEntry {
   id: string;
@@ -367,8 +368,10 @@ export default function EducatorDictionaryPage() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
       void queryClient.invalidateQueries({ queryKey: ["educator", "stats"] });
+      toast.success("Entry created");
       setModal(null);
     },
+    onError: (e: Error) => toast.error("Failed to create entry", { description: e.message }),
   });
 
   const updateEntry = useMutation({
@@ -379,8 +382,10 @@ export default function EducatorDictionaryPage() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
+      toast.success("Entry updated");
       setModal(null);
     },
+    onError: (e: Error) => toast.error("Failed to update entry", { description: e.message }),
   });
 
   const deleteEntry = useMutation({
@@ -391,7 +396,9 @@ export default function EducatorDictionaryPage() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
       void queryClient.invalidateQueries({ queryKey: ["educator", "stats"] });
+      toast.success("Entry deleted");
     },
+    onError: (e: Error) => toast.error("Failed to delete entry", { description: e.message }),
   });
 
   const editContrib = useMutation({
@@ -399,7 +406,11 @@ export default function EducatorDictionaryPage() {
       const token = await getToken();
       return apiFetch(`/educator/contributions/${id}`, { method: "PATCH", body: JSON.stringify(data), token: token ?? undefined });
     },
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
+      toast.success("Contribution updated");
+    },
+    onError: (e: Error) => toast.error("Failed to update contribution", { description: e.message }),
   });
 
   const reviewContrib = useMutation({
@@ -407,10 +418,12 @@ export default function EducatorDictionaryPage() {
       const token = await getToken();
       return apiFetch(`/educator/contributions/${id}/review`, { method: "POST", body: JSON.stringify({ action }), token: token ?? undefined });
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       void queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
       void queryClient.invalidateQueries({ queryKey: ["educator", "stats"] });
+      toast.success(variables.action === "approve" ? "Contribution approved" : "Contribution rejected");
     },
+    onError: (e: Error) => toast.error("Failed to review contribution", { description: e.message }),
   });
 
   const q = search.trim().toLowerCase();

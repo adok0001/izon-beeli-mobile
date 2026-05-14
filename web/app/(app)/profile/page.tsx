@@ -2,26 +2,28 @@
 
 import { apiFetch } from "@/lib/api";
 import { useTourStore } from "@/store/tour-store";
-import type { UserProfile } from "@/types";
+import type { UserMe, UserProfile } from "@/types";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
-    BookOpen,
-    BookText,
-    ChevronRight,
-    FileText,
-    Flame,
-    LayoutDashboard,
-    Loader2,
-    LogOut,
-    Map,
-    MessageSquare,
-    Settings,
-    Star,
-    UserRound,
-    Users,
-    X,
-    type LucideIcon,
+  BookOpen,
+  BookText,
+  ChevronRight,
+  FileText,
+  Flame,
+  GraduationCap,
+  LayoutDashboard,
+  Loader2,
+  LogOut,
+  Map,
+  MessageSquare,
+  Settings,
+  ShieldCheck,
+  Star,
+  UserRound,
+  Users,
+  X,
+  type LucideIcon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -33,7 +35,7 @@ function StatCard({ icon: Icon, label, value }: Readonly<{ icon: LucideIcon; lab
     <div className="flex-1 bg-neutral-50 dark:bg-neutral-800 rounded-xl p-4 text-center">
       <Icon className="mx-auto h-6 w-6 text-brand-500" />
       <p className="text-xl font-bold text-neutral-900 dark:text-white mt-1">{value}</p>
-      <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{label}</p>
+      <p className="text-xs text-neutral-600 dark:text-neutral-300 mt-0.5">{label}</p>
     </div>
   );
 }
@@ -61,8 +63,8 @@ function MenuRow({
     <>
       <Icon className="h-5 w-5 shrink-0" />
       <span className="flex-1 text-sm font-medium">{label}</span>
-      {detail && <span className="text-sm text-neutral-400 dark:text-neutral-500">{detail}</span>}
-      <ChevronRight className="h-4 w-4 text-neutral-300 dark:text-neutral-600" />
+      {detail && <span className="text-sm text-neutral-600 dark:text-neutral-300">{detail}</span>}
+      <ChevronRight className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
     </>
   );
 
@@ -148,7 +150,7 @@ function FeedbackModal({ onClose }: Readonly<{ onClose: () => void }>) {
       >
         <div className="flex items-center justify-between mb-4">
           <h2 id="profile-modal-title" className="font-bold text-neutral-900 dark:text-white">{t("profile.sendFeedback")}</h2>
-          <button onClick={onClose} className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200">
+          <button onClick={onClose} className="text-neutral-500 hover:text-neutral-700 dark:text-neutral-300 dark:hover:text-neutral-100">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -188,9 +190,9 @@ function FeedbackModal({ onClose }: Readonly<{ onClose: () => void }>) {
               maxLength={2000}
               autoFocus
             />
-            <p className="text-xs text-neutral-400 text-right mt-1">{message.length}/2000</p>
+            <p className="text-xs text-neutral-600 dark:text-neutral-300 text-right mt-1">{message.length}/2000</p>
             {submit.isError && (
-              <p className="text-xs text-red-500 mt-1">{(submit.error as Error).message}</p>
+              <p className="text-xs text-red-600 dark:text-red-400 mt-1">{(submit.error as Error).message}</p>
             )}
             <button
               onClick={() => submit.mutate()}
@@ -218,6 +220,14 @@ export default function ProfilePage() {
     queryFn: async () => {
       const token = await getToken();
       return apiFetch<UserProfile>("/users/me", { token: token ?? undefined });
+    },
+  });
+
+  const { data: me } = useQuery<UserMe>({
+    queryKey: ["me"],
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch<UserMe>("/users/me", { token: token ?? undefined });
     },
   });
 
@@ -265,17 +275,51 @@ export default function ProfilePage() {
         <MenuRow icon={MessageSquare} label={t("profile.sendFeedback")} onClick={() => setFeedbackOpen(true)} />
         <MenuRow
           icon={Map}
-          label={t("profile.restartWelcomeTour")}
+          label={t("profile.restartWelcomeTour", { defaultValue: "Restart Welcome Checklist" })}
           onClick={() => { resetTour(); startTour(); }}
         />
         <button
           onClick={() => signOut({ redirectUrl: "/sign-in" })}
-          className="flex items-center gap-3 py-3.5 w-full text-left text-red-500 border-b border-neutral-100 dark:border-neutral-800 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors rounded px-1"
+          className="flex items-center gap-3 py-3.5 w-full text-left text-red-600 dark:text-red-400 border-b border-neutral-100 dark:border-neutral-800 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors rounded px-1"
         >
           <LogOut className="h-5 w-5 shrink-0" />
           <span className="flex-1 text-sm font-medium">{t("profile.signOut")}</span>
         </button>
       </div>
+
+      {/* Educator / Admin panel — visible on mobile where the sidebar is hidden */}
+      {(me?.isReviewer || me?.isAdmin) && (
+        <div className="mt-8 md:hidden">
+          <p className="text-xs font-bold uppercase tracking-widest text-neutral-600 dark:text-neutral-300 mb-3 px-1">
+            {me.isAdmin ? t("admin.panelTitle") : t("educator.panelTitle")}
+          </p>
+          <div className="bg-neutral-50 dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+            {me.isReviewer && (
+              <MenuRow
+                href="/educator"
+                icon={GraduationCap}
+                label={t("educator.panelTitle")}
+                detail={
+                  me.reviewerRole === "elder"
+                    ? t("reviewerApplication.roleElder")
+                    : me.reviewerRole === "professor"
+                    ? t("reviewerApplication.roleProfessor")
+                    : me.reviewerRole === "teacher"
+                    ? t("reviewerApplication.roleTeacher")
+                    : undefined
+                }
+              />
+            )}
+            {me.isAdmin && (
+              <MenuRow
+                href="/admin"
+                icon={ShieldCheck}
+                label={t("admin.panelTitle")}
+              />
+            )}
+          </div>
+        </div>
+      )}
 
       {feedbackOpen && <FeedbackModal onClose={() => setFeedbackOpen(false)} />}
     </div>

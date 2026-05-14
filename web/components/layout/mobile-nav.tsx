@@ -13,11 +13,11 @@ import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 
 const NAV_ITEMS = [
-  { href: "/learn", labelKey: "tabs.learn", icon: BookOpen },
-  { href: "/listen", labelKey: "tabs.practice", icon: Sparkles },
-  { href: "/journal", labelKey: "tabs.journal", icon: NotebookPen },
-  { href: "/feed", labelKey: "tabs.feed", icon: Globe2 },
-  { href: "/profile", labelKey: "tabs.profile", icon: UserRound },
+  { href: "/learn", labelKey: "tabs.learn", icon: BookOpen, tourId: "nav-learn" },
+  { href: "/listen", labelKey: "tabs.practice", icon: Sparkles, tourId: "nav-listen" },
+  { href: "/journal", labelKey: "tabs.journal", icon: NotebookPen, tourId: "nav-journal" },
+  { href: "/feed", labelKey: "tabs.feed", icon: Globe2, tourId: "nav-feed" },
+  { href: "/profile", labelKey: "tabs.profile", icon: UserRound, tourId: "nav-profile" },
 ] as const;
 
 export function MobileNav() {
@@ -26,12 +26,13 @@ export function MobileNav() {
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/88 dark:bg-neutral-950/92 backdrop-blur-2xl backdrop-saturate-200 border-t border-neutral-200/50 dark:border-white/[0.07] flex">
-      {NAV_ITEMS.map(({ href, labelKey, icon: Icon }) => {
+      {NAV_ITEMS.map(({ href, labelKey, icon: Icon, tourId }) => {
         const active = pathname === href || pathname.startsWith(href + "/");
         return (
           <Link
             key={href}
             href={href}
+            data-tour={tourId}
             className={cn(
               "flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-[11px] font-semibold transition-all duration-150",
               active

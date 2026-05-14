@@ -38,6 +38,11 @@ function langFilter(
   return langs.length > 0 ? inArray(table.languageId, langs) : undefined;
 }
 
+function isAudioUpload(file: File): boolean {
+  if (file.type.toLowerCase().startsWith("audio/")) return true;
+  return /\.(mp3|wav|m4a|aac|ogg|oga|webm|mp4|mpeg)$/i.test(file.name);
+}
+
 // ─── GET /educator/me ─────────────────────────────────────────────────────────
 
 educatorRouter.get("/me", async (c) => {
@@ -910,6 +915,7 @@ educatorRouter.post("/lessons/:id/audio", async (c) => {
   const durationStr = formData.get("duration") as string | null;
 
   if (!audioFile?.size) return c.json({ error: "audio file is required" }, 400);
+  if (!isAudioUpload(audioFile)) return c.json({ error: "Only audio files are allowed" }, 400);
 
   try {
     const blob = await put(

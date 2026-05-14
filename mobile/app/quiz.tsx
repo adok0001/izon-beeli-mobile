@@ -4,6 +4,7 @@ import { analytics } from "@/lib/analytics";
 import { apiFetch } from "@/lib/api";
 import { hapticError, hapticHeavy, hapticSuccess } from "@/lib/haptics";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
+import { useLesson } from "@/lib/hooks/use-courses";
 import { getLanguageName } from "@/lib/mock-data";
 import { generateFocusedQuiz, generateQuiz } from "@/lib/quiz-engine";
 import {
@@ -13,12 +14,14 @@ import {
 } from "@/lib/sounds";
 import { useLanguageStore } from "@/store/language-store";
 import { useQuizStore } from "@/store/quiz-store";
+// TODO: Legacy tour import (soft-retired) — remove after full deprecation
 import { useTourStore } from "@/store/tour-store";
 import type { QuizQuestion } from "@/types";
 import { useInvalidateDailyChallenges } from "@/lib/hooks/use-daily-challenge";
 import { useAuth } from "@clerk/clerk-expo";
+import { useQueryClient } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -263,6 +266,7 @@ function ResultsView({ languageId }: { languageId: string }) {
   const { getResult, reset, startQuiz, questions } = useQuizStore();
   const router = useRouter();
   const { getToken } = useAuth();
+  const queryClient = useQueryClient();
   const invalidateDailyChallenges = useInvalidateDailyChallenges();
   const result = getResult();
   const startTime = useQuizStore((s) => s.startTime);
@@ -288,6 +292,7 @@ function ResultsView({ languageId }: { languageId: string }) {
           }),
         });
         setXpResult({ xpEarned: res.xpEarned, leveledUp: res.leveledUp });
+        queryClient.invalidateQueries({ queryKey: ["progress"] });
         invalidateDailyChallenges();
         analytics.quizFinished(languageId, result.accuracy, durationMs);
       } catch {
@@ -297,10 +302,8 @@ function ResultsView({ languageId }: { languageId: string }) {
     };
     post();
 
-    // Show feed tour after first quiz completion
-    if (!hasSeen("feed")) {
-      setTimeout(() => showTour("feed"), 2000);
-    }
+    // TODO: Legacy tour trigger (soft-retired) — remove after full deprecation
+    // showTour('feed') is disabled; welcome checklist now handles onboarding
   }, []);
 
   const scoreColor =
@@ -423,9 +426,26 @@ export default function QuizScreen() {
     focusWord?: string;
     focusEnglish?: string;
     focusAudio?: string;
+    lessonId?: string;
   }>();
   const { selectedLanguageId } = useLanguageStore();
   const { data: dictionaryEntries = [], isLoading: isDictLoading } = useDictionary(selectedLanguageId);
+  const { data: lessonData, isLoading: isLessonLoading } = useLesson(params.lessonId ?? "");
+
+  // When lessonId is provided, filter dictionary to words that appear in the lesson transcript.
+  // Falls back to full dictionary if fewer than 4 matches (not enough for distractors).
+  const activeEntries = useMemo(() => {
+    if (!params.lessonId || !lessonData?.transcript?.length) return dictionaryEntries;
+    const transcriptWords = new Set(
+      lessonData.transcript.flatMap((seg) =>
+        seg.text.split(/\s+/).map((w) => w.toLowerCase().replace(/[.,!?;:'"()\[\]]/g, "").trim())
+      ).filter(Boolean)
+    );
+    const matches = dictionaryEntries.filter((e) =>
+      transcriptWords.has(e.word.toLowerCase().trim())
+    );
+    return matches.length >= 4 ? matches : dictionaryEntries;
+  }, [params.lessonId, lessonData, dictionaryEntries]);
   const { phase, startQuiz, reset } = useQuizStore();
   const [isEmpty, setIsEmpty] = useState(false);
   const [configReady, setConfigReady] = useState(false);
@@ -448,10 +468,11 @@ export default function QuizScreen() {
     [t, languageName]
   );
 
-  // Once dictionary data loads: auto-start focused quizzes, show config for regular quizzes
+  // Once dictionary (and lesson, if applicable) data loads: auto-start focused quizzes, show config for regular quizzes
   useEffect(() => {
     if (initialized.current) return;
     if (isDictLoading) return;
+    if (params.lessonId && isLessonLoading) return;
     initialized.current = true;
 
     const tq = makeTq();
@@ -474,7 +495,7 @@ export default function QuizScreen() {
       // Check there's enough vocabulary before showing the config screen
       const test = generateQuiz(
         { languageId: selectedLanguageId, courseId: params.courseId, category: params.category, questionCount: 5 },
-        dictionaryEntries,
+        activeEntries,
         undefined,
         tq
       );
@@ -484,7 +505,7 @@ export default function QuizScreen() {
         setConfigReady(true);
       }
     }
-  }, [isDictLoading]);
+  }, [isDictLoading, isLessonLoading]);
 
   const handleStart = useCallback(
     (count: number) => {
@@ -496,7 +517,7 @@ export default function QuizScreen() {
           category: params.category,
           questionCount: count,
         },
-        dictionaryEntries,
+        activeEntries,
         undefined,
         tq
       );
@@ -507,7 +528,7 @@ export default function QuizScreen() {
         analytics.quizStarted(selectedLanguageId, questions.length);
       }
     },
-    [selectedLanguageId, params.courseId, params.category, dictionaryEntries, makeTq, startQuiz]
+    [selectedLanguageId, params.courseId, params.category, activeEntries, makeTq, startQuiz]
   );
 
   return (

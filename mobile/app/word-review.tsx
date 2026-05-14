@@ -4,6 +4,7 @@ import type { DictionaryEntry } from "@/lib/dictionary";
 import { hapticError, hapticSuccess, hapticTap } from "@/lib/haptics";
 import { useInvalidateDailyChallenges } from "@/lib/hooks/use-daily-challenge";
 import { useInvalidateReviewQueue, useReviewWord, useWordsDueForReview } from "@/lib/hooks/use-wordbank";
+import { useQueryClient } from "@tanstack/react-query";
 import { playCorrectSound, playIncorrectSound } from "@/lib/sounds";
 import { useLanguageStore } from "@/store/language-store";
 import type { AudioSource } from "@/types";
@@ -181,6 +182,7 @@ export default function WordReviewScreen() {
   const isDictLoading = dictionaryQueries.some((q) => q.isLoading);
   const dictionary = dictionaryQueries.flatMap((q) => q.data ?? []);
   const reviewWord = useReviewWord();
+  const queryClient = useQueryClient();
   const invalidateReviewQueue = useInvalidateReviewQueue();
   const invalidateDailyChallenges = useInvalidateDailyChallenges();
   const { t } = useTranslation();
@@ -189,8 +191,9 @@ export default function WordReviewScreen() {
     return () => {
       invalidateReviewQueue();
       invalidateDailyChallenges();
+      queryClient.invalidateQueries({ queryKey: ["progress"] });
     };
-  }, [invalidateReviewQueue, invalidateDailyChallenges]);
+  }, [invalidateReviewQueue, invalidateDailyChallenges, queryClient]);
 
   const isLoading = isDueLoading || isDictLoading;
 

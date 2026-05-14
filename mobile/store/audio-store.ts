@@ -96,6 +96,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
           }
           if (status.didJustFinish) {
             set({ isPlaying: false, progress: 0 });
+            sound.setPositionAsync(0).catch(() => {});
           }
         }
       );

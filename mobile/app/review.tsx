@@ -426,8 +426,19 @@ export default function ReviewScreen() {
   const reviewWord = useReviewContribution();
   const reviewLesson = useReviewLessonContribution();
 
-  const wordCount = pending?.length ?? 0;
-  const lessonCount = pendingLessons?.length ?? 0;
+  const allowedLanguages = isAdmin
+    ? null
+    : new Set(currentUser?.reviewerLanguages ?? []);
+
+  const scopedWords = allowedLanguages
+    ? (pending ?? []).filter((c) => allowedLanguages.has(c.languageId))
+    : (pending ?? []);
+  const scopedLessons = allowedLanguages
+    ? (pendingLessons ?? []).filter((c) => allowedLanguages.has(c.languageId))
+    : (pendingLessons ?? []);
+
+  const wordCount = scopedWords.length;
+  const lessonCount = scopedLessons.length;
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -541,7 +552,7 @@ export default function ReviewScreen() {
         {/* Words tab */}
         {activeTab === "words" && (
           <FlatList
-            data={pending ?? []}
+            data={scopedWords}
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingTop: 4, paddingBottom: 24 }}
             showsVerticalScrollIndicator={false}
@@ -572,7 +583,7 @@ export default function ReviewScreen() {
         {/* Lessons tab */}
         {activeTab === "lessons" && (
           <FlatList
-            data={pendingLessons ?? []}
+            data={scopedLessons}
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingTop: 4, paddingBottom: 24 }}
             showsVerticalScrollIndicator={false}

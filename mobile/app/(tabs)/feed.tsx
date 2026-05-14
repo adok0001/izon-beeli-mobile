@@ -12,7 +12,7 @@ import i18n from "@/lib/i18n";
 import { localizeField } from "@/lib/localize";
 import { useAudioStore } from "@/store/audio-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
-import type { AudioSource, Comment, FeedItem } from "@/types";
+import type { AudioSource, FeedItem } from "@/types";
 import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -64,7 +64,7 @@ const TYPE_CONFIG: Record<
 };
 
 // --- Audio preview for contribution cards ---
-function AudioPreview({ audioUrl }: { audioUrl: AudioSource }) {
+function AudioPreview({ audioUrl }: Readonly<{ audioUrl: AudioSource }>) {
   const { t } = useTranslation();
   const { currentTrackId, isPlaying, loadAndPlay, togglePlayback } =
     useAudioStore();
@@ -109,11 +109,11 @@ function CommentsModal({
   visible,
   feedItemId,
   onClose,
-}: {
+}: Readonly<{
   visible: boolean;
   feedItemId: string | null;
   onClose: () => void;
-}) {
+}>) {
   const { t } = useTranslation();
   const { data: commentsData } = useComments(feedItemId);
   const addComment = useAddComment();
@@ -164,7 +164,7 @@ function CommentsModal({
                 </Text>
               </View>
             }
-            renderItem={({ item }: { item: Comment }) => (
+            renderItem={({ item }) => (
               <View className="mb-3 rounded-lg bg-neutral-50 p-3 dark:bg-neutral-800">
                 <View className="flex-row items-center justify-between">
                   <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
@@ -217,10 +217,10 @@ function CommentsModal({
 function NewPostModal({
   visible,
   onClose,
-}: {
+}: Readonly<{
   visible: boolean;
   onClose: () => void;
-}) {
+}>) {
   const { t } = useTranslation();
   const createPost = useCreatePost();
   const [title, setTitle] = useState("");
@@ -306,10 +306,10 @@ function NewPostModal({
 function FeedCard({
   item,
   onOpenComments,
-}: {
+}: Readonly<{
   item: FeedItem & { isLiked?: boolean };
   onOpenComments: (id: string) => void;
-}) {
+}>) {
   const { t } = useTranslation();
   const router = useRouter();
   const toggleLike = useToggleLike();
@@ -482,12 +482,20 @@ export default function FeedScreen() {
             {t("feed.subtitle")}
           </Text>
         </View>
-        <Pressable
-          onPress={() => setShowNewPost(true)}
-          className="h-10 w-10 items-center justify-center rounded-full bg-purple-500"
-        >
-          <IconSymbol name="plus" size={22} color="#ffffff" />
-        </Pressable>
+        <View className="flex-row items-center gap-2">
+          <Pressable
+            onPress={() => router.push("/contribute")}
+            className="h-10 w-10 items-center justify-center rounded-full bg-blue-500 active:opacity-80"
+          >
+            <IconSymbol name="mic.fill" size={18} color="#ffffff" />
+          </Pressable>
+          <Pressable
+            onPress={() => setShowNewPost(true)}
+            className="h-10 w-10 items-center justify-center rounded-full bg-purple-500 active:opacity-80"
+          >
+            <IconSymbol name="plus" size={22} color="#ffffff" />
+          </Pressable>
+        </View>
       </View>
 
       {/* Filter bar */}
@@ -525,7 +533,7 @@ export default function FeedScreen() {
           keyExtractor={(item) => item.id}
           contentContainerClassName="px-5 pb-8 pt-2"
           renderItem={({ item }) => (
-            <FeedCard item={item as any} onOpenComments={setCommentsItemId} />
+            <FeedCard item={item} onOpenComments={setCommentsItemId} />
           )}
           showsVerticalScrollIndicator={false}
           refreshControl={
@@ -542,15 +550,6 @@ export default function FeedScreen() {
           }
         />
       )}
-
-      {/* Contribute FAB */}
-      <Pressable
-        onPress={() => router.push("/contribute")}
-        className="absolute bottom-6 right-5 h-14 w-14 items-center justify-center rounded-full bg-blue-500 shadow-lg active:opacity-80"
-        style={{ elevation: 5 }}
-      >
-        <IconSymbol name="mic.fill" size={24} color="#ffffff" />
-      </Pressable>
 
       {/* Comments Modal */}
       <CommentsModal

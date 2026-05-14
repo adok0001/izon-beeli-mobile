@@ -1,29 +1,31 @@
-import { useState, useCallback } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  Pressable,
-  TextInput,
-  Modal,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-  ActivityIndicator,
-  RefreshControl,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import {
-  useJournal,
-  useCreateJournalEntry,
-  useUpdateJournalEntry,
-  useDeleteJournalEntry,
+    useCreateJournalEntry,
+    useDeleteJournalEntry,
+    useJournal,
+    useUpdateJournalEntry,
 } from "@/lib/hooks/use-journal";
+import i18n from "@/lib/i18n";
+// TODO: Legacy tour import (soft-retired) — remove after full deprecation
 import { useTourStore } from "@/store/tour-store";
 import type { JournalEntry } from "@/types";
+import { useIsFocused } from "@react-navigation/native";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import i18n from "@/lib/i18n";
+import {
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    RefreshControl,
+    Text,
+    TextInput,
+    View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
@@ -102,6 +104,11 @@ export default function JournalScreen() {
   const { t } = useTranslation();
   const showTour = useTourStore((s) => s.showTour);
   const hasSeen = useTourStore((s) => s.hasSeen);
+  const activeTour = useTourStore((s) => s.activeTour);
+  const isFocused = useIsFocused();
+
+  // TODO: Legacy tour trigger (soft-retired) — remove after full deprecation
+  // showTour('journal') is disabled; welcome checklist now handles onboarding
 
   const openNew = () => {
     setEditingId(null);

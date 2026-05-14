@@ -86,7 +86,11 @@ export function searchDictionary(query: string, entries: DictionaryEntry[]): Dic
   return entries.filter(
     (e) =>
       e.word.toLowerCase().includes(q) ||
-      e.english.toLowerCase().includes(q)
+      e.english.toLowerCase().includes(q) ||
+      e.french?.toLowerCase().includes(q) ||
+      e.pronunciation?.toLowerCase().includes(q) ||
+      e.example?.toLowerCase().includes(q) ||
+      e.exampleTranslation?.toLowerCase().includes(q)
   );
 }
 

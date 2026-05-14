@@ -26,6 +26,14 @@ export function useInvalidateDailyChallenges() {
   );
 }
 
+export function useRefetchDailyChallenges() {
+  const queryClient = useQueryClient();
+  return useCallback(
+    () => queryClient.refetchQueries({ queryKey: ["daily-challenges", "today"] }),
+    [queryClient]
+  );
+}
+
 export function useChallengeHistory() {
   const { getToken, isSignedIn } = useAuth();
 

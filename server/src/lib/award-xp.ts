@@ -8,7 +8,7 @@ export const CONTRIBUTION_BASE_XP = { word: 15, phrase: 20, audio: 25 } as const
 export async function awardXP(
   userId: string,
   amount: number,
-  _source: "lesson" | "quiz" | "word_review" | "daily_challenge" | "contribution"
+  _source: "lesson" | "quiz" | "word_review" | "daily_challenge" | "contribution" | "checklist_bonus"
 ): Promise<{ totalPoints: number; leveledUp: boolean; newLevel: number; newTitle: string }> {
   const [user] = await db
     .select({ points: users.points, name: users.name })

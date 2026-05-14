@@ -1,7 +1,7 @@
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index.js";
-import { courses, lessons, userProgress, users } from "../db/schema.js";
+import { courses, lessons, quizResults, userProgress, users } from "../db/schema.js";
 import { awardXP } from "../lib/award-xp.js";
 import { incrementDailyChallenge } from "../lib/daily-challenge.js";
 import { updateStreak, diffDaysFromToday } from "../lib/update-streak.js";
@@ -26,10 +26,16 @@ progressRouter.get("/summary", async (c) => {
     .where(eq(users.id, userId))
     .limit(1);
 
-  const [countResult] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(userProgress)
-    .where(and(eq(userProgress.userId, userId), eq(userProgress.completed, true)));
+  const [[countResult], [quizCountResult]] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(userProgress)
+      .where(and(eq(userProgress.userId, userId), eq(userProgress.completed, true))),
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(quizResults)
+      .where(eq(quizResults.userId, userId)),
+  ]);
 
   // Streak is "broken" if user was last active 2+ days ago (missed at least one day)
   const diff = diffDaysFromToday(user?.lastActiveDate);
@@ -39,6 +45,7 @@ progressRouter.get("/summary", async (c) => {
     points: user?.points ?? 0,
     streak: user?.streak ?? 0,
     completedCount: countResult?.count ?? 0,
+    quizCount: quizCountResult?.count ?? 0,
     freezeCount: user?.streakFreezes ?? 0,
     streakBroken,
   });
@@ -96,7 +103,7 @@ progressRouter.post("/:lessonId/complete", async (c) => {
   // Award XP (updates points in DB)
   const xpResult = await awardXP(userId, 50, "lesson");
 
-  incrementDailyChallenge(userId, "complete_lesson").catch(() => {});
+  await incrementDailyChallenge(userId, "complete_lesson").catch(() => {});
 
   return c.json({
     completed: true,
@@ -280,6 +287,19 @@ progressRouter.get("/next-lesson", async (c) => {
       titleFr: course?.titleFr ?? null,
     },
     overallProgress: { completed, total },
+  });
+});
+
+// POST /api/progress/checklist-bonus - one-time bonus XP for completing all checklist tasks
+progressRouter.post("/checklist-bonus", async (c) => {
+  const userId = c.get("userId");
+  const xpResult = await awardXP(userId, 100, "checklist_bonus");
+  return c.json({
+    pointsEarned: 100,
+    totalPoints: xpResult.totalPoints,
+    leveledUp: xpResult.leveledUp,
+    newLevel: xpResult.newLevel,
+    newTitle: xpResult.newTitle,
   });
 });
 

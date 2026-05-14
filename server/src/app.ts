@@ -48,7 +48,8 @@ app.use(
             .filter(Boolean);
           return allowed.includes(origin) ? origin : "";
         },
-    allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    // Keep PUT enabled: educator transcript segment saves use PUT /educator/lessons/:id/segments.
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
   })
 );

@@ -4,20 +4,22 @@ import { apiFetch } from "@/lib/api";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowLeft,
-  CheckCircle2,
-  Eye,
-  EyeOff,
-  GripVertical,
-  Mic,
-  Plus,
-  Save,
-  Trash2,
-  Upload,
+    ArrowLeft,
+    CheckCircle2,
+    Eye,
+    EyeOff,
+    GripVertical,
+    Mic,
+    Plus,
+    Save,
+    Square,
+    Trash2,
+    Upload,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 interface Segment {
   id?: string;
@@ -43,6 +45,22 @@ interface LessonDetail {
   genre: string | null;
   isActive: boolean;
   segments: Segment[];
+}
+
+const AUDIO_FILE_ACCEPT = "audio/*,.mp3,.wav,.m4a,.aac,.ogg,.oga,.webm,.mp4,.mpeg";
+
+function isAudioFile(file: File): boolean {
+  if (file.type.toLowerCase().startsWith("audio/")) return true;
+  return /\.(mp3|wav|m4a|aac|ogg|oga|webm|mp4|mpeg)$/i.test(file.name);
+}
+
+function extensionFromMimeType(mimeType: string): string {
+  const normalized = mimeType.toLowerCase();
+  if (normalized.includes("wav")) return "wav";
+  if (normalized.includes("mpeg") || normalized.includes("mp3")) return "mp3";
+  if (normalized.includes("mp4") || normalized.includes("m4a")) return "m4a";
+  if (normalized.includes("ogg")) return "ogg";
+  return "webm";
 }
 
 function toSeconds(str: string): number {
@@ -125,13 +143,13 @@ function SegmentRow({
 }>) {
   return (
     <div className="flex items-start gap-2 group rounded-xl border border-neutral-100 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] p-3 hover:border-neutral-200 dark:hover:border-white/[0.1] transition-colors">
-      <div className="flex items-center gap-1 pt-1.5 text-neutral-300 dark:text-neutral-600 select-none shrink-0">
+      <div className="flex items-center gap-1 pt-1.5 text-neutral-300 dark:text-neutral-400 select-none shrink-0">
         <GripVertical className="h-4 w-4" />
         <span className="text-xs tabular-nums w-5 text-center">{index + 1}</span>
       </div>
       <div className="flex-1 grid grid-cols-2 gap-2">
         <div>
-          <label className="block text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mb-1">
+          <label className="block text-[10px] font-semibold text-neutral-400 dark:text-neutral-300 mb-1">
             Native text <span className="text-red-400">*</span>
           </label>
           <textarea
@@ -143,7 +161,7 @@ function SegmentRow({
           />
         </div>
         <div>
-          <label className="block text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mb-1">
+          <label className="block text-[10px] font-semibold text-neutral-400 dark:text-neutral-300 mb-1">
             Translation
           </label>
           <textarea
@@ -157,7 +175,7 @@ function SegmentRow({
       </div>
       <div className="flex flex-col gap-1.5 shrink-0 pt-0.5">
         <div>
-          <label className="block text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mb-1">Start</label>
+          <label className="block text-[10px] font-semibold text-neutral-400 dark:text-neutral-300 mb-1">Start</label>
           <TimeInput
             value={seg.startTime}
             onChange={(v) => onChange({ ...seg, startTime: v })}
@@ -166,7 +184,7 @@ function SegmentRow({
           />
         </div>
         <div>
-          <label className="block text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mb-1">End</label>
+          <label className="block text-[10px] font-semibold text-neutral-400 dark:text-neutral-300 mb-1">End</label>
           <TimeInput
             value={seg.endTime}
             onChange={(v) => onChange({ ...seg, endTime: v })}
@@ -192,10 +210,24 @@ export default function LessonDetailPage() {
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const recordingChunksRef = useRef<BlobPart[]>([]);
+  const pendingAudioUrlRef = useRef<string | null>(null);
   const [segments, setSegments] = useState<Segment[]>([]);
   const [segmentsDirty, setSegmentsDirty] = useState(false);
   const [saveOk, setSaveOk] = useState(false);
   const [audioError, setAudioError] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingError, setRecordingError] = useState("");
+  const [pendingAudioFile, setPendingAudioFile] = useState<File | null>(null);
+  const [pendingAudioPreviewUrl, setPendingAudioPreviewUrl] = useState<string | null>(null);
+
+  const canRecordAudio =
+    typeof window !== "undefined" &&
+    typeof navigator !== "undefined" &&
+    typeof MediaRecorder !== "undefined" &&
+    !!navigator.mediaDevices?.getUserMedia;
 
   const { data: lesson, isLoading } = useQuery<LessonDetail>({
     queryKey: ["educator-lesson", lessonId],
@@ -243,7 +275,9 @@ export default function LessonDetailPage() {
       setSegmentsDirty(false);
       setSaveOk(true);
       setTimeout(() => setSaveOk(false), 2500);
+      toast.success("Segments saved");
     },
+    onError: (e: Error) => toast.error("Failed to save segments", { description: e.message }),
   });
 
   const uploadAudio = useMutation({
@@ -260,12 +294,39 @@ export default function LessonDetailPage() {
       });
     },
     onSuccess: () => {
+      if (pendingAudioUrlRef.current) {
+        URL.revokeObjectURL(pendingAudioUrlRef.current);
+        pendingAudioUrlRef.current = null;
+      }
+      setPendingAudioFile(null);
+      setPendingAudioPreviewUrl(null);
       void qc.invalidateQueries({ queryKey: ["educator-lesson", lessonId] });
       void qc.invalidateQueries({ queryKey: ["educator-lessons"] });
       setAudioError("");
+      setRecordingError("");
+      toast.success("Audio uploaded");
     },
-    onError: (e: Error) => setAudioError(e.message),
+    onError: (e: Error) => {
+      setAudioError(e.message);
+      toast.error("Audio upload failed", { description: e.message });
+    },
   });
+
+  useEffect(() => {
+    return () => {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        mediaRecorderRef.current.stop();
+      }
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+      }
+      if (pendingAudioUrlRef.current) {
+        URL.revokeObjectURL(pendingAudioUrlRef.current);
+        pendingAudioUrlRef.current = null;
+      }
+    };
+  }, []);
 
   const toggleActive = useMutation({
     mutationFn: async () => {
@@ -279,7 +340,9 @@ export default function LessonDetailPage() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["educator-lesson", lessonId] });
       void qc.invalidateQueries({ queryKey: ["educator-lessons"] });
+      toast.success(lesson?.isActive ? "Lesson hidden" : "Lesson published");
     },
+    onError: (e: Error) => toast.error("Failed to update lesson", { description: e.message }),
   });
 
   function updateSegment(i: number, updated: Segment) {
@@ -307,6 +370,98 @@ export default function LessonDetailPage() {
     updateSegment(i, { ...segments[i], [field]: Math.round(t * 10) / 10 });
   }
 
+  function setPendingAudio(file: File) {
+    if (!isAudioFile(file)) {
+      setAudioError("Please select a valid audio file.");
+      return;
+    }
+    if (pendingAudioUrlRef.current) {
+      URL.revokeObjectURL(pendingAudioUrlRef.current);
+      pendingAudioUrlRef.current = null;
+    }
+    const previewUrl = URL.createObjectURL(file);
+    pendingAudioUrlRef.current = previewUrl;
+    setPendingAudioFile(file);
+    setPendingAudioPreviewUrl(previewUrl);
+    setAudioError("");
+    setRecordingError("");
+  }
+
+  function discardPendingAudio() {
+    if (pendingAudioUrlRef.current) {
+      URL.revokeObjectURL(pendingAudioUrlRef.current);
+      pendingAudioUrlRef.current = null;
+    }
+    setPendingAudioFile(null);
+    setPendingAudioPreviewUrl(null);
+    setAudioError("");
+    setRecordingError("");
+  }
+
+  function savePendingAudio() {
+    if (!pendingAudioFile) return;
+    uploadAudio.mutate(pendingAudioFile);
+  }
+
+  async function startRecording() {
+    if (!canRecordAudio) {
+      setRecordingError("Recording is not supported in this browser.");
+      return;
+    }
+
+    try {
+      setRecordingError("");
+      setAudioError("");
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+
+      const preferredTypes = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
+      const mimeType = preferredTypes.find((type) => MediaRecorder.isTypeSupported(type));
+      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+
+      recordingChunksRef.current = [];
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) recordingChunksRef.current.push(event.data);
+      };
+      recorder.onerror = () => setRecordingError("Recording failed. Please try again.");
+      recorder.onstop = () => {
+        setIsRecording(false);
+        if (mediaStreamRef.current) {
+          mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+          mediaStreamRef.current = null;
+        }
+
+        const blobType = recorder.mimeType || "audio/webm";
+        const blob = new Blob(recordingChunksRef.current, { type: blobType });
+        if (!blob.size) {
+          setRecordingError("No audio was captured. Please record again.");
+          return;
+        }
+
+        const extension = extensionFromMimeType(blobType);
+        const recordedFile = new File(
+          [blob],
+          `lesson-${lessonId}-${Date.now()}.${extension}`,
+          { type: blobType }
+        );
+        setPendingAudio(recordedFile);
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error("Failed to start recording:", err);
+      setRecordingError("Microphone permission denied or unavailable.");
+    }
+  }
+
+  function stopRecording() {
+    const recorder = mediaRecorderRef.current;
+    if (!recorder) return;
+    if (recorder.state !== "inactive") recorder.stop();
+  }
+
   if (isLoading || !lesson) {
     return (
       <div className="flex items-center justify-center py-32">
@@ -319,7 +474,7 @@ export default function LessonDetailPage() {
     <div className="max-w-4xl">
       <Link
         href={`/educator/courses/${courseId}`}
-        className="inline-flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 transition-colors mb-6"
+        className="inline-flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-300 hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors mb-6"
       >
         <ArrowLeft className="h-4 w-4" />
         {lesson.courseTitle}
@@ -331,12 +486,12 @@ export default function LessonDetailPage() {
             <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-neutral-100 dark:bg-white/[0.06] text-neutral-600 dark:text-neutral-300 capitalize">
               {lesson.type}
             </span>
-            <span className="text-xs text-neutral-400 dark:text-neutral-500">Lesson {lesson.order}</span>
+            <span className="text-xs text-neutral-500 dark:text-neutral-300">Lesson {lesson.order}</span>
           </div>
           <h1 className="text-xl font-bold text-neutral-900 dark:text-white">{lesson.title}</h1>
-          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">{lesson.description}</p>
+          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-300">{lesson.description}</p>
           {(lesson.artist || lesson.genre) && (
-            <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">
+            <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-300">
               {[lesson.artist, lesson.genre].filter(Boolean).join(" · ")}
             </p>
           )}
@@ -347,7 +502,7 @@ export default function LessonDetailPage() {
           className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors disabled:opacity-50 ${
             lesson.isActive
               ? "border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30 hover:bg-green-100 dark:hover:bg-green-900/30"
-              : "border-neutral-200 dark:border-white/[0.08] text-neutral-500 dark:text-neutral-400 bg-white dark:bg-white/[0.04] hover:bg-neutral-50 dark:hover:bg-white/[0.06]"
+              : "border-neutral-200 dark:border-white/[0.08] text-neutral-500 dark:text-neutral-300 bg-white dark:bg-white/[0.04] hover:bg-neutral-50 dark:hover:bg-white/[0.06]"
           }`}
         >
           {lesson.isActive ? <><Eye className="h-3.5 w-3.5" /> Active</> : <><EyeOff className="h-3.5 w-3.5" /> Inactive</>}
@@ -358,34 +513,73 @@ export default function LessonDetailPage() {
       <div className="mb-8 rounded-2xl border border-neutral-200 dark:border-white/[0.07] bg-neutral-50 dark:bg-white/[0.02] p-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-bold text-neutral-700 dark:text-neutral-200">Audio</h2>
-          <button
-            onClick={() => audioInputRef.current?.click()}
-            disabled={uploadAudio.isPending}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-neutral-200 dark:border-white/[0.08] text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/[0.06] disabled:opacity-50 transition-colors"
-          >
-            <Upload className="h-3.5 w-3.5" />
-            {uploadAudio.isPending ? "Uploading…" : lesson.audioUrl ? "Replace audio" : "Upload audio"}
-          </button>
+          <div className="flex items-center gap-2">
+            {canRecordAudio && (
+              <button
+                onClick={() => (isRecording ? stopRecording() : startRecording())}
+                disabled={uploadAudio.isPending}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors disabled:opacity-50 ${
+                  isRecording
+                    ? "border-red-300 text-red-600 bg-red-50 hover:bg-red-100 dark:border-red-800 dark:text-red-400 dark:bg-red-950/30 dark:hover:bg-red-900/30"
+                    : "border-neutral-200 dark:border-white/[0.08] text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06]"
+                }`}
+              >
+                {isRecording ? <Square className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+                {isRecording ? "Stop recording" : "Record audio"}
+              </button>
+            )}
+            <button
+              onClick={() => audioInputRef.current?.click()}
+              disabled={uploadAudio.isPending || isRecording}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-neutral-200 dark:border-white/[0.08] text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] disabled:opacity-50 transition-colors"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              {pendingAudioFile ? "Change draft audio" : lesson.audioUrl ? "Choose replacement" : "Choose audio"}
+            </button>
+            <button
+              onClick={savePendingAudio}
+              disabled={!pendingAudioFile || uploadAudio.isPending || isRecording}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-brand-300 text-brand-700 bg-brand-50 hover:bg-brand-100 dark:border-brand-700 dark:text-brand-300 dark:bg-brand-950/30 dark:hover:bg-brand-900/30 disabled:opacity-50 transition-colors"
+            >
+              <Save className="h-3.5 w-3.5" />
+              {uploadAudio.isPending ? "Saving…" : lesson.audioUrl ? "Update audio" : "Save audio"}
+            </button>
+            {pendingAudioFile && (
+              <button
+                onClick={discardPendingAudio}
+                disabled={uploadAudio.isPending || isRecording}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-neutral-200 dark:border-white/[0.08] text-neutral-500 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] disabled:opacity-50 transition-colors"
+              >
+                Discard draft
+              </button>
+            )}
+          </div>
           <input
             ref={audioInputRef}
             type="file"
-            accept="audio/*"
+            accept={AUDIO_FILE_ACCEPT}
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
-              if (f) uploadAudio.mutate(f);
+              if (f) setPendingAudio(f);
               e.target.value = "";
             }}
           />
         </div>
-        {lesson.audioUrl ? (
-          <audio ref={audioRef} src={lesson.audioUrl} controls className="w-full h-10" />
+        {pendingAudioFile && (
+          <p className="mb-2 text-xs text-amber-600 dark:text-amber-400">
+            Draft audio selected: {pendingAudioFile.name}. Click Save audio to update this lesson.
+          </p>
+        )}
+        {pendingAudioPreviewUrl || lesson.audioUrl ? (
+          <audio ref={audioRef} src={pendingAudioPreviewUrl ?? lesson.audioUrl ?? undefined} controls className="w-full h-10" />
         ) : (
           <div className="flex items-center justify-center h-10 rounded-xl border-2 border-dashed border-neutral-200 dark:border-white/[0.08]">
-            <p className="text-xs text-neutral-400">No audio yet — upload above</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-300">No audio yet — choose audio or record above</p>
           </div>
         )}
         {audioError && <p className="mt-2 text-xs text-red-500">{audioError}</p>}
+        {recordingError && <p className="mt-2 text-xs text-red-500">{recordingError}</p>}
       </div>
 
       {/* Segments */}
@@ -394,9 +588,9 @@ export default function LessonDetailPage() {
           <div>
             <h2 className="text-sm font-bold text-neutral-700 dark:text-neutral-200">
               Transcript segments
-              <span className="ml-2 text-xs font-normal text-neutral-400">({segments.length})</span>
+              <span className="ml-2 text-xs font-normal text-neutral-500 dark:text-neutral-300">({segments.length})</span>
             </h2>
-            <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5">
+            <p className="text-xs text-neutral-500 dark:text-neutral-300 mt-0.5">
               One segment per utterance — native text, English translation, and timestamps for audio sync.
               Click the <Mic className="inline h-3 w-3" /> icon while audio is playing to capture the current position.
             </p>
@@ -409,7 +603,7 @@ export default function LessonDetailPage() {
                 ? "bg-green-500 text-white"
                 : segmentsDirty
                 ? "bg-brand-500 text-white hover:bg-brand-600"
-                : "bg-neutral-100 dark:bg-white/[0.04] text-neutral-400 cursor-not-allowed"
+                : "bg-neutral-100 dark:bg-white/[0.04] text-neutral-400 dark:text-neutral-300 cursor-not-allowed"
             }`}
           >
             {saveOk ? <><CheckCircle2 className="h-4 w-4" /> Saved</> : saveSegments.isPending ? "Saving…" : <><Save className="h-4 w-4" /> Save segments</>}
@@ -425,8 +619,8 @@ export default function LessonDetailPage() {
         <div className="space-y-2">
           {segments.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 rounded-2xl border-2 border-dashed border-neutral-200 dark:border-white/[0.07]">
-              <p className="text-sm font-semibold text-neutral-400 dark:text-neutral-500">No segments yet</p>
-              <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1 text-center max-w-xs">
+              <p className="text-sm font-semibold text-neutral-500 dark:text-neutral-300">No segments yet</p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-300 mt-1 text-center max-w-xs">
                 Add transcript segments to enable audio-synced reading and comprehension exercises.
               </p>
             </div>
@@ -447,7 +641,7 @@ export default function LessonDetailPage() {
 
         <button
           onClick={addSegment}
-          className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-200 dark:border-white/[0.07] py-3 text-sm font-medium text-neutral-400 dark:text-neutral-500 hover:border-brand-300 hover:text-brand-500 dark:hover:border-brand-700 dark:hover:text-brand-400 transition-colors"
+          className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-200 dark:border-white/[0.07] py-3 text-sm font-medium text-neutral-500 dark:text-neutral-300 hover:border-brand-300 hover:text-brand-500 dark:hover:border-brand-700 dark:hover:text-brand-400 transition-colors"
         >
           <Plus className="h-4 w-4" />
           Add segment
@@ -463,7 +657,7 @@ export default function LessonDetailPage() {
                   ? "bg-green-500 text-white"
                   : segmentsDirty
                   ? "bg-brand-500 text-white hover:bg-brand-600"
-                  : "bg-neutral-100 dark:bg-white/[0.04] text-neutral-400 cursor-not-allowed"
+                  : "bg-neutral-100 dark:bg-white/[0.04] text-neutral-400 dark:text-neutral-300 cursor-not-allowed"
               }`}
             >
               {saveOk ? <><CheckCircle2 className="h-4 w-4" /> Saved</> : saveSegments.isPending ? "Saving…" : <><Save className="h-4 w-4" /> Save {segments.length} segments</>}

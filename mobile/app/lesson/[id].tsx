@@ -25,7 +25,7 @@ export default function LessonScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: lesson, isLoading, isError } = useLesson(id ?? "");
-  const { loadAndPlay, currentTrackId, isPlaying, togglePlayback } = useAudioStore();
+  const { loadAndPlay, currentTrackId, isPlaying, togglePlayback, progress } = useAudioStore();
   const { data: completedLessonIds } = useCompletedLessons();
   const { selectedLanguageId } = useLanguageStore();
   const { uiLanguage } = useUiLanguageStore();
@@ -156,9 +156,9 @@ export default function LessonScreen() {
                 <Text className="ml-2 font-semibold text-white">
                   {isCurrentTrack && isPlaying ? t("lesson.pause") : isCurrentTrack ? t("lesson.resume") : t("lesson.play")}
                 </Text>
-                {lesson.duration && (
+                {(isCurrentTrack || lesson.duration) && (
                   <Text className="ml-2 text-sm text-blue-200">
-                    {formatDuration(lesson.duration)}
+                    {isCurrentTrack ? formatDuration(progress) : formatDuration(lesson.duration!)}
                   </Text>
                 )}
               </Pressable>
@@ -180,7 +180,7 @@ export default function LessonScreen() {
               onPress={() =>
                 router.push({
                   pathname: "/quiz",
-                  params: { courseId: lesson.courseId },
+                  params: { courseId: lesson.courseId, lessonId: lesson.id },
                 })
               }
               className="flex-row items-center rounded-full border border-blue-500 px-4 py-2.5 active:opacity-80"
@@ -243,7 +243,7 @@ export default function LessonScreen() {
                 onPress={() =>
                   router.push({
                     pathname: "/quiz",
-                    params: { courseId: lesson.courseId },
+                    params: { courseId: lesson.courseId, lessonId: lesson.id },
                   })
                 }
                 className="flex-row items-center rounded-2xl bg-blue-500 px-4 py-4 active:opacity-80"
