@@ -32,8 +32,12 @@ export async function updateStreak(userId: string): Promise<StreakResult> {
     .where(eq(users.id, userId))
     .limit(1);
 
-  let newStreak = user?.streak ?? 0;
-  const lastActive = user?.lastActiveDate;
+  if (!user) {
+    throw new Error(`User not found while updating streak: ${userId}`);
+  }
+
+  let newStreak = user.streak ?? 0;
+  const lastActive = user.lastActiveDate;
   const diff = diffDaysFromToday(lastActive);
   const todayStr = new Date().toISOString().slice(0, 10);
 
@@ -43,7 +47,7 @@ export async function updateStreak(userId: string): Promise<StreakResult> {
       newStreak,
       streakMilestone: null,
       freezeGranted: null,
-      freezeCount: user?.streakFreezes ?? 0,
+      freezeCount: user.streakFreezes ?? 0,
     };
   }
 
@@ -65,7 +69,7 @@ export async function updateStreak(userId: string): Promise<StreakResult> {
       streak: newStreak,
       lastActiveDate: todayStr,
       ...(totalFreezeGrant > 0
-        ? { streakFreezes: (user?.streakFreezes ?? 0) + totalFreezeGrant }
+        ? { streakFreezes: (user.streakFreezes ?? 0) + totalFreezeGrant }
         : {}),
     })
     .where(eq(users.id, userId));
@@ -74,6 +78,6 @@ export async function updateStreak(userId: string): Promise<StreakResult> {
     newStreak,
     streakMilestone: STREAK_MILESTONES.has(newStreak) ? newStreak : null,
     freezeGranted: totalFreezeGrant > 0 ? totalFreezeGrant : null,
-    freezeCount: (user?.streakFreezes ?? 0) + totalFreezeGrant,
+    freezeCount: (user.streakFreezes ?? 0) + totalFreezeGrant,
   };
 }
