@@ -8,6 +8,7 @@ import {
     useEducatorDictionary,
     useUpsertEducatorDictionary,
 } from "@/lib/hooks/use-educator-panel";
+import { friendlyError } from "@/lib/api";
 import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { Stack } from "expo-router";
@@ -127,7 +128,7 @@ export default function EducatorDictionaryScreen() {
           resetEditor();
           toastSuccess(isEditing ? "Entry updated" : "Entry created", `"${editor.word}" saved to dictionary.`);
         },
-        onError: (err: Error) => toastError("Save failed", err.message),
+        onError: (err: Error) => toastError("Save failed", friendlyError(err)),
       },
     );
   };
@@ -141,7 +142,7 @@ export default function EducatorDictionaryScreen() {
         onPress: () =>
           deleteEntry.mutate(id, {
             onSuccess: () => toastSuccess("Entry deleted"),
-            onError: (err: Error) => toastError("Delete failed", err.message),
+            onError: (err: Error) => toastError("Delete failed", friendlyError(err)),
           }),
       },
     ]);

@@ -1,3 +1,4 @@
+import { friendlyError } from "@/lib/api";
 import { useState } from "react";
 import { View, Text, TextInput, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -27,7 +28,7 @@ export default function CreateGroupScreen() {
       { name: name.trim(), languageId: selectedLanguageId },
       {
         onSuccess: (group) => router.replace(`/classroom/${group.id}`),
-        onError: (err) => toastError("Error", err.message),
+        onError: (err) => toastError("Error", friendlyError(err)),
       }
     );
   };

@@ -30,6 +30,11 @@ export const pcm = {
     myAccount: "My Account",
     saveInProgress: "E dey save…",
     start: "Start",
+    permissionDenied: "You no get permission to do this.",
+    notFound: "Dem no fit find the item.",
+    serverError: "Server error. Try again.",
+    networkError: "Check your connection, then try again.",
+    unknownError: "Something do wrong. Try again.",
   },
   tabs: {
     learn: "Learn",

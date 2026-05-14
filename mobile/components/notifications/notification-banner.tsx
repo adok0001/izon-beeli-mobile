@@ -1,3 +1,4 @@
+import { useHeaderHeight } from "@react-navigation/elements";
 import { useEffect } from "react";
 import { Pressable, Text } from "react-native";
 import Animated, {
@@ -7,6 +8,7 @@ import Animated, {
     withDelay,
     withTiming,
 } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type ToastType = "success" | "error" | "info" | "warning";
 
@@ -34,8 +36,11 @@ export function NotificationBanner({
   duration = 4000,
   type = "info",
 }: Props) {
-  const translateY = useSharedValue(-100);
+  const translateY = useSharedValue(-150);
   const { bar, bg } = TYPE_CLASSES[type];
+  const headerHeight = useHeaderHeight();
+  const { top: topInset } = useSafeAreaInsets();
+  const topPosition = Math.max(headerHeight, topInset) + 8;
 
   useEffect(() => {
     if (visible) {
@@ -63,7 +68,7 @@ export function NotificationBanner({
         animStyle,
         {
           position: "absolute",
-          top: 50,
+          top: topPosition,
           left: 16,
           right: 16,
           zIndex: 999,

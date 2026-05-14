@@ -30,6 +30,11 @@ export const en = {
     myAccount: "My Account",
     saveInProgress: "Saving…",
     start: "Start",
+    permissionDenied: "You don't have permission to do this.",
+    notFound: "The item could not be found.",
+    serverError: "Server error. Please try again.",
+    networkError: "Check your connection and try again.",
+    unknownError: "Something went wrong. Please try again.",
   },
   tabs: {
     learn: "Learn",

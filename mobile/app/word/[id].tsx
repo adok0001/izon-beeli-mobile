@@ -1,3 +1,4 @@
+import { friendlyError } from "@/lib/api";
 import { useState, useEffect } from "react";
 import { View, Text, Pressable, ScrollView, ActivityIndicator, TextInput, Image } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
@@ -83,7 +84,7 @@ export default function WordDetailScreen() {
           toastSuccess(t("entryContribute.submitted"), t("entryContribute.audioSubmittedDesc"));
         },
         onError: (err) => {
-          toastError(t("common.error"), err.message || t("common.tryAgain"));
+          toastError(t("common.error"), friendlyError(err));
         },
       }
     );
@@ -117,7 +118,7 @@ export default function WordDetailScreen() {
           toastSuccess(t("entryContribute.submitted"), t("entryContribute.imageSubmittedDesc"));
         },
         onError: (err) => {
-          toastError(t("common.error"), err.message || t("common.tryAgain"));
+          toastError(t("common.error"), friendlyError(err));
         },
       }
     );
@@ -141,7 +142,7 @@ export default function WordDetailScreen() {
           toastSuccess(t("entryContribute.submitted"), t("entryContribute.meaningSubmittedDesc"));
         },
         onError: (err) => {
-          toastError(t("common.error"), err.message || t("common.tryAgain"));
+          toastError(t("common.error"), friendlyError(err));
         },
       }
     );

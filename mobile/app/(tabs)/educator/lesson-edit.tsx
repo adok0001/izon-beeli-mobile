@@ -12,6 +12,7 @@ import {
     useReplaceEducatorLessonSegments,
     useUpdateEducatorLesson,
 } from "@/lib/hooks/use-educator-panel";
+import { friendlyError } from "@/lib/api";
 import { useToast } from "@/lib/hooks/use-toast";
 import * as DocumentPicker from "expo-document-picker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -404,7 +405,7 @@ export default function EducatorLessonEditScreen() {
       { id: lessonId, audioUri: uri },
       {
         onSuccess: () => toastSuccess("Audio replaced", "Lesson audio updated."),
-        onError: (err: Error) => toastError("Audio failed", err.message),
+        onError: (err: Error) => toastError("Audio failed", friendlyError(err)),
       },
     );
   };
@@ -428,7 +429,7 @@ export default function EducatorLessonEditScreen() {
       },
       {
         onSuccess: () => router.back(),
-        onError: (err: Error) => toastError("Create failed", err.message),
+        onError: (err: Error) => toastError("Create failed", friendlyError(err)),
       },
     );
   };
@@ -446,13 +447,13 @@ export default function EducatorLessonEditScreen() {
           genre: genre.trim() || undefined,
         },
       },
-      { onError: (err: Error) => toastError("Save failed", err.message) },
+      { onError: (err: Error) => toastError("Save failed", friendlyError(err)) },
     );
     replaceSegments.mutate(
       { id: lessonId, segments: toSegmentsPayload(segments) },
       {
         onSuccess: () => toastSuccess("Saved", "Lesson and segments updated."),
-        onError: (err: Error) => toastError("Segments failed", err.message),
+        onError: (err: Error) => toastError("Segments failed", friendlyError(err)),
       },
     );
   };
@@ -482,7 +483,7 @@ export default function EducatorLessonEditScreen() {
           onPress: () => {
             deleteLesson.mutate(lessonId, {
               onSuccess: () => router.back(),
-              onError: (err: Error) => toastError("Delete failed", err.message),
+              onError: (err: Error) => toastError("Delete failed", friendlyError(err)),
             });
           },
         },

@@ -1,3 +1,4 @@
+import { friendlyError } from "@/lib/api";
 import { useRef, useState } from "react";
 import {
   View,
@@ -108,7 +109,7 @@ export default function ContributeBulkScreen() {
           setTimeout(() => router.back(), 1500);
         },
         onError: (err) => {
-          toastError(t("common.error"), err.message || t("common.tryAgain"));
+          toastError(t("common.error"), friendlyError(err));
         },
       }
     );

@@ -4,7 +4,6 @@ import { NotificationBell } from "@/components/notifications/notification-center
 import { StreakFreezeModal } from "@/components/streak-freeze-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { UpNextCard } from "@/components/up-next-card";
-import { XpLevelBadge } from "@/components/xp-level-badge";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { getStoryForCourse } from "@/lib/data/stories";
 import { useBounties } from "@/lib/hooks/use-bounties";
@@ -495,64 +494,63 @@ export default function LearnScreen() {
 
       <EnrolledLanguageBar />
 
-      {/* Stats card */}
-      <View className="mx-5 mb-3 flex-row rounded-2xl bg-neutral-50 px-2 py-3 dark:bg-neutral-800">
-        {/* Streak */}
-        <Pressable
-          onPress={() => summary?.streakBroken && summary.streak > 0 && setFreezeModalVisible(true)}
-          className="flex-row items-center gap-1"
-          accessibilityRole="button"
-          accessibilityLabel={`${summary?.streakBroken ? "Broken streak" : "Streak"}: ${summary?.streak ?? 0} days`}
-          accessibilityHint={summary?.streakBroken && (summary?.streak ?? 0) > 0 ? "Tap to use a streak freeze" : undefined}
-        >
-          <View className="flex-row items-center gap-1">
-            <IconSymbol
-              name="flame.fill"
-              size={16}
-              color={summary?.streakBroken ? "#9ca3af" : "#f59e0b"}
-            />
-            <Text className={`text-base font-bold ${summary?.streakBroken ? "text-neutral-400 line-through dark:text-neutral-500" : "text-neutral-800 dark:text-white"}`}>
-              {summary?.streak ?? 0}
-            </Text>
+     {/* Stats bar */}
+      <View className="border-b border-neutral-100 dark:border-neutral-800">
+        <View className="flex-row items-center justify-between gap-4 px-5 py-3.5">
+          {/* Streak */}
+          <Pressable
+            onPress={() => summary?.streakBroken && summary.streak > 0 && setFreezeModalVisible(true)}
+            className="flex-1 flex-row items-center gap-2 rounded-lg px-2.5 py-1.5 active:bg-neutral-100 dark:active:bg-neutral-800"
+            accessibilityRole="button"
+            accessibilityLabel={`${summary?.streakBroken ? "Broken streak" : "Streak"}: ${summary?.streak ?? 0} days`}
+            accessibilityHint={summary?.streakBroken && (summary?.streak ?? 0) > 0 ? "Tap to use a streak freeze" : undefined}
+          >
+            <View className="h-8 w-8 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30">
+              <IconSymbol
+                name="flame.fill"
+                size={16}
+                color={summary?.streakBroken ? "#9ca3af" : "#f59e0b"}
+              />
+            </View>
+            <View className="flex-1">
+              <Text className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+                Streak
+              </Text>
+              <Text className={`text-base font-bold ${summary?.streakBroken ? "text-neutral-400 line-through dark:text-neutral-500" : "text-neutral-900 dark:text-white"}`}>
+                {summary?.streak ?? 0}d
+              </Text>
+            </View>
             {(summary?.freezeCount ?? 0) > 0 && (
-              <View className="flex-row items-center rounded-full bg-blue-100 px-1 dark:bg-blue-900">
-                <IconSymbol name="snowflake" size={9} color="#3b82f6" />
+              <View className="flex-row items-center rounded-full bg-blue-100 px-2 py-0.5 dark:bg-blue-900/40">
+                <IconSymbol name="snowflake" size={11} color="#3b82f6" />
                 <Text className="ml-0.5 text-xs font-bold text-blue-600 dark:text-blue-400">
                   {summary!.freezeCount}
                 </Text>
               </View>
             )}
+          </Pressable>
+
+          {/* Divider */}
+          <View className="h-8 w-px bg-neutral-200 dark:bg-neutral-700" />
+
+          {/* Daily Goal */}
+          <View className="flex-1 flex-row items-center gap-2 rounded-lg px-2.5 py-1.5">
+            <View className="h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+              <Text className="text-xs font-bold text-blue-600 dark:text-blue-400">🎯</Text>
+            </View>
+            <View className="flex-1">
+              <Text className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+                Goal
+              </Text>
+              <View className="flex-row items-center gap-1">
+                <Text className="text-base font-bold text-neutral-900 dark:text-white">
+                  {completedToday}
+                </Text>
+                <Text className="text-xs text-neutral-500 dark:text-neutral-400">/3</Text>
+              </View>
+            </View>
+            <DailyGoalRing completedToday={completedToday} />
           </View>
-          <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">{t("learn.streak")}</Text>
-        </Pressable>
-
-        <View className="w-px self-stretch bg-neutral-200 dark:bg-neutral-700" />
-
-        {/* XP Level */}
-        <View className="flex-1 items-center">
-          <XpLevelBadge points={summary?.points ?? 0} variant="compact" />
-          <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">{t("learn.level")}</Text>
-        </View>
-
-        <View className="w-px self-stretch bg-neutral-200 dark:bg-neutral-700" />
-
-        {/* Lessons done */}
-        <View className="flex-1 items-center">
-          <View className="flex-row items-center gap-1">
-            <IconSymbol name="checkmark.circle.fill" size={16} color="#22c55e" />
-            <Text className="text-base font-bold text-neutral-800 dark:text-white">
-              {summary?.completedCount ?? 0}
-            </Text>
-          </View>
-          <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">{t("learn.statsLessonsDone")}</Text>
-        </View>
-
-        <View className="w-px self-stretch bg-neutral-200 dark:bg-neutral-700" />
-
-        {/* Daily goal */}
-        <View className="flex-1 items-center">
-          <DailyGoalRing completedToday={completedToday} />
-          <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">{t("learn.today")}</Text>
         </View>
       </View>
 

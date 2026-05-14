@@ -1,6 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
-import { ApiError } from "@/lib/api";
+import { ApiError, friendlyError } from "@/lib/api";
 import {
     ALL_CATEGORIES,
     CATEGORY_LABELS,
@@ -123,10 +123,10 @@ export default function ContributeScreen() {
           if (err instanceof ApiError && err.status === 409) {
             toastError(
               t("contribute.alreadyExists"),
-              err.message + " Try contributing a different word or refine this one."
+              friendlyError(err, "This entry may already exist. Try a different word or refine this one.")
             );
           } else {
-            toastError(t("common.error"), err.message || t("common.tryAgain"));
+            toastError(t("common.error"), friendlyError(err));
           }
         },
       }

@@ -8,6 +8,7 @@ import {
     useEducatorCourses,
     useGenerateEducatorStubs,
 } from "@/lib/hooks/use-educator-panel";
+import { friendlyError } from "@/lib/api";
 import { useToast } from "@/lib/hooks/use-toast";
 import { getLanguageName } from "@/lib/mock-data";
 import { Stack, useRouter } from "expo-router";
@@ -132,7 +133,7 @@ export default function EducatorCoursesScreen() {
           `Created ${result.courses} course(s) and ${result.lessons} lesson(s).`,
         );
       },
-      onError: (error: Error) => toastError("Action failed", error.message),
+      onError: (error: Error) => toastError("Action failed", friendlyError(error)),
     });
   };
 

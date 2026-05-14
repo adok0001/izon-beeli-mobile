@@ -1,3 +1,4 @@
+import { friendlyError } from "@/lib/api";
 import { useState } from "react";
 import { View, Text, Pressable, FlatList, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -38,7 +39,7 @@ export default function AssignLessonScreen() {
       { groupId, lessonId: selected },
       {
         onSuccess: () => router.back(),
-        onError: (err) => toastError("Error", err.message),
+        onError: (err) => toastError("Error", friendlyError(err)),
       }
     );
   };

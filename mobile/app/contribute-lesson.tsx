@@ -1,6 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, friendlyError } from "@/lib/api";
 import {
     useSubmitLessonContribution,
     type LessonContributionSegmentInput,
@@ -191,7 +191,7 @@ export default function ContributeLessonScreen() {
           setTimeout(() => router.back(), 1500);
         },
         onError: (err) => {
-          toastError(t("common.error"), err.message || t("common.tryAgain"));
+          toastError(t("common.error"), friendlyError(err));
         },
       }
     );

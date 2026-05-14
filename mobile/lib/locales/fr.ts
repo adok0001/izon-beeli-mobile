@@ -30,6 +30,11 @@ export const fr = {
     myAccount: "Mon compte",
     saveInProgress: "Enregistrement…",
     start: "Commencer",
+    permissionDenied: "Vous n'avez pas la permission de faire cela.",
+    notFound: "L'élément est introuvable.",
+    serverError: "Erreur serveur. Veuillez réessayer.",
+    networkError: "Vérifiez votre connexion et réessayez.",
+    unknownError: "Une erreur est survenue. Veuillez réessayer.",
   },
   tabs: {
     learn: "Apprendre",
