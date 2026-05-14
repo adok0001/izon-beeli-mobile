@@ -4,7 +4,6 @@ import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -13,6 +12,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
+import { useToast } from "@/lib/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 
 const mascot = require("../../public/mascot.jpg");
@@ -27,6 +28,7 @@ export default function SignUpScreen() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
+  const { toast, error: toastError, dismiss: dismissToast } = useToast();
 
   const passwordTooShort = password.length > 0 && password.length < 8;
   const passwordsMismatch =
@@ -63,7 +65,7 @@ export default function SignUpScreen() {
         clerkErr.errors?.[0]?.message ??
         (err instanceof Error ? err.message : "Something went wrong");
       setError(message);
-      Alert.alert(t("common.error"), message);
+      toastError(t("common.error"), message);
     } finally {
       setLoading(false);
     }
@@ -71,6 +73,13 @@ export default function SignUpScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900">
+      <NotificationBanner
+        visible={toast.visible}
+        title={toast.title}
+        body={toast.body}
+        type={toast.type}
+        onDismiss={dismissToast}
+      />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1 justify-center px-6"

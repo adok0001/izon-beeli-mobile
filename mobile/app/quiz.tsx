@@ -14,8 +14,6 @@ import {
 } from "@/lib/sounds";
 import { useLanguageStore } from "@/store/language-store";
 import { useQuizStore } from "@/store/quiz-store";
-// TODO: Legacy tour import (soft-retired) — remove after full deprecation
-import { useTourStore } from "@/store/tour-store";
 import type { QuizQuestion } from "@/types";
 import { useInvalidateDailyChallenges } from "@/lib/hooks/use-daily-challenge";
 import { useAuth } from "@clerk/clerk-expo";
@@ -270,8 +268,6 @@ function ResultsView({ languageId }: { languageId: string }) {
   const invalidateDailyChallenges = useInvalidateDailyChallenges();
   const result = getResult();
   const startTime = useQuizStore((s) => s.startTime);
-  const showTour = useTourStore((s) => s.showTour);
-  const hasSeen = useTourStore((s) => s.hasSeen);
   const [xpResult, setXpResult] = useState<{ xpEarned: number; leveledUp: boolean } | null>(null);
 
   useEffect(() => {
@@ -301,9 +297,6 @@ function ResultsView({ languageId }: { languageId: string }) {
       }
     };
     post();
-
-    // TODO: Legacy tour trigger (soft-retired) — remove after full deprecation
-    // showTour('feed') is disabled; welcome checklist now handles onboarding
   }, []);
 
   const scoreColor =

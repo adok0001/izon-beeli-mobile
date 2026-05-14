@@ -59,6 +59,9 @@ function ContinueCard({ lessonId, positionSeconds }: { lessonId: string; positio
     <Pressable
       onPress={handleResume}
       className="mb-3 rounded-2xl bg-emerald-50 p-4 active:opacity-70 dark:bg-emerald-950"
+      accessibilityRole="button"
+      accessibilityLabel={`Continue listening: ${localizeField(lesson.title, lesson.titleFr, uiLanguage)}, paused at ${posLabel}`}
+      accessibilityHint="Tap to resume playback"
     >
       <View className="flex-row items-center">
         <View className="mr-3 h-12 w-12 items-center justify-center rounded-xl bg-emerald-500">
@@ -98,6 +101,10 @@ function CourseCard({ course, completedIds }: { course: Course; completedIds: Se
       <Pressable
         onPress={() => setCollapsed((c) => !c)}
         className="p-4 active:opacity-70"
+        accessibilityRole="button"
+        accessibilityLabel={`${localizeField(course.title, course.titleFr, uiLanguage)}, ${completedCount} of ${lessons.length} lessons completed`}
+        accessibilityHint={collapsed ? "Tap to expand course" : "Tap to collapse course"}
+        accessibilityState={{ expanded: !collapsed }}
       >
         <View className="mb-2 flex-row items-center justify-between">
           <View className="rounded-full bg-blue-100 px-3 py-1 dark:bg-blue-900">
@@ -174,6 +181,9 @@ function CourseCard({ course, completedIds }: { course: Course; completedIds: Se
                 router.push({ pathname: "/quiz", params: { courseId: course.id } })
               }
               className="flex-1 flex-row items-center justify-center rounded-lg border border-blue-200 py-2.5 active:opacity-70 dark:border-blue-800"
+              accessibilityRole="button"
+              accessibilityLabel={t("learn.practiceQuiz")}
+              accessibilityHint="Start a practice quiz for this course"
             >
               <IconSymbol name="trophy.fill" size={16} color="#3b82f6" />
               <Text className="ml-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400">
@@ -185,6 +195,9 @@ function CourseCard({ course, completedIds }: { course: Course; completedIds: Se
                 router.push({ pathname: "/matching-game", params: { courseId: course.id } })
               }
               className="flex-1 flex-row items-center justify-center rounded-lg border border-violet-200 py-2.5 active:opacity-70 dark:border-violet-800"
+              accessibilityRole="button"
+              accessibilityLabel={t("learn.matchingGame")}
+              accessibilityHint="Start a matching game for this course"
             >
               <IconSymbol name="rectangle.grid.2x2" size={16} color="#8b5cf6" />
               <Text className="ml-1.5 text-sm font-semibold text-violet-600 dark:text-violet-400">
@@ -196,6 +209,9 @@ function CourseCard({ course, completedIds }: { course: Course; completedIds: Se
             <Pressable
               onPress={() => router.push(`/story/${course.id}` as any)}
               className="mt-2 flex-row items-center justify-center rounded-lg border border-amber-200 py-2.5 active:opacity-70 dark:border-amber-800"
+              accessibilityRole="button"
+              accessibilityLabel={t("learn.storyMode")}
+              accessibilityHint="Open story mode for this course"
             >
               <IconSymbol name="book.fill" size={16} color="#f59e0b" />
               <Text className="ml-1.5 text-sm font-semibold text-amber-600 dark:text-amber-400">
@@ -215,6 +231,9 @@ function LessonRow({ lesson, completed, onPress }: { lesson: Lesson; completed: 
     <Pressable
       onPress={onPress}
       className="flex-row items-center border-t border-neutral-200 py-3 active:opacity-70 dark:border-neutral-700"
+      accessibilityRole="button"
+      accessibilityLabel={`${localizeField(lesson.title, lesson.titleFr, uiLanguage)}${completed ? ", completed" : ""}`}
+      accessibilityHint="Tap to open lesson"
     >
       <IconSymbol
         name={completed ? "checkmark.circle.fill" : "circle"}
@@ -254,6 +273,9 @@ function BountyTeaser({ languageId }: { languageId: string }) {
     <Pressable
       onPress={() => router.push("/bounties")}
       className="rounded-2xl bg-amber-50 p-4 active:opacity-70 dark:bg-amber-950"
+      accessibilityRole="button"
+      accessibilityLabel={`Bounty: ${topBounty.title}, earn ${topBounty.xpReward} XP`}
+      accessibilityHint="Tap to view all bounties"
     >
       <View className="flex-row items-center">
         <View className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-amber-500">
@@ -288,6 +310,9 @@ function ContributorBanner() {
     <Pressable
       onPress={() => router.push("/reviewer-application")}
       className="flex-row items-center rounded-2xl bg-emerald-50 p-4 active:opacity-70 dark:bg-emerald-950"
+      accessibilityRole="button"
+      accessibilityLabel={t("learn.contributorBannerTitle")}
+      accessibilityHint="Tap to apply as a contributor"
     >
       <View className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-emerald-500">
         <IconSymbol name="person.badge.plus" size={18} color="#fff" />
@@ -316,6 +341,9 @@ function ReviewBanner({ languageId }: Readonly<{ languageId?: string | null }>) 
     <Pressable
       onPress={() => router.push("/word-review")}
       className="flex-row items-center rounded-2xl bg-violet-50 p-4 active:opacity-70 dark:bg-violet-950"
+      accessibilityRole="button"
+      accessibilityLabel={t("learn.reviewBanner", { count: dueWords.length })}
+      accessibilityHint="Tap to review words due for practice"
     >
       <View className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-violet-500">
         <IconSymbol name="brain.head.profile" size={18} color="#fff" />
@@ -451,12 +479,16 @@ export default function LearnScreen() {
           <Pressable
             onPress={() => router.push("/quiz")}
             className="h-9 w-9 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900"
+            accessibilityRole="button"
+            accessibilityLabel="Practice quiz"
           >
             <IconSymbol name="trophy.fill" size={18} color="#3b82f6" />
           </Pressable>
           <Pressable
             onPress={() => router.push("/dictionary")}
             className="h-9 w-9 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900"
+            accessibilityRole="button"
+            accessibilityLabel="Dictionary"
           >
             <IconSymbol name="character.book.closed" size={18} color="#f59e0b" />
           </Pressable>
@@ -470,6 +502,9 @@ export default function LearnScreen() {
         <Pressable
           onPress={() => summary?.streakBroken && summary.streak > 0 && setFreezeModalVisible(true)}
           className="flex-row items-center gap-1"
+          accessibilityRole="button"
+          accessibilityLabel={`${summary?.streakBroken ? "Broken streak" : "Streak"}: ${summary?.streak ?? 0} days`}
+          accessibilityHint={summary?.streakBroken && (summary?.streak ?? 0) > 0 ? "Tap to use a streak freeze" : undefined}
         >
           <IconSymbol
             name="flame.fill"

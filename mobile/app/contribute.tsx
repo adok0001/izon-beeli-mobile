@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { ApiError } from "@/lib/api";
 import {
     ALL_CATEGORIES,
@@ -7,14 +8,15 @@ import {
 } from "@/lib/dictionary";
 import { useBounties } from "@/lib/hooks/use-bounties";
 import { useSubmitContribution } from "@/lib/hooks/use-contributions";
+import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES } from "@/lib/mock-data";
+import { wordContributionSchema } from "@/lib/validation";
 import { useContributionStore } from "@/store/contribution-store";
 import * as DocumentPicker from "expo-document-picker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    Alert,
     Image,
     KeyboardAvoidingView,
     Platform,
@@ -32,6 +34,7 @@ export default function ContributeScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{ languageId?: string; category?: string }>();
+  const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
   const {
     isRecording,
     isPlaying,
@@ -77,36 +80,53 @@ export default function ContributeScreen() {
   };
 
   const handleSubmit = () => {
-    if (!selectedLanguage || !word.trim() || !english.trim() || !category) return;
+    const validation = wordContributionSchema.safeParse({
+      languageId: selectedLanguage ?? "",
+      word,
+      english,
+      category,
+      pronunciation: pronunciation || undefined,
+      example: example || undefined,
+      exampleTranslation: exampleTranslation || undefined,
+      audioUri: recordingUri ?? undefined,
+      imageUri: imageUri ?? undefined,
+    });
+
+    if (!validation.success) {
+      const message = validation.error.issues[0]?.message ?? t("common.tryAgain");
+      toastError(t("common.error"), message);
+      return;
+    }
+
+    const data = validation.data;
 
     submitContribution.mutate(
       {
         type: isPhrase ? "phrase" : "word",
-        languageId: selectedLanguage,
-        word: word.trim(),
-        english: english.trim(),
-        category,
-        pronunciation: pronunciation.trim() || undefined,
-        example: example.trim() || undefined,
-        exampleTranslation: exampleTranslation.trim() || undefined,
-        audioUri: recordingUri ?? undefined,
-        imageUri: imageUri ?? undefined,
+        languageId: data.languageId,
+        word: data.word,
+        english: data.english,
+        category: data.category,
+        pronunciation: data.pronunciation,
+        example: data.example,
+        exampleTranslation: data.exampleTranslation,
+        audioUri: data.audioUri,
+        imageUri: data.imageUri,
       },
       {
         onSuccess: () => {
-          Alert.alert(t("contribute.submitted"), t("contribute.submittedWordDesc"), [
-            { text: "OK", onPress: () => router.back() },
-          ]);
+          toastSuccess(t("contribute.submitted"), t("contribute.submittedWordDesc"));
+          setTimeout(() => router.back(), 1500);
         },
         onError: (err) => {
           console.error("Contribution submit error:", err);
           if (err instanceof ApiError && err.status === 409) {
-            Alert.alert(
+            toastError(
               t("contribute.alreadyExists"),
-              err.message + "\n\nTry contributing a different word or refine this one."
+              err.message + " Try contributing a different word or refine this one."
             );
           } else {
-            Alert.alert(t("common.error"), err.message || t("common.tryAgain"));
+            toastError(t("common.error"), err.message || t("common.tryAgain"));
           }
         },
       }
@@ -128,6 +148,13 @@ export default function ContributeScreen() {
     <>
       <Stack.Screen options={{ title: t("contribute.title"), presentation: "modal" }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
+        <NotificationBanner
+          visible={toast.visible}
+          title={toast.title}
+          body={toast.body}
+          type={toast.type}
+          onDismiss={dismissToast}
+        />
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           className="flex-1"
@@ -621,7 +648,13 @@ export default function ContributeScreen() {
                 {step === "entry" && (
                   <Pressable
                     onPress={() => {
-                      if (word.trim() && english.trim() && category) setStep("details");
+                      const entryCheck = wordContributionSchema.pick({ word: true, english: true, category: true }).safeParse({ word, english, category });
+                      if (entryCheck.success) {
+                        setStep("details");
+                      } else {
+                        const message = entryCheck.error.issues[0]?.message ?? t("common.tryAgain");
+                        toastError(t("common.error"), message);
+                      }
                     }}
                     disabled={!word.trim() || !english.trim() || !category}
                     className={`flex-1 items-center rounded-xl py-3.5 ${

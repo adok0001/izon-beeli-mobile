@@ -55,7 +55,14 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
     return (
       <View className={`bg-white px-4 py-2 dark:bg-neutral-900 ${position === "top" ? "border-b border-neutral-200 dark:border-neutral-700" : "border-t border-neutral-200 dark:border-neutral-700"}`}>
         <View className="flex-row items-center">
-          <Pressable onPress={togglePlayback} className="mr-3" hitSlop={8}>
+          <Pressable
+            onPress={togglePlayback}
+            className="mr-3"
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={isPlaying ? "Pause audio" : "Play audio"}
+            accessibilityState={{ busy: isLoading }}
+          >
             {isLoading ? (
               <ActivityIndicator size="small" color="#3b82f6" />
             ) : (
@@ -67,7 +74,13 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
             )}
           </Pressable>
           <View className="flex-1">
-            <Pressable onPress={onPress} disabled={!onPress}>
+            <Pressable
+              onPress={onPress}
+              disabled={!onPress}
+              accessibilityRole="button"
+              accessibilityLabel={currentTrackTitle ?? "Now Playing"}
+              accessibilityHint={onPress ? "Open lesson" : undefined}
+            >
               <Text
                 className="text-sm font-medium text-neutral-900 dark:text-white"
                 numberOfLines={1}
@@ -75,7 +88,14 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
                 {currentTrackTitle ?? "Now Playing"}
               </Text>
             </Pressable>
-            <Pressable onPress={handleSeek} onLayout={onBarLayout} className="mt-1 py-1">
+            <Pressable
+              onPress={handleSeek}
+              onLayout={onBarLayout}
+              className="mt-1 py-1"
+              accessibilityRole="button"
+              accessibilityLabel="Seek audio"
+              accessibilityHint="Tap to seek to position"
+            >
               <View className="h-1 rounded-full bg-neutral-200 dark:bg-neutral-700">
                 <View
                   className="h-1 rounded-full bg-blue-500"
@@ -103,7 +123,14 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
       </Text>
 
       {/* Progress bar */}
-      <Pressable onPress={handleSeek} className="py-2" onLayout={onBarLayout}>
+      <Pressable
+        onPress={handleSeek}
+        className="py-2"
+        onLayout={onBarLayout}
+        accessibilityRole="button"
+        accessibilityLabel={`Audio progress, ${formatDuration(progress)} of ${formatDuration(duration)}`}
+        accessibilityHint="Tap to seek to position"
+      >
         <View className="h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-700">
           <View
             className="h-1.5 rounded-full bg-blue-500"
@@ -125,12 +152,24 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
       {/* Controls */}
       <View className="flex-row items-center justify-center gap-6">
         {/* Speed */}
-        <Pressable onPress={cycleSpeed} hitSlop={8} className="min-w-[40px] items-center">
+        <Pressable
+          onPress={cycleSpeed}
+          hitSlop={8}
+          className="min-w-[40px] items-center"
+          accessibilityRole="button"
+          accessibilityLabel={`Playback speed: ${playbackSpeed}x`}
+          accessibilityHint="Tap to cycle through playback speeds"
+        >
           <Text className="text-sm font-bold text-blue-500">{playbackSpeed}x</Text>
         </Pressable>
 
         {/* Skip backward */}
-        <Pressable onPress={() => skipBackward(10)} hitSlop={8}>
+        <Pressable
+          onPress={() => skipBackward(10)}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Skip back 10 seconds"
+        >
           <IconSymbol name="backward.fill" size={28} color="#6b7280" />
         </Pressable>
 
@@ -139,6 +178,9 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
           onPress={togglePlayback}
           className="h-14 w-14 items-center justify-center rounded-full bg-blue-500"
           hitSlop={4}
+          accessibilityRole="button"
+          accessibilityLabel={isPlaying ? "Pause audio" : "Play audio"}
+          accessibilityState={{ busy: isLoading }}
         >
           {isLoading ? (
             <ActivityIndicator size="small" color="#fff" />
@@ -152,7 +194,12 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
         </Pressable>
 
         {/* Skip forward */}
-        <Pressable onPress={() => skipForward(10)} hitSlop={8}>
+        <Pressable
+          onPress={() => skipForward(10)}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Skip forward 10 seconds"
+        >
           <IconSymbol name="forward.fill" size={28} color="#6b7280" />
         </Pressable>
 

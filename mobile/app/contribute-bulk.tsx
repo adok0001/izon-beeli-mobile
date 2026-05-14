@@ -7,15 +7,16 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { LANGUAGES } from "@/lib/mock-data";
 import { ALL_CATEGORIES, CATEGORY_LABELS, type DictionaryCategory } from "@/lib/dictionary";
 import { useBulkSubmitContribution, type BulkContributionEntry } from "@/lib/hooks/use-contributions";
+import { useToast } from "@/lib/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 
 type Step = "language" | "category" | "entries";
@@ -32,6 +33,7 @@ export default function ContributeBulkScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const submitBulk = useBulkSubmitContribution();
+  const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
 
   const [step, setStep] = useState<Step>("language");
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
@@ -99,14 +101,14 @@ export default function ContributeBulkScreen() {
       {
         onSuccess: (data) => {
           const label = data.inserted === 1 ? t("contribute.submitEntry") : t("contribute.submitEntries");
-          Alert.alert(
+          toastSuccess(
             t("contribute.submitted"),
-            t("contribute.submittedBulkDesc", { inserted: data.inserted, label }),
-            [{ text: "OK", onPress: () => router.back() }]
+            t("contribute.submittedBulkDesc", { inserted: data.inserted, label })
           );
+          setTimeout(() => router.back(), 1500);
         },
         onError: (err) => {
-          Alert.alert(t("common.error"), err.message || t("common.tryAgain"));
+          toastError(t("common.error"), err.message || t("common.tryAgain"));
         },
       }
     );
@@ -120,6 +122,13 @@ export default function ContributeBulkScreen() {
     <>
       <Stack.Screen options={{ title: t("contribute.bulkTitle"), presentation: "modal" }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
+        <NotificationBanner
+          visible={toast.visible}
+          title={toast.title}
+          body={toast.body}
+          type={toast.type}
+          onDismiss={dismissToast}
+        />
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           className="flex-1"

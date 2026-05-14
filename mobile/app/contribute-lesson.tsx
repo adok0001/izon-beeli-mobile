@@ -1,10 +1,13 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { apiFetch } from "@/lib/api";
 import {
     useSubmitLessonContribution,
     type LessonContributionSegmentInput,
 } from "@/lib/hooks/use-contributions";
+import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
+import { lessonContributionSchema } from "@/lib/validation";
 import { useLessonContributionStore } from "@/store/lesson-contribution-store";
 import * as DocumentPicker from "expo-document-picker";
 import { Stack, useRouter } from "expo-router";
@@ -12,7 +15,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
-    Alert,
     KeyboardAvoidingView,
     Platform,
     Pressable,
@@ -62,6 +64,7 @@ export default function ContributeLessonScreen() {
   const router = useRouter();
   const store = useLessonContributionStore();
   const submitLesson = useSubmitLessonContribution();
+  const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
 
   const [step, setStep] = useState<Step>("language");
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
@@ -105,7 +108,7 @@ export default function ContributeLessonScreen() {
       const asset = result.assets[0];
       await store.loadAudio(asset.uri);
     } catch {
-      Alert.alert("Error", "Could not pick audio file.");
+      toastError("Error", "Could not pick audio file.");
     }
   };
 
@@ -147,36 +150,48 @@ export default function ContributeLessonScreen() {
   };
 
   const handleSubmit = () => {
-    if (!selectedLanguage || !title.trim() || !description.trim() || !store.audioUri) return;
+    const filledSegments = segments.filter((s) => s.text.trim());
 
-    const segmentInputs: LessonContributionSegmentInput[] = segments
-      .filter((s) => s.text.trim())
-      .map((s, i) => ({
-        text: s.text.trim(),
-        translation: s.translation.trim() || undefined,
-        startTime: s.startTime ? parseFloat(s.startTime) : undefined,
-        endTime: s.endTime ? parseFloat(s.endTime) : undefined,
-        order: i,
-      }));
+    const validation = lessonContributionSchema.safeParse({
+      languageId: selectedLanguage ?? "",
+      courseId: selectedCourse,
+      title,
+      description,
+      audioUri: store.audioUri ?? "",
+      segments: filledSegments,
+    });
+
+    if (!validation.success) {
+      const message = validation.error.issues[0]?.message ?? t("common.tryAgain");
+      toastError(t("common.error"), message);
+      return;
+    }
+
+    const segmentInputs: LessonContributionSegmentInput[] = filledSegments.map((s, i) => ({
+      text: s.text.trim(),
+      translation: s.translation.trim() || undefined,
+      startTime: s.startTime ? parseFloat(s.startTime) : undefined,
+      endTime: s.endTime ? parseFloat(s.endTime) : undefined,
+      order: i,
+    }));
 
     submitLesson.mutate(
       {
-        languageId: selectedLanguage,
+        languageId: validation.data.languageId,
         courseId: selectedCourse ?? undefined,
-        title: title.trim(),
-        description: description.trim(),
-        audioUri: store.audioUri,
+        title: validation.data.title,
+        description: validation.data.description,
+        audioUri: validation.data.audioUri,
         duration: store.audioDuration > 0 ? Math.round(store.audioDuration) : undefined,
         segments: segmentInputs,
       },
       {
         onSuccess: () => {
-          Alert.alert(t("contribute.submitted"), t("contribute.submittedLessonDesc"), [
-            { text: "OK", onPress: () => router.back() },
-          ]);
+          toastSuccess(t("contribute.submitted"), t("contribute.submittedLessonDesc"));
+          setTimeout(() => router.back(), 1500);
         },
         onError: (err) => {
-          Alert.alert(t("common.error"), err.message || t("common.tryAgain"));
+          toastError(t("common.error"), err.message || t("common.tryAgain"));
         },
       }
     );
@@ -210,6 +225,13 @@ export default function ContributeLessonScreen() {
     <>
       <Stack.Screen options={{ title: t("contribute.lessonTitle"), presentation: "modal" }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
+        <NotificationBanner
+          visible={toast.visible}
+          title={toast.title}
+          body={toast.body}
+          type={toast.type}
+          onDismiss={dismissToast}
+        />
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           className="flex-1"

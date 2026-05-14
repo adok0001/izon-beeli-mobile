@@ -107,7 +107,7 @@ export default function EducatorDictionaryScreen() {
 
   const submit = () => {
     if (!editor.word.trim() || !editor.english.trim()) {
-      Alert.alert("Missing fields", "Word and English are required.");
+      toastError("Missing fields", "Word and English are required.");
       return;
     }
 

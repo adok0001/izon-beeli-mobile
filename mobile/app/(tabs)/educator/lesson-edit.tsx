@@ -202,7 +202,7 @@ function RecordButton({
   const startRecording = async () => {
     const { status } = await Audio.requestPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert("Permission required", "Microphone access is needed to record audio.");
+      toastError("Permission required", "Microphone access is needed to record audio.");
       return;
     }
     await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
@@ -411,7 +411,7 @@ export default function EducatorLessonEditScreen() {
 
   const handleCreate = () => {
     if (!course) {
-      Alert.alert("No course", "Could not find the course. Go back and try again.");
+      toastError("No course", "Could not find the course. Go back and try again.");
       return;
     }
     createLesson.mutate(
@@ -459,7 +459,7 @@ export default function EducatorLessonEditScreen() {
 
   const handleSave = () => {
     if (!title.trim() || !description.trim()) {
-      Alert.alert("Missing fields", "Title and description are required.");
+      toastError("Missing fields", "Title and description are required.");
       return;
     }
     if (isEditMode) {

@@ -1,6 +1,8 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { apiFetch } from "@/lib/api";
 import { type CurrentUser, useCurrentUser } from "@/lib/hooks/use-current-user";
+import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES } from "@/lib/mock-data";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -244,6 +246,7 @@ export default function ReviewerApplicationScreen() {
   const qc = useQueryClient();
   const { t } = useTranslation();
   const { data: currentUser } = useCurrentUser();
+  const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
 
   const [role, setRole] = useState("teacher");
   const [background, setBackground] = useState("");
@@ -284,10 +287,10 @@ export default function ReviewerApplicationScreen() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["reviewer-application-me"] });
       void qc.invalidateQueries({ queryKey: ["current-user"] });
-      Alert.alert(t("reviewerApplication.cancelSuccessTitle"), t("reviewerApplication.cancelSuccessMessage"));
+      toastSuccess(t("reviewerApplication.cancelSuccessTitle"), t("reviewerApplication.cancelSuccessMessage"));
     },
     onError: (err: Error) => {
-      Alert.alert(t("reviewerApplication.failedTitle"), err.message);
+      toastError(t("reviewerApplication.failedTitle"), err.message);
     },
   });
 
@@ -322,10 +325,10 @@ export default function ReviewerApplicationScreen() {
       void qc.invalidateQueries({ queryKey: ["current-user"] });
       const title = isUpdate ? t("reviewerApplication.updateSuccessTitle") : t("reviewerApplication.successTitle");
       const message = isUpdate ? t("reviewerApplication.updateSuccessMessage") : t("reviewerApplication.successMessage");
-      Alert.alert(title, message);
+      toastSuccess(title, message);
     },
     onError: (err: Error) => {
-      Alert.alert(t("reviewerApplication.failedTitle"), err.message);
+      toastError(t("reviewerApplication.failedTitle"), err.message);
     },
   });
 
@@ -346,6 +349,13 @@ export default function ReviewerApplicationScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+        <NotificationBanner
+          visible={toast.visible}
+          title={toast.title}
+          body={toast.body}
+          type={toast.type}
+          onDismiss={dismissToast}
+        />
         <View className="flex-row items-center justify-between px-5 pb-3 pt-2">
           <Text className="text-lg font-bold text-neutral-900 dark:text-white">
             {existing?.status === "approved"
