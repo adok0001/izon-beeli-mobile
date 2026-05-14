@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { View, Text, Pressable, FlatList, ActivityIndicator, Alert } from "react-native";
+import { View, Text, Pressable, FlatList, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter, useLocalSearchParams } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { useClassroomGroups, useCreateAssignment } from "@/lib/hooks/use-classroom";
 import { useLanguageLessons } from "@/lib/hooks/use-courses";
+import { useToast } from "@/lib/hooks/use-toast";
 import { formatDuration } from "@/lib/mock-data";
 import type { Lesson } from "@/types";
 
@@ -15,6 +17,7 @@ export default function AssignLessonScreen() {
   const group = groups.find((g) => g.id === groupId);
   const createAssignment = useCreateAssignment();
   const [selected, setSelected] = useState<string | null>(null);
+  const { toast, error: toastError, dismiss: dismissToast } = useToast();
 
   const { data: allLessons = [], isLoading } = useLanguageLessons(group?.languageId ?? "");
 
@@ -35,7 +38,7 @@ export default function AssignLessonScreen() {
       { groupId, lessonId: selected },
       {
         onSuccess: () => router.back(),
-        onError: (err) => Alert.alert("Error", err.message),
+        onError: (err) => toastError("Error", err.message),
       }
     );
   };
@@ -44,6 +47,13 @@ export default function AssignLessonScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900">
+        <NotificationBanner
+          visible={toast.visible}
+          title={toast.title}
+          body={toast.body}
+          type={toast.type}
+          onDismiss={dismissToast}
+        />
         <View className="flex-row items-center justify-between border-b border-neutral-200 px-5 py-3 dark:border-neutral-700">
           <Pressable onPress={() => router.back()}>
             <Text className="text-base text-neutral-500">Cancel</Text>

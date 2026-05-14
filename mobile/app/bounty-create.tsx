@@ -1,12 +1,13 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { ALL_CATEGORIES, CATEGORY_LABELS, type DictionaryCategory } from "@/lib/dictionary";
 import { useCreateBounty, type CreateBountyInput } from "@/lib/hooks/use-bounties";
 import { canManageBounties, useCurrentUser } from "@/lib/hooks/use-current-user";
+import { useToast } from "@/lib/hooks/use-toast";
 import { ACTIVE_LANGUAGES } from "@/lib/mock-data";
 import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
 import {
-    Alert,
     KeyboardAvoidingView,
     Platform,
     Pressable,
@@ -52,6 +53,7 @@ export default function BountyCreateScreen() {
   const router = useRouter();
   const { data: currentUser } = useCurrentUser();
   const createBounty = useCreateBounty();
+  const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -105,11 +107,10 @@ export default function BountyCreateScreen() {
 
     try {
       await createBounty.mutateAsync(input);
-      Alert.alert("Bounty created!", `"${input.title}" is now live.`, [
-        { text: "Done", onPress: () => router.back() },
-      ]);
+      toastSuccess("Bounty created!", `"${input.title}" is now live.`);
+      setTimeout(() => router.back(), 1500);
     } catch {
-      Alert.alert("Error", "Failed to create bounty. Please try again.");
+      toastError("Error", "Failed to create bounty. Please try again.");
     }
   };
 
@@ -117,6 +118,13 @@ export default function BountyCreateScreen() {
     <>
       <Stack.Screen options={{ title: "Create Bounty", headerBackTitle: "Back" }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
+        <NotificationBanner
+          visible={toast.visible}
+          title={toast.title}
+          body={toast.body}
+          type={toast.type}
+          onDismiss={dismissToast}
+        />
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           className="flex-1"

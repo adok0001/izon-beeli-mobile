@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
-import { View, Text, Pressable, ScrollView, ActivityIndicator, TextInput, Alert, Image } from "react-native";
+import { View, Text, Pressable, ScrollView, ActivityIndicator, TextInput, Image } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { WordAudioButton } from "@/components/dictionary/word-audio-button";
 import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/lib/dictionary";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { useSubmitEntryContribution } from "@/lib/hooks/use-contributions";
+import { useToast } from "@/lib/hooks/use-toast";
 import { useContributionStore } from "@/store/contribution-store";
 import { useDictionaryNavStore } from "@/store/dictionary-nav-store";
 import { useSaveWord, useRemoveWord, useWordBank } from "@/lib/hooks/use-wordbank";
@@ -21,6 +23,7 @@ export default function WordDetailScreen() {
   }>();
   const router = useRouter();
   const { t } = useTranslation();
+  const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
 
   const { data: entries = [], isLoading } = useDictionary(languageId);
   const entry = entries.find((e) => e.id === id);
@@ -77,10 +80,10 @@ export default function WordDetailScreen() {
       {
         onSuccess: () => {
           discardRecording();
-          Alert.alert(t("entryContribute.submitted"), t("entryContribute.audioSubmittedDesc"));
+          toastSuccess(t("entryContribute.submitted"), t("entryContribute.audioSubmittedDesc"));
         },
         onError: (err) => {
-          Alert.alert(t("common.error"), err.message || t("common.tryAgain"));
+          toastError(t("common.error"), err.message || t("common.tryAgain"));
         },
       }
     );
@@ -111,10 +114,10 @@ export default function WordDetailScreen() {
       {
         onSuccess: () => {
           setImageUri(null);
-          Alert.alert(t("entryContribute.submitted"), t("entryContribute.imageSubmittedDesc"));
+          toastSuccess(t("entryContribute.submitted"), t("entryContribute.imageSubmittedDesc"));
         },
         onError: (err) => {
-          Alert.alert(t("common.error"), err.message || t("common.tryAgain"));
+          toastError(t("common.error"), err.message || t("common.tryAgain"));
         },
       }
     );
@@ -135,10 +138,10 @@ export default function WordDetailScreen() {
         onSuccess: () => {
           setNewMeaning("");
           setShowMeaningInput(false);
-          Alert.alert(t("entryContribute.submitted"), t("entryContribute.meaningSubmittedDesc"));
+          toastSuccess(t("entryContribute.submitted"), t("entryContribute.meaningSubmittedDesc"));
         },
         onError: (err) => {
-          Alert.alert(t("common.error"), err.message || t("common.tryAgain"));
+          toastError(t("common.error"), err.message || t("common.tryAgain"));
         },
       }
     );
@@ -218,6 +221,13 @@ export default function WordDetailScreen() {
         className="flex-1 bg-white dark:bg-neutral-900"
         edges={[]}
       >
+        <NotificationBanner
+          visible={toast.visible}
+          title={toast.title}
+          body={toast.body}
+          type={toast.type}
+          onDismiss={dismissToast}
+        />
         <ScrollView
           contentContainerStyle={{ paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}

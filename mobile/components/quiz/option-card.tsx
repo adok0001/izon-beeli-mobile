@@ -27,11 +27,28 @@ export function OptionCard({
     dimmed: "text-neutral-400 dark:text-neutral-500",
   }[state];
 
+  const accessibilityHintMap: Record<OptionState, string | undefined> = {
+    default: "Tap to select this answer",
+    correct: undefined,
+    incorrect: undefined,
+    dimmed: undefined,
+  };
+
   return (
     <Pressable
       onPress={onPress}
       disabled={state !== "default"}
       className={`mb-3 rounded-xl border-2 px-5 py-4 ${bgClass}`}
+      accessibilityRole="button"
+      accessibilityLabel={
+        state === "correct"
+          ? `${label}, correct`
+          : state === "incorrect"
+            ? `${label}, incorrect`
+            : label
+      }
+      accessibilityHint={accessibilityHintMap[state]}
+      accessibilityState={{ disabled: state !== "default", selected: state === "correct" || state === "incorrect" }}
     >
       <Text className={`text-base font-medium ${textClass}`}>{label}</Text>
     </Pressable>
