@@ -1,7 +1,15 @@
 import { Hono } from "hono";
 import { and, eq, gte, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { userProgress, quizResults, wordBank } from "../db/schema.js";
+import {
+  contributions,
+  gameSessionPlayers,
+  gameSessions,
+  journalEntries,
+  quizResults,
+  userProgress,
+  wordBank,
+} from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
 
 export const dashboardRouter = new Hono<AuthEnv>();
@@ -111,48 +119,109 @@ dashboardRouter.get("/streak-calendar", async (c) => {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  const lessonDates = await db
-    .select({
-      date: sql<string>`to_char(${userProgress.completedAt}, 'YYYY-MM-DD')`,
-    })
-    .from(userProgress)
-    .where(
-      and(
-        eq(userProgress.userId, userId),
-        eq(userProgress.completed, true),
-        gte(userProgress.completedAt, thirtyDaysAgo)
-      )
-    );
+  const [
+    lessonDates,
+    listenDates,
+    quizDates,
+    reviewDates,
+    journalDates,
+    contributionDates,
+    gameDates,
+  ] = await Promise.all([
+    // Completed lessons
+    db
+      .select({ date: sql<string>`to_char(${userProgress.completedAt}, 'YYYY-MM-DD')` })
+      .from(userProgress)
+      .where(
+        and(
+          eq(userProgress.userId, userId),
+          eq(userProgress.completed, true),
+          gte(userProgress.completedAt, thirtyDaysAgo)
+        )
+      ),
 
-  const quizDates = await db
-    .select({
-      date: sql<string>`to_char(${quizResults.createdAt}, 'YYYY-MM-DD')`,
-    })
-    .from(quizResults)
-    .where(
-      and(
-        eq(quizResults.userId, userId),
-        gte(quizResults.createdAt, thirtyDaysAgo)
-      )
-    );
+    // Audio listened
+    db
+      .select({ date: sql<string>`to_char(${userProgress.listenedAt}, 'YYYY-MM-DD')` })
+      .from(userProgress)
+      .where(
+        and(
+          eq(userProgress.userId, userId),
+          gte(userProgress.listenedAt, thirtyDaysAgo)
+        )
+      ),
 
-  const reviewDates = await db
-    .select({
-      date: sql<string>`to_char(${wordBank.lastReviewedAt}, 'YYYY-MM-DD')`,
-    })
-    .from(wordBank)
-    .where(
-      and(
-        eq(wordBank.userId, userId),
-        gte(wordBank.lastReviewedAt, thirtyDaysAgo)
-      )
-    );
+    // Quiz results
+    db
+      .select({ date: sql<string>`to_char(${quizResults.createdAt}, 'YYYY-MM-DD')` })
+      .from(quizResults)
+      .where(
+        and(
+          eq(quizResults.userId, userId),
+          gte(quizResults.createdAt, thirtyDaysAgo)
+        )
+      ),
+
+    // Word reviews
+    db
+      .select({ date: sql<string>`to_char(${wordBank.lastReviewedAt}, 'YYYY-MM-DD')` })
+      .from(wordBank)
+      .where(
+        and(
+          eq(wordBank.userId, userId),
+          gte(wordBank.lastReviewedAt, thirtyDaysAgo)
+        )
+      ),
+
+    // Journal entries created
+    db
+      .select({ date: sql<string>`to_char(${journalEntries.createdAt}, 'YYYY-MM-DD')` })
+      .from(journalEntries)
+      .where(
+        and(
+          eq(journalEntries.userId, userId),
+          gte(journalEntries.createdAt, thirtyDaysAgo)
+        )
+      ),
+
+    // Contributions submitted
+    db
+      .select({ date: sql<string>`to_char(${contributions.createdAt}, 'YYYY-MM-DD')` })
+      .from(contributions)
+      .where(
+        and(
+          eq(contributions.userId, userId),
+          gte(contributions.createdAt, thirtyDaysAgo)
+        )
+      ),
+
+    // Multiplayer games completed
+    db
+      .select({ date: sql<string>`to_char(${gameSessionPlayers.finishedAt}, 'YYYY-MM-DD')` })
+      .from(gameSessionPlayers)
+      .innerJoin(gameSessions, eq(gameSessionPlayers.sessionId, gameSessions.id))
+      .where(
+        and(
+          eq(gameSessionPlayers.userId, userId),
+          eq(gameSessions.status, "completed"),
+          gte(gameSessionPlayers.finishedAt, thirtyDaysAgo)
+        )
+      ),
+  ]);
 
   const allDates = new Set([
     ...lessonDates.map((r) => r.date),
+    ...listenDates.map((r) => r.date),
     ...quizDates.map((r) => r.date),
     ...reviewDates.map((r) => r.date),
+    ...journalDates.map((r) => r.date),
+    ...contributionDates.map((r) => r.date),
+    ...gameDates.map((r) => r.date),
   ]);
 
-  return c.json({ activeDays: Array.from(allDates).sort() });
+  // Remove any null values (rows with null timestamps produce null date strings)
+  allDates.delete("null");
+  allDates.delete(null as any);
+
+  return c.json({ activeDays: Array.from(allDates).filter(Boolean).sort() });
 });

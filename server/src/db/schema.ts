@@ -105,6 +105,7 @@ export const userProgress = pgTable(
     completed: boolean("completed").default(false).notNull(),
     points: integer("points").default(0).notNull(),
     completedAt: timestamp("completed_at"),
+    listenedAt: timestamp("listened_at"),
   },
   (table) => [
     uniqueIndex("user_progress_user_lesson_idx").on(table.userId, table.lessonId),
