@@ -34,6 +34,19 @@ export function useRefetchDailyChallenges() {
   );
 }
 
+export function useRegenerateDailyChallenges() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  return useCallback(async () => {
+    const token = await getToken();
+    await apiFetch<DailyChallenge[]>("/daily-challenges/today/refresh", {
+      method: "POST",
+      token: token!,
+    });
+    await queryClient.refetchQueries({ queryKey: ["daily-challenges", "today"] });
+  }, [getToken, queryClient]);
+}
+
 export function useChallengeHistory() {
   const { getToken, isSignedIn } = useAuth();
 

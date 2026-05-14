@@ -83,9 +83,10 @@ function hashCode(str: string): number {
 /** Pick 3 distinct templates for the day, one per slot. */
 function pickTemplatesForDay(
   userId: string,
-  date: string
+  date: string,
+  seed = 0
 ): [ChallengeTemplate, ChallengeTemplate, ChallengeTemplate] {
-  const base = hashCode(userId + date);
+  const base = hashCode(userId + date + String(seed));
   const picks: ChallengeTemplate[] = [];
   const used = new Set<number>();
 
@@ -105,7 +106,8 @@ function pickTemplatesForDay(
 }
 
 export async function getOrCreateTodayChallenges(
-  userId: string
+  userId: string,
+  seed = 0
 ): Promise<(typeof dailyChallenges.$inferSelect)[]> {
   const today = new Date().toISOString().slice(0, 10);
 
@@ -126,7 +128,7 @@ export async function getOrCreateTodayChallenges(
     .limit(1);
 
   const goal = (user?.dailyGoal as DailyGoal | null) ?? "steady";
-  const templates = pickTemplatesForDay(userId, today);
+  const templates = pickTemplatesForDay(userId, today, seed);
 
   // Determine which slots are missing and insert only those
   const existingSlots = new Set(existing.map((r) => r.slot));

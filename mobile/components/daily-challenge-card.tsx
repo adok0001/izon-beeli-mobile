@@ -2,7 +2,7 @@ import { View, Text, Pressable, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
+import { useRegenerateDailyChallenges, useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
 import { useTranslation } from "react-i18next";
 import type { ChallengeType, DailyChallenge } from "@/types";
 
@@ -78,13 +78,14 @@ function ChallengeItem({ challenge }: { challenge: DailyChallenge }) {
 
 export function DailyChallengeCards() {
   const { t } = useTranslation();
-  const { data: challenges, isLoading, refetch } = useTodayChallenges();
+  const { data: challenges, isLoading } = useTodayChallenges();
+  const regenerate = useRegenerateDailyChallenges();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await refetch();
+      await regenerate();
     } finally {
       setIsRefreshing(false);
     }
@@ -92,28 +93,32 @@ export function DailyChallengeCards() {
 
   if (isLoading || !challenges?.length) return null;
 
+  const anyCompleted = challenges.some((c) => c.completed);
+
   return (
     <View className="gap-3">
       {challenges.map((challenge) => (
         <ChallengeItem key={challenge.id} challenge={challenge} />
       ))}
-      <Pressable
-        onPress={handleRefresh}
-        disabled={isRefreshing}
-        className="flex-row items-center justify-center gap-1.5 py-1 active:opacity-60"
-        style={{ opacity: isRefreshing ? 0.5 : 1 }}
-      >
-        {isRefreshing ? (
-          <ActivityIndicator size="small" color="#9ca3af" />
-        ) : (
-          <>
-            <IconSymbol name="arrow.clockwise" size={13} color="#9ca3af" />
-            <Text className="text-xs text-neutral-400 dark:text-neutral-500">
-              {t("dailyChallenge.refresh")}
-            </Text>
-          </>
-        )}
-      </Pressable>
+      {!anyCompleted && (
+        <Pressable
+          onPress={handleRefresh}
+          disabled={isRefreshing}
+          className="flex-row items-center justify-center gap-1.5 py-1 active:opacity-60"
+          style={{ opacity: isRefreshing ? 0.5 : 1 }}
+        >
+          {isRefreshing ? (
+            <ActivityIndicator size="small" color="#9ca3af" />
+          ) : (
+            <>
+              <IconSymbol name="arrow.clockwise" size={13} color="#9ca3af" />
+              <Text className="text-xs text-neutral-400 dark:text-neutral-500">
+                {t("dailyChallenge.refresh")}
+              </Text>
+            </>
+          )}
+        </Pressable>
+      )}
     </View>
   );
 }
