@@ -5,6 +5,7 @@ import { db } from "../db/index.js";
 import { bounties, contributions, dictionaryEntries, feedItems, users } from "../db/schema.js";
 import { awardXP, CONTRIBUTION_BASE_XP } from "../lib/award-xp.js";
 import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
+import { updateStreak } from "../lib/update-streak.js";
 
 const VALID_TYPES = ["word", "phrase", "audio", "entry_audio", "entry_meaning", "entry_image"] as const;
 const VALID_REVIEW_ACTIONS = ["approve", "reject"] as const;
@@ -273,6 +274,8 @@ contributionsRouter.post("/", async (c) => {
       contributionId: contribution.id,
     });
 
+    updateStreak(userId).catch(() => {});
+
     return c.json(contribution, 201);
   } catch (err: any) {
     console.error("POST /contributions error:", err);
@@ -387,6 +390,8 @@ contributionsRouter.post("/bulk", async (c) => {
     userAvatarUrl: user?.avatarUrl,
     contributionId: null,
   });
+
+  updateStreak(userId).catch(() => {});
 
   return c.json({ inserted: inserted.length, contributions: inserted }, 201);
 });

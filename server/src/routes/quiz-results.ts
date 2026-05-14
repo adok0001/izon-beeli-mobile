@@ -4,6 +4,7 @@ import { quizResults } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
 import { awardXP } from "../lib/award-xp.js";
 import { incrementDailyChallenge } from "../lib/daily-challenge.js";
+import { updateStreak } from "../lib/update-streak.js";
 
 export const quizResultsRouter = new Hono<AuthEnv>();
 
@@ -34,7 +35,10 @@ quizResultsRouter.post("/", async (c) => {
 
   // Award XP based on accuracy × questionCount
   const xpEarned = Math.max(1, Math.round((body.accuracy / 100) * body.questionCount * 0.3));
-  const xpResult = await awardXP(userId, xpEarned, "quiz");
+  const [xpResult] = await Promise.all([
+    awardXP(userId, xpEarned, "quiz"),
+    updateStreak(userId),
+  ]);
 
   await incrementDailyChallenge(userId, "complete_quiz").catch(() => {});
 

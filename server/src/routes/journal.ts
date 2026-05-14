@@ -3,6 +3,7 @@ import { eq, and, desc } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { journalEntries } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
+import { updateStreak } from "../lib/update-streak.js";
 
 export const journalRouter = new Hono<AuthEnv>();
 
@@ -43,6 +44,8 @@ journalRouter.post("/", async (c) => {
       lessonId: body.lessonId || null,
     })
     .returning();
+
+  updateStreak(userId).catch(() => {});
 
   return c.json(entry, 201);
 });

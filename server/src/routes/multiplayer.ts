@@ -9,6 +9,7 @@ import {
   dictionaryEntries,
 } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
+import { updateStreak } from "../lib/update-streak.js";
 
 const CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 function generateInviteCode(): string {
@@ -227,6 +228,8 @@ multiplayerInternalRouter.post("/sessions/:id/complete", async (c) => {
       .update(users)
       .set({ points: sql`${users.points} + ${xp}` })
       .where(eq(users.id, p.id));
+
+    updateStreak(p.id).catch(() => {});
   }
 
   return c.json({ success: true });

@@ -4,24 +4,12 @@ import { db } from "../db/index.js";
 import { courses, lessons, quizResults, userProgress, users } from "../db/schema.js";
 import { awardXP } from "../lib/award-xp.js";
 import { incrementDailyChallenge } from "../lib/daily-challenge.js";
+import { updateStreak, diffDaysFromToday } from "../lib/update-streak.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
-
-const STREAK_MILESTONES = new Set([3, 7, 14, 30, 60, 100]);
-// Milestones that grant a freeze bonus
-const FREEZE_GRANT_MILESTONES: Record<number, number> = { 7: 1, 30: 2 };
 
 export const progressRouter = new Hono<AuthEnv>();
 
 progressRouter.use("*", authMiddleware);
-
-function diffDaysFromToday(dateStr: string | null | undefined): number {
-  if (!dateStr) return Infinity;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const last = new Date(dateStr);
-  last.setHours(0, 0, 0, 0);
-  return Math.floor((today.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
-}
 
 // GET /api/progress/summary - points, streak, freeze state, completedCount
 progressRouter.get("/summary", async (c) => {
@@ -94,7 +82,6 @@ progressRouter.post("/:lessonId/complete", async (c) => {
   }
 
   const now = new Date();
-  const todayStr = now.toISOString().slice(0, 10);
 
   if (existing) {
     await db
@@ -111,77 +98,52 @@ progressRouter.post("/:lessonId/complete", async (c) => {
     });
   }
 
-  // Update streak
-  const [user] = await db
-    .select({
-      points: users.points,
-      streak: users.streak,
-      lastActiveDate: users.lastActiveDate,
-      streakFreezes: users.streakFreezes,
-    })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-
-  let newStreak = user?.streak ?? 0;
-  const lastActive = user?.lastActiveDate;
-  const diff = diffDaysFromToday(lastActive);
-
-  if (!lastActive) {
-    newStreak = 1;
-  } else if (diff === 1) {
-    newStreak += 1;
-  } else if (diff === 0) {
-    // Same day — no change
-  } else {
-    newStreak = 1; // streak broken
-  }
-
-  // Determine freeze grants at milestone
-  const freezeGrant = FREEZE_GRANT_MILESTONES[newStreak] ?? 0;
-
-  // Grant 1 freeze to first-timers (no lastActiveDate means first activity)
-  const isFirstLesson = !lastActive;
-  const firstTimerGrant = isFirstLesson ? 1 : 0;
-
-  const totalFreezeGrant = freezeGrant + firstTimerGrant;
-
-  await db
-    .update(users)
-    .set({
-      streak: newStreak,
-      lastActiveDate: todayStr,
-      ...(totalFreezeGrant > 0
-        ? { streakFreezes: (user?.streakFreezes ?? 0) + totalFreezeGrant }
-        : {}),
-    })
-    .where(eq(users.id, userId));
+  const streakResult = await updateStreak(userId);
 
   // Award XP (updates points in DB)
   const xpResult = await awardXP(userId, 50, "lesson");
 
   await incrementDailyChallenge(userId, "complete_lesson").catch(() => {});
 
-  const streakMilestone = STREAK_MILESTONES.has(newStreak) ? newStreak : null;
-
   return c.json({
     completed: true,
     pointsEarned: 50,
     totalPoints: xpResult.totalPoints,
-    streak: newStreak,
+    streak: streakResult.newStreak,
     leveledUp: xpResult.leveledUp,
     newLevel: xpResult.newLevel,
     newTitle: xpResult.newTitle,
-    streakMilestone,
-    freezeGranted: totalFreezeGrant > 0 ? totalFreezeGrant : null,
-    freezeCount: (user?.streakFreezes ?? 0) + totalFreezeGrant,
+    streakMilestone: streakResult.streakMilestone,
+    freezeGranted: streakResult.freezeGranted,
+    freezeCount: streakResult.freezeCount,
   });
 });
 
 // POST /api/progress/:lessonId/listen - track that user started listening to a lesson
 progressRouter.post("/:lessonId/listen", async (c) => {
   const userId = c.get("userId");
-  await incrementDailyChallenge(userId, "listen_lesson").catch(() => {});
+  const lessonId = c.req.param("lessonId");
+  const now = new Date();
+
+  // Upsert a progress row to record listenedAt
+  const [existing] = await db
+    .select({ id: userProgress.id })
+    .from(userProgress)
+    .where(and(eq(userProgress.userId, userId), eq(userProgress.lessonId, lessonId)))
+    .limit(1);
+
+  if (existing) {
+    await db
+      .update(userProgress)
+      .set({ listenedAt: now })
+      .where(eq(userProgress.id, existing.id));
+  } else {
+    await db.insert(userProgress).values({ userId, lessonId, listenedAt: now });
+  }
+
+  await updateStreak(userId);
+
+  incrementDailyChallenge(userId, "listen_lesson").catch(() => {});
   return c.json({ tracked: true });
 });
 
