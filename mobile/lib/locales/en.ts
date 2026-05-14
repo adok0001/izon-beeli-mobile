@@ -65,6 +65,10 @@ export const en = {
     contributorBannerCta: "Apply to be a Reviewer",
     dailyGoal: "Daily Goal",
     goalProgress: "{{done}}/{{target}}",
+    streak: "Streak",
+    level: "Level",
+    statsLessonsDone: "Done",
+    today: "Today",
   },
   practice: {
     title: "Practice",

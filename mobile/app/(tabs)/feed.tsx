@@ -362,7 +362,10 @@ function FeedCard({
   };
 
   return (
-    <View className="mb-3 rounded-xl bg-neutral-50 p-4 dark:bg-neutral-800">
+    <View
+      className="mb-3 rounded-xl bg-neutral-50 p-4 dark:bg-neutral-800"
+      style={{ borderTopWidth: 2, borderTopColor: config.color + "90" }}
+    >
       {/* Header */}
       <View className="mb-2 flex-row items-center">
         <View className="h-9 w-9 items-center justify-center rounded-full bg-neutral-200 dark:bg-neutral-700">
@@ -378,13 +381,16 @@ function FeedCard({
             {timeAgo(item.createdAt)}
           </Text>
         </View>
-        <View className="flex-row items-center rounded-full bg-neutral-200/50 px-2 py-0.5 dark:bg-neutral-700/50">
+        <View
+          className="flex-row items-center rounded-full px-2 py-0.5"
+          style={{ backgroundColor: config.color + "20" }}
+        >
           <IconSymbol
             name={config.icon as any}
             size={12}
             color={config.color}
           />
-          <Text className="ml-1 text-xs text-neutral-500 dark:text-neutral-400">
+          <Text className="ml-1 text-xs font-medium" style={{ color: config.color }}>
             {t(config.label as any)}
           </Text>
         </View>
@@ -510,7 +516,7 @@ export default function FeedScreen() {
     >
       <View className="flex-row items-center justify-between px-5 pb-2 pt-4">
         <View>
-          <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
+          <Text className="font-heading text-2xl font-bold text-neutral-900 dark:text-white">
             {t("feed.title")}
           </Text>
           <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">

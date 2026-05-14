@@ -7,7 +7,12 @@ const config: Config = {
   ],
   presets: [require("nativewind/preset")],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        heading: ["PlusJakartaSans_700Bold"],
+        "heading-medium": ["PlusJakartaSans_600SemiBold"],
+      },
+    },
   },
   plugins: [],
 };
