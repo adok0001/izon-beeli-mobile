@@ -45,6 +45,8 @@ function MenuRow({
     <Pressable
       onPress={onPress}
       className="flex-row items-center border-b border-neutral-100 py-3.5 active:opacity-70 dark:border-neutral-800"
+      accessibilityRole="button"
+      accessibilityLabel={detail ? `${label}: ${detail}` : label}
     >
       <IconSymbol
         name={icon as any}
