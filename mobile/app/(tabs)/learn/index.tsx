@@ -488,7 +488,7 @@ export default function LearnScreen() {
               </View>
             )}
           </View>
-          <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">Streak</Text>
+          <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">{t("learn.streak")}</Text>
         </Pressable>
 
         <View className="w-px self-stretch bg-neutral-200 dark:bg-neutral-700" />
@@ -496,7 +496,7 @@ export default function LearnScreen() {
         {/* XP Level */}
         <View className="flex-1 items-center">
           <XpLevelBadge points={summary?.points ?? 0} variant="compact" />
-          <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">Level</Text>
+          <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">{t("learn.level")}</Text>
         </View>
 
         <View className="w-px self-stretch bg-neutral-200 dark:bg-neutral-700" />
@@ -509,7 +509,7 @@ export default function LearnScreen() {
               {summary?.completedCount ?? 0}
             </Text>
           </View>
-          <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">Done</Text>
+          <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">{t("learn.statsLessonsDone")}</Text>
         </View>
 
         <View className="w-px self-stretch bg-neutral-200 dark:bg-neutral-700" />
@@ -517,7 +517,7 @@ export default function LearnScreen() {
         {/* Daily goal */}
         <View className="flex-1 items-center">
           <DailyGoalRing completedToday={completedToday} />
-          <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">Today</Text>
+          <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">{t("learn.today")}</Text>
         </View>
       </View>
 

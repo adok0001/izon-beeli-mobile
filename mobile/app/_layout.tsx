@@ -31,7 +31,7 @@ import { Text, View } from "react-native";
 import "react-native-reanimated";
 import "../global.css";
 
-SplashScreen.preventAutoHideAsync();
+void SplashScreen.preventAutoHideAsync().catch(() => {});
 const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
 export const unstable_settings = {
@@ -103,7 +103,7 @@ export default function RootLayout() {
   const hydrateLanguage = useLanguageStore((s) => s.hydrate);
   const hydrateUiLanguage = useUiLanguageStore((s) => s.hydrate);
   const hydrateTours = useTourStore((s) => s.hydrate);
-  const [fontsLoaded] = useFonts({ PlusJakartaSans_700Bold, PlusJakartaSans_600SemiBold });
+  const [fontsLoaded, fontError] = useFonts({ PlusJakartaSans_700Bold, PlusJakartaSans_600SemiBold });
 
   useEffect(() => {
     configurePushNotifications();
@@ -115,10 +115,10 @@ export default function RootLayout() {
   }, [hydrateTheme, hydrateLanguage, hydrateUiLanguage, hydrateTours]);
 
   useEffect(() => {
-    if (fontsLoaded) SplashScreen.hideAsync();
-  }, [fontsLoaded]);
+    if (fontsLoaded || fontError) void SplashScreen.hideAsync().catch(() => {});
+  }, [fontsLoaded, fontError]);
 
-  if (!fontsLoaded) return null;
+  if (!fontsLoaded && !fontError) return null;
 
   if (!clerkPublishableKey) {
     return (

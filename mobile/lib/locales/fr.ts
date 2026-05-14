@@ -66,6 +66,10 @@ export const fr = {
     contributorBannerCta: "Devenir relecteur",
     dailyGoal: "Objectif du jour",
     goalProgress: "{{done}}/{{target}}",
+    streak: "Série",
+    level: "Niveau",
+    statsLessonsDone: "Terminés",
+    today: "Aujourd'hui",
   },
   practice: {
     title: "Pratiquer",
