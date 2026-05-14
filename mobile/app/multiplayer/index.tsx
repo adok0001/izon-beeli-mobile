@@ -4,13 +4,14 @@ import {
   Text,
   Pressable,
   TextInput,
-  Alert,
   ActivityIndicator,
   ScrollView,
 } from "react-native";
 import { useRouter, Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
+import { useToast } from "@/lib/hooks/use-toast";
 import { useLanguageStore } from "@/store/language-store";
 import {
   useCreateSession,
@@ -103,6 +104,7 @@ export default function MultiplayerHubScreen() {
   const { data: recentSessions = [] } = useRecentSessions();
   const [joinCode, setJoinCode] = useState("");
   const [joining, setJoining] = useState(false);
+  const { toast, error: toastError, dismiss: dismissToast } = useToast();
 
   const handleInvite = async (type: GameSessionType) => {
     try {
@@ -121,7 +123,7 @@ export default function MultiplayerHubScreen() {
         },
       });
     } catch (err: any) {
-      Alert.alert(t("multiplayer.sessionError"), err?.message ?? t("multiplayer.failedCreateSession"));
+      toastError(t("multiplayer.sessionError"), err?.message ?? t("multiplayer.failedCreateSession"));
     }
   };
 
@@ -154,7 +156,7 @@ export default function MultiplayerHubScreen() {
         });
       }
     } catch (err: any) {
-      Alert.alert(t("multiplayer.matchmakingError"), err?.message ?? t("multiplayer.failedJoinMatchmaking"));
+      toastError(t("multiplayer.matchmakingError"), err?.message ?? t("multiplayer.failedJoinMatchmaking"));
     }
   };
 
@@ -174,7 +176,7 @@ export default function MultiplayerHubScreen() {
         },
       });
     } catch {
-      Alert.alert(t("multiplayer.invalidCode"), t("multiplayer.codeNotFound"));
+      toastError(t("multiplayer.invalidCode"), t("multiplayer.codeNotFound"));
     } finally {
       setJoining(false);
     }
@@ -187,6 +189,13 @@ export default function MultiplayerHubScreen() {
         className="flex-1 bg-white dark:bg-neutral-900"
         edges={[]}
       >
+        <NotificationBanner
+          visible={toast.visible}
+          title={toast.title}
+          body={toast.body}
+          type={toast.type}
+          onDismiss={dismissToast}
+        />
         <ScrollView
           contentContainerClassName="px-5 pb-8 pt-4"
           showsVerticalScrollIndicator={false}

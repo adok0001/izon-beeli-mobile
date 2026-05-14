@@ -1,15 +1,16 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import {
     useLeaveMatchmaking,
     useMatchmakingStatus,
 } from "@/lib/hooks/use-multiplayer";
+import { useToast } from "@/lib/hooks/use-toast";
 import { useMultiplayerStore } from "@/store/multiplayer-store";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
-    Alert,
     Platform,
     Pressable,
     Share,
@@ -50,6 +51,7 @@ export default function LobbyScreen() {
   const { data: matchStatus } = useMatchmakingStatus(isMatchmaking && !hasSessionInfo);
   const [ready, setReady] = useState(false);
   const matchHandled = useRef(false);
+  const { toast, show: toastShow, dismiss: dismissToast } = useToast();
 
   // Connect to PartyKit room when we have session info
   useEffect(() => {
@@ -129,7 +131,7 @@ export default function LobbyScreen() {
       if (Platform.OS === "web") {
         // Try clipboard on web
         await navigator.clipboard?.writeText(code);
-        Alert.alert("Copied!", `Invite code ${code} copied to clipboard`);
+        toastShow("Copied!", `Invite code ${code} copied to clipboard`, "success");
       } else {
         await Share.share({
           message: `Join my ${
@@ -138,7 +140,7 @@ export default function LobbyScreen() {
         });
       }
     } catch {
-      Alert.alert("Invite Code", code);
+      toastShow("Invite Code", code, "info");
     }
   };
 
@@ -166,6 +168,13 @@ export default function LobbyScreen() {
         className="flex-1 bg-white dark:bg-neutral-900"
         edges={[]}
       >
+        <NotificationBanner
+          visible={toast.visible}
+          title={toast.title}
+          body={toast.body}
+          type={toast.type}
+          onDismiss={dismissToast}
+        />
         <View className="flex-1 items-center justify-center px-8">
           {/* Invite Code */}
           {params.inviteCode && (
