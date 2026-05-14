@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { View, Text, TextInput, Pressable, Alert } from "react-native";
+import { View, Text, TextInput, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { useCreateGroup, useJoinGroupByCode } from "@/lib/hooks/use-classroom";
+import { useToast } from "@/lib/hooks/use-toast";
 import { useLanguageStore } from "@/store/language-store";
 import { getLanguageName } from "@/lib/mock-data";
 import { useTranslation } from "react-i18next";
@@ -17,6 +19,7 @@ export default function CreateGroupScreen() {
   const [name, setName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
   const [error, setError] = useState("");
+  const { toast, error: toastError, dismiss: dismissToast } = useToast();
 
   const handleCreate = () => {
     if (!name.trim()) return;
@@ -24,7 +27,7 @@ export default function CreateGroupScreen() {
       { name: name.trim(), languageId: selectedLanguageId },
       {
         onSuccess: (group) => router.replace(`/classroom/${group.id}`),
-        onError: (err) => Alert.alert("Error", err.message),
+        onError: (err) => toastError("Error", err.message),
       }
     );
   };
@@ -43,6 +46,13 @@ export default function CreateGroupScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900">
+        <NotificationBanner
+          visible={toast.visible}
+          title={toast.title}
+          body={toast.body}
+          type={toast.type}
+          onDismiss={dismissToast}
+        />
         <View className="flex-row items-center justify-between border-b border-neutral-200 px-5 py-3 dark:border-neutral-700">
           <Pressable onPress={() => router.back()}>
             <Text className="text-base text-neutral-500">{t("common.cancel")}</Text>

@@ -1,11 +1,12 @@
 import { apiFetch } from "@/lib/api";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
+import { useToast } from "@/lib/hooks/use-toast";
 import { useAuth, useClerk } from "@clerk/clerk-expo";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
-    Alert,
     Pressable,
     Text,
     View,
@@ -19,6 +20,7 @@ export default function RestoreAccountScreen() {
   const { getToken } = useAuth();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
+  const { toast, error: toastError, dismiss: dismissToast } = useToast();
 
   const formattedDate = restoreBy
     ? new Date(restoreBy).toLocaleDateString(undefined, {
@@ -38,7 +40,7 @@ export default function RestoreAccountScreen() {
       });
       router.replace("/(tabs)/learn");
     } catch {
-      Alert.alert(t("common.error"), t("restoreAccount.restoreError"));
+      toastError(t("common.error"), t("restoreAccount.restoreError"));
     } finally {
       setLoading(false);
     }
@@ -51,6 +53,13 @@ export default function RestoreAccountScreen() {
 
   return (
     <SafeAreaView className="flex-1 items-center justify-center bg-white px-6 dark:bg-neutral-900">
+      <NotificationBanner
+        visible={toast.visible}
+        title={toast.title}
+        body={toast.body}
+        type={toast.type}
+        onDismiss={dismissToast}
+      />
       <View className="mb-6 h-16 w-16 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900">
         <Text className="text-3xl">⚠️</Text>
       </View>

@@ -1,5 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { apiFetch } from "@/lib/api";
+import { useToast } from "@/lib/hooks/use-toast";
 import { useNotificationPrefs, useUpdateNotificationPrefs } from "@/lib/hooks/use-notification-prefs";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
 import { getLanguageName } from "@/lib/mock-data";
@@ -94,6 +96,7 @@ export default function SettingsScreen() {
   const { data: prefs } = useNotificationPrefs();
   const updatePrefs = useUpdateNotificationPrefs();
   const { t } = useTranslation();
+  const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
 
   const handleResetProgress = () => {
     Alert.alert(
@@ -112,9 +115,9 @@ export default function SettingsScreen() {
                 token: token ?? undefined,
               });
               queryClient.invalidateQueries({ queryKey: ["progress"] });
-              Alert.alert(t("settings.resetSuccess"), t("settings.resetSuccessMessage"));
+              toastSuccess(t("settings.resetSuccess"), t("settings.resetSuccessMessage"));
             } catch {
-              Alert.alert(t("common.error"), t("settings.resetError"));
+              toastError(t("common.error"), t("settings.resetError"));
             }
           },
         },
@@ -141,7 +144,7 @@ export default function SettingsScreen() {
               await signOut();
               router.replace("/(auth)/sign-in");
             } catch {
-              Alert.alert(t("common.error"), t("settings.deleteAccountError"));
+              toastError(t("common.error"), t("settings.deleteAccountError"));
             }
           },
         },
@@ -156,6 +159,13 @@ export default function SettingsScreen() {
         className="flex-1 bg-white dark:bg-neutral-900"
         edges={[]}
       >
+        <NotificationBanner
+          visible={toast.visible}
+          title={toast.title}
+          body={toast.body}
+          type={toast.type}
+          onDismiss={dismissToast}
+        />
         <View className="px-5 pt-4">
           {/* Learning section */}
           <Text className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
