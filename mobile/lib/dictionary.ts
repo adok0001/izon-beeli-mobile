@@ -15,26 +15,29 @@ export interface DictionaryEntry {
   contributorId?: string;
 }
 
-export type DictionaryCategory =
-  | "greetings"
-  | "numbers"
-  | "family"
-  | "pronouns"
-  | "time"
-  | "verbs"
-  | "body"
-  | "market"
-  | "occupations"
-  | "nouns"
-  | "phrases"
-  | "food"
-  | "possessives"
-  | "ordinals"
-  | "commands"
-  | "animals"
-  | "phonetics"
-  | "money"
-  | "proverbs";
+export const DICTIONARY_CATEGORY_VALUES = [
+  "greetings",
+  "numbers",
+  "family",
+  "pronouns",
+  "time",
+  "verbs",
+  "body",
+  "market",
+  "occupations",
+  "nouns",
+  "phrases",
+  "food",
+  "possessives",
+  "ordinals",
+  "commands",
+  "animals",
+  "phonetics",
+  "money",
+  "proverbs",
+] as const;
+
+export type DictionaryCategory = (typeof DICTIONARY_CATEGORY_VALUES)[number];
 
 export const CATEGORY_LABELS: Record<DictionaryCategory, string> = {
   greetings: "Greetings & Courtesies",

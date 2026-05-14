@@ -105,7 +105,7 @@ export default function ContributeBulkScreen() {
             t("contribute.submitted"),
             t("contribute.submittedBulkDesc", { inserted: data.inserted, label })
           );
-          router.back();
+          setTimeout(() => router.back(), 1500);
         },
         onError: (err) => {
           toastError(t("common.error"), err.message || t("common.tryAgain"));

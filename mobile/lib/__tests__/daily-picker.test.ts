@@ -21,10 +21,17 @@ describe("getDailyItem", () => {
 
     it("returns a consistent index based on days-since-epoch formula", () => {
       const items = ["a", "b", "c", "d", "e"];
-      // Replicate the exact formula from daily-picker.ts which uses new Date().getTime()
-      const daysSinceEpoch = Math.floor(new Date().getTime() / 86_400_000);
-      const expectedIndex = daysSinceEpoch % items.length;
-      expect(getDailyItem(items)).toBe(items[expectedIndex]);
+      // Fix the current time so both the formula below and getDailyItem use the same timestamp
+      const fixedMs = 1_700_000_000_000; // an arbitrary fixed epoch ms
+      jest.useFakeTimers();
+      jest.setSystemTime(fixedMs);
+      try {
+        const daysSinceEpoch = Math.floor(fixedMs / 86_400_000);
+        const expectedIndex = daysSinceEpoch % items.length;
+        expect(getDailyItem(items)).toBe(items[expectedIndex]);
+      } finally {
+        jest.useRealTimers();
+      }
     });
   });
 
@@ -43,26 +50,29 @@ describe("getDailyItem", () => {
       const MS_PER_DAY = 86_400_000;
       const OriginalDate = global.Date;
 
-      for (let day = 0; day < items.length * 3; day++) {
-        const fakeMs = day * MS_PER_DAY + 1000;
-        // Replace Date with a class that returns fakeMs from getTime()
-        global.Date = class extends OriginalDate {
-          constructor(...args: any[]) {
-            if (args.length === 0) {
-              super(fakeMs);
-            } else {
-              super(...(args as []));
+      try {
+        for (let day = 0; day < items.length * 3; day++) {
+          const fakeMs = day * MS_PER_DAY + 1000;
+          // Replace Date with a class that returns fakeMs from getTime()
+          global.Date = class extends OriginalDate {
+            constructor(...args: any[]) {
+              if (args.length === 0) {
+                super(fakeMs);
+              } else {
+                super(...(args as []));
+              }
             }
-          }
-          getTime() {
-            return fakeMs;
-          }
-        } as unknown as typeof Date;
+            getTime() {
+              return fakeMs;
+            }
+          } as unknown as typeof Date;
 
-        const result = getDailyItem(items);
-        if (result !== null) seen.add(result);
+          const result = getDailyItem(items);
+          if (result !== null) seen.add(result);
+        }
+      } finally {
+        global.Date = OriginalDate;
       }
-      global.Date = OriginalDate;
 
       // All items should have been returned at least once across the simulated days
       for (const item of items) {
@@ -90,8 +100,11 @@ describe("getDailyItem", () => {
         }
       } as unknown as typeof Date;
 
-      expect(getDailyItem(items)).toBe("y");
-      global.Date = OriginalDate;
+      try {
+        expect(getDailyItem(items)).toBe("y");
+      } finally {
+        global.Date = OriginalDate;
+      }
     });
   });
 

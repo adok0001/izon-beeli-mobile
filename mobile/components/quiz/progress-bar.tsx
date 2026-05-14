@@ -12,7 +12,7 @@ export function ProgressBar({
     <View
       className="mx-5 mt-2 h-2 rounded-full bg-neutral-200 dark:bg-neutral-700"
       accessibilityRole="progressbar"
-      accessibilityLabel={`Question ${current} of ${total}`}
+      accessibilityLabel="Quiz progress"
       accessibilityValue={{ min: 0, max: total, now: current }}
     >
       <View

@@ -116,7 +116,7 @@ export default function ContributeScreen() {
       {
         onSuccess: () => {
           toastSuccess(t("contribute.submitted"), t("contribute.submittedWordDesc"));
-          router.back();
+          setTimeout(() => router.back(), 1500);
         },
         onError: (err) => {
           console.error("Contribution submit error:", err);

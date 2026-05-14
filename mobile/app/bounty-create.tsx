@@ -108,7 +108,7 @@ export default function BountyCreateScreen() {
     try {
       await createBounty.mutateAsync(input);
       toastSuccess("Bounty created!", `"${input.title}" is now live.`);
-      router.back();
+      setTimeout(() => router.back(), 1500);
     } catch {
       toastError("Error", "Failed to create bounty. Please try again.");
     }

@@ -48,7 +48,7 @@ export function OptionCard({
             : label
       }
       accessibilityHint={accessibilityHintMap[state]}
-      accessibilityState={{ disabled: state !== "default", selected: state === "correct" }}
+      accessibilityState={{ disabled: state !== "default", selected: state === "correct" || state === "incorrect" }}
     >
       <Text className={`text-base font-medium ${textClass}`}>{label}</Text>
     </Pressable>

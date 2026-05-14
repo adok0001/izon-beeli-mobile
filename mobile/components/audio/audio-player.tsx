@@ -79,7 +79,7 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
               disabled={!onPress}
               accessibilityRole="button"
               accessibilityLabel={currentTrackTitle ?? "Now Playing"}
-              accessibilityHint="Open lesson"
+              accessibilityHint={onPress ? "Open lesson" : undefined}
             >
               <Text
                 className="text-sm font-medium text-neutral-900 dark:text-white"
@@ -92,7 +92,7 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
               onPress={handleSeek}
               onLayout={onBarLayout}
               className="mt-1 py-1"
-              accessibilityRole="adjustable"
+              accessibilityRole="button"
               accessibilityLabel="Seek audio"
               accessibilityHint="Tap to seek to position"
             >
@@ -127,7 +127,7 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
         onPress={handleSeek}
         className="py-2"
         onLayout={onBarLayout}
-        accessibilityRole="adjustable"
+        accessibilityRole="button"
         accessibilityLabel={`Audio progress, ${formatDuration(progress)} of ${formatDuration(duration)}`}
         accessibilityHint="Tap to seek to position"
       >

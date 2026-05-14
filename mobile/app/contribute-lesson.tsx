@@ -188,7 +188,7 @@ export default function ContributeLessonScreen() {
       {
         onSuccess: () => {
           toastSuccess(t("contribute.submitted"), t("contribute.submittedLessonDesc"));
-          router.back();
+          setTimeout(() => router.back(), 1500);
         },
         onError: (err) => {
           toastError(t("common.error"), err.message || t("common.tryAgain"));

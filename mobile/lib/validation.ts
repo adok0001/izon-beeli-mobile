@@ -1,27 +1,5 @@
 import { z } from "zod";
-
-// ── Dictionary categories (mirrors DictionaryCategory in lib/dictionary.ts) ──
-const DICTIONARY_CATEGORIES = [
-  "greetings",
-  "numbers",
-  "family",
-  "pronouns",
-  "time",
-  "verbs",
-  "body",
-  "market",
-  "occupations",
-  "nouns",
-  "phrases",
-  "food",
-  "possessives",
-  "ordinals",
-  "commands",
-  "animals",
-  "phonetics",
-  "money",
-  "proverbs",
-] as const;
+import { DICTIONARY_CATEGORY_VALUES } from "@/lib/dictionary";
 
 // ── Word / Phrase contribution ──────────────────────────────────────────────
 
@@ -29,7 +7,7 @@ export const wordContributionSchema = z.object({
   languageId: z.string().min(1, "Please select a language."),
   word: z.string().trim().min(1, "Word or phrase is required."),
   english: z.string().trim().min(1, "English translation is required."),
-  category: z.enum(DICTIONARY_CATEGORIES, {
+  category: z.enum(DICTIONARY_CATEGORY_VALUES, {
     errorMap: () => ({ message: "Please select a category." }),
   }),
   pronunciation: z.string().trim().optional(),
