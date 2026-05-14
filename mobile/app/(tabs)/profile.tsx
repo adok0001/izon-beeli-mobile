@@ -98,7 +98,7 @@ export default function ProfileScreen() {
           <View className="mb-3 h-20 w-20 items-center justify-center rounded-full bg-blue-500">
             <Text className="text-2xl font-bold text-white">{initial}</Text>
           </View>
-          <Text className="text-xl font-bold text-neutral-900 dark:text-white">
+          <Text className="font-heading text-xl font-bold text-neutral-900 dark:text-white">
             {displayName}
           </Text>
           {email ? (

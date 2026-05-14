@@ -343,8 +343,6 @@ function DailyGoalRing({ completedToday }: { completedToday: number }) {
   const strokeDashoffset = circumference * (1 - pct);
   const color = pct >= 1 ? "#22c55e" : "#3b82f6";
 
-  if (completedToday === 0) return null;
-
   return (
     <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
       <Svg width={size} height={size} style={{ position: "absolute" }}>
@@ -370,8 +368,8 @@ function DailyGoalRing({ completedToday }: { completedToday: number }) {
           origin={`${size / 2}, ${size / 2}`}
         />
       </Svg>
-      <Text style={{ fontSize: 11, fontWeight: "700", color }}>
-        {completedToday}
+      <Text style={{ fontSize: 9, fontWeight: "700", color }}>
+        {completedToday}/{target}
       </Text>
     </View>
   );
@@ -439,7 +437,7 @@ export default function LearnScreen() {
       {/* Header */}
       <View className="flex-row items-center justify-between px-5 pb-2 pt-4">
         <View className="mr-3 shrink">
-          <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
+          <Text className="font-heading text-2xl font-bold text-neutral-900 dark:text-white">
             {t("learn.title")}
           </Text>
           <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
@@ -465,37 +463,62 @@ export default function LearnScreen() {
 
       <EnrolledLanguageBar />
 
-      {/* Stats bar */}
-      <View className="flex-row items-center gap-4 border-b border-neutral-100 px-5 pb-3 dark:border-neutral-800">
+      {/* Stats card */}
+      <View className="mx-5 mb-3 flex-row rounded-2xl bg-neutral-50 px-2 py-3 dark:bg-neutral-800">
+        {/* Streak */}
         <Pressable
           onPress={() => summary?.streakBroken && summary.streak > 0 && setFreezeModalVisible(true)}
-          className="flex-row items-center gap-1"
+          className="flex-1 items-center"
         >
-          <IconSymbol
-            name="flame.fill"
-            size={16}
-            color={summary?.streakBroken ? "#9ca3af" : "#f59e0b"}
-          />
-          <Text className={`text-sm font-semibold ${summary?.streakBroken ? "text-neutral-400 line-through dark:text-neutral-500" : "text-neutral-700 dark:text-neutral-300"}`}>
-            {summary?.streak ?? 0}
-          </Text>
-          {(summary?.freezeCount ?? 0) > 0 && (
-            <View className="ml-0.5 flex-row items-center rounded-full bg-blue-100 px-1.5 dark:bg-blue-900">
-              <IconSymbol name="snowflake" size={10} color="#3b82f6" />
-              <Text className="ml-0.5 text-xs font-bold text-blue-600 dark:text-blue-400">
-                {summary!.freezeCount}
-              </Text>
-            </View>
-          )}
+          <View className="flex-row items-center gap-1">
+            <IconSymbol
+              name="flame.fill"
+              size={16}
+              color={summary?.streakBroken ? "#9ca3af" : "#f59e0b"}
+            />
+            <Text className={`text-base font-bold ${summary?.streakBroken ? "text-neutral-400 line-through dark:text-neutral-500" : "text-neutral-800 dark:text-white"}`}>
+              {summary?.streak ?? 0}
+            </Text>
+            {(summary?.freezeCount ?? 0) > 0 && (
+              <View className="flex-row items-center rounded-full bg-blue-100 px-1 dark:bg-blue-900">
+                <IconSymbol name="snowflake" size={9} color="#3b82f6" />
+                <Text className="ml-0.5 text-xs font-bold text-blue-600 dark:text-blue-400">
+                  {summary!.freezeCount}
+                </Text>
+              </View>
+            )}
+          </View>
+          <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">Streak</Text>
         </Pressable>
-        <XpLevelBadge points={summary?.points ?? 0} variant="compact" />
-        <View className="flex-row items-center">
-          <IconSymbol name="checkmark.circle.fill" size={16} color="#22c55e" />
-          <Text className="ml-1 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-            {summary?.completedCount ?? 0}
-          </Text>
+
+        <View className="w-px self-stretch bg-neutral-200 dark:bg-neutral-700" />
+
+        {/* XP Level */}
+        <View className="flex-1 items-center">
+          <XpLevelBadge points={summary?.points ?? 0} variant="compact" />
+          <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">Level</Text>
         </View>
-        <DailyGoalRing completedToday={completedToday} />
+
+        <View className="w-px self-stretch bg-neutral-200 dark:bg-neutral-700" />
+
+        {/* Lessons done */}
+        <View className="flex-1 items-center">
+          <View className="flex-row items-center gap-1">
+            <IconSymbol name="checkmark.circle.fill" size={16} color="#22c55e" />
+            <Text className="text-base font-bold text-neutral-800 dark:text-white">
+              {summary?.completedCount ?? 0}
+            </Text>
+          </View>
+          <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">Done</Text>
+        </View>
+
+        <View className="w-px self-stretch bg-neutral-200 dark:bg-neutral-700" />
+
+        {/* Daily goal */}
+        <View className="flex-1 items-center">
+          <DailyGoalRing completedToday={completedToday} />
+          <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">Today</Text>
+        </View>
       </View>
 
       {isLoading ? (

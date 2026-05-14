@@ -150,7 +150,7 @@ export default function PracticeScreen() {
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
       <View className="flex-row items-center justify-between px-5 pb-2 pt-4">
         <View>
-          <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
+          <Text className="font-heading text-2xl font-bold text-neutral-900 dark:text-white">
             {t("practice.title")}
           </Text>
           <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
