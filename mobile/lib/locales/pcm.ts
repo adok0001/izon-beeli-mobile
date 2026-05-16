@@ -483,6 +483,18 @@ export const pcm = {
     privacyPolicyDesc: "How we handle your data",
     sendFeedbackSection: "Send Feedback",
     feedbackSent: "Feedback don send — thank you!",
+    accountSettings: "Account Settings",
+  },
+  account: {
+    title: "Account Settings",
+    usernameSection: "Username",
+    passwordSection: "Change Password",
+    currentPassword: "Current Password",
+    saveUsername: "Save Username",
+    savePassword: "Update Password",
+    saved: "Saved",
+    usernameSaved: "Your username don update.",
+    passwordSaved: "Your password don update.",
   },
   restoreAccount: {
     title: "Account Don Dey Schedule for Deletion",

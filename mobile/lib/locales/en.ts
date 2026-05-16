@@ -481,6 +481,18 @@ export const en = {
     privacyPolicyDesc: "How we handle your data",
     sendFeedbackSection: "Send Feedback",
     feedbackSent: "Feedback sent — thank you!",
+    accountSettings: "Account Settings",
+  },
+  account: {
+    title: "Account Settings",
+    usernameSection: "Username",
+    passwordSection: "Change Password",
+    currentPassword: "Current Password",
+    saveUsername: "Save Username",
+    savePassword: "Update Password",
+    saved: "Saved",
+    usernameSaved: "Your username has been updated.",
+    passwordSaved: "Your password has been updated.",
   },
   restoreAccount: {
     title: "Account Scheduled for Deletion",

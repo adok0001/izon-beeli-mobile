@@ -483,6 +483,18 @@ export const fr = {
     privacyPolicyDesc: "Comment nous traitons vos données",
     sendFeedbackSection: "Envoyer un commentaire",
     feedbackSent: "Commentaire envoyé — merci !",
+    accountSettings: "Paramètres du compte",
+  },
+  account: {
+    title: "Paramètres du compte",
+    usernameSection: "Nom d'utilisateur",
+    passwordSection: "Changer le mot de passe",
+    currentPassword: "Mot de passe actuel",
+    saveUsername: "Enregistrer le nom d'utilisateur",
+    savePassword: "Mettre à jour le mot de passe",
+    saved: "Enregistré",
+    usernameSaved: "Votre nom d'utilisateur a été mis à jour.",
+    passwordSaved: "Votre mot de passe a été mis à jour.",
   },
   restoreAccount: {
     title: "Compte programmé pour suppression",
