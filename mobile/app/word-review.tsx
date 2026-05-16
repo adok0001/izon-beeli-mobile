@@ -72,7 +72,7 @@ function ReviewCard({
   isSubmitting,
 }: {
   entry: DictionaryEntry;
-  onRate: (confidence: "easy" | "hard" | "again") => void;
+  onRate: (confidence: "again" | "hard" | "good" | "easy") => void;
   isSubmitting: boolean;
 }) {
   const { t } = useTranslation();
@@ -150,12 +150,22 @@ function ReviewCard({
             </Text>
           </Pressable>
           <Pressable
-            onPress={() => onRate("easy")}
+            onPress={() => onRate("good")}
             disabled={isSubmitting}
             className="flex-1 items-center rounded-2xl border-2 border-green-200 bg-green-50 py-4 active:opacity-70 dark:border-green-800 dark:bg-green-950"
           >
             <IconSymbol name="checkmark.circle" size={20} color="#22c55e" />
             <Text className="mt-1 text-xs font-semibold text-green-600 dark:text-green-400">
+              {t("wordReview.good")}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => onRate("easy")}
+            disabled={isSubmitting}
+            className="flex-1 items-center rounded-2xl border-2 border-blue-200 bg-blue-50 py-4 active:opacity-70 dark:border-blue-800 dark:bg-blue-950"
+          >
+            <IconSymbol name="checkmark.seal.fill" size={20} color="#3b82f6" />
+            <Text className="mt-1 text-xs font-semibold text-blue-600 dark:text-blue-400">
               {t("wordReview.easy")}
             </Text>
           </Pressable>
@@ -217,11 +227,11 @@ export default function WordReviewScreen() {
   const isFinished = queueBuilt && currentIndex >= queue.length;
 
   const handleRate = useCallback(
-    (confidence: "easy" | "hard" | "again") => {
+    (confidence: "again" | "hard" | "good" | "easy") => {
       if (!currentEntry) return;
       const entry = currentEntry;
 
-      if (confidence === "easy") {
+      if (confidence === "easy" || confidence === "good") {
         hapticSuccess();
         playCorrectSound().catch(() => {});
       } else if (confidence === "hard") {

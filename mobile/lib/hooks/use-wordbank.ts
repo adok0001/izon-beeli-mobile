@@ -10,6 +10,8 @@ export interface WordBankEntry {
   reviewCount: number;
   nextReviewAt: string | null;
   languageId: string;
+  easeFactor?: number;
+  interval?: number;
 }
 
 export function useWordBank() {
@@ -82,7 +84,7 @@ export function useReviewWord() {
       confidence,
     }: {
       dictionaryEntryId: string;
-      confidence: "easy" | "hard" | "again";
+      confidence: "again" | "hard" | "good" | "easy";
     }) => {
       const token = await getToken();
       return apiFetch<{ nextReviewAt: string; xpEarned: number; leveledUp: boolean; newLevel?: number; totalPoints?: number }>(`/wordbank/${dictionaryEntryId}/review`, {
