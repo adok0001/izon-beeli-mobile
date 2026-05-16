@@ -212,6 +212,7 @@ function FeedCard({ item, onSignInRequired }: Readonly<{ item: FeedItem; onSignI
     },
     onMutate: async () => {
       await qc.cancelQueries({ queryKey: ["feed"] });
+      const snapshot = qc.getQueriesData<FeedItem[]>({ queryKey: ["feed"] });
       qc.setQueriesData<FeedItem[]>({ queryKey: ["feed"] }, (old) =>
         old?.map((i) =>
           i.id === item.id
@@ -219,8 +220,15 @@ function FeedCard({ item, onSignInRequired }: Readonly<{ item: FeedItem; onSignI
             : i
         )
       );
+      return { snapshot };
     },
-    onSettled: () => void qc.invalidateQueries({ queryKey: ["feed"] }),
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.snapshot) {
+        for (const [queryKey, data] of ctx.snapshot) {
+          qc.setQueryData(queryKey, data);
+        }
+      }
+    },
   });
 
   return (

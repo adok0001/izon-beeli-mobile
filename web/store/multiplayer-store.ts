@@ -146,7 +146,8 @@ function _openSocket(
     set({ socket: null });
     const { phase, _reconnectAttempts } = get();
     if (phase === "results" || _reconnectAttempts >= 5) { set({ connectionStatus: "disconnected" }); return; }
-    const delay = Math.min(1000 * Math.pow(2, _reconnectAttempts), 30000);
+    const base = Math.min(1000 * Math.pow(2, _reconnectAttempts), 30000);
+    const delay = base * (0.5 + Math.random() * 0.5);
     set({ connectionStatus: "reconnecting", _reconnectAttempts: _reconnectAttempts + 1 });
     _clearReconnectTimer();
     _reconnectTimer = setTimeout(() => {

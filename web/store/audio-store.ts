@@ -26,6 +26,8 @@ interface AudioState {
   stop: () => void;
 }
 
+let _audioCleanup: (() => void) | null = null;
+
 export const useAudioStore = create<AudioState>((set, get) => ({
   currentLesson: null,
   isPlaying: false,
@@ -35,6 +37,9 @@ export const useAudioStore = create<AudioState>((set, get) => ({
   audioElement: null,
 
   load: (lesson: Lesson) => {
+    _audioCleanup?.();
+    _audioCleanup = null;
+
     const { audioElement: existing, speed } = get();
     if (existing) {
       existing.pause();
@@ -49,20 +54,25 @@ export const useAudioStore = create<AudioState>((set, get) => ({
     const audio = new Audio(lesson.audioUrl);
     audio.playbackRate = speed;
 
-    audio.addEventListener("timeupdate", () => {
-      set({ position: audio.currentTime });
-    });
+    const onTimeUpdate = () => { set({ position: audio.currentTime }); };
+    const onLoadedMetadata = () => { set({ duration: audio.duration }); };
+    const onEnded = () => { set({ isPlaying: false, position: 0 }); };
+    const onPlay = () => set({ isPlaying: true });
+    const onPause = () => set({ isPlaying: false });
 
-    audio.addEventListener("loadedmetadata", () => {
-      set({ duration: audio.duration });
-    });
+    audio.addEventListener("timeupdate", onTimeUpdate);
+    audio.addEventListener("loadedmetadata", onLoadedMetadata);
+    audio.addEventListener("ended", onEnded);
+    audio.addEventListener("play", onPlay);
+    audio.addEventListener("pause", onPause);
 
-    audio.addEventListener("ended", () => {
-      set({ isPlaying: false, position: 0 });
-    });
-
-    audio.addEventListener("play", () => set({ isPlaying: true }));
-    audio.addEventListener("pause", () => set({ isPlaying: false }));
+    _audioCleanup = () => {
+      audio.removeEventListener("timeupdate", onTimeUpdate);
+      audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+      audio.removeEventListener("ended", onEnded);
+      audio.removeEventListener("play", onPlay);
+      audio.removeEventListener("pause", onPause);
+    };
 
     audio.play().catch(() => {
       // Autoplay blocked — user must interact first
@@ -124,6 +134,8 @@ export const useAudioStore = create<AudioState>((set, get) => ({
   setDuration: (seconds: number) => set({ duration: seconds }),
 
   stop: () => {
+    _audioCleanup?.();
+    _audioCleanup = null;
     const { audioElement } = get();
     if (audioElement) {
       audioElement.pause();
