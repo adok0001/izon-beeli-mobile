@@ -1,4 +1,13 @@
-import { View, Text, FlatList, Pressable, RefreshControl, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  ActivityIndicator,
+  Share,
+  Clipboard,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
@@ -12,6 +21,21 @@ function GroupCard({ group }: { group: Group }) {
   const router = useRouter();
   const { t } = useTranslation();
   const memberCount = group.members.length;
+
+  const handleCopyCode = () => {
+    Clipboard.setString(group.inviteCode);
+  };
+
+  const handleShareCode = async (e: { stopPropagation?: () => void }) => {
+    e.stopPropagation?.();
+    try {
+      await Share.share({
+        message: `Join my Beeli classroom group "${group.name}" with code: ${group.inviteCode}`,
+      });
+    } catch {
+      // user dismissed
+    }
+  };
 
   return (
     <Pressable
@@ -38,11 +62,21 @@ function GroupCard({ group }: { group: Group }) {
           </Text>
         </View>
       </View>
-      <View className="mt-2 flex-row items-center rounded-lg bg-neutral-100 px-3 py-1.5 dark:bg-neutral-700">
-        <IconSymbol name="key.fill" size={12} color="#9ca3af" />
-        <Text className="ml-1.5 text-xs font-mono text-neutral-500 dark:text-neutral-400">
-          {group.inviteCode}
-        </Text>
+      <View className="mt-2 flex-row items-center justify-between">
+        <Pressable
+          onPress={handleCopyCode}
+          onLongPress={handleShareCode}
+          className="flex-row items-center rounded-lg bg-neutral-100 px-3 py-1.5 active:opacity-60 dark:bg-neutral-700"
+        >
+          <IconSymbol name="key.fill" size={12} color="#9ca3af" />
+          <Text className="ml-1.5 text-xs font-mono text-neutral-500 dark:text-neutral-400">
+            {group.inviteCode}
+          </Text>
+          <IconSymbol name="doc.on.doc" size={11} color="#9ca3af" className="ml-1.5" />
+        </Pressable>
+        <Pressable onPress={handleShareCode} hitSlop={8}>
+          <IconSymbol name="square.and.arrow.up" size={16} color="#3b82f6" />
+        </Pressable>
       </View>
     </Pressable>
   );
