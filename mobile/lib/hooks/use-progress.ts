@@ -56,6 +56,7 @@ export function useCompletedLessons() {
 
 export function useCompleteLesson(callbacks?: {
   onLevelUp?: (level: number, title: string) => void;
+  onStreakUpdate?: (streak: number, isMilestone: boolean) => void;
 }) {
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
@@ -86,6 +87,9 @@ export function useCompleteLesson(callbacks?: {
     onSuccess: (data) => {
       if (data.streakMilestone) {
         hapticHeavy();
+      }
+      if (data.streak && !data.alreadyCompleted) {
+        callbacks?.onStreakUpdate?.(data.streak, !!data.streakMilestone);
       }
       if (data.leveledUp && data.newLevel && data.newTitle) {
         callbacks?.onLevelUp?.(data.newLevel, data.newTitle);

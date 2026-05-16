@@ -553,6 +553,9 @@ export const pcm = {
     startFreshLink: "Start fresh instead",
     noFreezesMessage: "Complete lessons to earn Streak Freezes and protect future streaks.",
     startFreshButton: "Start Fresh",
+    toastTitle: "🔥 {{count}}-day streak!",
+    toastMilestoneTitle: "🎉 {{count}}-day milestone!",
+    toastMilestoneBody: "You don reach big milestone. Keep going!",
   },
   languagePicker: {
     title: "Choose Language",
