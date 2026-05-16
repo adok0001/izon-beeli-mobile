@@ -16,20 +16,18 @@ import { localizeField } from "@/lib/localize";
 import { BUNDLED_AUDIO, formatDuration } from "@/lib/mock-data";
 import { useAudioStore } from "@/store/audio-store";
 import { useLanguageStore } from "@/store/language-store";
-// TODO: Legacy tour import (soft-retired) — remove after full deprecation
 import { useTourStore } from "@/store/tour-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course, Lesson } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useIsFocused } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 
-function ContinueCard({ lessonId, positionSeconds }: { lessonId: string; positionSeconds: number }) {
+const ContinueCard = memo(function ContinueCard({ lessonId, positionSeconds }: { lessonId: string; positionSeconds: number }) {
   const { t } = useTranslation();
   const router = useRouter();
   const { uiLanguage } = useUiLanguageStore();
@@ -82,9 +80,9 @@ function ContinueCard({ lessonId, positionSeconds }: { lessonId: string; positio
       </View>
     </Pressable>
   );
-}
+});
 
-function CourseCard({ course, completedIds }: { course: Course; completedIds: Set<string> }) {
+const CourseCard = memo(function CourseCard({ course, completedIds }: { course: Course; completedIds: Set<string> }) {
   const { t } = useTranslation();
   const router = useRouter();
   const colorScheme = useColorScheme();
@@ -223,7 +221,7 @@ function CourseCard({ course, completedIds }: { course: Course; completedIds: Se
       )}
     </View>
   );
-}
+});
 
 function LessonRow({ lesson, completed, onPress }: { lesson: Lesson; completed: boolean; onPress: () => void }) {
   const { uiLanguage } = useUiLanguageStore();
@@ -406,13 +404,13 @@ function DailyGoalRing({ completedToday }: { completedToday: number }) {
 export default function LearnScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { selectedLanguageId } = useLanguageStore();
+  const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
   const { data: courses = [], isLoading: coursesLoading, refetch: refetchCourses } = useCourses(selectedLanguageId);
   const { data: completedLessonIds, isLoading: progressLoading, refetch } = useCompletedLessons();
   const { data: summary, refetch: refetchSummary } = useProgressSummary();
   const { refetch: refetchDue } = useWordsDueForReview(selectedLanguageId);
   const { data: todayChallenges = [] } = useTodayChallenges();
-  const completedIds = new Set(completedLessonIds ?? []);
+  const completedIds = useMemo(() => new Set(completedLessonIds ?? []), [completedLessonIds]);
   const completedToday = useMemo(
     () => todayChallenges.filter((c) => c.completed).length,
     [todayChallenges]
@@ -420,18 +418,13 @@ export default function LearnScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [freezeModalVisible, setFreezeModalVisible] = useState(false);
   const freezeChecked = useRef(false);
-  const { resumeState, loadResumeState } = useAudioStore();
-  const showTour = useTourStore((s) => s.showTour);
-  const hasSeen = useTourStore((s) => s.hasSeen);
+  const resumeState = useAudioStore((s) => s.resumeState);
+  const loadResumeState = useAudioStore((s) => s.loadResumeState);
   const activeTour = useTourStore((s) => s.activeTour);
-  const isFocused = useIsFocused();
 
   useEffect(() => {
     loadResumeState();
   }, []);
-
-  // TODO: Legacy tour trigger (soft-retired) — remove after full deprecation
-  // showTour('learn') is disabled; welcome checklist now handles onboarding
 
   // Show freeze modal once per day when we detect a broken streak (wait for any tour to finish)
   useEffect(() => {

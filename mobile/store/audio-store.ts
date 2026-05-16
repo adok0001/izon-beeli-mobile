@@ -80,18 +80,28 @@ export const useAudioStore = create<AudioState>((set, get) => ({
       const playbackSource: AVPlaybackSource =
         typeof source === "number" ? source : { uri: source };
 
+      let lastUpdateMs = 0;
+      let lastSavedPosition = 0;
+
       const { sound } = await Audio.Sound.createAsync(
         playbackSource,
         { shouldPlay: true, rate: get().playbackSpeed },
         (status: AVPlaybackStatus) => {
           if (!status.isLoaded) return;
           const positionSeconds = (status.positionMillis ?? 0) / 1000;
-          set({
-            progress: positionSeconds,
-            duration: (status.durationMillis ?? 0) / 1000,
-            isPlaying: status.isPlaying,
-          });
-          if (status.isPlaying) {
+          const now = Date.now();
+          const stateChanged = status.didJustFinish || status.isPlaying !== get().isPlaying;
+
+          if (stateChanged || now - lastUpdateMs >= 250) {
+            lastUpdateMs = now;
+            set({
+              progress: positionSeconds,
+              duration: (status.durationMillis ?? 0) / 1000,
+              isPlaying: status.isPlaying,
+            });
+          }
+          if (status.isPlaying && Math.abs(positionSeconds - lastSavedPosition) >= 2) {
+            lastSavedPosition = positionSeconds;
             get().saveResumeState(trackId, positionSeconds);
           }
           if (status.didJustFinish) {
