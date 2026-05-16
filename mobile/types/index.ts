@@ -252,6 +252,8 @@ export interface Group {
   languageId: string;
   createdAt: string;
   members: GroupMember[];
+  /** The current authenticated user's role in this group */
+  myRole?: GroupRole;
 }
 
 export interface GroupMember {

@@ -63,18 +63,23 @@ classroomRouter.get("/groups", async (c) => {
     {}
   );
 
-  const result = groups.map((g) => ({
-    ...g,
-    members: (membersByGroup[g.id] ?? []).map((m) => ({
-      id: m.userId,
-      userId: m.userId,
-      name: m.name ?? "User",
-      role: m.role,
-      lessonsCompleted: 0,
-      streak: 0,
-      points: 0,
-    })),
-  }));
+  const result = groups.map((g) => {
+    const groupMembers = membersByGroup[g.id] ?? [];
+    const myMember = groupMembers.find((m) => m.userId === userId);
+    return {
+      ...g,
+      myRole: myMember?.role ?? "student",
+      members: groupMembers.map((m) => ({
+        id: m.userId,
+        userId: m.userId,
+        name: m.name ?? "User",
+        role: m.role,
+        lessonsCompleted: 0,
+        streak: 0,
+        points: 0,
+      })),
+    };
+  });
 
   return c.json(result);
 });
@@ -251,15 +256,17 @@ classroomRouter.get("/groups/:id/progress", async (c) => {
 
   // Get assignments for this group to check completion
   const assignments = await db
-    .select({ lessonId: classroomAssignments.lessonId })
+    .select({ lessonId: classroomAssignments.lessonId, dueDate: classroomAssignments.dueDate })
     .from(classroomAssignments)
     .where(eq(classroomAssignments.groupId, id));
 
-  const assignedLessonIds = assignments.map((a) => a.lessonId);
+  const now = new Date();
+  const overdueCount = assignments.filter(
+    (a) => a.dueDate && new Date(a.dueDate) < now
+  ).length;
 
   const result = members.map((m) => {
     const p = progressByUser[m.userId];
-    const overdueLessons = 0; // Would need dueDate comparison to compute
     return {
       userId: m.userId,
       name: m.name ?? "User",
@@ -267,12 +274,99 @@ classroomRouter.get("/groups/:id/progress", async (c) => {
       lessonsCompleted: Number(p?.completedCount ?? 0),
       streak: p?.streak ?? 0,
       points: p?.points ?? 0,
-      assignedCount: assignedLessonIds.length,
-      overdueLessons,
+      assignedCount: assignments.length,
+      overdueLessons: overdueCount,
     };
   });
 
   return c.json(result);
+});
+
+// DELETE /api/classroom/groups/:id/leave — current user leaves the group
+classroomRouter.delete("/groups/:id/leave", async (c) => {
+  const userId = c.get("userId");
+  const { id } = c.req.param();
+
+  const [membership] = await db
+    .select()
+    .from(classroomMembers)
+    .where(and(eq(classroomMembers.groupId, id), eq(classroomMembers.userId, userId)))
+    .limit(1);
+
+  if (!membership) return c.json({ error: "Not a member of this group" }, 404);
+
+  // Don't let the last teacher leave without transferring ownership
+  if (membership.role === "teacher") {
+    const teachers = await db
+      .select()
+      .from(classroomMembers)
+      .where(and(eq(classroomMembers.groupId, id), eq(classroomMembers.role, "teacher")));
+    if (teachers.length === 1) {
+      return c.json({ error: "Cannot leave as the only teacher. Delete the group or assign another teacher first." }, 400);
+    }
+  }
+
+  await db
+    .delete(classroomMembers)
+    .where(and(eq(classroomMembers.groupId, id), eq(classroomMembers.userId, userId)));
+
+  return c.json({ ok: true });
+});
+
+// DELETE /api/classroom/groups/:id/members/:userId — teacher removes a member
+classroomRouter.delete("/groups/:id/members/:memberId", async (c) => {
+  const requesterId = c.get("userId");
+  const { id, memberId } = c.req.param();
+
+  // Requester must be a teacher
+  const [requesterMembership] = await db
+    .select()
+    .from(classroomMembers)
+    .where(and(eq(classroomMembers.groupId, id), eq(classroomMembers.userId, requesterId)))
+    .limit(1);
+
+  if (!requesterMembership || requesterMembership.role !== "teacher") {
+    return c.json({ error: "Only teachers can remove members" }, 403);
+  }
+
+  // Can't remove yourself via this endpoint
+  if (memberId === requesterId) {
+    return c.json({ error: "Use the leave endpoint to remove yourself" }, 400);
+  }
+
+  await db
+    .delete(classroomMembers)
+    .where(and(eq(classroomMembers.groupId, id), eq(classroomMembers.userId, memberId)));
+
+  return c.json({ ok: true });
+});
+
+// DELETE /api/classroom/assignments/:id — teacher deletes an assignment
+classroomRouter.delete("/assignments/:id", async (c) => {
+  const userId = c.get("userId");
+  const { id } = c.req.param();
+
+  const [assignment] = await db
+    .select()
+    .from(classroomAssignments)
+    .where(eq(classroomAssignments.id, id))
+    .limit(1);
+
+  if (!assignment) return c.json({ error: "Assignment not found" }, 404);
+
+  // Requester must be a teacher in this group
+  const [membership] = await db
+    .select()
+    .from(classroomMembers)
+    .where(and(eq(classroomMembers.groupId, assignment.groupId), eq(classroomMembers.userId, userId)))
+    .limit(1);
+
+  if (!membership || membership.role !== "teacher") {
+    return c.json({ error: "Only teachers can delete assignments" }, 403);
+  }
+
+  await db.delete(classroomAssignments).where(eq(classroomAssignments.id, id));
+  return c.json({ ok: true });
 });
 
 // GET /api/classroom/dashboard — institution-level aggregate stats
