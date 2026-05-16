@@ -253,6 +253,8 @@ export const wordBank = pgTable(
     confidence: integer("confidence").default(0).notNull(), // 0-5 SM-2 ease factor proxy
     reviewCount: integer("review_count").default(0).notNull(),
     lastReviewedAt: timestamp("last_reviewed_at"),
+    easeFactor: real("ease_factor").default(2.5).notNull(),
+    interval: integer("interval").default(0).notNull(), // days
   },
   (table) => [
     uniqueIndex("word_bank_user_entry_idx").on(

@@ -401,6 +401,7 @@ export const fr = {
     english: "Anglais",
     again: "Encore",
     hard: "Difficile",
+    good: "Bien",
     easy: "Facile",
     allCaughtUp: "Tout est à jour !",
     noWordsDue:

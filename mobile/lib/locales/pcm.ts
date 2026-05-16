@@ -401,6 +401,7 @@ export const pcm = {
     english: "English",
     again: "Again",
     hard: "Hard",
+    good: "Good",
     easy: "Easy",
     allCaughtUp: "You don catch up!",
     noWordsDue:

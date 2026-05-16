@@ -399,6 +399,7 @@ export const en = {
     english: "English",
     again: "Again",
     hard: "Hard",
+    good: "Good",
     easy: "Easy",
     allCaughtUp: "All caught up!",
     noWordsDue:
