@@ -160,6 +160,7 @@ export const en = {
     title: "Profile",
     learner: "Learner",
     points: "Points",
+    dailyGoal: "Daily Goal",
     restartWelcomeTour: "Restart Welcome Tour",
     thanks: "Thanks for your feedback!",
     feedbackHint: "We read every message.",

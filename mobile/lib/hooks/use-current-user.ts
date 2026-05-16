@@ -1,6 +1,8 @@
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@clerk/clerk-expo";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+export type DailyGoal = "casual" | "steady" | "intensive";
 
 export interface CurrentUser {
   id: string;
@@ -10,6 +12,7 @@ export interface CurrentUser {
   streak: number;
   points: number;
   selectedLanguageId: string | null;
+  dailyGoal: DailyGoal;
   isAdmin: boolean;
   isReviewer: boolean;
   reviewerLanguages: string[];
@@ -44,5 +47,26 @@ export function useCurrentUser() {
     },
     enabled: !!isSignedIn,
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useUpdateDailyGoal() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (dailyGoal: DailyGoal) => {
+      const token = await getToken();
+      return apiFetch("/users/me", {
+        method: "PATCH",
+        token: token!,
+        body: JSON.stringify({ dailyGoal }),
+      });
+    },
+    onSuccess: (_data, dailyGoal) => {
+      queryClient.setQueryData<CurrentUser>(["current-user"], (prev) =>
+        prev ? { ...prev, dailyGoal } : prev
+      );
+    },
   });
 }
