@@ -71,6 +71,9 @@ export function useMatchmakingStatus(enabled: boolean) {
       return apiFetch<{ status: string; session?: GameSession }>("/multiplayer/matchmaking/status", { token: token! });
     },
     enabled: !!isSignedIn && enabled,
-    refetchInterval: 3000,
+    refetchInterval: (query) => {
+      const count = query.state.dataUpdateCount ?? 0;
+      return Math.min(3000 + count * 1200, 15000);
+    },
   });
 }
