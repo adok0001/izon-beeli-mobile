@@ -654,7 +654,7 @@ export default function EducatorLessonEditScreen() {
               <View className="flex-row items-center gap-2">
                 <IconSymbol name="eye.fill" size={16} color="#3b82f6" />
                 <Text className="text-sm font-semibold text-blue-600 dark:text-blue-400">
-                  Preview as Learner
+                  {t("educator.lessonEdit.previewTitle")}
                 </Text>
               </View>
               <IconSymbol
@@ -678,7 +678,7 @@ export default function EducatorLessonEditScreen() {
                 {segments.some((s) => s.text.trim().length > 0) ? (
                   <View className="px-4 py-3">
                     <Text className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-                      Transcript
+                      {t("review.transcript")}
                     </Text>
                     {segments
                       .filter((s) => s.text.trim().length > 0)
@@ -698,7 +698,7 @@ export default function EducatorLessonEditScreen() {
                 ) : (
                   <View className="px-4 py-6 items-center">
                     <Text className="text-sm text-neutral-400 dark:text-neutral-500">
-                      No transcript segments yet
+                      {t("educator.lessonEdit.noSegments")}
                     </Text>
                   </View>
                 )}

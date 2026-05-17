@@ -633,7 +633,7 @@ export default function ReviewScreen() {
                   ? "text-white dark:text-neutral-900"
                   : "text-neutral-600 dark:text-neutral-400"
               }`}>
-                All
+                {t("review.filterAll")}
               </Text>
             </Pressable>
             {languageIds.map((lid) => (

@@ -15,10 +15,11 @@ const STATUS_CONFIG = {
 } as const;
 
 function StatusTimeline({ status }: { status: string }) {
+  const { t } = useTranslation();
   const steps = [
-    { key: "submitted", label: "Submitted" },
-    { key: "review", label: "In Review" },
-    { key: "done", label: status === "rejected" ? "Rejected" : "Approved" },
+    { key: "submitted", label: t("myContributions.timelineSubmitted") },
+    { key: "review", label: t("myContributions.timelineInReview") },
+    { key: "done", label: status === "rejected" ? t("myContributions.statusRejected") : t("myContributions.statusApproved") },
   ];
   const activeIndex = status === "submitted" ? 0 : 2;
   const isRejected = status === "rejected";
@@ -155,13 +156,13 @@ function ContributionRow({ item }: { item: MyContribution }) {
 
       {item.status === "submitted" && (
         <Text className="mt-2 text-xs text-neutral-400 dark:text-neutral-500">
-          Reviews typically complete within 3–5 days
+          {t("myContributions.reviewEstimate")}
         </Text>
       )}
 
       {item.status === "approved" && item.practiceCount != null && item.practiceCount > 0 && (
         <Text className="mt-2 text-xs text-blue-500 dark:text-blue-400">
-          Practiced {item.practiceCount} time{item.practiceCount !== 1 ? "s" : ""} by learners
+          {t(item.practiceCount === 1 ? "myContributions.practiceCount_one" : "myContributions.practiceCount_other", { count: item.practiceCount })}
         </Text>
       )}
 

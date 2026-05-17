@@ -384,7 +384,7 @@ export default function WordDetailScreen() {
             return (
               <View className="mt-5">
                 <Text className="mx-5 mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-                  More in {entry.category}
+                  {t("wordDetail.moreInCategory", { category: entry.category })}
                 </Text>
                 <ScrollView
                   horizontal

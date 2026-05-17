@@ -313,8 +313,7 @@ export default function WordReviewScreen() {
               return (
                 <View className="mt-5 w-full rounded-2xl bg-blue-50 p-4 dark:bg-blue-900/20">
                   <Text className="mb-1 text-center text-sm text-blue-800 dark:text-blue-300">
-                    Seen an avg of <Text className="font-bold">{avg.toFixed(1)}×</Text> — you're{" "}
-                    <Text className="font-bold">{retention}%</Text> likely to remember these
+                    {t("wordReview.retentionDesc", { avg: avg.toFixed(1), pct: retention })}
                   </Text>
                   <View className="mt-2 h-2 overflow-hidden rounded-full bg-blue-200 dark:bg-blue-800">
                     <View

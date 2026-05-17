@@ -264,7 +264,7 @@ function ActiveView() {
             <View className="flex-row items-center gap-1.5">
               <IconSymbol name="lightbulb.fill" size={14} color="#f97316" />
               <Text className="text-xs font-semibold text-orange-700 dark:text-orange-400">
-                The correct answer
+                {t("quiz.correctAnswerLabel")}
               </Text>
             </View>
             <Text className="mt-1 text-sm font-bold text-neutral-800 dark:text-neutral-200">
@@ -276,7 +276,7 @@ function ActiveView() {
               </Text>
             ) : (
               <Text className="mt-1 text-xs italic text-neutral-500 dark:text-neutral-500">
-                Try using it in a sentence to remember it!
+                {t("quiz.correctAnswerHint")}
               </Text>
             )}
           </View>
@@ -418,7 +418,7 @@ function ResultsView({ languageId }: { languageId: string }) {
       {missedItems.length > 0 && (
         <View className="mt-8">
           <Text className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-            You missed {missedItems.length} question{missedItems.length !== 1 ? "s" : ""}
+            {t(missedItems.length === 1 ? "quiz.missedCount_one" : "quiz.missedCount_other", { count: missedItems.length })}
           </Text>
           {missedItems.map(({ question, selectedAnswer }) => (
             <View

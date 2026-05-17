@@ -195,10 +195,10 @@ export default function ContributeScreen() {
                   <View className="mb-5 flex-row items-center gap-2 rounded-xl bg-amber-50 px-4 py-2.5 dark:bg-amber-900/20">
                     <IconSymbol name="person.2.fill" size={16} color="#d97706" />
                     <Text className="text-sm text-amber-800 dark:text-amber-300">
-                      <Text className="font-semibold">{totalContributors}</Text>
-                      {" contributors · "}
-                      <Text className="font-semibold">{totalApproved.toLocaleString()}+</Text>
-                      {" words — be part of it"}
+                      {t("contribute.socialProof", {
+                        contributors: totalContributors,
+                        words: totalApproved.toLocaleString(),
+                      })}
                     </Text>
                   </View>
                 )}

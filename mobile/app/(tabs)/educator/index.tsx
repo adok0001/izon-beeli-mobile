@@ -158,7 +158,7 @@ export default function EducatorPanelScreen() {
                 ))}
               </View>
               <Text className="px-4 pt-2 text-[10px] font-semibold uppercase tracking-wider text-blue-400">
-                Step {onboardingStep} of 3
+                {t("educator.onboarding.stepOf", { step: onboardingStep, total: 3 })}
               </Text>
 
               {onboardingStep === 1 && (
@@ -167,16 +167,16 @@ export default function EducatorPanelScreen() {
                     <IconSymbol name="book.fill" size={20} color="#fff" />
                   </View>
                   <Text className="text-base font-bold text-neutral-900 dark:text-white">
-                    Create your first course
+                    {t("educator.onboarding.step1Title")}
                   </Text>
                   <Text className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-                    Courses group lessons by theme or skill level.
+                    {t("educator.onboarding.step1Desc")}
                   </Text>
                   <Pressable
                     onPress={() => { router.push("/educator/courses" as any); setOnboardingStep(2); }}
                     className="mt-4 items-center rounded-xl bg-blue-500 py-3 active:opacity-80"
                   >
-                    <Text className="font-semibold text-white">Go to Courses →</Text>
+                    <Text className="font-semibold text-white">{t("educator.onboarding.step1Cta")} →</Text>
                   </Pressable>
                 </View>
               )}
@@ -187,16 +187,16 @@ export default function EducatorPanelScreen() {
                     <IconSymbol name="waveform" size={20} color="#fff" />
                   </View>
                   <Text className="text-base font-bold text-neutral-900 dark:text-white">
-                    Add a lesson
+                    {t("educator.onboarding.step2Title")}
                   </Text>
                   <Text className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-                    Upload audio and add a transcript to create an interactive lesson.
+                    {t("educator.onboarding.step2Desc")}
                   </Text>
                   <Pressable
                     onPress={() => { router.push("/educator/courses" as any); setOnboardingStep(3); }}
                     className="mt-4 items-center rounded-xl bg-blue-500 py-3 active:opacity-80"
                   >
-                    <Text className="font-semibold text-white">Create a Lesson →</Text>
+                    <Text className="font-semibold text-white">{t("educator.onboarding.step2Cta")} →</Text>
                   </Pressable>
                 </View>
               )}
@@ -207,22 +207,22 @@ export default function EducatorPanelScreen() {
                     <IconSymbol name="person.2.fill" size={20} color="#fff" />
                   </View>
                   <Text className="text-base font-bold text-neutral-900 dark:text-white">
-                    Invite students
+                    {t("educator.onboarding.step3Title")}
                   </Text>
                   <Text className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-                    Share your group invite code so learners can join your class.
+                    {t("educator.onboarding.step3Desc")}
                   </Text>
                   <Pressable
                     onPress={() => { router.push("/groups" as any); dismissOnboarding(); }}
                     className="mt-4 items-center rounded-xl bg-blue-500 py-3 active:opacity-80"
                   >
-                    <Text className="font-semibold text-white">Get Invite Code →</Text>
+                    <Text className="font-semibold text-white">{t("educator.onboarding.step3Cta")} →</Text>
                   </Pressable>
                 </View>
               )}
 
               <Pressable onPress={dismissOnboarding} className="items-center pb-4">
-                <Text className="text-xs text-neutral-400 dark:text-neutral-500">Skip setup</Text>
+                <Text className="text-xs text-neutral-400 dark:text-neutral-500">{t("educator.onboarding.skip")}</Text>
               </Pressable>
             </View>
           )}
