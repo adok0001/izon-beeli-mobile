@@ -283,6 +283,11 @@ export default function SettingsScreen() {
           <Text className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
             {t("settings.account")}
           </Text>
+          <SettingsRow
+            icon="person.fill"
+            label={t("settings.accountSettings")}
+            onPress={() => router.push("/account")}
+          />
           <Pressable
             onPress={handleDeleteAccount}
             className="flex-row items-center border-b border-neutral-100 py-4 active:opacity-70 dark:border-neutral-800"
