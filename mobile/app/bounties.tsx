@@ -81,7 +81,7 @@ function BountyCard({ bounty }: { bounty: Bounty }) {
         }
         className="items-center rounded-xl bg-amber-500 py-3 active:opacity-80"
       >
-        <Text className="font-semibold text-white">{t("bounties.contribute")}</Text>
+        <Text className="font-semibold text-white">{t("bounties.claim")}</Text>
       </Pressable>
     </View>
   );

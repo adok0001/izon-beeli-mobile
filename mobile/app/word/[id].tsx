@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { View, Text, Pressable, ScrollView, ActivityIndicator, TextInput, Image } from "react-native";
+import { Audio } from "expo-av";
 import * as DocumentPicker from "expo-document-picker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,6 +16,36 @@ import { useDictionaryNavStore } from "@/store/dictionary-nav-store";
 import { useSaveWord, useRemoveWord, useWordBank } from "@/lib/hooks/use-wordbank";
 import { addRecentlyViewed } from "@/lib/hooks/use-recently-viewed";
 import { useTranslation } from "react-i18next";
+
+function InlineAudioButton({ audioUrl }: { audioUrl: string }) {
+  const [playing, setPlaying] = useState(false);
+  const soundRef = useRef<Audio.Sound | null>(null);
+
+  useEffect(() => {
+    return () => { soundRef.current?.unloadAsync(); };
+  }, []);
+
+  const handlePress = useCallback(async () => {
+    try {
+      if (soundRef.current) { await soundRef.current.unloadAsync(); soundRef.current = null; }
+      const { sound } = await Audio.Sound.createAsync({ uri: audioUrl });
+      soundRef.current = sound;
+      sound.setOnPlaybackStatusUpdate((s) => { if (s.isLoaded && s.didJustFinish) setPlaying(false); });
+      setPlaying(true);
+      await sound.playAsync();
+    } catch { setPlaying(false); }
+  }, [audioUrl]);
+
+  return (
+    <Pressable onPress={handlePress} disabled={playing} hitSlop={8} className="ml-2 p-1">
+      <IconSymbol
+        name={playing ? "speaker.wave.3.fill" : "speaker.wave.2.fill"}
+        size={18}
+        color={playing ? "#3b82f6" : "#9ca3af"}
+      />
+    </Pressable>
+  );
+}
 
 export default function WordDetailScreen() {
   const { id, languageId } = useLocalSearchParams<{
@@ -290,18 +321,14 @@ export default function WordDetailScreen() {
               </View>
             )}
 
-            {/* Audio button */}
-            <View className="mt-5 flex-row items-center gap-3">
-              <WordAudioButton
-                audioSource={entry.audioUrl}
-                word={entry.word}
-                size={26}
-              />
-              {!entry.audioUrl && (
-                <Text className="text-xs text-neutral-400 dark:text-neutral-500">
-                  {t("wordDetail.textToSpeech")}
-                </Text>
-              )}
+            {/* Audio button — primary action */}
+            <View className="mt-6 items-center">
+              <View className="h-16 w-16 items-center justify-center rounded-full bg-blue-500 shadow-sm">
+                <WordAudioButton audioSource={entry.audioUrl} word={entry.word} size={28} />
+              </View>
+              <Text className="mt-2 text-xs font-semibold text-blue-500 dark:text-blue-400">
+                {entry.audioUrl ? t("wordDetail.hearPronunciation") : t("wordDetail.textToSpeech")}
+              </Text>
             </View>
 
             {/* Category badge */}
@@ -326,9 +353,14 @@ export default function WordDetailScreen() {
               <Text className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
                 {t("wordDetail.example")}
               </Text>
-              <Text className="text-base text-neutral-800 dark:text-neutral-200">
-                {entry.example}
-              </Text>
+              <View className="flex-row items-start">
+                <Text className="flex-1 text-base text-neutral-800 dark:text-neutral-200">
+                  {entry.example}
+                </Text>
+                {entry.exampleAudioUrl && (
+                  <InlineAudioButton audioUrl={entry.exampleAudioUrl} />
+                )}
+              </View>
               {entry.exampleTranslation && (
                 <Text className="mt-1.5 text-sm text-neutral-500 dark:text-neutral-400">
                   {entry.exampleTranslation}
@@ -336,6 +368,42 @@ export default function WordDetailScreen() {
               )}
             </View>
           )}
+
+          {/* Related words (same category) */}
+          {(() => {
+            const related = entries
+              .filter((e) => e.category === entry.category && e.id !== entry.id)
+              .slice(0, 5);
+            if (related.length === 0) return null;
+            return (
+              <View className="mt-5">
+                <Text className="mx-5 mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                  {t("wordDetail.moreInCategory", { category: categoryLabel })}
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  className="-mx-0 px-5"
+                  contentContainerStyle={{ gap: 8 }}
+                >
+                  {related.map((rel) => (
+                    <Pressable
+                      key={rel.id}
+                      onPress={() => router.push(`/word/${rel.id}?languageId=${languageId}` as any)}
+                      className="rounded-xl bg-neutral-50 px-3 py-2.5 active:opacity-70 dark:bg-neutral-800"
+                    >
+                      <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
+                        {rel.word}
+                      </Text>
+                      <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
+                        {rel.english}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+            );
+          })()}
 
           {/* Contributor */}
           {entry.contributorName && (

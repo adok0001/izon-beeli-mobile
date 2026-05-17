@@ -1,3 +1,4 @@
+import { CulturalSection } from "@/components/cultural/cultural-section";
 import { EnrolledLanguageBar } from "@/components/language-picker";
 import { NotificationBell } from "@/components/notifications/notification-center";
 
@@ -581,6 +582,7 @@ export default function LearnScreen() {
                 />
               )}
               <UpNextCard languageId={selectedLanguageId} />
+              <CulturalSection languageId={selectedLanguageId} />
               <BountyTeaser languageId={selectedLanguageId} />
               <ContributorBanner />
             </View>

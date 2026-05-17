@@ -16,7 +16,7 @@ import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useTourStore } from "@/store/tour-store";
 import { localizeField } from "@/lib/localize";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -31,6 +31,14 @@ export default function LessonScreen() {
   const { uiLanguage } = useUiLanguageStore();
   const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
   const [showSummary, setShowSummary] = useState(false);
+  const [pendingSummary, setPendingSummary] = useState(false);
+
+  useEffect(() => {
+    if (pendingSummary && !isPlaying) {
+      setShowSummary(true);
+      setPendingSummary(false);
+    }
+  }, [pendingSummary, isPlaying]);
   const { t } = useTranslation();
   const { data: nextLessonData } = useNextLesson(selectedLanguageId);
   const showTour = useTourStore((s) => s.showTour);
@@ -93,7 +101,12 @@ export default function LessonScreen() {
     hapticHeavy();
     analytics.lessonCompleted(lesson.id, selectedLanguageId);
     cancelDailyStreakReminder().catch(() => {});
-    setShowSummary(true);
+
+    if (isCurrentTrack && isPlaying) {
+      setPendingSummary(true);
+    } else {
+      setShowSummary(true);
+    }
 
     // Contextual tours: show journal tour after first lesson complete,
     // then practice tour on subsequent completions
@@ -239,30 +252,49 @@ export default function LessonScreen() {
               {t("lesson.whatsNext")}
             </Text>
             <View className="gap-3">
-              <Pressable
-                onPress={() =>
-                  router.push({
-                    pathname: "/quiz",
-                    params: { courseId: lesson.courseId, lessonId: lesson.id },
-                  })
-                }
-                className="flex-row items-center rounded-2xl bg-blue-500 px-4 py-4 active:opacity-80"
-              >
-                <IconSymbol name="trophy.fill" size={18} color="#fff" />
-                <Text className="ml-2 text-base font-semibold text-white">
-                  {t("lesson.takeQuiz")}
-                </Text>
-              </Pressable>
+              {/* Primary CTA: next lesson (most prominent) */}
+              {nextLessonData?.lesson && nextLessonData.lesson.id !== lesson.id && (
+                <Pressable
+                  onPress={() => {
+                    setShowSummary(false);
+                    router.replace(`/lesson/${nextLessonData.lesson!.id}`);
+                  }}
+                  className="flex-row items-center justify-center rounded-2xl bg-blue-500 px-4 py-4 active:opacity-80"
+                >
+                  <IconSymbol name="play.fill" size={18} color="#fff" />
+                  <Text className="ml-2 text-base font-semibold text-white">
+                    {t("lesson.continueToNext")}
+                  </Text>
+                </Pressable>
+              )}
 
-              <Pressable
-                onPress={() => router.push("/word-review")}
-                className="flex-row items-center rounded-2xl border border-emerald-200 px-4 py-4 active:opacity-80 dark:border-emerald-800"
-              >
-                <IconSymbol name="brain.head.profile" size={18} color="#10b981" />
-                <Text className="ml-2 text-base font-semibold text-emerald-600 dark:text-emerald-400">
-                  {t("lesson.reviewWords")}
-                </Text>
-              </Pressable>
+              {/* Secondary actions in a 2-column grid */}
+              <View className="flex-row gap-3">
+                <Pressable
+                  onPress={() =>
+                    router.push({
+                      pathname: "/quiz",
+                      params: { courseId: lesson.courseId, lessonId: lesson.id },
+                    })
+                  }
+                  className="flex-1 items-center rounded-2xl border border-blue-200 py-4 active:opacity-80 dark:border-blue-800"
+                >
+                  <IconSymbol name="trophy.fill" size={18} color="#3b82f6" />
+                  <Text className="mt-1 text-sm font-semibold text-blue-600 dark:text-blue-400">
+                    {t("lesson.takeQuiz")}
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => router.push("/word-review")}
+                  className="flex-1 items-center rounded-2xl border border-emerald-200 py-4 active:opacity-80 dark:border-emerald-800"
+                >
+                  <IconSymbol name="brain.head.profile" size={18} color="#10b981" />
+                  <Text className="mt-1 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                    {t("lesson.reviewWords")}
+                  </Text>
+                </Pressable>
+              </View>
 
               <Pressable
                 onPress={() => router.push("/(tabs)/journal" as any)}
@@ -273,21 +305,6 @@ export default function LessonScreen() {
                   {t("lesson.writeReflection")}
                 </Text>
               </Pressable>
-
-              {nextLessonData?.lesson && nextLessonData.lesson.id !== lesson.id && (
-                <Pressable
-                  onPress={() => {
-                    setShowSummary(false);
-                    router.replace(`/lesson/${nextLessonData.lesson!.id}`);
-                  }}
-                  className="flex-row items-center rounded-2xl border border-blue-200 px-4 py-4 active:opacity-80 dark:border-blue-800"
-                >
-                  <IconSymbol name="play.fill" size={18} color="#3b82f6" />
-                  <Text className="ml-2 text-base font-semibold text-blue-600 dark:text-blue-400">
-                    {t("lesson.continueToNext")}
-                  </Text>
-                </Pressable>
-              )}
 
               <Pressable
                 onPress={() => setShowSummary(false)}
