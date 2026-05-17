@@ -1,13 +1,15 @@
 "use client";
 
-import { apiFetch } from "@/lib/api";
+import { apiFetch, ApiError } from "@/lib/api";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     ArrowLeft,
+    BookOpen,
     ChevronRight,
     Eye,
     EyeOff,
+    GripVertical,
     Pencil,
     Play,
     Plus,
@@ -17,7 +19,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -49,6 +51,493 @@ interface Course {
 }
 
 const LESSON_TYPES = ["lesson", "story", "music", "pronunciation"] as const;
+
+// ─── Story Arc Types ──────────────────────────────────────────────────────────
+
+interface StoryChapterDraft {
+  id: string;
+  lessonId: string;
+  title: string;
+  narrativeIntro: string;
+  narrativeOutro: string;
+  order: number;
+}
+
+interface StoryArc {
+  id: string;
+  courseId: string;
+  title: string;
+  description: string;
+  chapters: StoryChapterDraft[];
+}
+
+// ─── Chapter Modal ────────────────────────────────────────────────────────────
+
+function ChapterModal({
+  chapter,
+  defaultOrder,
+  lessons,
+  onSave,
+  onClose,
+}: Readonly<{
+  chapter: StoryChapterDraft | null;
+  defaultOrder: number;
+  lessons: Lesson[];
+  onSave: (ch: StoryChapterDraft) => void;
+  onClose: () => void;
+}>) {
+  const isNew = !chapter;
+  const [lessonId, setLessonId] = useState(chapter?.lessonId ?? lessons[0]?.id ?? "");
+  const [title, setTitle] = useState(chapter?.title ?? "");
+  const [narrativeIntro, setNarrativeIntro] = useState(chapter?.narrativeIntro ?? "");
+  const [narrativeOutro, setNarrativeOutro] = useState(chapter?.narrativeOutro ?? "");
+  const [order, setOrder] = useState(String(chapter?.order ?? defaultOrder));
+
+  const canSave = lessonId && title.trim() && narrativeIntro.trim() && narrativeOutro.trim();
+
+  const handleSave = () => {
+    onSave({
+      id: chapter?.id ?? `story-ch-new-${Date.now()}`,
+      lessonId,
+      title: title.trim(),
+      narrativeIntro: narrativeIntro.trim(),
+      narrativeOutro: narrativeOutro.trim(),
+      order: parseInt(order) || 1,
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="w-full max-w-xl rounded-2xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#0f0f1a] shadow-2xl overflow-y-auto max-h-[90vh]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100 dark:border-white/[0.06]">
+          <h2 className="text-base font-bold text-neutral-900 dark:text-white">
+            {isNew ? "Add Chapter" : "Edit Chapter"}
+          </h2>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors">
+            <X className="h-4 w-4 text-neutral-500 dark:text-neutral-300" />
+          </button>
+        </div>
+
+        <div className="px-6 py-5 space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">
+              Lesson <span className="text-red-400">*</span>
+            </label>
+            <select
+              value={lessonId}
+              onChange={(e) => setLessonId(e.target.value)}
+              className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+            >
+              {lessons.map((l) => (
+                <option key={l.id} value={l.id}>{l.order}. {l.title}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">
+              Chapter title <span className="text-red-400">*</span>
+            </label>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Arriving at the Waterside"
+              className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">
+              Narrative intro <span className="text-red-400">*</span>
+            </label>
+            <textarea
+              value={narrativeIntro}
+              onChange={(e) => setNarrativeIntro(e.target.value)}
+              placeholder="Scene-setting text shown before the lesson starts…"
+              rows={4}
+              className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">
+              Narrative outro <span className="text-red-400">*</span>
+            </label>
+            <textarea
+              value={narrativeOutro}
+              onChange={(e) => setNarrativeOutro(e.target.value)}
+              placeholder="Closing text shown after the lesson completes…"
+              rows={4}
+              className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">Order</label>
+            <input
+              type="number"
+              value={order}
+              onChange={(e) => setOrder(e.target.value)}
+              className="w-24 rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-neutral-100 dark:border-white/[0.06]">
+          <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors">
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={!canSave}
+            className="px-5 py-2 rounded-lg text-sm font-semibold bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            {isNew ? "Add Chapter" : "Save Chapter"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Story Arc Section ────────────────────────────────────────────────────────
+
+function StoryArcSection({
+  courseId,
+  lessons,
+}: Readonly<{ courseId: string; lessons: Lesson[] }>) {
+  const { getToken } = useAuth();
+  const qc = useQueryClient();
+
+  const { data: arc, isLoading, error } = useQuery<StoryArc | null>({
+    queryKey: ["educator-story-arc", courseId],
+    queryFn: async () => {
+      const token = await getToken();
+      try {
+        return await apiFetch<StoryArc>(`/educator/story-arcs/${courseId}`, { token: token! });
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) return null;
+        throw err;
+      }
+    },
+  });
+
+  const [arcTitle, setArcTitle] = useState("");
+  const [arcDesc, setArcDesc] = useState("");
+  const [chapters, setChapters] = useState<StoryChapterDraft[]>([]);
+  const [chapterModal, setChapterModal] = useState<StoryChapterDraft | "new" | null>(null);
+  const [deleteChapterId, setDeleteChapterId] = useState<string | null>(null);
+  const [arcDirty, setArcDirty] = useState(false);
+  const [chaptersDirty, setChaptersDirty] = useState(false);
+  const [createTitle, setCreateTitle] = useState("");
+  const [createDesc, setCreateDesc] = useState("");
+
+  useEffect(() => {
+    if (arc) {
+      setArcTitle(arc.title);
+      setArcDesc(arc.description);
+      setChapters([...arc.chapters].sort((a, b) => a.order - b.order));
+      setArcDirty(false);
+      setChaptersDirty(false);
+    }
+  }, [arc]);
+
+  const createArc = useMutation({
+    mutationFn: async () => {
+      const token = await getToken();
+      return apiFetch("/educator/story-arcs", {
+        method: "POST",
+        token: token!,
+        body: JSON.stringify({ courseId, title: createTitle.trim(), description: createDesc.trim() }),
+      });
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["educator-story-arc", courseId] });
+      toast.success("Story arc created");
+      setCreateTitle("");
+      setCreateDesc("");
+    },
+    onError: (e: Error) => toast.error("Failed to create story arc", { description: e.message }),
+  });
+
+  const saveArcMeta = useMutation({
+    mutationFn: async () => {
+      const token = await getToken();
+      return apiFetch(`/educator/story-arcs/${arc!.id}`, {
+        method: "PUT",
+        token: token!,
+        body: JSON.stringify({ title: arcTitle.trim(), description: arcDesc.trim() }),
+      });
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["educator-story-arc", courseId] });
+      toast.success("Story arc updated");
+      setArcDirty(false);
+    },
+    onError: (e: Error) => toast.error("Failed to update story arc", { description: e.message }),
+  });
+
+  const saveChapters = useMutation({
+    mutationFn: async () => {
+      const token = await getToken();
+      return apiFetch(`/educator/story-arcs/${arc!.id}/chapters`, {
+        method: "PUT",
+        token: token!,
+        body: JSON.stringify({ chapters }),
+      });
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["educator-story-arc", courseId] });
+      toast.success("Chapters saved");
+      setChaptersDirty(false);
+    },
+    onError: (e: Error) => toast.error("Failed to save chapters", { description: e.message }),
+  });
+
+  const deleteArc = useMutation({
+    mutationFn: async () => {
+      const token = await getToken();
+      return apiFetch(`/educator/story-arcs/${arc!.id}`, { method: "DELETE", token: token! });
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["educator-story-arc", courseId] });
+      toast.success("Story arc deleted");
+    },
+    onError: (e: Error) => toast.error("Failed to delete story arc", { description: e.message }),
+  });
+
+  const handleChapterSave = (ch: StoryChapterDraft) => {
+    setChapters((prev) => {
+      const idx = prev.findIndex((c) => c.id === ch.id);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = ch;
+        return next;
+      }
+      return [...prev, ch];
+    });
+    setChaptersDirty(true);
+    setChapterModal(null);
+  };
+
+  const handleChapterDelete = (id: string) => {
+    setChapters((prev) => prev.filter((c) => c.id !== id));
+    setChaptersDirty(true);
+    setDeleteChapterId(null);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="mt-10 flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-300">
+        <div className="h-4 w-4 rounded-full border-2 border-amber-400 border-t-transparent animate-spin" />
+        Loading story arc…
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mt-10 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-5">
+        <p className="text-sm font-semibold text-red-700 dark:text-red-400">Failed to load story arc</p>
+        <p className="text-xs text-red-600 dark:text-red-300 mt-1">{(error as Error).message}</p>
+      </div>
+    );
+  }
+
+  if (!arc) {
+    return (
+      <div className="mt-10">
+        <div className="flex items-center gap-2 mb-4">
+          <BookOpen className="h-5 w-5 text-amber-500" />
+          <h2 className="text-base font-bold text-neutral-900 dark:text-white">Story Arc</h2>
+        </div>
+        <div className="rounded-xl border border-dashed border-neutral-200 dark:border-white/[0.08] p-6 space-y-4">
+          <p className="text-sm text-neutral-500 dark:text-neutral-300">
+            No story arc yet. Create one to give learners a narrative-driven path through this course.
+          </p>
+          <div className="space-y-3 max-w-lg">
+            <input
+              value={createTitle}
+              onChange={(e) => setCreateTitle(e.target.value)}
+              placeholder="Story title (e.g. Tari's Journey Home)"
+              className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
+            <textarea
+              value={createDesc}
+              onChange={(e) => setCreateDesc(e.target.value)}
+              placeholder="Brief story description shown to learners…"
+              rows={3}
+              className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+            />
+            <button
+              onClick={() => createArc.mutate()}
+              disabled={!createTitle.trim() || !createDesc.trim() || createArc.isPending}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              {createArc.isPending ? "Creating…" : "Create Story Arc"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const sortedChapters = [...chapters].sort((a, b) => a.order - b.order);
+
+  return (
+    <div className="mt-10">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <BookOpen className="h-5 w-5 text-amber-500" />
+          <h2 className="text-base font-bold text-neutral-900 dark:text-white">Story Arc</h2>
+        </div>
+        <button
+          onClick={() => deleteArc.mutate()}
+          disabled={deleteArc.isPending}
+          className="text-xs text-red-500 hover:text-red-600 dark:text-red-400 transition-colors"
+        >
+          {deleteArc.isPending ? "Deleting…" : "Delete arc"}
+        </button>
+      </div>
+
+      {/* Arc metadata */}
+      <div className="rounded-xl border border-neutral-200 dark:border-white/[0.07] p-5 space-y-3 mb-6">
+        <div>
+          <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1">Title</label>
+          <input
+            value={arcTitle}
+            onChange={(e) => { setArcTitle(e.target.value); setArcDirty(true); }}
+            className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1">Description</label>
+          <textarea
+            value={arcDesc}
+            onChange={(e) => { setArcDesc(e.target.value); setArcDirty(true); }}
+            rows={3}
+            className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+          />
+        </div>
+        {arcDirty && (
+          <button
+            onClick={() => saveArcMeta.mutate()}
+            disabled={!arcTitle.trim() || !arcDesc.trim() || saveArcMeta.isPending}
+            className="px-4 py-2 rounded-lg text-sm font-semibold bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-40 transition-colors"
+          >
+            {saveArcMeta.isPending ? "Saving…" : "Save changes"}
+          </button>
+        )}
+      </div>
+
+      {/* Chapters */}
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">
+          Chapters ({sortedChapters.length})
+        </h3>
+        <div className="flex items-center gap-3">
+          {chaptersDirty && (
+            <button
+              onClick={() => saveChapters.mutate()}
+              disabled={saveChapters.isPending}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-40 transition-colors"
+            >
+              {saveChapters.isPending ? "Saving…" : "Save chapters"}
+            </button>
+          )}
+          <button
+            onClick={() => setChapterModal("new")}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add Chapter
+          </button>
+        </div>
+      </div>
+
+      {sortedChapters.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-neutral-200 dark:border-white/[0.08] p-6 text-center">
+          <p className="text-sm text-neutral-500 dark:text-neutral-300">No chapters yet. Add the first one.</p>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-neutral-200 dark:border-white/[0.07] overflow-hidden">
+          {sortedChapters.map((ch, i) => {
+            const lesson = lessons.find((l) => l.id === ch.lessonId);
+            return (
+              <div
+                key={ch.id}
+                className={`flex items-start gap-3 px-4 py-3 ${i < sortedChapters.length - 1 ? "border-b border-neutral-100 dark:border-white/[0.04]" : ""} hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition-colors`}
+              >
+                <GripVertical className="h-4 w-4 text-neutral-300 dark:text-neutral-600 mt-0.5 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">Ch. {ch.order}</span>
+                    <span className="text-sm font-medium text-neutral-900 dark:text-white truncate">{ch.title}</span>
+                  </div>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
+                    {lesson ? `${lesson.order}. ${lesson.title}` : ch.lessonId}
+                  </p>
+                  <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5 line-clamp-1">{ch.narrativeIntro}</p>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={() => setChapterModal(ch)}
+                    className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors"
+                    title="Edit chapter"
+                  >
+                    <Pencil className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-300" />
+                  </button>
+                  <button
+                    onClick={() => setDeleteChapterId(ch.id)}
+                    className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/[0.1] transition-colors"
+                    title="Delete chapter"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-red-500 dark:text-red-400" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Chapter modal */}
+      {chapterModal !== null && (
+        <ChapterModal
+          chapter={chapterModal === "new" ? null : chapterModal}
+          defaultOrder={chapters.length + 1}
+          lessons={lessons}
+          onSave={handleChapterSave}
+          onClose={() => setChapterModal(null)}
+        />
+      )}
+
+      {/* Delete chapter confirmation */}
+      {deleteChapterId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#0f0f1a] shadow-2xl p-6">
+            <h3 className="text-base font-bold text-neutral-900 dark:text-white mb-2">Remove chapter?</h3>
+            <p className="text-sm text-neutral-500 dark:text-neutral-300 mb-6">
+              The chapter will be removed from the list. Click &ldquo;Save chapters&rdquo; to persist.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setDeleteChapterId(null)} className="px-4 py-2 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors">
+                Cancel
+              </button>
+              <button
+                onClick={() => handleChapterDelete(deleteChapterId)}
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function fmtDuration(seconds: number | null) {
   if (!seconds) return "—";
@@ -491,6 +980,9 @@ export default function CourseDetailPage() {
           onClose={() => setModal(null)}
         />
       )}
+
+      {/* Story Arc */}
+      <StoryArcSection courseId={courseId} lessons={lessons} />
 
       {/* Delete confirmation */}
       {deleteId && (

@@ -6,7 +6,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { UpNextCard } from "@/components/up-next-card";
 import { XpLevelBadge } from "@/components/xp-level-badge";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { getStoryForCourse } from "@/lib/data/stories";
+import { useStoryArcs } from "@/lib/hooks/use-story-arc";
 import { useBounties } from "@/lib/hooks/use-bounties";
 import { useCourseLessons, useCourses, useLesson } from "@/lib/hooks/use-courses";
 import { useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
@@ -82,7 +82,7 @@ const ContinueCard = memo(function ContinueCard({ lessonId, positionSeconds }: {
   );
 });
 
-const CourseCard = memo(function CourseCard({ course, completedIds }: { course: Course; completedIds: Set<string> }) {
+const CourseCard = memo(function CourseCard({ course, completedIds, hasStoryArc }: { course: Course; completedIds: Set<string>; hasStoryArc: boolean }) {
   const { t } = useTranslation();
   const router = useRouter();
   const colorScheme = useColorScheme();
@@ -203,7 +203,7 @@ const CourseCard = memo(function CourseCard({ course, completedIds }: { course: 
               </Text>
             </Pressable>
           </View>
-          {getStoryForCourse(course.id) && (
+          {hasStoryArc && (
             <Pressable
               onPress={() => router.push(`/story/${course.id}` as any)}
               className="mt-2 flex-row items-center justify-center rounded-lg border border-amber-200 py-2.5 active:opacity-70 dark:border-amber-800"
@@ -410,6 +410,11 @@ export default function LearnScreen() {
   const { data: summary, refetch: refetchSummary } = useProgressSummary();
   const { refetch: refetchDue } = useWordsDueForReview(selectedLanguageId);
   const { data: todayChallenges = [] } = useTodayChallenges();
+  const { data: storyArcSummaries = [] } = useStoryArcs();
+  const storyArcCourseIds = useMemo(
+    () => new Set(storyArcSummaries.map((a) => a.courseId)),
+    [storyArcSummaries]
+  );
   const completedIds = useMemo(() => new Set(completedLessonIds ?? []), [completedLessonIds]);
   const completedToday = useMemo(
     () => todayChallenges.filter((c) => c.completed).length,
@@ -565,7 +570,7 @@ export default function LearnScreen() {
           data={courses}
           keyExtractor={(item) => item.id}
           contentContainerClassName="px-5 pb-8 pt-2"
-          renderItem={({ item }) => <CourseCard course={item} completedIds={completedIds} />}
+          renderItem={({ item }) => <CourseCard course={item} completedIds={completedIds} hasStoryArc={storyArcCourseIds.has(item.id)} />}
           ListHeaderComponent={
             <View className="mb-4 gap-3">
               <ReviewBanner languageId={selectedLanguageId} />
