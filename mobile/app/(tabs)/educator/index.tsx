@@ -6,10 +6,14 @@ import {
 } from "@/lib/hooks/use-current-user";
 import { useEducatorStats } from "@/lib/hooks/use-educator-panel";
 import { getLanguageName } from "@/lib/mock-data";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Stack, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const ONBOARDING_KEY = "educator_onboarded";
 
 function StatCard({
   icon,
@@ -67,6 +71,24 @@ export default function EducatorPanelScreen() {
   const { data: currentUser, isLoading } = useCurrentUser();
   const canAccess = currentUser ? canAccessEducatorPanel(currentUser) : false;
   const { data: educatorStats } = useEducatorStats(canAccess);
+  const [onboardingStep, setOnboardingStep] = useState<1 | 2 | 3 | null>(null);
+
+  useEffect(() => {
+    if (!educatorStats) return;
+    const isEmpty =
+      educatorStats.dictionaryEntries === 0 &&
+      educatorStats.pendingLessons === 0 &&
+      educatorStats.approvedContributions === 0;
+    if (!isEmpty) return;
+    AsyncStorage.getItem(ONBOARDING_KEY).then((val: string | null) => {
+      if (!val) setOnboardingStep(1);
+    }).catch(() => {});
+  }, [educatorStats]);
+
+  const dismissOnboarding = () => {
+    setOnboardingStep(null);
+    AsyncStorage.setItem(ONBOARDING_KEY, "done").catch(() => {});
+  };
 
   if (!isLoading && !canAccess) {
     return (
@@ -120,6 +142,90 @@ export default function EducatorPanelScreen() {
               {assignedLanguages}
             </Text>
           </View>
+
+          {/* First-time onboarding */}
+          {onboardingStep != null && (
+            <View className="mx-5 mt-4 overflow-hidden rounded-2xl bg-blue-50 dark:bg-blue-900/20">
+              {/* Step indicator */}
+              <View className="flex-row gap-1.5 px-4 pt-4">
+                {([1, 2, 3] as const).map((s) => (
+                  <View
+                    key={s}
+                    className={`h-1 flex-1 rounded-full ${
+                      s <= onboardingStep ? "bg-blue-500" : "bg-blue-200 dark:bg-blue-800"
+                    }`}
+                  />
+                ))}
+              </View>
+              <Text className="px-4 pt-2 text-[10px] font-semibold uppercase tracking-wider text-blue-400">
+                Step {onboardingStep} of 3
+              </Text>
+
+              {onboardingStep === 1 && (
+                <View className="p-4">
+                  <View className="mb-3 h-10 w-10 items-center justify-center rounded-xl bg-blue-500">
+                    <IconSymbol name="book.fill" size={20} color="#fff" />
+                  </View>
+                  <Text className="text-base font-bold text-neutral-900 dark:text-white">
+                    Create your first course
+                  </Text>
+                  <Text className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+                    Courses group lessons by theme or skill level.
+                  </Text>
+                  <Pressable
+                    onPress={() => { router.push("/educator/courses" as any); setOnboardingStep(2); }}
+                    className="mt-4 items-center rounded-xl bg-blue-500 py-3 active:opacity-80"
+                  >
+                    <Text className="font-semibold text-white">Go to Courses →</Text>
+                  </Pressable>
+                </View>
+              )}
+
+              {onboardingStep === 2 && (
+                <View className="p-4">
+                  <View className="mb-3 h-10 w-10 items-center justify-center rounded-xl bg-blue-500">
+                    <IconSymbol name="waveform" size={20} color="#fff" />
+                  </View>
+                  <Text className="text-base font-bold text-neutral-900 dark:text-white">
+                    Add a lesson
+                  </Text>
+                  <Text className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+                    Upload audio and add a transcript to create an interactive lesson.
+                  </Text>
+                  <Pressable
+                    onPress={() => { router.push("/educator/courses" as any); setOnboardingStep(3); }}
+                    className="mt-4 items-center rounded-xl bg-blue-500 py-3 active:opacity-80"
+                  >
+                    <Text className="font-semibold text-white">Create a Lesson →</Text>
+                  </Pressable>
+                </View>
+              )}
+
+              {onboardingStep === 3 && (
+                <View className="p-4">
+                  <View className="mb-3 h-10 w-10 items-center justify-center rounded-xl bg-blue-500">
+                    <IconSymbol name="person.2.fill" size={20} color="#fff" />
+                  </View>
+                  <Text className="text-base font-bold text-neutral-900 dark:text-white">
+                    Invite students
+                  </Text>
+                  <Text className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+                    Share your group invite code so learners can join your class.
+                  </Text>
+                  <Pressable
+                    onPress={() => { router.push("/groups" as any); dismissOnboarding(); }}
+                    className="mt-4 items-center rounded-xl bg-blue-500 py-3 active:opacity-80"
+                  >
+                    <Text className="font-semibold text-white">Get Invite Code →</Text>
+                  </Pressable>
+                </View>
+              )}
+
+              <Pressable onPress={dismissOnboarding} className="items-center pb-4">
+                <Text className="text-xs text-neutral-400 dark:text-neutral-500">Skip setup</Text>
+              </Pressable>
+            </View>
+          )}
 
           <View className="px-5 pt-4">
             <Text className="mb-3 text-xs font-semibold uppercase tracking-[1.5px] text-neutral-400 dark:text-neutral-500">

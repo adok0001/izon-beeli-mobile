@@ -969,6 +969,7 @@ export const en = {
     title: "Bounties",
     subtitle: "Contribute words and earn XP rewards",
     contribute: "Contribute",
+    claim: "Claim Bounty",
     xpBonus: "+{{xp}} XP bonus",
     createdBy: "Created by {{name}}",
     loading: "Loading...",

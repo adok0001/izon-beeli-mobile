@@ -21,10 +21,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const QUESTION_COUNTS = [5, 10, 15, 20] as const;
+const TIME_ESTIMATES: Record<number, string> = { 5: "~3 min", 10: "~6 min", 15: "~9 min", 20: "~12 min" };
 
 const FEEDBACK_DELAY = 1200;
 
@@ -119,7 +120,7 @@ function ConfigView({ onStart }: { onStart: (count: number) => void }) {
           <Pressable
             key={n}
             onPress={() => setCount(n)}
-            className={`h-14 w-14 items-center justify-center rounded-xl border-2 ${
+            className={`h-16 w-16 items-center justify-center rounded-xl border-2 ${
               count === n
                 ? "border-blue-500 bg-blue-500"
                 : "border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800"
@@ -131,6 +132,9 @@ function ConfigView({ onStart }: { onStart: (count: number) => void }) {
               }`}
             >
               {n}
+            </Text>
+            <Text className={`text-[10px] ${count === n ? "text-blue-100" : "text-neutral-400 dark:text-neutral-500"}`}>
+              {TIME_ESTIMATES[n]}
             </Text>
           </Pressable>
         ))}
@@ -254,6 +258,29 @@ function ActiveView() {
             onPress={() => handleSelect(option)}
           />
         ))}
+
+        {locked && lastAnswerCorrect === false && (
+          <View className="mt-3 rounded-2xl bg-red-50 px-4 py-3 dark:bg-red-900/20">
+            <View className="flex-row items-center gap-1.5">
+              <IconSymbol name="lightbulb.fill" size={14} color="#f97316" />
+              <Text className="text-xs font-semibold text-orange-700 dark:text-orange-400">
+                The correct answer
+              </Text>
+            </View>
+            <Text className="mt-1 text-sm font-bold text-neutral-800 dark:text-neutral-200">
+              {question.correctAnswer}
+            </Text>
+            {(question as any).explanation ? (
+              <Text className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+                {(question as any).explanation}
+              </Text>
+            ) : (
+              <Text className="mt-1 text-xs italic text-neutral-500 dark:text-neutral-500">
+                Try using it in a sentence to remember it!
+              </Text>
+            )}
+          </View>
+        )}
       </View>
     </View>
   );
@@ -261,7 +288,7 @@ function ActiveView() {
 
 function ResultsView({ languageId }: { languageId: string }) {
   const { t } = useTranslation();
-  const { getResult, reset, startQuiz, questions } = useQuizStore();
+  const { getResult, reset, startQuiz, questions, answeredQuestions } = useQuizStore();
   const router = useRouter();
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
@@ -328,58 +355,96 @@ function ResultsView({ languageId }: { languageId: string }) {
     startQuiz(reshuffledQuestions);
   };
 
-  return (
-    <View className="flex-1 items-center justify-center px-8">
-      <View className={`mb-6 h-28 w-28 items-center justify-center rounded-full ${bgScoreColor}`}>
-        <Text className={`text-3xl font-bold ${scoreColor}`}>
-          {result.correctCount}/{result.totalQuestions}
-        </Text>
-      </View>
+  const missedItems = answeredQuestions
+    .filter((a) => !a.correct)
+    .map((a) => ({ ...a, question: questions.find((q) => q.id === a.questionId) }))
+    .filter((a) => a.question != null);
 
-      <Text className={`mb-2 text-4xl font-bold ${scoreColor}`}>
-        {result.accuracy}%
-      </Text>
-      {xpResult && (
-        <View className="mb-3 flex-row items-center gap-2">
-          <View className="rounded-full bg-amber-100 px-4 py-1.5 dark:bg-amber-900/40">
-            <Text className="text-sm font-bold text-amber-700 dark:text-amber-300">
-              {t("quiz.xpEarned", { xp: xpResult.xpEarned })}
-            </Text>
-          </View>
-          {xpResult.leveledUp && (
-            <View className="rounded-full bg-purple-100 px-4 py-1.5 dark:bg-purple-900/40">
-              <Text className="text-sm font-bold text-purple-700 dark:text-purple-300">
-                {t("quiz.leveledUp")}
+  return (
+    <ScrollView className="flex-1" contentContainerClassName="px-8 pb-8 pt-6" showsVerticalScrollIndicator={false}>
+      <View className="items-center">
+        <View className={`mb-6 h-28 w-28 items-center justify-center rounded-full ${bgScoreColor}`}>
+          <Text className={`text-3xl font-bold ${scoreColor}`}>
+            {result.correctCount}/{result.totalQuestions}
+          </Text>
+        </View>
+
+        <Text className={`mb-2 text-4xl font-bold ${scoreColor}`}>
+          {result.accuracy}%
+        </Text>
+        {xpResult && (
+          <View className="mb-3 flex-row items-center gap-2">
+            <View className="rounded-full bg-amber-100 px-4 py-1.5 dark:bg-amber-900/40">
+              <Text className="text-sm font-bold text-amber-700 dark:text-amber-300">
+                {t("quiz.xpEarned", { xp: xpResult.xpEarned })}
               </Text>
             </View>
-          )}
+            {xpResult.leveledUp && (
+              <View className="rounded-full bg-purple-100 px-4 py-1.5 dark:bg-purple-900/40">
+                <Text className="text-sm font-bold text-purple-700 dark:text-purple-300">
+                  {t("quiz.leveledUp")}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+        <Text className="mb-6 text-base text-neutral-500 dark:text-neutral-400">
+          {t("quiz.completedIn", { time: timeStr })}
+        </Text>
+
+        <View className="w-full gap-3">
+          <Pressable
+            onPress={handleTryAgain}
+            className="items-center rounded-xl bg-blue-500 py-4 active:opacity-80"
+          >
+            <Text className="text-base font-semibold text-white">{t("quiz.tryAgain")}</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => {
+              reset();
+              router.back();
+            }}
+            className="items-center rounded-xl border-2 border-neutral-200 py-4 active:opacity-80 dark:border-neutral-700"
+          >
+            <Text className="text-base font-semibold text-neutral-700 dark:text-neutral-300">
+              {t("quiz.backToLearn")}
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+
+      {/* Missed questions review */}
+      {missedItems.length > 0 && (
+        <View className="mt-8">
+          <Text className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+            You missed {missedItems.length} question{missedItems.length !== 1 ? "s" : ""}
+          </Text>
+          {missedItems.map(({ question, selectedAnswer }) => (
+            <View
+              key={question!.id}
+              className="mb-3 rounded-2xl bg-red-50 p-4 dark:bg-red-900/10"
+            >
+              <Text className="mb-1.5 text-sm font-semibold text-neutral-800 dark:text-neutral-200">
+                {question!.prompt}
+              </Text>
+              <View className="flex-row items-center gap-2">
+                <IconSymbol name="xmark.circle.fill" size={14} color="#ef4444" />
+                <Text className="text-xs text-neutral-500 dark:text-neutral-400 line-through">
+                  {selectedAnswer}
+                </Text>
+              </View>
+              <View className="mt-1 flex-row items-center gap-2">
+                <IconSymbol name="checkmark.circle.fill" size={14} color="#22c55e" />
+                <Text className="text-xs font-semibold text-green-700 dark:text-green-400">
+                  {question!.correctAnswer}
+                </Text>
+              </View>
+            </View>
+          ))}
         </View>
       )}
-      <Text className="mb-6 text-base text-neutral-500 dark:text-neutral-400">
-        {t("quiz.completedIn", { time: timeStr })}
-      </Text>
-
-      <View className="w-full gap-3">
-        <Pressable
-          onPress={handleTryAgain}
-          className="items-center rounded-xl bg-blue-500 py-4 active:opacity-80"
-        >
-          <Text className="text-base font-semibold text-white">{t("quiz.tryAgain")}</Text>
-        </Pressable>
-
-        <Pressable
-          onPress={() => {
-            reset();
-            router.back();
-          }}
-          className="items-center rounded-xl border-2 border-neutral-200 py-4 active:opacity-80 dark:border-neutral-700"
-        >
-          <Text className="text-base font-semibold text-neutral-700 dark:text-neutral-300">
-            {t("quiz.backToLearn")}
-          </Text>
-        </Pressable>
-      </View>
-    </View>
+    </ScrollView>
   );
 }
 

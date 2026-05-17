@@ -197,6 +197,12 @@ export default function WordReviewScreen() {
 
   const isLoading = isDueLoading || isDictLoading;
 
+  const reviewCountMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const e of dueEntries) map.set(e.dictionaryEntryId, e.reviewCount);
+    return map;
+  }, [dueEntries]);
+
   const [queue, setQueue] = useState<DictionaryEntry[]>([]);
   const [queueBuilt, setQueueBuilt] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -296,6 +302,30 @@ export default function WordReviewScreen() {
                 ? t("wordReview.sessionReviewedPlural", { count: uniqueReviewed })
                 : t("wordReview.sessionReviewed", { count: uniqueReviewed })}
             </Text>
+
+            {/* Retention curve */}
+            {uniqueReviewed > 0 && (() => {
+              const reviewed = [...reviewedIds];
+              const counts = reviewed.map((id) => reviewCountMap.get(id) ?? 1);
+              const avg = counts.reduce((s, n) => s + n, 0) / counts.length;
+              const retention = avg >= 5 ? 95 : avg >= 4 ? 85 : avg >= 3 ? 70 : avg >= 2 ? 50 : 30;
+              const barWidth = retention;
+              return (
+                <View className="mt-5 w-full rounded-2xl bg-blue-50 p-4 dark:bg-blue-900/20">
+                  <Text className="mb-1 text-center text-sm text-blue-800 dark:text-blue-300">
+                    Seen an avg of <Text className="font-bold">{avg.toFixed(1)}×</Text> — you're{" "}
+                    <Text className="font-bold">{retention}%</Text> likely to remember these
+                  </Text>
+                  <View className="mt-2 h-2 overflow-hidden rounded-full bg-blue-200 dark:bg-blue-800">
+                    <View
+                      className="h-2 rounded-full bg-blue-500"
+                      style={{ width: `${barWidth}%` }}
+                    />
+                  </View>
+                </View>
+              );
+            })()}
+
             <Pressable
               onPress={() => router.back()}
               className="mt-6 rounded-xl bg-blue-500 px-8 py-3 active:opacity-80"

@@ -145,6 +145,8 @@ export interface Proverb {
   literal?: string;
   context?: string;
   tags?: string[];
+  audioUrl?: string;
+  relatedLessonId?: string;
 }
 
 // --- Sentence Templates (for fill-in-the-blank) ---

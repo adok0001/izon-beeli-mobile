@@ -353,6 +353,7 @@ export default function EducatorLessonEditScreen() {
   const [audioUri, setAudioUri] = useState<string | undefined>(undefined);
   const [segments, setSegments] = useState<SegmentEditor[]>([EMPTY_SEGMENT()]);
   const [playbackPos, setPlaybackPos] = useState(0);
+  const [previewVisible, setPreviewVisible] = useState(false);
 
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
 
@@ -642,6 +643,67 @@ export default function EducatorLessonEditScreen() {
                 </Text>
               </Pressable>
             </View>
+          </View>
+
+          {/* Learner Preview */}
+          <View className="mt-4 px-5">
+            <Pressable
+              onPress={() => setPreviewVisible((v) => !v)}
+              className="flex-row items-center justify-between rounded-2xl bg-neutral-50 px-4 py-3 active:opacity-70 dark:bg-neutral-800"
+            >
+              <View className="flex-row items-center gap-2">
+                <IconSymbol name="eye.fill" size={16} color="#3b82f6" />
+                <Text className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                  Preview as Learner
+                </Text>
+              </View>
+              <IconSymbol
+                name={previewVisible ? "chevron.up" : "chevron.down"}
+                size={14}
+                color="#9ca3af"
+              />
+            </Pressable>
+            {previewVisible && (
+              <View className="mt-2 overflow-hidden rounded-2xl border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900">
+                <View className="border-b border-neutral-100 px-4 py-4 dark:border-neutral-800">
+                  <Text className="text-xl font-bold text-neutral-900 dark:text-white">
+                    {title || "Untitled Lesson"}
+                  </Text>
+                  {description ? (
+                    <Text className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+                      {description}
+                    </Text>
+                  ) : null}
+                </View>
+                {segments.some((s) => s.text.trim().length > 0) ? (
+                  <View className="px-4 py-3">
+                    <Text className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                      Transcript
+                    </Text>
+                    {segments
+                      .filter((s) => s.text.trim().length > 0)
+                      .map((s, i) => (
+                        <View key={s.uid} className={`${i > 0 ? "mt-3" : ""}`}>
+                          <Text className="text-base text-neutral-900 dark:text-white">
+                            {s.text}
+                          </Text>
+                          {s.translation ? (
+                            <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
+                              {s.translation}
+                            </Text>
+                          ) : null}
+                        </View>
+                      ))}
+                  </View>
+                ) : (
+                  <View className="px-4 py-6 items-center">
+                    <Text className="text-sm text-neutral-400 dark:text-neutral-500">
+                      No transcript segments yet
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
           </View>
 
           {/* Actions */}

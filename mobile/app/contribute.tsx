@@ -8,6 +8,7 @@ import {
 } from "@/lib/dictionary";
 import { useBounties } from "@/lib/hooks/use-bounties";
 import { useSubmitContribution } from "@/lib/hooks/use-contributions";
+import { useContributors } from "@/lib/hooks/use-contributors";
 import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES } from "@/lib/mock-data";
 import { wordContributionSchema } from "@/lib/validation";
@@ -68,6 +69,10 @@ export default function ContributeScreen() {
     category ?? undefined
   );
   const activeBounty = matchingBounties?.[0]; // highest xpReward first
+
+  const { data: contributors = [] } = useContributors();
+  const totalContributors = contributors.length;
+  const totalApproved = contributors.reduce((sum, c) => sum + c.approvedCount, 0);
 
   const handlePickImage = async () => {
     const result = await DocumentPicker.getDocumentAsync({
@@ -182,9 +187,21 @@ export default function ContributeScreen() {
                 <Text className="mb-1 text-2xl font-bold text-neutral-900 dark:text-white">
                   {t("contribute.title")}
                 </Text>
-                <Text className="mb-6 text-sm text-neutral-500 dark:text-neutral-400">
+                <Text className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
                   {t("contribute.subtitle")}
                 </Text>
+
+                {totalContributors > 0 && (
+                  <View className="mb-5 flex-row items-center gap-2 rounded-xl bg-amber-50 px-4 py-2.5 dark:bg-amber-900/20">
+                    <IconSymbol name="person.2.fill" size={16} color="#d97706" />
+                    <Text className="text-sm text-amber-800 dark:text-amber-300">
+                      <Text className="font-semibold">{totalContributors}</Text>
+                      {" contributors · "}
+                      <Text className="font-semibold">{totalApproved.toLocaleString()}+</Text>
+                      {" words — be part of it"}
+                    </Text>
+                  </View>
+                )}
 
                 {/* Word / Phrase card */}
                 <Pressable
