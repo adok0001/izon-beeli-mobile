@@ -193,9 +193,7 @@ export const fr = {
     resetPasswordSubtitle: "Entrez le code envoyé à votre e-mail et choisissez un nouveau mot de passe",
     newPassword: "Nouveau mot de passe",
     resetPasswordButton: "Réinitialiser le mot de passe",
-  },
-  onboarding: {
-    welcome: "Bienvenue sur\nBeeli",
+    resetIncomplete: "Réinitialisation incomplète. Veuillez réessayer.",
     whichLanguage: "Quelle langue souhaitez-vous apprendre en premier ?",
     continue: "Continuer",
     tryWord: "Essayez un mot !",

@@ -40,7 +40,7 @@ export default function ForgotPasswordScreen() {
       const clerkErr = err as { errors?: { message: string }[] };
       const message =
         clerkErr.errors?.[0]?.message ??
-        (err instanceof Error ? err.message : "Something went wrong");
+        (err instanceof Error ? err.message : t("common.error"));
       setError(message);
     } finally {
       setLoading(false);

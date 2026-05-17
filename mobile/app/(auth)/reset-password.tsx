@@ -26,7 +26,7 @@ export default function ResetPasswordScreen() {
   const passwordTooShort = password.length > 0 && password.length < 8;
   const passwordsMismatch = confirmPassword.length > 0 && password !== confirmPassword;
   const canSubmit =
-    code.trim().length === 6 &&
+    /^\d{6}$/.test(code.trim()) &&
     password.length >= 8 &&
     password === confirmPassword &&
     !loading;
@@ -45,13 +45,13 @@ export default function ResetPasswordScreen() {
         await setActive({ session: result.createdSessionId });
         router.replace("/(tabs)/learn");
       } else {
-        setError("Reset incomplete. Please try again.");
+        setError(t("auth.resetIncomplete"));
       }
     } catch (err: unknown) {
       const clerkErr = err as { errors?: { message: string }[] };
       const message =
         clerkErr.errors?.[0]?.message ??
-        (err instanceof Error ? err.message : "Something went wrong");
+        (err instanceof Error ? err.message : t("common.error"));
       setError(message);
     } finally {
       setLoading(false);

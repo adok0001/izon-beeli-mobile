@@ -193,10 +193,7 @@ export const pcm = {
     resetPasswordSubtitle: "Enter the code wey we send your email, then choose new password",
     newPassword: "New Password",
     resetPasswordButton: "Reset Password",
-  },
-  onboarding: {
-    welcome: "Welcome to\nBeeli",
-    whichLanguage: "Which language you wan learn first?",
+    resetIncomplete: "Reset no complete. Abeg try again.",
     continue: "Continue",
     tryWord: "Try one word!",
     firstWordIn: "Na your first word for",

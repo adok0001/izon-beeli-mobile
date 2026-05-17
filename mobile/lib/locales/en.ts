@@ -193,9 +193,7 @@ export const en = {
     resetPasswordSubtitle: "Enter the code sent to your email and choose a new password",
     newPassword: "New Password",
     resetPasswordButton: "Reset Password",
-  },
-  onboarding: {
-    welcome: "Welcome to\nBeeli",
+    resetIncomplete: "Reset incomplete. Please try again.",
     whichLanguage: "Which language would you like to learn first?",
     continue: "Continue",
     tryWord: "Try a word!",

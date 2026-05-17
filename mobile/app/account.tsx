@@ -2,7 +2,7 @@ import { NotificationBanner } from "@/components/notifications/notification-bann
 import { useToast } from "@/lib/hooks/use-toast";
 import { useUser } from "@clerk/clerk-expo";
 import { Stack } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
@@ -40,6 +40,12 @@ export default function AccountScreen() {
   const [username, setUsername] = useState(user?.username ?? "");
   const [usernameLoading, setUsernameLoading] = useState(false);
 
+  useEffect(() => {
+    if (user?.username != null) {
+      setUsername(user.username);
+    }
+  }, [user?.username]);
+
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -49,21 +55,23 @@ export default function AccountScreen() {
   const passwordsMismatch = confirmPassword.length > 0 && newPassword !== confirmPassword;
 
   const canSaveUsername =
+    !!user &&
     username.trim().length > 0 &&
     username.trim() !== (user?.username ?? "") &&
     !usernameLoading;
 
   const canSavePassword =
+    !!user &&
     currentPassword.length > 0 &&
     newPassword.length >= 8 &&
     newPassword === confirmPassword &&
     !passwordLoading;
 
   const onSaveUsername = async () => {
-    if (!canSaveUsername) return;
+    if (!user || !canSaveUsername) return;
     setUsernameLoading(true);
     try {
-      await user?.update({ username: username.trim() });
+      await user.update({ username: username.trim() });
       toastSuccess(t("account.saved"), t("account.usernameSaved"));
     } catch (err: unknown) {
       const clerkErr = err as { errors?: { message: string }[] };
@@ -77,10 +85,10 @@ export default function AccountScreen() {
   };
 
   const onSavePassword = async () => {
-    if (!canSavePassword) return;
+    if (!user || !canSavePassword) return;
     setPasswordLoading(true);
     try {
-      await user?.updatePassword({ currentPassword, newPassword });
+      await user.updatePassword({ currentPassword, newPassword });
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
