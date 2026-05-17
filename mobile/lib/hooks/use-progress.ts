@@ -20,6 +20,7 @@ interface CompleteLessonResponse {
   pointsEarned?: number;
   totalPoints?: number;
   streak?: number;
+  streakIncremented?: boolean;
   leveledUp?: boolean;
   newLevel?: number;
   newTitle?: string;
@@ -88,7 +89,7 @@ export function useCompleteLesson(callbacks?: {
       if (data.streakMilestone) {
         hapticHeavy();
       }
-      if (data.streak && !data.alreadyCompleted) {
+      if (data.streak && data.streakIncremented) {
         callbacks?.onStreakUpdate?.(data.streak, !!data.streakMilestone);
       }
       if (data.leveledUp && data.newLevel && data.newTitle) {
