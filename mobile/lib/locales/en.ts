@@ -581,6 +581,9 @@ export const en = {
     startFreshLink: "Start fresh instead",
     noFreezesMessage: "Complete lessons to earn Streak Freezes and protect future streaks.",
     startFreshButton: "Start Fresh",
+    toastTitle: "🔥 {{count}}-day streak!",
+    toastMilestoneTitle: "🎉 {{count}}-day milestone!",
+    toastMilestoneBody: "You hit a major milestone. Keep going!",
   },
   languagePicker: {
     title: "Choose Language",

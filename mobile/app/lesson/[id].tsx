@@ -1,8 +1,10 @@
 import { AudioPlayer } from "@/components/audio/audio-player";
 import { InteractiveTranscript } from "@/components/audio/interactive-transcript";
 import { LevelUpModal } from "@/components/level-up-modal";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useCompletedLessons, useCompleteLesson, useTrackListen } from "@/lib/hooks/use-progress";
+import { useToast } from "@/lib/hooks/use-toast";
 import { useLesson } from "@/lib/hooks/use-courses";
 import { useNextLesson } from "@/lib/hooks/use-next-lesson";
 import { formatDuration, BUNDLED_AUDIO } from "@/lib/mock-data";
@@ -40,6 +42,7 @@ export default function LessonScreen() {
     }
   }, [pendingSummary, isPlaying]);
   const { t } = useTranslation();
+  const { toast, success: toastSuccess, show: toastShow, dismiss: dismissToast } = useToast();
   const { data: nextLessonData } = useNextLesson(selectedLanguageId);
   const showTour = useTourStore((s) => s.showTour);
   const hasSeen = useTourStore((s) => s.hasSeen);
@@ -47,6 +50,17 @@ export default function LessonScreen() {
     onLevelUp: (level, title) => {
       analytics.levelUp(level, title);
       setLevelUp({ level, title });
+    },
+    onStreakUpdate: (streak, isMilestone) => {
+      if (isMilestone) {
+        toastShow(
+          t("streak.toastMilestoneTitle", { count: streak }),
+          t("streak.toastMilestoneBody"),
+          "success"
+        );
+      } else {
+        toastSuccess(t("streak.toastTitle", { count: streak }));
+      }
     },
   });
   const trackListen = useTrackListen();
@@ -345,6 +359,13 @@ export default function LessonScreen() {
         onDismiss={() => setLevelUp(null)}
       />
 
+      <NotificationBanner
+        visible={toast.visible}
+        title={toast.title}
+        body={toast.body}
+        type={toast.type}
+        onDismiss={dismissToast}
+      />
     </>
   );
 }

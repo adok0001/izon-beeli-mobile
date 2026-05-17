@@ -583,6 +583,9 @@ export const fr = {
     startFreshLink: "Repartir de zéro",
     noFreezesMessage: "Terminez des leçons pour gagner des gels de série et protéger vos futures séries.",
     startFreshButton: "Repartir de zéro",
+    toastTitle: "🔥 Série de {{count}} jours !",
+    toastMilestoneTitle: "🎉 Étape de {{count}} jours !",
+    toastMilestoneBody: "Vous avez atteint un grand jalon. Continuez !",
   },
   languagePicker: {
     title: "Choisir la langue",
