@@ -519,7 +519,7 @@ function StoryArcSection({
           <div className="w-full max-w-sm rounded-2xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#0f0f1a] shadow-2xl p-6">
             <h3 className="text-base font-bold text-neutral-900 dark:text-white mb-2">Remove chapter?</h3>
             <p className="text-sm text-neutral-500 dark:text-neutral-300 mb-6">
-              The chapter will be removed from the list. Click "Save chapters" to persist.
+              The chapter will be removed from the list. Click &ldquo;Save chapters&rdquo; to persist.
             </p>
             <div className="flex gap-3 justify-end">
               <button onClick={() => setDeleteChapterId(null)} className="px-4 py-2 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors">
