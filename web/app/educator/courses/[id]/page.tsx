@@ -1,6 +1,6 @@
 "use client";
 
-import { apiFetch } from "@/lib/api";
+import { apiFetch, ApiError } from "@/lib/api";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -75,11 +75,13 @@ interface StoryArc {
 
 function ChapterModal({
   chapter,
+  defaultOrder,
   lessons,
   onSave,
   onClose,
 }: Readonly<{
   chapter: StoryChapterDraft | null;
+  defaultOrder: number;
   lessons: Lesson[];
   onSave: (ch: StoryChapterDraft) => void;
   onClose: () => void;
@@ -89,7 +91,7 @@ function ChapterModal({
   const [title, setTitle] = useState(chapter?.title ?? "");
   const [narrativeIntro, setNarrativeIntro] = useState(chapter?.narrativeIntro ?? "");
   const [narrativeOutro, setNarrativeOutro] = useState(chapter?.narrativeOutro ?? "");
-  const [order, setOrder] = useState(String(chapter?.order ?? 1));
+  const [order, setOrder] = useState(String(chapter?.order ?? defaultOrder));
 
   const canSave = lessonId && title.trim() && narrativeIntro.trim() && narrativeOutro.trim();
 
@@ -207,14 +209,15 @@ function StoryArcSection({
   const { getToken } = useAuth();
   const qc = useQueryClient();
 
-  const { data: arc, isLoading } = useQuery<StoryArc | null>({
+  const { data: arc, isLoading, error } = useQuery<StoryArc | null>({
     queryKey: ["educator-story-arc", courseId],
     queryFn: async () => {
       const token = await getToken();
       try {
         return await apiFetch<StoryArc>(`/educator/story-arcs/${courseId}`, { token: token! });
-      } catch {
-        return null;
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) return null;
+        throw err;
       }
     },
   });
@@ -328,6 +331,15 @@ function StoryArcSection({
       <div className="mt-10 flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-300">
         <div className="h-4 w-4 rounded-full border-2 border-amber-400 border-t-transparent animate-spin" />
         Loading story arc…
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mt-10 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-5">
+        <p className="text-sm font-semibold text-red-700 dark:text-red-400">Failed to load story arc</p>
+        <p className="text-xs text-red-600 dark:text-red-300 mt-1">{(error as Error).message}</p>
       </div>
     );
   }
@@ -494,6 +506,7 @@ function StoryArcSection({
       {chapterModal !== null && (
         <ChapterModal
           chapter={chapterModal === "new" ? null : chapterModal}
+          defaultOrder={chapters.length + 1}
           lessons={lessons}
           onSave={handleChapterSave}
           onClose={() => setChapterModal(null)}

@@ -711,18 +711,14 @@ export const bounties = pgTable(
 
 // ---------- Story Mode ----------
 
-export const storyArcs = pgTable(
-  "story_arcs",
-  {
-    id: varchar("id", { length: 64 }).primaryKey(),
-    courseId: varchar("course_id", { length: 64 }).notNull().unique(),
-    title: varchar("title", { length: 300 }).notNull(),
-    description: text("description").notNull(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  },
-  (t) => [index("story_arcs_course_id_idx").on(t.courseId)]
-);
+export const storyArcs = pgTable("story_arcs", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  courseId: varchar("course_id", { length: 64 }).notNull().unique(),
+  title: varchar("title", { length: 300 }).notNull(),
+  description: text("description").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
 
 export const storyChapters = pgTable(
   "story_chapters",

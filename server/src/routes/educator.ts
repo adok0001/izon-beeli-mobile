@@ -1252,23 +1252,25 @@ educatorRouter.put("/story-arcs/:id/chapters", async (c) => {
     }
   }
 
-  await db.delete(storyChapters).where(eq(storyChapters.storyArcId, id));
+  await db.transaction(async (tx) => {
+    await tx.delete(storyChapters).where(eq(storyChapters.storyArcId, id));
 
-  if (body.chapters.length > 0) {
-    await db.insert(storyChapters).values(
-      body.chapters.map((ch, i) => ({
-        id: ch.id && ch.id.startsWith("story-ch-") ? ch.id : `story-ch-${randomUUID()}`,
-        storyArcId: id,
-        lessonId: ch.lessonId,
-        title: ch.title.trim(),
-        narrativeIntro: ch.narrativeIntro.trim(),
-        narrativeOutro: ch.narrativeOutro.trim(),
-        order: ch.order ?? i + 1,
-      }))
-    );
-  }
+    if (body.chapters.length > 0) {
+      await tx.insert(storyChapters).values(
+        body.chapters.map((ch, i) => ({
+          id: `story-ch-${randomUUID()}`,
+          storyArcId: id,
+          lessonId: ch.lessonId,
+          title: ch.title.trim(),
+          narrativeIntro: ch.narrativeIntro.trim(),
+          narrativeOutro: ch.narrativeOutro.trim(),
+          order: ch.order ?? i + 1,
+        }))
+      );
+    }
 
-  await db.update(storyArcs).set({ updatedAt: new Date() }).where(eq(storyArcs.id, id));
+    await tx.update(storyArcs).set({ updatedAt: new Date() }).where(eq(storyArcs.id, id));
+  });
 
   return c.json({ success: true, count: body.chapters.length });
 });
