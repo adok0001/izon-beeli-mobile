@@ -397,6 +397,7 @@ export const pcm = {
     correctAnswerHint: "Try use am for sentence so you go remember!",
     missedCount_one: "You miss {{count}} question",
     missedCount_other: "You miss {{count}} questions",
+    minutesEstimate: "~{{minutes}} min",
   },
   wordReview: {
     title: "Word Review",
@@ -606,6 +607,10 @@ export const pcm = {
     noResults: "No proverbs match your search.",
     searchPlaceholder: "Search {{language}} proverbs…",
     literal: "Literal:",
+    practiceInLesson: "Practice for lesson",
+    less: "Less",
+    meaning: "Meaning",
+    shareTitle: "{{language}} Proverb",
   },
   dashboard: {
     subtitle: "Your progress at a glance",
@@ -803,6 +808,7 @@ export const pcm = {
     rejectLessonMsg: "Optional: leave note for the contributor to explain why.",
     approveLessonTitle: "Approve this lesson?",
     approveLessonMsg: "This lesson go dey published and added to the course.",
+    swipeHint: "← Reject · Swipe · Approve →",
   },
   classroom: {
     memberCount_one: "{{count}} member",
@@ -826,6 +832,7 @@ export const pcm = {
   wordDetail: {
     notFound: "Word no dey.",
     textToSpeech: "Text-to-speech",
+    hearPronunciation: "Hear the word",
     example: "Example",
     moreInCategory: "More for {{category}}",
     contributedBy: "Contributed by {{name}}",
@@ -1226,6 +1233,7 @@ export const pcm = {
     lessonEdit: {
       previewTitle: "Preview as Learner",
       noSegments: "No transcript segment yet",
+      untitled: "Lesson wey no get name",
     },
   },
   reviewerApplication: {

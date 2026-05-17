@@ -25,7 +25,7 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const QUESTION_COUNTS = [5, 10, 15, 20] as const;
-const TIME_ESTIMATES: Record<number, string> = { 5: "~3 min", 10: "~6 min", 15: "~9 min", 20: "~12 min" };
+const TIME_ESTIMATE_MINUTES: Record<number, number> = { 5: 3, 10: 6, 15: 9, 20: 12 };
 
 const FEEDBACK_DELAY = 1200;
 
@@ -134,7 +134,7 @@ function ConfigView({ onStart }: { onStart: (count: number) => void }) {
               {n}
             </Text>
             <Text className={`text-[10px] ${count === n ? "text-blue-100" : "text-neutral-400 dark:text-neutral-500"}`}>
-              {TIME_ESTIMATES[n]}
+              {t("quiz.minutesEstimate", { minutes: TIME_ESTIMATE_MINUTES[n] })}
             </Text>
           </Pressable>
         ))}
@@ -270,9 +270,9 @@ function ActiveView() {
             <Text className="mt-1 text-sm font-bold text-neutral-800 dark:text-neutral-200">
               {question.correctAnswer}
             </Text>
-            {(question as any).explanation ? (
+            {question.explanation ? (
               <Text className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
-                {(question as any).explanation}
+                {question.explanation}
               </Text>
             ) : (
               <Text className="mt-1 text-xs italic text-neutral-500 dark:text-neutral-500">

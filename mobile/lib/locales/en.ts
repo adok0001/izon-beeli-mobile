@@ -395,6 +395,7 @@ export const en = {
     correctAnswerHint: "Try using it in a sentence to remember it!",
     missedCount_one: "You missed {{count}} question",
     missedCount_other: "You missed {{count}} questions",
+    minutesEstimate: "~{{minutes}} min",
   },
   wordReview: {
     title: "Word Review",
@@ -604,6 +605,10 @@ export const en = {
     noResults: "No proverbs match your search.",
     searchPlaceholder: "Search {{language}} proverbs…",
     literal: "Literal:",
+    practiceInLesson: "Practice in lesson",
+    less: "Less",
+    meaning: "Meaning",
+    shareTitle: "{{language}} Proverb",
   },
   dashboard: {
     subtitle: "Your progress at a glance",
@@ -801,6 +806,7 @@ export const en = {
     rejectLessonMsg: "Optional: leave a note for the contributor explaining why.",
     approveLessonTitle: "Approve this lesson?",
     approveLessonMsg: "This lesson will be published and added to the course.",
+    swipeHint: "← Reject · Swipe · Approve →",
   },
   classroom: {
     memberCount_one: "{{count}} member",
@@ -824,6 +830,7 @@ export const en = {
   wordDetail: {
     notFound: "Word not found.",
     textToSpeech: "Text-to-speech",
+    hearPronunciation: "Hear pronunciation",
     example: "Example",
     moreInCategory: "More in {{category}}",
     contributedBy: "Contributed by {{name}}",
@@ -1211,6 +1218,7 @@ export const en = {
     lessonEdit: {
       previewTitle: "Preview as Learner",
       noSegments: "No transcript segments yet",
+      untitled: "Untitled Lesson",
     },
   },
   reviewerApplication: {

@@ -67,19 +67,21 @@ function TabPill({
 // ---------- Swipe action backgrounds ----------
 
 function SwipeApprove() {
+  const { t } = useTranslation();
   return (
     <View className="mb-3 mx-5 flex-1 items-start justify-center rounded-2xl bg-green-500 pl-6">
       <IconSymbol name="checkmark.circle.fill" size={28} color="#fff" />
-      <Text className="mt-1 text-xs font-bold text-white">Approve</Text>
+      <Text className="mt-1 text-xs font-bold text-white">{t("common.approve")}</Text>
     </View>
   );
 }
 
 function SwipeReject() {
+  const { t } = useTranslation();
   return (
     <View className="mb-3 mx-5 flex-1 items-end justify-center rounded-2xl bg-red-500 pr-6">
       <IconSymbol name="xmark.circle.fill" size={28} color="#fff" />
-      <Text className="mt-1 text-xs font-bold text-white">Reject</Text>
+      <Text className="mt-1 text-xs font-bold text-white">{t("common.reject")}</Text>
     </View>
   );
 }
@@ -150,6 +152,7 @@ function ContributionCard({
       renderLeftActions={() => <SwipeApprove />}
       renderRightActions={() => <SwipeReject />}
       onSwipeableOpen={(dir) => {
+        if (isPending) return;
         if (dir === "left") onApprove();
         if (dir === "right") onReject();
       }}
@@ -229,7 +232,7 @@ function ContributionCard({
 
           {/* Swipe hint — shown once */}
           <Text className="mt-3 text-center text-[10px] text-neutral-400 dark:text-neutral-600">
-            ← Reject · Swipe · Approve →
+            {t("review.swipeHint")}
           </Text>
         </View>
 
@@ -315,6 +318,7 @@ function LessonContributionCard({
       renderLeftActions={() => <SwipeApprove />}
       renderRightActions={() => <SwipeReject />}
       onSwipeableOpen={(dir) => {
+        if (isPending) return;
         if (dir === "left") onApprove();
         if (dir === "right") onReject();
       }}
@@ -429,7 +433,7 @@ function LessonContributionCard({
 
           {/* Swipe hint */}
           <Text className="mt-3 text-center text-[10px] text-neutral-400 dark:text-neutral-600">
-            ← Reject · Swipe · Approve →
+            {t("review.swipeHint")}
           </Text>
         </View>
 

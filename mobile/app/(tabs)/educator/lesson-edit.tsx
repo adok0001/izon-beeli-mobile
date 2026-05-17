@@ -667,7 +667,7 @@ export default function EducatorLessonEditScreen() {
               <View className="mt-2 overflow-hidden rounded-2xl border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900">
                 <View className="border-b border-neutral-100 px-4 py-4 dark:border-neutral-800">
                   <Text className="text-xl font-bold text-neutral-900 dark:text-white">
-                    {title || "Untitled Lesson"}
+                    {title || t("educator.lessonEdit.untitled")}
                   </Text>
                   {description ? (
                     <Text className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">

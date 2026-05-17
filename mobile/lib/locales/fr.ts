@@ -397,6 +397,7 @@ export const fr = {
     correctAnswerHint: "Essayez de l'utiliser dans une phrase pour mieux la retenir !",
     missedCount_one: "Vous avez raté {{count}} question",
     missedCount_other: "Vous avez raté {{count}} questions",
+    minutesEstimate: "~{{minutes}} min",
   },
   wordReview: {
     title: "Révision",
@@ -606,6 +607,10 @@ export const fr = {
     noResults: "Aucun proverbe ne correspond à votre recherche.",
     searchPlaceholder: "Rechercher des proverbes {{language}}…",
     literal: "Littéral :",
+    practiceInLesson: "Pratiquer dans la leçon",
+    less: "Moins",
+    meaning: "Signification",
+    shareTitle: "Proverbe {{language}}",
   },
   dashboard: {
     subtitle: "Vos progrès en un coup d'œil",
@@ -803,6 +808,7 @@ export const fr = {
     rejectLessonMsg: "Optionnel : laissez une note au contributeur expliquant pourquoi.",
     approveLessonTitle: "Approuver cette leçon ?",
     approveLessonMsg: "Cette leçon sera publiée et ajoutée au cours.",
+    swipeHint: "← Rejeter · Glisser · Approuver →",
   },
   classroom: {
     memberCount_one: "{{count}} membre",
@@ -826,6 +832,7 @@ export const fr = {
   wordDetail: {
     notFound: "Mot introuvable.",
     textToSpeech: "Synthèse vocale",
+    hearPronunciation: "Écouter la prononciation",
     example: "Exemple",
     moreInCategory: "Plus dans {{category}}",
     contributedBy: "Contribué par {{name}}",
@@ -1226,6 +1233,7 @@ export const fr = {
     lessonEdit: {
       previewTitle: "Aperçu apprenant",
       noSegments: "Aucun segment de transcription pour l'instant",
+      untitled: "Leçon sans titre",
     },
   },
   reviewerApplication: {

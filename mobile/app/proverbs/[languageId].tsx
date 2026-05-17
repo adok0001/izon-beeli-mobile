@@ -40,6 +40,7 @@ function ProverbCard({
         sound.setOnPlaybackStatusUpdate((s) => {
           if (s.isLoaded && s.didJustFinish) {
             setPlaying(false);
+            sound.unloadAsync();
             soundRef.current = null;
           }
         });
@@ -54,11 +55,12 @@ function ProverbCard({
 
   const handleShare = useCallback(async () => {
     const languageName = getLanguageName(languageId);
+    const title = t("proverbs.shareTitle", { language: languageName });
     await Share.share({
-      message: `${languageName} Proverb\n\n"${proverb.text}"\n\n${proverb.translation}\n\n${proverb.meaning}`,
-      title: `${languageName} Proverb`,
+      message: `${title}\n\n"${proverb.text}"\n\n${proverb.translation}\n\n${proverb.meaning}`,
+      title,
     });
-  }, [proverb, languageId]);
+  }, [proverb, languageId, t]);
 
   return (
     <View className="mb-3 rounded-2xl bg-amber-50 p-4 dark:bg-amber-900/20">

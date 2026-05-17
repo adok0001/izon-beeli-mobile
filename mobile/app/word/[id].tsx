@@ -323,18 +323,12 @@ export default function WordDetailScreen() {
 
             {/* Audio button — primary action */}
             <View className="mt-6 items-center">
-              <Pressable
-                onPress={() => {}}
-                className="items-center"
-                accessibilityLabel={`Hear pronunciation of ${entry.word}`}
-              >
-                <View className="h-16 w-16 items-center justify-center rounded-full bg-blue-500 shadow-sm">
-                  <WordAudioButton audioSource={entry.audioUrl} word={entry.word} size={28} />
-                </View>
-                <Text className="mt-2 text-xs font-semibold text-blue-500 dark:text-blue-400">
-                  {entry.audioUrl ? t("wordDetail.hearPronunciation") : t("wordDetail.textToSpeech")}
-                </Text>
-              </Pressable>
+              <View className="h-16 w-16 items-center justify-center rounded-full bg-blue-500 shadow-sm">
+                <WordAudioButton audioSource={entry.audioUrl} word={entry.word} size={28} />
+              </View>
+              <Text className="mt-2 text-xs font-semibold text-blue-500 dark:text-blue-400">
+                {entry.audioUrl ? t("wordDetail.hearPronunciation") : t("wordDetail.textToSpeech")}
+              </Text>
             </View>
 
             {/* Category badge */}
@@ -384,7 +378,7 @@ export default function WordDetailScreen() {
             return (
               <View className="mt-5">
                 <Text className="mx-5 mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-                  {t("wordDetail.moreInCategory", { category: entry.category })}
+                  {t("wordDetail.moreInCategory", { category: categoryLabel })}
                 </Text>
                 <ScrollView
                   horizontal

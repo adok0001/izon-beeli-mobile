@@ -308,6 +308,7 @@ export interface QuizQuestion {
   correctAnswer: string;
   options: string[]; // 4 options, shuffled
   audioSource?: AudioSource; // for listening questions
+  explanation?: string; // optional explanation shown after incorrect answer
 }
 
 export interface QuizConfig {
