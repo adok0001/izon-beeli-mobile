@@ -181,24 +181,22 @@ function ActiveView() {
       if (correct) {
         playCorrectSound();
         hapticSuccess();
+        if (isLastQuestion) {
+          setTimeout(() => { playFinishSound(); }, FEEDBACK_DELAY - 200);
+        }
+        setTimeout(() => { nextQuestion(); }, FEEDBACK_DELAY);
       } else {
         playIncorrectSound();
         hapticError();
       }
-
-      if (isLastQuestion) {
-        // Play finish sound after a short delay for the last question
-        setTimeout(() => {
-          playFinishSound();
-        }, FEEDBACK_DELAY - 200);
-      }
-
-      setTimeout(() => {
-        nextQuestion();
-      }, FEEDBACK_DELAY);
     },
     [locked, answerQuestion, nextQuestion, isLastQuestion]
   );
+
+  const handleContinue = useCallback(() => {
+    if (isLastQuestion) playFinishSound();
+    nextQuestion();
+  }, [nextQuestion, isLastQuestion]);
 
   if (!question) return null;
 
@@ -271,14 +269,22 @@ function ActiveView() {
               {question.correctAnswer}
             </Text>
             {question.explanation ? (
-              <Text className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+              <Text className="mt-1 text-xs text-neutral-600 dark:text-neutral-300">
                 {question.explanation}
               </Text>
             ) : (
-              <Text className="mt-1 text-xs italic text-neutral-500 dark:text-neutral-500">
+              <Text className="mt-1 text-xs italic text-neutral-600 dark:text-neutral-300">
                 {t("quiz.correctAnswerHint")}
               </Text>
             )}
+            <Pressable
+              onPress={handleContinue}
+              className="mt-3 items-center rounded-xl bg-red-500 py-3 active:opacity-70 dark:bg-red-500"
+            >
+              <Text className="text-sm font-semibold text-white">
+                {t("common.continue")}
+              </Text>
+            </Pressable>
           </View>
         )}
       </View>
