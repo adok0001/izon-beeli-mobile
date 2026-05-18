@@ -13,6 +13,7 @@ import {
   contributions,
   courses,
   dictionaryEntries,
+  feedItems,
   languages,
   lessonContributions,
   lessonContributionSegments,
@@ -252,6 +253,28 @@ educatorRouter.patch("/contributions/:id", async (c) => {
   return c.json(updated);
 });
 
+// ─── DELETE /educator/contributions/:id ──────────────────────────────────────
+
+educatorRouter.delete("/contributions/:id", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const { id } = c.req.param();
+
+  const [existing] = await db
+    .select({ status: contributions.status, languageId: contributions.languageId })
+    .from(contributions)
+    .where(eq(contributions.id, id))
+    .limit(1);
+
+  if (!existing) return c.json({ error: "Not found" }, 404);
+  if (!isAdmin && !reviewerLanguages.includes(existing.languageId)) return c.json({ error: "Forbidden" }, 403);
+  if (existing.status === "approved") return c.json({ error: "Approved contributions cannot be deleted" }, 409);
+
+  await db.delete(feedItems).where(eq(feedItems.contributionId, id));
+  await db.delete(contributions).where(eq(contributions.id, id));
+  return c.json({ deleted: true });
+});
+
 // ─── GET /educator/lesson-contributions ──────────────────────────────────────
 
 educatorRouter.get("/lesson-contributions", async (c) => {
@@ -385,6 +408,28 @@ educatorRouter.post("/lesson-contributions/:id/review", async (c) => {
     .returning({ id: lessonContributions.id, status: lessonContributions.status });
 
   return c.json({ ...updated, lessonId });
+});
+
+// ─── DELETE /educator/lesson-contributions/:id ────────────────────────────────
+
+educatorRouter.delete("/lesson-contributions/:id", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const { id } = c.req.param();
+
+  const [existing] = await db
+    .select({ status: lessonContributions.status, languageId: lessonContributions.languageId })
+    .from(lessonContributions)
+    .where(eq(lessonContributions.id, id))
+    .limit(1);
+
+  if (!existing) return c.json({ error: "Not found" }, 404);
+  if (!isAdmin && !reviewerLanguages.includes(existing.languageId)) return c.json({ error: "Forbidden" }, 403);
+  if (existing.status === "approved") return c.json({ error: "Approved lesson contributions cannot be deleted" }, 409);
+
+  await db.delete(lessonContributionSegments).where(eq(lessonContributionSegments.lessonContributionId, id));
+  await db.delete(lessonContributions).where(eq(lessonContributions.id, id));
+  return c.json({ deleted: true });
 });
 
 // ─── DICTIONARY CRUD ──────────────────────────────────────────────────────────
@@ -631,7 +676,7 @@ educatorRouter.get("/courses", async (c) => {
   const reviewerLanguages = c.get("reviewerLanguages");
 
   const rows = await db
-    .select({ id: courses.id, title: courses.title, description: courses.description, languageId: courses.languageId, level: courses.level, order: courses.order })
+    .select({ id: courses.id, title: courses.title, description: courses.description, languageId: courses.languageId, level: courses.level, order: courses.order, isActive: courses.isActive })
     .from(courses)
     .where(!isAdmin && reviewerLanguages.length > 0 ? inArray(courses.languageId, reviewerLanguages) : undefined)
     .orderBy(courses.languageId, courses.order);
@@ -646,6 +691,21 @@ educatorRouter.get("/courses", async (c) => {
       return { ...row, courseType: suffix ? (abbrevToType[suffix] ?? null) : null };
     })
   );
+});
+
+// PATCH /educator/courses/:id
+educatorRouter.patch("/courses/:id", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const courseId = c.req.param("id");
+  const { isActive } = await c.req.json<{ isActive: boolean }>();
+
+  const [course] = await db.select({ languageId: courses.languageId }).from(courses).where(eq(courses.id, courseId)).limit(1);
+  if (!course) return c.json({ error: "Course not found" }, 404);
+  if (!isAdmin && !reviewerLanguages.includes(course.languageId)) return c.json({ error: "Forbidden" }, 403);
+
+  await db.update(courses).set({ isActive }).where(eq(courses.id, courseId));
+  return c.json({ ok: true });
 });
 
 // GET /educator/lessons

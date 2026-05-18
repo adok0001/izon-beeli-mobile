@@ -1,11 +1,11 @@
 import { WordAudioButton } from "@/components/dictionary/word-audio-button";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useMyContributions, type MyContribution } from "@/lib/hooks/use-contributions";
+import { useDeleteContribution, useMyContributions, useUpdateContribution, type MyContribution } from "@/lib/hooks/use-contributions";
 import { getLanguageName } from "@/lib/mock-data";
 import { Stack } from "expo-router";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FlatList, Image, RefreshControl, Text, View } from "react-native";
+import { Alert, FlatList, Image, Pressable, RefreshControl, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const STATUS_CONFIG = {
@@ -57,8 +57,21 @@ function StatusTimeline({ status }: { status: string }) {
   );
 }
 
+const EDITABLE_TYPES = ["word", "phrase", "entry_meaning"];
+
 function ContributionRow({ item }: { item: MyContribution }) {
   const { t } = useTranslation();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState({
+    word: item.word,
+    english: item.english,
+    pronunciation: item.pronunciation ?? "",
+    example: item.example ?? "",
+    exampleTranslation: item.exampleTranslation ?? "",
+  });
+  const updateContribution = useUpdateContribution();
+  const deleteContribution = useDeleteContribution();
+
   const config = STATUS_CONFIG[item.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.submitted;
   const categoryLabel = item.category
     ? t(`dictionaryPage.categoryLabels.${item.category}` as any, { defaultValue: item.category })
@@ -66,6 +79,40 @@ function ContributionRow({ item }: { item: MyContribution }) {
 
   const hasAudio = item.type === "entry_audio" || item.type === "audio" || !!item.audioUrl;
   const hasImage = item.type === "entry_image" || !!item.imageUrl;
+  const canEdit = item.status === "submitted" && EDITABLE_TYPES.includes(item.type);
+
+  const handleSave = () => {
+    updateContribution.mutate(
+      {
+        id: item.id,
+        updates: {
+          word: draft.word,
+          english: draft.english,
+          pronunciation: draft.pronunciation || null,
+          example: draft.example || null,
+          exampleTranslation: draft.exampleTranslation || null,
+        },
+      },
+      { onSuccess: () => setEditing(false) }
+    );
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      t("myContributions.deleteConfirmTitle"),
+      t("myContributions.deleteConfirmMessage"),
+      [
+        { text: t("myContributions.cancelEdit"), style: "cancel" },
+        {
+          text: t("myContributions.deleteButton"),
+          style: "destructive",
+          onPress: () => deleteContribution.mutate(item.id),
+        },
+      ]
+    );
+  };
+
+  const inputCls = "rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white";
 
   return (
     <View className="border-b border-neutral-100 px-5 py-4 dark:border-neutral-800">
@@ -76,6 +123,65 @@ function ContributionRow({ item }: { item: MyContribution }) {
           resizeMode="cover"
         />
       )}
+
+      {/* Inline edit form */}
+      {editing && (
+        <View className="mb-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-700 dark:bg-neutral-800/60">
+          <View className="mb-2 flex-row gap-2">
+            <View className="flex-1">
+              <Text className="mb-1 text-xs font-medium text-neutral-500">{t("myContributions.fieldWord")}</Text>
+              <TextInput
+                className={inputCls}
+                value={draft.word}
+                onChangeText={(v) => setDraft((d) => ({ ...d, word: v }))}
+              />
+            </View>
+            <View className="flex-1">
+              <Text className="mb-1 text-xs font-medium text-neutral-500">{t("myContributions.fieldEnglish")}</Text>
+              <TextInput
+                className={inputCls}
+                value={draft.english}
+                onChangeText={(v) => setDraft((d) => ({ ...d, english: v }))}
+              />
+            </View>
+          </View>
+          <Text className="mb-1 text-xs font-medium text-neutral-500">{t("myContributions.fieldPronunciation")}</Text>
+          <TextInput
+            className={`${inputCls} mb-2`}
+            value={draft.pronunciation}
+            onChangeText={(v) => setDraft((d) => ({ ...d, pronunciation: v }))}
+            placeholder="e.g. /ɪˈzɒn/"
+          />
+          <Text className="mb-1 text-xs font-medium text-neutral-500">{t("myContributions.fieldExample")}</Text>
+          <TextInput
+            className={`${inputCls} mb-2`}
+            value={draft.example}
+            onChangeText={(v) => setDraft((d) => ({ ...d, example: v }))}
+          />
+          <Text className="mb-1 text-xs font-medium text-neutral-500">{t("myContributions.fieldExampleTranslation")}</Text>
+          <TextInput
+            className={`${inputCls} mb-3`}
+            value={draft.exampleTranslation}
+            onChangeText={(v) => setDraft((d) => ({ ...d, exampleTranslation: v }))}
+          />
+          <View className="flex-row justify-end gap-2">
+            <Pressable
+              onPress={() => setEditing(false)}
+              className="rounded-lg px-3 py-1.5"
+            >
+              <Text className="text-sm font-medium text-neutral-500">{t("myContributions.cancelEdit")}</Text>
+            </Pressable>
+            <Pressable
+              onPress={handleSave}
+              disabled={updateContribution.isPending}
+              className="rounded-lg bg-blue-500 px-3 py-1.5 disabled:opacity-50"
+            >
+              <Text className="text-sm font-semibold text-white">{t("myContributions.saveChanges")}</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+
       <View className="flex-row items-start justify-between">
         <View className="flex-1 pr-3">
           <View className="flex-row items-center gap-2">
@@ -147,6 +253,16 @@ function ContributionRow({ item }: { item: MyContribution }) {
                   </Text>
                 </View>
               )}
+            </View>
+          )}
+          {canEdit && !editing && (
+            <View className="mt-1 flex-row gap-2">
+              <Pressable onPress={() => setEditing(true)} hitSlop={8}>
+                <IconSymbol name="pencil" size={15} color="#6b7280" />
+              </Pressable>
+              <Pressable onPress={handleDelete} disabled={deleteContribution.isPending} hitSlop={8}>
+                <IconSymbol name="trash" size={15} color="#ef4444" />
+              </Pressable>
             </View>
           )}
         </View>

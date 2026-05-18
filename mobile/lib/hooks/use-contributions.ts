@@ -429,6 +429,9 @@ export interface MyContribution {
   status: string;
   audioUrl: string | null;
   imageUrl: string | null;
+  pronunciation: string | null;
+  example: string | null;
+  exampleTranslation: string | null;
   reviewNote: string | null;
   xpAwarded: number | null;
   bountyXpAwarded: number | null;
@@ -444,6 +447,75 @@ export function useMyContributions() {
     queryFn: async () => {
       const token = await getToken();
       return apiFetch<MyContribution[]>("/contributions", { token: token! });
+    },
+  });
+}
+
+export function useUpdateContribution() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      updates,
+    }: {
+      id: string;
+      updates: {
+        word?: string;
+        english?: string;
+        pronunciation?: string | null;
+        example?: string | null;
+        exampleTranslation?: string | null;
+        category?: string;
+      };
+    }) => {
+      const token = await getToken();
+      return apiFetch<MyContribution>(`/contributions/${id}`, {
+        method: "PATCH",
+        token: token!,
+        body: JSON.stringify(updates),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-contributions"] });
+    },
+  });
+}
+
+export function useDeleteContribution() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const token = await getToken();
+      return apiFetch(`/contributions/${id}`, {
+        method: "DELETE",
+        token: token!,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-contributions"] });
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
+    },
+  });
+}
+
+export function useDeleteLessonContribution() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const token = await getToken();
+      return apiFetch(`/lesson-contributions/${id}`, {
+        method: "DELETE",
+        token: token!,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
     },
   });
 }

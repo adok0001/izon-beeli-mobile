@@ -11,6 +11,7 @@ import {
     ImageIcon,
     MessageSquare,
     Mic,
+    Trash2,
     Volume2,
     X,
     XCircle,
@@ -77,11 +78,13 @@ function ContributionCard({
   item,
   onAction,
   onEdit,
+  onDelete,
   busy,
 }: Readonly<{
   item: PendingContribution;
   onAction: (id: string, action: "approve" | "reject", note?: string) => void;
   onEdit: (id: string, updates: Partial<PendingContribution>) => void;
+  onDelete: (id: string) => void;
   busy: boolean;
 }>) {
   const [note, setNote] = useState("");
@@ -130,6 +133,14 @@ function ContributionCard({
             title="Edit before approving"
           >
             <Edit2 className="h-3.5 w-3.5" />
+          </button>
+          <button
+            onClick={() => onDelete(item.id)}
+            disabled={busy}
+            className="p-1.5 rounded-lg text-neutral-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+            title="Delete contribution"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
@@ -283,10 +294,12 @@ function ContributionCard({
 function LessonCard({
   item,
   onAction,
+  onDelete,
   busy,
 }: Readonly<{
   item: PendingLesson;
   onAction: (id: string, action: "approve" | "reject", note?: string) => void;
+  onDelete: (id: string) => void;
   busy: boolean;
 }>) {
   const [note, setNote] = useState("");
@@ -304,11 +317,21 @@ function LessonCard({
           </div>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">{item.description}</p>
         </div>
-        <div className="text-right shrink-0">
-          <p className="text-xs text-neutral-400">{item.submitterName ?? "Unknown"}</p>
-          <p className="text-xs text-neutral-300 dark:text-neutral-600">
-            {new Date(item.createdAt).toLocaleDateString()}
-          </p>
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="text-right">
+            <p className="text-xs text-neutral-400">{item.submitterName ?? "Unknown"}</p>
+            <p className="text-xs text-neutral-300 dark:text-neutral-600">
+              {new Date(item.createdAt).toLocaleDateString()}
+            </p>
+          </div>
+          <button
+            onClick={() => onDelete(item.id)}
+            disabled={busy}
+            className="p-1.5 rounded-lg text-neutral-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+            title="Delete lesson contribution"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
         </div>
       </div>
       <div className="flex items-center gap-2 mb-3 p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800">
@@ -426,6 +449,34 @@ export default function EducatorReviewPage() {
     },
   });
 
+  const deleteContrib = useMutation({
+    mutationFn: async (id: string) => {
+      const token = await getToken();
+      return apiFetch(`/educator/contributions/${id}`, {
+        method: "DELETE",
+        token: token ?? undefined,
+      });
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["educator", "contributions"] });
+      void qc.invalidateQueries({ queryKey: ["educator", "stats"] });
+    },
+  });
+
+  const deleteLesson = useMutation({
+    mutationFn: async (id: string) => {
+      const token = await getToken();
+      return apiFetch(`/educator/lesson-contributions/${id}`, {
+        method: "DELETE",
+        token: token ?? undefined,
+      });
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["educator", "lesson-contributions"] });
+      void qc.invalidateQueries({ queryKey: ["educator", "stats"] });
+    },
+  });
+
   const tabs: { id: Tab; label: string; count: number }[] = [
     { id: "contributions", label: t("educator.review.tabContributions"), count: contributions.length },
     { id: "lessons", label: t("educator.review.tabLessons"), count: lessons.length },
@@ -492,7 +543,8 @@ export default function EducatorReviewPage() {
                 item={item}
                 onAction={(id, action, note) => reviewContrib.mutate({ id, action, note })}
                 onEdit={(id, updates) => editContrib.mutate({ id, updates })}
-                busy={reviewContrib.isPending || editContrib.isPending}
+                onDelete={(id) => deleteContrib.mutate(id)}
+                busy={reviewContrib.isPending || editContrib.isPending || deleteContrib.isPending}
               />
             ))}
           </div>
@@ -522,7 +574,8 @@ export default function EducatorReviewPage() {
                 key={item.id}
                 item={item}
                 onAction={(id, action, note) => reviewLesson.mutate({ id, action, note })}
-                busy={reviewLesson.isPending}
+                onDelete={(id) => deleteLesson.mutate(id)}
+                busy={reviewLesson.isPending || deleteLesson.isPending}
               />
             ))}
           </div>
