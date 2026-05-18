@@ -278,6 +278,12 @@ export default function EducatorPanelScreen() {
                 detail={t("learn.webSubtitle")}
                 onPress={() => router.push("/educator/courses")}
               />
+              <ActionRow
+                icon="globe"
+                label={t("educator.nav.culture")}
+                detail={t("welcomeChecklist.exploreCultureMusicDetail")}
+                onPress={() => router.push("/educator/culture" as never)}
+              />
               {currentUser && canManageBounties(currentUser) ? (
                 <ActionRow
                   icon="star.fill"
