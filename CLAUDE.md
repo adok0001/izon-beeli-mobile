@@ -1,7 +1,3 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Project Overview
 
 Beeli is a React Native/Expo (SDK 54) mobile learning platform with tabs for learning, listening to audio lessons, journaling, community feed, and user profile. It targets iOS, Android, and web.
@@ -9,11 +5,11 @@ Beeli is a React Native/Expo (SDK 54) mobile learning platform with tabs for lea
 ## Development Commands
 
 ```bash
-npx expo start           # Start Expo dev server
-npm run ios              # Run on iOS simulator
-npm run android          # Run on Android emulator
-npm run web              # Run in browser
-npm run lint             # ESLint check
+npx expo start --no-dev --minify --clear            # Start Expo dev server
+npm run ios                                         # Run on iOS simulator
+npm run android                                     # Run on Android emulator
+npm run web                                         # Run in browser
+npm run lint                                        # ESLint check
 ```
 
 ## Architecture

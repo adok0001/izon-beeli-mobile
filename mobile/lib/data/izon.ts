@@ -780,4 +780,26 @@ export const IZON_DICTIONARY: DictionaryEntry[] = [
   e(688, "naị", "near", "verbs", undefined, "Naị emi daa", "It is near"),
   e(689, "zuuzu", "warm", "verbs", undefined, "Beni zuuzu emi", "The water is warm"),
   e(690, "sanị", "melt (variant of yọị)", "verbs", undefined, "Sanị wẹnị", "It is melting"),
+
+  // --- Lesson 18-05-2026: More Vocabulary ---
+  e(691, "ete", "loop", "nouns", undefined, "Ete bei emi", "That loop is there"),
+  e(692, "akụ", "bitter", "verbs", undefined, "Akụ emi", "It is bitter"),
+
+  // --- Lesson 18-05-2026: Animals (Nama-ama) ---
+  e(693, "nama", "animal; beast; meat; beef", "animals", undefined, "Nama bei emi daa", "That animal is fine"),
+  e(694, "wanghan", "hare", "animals", undefined, "Wanghan bou kọ emi", "The hare is in the bush"),
+  e(695, "ọtụbara", "antelope", "animals", undefined, "Ọtụbara bou kọ emi", "The antelope is in the bush"),
+  e(696, "egirigisi", "grass-cutter", "animals", undefined, "Egirigisi bei emi", "That grass-cutter is there"),
+  e(697, "ogori", "buffalo", "animals", undefined, "Ogori gbe emi", "The buffalo is big"),
+  e(698, "ọrọ", "rabbit", "animals", undefined, "Ọrọ bou kọ emi", "The rabbit is in the bush"),
+  e(699, "abụkọ", "monkey", "animals", undefined, "Abụkọ oke kọ emi", "The monkey is in the tree"),
+  e(700, "opuobori", "elephant", "animals", undefined, "Opuobori gbe emi", "The elephant is big"),
+  e(701, "kọnọwei", "leopard", "animals", undefined, "Kọnọwei bou kọ emi", "The leopard is in the bush"),
+  e(702, "adaka", "lion", "animals", undefined, "Adaka gbe emi", "The lion is big"),
+  e(703, "obori", "goat", "animals", undefined, "Obori kọ emi", "The goat is there"),
+  e(704, "asi", "horse", "animals", undefined, "Asi fara emi", "The horse is running"),
+  e(705, "anana", "sheep", "animals", undefined, "Anana emi daa", "The sheep is fine"),
+  e(706, "ologbo", "cat", "animals", undefined, "Ologbo warị mọ emi", "The cat is in the house"),
+  e(707, "otobo", "hippopotamus", "animals", undefined, "Otobo ọba mọ emi", "The hippopotamus is in the stream"),
+  e(708, "ẹlọlị", "hyena", "animals", undefined, "Ẹlọlị bou kọ emi", "The hyena is in the bush"),
 ];

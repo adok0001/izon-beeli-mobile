@@ -4,18 +4,21 @@ import { LanguageSelector } from "@/components/ui/language-selector";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@clerk/nextjs";
 import { LANGUAGES } from "@mobile/lib/data/languages";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     ArrowUpDown,
     BookOpen,
     ChevronDown,
     ChevronRight,
     ChevronUp,
+    Eye,
+    EyeOff,
     Filter,
     Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -27,6 +30,7 @@ interface Course {
   level: string;
   courseType: string | null;
   order: number;
+  isActive?: boolean;
 }
 
 interface LessonSummary {
@@ -257,6 +261,24 @@ export default function EducatorCoursesPage() {
   const [levelFilter, setLevelFilter] = useState<LevelFilter>("all");
   const [emptyOnly, setEmptyOnly] = useState(false);
 
+  const qc = useQueryClient();
+
+  const toggleCourseMutation = useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      const token = await getToken();
+      return apiFetch(`/educator/courses/${id}`, {
+        method: "PATCH",
+        token: token!,
+        body: JSON.stringify({ isActive }),
+      });
+    },
+    onSuccess: (_, variables) => {
+      void qc.invalidateQueries({ queryKey: ["educator-courses"] });
+      toast.success(variables.isActive ? "Course published" : "Course hidden");
+    },
+    onError: (e: Error) => toast.error("Failed to update course", { description: e.message }),
+  });
+
   const { data: me } = useQuery<EducatorMe>({
     queryKey: ["educator-me"],
     queryFn: async () => {
@@ -417,6 +439,7 @@ export default function EducatorCoursesPage() {
                 <SortTh label="Level" sortKey="level" current={sortKey} dir={sortDir} onClick={toggleSort} />
                 <SortTh label="Lessons" sortKey="total" current={sortKey} dir={sortDir} onClick={toggleSort} />
                 <SortTh label="Active" sortKey="active" current={sortKey} dir={sortDir} onClick={toggleSort} />
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">Status</th>
                 <th className="px-4 py-2.5" />
               </tr>
             </thead>
@@ -463,6 +486,22 @@ export default function EducatorCoursesPage() {
                       ) : (
                         <span className="text-xs text-neutral-300 dark:text-neutral-600">—</span>
                       )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => toggleCourseMutation.mutate({ id: course.id, isActive: course.isActive === false })}
+                        disabled={toggleCourseMutation.isPending}
+                        title={course.isActive !== false ? "Deactivate course" : "Activate course"}
+                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold transition-colors disabled:opacity-50 ${
+                          course.isActive !== false
+                            ? "bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-500/30"
+                            : "bg-neutral-100 dark:bg-white/[0.06] text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-white/[0.1]"
+                        }`}
+                      >
+                        {course.isActive !== false
+                          ? <><Eye className="h-3 w-3" /> Active</>
+                          : <><EyeOff className="h-3 w-3" /> Inactive</>}
+                      </button>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Link

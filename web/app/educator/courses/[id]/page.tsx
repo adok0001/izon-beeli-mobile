@@ -907,13 +907,20 @@ export default function CourseDetailPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
-                      lesson.isActive
-                        ? "bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400"
-                        : "bg-neutral-100 dark:bg-white/[0.06] text-neutral-500 dark:text-neutral-300"
-                    }`}>
-                      {lesson.isActive ? "Active" : "Inactive"}
-                    </span>
+                    <button
+                      onClick={() => toggleActiveMutation.mutate({ id: lesson.id, isActive: !lesson.isActive })}
+                      disabled={toggleActiveMutation.isPending}
+                      title={lesson.isActive ? "Deactivate lesson" : "Activate lesson"}
+                      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold transition-colors disabled:opacity-50 ${
+                        lesson.isActive
+                          ? "bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-500/30"
+                          : "bg-neutral-100 dark:bg-white/[0.06] text-neutral-500 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-white/[0.1]"
+                      }`}
+                    >
+                      {lesson.isActive
+                        ? <><Eye className="h-3 w-3" /> Active</>
+                        : <><EyeOff className="h-3 w-3" /> Inactive</>}
+                    </button>
                   </td>
                   <td className="px-4 py-3 text-neutral-500 dark:text-neutral-300 text-xs tabular-nums">
                     {fmtDuration(lesson.duration)}
@@ -929,15 +936,6 @@ export default function CourseDetailPage() {
                           <Play className={`h-3.5 w-3.5 ${playUrl === lesson.audioUrl ? "text-brand-500" : "text-neutral-400 dark:text-neutral-300"}`} />
                         </button>
                       )}
-                      <button
-                        onClick={() => toggleActiveMutation.mutate({ id: lesson.id, isActive: !lesson.isActive })}
-                        className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors"
-                        title={lesson.isActive ? "Deactivate" : "Activate"}
-                      >
-                        {lesson.isActive
-                          ? <EyeOff className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-300" />
-                          : <Eye className="h-3.5 w-3.5 text-green-500" />}
-                      </button>
                       <button
                         onClick={() => setModal(lesson)}
                         className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors"
