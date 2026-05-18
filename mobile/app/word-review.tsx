@@ -72,7 +72,7 @@ function ReviewCard({
   isSubmitting,
 }: {
   entry: DictionaryEntry;
-  onRate: (confidence: "easy" | "hard" | "again") => void;
+  onRate: (confidence: "again" | "hard" | "good" | "easy") => void;
   isSubmitting: boolean;
 }) {
   const { t } = useTranslation();
@@ -150,12 +150,22 @@ function ReviewCard({
             </Text>
           </Pressable>
           <Pressable
-            onPress={() => onRate("easy")}
+            onPress={() => onRate("good")}
             disabled={isSubmitting}
             className="flex-1 items-center rounded-2xl border-2 border-green-200 bg-green-50 py-4 active:opacity-70 dark:border-green-800 dark:bg-green-950"
           >
             <IconSymbol name="checkmark.circle" size={20} color="#22c55e" />
             <Text className="mt-1 text-xs font-semibold text-green-600 dark:text-green-400">
+              {t("wordReview.good")}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => onRate("easy")}
+            disabled={isSubmitting}
+            className="flex-1 items-center rounded-2xl border-2 border-blue-200 bg-blue-50 py-4 active:opacity-70 dark:border-blue-800 dark:bg-blue-950"
+          >
+            <IconSymbol name="checkmark.seal.fill" size={20} color="#3b82f6" />
+            <Text className="mt-1 text-xs font-semibold text-blue-600 dark:text-blue-400">
               {t("wordReview.easy")}
             </Text>
           </Pressable>
@@ -197,6 +207,12 @@ export default function WordReviewScreen() {
 
   const isLoading = isDueLoading || isDictLoading;
 
+  const reviewCountMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const e of dueEntries) map.set(e.dictionaryEntryId, e.reviewCount);
+    return map;
+  }, [dueEntries]);
+
   const [queue, setQueue] = useState<DictionaryEntry[]>([]);
   const [queueBuilt, setQueueBuilt] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -217,11 +233,11 @@ export default function WordReviewScreen() {
   const isFinished = queueBuilt && currentIndex >= queue.length;
 
   const handleRate = useCallback(
-    (confidence: "easy" | "hard" | "again") => {
+    (confidence: "again" | "hard" | "good" | "easy") => {
       if (!currentEntry) return;
       const entry = currentEntry;
 
-      if (confidence === "easy") {
+      if (confidence === "easy" || confidence === "good") {
         hapticSuccess();
         playCorrectSound().catch(() => {});
       } else if (confidence === "hard") {
@@ -296,6 +312,29 @@ export default function WordReviewScreen() {
                 ? t("wordReview.sessionReviewedPlural", { count: uniqueReviewed })
                 : t("wordReview.sessionReviewed", { count: uniqueReviewed })}
             </Text>
+
+            {/* Retention curve */}
+            {uniqueReviewed > 0 && (() => {
+              const reviewed = [...reviewedIds];
+              const counts = reviewed.map((id) => reviewCountMap.get(id) ?? 1);
+              const avg = counts.reduce((s, n) => s + n, 0) / counts.length;
+              const retention = avg >= 5 ? 95 : avg >= 4 ? 85 : avg >= 3 ? 70 : avg >= 2 ? 50 : 30;
+              const barWidth = retention;
+              return (
+                <View className="mt-5 w-full rounded-2xl bg-blue-50 p-4 dark:bg-blue-900/20">
+                  <Text className="mb-1 text-center text-sm text-blue-800 dark:text-blue-300">
+                    {t("wordReview.retentionDesc", { avg: avg.toFixed(1), pct: retention })}
+                  </Text>
+                  <View className="mt-2 h-2 overflow-hidden rounded-full bg-blue-200 dark:bg-blue-800">
+                    <View
+                      className="h-2 rounded-full bg-blue-500"
+                      style={{ width: `${barWidth}%` }}
+                    />
+                  </View>
+                </View>
+              );
+            })()}
+
             <Pressable
               onPress={() => router.back()}
               className="mt-6 rounded-xl bg-blue-500 px-8 py-3 active:opacity-80"

@@ -110,6 +110,7 @@ progressRouter.post("/:lessonId/complete", async (c) => {
     pointsEarned: 50,
     totalPoints: xpResult.totalPoints,
     streak: streakResult.newStreak,
+    streakIncremented: streakResult.streakIncremented,
     leveledUp: xpResult.leveledUp,
     newLevel: xpResult.newLevel,
     newTitle: xpResult.newTitle,

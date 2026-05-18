@@ -253,6 +253,8 @@ export const wordBank = pgTable(
     confidence: integer("confidence").default(0).notNull(), // 0-5 SM-2 ease factor proxy
     reviewCount: integer("review_count").default(0).notNull(),
     lastReviewedAt: timestamp("last_reviewed_at"),
+    easeFactor: real("ease_factor").default(2.5).notNull(),
+    interval: integer("interval").default(0).notNull(), // days
   },
   (table) => [
     uniqueIndex("word_bank_user_entry_idx").on(
@@ -705,6 +707,31 @@ export const bounties = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => [index("bounties_lang_status_idx").on(t.languageId, t.status)]
+);
+
+// ---------- Story Mode ----------
+
+export const storyArcs = pgTable("story_arcs", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  courseId: varchar("course_id", { length: 64 }).notNull().unique(),
+  title: varchar("title", { length: 300 }).notNull(),
+  description: text("description").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const storyChapters = pgTable(
+  "story_chapters",
+  {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    storyArcId: varchar("story_arc_id", { length: 64 }).notNull(),
+    lessonId: varchar("lesson_id", { length: 64 }).notNull(),
+    title: varchar("title", { length: 300 }).notNull(),
+    narrativeIntro: text("narrative_intro").notNull(),
+    narrativeOutro: text("narrative_outro").notNull(),
+    order: integer("order").default(0).notNull(),
+  },
+  (t) => [index("story_chapters_arc_id_idx").on(t.storyArcId)]
 );
 
 // ---------- Relations ----------

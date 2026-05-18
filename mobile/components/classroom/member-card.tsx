@@ -1,5 +1,6 @@
-import { View, Text } from "react-native";
+import { View, Text, Pressable, Alert } from "react-native";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useTranslation } from "react-i18next";
 import type { GroupMember } from "@/types";
 
 const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
@@ -8,9 +9,30 @@ const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
   student: { bg: "bg-neutral-100 dark:bg-neutral-800", text: "text-neutral-600 dark:text-neutral-400" },
 };
 
-export function MemberCard({ member }: { member: GroupMember }) {
+interface MemberCardProps {
+  member: GroupMember;
+  onRemove?: (member: GroupMember) => void;
+}
+
+export function MemberCard({ member, onRemove }: MemberCardProps) {
+  const { t } = useTranslation();
   const roleStyle = ROLE_COLORS[member.role] ?? ROLE_COLORS.student;
   const initial = member.name[0]?.toUpperCase() ?? "?";
+
+  const handleRemovePress = () => {
+    Alert.alert(
+      t("classroom.removeMember"),
+      t("classroom.removeMemberConfirm", { name: member.name }),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("classroom.remove"),
+          style: "destructive",
+          onPress: () => onRemove?.(member),
+        },
+      ]
+    );
+  };
 
   return (
     <View className="mb-2 flex-row items-center rounded-xl bg-neutral-50 p-3 dark:bg-neutral-800">
@@ -49,6 +71,11 @@ export function MemberCard({ member }: { member: GroupMember }) {
           </View>
         </View>
       </View>
+      {onRemove && (
+        <Pressable onPress={handleRemovePress} hitSlop={8} className="ml-2 p-1">
+          <IconSymbol name="xmark.circle.fill" size={20} color="#ef4444" />
+        </Pressable>
+      )}
     </View>
   );
 }

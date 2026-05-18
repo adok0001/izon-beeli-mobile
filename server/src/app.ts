@@ -27,6 +27,7 @@ import { quizResultsRouter } from "./routes/quiz-results.js";
 import { quizRouter } from "./routes/quiz.js";
 import { reviewerApplicationsAdminRouter, reviewerApplicationsRouter } from "./routes/reviewer-applications.js";
 import { sentencesRouter } from "./routes/sentences.js";
+import { storyArcsRouter } from "./routes/story-arcs.js";
 import { adminStatsRouter, adminUsersRouter, purgeExpiredDeletedUsers, usersRouter } from "./routes/users.js";
 import { wordbankRouter } from "./routes/wordbank.js";
 
@@ -77,6 +78,7 @@ app.route("/proverbs/admin", proverbsAdminRouter);
 app.route("/cultural", culturalRouter);
 app.route("/cultural/admin", culturalAdminRouter);
 app.route("/sentences", sentencesRouter);
+app.route("/story-arcs", storyArcsRouter);
 app.get("/health", (c) => c.json({ status: "ok" }));
 
 // Authenticated routes

@@ -432,6 +432,7 @@ export interface MyContribution {
   reviewNote: string | null;
   xpAwarded: number | null;
   bountyXpAwarded: number | null;
+  practiceCount?: number;
   createdAt: string;
 }
 

@@ -86,14 +86,44 @@ wordbankRouter.post("/", async (c) => {
   return c.json({ saved: true }, 201);
 });
 
+const RATING_QUALITY: Record<string, 0 | 2 | 4 | 5> = {
+  again: 0,
+  hard: 2,
+  good: 4,
+  easy: 5,
+};
+
+function applySM2(
+  quality: 0 | 2 | 4 | 5,
+  repetitions: number,
+  easeFactor: number,
+  interval: number
+): { repetitions: number; easeFactor: number; interval: number } {
+  let newReps: number;
+  let newInterval: number;
+  if (quality >= 3) {
+    newReps = repetitions + 1;
+    newInterval =
+      repetitions === 0 ? 1 : repetitions === 1 ? 6 : Math.round(interval * easeFactor);
+  } else {
+    newReps = 0;
+    newInterval = 1;
+  }
+  const newEF = Math.max(
+    1.3,
+    easeFactor + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)
+  );
+  return { repetitions: newReps, easeFactor: newEF, interval: newInterval };
+}
+
 // POST /api/wordbank/:entryId/review - record review outcome and update schedule
 wordbankRouter.post("/:entryId/review", async (c) => {
   const userId = c.get("userId");
   const entryId = c.req.param("entryId");
-  const body = await c.req.json<{ confidence: "easy" | "hard" | "again" }>();
+  const body = await c.req.json<{ confidence: "again" | "hard" | "good" | "easy" }>();
 
-  if (!["easy", "hard", "again"].includes(body.confidence)) {
-    return c.json({ error: "confidence must be 'easy', 'hard', or 'again'" }, 400);
+  if (!Object.keys(RATING_QUALITY).includes(body.confidence)) {
+    return c.json({ error: "confidence must be 'again', 'hard', 'good', or 'easy'" }, 400);
   }
 
   const [entry] = await db
@@ -106,30 +136,31 @@ wordbankRouter.post("/:entryId/review", async (c) => {
     return c.json({ error: "Word not found in bank" }, 404);
   }
 
-  const now = new Date();
-  const reviewCount = entry.reviewCount + 1;
-  let newConfidence = entry.confidence;
-  let nextReviewMs: number;
+  const quality = RATING_QUALITY[body.confidence];
+  const sm2 = applySM2(quality, entry.reviewCount, entry.easeFactor, entry.interval);
 
-  if (body.confidence === "easy") {
-    newConfidence = Math.min(newConfidence + 1, 5);
-    // Interval roughly doubles: 4d, 8d, 16d... capped at 30d
-    const days = Math.min(4 * Math.pow(2, newConfidence - 1), 30);
-    nextReviewMs = now.getTime() + days * 24 * 60 * 60 * 1000;
-  } else if (body.confidence === "hard") {
-    newConfidence = Math.max(newConfidence - 1, 0);
-    nextReviewMs = now.getTime() + 24 * 60 * 60 * 1000; // 1 day
+  const now = new Date();
+  let nextReviewAt: Date;
+  if (body.confidence === "again") {
+    // Re-surface in the same session — 10 minutes
+    nextReviewAt = new Date(now.getTime() + 10 * 60 * 1000);
   } else {
-    // again — very soon
-    newConfidence = 0;
-    nextReviewMs = now.getTime() + 10 * 60 * 1000; // 10 minutes
+    nextReviewAt = new Date(now.getTime() + sm2.interval * 24 * 60 * 60 * 1000);
   }
 
-  const nextReviewAt = new Date(nextReviewMs);
+  // Keep confidence as a 0-5 display proxy (clamped to quality range)
+  const newConfidence = Math.min(5, Math.max(0, Math.round((sm2.easeFactor - 1.3) / (2.5 - 1.3) * 5)));
 
   await db
     .update(wordBank)
-    .set({ confidence: newConfidence, reviewCount, lastReviewedAt: now, nextReviewAt })
+    .set({
+      confidence: newConfidence,
+      reviewCount: sm2.repetitions,
+      lastReviewedAt: now,
+      nextReviewAt,
+      easeFactor: sm2.easeFactor,
+      interval: sm2.interval,
+    })
     .where(and(eq(wordBank.userId, userId), eq(wordBank.dictionaryEntryId, entryId)));
 
   // Award XP + increment daily challenge (fire-and-forget)

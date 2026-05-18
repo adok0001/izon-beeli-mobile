@@ -14,6 +14,49 @@ const STATUS_CONFIG = {
   rejected: { label: "myContributions.statusRejected", color: "#ef4444", bg: "bg-red-100 dark:bg-red-900" },
 } as const;
 
+function StatusTimeline({ status }: { status: string }) {
+  const { t } = useTranslation();
+  const steps = [
+    { key: "submitted", label: t("myContributions.timelineSubmitted") },
+    { key: "review", label: t("myContributions.timelineInReview") },
+    { key: "done", label: status === "rejected" ? t("myContributions.statusRejected") : t("myContributions.statusApproved") },
+  ];
+  const activeIndex = status === "submitted" ? 0 : 2;
+  const isRejected = status === "rejected";
+
+  return (
+    <View className="mt-3 flex-row items-center">
+      {steps.map((step, i) => {
+        const done = i <= activeIndex;
+        const isLast = i === steps.length - 1;
+        const dotColor = done ? (isLast && isRejected ? "#ef4444" : "#3b82f6") : "#d1d5db";
+        return (
+          <View key={step.key} className="flex-1 flex-row items-center">
+            <View className="items-center" style={{ minWidth: 40 }}>
+              <View
+                className="h-3 w-3 rounded-full border-2"
+                style={{
+                  backgroundColor: done ? dotColor : "transparent",
+                  borderColor: dotColor,
+                }}
+              />
+              <Text className="mt-1 text-center text-[9px] text-neutral-400 dark:text-neutral-500" style={{ width: 44 }}>
+                {step.label}
+              </Text>
+            </View>
+            {!isLast && (
+              <View
+                className="mb-4 h-0.5 flex-1"
+                style={{ backgroundColor: i < activeIndex ? dotColor : "#d1d5db" }}
+              />
+            )}
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 function ContributionRow({ item }: { item: MyContribution }) {
   const { t } = useTranslation();
   const config = STATUS_CONFIG[item.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.submitted;
@@ -108,6 +151,20 @@ function ContributionRow({ item }: { item: MyContribution }) {
           )}
         </View>
       </View>
+
+      <StatusTimeline status={item.status} />
+
+      {item.status === "submitted" && (
+        <Text className="mt-2 text-xs text-neutral-400 dark:text-neutral-500">
+          {t("myContributions.reviewEstimate")}
+        </Text>
+      )}
+
+      {item.status === "approved" && item.practiceCount != null && item.practiceCount > 0 && (
+        <Text className="mt-2 text-xs text-blue-500 dark:text-blue-400">
+          {t(item.practiceCount === 1 ? "myContributions.practiceCount_one" : "myContributions.practiceCount_other", { count: item.practiceCount })}
+        </Text>
+      )}
 
       {item.status === "rejected" && item.reviewNote && (
         <View className="mt-2.5 rounded-xl bg-red-50 px-3 py-2 dark:bg-red-900/20">

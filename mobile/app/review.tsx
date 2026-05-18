@@ -12,8 +12,9 @@ import { useCurrentUser } from "@/lib/hooks/use-current-user";
 import { getLanguageName } from "@/lib/mock-data";
 import { Audio } from "expo-av";
 import { Stack, useRouter } from "expo-router";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Alert, FlatList, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
@@ -60,6 +61,28 @@ function TabPill({
         </View>
       )}
     </Pressable>
+  );
+}
+
+// ---------- Swipe action backgrounds ----------
+
+function SwipeApprove() {
+  const { t } = useTranslation();
+  return (
+    <View className="mb-3 mx-5 flex-1 items-start justify-center rounded-2xl bg-green-500 pl-6">
+      <IconSymbol name="checkmark.circle.fill" size={28} color="#fff" />
+      <Text className="mt-1 text-xs font-bold text-white">{t("common.approve")}</Text>
+    </View>
+  );
+}
+
+function SwipeReject() {
+  const { t } = useTranslation();
+  return (
+    <View className="mb-3 mx-5 flex-1 items-end justify-center rounded-2xl bg-red-500 pr-6">
+      <IconSymbol name="xmark.circle.fill" size={28} color="#fff" />
+      <Text className="mt-1 text-xs font-bold text-white">{t("common.reject")}</Text>
+    </View>
   );
 }
 
@@ -125,102 +148,118 @@ function ContributionCard({
   };
 
   return (
-    <View className="mx-5 mb-3 overflow-hidden rounded-2xl bg-neutral-50 dark:bg-neutral-800">
-      <View className="p-4">
-        <View className="flex-row items-start justify-between">
-          <View className="flex-1 flex-row items-center gap-3">
-            {/* Play button for audio contributions */}
-            {hasAudio && item.audioUrl ? (
-              <Pressable
-                onPress={togglePlay}
-                className={`h-12 w-12 items-center justify-center rounded-xl ${
-                  isPlaying ? "bg-blue-500" : "bg-orange-100 dark:bg-orange-900"
-                }`}
-              >
-                <IconSymbol
-                  name={isPlaying ? "pause.fill" : "play.fill"}
-                  size={18}
-                  color={isPlaying ? "white" : "#f97316"}
-                />
-              </Pressable>
-            ) : null}
-            <View className="flex-1">
-              <Text className="text-lg font-bold text-neutral-900 dark:text-white">
-                {item.word}
+    <Swipeable
+      renderLeftActions={() => <SwipeApprove />}
+      renderRightActions={() => <SwipeReject />}
+      onSwipeableOpen={(dir) => {
+        if (isPending) return;
+        if (dir === "left") onApprove();
+        if (dir === "right") onReject();
+      }}
+      overshootLeft={false}
+      overshootRight={false}
+    >
+      <View className="mx-5 mb-3 overflow-hidden rounded-2xl bg-neutral-50 dark:bg-neutral-800">
+        <View className="p-4">
+          <View className="flex-row items-start justify-between">
+            <View className="flex-1 flex-row items-center gap-3">
+              {hasAudio && item.audioUrl ? (
+                <Pressable
+                  onPress={togglePlay}
+                  className={`h-12 w-12 items-center justify-center rounded-xl ${
+                    isPlaying ? "bg-blue-500" : "bg-orange-100 dark:bg-orange-900"
+                  }`}
+                >
+                  <IconSymbol
+                    name={isPlaying ? "pause.fill" : "play.fill"}
+                    size={18}
+                    color={isPlaying ? "white" : "#f97316"}
+                  />
+                </Pressable>
+              ) : null}
+              <View className="flex-1">
+                <Text className="text-lg font-bold text-neutral-900 dark:text-white">
+                  {item.word}
+                </Text>
+                <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
+                  {item.english}
+                </Text>
+                {item.submitterName && (
+                  <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">
+                    {t("review.submittedBy", { name: item.submitterName })}
+                  </Text>
+                )}
+              </View>
+            </View>
+            <View className={`rounded-full px-2.5 py-1 ${typeBg}`}>
+              <Text className={`text-xs font-semibold ${typeColor}`}>
+                {typeLabel}
               </Text>
-              <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
-                {item.english}
+            </View>
+          </View>
+
+          <View className="mt-3 flex-row flex-wrap gap-1.5">
+            <View className="rounded-full bg-white px-2.5 py-1 dark:bg-neutral-700">
+              <Text className="text-xs text-neutral-600 dark:text-neutral-400">
+                {CATEGORY_LABELS[item.category as DictionaryCategory] ?? item.category}
               </Text>
-              {item.submitterName && (
-                <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">
-                  {t("review.submittedBy", { name: item.submitterName })}
+            </View>
+            <View className="rounded-full bg-white px-2.5 py-1 dark:bg-neutral-700">
+              <Text className="text-xs text-neutral-600 dark:text-neutral-400">
+                {getLanguageName(item.languageId)}
+              </Text>
+            </View>
+          </View>
+
+          {item.pronunciation && (
+            <Text className="mt-2 text-sm italic text-neutral-500 dark:text-neutral-400">
+              /{item.pronunciation}/
+            </Text>
+          )}
+
+          {item.example && (
+            <View className="mt-3 rounded-xl bg-white p-3 dark:bg-neutral-900">
+              <Text className="text-sm text-neutral-700 dark:text-neutral-300">
+                {item.example}
+              </Text>
+              {item.exampleTranslation && (
+                <Text className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                  {item.exampleTranslation}
                 </Text>
               )}
             </View>
-          </View>
-          <View className={`rounded-full px-2.5 py-1 ${typeBg}`}>
-            <Text className={`text-xs font-semibold ${typeColor}`}>
-              {typeLabel}
-            </Text>
-          </View>
+          )}
+
+          {/* Swipe hint — shown once */}
+          <Text className="mt-3 text-center text-[10px] text-neutral-400 dark:text-neutral-600">
+            {t("review.swipeHint")}
+          </Text>
         </View>
 
-        <View className="mt-3 flex-row flex-wrap gap-1.5">
-          <View className="rounded-full bg-white px-2.5 py-1 dark:bg-neutral-700">
-            <Text className="text-xs text-neutral-600 dark:text-neutral-400">
-              {CATEGORY_LABELS[item.category as DictionaryCategory] ?? item.category}
+        {/* Action bar */}
+        <View className="flex-row border-t border-neutral-200 dark:border-neutral-700">
+          <Pressable
+            onPress={onReject}
+            disabled={isPending}
+            className="flex-1 flex-row items-center justify-center py-3 active:opacity-70"
+          >
+            <IconSymbol name="xmark.circle.fill" size={16} color="#ef4444" />
+            <Text className="ml-1.5 text-sm font-semibold text-red-500">{t("common.reject")}</Text>
+          </Pressable>
+          <View className="w-[1px] bg-neutral-200 dark:bg-neutral-700" />
+          <Pressable
+            onPress={onApprove}
+            disabled={isPending}
+            className="flex-1 flex-row items-center justify-center py-3 active:opacity-70"
+          >
+            <IconSymbol name="checkmark.circle.fill" size={16} color="#22c55e" />
+            <Text className="ml-1.5 text-sm font-semibold text-green-600 dark:text-green-400">
+              {t("common.approve")}
             </Text>
-          </View>
-          <View className="rounded-full bg-white px-2.5 py-1 dark:bg-neutral-700">
-            <Text className="text-xs text-neutral-600 dark:text-neutral-400">
-              {getLanguageName(item.languageId)}
-            </Text>
-          </View>
+          </Pressable>
         </View>
-
-        {item.pronunciation && (
-          <Text className="mt-2 text-sm italic text-neutral-500 dark:text-neutral-400">
-            /{item.pronunciation}/
-          </Text>
-        )}
-
-        {item.example && (
-          <View className="mt-3 rounded-xl bg-white p-3 dark:bg-neutral-900">
-            <Text className="text-sm text-neutral-700 dark:text-neutral-300">
-              {item.example}
-            </Text>
-            {item.exampleTranslation && (
-              <Text className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-                {item.exampleTranslation}
-              </Text>
-            )}
-          </View>
-        )}
       </View>
-
-      {/* Action bar */}
-      <View className="flex-row border-t border-neutral-200 dark:border-neutral-700">
-        <Pressable
-          onPress={onReject}
-          disabled={isPending}
-          className="flex-1 flex-row items-center justify-center py-3 active:opacity-70"
-        >
-          <IconSymbol name="xmark.circle.fill" size={16} color="#ef4444" />
-          <Text className="ml-1.5 text-sm font-semibold text-red-500">{t("common.reject")}</Text>
-        </Pressable>
-        <View className="w-[1px] bg-neutral-200 dark:bg-neutral-700" />
-        <Pressable
-          onPress={onApprove}
-          disabled={isPending}
-          className="flex-1 flex-row items-center justify-center py-3 active:opacity-70"
-        >
-          <IconSymbol name="checkmark.circle.fill" size={16} color="#22c55e" />
-          <Text className="ml-1.5 text-sm font-semibold text-green-600 dark:text-green-400">
-            {t("common.approve")}
-          </Text>
-        </Pressable>
-      </View>
-    </View>
+    </Swipeable>
   );
 }
 
@@ -275,136 +314,153 @@ function LessonContributionCard({
   const timedCount = item.segments.filter((s) => s.startTime != null).length;
 
   return (
-    <View className="mx-5 mb-3 overflow-hidden rounded-2xl bg-neutral-50 dark:bg-neutral-800">
-      <View className="p-4">
-        {/* Header */}
-        <View className="flex-row items-start">
-          {/* Play button */}
-          <Pressable
-            onPress={togglePlay}
-            className={`mr-3 h-12 w-12 items-center justify-center rounded-xl ${
-              isPlaying ? "bg-blue-500" : "bg-blue-100 dark:bg-blue-900"
-            }`}
-          >
-            <IconSymbol
-              name={isPlaying ? "pause.fill" : "play.fill"}
-              size={18}
-              color={isPlaying ? "white" : "#3b82f6"}
-            />
-          </Pressable>
+    <Swipeable
+      renderLeftActions={() => <SwipeApprove />}
+      renderRightActions={() => <SwipeReject />}
+      onSwipeableOpen={(dir) => {
+        if (isPending) return;
+        if (dir === "left") onApprove();
+        if (dir === "right") onReject();
+      }}
+      overshootLeft={false}
+      overshootRight={false}
+    >
+      <View className="mx-5 mb-3 overflow-hidden rounded-2xl bg-neutral-50 dark:bg-neutral-800">
+        <View className="p-4">
+          {/* Header */}
+          <View className="flex-row items-start">
+            {/* Play button */}
+            <Pressable
+              onPress={togglePlay}
+              className={`mr-3 h-12 w-12 items-center justify-center rounded-xl ${
+                isPlaying ? "bg-blue-500" : "bg-blue-100 dark:bg-blue-900"
+              }`}
+            >
+              <IconSymbol
+                name={isPlaying ? "pause.fill" : "play.fill"}
+                size={18}
+                color={isPlaying ? "white" : "#3b82f6"}
+              />
+            </Pressable>
 
-          <View className="flex-1">
-            <Text className="text-base font-bold text-neutral-900 dark:text-white">
-              {item.title}
-            </Text>
-            <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
-              {t("review.submittedBy", { name: item.userName ?? t("review.unknown") })}
-            </Text>
+            <View className="flex-1">
+              <Text className="text-base font-bold text-neutral-900 dark:text-white">
+                {item.title}
+              </Text>
+              <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
+                {t("review.submittedBy", { name: item.userName ?? t("review.unknown") })}
+              </Text>
+            </View>
+
+            <View className="rounded-full bg-purple-100 px-2.5 py-1 dark:bg-purple-900">
+              <Text className="text-xs font-semibold text-purple-700 dark:text-purple-300">
+                {t("review.lessonBadge")}
+              </Text>
+            </View>
           </View>
 
-          <View className="rounded-full bg-purple-100 px-2.5 py-1 dark:bg-purple-900">
-            <Text className="text-xs font-semibold text-purple-700 dark:text-purple-300">
-              {t("review.lessonBadge")}
-            </Text>
-          </View>
-        </View>
-
-        {/* Meta chips */}
-        <View className="mt-3 flex-row flex-wrap gap-1.5">
-          <View className="rounded-full bg-white px-2.5 py-1 dark:bg-neutral-700">
-            <Text className="text-xs text-neutral-600 dark:text-neutral-400">
-              {getLanguageName(item.languageId)}
-            </Text>
-          </View>
-          {item.duration && (
+          {/* Meta chips */}
+          <View className="mt-3 flex-row flex-wrap gap-1.5">
             <View className="rounded-full bg-white px-2.5 py-1 dark:bg-neutral-700">
               <Text className="text-xs text-neutral-600 dark:text-neutral-400">
-                {Math.floor(item.duration / 60)}:{String(item.duration % 60).padStart(2, "0")}
+                {getLanguageName(item.languageId)}
               </Text>
             </View>
-          )}
-          <View className="rounded-full bg-white px-2.5 py-1 dark:bg-neutral-700">
-            <Text className="text-xs text-neutral-600 dark:text-neutral-400">
-              {t("review.segments", { count: segmentCount })}{timedCount > 0 ? ` ${t("review.timedSegments", { count: timedCount })}` : ""}
-            </Text>
+            {item.duration && (
+              <View className="rounded-full bg-white px-2.5 py-1 dark:bg-neutral-700">
+                <Text className="text-xs text-neutral-600 dark:text-neutral-400">
+                  {Math.floor(item.duration / 60)}:{String(item.duration % 60).padStart(2, "0")}
+                </Text>
+              </View>
+            )}
+            <View className="rounded-full bg-white px-2.5 py-1 dark:bg-neutral-700">
+              <Text className="text-xs text-neutral-600 dark:text-neutral-400">
+                {t("review.segments", { count: segmentCount })}{timedCount > 0 ? ` ${t("review.timedSegments", { count: timedCount })}` : ""}
+              </Text>
+            </View>
           </View>
+
+          {/* Description */}
+          <Text className="mt-3 text-sm leading-5 text-neutral-700 dark:text-neutral-300" numberOfLines={2}>
+            {item.description}
+          </Text>
+
+          {/* Transcript — expandable */}
+          {segmentCount > 0 && (
+            <Pressable
+              onPress={() => setTranscriptExpanded(!transcriptExpanded)}
+              className="mt-3 rounded-xl bg-white p-3 active:opacity-70 dark:bg-neutral-900"
+            >
+              <View className="flex-row items-center justify-between">
+                <Text className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                  {t("review.transcript")}
+                </Text>
+                <IconSymbol
+                  name={transcriptExpanded ? "chevron.up" : "chevron.down"}
+                  size={12}
+                  color="#9ca3af"
+                />
+              </View>
+
+              {transcriptExpanded ? (
+                <ScrollView style={{ maxHeight: 200 }} className="mt-2" nestedScrollEnabled>
+                  {item.segments.map((seg) => (
+                    <View key={seg.id} className="mb-2 flex-row">
+                      <Text className="mr-2 min-w-[36px] text-xs tabular-nums text-neutral-400 dark:text-neutral-500">
+                        {seg.startTime != null ? `${seg.startTime.toFixed(1)}s` : "--"}
+                      </Text>
+                      <View className="flex-1">
+                        <Text className="text-sm text-neutral-800 dark:text-neutral-200">
+                          {seg.text}
+                        </Text>
+                        {seg.translation && (
+                          <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                            {seg.translation}
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                  ))}
+                </ScrollView>
+              ) : (
+                <Text className="mt-1.5 text-xs text-neutral-500 dark:text-neutral-400" numberOfLines={2}>
+                  {item.segments.slice(0, 2).map((s) => s.text).join(" · ")}
+                  {segmentCount > 2 ? ` ${t("review.moreSegments", { count: segmentCount - 2 })}` : ""}
+                </Text>
+              )}
+            </Pressable>
+          )}
+
+          {/* Swipe hint */}
+          <Text className="mt-3 text-center text-[10px] text-neutral-400 dark:text-neutral-600">
+            {t("review.swipeHint")}
+          </Text>
         </View>
 
-        {/* Description */}
-        <Text className="mt-3 text-sm leading-5 text-neutral-700 dark:text-neutral-300" numberOfLines={2}>
-          {item.description}
-        </Text>
-
-        {/* Transcript — expandable */}
-        {segmentCount > 0 && (
+        {/* Action bar */}
+        <View className="flex-row border-t border-neutral-200 dark:border-neutral-700">
           <Pressable
-            onPress={() => setTranscriptExpanded(!transcriptExpanded)}
-            className="mt-3 rounded-xl bg-white p-3 active:opacity-70 dark:bg-neutral-900"
+            onPress={onReject}
+            disabled={isPending}
+            className="flex-1 flex-row items-center justify-center py-3 active:opacity-70"
           >
-            <View className="flex-row items-center justify-between">
-              <Text className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-                {t("review.transcript")}
-              </Text>
-              <IconSymbol
-                name={transcriptExpanded ? "chevron.up" : "chevron.down"}
-                size={12}
-                color="#9ca3af"
-              />
-            </View>
-
-            {transcriptExpanded ? (
-              <ScrollView style={{ maxHeight: 200 }} className="mt-2" nestedScrollEnabled>
-                {item.segments.map((seg) => (
-                  <View key={seg.id} className="mb-2 flex-row">
-                    <Text className="mr-2 min-w-[36px] text-xs tabular-nums text-neutral-400 dark:text-neutral-500">
-                      {seg.startTime != null ? `${seg.startTime.toFixed(1)}s` : "--"}
-                    </Text>
-                    <View className="flex-1">
-                      <Text className="text-sm text-neutral-800 dark:text-neutral-200">
-                        {seg.text}
-                      </Text>
-                      {seg.translation && (
-                        <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-                          {seg.translation}
-                        </Text>
-                      )}
-                    </View>
-                  </View>
-                ))}
-              </ScrollView>
-            ) : (
-              <Text className="mt-1.5 text-xs text-neutral-500 dark:text-neutral-400" numberOfLines={2}>
-                {item.segments.slice(0, 2).map((s) => s.text).join(" · ")}
-                {segmentCount > 2 ? ` ${t("review.moreSegments", { count: segmentCount - 2 })}` : ""}
-              </Text>
-            )}
+            <IconSymbol name="xmark.circle.fill" size={16} color="#ef4444" />
+            <Text className="ml-1.5 text-sm font-semibold text-red-500">{t("common.reject")}</Text>
           </Pressable>
-        )}
+          <View className="w-[1px] bg-neutral-200 dark:bg-neutral-700" />
+          <Pressable
+            onPress={onApprove}
+            disabled={isPending}
+            className="flex-1 flex-row items-center justify-center py-3 active:opacity-70"
+          >
+            <IconSymbol name="checkmark.circle.fill" size={16} color="#22c55e" />
+            <Text className="ml-1.5 text-sm font-semibold text-green-600 dark:text-green-400">
+              {t("common.approve")}
+            </Text>
+          </Pressable>
+        </View>
       </View>
-
-      {/* Action bar */}
-      <View className="flex-row border-t border-neutral-200 dark:border-neutral-700">
-        <Pressable
-          onPress={onReject}
-          disabled={isPending}
-          className="flex-1 flex-row items-center justify-center py-3 active:opacity-70"
-        >
-          <IconSymbol name="xmark.circle.fill" size={16} color="#ef4444" />
-          <Text className="ml-1.5 text-sm font-semibold text-red-500">{t("common.reject")}</Text>
-        </Pressable>
-        <View className="w-[1px] bg-neutral-200 dark:bg-neutral-700" />
-        <Pressable
-          onPress={onApprove}
-          disabled={isPending}
-          className="flex-1 flex-row items-center justify-center py-3 active:opacity-70"
-        >
-          <IconSymbol name="checkmark.circle.fill" size={16} color="#22c55e" />
-          <Text className="ml-1.5 text-sm font-semibold text-green-600 dark:text-green-400">
-            {t("common.approve")}
-          </Text>
-        </Pressable>
-      </View>
-    </View>
+    </Swipeable>
   );
 }
 
@@ -418,6 +474,7 @@ export default function ReviewScreen() {
   const canReview = isAdmin || (currentUser?.isReviewer ?? false);
 
   const [activeTab, setActiveTab] = useState<"words" | "lessons">("words");
+  const [selectedLang, setSelectedLang] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const { data: pending, isLoading: loadingWords, refetch: refetchWords } = usePendingContributions();
@@ -439,6 +496,16 @@ export default function ReviewScreen() {
 
   const wordCount = scopedWords.length;
   const lessonCount = scopedLessons.length;
+
+  const visibleWords = selectedLang ? scopedWords.filter((c) => c.languageId === selectedLang) : scopedWords;
+  const visibleLessons = selectedLang ? scopedLessons.filter((c) => c.languageId === selectedLang) : scopedLessons;
+
+  const languageIds = useMemo(() => {
+    const ids = activeTab === "words"
+      ? [...new Set(scopedWords.map((c) => c.languageId))]
+      : [...new Set(scopedLessons.map((c) => c.languageId))];
+    return ids;
+  }, [activeTab, scopedWords, scopedLessons]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -539,20 +606,66 @@ export default function ReviewScreen() {
             label={t("review.tabWords")}
             count={wordCount}
             active={activeTab === "words"}
-            onPress={() => setActiveTab("words")}
+            onPress={() => { setActiveTab("words"); setSelectedLang(null); }}
           />
           <TabPill
             label={t("review.tabLessons")}
             count={lessonCount}
             active={activeTab === "lessons"}
-            onPress={() => setActiveTab("lessons")}
+            onPress={() => { setActiveTab("lessons"); setSelectedLang(null); }}
           />
         </View>
+
+        {/* Language filter chips */}
+        {languageIds.length > 1 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="px-5 pb-3"
+            contentContainerStyle={{ gap: 8 }}
+          >
+            <Pressable
+              onPress={() => setSelectedLang(null)}
+              className={`rounded-full px-3 py-1.5 ${
+                selectedLang === null
+                  ? "bg-neutral-700 dark:bg-neutral-200"
+                  : "bg-neutral-100 dark:bg-neutral-800"
+              }`}
+            >
+              <Text className={`text-xs font-semibold ${
+                selectedLang === null
+                  ? "text-white dark:text-neutral-900"
+                  : "text-neutral-600 dark:text-neutral-400"
+              }`}>
+                {t("review.filterAll")}
+              </Text>
+            </Pressable>
+            {languageIds.map((lid) => (
+              <Pressable
+                key={lid}
+                onPress={() => setSelectedLang(lid)}
+                className={`rounded-full px-3 py-1.5 ${
+                  selectedLang === lid
+                    ? "bg-neutral-700 dark:bg-neutral-200"
+                    : "bg-neutral-100 dark:bg-neutral-800"
+                }`}
+              >
+                <Text className={`text-xs font-semibold ${
+                  selectedLang === lid
+                    ? "text-white dark:text-neutral-900"
+                    : "text-neutral-600 dark:text-neutral-400"
+                }`}>
+                  {getLanguageName(lid)}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
 
         {/* Words tab */}
         {activeTab === "words" && (
           <FlatList
-            data={scopedWords}
+            data={visibleWords}
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingTop: 4, paddingBottom: 24 }}
             showsVerticalScrollIndicator={false}
@@ -583,7 +696,7 @@ export default function ReviewScreen() {
         {/* Lessons tab */}
         {activeTab === "lessons" && (
           <FlatList
-            data={scopedLessons}
+            data={visibleLessons}
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingTop: 4, paddingBottom: 24 }}
             showsVerticalScrollIndicator={false}

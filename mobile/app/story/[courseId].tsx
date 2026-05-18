@@ -5,20 +5,21 @@ import {
   Pressable,
   ScrollView,
   Modal,
+  ActivityIndicator,
 } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { StoryProgressBar } from "@/components/story/story-progress-bar";
 import { ChapterIntro } from "@/components/story/chapter-intro";
-import { getStoryForCourse } from "@/lib/data/stories";
+import { useStoryArc } from "@/lib/hooks/use-story-arc";
 import { useStoryStore } from "@/store/story-store";
 import type { StoryChapter } from "@/types";
 
 export default function StoryScreen() {
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
   const router = useRouter();
-  const story = getStoryForCourse(courseId ?? "");
+  const { data: story, isLoading } = useStoryArc(courseId ?? "");
 
   const hydrate = useStoryStore((s) => s.hydrate);
   const hydrated = useStoryStore((s) => s._hydrated);
@@ -34,6 +35,17 @@ export default function StoryScreen() {
   useEffect(() => {
     hydrate();
   }, []);
+
+  if (isLoading) {
+    return (
+      <>
+        <Stack.Screen options={{ title: "Story Mode" }} />
+        <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-neutral-900">
+          <ActivityIndicator size="large" color="#f59e0b" />
+        </SafeAreaView>
+      </>
+    );
+  }
 
   if (!story) {
     return (
