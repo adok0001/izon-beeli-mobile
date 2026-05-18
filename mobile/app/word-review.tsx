@@ -10,11 +10,13 @@ import { useLanguageStore } from "@/store/language-store";
 import type { AudioSource } from "@/types";
 import { useQueries } from "@tanstack/react-query";
 import { Audio } from "expo-av";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useLesson } from "@/lib/hooks/use-courses";
+import { useDictionary } from "@/lib/hooks/use-dictionary";
 
 type CardFace = "question" | "answer";
 
@@ -177,8 +179,20 @@ function ReviewCard({
 
 export default function WordReviewScreen() {
   const router = useRouter();
+  const { lessonId } = useLocalSearchParams<{ lessonId?: string }>();
   const { selectedLanguageId } = useLanguageStore();
-  const { data: dueEntries = [], isLoading: isDueLoading } = useWordsDueForReview(selectedLanguageId);
+  const { t } = useTranslation();
+
+  // Lesson mode: load lesson transcript and match to dictionary
+  const { data: lessonData, isLoading: isLessonLoading } = useLesson(lessonId ?? "");
+  const { data: lessonDictionary = [], isLoading: isLessonDictLoading } = useDictionary(
+    lessonId ? selectedLanguageId : ""
+  );
+
+  // SRS mode: words due for review from the user's wordbank
+  const { data: dueEntries = [], isLoading: isDueLoading } = useWordsDueForReview(
+    lessonId ? null : selectedLanguageId
+  );
   const languageIds = useMemo(
     () => [...new Set(dueEntries.map((e) => e.languageId))],
     [dueEntries]
@@ -190,12 +204,12 @@ export default function WordReviewScreen() {
     })),
   });
   const isDictLoading = dictionaryQueries.some((q) => q.isLoading);
-  const dictionary = dictionaryQueries.flatMap((q) => q.data ?? []);
+  const srsDictionary = dictionaryQueries.flatMap((q) => q.data ?? []);
+
   const reviewWord = useReviewWord();
   const queryClient = useQueryClient();
   const invalidateReviewQueue = useInvalidateReviewQueue();
   const invalidateDailyChallenges = useInvalidateDailyChallenges();
-  const { t } = useTranslation();
 
   useEffect(() => {
     return () => {
@@ -205,7 +219,22 @@ export default function WordReviewScreen() {
     };
   }, [invalidateReviewQueue, invalidateDailyChallenges, queryClient]);
 
-  const isLoading = isDueLoading || isDictLoading;
+  // Lesson-mode: match transcript words to dictionary entries
+  const lessonEntries = useMemo(() => {
+    if (!lessonId || !lessonData?.transcript?.length || !lessonDictionary.length) return [];
+    const transcriptWords = new Set(
+      lessonData.transcript
+        .flatMap((seg) =>
+          seg.text.split(/\s+/).map((w) => w.toLowerCase().replace(/[.,!?;:'"()\[\]]/g, "").trim())
+        )
+        .filter(Boolean)
+    );
+    return lessonDictionary.filter((e) => transcriptWords.has(e.word.toLowerCase().trim()));
+  }, [lessonId, lessonData, lessonDictionary]);
+
+  const isLoading = lessonId
+    ? isLessonLoading || isLessonDictLoading
+    : isDueLoading || isDictLoading;
 
   const reviewCountMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -220,14 +249,23 @@ export default function WordReviewScreen() {
   const [xpToast, setXpToast] = useState<string | null>(null);
 
   useEffect(() => {
-    if (queueBuilt || isLoading || dueEntries.length === 0 || dictionary.length === 0) return;
-    const dictMap = new Map(dictionary.map((e) => [e.id, e]));
-    const resolved = dueEntries
-      .map((e) => dictMap.get(e.dictionaryEntryId))
-      .filter(Boolean) as DictionaryEntry[];
-    setQueue(resolved);
-    setQueueBuilt(true);
-  }, [isLoading, dueEntries, dictionary, queueBuilt]);
+    if (queueBuilt || isLoading) return;
+    if (lessonId) {
+      // Lesson mode: use transcript-matched entries (fall back to full dictionary if no matches)
+      const entries = lessonEntries.length > 0 ? lessonEntries : lessonDictionary;
+      if (entries.length === 0) return;
+      setQueue(entries);
+      setQueueBuilt(true);
+    } else {
+      if (dueEntries.length === 0 || srsDictionary.length === 0) return;
+      const dictMap = new Map(srsDictionary.map((e) => [e.id, e]));
+      const resolved = dueEntries
+        .map((e) => dictMap.get(e.dictionaryEntryId))
+        .filter(Boolean) as DictionaryEntry[];
+      setQueue(resolved);
+      setQueueBuilt(true);
+    }
+  }, [isLoading, lessonId, lessonEntries, lessonDictionary, dueEntries, srsDictionary, queueBuilt]);
 
   const currentEntry = queue[currentIndex];
   const isFinished = queueBuilt && currentIndex >= queue.length;
@@ -275,11 +313,12 @@ export default function WordReviewScreen() {
   );
 
   const uniqueReviewed = reviewedIds.size;
-  const showLoading = isLoading || (!queueBuilt && dueEntries.length > 0);
+  const hasSource = lessonId ? (lessonDictionary.length > 0) : (dueEntries.length > 0);
+  const showLoading = isLoading || (!queueBuilt && hasSource);
 
   return (
     <>
-      <Stack.Screen options={{ title: t("wordReview.title"), headerShown: true }} />
+      <Stack.Screen options={{ title: lessonId ? t("wordReview.lessonTitle") : t("wordReview.title"), headerShown: true }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
         {showLoading ? (
           <View className="flex-1 items-center justify-center">
@@ -292,7 +331,7 @@ export default function WordReviewScreen() {
               {t("wordReview.allCaughtUp")}
             </Text>
             <Text className="mt-2 text-center text-sm text-neutral-500 dark:text-neutral-400">
-              {t("wordReview.noWordsDue")}
+              {lessonId ? t("wordReview.noLessonWords") : t("wordReview.noWordsDue")}
             </Text>
             <Pressable
               onPress={() => router.back()}

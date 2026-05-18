@@ -431,6 +431,8 @@ export const pcm = {
     playAudio: "Play audio",
     playing: "E dey play…",
     retentionDesc: "You don see am {{avg}}× average — {{pct}}% chance you go remember",
+    lessonTitle: "Lesson Vocabulary",
+    noLessonWords: "No vocabulary dem find for dis lesson transcript.",
   },
   matching: {
     titleSuffix: "Matching",
@@ -590,6 +592,10 @@ export const pcm = {
     toastTitle: "🔥 {{count}}-day streak!",
     toastMilestoneTitle: "🎉 {{count}}-day milestone!",
     toastMilestoneBody: "You don reach big milestone. Keep going!",
+  },
+  dailyGoal: {
+    celebrationTitle: "🎯 Daily goal don complete!",
+    celebrationBody: "You don finish all 3 challenges for today. Come back tomorrow!",
   },
   languagePicker: {
     title: "Choose Language",

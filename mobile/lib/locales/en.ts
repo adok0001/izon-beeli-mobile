@@ -430,6 +430,8 @@ export const en = {
     playAudio: "Play audio",
     playing: "Playing…",
     retentionDesc: "Seen an avg of {{avg}}× — {{pct}}% likely to remember",
+    lessonTitle: "Lesson Vocabulary",
+    noLessonWords: "No vocabulary found in this lesson's transcript.",
   },
   matching: {
     titleSuffix: "Matching",
@@ -589,6 +591,10 @@ export const en = {
     toastTitle: "🔥 {{count}}-day streak!",
     toastMilestoneTitle: "🎉 {{count}}-day milestone!",
     toastMilestoneBody: "You hit a major milestone. Keep going!",
+  },
+  dailyGoal: {
+    celebrationTitle: "🎯 Daily goal complete!",
+    celebrationBody: "You've finished all 3 challenges for today. Come back tomorrow!",
   },
   languagePicker: {
     title: "Choose Language",

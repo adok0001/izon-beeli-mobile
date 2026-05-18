@@ -300,7 +300,12 @@ export default function LessonScreen() {
                 </Pressable>
 
                 <Pressable
-                  onPress={() => router.push("/word-review")}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/word-review",
+                      params: { lessonId: lesson.id },
+                    })
+                  }
                   className="flex-1 items-center rounded-2xl border border-emerald-200 py-4 active:opacity-80 dark:border-emerald-800"
                 >
                   <IconSymbol name="brain.head.profile" size={18} color="#10b981" />
