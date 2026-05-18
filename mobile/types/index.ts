@@ -84,6 +84,7 @@ export interface FeedItem {
   createdAt: string;
   likes: number;
   comments: number;
+  isLiked: boolean;
   audioUrl?: AudioSource; // for contribution cards with audio
 }
 
