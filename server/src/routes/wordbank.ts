@@ -5,6 +5,7 @@ import { wordBank, dictionaryEntries } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
 import { awardXP } from "../lib/award-xp.js";
 import { incrementDailyChallenge } from "../lib/daily-challenge.js";
+import { updateStreak } from "../lib/update-streak.js";
 
 export const wordbankRouter = new Hono<AuthEnv>();
 
@@ -163,9 +164,12 @@ wordbankRouter.post("/:entryId/review", async (c) => {
     })
     .where(and(eq(wordBank.userId, userId), eq(wordBank.dictionaryEntryId, entryId)));
 
-  // Award XP + increment daily challenge (fire-and-forget)
-  const xpResult = await awardXP(userId, 5, "word_review").catch(() => null);
-  await incrementDailyChallenge(userId, "review_words").catch(() => {});
+  // Award XP + streak + daily challenge (fire-and-forget)
+  const [xpResult] = await Promise.all([
+    awardXP(userId, 5, "word_review").catch(() => null),
+    updateStreak(userId).catch(() => null),
+    incrementDailyChallenge(userId, "review_words").catch(() => {}),
+  ]);
 
   return c.json({
     nextReviewAt: nextReviewAt.toISOString(),

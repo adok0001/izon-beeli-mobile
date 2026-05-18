@@ -12,6 +12,9 @@ import { getLanguageName } from "@/lib/mock-data";
 import { hapticHeavy } from "@/lib/haptics";
 import { playFinishSound } from "@/lib/sounds";
 import { useTranslation } from "react-i18next";
+import { apiFetch } from "@/lib/api";
+import { useAuth } from "@clerk/clerk-expo";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function MatchingGameScreen() {
   const router = useRouter();
@@ -21,6 +24,8 @@ export default function MatchingGameScreen() {
   const { phase, startGame, getResult, reset } = useMatchingStore();
   const [isEmpty, setIsEmpty] = useState(false);
   const initialized = useRef(false);
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
 
   const languageName = getLanguageName(selectedLanguageId);
   const { t } = useTranslation();
@@ -47,10 +52,29 @@ export default function MatchingGameScreen() {
   }, [isDictLoading]);
 
   useEffect(() => {
-    if (phase === "results") {
-      hapticHeavy();
-      playFinishSound();
-    }
+    if (phase !== "results") return;
+    hapticHeavy();
+    playFinishSound();
+    const result = getResult();
+    const post = async () => {
+      try {
+        const token = await getToken();
+        await apiFetch("/matching-results", {
+          method: "POST",
+          token: token ?? undefined,
+          body: JSON.stringify({
+            languageId: selectedLanguageId,
+            accuracy: result.accuracy,
+            totalPairs: result.totalPairs,
+            durationMs: result.timeElapsed * 1000,
+          }),
+        });
+        queryClient.invalidateQueries({ queryKey: ["progress"] });
+      } catch {
+        // non-blocking
+      }
+    };
+    post();
   }, [phase]);
 
   const handlePlayAgain = useCallback(() => {

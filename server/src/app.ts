@@ -23,6 +23,7 @@ import { notificationsAdminRouter, notificationsRouter } from "./routes/notifica
 import { progressRouter } from "./routes/progress.js";
 import { proverbsAdminRouter, proverbsRouter } from "./routes/proverbs.js";
 import { pushTokensRouter } from "./routes/push-tokens.js";
+import { matchingResultsRouter } from "./routes/matching-results.js";
 import { quizResultsRouter } from "./routes/quiz-results.js";
 import { quizRouter } from "./routes/quiz.js";
 import { reviewerApplicationsAdminRouter, reviewerApplicationsRouter } from "./routes/reviewer-applications.js";
@@ -94,6 +95,7 @@ app.route("/feedback/admin", feedbackAdminRouter);
 app.route("/multiplayer", multiplayerRouter);
 app.route("/multiplayer", multiplayerInternalRouter);
 app.route("/quiz-results", quizResultsRouter);
+app.route("/matching-results", matchingResultsRouter);
 app.route("/push-tokens", pushTokensRouter);
 app.route("/classroom", classroomRouter);
 app.route("/daily-challenges", dailyChallengesRouter);
