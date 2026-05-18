@@ -6,6 +6,7 @@ import Animated, {
     useAnimatedStyle,
     useSharedValue,
     withDelay,
+    withSequence,
     withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -44,12 +45,14 @@ export function NotificationBanner({
 
   useEffect(() => {
     if (visible) {
-      translateY.value = withTiming(0, { duration: 300 });
-      translateY.value = withDelay(
-        duration,
-        withTiming(-100, { duration: 300 }, (finished) => {
-          if (finished) runOnJS(onDismiss)();
-        })
+      translateY.value = withSequence(
+        withTiming(0, { duration: 300 }),
+        withDelay(
+          duration,
+          withTiming(-100, { duration: 300 }, (finished) => {
+            if (finished) runOnJS(onDismiss)();
+          })
+        )
       );
     } else {
       translateY.value = withTiming(-100, { duration: 300 });

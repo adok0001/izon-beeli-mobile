@@ -1,16 +1,16 @@
-import { CulturalSection } from "@/components/cultural/cultural-section";
 import { EnrolledLanguageBar } from "@/components/language-picker";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { NotificationBell } from "@/components/notifications/notification-center";
-
 import { StreakFreezeModal } from "@/components/streak-freeze-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { UpNextCard } from "@/components/up-next-card";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useStoryArcs } from "@/lib/hooks/use-story-arc";
 import { useBounties } from "@/lib/hooks/use-bounties";
 import { useCourseLessons, useCourses, useLesson } from "@/lib/hooks/use-courses";
 import { useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
 import { useCompletedLessons, useProgressSummary } from "@/lib/hooks/use-progress";
+import { useStoryArcs } from "@/lib/hooks/use-story-arc";
+import { useToast } from "@/lib/hooks/use-toast";
 import { useWordsDueForReview } from "@/lib/hooks/use-wordbank";
 import { localizeField } from "@/lib/localize";
 import { BUNDLED_AUDIO, formatDuration } from "@/lib/mock-data";
@@ -423,6 +423,8 @@ export default function LearnScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [freezeModalVisible, setFreezeModalVisible] = useState(false);
   const freezeChecked = useRef(false);
+  const goalCelebrationChecked = useRef(false);
+  const { toast, success: toastSuccess, dismiss: dismissToast } = useToast();
   const resumeState = useAudioStore((s) => s.resumeState);
   const loadResumeState = useAudioStore((s) => s.loadResumeState);
   const activeTour = useTourStore((s) => s.activeTour);
@@ -449,6 +451,21 @@ export default function LearnScreen() {
       setFreezeModalVisible(true);
     }).catch(() => {});
   }, [summary?.streakBroken, summary?.streak, activeTour]);
+
+  const DAILY_GOAL = 3;
+
+  useEffect(() => {
+    if (completedToday < DAILY_GOAL || goalCelebrationChecked.current) return;
+
+    goalCelebrationChecked.current = true;
+    const today = new Date().toISOString().slice(0, 10);
+    AsyncStorage.getItem("daily-goal-celebration-shown").then((lastShown) => {
+      if (lastShown === today) return;
+      AsyncStorage.setItem("daily-goal-celebration-shown", today).catch(() => {});
+      toastSuccess(t("dailyGoal.celebrationTitle"), t("dailyGoal.celebrationBody"));
+    }).catch(() => {});
+
+  }, [completedToday]);
 
   const isLoading = coursesLoading || progressLoading;
 
@@ -580,7 +597,6 @@ export default function LearnScreen() {
                 />
               )}
               <UpNextCard languageId={selectedLanguageId} />
-              <CulturalSection languageId={selectedLanguageId} />
               <BountyTeaser languageId={selectedLanguageId} />
               <ContributorBanner />
             </View>
@@ -599,6 +615,13 @@ export default function LearnScreen() {
         onDismiss={() => setFreezeModalVisible(false)}
       />
 
+      <NotificationBanner
+        visible={toast.visible}
+        title={toast.title}
+        body={toast.body}
+        type={toast.type}
+        onDismiss={dismissToast}
+      />
     </SafeAreaView>
   );
 }
