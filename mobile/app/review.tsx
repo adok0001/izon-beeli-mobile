@@ -617,13 +617,8 @@ export default function ReviewScreen() {
         </View>
 
         {/* Language filter chips */}
-        {languageIds.length > 1 && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="px-5 pb-3"
-            contentContainerStyle={{ gap: 8 }}
-          >
+        {languageIds.length > 0 && (
+          <View className="flex-row flex-wrap gap-2 px-5 pb-3">
             <Pressable
               onPress={() => setSelectedLang(null)}
               className={`rounded-full px-3 py-1.5 ${
@@ -659,7 +654,7 @@ export default function ReviewScreen() {
                 </Text>
               </Pressable>
             ))}
-          </ScrollView>
+          </View>
         )}
 
         {/* Words tab */}
