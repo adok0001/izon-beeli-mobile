@@ -241,6 +241,9 @@ export interface QuizQuestion {
     correctAnswer: string;
     options: string[];
     audioSource?: AudioSource;
+    explanation?: string;
+    exampleSentence?: string;
+    exampleSentenceTranslation?: string;
 }
 export interface QuizConfig {
     languageId: string;

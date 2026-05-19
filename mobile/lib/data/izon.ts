@@ -802,4 +802,90 @@ export const IZON_DICTIONARY: DictionaryEntry[] = [
   e(706, "ologbo", "cat", "animals", undefined, "Ologbo warị mọ emi", "The cat is in the house"),
   e(707, "otobo", "hippopotamus", "animals", undefined, "Otobo ọba mọ emi", "The hippopotamus is in the stream"),
   e(708, "ẹlọlị", "hyena", "animals", undefined, "Ẹlọlị bou kọ emi", "The hyena is in the bush"),
+
+  // =============================================
+  // New entries d709+ (scraped from lesson transcripts)
+  // Sources: izon-colours, izon-numbers-trade, izon-sound-script,
+  //          izon-communicative, izon-first-words lesson files
+  // =============================================
+
+  // --- Colours (core terms from course-21) ---
+  e(709, "ẹwiri", "colour", "nouns", undefined, "Ẹwiri teki mọ?", "What colour is it?"),
+  e(710, "kwa-kwa", "red (first sacred Izon colour)", "nouns", undefined, "Bịdẹ kwa-kwa emi daa", "The cloth is red"),
+  e(711, "pena-pena", "white (second sacred Izon colour)", "nouns", undefined, "Bịdẹ pena-pena emi daa", "The cloth is white"),
+  e(712, "dirimo", "black (third sacred Izon colour)", "nouns", undefined, "Bịdẹ dirimo emi daa", "The cloth is black"),
+  e(713, "kuekue", "red (most common variant)", "nouns", undefined, "Ụraụ kuekue emi", "The sun is red"),
+  e(714, "kpilikpili", "very black (intensifier)", "nouns", undefined, "Duma arị kpilikpili emi", "My hair is very black"),
+  e(715, "efịnị", "violet", "nouns", undefined, "Bịdẹ efịnị emi daa", "The cloth is violet"),
+  e(716, "ọbọ", "green", "nouns", undefined, "Tuo ọbọ emi daa", "The leaves are green"),
+  e(717, "kẹ", "orange (colour)", "nouns", undefined, "Kẹ emi daa", "It is orange"),
+  e(718, "biluyu", "blue (loanword)", "nouns", undefined, "Beni biluyu emi daa", "The water looks blue"),
+
+  // --- Cultural Abstracts (from colour symbolism lessons) ---
+  e(719, "ibe", "strength; power", "nouns", undefined, "Ibe emi daa!", "There is strength!"),
+  e(720, "iniye", "royalty; dignity", "nouns", undefined, "Iniye emi daa", "There is royalty here"),
+  e(721, "yalị", "purity", "nouns", undefined, "Yalị emi daa", "There is purity"),
+  e(722, "sere", "cleanliness", "nouns", undefined, "Sere mịẹ!", "Be clean!"),
+  e(723, "kụlọ", "death", "nouns", undefined, "Kụlọ mịẹgha!", "Do not cause death!"),
+  e(724, "fịnama", "witchcraft; secret", "nouns", undefined, "Fịnama mịẹgha!", "Do not practise witchcraft!"),
+
+  // --- Environment & Geography (from phonetics lessons) ---
+  e(725, "bụmọụ", "sandbank", "nouns", undefined, "Bụmọụ torụ mọ emi", "There is a sandbank in the river"),
+  e(726, "dụnọụ", "lake", "nouns", undefined, "Dụnọụ bou mọ emi", "The lake is in the bush"),
+  e(727, "ọgbọ", "river; fish", "nouns", undefined, "Ọgbọ bei bou emi daa", "The river runs through the bush"),
+
+  // --- Food (from communicative lessons) ---
+  e(728, "ọrọsị", "rice", "food", undefined, "Ọrọsị tụọ!", "Cook the rice!"),
+  e(729, "bịredị", "bread", "food", undefined, "Bịredị mọ fii!", "Eat the bread!"),
+  e(730, "tii", "tea", "food", undefined, "Tii bou!", "Drink tea!"),
+
+  // --- Numbers: counting terms (from course-20) ---
+  e(731, "feni", "extra; remainder (vigesimal counting suffix)", "numbers", undefined, "Oyi kẹnị feni", "Eleven (ten and one extra)"),
+  e(732, "andẹ", "400 (twenty twenties; second major counting bundle)", "numbers", undefined, "Andẹ kẹnị emi", "There are four hundred"),
+
+  // --- Greetings & Response Words (from first-words lessons) ---
+  e(733, "Inyo", "yes", "greetings", undefined, "Inyo! Arị emi daa.", "Yes! I am fine."),
+  e(734, "Ọ dẹ", "it's alright; never mind", "greetings", undefined, "Ọ dẹ, ese faa!", "It's alright, no problem!"),
+  e(735, "Ịbene", "congratulations", "greetings", undefined, "Ịbene! Sei mọ daa!", "Congratulations! Very well done!"),
+
+  // --- Grammar & Negation Markers (from phonetics & grammar lessons) ---
+  e(736, "mene", "present / habitual action marker", "phrases", undefined, "Arị mu mene.", "I am going (habitually)."),
+  e(737, "bingha", "not many; not plenty", "phrases", undefined, "Ịndị bingha emi", "There are not many fish"),
+  e(738, "pingha", "not crowded; not tight", "phrases", undefined, "Fọụ pingha emi", "The market is not crowded"),
+
+  // --- Body Parts (from lesson-71 body parts vocabulary) ---
+  e(739, "ango", "body", "body", undefined, "Ango arị emi daa", "My body is fine"),
+  e(740, "andị", "face", "body", undefined, "Andị arị emi daa", "My face is fine"),
+  e(741, "bịbị-apiran", "lip", "body", undefined, "Bịbị-apiran arị sei", "My lip is not well"),
+  e(742, "bịra-ịmgbisa", "finger", "body", undefined, "Bịra-ịmgbisa arị sei", "My finger is not well"),
+  e(743, "bụọ-kubụ", "foot", "body", undefined, "Bụọ-kubụ arị sei", "My foot is not well"),
+  e(744, "bụọ-emgbisa", "toe", "body", undefined, "Bụọ-emgbisa arị sei", "My toe is not well"),
+  e(745, "etẹmẹ", "body hair", "body", undefined, "Etẹmẹ arị emi daa", "My body hair is fine"),
+
+  // --- Demonstratives & Collective Pronouns (from lesson-84) ---
+  e(746, "mí", "this (demonstrative, near speaker)", "pronouns", undefined, "Mí bei arị", "This is mine"),
+  e(747, "kịmị-sẹ", "everyone; everybody", "pronouns", undefined, "Kịmị-sẹ bo!", "Everyone come!"),
+  e(748, "o-sẹ", "all of us; we all", "pronouns", undefined, "O-sẹ mu!", "Let us all go!"),
+
+  // --- Verbs (from lesson-73 & lesson-74 household vocabulary) ---
+  e(749, "kọn", "to take; to fetch", "verbs", undefined, "Mị fun kọn!", "Take this book!"),
+  e(750, "kọnbo", "to bring", "verbs", undefined, "Beni kọnbo!", "Bring water!"),
+  e(751, "gẹẹ", "to write", "verbs", undefined, "Fun gẹẹ!", "Write in the book!"),
+  e(752, "afịn", "to sweep", "verbs", undefined, "Warị afịn!", "Sweep the house!"),
+  e(753, "ibarị", "to help", "verbs", undefined, "Arị ibarị bo!", "Come and help me!"),
+
+  // --- Nouns & Vocabulary (from communicative & first-words lessons) ---
+  e(754, "kurai", "year", "time", undefined, "Kurai teki emi?", "How many years is it?"),
+  e(755, "yalịyalị", "neat; clean; tidy", "nouns", undefined, "Warị yalịyalị emi daa", "The house is very clean"),
+  e(756, "agono", "on top; above; surface", "nouns", undefined, "Fun mẹzẹ agono emi", "The book is on the table"),
+  e(757, "eyifị-okpo", "dining room", "nouns", undefined, "Eyifị-okpo mọ fii!", "Eat in the dining room!"),
+  e(758, "sibi", "kitchen", "nouns", undefined, "Ina sibi ka emi", "Mother is in the kitchen"),
+  e(759, "aru", "car; vehicle", "nouns", undefined, "Aru yọụ!", "Drive the car!"),
+  e(760, "ago", "cup; glass", "nouns", undefined, "Ago mọ beni bou!", "Drink water from the cup!"),
+
+  // --- Occupations (from communicative lessons) ---
+  e(761, "ogulapẹlẹ-ere", "judge (female)", "occupations", undefined, "Ogulapẹlẹ-ere emi daa", "The female judge is fine"),
+
+  // --- Titles & Forms of Address (from communicative lessons) ---
+  e(762, "Erearau", "Mrs.; Madam (female honorific)", "pronouns", undefined, "Erearau Tobi emi daa", "Mrs Tobi is fine"),
 ];

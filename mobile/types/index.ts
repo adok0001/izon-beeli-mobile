@@ -312,6 +312,8 @@ export interface QuizQuestion {
   options: string[]; // 4 options, shuffled
   audioSource?: AudioSource; // for listening questions
   explanation?: string; // optional explanation shown after incorrect answer
+  exampleSentence?: string;
+  exampleSentenceTranslation?: string;
 }
 
 export interface QuizConfig {

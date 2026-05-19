@@ -268,14 +268,25 @@ function ActiveView() {
             <Text className="mt-1 text-sm font-bold text-neutral-800 dark:text-neutral-200">
               {question.correctAnswer}
             </Text>
-            {question.explanation ? (
+            {question.explanation && (
               <Text className="mt-1 text-xs text-neutral-600 dark:text-neutral-300">
                 {question.explanation}
               </Text>
-            ) : (
-              <Text className="mt-1 text-xs italic text-neutral-600 dark:text-neutral-300">
-                {t("quiz.correctAnswerHint")}
-              </Text>
+            )}
+            {question.exampleSentence && (
+              <View className="mt-2 border-t border-red-200 pt-2 dark:border-red-800">
+                <Text className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                  {t("wordDetail.example")}
+                </Text>
+                <Text className="mt-0.5 text-xs italic text-neutral-700 dark:text-neutral-300">
+                  {question.exampleSentence}
+                </Text>
+                {question.exampleSentenceTranslation && (
+                  <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                    {question.exampleSentenceTranslation}
+                  </Text>
+                )}
+              </View>
             )}
             <Pressable
               onPress={handleContinue}
@@ -446,6 +457,21 @@ function ResultsView({ languageId }: { languageId: string }) {
                   {question!.correctAnswer}
                 </Text>
               </View>
+              {question!.exampleSentence && (
+                <View className="mt-2 border-t border-red-200 pt-2 dark:border-red-800">
+                  <Text className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                    {t("wordDetail.example")}
+                  </Text>
+                  <Text className="mt-0.5 text-xs italic text-neutral-600 dark:text-neutral-400">
+                    {question!.exampleSentence}
+                  </Text>
+                  {question!.exampleSentenceTranslation && (
+                    <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-500">
+                      {question!.exampleSentenceTranslation}
+                    </Text>
+                  )}
+                </View>
+              )}
             </View>
           ))}
         </View>

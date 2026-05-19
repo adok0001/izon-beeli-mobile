@@ -9,6 +9,8 @@ interface QuizPool {
   english: string;
   category?: string;
   audioSource?: AudioSource;
+  example?: string;
+  exampleTranslation?: string;
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -51,6 +53,8 @@ function gatherDictionaryPool(
     english: e.english,
     category: e.category,
     audioSource: (e as any).audioUrl,
+    example: e.example,
+    exampleTranslation: e.exampleTranslation,
   }));
 }
 
@@ -69,6 +73,8 @@ function makeWordToEnglish(
       : `What does "${item.word}" mean in English?`,
     correctAnswer: item.english,
     options: shuffle([item.english, ...distractors]),
+    exampleSentence: item.example,
+    exampleSentenceTranslation: item.exampleTranslation,
   };
 }
 
@@ -87,6 +93,8 @@ function makeEnglishToWord(
       : `How do you say "${item.english}"?`,
     correctAnswer: item.word,
     options: shuffle([item.word, ...distractors]),
+    exampleSentence: item.example,
+    exampleSentenceTranslation: item.exampleTranslation,
   };
 }
 
@@ -125,6 +133,8 @@ function makeFillInTheBlank(
     prompt,
     correctAnswer: item.word,
     options: shuffle([item.word, ...distractors]),
+    exampleSentence: item.example,
+    exampleSentenceTranslation: item.exampleTranslation,
   };
 }
 
@@ -149,6 +159,8 @@ function makeListening(
     correctAnswer: item.english,
     options: shuffle([item.english, ...distractors]),
     audioSource: item.audioSource,
+    exampleSentence: item.example,
+    exampleSentenceTranslation: item.exampleTranslation,
   };
 }
 
