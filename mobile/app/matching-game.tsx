@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import { useRouter, useLocalSearchParams, Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -93,26 +93,28 @@ export default function MatchingGameScreen() {
 
   const result = phase === "results" ? getResult() : null;
 
+  const headerLeft = useCallback(
+    () => (
+      <Pressable onPress={() => { reset(); router.back(); }} hitSlop={8}>
+        <IconSymbol name="xmark" size={22} color="#9ca3af" />
+      </Pressable>
+    ),
+    [reset, router]
+  );
+
+  const screenOptions = useMemo(
+    () => ({
+      title: `${languageName} ${t("matching.titleSuffix")}`,
+      headerShown: true,
+      presentation: "modal" as const,
+      headerLeft,
+    }),
+    [languageName, t, headerLeft]
+  );
+
   return (
     <>
-      <Stack.Screen
-        options={{
-          title: `${languageName} ${t("matching.titleSuffix")}`,
-          headerShown: true,
-          presentation: "modal",
-          headerLeft: () => (
-            <Pressable
-              onPress={() => {
-                reset();
-                router.back();
-              }}
-              hitSlop={8}
-            >
-              <IconSymbol name="xmark" size={22} color="#9ca3af" />
-            </Pressable>
-          ),
-        }}
-      />
+      <Stack.Screen options={screenOptions} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
         {isEmpty ? (
           <View className="flex-1 items-center justify-center px-8">
