@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
+import { LoadingScreen } from "@/components/loading-screen";
 import {
   View,
   Text,
   Pressable,
   ScrollView,
   Modal,
-  ActivityIndicator,
 } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -40,9 +40,7 @@ export default function StoryScreen() {
     return (
       <>
         <Stack.Screen options={{ title: "Story Mode" }} />
-        <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-neutral-900">
-          <ActivityIndicator size="large" color="#f59e0b" />
-        </SafeAreaView>
+        <LoadingScreen color="#f59e0b" />
       </>
     );
   }

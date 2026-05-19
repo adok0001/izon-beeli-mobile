@@ -4,7 +4,8 @@ import type { CulturalCategory, CulturalContent } from "@/types";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, View } from "react-native";
+import { LoadingScreen } from "@/components/loading-screen";
+import { FlatList, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const CULTURAL_CATEGORIES: { id: CulturalCategory; label: string; emoji: string }[] = [
@@ -186,9 +187,7 @@ export default function CulturalScreen() {
       </ScrollView>
 
       {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#f59e0b" />
-        </View>
+        <LoadingScreen color="#f59e0b" />
       ) : filteredContent.length === 0 ? (
         <View className="flex-1 items-center justify-center px-8">
           <IconSymbol name="book.fill" size={48} color="#d1d5db" />

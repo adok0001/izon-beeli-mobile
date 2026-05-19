@@ -6,7 +6,8 @@ import { Audio } from "expo-av";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, FlatList, Pressable, Share, Text, View } from "react-native";
+import { LoadingScreen } from "@/components/loading-screen";
+import { FlatList, Pressable, Share, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function ProverbCard({
@@ -152,9 +153,7 @@ export default function ProverbsScreen() {
       />
 
       {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#d97706" />
-        </View>
+        <LoadingScreen color="#d97706" />
       ) : proverbs.length === 0 ? (
         <View className="flex-1 items-center justify-center px-8">
           <IconSymbol name="text.quote" size={48} color="#d1d5db" />

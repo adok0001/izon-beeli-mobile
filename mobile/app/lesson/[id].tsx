@@ -19,7 +19,8 @@ import { useTourStore } from "@/store/tour-store";
 import { localizeField } from "@/lib/localize";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { LoadingScreen } from "@/components/loading-screen";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
@@ -69,9 +70,7 @@ export default function LessonScreen() {
     return (
       <>
         <Stack.Screen options={{ title: t("lesson.title") }} />
-        <View className="flex-1 items-center justify-center bg-white dark:bg-neutral-900">
-          <ActivityIndicator size="large" color="#3b82f6" />
-        </View>
+        <LoadingScreen />
       </>
     );
   }

@@ -15,6 +15,7 @@ import { useFeedLikesStore } from "@/store/feed-likes-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { AudioSource, FeedItem } from "@/types";
 import { useRouter } from "expo-router";
+import { LoadingScreen } from "@/components/loading-screen";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -574,9 +575,7 @@ export default function FeedScreen() {
       </View>
 
       {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#3b82f6" />
-        </View>
+        <LoadingScreen />
       ) : (
         <FlatList
           data={items}

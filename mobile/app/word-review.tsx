@@ -13,7 +13,8 @@ import { Audio } from "expo-av";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { LoadingScreen } from "@/components/loading-screen";
+import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLesson } from "@/lib/hooks/use-courses";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
@@ -321,9 +322,7 @@ export default function WordReviewScreen() {
       <Stack.Screen options={{ title: lessonId ? t("wordReview.lessonTitle") : t("wordReview.title"), headerShown: true }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
         {showLoading ? (
-          <View className="flex-1 items-center justify-center">
-            <ActivityIndicator size="large" color="#3b82f6" />
-          </View>
+          <LoadingScreen />
         ) : queue.length === 0 ? (
           <View className="flex-1 items-center justify-center px-8">
             <IconSymbol name="checkmark.circle.fill" size={56} color="#22c55e" />

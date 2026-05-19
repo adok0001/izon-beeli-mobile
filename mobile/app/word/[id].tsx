@@ -1,6 +1,7 @@
 import { friendlyError } from "@/lib/api";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { View, Text, Pressable, ScrollView, ActivityIndicator, TextInput, Image } from "react-native";
+import { LoadingScreen } from "@/components/loading-screen";
+import { View, Text, Pressable, ScrollView, TextInput, Image } from "react-native";
 import { Audio } from "expo-av";
 import * as DocumentPicker from "expo-document-picker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -213,12 +214,7 @@ export default function WordDetailScreen() {
     return (
       <>
         <Stack.Screen options={{ title: "", headerBackTitle: "Back" }} />
-        <SafeAreaView
-          className="flex-1 items-center justify-center bg-white dark:bg-neutral-900"
-          edges={[]}
-        >
-          <ActivityIndicator size="large" color="#3b82f6" />
-        </SafeAreaView>
+        <LoadingScreen />
       </>
     );
   }

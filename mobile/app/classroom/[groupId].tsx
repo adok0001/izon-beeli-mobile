@@ -1,3 +1,4 @@
+import { LoadingScreen } from "@/components/loading-screen";
 import {
   View,
   Text,
@@ -49,9 +50,7 @@ export default function GroupDetailScreen() {
     return (
       <>
         <Stack.Screen options={{ title: "Group" }} />
-        <View className="flex-1 items-center justify-center bg-white dark:bg-neutral-900">
-          <ActivityIndicator size="large" color="#3b82f6" />
-        </View>
+        <LoadingScreen />
       </>
     );
   }

@@ -1,10 +1,10 @@
+import { LoadingScreen } from "@/components/loading-screen";
 import {
   View,
   Text,
   FlatList,
   Pressable,
   RefreshControl,
-  ActivityIndicator,
   Share,
   Clipboard,
 } from "react-native";
@@ -111,9 +111,7 @@ export default function ClassroomScreen() {
       />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
         {isLoading ? (
-          <View className="flex-1 items-center justify-center">
-            <ActivityIndicator size="large" color="#3b82f6" />
-          </View>
+          <LoadingScreen />
         ) : (
           <FlatList
             data={groups}

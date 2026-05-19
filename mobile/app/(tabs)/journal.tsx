@@ -12,8 +12,8 @@ import type { JournalEntry } from "@/types";
 import { useIsFocused } from "@react-navigation/native";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { LoadingScreen } from "@/components/loading-screen";
 import {
-    ActivityIndicator,
     Alert,
     FlatList,
     KeyboardAvoidingView,
@@ -172,9 +172,7 @@ export default function JournalScreen() {
       </View>
 
       {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#3b82f6" />
-        </View>
+        <LoadingScreen />
       ) : !entries || entries.length === 0 ? (
         <View className="flex-1 items-center justify-center px-8">
           <IconSymbol name="pencil.and.list.clipboard" size={48} color="#d1d5db" />

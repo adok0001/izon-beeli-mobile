@@ -15,8 +15,8 @@ import { useLanguageStore } from "@/store/language-store";
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { LoadingScreen } from "@/components/loading-screen";
 import {
-  ActivityIndicator,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -429,9 +429,7 @@ export default function DictionaryScreen() {
 
         {/* Loading state */}
         {isLoading ? (
-          <View className="flex-1 items-center justify-center">
-            <ActivityIndicator size="large" color="#3b82f6" />
-          </View>
+          <LoadingScreen />
         ) : (
           <SectionList
             sections={sections}
