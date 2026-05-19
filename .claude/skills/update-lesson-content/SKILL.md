@@ -79,7 +79,47 @@ Append above the closing `];`, under a dated comment block:
 - Example sentences: short, natural Izon — follow patterns from surrounding entries
 - Group entries by section (vocabulary, animals, food, etc.) with their own comment header
 
-## Step 7 — Sync to DB (by content type only)
+## Step 7 — Ensure dictionary covers every word in the new lesson
+
+A new lesson transcript usually introduces Izon words that aren't yet in `mobile/lib/data/[lang].ts`. Every such word must get its own dictionary entry so learners can tap it for a definition. The audit script automates the find-missing-words step.
+
+```bash
+# Refresh converted lesson-note text cache (only needed if PDFs/DOCXs changed)
+./scripts/convert-izon-docs.sh
+
+# Diff every word in the corpus (.ts files) against the dictionary
+node scripts/izon-audit.mjs > /tmp/izon-audit.md
+```
+
+The script writes two markdown tables:
+
+- **Bucket A — 100%-sure missing entries**: tokens that appear in a lesson/sentence/proverb row with an English gloss and are not yet in the dictionary. The `Inferred English` column pulls from `userio-docs/izon_vocabulary_complete.csv`, `izon_english_csv.txt`, `Izon_Other Facts`, and the Williamson & Blench Kolokuma Izon dictionary (`Izon dictionary.pdf`).
+- **Bucket B — False-positive candidates**: tokens that look missing but are likely inflections, diacritic variants, or proper nouns. Skim these — a few are real and should be promoted.
+
+### Filter to just the lesson you added
+
+After adding lesson `lesson-N`, isolate its rows:
+
+```bash
+grep "lesson-N\|t[N]-\|^### Bucket\|^|---" /tmp/izon-audit.md | less
+```
+
+### Promote rows into the dictionary
+
+For each Bucket A row, append a new `e(...)` entry to the dictionary (Steps 3–6 of this skill apply). Use the `Inferred English` column as the gloss when reliable; verify against the `Gloss source` column (`Izon dictionary.txt:NNNN` points to the Williamson entry, `Izon_Other Facts:NN` to the line in that file) — the script's regex parser occasionally bleeds continuation text across entries, so spot-check.
+
+For tokens with no inferred gloss (`—`), translate from the row's sentence translation, the Williamson dictionary PDF, or ask the user.
+
+### Re-run to verify
+
+```bash
+node scripts/izon-audit.mjs > /tmp/izon-audit.md
+grep "lesson-N" /tmp/izon-audit.md
+```
+
+The new lesson's tokens should no longer appear in Bucket A.
+
+## Step 8 — Sync to DB (by content type only)
 
 Run only the sync commands for content types that were actually updated.
 
@@ -111,9 +151,10 @@ npm run db:sync
 - `lessons.audioUrl` — educator-uploaded lesson audio is never overwritten by a source-file placeholder
 - All user data (word_bank, user_progress, contributions) is untouched
 
-## Step 8 — Report to user
+## Step 9 — Report to user
 
 Summarise:
 - N new entries added to [file]
 - M entries skipped (already existed): [list]
+- K dictionary entries added to cover new lesson words (from Step 7 audit)
 - Sync command run and output
