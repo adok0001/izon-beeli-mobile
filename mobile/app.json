@@ -2,7 +2,7 @@
   "expo": {
     "name": "Beeli Mobile",
     "slug": "izon-beeli-mobile",
-    "version": "1.11.0",
+    "version": "1.11.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "izonbeelimobile",
@@ -65,7 +65,8 @@
           "color": "#246BFD",
           "sounds": []
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,
