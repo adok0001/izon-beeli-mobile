@@ -14,6 +14,8 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -252,6 +254,7 @@ export default function StoryEditScreen() {
         onDismiss={dismissToast}
       />
       <SafeAreaView className="flex-1 bg-neutral-50 dark:bg-neutral-950" edges={["bottom"]}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         {isLoading ? (
           <View className="flex-1 items-center justify-center">
             <Text className="text-sm text-neutral-400">Loading…</Text>
@@ -350,6 +353,7 @@ export default function StoryEditScreen() {
             </Pressable>
           </ScrollView>
         )}
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </>
   );

@@ -5,7 +5,7 @@ import { getLanguageName } from "@/lib/mock-data";
 import { Stack } from "expo-router";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, FlatList, Image, Pressable, RefreshControl, Text, TextInput, View } from "react-native";
+import { Alert, FlatList, Image, KeyboardAvoidingView, Platform, Pressable, RefreshControl, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const STATUS_CONFIG = {
@@ -319,6 +319,7 @@ export default function MyContributionsScreen() {
     <>
       <Stack.Screen options={{ title: t("myContributions.title"), headerBackTitle: "Back" }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         {/* Stats row */}
         {submissions.length > 0 && (
           <View className="flex-row border-b border-neutral-100 px-5 py-3 dark:border-neutral-800">
@@ -372,6 +373,7 @@ export default function MyContributionsScreen() {
             </View>
           }
         />
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </>
   );

@@ -6,7 +6,9 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     Alert,
+    KeyboardAvoidingView,
     Modal,
+    Platform,
     Pressable,
     ScrollView,
     SectionList,
@@ -185,6 +187,7 @@ function AddLanguageModal({
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900">
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         <View className="flex-row items-center justify-between border-b border-neutral-200 px-5 py-3 dark:border-neutral-700">
           <Text className="text-lg font-bold text-neutral-900 dark:text-white">
             {t("languagePicker.addLanguage")}
@@ -267,6 +270,7 @@ function AddLanguageModal({
             ) : null
           }
         />
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </Modal>
   );
@@ -310,6 +314,7 @@ export function LanguagePickerModal({
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900">
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         <View className="flex-row items-center justify-between border-b border-neutral-200 px-5 py-3 dark:border-neutral-700">
           <Text className="text-lg font-bold text-neutral-900 dark:text-white">
             {t("languagePicker.title")}
@@ -418,6 +423,7 @@ export function LanguagePickerModal({
             ) : null
           }
         />
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </Modal>
   );

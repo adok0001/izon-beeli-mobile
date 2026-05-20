@@ -17,6 +17,8 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LoadingScreen } from "@/components/loading-screen";
 import {
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -277,6 +279,7 @@ export default function DictionaryScreen() {
     <>
       <Stack.Screen options={{ title: "Dictionary", headerBackTitle: "Back" }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         {/* Search bar */}
         <View className="border-b border-neutral-200 px-5 pb-3 pt-2 dark:border-neutral-700">
           <View className="flex-row items-center rounded-xl bg-neutral-100 px-3 dark:bg-neutral-800">
@@ -487,6 +490,7 @@ export default function DictionaryScreen() {
             }
           />
         )}
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </>
   );

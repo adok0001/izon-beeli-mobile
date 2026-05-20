@@ -21,6 +21,8 @@ import { useTranslation } from "react-i18next";
 import {
   Alert,
   FlatList,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -826,6 +828,7 @@ export default function EducatorCultureScreen() {
     <>
       <Stack.Screen options={{ title: t("educator.nav.culture"), headerBackTitle: "Back" }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         <NotificationBanner
           visible={toast.visible}
           title={toast.title}
@@ -845,6 +848,7 @@ export default function EducatorCultureScreen() {
           ListHeaderComponent={listHeader}
           ListEmptyComponent={listEmpty}
         />
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </>
   );

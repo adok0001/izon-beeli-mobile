@@ -19,7 +19,7 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Audio } from "expo-av";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type SegmentEditor = {
@@ -535,6 +535,7 @@ export default function EducatorLessonEditScreen() {
         options={{ title: screenTitle, headerBackTitle: course?.title ?? "Lessons" }}
       />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         <NotificationBanner
           visible={toast.visible}
           title={toast.title}
@@ -727,6 +728,7 @@ export default function EducatorLessonEditScreen() {
             ) : null}
           </View>
         </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </>
   );

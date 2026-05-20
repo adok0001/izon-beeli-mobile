@@ -1,7 +1,7 @@
 import { friendlyError } from "@/lib/api";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { LoadingScreen } from "@/components/loading-screen";
-import { View, Text, Pressable, ScrollView, TextInput, Image } from "react-native";
+import { KeyboardAvoidingView, Platform, View, Text, Pressable, ScrollView, TextInput, Image } from "react-native";
 import { Audio } from "expo-av";
 import * as DocumentPicker from "expo-document-picker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -249,6 +249,7 @@ export default function WordDetailScreen() {
         className="flex-1 bg-white dark:bg-neutral-900"
         edges={[]}
       >
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         <NotificationBanner
           visible={toast.visible}
           title={toast.title}
@@ -691,6 +692,7 @@ export default function WordDetailScreen() {
             </View>
           )}
         </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </>
   );
