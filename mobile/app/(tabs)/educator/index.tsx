@@ -284,6 +284,12 @@ export default function EducatorPanelScreen() {
                 detail={t("welcomeChecklist.exploreCultureMusicDetail")}
                 onPress={() => router.push("/educator/culture" as never)}
               />
+              <ActionRow
+                icon="book.closed.fill"
+                label="Story Mode"
+                detail="Create and edit narrative story arcs for courses"
+                onPress={() => router.push("/educator/stories" as never)}
+              />
               {currentUser && canManageBounties(currentUser) ? (
                 <ActionRow
                   icon="star.fill"

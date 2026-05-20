@@ -173,6 +173,39 @@ export function useDeleteAssignment() {
   });
 }
 
+export function useAssignStoryArc() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      groupId,
+      lessonIds,
+      dueDate,
+    }: {
+      groupId: string;
+      lessonIds: string[];
+      dueDate?: string;
+    }) => {
+      const token = await getToken();
+      await Promise.all(
+        lessonIds.map((lessonId) =>
+          apiFetch<ServerAssignment>("/classroom/assignments", {
+            method: "POST",
+            token: token!,
+            body: JSON.stringify({ groupId, lessonId, dueDate }),
+          })
+        )
+      );
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["classroom-assignments", variables.groupId],
+      });
+    },
+  });
+}
+
 export function useGroupProgress(groupId: string) {
   const { getToken } = useAuth();
 
