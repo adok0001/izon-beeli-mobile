@@ -1089,4 +1089,54 @@ export const IZON_DICTIONARY: DictionaryEntry[] = [
   e(930, "níá andẹ", "1,600 (4 × 400)", "numbers"),
   e(931, "sọọnran andẹ", "2,000 (5 × 400)", "numbers"),
   e(932, "andẹrịmandẹ", "160,000 — the highest traditional Izon number (400 × 400)", "numbers"),
+
+  // --- Lesson 20-05-2026: The World (Акром) — Geography & Landscape ---
+  e(933, "oba", "small stream", "nouns", undefined, "Oba bei torụ mọ emi", "There is a small stream nearby"),
+  e(934, "polo", "channel", "nouns", undefined, "Polo bei bịdị emi", "The channel is wide"),
+  e(935, "bụụ", "pond", "nouns", undefined, "Bụụ mọ emi daa", "The pond is there"),
+  e(936, "seri ogbo", "high land; highland", "nouns", undefined, "Seri ogbo mọ emi", "We are on high land"),
+  e(937, "ọdọu", "hill", "nouns", undefined, "Ọdọu akụ mọ emi", "The hill is over there"),
+  e(938, "ogun-aka", "stone; rock (small)", "nouns", undefined, "Ogun-aka torụ emi", "There are stones on the ground"),
+  e(939, "ogunbou", "wilderness", "nouns", undefined, "Ogunbou mọ tọrụ", "It is far in the wilderness"),
+  e(940, "owunbou", "sandy area; desert", "nouns", undefined, "Owunbou mọ owun emi daa", "There is sand in the desert"),
+  e(941, "owun-aka", "gravels; pebbles", "nouns", undefined, "Owun-aka torụ emi", "There are pebbles here"),
+  e(942, "pouye", "rock", "nouns", undefined, "Pouye bịdị emi", "The rock is big"),
+  e(943, "tuobou", "forest", "nouns", undefined, "Tuobou mọ emi", "It is in the forest"),
+  e(944, "tinbou", "bush; thicket", "nouns", undefined, "Tinbou mọ emi", "It is in the thicket"),
+  e(945, "atogho", "mud; earth", "nouns", undefined, "Atogho torụ emi", "There is mud here"),
+  e(946, "apidi", "mud; earth (variant)", "nouns", undefined, "Apidi torụ emi", "There is earth here"),
+  e(947, "kiri ogbo", "clay", "nouns", undefined, "Kiri ogbo emi daa", "There is clay here"),
+  e(948, "oduatọgho", "silt", "nouns", undefined, "Oduatọgho torụ mọ emi", "There is silt in the water"),
+  e(949, "obudu", "sandbank", "nouns", undefined, "Obudu oba mọ emi", "The sandbank is in the stream"),
+  e(950, "bụmọun", "ground; earth (surface)", "nouns", undefined, "Bụmọun torụ emi", "There is something on the ground"),
+
+  // --- Lesson 20-05-2026: The World — Water & Tides ---
+  e(951, "ogbokiri", "ebb tide", "nouns", undefined, "Ogbokiri emi wẹnị", "The ebb tide is here"),
+  e(952, "amọumbeni", "flow tide", "nouns", undefined, "Amọumbeni emi wẹnị", "The flow tide is here"),
+  e(953, "sụọbeni", "current", "nouns", undefined, "Sụọbeni bịdị emi", "The current is strong"),
+  e(954, "beni oro", "flow", "nouns", undefined, "Beni oro emi daa", "The flow is good"),
+  e(955, "benitẹịn", "flow (variant)", "nouns"),
+  e(956, "tẹịn", "deepest part of the current", "nouns"),
+
+  // --- Lesson 20-05-2026: The World — Weather & Sky ---
+  e(957, "osuo", "it is raining; rain", "nouns", undefined, "Osuo kuro emi", "It is raining now"),
+  e(958, "osuo kuro mene", "rainy season; wet season", "time", undefined, "Osuo kuro mene emi wẹnị", "The rainy season is here"),
+  e(959, "owụra", "sun", "nouns", undefined, "Owụra dia emi", "The sun is shining"),
+  e(960, "owụra efie", "dry season; sunny season", "time", undefined, "Owụra efie emi wẹnị", "The dry season is here"),
+  e(961, "kime", "storm; hurricane", "nouns", undefined, "Kime bịdị emi", "The storm is strong"),
+  e(962, "ebiri", "storm; hurricane (variant)", "nouns"),
+  e(963, "okiriyẹn", "harmattan", "nouns", undefined, "Okiriyẹn emi wẹnị", "The harmattan is here"),
+
+  // --- Lesson 20-05-2026: The World — Celestial Bodies ---
+  e(964, "agọnọwei", "moon; month", "time", undefined, "Agọnọwei dia emi", "The moon is shining"),
+  e(965, "akalụ", "moon", "nouns", undefined, "Akalụ dia emi", "The moon is shining"),
+  e(966, "agụra", "star", "nouns", undefined, "Dein korodẹ sẹ agụra padẹ", "The stars come out when it is night"),
+  e(967, "ekịkaị", "star (variant)", "nouns"),
+
+  // --- Lesson 20-05-2026: The World — Compass Directions ---
+  e(968, "dụmakụ", "east", "nouns", undefined, "Pekei owụra dia akụmị dụmakụ", "Where the sun rises is east"),
+  e(969, "tamụakụ", "west", "nouns"),
+  e(970, "toun akụ", "west; back side", "nouns"),
+  e(971, "amakụ", "south; right-hand side", "nouns", undefined, "Amabịrakụmị amabịra akụ", "The right side is south"),
+  e(972, "kọnọakụ", "north; left-hand side", "nouns"),
 ];

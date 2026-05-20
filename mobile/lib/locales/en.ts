@@ -1412,6 +1412,7 @@ export const en = {
     cancelSuccessMessage: "Your application has been cancelled.",
   },
   dailyChallenge: {
-    refresh: "Refresh",
+    refresh: "New challenges",
+    refreshBlocked: "All challenges are complete — come back tomorrow!",
   },
 } as const;

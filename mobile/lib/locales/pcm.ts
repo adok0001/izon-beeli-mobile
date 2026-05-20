@@ -1426,6 +1426,7 @@ export const pcm = {
     cancelSuccessMessage: "Your application don cancel.",
   },
   dailyChallenge: {
-    refresh: "Refresh",
+    refresh: "New challenges",
+    refreshBlocked: "You don finish all challenges — come back tomorrow!",
   },
 } as const;

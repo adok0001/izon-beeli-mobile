@@ -1427,6 +1427,7 @@ export const fr = {
     cancelSuccessMessage: "Votre candidature a été annulée.",
   },
   dailyChallenge: {
-    refresh: "Actualiser",
+    refresh: "Nouveaux défis",
+    refreshBlocked: "Tous les défis sont terminés — revenez demain !",
   },
 } as const;

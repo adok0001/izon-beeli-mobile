@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { and, eq, gte } from "drizzle-orm";
+import { and, eq, gte, inArray } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { dailyChallenges } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
@@ -23,17 +23,19 @@ dailyChallengesRouter.post("/today/refresh", async (c) => {
   const today = new Date().toISOString().slice(0, 10);
 
   const existing = await db
-    .select({ completed: dailyChallenges.completed })
+    .select()
     .from(dailyChallenges)
     .where(and(eq(dailyChallenges.userId, userId), eq(dailyChallenges.date, today)));
 
-  if (existing.some((r) => r.completed)) {
-    return c.json({ error: "Cannot refresh after completing a challenge" }, 409);
+  if (existing.length > 0 && existing.every((r) => r.completed)) {
+    return c.json({ error: "All challenges already completed" }, 409);
   }
 
-  await db
-    .delete(dailyChallenges)
-    .where(and(eq(dailyChallenges.userId, userId), eq(dailyChallenges.date, today)));
+  // Delete only the incomplete challenges so completed ones are preserved
+  const incompleteIds = existing.filter((r) => !r.completed).map((r) => r.id);
+  if (incompleteIds.length > 0) {
+    await db.delete(dailyChallenges).where(inArray(dailyChallenges.id, incompleteIds));
+  }
 
   const seed = randomInt(1_000_000);
   const challenges = await getOrCreateTodayChallenges(userId, seed);

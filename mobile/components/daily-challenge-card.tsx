@@ -1,8 +1,9 @@
-import { View, Text, Pressable, ActivityIndicator } from "react-native";
+import { View, Text, Pressable, ActivityIndicator, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useRegenerateDailyChallenges, useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
+import { ApiError } from "@/lib/api";
 import { useTranslation } from "react-i18next";
 import type { ChallengeType, DailyChallenge } from "@/types";
 
@@ -86,6 +87,10 @@ export function DailyChallengeCards() {
     setIsRefreshing(true);
     try {
       await regenerate();
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        Alert.alert("", t("dailyChallenge.refreshBlocked"));
+      }
     } finally {
       setIsRefreshing(false);
     }
@@ -93,14 +98,14 @@ export function DailyChallengeCards() {
 
   if (isLoading || !challenges?.length) return null;
 
-  const anyCompleted = challenges.some((c) => c.completed);
+  const allCompleted = challenges.every((c) => c.completed);
 
   return (
     <View className="gap-3">
       {challenges.map((challenge) => (
         <ChallengeItem key={challenge.id} challenge={challenge} />
       ))}
-      {!anyCompleted && (
+      {!allCompleted && (
         <Pressable
           onPress={handleRefresh}
           disabled={isRefreshing}
