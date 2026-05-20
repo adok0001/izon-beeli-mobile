@@ -41,6 +41,9 @@ progressRouter.get("/summary", async (c) => {
   const diff = diffDaysFromToday(user?.lastActiveDate);
   const streakBroken = diff >= 2 && (user?.streak ?? 0) > 0;
 
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const refreshedToday = user?.lastActiveDate === todayStr;
+
   return c.json({
     points: user?.points ?? 0,
     streak: user?.streak ?? 0,
@@ -48,6 +51,7 @@ progressRouter.get("/summary", async (c) => {
     quizCount: quizCountResult?.count ?? 0,
     freezeCount: user?.streakFreezes ?? 0,
     streakBroken,
+    refreshedToday,
   });
 });
 

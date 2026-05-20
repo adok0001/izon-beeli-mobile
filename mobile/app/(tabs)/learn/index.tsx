@@ -20,7 +20,7 @@ import { useTourStore } from "@/store/tour-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course, Lesson } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LoadingScreen } from "@/components/loading-screen";
@@ -434,6 +434,10 @@ export default function LearnScreen() {
     loadResumeState();
   }, []);
 
+  useFocusEffect(useCallback(() => {
+    refetchSummary();
+  }, [refetchSummary]));
+
   // Show freeze modal once per day when we detect a broken streak (wait for any tour to finish)
   useEffect(() => {
     if (
@@ -526,14 +530,14 @@ export default function LearnScreen() {
               <IconSymbol
                 name="flame.fill"
                 size={16}
-                color={summary?.streakBroken ? "#9ca3af" : "#f59e0b"}
+                color={summary?.streakBroken || summary?.refreshedToday === false ? "#9ca3af" : "#f59e0b"}
               />
             </View>
             <View className="flex-1">
               <Text className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                 Streak
               </Text>
-              <Text className={`text-base font-bold ${summary?.streakBroken ? "text-neutral-400 line-through dark:text-neutral-500" : "text-neutral-900 dark:text-white"}`}>
+              <Text className={`text-base font-bold ${summary?.streakBroken ? "text-neutral-400 line-through dark:text-neutral-500" : summary?.refreshedToday === false ? "text-neutral-400 dark:text-neutral-500" : "text-neutral-900 dark:text-white"}`}>
                 {summary?.streak ?? 0}d
               </Text>
             </View>

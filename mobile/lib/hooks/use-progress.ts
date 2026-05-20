@@ -12,6 +12,7 @@ export interface ProgressSummary {
   quizCount: number;
   freezeCount: number;
   streakBroken: boolean;
+  refreshedToday: boolean;
 }
 
 interface CompleteLessonResponse {
@@ -86,6 +87,9 @@ export function useCompleteLesson(callbacks?: {
       Alert.alert("Error", "Failed to mark lesson as complete. Please try again.");
     },
     onSuccess: (data) => {
+      queryClient.setQueryData<ProgressSummary>(["progress", "summary"], (old) =>
+        old ? { ...old, refreshedToday: true, ...(data.streak ? { streak: data.streak } : {}) } : old
+      );
       if (data.streakMilestone) {
         hapticHeavy();
       }
