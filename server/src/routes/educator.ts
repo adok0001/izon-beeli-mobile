@@ -24,7 +24,7 @@ import {
   users,
 } from "../db/schema.js";
 import { AuthEnv, authMiddleware, reviewerMiddleware } from "../middleware/auth.js";
-import { stubForCourse, stubForLanguage, STUB_COURSE_TYPES } from "../lib/lesson-stubs.js";
+import { stubForCourse, stubForLanguage } from "../lib/lesson-stubs.js";
 
 export const educatorRouter = new Hono<AuthEnv>();
 educatorRouter.use("*", authMiddleware);
@@ -681,16 +681,7 @@ educatorRouter.get("/courses", async (c) => {
     .where(!isAdmin && reviewerLanguages.length > 0 ? inArray(courses.languageId, reviewerLanguages) : undefined)
     .orderBy(courses.languageId, courses.order);
 
-  const abbrevToType = Object.fromEntries(STUB_COURSE_TYPES.map((c) => [c.abbrev, c.type]));
-
-  return c.json(
-    rows.map((row) => {
-      const suffix = row.id.startsWith(`course-${row.languageId}-`)
-        ? row.id.slice(`course-${row.languageId}-`.length)
-        : null;
-      return { ...row, courseType: suffix ? (abbrevToType[suffix] ?? null) : null };
-    })
-  );
+  return c.json(rows);
 });
 
 // PATCH /educator/courses/:id
@@ -1075,6 +1066,7 @@ educatorRouter.post("/generate-stubs", async (c) => {
       level: course.level,
       lessonsCount: course.lessonsCount,
       order: course.order,
+      courseType: course.courseType ?? null,
     }).onConflictDoNothing();
 
     for (const lesson of stubLessons) {
@@ -1125,6 +1117,7 @@ educatorRouter.post("/generate-stubs", async (c) => {
       level: course.level,
       lessonsCount: course.lessonsCount,
       order: course.order,
+      courseType: course.courseType ?? null,
     }).onConflictDoNothing();
   }
 

@@ -139,6 +139,7 @@ async function seed() {
       level: course.level,
       lessonsCount: course.lessonsCount,
       order: course.order,
+      courseType: course.courseType ?? null,
     }).onConflictDoUpdate({
       target: courses.id,
       set: {
@@ -149,6 +150,7 @@ async function seed() {
         level: course.level,
         lessonsCount: course.lessonsCount,
         order: course.order,
+        courseType: course.courseType ?? null,
       },
     });
   }

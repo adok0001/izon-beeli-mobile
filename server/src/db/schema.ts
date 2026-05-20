@@ -285,6 +285,7 @@ export const courses = pgTable(
     level: varchar("level", { length: 32 }).notNull(),
     lessonsCount: integer("lessons_count").default(0).notNull(),
     order: integer("order").default(0).notNull(),
+    courseType: varchar("course_type", { length: 32 }),
     isActive: boolean("is_active").default(true).notNull(),
   },
   (table) => [index("courses_language_id_idx").on(table.languageId)]
