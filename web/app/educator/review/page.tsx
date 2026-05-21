@@ -227,7 +227,6 @@ function ContributionCard({
       {item.audioUrl && (
         <div className="flex items-center gap-2 mb-3 p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800">
           <Volume2 className="h-4 w-4 text-brand-500 shrink-0" />
-          {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
           <audio controls className="flex-1 h-8" src={item.audioUrl} />
         </div>
       )}
@@ -336,7 +335,6 @@ function LessonCard({
       </div>
       <div className="flex items-center gap-2 mb-3 p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800">
         <Volume2 className="h-4 w-4 text-brand-500 shrink-0" />
-        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
         <audio controls className="flex-1 h-8" src={item.audioUrl} />
       </div>
       {showNote && (

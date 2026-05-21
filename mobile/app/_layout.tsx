@@ -1,3 +1,4 @@
+import { ErrorBoundary } from "@/components/error-boundary";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { analytics } from "@/lib/analytics";
 import { queryClient } from "@/lib/api";
@@ -131,6 +132,7 @@ export default function RootLayout() {
   }
 
   return (
+    <ErrorBoundary>
     <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
       <ClerkLoaded>
         <QueryClientProvider client={queryClient}>
@@ -178,5 +180,6 @@ export default function RootLayout() {
         </QueryClientProvider>
       </ClerkLoaded>
     </ClerkProvider>
+    </ErrorBoundary>
   );
 }

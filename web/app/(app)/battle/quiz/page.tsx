@@ -148,7 +148,7 @@ export default function QuizBattlePage() {
   useEffect(() => {
     if (!myPlayerId && !sessionId) { router.replace("/battle"); return; }
     if (phase === "results") { router.replace("/battle/results"); }
-  }, [phase, myPlayerId, sessionId]);
+  }, [phase, myPlayerId, sessionId, router]);
 
   return (
     <div className="max-w-xl mx-auto flex flex-col min-h-[calc(100vh-4rem)]">

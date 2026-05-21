@@ -7,7 +7,7 @@ import { useLanguageStore } from "@/store/language-store";
 import { SignInButton, useAuth, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bookmark, BookmarkCheck, BookText, CheckCircle2, ChevronDown, ChevronUp, Mic, Plus, Search, Square, Volume2, X } from "lucide-react";
+import { Bookmark, BookmarkCheck, CheckCircle2, ChevronDown, ChevronUp, Mic, Plus, Search, Square, Volume2, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";

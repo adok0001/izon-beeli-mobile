@@ -48,6 +48,7 @@ function LobbyContent() {
       });
     };
     connectToRoom();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [partyRoomId, sessionId]);
 
   useEffect(() => {
@@ -64,13 +65,13 @@ function LobbyContent() {
       });
       router.replace(`/battle/lobby?${p}`);
     }
-  }, [matchStatus]);
+  }, [matchStatus, router]);
 
   useEffect(() => {
     if (phase === "countdown" || phase === "playing") {
       router.replace("/battle/quiz");
     }
-  }, [phase]);
+  }, [phase, router]);
 
   const handleReady = () => { sendReady(); setReady(true); };
 
