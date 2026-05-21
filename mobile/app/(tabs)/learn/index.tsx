@@ -1,4 +1,5 @@
 import { EnrolledLanguageBar } from "@/components/language-picker";
+import { LoadingScreen } from "@/components/loading-screen";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { NotificationBell } from "@/components/notifications/notification-center";
 import { StreakFreezeModal } from "@/components/streak-freeze-modal";
@@ -23,7 +24,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { LoadingScreen } from "@/components/loading-screen";
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
@@ -592,13 +592,13 @@ export default function LearnScreen() {
           renderItem={({ item }) => <CourseCard course={item} completedIds={completedIds} hasStoryArc={storyArcCourseIds.has(item.id)} />}
           ListHeaderComponent={
             <View className="mb-4 gap-3">
-              <ReviewBanner languageId={selectedLanguageId} />
-              {resumeState && resumeState.positionSeconds > 5 && (
+              {/* <ReviewBanner languageId={selectedLanguageId} /> */}
+              {/* {resumeState && resumeState.positionSeconds > 5 && (
                 <ContinueCard
                   lessonId={resumeState.lessonId}
                   positionSeconds={resumeState.positionSeconds}
                 />
-              )}
+              )} */}
               <UpNextCard languageId={selectedLanguageId} />
               <BountyTeaser languageId={selectedLanguageId} />
               <ContributorBanner />
