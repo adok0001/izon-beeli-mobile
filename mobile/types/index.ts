@@ -6,7 +6,8 @@ export type CourseType =
   | "oral_tradition"
   | "communicative"
   | "contemporary"
-  | "songs";
+  | "songs"
+  | "colors";
 
 export interface Course {
   id: string;
@@ -53,6 +54,7 @@ export interface TranscriptSegment {
   text: string;
   translation?: string | null;
   translationFr?: string | null;
+  colorHex?: string | null;
 }
 
 export interface JournalEntry {

@@ -136,7 +136,7 @@ export default function StoryScreen() {
                   disabled={!unlocked}
                   className={`mb-3 rounded-2xl border p-4 active:opacity-80 ${
                     isCurrent
-                      ? "border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-950/30"
+                      ? "border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30"
                       : completed
                       ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20"
                       : unlocked
@@ -236,7 +236,7 @@ export default function StoryScreen() {
                 </View>
                 <Pressable
                   onPress={() => setOutroChapter(null)}
-                  className="items-center rounded-xl bg-green-500 py-4 active:opacity-80 dark:bg-green-600"
+                  className="items-center rounded-xl bg-amber-500 py-4 active:opacity-80 dark:bg-amber-600"
                 >
                   <Text className="text-base font-bold text-white">
                     Continue

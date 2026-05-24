@@ -55,7 +55,7 @@ function AudioButton({ audioSource }: { audioSource: AudioSource }) {
     <Pressable
       onPress={handlePress}
       disabled={isPlaying}
-      className="mt-4 flex-row items-center gap-2 rounded-full bg-blue-50 px-5 py-2.5 active:opacity-70 dark:bg-blue-900/30"
+      className="mt-4 flex-row items-center gap-2 rounded-full bg-violet-50 px-5 py-2.5 active:opacity-70 dark:bg-blue-900/30"
     >
       <IconSymbol
         name={isPlaying ? "speaker.wave.3.fill" : "speaker.wave.2.fill"}
@@ -334,14 +334,14 @@ export default function WordReviewScreen() {
             </Text>
             <Pressable
               onPress={() => router.back()}
-              className="mt-6 rounded-xl bg-blue-500 px-8 py-3 active:opacity-80"
+              className="mt-6 rounded-xl bg-violet-500 px-8 py-3 active:opacity-80"
             >
               <Text className="font-semibold text-white">{t("wordReview.done")}</Text>
             </Pressable>
           </View>
         ) : isFinished ? (
           <View className="flex-1 items-center justify-center px-8">
-            <IconSymbol name="checkmark.seal.fill" size={56} color="#3b82f6" />
+            <IconSymbol name="checkmark.seal.fill" size={56} color="#8b5cf6" />
             <Text className="mt-4 text-center text-xl font-bold text-neutral-900 dark:text-white">
               {t("wordReview.sessionComplete")}
             </Text>
@@ -359,13 +359,13 @@ export default function WordReviewScreen() {
               const retention = avg >= 5 ? 95 : avg >= 4 ? 85 : avg >= 3 ? 70 : avg >= 2 ? 50 : 30;
               const barWidth = retention;
               return (
-                <View className="mt-5 w-full rounded-2xl bg-blue-50 p-4 dark:bg-blue-900/20">
-                  <Text className="mb-1 text-center text-sm text-blue-800 dark:text-blue-300">
+                <View className="mt-5 w-full rounded-2xl bg-violet-50 p-4 dark:bg-violet-900/20">
+                  <Text className="mb-1 text-center text-sm text-violet-800 dark:text-violet-300">
                     {t("wordReview.retentionDesc", { avg: avg.toFixed(1), pct: retention })}
                   </Text>
-                  <View className="mt-2 h-2 overflow-hidden rounded-full bg-blue-200 dark:bg-blue-800">
+                  <View className="mt-2 h-2 overflow-hidden rounded-full bg-violet-200 dark:bg-violet-800">
                     <View
-                      className="h-2 rounded-full bg-blue-500"
+                      className="h-2 rounded-full bg-violet-500"
                       style={{ width: `${barWidth}%` }}
                     />
                   </View>
@@ -375,7 +375,7 @@ export default function WordReviewScreen() {
 
             <Pressable
               onPress={() => router.back()}
-              className="mt-6 rounded-xl bg-blue-500 px-8 py-3 active:opacity-80"
+              className="mt-6 rounded-xl bg-violet-500 px-8 py-3 active:opacity-80"
             >
               <Text className="font-semibold text-white">{t("wordReview.done")}</Text>
             </Pressable>
@@ -393,7 +393,7 @@ export default function WordReviewScreen() {
               </View>
               <View className="h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-700">
                 <View
-                  className="h-1.5 rounded-full bg-blue-500"
+                  className="h-1.5 rounded-full bg-violet-500"
                   style={{ width: `${(currentIndex / queue.length) * 100}%` }}
                 />
               </View>

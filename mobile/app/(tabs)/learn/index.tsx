@@ -5,6 +5,7 @@ import { NotificationBell } from "@/components/notifications/notification-center
 import { StreakFreezeModal } from "@/components/streak-freeze-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { UpNextCard } from "@/components/up-next-card";
+import { getCourseTypeColors, getLevelColors } from "@/constants/course-colors";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useBounties } from "@/lib/hooks/use-bounties";
 import { useCourseLessons, useCourses, useLesson } from "@/lib/hooks/use-courses";
@@ -93,9 +94,11 @@ const CourseCard = memo(function CourseCard({ course, completedIds, hasStoryArc 
   const progressPercent =
     lessons.length > 0 ? (completedCount / lessons.length) * 100 : 0;
   const [collapsed, setCollapsed] = useState(false);
+  const typeColors = getCourseTypeColors(course.courseType);
+  const levelColors = getLevelColors(course.level);
 
   return (
-    <View className="mb-4 overflow-hidden rounded-2xl bg-neutral-50 dark:bg-neutral-800">
+    <View className={`mb-4 overflow-hidden rounded-2xl ${typeColors.headerBg}`}>
       {/* Tappable header — always visible */}
       <Pressable
         onPress={() => setCollapsed((c) => !c)}
@@ -106,8 +109,8 @@ const CourseCard = memo(function CourseCard({ course, completedIds, hasStoryArc 
         accessibilityState={{ expanded: !collapsed }}
       >
         <View className="mb-2 flex-row items-center justify-between">
-          <View className="rounded-full bg-blue-100 px-3 py-1 dark:bg-blue-900">
-            <Text className="text-xs font-semibold capitalize text-blue-700 dark:text-blue-300">
+          <View className={`rounded-full px-3 py-1 ${levelColors.badgeBg}`}>
+            <Text className={`text-xs font-semibold capitalize ${levelColors.badgeText}`}>
               {t(`levels.${course.level}`, { defaultValue: course.level })}
             </Text>
           </View>
@@ -130,16 +133,24 @@ const CourseCard = memo(function CourseCard({ course, completedIds, hasStoryArc 
           {localizeField(course.description, course.descriptionFr, uiLanguage)}
         </Text>
 
+        {course.courseType && typeColors.label ? (
+          <View className={`mt-2 self-start rounded-full px-2.5 py-0.5 ${typeColors.badgeBg}`}>
+            <Text className={`text-xs font-semibold ${typeColors.badgeText}`}>
+              {typeColors.label}
+            </Text>
+          </View>
+        ) : null}
+
         {progressPercent > 0 && (
           <View className="mt-3">
             <View className="relative h-2 rounded-full bg-neutral-200 dark:bg-neutral-700">
               <View
-                className="h-2 rounded-full bg-blue-500"
+                className={`h-2 rounded-full ${typeColors.progressBar}`}
                 style={{ width: `${progressPercent}%` }}
               />
               {[25, 50, 75].map((pct) => {
                 const inactiveColor = colorScheme === "dark" ? "#4b5563" : "#d1d5db";
-                const tickColor = progressPercent >= pct ? "#93c5fd" : inactiveColor;
+                const tickColor = progressPercent >= pct ? typeColors.tickActive : inactiveColor;
                 return (
                   <View
                     key={pct}
@@ -162,7 +173,7 @@ const CourseCard = memo(function CourseCard({ course, completedIds, hasStoryArc 
       {!collapsed && (
         <View className="px-4 pb-4">
           {lessonsLoading ? (
-            <ActivityIndicator size="small" color="#3b82f6" />
+            <ActivityIndicator size="small" color={typeColors.tickActive} />
           ) : (
             lessons.map((lesson) => (
               <LessonRow
@@ -179,13 +190,13 @@ const CourseCard = memo(function CourseCard({ course, completedIds, hasStoryArc 
               onPress={() =>
                 router.push({ pathname: "/quiz", params: { courseId: course.id } })
               }
-              className="flex-1 flex-row items-center justify-center rounded-lg border border-blue-200 py-2.5 active:opacity-70 dark:border-blue-800"
+              className={`flex-1 flex-row items-center justify-center rounded-lg border py-2.5 active:opacity-70 ${typeColors.badgeBg}`}
               accessibilityRole="button"
               accessibilityLabel={t("learn.practiceQuiz")}
               accessibilityHint="Start a practice quiz for this course"
             >
-              <IconSymbol name="trophy.fill" size={16} color="#3b82f6" />
-              <Text className="ml-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400">
+              <IconSymbol name="trophy.fill" size={16} color={typeColors.tickActive} />
+              <Text className={`ml-1.5 text-sm font-semibold ${typeColors.badgeText}`}>
                 {t("learn.practiceQuiz")}
               </Text>
             </Pressable>

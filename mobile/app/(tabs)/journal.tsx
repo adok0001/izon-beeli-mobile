@@ -57,7 +57,7 @@ function EntryCard({
     <Pressable
       onPress={onPress}
       onLongPress={confirmDelete}
-      className="mb-3 rounded-xl bg-neutral-50 p-4 active:opacity-80 dark:bg-neutral-800"
+      className="mb-3 rounded-xl border-l-2 border-l-emerald-400 bg-neutral-50 p-4 active:opacity-80 dark:border-l-emerald-600 dark:bg-neutral-800"
     >
       <View className="flex-row items-start justify-between">
         <View className="flex-1">
@@ -165,7 +165,7 @@ export default function JournalScreen() {
         </View>
         <Pressable
           onPress={openNew}
-          className="h-10 w-10 items-center justify-center rounded-full bg-blue-500"
+          className="h-10 w-10 items-center justify-center rounded-full bg-emerald-500"
         >
           <IconSymbol name="plus" size={22} color="#ffffff" />
         </Pressable>
@@ -175,7 +175,7 @@ export default function JournalScreen() {
         <LoadingScreen />
       ) : !entries || entries.length === 0 ? (
         <View className="flex-1 items-center justify-center px-8">
-          <IconSymbol name="pencil.and.list.clipboard" size={48} color="#d1d5db" />
+          <IconSymbol name="pencil.and.list.clipboard" size={48} color="#6ee7b7" />
           <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
             {t("journal.noEntries")}
           </Text>
@@ -217,7 +217,7 @@ export default function JournalScreen() {
                 <Text
                   className={`text-base font-semibold ${
                     canSave
-                      ? "text-blue-500"
+                      ? "text-emerald-500"
                       : "text-neutral-300 dark:text-neutral-600"
                   }`}
                 >

@@ -305,7 +305,7 @@ export default function DictionaryScreen() {
             <Pressable
               onPress={() => setViewMode("all")}
               className={`flex-1 items-center rounded-lg py-2 ${
-                viewMode === "all" ? "bg-blue-500" : "bg-neutral-100 dark:bg-neutral-800"
+                viewMode === "all" ? "bg-sky-500" : "bg-neutral-100 dark:bg-neutral-800"
               }`}
             >
               <Text
@@ -391,7 +391,7 @@ export default function DictionaryScreen() {
                 onPress={() => setSelectedCategory(null)}
                 className={`rounded-full px-3.5 py-1.5 ${
                   selectedCategory === null
-                    ? "bg-blue-500"
+                    ? "bg-sky-500"
                     : "bg-neutral-100 dark:bg-neutral-800"
                 }`}
               >
@@ -411,7 +411,7 @@ export default function DictionaryScreen() {
                   onPress={() => handleCategoryChip(category)}
                   className={`rounded-full px-3.5 py-1.5 ${
                     selectedCategory === category
-                      ? "bg-blue-500"
+                      ? "bg-sky-500"
                       : "bg-neutral-100 dark:bg-neutral-800"
                   }`}
                 >
