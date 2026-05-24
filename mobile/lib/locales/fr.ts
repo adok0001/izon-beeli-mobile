@@ -952,6 +952,12 @@ export const fr = {
     changeImage: "Changer de photo",
     recordingTapToStop: "Enregistrement… Appuyez pour arrêter",
     submittedWordDesc: "Votre contribution a été soumise pour examen.",
+    // Update-mode strings
+    updateBanner: "Ce mot existe déjà — sera soumis comme demande de mise à jour.",
+    foundInDictionary: "Trouvé dans le dictionnaire — appuyez pour sélectionner",
+    suggestedMeaning: "Sens suggéré",
+    suggestedMeaningPlaceholder: "Entrez le sens mis à jour ou alternatif…",
+    submitUpdate: "Soumettre la mise à jour",
     // Lesson flow
     lessonTitle: "Contribuer une leçon",
     stepLanguage: "Langue",
