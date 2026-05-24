@@ -15,6 +15,7 @@ import { useToast } from "@/lib/hooks/use-toast";
 import { useWordsDueForReview } from "@/lib/hooks/use-wordbank";
 import { localizeField } from "@/lib/localize";
 import { BUNDLED_AUDIO, formatDuration } from "@/lib/mock-data";
+import { useUser } from "@clerk/clerk-expo";
 import { useAudioStore } from "@/store/audio-store";
 import { useLanguageStore } from "@/store/language-store";
 import { useTourStore } from "@/store/tour-store";
@@ -405,6 +406,8 @@ function DailyGoalRing({ completedToday }: { completedToday: number }) {
 export default function LearnScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const { user } = useUser();
+  const avatarInitial = (user?.username ?? "L")[0]?.toUpperCase() ?? "L";
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
   const { data: courses = [], isLoading: coursesLoading, refetch: refetchCourses } = useCourses(selectedLanguageId);
   const { data: completedLessonIds, isLoading: progressLoading, refetch } = useCompletedLessons();
@@ -509,6 +512,14 @@ export default function LearnScreen() {
             accessibilityLabel="Dictionary"
           >
             <IconSymbol name="character.book.closed" size={18} color="#f59e0b" />
+          </Pressable>
+          <Pressable
+            onPress={() => router.push("/(tabs)/profile")}
+            className="h-9 w-9 items-center justify-center rounded-full bg-blue-500"
+            accessibilityRole="button"
+            accessibilityLabel="Profile"
+          >
+            <Text className="text-sm font-bold text-white">{avatarInitial}</Text>
           </Pressable>
         </View>
       </View>
