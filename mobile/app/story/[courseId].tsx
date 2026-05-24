@@ -157,7 +157,7 @@ export default function StoryScreen() {
                         <IconSymbol
                           name="play.fill"
                           size={24}
-                          color={isCurrent ? "#3b82f6" : "#9ca3af"}
+                          color={isCurrent ? "#f59e0b" : "#9ca3af"}
                         />
                       ) : (
                         <IconSymbol name="circle" size={24} color="#d1d5db" />

@@ -190,7 +190,7 @@ const CourseCard = memo(function CourseCard({ course, completedIds, hasStoryArc 
               onPress={() =>
                 router.push({ pathname: "/quiz", params: { courseId: course.id } })
               }
-              className={`flex-1 flex-row items-center justify-center rounded-lg border py-2.5 active:opacity-70 ${typeColors.badgeBg}`}
+              className={`flex-1 flex-row items-center justify-center rounded-lg border py-2.5 active:opacity-70 ${typeColors.badgeBg} ${typeColors.badgeBorder}`}
               accessibilityRole="button"
               accessibilityLabel={t("learn.practiceQuiz")}
               accessibilityHint="Start a practice quiz for this course"

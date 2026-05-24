@@ -5,9 +5,11 @@ import { NotificationBanner } from "@/components/notifications/notification-bann
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useCompletedLessons, useCompleteLesson, useTrackListen } from "@/lib/hooks/use-progress";
 import { useToast } from "@/lib/hooks/use-toast";
-import { useCourses, useLesson } from "@/lib/hooks/use-courses";
+import { useLesson } from "@/lib/hooks/use-courses";
 import { getCourseTypeColors } from "@/constants/course-colors";
 import { useNextLesson } from "@/lib/hooks/use-next-lesson";
+import { useQueryClient } from "@tanstack/react-query";
+import type { Course } from "@/types";
 import { formatDuration, BUNDLED_AUDIO } from "@/lib/mock-data";
 import { playFinishSound } from "@/lib/sounds";
 import { hapticHeavy } from "@/lib/haptics";
@@ -33,7 +35,8 @@ export default function LessonScreen() {
   const { data: completedLessonIds } = useCompletedLessons();
   const { selectedLanguageId } = useLanguageStore();
   const { uiLanguage } = useUiLanguageStore();
-  const { data: courses } = useCourses(selectedLanguageId);
+  const queryClient = useQueryClient();
+  const courses = queryClient.getQueryData<Course[]>(["courses", selectedLanguageId]);
   const lessonCourse = courses?.find((c) => c.id === lesson?.courseId);
   const typeColors = getCourseTypeColors(lessonCourse?.courseType);
   const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
