@@ -183,6 +183,7 @@ export default function TabLayout() {
           name="profile"
           options={{
             title: t("tabs.profile"),
+            href: null,
             tabBarIcon: ProfileTabIcon,
           }}
         />
