@@ -55,14 +55,14 @@ function AudioButton({ audioSource }: { audioSource: AudioSource }) {
     <Pressable
       onPress={handlePress}
       disabled={isPlaying}
-      className="mt-4 flex-row items-center gap-2 rounded-full bg-violet-50 px-5 py-2.5 active:opacity-70 dark:bg-blue-900/30"
+      className="mt-4 flex-row items-center gap-2 rounded-full bg-violet-50 px-5 py-2.5 active:opacity-70 dark:bg-violet-900/30"
     >
       <IconSymbol
         name={isPlaying ? "speaker.wave.3.fill" : "speaker.wave.2.fill"}
         size={18}
-        color="#3b82f6"
+        color="#8b5cf6"
       />
-      <Text className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+      <Text className="text-sm font-semibold text-violet-600 dark:text-violet-400">
         {isPlaying ? t("wordReview.playing") : t("wordReview.playAudio")}
       </Text>
     </Pressable>

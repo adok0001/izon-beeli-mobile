@@ -283,13 +283,16 @@ export function InteractiveTranscript({ segments, onSegmentPress }: Props) {
                 </Text>
               )}
               {segment.colorHex && (
-                <View className="mt-1.5 flex-row items-center gap-1.5">
+                <View
+                  className="mt-1.5 flex-row items-center gap-1.5"
+                  accessible={false}
+                >
                   <View
                     className="h-4 w-4 rounded-full border border-neutral-200 dark:border-neutral-600"
                     style={{ backgroundColor: segment.colorHex }}
                   />
                   <View
-                    className="h-1.5 flex-1 rounded-full"
+                    className="h-1.5 flex-1 rounded-full border border-neutral-200 dark:border-neutral-600"
                     style={{ backgroundColor: segment.colorHex, opacity: 0.3 }}
                   />
                 </View>
