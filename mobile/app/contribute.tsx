@@ -6,7 +6,6 @@ import {
     CATEGORY_LABELS,
     type DictionaryCategory,
     type DictionaryEntry,
-    searchDictionary,
 } from "@/lib/dictionary";
 import { useBounties } from "@/lib/hooks/use-bounties";
 import {
@@ -76,13 +75,17 @@ export default function ContributeScreen() {
   const wordTrimmed = word.trim();
   const dictMatches =
     wordTrimmed.length >= 2 && !selectedEntry
-      ? searchDictionary(wordTrimmed, dictionaryEntries).slice(0, 5)
+      ? dictionaryEntries
+          .filter((e) =>
+            e.word.toLowerCase().startsWith(wordTrimmed.toLowerCase())
+          )
+          .slice(0, 5)
       : [];
 
   const handleSelectEntry = (entry: DictionaryEntry) => {
     setSelectedEntry(entry);
     setWord(entry.word);
-    setEnglish(entry.english);
+    setEnglish("");
     setCategory(entry.category);
   };
 
@@ -501,7 +504,7 @@ export default function ContributeScreen() {
                   <View className="mb-4 flex-row items-center rounded-xl bg-amber-50 px-4 py-3 dark:bg-amber-950">
                     <IconSymbol name="arrow.up.circle.fill" size={16} color="#d97706" />
                     <Text className="ml-2 flex-1 text-sm text-amber-800 dark:text-amber-300">
-                      Word already exists \u2014 this will be submitted as an update request.
+                      {t("contribute.updateBanner")}
                     </Text>
                     <Pressable onPress={handleClearEntry} hitSlop={8}>
                       <IconSymbol name="xmark.circle.fill" size={18} color="#d97706" />
@@ -531,7 +534,7 @@ export default function ContributeScreen() {
                     <View className="flex-row items-center bg-neutral-100 px-3 py-1.5 dark:bg-neutral-800">
                       <IconSymbol name="magnifyingglass" size={12} color="#9ca3af" />
                       <Text className="ml-1.5 text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                        Found in dictionary \u2014 tap to select
+                        {t("contribute.foundInDictionary")}
                       </Text>
                     </View>
                     {dictMatches.map((entry, i) => (
@@ -557,12 +560,12 @@ export default function ContributeScreen() {
                 )}
 
                 <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  {selectedEntry ? "Suggested meaning" : t("dictionaryPage.fieldEnglish")}
+                  {selectedEntry ? t("contribute.suggestedMeaning") : t("dictionaryPage.fieldEnglish")}
                 </Text>
                 <TextInput
                   value={english}
                   onChangeText={setEnglish}
-                  placeholder={selectedEntry ? "Enter the updated or alternative meaning..." : "e.g. Good morning"}
+                  placeholder={selectedEntry ? t("contribute.suggestedMeaningPlaceholder") : "e.g. Good morning"}
                   placeholderTextColor="#9ca3af"
                   className="mb-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                 />
@@ -575,6 +578,8 @@ export default function ContributeScreen() {
                     <Pressable
                       key={cat}
                       onPress={() => { if (!selectedEntry) setCategory(cat); }}
+                      disabled={!!selectedEntry}
+                      accessibilityState={{ disabled: !!selectedEntry }}
                       className={`rounded-lg px-3 py-2 ${
                         category === cat
                           ? "bg-blue-500"
@@ -760,6 +765,10 @@ export default function ContributeScreen() {
                 {step === "entry" && (
                   <Pressable
                     onPress={() => {
+                      if (selectedEntry) {
+                        handleSubmit();
+                        return;
+                      }
                       const entryCheck = wordContributionSchema.pick({ word: true, english: true, category: true }).safeParse({ word, english, category });
                       if (entryCheck.success) {
                         setStep("details");
@@ -775,7 +784,9 @@ export default function ContributeScreen() {
                         : "bg-blue-300 dark:bg-blue-800"
                     }`}
                   >
-                    <Text className="font-semibold text-white">{t("common.next")}</Text>
+                    <Text className="font-semibold text-white">
+                      {selectedEntry ? t("contribute.submitUpdate") : t("common.next")}
+                    </Text>
                   </Pressable>
                 )}
                 {step === "details" && (
@@ -790,7 +801,7 @@ export default function ContributeScreen() {
                       {(submitContribution.isPending || submitEntryContribution.isPending)
                         ? t("contribute.submitting")
                         : selectedEntry
-                          ? "Submit Update"
+                          ? t("contribute.submitUpdate")
                           : t("common.submit")}
                     </Text>
                   </Pressable>

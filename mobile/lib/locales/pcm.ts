@@ -951,6 +951,12 @@ export const pcm = {
     changeImage: "Change photo",
     recordingTapToStop: "E dey record… Press to stop",
     submittedWordDesc: "Your contribution don submit for review.",
+    // Update-mode strings
+    updateBanner: "This word don exist — e go submit as update request.",
+    foundInDictionary: "Dem find am for dictionary — press to select",
+    suggestedMeaning: "Suggested meaning",
+    suggestedMeaningPlaceholder: "Enter updated or alternative meaning…",
+    submitUpdate: "Submit Update",
     // Lesson flow
     lessonTitle: "Contribute Lesson",
     stepLanguage: "Language",

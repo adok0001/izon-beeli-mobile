@@ -950,6 +950,12 @@ export const en = {
     changeImage: "Change photo",
     recordingTapToStop: "Recording… Tap to stop",
     submittedWordDesc: "Your contribution has been submitted for review.",
+    // Update-mode strings
+    updateBanner: "Word already exists — this will be submitted as an update request.",
+    foundInDictionary: "Found in dictionary — tap to select",
+    suggestedMeaning: "Suggested meaning",
+    suggestedMeaningPlaceholder: "Enter the updated or alternative meaning…",
+    submitUpdate: "Submit Update",
     // Lesson flow
     lessonTitle: "Contribute a Lesson",
     stepLanguage: "Language",
