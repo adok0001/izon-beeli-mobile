@@ -141,7 +141,7 @@ export default function PracticeScreen() {
           <Text className="font-heading text-2xl font-bold text-neutral-900 dark:text-white">
             {t("practice.title")}
           </Text>
-          <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+          <Text className="mt-1 text-sm text-teal-600 dark:text-teal-400">
             {t("practice.subtitle")}
           </Text>
         </View>

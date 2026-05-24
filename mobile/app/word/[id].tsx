@@ -43,7 +43,7 @@ function InlineAudioButton({ audioUrl }: { audioUrl: string }) {
       <IconSymbol
         name={playing ? "speaker.wave.3.fill" : "speaker.wave.2.fill"}
         size={18}
-        color={playing ? "#3b82f6" : "#9ca3af"}
+        color={playing ? "#0ea5e9" : "#9ca3af"}
       />
     </Pressable>
   );
@@ -293,7 +293,7 @@ export default function WordDetailScreen() {
                 <View className="mt-3 items-center gap-1">
                   {meanings.map((meaning, i) => (
                     <View key={i} className="flex-row items-baseline gap-2">
-                      <Text className="text-sm font-semibold text-blue-500 dark:text-blue-400">
+                      <Text className="text-sm font-semibold text-sky-500 dark:text-sky-400">
                         {i + 1}.
                       </Text>
                       <Text className="text-lg text-neutral-600 dark:text-neutral-300">
@@ -308,8 +308,8 @@ export default function WordDetailScreen() {
             {/* French translation */}
             {!!entry.french && (
               <View className="mt-2 flex-row items-center gap-2">
-                <View className="rounded-full bg-blue-50 px-2 py-0.5 dark:bg-blue-900/30">
-                  <Text className="text-[10px] font-semibold text-blue-500 dark:text-blue-400">
+                <View className="rounded-full bg-sky-50 px-2 py-0.5 dark:bg-sky-900/30">
+                  <Text className="text-[10px] font-semibold text-sky-500 dark:text-sky-400">
                     {t("wordDetail.french")}
                   </Text>
                 </View>
@@ -321,22 +321,22 @@ export default function WordDetailScreen() {
 
             {/* Audio button — primary action */}
             <View className="mt-6 items-center">
-              <View className="h-16 w-16 items-center justify-center rounded-full bg-blue-500 shadow-sm">
+              <View className="h-16 w-16 items-center justify-center rounded-full bg-sky-500 shadow-sm">
                 <WordAudioButton audioSource={entry.audioUrl} word={entry.word} size={28} />
               </View>
-              <Text className="mt-2 text-xs font-semibold text-blue-500 dark:text-blue-400">
+              <Text className="mt-2 text-xs font-semibold text-sky-500 dark:text-sky-400">
                 {entry.audioUrl ? t("wordDetail.hearPronunciation") : t("wordDetail.textToSpeech")}
               </Text>
             </View>
 
             {/* Category badge */}
-            <View className="mt-4 flex-row items-center rounded-full bg-blue-50 px-4 py-1.5 dark:bg-blue-900/30">
+            <View className="mt-4 flex-row items-center rounded-full bg-sky-50 px-4 py-1.5 dark:bg-sky-900/30">
               <IconSymbol
                 name={categoryIcon as any}
                 size={13}
-                color="#3b82f6"
+                color="#0ea5e9"
               />
-              <Text className="ml-1.5 text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+              <Text className="ml-1.5 text-xs font-semibold uppercase tracking-wider text-sky-600 dark:text-sky-400">
                 {categoryLabel}
               </Text>
             </View>
@@ -492,8 +492,8 @@ export default function WordDetailScreen() {
                 className="flex-row items-center justify-between rounded-2xl border border-neutral-200 px-4 py-3.5 active:opacity-80 dark:border-neutral-700"
               >
                 <View className="flex-row items-center">
-                  <IconSymbol name="plus.circle.fill" size={18} color="#3b82f6" />
-                  <Text className="ml-2 text-base font-medium text-blue-600 dark:text-blue-400">
+                  <IconSymbol name="plus.circle.fill" size={18} color="#0ea5e9" />
+                  <Text className="ml-2 text-base font-medium text-sky-600 dark:text-sky-400">
                     {t("wordDetail.contributeExpand")}
                   </Text>
                 </View>
@@ -525,7 +525,7 @@ export default function WordDetailScreen() {
                             <Pressable
                               onPress={isPlaying ? stopPlayback : playRecording}
                               className={`h-14 w-14 items-center justify-center rounded-full ${
-                                isPlaying ? "bg-blue-500" : "bg-emerald-100 dark:bg-emerald-900"
+                                isPlaying ? "bg-sky-500" : "bg-emerald-100 dark:bg-emerald-900"
                               }`}
                             >
                               <IconSymbol
@@ -549,7 +549,7 @@ export default function WordDetailScreen() {
                               <Pressable
                                 onPress={handleSubmitAudio}
                                 disabled={submitEntry.isPending}
-                                className="rounded-lg bg-blue-500 px-4 py-2"
+                                className="rounded-lg bg-sky-500 px-4 py-2"
                               >
                                 <Text className="text-sm font-medium text-white">
                                   {submitEntry.isPending ? t("contribute.submitting") : t("common.submit")}
@@ -666,8 +666,8 @@ export default function WordDetailScreen() {
                           disabled={!newMeaning.trim() || submitEntry.isPending}
                           className={`flex-1 items-center rounded-xl py-3 ${
                             newMeaning.trim() && !submitEntry.isPending
-                              ? "bg-blue-500"
-                              : "bg-blue-300 dark:bg-blue-800"
+                              ? "bg-sky-500"
+                              : "bg-sky-300 dark:bg-sky-800"
                           }`}
                         >
                           <Text className="font-semibold text-white">
@@ -681,8 +681,8 @@ export default function WordDetailScreen() {
                       onPress={() => setShowMeaningInput(true)}
                       className="flex-row items-center rounded-2xl border border-neutral-200 px-4 py-3.5 active:opacity-80 dark:border-neutral-700"
                     >
-                      <IconSymbol name="plus.circle.fill" size={20} color="#3b82f6" />
-                      <Text className="ml-2 text-base font-medium text-blue-600 dark:text-blue-400">
+                      <IconSymbol name="plus.circle.fill" size={20} color="#0ea5e9" />
+                      <Text className="ml-2 text-base font-medium text-sky-600 dark:text-sky-400">
                         {t("entryContribute.addMeaning")}
                       </Text>
                     </Pressable>

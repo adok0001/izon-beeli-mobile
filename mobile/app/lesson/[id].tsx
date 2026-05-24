@@ -6,7 +6,10 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useCompletedLessons, useCompleteLesson, useTrackListen } from "@/lib/hooks/use-progress";
 import { useToast } from "@/lib/hooks/use-toast";
 import { useLesson } from "@/lib/hooks/use-courses";
+import { getCourseTypeColors } from "@/constants/course-colors";
 import { useNextLesson } from "@/lib/hooks/use-next-lesson";
+import { useQueryClient } from "@tanstack/react-query";
+import type { Course } from "@/types";
 import { formatDuration, BUNDLED_AUDIO } from "@/lib/mock-data";
 import { playFinishSound } from "@/lib/sounds";
 import { hapticHeavy } from "@/lib/haptics";
@@ -32,6 +35,10 @@ export default function LessonScreen() {
   const { data: completedLessonIds } = useCompletedLessons();
   const { selectedLanguageId } = useLanguageStore();
   const { uiLanguage } = useUiLanguageStore();
+  const queryClient = useQueryClient();
+  const courses = queryClient.getQueryData<Course[]>(["courses", selectedLanguageId]);
+  const lessonCourse = courses?.find((c) => c.id === lesson?.courseId);
+  const typeColors = getCourseTypeColors(lessonCourse?.courseType);
   const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [pendingSummary, setPendingSummary] = useState(false);
@@ -172,7 +179,7 @@ export default function LessonScreen() {
             {audioSource && (
               <Pressable
                 onPress={handlePlayAudio}
-                className="flex-row items-center rounded-full bg-blue-500 px-5 py-2.5 active:opacity-80"
+                className={`flex-row items-center rounded-full px-5 py-2.5 active:opacity-80 ${typeColors.progressBar}`}
               >
                 <IconSymbol
                   name={isCurrentTrack && isPlaying ? "pause.fill" : "play.fill"}
@@ -183,7 +190,7 @@ export default function LessonScreen() {
                   {isCurrentTrack && isPlaying ? t("lesson.pause") : isCurrentTrack ? t("lesson.resume") : t("lesson.play")}
                 </Text>
                 {(isCurrentTrack ? trackDuration > 0 : !!lesson.duration) && (
-                  <Text className="ml-2 text-sm text-blue-200">
+                  <Text className="ml-2 text-sm" style={{ color: typeColors.tickActive + "99" }}>
                     {isCurrentTrack ? formatDuration(trackDuration) : formatDuration(lesson.duration!)}
                   </Text>
                 )}

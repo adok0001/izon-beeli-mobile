@@ -17,7 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 function StatCard({ icon, label, value }: Readonly<{ icon: string; label: string; value: string }>) {
   return (
     <View className="flex-1 items-center rounded-xl bg-neutral-50 px-2 py-4 dark:bg-neutral-800">
-      <IconSymbol name={icon as any} size={22} color="#3b82f6" />
+      <IconSymbol name={icon as any} size={22} color="#6366f1" />
       <Text className="mt-1.5 text-lg font-bold text-neutral-900 dark:text-white">
         {value}
       </Text>
@@ -97,7 +97,7 @@ export default function ProfileScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Profile header */}
         <View className="items-center border-b border-neutral-100 px-5 pb-6 pt-6 dark:border-neutral-800">
-          <View className="mb-3 h-20 w-20 items-center justify-center rounded-full bg-blue-500">
+          <View className="mb-3 h-20 w-20 items-center justify-center rounded-full bg-indigo-500">
             <Text className="text-2xl font-bold text-white">{initial}</Text>
           </View>
           <Text className="font-heading text-xl font-bold text-neutral-900 dark:text-white">
