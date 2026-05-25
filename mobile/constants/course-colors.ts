@@ -102,11 +102,11 @@ export const COURSE_TYPE_COLORS: Record<CourseType, CourseTypeColors> = {
 
 const FALLBACK_COURSE_TYPE_COLORS: CourseTypeColors = {
   headerBg: "bg-neutral-50 dark:bg-neutral-800",
-  badgeBg: "bg-blue-100 dark:bg-blue-900",
-  badgeBorder: "border-blue-200 dark:border-blue-800",
-  badgeText: "text-blue-700 dark:text-blue-300",
-  progressBar: "bg-blue-500",
-  tickActive: "#3b82f6",
+  badgeBg: "bg-neutral-100 dark:bg-neutral-700",
+  badgeBorder: "border-neutral-300 dark:border-neutral-600",
+  badgeText: "text-neutral-700 dark:text-neutral-300",
+  progressBar: "bg-neutral-500",
+  tickActive: "#737373",
   label: "",
 };
 
