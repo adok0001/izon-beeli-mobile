@@ -5,6 +5,11 @@ import { apiFetch } from "@/lib/api";
 export interface NotificationPrefs {
   pushWotdEnabled: boolean;
   pushStreakReminderEnabled: boolean;
+  emailWotdEnabled: boolean;
+  emailStreakReminderEnabled: boolean;
+  emailAssignmentDueEnabled: boolean;
+  emailContributionStatusEnabled: boolean;
+  emailReviewerStatusEnabled: boolean;
 }
 
 export function useNotificationPrefs() {

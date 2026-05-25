@@ -206,6 +206,46 @@ export default function SettingsScreen() {
             onToggle={(v) => updatePrefs.mutate({ pushStreakReminderEnabled: v })}
           />
 
+          {/* Email Notifications section */}
+          <Text className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+            {t("settings.emailNotifications")}
+          </Text>
+          <ToggleRow
+            icon="star.fill"
+            label={t("settings.emailWordOfDay")}
+            detail={t("settings.emailWordOfDayDetail")}
+            value={prefs?.emailWotdEnabled ?? true}
+            onToggle={(v) => updatePrefs.mutate({ emailWotdEnabled: v })}
+          />
+          <ToggleRow
+            icon="flame.fill"
+            label={t("settings.emailStreakReminder")}
+            detail={t("settings.emailStreakReminderDetail")}
+            value={prefs?.emailStreakReminderEnabled ?? true}
+            onToggle={(v) => updatePrefs.mutate({ emailStreakReminderEnabled: v })}
+          />
+          <ToggleRow
+            icon="calendar"
+            label={t("settings.emailAssignmentDue")}
+            detail={t("settings.emailAssignmentDueDetail")}
+            value={prefs?.emailAssignmentDueEnabled ?? true}
+            onToggle={(v) => updatePrefs.mutate({ emailAssignmentDueEnabled: v })}
+          />
+          <ToggleRow
+            icon="checkmark.circle.fill"
+            label={t("settings.emailContributionStatus")}
+            detail={t("settings.emailContributionStatusDetail")}
+            value={prefs?.emailContributionStatusEnabled ?? true}
+            onToggle={(v) => updatePrefs.mutate({ emailContributionStatusEnabled: v })}
+          />
+          <ToggleRow
+            icon="person.badge.shield.checkmark.fill"
+            label={t("settings.emailReviewerStatus")}
+            detail={t("settings.emailReviewerStatusDetail")}
+            value={prefs?.emailReviewerStatusEnabled ?? true}
+            onToggle={(v) => updatePrefs.mutate({ emailReviewerStatusEnabled: v })}
+          />
+
           {/* App section */}
           <Text className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
             {t("settings.app")}
