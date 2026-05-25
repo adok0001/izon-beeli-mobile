@@ -23,5 +23,8 @@
       },
       "environment": "development"
     }
+  },
+  "submit": {
+    "production": {}
   }
 }
