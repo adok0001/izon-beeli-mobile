@@ -7,8 +7,10 @@ jobs:
   build:
     name: iOS Production Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
-      build-id: ${{ steps.build.outputs.build-id }}
+      build_id: ${{ steps.build.outputs.build_id }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -36,12 +38,18 @@ jobs:
         run: |
           BUILD_JSON=$(eas build --platform ios --profile production --non-interactive --json)
           BUILD_ID=$(echo "$BUILD_JSON" | jq -r '.[0].id')
-          echo "build-id=$BUILD_ID" >> $GITHUB_OUTPUT
+          if [ -z "$BUILD_ID" ] || [ "$BUILD_ID" = "null" ]; then
+            echo "Error: failed to extract build ID from EAS output" >&2
+            exit 1
+          fi
+          echo "build_id=$BUILD_ID" >> $GITHUB_OUTPUT
 
   submit:
     name: Submit to App Store
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -65,4 +73,4 @@ jobs:
 
       - name: Submit iOS to App Store
         working-directory: ./mobile
-        run: eas submit --platform ios --profile production --id ${{ needs.build.outputs.build-id }} --non-interactive
+        run: eas submit --platform ios --profile production --id ${{ needs.build.outputs.build_id }} --non-interactive
