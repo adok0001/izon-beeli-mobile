@@ -30,4 +30,4 @@ jobs:
 
       - name: Build and submit iOS (production)
         working-directory: ./mobile
-        run: eas build --platform ios --profile production --auto-submit --non-interactive
+        run: eas build --platform ios --auto-submit --non-interactive
