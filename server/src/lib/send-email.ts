@@ -203,3 +203,36 @@ export function reviewerApplicationStatusEmailText(name: string, status: "approv
   text += "\n\nOpen Beeli: https://beeli.app\n\nTo unsubscribe, go to Settings → Notifications in the Beeli app.";
   return text;
 }
+
+export function newReviewerApplicationEmailHtml(
+  adminName: string,
+  applicantName: string,
+  applicantEmail: string,
+  role: string,
+  languages: string[]
+): string {
+  const langList = languages.length > 0 ? languages.join(", ") : "Not specified";
+  const body = `
+    <h2 style="margin:0 0 8px;color:#111827;font-size:20px;">New Reviewer Application</h2>
+    <p style="margin:0 0 24px;color:#6b7280;">Hello ${adminName},</p>
+    <p style="margin:0 0 16px;color:#374151;">A new reviewer application has been submitted and is awaiting your review.</p>
+    <div style="background:#eff6ff;border-left:4px solid #1d4ed8;padding:20px 24px;border-radius:4px;">
+      <p style="margin:0 0 8px;font-size:18px;font-weight:700;color:#1e3a8a;">${applicantName}</p>
+      <p style="margin:0 0 4px;font-size:14px;color:#374151;"><strong>Email:</strong> ${applicantEmail}</p>
+      <p style="margin:0 0 4px;font-size:14px;color:#374151;"><strong>Role:</strong> ${role}</p>
+      <p style="margin:0;font-size:14px;color:#374151;"><strong>Languages:</strong> ${langList}</p>
+    </div>
+    ${ctaButton("Review Application")}`;
+  return emailWrapper("New Reviewer Application", body);
+}
+
+export function newReviewerApplicationEmailText(
+  adminName: string,
+  applicantName: string,
+  applicantEmail: string,
+  role: string,
+  languages: string[]
+): string {
+  const langList = languages.length > 0 ? languages.join(", ") : "Not specified";
+  return `New Reviewer Application\n\nHello ${adminName},\n\nA new reviewer application has been submitted.\n\nApplicant: ${applicantName}\nEmail: ${applicantEmail}\nRole: ${role}\nLanguages: ${langList}\n\nReview it in Beeli: https://beeli.app\n`;
+}

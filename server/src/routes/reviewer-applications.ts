@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { pushTokens, reviewerApplications, users } from "../db/schema.js";
 import { elderMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
@@ -8,6 +8,8 @@ import {
   sendEmail,
   reviewerApplicationStatusEmailHtml,
   reviewerApplicationStatusEmailText,
+  newReviewerApplicationEmailHtml,
+  newReviewerApplicationEmailText,
 } from "../lib/send-email.js";
 
 const VALID_ROLES = ["teacher", "professor", "elder"] as const;
@@ -83,6 +85,66 @@ reviewerApplicationsRouter.post("/", async (c) => {
     reason: finalReason,
     languages: sanitisedLanguages,
   });
+
+  // Notify admins and elders about the new application (fire-and-forget)
+  const [applicant] = await db
+    .select({ name: users.name, email: users.email })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (applicant) {
+    const admins = await db
+      .select({ id: users.id, name: users.name, email: users.email })
+      .from(users)
+      .where(
+        and(
+          sql`(${users.isAdmin} = true OR ${users.reviewerRole} = 'elder')`,
+          sql`${users.deletedAt} IS NULL`
+        )
+      );
+
+    await Promise.all([
+      // Email each admin/elder
+      ...admins.map((admin) =>
+        sendEmail({
+          to: { email: admin.email, name: admin.name },
+          subject: `New reviewer application from ${applicant.name}`,
+          htmlContent: newReviewerApplicationEmailHtml(
+            admin.name,
+            applicant.name,
+            applicant.email,
+            role,
+            sanitisedLanguages
+          ),
+          textContent: newReviewerApplicationEmailText(
+            admin.name,
+            applicant.name,
+            applicant.email,
+            role,
+            sanitisedLanguages
+          ),
+        })
+      ),
+      // Push to admin/elder devices
+      ...admins.map(async (admin) => {
+        const tokens = await db
+          .select({ token: pushTokens.token })
+          .from(pushTokens)
+          .where(eq(pushTokens.userId, admin.id));
+        return Promise.all(
+          tokens.map(({ token }) =>
+            sendPush(
+              token,
+              "New Reviewer Application",
+              `${applicant.name} has applied for the ${role} role.`,
+              { screen: "reviewer-applications-admin" }
+            )
+          )
+        );
+      }),
+    ]);
+  }
 
   return c.json({ success: true }, 201);
 });
