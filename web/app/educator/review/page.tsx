@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
 interface PendingContribution {
@@ -458,7 +459,9 @@ export default function EducatorReviewPage() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["educator", "contributions"] });
       void qc.invalidateQueries({ queryKey: ["educator", "stats"] });
+      toast.success("Contribution deleted");
     },
+    onError: (e: Error) => toast.error("Failed to delete contribution", { description: e.message }),
   });
 
   const deleteLesson = useMutation({
@@ -472,7 +475,9 @@ export default function EducatorReviewPage() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["educator", "lesson-contributions"] });
       void qc.invalidateQueries({ queryKey: ["educator", "stats"] });
+      toast.success("Lesson contribution deleted");
     },
+    onError: (e: Error) => toast.error("Failed to delete lesson contribution", { description: e.message }),
   });
 
   const tabs: { id: Tab; label: string; count: number }[] = [

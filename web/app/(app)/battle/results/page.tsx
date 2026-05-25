@@ -11,7 +11,8 @@ export default function BattleResultsPage() {
 
   useEffect(() => {
     if (!gameResults && !myPlayerId) { router.replace("/battle"); }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // router is stable; run once on mount as a redirect guard
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
