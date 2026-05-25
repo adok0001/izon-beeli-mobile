@@ -36,7 +36,7 @@ jobs:
         id: build
         working-directory: ./mobile
         run: |
-          BUILD_JSON=$(eas build --platform ios --profile production --non-interactive --json)
+          BUILD_JSON=$(eas build --platform ios --non-interactive --json)
           BUILD_ID=$(echo "$BUILD_JSON" | jq -r '.[0].id')
           if [ -z "$BUILD_ID" ] || [ "$BUILD_ID" = "null" ]; then
             echo "Error: failed to extract build ID from EAS output" >&2
