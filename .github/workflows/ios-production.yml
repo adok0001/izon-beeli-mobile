@@ -7,6 +7,7 @@ jobs:
   build:
     name: iOS Production Build
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     permissions:
       contents: read
     outputs:
@@ -36,7 +37,7 @@ jobs:
         id: build
         working-directory: ./mobile
         run: |
-          BUILD_JSON=$(eas build --platform ios --non-interactive --json)
+          BUILD_JSON=$(eas build --platform ios --non-interactive --json --wait)
           BUILD_ID=$(echo "$BUILD_JSON" | jq -r '.[0].id')
           if [ -z "$BUILD_ID" ] || [ "$BUILD_ID" = "null" ]; then
             echo "Error: failed to extract build ID from EAS output" >&2
@@ -51,20 +52,6 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: mobile/package-lock.json
-
-      - name: Install dependencies
-        working-directory: ./mobile
-        run: npm ci
-
       - name: Set up Expo and EAS CLI
         uses: expo/expo-github-action@v8
         with:
@@ -72,6 +59,4 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Submit iOS to App Store
-        working-directory: ./mobile
         run: eas submit --platform ios --id ${{ needs.build.outputs.build_id }} --non-interactive
-t
