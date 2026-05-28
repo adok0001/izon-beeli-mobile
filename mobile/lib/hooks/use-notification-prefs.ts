@@ -15,7 +15,7 @@ export interface NotificationPrefs {
 export function useNotificationPrefs() {
   const { getToken, isSignedIn } = useAuth();
 
-  return useQuery<NotificationPrefs>({
+  const query = useQuery<NotificationPrefs>({
     queryKey: ["notification-prefs"],
     queryFn: async () => {
       const token = await getToken();
@@ -24,6 +24,8 @@ export function useNotificationPrefs() {
     enabled: !!isSignedIn,
     staleTime: 5 * 60 * 1000,
   });
+
+  return { ...query, isLoading: query.isLoading };
 }
 
 export function useUpdateNotificationPrefs() {
@@ -42,15 +44,15 @@ export function useUpdateNotificationPrefs() {
     onMutate: async (prefs) => {
       await queryClient.cancelQueries({ queryKey: ["notification-prefs"] });
       const previous = queryClient.getQueryData<NotificationPrefs>(["notification-prefs"]);
-      queryClient.setQueryData<NotificationPrefs>(["notification-prefs"], (old) =>
-        old ? { ...old, ...prefs } : (prefs as NotificationPrefs)
-      );
+      // Only apply optimistic update when cache already has data
+      if (previous) {
+        queryClient.setQueryData<NotificationPrefs>(["notification-prefs"], { ...previous, ...prefs });
+      }
       return { previous };
     },
     onError: (_err, _prefs, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(["notification-prefs"], context.previous);
-      }
+      // Restore previous value (may be undefined if no prior cache — that's fine)
+      queryClient.setQueryData(["notification-prefs"], context?.previous);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["notification-prefs"] });

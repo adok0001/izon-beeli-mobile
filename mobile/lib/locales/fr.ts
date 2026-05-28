@@ -154,6 +154,7 @@ export const fr = {
     learning: "Apprentissage",
     dictionary: "Dictionnaire",
     reviewContributions: "Examiner les contributions",
+    reviewApplications: "Examiner les candidatures",
     myContributions: "Mes contributions",
     bounties: "Primes",
     contributors: "Contributeurs",

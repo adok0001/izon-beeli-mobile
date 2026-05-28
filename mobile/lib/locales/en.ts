@@ -43,6 +43,7 @@ export const en = {
     feed: "Feed",
     profile: "Profile",
     listen: "Listen",
+    contribute: "Contribute",
   },
   learn: {
     title: "Learn",
