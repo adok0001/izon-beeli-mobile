@@ -39,7 +39,7 @@ export const unstable_settings = {
   anchor: "(tabs)",
 };
 function AuthGate({ children }: Readonly<{ children: React.ReactNode }>) {
-  const { isSignedIn, isLoaded, getToken } = useAuth();
+  const { isSignedIn, isLoaded, getToken, userId } = useAuth();
   const router = useRouter();
   const segments = useSegments();
   const prevSignedIn = useRef<boolean | undefined>(undefined);
@@ -62,6 +62,10 @@ function AuthGate({ children }: Readonly<{ children: React.ReactNode }>) {
       if (token) registerPushToken(token).catch(() => {});
     });
   }, [isSignedIn, getToken]);
+
+  useEffect(() => {
+    if (isSignedIn && userId) analytics.identify(userId);
+  }, [isSignedIn, userId]);
 
   useEffect(() => {
     return addNotificationListener((title, body, type) => {

@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { FeedbackModal } from "@/components/feedback-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { XpLevelBadge } from "@/components/xp-level-badge";
@@ -254,7 +255,7 @@ export default function ProfileScreen() {
             <MenuRow
               icon="xmark"
               label={t("profile.signOut")}
-              onPress={() => signOut()}
+              onPress={() => { analytics.reset(); signOut(); }}
               danger
             />
           </View>

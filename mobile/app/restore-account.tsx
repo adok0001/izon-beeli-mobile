@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { apiFetch } from "@/lib/api";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { useToast } from "@/lib/hooks/use-toast";
@@ -47,6 +48,7 @@ export default function RestoreAccountScreen() {
   };
 
   const handleContinueDeletion = async () => {
+    analytics.reset();
     await signOut();
     router.replace("/(auth)/sign-in");
   };
