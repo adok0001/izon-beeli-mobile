@@ -19,7 +19,7 @@
 6. [Acquisition Channels](#6-acquisition-channels)
 7. [Retention Strategy](#7-retention-strategy)
 8. [Monetization Strategy](#8-monetization-strategy)
-9. [Content Marketing Plan](#9-content-marketing-plan)
+9. [Content Marketing & PR](#9-content-marketing--pr)
 10. [Partnership & Community Strategy](#10-partnership--community-strategy)
 11. [App Store Optimization (ASO)](#11-app-store-optimization-aso)
 12. [KPIs & Success Metrics](#12-kpis--success-metrics)
@@ -241,16 +241,9 @@ Do not compete with Duolingo on gamification mechanics — compete on authentici
 
 **Platforms:** TikTok and Instagram Reels (Segments 1, 3); Twitter/X for culture commentary and educator amplification (Segment 2).
 
-**Content types:**
-- Word of the Day (pull from existing API — one word, pronunciation audio, example sentence)
-- Proverb of the Week with translation and context (the proverb collection is already in the app)
-- Language challenge: "Can you say [word] in [language]?" with audio reveal
-- Achievement share posts (leverage the existing `ShareModal` and share card components)
-- Cultural fact: one Adinkra symbol, one naming ceremony tradition, one oral history fragment
-
 **Frequency:** 5 posts/week minimum. Daily in peak months.
 
-**Automation opportunity:** The Word of the Day notification system already exists in the app. A simple scheduled job can publish the same data to social via Buffer or Hootsuite.
+Content types, automation approach, and the full posting calendar are in Section 9.
 
 ---
 
@@ -267,17 +260,13 @@ Do not compete with Duolingo on gamification mechanics — compete on authentici
 
 **The SEO surface is the web app** (`izonbeeli.app` or equivalent domain). Currently, the root URL redirects to `/learn`. A public landing page with language-specific content is required before SEO investment yields results.
 
-**Content plan:** One blog post per high-priority language per quarter. Format: "Beginner's guide to [Language]: phrases, pronunciation, and cultural context." Each post includes 10–15 vocabulary items pulled from the dictionary API. These pages rank for long-tail searches diaspora communities make when feeling nostalgic or triggered by a life event.
+**Content plan:** One blog post per high-priority language per quarter. Format: "Beginner's guide to [Language]: phrases, pronunciation, and cultural context." Each post includes 10–15 vocabulary items pulled from the dictionary API. These pages rank for long-tail searches diaspora communities make when feeling nostalgic or triggered by a life event. Blog post topics and the full Cultural Deep Dive pillar are in Section 9.
 
 ---
 
 ### Channel 3: Diaspora Community Partnerships (Priority: High | Cost: Low)
 
-**Targets:** Nigerian Student Unions (UK, US, Canada universities); Yoruba, Igbo, and Izon cultural associations; Ghanaian community organizations; East African diaspora groups; relevant subreddits (r/Nigeria, r/Africa, r/Yoruba, r/learnswahili); active Facebook groups for specific language communities.
-
-**Mechanism:** Provide a free Classroom account to any community organization that commits to hosting a language learning event or challenge. The classroom feature already exists — this is zero-product-cost customer acquisition.
-
-**Activation:** Personal outreach (not templated blasts). One paragraph explaining what Beeli is, one screenshot of the classroom feature, one link to create an account.
+Diaspora cultural organizations — student unions, language associations, community groups — are the highest-trust acquisition channel for Segment 1. The mechanism is free Classroom accounts in exchange for hosting a language learning event. Zero product cost; zero ad spend. Activation targets, outreach approach, and value exchange terms are in Section 10.
 
 ---
 
@@ -287,33 +276,13 @@ Organic App Store and Google Play search is a significant passive acquisition ch
 
 ---
 
-### Channel 5: PR / Media Outreach (Priority: Medium | Cost: Low)
+### Channel 5: Educator / Institutional Outreach (Priority: Medium | Cost: Medium)
 
-**Target publications:**
-- TechCabal, Techpoint Africa (tech narrative: "Nigerian startup building Duolingo for African languages")
-- Rest of World (tech + global south narrative)
-- The Guardian Africa desk (cultural preservation narrative)
-- OkayAfrica, The Native (Afrobeats / culture narrative: "The app teaching diaspora kids the language behind their favorite songs")
-
-**Story angles:**
-1. *Technology*: "The startup that put 70 African languages on one app — and counting"
-2. *Preservation*: "The app trying to save Africa's endangered languages, one lesson at a time"
-3. *Community*: "How a bounty system is turning native speakers into language archivists"
-4. *Diaspora*: "Nigerian kids abroad are learning their parents' language from their phones"
-
-**Pitch structure:** Founder story (1 paragraph) → community contributor story with specific language (1 paragraph) → the statistic that makes it newsworthy ("the only app with Ogoni/Khana content anywhere") → product screenshot or video.
+Heritage language schools and university African language departments (SOAS, Howard, UCLA, University of Lagos, University of Nairobi). The educator portal, classroom management, and assignment tools already exist in the codebase — this channel requires a positioning document and a landing page, not new product work. Activation detail and outreach templates are in Section 10 and Appendix D.
 
 ---
 
-### Channel 6: Educator / Institutional Outreach (Priority: Medium | Cost: Medium)
-
-**Targets:** Heritage language schools (supplementary schools in UK/US teaching Yoruba, Igbo, Twi, Somali, Amharic to diaspora children); university African language departments (SOAS London, Howard University, UCLA, University of Lagos, University of Nairobi).
-
-**Mechanism:** A one-page educator overview deck + a frictionless "Create a Classroom in 2 minutes" CTA. The educator portal, classroom management, and assignment tools already exist in the codebase — this channel requires a positioning document and a landing page, not new product work.
-
----
-
-### Channel 7: Paid Acquisition (Priority: Low initially | Cost: High)
+### Channel 6: Paid Acquisition (Priority: Low initially | Cost: High)
 
 **Defer paid acquisition** until organic channels establish conversion rate and retention benchmarks. Paying for installs before knowing D30 retention rate is spending money to fill a leaky bucket.
 
@@ -422,7 +391,7 @@ This model generates mission-aligned revenue, earns press coverage, and produces
 
 ---
 
-## 9. Content Marketing Plan
+## 9. Content Marketing & PR
 
 ### Content Pillars
 
@@ -437,6 +406,25 @@ Blog posts of 600–1,000 words. Topics: "The wisdom of Adinkra: what Akan symbo
 
 **Pillar 4: Language Preservation Advocacy**
 Periodic long-form content on endangered African languages. Topics: "7 African languages with fewer than 10,000 speakers — and how communities are fighting back." This content earns editorial links, shares from academics and activists, and press attention that no paid campaign can replicate.
+
+### Content → PR Pipeline
+
+Each content pillar has a natural press destination. The content gets produced for organic distribution first; the same material — or a longer treatment of the same theme — becomes the basis for a media pitch.
+
+| Content Pillar | Story Angle | Target Publications |
+|---|---|---|
+| Cultural Deep Dives | *Technology*: "The startup that put 70 African languages on one app — and counting" | TechCabal, Techpoint Africa |
+| Language Preservation Advocacy | *Preservation*: "The app trying to save Africa's endangered languages, one lesson at a time" | The Guardian Africa, Rest of World |
+| Learner Stories | *Diaspora*: "Nigerian kids abroad are learning their parents' language from their phones" | OkayAfrica, The Native |
+| Language of the Week + Learner Stories | *Community*: "How a bounty system is turning native speakers into language archivists" | Rest of World, TechCabal |
+
+**The "70 vs 4" statistic appears in every pitch** regardless of angle — it is the most compelling single fact Beeli has and requires no context to land.
+
+**Pitch structure:** Founder story (1 paragraph) → community contributor story with a specific language (1 paragraph) → the statistic that makes it newsworthy ("the only app with Ogoni/Khana content anywhere") → product screenshot or video.
+
+**Cadence:** One pitch per month, aligned to the monthly Cultural Deep Dive publication. Templates are in Appendix E.
+
+---
 
 ### Content Calendar Cadence
 
@@ -508,7 +496,13 @@ The `ShareModal` and share card components already exist in the mobile app. Ever
 
 ### The Contributor Economy Flywheel
 
-The bounty system is simultaneously a product feature and a community marketing tool. Feature top contributors on social media. Create a "Contributor of the Month" spotlight. Build contributor profile highlights into the social feed. Contributors who feel seen and recognized become the app's most authentic advocates — and their contributions make the app better for every subsequent learner.
+The mechanics of how the bounty system creates a compounding content and community moat are covered in Section 2 (USP Pillar 3). The community-facing execution:
+
+- Feature top contributors on social weekly
+- "Contributor of the Month" spotlight on the social feed and across Beeli's social accounts
+- Build contributor profile highlights into the app feed so their authorship is visible to every learner
+
+Contributors who feel seen become the app's most authentic advocates — and their contributions make the app better for every subsequent learner.
 
 ---
 
