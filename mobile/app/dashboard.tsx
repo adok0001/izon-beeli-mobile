@@ -137,24 +137,33 @@ export default function DashboardScreen() {
           ) : null}
 
           {/* Streak Calendar */}
-          <Text className="mb-3 text-base font-bold text-neutral-900 dark:text-white">
-            {t("dashboard.thirtyDayActivity")}
-          </Text>
+          <View className="mb-3 flex-row items-center justify-between">
+            <Text className="text-base font-bold text-neutral-900 dark:text-white">
+              {t("dashboard.thirtyDayActivity")}
+            </Text>
+            <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+              {new Date().toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+            </Text>
+          </View>
           <View className="mb-6 rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
             {calendarLoading ? (
               <ActivityIndicator size="small" color="#3b82f6" />
             ) : (
               <View className="flex-row flex-wrap gap-1">
-                {calendarDays.map((date) => (
-                  <View
-                    key={date}
-                    className={`h-7 w-7 rounded-full ${
-                      activeDaysSet.has(date)
-                        ? "bg-blue-500"
-                        : "bg-neutral-200 dark:bg-neutral-700"
-                    }`}
-                  />
-                ))}
+                {calendarDays.map((date) => {
+                  const isToday = date === TODAY;
+                  const isActive = activeDaysSet.has(date);
+                  return (
+                    <View
+                      key={date}
+                      className={`h-7 w-7 rounded-full ${
+                        isActive
+                          ? "bg-blue-500"
+                          : "bg-neutral-200 dark:bg-neutral-700"
+                      } ${isToday ? "border-2 border-blue-400 dark:border-blue-300" : ""}`}
+                    />
+                  );
+                })}
               </View>
             )}
           </View>

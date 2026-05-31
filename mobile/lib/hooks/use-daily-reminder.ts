@@ -6,8 +6,11 @@ import { useWordOfTheDay } from "./use-word-of-the-day";
 const LAST_REMINDER_KEY = "izon-beeli-last-daily-reminder";
 const SCHEDULED_NOTIF_ID_KEY = "izon-beeli-scheduled-notif-id";
 
-/** Reminder hour in 24h local time (8 PM) */
-const REMINDER_HOUR = 20;
+const REMINDER_HOUR_BY_GOAL: Record<string, number> = {
+  casual: 20,    // 8 PM
+  steady: 19,    // 7 PM
+  intensive: 18, // 6 PM
+};
 
 function getNotifications() {
   try {
@@ -32,7 +35,7 @@ async function cancelScheduledReminder() {
   }
 }
 
-async function scheduleEveningReminder(streak: number) {
+async function scheduleEveningReminder(streak: number, dailyGoal?: string | null) {
   const N = getNotifications();
   if (!N) return;
 
@@ -43,12 +46,14 @@ async function scheduleEveningReminder(streak: number) {
     // Cancel any previous scheduled reminder first
     await cancelScheduledReminder();
 
-    // Schedule for tonight at REMINDER_HOUR if it hasn't passed yet
+    const reminderHour = REMINDER_HOUR_BY_GOAL[dailyGoal ?? "casual"] ?? 20;
+
+    // Schedule for tonight at reminderHour if it hasn't passed yet
     const now = new Date();
     const trigger = new Date();
-    trigger.setHours(REMINDER_HOUR, 0, 0, 0);
+    trigger.setHours(reminderHour, 0, 0, 0);
 
-    if (trigger <= now) return; // Already past 8 PM — skip
+    if (trigger <= now) return; // Already past reminder hour — skip
 
     const id = await N.scheduleNotificationAsync({
       content: {
@@ -69,7 +74,7 @@ async function scheduleEveningReminder(streak: number) {
   }
 }
 
-export function useDailyReminder(languageId: string, streak = 0) {
+export function useDailyReminder(languageId: string, streak = 0, dailyGoal?: string | null) {
   const { addNotification } = useNotificationStore();
   const word = useWordOfTheDay(languageId);
 
@@ -96,7 +101,7 @@ export function useDailyReminder(languageId: string, streak = 0) {
       }
 
       // Schedule a local push for the evening (streak reminder)
-      await scheduleEveningReminder(streak);
+      await scheduleEveningReminder(streak, dailyGoal);
     } catch {
       // Silently fail
     }

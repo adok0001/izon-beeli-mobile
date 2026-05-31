@@ -41,6 +41,7 @@ export const en = {
     practice: "Practice",
     journal: "Journal",
     feed: "Feed",
+    leaderboard: "Leaderboard",
     profile: "Profile",
     listen: "Listen",
   },
