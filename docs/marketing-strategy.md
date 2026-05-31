@@ -496,7 +496,7 @@ The `ShareModal` and share card components already exist in the mobile app. Ever
 
 ### The Contributor Economy Flywheel
 
-The mechanics of how the bounty system creates a compounding content and community moat are covered in Section 2 (USP Pillar 3). The community-facing execution:
+The bounty system is simultaneously a product feature and a community marketing tool. The community-facing execution:
 
 - Feature top contributors on social weekly
 - "Contributor of the Month" spotlight on the social feed and across Beeli's social accounts
@@ -628,41 +628,41 @@ The `analytics.ts` wrapper in `mobile/lib/analytics.ts` is currently a no-op pla
 
 ### Days 1–14: Foundation
 
-Marketing prerequisites — none of the acquisition channels function until these exist:
+**⚠ Engineering blocker:** The analytics integration must ship before any acquisition channel is activated. Without it, none of the KPIs in Section 12 can be measured and channel performance is invisible.
 
-- [ ] Integrate PostHog (or equivalent) using existing `analytics.ts` wrapper — instrument lesson completions, challenge completions, streak events, level-ups
-- [ ] Create a public landing page at the root URL (currently redirects to `/learn`) — tagline, 4-screenshot carousel, "Download on iOS/Android" CTAs, "70+ African languages" stat, email capture
-- [ ] Update App Store listing: new app name, subtitle, keywords, long description, screenshots (per Section 11)
-- [ ] Update Google Play listing with same content
-- [ ] Create social accounts: TikTok, Instagram, Twitter/X (@beeliapp on all)
-- [ ] Write first 14 days of social content in advance (28 posts: 1 Word of the Day + 1 Proverb per platform, 2 per week per platform)
+- [ ] **[Engineering]** Integrate PostHog (or equivalent) using existing `analytics.ts` wrapper — instrument lesson completions, challenge completions, streak events, level-ups. *Blocker for all downstream measurement.*
+- [ ] **[Engineering]** Create a public landing page at the root URL (currently redirects to `/learn`) — tagline, 4-screenshot carousel, "Download on iOS/Android" CTAs, "70+ African languages" stat, email capture
+- [ ] **[Founding team]** Update App Store listing: new app name, subtitle, keywords, long description, screenshots (per Section 11)
+- [ ] **[Founding team]** Update Google Play listing with same content
+- [ ] **[Marketing]** Create social accounts: TikTok, Instagram, Twitter/X (@beeliapp on all)
+- [ ] **[Marketing]** Write first 14 days of social content in advance (28 posts: 1 Word of the Day + 1 Proverb per platform, 2 per week per platform)
 
 ### Days 15–30: Soft Launch Seeding
 
 **Community activation:**
-- [ ] Identify 10 diaspora community organizations (UK, US, Nigeria). Reach out to each with personal message offering free Classroom accounts
-- [ ] Identify 5 African language educators on LinkedIn and Twitter. Engage their content, send educator portal demo link
-- [ ] Post first Language of the Week (recommended: Yoruba — largest diaspora, highest search volume, strong existing content depth)
-- [ ] Submit to Product Hunt in the Education/Language category
-- [ ] Send first media pitch to TechCabal and Techpoint Africa with the "70 vs 4" headline
+- [ ] **[Founding team]** Identify 10 diaspora community organizations (UK, US, Nigeria). Reach out to each with personal message offering free Classroom accounts
+- [ ] **[Founding team]** Identify 5 African language educators on LinkedIn and Twitter. Engage their content, send educator portal demo link
+- [ ] **[Marketing]** Post first Language of the Week (recommended: Yoruba — largest diaspora, highest search volume, strong existing content depth)
+- [ ] **[Founding team]** Submit to Product Hunt in the Education/Language category
+- [ ] **[Founding team]** Send first media pitch to TechCabal and Techpoint Africa with the "70 vs 4" headline
 
 ### Days 31–60: Content Engine
 
 **Content production:**
-- [ ] Publish first 3 blog posts (Yoruba, Swahili, Amharic — highest search volume languages)
-- [ ] Launch "Contributor Spotlight" series — feature a top community contributor on social weekly
-- [ ] Run first community challenge: "Share your first word in [your language] and tag #BeeliChallenge" (uses the existing share card flow)
-- [ ] Follow up on all press pitches; target at least 1 published article by Day 60
-- [ ] Onboard first 3 classroom groups from community partnerships
+- [ ] **[Marketing]** Publish first 3 blog posts (Yoruba, Swahili, Amharic — highest search volume languages)
+- [ ] **[Marketing]** Launch "Contributor Spotlight" series — feature a top community contributor on social weekly
+- [ ] **[Marketing]** Run first community challenge: "Share your first word in [your language] and tag #BeeliChallenge" (uses the existing share card flow)
+- [ ] **[Founding team]** Follow up on all press pitches; target at least 1 published article by Day 60
+- [ ] **[Founding team]** Onboard first 3 classroom groups from community partnerships
 
 ### Days 61–90: Evaluate, Iterate, Monetize
 
 **Analysis and adjustment:**
-- [ ] Analyze D7/D30 retention by acquisition channel — if community partnership channels outperform paid social, double the partnership outreach budget
-- [ ] Analyze which languages drive the most activation — shift Language of the Week calendar to favor highest-converting languages
-- [ ] Soft-launch Beeli Plus pricing: show a "Support Beeli" CTA to users at Level 5 "Scholar" or higher (already have the most invested users)
-- [ ] Activate first institutional educator partnership (heritage school or university department)
-- [ ] Issue a "State of African Language Learning on Beeli" press release with aggregate stats — lessons completed, contributors active, languages represented, bounties fulfilled — as a credibility and PR play
+- [ ] **[Founding team]** Analyze D7/D30 retention by acquisition channel — if community partnership channels outperform paid social, double the partnership outreach budget
+- [ ] **[Marketing]** Analyze which languages drive the most activation — shift Language of the Week calendar to favor highest-converting languages
+- [ ] **[Engineering]** Soft-launch Beeli Plus pricing: show a "Support Beeli" CTA to users at Level 5 "Scholar" or higher (already have the most invested users)
+- [ ] **[Founding team]** Activate first institutional educator partnership (heritage school or university department)
+- [ ] **[Founding team]** Issue a "State of African Language Learning on Beeli" press release with aggregate stats — lessons completed, contributors active, languages represented, bounties fulfilled — as a credibility and PR play
 
 ---
 
