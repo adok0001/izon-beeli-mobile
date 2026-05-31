@@ -86,14 +86,32 @@ function ctaButton(text: string): string {
   return `<a href="https://beeli.app" style="display:inline-block;background:#1d4ed8;color:#ffffff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;margin-top:24px;">${text}</a>`;
 }
 
+const LANGUAGE_DISPLAY_NAMES: Record<string, string> = {
+  izon: "Izon",
+  igbo: "Igbo",
+  yoruba: "Yoruba",
+  hausa: "Hausa",
+  oromo: "Oromo",
+  amharic: "Amharic",
+  geez: "Ge\u02beez",
+  swahili: "Swahili",
+  wolof: "Wolof",
+  zulu: "Zulu",
+};
+
+function getLanguageName(languageId: string): string {
+  return LANGUAGE_DISPLAY_NAMES[languageId.toLowerCase()] ?? languageId;
+}
+
 export function wordOfDayEmailHtml(name: string, word: string, english: string, languageId: string): string {
+  const languageName = getLanguageName(languageId);
   const body = `
     <h2 style="margin:0 0 8px;color:#111827;font-size:20px;">Word of the Day</h2>
     <p style="margin:0 0 24px;color:#6b7280;">Hello ${name},</p>
     <div style="background:#eff6ff;border-left:4px solid #1d4ed8;padding:20px 24px;border-radius:4px;">
       <p style="margin:0 0 4px;font-size:28px;font-weight:700;color:#1d4ed8;">${word}</p>
       <p style="margin:0;font-size:18px;color:#374151;">${english}</p>
-      <p style="margin:8px 0 0;font-size:13px;color:#6b7280;text-transform:capitalize;">${languageId}</p>
+      <p style="margin:8px 0 0;font-size:13px;color:#6b7280;">${languageName}</p>
     </div>
     ${ctaButton("Open Beeli")}`;
   return emailWrapper("Word of the Day", body);
@@ -234,5 +252,5 @@ export function newReviewerApplicationEmailText(
   languages: string[]
 ): string {
   const langList = languages.length > 0 ? languages.join(", ") : "Not specified";
-  return `New Reviewer Application\n\nHello ${adminName},\n\nA new reviewer application has been submitted.\n\nApplicant: ${applicantName}\nEmail: ${applicantEmail}\nRole: ${role}\nLanguages: ${langList}\n\nReview it in Beeli: https://beeli.app\n`;
+  return `New Reviewer Application\n\nHello ${adminName},\n\nA new reviewer application has been submitted.\n\nApplicant: ${applicantName}\nEmail: ${applicantEmail}\nRole: ${role}\nLanguages: ${langList}\n\nReview it in Beeli: https://beeli.app\n\nTo unsubscribe, go to Settings \u2192 Notifications in the Beeli app.`;
 }

@@ -306,9 +306,17 @@ notificationsAdminRouter.post("/send-assignment-due", async (c) => {
       )
     );
 
+  const seen = new Set<string>();
+  const dedupedRows = rows.filter((row) => {
+    const key = `${row.userEmail}-${row.lessonTitle}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
   let emailSent = 0;
   await Promise.all(
-    rows.map(async (row) => {
+    dedupedRows.map(async (row) => {
       if (!row.dueDate) return;
       const ok = await sendEmail({
         to: { email: row.userEmail, name: row.userName },
@@ -320,5 +328,5 @@ notificationsAdminRouter.post("/send-assignment-due", async (c) => {
     })
   );
 
-  return c.json({ emailSent, total: rows.length });
+  return c.json({ emailSent, total: dedupedRows.length });
 });
