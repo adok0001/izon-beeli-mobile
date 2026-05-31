@@ -65,6 +65,45 @@ export const lessonContributionStatusEnum = pgEnum("lesson_contribution_status",
   "rejected",
 ]);
 
+// ---------- Organizations ----------
+
+export const orgPlanEnum = pgEnum("org_plan", ["starter", "pro", "institution"]);
+export const orgSubscriptionStatusEnum = pgEnum("org_subscription_status", [
+  "active",
+  "past_due",
+  "canceled",
+]);
+
+export const organizations = pgTable("organizations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: varchar("name", { length: 300 }).notNull(),
+  stripeCustomerId: varchar("stripe_customer_id", { length: 128 }),
+  createdBy: uuid("created_by").notNull(), // FK set after users table defined
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const organizationSubscriptions = pgTable("organization_subscriptions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 128 }),
+  stripePriceId: varchar("stripe_price_id", { length: 128 }),
+  plan: orgPlanEnum("plan").notNull(),
+  status: orgSubscriptionStatusEnum("status").notNull(),
+  studentLimit: integer("student_limit"), // null = unlimited (institution)
+  currentPeriodEnd: timestamp("current_period_end"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ---------- App Config ----------
+
+export const appConfig = pgTable("app_config", {
+  key: varchar("key", { length: 64 }).primaryKey(),
+  value: text("value").notNull(),
+});
+
 // ---------- Users ----------
 
 export const users = pgTable("users", {
@@ -86,6 +125,12 @@ export const users = pgTable("users", {
   isReviewer: boolean("is_reviewer").default(false).notNull(),
   reviewerLanguages: text("reviewer_languages").array().default([]).notNull(),
   reviewerRole: varchar("reviewer_role", { length: 32 }), // "teacher" | "professor" | "elder"
+  // Monetization
+  planTier: varchar("plan_tier", { length: 16 }).default("free").notNull(), // "free" | "plus"
+  plusEnabledAt: timestamp("plus_enabled_at"),
+  organizationId: uuid("organization_id").references(() => organizations.id),
+  accentColor: varchar("accent_color", { length: 16 }), // e.g. "#6366f1"
+  profileTheme: varchar("profile_theme", { length: 16 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   // Soft-delete: set when user requests deletion; hard purge runs after 30 days
   deletedAt: timestamp("deleted_at"),
@@ -738,7 +783,30 @@ export const storyChapters = pgTable(
 
 // ---------- Relations ----------
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const organizationsRelations = relations(organizations, ({ one, many }) => ({
+  createdByUser: one(users, {
+    fields: [organizations.createdBy],
+    references: [users.id],
+  }),
+  subscriptions: many(organizationSubscriptions),
+  members: many(users),
+}));
+
+export const organizationSubscriptionsRelations = relations(
+  organizationSubscriptions,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [organizationSubscriptions.organizationId],
+      references: [organizations.id],
+    }),
+  })
+);
+
+export const usersRelations = relations(users, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [users.organizationId],
+    references: [organizations.id],
+  }),
   progress: many(userProgress),
   journalEntries: many(journalEntries),
   feedItems: many(feedItems),
