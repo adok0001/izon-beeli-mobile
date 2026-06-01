@@ -104,7 +104,8 @@ reviewerApplicationsRouter.post("/", async (c) => {
         )
       );
 
-    await Promise.all([
+    // Fire-and-forget: do not block the response on notification delivery
+    Promise.all([
       // Email each admin/elder
       ...admins.map((admin) =>
         sendEmail({
@@ -143,7 +144,7 @@ reviewerApplicationsRouter.post("/", async (c) => {
           )
         );
       }),
-    ]);
+    ]).catch((err) => console.error("[reviewer-applications] notification error:", err));
   }
 
   return c.json({ success: true }, 201);

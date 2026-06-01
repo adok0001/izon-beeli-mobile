@@ -94,16 +94,20 @@ export const notificationsAdminRouter = new Hono();
 function cronGuard(req: Request): boolean {
   const secret = process.env.CRON_SECRET;
   if (!secret) return false;
-  const auth = req.headers.get("x-cron-secret");
-  return auth === secret;
+  // Support Vercel's Authorization bearer header (used by Vercel Cron)
+  const authHeader = req.headers.get("authorization");
+  if (authHeader === "Bearer " + secret) return true;
+  // Also accept legacy x-cron-secret header
+  const cronHeader = req.headers.get("x-cron-secret");
+  return cronHeader === secret;
 }
 
 /**
- * POST /api/notifications/admin/send-wotd
+ * GET /api/notifications/admin/send-wotd
  * Send today's Word of the Day push + email to all opted-in users.
- * Call this from a cron job at your preferred time (e.g. 9:00 AM).
+ * Called by Vercel Cron at the configured schedule (e.g. 9:00 AM).
  */
-notificationsAdminRouter.post("/send-wotd", async (c) => {
+notificationsAdminRouter.get("/send-wotd", async (c) => {
   if (!cronGuard(c.req.raw)) {
     return c.json({ error: "Forbidden" }, 403);
   }
@@ -199,11 +203,11 @@ notificationsAdminRouter.post("/send-wotd", async (c) => {
 });
 
 /**
- * POST /api/notifications/admin/send-streak-reminder
+ * GET /api/notifications/admin/send-streak-reminder
  * Send streak reminders to opted-in users who haven't been active today.
- * Call from a cron job in the evening (e.g. 7:00 PM).
+ * Called by Vercel Cron in the evening (e.g. 7:00 PM).
  */
-notificationsAdminRouter.post("/send-streak-reminder", async (c) => {
+notificationsAdminRouter.get("/send-streak-reminder", async (c) => {
   if (!cronGuard(c.req.raw)) {
     return c.json({ error: "Forbidden" }, 403);
   }
@@ -273,11 +277,11 @@ notificationsAdminRouter.post("/send-streak-reminder", async (c) => {
 });
 
 /**
- * POST /api/notifications/admin/send-assignment-due
+ * GET /api/notifications/admin/send-assignment-due
  * Email students whose assignments are due within the next 24 hours.
- * Call from a cron job once daily (e.g. 8:00 AM).
+ * Called by Vercel Cron once daily (e.g. 8:00 AM).
  */
-notificationsAdminRouter.post("/send-assignment-due", async (c) => {
+notificationsAdminRouter.get("/send-assignment-due", async (c) => {
   if (!cronGuard(c.req.raw)) {
     return c.json({ error: "Forbidden" }, 403);
   }
@@ -301,6 +305,7 @@ notificationsAdminRouter.post("/send-assignment-due", async (c) => {
     .where(
       and(
         between(classroomAssignments.dueDate, now, in24h),
+        eq(classroomMembers.role, "student"),
         eq(users.emailAssignmentDueEnabled, true),
         sql`${users.deletedAt} IS NULL`
       )
