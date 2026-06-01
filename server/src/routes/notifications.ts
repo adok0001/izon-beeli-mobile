@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { eq, and, ne, sql, between } from "drizzle-orm";
 import { db } from "../db/index.js";
+import { authMiddleware, adminMiddleware, type AuthEnv } from "../middleware/auth.js";
 import {
   users,
   pushTokens,
@@ -9,7 +10,6 @@ import {
   classroomMembers,
   lessons,
 } from "../db/schema.js";
-import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
 import { sendPushBatch, chunk, type PushMessage } from "../lib/send-push.js";
 import {
   sendEmail,
@@ -86,6 +86,44 @@ notificationsRouter.patch("/preferences", async (c) => {
   }
 
   return c.json({ updated: true });
+});
+
+// POST /api/notifications/broadcast — admin-auth-protected broadcast
+notificationsRouter.post("/broadcast", adminMiddleware, async (c) => {
+  const body = await c.req.json<{
+    title: string;
+    body: string;
+    data?: Record<string, string | number | boolean>;
+    languageId?: string;
+  }>();
+
+  if (!body.title || !body.body) {
+    return c.json({ error: "title and body are required" }, 400);
+  }
+
+  const rows = await db
+    .select({ token: pushTokens.token })
+    .from(pushTokens)
+    .innerJoin(users, eq(pushTokens.userId, users.id))
+    .where(body.languageId ? eq(users.selectedLanguageId, body.languageId) : undefined);
+
+  if (rows.length === 0) return c.json({ sent: 0, total: 0 });
+
+  const messages: PushMessage[] = rows.map((row) => ({
+    to: row.token,
+    title: body.title,
+    body: body.body,
+    data: { type: "broadcast", ...body.data },
+    sound: "default",
+  }));
+
+  let sent = 0;
+  for (const batch of chunk(messages, 100)) {
+    const tickets = await sendPushBatch(batch);
+    sent += tickets.filter((t) => t.status === "ok").length;
+  }
+
+  return c.json({ sent, total: messages.length });
 });
 
 // ---- Cron/admin router (protected by CRON_SECRET header) ----
@@ -203,7 +241,58 @@ notificationsAdminRouter.get("/send-wotd", async (c) => {
 });
 
 /**
- * GET /api/notifications/admin/send-streak-reminder
+ * POST /api/notifications/admin/broadcast
+ * Send a custom push notification to all users with push tokens.
+ * Body: { title: string, body: string, data?: Record<string, string|number|boolean> }
+ * Optionally filter by languageId: { languageId?: string }
+ */
+notificationsAdminRouter.post("/broadcast", async (c) => {
+  if (!cronGuard(c.req.raw)) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  const body = await c.req.json<{
+    title: string;
+    body: string;
+    data?: Record<string, string | number | boolean>;
+    languageId?: string;
+  }>();
+
+  if (!body.title || !body.body) {
+    return c.json({ error: "title and body are required" }, 400);
+  }
+
+  const conditions = body.languageId
+    ? [eq(users.selectedLanguageId, body.languageId)]
+    : [];
+
+  const rows = await db
+    .select({ token: pushTokens.token })
+    .from(pushTokens)
+    .innerJoin(users, eq(pushTokens.userId, users.id))
+    .where(conditions.length ? and(...conditions) : undefined);
+
+  if (rows.length === 0) return c.json({ sent: 0, total: 0 });
+
+  const messages: PushMessage[] = rows.map((row) => ({
+    to: row.token,
+    title: body.title,
+    body: body.body,
+    data: { type: "broadcast", ...body.data },
+    sound: "default",
+  }));
+
+  let sent = 0;
+  for (const batch of chunk(messages, 100)) {
+    const tickets = await sendPushBatch(batch);
+    sent += tickets.filter((t) => t.status === "ok").length;
+  }
+
+  return c.json({ sent, total: messages.length });
+});
+
+/**
+ * POST /api/notifications/admin/send-streak-reminder
  * Send streak reminders to opted-in users who haven't been active today.
  * Called by Vercel Cron in the evening (e.g. 7:00 PM).
  */

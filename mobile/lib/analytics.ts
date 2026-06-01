@@ -1,10 +1,12 @@
-/**
- * Thin analytics wrapper. Swap `__sendEvent` for a real provider
- * (Amplitude, PostHog, Segment, etc.) without touching call sites.
- */
+import PostHog from "posthog-react-native";
 
 // eslint-disable-next-line no-undef
 const isDev = typeof __DEV__ !== "undefined" ? __DEV__ : process.env.NODE_ENV !== "production";
+
+const client = new PostHog(process.env.EXPO_PUBLIC_POSTHOG_API_KEY ?? "", {
+  host: process.env.EXPO_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com",
+  disabled: !process.env.EXPO_PUBLIC_POSTHOG_API_KEY,
+});
 
 type EventName =
   | "app_open"
@@ -16,16 +18,16 @@ type EventName =
   | "contribution_submitted"
   | "multiplayer_joined"
   | "daily_challenge_completed"
-  | "level_up";
+  | "level_up"
+  | "plus_cta_tapped";
 
-type EventProperties = Record<string, string | number | boolean | null | undefined>;
+type EventProperties = Record<string, string | number | boolean | null>;
 
 function __sendEvent(name: EventName, properties?: EventProperties): void {
   if (isDev) {
     console.log("[Analytics]", name, properties ?? {});
   }
-  // TODO: replace with real provider, e.g.:
-  // amplitude.logEvent(name, properties);
+  client.capture(name, properties);
 }
 
 export const analytics = {
@@ -48,4 +50,9 @@ export const analytics = {
     __sendEvent("daily_challenge_completed", { challengeType, xpReward }),
   levelUp: (level: number, title: string) =>
     __sendEvent("level_up", { level, title }),
+  plusCtaTapped: (source: string) =>
+    __sendEvent("plus_cta_tapped", { source }),
+  identify: (userId: string, traits?: Record<string, string>) =>
+    client.identify(userId, traits),
+  reset: () => client.reset(),
 };

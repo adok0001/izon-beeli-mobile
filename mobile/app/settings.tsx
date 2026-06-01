@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { apiFetch } from "@/lib/api";
@@ -148,6 +149,7 @@ export default function SettingsScreen() {
                 method: "DELETE",
                 token: token ?? undefined,
               });
+              analytics.reset();
               await signOut();
               router.replace("/(auth)/sign-in");
             } catch {

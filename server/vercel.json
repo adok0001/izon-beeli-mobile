@@ -8,6 +8,12 @@
       "schedule": "0 3 * * *"
     },
     {
+      "path": "/api/internal/send-reengagement",
+      "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/internal/restock-plus-freezes",
+      "schedule": "0 6 1 * *"
       "path": "/api/notifications/admin/send-wotd",
       "schedule": "0 9 * * *"
     },

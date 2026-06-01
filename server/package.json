@@ -1,6 +1,6 @@
 {
   "name": "izon-beeli-server",
-  "version": "1.16.2",
+  "version": "1.23.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -25,6 +25,7 @@
     "dotenv": "^16.5.0",
     "drizzle-orm": "^0.44.2",
     "hono": "^4.7.11",
+    "stripe": "^22.2.0",
     "zod": "^3.25.17"
   },
   "devDependencies": {
