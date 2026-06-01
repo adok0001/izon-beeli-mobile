@@ -14,6 +14,7 @@ import { formatDuration, BUNDLED_AUDIO } from "@/lib/mock-data";
 import { playFinishSound } from "@/lib/sounds";
 import { hapticHeavy } from "@/lib/haptics";
 import { cancelDailyStreakReminder } from "@/lib/hooks/use-daily-reminder";
+import { useReviewPrompt } from "@/lib/hooks/use-review-prompt";
 import { useAudioStore } from "@/store/audio-store";
 import { analytics } from "@/lib/analytics";
 import { useLanguageStore } from "@/store/language-store";
@@ -54,12 +55,15 @@ export default function LessonScreen() {
   const { data: nextLessonData } = useNextLesson(selectedLanguageId);
   const showTour = useTourStore((s) => s.showTour);
   const hasSeen = useTourStore((s) => s.hasSeen);
+  const reviewPrompt = useReviewPrompt();
   const completeLesson = useCompleteLesson({
     onLevelUp: (level, title) => {
       analytics.levelUp(level, title);
       setLevelUp({ level, title });
+      reviewPrompt.onLevelUp(level);
     },
     onStreakUpdate: (streak, isMilestone) => {
+      reviewPrompt.onStreakUpdate(streak);
       if (isMilestone) {
         toastShow(
           t("streak.toastMilestoneTitle", { count: streak }),

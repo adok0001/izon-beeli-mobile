@@ -18,7 +18,8 @@ type EventName =
   | "contribution_submitted"
   | "multiplayer_joined"
   | "daily_challenge_completed"
-  | "level_up";
+  | "level_up"
+  | "plus_cta_tapped";
 
 type EventProperties = Record<string, string | number | boolean | null>;
 
@@ -49,6 +50,8 @@ export const analytics = {
     __sendEvent("daily_challenge_completed", { challengeType, xpReward }),
   levelUp: (level: number, title: string) =>
     __sendEvent("level_up", { level, title }),
+  plusCtaTapped: (source: string) =>
+    __sendEvent("plus_cta_tapped", { source }),
   identify: (userId: string, traits?: Record<string, string>) =>
     client.identify(userId, traits),
   reset: () => client.reset(),

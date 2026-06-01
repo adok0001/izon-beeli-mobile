@@ -3,7 +3,9 @@ import { FeedbackModal } from "@/components/feedback-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { XpLevelBadge } from "@/components/xp-level-badge";
 import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
+import { useAppConfig } from "@/lib/hooks/use-app-config";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
+import { getLevelInfo } from "@/lib/xp-levels";
 import { getLanguageName } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
 import { useTourStore } from "@/store/tour-store";
@@ -80,6 +82,7 @@ export default function ProfileScreen() {
   const { data: currentUser } = useCurrentUser();
   const [feedbackVisible, setFeedbackVisible] = useState(false);
   const { data: summary } = useProgressSummary();
+  const { data: config } = useAppConfig();
   const { selectedLanguageId } = useLanguageStore();
   const { t } = useTranslation();
   const showTour = useTourStore((s) => s.showTour);
@@ -87,6 +90,11 @@ export default function ProfileScreen() {
   const resetChecklist = useWelcomeChecklistStore((s) => s.reset);
   const resetTours = useTourStore((s) => s.reset);
   const isAdmin = currentUser?.isAdmin ?? false;
+  const levelInfo = getLevelInfo(summary?.points ?? 0);
+  const showPlusCta =
+    config?.plusEnabled &&
+    currentUser?.planTier !== "plus" &&
+    levelInfo.level >= 5;
   const canAccessEducator = currentUser ? canAccessEducatorPanel(currentUser) : false;
   const reviewerRole = currentUser?.reviewerRole ?? null;
   const displayName = user?.username ?? "Learner";
@@ -160,6 +168,30 @@ export default function ProfileScreen() {
             />
           </View>
         </View>
+
+        {/* Support Beeli CTA — shown to Level 5+ (Scholar) free users */}
+        {showPlusCta ? (
+          <Pressable
+            onPress={() => {
+              analytics.plusCtaTapped("profile");
+              router.push("/plus-paywall");
+            }}
+            className="mx-5 mb-4 flex-row items-center gap-4 rounded-2xl bg-indigo-50 p-4 active:opacity-80 dark:bg-indigo-900/20"
+          >
+            <View className="h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 dark:bg-indigo-900/40">
+              <IconSymbol name="heart.fill" size={20} color="#6366f1" />
+            </View>
+            <View className="flex-1">
+              <Text className="font-semibold text-indigo-900 dark:text-indigo-200 text-sm">
+                Support Beeli
+              </Text>
+              <Text className="mt-0.5 text-xs text-indigo-600 dark:text-indigo-400">
+                You've reached {levelInfo.title}. Unlock Plus and keep us growing.
+              </Text>
+            </View>
+            <IconSymbol name="chevron.right" size={16} color="#6366f1" />
+          </Pressable>
+        ) : null}
 
         {/* Menu */}
         <View className="px-5">
