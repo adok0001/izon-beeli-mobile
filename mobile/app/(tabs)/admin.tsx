@@ -123,6 +123,12 @@ export default function AdminPanelScreen() {
                 detail={t("learn.webSubtitle")}
                 onPress={() => router.push("/educator/courses")}
               />
+              <ActionRow
+                icon="bell.fill"
+                label={t("admin.notifications.title", "Push Notifications")}
+                detail={t("admin.notifications.subtitle", "Broadcast a message to all users")}
+                onPress={() => router.push("/admin/broadcast")}
+              />
               {currentUser && canManageBounties(currentUser) ? (
                 <ActionRow
                   icon="star.fill"

@@ -41,6 +41,7 @@ export const fr = {
     practice: "Pratiquer",
     journal: "Journal",
     feed: "Fil",
+    leaderboard: "Classement",
     profile: "Profil",
     listen: "Écouter",
     contribute: "Contribuer"
@@ -1155,7 +1156,7 @@ export const fr = {
     imageSubmittedDesc: "Votre image a été soumise pour examen.",
   },
   admin: {
-    panelTitle: "Administration",
+    panelTitle: "Admin",
     internalTools: "Beeli — outils internes",
     backToApp: "← Retour à l'application",
     nav: {
@@ -1166,6 +1167,26 @@ export const fr = {
       review: "Révision",
       applications: "Candidatures",
       feedback: "Retours",
+      notifications: "Notifications",
+    },
+    notifications: {
+      title: "Notifications push",
+      subtitle: "Diffusez un message à tous les utilisateurs ou à un groupe linguistique.",
+      audience: "Audience",
+      allUsers: "Tous les utilisateurs",
+      notifTitle: "Titre",
+      titlePlaceholder: "ex. De nouvelles leçons viennent de sortir !",
+      message: "Message",
+      messagePlaceholder: "ex. Découvrez les nouveautés sur Beeli.",
+      preview: "Aperçu",
+      send: "Envoyer la notification",
+      sending: "Envoi en cours…",
+      sent: "Envoyé !",
+      success: "Livré à {{sent}} sur {{total}} appareils.",
+      error: "Échec de l'envoi. Veuillez réessayer.",
+      selectLanguage: "Choisir une langue",
+      audienceAll: "Aucune langue sélectionnée — tous les utilisateurs recevront ceci.",
+      audienceFiltered: "Seuls les apprenants en {{language}} recevront ceci.",
     },
     overview: {
       subtitle: "Statistiques de la plateforme",
@@ -1291,7 +1312,7 @@ export const fr = {
     panelTitle: "Éducateur",
     subtitleAdmin: "Toutes les langues",
     subtitleReviewer: "Langues : {{languages}}",
-    adminPanel: "Administration",
+    adminPanel: "Admin",
     nav: {
       overview: "Vue d'ensemble",
       review: "Révision",
