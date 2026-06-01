@@ -38,6 +38,7 @@ import { eq } from "drizzle-orm";
 import { appConfig } from "./db/schema.js";
 import { db } from "./db/index.js";
 import { wordbankRouter } from "./routes/wordbank.js";
+import { authMiddleware, adminMiddleware } from "./middleware/auth.js";
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -140,10 +141,7 @@ app.post("/internal/restock-plus-freezes", async (c) => {
 });
 
 // PATCH /api/admin/config — toggle app config values (admin only)
-app.patch("/admin/config", async (c) => {
-  // Inline admin check to avoid circular imports
-  const authHeader = c.req.header("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) return c.json({ error: "Unauthorized" }, 401);
+app.patch("/admin/config", authMiddleware, adminMiddleware, async (c) => {
   const body = await c.req.json<{ key: string; value: string }>();
   await db
     .insert(appConfig)

@@ -6,6 +6,7 @@ import {
   organizations,
   organizationSubscriptions,
   classroomMembers,
+  classroomGroups,
   users,
 } from "../db/schema.js";
 import { authMiddleware, adminMiddleware, type AuthEnv } from "../middleware/auth.js";
@@ -80,15 +81,28 @@ billingWebhookRouter.post("/webhooks", async (c) => {
         })
         .returning({ id: organizations.id });
 
-      await db.insert(organizationSubscriptions).values({
-        organizationId: org.id,
-        stripeSubscriptionId: stripeSubId,
-        stripePriceId: priceId,
-        plan: meta.plan,
-        status: "active",
-        studentLimit: meta.studentLimit,
-        currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
-      });
+      await db
+        .insert(organizationSubscriptions)
+        .values({
+          organizationId: org.id,
+          stripeSubscriptionId: stripeSubId,
+          stripePriceId: priceId,
+          plan: meta.plan,
+          status: "active",
+          studentLimit: meta.studentLimit,
+          currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
+        })
+        .onConflictDoUpdate({
+          target: organizationSubscriptions.stripeSubscriptionId,
+          set: {
+            stripePriceId: priceId,
+            plan: meta.plan,
+            status: "active",
+            studentLimit: meta.studentLimit,
+            currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
+            updatedAt: new Date(),
+          },
+        });
 
       await db
         .update(users)
@@ -185,7 +199,9 @@ billingRouter.get("/educator/status", async (c) => {
   const [{ studentCount }] = await db
     .select({ studentCount: count() })
     .from(classroomMembers)
-    .where(eq(classroomMembers.userId, userId)); // naive — TODO: count org-wide if needed
+    .innerJoin(classroomGroups, eq(classroomMembers.groupId, classroomGroups.id))
+    .innerJoin(users, eq(classroomGroups.createdBy, users.id))
+    .where(eq(users.organizationId, user.organizationId));
 
   return c.json({
     active: sub.status === "active",

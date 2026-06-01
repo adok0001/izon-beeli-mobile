@@ -77,7 +77,7 @@ export const orgSubscriptionStatusEnum = pgEnum("org_subscription_status", [
 export const organizations = pgTable("organizations", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: varchar("name", { length: 300 }).notNull(),
-  stripeCustomerId: varchar("stripe_customer_id", { length: 128 }),
+  stripeCustomerId: varchar("stripe_customer_id", { length: 128 }).unique(),
   createdBy: uuid("created_by").notNull(), // FK set after users table defined
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -87,7 +87,7 @@ export const organizationSubscriptions = pgTable("organization_subscriptions", {
   organizationId: uuid("organization_id")
     .notNull()
     .references(() => organizations.id, { onDelete: "cascade" }),
-  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 128 }),
+  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 128 }).unique(),
   stripePriceId: varchar("stripe_price_id", { length: 128 }),
   plan: orgPlanEnum("plan").notNull(),
   status: orgSubscriptionStatusEnum("status").notNull(),

@@ -1,12 +1,8 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useAppConfig } from "@/lib/hooks/use-app-config";
 import { useCurrentUser } from "@/lib/hooks/use-current-user";
-import { apiFetch } from "@/lib/api";
-import { useAuth } from "@clerk/clerk-expo";
-import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -47,23 +43,21 @@ const PLUS_FEATURES = [
 ] as const;
 
 export default function PlusPaywallScreen() {
-  const { getToken } = useAuth();
-  const queryClient = useQueryClient();
   const router = useRouter();
-  const { t } = useTranslation();
   const { data: config } = useAppConfig();
   const { data: user } = useCurrentUser();
   const [loading, setLoading] = useState(false);
 
-  // If Plus is globally disabled, features are already free — this screen shouldn't show,
-  // but handle gracefully.
-  if (!config?.plusEnabled) {
-    router.back();
-    return null;
-  }
+  const shouldGoBack = !config?.plusEnabled || user?.planTier === "plus";
 
-  if (user?.planTier === "plus") {
-    router.back();
+  useEffect(() => {
+    if (shouldGoBack) {
+      router.back();
+    }
+  }, [shouldGoBack, router]);
+
+  // If Plus is globally disabled or user already has Plus, render nothing while navigating back.
+  if (shouldGoBack) {
     return null;
   }
 

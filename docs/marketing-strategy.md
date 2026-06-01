@@ -620,7 +620,7 @@ Both events are already tracked in the analytics and gamification systems. These
 
 ### Analytics Prerequisite
 
-The `analytics.ts` wrapper in `mobile/lib/analytics.ts` is currently a no-op placeholder with empty function bodies. Integrating an analytics provider (PostHog recommended — open source, privacy-first, no data sampling) is a Day 1 engineering prerequisite. Without it, none of the metrics above can be measured.
+The `analytics.ts` wrapper in `mobile/lib/analytics.ts` has been integrated with PostHog (open source, privacy-first, no data sampling). It instruments key events including lesson completions, challenge completions, streak events, and level-ups. Ensure the PostHog project key is configured in the environment and verify that events are flowing correctly in the PostHog dashboard.
 
 ---
 
@@ -628,9 +628,9 @@ The `analytics.ts` wrapper in `mobile/lib/analytics.ts` is currently a no-op pla
 
 ### Days 1–14: Foundation
 
-**⚠ Engineering blocker:** The analytics integration must ship before any acquisition channel is activated. Without it, none of the KPIs in Section 12 can be measured and channel performance is invisible.
+**✅ Analytics integration shipped:** PostHog is now live. Verify events are flowing and configure dashboards before activating acquisition channels.
 
-- [ ] **[Engineering]** Integrate PostHog (or equivalent) using existing `analytics.ts` wrapper — instrument lesson completions, challenge completions, streak events, level-ups. *Blocker for all downstream measurement.*
+- [x] **[Engineering]** Integrate PostHog using existing `analytics.ts` wrapper — instrument lesson completions, challenge completions, streak events, level-ups. *Verify events flow correctly in PostHog dashboard and set up key metric dashboards.*
 - [ ] **[Engineering]** Create a public landing page at the root URL (currently redirects to `/learn`) — tagline, 4-screenshot carousel, "Download on iOS/Android" CTAs, "70+ African languages" stat, email capture
 - [ ] **[Founding team]** Update App Store listing: new app name, subtitle, keywords, long description, screenshots (per Section 11)
 - [ ] **[Founding team]** Update Google Play listing with same content

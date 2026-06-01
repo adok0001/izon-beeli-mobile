@@ -3,9 +3,9 @@ import { createMiddleware } from "hono/factory";
 import { db } from "../db/index.js";
 import {
   users,
-  organizations,
   organizationSubscriptions,
   classroomMembers,
+  classroomGroups,
 } from "../db/schema.js";
 import type { AuthEnv } from "./auth.js";
 
@@ -56,17 +56,13 @@ export async function assertStudentCapacity(
 ): Promise<boolean> {
   if (studentLimit === null) return true; // institution = unlimited
 
-  // Count all members across all groups in the org
-  const groups = await db
-    .select({ id: organizations.id })
-    .from(organizations)
-    .where(eq(organizations.id, organizationId));
-
-  if (groups.length === 0) return true;
-
+  // Count all members across all groups owned by users in this org
   const [{ total }] = await db
     .select({ total: count() })
-    .from(classroomMembers);
+    .from(classroomMembers)
+    .innerJoin(classroomGroups, eq(classroomMembers.groupId, classroomGroups.id))
+    .innerJoin(users, eq(classroomGroups.createdBy, users.id))
+    .where(eq(users.organizationId, organizationId));
 
   return total < studentLimit;
 }
