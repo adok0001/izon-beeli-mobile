@@ -121,6 +121,11 @@ export const users = pgTable("users", {
   lastFreezeUsedDate: varchar("last_freeze_used_date", { length: 10 }), // YYYY-MM-DD
   pushWotdEnabled: boolean("push_wotd_enabled").default(true).notNull(),
   pushStreakReminderEnabled: boolean("push_streak_reminder_enabled").default(true).notNull(),
+  emailWotdEnabled: boolean("email_wotd_enabled").default(true).notNull(),
+  emailStreakReminderEnabled: boolean("email_streak_reminder_enabled").default(true).notNull(),
+  emailAssignmentDueEnabled: boolean("email_assignment_due_enabled").default(true).notNull(),
+  emailContributionStatusEnabled: boolean("email_contribution_status_enabled").default(true).notNull(),
+  emailReviewerStatusEnabled: boolean("email_reviewer_status_enabled").default(true).notNull(),
   isAdmin: boolean("is_admin").default(false).notNull(),
   isReviewer: boolean("is_reviewer").default(false).notNull(),
   reviewerLanguages: text("reviewer_languages").array().default([]).notNull(),

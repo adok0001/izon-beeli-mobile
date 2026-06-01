@@ -1,9 +1,16 @@
 import { Hono } from "hono";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { pushTokens, reviewerApplications, users } from "../db/schema.js";
 import { elderMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
 import { sendPush } from "../lib/send-push.js";
+import {
+  sendEmail,
+  reviewerApplicationStatusEmailHtml,
+  reviewerApplicationStatusEmailText,
+  newReviewerApplicationEmailHtml,
+  newReviewerApplicationEmailText,
+} from "../lib/send-email.js";
 
 const VALID_ROLES = ["teacher", "professor", "elder"] as const;
 
@@ -78,6 +85,67 @@ reviewerApplicationsRouter.post("/", async (c) => {
     reason: finalReason,
     languages: sanitisedLanguages,
   });
+
+  // Notify admins and elders about the new application (fire-and-forget)
+  const [applicant] = await db
+    .select({ name: users.name, email: users.email })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (applicant) {
+    const admins = await db
+      .select({ id: users.id, name: users.name, email: users.email })
+      .from(users)
+      .where(
+        and(
+          sql`(${users.isAdmin} = true OR ${users.reviewerRole} = 'elder')`,
+          sql`${users.deletedAt} IS NULL`
+        )
+      );
+
+    // Fire-and-forget: do not block the response on notification delivery
+    Promise.all([
+      // Email each admin/elder
+      ...admins.map((admin) =>
+        sendEmail({
+          to: { email: admin.email, name: admin.name },
+          subject: `New reviewer application from ${applicant.name}`,
+          htmlContent: newReviewerApplicationEmailHtml(
+            admin.name,
+            applicant.name,
+            applicant.email,
+            role,
+            sanitisedLanguages
+          ),
+          textContent: newReviewerApplicationEmailText(
+            admin.name,
+            applicant.name,
+            applicant.email,
+            role,
+            sanitisedLanguages
+          ),
+        })
+      ),
+      // Push to admin/elder devices
+      ...admins.map(async (admin) => {
+        const tokens = await db
+          .select({ token: pushTokens.token })
+          .from(pushTokens)
+          .where(eq(pushTokens.userId, admin.id));
+        return Promise.all(
+          tokens.map(({ token }) =>
+            sendPush(
+              token,
+              "New Reviewer Application",
+              `${applicant.name} has applied for the ${role} role.`,
+              { screen: "reviewer-applications-admin" }
+            )
+          )
+        );
+      }),
+    ]).catch((err) => console.error("[reviewer-applications] notification error:", err));
+  }
 
   return c.json({ success: true }, 201);
 });
@@ -233,7 +301,18 @@ reviewerApplicationsAdminRouter.patch("/:id", async (c) => {
       .where(eq(users.id, app.userId));
   }
 
-  // Notify the applicant via push
+  // Fetch applicant details for notifications
+  const [applicant] = await db
+    .select({
+      email: users.email,
+      name: users.name,
+      emailReviewerStatusEnabled: users.emailReviewerStatusEnabled,
+    })
+    .from(users)
+    .where(eq(users.id, app.userId))
+    .limit(1);
+
+  // Push notification
   const tokens = await db
     .select({ token: pushTokens.token })
     .from(pushTokens)
@@ -253,6 +332,17 @@ reviewerApplicationsAdminRouter.patch("/:id", async (c) => {
       )
     )
   );
+
+  // Email notification
+  if (applicant?.emailReviewerStatusEnabled) {
+    const note = reviewerNote?.trim() || null;
+    await sendEmail({
+      to: { email: applicant.email, name: applicant.name },
+      subject: status === "approved" ? "Reviewer access granted 🎉" : "Reviewer application update",
+      htmlContent: reviewerApplicationStatusEmailHtml(applicant.name, status, note),
+      textContent: reviewerApplicationStatusEmailText(applicant.name, status, note),
+    });
+  }
 
   return c.json({ success: true });
 });

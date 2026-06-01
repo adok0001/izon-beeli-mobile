@@ -14,7 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import Constants from "expo-constants";
 import { router, Stack } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { Alert, Pressable, Switch, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, Switch, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function SettingsRow({
@@ -56,12 +56,14 @@ function ToggleRow({
   detail,
   value,
   onToggle,
+  disabled,
 }: {
   icon: string;
   label: string;
   detail?: string;
   value: boolean;
   onToggle: (v: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
     <View className="flex-row items-center border-b border-neutral-100 py-3.5 dark:border-neutral-800">
@@ -75,8 +77,13 @@ function ToggleRow({
       <Switch
         value={value}
         onValueChange={onToggle}
+        disabled={disabled}
         trackColor={{ false: "#d1d5db", true: "#3b82f6" }}
         thumbColor="#ffffff"
+        accessibilityLabel={label}
+        accessibilityHint={detail}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: value, disabled }}
       />
     </View>
   );
@@ -94,7 +101,7 @@ export default function SettingsScreen() {
   const { getToken } = useAuth();
   const { signOut } = useClerk();
   const queryClient = useQueryClient();
-  const { data: prefs } = useNotificationPrefs();
+  const { data: prefs, isLoading: prefsLoading } = useNotificationPrefs();
   const updatePrefs = useUpdateNotificationPrefs();
   const { t } = useTranslation();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
@@ -168,7 +175,7 @@ export default function SettingsScreen() {
           type={toast.type}
           onDismiss={dismissToast}
         />
-        <View className="px-5 pt-4">
+        <ScrollView className="px-5 pt-4" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
           {/* Learning section */}
           <Text className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
             {t("settings.learning")}
@@ -199,6 +206,7 @@ export default function SettingsScreen() {
             detail={t("settings.wordOfDayDetail")}
             value={prefs?.pushWotdEnabled ?? true}
             onToggle={(v) => updatePrefs.mutate({ pushWotdEnabled: v })}
+            disabled={prefsLoading}
           />
           <ToggleRow
             icon="flame.fill"
@@ -206,6 +214,52 @@ export default function SettingsScreen() {
             detail={t("settings.streakReminderDetail")}
             value={prefs?.pushStreakReminderEnabled ?? true}
             onToggle={(v) => updatePrefs.mutate({ pushStreakReminderEnabled: v })}
+            disabled={prefsLoading}
+          />
+
+          {/* Email Notifications section */}
+          <Text className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+            {t("settings.emailNotifications")}
+          </Text>
+          <ToggleRow
+            icon="paperplane.fill"
+            label={t("settings.emailWordOfDay")}
+            detail={t("settings.emailWordOfDayDetail")}
+            value={prefs?.emailWotdEnabled ?? true}
+            onToggle={(v) => updatePrefs.mutate({ emailWotdEnabled: v })}
+            disabled={prefsLoading}
+          />
+          <ToggleRow
+            icon="arrow.up.circle.fill"
+            label={t("settings.emailStreakReminder")}
+            detail={t("settings.emailStreakReminderDetail")}
+            value={prefs?.emailStreakReminderEnabled ?? true}
+            onToggle={(v) => updatePrefs.mutate({ emailStreakReminderEnabled: v })}
+            disabled={prefsLoading}
+          />
+          <ToggleRow
+            icon="calendar"
+            label={t("settings.emailAssignmentDue")}
+            detail={t("settings.emailAssignmentDueDetail")}
+            value={prefs?.emailAssignmentDueEnabled ?? true}
+            onToggle={(v) => updatePrefs.mutate({ emailAssignmentDueEnabled: v })}
+            disabled={prefsLoading}
+          />
+          <ToggleRow
+            icon="checkmark.seal.fill"
+            label={t("settings.emailContributionStatus")}
+            detail={t("settings.emailContributionStatusDetail")}
+            value={prefs?.emailContributionStatusEnabled ?? true}
+            onToggle={(v) => updatePrefs.mutate({ emailContributionStatusEnabled: v })}
+            disabled={prefsLoading}
+          />
+          <ToggleRow
+            icon="person.badge.shield.checkmark.fill"
+            label={t("settings.emailReviewerStatus")}
+            detail={t("settings.emailReviewerStatusDetail")}
+            value={prefs?.emailReviewerStatusEnabled ?? true}
+            onToggle={(v) => updatePrefs.mutate({ emailReviewerStatusEnabled: v })}
+            disabled={prefsLoading}
           />
 
           {/* App section */}
@@ -309,7 +363,7 @@ export default function SettingsScreen() {
               Version {Constants.expoConfig?.version ?? "1.0.0"}
             </Text>
           </View>
-        </View>
+        </ScrollView>
       </SafeAreaView>
     </>
   );

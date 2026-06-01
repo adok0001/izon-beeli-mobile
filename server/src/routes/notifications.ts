@@ -1,9 +1,25 @@
 import { Hono } from "hono";
-import { eq, and, ne, sql } from "drizzle-orm";
+import { eq, and, ne, sql, between } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { users, pushTokens, dictionaryEntries } from "../db/schema.js";
 import { authMiddleware, adminMiddleware, type AuthEnv } from "../middleware/auth.js";
+import {
+  users,
+  pushTokens,
+  dictionaryEntries,
+  classroomAssignments,
+  classroomMembers,
+  lessons,
+} from "../db/schema.js";
 import { sendPushBatch, chunk, type PushMessage } from "../lib/send-push.js";
+import {
+  sendEmail,
+  wordOfDayEmailHtml,
+  wordOfDayEmailText,
+  streakReminderEmailHtml,
+  streakReminderEmailText,
+  assignmentDueEmailHtml,
+  assignmentDueEmailText,
+} from "../lib/send-email.js";
 
 // ---- Shared auth router ----
 export const notificationsRouter = new Hono<AuthEnv>();
@@ -16,6 +32,11 @@ notificationsRouter.get("/preferences", async (c) => {
     .select({
       pushWotdEnabled: users.pushWotdEnabled,
       pushStreakReminderEnabled: users.pushStreakReminderEnabled,
+      emailWotdEnabled: users.emailWotdEnabled,
+      emailStreakReminderEnabled: users.emailStreakReminderEnabled,
+      emailAssignmentDueEnabled: users.emailAssignmentDueEnabled,
+      emailContributionStatusEnabled: users.emailContributionStatusEnabled,
+      emailReviewerStatusEnabled: users.emailReviewerStatusEnabled,
     })
     .from(users)
     .where(eq(users.id, userId))
@@ -24,6 +45,11 @@ notificationsRouter.get("/preferences", async (c) => {
   return c.json({
     pushWotdEnabled: user?.pushWotdEnabled ?? true,
     pushStreakReminderEnabled: user?.pushStreakReminderEnabled ?? true,
+    emailWotdEnabled: user?.emailWotdEnabled ?? true,
+    emailStreakReminderEnabled: user?.emailStreakReminderEnabled ?? true,
+    emailAssignmentDueEnabled: user?.emailAssignmentDueEnabled ?? true,
+    emailContributionStatusEnabled: user?.emailContributionStatusEnabled ?? true,
+    emailReviewerStatusEnabled: user?.emailReviewerStatusEnabled ?? true,
   });
 });
 
@@ -33,19 +59,31 @@ notificationsRouter.patch("/preferences", async (c) => {
   const body = await c.req.json<{
     pushWotdEnabled?: boolean;
     pushStreakReminderEnabled?: boolean;
+    emailWotdEnabled?: boolean;
+    emailStreakReminderEnabled?: boolean;
+    emailAssignmentDueEnabled?: boolean;
+    emailContributionStatusEnabled?: boolean;
+    emailReviewerStatusEnabled?: boolean;
   }>();
 
-  await db
-    .update(users)
-    .set({
-      ...(typeof body.pushWotdEnabled === "boolean"
-        ? { pushWotdEnabled: body.pushWotdEnabled }
-        : {}),
-      ...(typeof body.pushStreakReminderEnabled === "boolean"
-        ? { pushStreakReminderEnabled: body.pushStreakReminderEnabled }
-        : {}),
-    })
-    .where(eq(users.id, userId));
+  const patch: Record<string, boolean> = {};
+  const boolFields = [
+    "pushWotdEnabled",
+    "pushStreakReminderEnabled",
+    "emailWotdEnabled",
+    "emailStreakReminderEnabled",
+    "emailAssignmentDueEnabled",
+    "emailContributionStatusEnabled",
+    "emailReviewerStatusEnabled",
+  ] as const;
+
+  for (const field of boolFields) {
+    if (typeof body[field] === "boolean") patch[field] = body[field]!;
+  }
+
+  if (Object.keys(patch).length > 0) {
+    await db.update(users).set(patch).where(eq(users.id, userId));
+  }
 
   return c.json({ updated: true });
 });
@@ -93,23 +131,29 @@ export const notificationsAdminRouter = new Hono();
 
 function cronGuard(req: Request): boolean {
   const secret = process.env.CRON_SECRET;
-  if (!secret) return false; // No secret configured → blocked
-  const auth = req.headers.get("x-cron-secret");
-  return auth === secret;
+  if (!secret) return false;
+  // Support Vercel's Authorization bearer header (used by Vercel Cron)
+  const authHeader = req.headers.get("authorization");
+  if (authHeader === "Bearer " + secret) return true;
+  // Also accept legacy x-cron-secret header
+  const cronHeader = req.headers.get("x-cron-secret");
+  return cronHeader === secret;
 }
 
 /**
- * POST /api/notifications/admin/send-wotd
- * Send today's Word of the Day push to all opted-in users with push tokens.
- * Call this from a cron job at your preferred time (e.g. 9:00 AM).
+ * GET /api/notifications/admin/send-wotd
+ * Send today's Word of the Day push + email to all opted-in users.
+ * Called by Vercel Cron at the configured schedule (e.g. 9:00 AM).
  */
-notificationsAdminRouter.post("/send-wotd", async (c) => {
+notificationsAdminRouter.get("/send-wotd", async (c) => {
   if (!cronGuard(c.req.raw)) {
     return c.json({ error: "Forbidden" }, 403);
   }
 
-  // Get all opted-in users who have push tokens + their selected language
-  const rows = await db
+  const today = Math.floor(Date.now() / 86_400_000);
+
+  // Users who opted into push WOTD
+  const pushRows = await db
     .select({
       token: pushTokens.token,
       languageId: users.selectedLanguageId,
@@ -118,34 +162,47 @@ notificationsAdminRouter.post("/send-wotd", async (c) => {
     .innerJoin(users, eq(pushTokens.userId, users.id))
     .where(eq(users.pushWotdEnabled, true));
 
-  if (rows.length === 0) {
-    return c.json({ sent: 0 });
-  }
+  // Users who opted into email WOTD
+  const emailRows = await db
+    .select({
+      email: users.email,
+      name: users.name,
+      languageId: users.selectedLanguageId,
+    })
+    .from(users)
+    .where(and(eq(users.emailWotdEnabled, true), sql`${users.deletedAt} IS NULL`));
 
-  // Deterministic daily word: days-since-epoch % total entries per language
-  const today = Math.floor(Date.now() / 86_400_000);
+  // Group by language to fetch one word per language
+  const wordByLang = new Map<string, { word: string; english: string }>();
 
-  // Group tokens by languageId to fetch one word per language
-  const langMap = new Map<string, string[]>();
-  for (const row of rows) {
-    const lang = row.languageId ?? "izon";
-    if (!langMap.has(lang)) langMap.set(lang, []);
-    langMap.get(lang)!.push(row.token);
-  }
+  const allLanguages = new Set([
+    ...pushRows.map((r) => r.languageId ?? "izon"),
+    ...emailRows.map((r) => r.languageId ?? "izon"),
+  ]);
 
-  const messages: PushMessage[] = [];
-
-  for (const [languageId, tokens] of langMap) {
+  for (const languageId of allLanguages) {
     const entries = await db
       .select({ word: dictionaryEntries.word, english: dictionaryEntries.english })
       .from(dictionaryEntries)
       .where(eq(dictionaryEntries.languageId, languageId))
       .orderBy(dictionaryEntries.id);
+    if (entries.length > 0) {
+      wordByLang.set(languageId, entries[today % entries.length]);
+    }
+  }
 
-    if (entries.length === 0) continue;
+  // Send push notifications
+  const pushLangMap = new Map<string, string[]>();
+  for (const row of pushRows) {
+    const lang = row.languageId ?? "izon";
+    if (!pushLangMap.has(lang)) pushLangMap.set(lang, []);
+    pushLangMap.get(lang)!.push(row.token);
+  }
 
-    const entry = entries[today % entries.length];
-
+  const messages: PushMessage[] = [];
+  for (const [languageId, tokens] of pushLangMap) {
+    const entry = wordByLang.get(languageId);
+    if (!entry) continue;
     for (const token of tokens) {
       messages.push({
         to: token,
@@ -157,14 +214,30 @@ notificationsAdminRouter.post("/send-wotd", async (c) => {
     }
   }
 
-  // Send in batches of 100 (Expo limit)
-  let sent = 0;
+  let pushSent = 0;
   for (const batch of chunk(messages, 100)) {
     const tickets = await sendPushBatch(batch);
-    sent += tickets.filter((t) => t.status === "ok").length;
+    pushSent += tickets.filter((t) => t.status === "ok").length;
   }
 
-  return c.json({ sent, total: messages.length });
+  // Send emails concurrently
+  let emailSent = 0;
+  await Promise.all(
+    emailRows.map(async (row) => {
+      const lang = row.languageId ?? "izon";
+      const entry = wordByLang.get(lang);
+      if (!entry) return;
+      const ok = await sendEmail({
+        to: { email: row.email, name: row.name },
+        subject: `Word of the Day: ${entry.word}`,
+        htmlContent: wordOfDayEmailHtml(row.name, entry.word, entry.english, lang),
+        textContent: wordOfDayEmailText(row.name, entry.word, entry.english),
+      });
+      if (ok) emailSent++;
+    })
+  );
+
+  return c.json({ pushSent, emailSent, total: messages.length + emailRows.length });
 });
 
 /**
@@ -221,17 +294,22 @@ notificationsAdminRouter.post("/broadcast", async (c) => {
 /**
  * POST /api/notifications/admin/send-streak-reminder
  * Send streak reminders to opted-in users who haven't been active today.
- * Call from a cron job in the evening (e.g. 7:00 PM).
+ * Called by Vercel Cron in the evening (e.g. 7:00 PM).
  */
-notificationsAdminRouter.post("/send-streak-reminder", async (c) => {
+notificationsAdminRouter.get("/send-streak-reminder", async (c) => {
   if (!cronGuard(c.req.raw)) {
     return c.json({ error: "Forbidden" }, 403);
   }
 
   const todayStr = new Date().toISOString().slice(0, 10);
 
-  // Users with push tokens, streak reminder enabled, streak > 0, not active today
-  const rows = await db
+  const inactiveFilter = and(
+    ne(users.streak, 0),
+    sql`${users.lastActiveDate} IS NULL OR ${users.lastActiveDate} != ${todayStr}`
+  );
+
+  // Push reminders
+  const pushRows = await db
     .select({
       token: pushTokens.token,
       streak: users.streak,
@@ -239,18 +317,25 @@ notificationsAdminRouter.post("/send-streak-reminder", async (c) => {
     })
     .from(pushTokens)
     .innerJoin(users, eq(pushTokens.userId, users.id))
+    .where(and(eq(users.pushStreakReminderEnabled, true), inactiveFilter));
+
+  // Email reminders
+  const emailRows = await db
+    .select({
+      email: users.email,
+      name: users.name,
+      streak: users.streak,
+    })
+    .from(users)
     .where(
       and(
-        eq(users.pushStreakReminderEnabled, true),
-        ne(users.streak, 0),
-        // lastActiveDate is not today
-        sql`${users.lastActiveDate} IS NULL OR ${users.lastActiveDate} != ${todayStr}`
+        eq(users.emailStreakReminderEnabled, true),
+        sql`${users.deletedAt} IS NULL`,
+        inactiveFilter
       )
     );
 
-  if (rows.length === 0) return c.json({ sent: 0 });
-
-  const messages: PushMessage[] = rows.map((row) => ({
+  const pushMessages: PushMessage[] = pushRows.map((row) => ({
     to: row.token,
     title: "Keep your streak alive! 🔥",
     body: `You have a ${row.streak}-day streak. Complete a lesson today to keep it going.`,
@@ -258,11 +343,84 @@ notificationsAdminRouter.post("/send-streak-reminder", async (c) => {
     sound: "default",
   }));
 
-  let sent = 0;
-  for (const batch of chunk(messages, 100)) {
+  let pushSent = 0;
+  for (const batch of chunk(pushMessages, 100)) {
     const tickets = await sendPushBatch(batch);
-    sent += tickets.filter((t) => t.status === "ok").length;
+    pushSent += tickets.filter((t) => t.status === "ok").length;
   }
 
-  return c.json({ sent, total: messages.length });
+  let emailSent = 0;
+  await Promise.all(
+    emailRows.map(async (row) => {
+      const ok = await sendEmail({
+        to: { email: row.email, name: row.name },
+        subject: "Keep your streak alive! 🔥",
+        htmlContent: streakReminderEmailHtml(row.name, row.streak),
+        textContent: streakReminderEmailText(row.name, row.streak),
+      });
+      if (ok) emailSent++;
+    })
+  );
+
+  return c.json({ pushSent, emailSent, total: pushMessages.length + emailRows.length });
+});
+
+/**
+ * GET /api/notifications/admin/send-assignment-due
+ * Email students whose assignments are due within the next 24 hours.
+ * Called by Vercel Cron once daily (e.g. 8:00 AM).
+ */
+notificationsAdminRouter.get("/send-assignment-due", async (c) => {
+  if (!cronGuard(c.req.raw)) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  const now = new Date();
+  const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+  // Assignments due in next 24 hours
+  const rows = await db
+    .select({
+      lessonTitle: lessons.title,
+      dueDate: classroomAssignments.dueDate,
+      userEmail: users.email,
+      userName: users.name,
+      emailAssignmentDueEnabled: users.emailAssignmentDueEnabled,
+    })
+    .from(classroomAssignments)
+    .innerJoin(classroomMembers, eq(classroomMembers.groupId, classroomAssignments.groupId))
+    .innerJoin(users, eq(users.id, classroomMembers.userId))
+    .innerJoin(lessons, eq(lessons.id, classroomAssignments.lessonId))
+    .where(
+      and(
+        between(classroomAssignments.dueDate, now, in24h),
+        eq(classroomMembers.role, "student"),
+        eq(users.emailAssignmentDueEnabled, true),
+        sql`${users.deletedAt} IS NULL`
+      )
+    );
+
+  const seen = new Set<string>();
+  const dedupedRows = rows.filter((row) => {
+    const key = `${row.userEmail}-${row.lessonTitle}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  let emailSent = 0;
+  await Promise.all(
+    dedupedRows.map(async (row) => {
+      if (!row.dueDate) return;
+      const ok = await sendEmail({
+        to: { email: row.userEmail, name: row.userName },
+        subject: `Assignment due soon: ${row.lessonTitle}`,
+        htmlContent: assignmentDueEmailHtml(row.userName, row.lessonTitle, row.dueDate),
+        textContent: assignmentDueEmailText(row.userName, row.lessonTitle, row.dueDate),
+      });
+      if (ok) emailSent++;
+    })
+  );
+
+  return c.json({ emailSent, total: dedupedRows.length });
 });

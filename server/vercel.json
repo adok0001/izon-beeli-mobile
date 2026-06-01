@@ -14,6 +14,16 @@
     {
       "path": "/api/internal/restock-plus-freezes",
       "schedule": "0 6 1 * *"
+      "path": "/api/notifications/admin/send-wotd",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/notifications/admin/send-streak-reminder",
+      "schedule": "0 19 * * *"
+    },
+    {
+      "path": "/api/notifications/admin/send-assignment-due",
+      "schedule": "0 8 * * *"
     }
   ]
 }

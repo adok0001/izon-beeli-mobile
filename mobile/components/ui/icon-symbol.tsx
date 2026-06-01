@@ -59,6 +59,8 @@ const MAPPING = {
   'photo': 'photo',
   'photo.badge.plus': 'add-photo-alternate',
   'plus.circle': 'add-circle-outline',
+  'calendar': 'calendar-today',
+  'person.badge.shield.checkmark.fill': 'admin-panel-settings',
 } as IconMapping;
 
 /**

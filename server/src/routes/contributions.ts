@@ -6,6 +6,11 @@ import { bounties, contributions, dictionaryEntries, feedItems, users } from "..
 import { awardXP, CONTRIBUTION_BASE_XP } from "../lib/award-xp.js";
 import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
 import { updateStreak } from "../lib/update-streak.js";
+import {
+  sendEmail,
+  contributionStatusEmailHtml,
+  contributionStatusEmailText,
+} from "../lib/send-email.js";
 
 const VALID_TYPES = ["word", "phrase", "audio", "entry_audio", "entry_meaning", "entry_image"] as const;
 const VALID_REVIEW_ACTIONS = ["approve", "reject"] as const;
@@ -520,6 +525,29 @@ contributionsRouter.patch("/:id/review", adminMiddleware, async (c) => {
     })
     .where(eq(contributions.id, id))
     .returning();
+
+  // Email notification to contributor
+  const [contributor] = await db
+    .select({
+      email: users.email,
+      name: users.name,
+      emailContributionStatusEnabled: users.emailContributionStatusEnabled,
+    })
+    .from(users)
+    .where(eq(users.id, existing.userId))
+    .limit(1);
+
+  if (contributor?.emailContributionStatusEnabled) {
+    const note = body.note?.trim() || null;
+    await sendEmail({
+      to: { email: contributor.email, name: contributor.name },
+      subject: newStatus === "approved"
+        ? `Your contribution was approved: ${existing.word}`
+        : `Contribution update: ${existing.word}`,
+      htmlContent: contributionStatusEmailHtml(contributor.name, existing.word, newStatus as "approved" | "rejected", note),
+      textContent: contributionStatusEmailText(contributor.name, existing.word, newStatus as "approved" | "rejected", note),
+    });
+  }
 
   return c.json(updated);
 });
