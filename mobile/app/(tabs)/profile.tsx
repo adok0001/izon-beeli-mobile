@@ -1,12 +1,11 @@
-import { analytics } from "@/lib/analytics";
 import { FeedbackModal } from "@/components/feedback-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { XpLevelBadge } from "@/components/xp-level-badge";
-import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
+import { analytics } from "@/lib/analytics";
 import { useAppConfig } from "@/lib/hooks/use-app-config";
+import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
 import { getLevelInfo } from "@/lib/xp-levels";
-import { getLanguageName } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
 import { useTourStore } from "@/store/tour-store";
 import { useWelcomeChecklistStore } from "@/store/welcome-checklist-store";
@@ -201,45 +200,6 @@ export default function ProfileScreen() {
             onPress={() => router.push("/dashboard")}
           />
           <MenuRow
-            icon="book.fill"
-            label={t("profile.learning")}
-            detail={getLanguageName(selectedLanguageId)}
-            onPress={() => router.push("/(tabs)/learn")}
-          />
-          <MenuRow
-            icon="character.book.closed"
-            label={t("profile.dictionary")}
-            onPress={() => router.push("/dictionary")}
-          />
-          {currentUser?.isAdmin ? (
-            <>
-              <MenuRow
-                icon="shield.fill"
-                label={t("educator.panelTitle")}
-                onPress={() => router.push("/(tabs)/educator")}
-              />
-              <MenuRow
-                icon="gearshape.fill"
-                label={t("educator.adminPanel")}
-                onPress={() => router.push("/(tabs)/admin")}
-              />
-            </>
-          ) : null}
-          {!isAdmin && canAccessEducator ? (
-            <MenuRow
-              icon="shield.fill"
-              label={t("educator.panelTitle")}
-              onPress={() => router.push("/(tabs)/educator")}
-            />
-          ) : null}
-          {(isAdmin || currentUser?.isReviewer) && (
-            <MenuRow
-              icon="checkmark.shield.fill"
-              label={t("profile.reviewContributions")}
-              onPress={() => router.push("/review")}
-            />
-          )}
-          <MenuRow
             icon="doc.text.fill"
             label={t("profile.myContributions")}
             onPress={() => router.push("/my-contributions")}
@@ -258,11 +218,6 @@ export default function ProfileScreen() {
             icon="person.3.fill"
             label={t("profile.classroom")}
             onPress={() => router.push("/classroom")}
-          />
-          <MenuRow
-            icon="bell.fill"
-            label={t("profile.notifications")}
-            onPress={() => router.push("/notifications")}
           />
           <MenuRow
             icon="exclamationmark.bubble"
