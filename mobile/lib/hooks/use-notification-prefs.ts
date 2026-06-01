@@ -25,7 +25,7 @@ export function useNotificationPrefs() {
     staleTime: 5 * 60 * 1000,
   });
 
-  return { ...query, isLoading: query.isLoading };
+  return query;
 }
 
 export function useUpdateNotificationPrefs() {

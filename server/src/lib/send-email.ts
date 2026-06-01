@@ -103,15 +103,24 @@ function getLanguageName(languageId: string): string {
   return LANGUAGE_DISPLAY_NAMES[languageId.toLowerCase()] ?? languageId;
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export function wordOfDayEmailHtml(name: string, word: string, english: string, languageId: string): string {
   const languageName = getLanguageName(languageId);
   const body = `
     <h2 style="margin:0 0 8px;color:#111827;font-size:20px;">Word of the Day</h2>
-    <p style="margin:0 0 24px;color:#6b7280;">Hello ${name},</p>
+    <p style="margin:0 0 24px;color:#6b7280;">Hello ${escapeHtml(name)},</p>
     <div style="background:#eff6ff;border-left:4px solid #1d4ed8;padding:20px 24px;border-radius:4px;">
-      <p style="margin:0 0 4px;font-size:28px;font-weight:700;color:#1d4ed8;">${word}</p>
-      <p style="margin:0;font-size:18px;color:#374151;">${english}</p>
-      <p style="margin:8px 0 0;font-size:13px;color:#6b7280;">${languageName}</p>
+      <p style="margin:0 0 4px;font-size:28px;font-weight:700;color:#1d4ed8;">${escapeHtml(word)}</p>
+      <p style="margin:0;font-size:18px;color:#374151;">${escapeHtml(english)}</p>
+      <p style="margin:8px 0 0;font-size:13px;color:#6b7280;">${escapeHtml(languageName)}</p>
     </div>
     ${ctaButton("Open Beeli")}`;
   return emailWrapper("Word of the Day", body);
@@ -124,7 +133,7 @@ export function wordOfDayEmailText(name: string, word: string, english: string):
 export function streakReminderEmailHtml(name: string, streak: number): string {
   const body = `
     <h2 style="margin:0 0 8px;color:#111827;font-size:20px;">Keep your streak alive! 🔥</h2>
-    <p style="margin:0 0 24px;color:#6b7280;">Hello ${name},</p>
+    <p style="margin:0 0 24px;color:#6b7280;">Hello ${escapeHtml(name)},</p>
     <p style="margin:0 0 16px;color:#374151;font-size:16px;">
       You have a <strong>${streak}-day streak</strong> — don't let it end today!
     </p>
@@ -138,24 +147,24 @@ export function streakReminderEmailText(name: string, streak: number): string {
 }
 
 export function assignmentDueEmailHtml(name: string, lessonTitle: string, dueDate: Date): string {
-  const formatted = dueDate.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  const formatted = dueDate.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "UTC" }) + " UTC";
   const body = `
-    <h2 style="margin:0 0 8px;color:#111827;font-size:20px;">Assignment Due Tomorrow</h2>
-    <p style="margin:0 0 24px;color:#6b7280;">Hello ${name},</p>
+    <h2 style="margin:0 0 8px;color:#111827;font-size:20px;">Assignment Due Soon</h2>
+    <p style="margin:0 0 24px;color:#6b7280;">Hello ${escapeHtml(name)},</p>
     <p style="margin:0 0 16px;color:#374151;font-size:16px;">
       A lesson assignment is due soon:
     </p>
     <div style="background:#fef3c7;border-left:4px solid #d97706;padding:20px 24px;border-radius:4px;">
-      <p style="margin:0 0 4px;font-size:18px;font-weight:700;color:#92400e;">${lessonTitle}</p>
+      <p style="margin:0 0 4px;font-size:18px;font-weight:700;color:#92400e;">${escapeHtml(lessonTitle)}</p>
       <p style="margin:0;font-size:14px;color:#78350f;">Due: ${formatted}</p>
     </div>
     ${ctaButton("Complete Assignment")}`;
-  return emailWrapper("Assignment Due Tomorrow", body);
+  return emailWrapper("Assignment Due Soon", body);
 }
 
 export function assignmentDueEmailText(name: string, lessonTitle: string, dueDate: Date): string {
-  const formatted = dueDate.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
-  return `Assignment Due Tomorrow\n\nHello ${name},\n\nYour assignment "${lessonTitle}" is due on ${formatted}.\n\nComplete it now: https://beeli.app\n\nTo unsubscribe, go to Settings → Notifications in the Beeli app.`;
+  const formatted = dueDate.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "UTC" }) + " UTC";
+  return `Assignment Due Soon\n\nHello ${name},\n\nYour assignment "${lessonTitle}" is due on ${formatted}.\n\nComplete it now: https://beeli.app\n\nTo unsubscribe, go to Settings → Notifications in the Beeli app.`;
 }
 
 export function contributionStatusEmailHtml(name: string, word: string, status: "approved" | "rejected", note?: string | null): string {
@@ -168,11 +177,11 @@ export function contributionStatusEmailHtml(name: string, word: string, status: 
 
   const body = `
     <h2 style="margin:0 0 8px;color:#111827;font-size:20px;">${headline}</h2>
-    <p style="margin:0 0 24px;color:#6b7280;">Hello ${name},</p>
+    <p style="margin:0 0 24px;color:#6b7280;">Hello ${escapeHtml(name)},</p>
     <div style="background:${bg};border-left:4px solid ${border};padding:20px 24px;border-radius:4px;">
-      <p style="margin:0 0 4px;font-size:18px;font-weight:700;color:${color};">${word}</p>
+      <p style="margin:0 0 4px;font-size:18px;font-weight:700;color:${color};">${escapeHtml(word)}</p>
       <p style="margin:0;font-size:14px;color:${color};text-transform:capitalize;">${status}</p>
-      ${note ? `<p style="margin:12px 0 0;font-size:14px;color:#374151;"><strong>Note:</strong> ${note}</p>` : ""}
+      ${note ? `<p style="margin:12px 0 0;font-size:14px;color:#374151;"><strong>Note:</strong> ${escapeHtml(note)}</p>` : ""}
     </div>
     ${approved ? `<p style="margin:16px 0 0;color:#374151;">XP has been added to your account. Keep contributing!</p>` : ""}
     ${ctaButton("Open Beeli")}`;
@@ -198,14 +207,14 @@ export function reviewerApplicationStatusEmailHtml(name: string, status: "approv
 
   const body = `
     <h2 style="margin:0 0 8px;color:#111827;font-size:20px;">${headline}</h2>
-    <p style="margin:0 0 24px;color:#6b7280;">Hello ${name},</p>
+    <p style="margin:0 0 24px;color:#6b7280;">Hello ${escapeHtml(name)},</p>
     <div style="background:${bg};border-left:4px solid ${border};padding:20px 24px;border-radius:4px;">
       <p style="margin:0;font-size:16px;color:${color};">
         ${approved
           ? "Your reviewer application has been approved. You now have access to review contributions in Beeli."
           : "Your reviewer application was not approved at this time."}
       </p>
-      ${note ? `<p style="margin:12px 0 0;font-size:14px;color:#374151;"><strong>Note:</strong> ${note}</p>` : ""}
+      ${note ? `<p style="margin:12px 0 0;font-size:14px;color:#374151;"><strong>Note:</strong> ${escapeHtml(note)}</p>` : ""}
     </div>
     ${ctaButton("Open Beeli")}`;
   return emailWrapper(headline, body);
@@ -229,15 +238,15 @@ export function newReviewerApplicationEmailHtml(
   role: string,
   languages: string[]
 ): string {
-  const langList = languages.length > 0 ? languages.join(", ") : "Not specified";
+  const langList = languages.length > 0 ? languages.map(escapeHtml).join(", ") : "Not specified";
   const body = `
     <h2 style="margin:0 0 8px;color:#111827;font-size:20px;">New Reviewer Application</h2>
-    <p style="margin:0 0 24px;color:#6b7280;">Hello ${adminName},</p>
+    <p style="margin:0 0 24px;color:#6b7280;">Hello ${escapeHtml(adminName)},</p>
     <p style="margin:0 0 16px;color:#374151;">A new reviewer application has been submitted and is awaiting your review.</p>
     <div style="background:#eff6ff;border-left:4px solid #1d4ed8;padding:20px 24px;border-radius:4px;">
-      <p style="margin:0 0 8px;font-size:18px;font-weight:700;color:#1e3a8a;">${applicantName}</p>
-      <p style="margin:0 0 4px;font-size:14px;color:#374151;"><strong>Email:</strong> ${applicantEmail}</p>
-      <p style="margin:0 0 4px;font-size:14px;color:#374151;"><strong>Role:</strong> ${role}</p>
+      <p style="margin:0 0 8px;font-size:18px;font-weight:700;color:#1e3a8a;">${escapeHtml(applicantName)}</p>
+      <p style="margin:0 0 4px;font-size:14px;color:#374151;"><strong>Email:</strong> ${escapeHtml(applicantEmail)}</p>
+      <p style="margin:0 0 4px;font-size:14px;color:#374151;"><strong>Role:</strong> ${escapeHtml(role)}</p>
       <p style="margin:0;font-size:14px;color:#374151;"><strong>Languages:</strong> ${langList}</p>
     </div>
     ${ctaButton("Review Application")}`;
