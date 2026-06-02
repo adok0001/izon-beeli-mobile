@@ -5,6 +5,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { apiFetch } from "@/lib/api";
 import type { DictionaryEntry } from "@/lib/dictionary";
 import { hapticError, hapticSuccess } from "@/lib/haptics";
+import { ONBOARDING_KEY } from "@/lib/constants";
 import { ACTIVE_LANGUAGES } from "@/lib/mock-data";
 import { generateQuiz } from "@/lib/quiz-engine";
 import {
@@ -30,7 +31,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export const ONBOARDING_KEY = "onboarding-completed-v2";
 
 type DailyGoal = "casual" | "steady" | "intensive";
 type Step = "language" | "tryit" | "goal" | "ready";

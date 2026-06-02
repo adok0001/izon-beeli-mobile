@@ -10,6 +10,7 @@ import {
 import { getLanguageName } from "@/lib/mock-data";
 import { Stack, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -23,6 +24,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function StoryNewScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { data: currentUser } = useCurrentUser();
   const canAccess = currentUser ? canAccessEducatorPanel(currentUser) : false;
 
@@ -61,9 +63,9 @@ export default function StoryNewScreen() {
   };
 
   const handleCreate = async () => {
-    if (!courseId) { setError("Select a course."); return; }
-    if (!title.trim()) { setError("Title is required."); return; }
-    if (!description.trim()) { setError("Description is required."); return; }
+    if (!courseId) { setError(t("educator.story.errorSelectCourse")); return; }
+    if (!title.trim()) { setError(t("educator.story.errorTitleRequired")); return; }
+    if (!description.trim()) { setError(t("educator.story.errorDescriptionRequired")); return; }
     setError("");
     try {
       await createArc.mutateAsync({ courseId, title: title.trim(), description: description.trim() });
@@ -77,8 +79,8 @@ export default function StoryNewScreen() {
     <>
       <Stack.Screen
         options={{
-          title: "New Story Arc",
-          headerBackTitle: "Story Mode",
+          title: t("educator.story.newArcTitle"),
+          headerBackTitle: t("educator.story.newArcBackTitle"),
           headerRight: () => (
             <Pressable onPress={handleCreate} disabled={createArc.isPending} className="mr-2">
               <Text
@@ -86,7 +88,7 @@ export default function StoryNewScreen() {
                   createArc.isPending ? "text-neutral-400" : "text-amber-500"
                 }`}
               >
-                {createArc.isPending ? "Creating…" : "Create"}
+                {createArc.isPending ? t("educator.story.creating") : t("educator.story.saveHeader")}
               </Text>
             </Pressable>
           ),
@@ -104,10 +106,10 @@ export default function StoryNewScreen() {
           >
             <View className="px-5 pt-4">
               <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
-                New Story Arc
+                {t("educator.story.newArcTitle")}
               </Text>
               <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-                Choose a language and course, then give the arc a title and description.
+                {t("educator.story.newArcSubtitle")}
               </Text>
             </View>
 
@@ -120,7 +122,7 @@ export default function StoryNewScreen() {
             {/* Language */}
             <View className="mt-5 px-5">
               <Text className="mb-1.5 text-xs font-semibold uppercase tracking-[1.2px] text-neutral-400 dark:text-neutral-500">
-                Language
+                {t("educator.story.labelLanguage")}
               </Text>
               <Pressable
                 onPress={() => setLanguagePickerVisible(true)}
@@ -134,7 +136,7 @@ export default function StoryNewScreen() {
                 </View>
                 <View className="flex-row items-center gap-2">
                   <Text className="text-xs text-neutral-400 dark:text-neutral-500">
-                    {languageCourses.length} course{languageCourses.length === 1 ? "" : "s"} available
+                    {t("educator.story.coursesAvailable", { count: languageCourses.length })}
                   </Text>
                   <IconSymbol name="chevron.right" size={14} color="#9ca3af" />
                 </View>
@@ -144,14 +146,14 @@ export default function StoryNewScreen() {
             {/* Course */}
             <View className="mt-5 px-5">
               <Text className="mb-2 text-xs font-semibold uppercase tracking-[1.2px] text-neutral-400 dark:text-neutral-500">
-                Course
+                {t("educator.story.labelCourse")}
               </Text>
               {coursesLoading ? (
-                <Text className="text-sm text-neutral-400">Loading…</Text>
+                <Text className="text-sm text-neutral-400">{t("educator.story.loading")}</Text>
               ) : languageCourses.length === 0 ? (
                 <View className="rounded-xl bg-neutral-50 px-4 py-4 dark:bg-neutral-800">
                   <Text className="text-center text-sm text-neutral-500 dark:text-neutral-400">
-                    All courses for {getLanguageName(languageId)} already have a story arc.
+                    {t("educator.story.allCoursesHaveArc", { language: getLanguageName(languageId) })}
                   </Text>
                 </View>
               ) : (
@@ -198,12 +200,12 @@ export default function StoryNewScreen() {
             {/* Title */}
             <View className="mt-5 px-5">
               <Text className="mb-1.5 text-xs font-semibold uppercase tracking-[1.2px] text-neutral-400 dark:text-neutral-500">
-                Title
+                {t("educator.story.labelTitle")}
               </Text>
               <TextInput
                 value={title}
                 onChangeText={setTitle}
-                placeholder="e.g. Tari's Journey Home"
+                placeholder={t("educator.story.titlePlaceholder")}
                 returnKeyType="next"
                 className="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                 placeholderTextColor="#9ca3af"
@@ -213,12 +215,12 @@ export default function StoryNewScreen() {
             {/* Description */}
             <View className="mt-5 px-5">
               <Text className="mb-1.5 text-xs font-semibold uppercase tracking-[1.2px] text-neutral-400 dark:text-neutral-500">
-                Description
+                {t("educator.story.labelDescription")}
               </Text>
               <TextInput
                 value={description}
                 onChangeText={setDescription}
-                placeholder="A short summary of the story…"
+                placeholder={t("educator.story.descriptionPlaceholder")}
                 multiline
                 numberOfLines={4}
                 className="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
@@ -234,7 +236,7 @@ export default function StoryNewScreen() {
                 className="items-center rounded-xl bg-amber-500 py-4 active:opacity-80 disabled:opacity-50"
               >
                 <Text className="text-base font-bold text-white">
-                  {createArc.isPending ? "Creating…" : "Create Story Arc"}
+                  {createArc.isPending ? t("educator.story.creating") : t("educator.story.createButton")}
                 </Text>
               </Pressable>
             </View>

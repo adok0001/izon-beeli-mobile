@@ -286,8 +286,8 @@ export default function EducatorPanelScreen() {
               />
               <ActionRow
                 icon="book.closed.fill"
-                label="Story Mode"
-                detail="Create and edit narrative story arcs for courses"
+                label={t("educator.story.screenTitle")}
+                detail={t("educator.story.screenSubtitle")}
                 onPress={() => router.push("/educator/stories" as never)}
               />
               {currentUser && canManageBounties(currentUser) ? (

@@ -12,6 +12,7 @@ import {
 import { useToast } from "@/lib/hooks/use-toast";
 import { getLanguageName } from "@/lib/mock-data";
 import { Stack, useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
 import {
   Alert,
   Pressable,
@@ -78,6 +79,7 @@ function ArcCard({
 
 export default function EducatorStoriesScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
   const { data: currentUser } = useCurrentUser();
   const canAccess = currentUser ? canAccessEducatorPanel(currentUser) : false;
@@ -91,17 +93,17 @@ export default function EducatorStoriesScreen() {
 
   const handleDelete = (arc: EducatorStoryArc) => {
     Alert.alert(
-      "Delete story arc",
-      `"${arc.title}" and all its chapters will be permanently deleted.`,
+      t("educator.story.deleteArcTitle"),
+      t("educator.story.deleteArcMessage", { title: arc.title }),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("educator.story.deleteArcCancel"), style: "cancel" },
         {
-          text: "Delete",
+          text: t("educator.story.deleteArcConfirm"),
           style: "destructive",
           onPress: async () => {
             try {
               await deleteArc.mutateAsync(arc.id);
-              toastSuccess("Story arc deleted");
+              toastSuccess(t("educator.story.arcDeleted"));
             } catch (e) {
               toastError(friendlyError(e as Error));
             }
@@ -115,7 +117,7 @@ export default function EducatorStoriesScreen() {
     <>
       <Stack.Screen
         options={{
-          title: "Story Mode",
+          title: t("educator.story.screenTitle"),
           headerRight: () => (
             <Pressable
               onPress={() => router.push("/educator/story-new" as never)}
@@ -139,15 +141,15 @@ export default function EducatorStoriesScreen() {
           showsVerticalScrollIndicator={false}
         >
           {isLoading ? (
-            <Text className="mt-8 text-center text-sm text-neutral-400">Loading…</Text>
+            <Text className="mt-8 text-center text-sm text-neutral-400">{t("educator.story.loading")}</Text>
           ) : arcs.length === 0 ? (
             <View className="mt-20 items-center">
               <IconSymbol name="book.closed.fill" size={48} color="#d1d5db" />
               <Text className="mt-4 text-center text-base font-semibold text-neutral-500 dark:text-neutral-400">
-                No story arcs yet
+                {t("educator.story.noArcsTitle")}
               </Text>
               <Text className="mt-1 text-center text-sm text-neutral-400 dark:text-neutral-500">
-                Tap + to create a story arc for a course.
+                {t("educator.story.noArcsSubtitle")}
               </Text>
             </View>
           ) : (

@@ -12,6 +12,7 @@ import {
 import { useToast } from "@/lib/hooks/use-toast";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -32,18 +33,20 @@ function ChapterEditor({
   lessonOptions,
   onChange,
   onDelete,
+  t,
 }: Readonly<{
   index: number;
   chapter: ChapterDraft;
   lessonOptions: { id: string; title: string }[];
   onChange: (updated: ChapterDraft) => void;
   onDelete: () => void;
+  t: (key: string, opts?: Record<string, unknown>) => string;
 }>) {
   return (
     <View className="mb-4 rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-900">
       <View className="mb-3 flex-row items-center justify-between">
         <Text className="text-xs font-bold uppercase tracking-widest text-amber-500">
-          Chapter {index + 1}
+          {t("educator.story.chapterLabel", { number: index + 1 })}
         </Text>
         <Pressable onPress={onDelete} hitSlop={8}>
           <IconSymbol name="trash" size={16} color="#ef4444" />
@@ -51,18 +54,18 @@ function ChapterEditor({
       </View>
 
       <Text className="mb-1 text-xs font-semibold text-neutral-500 dark:text-neutral-400">
-        Chapter title
+        {t("educator.story.chapterTitleLabel")}
       </Text>
       <TextInput
         value={chapter.title}
         onChangeText={(v) => onChange({ ...chapter, title: v })}
-        placeholder="e.g. Arriving at the Waterside"
+        placeholder={t("educator.story.chapterTitlePlaceholder")}
         className="mb-3 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
         placeholderTextColor="#9ca3af"
       />
 
       <Text className="mb-1 text-xs font-semibold text-neutral-500 dark:text-neutral-400">
-        Lesson
+        {t("educator.story.chapterLessonLabel")}
       </Text>
       <ScrollView
         horizontal
@@ -96,12 +99,12 @@ function ChapterEditor({
       </ScrollView>
 
       <Text className="mb-1 text-xs font-semibold text-neutral-500 dark:text-neutral-400">
-        Narrative intro
+        {t("educator.story.chapterNarrativeIntroLabel")}
       </Text>
       <TextInput
         value={chapter.narrativeIntro}
         onChangeText={(v) => onChange({ ...chapter, narrativeIntro: v })}
-        placeholder="What happens before this lesson begins…"
+        placeholder={t("educator.story.chapterNarrativeIntroPlaceholder")}
         multiline
         numberOfLines={3}
         className="mb-3 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
@@ -110,12 +113,12 @@ function ChapterEditor({
       />
 
       <Text className="mb-1 text-xs font-semibold text-neutral-500 dark:text-neutral-400">
-        Narrative outro
+        {t("educator.story.chapterNarrativeOutroLabel")}
       </Text>
       <TextInput
         value={chapter.narrativeOutro}
         onChangeText={(v) => onChange({ ...chapter, narrativeOutro: v })}
-        placeholder="What happens after completing this lesson…"
+        placeholder={t("educator.story.chapterNarrativeOutroPlaceholder")}
         multiline
         numberOfLines={3}
         className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
@@ -128,6 +131,7 @@ function ChapterEditor({
 
 export default function StoryEditScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
   const { data: currentUser } = useCurrentUser();
@@ -181,15 +185,15 @@ export default function StoryEditScreen() {
 
   const handleSave = async () => {
     if (!arc) return;
-    if (!title.trim()) { toastError("Title is required"); return; }
+    if (!title.trim()) { toastError(t("educator.story.errorTitleRequiredShort")); return; }
 
     for (const [i, ch] of chapters.entries()) {
       if (!ch.lessonId) {
-        toastError(`Chapter ${i + 1} needs a lesson`);
+        toastError(t("educator.story.errorChapterNeedsLesson", { number: i + 1 }));
         return;
       }
       if (!ch.title.trim() || !ch.narrativeIntro.trim() || !ch.narrativeOutro.trim()) {
-        toastError(`Chapter ${i + 1} is incomplete`);
+        toastError(t("educator.story.errorChapterIncomplete", { number: i + 1 }));
         return;
       }
     }
@@ -207,7 +211,7 @@ export default function StoryEditScreen() {
           order: i + 1,
         })),
       });
-      toastSuccess("Story arc saved");
+      toastSuccess(t("educator.story.arcSaved"));
       router.back();
     } catch (e) {
       toastError(friendlyError(e as Error));
@@ -217,22 +221,26 @@ export default function StoryEditScreen() {
   };
 
   const confirmDeleteChapter = (index: number) => {
-    Alert.alert("Remove chapter", "Remove this chapter from the story arc?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Remove",
-        style: "destructive",
-        onPress: () =>
-          setChapters((prev) => prev.filter((_, i) => i !== index)),
-      },
-    ]);
+    Alert.alert(
+      t("educator.story.removeChapterTitle"),
+      t("educator.story.removeChapterMessage"),
+      [
+        { text: t("educator.story.removeChapterCancel"), style: "cancel" },
+        {
+          text: t("educator.story.removeChapterConfirm"),
+          style: "destructive",
+          onPress: () =>
+            setChapters((prev) => prev.filter((_, i) => i !== index)),
+        },
+      ]
+    );
   };
 
   return (
     <>
       <Stack.Screen
         options={{
-          title: arc?.title ?? "Story Arc",
+          title: arc?.title ?? t("educator.story.screenTitle"),
           headerRight: () => (
             <Pressable
               onPress={handleSave}
@@ -240,7 +248,7 @@ export default function StoryEditScreen() {
               className="mr-2"
             >
               <Text className="text-base font-semibold text-amber-500 disabled:opacity-50">
-                {saving ? "Saving…" : "Save"}
+                {saving ? t("educator.story.saving") : t("educator.story.saveHeader")}
               </Text>
             </Pressable>
           ),
@@ -257,13 +265,13 @@ export default function StoryEditScreen() {
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         {isLoading ? (
           <View className="flex-1 items-center justify-center">
-            <Text className="text-sm text-neutral-400">Loading…</Text>
+            <Text className="text-sm text-neutral-400">{t("educator.story.loading")}</Text>
           </View>
         ) : !arc ? (
           <View className="flex-1 items-center justify-center px-8">
             <IconSymbol name="exclamationmark.triangle" size={40} color="#d1d5db" />
             <Text className="mt-4 text-center text-base text-neutral-500">
-              Story arc not found.
+              {t("educator.story.noArcsTitle")}
             </Text>
           </View>
         ) : (
@@ -275,17 +283,17 @@ export default function StoryEditScreen() {
             {/* Arc metadata */}
             <View className="mb-5 rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-900">
               <Text className="mb-1 text-xs font-semibold uppercase tracking-wider text-neutral-400">
-                Arc title
+                {t("educator.story.labelArcTitle")}
               </Text>
               <TextInput
                 value={title}
                 onChangeText={setTitle}
                 className="mb-3 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                 placeholderTextColor="#9ca3af"
-                placeholder="Story title"
+                placeholder={t("educator.story.arcTitlePlaceholder")}
               />
               <Text className="mb-1 text-xs font-semibold uppercase tracking-wider text-neutral-400">
-                Description
+                {t("educator.story.labelDescription")}
               </Text>
               <TextInput
                 value={description}
@@ -294,7 +302,7 @@ export default function StoryEditScreen() {
                 numberOfLines={3}
                 className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                 placeholderTextColor="#9ca3af"
-                placeholder="Describe the story arc…"
+                placeholder={t("educator.story.arcDescriptionPlaceholder")}
                 textAlignVertical="top"
               />
             </View>
@@ -302,7 +310,7 @@ export default function StoryEditScreen() {
             {/* Chapter list */}
             <View className="mb-3 flex-row items-center justify-between">
               <Text className="text-xs font-semibold uppercase tracking-[1.5px] text-neutral-400 dark:text-neutral-500">
-                Chapters ({chapters.length})
+                {t("educator.story.chaptersCount", { count: chapters.length })}
               </Text>
               <Pressable
                 onPress={addChapter}
@@ -310,7 +318,7 @@ export default function StoryEditScreen() {
               >
                 <IconSymbol name="plus.circle.fill" size={18} color="#f59e0b" />
                 <Text className="text-sm font-semibold text-amber-500">
-                  Add chapter
+                  {t("educator.story.addChapter")}
                 </Text>
               </Pressable>
             </View>
@@ -319,7 +327,7 @@ export default function StoryEditScreen() {
               <View className="mb-4 items-center rounded-2xl border border-dashed border-neutral-300 py-10 dark:border-neutral-700">
                 <IconSymbol name="book.pages" size={32} color="#d1d5db" />
                 <Text className="mt-2 text-sm text-neutral-400">
-                  No chapters yet. Tap "Add chapter" to start.
+                  {t("educator.story.noChapters")}
                 </Text>
               </View>
             ) : (
@@ -338,6 +346,7 @@ export default function StoryEditScreen() {
                     )
                   }
                   onDelete={() => confirmDeleteChapter(i)}
+                  t={(key, opts) => t(key as any, opts as any) as string}
                 />
               ))
             )}
@@ -348,7 +357,7 @@ export default function StoryEditScreen() {
               className="mt-2 items-center rounded-xl bg-amber-500 py-4 active:opacity-80 disabled:opacity-50"
             >
               <Text className="text-base font-bold text-white">
-                {saving ? "Saving…" : "Save story arc"}
+                {saving ? t("educator.story.saving") : t("educator.story.saveButton")}
               </Text>
             </Pressable>
           </ScrollView>

@@ -1,4 +1,4 @@
-import { ONBOARDING_KEY } from "@/app/(onboarding)/index";
+import { ONBOARDING_KEY } from "@/lib/constants";
 import { AudioPlayer } from "@/components/audio/audio-player";
 import { FeatureTourModal } from "@/components/feature-tour-modal";
 import { HapticTab } from "@/components/haptic-tab";

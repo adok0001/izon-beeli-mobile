@@ -1212,4 +1212,19 @@ export const IZON_DICTIONARY: DictionaryEntry[] = [
   e(1038, "omoniwarị", "slave family", "nouns"),
   e(1039, "odubo", "slave; servant", "nouns"),
   e(1040, "odubogban", "slave service", "nouns"),
+
+  // --- Lesson 01-06-2026: Short sentences and phrases (body parts, objects, demonstratives) ---
+  e(1042, "beri", "ear", "body", undefined, "Mị enị beri", "This is your ear."),
+  e(1043, "buru", "yam", "food", undefined, "Mị enị buru", "This is your yam."),
+  e(1044, "aka", "tooth; maize", "body", undefined, "Mị aka", "This is a tooth."),
+  e(1045, "warị", "house", "nouns", undefined, "Mị enị warị", "This is your house."),
+  e(1046, "bẹlẹ", "pot", "nouns", undefined, "Mị bẹlẹ", "This is a pot."),
+  e(1047, "bịbị", "mouth", "body", undefined, "Mị enị bịbị", "This is your mouth."),
+  e(1048, "kịmị", "person; man", "nouns", undefined, "Mị kịmị", "This is a person."),
+  e(1049, "sango", "glass jar (for local gin)", "nouns", undefined, "Mị sango", "This is a glass jar."),
+  e(1050, "zongo", "earthenware jar", "nouns", undefined, "Mị zongo", "This is an earthenware jar."),
+  e(1051, "mọngọ", "mug", "nouns", undefined, "Mị mọngọ", "This is a mug."),
+  e(1052, "mị", "this; this is", "phrases", undefined, "Mị te ye?", "What is this?"),
+  e(1053, "anị", "that; that is", "phrases", undefined, "Anị te ye?", "What is that?"),
+  e(1054, "enị", "your (possessive)", "phrases", undefined, "Mị enị beri", "This is your ear."),
 ];
