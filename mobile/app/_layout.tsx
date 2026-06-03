@@ -68,8 +68,10 @@ function AuthGate({ children }: Readonly<{ children: React.ReactNode }>) {
   }, [isSignedIn, userId]);
 
   useEffect(() => {
-    return addNotificationListener((title, body, type) => {
-      addNotification(type as any, title, body);
+    return addNotificationListener((title, body, type, icon) => {
+      const VALID_TYPES = ["word_of_day", "streak_reminder", "assignment_due", "achievement", "broadcast", "reengagement"] as const;
+      const safeType = VALID_TYPES.includes(type as any) ? (type as typeof VALID_TYPES[number]) : "broadcast";
+      addNotification(safeType, title, body, icon);
     });
   }, [addNotification]);
 

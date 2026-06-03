@@ -6,7 +6,7 @@ interface NotificationState {
   notifications: InAppNotification[];
   unreadCount: number;
 
-  addNotification: (type: NotificationType, title: string, body: string) => void;
+  addNotification: (type: NotificationType, title: string, body: string, icon?: string) => void;
   markRead: (id: string) => void;
   markAllRead: () => void;
   clearAll: () => void;
@@ -25,7 +25,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   unreadCount: 0,
   _hydrated: false,
 
-  addNotification: (type, title, body) => {
+  addNotification: (type, title, body, icon) => {
     const notification: InAppNotification = {
       id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       type,
@@ -33,6 +33,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       body,
       read: false,
       createdAt: new Date().toISOString(),
+      ...(icon ? { icon } : {}),
     };
     const updated = [notification, ...get().notifications].slice(0, 50); // Keep max 50
     set({

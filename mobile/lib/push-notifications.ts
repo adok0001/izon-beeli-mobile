@@ -38,7 +38,7 @@ export function configurePushNotifications() {
  * Returns an unsubscribe function — call it in a useEffect cleanup.
  */
 export function addNotificationListener(
-  onReceive: (title: string, body: string, type: string) => void
+  onReceive: (title: string, body: string, type: string, icon?: string) => void
 ): () => void {
   const N = getNotifications();
   if (!N) return () => {};
@@ -46,7 +46,12 @@ export function addNotificationListener(
     const sub = N.addNotificationReceivedListener((notification) => {
       const { title, body, data } = notification.request.content;
       if (title) {
-        onReceive(title, body ?? "", (data?.type as string) ?? "achievement");
+        onReceive(
+          title,
+          body ?? "",
+          (data?.type as string) ?? "broadcast",
+          data?.icon as string | undefined
+        );
       }
     });
     return () => sub.remove();

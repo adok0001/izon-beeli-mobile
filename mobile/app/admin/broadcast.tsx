@@ -17,6 +17,17 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+const BROADCAST_ICONS: { name: string; label: string }[] = [
+  { name: "bell.fill", label: "General" },
+  { name: "star.fill", label: "Featured" },
+  { name: "megaphone", label: "Announce" },
+  { name: "flame.fill", label: "Hot" },
+  { name: "heart.fill", label: "Community" },
+  { name: "trophy.fill", label: "Achievement" },
+  { name: "calendar", label: "Event" },
+  { name: "checkmark.circle.fill", label: "Done" },
+];
+
 export default function BroadcastScreen() {
   const { t } = useTranslation();
   const { getToken } = useAuth();
@@ -24,6 +35,7 @@ export default function BroadcastScreen() {
 
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [selectedIcon, setSelectedIcon] = useState("bell.fill");
   const [languageId, setLanguageId] = useState<string | null>(null);
   const [pickerVisible, setPickerVisible] = useState(false);
   const [sending, setSending] = useState(false);
@@ -40,7 +52,7 @@ export default function BroadcastScreen() {
       const result = await apiFetch<{ sent: number; total: number }>("/notifications/broadcast", {
         token: token ?? undefined,
         method: "POST",
-        body: JSON.stringify({ title, body, ...(languageId ? { languageId } : {}) }),
+        body: JSON.stringify({ title, body, data: { icon: selectedIcon }, ...(languageId ? { languageId } : {}) }),
       });
       Alert.alert(
         t("admin.notifications.sent"),
@@ -48,6 +60,7 @@ export default function BroadcastScreen() {
       );
       setTitle("");
       setBody("");
+      setSelectedIcon("bell.fill");
       setLanguageId(null);
     } catch {
       Alert.alert(t("common.error"), t("admin.notifications.error"));
@@ -134,11 +147,41 @@ export default function BroadcastScreen() {
           />
           <Text className="text-xs text-neutral-400 text-right mb-6">{body.length}/250</Text>
 
+          {/* Icon */}
+          <Text className="text-xs font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-3">
+            Icon
+          </Text>
+          <View className="flex-row flex-wrap gap-2 mb-6">
+            {BROADCAST_ICONS.map(({ name, label }) => {
+              const active = selectedIcon === name;
+              return (
+                <Pressable
+                  key={name}
+                  onPress={() => setSelectedIcon(name)}
+                  className={`items-center gap-1.5 rounded-2xl px-3 py-2.5 border ${
+                    active
+                      ? "bg-blue-50 dark:bg-blue-900/30 border-blue-400 dark:border-blue-500"
+                      : "bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700"
+                  } active:opacity-70`}
+                >
+                  <IconSymbol
+                    name={name as any}
+                    size={20}
+                    color={active ? "#2563eb" : "#9ca3af"}
+                  />
+                  <Text className={`text-[10px] font-medium ${active ? "text-blue-600 dark:text-blue-400" : "text-neutral-400 dark:text-neutral-500"}`}>
+                    {label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
           {/* Preview */}
           {(title.trim() || body.trim()) ? (
             <View className="rounded-2xl bg-neutral-100 dark:bg-neutral-800 px-4 py-4 mb-6">
               <View className="flex-row items-center gap-2 mb-2">
-                <IconSymbol name="bell.fill" size={14} color="#9ca3af" />
+                <IconSymbol name={selectedIcon as any} size={14} color="#9ca3af" />
                 <Text className="text-xs font-semibold text-neutral-400 uppercase tracking-widest">
                   {t("admin.notifications.preview")}
                 </Text>

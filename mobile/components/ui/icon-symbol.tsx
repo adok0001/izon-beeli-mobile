@@ -61,6 +61,10 @@ const MAPPING = {
   'plus.circle': 'add-circle-outline',
   'calendar': 'calendar-today',
   'person.badge.shield.checkmark.fill': 'admin-panel-settings',
+  'bell.fill': 'notifications',
+  'bell': 'notifications-none',
+  'trophy.fill': 'emoji-events',
+  'megaphone': 'campaign',
 } as IconMapping;
 
 /**

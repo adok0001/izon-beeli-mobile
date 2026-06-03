@@ -12,6 +12,8 @@ const TYPE_CONFIG: Record<NotificationType, { icon: string; color: string }> = {
   streak_reminder: { icon: "flame.fill", color: "#f59e0b" },
   assignment_due: { icon: "calendar", color: "#8b5cf6" },
   achievement: { icon: "trophy.fill", color: "#22c55e" },
+  broadcast: { icon: "megaphone", color: "#6b7280" },
+  reengagement: { icon: "flame.fill", color: "#f59e0b" },
 };
 
 function timeAgo(dateStr: string): string {
@@ -27,7 +29,8 @@ function timeAgo(dateStr: string): string {
 
 function NotificationRow({ item }: { item: InAppNotification }) {
   const markRead = useNotificationStore((s) => s.markRead);
-  const config = TYPE_CONFIG[item.type];
+  const config = TYPE_CONFIG[item.type] ?? { icon: "bell.fill", color: "#6b7280" };
+  const iconName = (item.icon ?? config.icon) as any;
 
   return (
     <Pressable
@@ -40,7 +43,7 @@ function NotificationRow({ item }: { item: InAppNotification }) {
     >
       <View className="flex-row items-start">
         <View className="mr-3 mt-0.5 h-8 w-8 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-700">
-          <IconSymbol name={config.icon as any} size={16} color={config.color} />
+          <IconSymbol name={iconName} size={16} color={config.color} />
         </View>
         <View className="flex-1">
           <View className="flex-row items-center justify-between">

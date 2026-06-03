@@ -235,7 +235,9 @@ export type NotificationType =
   | "word_of_day"
   | "streak_reminder"
   | "assignment_due"
-  | "achievement";
+  | "achievement"
+  | "broadcast"
+  | "reengagement";
 
 export interface InAppNotification {
   id: string;
@@ -244,6 +246,7 @@ export interface InAppNotification {
   body: string;
   read: boolean;
   createdAt: string;
+  icon?: string;
 }
 
 // --- Classroom / Groups ---
