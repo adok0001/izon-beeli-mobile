@@ -9,7 +9,7 @@ import {
 import * as fs from "fs";
 import * as path from "path";
 
-const APP_GROUP = "group.com.izonbeeli.app";
+const APP_GROUP = "group.com.izonbeeli.shared";
 
 const withIosAppGroup: ConfigPlugin = (config) =>
   withEntitlementsPlist(config, (mod) => {

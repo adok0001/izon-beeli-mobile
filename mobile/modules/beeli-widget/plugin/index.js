@@ -8,7 +8,7 @@ const {
 const fs = require("fs");
 const path = require("path");
 
-const APP_GROUP = "group.com.izonbeeli.app";
+const APP_GROUP = "group.com.izonbeeli.shared";
 
 const withIosAppGroup = (config) =>
   withEntitlementsPlist(config, (mod) => {

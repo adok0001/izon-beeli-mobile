@@ -1,7 +1,7 @@
 import ExpoModulesCore
 import WidgetKit
 
-private let appGroupId = "group.com.izonbeeli.app"
+private let appGroupId = "group.com.izonbeeli.shared"
 
 public class BeeliWidgetModule: Module {
   public func definition() -> ModuleDefinition {

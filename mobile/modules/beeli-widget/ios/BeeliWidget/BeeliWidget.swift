@@ -1,7 +1,7 @@
 import WidgetKit
 import SwiftUI
 
-private let appGroupId = "group.com.izonbeeli.app"
+private let appGroupId = "group.com.izonbeeli.shared"
 
 // MARK: - Shared helpers
 
