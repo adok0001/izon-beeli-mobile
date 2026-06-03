@@ -17,6 +17,27 @@ import { useTranslation } from "react-i18next";
 import { Alert, Pressable, ScrollView, Switch, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+const M = {
+  ink: "#0D0F1A",
+  parchment: "#F7F2E8",
+  accent: "#C4862A",
+  cardBg: "#1A1D2C",
+  borderDark: "#2E3245",
+  textDim: "#9A9480",
+  textDimDark: "#5A5D70",
+} as const;
+
+function SectionLabel({ label }: { label: string }) {
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 28, marginBottom: 8 }}>
+      <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: M.accent }} />
+      <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 2, textTransform: "uppercase", color: M.textDimDark }}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
 function SettingsRow({
   icon,
   label,
@@ -32,20 +53,17 @@ function SettingsRow({
     <Pressable
       onPress={onPress}
       disabled={!onPress}
-      className="flex-row items-center border-b border-neutral-100 py-4 active:opacity-70 dark:border-neutral-800"
+      style={{
+        flexDirection: "row", alignItems: "center",
+        paddingVertical: 14,
+        borderBottomWidth: 1, borderBottomColor: M.borderDark,
+      }}
+      className="active:opacity-70"
     >
-      <IconSymbol name={icon as any} size={20} color="#6b7280" />
-      <Text className="ml-3 flex-1 text-base text-neutral-900 dark:text-white">
-        {label}
-      </Text>
-      {value && (
-        <Text className="mr-2 text-sm text-neutral-500 dark:text-neutral-400">
-          {value}
-        </Text>
-      )}
-      {onPress && (
-        <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
-      )}
+      <IconSymbol name={icon as any} size={17} color={M.textDimDark} />
+      <Text style={{ marginLeft: 14, flex: 1, fontSize: 14, color: M.parchment }}>{label}</Text>
+      {value && <Text style={{ marginRight: 8, fontSize: 12, color: M.textDimDark }}>{value}</Text>}
+      {onPress && <IconSymbol name="chevron.right" size={13} color={M.textDimDark} />}
     </Pressable>
   );
 }
@@ -66,20 +84,24 @@ function ToggleRow({
   disabled?: boolean;
 }) {
   return (
-    <View className="flex-row items-center border-b border-neutral-100 py-3.5 dark:border-neutral-800">
-      <IconSymbol name={icon as any} size={20} color="#6b7280" />
-      <View className="ml-3 flex-1">
-        <Text className="text-base text-neutral-900 dark:text-white">{label}</Text>
-        {detail && (
-          <Text className="text-xs text-neutral-500 dark:text-neutral-400">{detail}</Text>
-        )}
+    <View
+      style={{
+        flexDirection: "row", alignItems: "center",
+        paddingVertical: 12,
+        borderBottomWidth: 1, borderBottomColor: M.borderDark,
+      }}
+    >
+      <IconSymbol name={icon as any} size={17} color={M.textDimDark} />
+      <View style={{ marginLeft: 14, flex: 1 }}>
+        <Text style={{ fontSize: 14, color: M.parchment }}>{label}</Text>
+        {detail && <Text style={{ fontSize: 11, color: M.textDimDark, marginTop: 2 }}>{detail}</Text>}
       </View>
       <Switch
         value={value}
         onValueChange={onToggle}
         disabled={disabled}
-        trackColor={{ false: "#d1d5db", true: "#3b82f6" }}
-        thumbColor="#ffffff"
+        trackColor={{ false: M.borderDark, true: M.accent }}
+        thumbColor={M.parchment}
         accessibilityLabel={label}
         accessibilityHint={detail}
         accessibilityRole="switch"
@@ -118,10 +140,7 @@ export default function SettingsScreen() {
           onPress: async () => {
             try {
               const token = await getToken();
-              await apiFetch("/progress", {
-                method: "DELETE",
-                token: token ?? undefined,
-              });
+              await apiFetch("/progress", { method: "DELETE", token: token ?? undefined });
               queryClient.invalidateQueries({ queryKey: ["progress"] });
               toastSuccess(t("settings.resetSuccess"), t("settings.resetSuccessMessage"));
             } catch {
@@ -145,10 +164,7 @@ export default function SettingsScreen() {
           onPress: async () => {
             try {
               const token = await getToken();
-              await apiFetch("/users/me", {
-                method: "DELETE",
-                token: token ?? undefined,
-              });
+              await apiFetch("/users/me", { method: "DELETE", token: token ?? undefined });
               analytics.reset();
               await signOut();
               router.replace("/(auth)/sign-in");
@@ -163,11 +179,8 @@ export default function SettingsScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: t("settings.title") }} />
-      <SafeAreaView
-        className="flex-1 bg-white dark:bg-neutral-900"
-        edges={[]}
-      >
+      <Stack.Screen options={{ title: t("settings.title"), headerStyle: { backgroundColor: M.ink }, headerTintColor: M.parchment, headerShadowVisible: false }} />
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.cardBg }} edges={[]}>
         <NotificationBanner
           visible={toast.visible}
           title={toast.title}
@@ -175,31 +188,19 @@ export default function SettingsScreen() {
           type={toast.type}
           onDismiss={dismissToast}
         />
-        <ScrollView className="px-5 pt-4" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
-          {/* Learning section */}
-          <Text className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-            {t("settings.learning")}
-          </Text>
-          <SettingsRow
-            icon="book.fill"
-            label={t("settings.currentLanguage")}
-            value={getLanguageName(selectedLanguageId)}
-          />
-          <SettingsRow
-            icon="flame.fill"
-            label={t("settings.dailyStreak")}
-            value={t("settings.daysCount", { count: summary?.streak ?? 0 })}
-          />
-          <SettingsRow
-            icon="star.fill"
-            label={t("settings.pointsEarned")}
-            value={String(summary?.points ?? 0)}
-          />
+        <ScrollView
+          style={{ paddingHorizontal: 20 }}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 40, paddingTop: 8 }}
+        >
+          {/* Learning */}
+          <SectionLabel label={t("settings.learning")} />
+          <SettingsRow icon="book.fill" label={t("settings.currentLanguage")} value={getLanguageName(selectedLanguageId)} />
+          <SettingsRow icon="flame.fill" label={t("settings.dailyStreak")} value={t("settings.daysCount", { count: summary?.streak ?? 0 })} />
+          <SettingsRow icon="star.fill" label={t("settings.pointsEarned")} value={String(summary?.points ?? 0)} />
 
-          {/* Notifications section */}
-          <Text className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-            {t("settings.notifications")}
-          </Text>
+          {/* Push Notifications */}
+          <SectionLabel label={t("settings.notifications")} />
           <ToggleRow
             icon="star.fill"
             label={t("settings.wordOfDay")}
@@ -217,75 +218,36 @@ export default function SettingsScreen() {
             disabled={prefsLoading}
           />
 
-          {/* Email Notifications section */}
-          <Text className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-            {t("settings.emailNotifications")}
-          </Text>
-          <ToggleRow
-            icon="paperplane.fill"
-            label={t("settings.emailWordOfDay")}
-            detail={t("settings.emailWordOfDayDetail")}
-            value={prefs?.emailWotdEnabled ?? true}
-            onToggle={(v) => updatePrefs.mutate({ emailWotdEnabled: v })}
-            disabled={prefsLoading}
-          />
-          <ToggleRow
-            icon="arrow.up.circle.fill"
-            label={t("settings.emailStreakReminder")}
-            detail={t("settings.emailStreakReminderDetail")}
-            value={prefs?.emailStreakReminderEnabled ?? true}
-            onToggle={(v) => updatePrefs.mutate({ emailStreakReminderEnabled: v })}
-            disabled={prefsLoading}
-          />
-          <ToggleRow
-            icon="calendar"
-            label={t("settings.emailAssignmentDue")}
-            detail={t("settings.emailAssignmentDueDetail")}
-            value={prefs?.emailAssignmentDueEnabled ?? true}
-            onToggle={(v) => updatePrefs.mutate({ emailAssignmentDueEnabled: v })}
-            disabled={prefsLoading}
-          />
-          <ToggleRow
-            icon="checkmark.seal.fill"
-            label={t("settings.emailContributionStatus")}
-            detail={t("settings.emailContributionStatusDetail")}
-            value={prefs?.emailContributionStatusEnabled ?? true}
-            onToggle={(v) => updatePrefs.mutate({ emailContributionStatusEnabled: v })}
-            disabled={prefsLoading}
-          />
-          <ToggleRow
-            icon="person.badge.shield.checkmark.fill"
-            label={t("settings.emailReviewerStatus")}
-            detail={t("settings.emailReviewerStatusDetail")}
-            value={prefs?.emailReviewerStatusEnabled ?? true}
-            onToggle={(v) => updatePrefs.mutate({ emailReviewerStatusEnabled: v })}
-            disabled={prefsLoading}
-          />
+          {/* Email Notifications */}
+          <SectionLabel label={t("settings.emailNotifications")} />
+          <ToggleRow icon="paperplane.fill" label={t("settings.emailWordOfDay")} detail={t("settings.emailWordOfDayDetail")} value={prefs?.emailWotdEnabled ?? true} onToggle={(v) => updatePrefs.mutate({ emailWotdEnabled: v })} disabled={prefsLoading} />
+          <ToggleRow icon="arrow.up.circle.fill" label={t("settings.emailStreakReminder")} detail={t("settings.emailStreakReminderDetail")} value={prefs?.emailStreakReminderEnabled ?? true} onToggle={(v) => updatePrefs.mutate({ emailStreakReminderEnabled: v })} disabled={prefsLoading} />
+          <ToggleRow icon="calendar" label={t("settings.emailAssignmentDue")} detail={t("settings.emailAssignmentDueDetail")} value={prefs?.emailAssignmentDueEnabled ?? true} onToggle={(v) => updatePrefs.mutate({ emailAssignmentDueEnabled: v })} disabled={prefsLoading} />
+          <ToggleRow icon="checkmark.seal.fill" label={t("settings.emailContributionStatus")} detail={t("settings.emailContributionStatusDetail")} value={prefs?.emailContributionStatusEnabled ?? true} onToggle={(v) => updatePrefs.mutate({ emailContributionStatusEnabled: v })} disabled={prefsLoading} />
+          <ToggleRow icon="person.badge.shield.checkmark.fill" label={t("settings.emailReviewerStatus")} detail={t("settings.emailReviewerStatusDetail")} value={prefs?.emailReviewerStatusEnabled ?? true} onToggle={(v) => updatePrefs.mutate({ emailReviewerStatusEnabled: v })} disabled={prefsLoading} />
 
-          {/* App section */}
-          <Text className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-            {t("settings.app")}
-          </Text>
-          <Text className="mb-1 mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+          {/* App */}
+          <SectionLabel label={t("settings.app")} />
+          <Text style={{ fontSize: 11, color: M.textDimDark, marginBottom: 8, letterSpacing: 0.5 }}>
             {t("settings.appearance")}
           </Text>
-          <View className="flex-row gap-2">
+          <View style={{ flexDirection: "row", gap: 8, marginBottom: 16 }}>
             {THEME_OPTIONS.map((opt) => (
               <Pressable
                 key={opt}
                 onPress={() => setPreference(opt)}
-                className={`flex-1 items-center rounded-lg py-2.5 ${
-                  preference === opt
-                    ? "bg-blue-500"
-                    : "bg-neutral-100 dark:bg-neutral-800"
-                }`}
+                style={{
+                  flex: 1, alignItems: "center", borderRadius: 10, paddingVertical: 10,
+                  backgroundColor: preference === opt ? M.accent : M.ink,
+                  borderWidth: 1,
+                  borderColor: preference === opt ? M.accent : M.borderDark,
+                }}
               >
                 <Text
-                  className={`text-sm font-semibold ${
-                    preference === opt
-                      ? "text-white"
-                      : "text-neutral-600 dark:text-neutral-400"
-                  }`}
+                  style={{
+                    fontSize: 12, fontWeight: "700",
+                    color: preference === opt ? M.ink : M.textDim,
+                  }}
                 >
                   {t(`settings.theme${opt.charAt(0).toUpperCase() + opt.slice(1)}` as any)}
                 </Text>
@@ -293,73 +255,67 @@ export default function SettingsScreen() {
             ))}
           </View>
 
-          {/* Interface language */}
-          <Text className="mb-1 mt-4 text-sm text-neutral-500 dark:text-neutral-400">
+          <Text style={{ fontSize: 11, color: M.textDimDark, marginBottom: 8, letterSpacing: 0.5 }}>
             {t("settings.uiLanguage")}
           </Text>
-          <View className="flex-row gap-2">
+          <View style={{ flexDirection: "row", gap: 8 }}>
             {LANG_OPTIONS.map((lang) => (
               <Pressable
                 key={lang}
                 onPress={() => setUiLanguage(lang)}
-                className={`flex-1 items-center rounded-lg py-2.5 ${
-                  uiLanguage === lang
-                    ? "bg-blue-500"
-                    : "bg-neutral-100 dark:bg-neutral-800"
-                }`}
+                style={{
+                  flex: 1, alignItems: "center", borderRadius: 10, paddingVertical: 10,
+                  backgroundColor: uiLanguage === lang ? M.accent : M.ink,
+                  borderWidth: 1,
+                  borderColor: uiLanguage === lang ? M.accent : M.borderDark,
+                }}
               >
-                <Text
-                  className={`text-sm font-semibold ${
-                    uiLanguage === lang
-                      ? "text-white"
-                      : "text-neutral-600 dark:text-neutral-400"
-                  }`}
-                >
+                <Text style={{ fontSize: 12, fontWeight: "700", color: uiLanguage === lang ? M.ink : M.textDim }}>
                   {LANG_LABELS[lang]}
                 </Text>
               </Pressable>
             ))}
           </View>
 
-          {/* Danger zone */}
-          <Text className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-            {t("settings.data")}
-          </Text>
+          {/* Danger */}
+          <SectionLabel label={t("settings.data")} />
           <Pressable
             onPress={handleResetProgress}
-            className="flex-row items-center border-b border-neutral-100 py-4 active:opacity-70 dark:border-neutral-800"
+            style={{ flexDirection: "row", alignItems: "center", paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: M.borderDark }}
+            className="active:opacity-70"
           >
-            <IconSymbol name="xmark" size={20} color="#ef4444" />
-            <Text className="ml-3 text-base font-semibold text-red-500">
+            <IconSymbol name="xmark" size={17} color="#f87171" />
+            <Text style={{ marginLeft: 14, fontSize: 14, fontWeight: "700", color: "#f87171" }}>
               {t("settings.resetProgress")}
             </Text>
           </Pressable>
 
           {/* Account */}
-          <Text className="mb-2 mt-6 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-            {t("settings.account")}
-          </Text>
-          <SettingsRow
-            icon="person.fill"
-            label={t("settings.accountSettings")}
-            onPress={() => router.push("/account")}
-          />
+          <SectionLabel label={t("settings.account")} />
+          <SettingsRow icon="person.fill" label={t("settings.accountSettings")} onPress={() => router.push("/account")} />
           <Pressable
             onPress={handleDeleteAccount}
-            className="flex-row items-center border-b border-neutral-100 py-4 active:opacity-70 dark:border-neutral-800"
+            style={{ flexDirection: "row", alignItems: "center", paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: M.borderDark }}
+            className="active:opacity-70"
           >
-            <IconSymbol name="trash" size={20} color="#ef4444" />
-            <Text className="ml-3 text-base font-semibold text-red-500">
+            <IconSymbol name="trash" size={17} color="#f87171" />
+            <Text style={{ marginLeft: 14, fontSize: 14, fontWeight: "700", color: "#f87171" }}>
               {t("settings.deleteAccount")}
             </Text>
           </Pressable>
 
           {/* App info */}
-          <View className="mt-8 items-center">
-            <Text className="text-lg font-bold text-neutral-900 dark:text-white">
-              Beeli
-            </Text>
-            <Text className="mt-1 text-sm text-neutral-400 dark:text-neutral-500">
+          <View style={{ marginTop: 36, alignItems: "center" }}>
+            <View
+              style={{
+                paddingHorizontal: 16, paddingVertical: 6,
+                borderRadius: 999, borderWidth: 1, borderColor: M.borderDark,
+                marginBottom: 8,
+              }}
+            >
+              <Text style={{ fontSize: 14, fontWeight: "900", color: M.accent, letterSpacing: 1 }}>BEELI</Text>
+            </View>
+            <Text style={{ fontSize: 11, color: M.textDimDark }}>
               Version {Constants.expoConfig?.version ?? "1.0.0"}
             </Text>
           </View>

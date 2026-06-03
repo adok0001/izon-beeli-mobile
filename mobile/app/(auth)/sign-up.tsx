@@ -1,12 +1,15 @@
 import { useSignUp } from "@clerk/clerk-expo";
 import { Image } from "expo-image";
 import { Link, useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
+  Animated,
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
   Text,
   TextInput,
   View,
@@ -14,9 +17,19 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { useToast } from "@/lib/hooks/use-toast";
-import { useTranslation } from "react-i18next";
 
 const mascot = require("../../public/mascot.jpg");
+
+const M = {
+  ink: "#0D0F1A",
+  parchment: "#F7F2E8",
+  accent: "#C4862A",
+  accentBorder: "rgba(196, 134, 42, 0.4)",
+  cardBg: "#161826",
+  borderDark: "#2E3245",
+  textDim: "#9A9480",
+  textDimDark: "#5A5D70",
+} as const;
 
 export default function SignUpScreen() {
   const { signUp, setActive, isLoaded } = useSignUp();
@@ -30,9 +43,18 @@ export default function SignUpScreen() {
   const { t } = useTranslation();
   const { toast, error: toastError, dismiss: dismissToast } = useToast();
 
+  const logoAnim = useRef(new Animated.Value(0)).current;
+  const formAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.stagger(120, [
+      Animated.timing(logoAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+      Animated.timing(formAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
   const passwordTooShort = password.length > 0 && password.length < 8;
-  const passwordsMismatch =
-    confirmPassword.length > 0 && password !== confirmPassword;
+  const passwordsMismatch = confirmPassword.length > 0 && password !== confirmPassword;
   const canSubmit =
     email.trim().length > 0 &&
     username.trim().length > 0 &&
@@ -50,12 +72,10 @@ export default function SignUpScreen() {
         username: username.trim(),
         password,
       });
-      
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
         router.replace("/(tabs)/learn");
       } else if (result.status === "missing_requirements") {
-        // Email needs to be verified
         await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
         router.push("/(auth)/verify-email");
       }
@@ -71,8 +91,20 @@ export default function SignUpScreen() {
     }
   };
 
+  const inputStyle = (hasError = false) => ({
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: hasError ? "rgba(239, 68, 68, 0.5)" : M.borderDark,
+    backgroundColor: M.cardBg,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    color: M.parchment,
+    marginBottom: 4,
+  });
+
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900">
+    <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }}>
       <NotificationBanner
         visible={toast.visible}
         title={toast.title}
@@ -82,119 +114,182 @@ export default function SignUpScreen() {
       />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1 justify-center px-6"
+        style={{ flex: 1 }}
       >
-        <View className="mb-4 items-center">
-          <Image
-            source={mascot}
-            style={{ width: 100, height: 68 }}
-            contentFit="contain"
-          />
-        </View>
-        <Text className="mb-2 text-center text-3xl font-bold text-neutral-900 dark:text-white">
-          {t("auth.createAccount")}
-        </Text>
-        <Text className="mb-8 text-center text-sm text-neutral-500 dark:text-neutral-400">
-          {t("auth.createAccountSubtitle")}
-        </Text>
-
-        {error ? (
-          <View className="mb-4 rounded-lg bg-red-50 px-4 py-3 dark:bg-red-950">
-            <Text className="text-center text-sm text-red-600 dark:text-red-400">
-              {error}
-            </Text>
-          </View>
-        ) : null}
-
-        <TextInput
-          className="mb-4 rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-          placeholder={t("auth.email")}
-          placeholderTextColor="#9ca3af"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          autoComplete="email"
-          editable={!loading}
-        />
-
-        <TextInput
-          className="mb-4 rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-          placeholder={t("auth.username")}
-          placeholderTextColor="#9ca3af"
-          value={username}
-          onChangeText={setUsername}
-          autoCapitalize="none"
-          autoComplete="username"
-          editable={!loading}
-        />
-
-        <TextInput
-          className={`mb-1 rounded-xl border bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:bg-neutral-800 dark:text-white ${
-            passwordTooShort
-              ? "border-amber-400 dark:border-amber-600"
-              : "border-neutral-300 dark:border-neutral-700"
-          }`}
-          placeholder={t("auth.password")}
-          placeholderTextColor="#9ca3af"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          autoComplete="new-password"
-          editable={!loading}
-        />
-        {passwordTooShort ? (
-          <Text className="mb-3 ml-1 text-xs text-amber-600 dark:text-amber-400">
-            {t("auth.passwordTooShort")}
-          </Text>
-        ) : (
-          <View className="mb-3" />
-        )}
-
-        <TextInput
-          className={`mb-1 rounded-xl border bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:bg-neutral-800 dark:text-white ${
-            passwordsMismatch
-              ? "border-red-400 dark:border-red-600"
-              : "border-neutral-300 dark:border-neutral-700"
-          }`}
-          placeholder={t("auth.confirmPassword")}
-          placeholderTextColor="#9ca3af"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry
-          editable={!loading}
-          onSubmitEditing={onSignUp}
-          returnKeyType="go"
-        />
-        {passwordsMismatch ? (
-          <Text className="mb-5 ml-1 text-xs text-red-500">
-            {t("auth.passwordsMismatch")}
-          </Text>
-        ) : (
-          <View className="mb-5" />
-        )}
-
-        <Pressable
-          onPress={onSignUp}
-          disabled={!canSubmit}
-          className={`mb-4 flex-row items-center justify-center rounded-xl py-3.5 ${
-            canSubmit ? "bg-blue-600 active:opacity-80" : "bg-blue-300 dark:bg-blue-800"
-          }`}
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingHorizontal: 28, paddingVertical: 32 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          {loading ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text className="font-semibold text-white">{t("auth.createAccount")}</Text>
-          )}
-        </Pressable>
-
-        <Link href="/(auth)/sign-in" asChild>
-          <Pressable disabled={loading}>
-            <Text className="text-center text-blue-600 dark:text-blue-400">
-              {t("auth.alreadyHaveAccount")}
+          {/* Brand */}
+          <Animated.View
+            style={{
+              alignItems: "center",
+              marginBottom: 32,
+              opacity: logoAnim,
+              transform: [
+                {
+                  translateY: logoAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-16, 0],
+                  }),
+                },
+              ],
+            }}
+          >
+            <View
+              style={{
+                borderRadius: 20,
+                padding: 3,
+                borderWidth: 1,
+                borderColor: M.accentBorder,
+                marginBottom: 14,
+              }}
+            >
+              <Image
+                source={mascot}
+                style={{ width: 72, height: 48, borderRadius: 17 }}
+                contentFit="contain"
+              />
+            </View>
+            <Text style={{ fontSize: 30, fontWeight: "900", color: M.parchment, letterSpacing: -0.4 }}>
+              {t("auth.createAccount")}
             </Text>
-          </Pressable>
-        </Link>
+            <Text style={{ fontSize: 13, color: M.textDim, marginTop: 4 }}>
+              {t("auth.createAccountSubtitle")}
+            </Text>
+          </Animated.View>
+
+          {/* Form */}
+          <Animated.View
+            style={{
+              opacity: formAnim,
+              transform: [
+                {
+                  translateY: formAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [16, 0],
+                  }),
+                },
+              ],
+            }}
+          >
+            {error ? (
+              <View
+                style={{
+                  marginBottom: 16,
+                  borderRadius: 12,
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                  backgroundColor: "rgba(239, 68, 68, 0.1)",
+                  borderWidth: 1,
+                  borderColor: "rgba(239, 68, 68, 0.25)",
+                }}
+              >
+                <Text style={{ textAlign: "center", fontSize: 13, color: "#f87171" }}>{error}</Text>
+              </View>
+            ) : null}
+
+            <TextInput
+              style={[inputStyle(), { marginBottom: 12 }]}
+              placeholder={t("auth.email")}
+              placeholderTextColor={M.textDimDark}
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              autoComplete="email"
+              editable={!loading}
+            />
+
+            <TextInput
+              style={[inputStyle(), { marginBottom: 12 }]}
+              placeholder={t("auth.username")}
+              placeholderTextColor={M.textDimDark}
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+              autoComplete="username"
+              editable={!loading}
+            />
+
+            <TextInput
+              style={inputStyle(passwordTooShort)}
+              placeholder={t("auth.password")}
+              placeholderTextColor={M.textDimDark}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoComplete="new-password"
+              editable={!loading}
+            />
+            {passwordTooShort ? (
+              <Text style={{ fontSize: 11, color: "#fbbf24", marginBottom: 10, marginLeft: 4 }}>
+                {t("auth.passwordTooShort")}
+              </Text>
+            ) : (
+              <View style={{ height: 10 }} />
+            )}
+
+            <TextInput
+              style={inputStyle(passwordsMismatch)}
+              placeholder={t("auth.confirmPassword")}
+              placeholderTextColor={M.textDimDark}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+              editable={!loading}
+              onSubmitEditing={onSignUp}
+              returnKeyType="go"
+            />
+            {passwordsMismatch ? (
+              <Text style={{ fontSize: 11, color: "#f87171", marginBottom: 16, marginLeft: 4 }}>
+                {t("auth.passwordsMismatch")}
+              </Text>
+            ) : (
+              <View style={{ height: 18 }} />
+            )}
+
+            <Pressable
+              onPress={onSignUp}
+              disabled={!canSubmit}
+              style={{
+                marginBottom: 14,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 14,
+                paddingVertical: 15,
+                backgroundColor: canSubmit ? M.accent : "rgba(196, 134, 42, 0.25)",
+                borderWidth: 1,
+                borderColor: canSubmit ? M.accent : "rgba(196, 134, 42, 0.2)",
+              }}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color={M.ink} />
+              ) : (
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontWeight: "800",
+                    color: canSubmit ? M.ink : "rgba(196, 134, 42, 0.5)",
+                    letterSpacing: 0.3,
+                  }}
+                >
+                  {t("auth.createAccount")}
+                </Text>
+              )}
+            </Pressable>
+
+            <Link href="/(auth)/sign-in" asChild>
+              <Pressable disabled={loading} style={{ alignItems: "center" }}>
+                <Text style={{ fontSize: 13, color: M.textDim }}>
+                  {t("auth.alreadyHaveAccount")}
+                </Text>
+              </Pressable>
+            </Link>
+          </Animated.View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

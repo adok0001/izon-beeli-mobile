@@ -14,108 +14,118 @@ import { localizeField } from "@/lib/localize";
 import { useLanguageStore } from "@/store/language-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-/* ─── Exhibit section header ─── */
+const M = {
+  ink: "#0D0F1A",
+  parchment: "#F7F2E8",
+  accent: "#C4862A",
+  cardBg: "#1A1D2C",
+  borderDark: "#2E3245",
+  textDim: "#9A9480",
+  textDimDark: "#5A5D70",
+} as const;
 
 function ExhibitHeader({ label }: { label: string }) {
   return (
-    <View className="mb-4 mt-6 flex-row items-center gap-3">
-      <View className="h-px flex-1 bg-neutral-200 dark:bg-neutral-700" />
-      <Text className="text-[10px] font-bold uppercase tracking-[2.5px] text-neutral-400 dark:text-neutral-500">
-        {label}
-      </Text>
-      <View className="h-px flex-1 bg-neutral-200 dark:bg-neutral-700" />
+    <View style={{ marginTop: 28, marginBottom: 14, flexDirection: "row", alignItems: "center", gap: 12 }}>
+      <View style={{ flex: 1, height: 1, backgroundColor: M.borderDark }} />
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+        <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: M.accent }} />
+        <Text
+          style={{
+            fontSize: 9, fontWeight: "800", letterSpacing: 2.5,
+            textTransform: "uppercase", color: M.textDimDark,
+          }}
+        >
+          {label}
+        </Text>
+        <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: M.accent }} />
+      </View>
+      <View style={{ flex: 1, height: 1, backgroundColor: M.borderDark }} />
     </View>
   );
 }
-
-/* ─── Proverb of the Month ─── */
 
 function ProverbOfTheMonthCard({ languageId }: { languageId: string }) {
   const { t } = useTranslation();
   const { uiLanguage } = useUiLanguageStore();
   const router = useRouter();
   const proverb = useProverbOfTheMonth(languageId);
-
-  // Fallback to first proverb from list if API returns nothing
   const { data: proverbs = [] } = useProverbs(languageId);
   const displayed = proverb ?? proverbs[0] ?? null;
 
   if (!displayed) return null;
 
   return (
-    <View className="overflow-hidden rounded-2xl bg-amber-50 dark:bg-amber-950/40">
-      {/* Exhibit label strip */}
-      <View className="flex-row items-center justify-between bg-amber-800/10 px-4 py-2.5 dark:bg-amber-700/20">
-        <View className="flex-row items-center gap-2">
-          <IconSymbol name="text.quote" size={13} color="#92400e" />
-          <Text className="text-[10px] font-bold uppercase tracking-[2px] text-amber-800 dark:text-amber-400">
-            {t("practice.proverbOfTheMonth")}
+    <View
+      style={{
+        borderRadius: 16,
+        backgroundColor: M.cardBg,
+        borderWidth: 1, borderColor: M.borderDark,
+        borderLeftWidth: 4, borderLeftColor: M.accent,
+        overflow: "hidden",
+      }}
+    >
+      {/* Label strip */}
+      <View
+        style={{
+          flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+          backgroundColor: `${M.accent}10`,
+          paddingHorizontal: 14, paddingVertical: 8,
+          borderBottomWidth: 1, borderBottomColor: `${M.accent}20`,
+        }}
+      >
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
+          <IconSymbol name="text.quote" size={12} color={M.accent} />
+          <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 2, color: M.accent }}>
+            {t("practice.proverbOfTheMonth").toUpperCase()}
           </Text>
         </View>
-        <View className="rounded-full bg-amber-800/15 px-2 py-0.5 dark:bg-amber-600/20">
-          <Text className="text-[9px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
-            Featured
-          </Text>
+        <View style={{ borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, backgroundColor: `${M.accent}20` }}>
+          <Text style={{ fontSize: 8, fontWeight: "700", letterSpacing: 1, color: M.accent }}>FEATURED</Text>
         </View>
       </View>
 
-      {/* Quote body */}
-      <View className="px-5 pb-5 pt-4">
-        {/* Decorative opening mark */}
-        <Text
-          style={{ fontSize: 52, lineHeight: 40, marginBottom: 4 }}
-          className="font-bold text-amber-300 dark:text-amber-800"
-        >
-          "
-        </Text>
-        <Text className="text-lg font-semibold italic leading-relaxed text-neutral-800 dark:text-amber-100">
+      <View style={{ paddingHorizontal: 16, paddingVertical: 16 }}>
+        <Text style={{ fontSize: 42, lineHeight: 36, marginBottom: 6, color: M.accent, fontWeight: "900" }}>"</Text>
+        <Text style={{ fontSize: 16, fontWeight: "600", fontStyle: "italic", lineHeight: 24, color: M.parchment }}>
           {displayed.text}
         </Text>
-        <View className="mb-4 mt-3 h-px bg-amber-200 dark:bg-amber-800/40" />
-        <Text className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+        <View style={{ height: 1, backgroundColor: M.borderDark, marginVertical: 12 }} />
+        <Text style={{ fontSize: 13, lineHeight: 18, color: M.textDim }}>
           {localizeField(displayed.translation, displayed.translationFr, uiLanguage)}
         </Text>
         {displayed.meaning ? (
-          <View className="mt-3 rounded-xl bg-amber-100/70 px-4 py-3 dark:bg-amber-900/30">
-            <Text className="text-xs font-medium leading-relaxed text-amber-900 dark:text-amber-300">
+          <View style={{ marginTop: 10, borderRadius: 10, padding: 12, backgroundColor: `${M.accent}08` }}>
+            <Text style={{ fontSize: 12, lineHeight: 17, color: M.textDim }}>
               {localizeField(displayed.meaning, displayed.meaningFr, uiLanguage)}
             </Text>
           </View>
         ) : null}
-
         <Pressable
           onPress={() => router.push(`/proverbs/${languageId}` as any)}
-          className="mt-4 flex-row items-center gap-1.5 self-start active:opacity-60"
+          style={{ marginTop: 14, flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "flex-start" }}
+          className="active:opacity-60"
         >
-          <Text className="text-xs font-semibold text-amber-700 dark:text-amber-400">
-            Browse all proverbs
-          </Text>
-          <IconSymbol name="chevron.right" size={12} color="#b45309" />
+          <Text style={{ fontSize: 11, fontWeight: "700", color: M.accent }}>Browse all proverbs</Text>
+          <IconSymbol name="chevron.right" size={11} color={M.accent} />
         </Pressable>
       </View>
     </View>
   );
 }
 
-/* ─── Song of the Week ─── */
-
 function SongOfTheWeekCard({ languageId }: { languageId: string }) {
   const { t } = useTranslation();
   const router = useRouter();
   const song = useSongOfTheWeek(languageId);
   const { uiLanguage } = useUiLanguageStore();
-
-  // Fallback: show link to songs list if no song of the week
   const { data: courses = [] } = useCourses(languageId);
-  const hasSongs = useMemo(
-    () => courses.some((c) => c.courseType === "songs"),
-    [courses]
-  );
+  const hasSongs = useMemo(() => courses.some((c) => c.courseType === "songs"), [courses]);
 
   if (!song && !hasSongs) return null;
 
@@ -123,21 +133,17 @@ function SongOfTheWeekCard({ languageId }: { languageId: string }) {
     return (
       <Pressable
         onPress={() => router.push(`/songs/${languageId}` as any)}
-        className="overflow-hidden rounded-2xl bg-rose-50 active:opacity-70 dark:bg-rose-950/40"
+        style={{
+          borderRadius: 16, backgroundColor: M.cardBg,
+          borderWidth: 1, borderColor: M.borderDark,
+          borderLeftWidth: 4, borderLeftColor: "#f43f5e",
+          overflow: "hidden",
+        }}
+        className="active:opacity-70"
       >
-        <View className="flex-row items-center justify-between bg-rose-800/10 px-4 py-2.5 dark:bg-rose-700/20">
-          <View className="flex-row items-center gap-2">
-            <IconSymbol name="music.note" size={13} color="#9f1239" />
-            <Text className="text-[10px] font-bold uppercase tracking-[2px] text-rose-800 dark:text-rose-400">
-              {t("practice.songOfTheWeek")}
-            </Text>
-          </View>
-        </View>
-        <View className="flex-row items-center justify-between px-5 py-4">
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-            {t("practice.noSongThisWeek")}
-          </Text>
-          <IconSymbol name="chevron.right" size={16} color="#9f1239" />
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 14, paddingVertical: 12 }}>
+          <Text style={{ fontSize: 13, color: M.textDim }}>{t("practice.noSongThisWeek")}</Text>
+          <IconSymbol name="chevron.right" size={14} color="#f43f5e" />
         </View>
       </Pressable>
     );
@@ -146,64 +152,62 @@ function SongOfTheWeekCard({ languageId }: { languageId: string }) {
   return (
     <Pressable
       onPress={() => router.push(`/lesson/${song.id}` as any)}
-      className="overflow-hidden rounded-2xl bg-rose-50 active:opacity-70 dark:bg-rose-950/40"
+      style={{
+        borderRadius: 16, backgroundColor: M.cardBg,
+        borderWidth: 1, borderColor: M.borderDark,
+        borderLeftWidth: 4, borderLeftColor: "#f43f5e",
+        overflow: "hidden",
+      }}
+      className="active:opacity-70"
     >
-      {/* Exhibit label strip */}
-      <View className="flex-row items-center justify-between bg-rose-800/10 px-4 py-2.5 dark:bg-rose-700/20">
-        <View className="flex-row items-center gap-2">
-          <IconSymbol name="music.note" size={13} color="#9f1239" />
-          <Text className="text-[10px] font-bold uppercase tracking-[2px] text-rose-800 dark:text-rose-400">
-            {t("practice.songOfTheWeek")}
+      <View
+        style={{
+          flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+          backgroundColor: "rgba(244, 63, 94, 0.08)",
+          paddingHorizontal: 14, paddingVertical: 8,
+          borderBottomWidth: 1, borderBottomColor: "rgba(244, 63, 94, 0.15)",
+        }}
+      >
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
+          <IconSymbol name="music.note" size={12} color="#f43f5e" />
+          <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 2, color: "#f43f5e" }}>
+            {t("practice.songOfTheWeek").toUpperCase()}
           </Text>
         </View>
-        <View className="rounded-full bg-rose-800/15 px-2 py-0.5 dark:bg-rose-600/20">
-          <Text className="text-[9px] font-semibold uppercase tracking-wider text-rose-700 dark:text-rose-400">
-            {t("practice.thisWeeksSelection")}
+        <View style={{ borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, backgroundColor: "rgba(244, 63, 94, 0.15)" }}>
+          <Text style={{ fontSize: 8, fontWeight: "700", letterSpacing: 1, color: "#f43f5e" }}>
+            {t("practice.thisWeeksSelection").toUpperCase()}
           </Text>
         </View>
       </View>
-
-      <View className="flex-row items-center gap-4 px-5 py-4">
-        <View className="h-14 w-14 items-center justify-center rounded-2xl bg-rose-100 dark:bg-rose-900/40">
-          <IconSymbol name="music.note.list" size={26} color="#be185d" />
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 14, padding: 14 }}>
+        <View style={{ width: 48, height: 48, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(244, 63, 94, 0.12)" }}>
+          <IconSymbol name="music.note.list" size={22} color="#f43f5e" />
         </View>
-        <View className="flex-1">
-          <Text
-            className="text-base font-bold text-neutral-900 dark:text-white"
-            numberOfLines={1}
-          >
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 14, fontWeight: "700", color: M.parchment }} numberOfLines={1}>
             {localizeField(song.title, song.titleFr, uiLanguage)}
           </Text>
           {song.description ? (
-            <Text
-              className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400"
-              numberOfLines={1}
-            >
+            <Text style={{ marginTop: 2, fontSize: 12, color: M.textDim }} numberOfLines={1}>
               {localizeField(song.description, song.descriptionFr, uiLanguage)}
             </Text>
           ) : null}
         </View>
-        <IconSymbol name="play.circle.fill" size={34} color="#be185d" />
+        <IconSymbol name="play.circle.fill" size={32} color="#f43f5e" />
       </View>
     </Pressable>
   );
 }
 
-/* ─── Songs collection card ─── */
-
 function SongsCard({ languageId }: { languageId: string }) {
   const router = useRouter();
   const { t } = useTranslation();
   const { data: courses = [] } = useCourses(languageId);
-
   const songs = useMemo(() => {
-    const songCourseIds = courses
-      .filter((c) => c.courseType === "songs")
-      .map((c) => c.id);
+    const songCourseIds = courses.filter((c) => c.courseType === "songs").map((c) => c.id);
     if (songCourseIds.length === 0) return [];
-    return ALL_LESSONS.filter(
-      (l) => l.type === "song" && songCourseIds.includes(l.courseId)
-    );
+    return ALL_LESSONS.filter((l) => l.type === "song" && songCourseIds.includes(l.courseId));
   }, [courses]);
 
   if (songs.length === 0) return null;
@@ -211,25 +215,24 @@ function SongsCard({ languageId }: { languageId: string }) {
   return (
     <Pressable
       onPress={() => router.push(`/songs/${languageId}` as any)}
-      className="flex-row items-center rounded-2xl border border-rose-100 bg-white px-4 py-3.5 active:opacity-70 dark:border-rose-900/30 dark:bg-neutral-800/60"
+      style={{
+        flexDirection: "row", alignItems: "center",
+        borderRadius: 14, padding: 14,
+        backgroundColor: M.cardBg, borderWidth: 1, borderColor: M.borderDark,
+      }}
+      className="active:opacity-70"
     >
-      <View className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/60">
-        <IconSymbol name="music.note" size={20} color="#be185d" />
+      <View style={{ width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(244, 63, 94, 0.12)", marginRight: 12 }}>
+        <IconSymbol name="music.note" size={18} color="#f43f5e" />
       </View>
-      <View className="flex-1">
-        <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-          {t("songs.title")}
-        </Text>
-        <Text className="text-xs text-neutral-400 dark:text-neutral-500">
-          {songs.length} songs available
-        </Text>
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 13, fontWeight: "700", color: M.parchment }}>{t("songs.title")}</Text>
+        <Text style={{ fontSize: 11, color: M.textDimDark, marginTop: 1 }}>{songs.length} songs available</Text>
       </View>
-      <IconSymbol name="chevron.right" size={15} color="#be185d" />
+      <IconSymbol name="chevron.right" size={13} color="#f43f5e" />
     </Pressable>
   );
 }
-
-/* ─── Proverbs collection card ─── */
 
 function ProverbsCollectionCard({ languageId }: { languageId: string }) {
   const router = useRouter();
@@ -241,25 +244,24 @@ function ProverbsCollectionCard({ languageId }: { languageId: string }) {
   return (
     <Pressable
       onPress={() => router.push(`/proverbs/${languageId}` as any)}
-      className="flex-row items-center rounded-2xl border border-amber-100 bg-white px-4 py-3.5 active:opacity-70 dark:border-amber-900/30 dark:bg-neutral-800/60"
+      style={{
+        flexDirection: "row", alignItems: "center",
+        borderRadius: 14, padding: 14,
+        backgroundColor: M.cardBg, borderWidth: 1, borderColor: M.borderDark,
+      }}
+      className="active:opacity-70"
     >
-      <View className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/60">
-        <IconSymbol name="text.quote" size={20} color="#b45309" />
+      <View style={{ width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: `${M.accent}12`, marginRight: 12 }}>
+        <IconSymbol name="text.quote" size={18} color={M.accent} />
       </View>
-      <View className="flex-1">
-        <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-          {t("practice.proverbs")}
-        </Text>
-        <Text className="text-xs text-neutral-400 dark:text-neutral-500">
-          {proverbs.length} proverbs in collection
-        </Text>
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 13, fontWeight: "700", color: M.parchment }}>{t("practice.proverbs")}</Text>
+        <Text style={{ fontSize: 11, color: M.textDimDark, marginTop: 1 }}>{proverbs.length} proverbs in collection</Text>
       </View>
-      <IconSymbol name="chevron.right" size={15} color="#b45309" />
+      <IconSymbol name="chevron.right" size={13} color={M.accent} />
     </Pressable>
   );
 }
-
-/* ─── Main screen ─── */
 
 export default function DiscoverScreen() {
   const router = useRouter();
@@ -272,29 +274,32 @@ export default function DiscoverScreen() {
   const hasAkan = selectedLanguageId === "akan";
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
       {/* Header */}
-      <View className="flex-row items-center justify-between px-5 pb-2 pt-4">
-        <View>
-          <Text className="font-heading text-2xl font-bold text-neutral-900 dark:text-white">
-            {t("practice.title")}
-          </Text>
-          <Text className="mt-0.5 text-sm text-stone-400 dark:text-stone-500">
-            {t("practice.subtitle")}
-          </Text>
+      <View style={{ backgroundColor: M.ink, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20 }}>
+        <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
+          <View>
+            <Text style={{ fontSize: 32, fontWeight: "900", color: M.parchment, letterSpacing: -0.5 }}>
+              {t("practice.title")}
+            </Text>
+            <Text style={{ fontSize: 13, color: M.textDim, marginTop: 4 }}>
+              {t("practice.subtitle")}
+            </Text>
+          </View>
+          <View style={{ marginTop: 4 }}>
+            <LanguagePickerButton />
+          </View>
         </View>
-        <LanguagePickerButton />
       </View>
 
       <ScrollView
-        className="flex-1"
-        contentContainerClassName="px-5 pb-10 pt-1"
+        style={{ flex: 1, backgroundColor: M.cardBg }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40, paddingTop: 8 }}
         showsVerticalScrollIndicator={false}
       >
         {/* ── Today's Gallery ── */}
         <ExhibitHeader label={t("practice.sectionToday")} />
-
-        <View className="gap-3">
+        <View style={{ gap: 10 }}>
           <WordOfTheDay languageId={selectedLanguageId} />
           <ProverbOfTheMonthCard languageId={selectedLanguageId} />
           <SongOfTheWeekCard languageId={selectedLanguageId} />
@@ -303,43 +308,64 @@ export default function DiscoverScreen() {
 
         {/* ── The Workshop ── */}
         <ExhibitHeader label={t("practice.sectionActivities")} />
-
-        <View className="gap-3">
+        <View style={{ gap: 10 }}>
           {/* Quick tools */}
-          <View className="flex-row gap-3">
+          <View style={{ flexDirection: "row", gap: 10 }}>
             <Pressable
               onPress={() => router.push("/word-review")}
-              className="flex-1 items-center rounded-2xl border border-emerald-100 bg-white py-4 active:opacity-70 dark:border-emerald-900/30 dark:bg-neutral-800/60"
+              style={{
+                flex: 1, alignItems: "center", paddingVertical: 16,
+                borderRadius: 14, backgroundColor: M.cardBg,
+                borderWidth: 1, borderColor: M.borderDark,
+              }}
+              className="active:opacity-70"
             >
               <View>
-                <IconSymbol name="brain.head.profile" size={24} color="#10b981" />
+                <IconSymbol name="brain.head.profile" size={22} color="#4ade80" />
                 {dueWords.length > 0 && (
-                  <View className="absolute -right-2 -top-1 min-w-[18px] items-center rounded-full bg-red-500 px-1">
-                    <Text className="text-[10px] font-bold text-white">{dueWords.length}</Text>
+                  <View
+                    style={{
+                      position: "absolute", top: -4, right: -8,
+                      minWidth: 16, borderRadius: 999,
+                      alignItems: "center", justifyContent: "center",
+                      backgroundColor: "#ef4444", paddingHorizontal: 4, paddingVertical: 1,
+                    }}
+                  >
+                    <Text style={{ fontSize: 9, fontWeight: "800", color: "#fff" }}>{dueWords.length}</Text>
                   </View>
                 )}
               </View>
-              <Text className="mt-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+              <Text style={{ marginTop: 6, fontSize: 10, fontWeight: "700", letterSpacing: 0.5, color: "#4ade80" }}>
                 {t("practice.wordReview")}
               </Text>
             </Pressable>
 
             <Pressable
               onPress={() => router.push("/quiz")}
-              className="flex-1 items-center rounded-2xl border border-blue-100 bg-white py-4 active:opacity-70 dark:border-blue-900/30 dark:bg-neutral-800/60"
+              style={{
+                flex: 1, alignItems: "center", paddingVertical: 16,
+                borderRadius: 14, backgroundColor: M.cardBg,
+                borderWidth: 1, borderColor: M.borderDark,
+              }}
+              className="active:opacity-70"
             >
-              <IconSymbol name="trophy.fill" size={24} color="#3b82f6" />
-              <Text className="mt-1.5 text-xs font-semibold text-blue-700 dark:text-blue-300">
+              <IconSymbol name="trophy.fill" size={22} color={M.accent} />
+              <Text style={{ marginTop: 6, fontSize: 10, fontWeight: "700", letterSpacing: 0.5, color: M.accent }}>
                 {t("practice.quiz")}
               </Text>
             </Pressable>
 
             <Pressable
               onPress={() => router.push("/matching-game")}
-              className="flex-1 items-center rounded-2xl border border-violet-100 bg-white py-4 active:opacity-70 dark:border-violet-900/30 dark:bg-neutral-800/60"
+              style={{
+                flex: 1, alignItems: "center", paddingVertical: 16,
+                borderRadius: 14, backgroundColor: M.cardBg,
+                borderWidth: 1, borderColor: M.borderDark,
+              }}
+              className="active:opacity-70"
             >
-              <IconSymbol name="rectangle.grid.2x2" size={24} color="#8b5cf6" />
-              <Text className="mt-1.5 text-xs font-semibold text-violet-700 dark:text-violet-300">
+              <IconSymbol name="rectangle.grid.2x2" size={22} color="#a78bfa" />
+              <Text style={{ marginTop: 6, fontSize: 10, fontWeight: "700", letterSpacing: 0.5, color: "#a78bfa" }}>
                 {t("practice.match")}
               </Text>
             </Pressable>
@@ -348,35 +374,39 @@ export default function DiscoverScreen() {
           {/* Multiplayer */}
           <Pressable
             onPress={() => router.push("/multiplayer")}
-            className="overflow-hidden rounded-2xl bg-[#0f2670] active:opacity-70"
+            style={{
+              borderRadius: 16, overflow: "hidden",
+              backgroundColor: "#0F1B4A",
+              borderWidth: 1, borderColor: "rgba(59, 130, 246, 0.3)",
+              borderLeftWidth: 4, borderLeftColor: "#3b82f6",
+            }}
+            className="active:opacity-70"
           >
-            <View className="flex-row items-center px-4 py-4">
-              <View className="mr-4 h-12 w-12 items-center justify-center rounded-2xl bg-blue-600/50">
-                <IconSymbol name="trophy.fill" size={22} color="#fff" />
+            <View style={{ flexDirection: "row", alignItems: "center", padding: 16, gap: 14 }}>
+              <View style={{ width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(59, 130, 246, 0.2)" }}>
+                <IconSymbol name="trophy.fill" size={20} color="#60a5fa" />
               </View>
-              <View className="flex-1">
-                <Text className="text-[10px] font-bold uppercase tracking-[2px] text-blue-300">
-                  {t("practice.multiplayer")}
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 2, color: "#60a5fa" }}>
+                  {t("practice.multiplayer").toUpperCase()}
                 </Text>
-                <Text className="mt-0.5 text-base font-bold text-white">
+                <Text style={{ marginTop: 2, fontSize: 15, fontWeight: "800", color: M.parchment }}>
                   {t("practice.multiplayerTitle")}
                 </Text>
-                <Text className="text-xs text-blue-300">
+                <Text style={{ fontSize: 11, color: "#60a5fa", marginTop: 1 }}>
                   {t("practice.multiplayerSubtitle")}
                 </Text>
               </View>
-              <IconSymbol name="chevron.right" size={16} color="#93c5fd" />
+              <IconSymbol name="chevron.right" size={14} color="#60a5fa" />
             </View>
           </Pressable>
         </View>
 
-        {/* ── The Cultural Hall ── */}
+        {/* ── Cultural Hall ── */}
         <ExhibitHeader label={t("practice.sectionCulture")} />
-
-        <View className="gap-3">
+        <View style={{ gap: 10 }}>
           <SongsCard languageId={selectedLanguageId} />
           <ProverbsCollectionCard languageId={selectedLanguageId} />
-
           <CulturalSection
             languageId={selectedLanguageId}
             onViewAll={() => router.push(`/cultural/${selectedLanguageId}` as any)}
@@ -387,46 +417,54 @@ export default function DiscoverScreen() {
           {hasScriptPractice && (
             <Pressable
               onPress={() => router.push("/geez-lesson")}
-              className="flex-row items-center rounded-2xl border border-emerald-100 bg-white px-4 py-4 active:opacity-70 dark:border-emerald-900/30 dark:bg-neutral-800/60"
+              style={{
+                flexDirection: "row", alignItems: "center",
+                borderRadius: 14, padding: 14,
+                backgroundColor: M.cardBg, borderWidth: 1, borderColor: M.borderDark,
+                borderLeftWidth: 4, borderLeftColor: "#4ade80",
+              }}
+              className="active:opacity-70"
             >
-              <View className="mr-3 h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/60">
-                <Text className="text-2xl font-bold text-emerald-600">ሀ</Text>
+              <View style={{ width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(74, 222, 128, 0.1)", marginRight: 12 }}>
+                <Text style={{ fontSize: 22, fontWeight: "800", color: "#4ade80" }}>ሀ</Text>
               </View>
-              <View className="flex-1">
-                <Text className="text-[10px] font-bold uppercase tracking-[2px] text-emerald-600 dark:text-emerald-400">
-                  {t("practice.scriptPractice")}
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: "#4ade80" }}>
+                  {t("practice.scriptPractice").toUpperCase()}
                 </Text>
-                <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
+                <Text style={{ fontSize: 13, fontWeight: "700", color: M.parchment, marginTop: 2 }}>
                   {t("practice.geezTitle")}
                 </Text>
-                <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-                  {t("practice.geezSubtitle")}
-                </Text>
+                <Text style={{ fontSize: 11, color: M.textDim, marginTop: 1 }}>{t("practice.geezSubtitle")}</Text>
               </View>
-              <IconSymbol name="chevron.right" size={16} color="#10b981" />
+              <IconSymbol name="chevron.right" size={14} color="#4ade80" />
             </Pressable>
           )}
 
           {hasAdinkra && (
             <Pressable
               onPress={() => router.push("/adinkra")}
-              className="flex-row items-center rounded-2xl border border-violet-100 bg-white px-4 py-4 active:opacity-70 dark:border-violet-900/30 dark:bg-neutral-800/60"
+              style={{
+                flexDirection: "row", alignItems: "center",
+                borderRadius: 14, padding: 14,
+                backgroundColor: M.cardBg, borderWidth: 1, borderColor: M.borderDark,
+                borderLeftWidth: 4, borderLeftColor: "#a78bfa",
+              }}
+              className="active:opacity-70"
             >
-              <View className="mr-3 h-12 w-12 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-950/60">
-                <IconSymbol name="sparkles" size={22} color="#7c3aed" />
+              <View style={{ width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(167, 139, 250, 0.1)", marginRight: 12 }}>
+                <IconSymbol name="sparkles" size={20} color="#a78bfa" />
               </View>
-              <View className="flex-1">
-                <Text className="text-[10px] font-bold uppercase tracking-[2px] text-violet-600 dark:text-violet-400">
-                  {t("practice.culturalSymbols")}
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: "#a78bfa" }}>
+                  {t("practice.culturalSymbols").toUpperCase()}
                 </Text>
-                <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
+                <Text style={{ fontSize: 13, fontWeight: "700", color: M.parchment, marginTop: 2 }}>
                   {t("practice.adinkraTitle")}
                 </Text>
-                <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-                  {t("practice.adinkraSubtitle")}
-                </Text>
+                <Text style={{ fontSize: 11, color: M.textDim, marginTop: 1 }}>{t("practice.adinkraSubtitle")}</Text>
               </View>
-              <IconSymbol name="chevron.right" size={16} color="#7c3aed" />
+              <IconSymbol name="chevron.right" size={14} color="#a78bfa" />
             </Pressable>
           )}
         </View>

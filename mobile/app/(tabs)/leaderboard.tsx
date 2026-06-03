@@ -1,40 +1,37 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useLeaderboard, type LeaderboardEntry } from "@/lib/hooks/use-leaderboard";
 import { useTranslation } from "react-i18next";
-import {
-  ActivityIndicator,
-  FlatList,
-  Image,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, FlatList, Image, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+const M = {
+  ink: "#0D0F1A",
+  parchment: "#F7F2E8",
+  accent: "#C4862A",
+  cardBg: "#1A1D2C",
+  borderDark: "#2E3245",
+  textDim: "#9A9480",
+  textDimDark: "#5A5D70",
+} as const;
+
 function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 }
 
-function Avatar({ name, avatarUrl }: Readonly<{ name: string; avatarUrl?: string | null }>) {
+function Avatar({ name, avatarUrl, color }: Readonly<{ name: string; avatarUrl?: string | null; color: string }>) {
   if (avatarUrl) {
-    return (
-      <Image
-        source={{ uri: avatarUrl }}
-        className="w-9 h-9 rounded-full"
-        resizeMode="cover"
-      />
-    );
+    return <Image source={{ uri: avatarUrl }} style={{ width: 36, height: 36, borderRadius: 18 }} resizeMode="cover" />;
   }
   return (
-    <View className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900 items-center justify-center">
-      <Text className="text-sm font-bold text-blue-700 dark:text-blue-300">
-        {getInitials(name)}
-      </Text>
+    <View
+      style={{
+        width: 36, height: 36, borderRadius: 18,
+        alignItems: "center", justifyContent: "center",
+        backgroundColor: `${color}20`,
+        borderWidth: 1, borderColor: `${color}30`,
+      }}
+    >
+      <Text style={{ fontSize: 12, fontWeight: "800", color }}>{getInitials(name)}</Text>
     </View>
   );
 }
@@ -44,73 +41,93 @@ function RankBadge({ rank }: Readonly<{ rank: number }>) {
   const silver = rank === 2;
   const bronze = rank === 3;
 
+  const color = gold ? "#C4862A" : silver ? "#9CA3AF" : bronze ? "#CD7F32" : M.textDimDark;
   const bg = gold
-    ? "bg-yellow-100 dark:bg-yellow-900"
+    ? "rgba(196,134,42,0.15)"
     : silver
-    ? "bg-neutral-200 dark:bg-neutral-700"
+    ? "rgba(156,163,175,0.1)"
     : bronze
-    ? "bg-orange-100 dark:bg-orange-900"
-    : "bg-neutral-100 dark:bg-neutral-800";
-
-  const text = gold
-    ? "text-yellow-700 dark:text-yellow-300"
-    : silver
-    ? "text-neutral-600 dark:text-neutral-300"
-    : bronze
-    ? "text-orange-700 dark:text-orange-300"
-    : "text-neutral-500 dark:text-neutral-400";
+    ? "rgba(205,127,50,0.12)"
+    : "rgba(255,255,255,0.04)";
 
   return (
-    <View className={`w-8 h-8 rounded-full items-center justify-center ${bg}`}>
-      <Text className={`text-sm font-bold ${text}`}>{rank}</Text>
+    <View
+      style={{
+        width: 32, height: 32, borderRadius: 16,
+        alignItems: "center", justifyContent: "center",
+        backgroundColor: bg,
+        borderWidth: rank <= 3 ? 1 : 0,
+        borderColor: `${color}50`,
+      }}
+    >
+      {rank <= 3 ? (
+        <Text style={{ fontSize: 14, color }}>
+          {rank === 1 ? "🥇" : rank === 2 ? "🥈" : "🥉"}
+        </Text>
+      ) : (
+        <Text style={{ fontSize: 11, fontWeight: "700", color: M.textDimDark }}>{rank}</Text>
+      )}
     </View>
   );
 }
 
 function EntryRow({ entry }: Readonly<{ entry: LeaderboardEntry }>) {
   const highlighted = entry.isCurrentUser;
+  const avatarColor = highlighted ? M.accent : M.textDim;
+
   return (
     <View
-      className={`flex-row items-center gap-3 px-4 py-3 rounded-xl border mb-2 ${
-        highlighted
-          ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
-          : "bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
-      }`}
+      style={{
+        flexDirection: "row", alignItems: "center", gap: 12,
+        paddingHorizontal: 14, paddingVertical: 12,
+        borderRadius: 14, marginBottom: 8,
+        backgroundColor: highlighted ? `${M.accent}0D` : M.cardBg,
+        borderWidth: 1,
+        borderColor: highlighted ? `${M.accent}35` : M.borderDark,
+        borderLeftWidth: highlighted ? 4 : 1,
+        borderLeftColor: highlighted ? M.accent : M.borderDark,
+      }}
     >
       <RankBadge rank={entry.rank} />
-      <Avatar name={entry.name} avatarUrl={entry.avatarUrl} />
-      <View className="flex-1 min-w-0">
-        <View className="flex-row items-center gap-1">
+      <Avatar name={entry.name} avatarUrl={entry.avatarUrl} color={avatarColor} />
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <Text
             numberOfLines={1}
-            className={`font-semibold text-sm ${
-              highlighted
-                ? "text-blue-700 dark:text-blue-300"
-                : "text-neutral-900 dark:text-neutral-100"
-            }`}
+            style={{
+              fontSize: 13, fontWeight: "700",
+              color: highlighted ? M.accent : M.parchment,
+            }}
           >
             {entry.name}
           </Text>
           {highlighted && (
-            <Text className="text-xs text-blue-500 dark:text-blue-400 font-medium">You</Text>
+            <View
+              style={{
+                borderRadius: 999, paddingHorizontal: 6, paddingVertical: 1.5,
+                backgroundColor: `${M.accent}25`,
+              }}
+            >
+              <Text style={{ fontSize: 8, fontWeight: "800", letterSpacing: 1, color: M.accent }}>YOU</Text>
+            </View>
           )}
         </View>
         {entry.selectedLanguageId ? (
-          <Text className="text-xs text-neutral-500 dark:text-neutral-400 capitalize">
+          <Text style={{ fontSize: 10, color: M.textDimDark, textTransform: "capitalize", marginTop: 1 }}>
             {entry.selectedLanguageId}
           </Text>
         ) : null}
       </View>
-      <View className="flex-row items-center gap-3">
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
         {entry.streak > 0 && (
-          <View className="flex-row items-center gap-0.5">
-            <IconSymbol name="flame.fill" size={14} color="#f97316" />
-            <Text className="text-xs font-semibold text-orange-500">{entry.streak}</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+            <IconSymbol name="flame.fill" size={12} color="#fb923c" />
+            <Text style={{ fontSize: 11, fontWeight: "700", color: "#fb923c" }}>{entry.streak}</Text>
           </View>
         )}
-        <View className="flex-row items-center gap-0.5">
-          <IconSymbol name="star.fill" size={14} color="#0a7ea4" />
-          <Text className="text-sm font-bold tabular-nums text-blue-600 dark:text-blue-400">
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+          <IconSymbol name="star.fill" size={12} color={M.accent} />
+          <Text style={{ fontSize: 13, fontWeight: "800", color: M.accent }}>
             {entry.points.toLocaleString()}
           </Text>
         </View>
@@ -121,7 +138,6 @@ function EntryRow({ entry }: Readonly<{ entry: LeaderboardEntry }>) {
 
 export default function LeaderboardScreen() {
   const { t } = useTranslation();
-  const colorScheme = useColorScheme();
   const { data, isLoading, refetch, isRefetching } = useLeaderboard();
 
   const topEntries = data?.filter((e) => e.rank >= 1 && e.rank <= 50) ?? [];
@@ -130,61 +146,73 @@ export default function LeaderboardScreen() {
   const showCurrentUserBanner = !isLoading && currentUserEntry && !currentUserInTop;
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-neutral-950" edges={["top"]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
       {/* Header */}
-      <View className="flex-row items-center gap-3 px-4 pt-4 pb-2">
-        <View className="w-10 h-10 rounded-xl bg-yellow-100 dark:bg-yellow-900/30 items-center justify-center">
-          <IconSymbol name="trophy.fill" size={20} color={colorScheme === "dark" ? "#facc15" : "#ca8a04"} />
-        </View>
-        <View>
-          <Text className="text-xl font-bold text-neutral-900 dark:text-white">
-            {t("leaderboard.title")}
-          </Text>
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-            {t("leaderboard.subtitle")}
-          </Text>
+      <View style={{ backgroundColor: M.ink, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+          <View
+            style={{
+              width: 44, height: 44, borderRadius: 12,
+              alignItems: "center", justifyContent: "center",
+              backgroundColor: `${M.accent}15`,
+              borderWidth: 1, borderColor: `${M.accent}30`,
+            }}
+          >
+            <IconSymbol name="trophy.fill" size={20} color={M.accent} />
+          </View>
+          <View>
+            <Text style={{ fontSize: 28, fontWeight: "900", color: M.parchment, letterSpacing: -0.4 }}>
+              {t("leaderboard.title")}
+            </Text>
+            <Text style={{ fontSize: 12, color: M.textDim, marginTop: 2 }}>
+              {t("leaderboard.subtitle")}
+            </Text>
+          </View>
         </View>
       </View>
 
-      {isLoading && (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator />
-        </View>
-      )}
+      {/* Content */}
+      <View style={{ flex: 1, backgroundColor: M.cardBg }}>
+        {isLoading && (
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+            <ActivityIndicator color={M.accent} />
+          </View>
+        )}
 
-      {!isLoading && topEntries.length === 0 && (
-        <View className="flex-1 items-center justify-center px-8">
-          <IconSymbol name="trophy.fill" size={48} color="#d1d5db" />
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400 text-center mt-3">
-            {t("leaderboard.empty")}
-          </Text>
-        </View>
-      )}
+        {!isLoading && topEntries.length === 0 && (
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+            <IconSymbol name="trophy.fill" size={44} color={M.textDimDark} />
+            <Text style={{ fontSize: 13, color: M.textDimDark, textAlign: "center", marginTop: 14 }}>
+              {t("leaderboard.empty")}
+            </Text>
+          </View>
+        )}
 
-      {!isLoading && topEntries.length > 0 && (
-        <FlatList
-          data={topEntries}
-          keyExtractor={(item) => item.id}
-          contentContainerClassName="px-4 pt-2 pb-8"
-          refreshing={isRefetching}
-          onRefresh={refetch}
-          renderItem={({ item }) => <EntryRow entry={item} />}
-          ListFooterComponent={
-            showCurrentUserBanner ? (
-              <View>
-                <View className="flex-row items-center gap-2 py-2">
-                  <View className="flex-1 border-t border-dashed border-neutral-300 dark:border-neutral-700" />
-                  <Text className="text-xs text-neutral-400 dark:text-neutral-500">
-                    {t("leaderboard.yourRank")}
-                  </Text>
-                  <View className="flex-1 border-t border-dashed border-neutral-300 dark:border-neutral-700" />
+        {!isLoading && topEntries.length > 0 && (
+          <FlatList
+            data={topEntries}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 32 }}
+            refreshing={isRefetching}
+            onRefresh={refetch}
+            renderItem={({ item }) => <EntryRow entry={item} />}
+            ListFooterComponent={
+              showCurrentUserBanner ? (
+                <View>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8 }}>
+                    <View style={{ flex: 1, borderTopWidth: 1, borderStyle: "dashed", borderTopColor: M.borderDark }} />
+                    <Text style={{ fontSize: 10, color: M.textDimDark, letterSpacing: 1 }}>
+                      {t("leaderboard.yourRank").toUpperCase()}
+                    </Text>
+                    <View style={{ flex: 1, borderTopWidth: 1, borderStyle: "dashed", borderTopColor: M.borderDark }} />
+                  </View>
+                  <EntryRow entry={currentUserEntry!} />
                 </View>
-                <EntryRow entry={currentUserEntry!} />
-              </View>
-            ) : null
-          }
-        />
-      )}
+              ) : null
+            }
+          />
+        )}
+      </View>
     </SafeAreaView>
   );
 }

@@ -129,7 +129,18 @@ export default function TabLayout() {
       <Tabs
         tabBar={(props) => <MiniPlayerTabBar {...props} />}
         screenOptions={{
-          tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+          tabBarActiveTintColor: "#C4862A",
+          tabBarInactiveTintColor: "#4A4D60",
+          tabBarStyle: {
+            backgroundColor: "#0D0F1A",
+            borderTopColor: "#2E3245",
+            borderTopWidth: 1,
+          },
+          tabBarLabelStyle: {
+            fontSize: 10,
+            fontWeight: "700",
+            letterSpacing: 0.5,
+          },
           headerShown: false,
           tabBarButton: HapticTab,
         }}

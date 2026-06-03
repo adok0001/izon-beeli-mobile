@@ -1,12 +1,12 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { hapticSuccess } from "@/lib/haptics";
 import {
-    useAddComment,
-    useComments,
-    useCreatePost,
-    useFeed,
-    useToggleLike,
-    type FeedTypeFilter,
+  useAddComment,
+  useComments,
+  useCreatePost,
+  useFeed,
+  useToggleLike,
+  type FeedTypeFilter,
 } from "@/lib/hooks/use-feed";
 import i18n from "@/lib/i18n";
 import { localizeField } from "@/lib/localize";
@@ -19,57 +19,54 @@ import { LoadingScreen } from "@/components/loading-screen";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    ActivityIndicator,
-    FlatList,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    Pressable,
-    RefreshControl,
-    Share,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  FlatList,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  RefreshControl,
+  Share,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const M = {
+  ink: "#0D0F1A",
+  parchment: "#F7F2E8",
+  accent: "#C4862A",
+  cardBg: "#1A1D2C",
+  borderDark: "#2E3245",
+  textDim: "#9A9480",
+  textDimDark: "#5A5D70",
+} as const;
 
 function timeAgo(dateStr: string): string {
   const now = Date.now();
   const then = new Date(dateStr).getTime();
   const diffMs = now - then;
   const diffMins = Math.floor(diffMs / 60000);
-
   if (diffMins < 1) return i18n.t("time.justNow");
   if (diffMins < 60) return i18n.t("time.minutesAgo", { count: diffMins });
   const diffHours = Math.floor(diffMins / 60);
   if (diffHours < 24) return i18n.t("time.hoursAgo", { count: diffHours });
   const diffDays = Math.floor(diffHours / 24);
   if (diffDays < 7) return i18n.t("time.daysAgo", { count: diffDays });
-  return new Date(dateStr).toLocaleDateString(i18n.language, {
-    month: "short",
-    day: "numeric",
-  });
+  return new Date(dateStr).toLocaleDateString(i18n.language, { month: "short", day: "numeric" });
 }
 
-const TYPE_CONFIG: Record<
-  FeedItem["type"],
-  { icon: string; color: string; label: string }
-> = {
-  lesson_completed: {
-    icon: "checkmark.circle.fill",
-    color: "#22c55e",
-    label: "feed.typeLesson",
-  },
-  achievement: { icon: "trophy.fill", color: "#f59e0b", label: "feed.typeAchievement" },
-  contribution: { icon: "mic.fill", color: "#3b82f6", label: "feed.typeContribution" },
-  community: { icon: "text.bubble", color: "#8b5cf6", label: "feed.typeCommunity" },
+const TYPE_CONFIG: Record<FeedItem["type"], { icon: string; color: string; label: string }> = {
+  lesson_completed: { icon: "checkmark.circle.fill", color: "#4ade80", label: "feed.typeLesson" },
+  achievement: { icon: "trophy.fill", color: "#C4862A", label: "feed.typeAchievement" },
+  contribution: { icon: "mic.fill", color: "#60a5fa", label: "feed.typeContribution" },
+  community: { icon: "text.bubble", color: "#a78bfa", label: "feed.typeCommunity" },
 };
 
-// --- Audio preview for contribution cards ---
 function AudioPreview({ audioUrl }: Readonly<{ audioUrl: AudioSource }>) {
   const { t } = useTranslation();
-  const { currentTrackId, isPlaying, loadAndPlay, togglePlayback } =
-    useAudioStore();
+  const { currentTrackId, isPlaying, loadAndPlay, togglePlayback } = useAudioStore();
   const trackId = `feed-${audioUrl}`;
   const isCurrentTrack = currentTrackId === trackId;
 
@@ -84,46 +81,52 @@ function AudioPreview({ audioUrl }: Readonly<{ audioUrl: AudioSource }>) {
   return (
     <Pressable
       onPress={handlePress}
-      className="mb-3 flex-row items-center rounded-lg bg-blue-50 px-3 py-2.5 dark:bg-blue-900/30"
+      style={{
+        marginBottom: 12,
+        flexDirection: "row",
+        alignItems: "center",
+        borderRadius: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        backgroundColor: "rgba(96, 165, 250, 0.08)",
+        borderWidth: 1,
+        borderColor: "rgba(96, 165, 250, 0.2)",
+        gap: 10,
+      }}
       hitSlop={4}
       accessibilityRole="button"
       accessibilityLabel={isCurrentTrack && isPlaying ? t("feed.playing") : t("feed.playAudio")}
-      accessibilityHint="Tap to play or pause audio contribution"
     >
       <View
-        className={`mr-3 h-8 w-8 items-center justify-center rounded-full ${
-          isCurrentTrack ? "bg-blue-500" : "bg-blue-200 dark:bg-blue-800"
-        }`}
+        style={{
+          width: 30, height: 30, borderRadius: 15,
+          alignItems: "center", justifyContent: "center",
+          backgroundColor: isCurrentTrack ? "#60a5fa" : "rgba(96, 165, 250, 0.15)",
+        }}
       >
         <IconSymbol
           name={isCurrentTrack && isPlaying ? "pause.fill" : "play.fill"}
-          size={14}
-          color={isCurrentTrack ? "#ffffff" : "#3b82f6"}
+          size={12}
+          color={isCurrentTrack ? M.ink : "#60a5fa"}
         />
       </View>
-      <IconSymbol name="waveform" size={18} color="#3b82f6" />
-      <Text className="ml-2 flex-1 text-sm font-medium text-blue-600 dark:text-blue-400">
+      <IconSymbol name="waveform" size={16} color="#60a5fa" />
+      <Text style={{ flex: 1, fontSize: 12, fontWeight: "600", color: "#60a5fa" }}>
         {isCurrentTrack && isPlaying ? t("feed.playing") : t("feed.playAudio")}
       </Text>
     </Pressable>
   );
 }
 
-// --- Comment list modal ---
 function CommentsModal({
   visible,
   feedItemId,
   onClose,
-}: Readonly<{
-  visible: boolean;
-  feedItemId: string | null;
-  onClose: () => void;
-}>) {
+}: Readonly<{ visible: boolean; feedItemId: string | null; onClose: () => void }>) {
   const { t } = useTranslation();
   const { data: commentsData } = useComments(feedItemId);
   const addComment = useAddComment();
   const [text, setText] = useState("");
-
   const comments = commentsData ?? [];
 
   const handleSend = () => {
@@ -133,92 +136,94 @@ function CommentsModal({
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1 bg-white dark:bg-neutral-900"
+        style={{ flex: 1, backgroundColor: M.ink }}
       >
-        <SafeAreaView className="flex-1">
-          {/* Header */}
-          <View className="flex-row items-center justify-between border-b border-neutral-200 px-5 py-3 dark:border-neutral-700">
-            <Text className="text-lg font-bold text-neutral-900 dark:text-white">
+        <SafeAreaView style={{ flex: 1 }}>
+          <View
+            style={{
+              flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+              borderBottomWidth: 1, borderBottomColor: M.borderDark,
+              paddingHorizontal: 20, paddingVertical: 14,
+            }}
+          >
+            <Text style={{ fontSize: 16, fontWeight: "800", color: M.parchment }}>
               {t("feed.comments")}
             </Text>
-            <Pressable
-              onPress={onClose}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Close comments"
-            >
-              <IconSymbol name="xmark" size={20} color="#9ca3af" />
+            <Pressable onPress={onClose} hitSlop={8} accessibilityRole="button" accessibilityLabel="Close">
+              <IconSymbol name="xmark" size={18} color={M.textDimDark} />
             </Pressable>
           </View>
 
-          {/* Comment list */}
           <FlatList
             data={comments}
             keyExtractor={(item) => item.id}
-            contentContainerClassName="px-5 pt-3 pb-4"
+            contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 }}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             ListEmptyComponent={
-              <View className="items-center py-12">
-                <IconSymbol name="message" size={36} color="#d1d5db" />
-                <Text className="mt-3 text-sm text-neutral-400 dark:text-neutral-500">
+              <View style={{ alignItems: "center", paddingVertical: 48 }}>
+                <IconSymbol name="message" size={32} color={M.textDimDark} />
+                <Text style={{ marginTop: 10, fontSize: 13, color: M.textDimDark }}>
                   {t("feed.noComments")}
                 </Text>
               </View>
             }
             renderItem={({ item }) => (
-              <View className="mb-3 rounded-lg bg-neutral-50 p-3 dark:bg-neutral-800">
-                <View className="flex-row items-center justify-between">
-                  <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-                    {item.userName}
-                  </Text>
-                  <Text className="text-xs text-neutral-400 dark:text-neutral-500">
-                    {timeAgo(item.createdAt)}
-                  </Text>
+              <View
+                style={{
+                  marginBottom: 10, borderRadius: 12,
+                  paddingHorizontal: 14, paddingVertical: 10,
+                  backgroundColor: M.cardBg,
+                  borderWidth: 1, borderColor: M.borderDark,
+                }}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                  <Text style={{ fontSize: 12, fontWeight: "700", color: M.parchment }}>{item.userName}</Text>
+                  <Text style={{ fontSize: 10, color: M.textDimDark }}>{timeAgo(item.createdAt)}</Text>
                 </View>
-                <Text className="mt-1 text-sm text-neutral-700 dark:text-neutral-300">
-                  {item.text}
-                </Text>
+                <Text style={{ marginTop: 4, fontSize: 13, color: M.textDim, lineHeight: 18 }}>{item.text}</Text>
               </View>
             )}
           />
 
-          {/* Input bar */}
-          <View className="flex-row items-center border-t border-neutral-200 px-4 py-2 dark:border-neutral-700">
+          <View
+            style={{
+              flexDirection: "row", alignItems: "center",
+              borderTopWidth: 1, borderTopColor: M.borderDark,
+              paddingHorizontal: 16, paddingVertical: 10, gap: 10,
+            }}
+          >
             <TextInput
               value={text}
               onChangeText={setText}
               placeholder={t("feed.addComment")}
-              placeholderTextColor="#9ca3af"
-              className="mr-2 flex-1 rounded-full bg-neutral-100 px-4 py-2.5 text-sm text-neutral-900 dark:bg-neutral-800 dark:text-white"
+              placeholderTextColor={M.textDimDark}
+              style={{
+                flex: 1, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 10,
+                fontSize: 13, backgroundColor: M.cardBg, color: M.parchment,
+                borderWidth: 1, borderColor: M.borderDark,
+              }}
               returnKeyType="send"
               onSubmitEditing={handleSend}
-              accessibilityLabel={t("feed.addComment")}
             />
             <Pressable
               onPress={handleSend}
               disabled={!text.trim()}
-              className={`h-9 w-9 items-center justify-center rounded-full ${
-                text.trim() ? "bg-blue-500" : "bg-neutral-200 dark:bg-neutral-700"
-              }`}
+              style={{
+                width: 36, height: 36, borderRadius: 18,
+                alignItems: "center", justifyContent: "center",
+                backgroundColor: text.trim() ? M.accent : M.cardBg,
+                borderWidth: 1,
+                borderColor: text.trim() ? M.accent : M.borderDark,
+              }}
               hitSlop={4}
               accessibilityRole="button"
               accessibilityLabel="Send comment"
-              accessibilityState={{ disabled: !text.trim() }}
             >
-              <IconSymbol
-                name="arrow.up.circle.fill"
-                size={18}
-                color={text.trim() ? "#ffffff" : "#9ca3af"}
-              />
+              <IconSymbol name="arrow.up.circle.fill" size={16} color={text.trim() ? M.ink : M.textDimDark} />
             </Pressable>
           </View>
         </SafeAreaView>
@@ -227,27 +232,16 @@ function CommentsModal({
   );
 }
 
-// --- New Post Modal ---
-function NewPostModal({
-  visible,
-  onClose,
-}: Readonly<{
-  visible: boolean;
-  onClose: () => void;
-}>) {
+function NewPostModal({ visible, onClose }: Readonly<{ visible: boolean; onClose: () => void }>) {
   const { t } = useTranslation();
   const createPost = useCreatePost();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-
   const canPost = title.trim().length > 0 && description.trim().length > 0;
 
   const handlePost = () => {
     if (!canPost) return;
-    createPost.mutate(
-      { title: title.trim(), description: description.trim() },
-      { onSuccess: () => hapticSuccess() }
-    );
+    createPost.mutate({ title: title.trim(), description: description.trim() }, { onSuccess: () => hapticSuccess() });
     setTitle("");
     setDescription("");
     onClose();
@@ -260,66 +254,50 @@ function NewPostModal({
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={handleClose}
-    >
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={handleClose}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1 bg-white dark:bg-neutral-900"
+        style={{ flex: 1, backgroundColor: M.ink }}
       >
-        <SafeAreaView className="flex-1">
-          <View className="flex-row items-center justify-between border-b border-neutral-200 px-5 py-3 dark:border-neutral-700">
-            <Pressable
-              onPress={handleClose}
-              accessibilityRole="button"
-              accessibilityLabel={t("feed.cancel")}
-            >
-              <Text className="text-base text-neutral-500">{t("feed.cancel")}</Text>
+        <SafeAreaView style={{ flex: 1 }}>
+          <View
+            style={{
+              flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+              borderBottomWidth: 1, borderBottomColor: M.borderDark,
+              paddingHorizontal: 20, paddingVertical: 14,
+            }}
+          >
+            <Pressable onPress={handleClose} accessibilityRole="button" accessibilityLabel={t("feed.cancel")}>
+              <Text style={{ fontSize: 14, color: M.textDim }}>{t("feed.cancel")}</Text>
             </Pressable>
-            <Text className="text-base font-semibold text-neutral-900 dark:text-white">
-              {t("feed.newPost")}
-            </Text>
-            <Pressable
-              onPress={handlePost}
-              disabled={!canPost}
-              accessibilityRole="button"
-              accessibilityLabel={t("feed.post")}
-              accessibilityState={{ disabled: !canPost }}
-            >
-              <Text
-                className={`text-base font-semibold ${
-                  canPost
-                    ? "text-blue-500"
-                    : "text-neutral-300 dark:text-neutral-600"
-                }`}
-              >
+            <Text style={{ fontSize: 15, fontWeight: "800", color: M.parchment }}>{t("feed.newPost")}</Text>
+            <Pressable onPress={handlePost} disabled={!canPost} accessibilityRole="button">
+              <Text style={{ fontSize: 14, fontWeight: "800", color: canPost ? M.accent : M.textDimDark }}>
                 {t("feed.post")}
               </Text>
             </Pressable>
           </View>
-
-          <View className="flex-1 px-5 pt-4">
+          <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 20 }}>
             <TextInput
               value={title}
               onChangeText={setTitle}
               placeholder={t("feed.titlePlaceholder")}
-              placeholderTextColor="#9ca3af"
-              className="mb-4 border-b border-neutral-200 pb-3 text-xl font-bold text-neutral-900 dark:border-neutral-700 dark:text-white"
-              accessibilityLabel={t("feed.titlePlaceholder")}
+              placeholderTextColor={M.textDimDark}
+              style={{
+                marginBottom: 16, paddingBottom: 14,
+                borderBottomWidth: 1, borderBottomColor: M.borderDark,
+                fontSize: 20, fontWeight: "800", color: M.parchment,
+              }}
             />
             <TextInput
               value={description}
               onChangeText={setDescription}
               placeholder={t("feed.contentPlaceholder")}
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={M.textDimDark}
               multiline
               textAlignVertical="top"
-              className="flex-1 text-base leading-6 text-neutral-700 dark:text-neutral-300"
+              style={{ flex: 1, fontSize: 14, lineHeight: 22, color: M.textDim }}
               autoFocus
-              accessibilityLabel={t("feed.contentPlaceholder")}
             />
           </View>
         </SafeAreaView>
@@ -328,14 +306,7 @@ function NewPostModal({
   );
 }
 
-// --- Feed Card ---
-function FeedCard({
-  item,
-  onOpenComments,
-}: Readonly<{
-  item: FeedItem;
-  onOpenComments: (id: string) => void;
-}>) {
+function FeedCard({ item, onOpenComments }: Readonly<{ item: FeedItem; onOpenComments: (id: string) => void }>) {
   const { t } = useTranslation();
   const router = useRouter();
   const toggleLike = useToggleLike();
@@ -347,10 +318,8 @@ function FeedCard({
   const localTitle = localizeField(item.title, item.titleFr, uiLanguage);
   const localDescription = localizeField(item.description, item.descriptionFr, uiLanguage);
 
-  // Parse "word → english" from single-word contribution titles
-  const wordParts = item.type === "contribution" && item.title.includes(" → ")
-    ? item.title.split(" → ")
-    : null;
+  const wordParts =
+    item.type === "contribution" && item.title.includes(" → ") ? item.title.split(" → ") : null;
   const focusWord = wordParts?.[0]?.trim();
   const focusEnglish = wordParts?.[1]?.trim();
 
@@ -359,128 +328,130 @@ function FeedCard({
       await Share.share({
         message: `${localTitle}\n\n${localDescription}\n\n${t("feed.shareOnBeeli", { userName: item.userName })}`,
       });
-    } catch {
-      // user cancelled
-    }
+    } catch {}
   };
 
   return (
     <View
-      className="mb-3 rounded-xl bg-neutral-50 p-4 dark:bg-neutral-800"
-      style={{ borderTopWidth: 2, borderTopColor: config.color + "90" }}
+      style={{
+        marginBottom: 10,
+        borderRadius: 16,
+        backgroundColor: M.cardBg,
+        borderWidth: 1,
+        borderColor: M.borderDark,
+        borderTopWidth: 3,
+        borderTopColor: config.color + "80",
+        overflow: "hidden",
+      }}
     >
       {/* Header */}
-      <View className="mb-2 flex-row items-center">
-        <View className="h-9 w-9 items-center justify-center rounded-full bg-neutral-200 dark:bg-neutral-700">
-          <Text className="text-sm font-bold text-neutral-600 dark:text-neutral-300">
+      <View style={{ flexDirection: "row", alignItems: "center", padding: 14, paddingBottom: 10 }}>
+        <View
+          style={{
+            width: 36, height: 36, borderRadius: 18,
+            alignItems: "center", justifyContent: "center",
+            backgroundColor: `${config.color}15`,
+            borderWidth: 1, borderColor: `${config.color}30`,
+          }}
+        >
+          <Text style={{ fontSize: 13, fontWeight: "800", color: config.color }}>
             {item.userName.charAt(0)}
           </Text>
         </View>
-        <View className="ml-3 flex-1">
-          <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-            {item.userName}
-          </Text>
-          <Text className="text-xs text-neutral-400 dark:text-neutral-500">
-            {timeAgo(item.createdAt)}
-          </Text>
+        <View style={{ marginLeft: 10, flex: 1 }}>
+          <Text style={{ fontSize: 13, fontWeight: "700", color: M.parchment }}>{item.userName}</Text>
+          <Text style={{ fontSize: 10, color: M.textDimDark }}>{timeAgo(item.createdAt)}</Text>
         </View>
         <View
-          className="flex-row items-center rounded-full px-2 py-0.5"
-          style={{ backgroundColor: config.color + "20" }}
+          style={{
+            flexDirection: "row", alignItems: "center", gap: 4,
+            borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3,
+            backgroundColor: `${config.color}15`,
+          }}
         >
-          <IconSymbol
-            name={config.icon as any}
-            size={12}
-            color={config.color}
-          />
-          <Text className="ml-1 text-xs font-medium" style={{ color: config.color }}>
-            {t(config.label as any)}
+          <IconSymbol name={config.icon as any} size={10} color={config.color} />
+          <Text style={{ fontSize: 9, fontWeight: "700", letterSpacing: 1, color: config.color }}>
+            {t(config.label as any).toUpperCase()}
           </Text>
         </View>
       </View>
 
-      {/* Content */}
-      <Text className="mb-1 text-base font-semibold text-neutral-900 dark:text-white">
-        {localTitle}
-      </Text>
-      <Text className="mb-3 text-sm text-neutral-600 dark:text-neutral-400">
-        {localDescription}
-      </Text>
+      {/* Body */}
+      <View style={{ paddingHorizontal: 14, paddingBottom: 12 }}>
+        <Text style={{ fontSize: 14, fontWeight: "700", color: M.parchment, marginBottom: 4 }}>
+          {localTitle}
+        </Text>
+        <Text style={{ fontSize: 13, color: M.textDim, lineHeight: 18 }}>{localDescription}</Text>
 
-      {/* Audio preview for contributions */}
-      {item.type === "contribution" && item.audioUrl && (
-        <AudioPreview audioUrl={item.audioUrl} />
-      )}
+        {item.type === "contribution" && item.audioUrl && (
+          <View style={{ marginTop: 10 }}>
+            <AudioPreview audioUrl={item.audioUrl} />
+          </View>
+        )}
 
-      {/* Practice CTA — only for single-word contributions */}
-      {focusWord && focusEnglish && (
-        <Pressable
-          onPress={() =>
-            router.push({
-              pathname: "/quiz",
-              params: {
-                focusWord,
-                focusEnglish,
-                ...(typeof item.audioUrl === "string" && item.audioUrl
-                  ? { focusAudio: item.audioUrl }
-                  : {}),
-              },
-            })
-          }
-          className="mb-3 flex-row items-center justify-center rounded-lg bg-emerald-50 py-2 active:opacity-70 dark:bg-emerald-900/20"
-          accessibilityRole="button"
-          accessibilityLabel={t("feed.practice", { word: focusWord })}
-          accessibilityHint="Tap to practice this word in a quiz"
-        >
-          <IconSymbol name="brain.head.profile" size={14} color="#10b981" />
-          <Text className="ml-1.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-            {t("feed.practice", { word: focusWord })}
-          </Text>
-        </Pressable>
-      )}
+        {focusWord && focusEnglish && (
+          <Pressable
+            onPress={() =>
+              router.push({
+                pathname: "/quiz",
+                params: {
+                  focusWord,
+                  focusEnglish,
+                  ...(typeof item.audioUrl === "string" && item.audioUrl
+                    ? { focusAudio: item.audioUrl }
+                    : {}),
+                },
+              })
+            }
+            style={{
+              marginTop: 8,
+              flexDirection: "row", alignItems: "center", justifyContent: "center",
+              borderRadius: 10, paddingVertical: 8,
+              backgroundColor: "rgba(74, 222, 128, 0.06)",
+              borderWidth: 1, borderColor: "rgba(74, 222, 128, 0.2)",
+              gap: 6,
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={t("feed.practice", { word: focusWord })}
+          >
+            <IconSymbol name="brain.head.profile" size={13} color="#4ade80" />
+            <Text style={{ fontSize: 12, fontWeight: "700", color: "#4ade80" }}>
+              {t("feed.practice", { word: focusWord })}
+            </Text>
+          </Pressable>
+        )}
+      </View>
 
       {/* Actions */}
-      <View className="flex-row items-center border-t border-neutral-200 pt-3 dark:border-neutral-700">
+      <View
+        style={{
+          flexDirection: "row", alignItems: "center",
+          borderTopWidth: 1, borderTopColor: M.borderDark,
+          paddingHorizontal: 14, paddingVertical: 10, gap: 20,
+        }}
+      >
         <Pressable
           onPress={() => toggleLike.mutate(item.id)}
-          className="mr-5 flex-row items-center"
+          style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel={liked ? `Unlike, ${item.likes} likes` : `Like, ${item.likes} likes`}
-          accessibilityState={{ selected: liked }}
+          accessibilityLabel={liked ? `Unlike, ${item.likes}` : `Like, ${item.likes}`}
         >
-          <IconSymbol
-            name={liked ? "heart.fill" : "heart"}
-            size={18}
-            color={liked ? "#ef4444" : "#9ca3af"}
-          />
-          <Text className="ml-1.5 text-sm text-neutral-500 dark:text-neutral-400">
-            {item.likes}
-          </Text>
+          <IconSymbol name={liked ? "heart.fill" : "heart"} size={16} color={liked ? "#ef4444" : M.textDimDark} />
+          <Text style={{ fontSize: 12, color: M.textDimDark }}>{item.likes}</Text>
         </Pressable>
-
         <Pressable
           onPress={() => onOpenComments(item.id)}
-          className="mr-5 flex-row items-center"
+          style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={`${item.comments} comments`}
-          accessibilityHint="Tap to view comments"
         >
-          <IconSymbol name="message" size={18} color="#9ca3af" />
-          <Text className="ml-1.5 text-sm text-neutral-500 dark:text-neutral-400">
-            {item.comments}
-          </Text>
+          <IconSymbol name="message" size={16} color={M.textDimDark} />
+          <Text style={{ fontSize: 12, color: M.textDimDark }}>{item.comments}</Text>
         </Pressable>
-
-        <Pressable
-          onPress={handleShare}
-          className="flex-row items-center"
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Share post"
-        >
-          <IconSymbol name="square.and.arrow.up" size={18} color="#9ca3af" />
+        <Pressable onPress={handleShare} hitSlop={8} accessibilityRole="button" accessibilityLabel="Share">
+          <IconSymbol name="square.and.arrow.up" size={16} color={M.textDimDark} />
         </Pressable>
       </View>
     </View>
@@ -494,7 +465,6 @@ const FILTER_OPTIONS: { id: FeedTypeFilter; label: string }[] = [
   { id: "community", label: "feed.filterCommunity" },
 ];
 
-// --- Feed Screen ---
 export default function FeedScreen() {
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<FeedTypeFilter>("all");
@@ -502,7 +472,6 @@ export default function FeedScreen() {
   const [commentsItemId, setCommentsItemId] = useState<string | null>(null);
   const [showNewPost, setShowNewPost] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-
   const { t } = useTranslation();
   const items = data?.pages.flatMap((p) => p.items) ?? [];
 
@@ -513,105 +482,115 @@ export default function FeedScreen() {
   }, [refetch]);
 
   return (
-    <SafeAreaView
-      className="flex-1 bg-white dark:bg-neutral-900"
-      edges={["top"]}
-    >
-      <View className="flex-row items-center justify-between px-5 pb-2 pt-4">
-        <View>
-          <Text className="font-heading text-2xl font-bold text-neutral-900 dark:text-white">
-            {t("feed.title")}
-          </Text>
-          <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            {t("feed.subtitle")}
-          </Text>
-        </View>
-        <View className="flex-row items-center gap-2">
-          <Pressable
-            onPress={() => router.push("/contribute")}
-            className="h-10 w-10 items-center justify-center rounded-full bg-blue-500 active:opacity-80"
-            accessibilityRole="button"
-            accessibilityLabel="Record audio contribution"
-          >
-            <IconSymbol name="mic.fill" size={18} color="#ffffff" />
-          </Pressable>
-          <Pressable
-            onPress={() => setShowNewPost(true)}
-            className="h-10 w-10 items-center justify-center rounded-full bg-purple-500 active:opacity-80"
-            accessibilityRole="button"
-            accessibilityLabel="Create new post"
-          >
-            <IconSymbol name="plus" size={22} color="#ffffff" />
-          </Pressable>
-        </View>
-      </View>
-
-      {/* Filter bar */}
-      <View className="flex-row gap-2 px-5 pb-2">
-        {FILTER_OPTIONS.map((opt) => (
-          <Pressable
-            key={opt.id}
-            onPress={() => setActiveFilter(opt.id)}
-            className={`rounded-full px-3.5 py-1.5 active:opacity-70 ${
-              activeFilter === opt.id
-                ? "bg-blue-500"
-                : "bg-neutral-100 dark:bg-neutral-800"
-            }`}
-            accessibilityRole="button"
-            accessibilityLabel={t(opt.label as any)}
-            accessibilityState={{ selected: activeFilter === opt.id }}
-          >
-            <Text
-              className={`text-xs font-semibold ${
-                activeFilter === opt.id
-                  ? "text-white"
-                  : "text-neutral-600 dark:text-neutral-400"
-              }`}
-            >
-              {t(opt.label as any)}
+    <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
+      {/* Header */}
+      <View style={{ backgroundColor: M.ink, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 16 }}>
+        <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
+          <View>
+            <Text style={{ fontSize: 32, fontWeight: "900", color: M.parchment, letterSpacing: -0.5 }}>
+              {t("feed.title")}
             </Text>
-          </Pressable>
-        ))}
+            <Text style={{ fontSize: 13, color: M.textDim, marginTop: 4 }}>
+              {t("feed.subtitle")}
+            </Text>
+          </View>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 }}>
+            <Pressable
+              onPress={() => router.push("/contribute")}
+              style={{
+                width: 36, height: 36, borderRadius: 18,
+                alignItems: "center", justifyContent: "center",
+                backgroundColor: "rgba(96, 165, 250, 0.15)",
+                borderWidth: 1, borderColor: "rgba(96, 165, 250, 0.3)",
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Record audio contribution"
+            >
+              <IconSymbol name="mic.fill" size={16} color="#60a5fa" />
+            </Pressable>
+            <Pressable
+              onPress={() => setShowNewPost(true)}
+              style={{
+                width: 36, height: 36, borderRadius: 18,
+                alignItems: "center", justifyContent: "center",
+                backgroundColor: `${M.accent}20`,
+                borderWidth: 1, borderColor: `${M.accent}40`,
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Create new post"
+            >
+              <IconSymbol name="plus" size={18} color={M.accent} />
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Filter pills */}
+        <View style={{ flexDirection: "row", gap: 8, marginTop: 14 }}>
+          {FILTER_OPTIONS.map((opt) => (
+            <Pressable
+              key={opt.id}
+              onPress={() => setActiveFilter(opt.id)}
+              style={{
+                borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6,
+                backgroundColor: activeFilter === opt.id ? M.accent : M.cardBg,
+                borderWidth: 1,
+                borderColor: activeFilter === opt.id ? M.accent : M.borderDark,
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={t(opt.label as any)}
+              accessibilityState={{ selected: activeFilter === opt.id }}
+            >
+              <Text
+                style={{
+                  fontSize: 11, fontWeight: "700",
+                  color: activeFilter === opt.id ? M.ink : M.textDim,
+                }}
+              >
+                {t(opt.label as any)}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
       </View>
 
-      {isLoading ? (
-        <LoadingScreen />
-      ) : (
-        <FlatList
-          data={items}
-          keyExtractor={(item) => item.id}
-          contentContainerClassName="px-5 pb-8 pt-2"
-          renderItem={({ item }) => (
-            <FeedCard item={item} onOpenComments={setCommentsItemId} />
-          )}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-          onEndReached={() => {
-            if (hasNextPage && !isFetchingNextPage) fetchNextPage();
-          }}
-          onEndReachedThreshold={0.5}
-          ListFooterComponent={
-            isFetchingNextPage ? (
-              <ActivityIndicator size="small" color="#3b82f6" className="py-4" />
-            ) : null
-          }
-        />
-      )}
+      {/* Content */}
+      <View style={{ flex: 1, backgroundColor: M.cardBg }}>
+        {isLoading ? (
+          <LoadingScreen />
+        ) : (
+          <FlatList
+            data={items}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32, paddingTop: 12 }}
+            renderItem={({ item }) => <FeedCard item={item} onOpenComments={setCommentsItemId} />}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={M.accent}
+                colors={[M.accent]}
+              />
+            }
+            onEndReached={() => {
+              if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+            }}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={
+              isFetchingNextPage ? (
+                <ActivityIndicator size="small" color={M.accent} style={{ paddingVertical: 16 }} />
+              ) : null
+            }
+          />
+        )}
+      </View>
 
-      {/* Comments Modal */}
       <CommentsModal
         visible={commentsItemId !== null}
         feedItemId={commentsItemId}
         onClose={() => setCommentsItemId(null)}
       />
-
-      {/* New Post Modal */}
-      <NewPostModal
-        visible={showNewPost}
-        onClose={() => setShowNewPost(false)}
-      />
+      <NewPostModal visible={showNewPost} onClose={() => setShowNewPost(false)} />
     </SafeAreaView>
   );
 }
