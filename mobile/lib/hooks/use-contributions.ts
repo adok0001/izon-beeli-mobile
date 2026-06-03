@@ -82,6 +82,7 @@ export function useSubmitContribution() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["feed"] });
       queryClient.invalidateQueries({ queryKey: ["approved-words"] });
+      queryClient.invalidateQueries({ queryKey: ["my-contributions"] });
     },
   });
 }
@@ -180,6 +181,7 @@ export function useSubmitEntryContribution() {
       queryClient.invalidateQueries({ queryKey: ["feed"] });
       queryClient.invalidateQueries({ queryKey: ["dictionary"] });
       queryClient.invalidateQueries({ queryKey: ["approved-words"] });
+      queryClient.invalidateQueries({ queryKey: ["my-contributions"] });
     },
   });
 }
@@ -213,6 +215,7 @@ export function useBulkSubmitContribution() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["feed"] });
       queryClient.invalidateQueries({ queryKey: ["approved-words"] });
+      queryClient.invalidateQueries({ queryKey: ["my-contributions"] });
     },
   });
 }
@@ -468,13 +471,43 @@ export function useUpdateContribution() {
         example?: string | null;
         exampleTranslation?: string | null;
         category?: string;
+        audioUri?: string;
+        imageUri?: string;
       };
     }) => {
       const token = await getToken();
+      const { audioUri, imageUri, ...textUpdates } = updates;
+
+      if (audioUri || imageUri) {
+        const formData = new FormData();
+        Object.entries(textUpdates).forEach(([k, v]) => {
+          if (v !== undefined) formData.append(k, v ?? "");
+        });
+        if (audioUri) {
+          formData.append("audio", { uri: audioUri, type: "audio/m4a", name: "pronunciation.m4a" } as any);
+        }
+        if (imageUri) {
+          const filename = imageUri.split("/").pop() ?? "image.jpg";
+          const ext = filename.split(".").pop()?.toLowerCase() ?? "jpg";
+          const mimeType = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+          formData.append("image", { uri: imageUri, type: mimeType, name: filename } as any);
+        }
+        const res = await fetch(`${API_BASE_URL}/contributions/${id}`, {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`API error ${res.status}: ${text}`);
+        }
+        return res.json() as Promise<MyContribution>;
+      }
+
       return apiFetch<MyContribution>(`/contributions/${id}`, {
         method: "PATCH",
         token: token!,
-        body: JSON.stringify(updates),
+        body: JSON.stringify(textUpdates),
       });
     },
     onSuccess: () => {

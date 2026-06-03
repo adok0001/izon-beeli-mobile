@@ -1155,6 +1155,31 @@ export const en = {
       applications: "Applications",
       feedback: "Feedback",
       notifications: "Notifications",
+      dailyContent: "Daily Content",
+    },
+    dailyContent: {
+      title: "Daily Content",
+      subtitle: "Pin featured content for each time period.",
+      language: "Language",
+      current: "Current",
+      pinned: "Pinned",
+      auto: "Auto",
+      clearOverride: "Clear override",
+      errorSet: "Failed to set. Please try again.",
+      errorClear: "Failed to clear override.",
+      actionRowDetail: "Word of the Day · Proverb of the Month · Song of the Week",
+      wotd: {
+        tab: "Word / Day",
+        searchPlaceholder: "Search words…",
+      },
+      potm: {
+        tab: "Proverb / Month",
+        searchPlaceholder: "Search proverbs…",
+      },
+      sotw: {
+        tab: "Song / Week",
+        searchPlaceholder: "Search songs…",
+      },
     },
     notifications: {
       title: "Push Notifications",

@@ -54,6 +54,20 @@ export function useBounties(languageId?: string, category?: string) {
   });
 }
 
+// Fetch a single bounty by id (admin-authenticated)
+export function useBounty(id: string) {
+  const { getToken } = useAuth();
+
+  return useQuery<Bounty>({
+    queryKey: ["bounty", id],
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch<Bounty>(`/bounties/${id}`, { token: token! });
+    },
+    enabled: !!id,
+  });
+}
+
 // Admin: all bounties across all statuses
 export function useAdminBounties() {
   const { getToken } = useAuth();

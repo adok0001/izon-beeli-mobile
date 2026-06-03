@@ -175,6 +175,7 @@ export default function RootLayout() {
                   <Stack.Screen name="dashboard" options={{ headerBackTitle: "Back" }} />
                   <Stack.Screen name="bounties" options={{ headerBackTitle: "Back" }} />
                   <Stack.Screen name="bounty-create" options={{ presentation: "modal", headerShown: false }} />
+                  <Stack.Screen name="bounty-edit" options={{ presentation: "modal", headerShown: false }} />
                   <Stack.Screen name="word/[id]" options={{ headerBackTitle: "Back" }} />
                 </Stack>
               </GestureHandlerRootView>

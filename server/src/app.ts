@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
+import { dailyContentAdminRouter, dailyContentRouter } from "./routes/daily-content.js";
 import { billingAdminRouter, billingRouter, billingWebhookRouter } from "./routes/billing.js";
 import { bountiesAdminRouter, bountiesRouter } from "./routes/bounties.js";
 import { classroomRouter } from "./routes/classroom.js";
@@ -97,6 +98,7 @@ app.route("/cultural", culturalRouter);
 app.route("/cultural/admin", culturalAdminRouter);
 app.route("/sentences", sentencesRouter);
 app.route("/story-arcs", storyArcsRouter);
+app.route("/daily-content", dailyContentRouter);
 app.get("/health", (c) => c.json({ status: "ok" }));
 
 // Authenticated routes
@@ -124,6 +126,7 @@ app.route("/bounties/admin", bountiesAdminRouter);
 app.route("/billing", billingRouter);
 app.route("/admin/billing", billingAdminRouter);
 app.route("/admin/users", adminUsersRouter);
+app.route("/daily-content/admin", dailyContentAdminRouter);
 app.route("/admin", adminStatsRouter);
 app.route("/educator", educatorRouter);
 app.route("/reviewer-applications", reviewerApplicationsRouter);

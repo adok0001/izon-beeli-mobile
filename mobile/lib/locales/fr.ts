@@ -1157,6 +1157,31 @@ export const fr = {
       applications: "Candidatures",
       feedback: "Retours",
       notifications: "Notifications",
+      dailyContent: "Contenu quotidien",
+    },
+    dailyContent: {
+      title: "Contenu quotidien",
+      subtitle: "Épinglez le contenu mis en avant pour chaque période.",
+      language: "Langue",
+      current: "Actuel",
+      pinned: "Épinglé",
+      auto: "Auto",
+      clearOverride: "Retirer l'épingle",
+      errorSet: "Échec de la mise à jour. Veuillez réessayer.",
+      errorClear: "Échec du retrait. Veuillez réessayer.",
+      actionRowDetail: "Mot du jour · Proverbe du mois · Chanson de la semaine",
+      wotd: {
+        tab: "Mot / Jour",
+        searchPlaceholder: "Chercher des mots…",
+      },
+      potm: {
+        tab: "Proverbe / Mois",
+        searchPlaceholder: "Chercher des proverbes…",
+      },
+      sotw: {
+        tab: "Chanson / Semaine",
+        searchPlaceholder: "Chercher des chansons…",
+      },
     },
     notifications: {
       title: "Notifications push",

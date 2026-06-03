@@ -1177,6 +1177,31 @@ export const pcm = {
       applications: "Applications",
       feedback: "Feedback",
       notifications: "Notifications",
+      dailyContent: "Daily Content",
+    },
+    dailyContent: {
+      title: "Daily Content",
+      subtitle: "Pin wetin go show for each time period.",
+      language: "Language",
+      current: "Current",
+      pinned: "Pinned",
+      auto: "Auto",
+      clearOverride: "Remove pin",
+      errorSet: "E no set. Try again.",
+      errorClear: "E no clear. Try again.",
+      actionRowDetail: "Word of the Day · Proverb of the Month · Song of the Week",
+      wotd: {
+        tab: "Word / Day",
+        searchPlaceholder: "Search words…",
+      },
+      potm: {
+        tab: "Proverb / Month",
+        searchPlaceholder: "Search proverbs…",
+      },
+      sotw: {
+        tab: "Song / Week",
+        searchPlaceholder: "Search songs…",
+      },
     },
     notifications: {
       title: "Push Notifications",
