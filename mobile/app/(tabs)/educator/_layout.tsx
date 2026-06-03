@@ -1,38 +1,35 @@
 import { AudioPlayer } from "@/components/audio/audio-player";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useAudioStore } from "@/store/audio-store";
-import { Header, getHeaderTitle } from "@react-navigation/elements";
-import type { NativeStackHeaderProps } from "@react-navigation/native-stack";
 import { Stack, useRouter } from "expo-router";
 import { View } from "react-native";
 
-function EducatorHeader({ back, navigation, options, route }: NativeStackHeaderProps) {
+function EducatorAudioBar() {
+  const M = useMuseumTheme();
   const { currentTrackId } = useAudioStore();
   const router = useRouter();
+
+  if (!currentTrackId) return null;
+
   return (
-    <View>
-      <Header
-        {...options}
-        title={getHeaderTitle(options, route.name)}
-        back={back}
-        navigation={navigation as never}
+    <View style={{ backgroundColor: M.ink }}>
+      <AudioPlayer
+        compact
+        position="top"
+        onPress={() => router.push(`/lesson/${currentTrackId}`)}
       />
-      {currentTrackId ? (
-        <AudioPlayer
-          compact
-          position="top"
-          onPress={() => router.push(`/lesson/${currentTrackId}`)}
-        />
-      ) : null}
     </View>
   );
 }
 
 export default function EducatorLayout() {
+  const M = useMuseumTheme();
+
   return (
     <Stack
       screenOptions={{
-        header: (props) => <EducatorHeader {...props} />,
-        headerBackTitle: "Back",
+        headerShown: false,
+        contentStyle: { backgroundColor: M.ink },
       }}
     />
   );

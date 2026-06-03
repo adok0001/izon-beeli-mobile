@@ -1,49 +1,84 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { canManageBounties, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useAdminStats } from "@/lib/hooks/use-educator-panel";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { Stack, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-function StatCard({
-  icon,
-  label,
-  value,
-}: Readonly<{ icon: string; label: string; value: number }>) {
+function StatCard({ icon, label, value }: Readonly<{ icon: string; label: string; value: number }>) {
+  const M = useMuseumTheme();
   return (
-    <View className="min-w-[46%] flex-1 rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
-      <IconSymbol name={icon as never} size={20} color="#3b82f6" />
-      <Text className="mt-3 text-2xl font-bold text-neutral-900 dark:text-white">{value}</Text>
-      <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">{label}</Text>
+    <View
+      style={{
+        minWidth: "46%", flex: 1, borderRadius: 16, padding: 16,
+        backgroundColor: M.card, borderWidth: 1, borderColor: M.border,
+      }}
+    >
+      <View
+        style={{
+          width: 36, height: 36, borderRadius: 10,
+          alignItems: "center", justifyContent: "center",
+          backgroundColor: `${M.accent}15`,
+        }}
+      >
+        <IconSymbol name={icon as never} size={18} color={M.accent} />
+      </View>
+      <Text style={{ marginTop: 12, fontSize: 26, fontWeight: "800", color: M.text }}>{value}</Text>
+      <Text style={{ marginTop: 3, fontSize: 12, color: M.muted }}>{label}</Text>
     </View>
   );
 }
 
-function ActionRow({
-  icon,
-  label,
-  detail,
-  onPress,
-}: Readonly<{ icon: string; label: string; detail: string; onPress: () => void }>) {
+function ActionRow({ icon, label, detail, onPress, accent }: Readonly<{
+  icon: string; label: string; detail: string; onPress: () => void; accent?: string;
+}>) {
+  const M = useMuseumTheme();
+  const color = accent ?? M.accent;
   return (
     <Pressable
       onPress={onPress}
-      className="flex-row items-center rounded-2xl bg-neutral-50 px-4 py-4 active:opacity-70 dark:bg-neutral-800"
+      style={{
+        flexDirection: "row", alignItems: "center",
+        borderRadius: 16, paddingHorizontal: 14, paddingVertical: 14,
+        backgroundColor: M.card, borderWidth: 1, borderColor: M.border,
+        borderLeftWidth: 4, borderLeftColor: color,
+      }}
+      className="active:opacity-70"
     >
-      <View className="h-11 w-11 items-center justify-center rounded-xl bg-white dark:bg-neutral-900">
-        <IconSymbol name={icon as never} size={20} color="#3b82f6" />
+      <View
+        style={{
+          width: 40, height: 40, borderRadius: 10,
+          alignItems: "center", justifyContent: "center",
+          backgroundColor: `${color}15`, marginRight: 12,
+        }}
+      >
+        <IconSymbol name={icon as never} size={18} color={color} />
       </View>
-      <View className="ml-3 flex-1">
-        <Text className="text-base font-semibold text-neutral-900 dark:text-white">{label}</Text>
-        <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">{detail}</Text>
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 14, fontWeight: "700", color: M.text }}>{label}</Text>
+        <Text style={{ marginTop: 2, fontSize: 12, color: M.sub }}>{detail}</Text>
       </View>
-      <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
+      <IconSymbol name="chevron.right" size={14} color={M.muted} />
     </Pressable>
   );
 }
 
+function SectionLabel({ label }: { label: string }) {
+  const M = useMuseumTheme();
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }}>
+      <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: M.accent }} />
+      <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 2, textTransform: "uppercase", color: M.muted }}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
 export default function AdminPanelScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
   const { data: currentUser, isLoading } = useCurrentUser();
@@ -53,19 +88,31 @@ export default function AdminPanelScreen() {
   if (!isLoading && !isAdmin) {
     return (
       <>
-        <Stack.Screen options={{ title: t("educator.adminPanel") }} />
-        <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-neutral-900" edges={["top"]}>
-          <View className="h-16 w-16 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
-            <IconSymbol name="shield.fill" size={28} color="#9ca3af" />
+        <Stack.Screen options={{ headerShown: false }} />
+        <SafeAreaView style={{ flex: 1, backgroundColor: M.ink, alignItems: "center", justifyContent: "center" }} edges={["top"]}>
+          <View
+            style={{
+              width: 64, height: 64, borderRadius: 32,
+              alignItems: "center", justifyContent: "center",
+              backgroundColor: `${M.accent}12`,
+              borderWidth: 1, borderColor: `${M.accent}25`,
+            }}
+          >
+            <IconSymbol name="shield.fill" size={26} color={M.muted} />
           </View>
-          <Text className="mt-4 px-8 text-center text-base font-semibold text-neutral-600 dark:text-neutral-400">
+          <Text style={{ marginTop: 16, paddingHorizontal: 32, textAlign: "center", fontSize: 14, fontWeight: "600", color: M.sub }}>
             {t("review.adminRequired")}
           </Text>
           <Pressable
             onPress={() => router.replace("/(tabs)/profile")}
-            className="mt-6 rounded-2xl bg-neutral-100 px-6 py-3 active:opacity-80 dark:bg-neutral-800"
+            style={{
+              marginTop: 20, borderRadius: 999,
+              paddingHorizontal: 24, paddingVertical: 10,
+              borderWidth: 1, borderColor: M.border, backgroundColor: M.card,
+            }}
+            className="active:opacity-80"
           >
-            <Text className="font-semibold text-neutral-700 dark:text-neutral-300">{t("common.goBack")}</Text>
+            <Text style={{ fontWeight: "700", color: M.text }}>{t("common.goBack")}</Text>
           </Pressable>
         </SafeAreaView>
       </>
@@ -74,60 +121,65 @@ export default function AdminPanelScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: t("educator.adminPanel") }} />
-      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
-          <View className="px-5 pb-2 pt-4">
-            <Text className="text-3xl font-bold text-neutral-900 dark:text-white">{t("educator.adminPanel")}</Text>
-            <Text className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">{t("admin.internalTools")}</Text>
+      <Stack.Screen options={{ headerShown: false }} />
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
+        {/* Header */}
+        <View style={{ backgroundColor: M.ink, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20 }}>
+          <Text style={{ fontSize: 32, fontWeight: "900", color: M.parchment, letterSpacing: -0.5 }}>
+            {t("educator.adminPanel")}
+          </Text>
+          <Text style={{ marginTop: 4, fontSize: 13, color: M.textDim }}>
+            {t("admin.internalTools")}
+          </Text>
+        </View>
+
+        <ScrollView
+          style={{ flex: 1, backgroundColor: M.card }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32, paddingTop: 16 }}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Stats */}
+          <SectionLabel label={t("admin.overview.subtitle")} />
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 24 }}>
+            <StatCard icon="person.fill" label={t("admin.stats.totalUsers")} value={adminStats?.users ?? 0} />
+            <StatCard icon="book.fill" label={t("admin.stats.courses")} value={adminStats?.courses ?? 0} />
+            <StatCard icon="checkmark.circle.fill" label={t("admin.stats.pendingReview")} value={adminStats?.pendingContributions ?? 0} />
+            <StatCard icon="character.book.closed" label={t("admin.stats.dictionaryEntries")} value={adminStats?.dictionaryEntries ?? 0} />
           </View>
 
-          <View className="px-5 pt-4">
-            <Text className="mb-3 text-xs font-semibold uppercase tracking-[1.5px] text-neutral-400 dark:text-neutral-500">
-              {t("admin.overview.subtitle")}
-            </Text>
-            <View className="flex-row flex-wrap gap-3">
-              <StatCard icon="person.fill" label={t("admin.stats.totalUsers")} value={adminStats?.users ?? 0} />
-              <StatCard icon="book.fill" label={t("admin.stats.courses")} value={adminStats?.courses ?? 0} />
-              <StatCard icon="checkmark.circle.fill" label={t("admin.stats.pendingReview")} value={adminStats?.pendingContributions ?? 0} />
-              <StatCard icon="character.book.closed" label={t("admin.stats.dictionaryEntries")} value={adminStats?.dictionaryEntries ?? 0} />
-            </View>
-          </View>
-
-          <View className="px-5 pt-6">
-            <Text className="mb-3 text-xs font-semibold uppercase tracking-[1.5px] text-neutral-400 dark:text-neutral-500">
-              {t("admin.overview.quickActions")}
-            </Text>
-            <View className="gap-3">
+          {/* Actions */}
+          <SectionLabel label={t("admin.overview.quickActions")} />
+          <View style={{ gap: 10 }}>
+            <ActionRow
+              icon="shield.fill"
+              label={t("educator.panelTitle")}
+              detail={t("educator.nav.overview")}
+              onPress={() => router.push("/(tabs)/educator")}
+              accent="#4ade80"
+            />
+            <ActionRow
+              icon="sun.max.fill"
+              label={t("admin.dailyContent.title")}
+              detail={t("admin.dailyContent.actionRowDetail")}
+              onPress={() => router.push("/admin/daily-content")}
+              accent="#fb923c"
+            />
+            <ActionRow
+              icon="bell.fill"
+              label={t("admin.notifications.title", "Push Notifications")}
+              detail={t("admin.notifications.subtitle", "Broadcast a message to all users")}
+              onPress={() => router.push("/admin/broadcast")}
+              accent="#60a5fa"
+            />
+            {currentUser && canManageBounties(currentUser) ? (
               <ActionRow
-                icon="shield.fill"
-                label={t("educator.panelTitle")}
-                detail={t("educator.nav.overview")}
-                onPress={() => router.push("/(tabs)/educator")}
+                icon="star.fill"
+                label={t("profile.bounties")}
+                detail={t("admin.overview.manageCourses")}
+                onPress={() => router.push("/bounties")}
+                accent="#f59e0b"
               />
-
-              <ActionRow
-                icon="sun.max.fill"
-                label={t("admin.dailyContent.title")}
-                detail={t("admin.dailyContent.actionRowDetail")}
-                onPress={() => router.push("/admin/daily-content")}
-              />
-
-              <ActionRow
-                icon="bell.fill"
-                label={t("admin.notifications.title", "Push Notifications")}
-                detail={t("admin.notifications.subtitle", "Broadcast a message to all users")}
-                onPress={() => router.push("/admin/broadcast")}
-              />
-              {currentUser && canManageBounties(currentUser) ? (
-                <ActionRow
-                  icon="star.fill"
-                  label={t("profile.bounties")}
-                  detail={t("admin.overview.manageCourses")}
-                  onPress={() => router.push("/bounties")}
-                />
-              ) : null}
-            </View>
+            ) : null}
           </View>
         </ScrollView>
       </SafeAreaView>
