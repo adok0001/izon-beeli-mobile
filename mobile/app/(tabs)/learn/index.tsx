@@ -26,16 +26,119 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Animated,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 
-const ContinueCard = memo(function ContinueCard({ lessonId, positionSeconds }: { lessonId: string; positionSeconds: number }) {
+// ─── Design Tokens ────────────────────────────────────────────────────────────
+const M = {
+  ink: "#0D0F1A",
+  inkDeep: "#07080F",
+  parchment: "#F7F2E8",
+  accent: "#C4862A",
+  accentDim: "#8B5E1A",
+  accentGlow: "rgba(196, 134, 42, 0.15)",
+  accentLight: "#F5E8CC",
+  cardDark: "#1A1D2C",
+  borderDark: "#2E3245",
+  textDim: "#9A9480",
+  textDimDark: "#5A5D70",
+  warmWhite: "#FDFAF5",
+} as const;
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function useMountAnimation(count = 1, stagger = 80) {
+  const anims = useRef(
+    Array.from({ length: count }, () => new Animated.Value(0))
+  ).current;
+
+  useEffect(() => {
+    Animated.stagger(
+      stagger,
+      anims.map((a) =>
+        Animated.timing(a, { toValue: 1, duration: 500, useNativeDriver: true })
+      )
+    ).start();
+  }, []);
+
+  return anims;
+}
+
+function animStyle(anim: Animated.Value, offsetY = 18) {
+  return {
+    opacity: anim,
+    transform: [
+      {
+        translateY: anim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [offsetY, 0],
+        }),
+      },
+    ],
+  };
+}
+
+// ─── DailyGoalRing ─────────────────────────────────────────────────────────
+function DailyGoalRing({ completedToday }: { completedToday: number }) {
+  const target = 3;
+  const pct = Math.min(completedToday / target, 1);
+  const size = 32;
+  const strokeWidth = 3;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference * (1 - pct);
+  const color = pct >= 1 ? "#4ade80" : M.accent;
+
+  return (
+    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
+      <Svg width={size} height={size} style={{ position: "absolute" }}>
+        <Circle
+          cx={size / 2} cy={size / 2} r={radius}
+          stroke="rgba(255,255,255,0.1)" strokeWidth={strokeWidth} fill="none"
+        />
+        <Circle
+          cx={size / 2} cy={size / 2} r={radius}
+          stroke={color} strokeWidth={strokeWidth} fill="none"
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          rotation={-90}
+          origin={`${size / 2}, ${size / 2}`}
+        />
+      </Svg>
+      <Text style={{ fontSize: 8, fontWeight: "800", color }}>
+        {completedToday}/{target}
+      </Text>
+    </View>
+  );
+}
+
+// ─── ContinueCard ──────────────────────────────────────────────────────────
+const ContinueCard = memo(function ContinueCard({
+  lessonId,
+  positionSeconds,
+}: {
+  lessonId: string;
+  positionSeconds: number;
+}) {
   const { t } = useTranslation();
   const router = useRouter();
   const { uiLanguage } = useUiLanguageStore();
   const { data: lesson } = useLesson(lessonId);
   const { loadAndPlay, seekTo, currentTrackId } = useAudioStore();
+  const anim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(anim, { toValue: 1, duration: 450, useNativeDriver: true }).start();
+  }, []);
 
   if (!lesson) return null;
 
@@ -57,262 +160,445 @@ const ContinueCard = memo(function ContinueCard({ lessonId, positionSeconds }: {
   };
 
   return (
-    <Pressable
-      onPress={handleResume}
-      className="mb-3 rounded-2xl bg-emerald-50 p-4 active:opacity-70 dark:bg-emerald-950"
-      accessibilityRole="button"
-      accessibilityLabel={`Continue listening: ${localizeField(lesson.title, lesson.titleFr, uiLanguage)}, paused at ${posLabel}`}
-      accessibilityHint="Tap to resume playback"
-    >
-      <View className="flex-row items-center">
-        <View className="mr-3 h-12 w-12 items-center justify-center rounded-xl bg-emerald-500">
-          <IconSymbol name="play.fill" size={22} color="#fff" />
-        </View>
-        <View className="flex-1">
-          <Text className="text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
-            {t("learn.continueListening")}
-          </Text>
-          <Text className="text-base font-bold text-neutral-900 dark:text-white" numberOfLines={1}>
-            {localizeField(lesson.title, lesson.titleFr, uiLanguage)}
-          </Text>
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-            {t("learn.pausedAt", { time: posLabel })}
-          </Text>
-        </View>
-        <IconSymbol name="chevron.right" size={16} color="#10b981" />
-      </View>
-    </Pressable>
-  );
-});
-
-const CourseCard = memo(function CourseCard({ course, completedIds, hasStoryArc }: { course: Course; completedIds: Set<string>; hasStoryArc: boolean }) {
-  const { t } = useTranslation();
-  const router = useRouter();
-  const colorScheme = useColorScheme();
-  const { uiLanguage } = useUiLanguageStore();
-  const { data: lessons = [], isLoading: lessonsLoading } = useCourseLessons(course.id);
-  const completedCount = lessons.filter((l) => completedIds.has(l.id)).length;
-  const progressPercent =
-    lessons.length > 0 ? (completedCount / lessons.length) * 100 : 0;
-  const [collapsed, setCollapsed] = useState(false);
-  const typeColors = getCourseTypeColors(course.courseType);
-  const levelColors = getLevelColors(course.level);
-
-  return (
-    <View className={`mb-4 overflow-hidden rounded-2xl ${typeColors.headerBg}`}>
-      {/* Tappable header — always visible */}
+    <Animated.View style={animStyle(anim)}>
       <Pressable
-        onPress={() => setCollapsed((c) => !c)}
-        className="p-4 active:opacity-70"
+        onPress={handleResume}
+        style={{
+          borderRadius: 16,
+          overflow: "hidden",
+          borderLeftWidth: 4,
+          borderLeftColor: "#4ade80",
+          backgroundColor: "rgba(74, 222, 128, 0.06)",
+          borderWidth: 1,
+          borderColor: "rgba(74, 222, 128, 0.15)",
+        }}
+        className="mb-3 p-4 active:opacity-70"
         accessibilityRole="button"
-        accessibilityLabel={`${localizeField(course.title, course.titleFr, uiLanguage)}, ${completedCount} of ${lessons.length} lessons completed`}
-        accessibilityHint={collapsed ? "Tap to expand course" : "Tap to collapse course"}
-        accessibilityState={{ expanded: !collapsed }}
+        accessibilityLabel={`Continue listening: ${localizeField(lesson.title, lesson.titleFr, uiLanguage)}, paused at ${posLabel}`}
+        accessibilityHint="Tap to resume playback"
       >
-        <View className="mb-2 flex-row items-center justify-between">
-          <View className={`rounded-full px-3 py-1 ${levelColors.badgeBg}`}>
-            <Text className={`text-xs font-semibold capitalize ${levelColors.badgeText}`}>
-              {t(`levels.${course.level}`, { defaultValue: course.level })}
+        <View className="flex-row items-center">
+          <View
+            style={{ backgroundColor: "#22c55e", borderRadius: 12 }}
+            className="mr-3 h-12 w-12 items-center justify-center"
+          >
+            <IconSymbol name="play.fill" size={20} color="#fff" />
+          </View>
+          <View className="flex-1">
+            <Text style={{ color: "#4ade80", fontSize: 10, fontWeight: "700", letterSpacing: 1.5 }}>
+              {t("learn.continueListening").toUpperCase()}
+            </Text>
+            <Text className="mt-0.5 text-base font-bold text-neutral-900 dark:text-white" numberOfLines={1}>
+              {localizeField(lesson.title, lesson.titleFr, uiLanguage)}
+            </Text>
+            <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+              {t("learn.pausedAt", { time: posLabel })}
             </Text>
           </View>
-          <View className="flex-row items-center gap-2">
-            <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-              {t("learn.lessonsCount", { done: completedCount, total: lessons.length })}
-            </Text>
-            <IconSymbol
-              name={collapsed ? "chevron.right" : "chevron.down"}
-              size={13}
-              color="#9ca3af"
-            />
-          </View>
+          <IconSymbol name="chevron.right" size={16} color="#22c55e" />
         </View>
-
-        <Text className="mb-1 text-lg font-bold text-neutral-900 dark:text-white">
-          {localizeField(course.title, course.titleFr, uiLanguage)}
-        </Text>
-        <Text className="text-sm text-neutral-600 dark:text-neutral-400" numberOfLines={2}>
-          {localizeField(course.description, course.descriptionFr, uiLanguage)}
-        </Text>
-
-        {course.courseType && typeColors.label ? (
-          <View className={`mt-2 self-start rounded-full px-2.5 py-0.5 ${typeColors.badgeBg}`}>
-            <Text className={`text-xs font-semibold ${typeColors.badgeText}`}>
-              {typeColors.label}
-            </Text>
-          </View>
-        ) : null}
-
-        {progressPercent > 0 && (
-          <View className="mt-3">
-            <View className="relative h-2 rounded-full bg-neutral-200 dark:bg-neutral-700">
-              <View
-                className={`h-2 rounded-full ${typeColors.progressBar}`}
-                style={{ width: `${progressPercent}%` }}
-              />
-              {[25, 50, 75].map((pct) => {
-                const inactiveColor = colorScheme === "dark" ? "#4b5563" : "#d1d5db";
-                const tickColor = progressPercent >= pct ? typeColors.tickActive : inactiveColor;
-                return (
-                  <View
-                    key={pct}
-                    className="absolute top-0 h-2 w-0.5"
-                    style={{ left: `${pct}%`, backgroundColor: tickColor }}
-                  />
-                );
-              })}
-            </View>
-            {progressPercent >= 100 && (
-              <Text className="mt-1 text-right text-xs font-semibold text-green-600 dark:text-green-400">
-                {t("learn.complete")}
-              </Text>
-            )}
-          </View>
-        )}
       </Pressable>
-
-      {/* Collapsible: lessons + actions */}
-      {!collapsed && (
-        <View className="px-4 pb-4">
-          {lessonsLoading ? (
-            <ActivityIndicator size="small" color={typeColors.tickActive} />
-          ) : (
-            lessons.map((lesson) => (
-              <LessonRow
-                key={lesson.id}
-                lesson={lesson}
-                completed={completedIds.has(lesson.id)}
-                onPress={() => router.push(`/lesson/${lesson.id}`)}
-              />
-            ))
-          )}
-
-          <View className="mt-2 flex-row gap-2">
-            <Pressable
-              onPress={() =>
-                router.push({ pathname: "/quiz", params: { courseId: course.id } })
-              }
-              className={`flex-1 flex-row items-center justify-center rounded-lg border py-2.5 active:opacity-70 ${typeColors.badgeBg} ${typeColors.badgeBorder}`}
-              accessibilityRole="button"
-              accessibilityLabel={t("learn.practiceQuiz")}
-              accessibilityHint="Start a practice quiz for this course"
-            >
-              <IconSymbol name="trophy.fill" size={16} color={typeColors.tickActive} />
-              <Text className={`ml-1.5 text-sm font-semibold ${typeColors.badgeText}`}>
-                {t("learn.practiceQuiz")}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() =>
-                router.push({ pathname: "/matching-game", params: { courseId: course.id } })
-              }
-              className="flex-1 flex-row items-center justify-center rounded-lg border border-violet-200 py-2.5 active:opacity-70 dark:border-violet-800"
-              accessibilityRole="button"
-              accessibilityLabel={t("learn.matchingGame")}
-              accessibilityHint="Start a matching game for this course"
-            >
-              <IconSymbol name="rectangle.grid.2x2" size={16} color="#8b5cf6" />
-              <Text className="ml-1.5 text-sm font-semibold text-violet-600 dark:text-violet-400">
-                {t("learn.matchingGame")}
-              </Text>
-            </Pressable>
-          </View>
-          {hasStoryArc && (
-            <Pressable
-              onPress={() => router.push(`/story/${course.id}` as any)}
-              className="mt-2 flex-row items-center justify-center rounded-lg border border-amber-200 py-2.5 active:opacity-70 dark:border-amber-800"
-              accessibilityRole="button"
-              accessibilityLabel={t("learn.storyMode")}
-              accessibilityHint="Open story mode for this course"
-            >
-              <IconSymbol name="book.fill" size={16} color="#f59e0b" />
-              <Text className="ml-1.5 text-sm font-semibold text-amber-600 dark:text-amber-400">
-                {t("learn.storyMode")}
-              </Text>
-            </Pressable>
-          )}
-        </View>
-      )}
-    </View>
+    </Animated.View>
   );
 });
 
-function LessonRow({ lesson, completed, onPress }: { lesson: Lesson; completed: boolean; onPress: () => void }) {
+// ─── LessonRow ─────────────────────────────────────────────────────────────
+function LessonRow({
+  lesson,
+  completed,
+  onPress,
+}: {
+  lesson: Lesson;
+  completed: boolean;
+  onPress: () => void;
+}) {
   const { uiLanguage } = useUiLanguageStore();
+
   return (
     <Pressable
       onPress={onPress}
-      className="flex-row items-center border-t border-neutral-200 py-3 active:opacity-70 dark:border-neutral-700"
+      style={{ borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.05)" }}
+      className="flex-row items-center py-3 active:opacity-60"
       accessibilityRole="button"
       accessibilityLabel={`${localizeField(lesson.title, lesson.titleFr, uiLanguage)}${completed ? ", completed" : ""}`}
       accessibilityHint="Tap to open lesson"
     >
-      <IconSymbol
-        name={completed ? "checkmark.circle.fill" : "circle"}
-        size={20}
-        color={completed ? "#22c55e" : "#9ca3af"}
-      />
+      <View
+        style={{
+          width: 20,
+          height: 20,
+          borderRadius: 10,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: completed ? "rgba(74, 222, 128, 0.15)" : "rgba(255,255,255,0.05)",
+          borderWidth: 1.5,
+          borderColor: completed ? "#4ade80" : "rgba(255,255,255,0.12)",
+        }}
+      >
+        {completed && (
+          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#4ade80" }} />
+        )}
+      </View>
       <View className="ml-3 flex-1">
         <Text
-          className="text-sm font-medium text-neutral-900 dark:text-white"
+          style={{
+            fontSize: 13,
+            fontWeight: completed ? "500" : "600",
+            color: completed ? "#6B7280" : "#F7F2E8",
+            opacity: completed ? 0.6 : 1,
+          }}
           numberOfLines={1}
         >
           {localizeField(lesson.title, lesson.titleFr, uiLanguage)}
         </Text>
-        <Text className="text-xs text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
-          {localizeField(lesson.description, lesson.descriptionFr, uiLanguage)}
-        </Text>
+        {lesson.description ? (
+          <Text style={{ fontSize: 11, color: M.textDimDark, marginTop: 1 }} numberOfLines={1}>
+            {localizeField(lesson.description, lesson.descriptionFr, uiLanguage)}
+          </Text>
+        ) : null}
       </View>
       {lesson.duration && (
-        <Text className="ml-2 text-xs text-neutral-400 dark:text-neutral-500">
+        <Text style={{ fontSize: 11, color: M.textDimDark, marginRight: 6 }}>
           {formatDuration(lesson.duration)}
         </Text>
       )}
-      <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
+      <IconSymbol name="chevron.right" size={14} color={M.textDimDark} />
     </Pressable>
   );
 }
 
+// ─── CourseCard ────────────────────────────────────────────────────────────
+const CourseCard = memo(function CourseCard({
+  course,
+  completedIds,
+  hasStoryArc,
+  index,
+}: {
+  course: Course;
+  completedIds: Set<string>;
+  hasStoryArc: boolean;
+  index: number;
+}) {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const { uiLanguage } = useUiLanguageStore();
+  const { data: lessons = [], isLoading: lessonsLoading } = useCourseLessons(course.id);
+  const completedCount = lessons.filter((l) => completedIds.has(l.id)).length;
+  const progressPercent = lessons.length > 0 ? (completedCount / lessons.length) * 100 : 0;
+  const [collapsed, setCollapsed] = useState(false);
+  const typeColors = getCourseTypeColors(course.courseType);
+  const levelColors = getLevelColors(course.level);
+  const anim = useRef(new Animated.Value(0)).current;
+  const progressAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(anim, {
+      toValue: 1,
+      duration: 480,
+      delay: index * 90,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  useEffect(() => {
+    if (!collapsed) {
+      Animated.timing(progressAnim, {
+        toValue: progressPercent,
+        duration: 700,
+        delay: index * 90 + 200,
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [collapsed, progressPercent]);
+
+  const accentColor = typeColors.tickActive ?? M.accent;
+
+  return (
+    <Animated.View style={[{ marginBottom: 16 }, animStyle(anim, 24)]}>
+      <View
+        style={{
+          borderRadius: 18,
+          overflow: "hidden",
+          backgroundColor: M.cardDark,
+          borderWidth: 1,
+          borderColor: M.borderDark,
+          borderLeftWidth: 4,
+          borderLeftColor: accentColor,
+        }}
+      >
+        {/* Header */}
+        <Pressable
+          onPress={() => setCollapsed((c) => !c)}
+          className="p-4 active:opacity-70"
+          accessibilityRole="button"
+          accessibilityLabel={`${localizeField(course.title, course.titleFr, uiLanguage)}, ${completedCount} of ${lessons.length} lessons completed`}
+          accessibilityHint={collapsed ? "Tap to expand course" : "Tap to collapse course"}
+          accessibilityState={{ expanded: !collapsed }}
+        >
+          {/* Top row: level badge + count */}
+          <View className="mb-2.5 flex-row items-center justify-between">
+            <View
+              style={{
+                paddingHorizontal: 10,
+                paddingVertical: 3,
+                borderRadius: 999,
+                backgroundColor: `${accentColor}20`,
+                borderWidth: 1,
+                borderColor: `${accentColor}40`,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 9,
+                  fontWeight: "800",
+                  letterSpacing: 1.8,
+                  textTransform: "uppercase",
+                  color: accentColor,
+                }}
+              >
+                {t(`levels.${course.level}`, { defaultValue: course.level })}
+              </Text>
+            </View>
+            <View className="flex-row items-center gap-2">
+              <Text style={{ fontSize: 11, color: M.textDimDark }}>
+                {completedCount}/{lessons.length}
+              </Text>
+              <IconSymbol
+                name={collapsed ? "chevron.right" : "chevron.down"}
+                size={12}
+                color={M.textDimDark}
+              />
+            </View>
+          </View>
+
+          {/* Title */}
+          <Text
+            style={{ fontSize: 18, fontWeight: "800", color: M.parchment, letterSpacing: -0.3, marginBottom: 4 }}
+          >
+            {localizeField(course.title, course.titleFr, uiLanguage)}
+          </Text>
+          <Text style={{ fontSize: 13, color: M.textDim, lineHeight: 18 }} numberOfLines={2}>
+            {localizeField(course.description, course.descriptionFr, uiLanguage)}
+          </Text>
+
+          {/* Course type badge */}
+          {course.courseType && typeColors.label ? (
+            <View
+              style={{
+                marginTop: 10,
+                alignSelf: "flex-start",
+                paddingHorizontal: 8,
+                paddingVertical: 2,
+                borderRadius: 999,
+                backgroundColor: `${accentColor}18`,
+              }}
+            >
+              <Text style={{ fontSize: 10, fontWeight: "700", color: accentColor }}>
+                {typeColors.label}
+              </Text>
+            </View>
+          ) : null}
+
+          {/* Progress bar */}
+          {progressPercent > 0 && (
+            <View style={{ marginTop: 14 }}>
+              <View
+                style={{
+                  height: 3,
+                  borderRadius: 2,
+                  backgroundColor: "rgba(255,255,255,0.08)",
+                  overflow: "hidden",
+                }}
+              >
+                <Animated.View
+                  style={{
+                    height: 3,
+                    borderRadius: 2,
+                    backgroundColor: accentColor,
+                    width: progressAnim.interpolate({
+                      inputRange: [0, 100],
+                      outputRange: ["0%", "100%"],
+                    }),
+                  }}
+                />
+              </View>
+              {progressPercent >= 100 && (
+                <Text style={{ marginTop: 4, fontSize: 10, fontWeight: "700", color: "#4ade80", textAlign: "right" }}>
+                  {t("learn.complete")}
+                </Text>
+              )}
+            </View>
+          )}
+        </Pressable>
+
+        {/* Lessons + Actions */}
+        {!collapsed && (
+          <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
+            {lessonsLoading ? (
+              <ActivityIndicator size="small" color={accentColor} style={{ paddingVertical: 12 }} />
+            ) : (
+              lessons.map((lesson) => (
+                <LessonRow
+                  key={lesson.id}
+                  lesson={lesson}
+                  completed={completedIds.has(lesson.id)}
+                  onPress={() => router.push(`/lesson/${lesson.id}`)}
+                />
+              ))
+            )}
+
+            {/* Action buttons */}
+            <View className="mt-3 flex-row gap-2">
+              <Pressable
+                onPress={() => router.push({ pathname: "/quiz", params: { courseId: course.id } })}
+                style={{
+                  flex: 1,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 10,
+                  paddingVertical: 10,
+                  borderWidth: 1,
+                  borderColor: `${accentColor}40`,
+                  backgroundColor: `${accentColor}10`,
+                  gap: 6,
+                }}
+                className="active:opacity-70"
+                accessibilityRole="button"
+                accessibilityLabel={t("learn.practiceQuiz")}
+              >
+                <IconSymbol name="trophy.fill" size={14} color={accentColor} />
+                <Text style={{ fontSize: 12, fontWeight: "700", color: accentColor }}>
+                  {t("learn.practiceQuiz")}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => router.push({ pathname: "/matching-game", params: { courseId: course.id } })}
+                style={{
+                  flex: 1,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 10,
+                  paddingVertical: 10,
+                  borderWidth: 1,
+                  borderColor: "rgba(139, 92, 246, 0.35)",
+                  backgroundColor: "rgba(139, 92, 246, 0.08)",
+                  gap: 6,
+                }}
+                className="active:opacity-70"
+                accessibilityRole="button"
+                accessibilityLabel={t("learn.matchingGame")}
+              >
+                <IconSymbol name="rectangle.grid.2x2" size={14} color="#8b5cf6" />
+                <Text style={{ fontSize: 12, fontWeight: "700", color: "#8b5cf6" }}>
+                  {t("learn.matchingGame")}
+                </Text>
+              </Pressable>
+            </View>
+
+            {hasStoryArc && (
+              <Pressable
+                onPress={() => router.push(`/story/${course.id}` as any)}
+                style={{
+                  marginTop: 8,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 10,
+                  paddingVertical: 10,
+                  borderWidth: 1,
+                  borderColor: "rgba(245, 158, 11, 0.35)",
+                  backgroundColor: "rgba(245, 158, 11, 0.08)",
+                  gap: 6,
+                }}
+                className="active:opacity-70"
+                accessibilityRole="button"
+                accessibilityLabel={t("learn.storyMode")}
+              >
+                <IconSymbol name="book.fill" size={14} color="#f59e0b" />
+                <Text style={{ fontSize: 12, fontWeight: "700", color: "#f59e0b" }}>
+                  {t("learn.storyMode")}
+                </Text>
+              </Pressable>
+            )}
+          </View>
+        )}
+      </View>
+    </Animated.View>
+  );
+});
+
+// ─── BountyTeaser ──────────────────────────────────────────────────────────
 function BountyTeaser({ languageId }: { languageId: string }) {
   const { t } = useTranslation();
   const router = useRouter();
   const { data: bounties } = useBounties(languageId);
-  const topBounty = bounties?.[0]; // highest xpReward
+  const topBounty = bounties?.[0];
 
   if (!topBounty) return null;
 
   return (
     <Pressable
       onPress={() => router.push("/bounties")}
-      className="rounded-2xl bg-amber-50 p-4 active:opacity-70 dark:bg-amber-950"
+      style={{
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: "rgba(245, 158, 11, 0.25)",
+        borderLeftWidth: 4,
+        borderLeftColor: "#f59e0b",
+        backgroundColor: "rgba(245, 158, 11, 0.07)",
+        padding: 14,
+      }}
+      className="active:opacity-70"
       accessibilityRole="button"
       accessibilityLabel={`Bounty: ${topBounty.title}, earn ${topBounty.xpReward} XP`}
       accessibilityHint="Tap to view all bounties"
     >
       <View className="flex-row items-center">
-        <View className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-amber-500">
-          <IconSymbol name="star.fill" size={18} color="#fff" />
+        <View
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: 10,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "rgba(245, 158, 11, 0.15)",
+            marginRight: 12,
+          }}
+        >
+          <IconSymbol name="star.fill" size={17} color="#f59e0b" />
         </View>
         <View className="flex-1">
           <View className="flex-row items-center gap-2">
-            <Text className="text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
-              {t("learn.bountyLabel")}
+            <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: "#f59e0b" }}>
+              {t("learn.bountyLabel").toUpperCase()}
             </Text>
-            <View className="rounded-full bg-amber-200 px-2 py-0.5 dark:bg-amber-800">
-              <Text className="text-xs font-bold text-amber-700 dark:text-amber-300">
+            <View
+              style={{
+                borderRadius: 999,
+                paddingHorizontal: 7,
+                paddingVertical: 1.5,
+                backgroundColor: "rgba(245, 158, 11, 0.2)",
+              }}
+            >
+              <Text style={{ fontSize: 10, fontWeight: "800", color: "#f59e0b" }}>
                 +{topBounty.xpReward} XP
               </Text>
             </View>
           </View>
-          <Text className="text-sm font-medium text-neutral-900 dark:text-white" numberOfLines={1}>
+          <Text style={{ fontSize: 13, fontWeight: "600", color: M.parchment, marginTop: 2 }} numberOfLines={1}>
             {topBounty.title}
           </Text>
         </View>
-        <IconSymbol name="chevron.right" size={16} color="#f59e0b" />
+        <IconSymbol name="chevron.right" size={14} color="#f59e0b" />
       </View>
     </Pressable>
   );
 }
 
+// ─── ContributorBanner ─────────────────────────────────────────────────────
 function ContributorBanner() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -320,27 +606,49 @@ function ContributorBanner() {
   return (
     <Pressable
       onPress={() => router.push("/reviewer-application")}
-      className="flex-row items-center rounded-2xl bg-emerald-50 p-4 active:opacity-70 dark:bg-emerald-950"
+      style={{
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: "rgba(74, 222, 128, 0.2)",
+        borderLeftWidth: 4,
+        borderLeftColor: "#22c55e",
+        backgroundColor: "rgba(74, 222, 128, 0.06)",
+        padding: 14,
+        flexDirection: "row",
+        alignItems: "center",
+      }}
+      className="active:opacity-70"
       accessibilityRole="button"
       accessibilityLabel={t("learn.contributorBannerTitle")}
       accessibilityHint="Tap to apply as a contributor"
     >
-      <View className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-emerald-500">
-        <IconSymbol name="person.badge.plus" size={18} color="#fff" />
+      <View
+        style={{
+          width: 38,
+          height: 38,
+          borderRadius: 10,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "rgba(74, 222, 128, 0.12)",
+          marginRight: 12,
+        }}
+      >
+        <IconSymbol name="person.badge.plus" size={17} color="#4ade80" />
       </View>
       <View className="flex-1">
-        <Text className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+        <Text style={{ fontSize: 13, fontWeight: "700", color: "#4ade80" }}>
           {t("learn.contributorBannerTitle")}
         </Text>
-        <Text className="text-xs text-emerald-600 dark:text-emerald-400">
+        <Text style={{ fontSize: 11, color: "rgba(74, 222, 128, 0.6)", marginTop: 1 }}>
           {t("learn.contributorBannerCta")}
         </Text>
       </View>
-      <IconSymbol name="chevron.right" size={16} color="#10b981" />
+      <IconSymbol name="chevron.right" size={14} color="#4ade80" />
     </Pressable>
   );
 }
 
+// ─── ReviewBanner ──────────────────────────────────────────────────────────
 function ReviewBanner({ languageId }: Readonly<{ languageId?: string | null }>) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -351,90 +659,79 @@ function ReviewBanner({ languageId }: Readonly<{ languageId?: string | null }>) 
   return (
     <Pressable
       onPress={() => router.push("/word-review")}
-      className="flex-row items-center rounded-2xl bg-violet-50 p-4 active:opacity-70 dark:bg-violet-950"
+      style={{
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: "rgba(139, 92, 246, 0.25)",
+        borderLeftWidth: 4,
+        borderLeftColor: "#8b5cf6",
+        backgroundColor: "rgba(139, 92, 246, 0.07)",
+        padding: 14,
+        flexDirection: "row",
+        alignItems: "center",
+      }}
+      className="active:opacity-70"
       accessibilityRole="button"
       accessibilityLabel={t("learn.reviewBanner", { count: dueWords.length })}
       accessibilityHint="Tap to review words due for practice"
     >
-      <View className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-violet-500">
-        <IconSymbol name="brain.head.profile" size={18} color="#fff" />
+      <View
+        style={{
+          width: 38, height: 38, borderRadius: 10,
+          alignItems: "center", justifyContent: "center",
+          backgroundColor: "rgba(139, 92, 246, 0.12)", marginRight: 12,
+        }}
+      >
+        <IconSymbol name="brain.head.profile" size={17} color="#8b5cf6" />
       </View>
       <View className="flex-1">
-        <Text className="text-sm font-semibold text-violet-700 dark:text-violet-300">
+        <Text style={{ fontSize: 13, fontWeight: "700", color: "#8b5cf6" }}>
           {t("learn.reviewBanner", { count: dueWords.length })}
         </Text>
-        <Text className="text-xs text-violet-500 dark:text-violet-400">
+        <Text style={{ fontSize: 11, color: "rgba(139, 92, 246, 0.6)", marginTop: 1 }}>
           {t("learn.reviewBannerCta")}
         </Text>
       </View>
-      <IconSymbol name="chevron.right" size={16} color="#8b5cf6" />
+      <IconSymbol name="chevron.right" size={14} color="#8b5cf6" />
     </Pressable>
   );
 }
 
-function DailyGoalRing({ completedToday }: { completedToday: number }) {
-  const target = 3;
-  const pct = Math.min(completedToday / target, 1);
-  const size = 36;
-  const strokeWidth = 3.5;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference * (1 - pct);
-  const color = pct >= 1 ? "#22c55e" : "#3b82f6";
-
-  return (
-    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
-      <Svg width={size} height={size} style={{ position: "absolute" }}>
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="#e5e7eb"
-          strokeWidth={strokeWidth}
-          fill="none"
-        />
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={color}
-          strokeWidth={strokeWidth}
-          fill="none"
-          strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
-          strokeLinecap="round"
-          rotation={-90}
-          origin={`${size / 2}, ${size / 2}`}
-        />
-      </Svg>
-      <Text style={{ fontSize: 9, fontWeight: "700", color }}>
-        {completedToday}/{target}
-      </Text>
-    </View>
-  );
-}
-
+// ─── LearnScreen ───────────────────────────────────────────────────────────
 export default function LearnScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { user } = useUser();
   const avatarInitial = (user?.username ?? "L")[0]?.toUpperCase() ?? "L";
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
-  const { data: courses = [], isLoading: coursesLoading, refetch: refetchCourses } = useCourses(selectedLanguageId);
-  const { data: completedLessonIds, isLoading: progressLoading, refetch } = useCompletedLessons();
+  const {
+    data: courses = [],
+    isLoading: coursesLoading,
+    refetch: refetchCourses,
+  } = useCourses(selectedLanguageId);
+  const {
+    data: completedLessonIds,
+    isLoading: progressLoading,
+    refetch,
+  } = useCompletedLessons();
   const { data: summary, refetch: refetchSummary } = useProgressSummary();
   const { refetch: refetchDue } = useWordsDueForReview(selectedLanguageId);
   const { data: todayChallenges = [] } = useTodayChallenges();
   const { data: storyArcSummaries = [] } = useStoryArcs();
+
   const storyArcCourseIds = useMemo(
     () => new Set(storyArcSummaries.map((a) => a.courseId)),
     [storyArcSummaries]
   );
-  const completedIds = useMemo(() => new Set(completedLessonIds ?? []), [completedLessonIds]);
+  const completedIds = useMemo(
+    () => new Set(completedLessonIds ?? []),
+    [completedLessonIds]
+  );
   const completedToday = useMemo(
     () => todayChallenges.filter((c) => c.completed).length,
     [todayChallenges]
   );
+
   const [refreshing, setRefreshing] = useState(false);
   const [freezeModalVisible, setFreezeModalVisible] = useState(false);
   const freezeChecked = useRef(false);
@@ -444,24 +741,22 @@ export default function LearnScreen() {
   const loadResumeState = useAudioStore((s) => s.loadResumeState);
   const activeTour = useTourStore((s) => s.activeTour);
 
+  // Entrance animations
+  const [titleAnim, subtitleAnim, statsAnim] = useMountAnimation(3, 70);
+
   useEffect(() => {
     loadResumeState();
   }, []);
 
-  useFocusEffect(useCallback(() => {
-    refetchSummary();
-  }, [refetchSummary]));
+  useFocusEffect(
+    useCallback(() => {
+      refetchSummary();
+    }, [refetchSummary])
+  );
 
-  // Show freeze modal once per day when we detect a broken streak (wait for any tour to finish)
   useEffect(() => {
-    if (
-      !summary?.streakBroken ||
-      summary.streak <= 0 ||
-      activeTour ||
-      freezeChecked.current
-    )
+    if (!summary?.streakBroken || summary.streak <= 0 || activeTour || freezeChecked.current)
       return;
-
     freezeChecked.current = true;
     const today = new Date().toISOString().slice(0, 10);
     AsyncStorage.getItem("streak-freeze-shown").then((lastShown) => {
@@ -472,10 +767,8 @@ export default function LearnScreen() {
   }, [summary?.streakBroken, summary?.streak, activeTour]);
 
   const DAILY_GOAL = 3;
-
   useEffect(() => {
     if (completedToday < DAILY_GOAL || goalCelebrationChecked.current) return;
-
     goalCelebrationChecked.current = true;
     const today = new Date().toISOString().slice(0, 10);
     AsyncStorage.getItem("daily-goal-celebration-shown").then((lastShown) => {
@@ -483,7 +776,6 @@ export default function LearnScreen() {
       AsyncStorage.setItem("daily-goal-celebration-shown", today).catch(() => {});
       toastSuccess(t("dailyGoal.celebrationTitle"), t("dailyGoal.celebrationBody"));
     }).catch(() => {});
-
   }, [completedToday]);
 
   const isLoading = coursesLoading || progressLoading;
@@ -494,79 +786,140 @@ export default function LearnScreen() {
     setRefreshing(false);
   }, [refetch, refetchSummary, refetchCourses, refetchDue]);
 
+  const streakActive = !summary?.streakBroken && summary?.refreshedToday !== false;
+
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
-      {/* Header */}
-      <View className="flex-row items-center justify-between px-5 pb-2 pt-4">
-        <View className="mr-3 shrink">
-          <Text className="font-heading text-2xl font-bold text-neutral-900 dark:text-white">
-            {t("learn.title")}
-          </Text>
-          <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
-            {t("learn.subtitle")}
-          </Text>
-        </View>
-        <View className="flex-row items-center gap-1.5">
-          <NotificationBell />
-          <Pressable
-            onPress={() => router.push("/quiz")}
-            className="h-9 w-9 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900"
-            accessibilityRole="button"
-            accessibilityLabel="Practice quiz"
-          >
-            <IconSymbol name="trophy.fill" size={18} color="#3b82f6" />
-          </Pressable>
-          <Pressable
-            onPress={() => router.push("/dictionary")}
-            className="h-9 w-9 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900"
-            accessibilityRole="button"
-            accessibilityLabel="Dictionary"
-          >
-            <IconSymbol name="character.book.closed" size={18} color="#f59e0b" />
-          </Pressable>
-          <Pressable
-            onPress={() => router.push("/(tabs)/profile")}
-            className="h-9 w-9 items-center justify-center rounded-full bg-blue-500"
-            accessibilityRole="button"
-            accessibilityLabel="Profile"
-          >
-            <Text className="text-sm font-bold text-white">{avatarInitial}</Text>
-          </Pressable>
-        </View>
-      </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
+      {/* ── Museum Foyer Header ── */}
+      <View style={{ backgroundColor: M.ink, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20 }}>
+        {/* Top row: title + actions */}
+        <View className="flex-row items-start justify-between">
+          <View className="flex-1 mr-3">
+            <Animated.Text
+              style={[
+                {
+                  fontSize: 32,
+                  fontWeight: "900",
+                  color: M.parchment,
+                  letterSpacing: -0.5,
+                  lineHeight: 36,
+                },
+                animStyle(titleAnim, 12),
+              ]}
+            >
+              {t("learn.title")}
+            </Animated.Text>
+            <Animated.Text
+              style={[
+                { fontSize: 13, color: M.textDim, marginTop: 4 },
+                animStyle(subtitleAnim, 10),
+              ]}
+              numberOfLines={1}
+            >
+              {t("learn.subtitle")}
+            </Animated.Text>
+          </View>
 
-      <EnrolledLanguageBar />
+          <View className="flex-row items-center gap-1.5 mt-1">
+            <NotificationBell />
+            <Pressable
+              onPress={() => router.push("/quiz")}
+              style={{
+                width: 36, height: 36, borderRadius: 18,
+                alignItems: "center", justifyContent: "center",
+                backgroundColor: "rgba(196, 134, 42, 0.15)",
+                borderWidth: 1, borderColor: "rgba(196, 134, 42, 0.3)",
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Practice quiz"
+            >
+              <IconSymbol name="trophy.fill" size={16} color={M.accent} />
+            </Pressable>
+            <Pressable
+              onPress={() => router.push("/dictionary")}
+              style={{
+                width: 36, height: 36, borderRadius: 18,
+                alignItems: "center", justifyContent: "center",
+                backgroundColor: "rgba(255,255,255,0.07)",
+                borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Dictionary"
+            >
+              <IconSymbol name="character.book.closed" size={16} color={M.textDim} />
+            </Pressable>
+            <Pressable
+              onPress={() => router.push("/(tabs)/profile")}
+              style={{
+                width: 36, height: 36, borderRadius: 18,
+                alignItems: "center", justifyContent: "center",
+                backgroundColor: M.accent,
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Profile"
+            >
+              <Text style={{ fontSize: 14, fontWeight: "800", color: M.ink }}>{avatarInitial}</Text>
+            </Pressable>
+          </View>
+        </View>
 
-     {/* Stats bar */}
-      <View className="border-b border-neutral-100 dark:border-neutral-800">
-        <View className="flex-row items-center justify-between gap-4 px-5 py-3.5">
+        {/* Stats row — specimen labels */}
+        <Animated.View style={[{ marginTop: 20, flexDirection: "row", gap: 8 }, animStyle(statsAnim, 8)]}>
           {/* Streak */}
           <Pressable
-            onPress={() => summary?.streakBroken && summary.streak > 0 && setFreezeModalVisible(true)}
-            className="flex-1 flex-row items-center gap-2 rounded-lg px-2.5 py-1.5 active:bg-neutral-100 dark:active:bg-neutral-800"
+            onPress={() =>
+              summary?.streakBroken && summary.streak > 0 && setFreezeModalVisible(true)
+            }
+            style={{
+              flex: 1,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 8,
+              paddingHorizontal: 12,
+              paddingVertical: 10,
+              borderRadius: 12,
+              backgroundColor: "rgba(255,255,255,0.05)",
+              borderWidth: 1,
+              borderColor: "rgba(255,255,255,0.08)",
+            }}
             accessibilityRole="button"
             accessibilityLabel={`${summary?.streakBroken ? "Broken streak" : "Streak"}: ${summary?.streak ?? 0} days`}
-            accessibilityHint={summary?.streakBroken && (summary?.streak ?? 0) > 0 ? "Tap to use a streak freeze" : undefined}
           >
-            <View className="h-8 w-8 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30">
-              <IconSymbol
-                name="flame.fill"
-                size={16}
-                color={summary?.streakBroken || summary?.refreshedToday === false ? "#9ca3af" : "#f59e0b"}
-              />
-            </View>
-            <View className="flex-1">
-              <Text className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-                Streak
+            <IconSymbol
+              name="flame.fill"
+              size={15}
+              color={streakActive ? "#FB923C" : "rgba(255,255,255,0.2)"}
+            />
+            <View>
+              <Text style={{ fontSize: 9, fontWeight: "700", letterSpacing: 1.2, color: M.textDimDark }}>
+                STREAK
               </Text>
-              <Text className={`text-base font-bold ${summary?.streakBroken ? "text-neutral-400 line-through dark:text-neutral-500" : summary?.refreshedToday === false ? "text-neutral-400 dark:text-neutral-500" : "text-neutral-900 dark:text-white"}`}>
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: "800",
+                  color: streakActive ? M.parchment : "rgba(255,255,255,0.25)",
+                  textDecorationLine: summary?.streakBroken ? "line-through" : "none",
+                }}
+              >
                 {summary?.streak ?? 0}d
               </Text>
             </View>
             {(summary?.freezeCount ?? 0) > 0 && (
-              <View className="flex-row items-center rounded-full bg-blue-100 px-2 py-0.5 dark:bg-blue-900/40">
-                <IconSymbol name="snowflake" size={11} color="#3b82f6" />
-                <Text className="ml-0.5 text-xs font-bold text-blue-600 dark:text-blue-400">
+              <View
+                style={{
+                  marginLeft: "auto",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  borderRadius: 999,
+                  paddingHorizontal: 6,
+                  paddingVertical: 2,
+                  backgroundColor: "rgba(59, 130, 246, 0.2)",
+                  gap: 3,
+                }}
+              >
+                <IconSymbol name="snowflake" size={9} color="#60a5fa" />
+                <Text style={{ fontSize: 10, fontWeight: "800", color: "#60a5fa" }}>
                   {summary!.freezeCount}
                 </Text>
               </View>
@@ -574,64 +927,92 @@ export default function LearnScreen() {
           </Pressable>
 
           {/* Divider */}
-          <View className="h-8 w-px bg-neutral-200 dark:bg-neutral-700" />
+          <View style={{ width: 1, backgroundColor: "rgba(255,255,255,0.06)" }} />
 
-          {/* Daily Goal */}
-          <View className="flex-1 flex-row items-center gap-2 rounded-lg px-2.5 py-1.5">
-            <View className="h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
-              <Text className="text-xs font-bold text-blue-600 dark:text-blue-400">🎯</Text>
-            </View>
-            <View className="flex-1">
-              <Text className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-                Goal
-              </Text>
-              <View className="flex-row items-center gap-1">
-                <Text className="text-base font-bold text-neutral-900 dark:text-white">
-                  {completedToday}
-                </Text>
-                <Text className="text-xs text-neutral-500 dark:text-neutral-400">/3</Text>
-              </View>
-            </View>
+          {/* Daily goal */}
+          <View
+            style={{
+              flex: 1,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 8,
+              paddingHorizontal: 12,
+              paddingVertical: 10,
+              borderRadius: 12,
+              backgroundColor: "rgba(255,255,255,0.05)",
+              borderWidth: 1,
+              borderColor: "rgba(255,255,255,0.08)",
+            }}
+          >
             <DailyGoalRing completedToday={completedToday} />
+            <View>
+              <Text style={{ fontSize: 9, fontWeight: "700", letterSpacing: 1.2, color: M.textDimDark }}>
+                DAILY GOAL
+              </Text>
+              <Text style={{ fontSize: 16, fontWeight: "800", color: M.parchment }}>
+                {completedToday}
+                <Text style={{ fontSize: 12, fontWeight: "500", color: M.textDimDark }}>/3</Text>
+              </Text>
+            </View>
           </View>
-        </View>
+        </Animated.View>
       </View>
 
-      {isLoading ? (
-        <LoadingScreen />
-      ) : courses.length === 0 ? (
-        <View className="flex-1 items-center justify-center px-8">
-          <IconSymbol name="book.fill" size={48} color="#d1d5db" />
-          <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
-            {t("learn.noCourses")}
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={courses}
-          keyExtractor={(item) => item.id}
-          contentContainerClassName="px-5 pb-8 pt-2"
-          renderItem={({ item }) => <CourseCard course={item} completedIds={completedIds} hasStoryArc={storyArcCourseIds.has(item.id)} />}
-          ListHeaderComponent={
-            <View className="mb-4 gap-3">
-              {/* <ReviewBanner languageId={selectedLanguageId} /> */}
-              {/* {resumeState && resumeState.positionSeconds > 5 && (
-                <ContinueCard
-                  lessonId={resumeState.lessonId}
-                  positionSeconds={resumeState.positionSeconds}
-                />
-              )} */}
-              <UpNextCard languageId={selectedLanguageId} />
-              <BountyTeaser languageId={selectedLanguageId} />
-              <ContributorBanner />
-            </View>
-          }
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-        />
-      )}
+      {/* Language selector — sits at the boundary */}
+      <View style={{ backgroundColor: M.cardDark, borderBottomWidth: 1, borderBottomColor: M.borderDark }}>
+        <EnrolledLanguageBar />
+      </View>
+
+      {/* ── Gallery Content ── */}
+      <View style={{ flex: 1, backgroundColor: M.cardDark }}>
+        {isLoading ? (
+          <LoadingScreen />
+        ) : courses.length === 0 ? (
+          <View className="flex-1 items-center justify-center px-8">
+            <IconSymbol name="book.fill" size={44} color="rgba(255,255,255,0.1)" />
+            <Text style={{ marginTop: 16, textAlign: "center", fontSize: 14, color: M.textDimDark }}>
+              {t("learn.noCourses")}
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={courses}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32, paddingTop: 16 }}
+            renderItem={({ item, index }) => (
+              <CourseCard
+                course={item}
+                completedIds={completedIds}
+                hasStoryArc={storyArcCourseIds.has(item.id)}
+                index={index}
+              />
+            )}
+            ListHeaderComponent={
+              <View style={{ gap: 10, marginBottom: 16 }}>
+                <ReviewBanner languageId={selectedLanguageId} />
+                {resumeState && resumeState.positionSeconds > 5 && (
+                  <ContinueCard
+                    lessonId={resumeState.lessonId}
+                    positionSeconds={resumeState.positionSeconds}
+                  />
+                )}
+                <UpNextCard languageId={selectedLanguageId} />
+                <BountyTeaser languageId={selectedLanguageId ?? ""} />
+                <ContributorBanner />
+              </View>
+            }
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={M.accent}
+                colors={[M.accent]}
+              />
+            }
+          />
+        )}
+      </View>
 
       <StreakFreezeModal
         visible={freezeModalVisible}
