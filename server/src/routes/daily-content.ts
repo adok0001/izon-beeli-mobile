@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { db } from "../db/index.js";
 import { appConfig, courses, dictionaryEntries, lessons, proverbs } from "../db/schema.js";
 import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
+import { sendDailyContentNotification } from "../lib/send-daily-content-notification.js";
 
 // ---- AppConfig key helpers ----
 
@@ -148,6 +149,10 @@ dailyContentAdminRouter.put("/wotd", async (c) => {
   const [entry] = await db.select({ id: dictionaryEntries.id }).from(dictionaryEntries).where(and(eq(dictionaryEntries.id, entryId), eq(dictionaryEntries.languageId, languageId))).limit(1);
   if (!entry) return c.json({ error: "Entry not found for this language" }, 404);
   await db.insert(appConfig).values({ key: WOTD_KEY(languageId), value: entryId }).onConflictDoUpdate({ target: appConfig.key, set: { value: entryId } });
+  const result = await resolveWotd(languageId);
+  if (result) {
+    sendDailyContentNotification("wotd", languageId, `${result.entry.word} — ${result.entry.english}`).catch(() => {});
+  }
   return c.json({ ok: true });
 });
 
@@ -173,6 +178,11 @@ dailyContentAdminRouter.put("/potm", async (c) => {
   const [proverb] = await db.select({ id: proverbs.id }).from(proverbs).where(and(eq(proverbs.id, proverbId), eq(proverbs.languageId, languageId))).limit(1);
   if (!proverb) return c.json({ error: "Proverb not found for this language" }, 404);
   await db.insert(appConfig).values({ key: POTM_KEY(languageId), value: proverbId }).onConflictDoUpdate({ target: appConfig.key, set: { value: proverbId } });
+  const result = await resolvePotm(languageId);
+  if (result) {
+    const body = result.proverb.text.length > 80 ? result.proverb.text.slice(0, 77) + "…" : result.proverb.text;
+    sendDailyContentNotification("potm", languageId, body).catch(() => {});
+  }
   return c.json({ ok: true });
 });
 
@@ -198,6 +208,10 @@ dailyContentAdminRouter.put("/sotw", async (c) => {
   const [lesson] = await db.select({ id: lessons.id }).from(lessons).where(and(eq(lessons.id, lessonId), eq(lessons.type, "song"))).limit(1);
   if (!lesson) return c.json({ error: "Song not found" }, 404);
   await db.insert(appConfig).values({ key: SOTW_KEY(languageId), value: lessonId }).onConflictDoUpdate({ target: appConfig.key, set: { value: lessonId } });
+  const result = await resolveSotw(languageId);
+  if (result) {
+    sendDailyContentNotification("sotw", languageId, result.lesson.title).catch(() => {});
+  }
   return c.json({ ok: true });
 });
 

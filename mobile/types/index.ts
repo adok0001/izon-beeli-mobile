@@ -233,6 +233,8 @@ export interface MatchingGameResult {
 
 export type NotificationType =
   | "word_of_day"
+  | "proverb_of_month"
+  | "song_of_week"
   | "streak_reminder"
   | "assignment_due"
   | "achievement"

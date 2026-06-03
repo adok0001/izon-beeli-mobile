@@ -63,6 +63,8 @@ export function addNotificationListener(
 const SCREEN_ROUTES: Record<string, string> = {
   "educator-guide": "/educator-guide",
   "reviewer-application": "/reviewer-application",
+  "potm": "/(tabs)/learn",
+  "sotw": "/(tabs)/listen",
 };
 
 export function addNotificationTapListener(onTap: (route: string) => void): () => void {
