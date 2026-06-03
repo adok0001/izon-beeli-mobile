@@ -1,5 +1,7 @@
 import { WordAudioButton } from "@/components/dictionary/word-audio-button";
+import { NsibidiText } from "@/components/nsibidi/nsibidi-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { ActivityIndicator } from "react-native";
 import {
   ALL_CATEGORIES,
   searchDictionary,
@@ -8,6 +10,7 @@ import {
 } from "@/lib/dictionary";
 import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
+import { useIgboSearch } from "@/lib/hooks/use-igbo-search";
 import { useRecentlyViewed } from "@/lib/hooks/use-recently-viewed";
 import { useRemoveWord, useSaveWord, useWordBank } from "@/lib/hooks/use-wordbank";
 import { useDictionaryNavStore } from "@/store/dictionary-nav-store";
@@ -131,6 +134,11 @@ function WordRow({
                 ? entry.english.split(";").map((m) => m.trim()).filter(Boolean).join(" · ")
                 : entry.english}
             </Text>
+            {!!entry.nsibidi && (
+              <NsibidiText size={18} color="#f59e0b" style={{ marginTop: 2 }}>
+                {entry.nsibidi}
+              </NsibidiText>
+            )}
           </View>
           <WordAudioButton audioSource={entry.audioUrl} word={entry.word} />
           <Pressable onPress={onToggle} hitSlop={8} className="ml-1">
@@ -195,8 +203,20 @@ export default function DictionaryScreen() {
   const saveWord = useSaveWord();
   const removeWord = useRemoveWord();
   const { selectedLanguageId } = useLanguageStore();
-  const { data: allEntries = [], isLoading, refetch } = useDictionary(selectedLanguageId);
+  const { data: localEntries = [], isLoading: localLoading, refetch } = useDictionary(selectedLanguageId);
+  const isIgbo = selectedLanguageId === "igbo";
+  const { data: igboApiResults = [], isFetching: igboFetching } = useIgboSearch(isIgbo ? query : "");
   const [refreshing, setRefreshing] = useState(false);
+
+  // Merge: local entries first, then API results not already present by word (case-insensitive)
+  const allEntries = useMemo(() => {
+    if (!isIgbo || igboApiResults.length === 0) return localEntries;
+    const localWords = new Set(localEntries.map((e) => e.word.toLowerCase()));
+    const novel = igboApiResults.filter((e) => !localWords.has(e.word.toLowerCase()));
+    return [...localEntries, ...novel];
+  }, [isIgbo, localEntries, igboApiResults]);
+
+  const isLoading = localLoading;
   const { data: currentUser } = useCurrentUser();
   const isEducator = !!(currentUser && canAccessEducatorPanel(currentUser));
   const setNavContext = useDictionaryNavStore((s) => s.setContext);
@@ -293,6 +313,9 @@ export default function DictionaryScreen() {
               autoCapitalize="none"
               autoCorrect={false}
             />
+            {igboFetching && isIgbo && query.length >= 2 && (
+              <ActivityIndicator size="small" color="#f59e0b" style={{ marginRight: 4 }} />
+            )}
             {query.length > 0 && (
               <Pressable onPress={() => setQuery("")} hitSlop={8}>
                 <IconSymbol name="xmark" size={16} color="#9ca3af" />

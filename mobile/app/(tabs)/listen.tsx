@@ -294,6 +294,7 @@ export default function DiscoverScreen() {
   const hasScriptPractice = ["amharic", "tigrinya", "oromo"].includes(selectedLanguageId);
   const hasAdinkra = ["ga", "ewe", "dagbani"].includes(selectedLanguageId);
   const hasAkan = selectedLanguageId === "akan";
+  const hasNsibidi = selectedLanguageId === "igbo";
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
@@ -487,6 +488,33 @@ export default function DiscoverScreen() {
                 <Text style={{ fontSize: 11, color: M.sub, marginTop: 1 }}>{t("practice.adinkraSubtitle")}</Text>
               </View>
               <IconSymbol name="chevron.right" size={14} color="#a78bfa" />
+            </Pressable>
+          )}
+
+          {hasNsibidi && (
+            <Pressable
+              onPress={() => router.push("/nsibidi-lesson")}
+              style={{
+                flexDirection: "row", alignItems: "center",
+                borderRadius: 14, padding: 14,
+                backgroundColor: M.card, borderWidth: 1, borderColor: M.border,
+                borderLeftWidth: 4, borderLeftColor: "#f59e0b",
+              }}
+              className="active:opacity-70"
+            >
+              <View style={{ width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(245, 158, 11, 0.1)", marginRight: 12 }}>
+                <Text style={{ fontSize: 22, fontWeight: "800", color: "#f59e0b" }}>𐘕</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: "#f59e0b" }}>
+                  {t("practice.scriptPractice").toUpperCase()}
+                </Text>
+                <Text style={{ fontSize: 13, fontWeight: "700", color: M.text, marginTop: 2 }}>
+                  {t("practice.nsibidiTitle")}
+                </Text>
+                <Text style={{ fontSize: 11, color: M.sub, marginTop: 1 }}>{t("practice.nsibidiSubtitle")}</Text>
+              </View>
+              <IconSymbol name="chevron.right" size={14} color="#f59e0b" />
             </Pressable>
           )}
         </View>

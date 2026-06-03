@@ -15,6 +15,7 @@ export interface DictionaryEntry {
   contributorName?: string;
   contributorId?: string;
   englishWordId?: string;
+  nsibidi?: string;
 }
 
 export const DICTIONARY_CATEGORY_VALUES = [

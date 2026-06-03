@@ -93,6 +93,8 @@ export const pcm = {
     culturalSymbols: "Cultural Symbols",
     adinkraTitle: "Adinkra Symbols",
     adinkraSubtitle: "Explore Akan wisdom symbols",
+    nsibidiTitle: "Nsịbịdị Script",
+    nsibidiSubtitle: "Explore Igbo people own writing system",
     sectionToday: "Today's Gallery",
     sectionActivities: "The Workshop",
     sectionCulture: "The Cultural Hall",

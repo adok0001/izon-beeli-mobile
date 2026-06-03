@@ -3,8 +3,8 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { analytics } from "@/lib/analytics";
 import { queryClient } from "@/lib/api";
 import { tokenCache } from "@/lib/auth";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSyncUser } from "@/lib/hooks/use-sync-user";
+import { useWidgetSync } from "@/lib/hooks/use-widget-sync";
 import "@/lib/i18n";
 import {
   addNotificationListener,
@@ -13,24 +13,24 @@ import {
   registerPushToken,
 } from "@/lib/push-notifications";
 import { useLanguageStore } from "@/store/language-store";
-import { useWidgetSync } from "@/lib/hooks/use-widget-sync";
 import { useNotificationStore } from "@/store/notification-store";
 import { useThemeStore } from "@/store/theme-store";
 import { useTourStore } from "@/store/tour-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { ClerkLoaded, ClerkProvider, useAuth } from "@clerk/clerk-expo";
-import { DarkTheme, ThemeProvider, type Theme } from "@react-navigation/native";
-import { QueryClientProvider } from "@tanstack/react-query";
 import {
   PlusJakartaSans_600SemiBold,
   PlusJakartaSans_700Bold,
   useFonts,
 } from "@expo-google-fonts/plus-jakarta-sans";
+import { DarkTheme, ThemeProvider, type Theme } from "@react-navigation/native";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef } from "react";
 import { Text, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import "../global.css";
 
@@ -134,7 +134,11 @@ export default function RootLayout() {
   const hydrateLanguage = useLanguageStore((s) => s.hydrate);
   const hydrateUiLanguage = useUiLanguageStore((s) => s.hydrate);
   const hydrateTours = useTourStore((s) => s.hydrate);
-  const [fontsLoaded, fontError] = useFonts({ PlusJakartaSans_700Bold, PlusJakartaSans_600SemiBold });
+  const [fontsLoaded, fontError] = useFonts({ 
+    PlusJakartaSans_700Bold, 
+    PlusJakartaSans_600SemiBold,
+    Akagu: require("../assets/fonts/Akagu.ttf"),
+   });
 
   useEffect(() => {
     configurePushNotifications();
@@ -196,6 +200,7 @@ export default function RootLayout() {
                   <Stack.Screen name="matching-game" options={{ presentation: "modal", headerShown: false }} />
                   <Stack.Screen name="adinkra" options={{ headerBackTitle: "Back" }} />
                   <Stack.Screen name="geez-lesson" options={{ headerBackTitle: "Back" }} />
+                  <Stack.Screen name="nsibidi-lesson" options={{ headerBackTitle: "Back" }} />
                   <Stack.Screen name="contributors" options={{ headerBackTitle: "Back" }} />
                   <Stack.Screen name="notifications" options={{ headerBackTitle: "Back" }} />
                   <Stack.Screen name="cultural/[languageId]" options={{ headerBackTitle: "Back" }} />

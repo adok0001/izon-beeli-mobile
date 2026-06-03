@@ -93,6 +93,8 @@ export const fr = {
     culturalSymbols: "Symboles culturels",
     adinkraTitle: "Symboles Adinkra",
     adinkraSubtitle: "Explorez les symboles de sagesse Akan",
+    nsibidiTitle: "Écriture Nsịbịdị",
+    nsibidiSubtitle: "Explorez le système d'écriture indigène igbo",
     sectionToday: "La Galerie du Jour",
     sectionActivities: "L'Atelier",
     sectionCulture: "La Grande Salle",
