@@ -18,7 +18,7 @@ import { useThemeStore } from "@/store/theme-store";
 import { useTourStore } from "@/store/tour-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { ClerkLoaded, ClerkProvider, useAuth } from "@clerk/clerk-expo";
-import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { DarkTheme, ThemeProvider, type Theme } from "@react-navigation/native";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
   PlusJakartaSans_600SemiBold,
@@ -38,6 +38,21 @@ const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
 export const unstable_settings = {
   anchor: "(tabs)",
+};
+
+// Navigation chrome (headers, tab bar) is always dark — the museum foyer is always atmospheric.
+// Content areas adapt via useMuseumTheme().
+const MuseumNavigationTheme: Theme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    primary: "#C4862A",
+    background: "#0D0F1A",
+    card: "#0D0F1A",       // tab bar + header background
+    text: "#F7F2E8",       // header title + tab label
+    border: "#2E3245",
+    notification: "#C4862A",
+  },
 };
 function AuthGate({ children }: Readonly<{ children: React.ReactNode }>) {
   const { isSignedIn, isLoaded, getToken, userId } = useAuth();
@@ -149,7 +164,7 @@ export default function RootLayout() {
     <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
       <ClerkLoaded>
         <QueryClientProvider client={queryClient}>
-          <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+          <ThemeProvider value={MuseumNavigationTheme}>
             <AuthGate>
               <GestureHandlerRootView style={{ flex: 1 }}>
                 <Stack
