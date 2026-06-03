@@ -1,24 +1,17 @@
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useLeaderboard, type LeaderboardEntry } from "@/lib/hooks/use-leaderboard";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, FlatList, Image, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const M = {
-  ink: "#0D0F1A",
-  parchment: "#F7F2E8",
-  accent: "#C4862A",
-  cardBg: "#1A1D2C",
-  borderDark: "#2E3245",
-  textDim: "#9A9480",
-  textDimDark: "#5A5D70",
-} as const;
 
 function getInitials(name: string): string {
   return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 }
 
 function Avatar({ name, avatarUrl, color }: Readonly<{ name: string; avatarUrl?: string | null; color: string }>) {
+  const M = useMuseumTheme();
   if (avatarUrl) {
     return <Image source={{ uri: avatarUrl }} style={{ width: 36, height: 36, borderRadius: 18 }} resizeMode="cover" />;
   }
@@ -37,11 +30,12 @@ function Avatar({ name, avatarUrl, color }: Readonly<{ name: string; avatarUrl?:
 }
 
 function RankBadge({ rank }: Readonly<{ rank: number }>) {
+  const M = useMuseumTheme();
   const gold = rank === 1;
   const silver = rank === 2;
   const bronze = rank === 3;
 
-  const color = gold ? "#C4862A" : silver ? "#9CA3AF" : bronze ? "#CD7F32" : M.textDimDark;
+  const color = gold ? "#C4862A" : silver ? "#9CA3AF" : bronze ? "#CD7F32" : M.muted;
   const bg = gold
     ? "rgba(196,134,42,0.15)"
     : silver
@@ -65,15 +59,16 @@ function RankBadge({ rank }: Readonly<{ rank: number }>) {
           {rank === 1 ? "🥇" : rank === 2 ? "🥈" : "🥉"}
         </Text>
       ) : (
-        <Text style={{ fontSize: 11, fontWeight: "700", color: M.textDimDark }}>{rank}</Text>
+        <Text style={{ fontSize: 11, fontWeight: "700", color: M.muted }}>{rank}</Text>
       )}
     </View>
   );
 }
 
 function EntryRow({ entry }: Readonly<{ entry: LeaderboardEntry }>) {
+  const M = useMuseumTheme();
   const highlighted = entry.isCurrentUser;
-  const avatarColor = highlighted ? M.accent : M.textDim;
+  const avatarColor = highlighted ? M.accent : M.sub;
 
   return (
     <View
@@ -81,11 +76,11 @@ function EntryRow({ entry }: Readonly<{ entry: LeaderboardEntry }>) {
         flexDirection: "row", alignItems: "center", gap: 12,
         paddingHorizontal: 14, paddingVertical: 12,
         borderRadius: 14, marginBottom: 8,
-        backgroundColor: highlighted ? `${M.accent}0D` : M.cardBg,
+        backgroundColor: highlighted ? `${M.accent}0D` : M.card,
         borderWidth: 1,
-        borderColor: highlighted ? `${M.accent}35` : M.borderDark,
+        borderColor: highlighted ? `${M.accent}35` : M.border,
         borderLeftWidth: highlighted ? 4 : 1,
-        borderLeftColor: highlighted ? M.accent : M.borderDark,
+        borderLeftColor: highlighted ? M.accent : M.border,
       }}
     >
       <RankBadge rank={entry.rank} />
@@ -96,7 +91,7 @@ function EntryRow({ entry }: Readonly<{ entry: LeaderboardEntry }>) {
             numberOfLines={1}
             style={{
               fontSize: 13, fontWeight: "700",
-              color: highlighted ? M.accent : M.parchment,
+              color: highlighted ? M.accent : M.text,
             }}
           >
             {entry.name}
@@ -113,7 +108,7 @@ function EntryRow({ entry }: Readonly<{ entry: LeaderboardEntry }>) {
           )}
         </View>
         {entry.selectedLanguageId ? (
-          <Text style={{ fontSize: 10, color: M.textDimDark, textTransform: "capitalize", marginTop: 1 }}>
+          <Text style={{ fontSize: 10, color: M.muted, textTransform: "capitalize", marginTop: 1 }}>
             {entry.selectedLanguageId}
           </Text>
         ) : null}
@@ -137,6 +132,7 @@ function EntryRow({ entry }: Readonly<{ entry: LeaderboardEntry }>) {
 }
 
 export default function LeaderboardScreen() {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const { data, isLoading, refetch, isRefetching } = useLeaderboard();
 
@@ -161,10 +157,10 @@ export default function LeaderboardScreen() {
             <IconSymbol name="trophy.fill" size={20} color={M.accent} />
           </View>
           <View>
-            <Text style={{ fontSize: 28, fontWeight: "900", color: M.parchment, letterSpacing: -0.4 }}>
+            <Text style={{ fontSize: 28, fontWeight: "900", color: M.text, letterSpacing: -0.4 }}>
               {t("leaderboard.title")}
             </Text>
-            <Text style={{ fontSize: 12, color: M.textDim, marginTop: 2 }}>
+            <Text style={{ fontSize: 12, color: M.sub, marginTop: 2 }}>
               {t("leaderboard.subtitle")}
             </Text>
           </View>
@@ -172,7 +168,7 @@ export default function LeaderboardScreen() {
       </View>
 
       {/* Content */}
-      <View style={{ flex: 1, backgroundColor: M.cardBg }}>
+      <View style={{ flex: 1, backgroundColor: M.card }}>
         {isLoading && (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
             <ActivityIndicator color={M.accent} />
@@ -181,8 +177,8 @@ export default function LeaderboardScreen() {
 
         {!isLoading && topEntries.length === 0 && (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
-            <IconSymbol name="trophy.fill" size={44} color={M.textDimDark} />
-            <Text style={{ fontSize: 13, color: M.textDimDark, textAlign: "center", marginTop: 14 }}>
+            <IconSymbol name="trophy.fill" size={44} color={M.muted} />
+            <Text style={{ fontSize: 13, color: M.muted, textAlign: "center", marginTop: 14 }}>
               {t("leaderboard.empty")}
             </Text>
           </View>
@@ -200,11 +196,11 @@ export default function LeaderboardScreen() {
               showCurrentUserBanner ? (
                 <View>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8 }}>
-                    <View style={{ flex: 1, borderTopWidth: 1, borderStyle: "dashed", borderTopColor: M.borderDark }} />
-                    <Text style={{ fontSize: 10, color: M.textDimDark, letterSpacing: 1 }}>
+                    <View style={{ flex: 1, borderTopWidth: 1, borderStyle: "dashed", borderTopColor: M.border }} />
+                    <Text style={{ fontSize: 10, color: M.muted, letterSpacing: 1 }}>
                       {t("leaderboard.yourRank").toUpperCase()}
                     </Text>
-                    <View style={{ flex: 1, borderTopWidth: 1, borderStyle: "dashed", borderTopColor: M.borderDark }} />
+                    <View style={{ flex: 1, borderTopWidth: 1, borderStyle: "dashed", borderTopColor: M.border }} />
                   </View>
                   <EntryRow entry={currentUserEntry!} />
                 </View>

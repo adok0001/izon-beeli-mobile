@@ -14,43 +14,37 @@ import { localizeField } from "@/lib/localize";
 import { useLanguageStore } from "@/store/language-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useRouter } from "expo-router";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const M = {
-  ink: "#0D0F1A",
-  parchment: "#F7F2E8",
-  accent: "#C4862A",
-  cardBg: "#1A1D2C",
-  borderDark: "#2E3245",
-  textDim: "#9A9480",
-  textDimDark: "#5A5D70",
-} as const;
 
 function ExhibitHeader({ label }: { label: string }) {
+  const M = useMuseumTheme();
   return (
     <View style={{ marginTop: 28, marginBottom: 14, flexDirection: "row", alignItems: "center", gap: 12 }}>
-      <View style={{ flex: 1, height: 1, backgroundColor: M.borderDark }} />
+      <View style={{ flex: 1, height: 1, backgroundColor: M.border }} />
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
         <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: M.accent }} />
         <Text
           style={{
             fontSize: 9, fontWeight: "800", letterSpacing: 2.5,
-            textTransform: "uppercase", color: M.textDimDark,
+            textTransform: "uppercase", color: M.muted,
           }}
         >
           {label}
         </Text>
         <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: M.accent }} />
       </View>
-      <View style={{ flex: 1, height: 1, backgroundColor: M.borderDark }} />
+      <View style={{ flex: 1, height: 1, backgroundColor: M.border }} />
     </View>
   );
 }
 
 function ProverbOfTheMonthCard({ languageId }: { languageId: string }) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const { uiLanguage } = useUiLanguageStore();
   const router = useRouter();
@@ -64,8 +58,8 @@ function ProverbOfTheMonthCard({ languageId }: { languageId: string }) {
     <View
       style={{
         borderRadius: 16,
-        backgroundColor: M.cardBg,
-        borderWidth: 1, borderColor: M.borderDark,
+        backgroundColor: M.card,
+        borderWidth: 1, borderColor: M.border,
         borderLeftWidth: 4, borderLeftColor: M.accent,
         overflow: "hidden",
       }}
@@ -92,16 +86,16 @@ function ProverbOfTheMonthCard({ languageId }: { languageId: string }) {
 
       <View style={{ paddingHorizontal: 16, paddingVertical: 16 }}>
         <Text style={{ fontSize: 42, lineHeight: 36, marginBottom: 6, color: M.accent, fontWeight: "900" }}>"</Text>
-        <Text style={{ fontSize: 16, fontWeight: "600", fontStyle: "italic", lineHeight: 24, color: M.parchment }}>
+        <Text style={{ fontSize: 16, fontWeight: "600", fontStyle: "italic", lineHeight: 24, color: M.text }}>
           {displayed.text}
         </Text>
-        <View style={{ height: 1, backgroundColor: M.borderDark, marginVertical: 12 }} />
-        <Text style={{ fontSize: 13, lineHeight: 18, color: M.textDim }}>
+        <View style={{ height: 1, backgroundColor: M.border, marginVertical: 12 }} />
+        <Text style={{ fontSize: 13, lineHeight: 18, color: M.sub }}>
           {localizeField(displayed.translation, displayed.translationFr, uiLanguage)}
         </Text>
         {displayed.meaning ? (
           <View style={{ marginTop: 10, borderRadius: 10, padding: 12, backgroundColor: `${M.accent}08` }}>
-            <Text style={{ fontSize: 12, lineHeight: 17, color: M.textDim }}>
+            <Text style={{ fontSize: 12, lineHeight: 17, color: M.sub }}>
               {localizeField(displayed.meaning, displayed.meaningFr, uiLanguage)}
             </Text>
           </View>
@@ -120,6 +114,7 @@ function ProverbOfTheMonthCard({ languageId }: { languageId: string }) {
 }
 
 function SongOfTheWeekCard({ languageId }: { languageId: string }) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
   const song = useSongOfTheWeek(languageId);
@@ -134,15 +129,15 @@ function SongOfTheWeekCard({ languageId }: { languageId: string }) {
       <Pressable
         onPress={() => router.push(`/songs/${languageId}` as any)}
         style={{
-          borderRadius: 16, backgroundColor: M.cardBg,
-          borderWidth: 1, borderColor: M.borderDark,
+          borderRadius: 16, backgroundColor: M.card,
+          borderWidth: 1, borderColor: M.border,
           borderLeftWidth: 4, borderLeftColor: "#f43f5e",
           overflow: "hidden",
         }}
         className="active:opacity-70"
       >
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 14, paddingVertical: 12 }}>
-          <Text style={{ fontSize: 13, color: M.textDim }}>{t("practice.noSongThisWeek")}</Text>
+          <Text style={{ fontSize: 13, color: M.sub }}>{t("practice.noSongThisWeek")}</Text>
           <IconSymbol name="chevron.right" size={14} color="#f43f5e" />
         </View>
       </Pressable>
@@ -153,8 +148,8 @@ function SongOfTheWeekCard({ languageId }: { languageId: string }) {
     <Pressable
       onPress={() => router.push(`/lesson/${song.id}` as any)}
       style={{
-        borderRadius: 16, backgroundColor: M.cardBg,
-        borderWidth: 1, borderColor: M.borderDark,
+        borderRadius: 16, backgroundColor: M.card,
+        borderWidth: 1, borderColor: M.border,
         borderLeftWidth: 4, borderLeftColor: "#f43f5e",
         overflow: "hidden",
       }}
@@ -185,11 +180,11 @@ function SongOfTheWeekCard({ languageId }: { languageId: string }) {
           <IconSymbol name="music.note.list" size={22} color="#f43f5e" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 14, fontWeight: "700", color: M.parchment }} numberOfLines={1}>
+          <Text style={{ fontSize: 14, fontWeight: "700", color: M.text }} numberOfLines={1}>
             {localizeField(song.title, song.titleFr, uiLanguage)}
           </Text>
           {song.description ? (
-            <Text style={{ marginTop: 2, fontSize: 12, color: M.textDim }} numberOfLines={1}>
+            <Text style={{ marginTop: 2, fontSize: 12, color: M.sub }} numberOfLines={1}>
               {localizeField(song.description, song.descriptionFr, uiLanguage)}
             </Text>
           ) : null}
@@ -201,6 +196,7 @@ function SongOfTheWeekCard({ languageId }: { languageId: string }) {
 }
 
 function SongsCard({ languageId }: { languageId: string }) {
+  const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
   const { data: courses = [] } = useCourses(languageId);
@@ -218,7 +214,7 @@ function SongsCard({ languageId }: { languageId: string }) {
       style={{
         flexDirection: "row", alignItems: "center",
         borderRadius: 14, padding: 14,
-        backgroundColor: M.cardBg, borderWidth: 1, borderColor: M.borderDark,
+        backgroundColor: M.card, borderWidth: 1, borderColor: M.border,
       }}
       className="active:opacity-70"
     >
@@ -226,8 +222,8 @@ function SongsCard({ languageId }: { languageId: string }) {
         <IconSymbol name="music.note" size={18} color="#f43f5e" />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 13, fontWeight: "700", color: M.parchment }}>{t("songs.title")}</Text>
-        <Text style={{ fontSize: 11, color: M.textDimDark, marginTop: 1 }}>{songs.length} songs available</Text>
+        <Text style={{ fontSize: 13, fontWeight: "700", color: M.text }}>{t("songs.title")}</Text>
+        <Text style={{ fontSize: 11, color: M.muted, marginTop: 1 }}>{songs.length} songs available</Text>
       </View>
       <IconSymbol name="chevron.right" size={13} color="#f43f5e" />
     </Pressable>
@@ -235,6 +231,7 @@ function SongsCard({ languageId }: { languageId: string }) {
 }
 
 function ProverbsCollectionCard({ languageId }: { languageId: string }) {
+  const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
   const { data: proverbs = [] } = useProverbs(languageId);
@@ -247,7 +244,7 @@ function ProverbsCollectionCard({ languageId }: { languageId: string }) {
       style={{
         flexDirection: "row", alignItems: "center",
         borderRadius: 14, padding: 14,
-        backgroundColor: M.cardBg, borderWidth: 1, borderColor: M.borderDark,
+        backgroundColor: M.card, borderWidth: 1, borderColor: M.border,
       }}
       className="active:opacity-70"
     >
@@ -255,8 +252,8 @@ function ProverbsCollectionCard({ languageId }: { languageId: string }) {
         <IconSymbol name="text.quote" size={18} color={M.accent} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 13, fontWeight: "700", color: M.parchment }}>{t("practice.proverbs")}</Text>
-        <Text style={{ fontSize: 11, color: M.textDimDark, marginTop: 1 }}>{proverbs.length} proverbs in collection</Text>
+        <Text style={{ fontSize: 13, fontWeight: "700", color: M.text }}>{t("practice.proverbs")}</Text>
+        <Text style={{ fontSize: 11, color: M.muted, marginTop: 1 }}>{proverbs.length} proverbs in collection</Text>
       </View>
       <IconSymbol name="chevron.right" size={13} color={M.accent} />
     </Pressable>
@@ -264,6 +261,7 @@ function ProverbsCollectionCard({ languageId }: { languageId: string }) {
 }
 
 export default function DiscoverScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const { selectedLanguageId } = useLanguageStore();
   const { t } = useTranslation();
@@ -279,10 +277,10 @@ export default function DiscoverScreen() {
       <View style={{ backgroundColor: M.ink, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20 }}>
         <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
           <View>
-            <Text style={{ fontSize: 32, fontWeight: "900", color: M.parchment, letterSpacing: -0.5 }}>
+            <Text style={{ fontSize: 32, fontWeight: "900", color: M.text, letterSpacing: -0.5 }}>
               {t("practice.title")}
             </Text>
-            <Text style={{ fontSize: 13, color: M.textDim, marginTop: 4 }}>
+            <Text style={{ fontSize: 13, color: M.sub, marginTop: 4 }}>
               {t("practice.subtitle")}
             </Text>
           </View>
@@ -293,7 +291,7 @@ export default function DiscoverScreen() {
       </View>
 
       <ScrollView
-        style={{ flex: 1, backgroundColor: M.cardBg }}
+        style={{ flex: 1, backgroundColor: M.card }}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40, paddingTop: 8 }}
         showsVerticalScrollIndicator={false}
       >
@@ -315,8 +313,8 @@ export default function DiscoverScreen() {
               onPress={() => router.push("/word-review")}
               style={{
                 flex: 1, alignItems: "center", paddingVertical: 16,
-                borderRadius: 14, backgroundColor: M.cardBg,
-                borderWidth: 1, borderColor: M.borderDark,
+                borderRadius: 14, backgroundColor: M.card,
+                borderWidth: 1, borderColor: M.border,
               }}
               className="active:opacity-70"
             >
@@ -344,8 +342,8 @@ export default function DiscoverScreen() {
               onPress={() => router.push("/quiz")}
               style={{
                 flex: 1, alignItems: "center", paddingVertical: 16,
-                borderRadius: 14, backgroundColor: M.cardBg,
-                borderWidth: 1, borderColor: M.borderDark,
+                borderRadius: 14, backgroundColor: M.card,
+                borderWidth: 1, borderColor: M.border,
               }}
               className="active:opacity-70"
             >
@@ -359,8 +357,8 @@ export default function DiscoverScreen() {
               onPress={() => router.push("/matching-game")}
               style={{
                 flex: 1, alignItems: "center", paddingVertical: 16,
-                borderRadius: 14, backgroundColor: M.cardBg,
-                borderWidth: 1, borderColor: M.borderDark,
+                borderRadius: 14, backgroundColor: M.card,
+                borderWidth: 1, borderColor: M.border,
               }}
               className="active:opacity-70"
             >
@@ -390,7 +388,7 @@ export default function DiscoverScreen() {
                 <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 2, color: "#60a5fa" }}>
                   {t("practice.multiplayer").toUpperCase()}
                 </Text>
-                <Text style={{ marginTop: 2, fontSize: 15, fontWeight: "800", color: M.parchment }}>
+                <Text style={{ marginTop: 2, fontSize: 15, fontWeight: "800", color: M.text }}>
                   {t("practice.multiplayerTitle")}
                 </Text>
                 <Text style={{ fontSize: 11, color: "#60a5fa", marginTop: 1 }}>
@@ -420,7 +418,7 @@ export default function DiscoverScreen() {
               style={{
                 flexDirection: "row", alignItems: "center",
                 borderRadius: 14, padding: 14,
-                backgroundColor: M.cardBg, borderWidth: 1, borderColor: M.borderDark,
+                backgroundColor: M.card, borderWidth: 1, borderColor: M.border,
                 borderLeftWidth: 4, borderLeftColor: "#4ade80",
               }}
               className="active:opacity-70"
@@ -432,10 +430,10 @@ export default function DiscoverScreen() {
                 <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: "#4ade80" }}>
                   {t("practice.scriptPractice").toUpperCase()}
                 </Text>
-                <Text style={{ fontSize: 13, fontWeight: "700", color: M.parchment, marginTop: 2 }}>
+                <Text style={{ fontSize: 13, fontWeight: "700", color: M.text, marginTop: 2 }}>
                   {t("practice.geezTitle")}
                 </Text>
-                <Text style={{ fontSize: 11, color: M.textDim, marginTop: 1 }}>{t("practice.geezSubtitle")}</Text>
+                <Text style={{ fontSize: 11, color: M.sub, marginTop: 1 }}>{t("practice.geezSubtitle")}</Text>
               </View>
               <IconSymbol name="chevron.right" size={14} color="#4ade80" />
             </Pressable>
@@ -447,7 +445,7 @@ export default function DiscoverScreen() {
               style={{
                 flexDirection: "row", alignItems: "center",
                 borderRadius: 14, padding: 14,
-                backgroundColor: M.cardBg, borderWidth: 1, borderColor: M.borderDark,
+                backgroundColor: M.card, borderWidth: 1, borderColor: M.border,
                 borderLeftWidth: 4, borderLeftColor: "#a78bfa",
               }}
               className="active:opacity-70"
@@ -459,10 +457,10 @@ export default function DiscoverScreen() {
                 <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: "#a78bfa" }}>
                   {t("practice.culturalSymbols").toUpperCase()}
                 </Text>
-                <Text style={{ fontSize: 13, fontWeight: "700", color: M.parchment, marginTop: 2 }}>
+                <Text style={{ fontSize: 13, fontWeight: "700", color: M.text, marginTop: 2 }}>
                   {t("practice.adinkraTitle")}
                 </Text>
-                <Text style={{ fontSize: 11, color: M.textDim, marginTop: 1 }}>{t("practice.adinkraSubtitle")}</Text>
+                <Text style={{ fontSize: 11, color: M.sub, marginTop: 1 }}>{t("practice.adinkraSubtitle")}</Text>
               </View>
               <IconSymbol name="chevron.right" size={14} color="#a78bfa" />
             </Pressable>

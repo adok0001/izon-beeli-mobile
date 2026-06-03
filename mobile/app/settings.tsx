@@ -1,3 +1,4 @@
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { analytics } from "@/lib/analytics";
@@ -17,21 +18,13 @@ import { useTranslation } from "react-i18next";
 import { Alert, Pressable, ScrollView, Switch, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const M = {
-  ink: "#0D0F1A",
-  parchment: "#F7F2E8",
-  accent: "#C4862A",
-  cardBg: "#1A1D2C",
-  borderDark: "#2E3245",
-  textDim: "#9A9480",
-  textDimDark: "#5A5D70",
-} as const;
 
 function SectionLabel({ label }: { label: string }) {
+  const M = useMuseumTheme();
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 28, marginBottom: 8 }}>
       <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: M.accent }} />
-      <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 2, textTransform: "uppercase", color: M.textDimDark }}>
+      <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 2, textTransform: "uppercase", color: M.muted }}>
         {label}
       </Text>
     </View>
@@ -49,6 +42,7 @@ function SettingsRow({
   value?: string;
   onPress?: () => void;
 }) {
+  const M = useMuseumTheme();
   return (
     <Pressable
       onPress={onPress}
@@ -56,14 +50,14 @@ function SettingsRow({
       style={{
         flexDirection: "row", alignItems: "center",
         paddingVertical: 14,
-        borderBottomWidth: 1, borderBottomColor: M.borderDark,
+        borderBottomWidth: 1, borderBottomColor: M.border,
       }}
       className="active:opacity-70"
     >
-      <IconSymbol name={icon as any} size={17} color={M.textDimDark} />
-      <Text style={{ marginLeft: 14, flex: 1, fontSize: 14, color: M.parchment }}>{label}</Text>
-      {value && <Text style={{ marginRight: 8, fontSize: 12, color: M.textDimDark }}>{value}</Text>}
-      {onPress && <IconSymbol name="chevron.right" size={13} color={M.textDimDark} />}
+      <IconSymbol name={icon as any} size={17} color={M.muted} />
+      <Text style={{ marginLeft: 14, flex: 1, fontSize: 14, color: M.text }}>{label}</Text>
+      {value && <Text style={{ marginRight: 8, fontSize: 12, color: M.muted }}>{value}</Text>}
+      {onPress && <IconSymbol name="chevron.right" size={13} color={M.muted} />}
     </Pressable>
   );
 }
@@ -83,25 +77,26 @@ function ToggleRow({
   onToggle: (v: boolean) => void;
   disabled?: boolean;
 }) {
+  const M = useMuseumTheme();
   return (
     <View
       style={{
         flexDirection: "row", alignItems: "center",
         paddingVertical: 12,
-        borderBottomWidth: 1, borderBottomColor: M.borderDark,
+        borderBottomWidth: 1, borderBottomColor: M.border,
       }}
     >
-      <IconSymbol name={icon as any} size={17} color={M.textDimDark} />
+      <IconSymbol name={icon as any} size={17} color={M.muted} />
       <View style={{ marginLeft: 14, flex: 1 }}>
-        <Text style={{ fontSize: 14, color: M.parchment }}>{label}</Text>
-        {detail && <Text style={{ fontSize: 11, color: M.textDimDark, marginTop: 2 }}>{detail}</Text>}
+        <Text style={{ fontSize: 14, color: M.text }}>{label}</Text>
+        {detail && <Text style={{ fontSize: 11, color: M.muted, marginTop: 2 }}>{detail}</Text>}
       </View>
       <Switch
         value={value}
         onValueChange={onToggle}
         disabled={disabled}
-        trackColor={{ false: M.borderDark, true: M.accent }}
-        thumbColor={M.parchment}
+        trackColor={{ false: M.border, true: M.accent }}
+        thumbColor={M.text}
         accessibilityLabel={label}
         accessibilityHint={detail}
         accessibilityRole="switch"
@@ -116,6 +111,7 @@ const LANG_OPTIONS: UiLanguage[] = ["en", "fr", "pcm"];
 const LANG_LABELS: Record<UiLanguage, string> = { en: "English", fr: "Français", pcm: "Naija" };
 
 export default function SettingsScreen() {
+  const M = useMuseumTheme();
   const { selectedLanguageId } = useLanguageStore();
   const { data: summary } = useProgressSummary();
   const { preference, setPreference } = useThemeStore();
@@ -179,8 +175,8 @@ export default function SettingsScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: t("settings.title"), headerStyle: { backgroundColor: M.ink }, headerTintColor: M.parchment, headerShadowVisible: false }} />
-      <SafeAreaView style={{ flex: 1, backgroundColor: M.cardBg }} edges={[]}>
+      <Stack.Screen options={{ title: t("settings.title"), headerStyle: { backgroundColor: M.ink }, headerTintColor: M.text, headerShadowVisible: false }} />
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.card }} edges={[]}>
         <NotificationBanner
           visible={toast.visible}
           title={toast.title}
@@ -228,7 +224,7 @@ export default function SettingsScreen() {
 
           {/* App */}
           <SectionLabel label={t("settings.app")} />
-          <Text style={{ fontSize: 11, color: M.textDimDark, marginBottom: 8, letterSpacing: 0.5 }}>
+          <Text style={{ fontSize: 11, color: M.muted, marginBottom: 8, letterSpacing: 0.5 }}>
             {t("settings.appearance")}
           </Text>
           <View style={{ flexDirection: "row", gap: 8, marginBottom: 16 }}>
@@ -240,13 +236,13 @@ export default function SettingsScreen() {
                   flex: 1, alignItems: "center", borderRadius: 10, paddingVertical: 10,
                   backgroundColor: preference === opt ? M.accent : M.ink,
                   borderWidth: 1,
-                  borderColor: preference === opt ? M.accent : M.borderDark,
+                  borderColor: preference === opt ? M.accent : M.border,
                 }}
               >
                 <Text
                   style={{
                     fontSize: 12, fontWeight: "700",
-                    color: preference === opt ? M.ink : M.textDim,
+                    color: preference === opt ? M.ink : M.sub,
                   }}
                 >
                   {t(`settings.theme${opt.charAt(0).toUpperCase() + opt.slice(1)}` as any)}
@@ -255,7 +251,7 @@ export default function SettingsScreen() {
             ))}
           </View>
 
-          <Text style={{ fontSize: 11, color: M.textDimDark, marginBottom: 8, letterSpacing: 0.5 }}>
+          <Text style={{ fontSize: 11, color: M.muted, marginBottom: 8, letterSpacing: 0.5 }}>
             {t("settings.uiLanguage")}
           </Text>
           <View style={{ flexDirection: "row", gap: 8 }}>
@@ -267,10 +263,10 @@ export default function SettingsScreen() {
                   flex: 1, alignItems: "center", borderRadius: 10, paddingVertical: 10,
                   backgroundColor: uiLanguage === lang ? M.accent : M.ink,
                   borderWidth: 1,
-                  borderColor: uiLanguage === lang ? M.accent : M.borderDark,
+                  borderColor: uiLanguage === lang ? M.accent : M.border,
                 }}
               >
-                <Text style={{ fontSize: 12, fontWeight: "700", color: uiLanguage === lang ? M.ink : M.textDim }}>
+                <Text style={{ fontSize: 12, fontWeight: "700", color: uiLanguage === lang ? M.ink : M.sub }}>
                   {LANG_LABELS[lang]}
                 </Text>
               </Pressable>
@@ -281,7 +277,7 @@ export default function SettingsScreen() {
           <SectionLabel label={t("settings.data")} />
           <Pressable
             onPress={handleResetProgress}
-            style={{ flexDirection: "row", alignItems: "center", paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: M.borderDark }}
+            style={{ flexDirection: "row", alignItems: "center", paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: M.border }}
             className="active:opacity-70"
           >
             <IconSymbol name="xmark" size={17} color="#f87171" />
@@ -295,7 +291,7 @@ export default function SettingsScreen() {
           <SettingsRow icon="person.fill" label={t("settings.accountSettings")} onPress={() => router.push("/account")} />
           <Pressable
             onPress={handleDeleteAccount}
-            style={{ flexDirection: "row", alignItems: "center", paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: M.borderDark }}
+            style={{ flexDirection: "row", alignItems: "center", paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: M.border }}
             className="active:opacity-70"
           >
             <IconSymbol name="trash" size={17} color="#f87171" />
@@ -309,13 +305,13 @@ export default function SettingsScreen() {
             <View
               style={{
                 paddingHorizontal: 16, paddingVertical: 6,
-                borderRadius: 999, borderWidth: 1, borderColor: M.borderDark,
+                borderRadius: 999, borderWidth: 1, borderColor: M.border,
                 marginBottom: 8,
               }}
             >
               <Text style={{ fontSize: 14, fontWeight: "900", color: M.accent, letterSpacing: 1 }}>BEELI</Text>
             </View>
-            <Text style={{ fontSize: 11, color: M.textDimDark }}>
+            <Text style={{ fontSize: 11, color: M.muted }}>
               Version {Constants.expoConfig?.version ?? "1.0.0"}
             </Text>
           </View>

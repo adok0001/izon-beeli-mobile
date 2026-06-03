@@ -21,6 +21,7 @@ import { useAudioStore } from "@/store/audio-store";
 import { useLanguageStore } from "@/store/language-store";
 import { useTourStore } from "@/store/tour-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { Course, Lesson } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -37,22 +38,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
-
-// ─── Design Tokens ────────────────────────────────────────────────────────────
-const M = {
-  ink: "#0D0F1A",
-  inkDeep: "#07080F",
-  parchment: "#F7F2E8",
-  accent: "#C4862A",
-  accentDim: "#8B5E1A",
-  accentGlow: "rgba(196, 134, 42, 0.15)",
-  accentLight: "#F5E8CC",
-  cardDark: "#1A1D2C",
-  borderDark: "#2E3245",
-  textDim: "#9A9480",
-  textDimDark: "#5A5D70",
-  warmWhite: "#FDFAF5",
-} as const;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function useMountAnimation(count = 1, stagger = 80) {
@@ -88,6 +73,7 @@ function animStyle(anim: Animated.Value, offsetY = 18) {
 
 // ─── DailyGoalRing ─────────────────────────────────────────────────────────
 function DailyGoalRing({ completedToday }: { completedToday: number }) {
+  const M = useMuseumTheme();
   const target = 3;
   const pct = Math.min(completedToday / target, 1);
   const size = 32;
@@ -129,6 +115,7 @@ const ContinueCard = memo(function ContinueCard({
   lessonId: string;
   positionSeconds: number;
 }) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
   const { uiLanguage } = useUiLanguageStore();
@@ -212,12 +199,13 @@ function LessonRow({
   completed: boolean;
   onPress: () => void;
 }) {
+  const M = useMuseumTheme();
   const { uiLanguage } = useUiLanguageStore();
 
   return (
     <Pressable
       onPress={onPress}
-      style={{ borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.05)" }}
+      style={{ borderTopWidth: 1, borderTopColor: M.border }}
       className="flex-row items-center py-3 active:opacity-60"
       accessibilityRole="button"
       accessibilityLabel={`${localizeField(lesson.title, lesson.titleFr, uiLanguage)}${completed ? ", completed" : ""}`}
@@ -230,9 +218,9 @@ function LessonRow({
           borderRadius: 10,
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: completed ? "rgba(74, 222, 128, 0.15)" : "rgba(255,255,255,0.05)",
+          backgroundColor: completed ? "rgba(74, 222, 128, 0.15)" : "transparent",
           borderWidth: 1.5,
-          borderColor: completed ? "#4ade80" : "rgba(255,255,255,0.12)",
+          borderColor: completed ? "#4ade80" : M.border,
         }}
       >
         {completed && (
@@ -244,7 +232,7 @@ function LessonRow({
           style={{
             fontSize: 13,
             fontWeight: completed ? "500" : "600",
-            color: completed ? "#6B7280" : "#F7F2E8",
+            color: completed ? M.muted : M.text,
             opacity: completed ? 0.6 : 1,
           }}
           numberOfLines={1}
@@ -279,6 +267,7 @@ const CourseCard = memo(function CourseCard({
   hasStoryArc: boolean;
   index: number;
 }) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
   const { uiLanguage } = useUiLanguageStore();
@@ -319,7 +308,7 @@ const CourseCard = memo(function CourseCard({
         style={{
           borderRadius: 18,
           overflow: "hidden",
-          backgroundColor: M.cardDark,
+          backgroundColor: M.card,
           borderWidth: 1,
           borderColor: M.borderDark,
           borderLeftWidth: 4,
@@ -373,7 +362,7 @@ const CourseCard = memo(function CourseCard({
 
           {/* Title */}
           <Text
-            style={{ fontSize: 18, fontWeight: "800", color: M.parchment, letterSpacing: -0.3, marginBottom: 4 }}
+            style={{ fontSize: 18, fontWeight: "800", color: M.text, letterSpacing: -0.3, marginBottom: 4 }}
           >
             {localizeField(course.title, course.titleFr, uiLanguage)}
           </Text>
@@ -532,6 +521,7 @@ const CourseCard = memo(function CourseCard({
 
 // ─── BountyTeaser ──────────────────────────────────────────────────────────
 function BountyTeaser({ languageId }: { languageId: string }) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
   const { data: bounties } = useBounties(languageId);
@@ -588,7 +578,7 @@ function BountyTeaser({ languageId }: { languageId: string }) {
               </Text>
             </View>
           </View>
-          <Text style={{ fontSize: 13, fontWeight: "600", color: M.parchment, marginTop: 2 }} numberOfLines={1}>
+          <Text style={{ fontSize: 13, fontWeight: "600", color: M.text, marginTop: 2 }} numberOfLines={1}>
             {topBounty.title}
           </Text>
         </View>
@@ -600,6 +590,7 @@ function BountyTeaser({ languageId }: { languageId: string }) {
 
 // ─── ContributorBanner ─────────────────────────────────────────────────────
 function ContributorBanner() {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
 
@@ -650,6 +641,7 @@ function ContributorBanner() {
 
 // ─── ReviewBanner ──────────────────────────────────────────────────────────
 function ReviewBanner({ languageId }: Readonly<{ languageId?: string | null }>) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
   const { data: dueWords = [] } = useWordsDueForReview(languageId);
@@ -699,6 +691,7 @@ function ReviewBanner({ languageId }: Readonly<{ languageId?: string | null }>) 
 
 // ─── LearnScreen ───────────────────────────────────────────────────────────
 export default function LearnScreen() {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
   const { user } = useUser();
@@ -959,12 +952,12 @@ export default function LearnScreen() {
       </View>
 
       {/* Language selector — sits at the boundary */}
-      <View style={{ backgroundColor: M.cardDark, borderBottomWidth: 1, borderBottomColor: M.borderDark }}>
+      <View style={{ backgroundColor: M.card, borderBottomWidth: 1, borderBottomColor: M.border }}>
         <EnrolledLanguageBar />
       </View>
 
       {/* ── Gallery Content ── */}
-      <View style={{ flex: 1, backgroundColor: M.cardDark }}>
+      <View style={{ flex: 1, backgroundColor: M.card }}>
         {isLoading ? (
           <LoadingScreen />
         ) : courses.length === 0 ? (

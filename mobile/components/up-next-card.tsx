@@ -4,22 +4,14 @@ import { localizeField } from "@/lib/localize";
 import { formatDuration } from "@/lib/mock-data";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useRouter } from "expo-router";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Animated, Pressable, Text, View } from "react-native";
 
-const M = {
-  ink: "#0D0F1A",
-  parchment: "#F7F2E8",
-  accent: "#C4862A",
-  accentGlow: "rgba(196, 134, 42, 0.2)",
-  accentBorder: "rgba(196, 134, 42, 0.4)",
-  cardBg: "#161826",
-  textDim: "#9A9480",
-  textDimDark: "#5A5D70",
-} as const;
 
 export function UpNextCard({ languageId }: { languageId?: string }) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
   const { uiLanguage } = useUiLanguageStore();
@@ -74,7 +66,7 @@ export function UpNextCard({ languageId }: { languageId?: string }) {
         style={{
           borderRadius: 18,
           overflow: "hidden",
-          backgroundColor: M.cardBg,
+          backgroundColor: M.card,
           borderWidth: 1,
           borderColor: M.accentBorder,
           borderLeftWidth: 4,
@@ -120,7 +112,7 @@ export function UpNextCard({ languageId }: { languageId?: string }) {
                 fontSize: 9,
                 fontWeight: "700",
                 letterSpacing: 1.2,
-                color: M.textDimDark,
+                color: M.muted,
                 textTransform: "uppercase",
               }}
             >
@@ -135,7 +127,7 @@ export function UpNextCard({ languageId }: { languageId?: string }) {
             style={{
               fontSize: 22,
               fontWeight: "800",
-              color: M.parchment,
+              color: M.text,
               letterSpacing: -0.4,
               lineHeight: 28,
             }}
@@ -145,7 +137,7 @@ export function UpNextCard({ languageId }: { languageId?: string }) {
           </Text>
           {lesson.description ? (
             <Text
-              style={{ fontSize: 13, color: M.textDim, marginTop: 5, lineHeight: 18 }}
+              style={{ fontSize: 13, color: M.sub, marginTop: 5, lineHeight: 18 }}
               numberOfLines={2}
             >
               {localizeField(lesson.description, lesson.descriptionFr, uiLanguage)}
@@ -155,7 +147,7 @@ export function UpNextCard({ languageId }: { languageId?: string }) {
           {/* Progress + duration row */}
           <View style={{ marginTop: 14 }}>
             <View className="flex-row items-center justify-between mb-2">
-              <Text style={{ fontSize: 10, fontWeight: "700", letterSpacing: 1, color: M.textDimDark }}>
+              <Text style={{ fontSize: 10, fontWeight: "700", letterSpacing: 1, color: M.muted }}>
                 YOUR PATH · {overallProgress.completed}/{overallProgress.total}
               </Text>
               <Text style={{ fontSize: 10, fontWeight: "700", color: M.accent }}>
@@ -213,7 +205,7 @@ export function UpNextCard({ languageId }: { languageId?: string }) {
             </Text>
           </View>
           {lesson.duration ? (
-            <Text style={{ fontSize: 12, color: M.textDimDark }}>
+            <Text style={{ fontSize: 12, color: M.muted }}>
               {formatDuration(lesson.duration)}
             </Text>
           ) : (

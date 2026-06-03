@@ -15,6 +15,7 @@ import { useFeedLikesStore } from "@/store/feed-likes-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { AudioSource, FeedItem } from "@/types";
 import { useRouter } from "expo-router";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { LoadingScreen } from "@/components/loading-screen";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -33,15 +34,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const M = {
-  ink: "#0D0F1A",
-  parchment: "#F7F2E8",
-  accent: "#C4862A",
-  cardBg: "#1A1D2C",
-  borderDark: "#2E3245",
-  textDim: "#9A9480",
-  textDimDark: "#5A5D70",
-} as const;
 
 function timeAgo(dateStr: string): string {
   const now = Date.now();
@@ -65,6 +57,7 @@ const TYPE_CONFIG: Record<FeedItem["type"], { icon: string; color: string; label
 };
 
 function AudioPreview({ audioUrl }: Readonly<{ audioUrl: AudioSource }>) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const { currentTrackId, isPlaying, loadAndPlay, togglePlayback } = useAudioStore();
   const trackId = `feed-${audioUrl}`;
@@ -123,6 +116,7 @@ function CommentsModal({
   feedItemId,
   onClose,
 }: Readonly<{ visible: boolean; feedItemId: string | null; onClose: () => void }>) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const { data: commentsData } = useComments(feedItemId);
   const addComment = useAddComment();
@@ -145,15 +139,15 @@ function CommentsModal({
           <View
             style={{
               flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-              borderBottomWidth: 1, borderBottomColor: M.borderDark,
+              borderBottomWidth: 1, borderBottomColor: M.border,
               paddingHorizontal: 20, paddingVertical: 14,
             }}
           >
-            <Text style={{ fontSize: 16, fontWeight: "800", color: M.parchment }}>
+            <Text style={{ fontSize: 16, fontWeight: "800", color: M.text }}>
               {t("feed.comments")}
             </Text>
             <Pressable onPress={onClose} hitSlop={8} accessibilityRole="button" accessibilityLabel="Close">
-              <IconSymbol name="xmark" size={18} color={M.textDimDark} />
+              <IconSymbol name="xmark" size={18} color={M.muted} />
             </Pressable>
           </View>
 
@@ -165,8 +159,8 @@ function CommentsModal({
             keyboardShouldPersistTaps="handled"
             ListEmptyComponent={
               <View style={{ alignItems: "center", paddingVertical: 48 }}>
-                <IconSymbol name="message" size={32} color={M.textDimDark} />
-                <Text style={{ marginTop: 10, fontSize: 13, color: M.textDimDark }}>
+                <IconSymbol name="message" size={32} color={M.muted} />
+                <Text style={{ marginTop: 10, fontSize: 13, color: M.muted }}>
                   {t("feed.noComments")}
                 </Text>
               </View>
@@ -176,15 +170,15 @@ function CommentsModal({
                 style={{
                   marginBottom: 10, borderRadius: 12,
                   paddingHorizontal: 14, paddingVertical: 10,
-                  backgroundColor: M.cardBg,
-                  borderWidth: 1, borderColor: M.borderDark,
+                  backgroundColor: M.card,
+                  borderWidth: 1, borderColor: M.border,
                 }}
               >
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                  <Text style={{ fontSize: 12, fontWeight: "700", color: M.parchment }}>{item.userName}</Text>
-                  <Text style={{ fontSize: 10, color: M.textDimDark }}>{timeAgo(item.createdAt)}</Text>
+                  <Text style={{ fontSize: 12, fontWeight: "700", color: M.text }}>{item.userName}</Text>
+                  <Text style={{ fontSize: 10, color: M.muted }}>{timeAgo(item.createdAt)}</Text>
                 </View>
-                <Text style={{ marginTop: 4, fontSize: 13, color: M.textDim, lineHeight: 18 }}>{item.text}</Text>
+                <Text style={{ marginTop: 4, fontSize: 13, color: M.sub, lineHeight: 18 }}>{item.text}</Text>
               </View>
             )}
           />
@@ -192,7 +186,7 @@ function CommentsModal({
           <View
             style={{
               flexDirection: "row", alignItems: "center",
-              borderTopWidth: 1, borderTopColor: M.borderDark,
+              borderTopWidth: 1, borderTopColor: M.border,
               paddingHorizontal: 16, paddingVertical: 10, gap: 10,
             }}
           >
@@ -200,11 +194,11 @@ function CommentsModal({
               value={text}
               onChangeText={setText}
               placeholder={t("feed.addComment")}
-              placeholderTextColor={M.textDimDark}
+              placeholderTextColor={M.muted}
               style={{
                 flex: 1, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 10,
-                fontSize: 13, backgroundColor: M.cardBg, color: M.parchment,
-                borderWidth: 1, borderColor: M.borderDark,
+                fontSize: 13, backgroundColor: M.card, color: M.text,
+                borderWidth: 1, borderColor: M.border,
               }}
               returnKeyType="send"
               onSubmitEditing={handleSend}
@@ -215,15 +209,15 @@ function CommentsModal({
               style={{
                 width: 36, height: 36, borderRadius: 18,
                 alignItems: "center", justifyContent: "center",
-                backgroundColor: text.trim() ? M.accent : M.cardBg,
+                backgroundColor: text.trim() ? M.accent : M.card,
                 borderWidth: 1,
-                borderColor: text.trim() ? M.accent : M.borderDark,
+                borderColor: text.trim() ? M.accent : M.border,
               }}
               hitSlop={4}
               accessibilityRole="button"
               accessibilityLabel="Send comment"
             >
-              <IconSymbol name="arrow.up.circle.fill" size={16} color={text.trim() ? M.ink : M.textDimDark} />
+              <IconSymbol name="arrow.up.circle.fill" size={16} color={text.trim() ? M.ink : M.muted} />
             </Pressable>
           </View>
         </SafeAreaView>
@@ -233,6 +227,7 @@ function CommentsModal({
 }
 
 function NewPostModal({ visible, onClose }: Readonly<{ visible: boolean; onClose: () => void }>) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const createPost = useCreatePost();
   const [title, setTitle] = useState("");
@@ -263,16 +258,16 @@ function NewPostModal({ visible, onClose }: Readonly<{ visible: boolean; onClose
           <View
             style={{
               flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-              borderBottomWidth: 1, borderBottomColor: M.borderDark,
+              borderBottomWidth: 1, borderBottomColor: M.border,
               paddingHorizontal: 20, paddingVertical: 14,
             }}
           >
             <Pressable onPress={handleClose} accessibilityRole="button" accessibilityLabel={t("feed.cancel")}>
-              <Text style={{ fontSize: 14, color: M.textDim }}>{t("feed.cancel")}</Text>
+              <Text style={{ fontSize: 14, color: M.sub }}>{t("feed.cancel")}</Text>
             </Pressable>
-            <Text style={{ fontSize: 15, fontWeight: "800", color: M.parchment }}>{t("feed.newPost")}</Text>
+            <Text style={{ fontSize: 15, fontWeight: "800", color: M.text }}>{t("feed.newPost")}</Text>
             <Pressable onPress={handlePost} disabled={!canPost} accessibilityRole="button">
-              <Text style={{ fontSize: 14, fontWeight: "800", color: canPost ? M.accent : M.textDimDark }}>
+              <Text style={{ fontSize: 14, fontWeight: "800", color: canPost ? M.accent : M.muted }}>
                 {t("feed.post")}
               </Text>
             </Pressable>
@@ -282,21 +277,21 @@ function NewPostModal({ visible, onClose }: Readonly<{ visible: boolean; onClose
               value={title}
               onChangeText={setTitle}
               placeholder={t("feed.titlePlaceholder")}
-              placeholderTextColor={M.textDimDark}
+              placeholderTextColor={M.muted}
               style={{
                 marginBottom: 16, paddingBottom: 14,
-                borderBottomWidth: 1, borderBottomColor: M.borderDark,
-                fontSize: 20, fontWeight: "800", color: M.parchment,
+                borderBottomWidth: 1, borderBottomColor: M.border,
+                fontSize: 20, fontWeight: "800", color: M.text,
               }}
             />
             <TextInput
               value={description}
               onChangeText={setDescription}
               placeholder={t("feed.contentPlaceholder")}
-              placeholderTextColor={M.textDimDark}
+              placeholderTextColor={M.muted}
               multiline
               textAlignVertical="top"
-              style={{ flex: 1, fontSize: 14, lineHeight: 22, color: M.textDim }}
+              style={{ flex: 1, fontSize: 14, lineHeight: 22, color: M.sub }}
               autoFocus
             />
           </View>
@@ -307,6 +302,7 @@ function NewPostModal({ visible, onClose }: Readonly<{ visible: boolean; onClose
 }
 
 function FeedCard({ item, onOpenComments }: Readonly<{ item: FeedItem; onOpenComments: (id: string) => void }>) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
   const toggleLike = useToggleLike();
@@ -336,9 +332,9 @@ function FeedCard({ item, onOpenComments }: Readonly<{ item: FeedItem; onOpenCom
       style={{
         marginBottom: 10,
         borderRadius: 16,
-        backgroundColor: M.cardBg,
+        backgroundColor: M.card,
         borderWidth: 1,
-        borderColor: M.borderDark,
+        borderColor: M.border,
         borderTopWidth: 3,
         borderTopColor: config.color + "80",
         overflow: "hidden",
@@ -359,8 +355,8 @@ function FeedCard({ item, onOpenComments }: Readonly<{ item: FeedItem; onOpenCom
           </Text>
         </View>
         <View style={{ marginLeft: 10, flex: 1 }}>
-          <Text style={{ fontSize: 13, fontWeight: "700", color: M.parchment }}>{item.userName}</Text>
-          <Text style={{ fontSize: 10, color: M.textDimDark }}>{timeAgo(item.createdAt)}</Text>
+          <Text style={{ fontSize: 13, fontWeight: "700", color: M.text }}>{item.userName}</Text>
+          <Text style={{ fontSize: 10, color: M.muted }}>{timeAgo(item.createdAt)}</Text>
         </View>
         <View
           style={{
@@ -378,10 +374,10 @@ function FeedCard({ item, onOpenComments }: Readonly<{ item: FeedItem; onOpenCom
 
       {/* Body */}
       <View style={{ paddingHorizontal: 14, paddingBottom: 12 }}>
-        <Text style={{ fontSize: 14, fontWeight: "700", color: M.parchment, marginBottom: 4 }}>
+        <Text style={{ fontSize: 14, fontWeight: "700", color: M.text, marginBottom: 4 }}>
           {localTitle}
         </Text>
-        <Text style={{ fontSize: 13, color: M.textDim, lineHeight: 18 }}>{localDescription}</Text>
+        <Text style={{ fontSize: 13, color: M.sub, lineHeight: 18 }}>{localDescription}</Text>
 
         {item.type === "contribution" && item.audioUrl && (
           <View style={{ marginTop: 10 }}>
@@ -426,7 +422,7 @@ function FeedCard({ item, onOpenComments }: Readonly<{ item: FeedItem; onOpenCom
       <View
         style={{
           flexDirection: "row", alignItems: "center",
-          borderTopWidth: 1, borderTopColor: M.borderDark,
+          borderTopWidth: 1, borderTopColor: M.border,
           paddingHorizontal: 14, paddingVertical: 10, gap: 20,
         }}
       >
@@ -437,8 +433,8 @@ function FeedCard({ item, onOpenComments }: Readonly<{ item: FeedItem; onOpenCom
           accessibilityRole="button"
           accessibilityLabel={liked ? `Unlike, ${item.likes}` : `Like, ${item.likes}`}
         >
-          <IconSymbol name={liked ? "heart.fill" : "heart"} size={16} color={liked ? "#ef4444" : M.textDimDark} />
-          <Text style={{ fontSize: 12, color: M.textDimDark }}>{item.likes}</Text>
+          <IconSymbol name={liked ? "heart.fill" : "heart"} size={16} color={liked ? "#ef4444" : M.muted} />
+          <Text style={{ fontSize: 12, color: M.muted }}>{item.likes}</Text>
         </Pressable>
         <Pressable
           onPress={() => onOpenComments(item.id)}
@@ -447,11 +443,11 @@ function FeedCard({ item, onOpenComments }: Readonly<{ item: FeedItem; onOpenCom
           accessibilityRole="button"
           accessibilityLabel={`${item.comments} comments`}
         >
-          <IconSymbol name="message" size={16} color={M.textDimDark} />
-          <Text style={{ fontSize: 12, color: M.textDimDark }}>{item.comments}</Text>
+          <IconSymbol name="message" size={16} color={M.muted} />
+          <Text style={{ fontSize: 12, color: M.muted }}>{item.comments}</Text>
         </Pressable>
         <Pressable onPress={handleShare} hitSlop={8} accessibilityRole="button" accessibilityLabel="Share">
-          <IconSymbol name="square.and.arrow.up" size={16} color={M.textDimDark} />
+          <IconSymbol name="square.and.arrow.up" size={16} color={M.muted} />
         </Pressable>
       </View>
     </View>
@@ -466,6 +462,7 @@ const FILTER_OPTIONS: { id: FeedTypeFilter; label: string }[] = [
 ];
 
 export default function FeedScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<FeedTypeFilter>("all");
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } = useFeed(activeFilter);
@@ -487,10 +484,10 @@ export default function FeedScreen() {
       <View style={{ backgroundColor: M.ink, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 16 }}>
         <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
           <View>
-            <Text style={{ fontSize: 32, fontWeight: "900", color: M.parchment, letterSpacing: -0.5 }}>
+            <Text style={{ fontSize: 32, fontWeight: "900", color: M.text, letterSpacing: -0.5 }}>
               {t("feed.title")}
             </Text>
-            <Text style={{ fontSize: 13, color: M.textDim, marginTop: 4 }}>
+            <Text style={{ fontSize: 13, color: M.sub, marginTop: 4 }}>
               {t("feed.subtitle")}
             </Text>
           </View>
@@ -532,9 +529,9 @@ export default function FeedScreen() {
               onPress={() => setActiveFilter(opt.id)}
               style={{
                 borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6,
-                backgroundColor: activeFilter === opt.id ? M.accent : M.cardBg,
+                backgroundColor: activeFilter === opt.id ? M.accent : M.card,
                 borderWidth: 1,
-                borderColor: activeFilter === opt.id ? M.accent : M.borderDark,
+                borderColor: activeFilter === opt.id ? M.accent : M.border,
               }}
               accessibilityRole="button"
               accessibilityLabel={t(opt.label as any)}
@@ -543,7 +540,7 @@ export default function FeedScreen() {
               <Text
                 style={{
                   fontSize: 11, fontWeight: "700",
-                  color: activeFilter === opt.id ? M.ink : M.textDim,
+                  color: activeFilter === opt.id ? M.ink : M.sub,
                 }}
               >
                 {t(opt.label as any)}
@@ -554,7 +551,7 @@ export default function FeedScreen() {
       </View>
 
       {/* Content */}
-      <View style={{ flex: 1, backgroundColor: M.cardBg }}>
+      <View style={{ flex: 1, backgroundColor: M.card }}>
         {isLoading ? (
           <LoadingScreen />
         ) : (

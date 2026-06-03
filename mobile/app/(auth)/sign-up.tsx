@@ -1,3 +1,4 @@
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useSignUp } from "@clerk/clerk-expo";
 import { Image } from "expo-image";
 import { Link, useRouter } from "expo-router";
@@ -20,18 +21,9 @@ import { useToast } from "@/lib/hooks/use-toast";
 
 const mascot = require("../../public/mascot.jpg");
 
-const M = {
-  ink: "#0D0F1A",
-  parchment: "#F7F2E8",
-  accent: "#C4862A",
-  accentBorder: "rgba(196, 134, 42, 0.4)",
-  cardBg: "#161826",
-  borderDark: "#2E3245",
-  textDim: "#9A9480",
-  textDimDark: "#5A5D70",
-} as const;
 
 export default function SignUpScreen() {
+  const M = useMuseumTheme();
   const { signUp, setActive, isLoaded } = useSignUp();
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -94,17 +86,17 @@ export default function SignUpScreen() {
   const inputStyle = (hasError = false) => ({
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: hasError ? "rgba(239, 68, 68, 0.5)" : M.borderDark,
-    backgroundColor: M.cardBg,
+    borderColor: hasError ? "rgba(239, 68, 68, 0.5)" : M.border,
+    backgroundColor: M.card,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 15,
-    color: M.parchment,
+    color: M.text,
     marginBottom: 4,
   });
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: M.authBg }}>
       <NotificationBanner
         visible={toast.visible}
         title={toast.title}
@@ -152,10 +144,10 @@ export default function SignUpScreen() {
                 contentFit="contain"
               />
             </View>
-            <Text style={{ fontSize: 30, fontWeight: "900", color: M.parchment, letterSpacing: -0.4 }}>
+            <Text style={{ fontSize: 30, fontWeight: "900", color: M.text, letterSpacing: -0.4 }}>
               {t("auth.createAccount")}
             </Text>
-            <Text style={{ fontSize: 13, color: M.textDim, marginTop: 4 }}>
+            <Text style={{ fontSize: 13, color: M.sub, marginTop: 4 }}>
               {t("auth.createAccountSubtitle")}
             </Text>
           </Animated.View>
@@ -193,7 +185,7 @@ export default function SignUpScreen() {
             <TextInput
               style={[inputStyle(), { marginBottom: 12 }]}
               placeholder={t("auth.email")}
-              placeholderTextColor={M.textDimDark}
+              placeholderTextColor={M.muted}
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
@@ -205,7 +197,7 @@ export default function SignUpScreen() {
             <TextInput
               style={[inputStyle(), { marginBottom: 12 }]}
               placeholder={t("auth.username")}
-              placeholderTextColor={M.textDimDark}
+              placeholderTextColor={M.muted}
               value={username}
               onChangeText={setUsername}
               autoCapitalize="none"
@@ -216,7 +208,7 @@ export default function SignUpScreen() {
             <TextInput
               style={inputStyle(passwordTooShort)}
               placeholder={t("auth.password")}
-              placeholderTextColor={M.textDimDark}
+              placeholderTextColor={M.muted}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -234,7 +226,7 @@ export default function SignUpScreen() {
             <TextInput
               style={inputStyle(passwordsMismatch)}
               placeholder={t("auth.confirmPassword")}
-              placeholderTextColor={M.textDimDark}
+              placeholderTextColor={M.muted}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry
@@ -283,7 +275,7 @@ export default function SignUpScreen() {
 
             <Link href="/(auth)/sign-in" asChild>
               <Pressable disabled={loading} style={{ alignItems: "center" }}>
-                <Text style={{ fontSize: 13, color: M.textDim }}>
+                <Text style={{ fontSize: 13, color: M.sub }}>
                   {t("auth.alreadyHaveAccount")}
                 </Text>
               </Pressable>

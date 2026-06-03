@@ -1,3 +1,4 @@
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import {
   useCreateJournalEntry,
@@ -27,16 +28,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const M = {
-  ink: "#0D0F1A",
-  parchment: "#F7F2E8",
-  accent: "#C4862A",
-  cardBg: "#1A1D2C",
-  borderDark: "#2E3245",
-  textDim: "#9A9480",
-  textDimDark: "#5A5D70",
-  green: "#4ade80",
-} as const;
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
@@ -48,6 +39,7 @@ function wordCount(text: string) {
 }
 
 function EntryCard({ entry, onPress }: { entry: JournalEntry; onPress: () => void }) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const count = wordCount(entry.content);
 
@@ -60,35 +52,35 @@ function EntryCard({ entry, onPress }: { entry: JournalEntry; onPress: () => voi
       style={{
         marginBottom: 10,
         borderRadius: 16,
-        backgroundColor: M.cardBg,
+        backgroundColor: M.card,
         borderWidth: 1,
-        borderColor: M.borderDark,
+        borderColor: M.border,
         borderLeftWidth: 4,
         borderLeftColor: M.accent,
         padding: 16,
       }}
       className="active:opacity-70"
     >
-      <Text style={{ fontSize: 15, fontWeight: "700", color: M.parchment }} numberOfLines={1}>
+      <Text style={{ fontSize: 15, fontWeight: "700", color: M.text }} numberOfLines={1}>
         {entry.title}
       </Text>
       <Text
-        style={{ marginTop: 6, fontSize: 13, lineHeight: 19, color: M.textDim }}
+        style={{ marginTop: 6, fontSize: 13, lineHeight: 19, color: M.sub }}
         numberOfLines={3}
       >
         {entry.content}
       </Text>
       <View style={{ marginTop: 12, flexDirection: "row", alignItems: "center" }}>
-        <Text style={{ fontSize: 10, color: M.textDimDark, letterSpacing: 0.5 }}>
+        <Text style={{ fontSize: 10, color: M.muted, letterSpacing: 0.5 }}>
           {formatDate(entry.createdAt)}
         </Text>
         {entry.updatedAt !== entry.createdAt && (
-          <Text style={{ fontSize: 10, color: M.textDimDark, marginLeft: 6 }}>
+          <Text style={{ fontSize: 10, color: M.muted, marginLeft: 6 }}>
             · {t("journal.edited")}
           </Text>
         )}
         <View style={{ flex: 1 }} />
-        <Text style={{ fontSize: 10, color: M.textDimDark }}>
+        <Text style={{ fontSize: 10, color: M.muted }}>
           {t("journal.words", { count, defaultValue: `${count} words` })}
         </Text>
       </View>
@@ -97,6 +89,7 @@ function EntryCard({ entry, onPress }: { entry: JournalEntry; onPress: () => voi
 }
 
 export default function JournalScreen() {
+  const M = useMuseumTheme();
   const { data: entries, isLoading, refetch } = useJournal();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -212,17 +205,17 @@ export default function JournalScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
       {/* Header */}
       <View style={{ backgroundColor: M.ink, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20 }}>
-        <Text style={{ fontSize: 32, fontWeight: "900", color: M.parchment, letterSpacing: -0.5 }}>
+        <Text style={{ fontSize: 32, fontWeight: "900", color: M.text, letterSpacing: -0.5 }}>
           {t("journal.title")}
         </Text>
-        <Text style={{ fontSize: 13, color: M.textDim, marginTop: 4 }}>
+        <Text style={{ fontSize: 13, color: M.sub, marginTop: 4 }}>
           {entryCount > 0
             ? t("journal.entryCount", { count: entryCount, defaultValue: `${entryCount} ${entryCount === 1 ? "entry" : "entries"}` })
             : t("journal.subtitle")}
         </Text>
       </View>
 
-      <View style={{ flex: 1, backgroundColor: M.cardBg }}>
+      <View style={{ flex: 1, backgroundColor: M.card }}>
         {isLoading ? (
           <LoadingScreen />
         ) : !entries || entries.length === 0 ? (
@@ -238,10 +231,10 @@ export default function JournalScreen() {
             >
               <IconSymbol name="pencil.and.list.clipboard" size={30} color={M.accent} />
             </View>
-            <Text style={{ textAlign: "center", fontSize: 15, fontWeight: "700", color: M.parchment }}>
+            <Text style={{ textAlign: "center", fontSize: 15, fontWeight: "700", color: M.text }}>
               {t("journal.emptyTitle", { defaultValue: "Nothing written yet" })}
             </Text>
-            <Text style={{ marginTop: 6, textAlign: "center", fontSize: 13, color: M.textDim, lineHeight: 18 }}>
+            <Text style={{ marginTop: 6, textAlign: "center", fontSize: 13, color: M.sub, lineHeight: 18 }}>
               {t("journal.emptyBody", { defaultValue: "Capture your thoughts after a lesson. It helps things stick." })}
             </Text>
             <Pressable
@@ -320,18 +313,18 @@ export default function JournalScreen() {
             <View
               style={{
                 flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-                borderBottomWidth: 1, borderBottomColor: M.borderDark,
+                borderBottomWidth: 1, borderBottomColor: M.border,
                 paddingHorizontal: 20, paddingVertical: 14,
               }}
             >
               <Pressable onPress={handleClose} hitSlop={8}>
-                <Text style={{ fontSize: 14, color: M.textDim }}>{t("common.cancel")}</Text>
+                <Text style={{ fontSize: 14, color: M.sub }}>{t("common.cancel")}</Text>
               </Pressable>
-              <Text style={{ fontSize: 15, fontWeight: "800", color: M.parchment }}>
+              <Text style={{ fontSize: 15, fontWeight: "800", color: M.text }}>
                 {isEditing ? t("journal.editEntry") : t("journal.newEntry")}
               </Text>
               <Pressable onPress={handleSave} disabled={!canSave} hitSlop={8}>
-                <Text style={{ fontSize: 14, fontWeight: "800", color: canSave ? M.accent : M.textDimDark }}>
+                <Text style={{ fontSize: 14, fontWeight: "800", color: canSave ? M.accent : M.muted }}>
                   {t("common.save")}
                 </Text>
               </Pressable>
@@ -343,15 +336,15 @@ export default function JournalScreen() {
                 value={title}
                 onChangeText={setTitle}
                 placeholder={t("journal.titlePlaceholder")}
-                placeholderTextColor={M.textDimDark}
+                placeholderTextColor={M.muted}
                 returnKeyType="next"
                 autoFocus
                 onSubmitEditing={() => contentInputRef.current?.focus()}
                 blurOnSubmit={false}
                 style={{
                   marginBottom: 16, paddingBottom: 14,
-                  borderBottomWidth: 1, borderBottomColor: M.borderDark,
-                  fontSize: 20, fontWeight: "800", color: M.parchment,
+                  borderBottomWidth: 1, borderBottomColor: M.border,
+                  fontSize: 20, fontWeight: "800", color: M.text,
                 }}
               />
               <TextInput
@@ -359,10 +352,10 @@ export default function JournalScreen() {
                 value={content}
                 onChangeText={setContent}
                 placeholder={t("journal.contentPlaceholder")}
-                placeholderTextColor={M.textDimDark}
+                placeholderTextColor={M.muted}
                 multiline
                 textAlignVertical="top"
-                style={{ flex: 1, fontSize: 14, lineHeight: 22, color: M.textDim }}
+                style={{ flex: 1, fontSize: 14, lineHeight: 22, color: M.sub }}
               />
             </View>
 
@@ -370,11 +363,11 @@ export default function JournalScreen() {
             <View
               style={{
                 flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-                borderTopWidth: 1, borderTopColor: M.borderDark,
+                borderTopWidth: 1, borderTopColor: M.border,
                 paddingHorizontal: 20, paddingVertical: 12,
               }}
             >
-              <Text style={{ fontSize: 11, color: M.textDimDark }}>
+              <Text style={{ fontSize: 11, color: M.muted }}>
                 {t("journal.words", { count: editorWordCount, defaultValue: `${editorWordCount} words` })}
               </Text>
               {isEditing && (

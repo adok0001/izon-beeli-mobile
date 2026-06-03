@@ -1,3 +1,4 @@
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useSignIn } from "@clerk/clerk-expo";
 import { Image } from "expo-image";
 import { Link, useRouter } from "expo-router";
@@ -17,18 +18,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const mascot = require("../../public/mascot.jpg");
 
-const M = {
-  ink: "#0D0F1A",
-  parchment: "#F7F2E8",
-  accent: "#C4862A",
-  accentBorder: "rgba(196, 134, 42, 0.4)",
-  cardBg: "#161826",
-  borderDark: "#2E3245",
-  textDim: "#9A9480",
-  textDimDark: "#5A5D70",
-} as const;
 
 export default function SignInScreen() {
+  const M = useMuseumTheme();
   const { signIn, setActive, isLoaded } = useSignIn();
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -71,7 +63,7 @@ export default function SignInScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: M.authBg }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1, justifyContent: "center", paddingHorizontal: 28 }}
@@ -111,13 +103,13 @@ export default function SignInScreen() {
             style={{
               fontSize: 36,
               fontWeight: "900",
-              color: M.parchment,
+              color: M.text,
               letterSpacing: -0.5,
             }}
           >
             Beeli
           </Text>
-          <Text style={{ fontSize: 13, color: M.textDim, marginTop: 4 }}>
+          <Text style={{ fontSize: 13, color: M.sub, marginTop: 4 }}>
             {t("auth.signInSubtitle")}
           </Text>
         </Animated.View>
@@ -159,15 +151,15 @@ export default function SignInScreen() {
               marginBottom: 12,
               borderRadius: 14,
               borderWidth: 1,
-              borderColor: M.borderDark,
-              backgroundColor: M.cardBg,
+              borderColor: M.border,
+              backgroundColor: M.card,
               paddingHorizontal: 16,
               paddingVertical: 14,
               fontSize: 15,
-              color: M.parchment,
+              color: M.text,
             }}
             placeholder={t("auth.emailOrUsername")}
-            placeholderTextColor={M.textDimDark}
+            placeholderTextColor={M.muted}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -181,15 +173,15 @@ export default function SignInScreen() {
               marginBottom: 8,
               borderRadius: 14,
               borderWidth: 1,
-              borderColor: M.borderDark,
-              backgroundColor: M.cardBg,
+              borderColor: M.border,
+              backgroundColor: M.card,
               paddingHorizontal: 16,
               paddingVertical: 14,
               fontSize: 15,
-              color: M.parchment,
+              color: M.text,
             }}
             placeholder={t("auth.password")}
-            placeholderTextColor={M.textDimDark}
+            placeholderTextColor={M.muted}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -240,7 +232,7 @@ export default function SignInScreen() {
 
           <Link href="/(auth)/sign-up" asChild>
             <Pressable disabled={loading} style={{ alignItems: "center" }}>
-              <Text style={{ fontSize: 13, color: M.textDim }}>
+              <Text style={{ fontSize: 13, color: M.sub }}>
                 {t("auth.noAccount")}
               </Text>
             </Pressable>

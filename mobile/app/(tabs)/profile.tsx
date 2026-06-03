@@ -11,21 +11,13 @@ import { useTourStore } from "@/store/tour-store";
 import { useWelcomeChecklistStore } from "@/store/welcome-checklist-store";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getLanguageName } from "@/lib/mock-data";
 
-const M = {
-  ink: "#0D0F1A",
-  parchment: "#F7F2E8",
-  accent: "#C4862A",
-  cardBg: "#1A1D2C",
-  borderDark: "#2E3245",
-  textDim: "#9A9480",
-  textDimDark: "#5A5D70",
-} as const;
 
 const GOAL_OPTIONS: { id: DailyGoal; icon: string; labelKey: string; detailKey: string }[] = [
   { id: "casual", icon: "leaf.fill", labelKey: "onboarding.goalCasual", detailKey: "onboarding.goalCasualDetail" },
@@ -33,20 +25,22 @@ const GOAL_OPTIONS: { id: DailyGoal; icon: string; labelKey: string; detailKey: 
   { id: "intensive", icon: "bolt.fill", labelKey: "onboarding.goalIntensive", detailKey: "onboarding.goalIntensiveDetail" },
 ];
 
-function StatCard({ icon, label, value, color = M.accent }: Readonly<{ icon: string; label: string; value: string; color?: string }>) {
+function StatCard({ icon, label, value, color }: Readonly<{ icon: string; label: string; value: string; color?: string }>) {
+  const M = useMuseumTheme();
+  const iconColor = color ?? M.accent;
   return (
     <View
       style={{
         flex: 1, alignItems: "center",
         borderRadius: 14, paddingHorizontal: 8, paddingVertical: 14,
-        backgroundColor: M.cardBg, borderWidth: 1, borderColor: M.borderDark,
+        backgroundColor: M.card, borderWidth: 1, borderColor: M.border,
       }}
     >
-      <IconSymbol name={icon as any} size={20} color={color} />
-      <Text style={{ marginTop: 6, fontSize: 18, fontWeight: "800", color: M.parchment }}>
+      <IconSymbol name={icon as any} size={20} color={iconColor} />
+      <Text style={{ marginTop: 6, fontSize: 18, fontWeight: "800", color: M.text }}>
         {value}
       </Text>
-      <Text style={{ marginTop: 2, fontSize: 10, color: M.textDimDark, letterSpacing: 0.5 }}>
+      <Text style={{ marginTop: 2, fontSize: 10, color: M.muted, letterSpacing: 0.5 }}>
         {label}
       </Text>
     </View>
@@ -60,44 +54,46 @@ function MenuRow({
   onPress,
   danger,
 }: Readonly<{ icon: string; label: string; detail?: string; onPress: () => void; danger?: boolean }>) {
+  const M = useMuseumTheme();
   return (
     <Pressable
       onPress={onPress}
       style={{
         flexDirection: "row", alignItems: "center",
         paddingVertical: 14,
-        borderBottomWidth: 1, borderBottomColor: M.borderDark,
+        borderBottomWidth: 1, borderBottomColor: M.border,
       }}
       accessibilityRole="button"
       accessibilityLabel={detail ? `${label}: ${detail}` : label}
       className="active:opacity-70"
     >
-      <IconSymbol name={icon as any} size={18} color={danger ? "#f87171" : M.textDimDark} />
+      <IconSymbol name={icon as any} size={18} color={danger ? "#f87171" : M.muted} />
       <Text
         style={{
           marginLeft: 14, flex: 1, fontSize: 14,
-          color: danger ? "#f87171" : M.parchment,
+          color: danger ? "#f87171" : M.text,
           fontWeight: danger ? "700" : "500",
         }}
       >
         {label}
       </Text>
       {!!detail && (
-        <Text style={{ marginRight: 8, fontSize: 12, color: M.textDimDark }}>{detail}</Text>
+        <Text style={{ marginRight: 8, fontSize: 12, color: M.muted }}>{detail}</Text>
       )}
-      {!danger && <IconSymbol name="chevron.right" size={14} color={M.textDimDark} />}
+      {!danger && <IconSymbol name="chevron.right" size={14} color={M.muted} />}
     </Pressable>
   );
 }
 
 function SectionLabel({ label }: { label: string }) {
+  const M = useMuseumTheme();
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 24, marginBottom: 4 }}>
       <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: M.accent }} />
       <Text
         style={{
           fontSize: 9, fontWeight: "800", letterSpacing: 2,
-          textTransform: "uppercase", color: M.textDimDark,
+          textTransform: "uppercase", color: M.muted,
         }}
       >
         {label}
@@ -107,6 +103,7 @@ function SectionLabel({ label }: { label: string }) {
 }
 
 export default function ProfileScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const { signOut } = useAuth();
   const { user } = useUser();
@@ -140,7 +137,7 @@ export default function ProfileScreen() {
             alignItems: "center",
             paddingHorizontal: 20, paddingTop: 32, paddingBottom: 28,
             backgroundColor: M.ink,
-            borderBottomWidth: 1, borderBottomColor: M.borderDark,
+            borderBottomWidth: 1, borderBottomColor: M.border,
           }}
         >
           <View
@@ -158,11 +155,11 @@ export default function ProfileScreen() {
           >
             <Text style={{ fontSize: 24, fontWeight: "900", color: M.ink }}>{initial}</Text>
           </View>
-          <Text style={{ fontSize: 22, fontWeight: "900", color: M.parchment, letterSpacing: -0.3 }}>
+          <Text style={{ fontSize: 22, fontWeight: "900", color: M.text, letterSpacing: -0.3 }}>
             {displayName}
           </Text>
           {email ? (
-            <Text style={{ marginTop: 3, fontSize: 12, color: M.textDim }}>{email}</Text>
+            <Text style={{ marginTop: 3, fontSize: 12, color: M.sub }}>{email}</Text>
           ) : null}
           {/* Role badges */}
           <View style={{ flexDirection: "row", gap: 8, marginTop: 10, flexWrap: "wrap", justifyContent: "center" }}>
@@ -190,7 +187,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Stats */}
-        <View style={{ backgroundColor: M.cardBg, paddingHorizontal: 16, paddingTop: 20, paddingBottom: 16 }}>
+        <View style={{ backgroundColor: M.card, paddingHorizontal: 16, paddingTop: 20, paddingBottom: 16 }}>
           <View style={{ alignItems: "center", marginBottom: 16 }}>
             <XpLevelBadge points={summary?.points ?? 0} variant="full" />
           </View>
@@ -203,7 +200,7 @@ export default function ProfileScreen() {
 
         {/* Plus CTA */}
         {showPlusCta ? (
-          <View style={{ paddingHorizontal: 16, paddingTop: 8, backgroundColor: M.cardBg }}>
+          <View style={{ paddingHorizontal: 16, paddingTop: 8, backgroundColor: M.card }}>
             <Pressable
               onPress={() => { analytics.plusCtaTapped("profile"); router.push("/plus-paywall"); }}
               style={{
@@ -230,7 +227,7 @@ export default function ProfileScreen() {
         ) : null}
 
         {/* Menu */}
-        <View style={{ backgroundColor: M.cardBg, paddingHorizontal: 20, paddingBottom: 8 }}>
+        <View style={{ backgroundColor: M.card, paddingHorizontal: 20, paddingBottom: 8 }}>
           <SectionLabel label={t("settings.learning")} />
           <MenuRow icon="chart.bar.fill" label={t("profile.progressDashboard")} onPress={() => router.push("/dashboard")} />
           <MenuRow icon="book.fill" label={t("profile.learning")} detail={getLanguageName(selectedLanguageId)} onPress={() => router.push("/(tabs)/learn")} />
@@ -275,7 +272,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <View style={{ height: 40, backgroundColor: M.cardBg }} />
+        <View style={{ height: 40, backgroundColor: M.card }} />
       </ScrollView>
 
       <FeedbackModal visible={feedbackVisible} onClose={() => setFeedbackVisible(false)} />
@@ -287,12 +284,12 @@ export default function ProfileScreen() {
           style={{
             borderTopLeftRadius: 24, borderTopRightRadius: 24,
             backgroundColor: M.ink,
-            borderTopWidth: 1, borderTopColor: M.borderDark,
+            borderTopWidth: 1, borderTopColor: M.border,
             paddingHorizontal: 20, paddingBottom: 40, paddingTop: 16,
           }}
         >
-          <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: M.borderDark, alignSelf: "center", marginBottom: 16 }} />
-          <Text style={{ marginBottom: 20, textAlign: "center", fontSize: 17, fontWeight: "800", color: M.parchment }}>
+          <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: M.border, alignSelf: "center", marginBottom: 16 }} />
+          <Text style={{ marginBottom: 20, textAlign: "center", fontSize: 17, fontWeight: "800", color: M.text }}>
             {t("profile.dailyGoal")}
           </Text>
           {GOAL_OPTIONS.map((opt) => {
@@ -305,8 +302,8 @@ export default function ProfileScreen() {
                   marginBottom: 10, flexDirection: "row", alignItems: "center",
                   borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14,
                   borderWidth: selected ? 2 : 1,
-                  borderColor: selected ? M.accent : M.borderDark,
-                  backgroundColor: selected ? `${M.accent}10` : M.cardBg,
+                  borderColor: selected ? M.accent : M.border,
+                  backgroundColor: selected ? `${M.accent}10` : M.card,
                 }}
                 className="active:opacity-70"
               >
@@ -314,16 +311,16 @@ export default function ProfileScreen() {
                   style={{
                     marginRight: 14, width: 42, height: 42, borderRadius: 21,
                     alignItems: "center", justifyContent: "center",
-                    backgroundColor: selected ? M.accent : M.borderDark,
+                    backgroundColor: selected ? M.accent : M.border,
                   }}
                 >
-                  <IconSymbol name={opt.icon as any} size={18} color={selected ? M.ink : M.textDim} />
+                  <IconSymbol name={opt.icon as any} size={18} color={selected ? M.ink : M.sub} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 14, fontWeight: "700", color: selected ? M.accent : M.parchment }}>
+                  <Text style={{ fontSize: 14, fontWeight: "700", color: selected ? M.accent : M.text }}>
                     {t(opt.labelKey as any)}
                   </Text>
-                  <Text style={{ fontSize: 12, color: M.textDim, marginTop: 2 }}>{t(opt.detailKey as any)}</Text>
+                  <Text style={{ fontSize: 12, color: M.sub, marginTop: 2 }}>{t(opt.detailKey as any)}</Text>
                 </View>
                 {selected && <IconSymbol name="checkmark.circle.fill" size={20} color={M.accent} />}
               </Pressable>
