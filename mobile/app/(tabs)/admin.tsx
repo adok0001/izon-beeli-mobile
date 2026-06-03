@@ -107,6 +107,13 @@ export default function AdminPanelScreen() {
               />
 
               <ActionRow
+                icon="sun.max.fill"
+                label={t("admin.dailyContent.title")}
+                detail={t("admin.dailyContent.actionRowDetail")}
+                onPress={() => router.push("/admin/daily-content")}
+              />
+
+              <ActionRow
                 icon="bell.fill"
                 label={t("admin.notifications.title", "Push Notifications")}
                 detail={t("admin.notifications.subtitle", "Broadcast a message to all users")}

@@ -5,11 +5,11 @@ import { authMiddleware, adminMiddleware, type AuthEnv } from "../middleware/aut
 import {
   users,
   pushTokens,
-  dictionaryEntries,
   classroomAssignments,
   classroomMembers,
   lessons,
 } from "../db/schema.js";
+import { resolveWotd } from "./daily-content.js";
 import { sendPushBatch, chunk, type PushMessage } from "../lib/send-push.js";
 import {
   sendEmail,
@@ -150,8 +150,6 @@ notificationsAdminRouter.get("/send-wotd", async (c) => {
     return c.json({ error: "Forbidden" }, 403);
   }
 
-  const today = Math.floor(Date.now() / 86_400_000);
-
   // Users who opted into push WOTD
   const pushRows = await db
     .select({
@@ -172,7 +170,7 @@ notificationsAdminRouter.get("/send-wotd", async (c) => {
     .from(users)
     .where(and(eq(users.emailWotdEnabled, true), sql`${users.deletedAt} IS NULL`));
 
-  // Group by language to fetch one word per language
+  // Resolve one word per language (respects manual override)
   const wordByLang = new Map<string, { word: string; english: string }>();
 
   const allLanguages = new Set([
@@ -181,14 +179,8 @@ notificationsAdminRouter.get("/send-wotd", async (c) => {
   ]);
 
   for (const languageId of allLanguages) {
-    const entries = await db
-      .select({ word: dictionaryEntries.word, english: dictionaryEntries.english })
-      .from(dictionaryEntries)
-      .where(eq(dictionaryEntries.languageId, languageId))
-      .orderBy(dictionaryEntries.id);
-    if (entries.length > 0) {
-      wordByLang.set(languageId, entries[today % entries.length]);
-    }
+    const result = await resolveWotd(languageId);
+    if (result) wordByLang.set(languageId, { word: result.entry.word, english: result.entry.english });
   }
 
   // Send push notifications

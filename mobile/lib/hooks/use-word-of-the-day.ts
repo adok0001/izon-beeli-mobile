@@ -1,10 +1,17 @@
-import { useDictionary } from "@/lib/hooks/use-dictionary";
-import { getDailyItem } from "@/lib/daily-picker";
+import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api";
 import type { DictionaryEntry } from "@/lib/dictionary";
 
-export function useWordOfTheDay(
-  languageId: string
-): DictionaryEntry | null {
-  const { data: entries = [] } = useDictionary(languageId);
-  return getDailyItem(entries) ?? null;
+interface WotdResponse {
+  entry: DictionaryEntry | null;
+  isOverride: boolean;
+}
+
+export function useWordOfTheDay(languageId: string): DictionaryEntry | null {
+  const { data } = useQuery<WotdResponse>({
+    queryKey: ["wotd", languageId],
+    queryFn: () => apiFetch<WotdResponse>(`/daily-content/wotd?languageId=${encodeURIComponent(languageId)}`),
+    enabled: !!languageId,
+  });
+  return data?.entry ?? null;
 }
