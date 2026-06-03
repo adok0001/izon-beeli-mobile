@@ -197,6 +197,8 @@ export function contributionStatusEmailText(name: string, word: string, status: 
   return text;
 }
 
+const EDUCATOR_GUIDE_URL = process.env.EDUCATOR_GUIDE_URL ?? "https://beeli.app/educator-guide";
+
 export function reviewerApplicationStatusEmailHtml(name: string, status: "approved" | "rejected", note?: string | null): string {
   const approved = status === "approved";
   const emoji = approved ? "🎉" : "📝";
@@ -216,6 +218,12 @@ export function reviewerApplicationStatusEmailHtml(name: string, status: "approv
       </p>
       ${note ? `<p style="margin:12px 0 0;font-size:14px;color:#374151;"><strong>Note:</strong> ${escapeHtml(note)}</p>` : ""}
     </div>
+    ${approved ? `
+    <div style="margin-top:24px;background:#eff6ff;border-left:4px solid #1d4ed8;padding:20px 24px;border-radius:4px;">
+      <p style="margin:0 0 8px;font-size:15px;font-weight:600;color:#1e3a8a;">Get started with the Educator Guide</p>
+      <p style="margin:0;font-size:14px;color:#374151;">The Beeli Educator Guide covers everything you need to know — how to create courses, contribute content, use the CMS, and manage classrooms. Read it before your first session.</p>
+      <a href="${EDUCATOR_GUIDE_URL}" style="display:inline-block;margin-top:16px;background:#1e3a8a;color:#ffffff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">Read the Educator Guide</a>
+    </div>` : ""}
     ${ctaButton("Open Beeli")}`;
   return emailWrapper(headline, body);
 }
@@ -227,6 +235,7 @@ export function reviewerApplicationStatusEmailText(name: string, status: "approv
     ? "Your reviewer application has been approved. You now have access to review contributions in Beeli."
     : "Your reviewer application was not approved at this time.";
   if (note) text += `\n\nNote: ${note}`;
+  if (status === "approved") text += `\n\nEducator Guide: ${EDUCATOR_GUIDE_URL}\nRead this before your first session — it covers courses, content, the CMS, and classroom management.`;
   text += "\n\nOpen Beeli: https://beeli.app\n\nTo unsubscribe, go to Settings → Notifications in the Beeli app.";
   return text;
 }
