@@ -60,6 +60,25 @@ export function addNotificationListener(
   }
 }
 
+const SCREEN_ROUTES: Record<string, string> = {
+  "educator-guide": "/educator-guide",
+  "reviewer-application": "/reviewer-application",
+};
+
+export function addNotificationTapListener(onTap: (route: string) => void): () => void {
+  const N = getNotifications();
+  if (!N) return () => {};
+  try {
+    const sub = N.addNotificationResponseReceivedListener((response) => {
+      const screen = response.notification.request.content.data?.screen as string | undefined;
+      if (screen && SCREEN_ROUTES[screen]) onTap(SCREEN_ROUTES[screen]);
+    });
+    return () => sub.remove();
+  } catch {
+    return () => {};
+  }
+}
+
 export async function registerPushToken(authToken: string): Promise<void> {
   if (!Device.isDevice) return;
   const N = getNotifications();

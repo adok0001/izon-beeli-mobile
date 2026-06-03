@@ -249,6 +249,40 @@ export default function EducatorPanelScreen() {
           </View>
         )}
 
+        {/* Educator Guide banner */}
+        <Pressable
+          onPress={() => router.push("/educator-guide")}
+          style={{
+            marginBottom: 20,
+            borderRadius: 16,
+            padding: 16,
+            backgroundColor: M.accent,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 14,
+          }}
+          className="active:opacity-80"
+        >
+          <View
+            style={{
+              width: 44, height: 44, borderRadius: 12,
+              alignItems: "center", justifyContent: "center",
+              backgroundColor: "rgba(255,255,255,0.2)",
+            }}
+          >
+            <IconSymbol name="book.fill" size={22} color="#fff" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 15, fontWeight: "800", color: "#fff" }}>
+              {t("educator.guide.title")}
+            </Text>
+            <Text style={{ marginTop: 2, fontSize: 12, color: "rgba(255,255,255,0.75)" }}>
+              {t("educator.guide.subtitle")}
+            </Text>
+          </View>
+          <IconSymbol name="chevron.right" size={16} color="rgba(255,255,255,0.7)" />
+        </Pressable>
+
         {/* Stats */}
         <SectionLabel label={t("educator.nav.overview")} />
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 24 }}>
@@ -266,7 +300,6 @@ export default function EducatorPanelScreen() {
           <ActionRow icon="book.fill" label={t("educator.nav.lessons")} detail={t("learn.webSubtitle")} onPress={() => router.push("/educator/courses")} />
           <ActionRow icon="globe" label={t("educator.nav.culture")} detail={t("welcomeChecklist.exploreCultureMusicDetail")} onPress={() => router.push("/educator/culture" as never)} accent="#a78bfa" />
           <ActionRow icon="book.closed.fill" label={t("educator.story.screenTitle")} detail={t("educator.story.screenSubtitle")} onPress={() => router.push("/educator/stories" as never)} accent="#fb923c" />
-          <ActionRow icon="book.fill" label={t("educator.guide.title")} detail={t("educator.guide.subtitle")} onPress={() => router.push("/educator-guide")} accent="#60a5fa" />
           {currentUser && canManageBounties(currentUser) ? (
             <ActionRow icon="star.fill" label={t("profile.bounties")} detail={t("admin.overview.manageCourses")} onPress={() => router.push("/bounties")} accent="#f59e0b" />
           ) : null}
