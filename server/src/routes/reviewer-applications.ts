@@ -324,11 +324,13 @@ reviewerApplicationsAdminRouter.patch("/:id", async (c) => {
         token,
         status === "approved" ? "Application Approved 🎉" : "Application Update",
         status === "approved"
-          ? "You've been granted reviewer access. Open the app to get started."
+          ? "You've been granted reviewer access. Read the Educator Guide to get started."
           : reviewerNote?.trim()
             ? `Your application was not approved: ${reviewerNote.trim()}`
             : "Your reviewer application was not approved at this time.",
-        { screen: "reviewer-application" }
+        status === "approved"
+          ? { screen: "educator-guide" }
+          : { screen: "reviewer-application" }
       )
     )
   );
