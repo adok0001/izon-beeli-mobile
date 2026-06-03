@@ -140,6 +140,7 @@ usersRouter.get("/me", authMiddleware, async (c) => {
     streak: user.streak,
     points: user.points,
     selectedLanguageId: user.selectedLanguageId,
+    dailyGoal: user.dailyGoal ?? "steady",
     isAdmin: user.isAdmin,
     isReviewer: user.isReviewer,
     reviewerLanguages: user.reviewerLanguages,

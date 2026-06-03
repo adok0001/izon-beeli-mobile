@@ -167,6 +167,7 @@ export const fr = {
     title: "Profil",
     learner: "Apprenant",
     points: "Points",
+    dailyGoal: "Objectif quotidien",
     restartWelcomeTour: "Relancer le tutoriel",
     thanks: "Merci pour votre retour !",
     feedbackHint: "Nous lisons chaque message.",

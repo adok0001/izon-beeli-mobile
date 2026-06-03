@@ -167,6 +167,7 @@ export const pcm = {
     title: "Profile",
     learner: "Learner",
     points: "Points",
+    dailyGoal: "Daily Goal",
     restartWelcomeTour: "Restart Welcome Tour",
     thanks: "Thanks for your feedback!",
     feedbackHint: "We dey read every message.",
