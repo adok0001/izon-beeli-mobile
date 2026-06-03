@@ -21,9 +21,9 @@ interface LeaderboardEntry {
 
 const RANK_STYLES: Record<number, { bg: string; text: string; icon: React.ReactNode }> = {
   1: {
-    bg: "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800",
-    text: "text-yellow-700 dark:text-yellow-400",
-    icon: <Crown className="h-4 w-4 text-yellow-500" />,
+    bg: "bg-amber-50 dark:bg-amber-900/25 border-amber-300 dark:border-amber-700 shadow-[0_0_20px_-6px_rgb(245_158_11_/0.4)]",
+    text: "text-amber-700 dark:text-amber-300",
+    icon: <Crown className="h-4 w-4 text-amber-500" />,
   },
   2: {
     bg: "bg-neutral-100 dark:bg-neutral-800/60 border-neutral-300 dark:border-neutral-700",
@@ -58,7 +58,7 @@ function Avatar({ name, avatarUrl }: Readonly<{ name: string; avatarUrl?: string
   }
   const initials = name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
   return (
-    <div className="w-9 h-9 rounded-full bg-brand-100 dark:bg-brand-900/40 flex items-center justify-center text-brand-700 dark:text-brand-300 text-sm font-bold">
+    <div className="w-9 h-9 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center text-amber-700 dark:text-amber-300 text-sm font-bold">
       {initials}
     </div>
   );
@@ -85,13 +85,19 @@ export default function LeaderboardPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
       {/* Header */}
-      <div className="mb-6 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-          <Trophy className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-7 h-px bg-amber-500/50" />
+          <span className="text-[10px] uppercase tracking-[0.28em] text-amber-500/70 font-semibold">Hall of Fame</span>
         </div>
-        <div>
-          <h1 className="text-xl font-bold text-neutral-900 dark:text-white">{t("leaderboard.title")}</h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">{t("leaderboard.subtitle")}</p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shadow-[0_0_20px_-6px_rgb(245_158_11_/0.4)]">
+            <Trophy className="h-6 w-6 text-amber-400" />
+          </div>
+          <div>
+            <h1 className="font-display font-bold text-3xl text-neutral-900 dark:text-white">{t("leaderboard.title")}</h1>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">{t("leaderboard.subtitle")}</p>
+          </div>
         </div>
       </div>
 
@@ -109,9 +115,9 @@ export default function LeaderboardPage() {
                 <Avatar name={entry.name} avatarUrl={entry.avatarUrl} />
                 <p className="text-xs font-medium text-neutral-700 dark:text-neutral-300 max-w-16 truncate text-center">{entry.name}</p>
                 <div className={cn("w-16 rounded-t-lg flex items-center justify-center", heights[podiumIndex],
-                  podiumIndex === 0 ? "bg-yellow-400 dark:bg-yellow-500" :
-                  podiumIndex === 1 ? "bg-neutral-300 dark:bg-neutral-600" :
-                  "bg-orange-300 dark:bg-orange-600")}>
+                  podiumIndex === 0 ? "bg-gradient-to-t from-amber-600 to-amber-400 shadow-[0_0_24px_-6px_rgb(245_158_11_/0.6)]" :
+                  podiumIndex === 1 ? "bg-gradient-to-t from-neutral-500 to-neutral-400 dark:from-neutral-600 dark:to-neutral-500" :
+                  "bg-gradient-to-t from-orange-500 to-orange-400")}>
                   <span className="text-white font-bold text-lg">{entry.rank}</span>
                 </div>
               </div>
@@ -139,7 +145,7 @@ export default function LeaderboardPage() {
             className={cn(
               "flex items-center gap-3 p-3 rounded-xl border transition-colors",
               entry.isCurrentUser
-                ? "bg-brand-50 dark:bg-brand-900/20 border-brand-200 dark:border-brand-800"
+                ? "bg-amber-50 dark:bg-amber-900/15 border-amber-200 dark:border-amber-800/50 shadow-[0_0_16px_-6px_rgb(245_158_11_/0.3)]"
                 : "bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
             )}
           >
@@ -147,11 +153,11 @@ export default function LeaderboardPage() {
             <Avatar name={entry.name} avatarUrl={entry.avatarUrl} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
-                <p className={cn("font-semibold text-sm truncate", entry.isCurrentUser ? "text-brand-700 dark:text-brand-300" : "text-neutral-900 dark:text-neutral-100")}>
+                <p className={cn("font-semibold text-sm truncate", entry.isCurrentUser ? "text-amber-700 dark:text-amber-300" : "text-neutral-900 dark:text-neutral-100")}>
                   {entry.name}
                 </p>
                 {entry.isCurrentUser && (
-                  <span className="text-xs text-brand-500 dark:text-brand-400 font-medium">{t("leaderboard.you")}</span>
+                  <span className="text-xs text-amber-500 dark:text-amber-400 font-medium">{t("leaderboard.you")}</span>
                 )}
                 {entry.rank <= 3 && RANK_STYLES[entry.rank]?.icon}
               </div>
@@ -166,7 +172,7 @@ export default function LeaderboardPage() {
                   <span className="text-xs font-semibold">{entry.streak}</span>
                 </div>
               )}
-              <div className="flex items-center gap-1 text-brand-600 dark:text-brand-400">
+              <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
                 <Star className="h-3.5 w-3.5" />
                 <span className="text-sm font-bold tabular-nums">{entry.points.toLocaleString()}</span>
               </div>
@@ -195,7 +201,7 @@ export default function LeaderboardPage() {
                     <span className="text-xs font-semibold">{currentUserEntry.streak}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-1 text-brand-600 dark:text-brand-400">
+                <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
                   <Star className="h-3.5 w-3.5" />
                   <span className="text-sm font-bold tabular-nums">{currentUserEntry.points.toLocaleString()}</span>
                 </div>

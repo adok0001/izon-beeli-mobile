@@ -92,17 +92,23 @@ export default function BountiesPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
-          <Star className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-7 h-px bg-amber-500/50" />
+          <span className="text-[10px] uppercase tracking-[0.28em] text-amber-500/70 font-semibold">Earn XP</span>
         </div>
-        <div>
-          <h1 className="text-xl font-bold text-neutral-900 dark:text-white">
-            {t("bounties.title")}
-          </h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            {t("bounties.subtitle")}
-          </p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shadow-[0_0_20px_-6px_rgb(245_158_11_/0.4)]">
+            <Star className="h-6 w-6 text-amber-400" />
+          </div>
+          <div>
+            <h1 className="font-display font-bold text-3xl text-neutral-900 dark:text-white">
+              {t("bounties.title")}
+            </h1>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              {t("bounties.subtitle")}
+            </p>
+          </div>
         </div>
       </div>
 

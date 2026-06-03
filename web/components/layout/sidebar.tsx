@@ -109,14 +109,14 @@ export function Sidebar() {
       {/* Logo */}
       <div className="px-5 py-[18px] border-b border-white/[0.055]">
         <Link href="/learn" className="flex items-center gap-3 group">
-          <div className="relative w-9 h-9 rounded-xl overflow-hidden shrink-0 shadow-glow-xs">
-            <div className="absolute inset-0 bg-gradient-to-br from-brand-400 via-brand-500 to-brand-800" />
+          <div className="relative w-9 h-9 rounded-xl overflow-hidden shrink-0 shadow-[0_0_20px_-4px_rgb(245_158_11_/0.55)]">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-400 to-amber-700" />
             <div className="absolute inset-0 flex items-center justify-center">
               <Languages className="h-[18px] w-[18px] text-white relative z-10 drop-shadow" />
             </div>
             <div className="absolute inset-0 shadow-inner-bright rounded-xl" />
           </div>
-          <span className="font-extrabold text-[18px] text-white tracking-tight group-hover:text-brand-200 transition-colors">
+          <span className="font-display font-bold text-[18px] text-white tracking-tight group-hover:text-amber-200 transition-colors">
             Beeli
           </span>
         </Link>
@@ -135,11 +135,11 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150",
                 active
-                  ? "bg-brand-500/[0.14] text-brand-200 ring-1 ring-inset ring-brand-500/[0.22] shadow-glow-xs"
+                  ? "bg-amber-500/[0.14] text-amber-200 ring-1 ring-inset ring-amber-500/[0.25] shadow-[0_0_14px_-4px_rgb(245_158_11_/0.4)]"
                   : "text-neutral-400 hover:text-neutral-100 hover:bg-white/[0.05]"
               )}
             >
-              <Icon className={cn("h-4 w-4 shrink-0 transition-colors", active ? "text-brand-400" : "text-neutral-500 group-hover:text-neutral-300")} />
+              <Icon className={cn("h-4 w-4 shrink-0 transition-colors", active ? "text-amber-400" : "text-neutral-500 group-hover:text-neutral-300")} />
               {t(labelKey)}
             </Link>
           );
@@ -164,11 +164,11 @@ export function Sidebar() {
                     className={cn(
                       "flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150",
                       active
-                        ? "bg-brand-500/[0.11] text-brand-300 ring-1 ring-inset ring-brand-500/[0.16]"
+                        ? "bg-amber-500/[0.11] text-amber-300 ring-1 ring-inset ring-amber-500/[0.18]"
                         : "text-neutral-500 hover:text-neutral-200 hover:bg-white/[0.05]"
                     )}
                   >
-                    <Icon className={cn("h-4 w-4 shrink-0", active ? "text-brand-400" : "text-neutral-600")} />
+                    <Icon className={cn("h-4 w-4 shrink-0", active ? "text-amber-400" : "text-neutral-600")} />
                     {t(labelKey)}
                   </Link>
                 );

@@ -36,7 +36,7 @@ export function MobileNav() {
             className={cn(
               "flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-[11px] font-semibold transition-all duration-150",
               active
-                ? "text-brand-600 dark:text-brand-400"
+                ? "text-amber-600 dark:text-amber-400"
                 : "text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300"
             )}
           >
@@ -44,7 +44,7 @@ export function MobileNav() {
               className={cn(
                 "w-10 h-7 rounded-full flex items-center justify-center transition-all duration-150",
                 active
-                  ? "bg-brand-500/[0.12] dark:bg-brand-500/[0.18] shadow-glow-xs"
+                  ? "bg-amber-500/[0.12] dark:bg-amber-500/[0.18] shadow-[0_0_14px_-4px_rgb(245_158_11_/0.4)]"
                   : ""
               )}
             >

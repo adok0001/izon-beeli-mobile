@@ -38,7 +38,7 @@ function WeeklyChart({ stats }: Readonly<{ stats: DashboardStats }>) {
   return (
     <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-5">
       <div className="flex items-center gap-2 mb-4">
-        <BarChart2 className="h-4 w-4 text-brand-500" />
+        <BarChart2 className="h-4 w-4 text-amber-500" />
         <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
           {t("dashboard.weeklyActivity")}
         </h3>
@@ -53,7 +53,7 @@ function WeeklyChart({ stats }: Readonly<{ stats: DashboardStats }>) {
             <div key={day.date} className="flex-1 flex flex-col items-center gap-1">
               <div className="w-full flex items-end justify-center" style={{ height: "80px" }}>
                 <div
-                  className="w-full rounded-t-md bg-brand-500 dark:bg-brand-400 transition-all min-h-[3px]"
+                  className="w-full rounded-t-md bg-gradient-to-t from-amber-600 to-amber-400 dark:from-amber-500 dark:to-amber-300 transition-all min-h-[3px]"
                   style={{ height: `${Math.max(heightPct, 3)}%` }}
                   title={`${day.lessonsCompleted} lessons`}
                 />
@@ -91,7 +91,7 @@ function StreakCalendarGrid({ activeDays }: Readonly<{ activeDays: string[] }>) 
   return (
     <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-5">
       <div className="flex items-center gap-2 mb-4">
-        <CalendarDays className="h-4 w-4 text-brand-500" />
+        <CalendarDays className="h-4 w-4 text-amber-500" />
         <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
           {t("dashboard.streakCalendar")}
         </h3>
@@ -107,9 +107,9 @@ function StreakCalendarGrid({ activeDays }: Readonly<{ activeDays: string[] }>) 
               className={cn(
                 "aspect-square rounded-sm",
                 active
-                  ? "bg-brand-500 dark:bg-brand-400"
+                  ? "bg-amber-500 dark:bg-amber-400"
                   : "bg-neutral-100 dark:bg-neutral-800",
-                isToday && "ring-2 ring-brand-400 dark:ring-brand-500"
+                isToday && "ring-2 ring-amber-400 dark:ring-amber-500"
               )}
             />
           );
@@ -134,7 +134,7 @@ function ChallengePill({ challenge }: Readonly<{ challenge: DailyChallenge }>) {
             {challenge.completed ? (
               <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
             ) : (
-              <Target className="h-4 w-4 text-brand-500 shrink-0" />
+              <Target className="h-4 w-4 text-amber-500 shrink-0" />
             )}
             <p className="text-sm font-semibold text-neutral-900 dark:text-white truncate">
               {challenge.title}
@@ -144,7 +144,7 @@ function ChallengePill({ challenge }: Readonly<{ challenge: DailyChallenge }>) {
             {challenge.description}
           </p>
         </div>
-        <div className="flex items-center gap-1 text-xs font-medium text-brand-600 dark:text-brand-400 shrink-0">
+        <div className="flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400 shrink-0">
           <Zap className="h-3.5 w-3.5" />
           +{challenge.xpReward} XP
         </div>
@@ -153,7 +153,7 @@ function ChallengePill({ challenge }: Readonly<{ challenge: DailyChallenge }>) {
         <div
           className={cn(
             "h-full rounded-full transition-all",
-            challenge.completed ? "bg-green-500" : "bg-brand-500"
+            challenge.completed ? "bg-green-500" : "bg-amber-500"
           )}
           style={{ width: `${pct}%` }}
         />
@@ -233,10 +233,14 @@ export default function DashboardPage() {
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-7 h-px bg-amber-500/50" />
+          <span className="text-[10px] uppercase tracking-[0.28em] text-amber-500/70 font-semibold">Your Journey</span>
+        </div>
+        <h1 className="font-display font-bold text-3xl text-neutral-900 dark:text-white leading-tight">
           {t("profile.progressDashboard")}
         </h1>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
+        <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
           {t("dashboard.subtitle")}
         </p>
       </div>
@@ -253,7 +257,7 @@ export default function DashboardPage() {
           icon={Star}
           label={t("profile.points")}
           value={(summary?.points ?? 0).toLocaleString()}
-          color="text-brand-500 bg-brand-50 dark:bg-brand-900/20"
+          color="text-amber-500 bg-amber-50 dark:bg-amber-900/20"
         />
         <SummaryCard
           icon={BookOpen}
@@ -279,7 +283,7 @@ export default function DashboardPage() {
           </div>
           <div className="h-2 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-purple-500 to-brand-500 rounded-full transition-all"
+              className="h-full bg-gradient-to-r from-amber-500 to-amber-300 rounded-full transition-all"
               style={{
                 width: `${Math.min((summary.xp / summary.xpForNextLevel) * 100, 100)}%`,
               }}
@@ -301,8 +305,8 @@ export default function DashboardPage() {
       {/* Daily challenges */}
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <Target className="h-4 w-4 text-brand-500" />
-          <h2 className="text-base font-semibold text-neutral-900 dark:text-white">
+          <Target className="h-4 w-4 text-amber-500" />
+          <h2 className="font-display font-semibold text-lg text-neutral-900 dark:text-white">
             {t("dashboard.dailyChallenges")}
           </h2>
         </div>
@@ -337,7 +341,7 @@ export default function DashboardPage() {
       <div className="flex flex-wrap gap-3 pt-2">
         <Link
           href="/quiz"
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-[#06060e] text-sm font-bold transition-colors shadow-[0_0_20px_-6px_rgb(245_158_11_/0.6)]"
         >
           <BrainCircuit className="h-4 w-4" />
           {t("quiz.title")}

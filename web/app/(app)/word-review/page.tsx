@@ -231,7 +231,7 @@ export default function WordReviewPage() {
         </p>
         <Link
           href="/dictionary"
-          className="inline-block px-6 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors"
+          className="inline-block px-6 py-2.5 rounded-xl bg-amber-500 text-[#06060e] text-sm font-bold hover:bg-amber-400 transition-colors"
         >
           {t("dictionaryPage.title")}
         </Link>
@@ -251,7 +251,7 @@ export default function WordReviewPage() {
         </p>
         <Link
           href="/listen"
-          className="inline-block px-6 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors"
+          className="inline-block px-6 py-2.5 rounded-xl bg-amber-500 text-[#06060e] text-sm font-bold hover:bg-amber-400 transition-colors"
         >
           {t("wordReview.done")}
         </Link>
@@ -263,7 +263,11 @@ export default function WordReviewPage() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6">
-      <h1 className="text-xl font-bold text-neutral-900 dark:text-white mb-4">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="w-7 h-px bg-amber-500/50" />
+        <span className="text-[10px] uppercase tracking-[0.28em] text-amber-500/70 font-semibold">Flashcards</span>
+      </div>
+      <h1 className="font-display font-bold text-3xl text-neutral-900 dark:text-white mb-4">
         {t("wordReview.title")}
       </h1>
 
@@ -275,7 +279,7 @@ export default function WordReviewPage() {
         </div>
         <div className="h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden">
           <div
-            className="h-full rounded-full bg-brand-500 transition-all"
+            className="h-full rounded-full bg-amber-500 transition-all"
             style={{ width: `${(currentIndex / (queue?.length ?? 1)) * 100}%` }}
           />
         </div>

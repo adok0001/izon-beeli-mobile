@@ -33,7 +33,7 @@ import { useTranslation } from "react-i18next";
 function StatCard({ icon: Icon, label, value }: Readonly<{ icon: LucideIcon; label: string; value: string | number }>) {
   return (
     <div className="flex-1 bg-neutral-50 dark:bg-neutral-800 rounded-xl p-4 text-center">
-      <Icon className="mx-auto h-6 w-6 text-brand-500" />
+      <Icon className="mx-auto h-6 w-6 text-amber-500" />
       <p className="text-xl font-bold text-neutral-900 dark:text-white mt-1">{value}</p>
       <p className="text-xs text-neutral-600 dark:text-neutral-300 mt-0.5">{label}</p>
     </div>
@@ -233,7 +233,11 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-xl mx-auto px-4 py-6">
-      <h1 className="text-2xl font-bold text-neutral-900 dark:text-white mb-6">{t("profile.title")}</h1>
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-7 h-px bg-amber-500/50" />
+        <span className="text-[10px] uppercase tracking-[0.28em] text-amber-500/70 font-semibold">Your Profile</span>
+      </div>
+      <h1 className="font-display font-bold text-3xl text-neutral-900 dark:text-white mb-6">{t("profile.title")}</h1>
 
       {/* Avatar + name */}
       <div className="flex items-center gap-4 mb-8">

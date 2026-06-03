@@ -1,38 +1,182 @@
 "use client";
 
 import Link from "next/link";
-import {
-  Languages,
-  Volume2,
-  Globe,
-  Users,
-  ArrowRight,
-} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowRight, Languages, Volume2, Globe, Users } from "lucide-react";
+
+// ── Scroll reveal ─────────────────────────────────────────────────────────────
+
+function useReveal(threshold = 0.12) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [threshold]);
+  return { ref, visible };
+}
+
+function Reveal({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  const { ref, visible } = useReveal();
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(30px)",
+        transition: `opacity 0.75s cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform 0.75s cubic-bezier(0.16,1,0.3,1) ${delay}ms`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ── #2 — Animated counter ─────────────────────────────────────────────────────
+
+function useCountUp(target: number, duration = 1800, trigger: boolean) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!trigger) return;
+    const start = performance.now();
+    const raf = (now: number) => {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      // ease-out-expo
+      const eased = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      setCount(Math.floor(eased * target));
+      if (progress < 1) requestAnimationFrame(raf);
+    };
+    requestAnimationFrame(raf);
+  }, [trigger, target, duration]);
+  return count;
+}
+
+// Parse "70+", "500M+", "7" → { num: 70, suffix: "+" } etc.
+function parseStat(value: string): { num: number; suffix: string } {
+  const m = value.match(/^([\d.]+)(M\+|\+|)?$/);
+  if (!m) return { num: 0, suffix: value };
+  const raw = parseFloat(m[1]);
+  const unit = m[2] ?? "";
+  if (unit.includes("M")) return { num: raw, suffix: "M+" };
+  return { num: raw, suffix: unit };
+}
+
+function AnimatedStat({ value, label, refLabel }: { value: string; label: string; refLabel: string }) {
+  const { ref, visible } = useReveal();
+  const { num, suffix } = parseStat(value);
+  const count = useCountUp(num, 1600, visible);
+  return (
+    <div ref={ref} className="flex flex-col">
+      <span className="text-[10px] uppercase tracking-[0.28em] text-neutral-700 mb-3 font-medium">
+        {refLabel}
+      </span>
+      <span className="font-display font-bold text-5xl text-amber-400 leading-none tabular-nums">
+        {count}{suffix}
+      </span>
+      <span className="mt-3 text-sm text-neutral-500">{label}</span>
+    </div>
+  );
+}
+
+// ── #3 — Language cycling hero ────────────────────────────────────────────────
+
+const HERO_PHRASES = [
+  { text: "Your language",    lang: "English" },
+  { text: "Ède rẹ",           lang: "Yoruba" },
+  { text: "Asụsụ gị",        lang: "Igbo" },
+  { text: "Lugha yako",       lang: "Swahili" },
+  { text: "Luqadaada",        lang: "Somali" },
+  { text: "ቋንቋህ",             lang: "Amharic" },
+  { text: "Wo kasa",          lang: "Twi" },
+  { text: "Edem mi",          lang: "Izon" },
+];
+
+function CyclingHeroLine() {
+  const [index, setIndex] = useState(0);
+  const [phase, setPhase] = useState<"in" | "hold" | "out">("in");
+
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout>;
+
+    if (phase === "in") {
+      // hold for 2.4s then start out
+      t = setTimeout(() => setPhase("out"), 2400);
+    } else if (phase === "out") {
+      // wait for exit transition (400ms) then advance index
+      t = setTimeout(() => {
+        setIndex((i) => (i + 1) % HERO_PHRASES.length);
+        setPhase("in");
+      }, 420);
+    }
+    return () => clearTimeout(t);
+  }, [phase, index]);
+
+  const current = HERO_PHRASES[index];
+  const isIn = phase === "in";
+
+  return (
+    <div className="relative overflow-hidden" style={{ minHeight: "1.05em" }}>
+      {/* Main text */}
+      <span
+        className="block font-display font-bold leading-[0.92] tracking-tight text-white"
+        style={{
+          fontSize: "clamp(3.5rem,9vw,7.5rem)",
+          opacity: isIn ? 1 : 0,
+          transform: isIn ? "translateY(0)" : "translateY(-18px)",
+          transition: "opacity 0.38s cubic-bezier(0.16,1,0.3,1), transform 0.38s cubic-bezier(0.16,1,0.3,1)",
+        }}
+      >
+        {current.text}
+      </span>
+
+      {/* Language name pill — fades alongside the text */}
+      <span
+        className="absolute bottom-0 right-0 text-[10px] uppercase tracking-[0.22em] text-amber-500/50 font-semibold"
+        style={{
+          opacity: isIn && index !== 0 ? 0.8 : 0,
+          transition: "opacity 0.38s ease",
+        }}
+      >
+        {current.lang}
+      </span>
+    </div>
+  );
+}
+
+// ── Data ──────────────────────────────────────────────────────────────────────
 
 const STATS = [
-  { value: "70+", label: "African Languages" },
-  { value: "7", label: "Regions Covered" },
-  { value: "500M+", label: "Diaspora Speakers" },
+  { value: "70+",   label: "African Languages", ref: "Cat. No. 001" },
+  { value: "7",     label: "Regions Covered",   ref: "Cat. No. 002" },
+  { value: "500M+", label: "Diaspora Speakers", ref: "Cat. No. 003" },
 ];
 
 const FEATURES = [
   {
+    roman: "I",
     icon: Volume2,
     title: "Audio-First Learning",
     desc: "Every word recorded by native speakers. Segment-synced transcripts. Train your ear before your eye.",
-    color: "text-brand-400",
   },
   {
+    roman: "II",
     icon: Globe,
     title: "Cultural Depth",
     desc: "Language is culture. Learn Adinkra symbols, Ge'ez script, oral proverbs, and the stories behind the words.",
-    color: "text-gold-400",
   },
   {
+    roman: "III",
     icon: Users,
     title: "Community-Powered",
     desc: "Native speakers earn XP for contributing vocabulary and audio. The community builds the platform.",
-    color: "text-indigo-400",
   },
 ];
 
@@ -47,200 +191,307 @@ const LANGUAGES = [
   { name: "Wolof", region: "West Africa" },
   { name: "Somali", region: "East Africa" },
   { name: "Zulu", region: "Southern Africa" },
+  { name: "Fula", region: "West Africa" },
+  { name: "Shona", region: "Southern Africa" },
 ];
+
+const TICKER_LANGS = [
+  "Yoruba", "Igbo", "Swahili", "Hausa", "Amharic", "Izon", "Twi",
+  "Wolof", "Somali", "Zulu", "Fula", "Shona", "Kikuyu", "Lingala", "Bambara",
+];
+
+// ── Section label ─────────────────────────────────────────────────────────────
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-4 mb-5">
+      <div className="w-10 h-px bg-amber-500/50" />
+      <span className="text-[10px] uppercase tracking-[0.32em] text-amber-500/70 font-semibold">
+        {children}
+      </span>
+    </div>
+  );
+}
+
+// ── Landing page ──────────────────────────────────────────────────────────────
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#05050c] text-neutral-50 overflow-x-hidden">
-      {/* Background */}
-      <div className="pointer-events-none fixed inset-0 grid-bg opacity-100" />
+    <div className="min-h-screen bg-[#06060e] text-neutral-50 overflow-x-hidden">
+
+      {/* ── #1 Film grain overlay ── */}
+      <div aria-hidden className="grain-overlay" />
+
+      {/* Ambient layers */}
+      <div className="pointer-events-none fixed inset-0 grid-bg opacity-50" />
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[800px] h-[600px] rounded-full bg-brand-900/30 blur-[140px] animate-aurora" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full bg-brand-900/20 blur-[100px]" />
-        <div className="absolute bottom-0 right-0 w-72 h-72 rounded-full bg-indigo-900/15 blur-[90px]" />
-        <div className="absolute top-1/3 right-1/4 w-48 h-48 rounded-full bg-purple-800/10 blur-[70px]" />
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[700px] rounded-full bg-amber-900/[0.18] blur-[180px] animate-aurora" />
+        <div className="absolute top-1/2 -left-48 w-96 h-96 rounded-full bg-brand-900/20 blur-[130px]" />
+        <div className="absolute bottom-1/3 right-0 w-80 h-80 rounded-full bg-amber-800/[0.12] blur-[110px]" />
       </div>
 
-      {/* Nav */}
-      <nav className="sticky top-0 z-50 glass-dark border-b border-white/[0.07]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-400 via-brand-500 to-brand-800 flex items-center justify-center shadow-glow-sm">
+      {/* ── Nav ── */}
+      <nav className="sticky top-0 z-50 glass-dark border-b border-white/[0.06]">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-8">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-amber-700 flex items-center justify-center shadow-[0_0_20px_-4px_rgb(245_158_11_/0.5)]">
                 <Languages className="h-4 w-4 text-white" />
               </div>
-              <span className="font-extrabold text-white text-lg tracking-tight">Beeli</span>
+              <span className="font-display font-bold text-white text-xl tracking-tight">Beeli</span>
             </div>
             <Link
               href="/for-educators"
-              className="hidden sm:block text-sm text-neutral-400 hover:text-white transition-colors"
+              className="hidden sm:block text-[11px] uppercase tracking-widest text-neutral-500 hover:text-neutral-300 transition-colors"
             >
               For Educators
             </Link>
           </div>
           <div className="flex items-center gap-2">
             <Link href="/sign-in" className="btn-ghost text-sm">Sign In</Link>
-            <Link href="/sign-up" className="btn-primary text-sm">Start Free</Link>
+            <Link
+              href="/sign-up"
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#06060e] font-bold text-sm transition-all duration-200 shadow-[0_0_24px_-6px_rgb(245_158_11_/0.5)] hover:shadow-[0_0_36px_-6px_rgb(245_158_11_/0.7)]"
+            >
+              Start Free
+            </Link>
           </div>
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="relative min-h-[90vh] flex flex-col items-center justify-center text-center px-4 py-24">
-        <div className="animate-fade-in max-w-4xl mx-auto">
-          <span className="badge bg-brand-500/10 border border-brand-500/20 text-brand-300 mb-6">
-            Audio-first · Free · 70+ Languages
-          </span>
-          <h1 className="mt-4 text-5xl sm:text-7xl font-extrabold tracking-tight leading-[1.05]">
-            <span className="gradient-text-bold">Your language,</span>
-            <br />your roots.
-          </h1>
-          <p className="mt-6 text-xl sm:text-2xl text-neutral-400 font-medium">
-            70+ African languages. Audio-first. Free.
-          </p>
-          <p className="mt-3 text-sm text-neutral-600">
-            Built with native speakers. Used by diaspora communities worldwide.
-          </p>
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link href="/sign-up" className="btn-primary px-8 py-3.5 text-base shadow-glow">
-              Start Learning Free
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              href="/sign-in"
-              className="btn-ghost px-8 py-3.5 text-base border border-white/[0.10]"
+      {/* ── Hero ── */}
+      <section className="relative min-h-[92vh] flex flex-col justify-center px-6 py-32 overflow-hidden">
+        <div className="max-w-7xl mx-auto w-full">
+          <div className="max-w-3xl animate-fade-in">
+            <SectionLabel>Collection No. 001 — African Languages</SectionLabel>
+
+            {/* ── #3 Language cycling headline ── */}
+            <h1 className="font-display font-bold leading-[0.92] tracking-tight">
+              <CyclingHeroLine />
+              <span
+                className="block text-amber-400"
+                style={{ fontSize: "clamp(3.5rem,9vw,7.5rem)" }}
+              >
+                lives here.
+              </span>
+            </h1>
+
+            <p className="mt-8 text-lg sm:text-xl text-neutral-400 max-w-lg leading-relaxed">
+              70+ African languages. Audio-first. Built with native speakers.
+              Free forever.
+            </p>
+            <p className="mt-2 text-sm text-neutral-600">
+              From the Niger Delta to the Horn of Africa — and everywhere the diaspora calls home.
+            </p>
+
+            <div className="mt-12 flex flex-col sm:flex-row items-start gap-4">
+              <Link
+                href="/sign-up"
+                className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#06060e] font-bold text-sm transition-all duration-200 shadow-[0_0_60px_-12px_rgb(245_158_11_/0.65)] hover:shadow-[0_0_80px_-12px_rgb(245_158_11_/0.85)]"
+              >
+                Start Learning Free
+                <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+              <Link
+                href="/sign-in"
+                className="inline-flex items-center gap-2 px-8 py-4 rounded-xl border border-white/[0.1] text-neutral-400 hover:text-white hover:border-white/20 font-medium text-sm transition-all duration-200"
+              >
+                Sign In
+              </Link>
+            </div>
+          </div>
+
+          {/* Decorative letterform */}
+          <div
+            aria-hidden
+            className="absolute right-0 bottom-0 hidden lg:flex items-end opacity-[0.03] select-none pointer-events-none overflow-hidden h-[70vh]"
+          >
+            <span
+              className="font-display font-bold leading-none text-white"
+              style={{ fontSize: "clamp(18rem, 28vw, 32rem)", lineHeight: 0.85 }}
             >
-              Sign In
-            </Link>
+              Aː
+            </span>
           </div>
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="relative border-y border-white/[0.06] bg-white/[0.02] backdrop-blur-sm">
-        <div className="max-w-4xl mx-auto px-4 py-10 grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/[0.07]">
-          {STATS.map((s) => (
-            <div key={s.value} className="flex flex-col items-center py-6 sm:py-0">
-              <span className="text-4xl font-extrabold gradient-text">{s.value}</span>
-              <span className="mt-1 text-sm text-neutral-500 font-medium">{s.label}</span>
+      {/* ── #2 Stats band with animated counters ── */}
+      <section className="relative border-y border-white/[0.06]">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-3">
+          {STATS.map((s, i) => (
+            <div
+              key={s.value}
+              className={`flex flex-col py-10 sm:px-12 ${i > 0 ? "sm:border-l border-white/[0.06]" : ""}`}
+            >
+              <AnimatedStat value={s.value} label={s.label} refLabel={s.ref} />
             </div>
           ))}
         </div>
       </section>
 
-      {/* Feature pillars */}
-      <section className="relative py-24 px-4">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-center text-3xl sm:text-4xl font-extrabold text-white mb-4">
-            Built differently.
-          </h2>
-          <p className="text-center text-neutral-500 mb-12 max-w-xl mx-auto">
-            Most apps are built for European languages. Beeli was built for Africa.
-          </p>
+      {/* ── Language ticker ── */}
+      <div className="relative border-b border-white/[0.04] overflow-hidden py-4 bg-white/[0.01]">
+        <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-[#06060e] to-transparent z-10 pointer-events-none" />
+        <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-[#06060e] to-transparent z-10 pointer-events-none" />
+        <div className="flex items-center animate-ticker" style={{ width: "max-content" }}>
+          {[...TICKER_LANGS, ...TICKER_LANGS].map((lang, i) => (
+            <span key={i} className="flex items-center gap-5 px-5">
+              <span className="text-[11px] text-neutral-600 uppercase tracking-[0.22em] whitespace-nowrap font-medium">
+                {lang}
+              </span>
+              <span className="w-1 h-1 rounded-full bg-amber-500/35 shrink-0" />
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Feature halls ── */}
+      <section className="relative py-28 px-6">
+        <div className="max-w-7xl mx-auto">
+          <Reveal>
+            <div className="mb-16">
+              <SectionLabel>Exhibition Halls</SectionLabel>
+              <h2 className="font-display font-bold text-4xl sm:text-5xl text-white leading-tight">
+                Built differently.
+              </h2>
+              <p className="mt-4 text-neutral-500 max-w-sm text-sm leading-relaxed">
+                Most apps are built for European languages. Beeli was built for Africa.
+              </p>
+            </div>
+          </Reveal>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {FEATURES.map((f) => (
-              <div key={f.title} className="surface-raised highlight-top p-7 flex flex-col gap-4">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/[0.05]">
-                  <f.icon className={`h-5 w-5 ${f.color}`} />
+            {FEATURES.map((f, i) => (
+              <Reveal key={f.title} delay={i * 110}>
+                <div className="group relative h-full bg-white/[0.025] border border-white/[0.06] rounded-2xl p-8 hover:border-amber-500/25 hover:bg-white/[0.04] transition-all duration-300 overflow-hidden">
+                  <span className="absolute top-6 right-7 text-[10px] uppercase tracking-[0.28em] text-neutral-700 font-medium">
+                    {f.roman}
+                  </span>
+                  <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-amber-500/35 to-transparent group-hover:via-amber-500/65 transition-all duration-300" />
+                  <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-6 group-hover:bg-amber-500/15 transition-colors duration-300">
+                    <f.icon className="h-5 w-5 text-amber-400" />
+                  </div>
+                  <h3 className="font-display font-semibold text-xl text-white mb-3 leading-snug">
+                    {f.title}
+                  </h3>
+                  <p className="text-sm text-neutral-500 leading-relaxed">{f.desc}</p>
                 </div>
-                <h3 className="text-lg font-bold text-white">{f.title}</h3>
-                <p className="text-sm text-neutral-500 leading-relaxed">{f.desc}</p>
-              </div>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Language showcase */}
-      <section className="relative py-20 px-4 bg-white/[0.01]">
-        <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-3">
-            Your language is here.
-          </h2>
-          <p className="text-neutral-500 mb-12">
-            From the Niger Delta to the Horn of Africa — and everywhere the diaspora calls home.
-          </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            {LANGUAGES.map((l) => (
-              <div
-                key={l.name}
-                className="glass rounded-2xl px-5 py-4 text-left min-w-[120px]"
-              >
-                <div className="font-bold text-white text-sm">{l.name}</div>
-                <div className="text-xs text-neutral-500 mt-0.5">{l.region}</div>
+      {/* ── Language placard grid ── */}
+      <section className="relative py-24 px-6 bg-white/[0.01]">
+        <div className="max-w-7xl mx-auto">
+          <Reveal>
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-12">
+              <div>
+                <SectionLabel>Permanent Collection</SectionLabel>
+                <h2 className="font-display font-bold text-4xl sm:text-5xl text-white leading-tight">
+                  Your language
+                  <br />is here.
+                </h2>
               </div>
+              <p className="text-sm text-neutral-600 max-w-xs sm:text-right leading-relaxed">
+                From the Niger Delta to the Horn of Africa — and everywhere the diaspora calls home.
+              </p>
+            </div>
+          </Reveal>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            {LANGUAGES.map((l, i) => (
+              <Reveal key={l.name} delay={i * 45}>
+                <div className="group relative bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 hover:bg-white/[0.05] hover:border-amber-500/20 transition-all duration-200 overflow-hidden cursor-default">
+                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-amber-500/25 group-hover:bg-amber-500/55 transition-colors duration-200" />
+                  <div className="text-sm font-semibold text-white mt-1">{l.name}</div>
+                  <div className="text-[10px] text-neutral-600 mt-1 uppercase tracking-wide">{l.region}</div>
+                </div>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Why Beeli */}
-      <section className="relative py-20 px-4">
-        <div className="max-w-3xl mx-auto">
-          <div className="surface-brand relative p-8 sm:p-12 text-center overflow-hidden">
-            <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-brand-500/50 to-transparent" />
-            <p className="text-neutral-500 text-xs font-semibold uppercase tracking-widest mb-8">
-              The Beeli difference
-            </p>
-            <div className="flex items-center justify-center gap-8 sm:gap-16 mb-10">
-              <div className="text-center">
-                <div className="text-5xl font-extrabold text-neutral-600">4</div>
-                <div className="text-xs text-neutral-600 mt-1">Other apps</div>
-              </div>
-              <div className="text-2xl text-neutral-700 font-light">vs</div>
-              <div className="text-center">
-                <div className="text-5xl font-extrabold gradient-text">70+</div>
-                <div className="text-xs text-brand-400 mt-1 font-semibold">Beeli</div>
+      {/* ── Comparison panel ── */}
+      <Reveal>
+        <section className="relative py-28 px-6">
+          <div className="max-w-5xl mx-auto">
+            <div className="relative border border-white/[0.07] rounded-2xl p-12 sm:p-20 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-900/[0.12] via-transparent to-transparent pointer-events-none" />
+              <div className="absolute top-0 left-[12%] right-[12%] h-px bg-gradient-to-r from-transparent via-amber-500/40 to-transparent" />
+
+              <div className="relative text-center">
+                <SectionLabel>The Beeli Difference</SectionLabel>
+
+                <div className="flex items-center justify-center gap-16 sm:gap-32 my-12">
+                  <div className="text-center">
+                    <div className="font-display font-bold text-6xl sm:text-8xl text-neutral-700 leading-none">4</div>
+                    <div className="text-[11px] text-neutral-700 mt-3 uppercase tracking-widest">Other apps</div>
+                  </div>
+                  <div className="text-neutral-700 text-sm uppercase tracking-widest">vs</div>
+                  <div className="text-center">
+                    <div className="font-display font-bold text-6xl sm:text-8xl text-amber-400 leading-none">70+</div>
+                    <div className="text-[11px] text-amber-600 mt-3 uppercase tracking-widest font-semibold">Beeli</div>
+                  </div>
+                </div>
+
+                <h3 className="font-display font-bold text-3xl sm:text-4xl text-white leading-snug">
+                  Duolingo covers 4 African languages.
+                  <br />
+                  <span className="text-amber-400">We cover 70+.</span>
+                </h3>
+                <p className="mt-5 text-neutral-500 text-sm max-w-sm mx-auto leading-relaxed">
+                  African languages aren&apos;t an afterthought. They&apos;re the whole point.
+                </p>
               </div>
             </div>
-            <h3 className="text-2xl sm:text-3xl font-extrabold text-white leading-snug">
-              Duolingo covers 4 African languages.
-              <br />
-              <span className="gradient-text">We cover 70+.</span>
-            </h3>
-            <p className="mt-4 text-neutral-500 text-sm max-w-md mx-auto">
-              African languages aren&apos;t an afterthought. They&apos;re the whole point.
-            </p>
           </div>
-        </div>
-      </section>
+        </section>
+      </Reveal>
 
-      {/* CTA footer */}
-      <section className="relative py-28 px-4 text-center">
-        <div className="max-w-2xl mx-auto animate-fade-in">
-          <h2 className="text-4xl sm:text-5xl font-extrabold text-white leading-tight mb-6">
-            Start learning your
-            <br />
-            <span className="gradient-text-gold">mother tongue.</span>
-          </h2>
-          <p className="text-neutral-500 mb-10 text-lg">
-            Free forever. No credit card. Start in 60 seconds.
-          </p>
-          <Link href="/sign-up" className="btn-primary px-10 py-4 text-base shadow-glow-lg">
-            Start Learning Free
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </section>
+      {/* ── CTA ── */}
+      <Reveal>
+        <section className="relative py-32 px-6 text-center overflow-hidden">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[640px] h-[380px] rounded-full bg-amber-900/[0.18] blur-[140px] pointer-events-none" />
 
-      {/* Footer */}
-      <footer className="relative border-t border-white/[0.06] py-10 px-4">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-neutral-600">
-          <span>© {new Date().getFullYear()} Beeli. All rights reserved.</span>
-          <div className="flex gap-5">
-            <Link href="/privacy" className="hover:text-neutral-400 transition-colors">
-              Privacy
-            </Link>
-            <Link href="/support" className="hover:text-neutral-400 transition-colors">
-              Support
-            </Link>
-            <Link href="/for-educators" className="hover:text-neutral-400 transition-colors">
-              For Educators
-            </Link>
+          <div className="max-w-3xl mx-auto relative">
+            <div className="flex items-center justify-center gap-6 mb-10">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent to-white/[0.05]" />
+              <SectionLabel>Begin Your Journey</SectionLabel>
+              <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white/[0.05]" />
+            </div>
+
+            <h2 className="font-display font-bold text-5xl sm:text-6xl text-white leading-tight mb-4">
+              Start learning your
+              <br />
+              <span className="text-amber-400">mother tongue.</span>
+            </h2>
+            <p className="text-neutral-500 mb-10 text-base">
+              Free forever. No credit card. Start in 60 seconds.
+            </p>
             <Link
               href="/sign-up"
-              className="text-brand-400 hover:text-brand-300 font-semibold transition-colors"
+              className="group inline-flex items-center gap-2 px-10 py-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#06060e] font-bold text-base transition-all duration-200 shadow-[0_0_72px_-12px_rgb(245_158_11_/0.65)] hover:shadow-[0_0_100px_-12px_rgb(245_158_11_/0.85)]"
             >
+              Start Learning Free
+              <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </div>
+        </section>
+      </Reveal>
+
+      {/* ── Footer ── */}
+      <footer className="relative border-t border-white/[0.06] py-10 px-6">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-neutral-700">
+          <span className="font-display">© {new Date().getFullYear()} Beeli. All rights reserved.</span>
+          <div className="flex gap-6">
+            <Link href="/privacy" className="hover:text-neutral-400 transition-colors">Privacy</Link>
+            <Link href="/support" className="hover:text-neutral-400 transition-colors">Support</Link>
+            <Link href="/for-educators" className="hover:text-neutral-400 transition-colors">For Educators</Link>
+            <Link href="/sign-up" className="text-amber-500 hover:text-amber-400 font-semibold transition-colors">
               Get Started
             </Link>
           </div>

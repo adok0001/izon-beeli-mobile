@@ -9,7 +9,7 @@ import { en } from "@mobile/lib/locales/en";
 import { fr } from "@mobile/lib/locales/fr";
 import { pcm } from "@mobile/lib/locales/pcm";
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Cormorant_Garamond, Plus_Jakarta_Sans } from "next/font/google";
 import { cookies } from "next/headers";
 import Script from "next/script";
 import "./globals.css";
@@ -21,6 +21,13 @@ const APP_SECOND_NAME = "Aurufie";
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-jakarta",
+  display: "swap",
+});
+
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  variable: "--font-display",
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -140,7 +147,7 @@ export default async function RootLayout({
 
   return (
     <html lang={lang} suppressHydrationWarning>
-      <body className={`${jakarta.variable} font-sans`}>
+      <body className={`${jakarta.variable} ${cormorant.variable} font-sans`}>
         <Script id="ld-org" type="application/ld+json" strategy="beforeInteractive">
           {JSON.stringify(organizationJsonLd)}
         </Script>

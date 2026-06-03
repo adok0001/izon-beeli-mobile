@@ -11,38 +11,34 @@ export default function AuthLayout({
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#05050c] p-4 relative overflow-hidden">
-      {/* Grid pattern */}
-      <div className="pointer-events-none absolute inset-0 grid-bg opacity-100" />
+    <div className="min-h-screen flex items-center justify-center bg-[#06060e] p-4 relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 grid-bg opacity-50" />
 
-      {/* Ambient glow blobs */}
+      {/* Warm ambient blobs */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[800px] h-[600px] rounded-full bg-brand-900/30 blur-[140px] animate-aurora" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full bg-brand-900/20 blur-[100px]" />
-        <div className="absolute bottom-0 right-0 w-72 h-72 rounded-full bg-indigo-900/15 blur-[90px]" />
-        <div className="absolute top-1/3 right-1/4 w-48 h-48 rounded-full bg-purple-800/10 blur-[70px]" />
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[800px] h-[600px] rounded-full bg-amber-900/[0.2] blur-[160px] animate-aurora" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full bg-brand-900/20 blur-[110px]" />
+        <div className="absolute bottom-0 right-0 w-64 h-64 rounded-full bg-amber-800/[0.12] blur-[90px]" />
       </div>
 
       <div className="relative w-full max-w-md animate-fade-in">
         {/* Brand header */}
         <div className="text-center mb-8">
-          {/* Icon with aurora ring */}
           <div className="relative inline-flex mb-5">
-            <div className="absolute inset-0 rounded-2xl bg-brand-500/30 blur-xl scale-150 animate-pulse-glow" />
-            <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-400 via-brand-500 to-brand-800 flex items-center justify-center shadow-glow-lg">
+            <div className="absolute inset-0 rounded-2xl bg-amber-500/25 blur-xl scale-150 animate-pulse-glow" />
+            <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-700 flex items-center justify-center shadow-[0_0_52px_-12px_rgb(245_158_11_/0.7)]">
               <Languages className="h-8 w-8 text-white drop-shadow" />
               <div className="absolute inset-0 rounded-2xl shadow-inner-bright" />
             </div>
           </div>
 
-          <h1 className="text-4xl font-extrabold text-white tracking-tight">Beeli (Aurufie)</h1>
+          <h1 className="font-display font-bold text-4xl text-white tracking-tight">Beeli</h1>
           <p className="text-neutral-500 mt-2 text-sm font-medium">{t("auth.brandSubtitle")}</p>
         </div>
 
-        {/* Auth card — glass */}
+        {/* Auth card */}
         <div className="relative rounded-2xl overflow-hidden border border-white/[0.09] shadow-lift">
-          {/* Top accent line */}
-          <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-brand-500/60 to-transparent" />
+          <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
           <div className="bg-white/[0.04] backdrop-blur-2xl px-6 py-8">
             {children}
           </div>

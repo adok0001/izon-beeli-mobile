@@ -48,7 +48,7 @@ function QuizGameOver({ onRestart }: Readonly<{ onRestart: () => void }>) {
       <p className="text-neutral-500 dark:text-neutral-400 mb-8">{t("quiz.gameOverDesc")}</p>
       <button
         onClick={onRestart}
-        className="w-full py-3 rounded-xl bg-brand-600 text-white font-semibold hover:bg-brand-700 transition-colors"
+        className="w-full py-3 rounded-xl bg-amber-500 text-[#06060e] font-bold hover:bg-amber-400 transition-colors shadow-[0_0_20px_-6px_rgb(245_158_11_/0.5)]"
       >
         {t("quiz.tryAgain")}
       </button>
@@ -105,8 +105,10 @@ function QuizConfig({ onStart }: Readonly<{ onStart: (count: number) => void }>)
 
   return (
     <div className="max-w-md mx-auto text-center py-12">
-      <Brain className="mx-auto mb-4 h-12 w-12 text-brand-500" />
-      <h1 className="text-2xl font-bold text-neutral-900 dark:text-white mb-2">{t("quiz.title")}</h1>
+      <div className="w-16 h-16 rounded-2xl bg-brand-500/15 border border-brand-500/25 flex items-center justify-center mx-auto mb-4">
+        <Brain className="h-8 w-8 text-brand-400" />
+      </div>
+      <h1 className="font-display font-bold text-3xl text-neutral-900 dark:text-white mb-2">{t("quiz.title")}</h1>
       <p className="text-neutral-500 dark:text-neutral-400 mb-8">
         {t("quiz.subtitle")}
       </p>
@@ -123,7 +125,7 @@ function QuizConfig({ onStart }: Readonly<{ onStart: (count: number) => void }>)
               className={cn(
                 "w-14 h-14 rounded-xl text-sm font-bold border transition-colors",
                 count === n
-                  ? "bg-brand-600 text-white border-brand-600"
+                  ? "bg-amber-500 text-[#06060e] border-amber-500 font-bold"
                   : "border-neutral-200 text-neutral-700 dark:border-neutral-700 dark:text-neutral-300 hover:border-brand-400"
               )}
             >
@@ -139,7 +141,7 @@ function QuizConfig({ onStart }: Readonly<{ onStart: (count: number) => void }>)
       <button
         onClick={() => onStart(count)}
         aria-keyshortcuts="Enter"
-        className="w-full py-3 rounded-xl bg-brand-600 text-white font-semibold hover:bg-brand-700 transition-colors"
+        className="w-full py-3 rounded-xl bg-amber-500 text-[#06060e] font-bold hover:bg-amber-400 transition-colors shadow-[0_0_20px_-6px_rgb(245_158_11_/0.5)]"
       >
         {t("quiz.startQuiz")}
       </button>
@@ -227,7 +229,7 @@ function QuizPlay({
       <div className="flex items-center gap-3 mb-6">
         <div className="flex-1 h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
           <div
-            className="h-full bg-brand-500 rounded-full transition-all"
+            className="h-full bg-amber-500 rounded-full transition-all"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -293,7 +295,7 @@ function QuizPlay({
         <button
           onClick={handleNext}
           aria-keyshortcuts="Enter"
-          className="w-full py-3 rounded-xl bg-brand-600 text-white font-semibold hover:bg-brand-700 transition-colors"
+          className="w-full py-3 rounded-xl bg-amber-500 text-[#06060e] font-bold hover:bg-amber-400 transition-colors shadow-[0_0_20px_-6px_rgb(245_158_11_/0.5)]"
         >
           {index + 1 >= questions.length ? t("quiz.seeResults") : `${t("common.next")} →`}
         </button>
@@ -350,7 +352,7 @@ function QuizResults({ result, onRestart }: Readonly<{ result: QuizResult; onRes
       <button
         onClick={onRestart}
         aria-keyshortcuts="Enter"
-        className="w-full py-3 rounded-xl bg-brand-600 text-white font-semibold hover:bg-brand-700 transition-colors"
+        className="w-full py-3 rounded-xl bg-amber-500 text-[#06060e] font-bold hover:bg-amber-400 transition-colors shadow-[0_0_20px_-6px_rgb(245_158_11_/0.5)]"
       >
         {t("common.tryAgain")}
       </button>

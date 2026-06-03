@@ -98,12 +98,12 @@ export default function SupportPage() {
       <div className="max-w-3xl mx-auto px-6 py-16">
         <Link
           href="/learn"
-          className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+          className="text-sm text-amber-600 dark:text-amber-400 hover:underline"
         >
-          ← Back to Beeli (Aurufie)
+          ← Back to Beeli
         </Link>
 
-        <h1 className="mt-8 text-4xl font-bold tracking-tight">Support</h1>
+        <h1 className="mt-8 font-display font-bold text-4xl tracking-tight">Support</h1>
         <p className="mt-3 text-lg text-neutral-500 dark:text-neutral-400">
           Learn African languages, interactively.
         </p>

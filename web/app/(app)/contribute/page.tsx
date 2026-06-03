@@ -74,7 +74,7 @@ function StepHeader({ step, total, title, onBack }: Readonly<{ step: number; tot
         {Array.from({ length: total }, (_, i) => (
           <div
             key={i}
-            className={cn("h-1.5 w-6 rounded-full", i < step ? "bg-brand-500" : "bg-neutral-200 dark:bg-neutral-700")}
+            className={cn("h-1.5 w-6 rounded-full", i < step ? "bg-amber-500" : "bg-neutral-200 dark:bg-neutral-700")}
           />
         ))}
       </div>
@@ -174,7 +174,7 @@ function WordFlow({ onDone }: Readonly<{ onDone: () => void }>) {
         <button
           onClick={() => setStep(2)}
           disabled={!langId}
-          className="mt-6 w-full py-3 rounded-xl bg-brand-600 text-white font-medium hover:bg-brand-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+          className="mt-6 w-full py-3 rounded-xl bg-amber-500 text-[#06060e] font-bold hover:bg-amber-400 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
         >
           {t("common.next")} <ChevronRight className="h-4 w-4" />
         </button>
@@ -207,7 +207,7 @@ function WordFlow({ onDone }: Readonly<{ onDone: () => void }>) {
                   className={cn(
                     "px-3 py-1.5 rounded-full text-xs font-medium border capitalize transition-colors",
                     category === cat
-                      ? "bg-brand-600 text-white border-brand-600"
+                      ? "bg-amber-500 text-[#06060e] border-amber-500 font-bold"
                       : "border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:border-brand-400"
                   )}
                 >
@@ -220,7 +220,7 @@ function WordFlow({ onDone }: Readonly<{ onDone: () => void }>) {
         <button
           onClick={() => setStep(3)}
           disabled={!word.trim() || !english.trim()}
-          className="mt-6 w-full py-3 rounded-xl bg-brand-600 text-white font-medium hover:bg-brand-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+          className="mt-6 w-full py-3 rounded-xl bg-amber-500 text-[#06060e] font-bold hover:bg-amber-400 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
         >
           {t("common.next")} <ChevronRight className="h-4 w-4" />
         </button>
@@ -261,7 +261,7 @@ function WordFlow({ onDone }: Readonly<{ onDone: () => void }>) {
       <button
         onClick={() => submit.mutate()}
         disabled={submit.isPending}
-        className="mt-6 w-full py-3 rounded-xl bg-brand-600 text-white font-medium hover:bg-brand-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+        className="mt-6 w-full py-3 rounded-xl bg-amber-500 text-[#06060e] font-bold hover:bg-amber-400 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
       >
         {submit.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> {t("contribute.submitting")}</> : t("contribute.submitForReview")}
       </button>

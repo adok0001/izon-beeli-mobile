@@ -40,6 +40,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-jakarta)", "Inter", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "Georgia", "serif"],
       },
       borderWidth: {
         "3": "3px",
@@ -103,6 +104,14 @@ const config: Config = {
           from: { transform: "rotate(0deg)" },
           to:   { transform: "rotate(360deg)" },
         },
+        ticker: {
+          from: { transform: "translateX(0)" },
+          to:   { transform: "translateX(-50%)" },
+        },
+        "reveal-up": {
+          from: { opacity: "0", transform: "translateY(32px)" },
+          to:   { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         "fade-in":   "fade-in 0.35s ease-out",
@@ -112,7 +121,9 @@ const config: Config = {
         "pulse-glow":"pulse-glow 2.5s ease-in-out infinite",
         float:       "float 3.5s ease-in-out infinite",
         aurora:      "aurora 14s ease-in-out infinite",
-        "spin-slow": "spin-slow 18s linear infinite",
+        "spin-slow":  "spin-slow 18s linear infinite",
+        ticker:       "ticker 35s linear infinite",
+        "reveal-up":  "reveal-up 0.65s ease-out both",
       },
     },
   },
