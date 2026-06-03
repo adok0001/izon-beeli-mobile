@@ -3,6 +3,7 @@ import { useWordOfTheDay } from "@/lib/hooks/use-word-of-the-day";
 import { useSaveWord, useWordBank } from "@/lib/hooks/use-wordbank";
 import { localizeField } from "@/lib/localize";
 import { useUiLanguageStore } from "@/store/ui-language-store";
+import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Pressable, Text, View } from "react-native";
 
@@ -16,12 +17,17 @@ export function WordOfTheDay({ languageId }: Props) {
   const word = useWordOfTheDay(languageId);
   const { data: savedIds } = useWordBank();
   const saveWord = useSaveWord();
+  const router = useRouter();
 
   if (!word) return null;
 
   const isSaved = savedIds?.includes(word.id) ?? false;
 
   return (
+    <Pressable
+      onPress={() => router.push({ pathname: "/word/[id]", params: { id: word.id, languageId: word.languageId } })}
+      className="active:opacity-70"
+    >
     <View className="rounded-2xl bg-blue-50 p-4 dark:bg-blue-900/20">
       <View className="mb-2 flex-row items-center justify-between">
         <View className="flex-row items-center">
@@ -31,7 +37,8 @@ export function WordOfTheDay({ languageId }: Props) {
           </Text>
         </View>
         <Pressable
-          onPress={() => {
+          onPress={(e) => {
+            e.stopPropagation();
             if (!isSaved) saveWord.mutate(word.id);
           }}
           hitSlop={8}
@@ -71,5 +78,6 @@ export function WordOfTheDay({ languageId }: Props) {
         </View>
       )}
     </View>
+    </Pressable>
   );
 }
