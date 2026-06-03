@@ -3,7 +3,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDeleteContribution, useMyContributions, useUpdateContribution, type MyContribution } from "@/lib/hooks/use-contributions";
 import { getLanguageName } from "@/lib/mock-data";
 import { useContributionStore } from "@/store/contribution-store";
-import * as DocumentPicker from "expo-document-picker";
+import * as ImagePicker from "expo-image-picker";
 import { Stack } from "expo-router";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -87,9 +87,24 @@ function ContributionRow({ item }: { item: MyContribution }) {
 
 
   const handlePickImage = async () => {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: ["image/*"],
-      copyToCacheDirectory: true,
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setNewImageUri(result.assets[0].uri);
+    }
+  };
+
+  const handleTakePhoto = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Permission required", "Camera access is needed to take a photo.");
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
     });
     if (!result.canceled && result.assets[0]) {
       setNewImageUri(result.assets[0].uri);
@@ -103,7 +118,7 @@ function ContributionRow({ item }: { item: MyContribution }) {
 
   const hasAudio = item.type === "entry_audio" || item.type === "audio" || !!item.audioUrl;
   const hasImage = item.type === "entry_image" || !!item.imageUrl;
-  const canEdit = item.status === "submitted" && EDITABLE_TYPES.includes(item.type);
+  const canEdit = (item.status === "submitted" || item.status === "rejected") && EDITABLE_TYPES.includes(item.type);
 
   const handleSave = () => {
     updateContribution.mutate(
@@ -245,24 +260,41 @@ function ContributionRow({ item }: { item: MyContribution }) {
               {newImageUri ? (
                 <View className="mb-3 overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
                   <Image source={{ uri: newImageUri }} className="h-32 w-full" resizeMode="cover" />
-                  <Pressable onPress={handlePickImage} className="flex-row items-center justify-center gap-1.5 py-2">
-                    <IconSymbol name="photo" size={13} color="#3b82f6" />
-                    <Text className="text-xs font-medium text-blue-500">Change image</Text>
-                  </Pressable>
+                  <View className="flex-row justify-center gap-4 py-2">
+                    <Pressable onPress={handleTakePhoto} className="flex-row items-center gap-1">
+                      <IconSymbol name="camera.fill" size={13} color="#3b82f6" />
+                      <Text className="text-xs font-medium text-blue-500">Retake</Text>
+                    </Pressable>
+                    <Pressable onPress={handlePickImage} className="flex-row items-center gap-1">
+                      <IconSymbol name="photo" size={13} color="#3b82f6" />
+                      <Text className="text-xs font-medium text-blue-500">Gallery</Text>
+                    </Pressable>
+                  </View>
                 </View>
               ) : (
-                <Pressable
-                  onPress={handlePickImage}
-                  className="mb-3 items-center gap-1.5 rounded-xl border border-dashed border-neutral-300 py-5 dark:border-neutral-600"
-                >
+                <View className="mb-3 rounded-xl border border-dashed border-neutral-300 py-4 dark:border-neutral-600">
                   {item.imageUrl && (
-                    <Text className="text-xs text-neutral-400 dark:text-neutral-500">Current image on file · tap to replace</Text>
+                    <Text className="mb-2 text-center text-xs text-neutral-400 dark:text-neutral-500">
+                      Current image on file · replace with:
+                    </Text>
                   )}
-                  <IconSymbol name="photo.badge.plus" size={24} color="#9ca3af" />
-                  <Text className="text-xs text-neutral-400 dark:text-neutral-500">
-                    {item.imageUrl ? "Replace image" : "Add image"}
-                  </Text>
-                </Pressable>
+                  <View className="flex-row justify-center gap-4">
+                    <Pressable
+                      onPress={handleTakePhoto}
+                      className="items-center gap-1"
+                    >
+                      <IconSymbol name="camera.fill" size={24} color="#9ca3af" />
+                      <Text className="text-xs text-neutral-400 dark:text-neutral-500">Camera</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={handlePickImage}
+                      className="items-center gap-1"
+                    >
+                      <IconSymbol name="photo.badge.plus" size={24} color="#9ca3af" />
+                      <Text className="text-xs text-neutral-400 dark:text-neutral-500">Gallery</Text>
+                    </Pressable>
+                  </View>
+                </View>
               )}
             </>
 
@@ -364,10 +396,17 @@ function ContributionRow({ item }: { item: MyContribution }) {
             </View>
           )}
           {canEdit && !editing && (
-            <View className="mt-1 flex-row gap-2">
-              <Pressable onPress={() => setEditing(true)} hitSlop={8}>
-                <IconSymbol name="pencil" size={15} color="#6b7280" />
-              </Pressable>
+            <View className="mt-1 flex-row items-center gap-2">
+              {item.status === "rejected" ? (
+                <Pressable onPress={() => setEditing(true)} hitSlop={8} className="flex-row items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 dark:bg-amber-900/40">
+                  <IconSymbol name="arrow.counterclockwise" size={11} color="#d97706" />
+                  <Text className="text-xs font-semibold text-amber-600 dark:text-amber-400">Retry</Text>
+                </Pressable>
+              ) : (
+                <Pressable onPress={() => setEditing(true)} hitSlop={8}>
+                  <IconSymbol name="pencil" size={15} color="#6b7280" />
+                </Pressable>
+              )}
               <Pressable onPress={handleDelete} disabled={deleteContribution.isPending} hitSlop={8}>
                 <IconSymbol name="trash" size={15} color="#ef4444" />
               </Pressable>
@@ -463,6 +502,7 @@ export default function MyContributionsScreen() {
           data={submissions}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           renderItem={({ item }) => <ContributionRow item={item} />}
           ListEmptyComponent={

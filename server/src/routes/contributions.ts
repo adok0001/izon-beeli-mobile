@@ -567,7 +567,7 @@ contributionsRouter.patch("/:id", async (c) => {
   const [user] = await db.select({ isAdmin: users.isAdmin }).from(users).where(eq(users.id, userId)).limit(1);
   if (!user?.isAdmin) {
     if (existing.userId !== userId) return c.json({ error: "Forbidden" }, 403);
-    if (existing.status !== "submitted") return c.json({ error: "Only pending contributions can be edited" }, 409);
+    if (existing.status !== "submitted" && existing.status !== "rejected") return c.json({ error: "Only pending or rejected contributions can be edited" }, 409);
   }
 
   const contentType = c.req.header("Content-Type") ?? "";
@@ -644,6 +644,11 @@ contributionsRouter.patch("/:id", async (c) => {
   if (imageUrl) updates.imageUrl = imageUrl;
 
   if (Object.keys(updates).length === 0) return c.json({ error: "Nothing to update" }, 400);
+
+  if (existing.status === "rejected") {
+    updates.status = "submitted";
+    updates.reviewNote = null;
+  }
 
   const [updated] = await db.update(contributions).set(updates).where(eq(contributions.id, id)).returning();
   return c.json(updated);
