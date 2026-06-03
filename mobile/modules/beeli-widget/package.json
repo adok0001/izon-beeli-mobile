@@ -6,6 +6,6 @@
   "source": "src/index",
   "types": "src/index.d.ts",
   "expo": {
-    "plugin": "plugin/index"
+    "plugin": "plugin/index.js"
   }
 }
