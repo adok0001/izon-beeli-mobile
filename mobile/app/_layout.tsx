@@ -13,6 +13,7 @@ import {
   registerPushToken,
 } from "@/lib/push-notifications";
 import { useLanguageStore } from "@/store/language-store";
+import { useWidgetSync } from "@/lib/hooks/use-widget-sync";
 import { useNotificationStore } from "@/store/notification-store";
 import { useThemeStore } from "@/store/theme-store";
 import { useTourStore } from "@/store/tour-store";
@@ -91,7 +92,7 @@ function AuthGate({ children }: Readonly<{ children: React.ReactNode }>) {
 
   useEffect(() => {
     return addNotificationListener((title, body, type, icon) => {
-      const VALID_TYPES = ["word_of_day", "streak_reminder", "assignment_due", "achievement", "broadcast", "reengagement"] as const;
+      const VALID_TYPES = ["word_of_day", "proverb_of_month", "song_of_week", "streak_reminder", "assignment_due", "achievement", "broadcast", "reengagement"] as const;
       const safeType = VALID_TYPES.includes(type as any) ? (type as typeof VALID_TYPES[number]) : "broadcast";
       addNotification(safeType, title, body, icon);
     });
@@ -128,6 +129,7 @@ function AuthGate({ children }: Readonly<{ children: React.ReactNode }>) {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  useWidgetSync();
   const hydrateTheme = useThemeStore((s) => s.hydrate);
   const hydrateLanguage = useLanguageStore((s) => s.hydrate);
   const hydrateUiLanguage = useUiLanguageStore((s) => s.hydrate);

@@ -1,0 +1,11 @@
+{
+  "name": "beeli-widget",
+  "version": "1.0.0",
+  "description": "Expo native module for Beeli home screen widgets",
+  "main": "src/index",
+  "source": "src/index",
+  "types": "src/index.d.ts",
+  "expo": {
+    "plugin": "plugin/index"
+  }
+}
