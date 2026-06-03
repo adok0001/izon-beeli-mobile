@@ -8,6 +8,7 @@ import { useSyncUser } from "@/lib/hooks/use-sync-user";
 import "@/lib/i18n";
 import {
   addNotificationListener,
+  addNotificationTapListener,
   configurePushNotifications,
   registerPushToken,
 } from "@/lib/push-notifications";
@@ -66,6 +67,12 @@ function AuthGate({ children }: Readonly<{ children: React.ReactNode }>) {
   useEffect(() => {
     if (isSignedIn && userId) analytics.identify(userId);
   }, [isSignedIn, userId]);
+
+  useEffect(() => {
+    return addNotificationTapListener((route) => {
+      router.push(route as never);
+    });
+  }, [router]);
 
   useEffect(() => {
     return addNotificationListener((title, body, type, icon) => {
@@ -145,7 +152,14 @@ export default function RootLayout() {
           <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
             <AuthGate>
               <GestureHandlerRootView style={{ flex: 1 }}>
-                <Stack>
+                <Stack
+                  screenOptions={{
+                    headerStyle: { backgroundColor: "#0D0F1A" },
+                    headerTintColor: "#F7F2E8",
+                    headerTitleStyle: { color: "#F7F2E8", fontWeight: "700" },
+                    headerShadowVisible: false,
+                  }}
+                >
                   <Stack.Screen name="index" options={{ headerShown: false }} />
                   <Stack.Screen name="(onboarding)/index" options={{ headerShown: false }} />
                   <Stack.Screen name="(auth)" options={{ headerShown: false }} />
@@ -153,6 +167,7 @@ export default function RootLayout() {
                   <Stack.Screen name="lesson/[id]" options={{ headerBackTitle: "Back" }} />
                   <Stack.Screen name="contribute" options={{ presentation: "modal", headerShown: false }} />
                   <Stack.Screen name="reviewer-application" options={{ presentation: "modal", headerShown: false }} />
+                  <Stack.Screen name="educator-guide" options={{ headerBackTitle: "Back" }} />
                   <Stack.Screen name="contribute-lesson" options={{ presentation: "modal", headerShown: false }} />
                   <Stack.Screen name="contribute-bulk" options={{ presentation: "modal", headerShown: false }} />
                   <Stack.Screen name="settings" options={{ headerBackTitle: "Back" }} />
@@ -181,7 +196,7 @@ export default function RootLayout() {
                   <Stack.Screen name="word/[id]" options={{ headerBackTitle: "Back" }} />
                 </Stack>
               </GestureHandlerRootView>
-              <StatusBar style="auto" />
+              <StatusBar style="light" />
             </AuthGate>
           </ThemeProvider>
         </QueryClientProvider>
