@@ -556,14 +556,6 @@ contributionsRouter.patch("/:id/review", adminMiddleware, async (c) => {
 contributionsRouter.patch("/:id", async (c) => {
   const userId = c.get("userId");
   const { id } = c.req.param();
-  const body = await c.req.json<{
-    word?: string;
-    english?: string;
-    pronunciation?: string | null;
-    example?: string | null;
-    exampleTranslation?: string | null;
-    category?: string;
-  }>();
 
   const [existing] = await db
     .select({ id: contributions.id, userId: contributions.userId, status: contributions.status })
@@ -575,18 +567,88 @@ contributionsRouter.patch("/:id", async (c) => {
   const [user] = await db.select({ isAdmin: users.isAdmin }).from(users).where(eq(users.id, userId)).limit(1);
   if (!user?.isAdmin) {
     if (existing.userId !== userId) return c.json({ error: "Forbidden" }, 403);
-    if (existing.status !== "submitted") return c.json({ error: "Only pending contributions can be edited" }, 409);
+    if (existing.status !== "submitted" && existing.status !== "rejected") return c.json({ error: "Only pending or rejected contributions can be edited" }, 409);
+  }
+
+  const contentType = c.req.header("Content-Type") ?? "";
+  let word: string | undefined;
+  let english: string | undefined;
+  let pronunciation: string | null | undefined;
+  let example: string | null | undefined;
+  let exampleTranslation: string | null | undefined;
+  let category: string | undefined;
+  let audioUrl: string | undefined;
+  let imageUrl: string | undefined;
+
+  if (contentType.includes("multipart/form-data")) {
+    const formData = await c.req.formData();
+    word = (formData.get("word") as string) || undefined;
+    english = (formData.get("english") as string) || undefined;
+    pronunciation = formData.has("pronunciation") ? ((formData.get("pronunciation") as string) || null) : undefined;
+    example = formData.has("example") ? ((formData.get("example") as string) || null) : undefined;
+    exampleTranslation = formData.has("exampleTranslation") ? ((formData.get("exampleTranslation") as string) || null) : undefined;
+    category = (formData.get("category") as string) || undefined;
+
+    const audioFile = formData.get("audio") as File | null;
+    if (audioFile) {
+      try {
+        const blob = await put(
+          `contributions/${userId}/${Date.now()}-${audioFile.name}`,
+          audioFile,
+          { access: "public", token: process.env.BLOB_READ_WRITE_TOKEN! }
+        );
+        audioUrl = blob.url;
+      } catch (err: any) {
+        return c.json({ error: `Failed to upload audio: ${err?.message ?? "unknown"}` }, 500);
+      }
+    }
+
+    const imageFile = formData.get("image") as File | null;
+    if (imageFile) {
+      try {
+        const blob = await put(
+          `contributions/${userId}/${Date.now()}-${imageFile.name}`,
+          imageFile,
+          { access: "public", token: process.env.BLOB_READ_WRITE_TOKEN! }
+        );
+        imageUrl = blob.url;
+      } catch (err: any) {
+        return c.json({ error: `Failed to upload image: ${err?.message ?? "unknown"}` }, 500);
+      }
+    }
+  } else {
+    const body = await c.req.json<{
+      word?: string;
+      english?: string;
+      pronunciation?: string | null;
+      example?: string | null;
+      exampleTranslation?: string | null;
+      category?: string;
+    }>();
+    word = body.word;
+    english = body.english;
+    pronunciation = "pronunciation" in body ? body.pronunciation : undefined;
+    example = "example" in body ? body.example : undefined;
+    exampleTranslation = "exampleTranslation" in body ? body.exampleTranslation : undefined;
+    category = body.category;
   }
 
   const updates: Record<string, unknown> = {};
-  if (body.word?.trim()) updates.word = body.word.trim();
-  if (body.english?.trim()) updates.english = body.english.trim();
-  if ("pronunciation" in body) updates.pronunciation = body.pronunciation?.trim() || null;
-  if ("example" in body) updates.example = body.example?.trim() || null;
-  if ("exampleTranslation" in body) updates.exampleTranslation = body.exampleTranslation?.trim() || null;
-  if (body.category) updates.category = body.category;
+  if (word?.trim()) updates.word = word.trim();
+  if (english?.trim()) updates.english = english.trim();
+  if (pronunciation !== undefined) updates.pronunciation = pronunciation?.trim() || null;
+  if (example !== undefined) updates.example = example?.trim() || null;
+  if (exampleTranslation !== undefined) updates.exampleTranslation = exampleTranslation?.trim() || null;
+  if (category) updates.category = category;
+  if (audioUrl) updates.audioUrl = audioUrl;
+  if (imageUrl) updates.imageUrl = imageUrl;
 
   if (Object.keys(updates).length === 0) return c.json({ error: "Nothing to update" }, 400);
+
+  if (existing.status === "rejected") {
+    updates.status = "submitted";
+    updates.reviewNote = null;
+  }
 
   const [updated] = await db.update(contributions).set(updates).where(eq(contributions.id, id)).returning();
   return c.json(updated);

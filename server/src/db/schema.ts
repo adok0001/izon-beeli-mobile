@@ -376,6 +376,20 @@ export const transcriptSegments = pgTable(
   (table) => [index("transcript_segments_lesson_id_idx").on(table.lessonId)]
 );
 
+export const englishWordbank = pgTable(
+  "english_wordbank",
+  {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    word: varchar("word", { length: 500 }).notNull(),
+    definition: text("definition"),
+    category: varchar("category", { length: 64 }).notNull(),
+    posType: varchar("pos_type", { length: 32 }),
+  },
+  (table) => [
+    index("english_wordbank_word_idx").on(table.word),
+  ]
+);
+
 export const dictionaryEntries = pgTable(
   "dictionary_entries",
   {
@@ -393,10 +407,12 @@ export const dictionaryEntries = pgTable(
     imageUrl: text("image_url"),
     contributorName: varchar("contributor_name", { length: 200 }),
     contributorId: varchar("contributor_id", { length: 64 }),
+    englishWordId: varchar("english_word_id", { length: 64 }).references(() => englishWordbank.id),
   },
   (table) => [
     index("dictionary_entries_language_idx").on(table.languageId),
     index("dictionary_entries_lang_cat_idx").on(table.languageId, table.category),
+    index("dictionary_entries_english_word_idx").on(table.englishWordId),
   ]
 );
 

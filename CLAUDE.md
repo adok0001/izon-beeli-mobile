@@ -98,3 +98,47 @@ Act as a French tutor and study partner preparing for the TCF (C1/C2 level). App
 
 - Do not encourage. Be firm and deliberate.
 - Commemorate milestones
+
+## Code Review Standards
+
+After completing any implementation, review the code for:
+- Functions longer than 30 lines (likely doing too much)
+- Logic duplicated more than twice (extract to utility)
+- Any `any` type usage in TypeScript (replace with real types)
+- Components with more than 3 props that could be grouped into an object
+- Missing error handling on async operations
+
+Run /simplify before presenting code to the user.
+
+## Routines
+
+Configure a Claude Code routine once, then trigger it on a schedule, via API, or in response to an event. Use the `/schedule` skill to set up and manage routines.
+
+Common patterns for this project:
+
+- **Nightly dependency audit** — check for outdated or vulnerable packages across `mobile/`, `server/`, `web/`
+- **Issue triage** — on new GitHub issue, categorize and apply labels
+- **On-merge changelog** — generate changelog entry from PR diff on merge to `master`
+
+Skills + Routines is the recommended combo: a skill defines *how* to do the task; a routine defines *when*.
+
+## Antigravity Awesome Skills
+
+Community-maintained library of 1,234+ agentic skills for Claude Code and other AI coding assistants. Install with:
+
+```bash
+npx antigravity-awesome-skills --claude
+```
+
+Key skills available after install:
+
+- `/brainstorming` — structured planning before writing code
+- `/architecture` — system design and component structure
+- `/debugging-strategies` — systematic troubleshooting playbooks
+- `/api-design-principles` — API shape, consistency, versioning
+- `/security-auditor` — security-focused code review
+- `/lint-and-validate` — lightweight quality checks
+- `/create-pr` — packages work into clean pull requests
+- `/doc-coauthoring` — structured technical documentation
+
+Recommended bundle for this project: **Web Wizard** (`frontend-design`, `api-design-principles`, `lint-and-validate`, `create-pr`).

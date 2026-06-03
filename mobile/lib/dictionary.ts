@@ -14,6 +14,7 @@ export interface DictionaryEntry {
   imageUrl?: string;
   contributorName?: string;
   contributorId?: string;
+  englishWordId?: string;
 }
 
 export const DICTIONARY_CATEGORY_VALUES = [
@@ -36,6 +37,7 @@ export const DICTIONARY_CATEGORY_VALUES = [
   "phonetics",
   "money",
   "proverbs",
+  "adjectives",
 ] as const;
 
 export type DictionaryCategory = (typeof DICTIONARY_CATEGORY_VALUES)[number];
@@ -60,6 +62,7 @@ export const CATEGORY_LABELS: Record<DictionaryCategory, string> = {
   phonetics: "Phonetics & Spelling",
   money: "Money & Currency",
   proverbs: "Proverbs & Sayings",
+  adjectives: "Adjectives & Descriptors",
 };
 
 export const CATEGORY_ICONS: Record<DictionaryCategory, string> = {
@@ -82,6 +85,7 @@ export const CATEGORY_ICONS: Record<DictionaryCategory, string> = {
   phonetics: "textformat.abc",
   money: "banknote",
   proverbs: "text.quote",
+  adjectives: "tag",
 };
 
 export function searchDictionary(query: string, entries: DictionaryEntry[]): DictionaryEntry[] {

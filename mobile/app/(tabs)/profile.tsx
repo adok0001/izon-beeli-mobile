@@ -1,9 +1,9 @@
 import { FeedbackModal } from "@/components/feedback-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { XpLevelBadge } from "@/components/xp-level-badge";
+import { canAccessEducatorPanel, type DailyGoal, useCurrentUser, useUpdateDailyGoal } from "@/lib/hooks/use-current-user";
 import { analytics } from "@/lib/analytics";
 import { useAppConfig } from "@/lib/hooks/use-app-config";
-import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
 import { getLevelInfo } from "@/lib/xp-levels";
 import { useLanguageStore } from "@/store/language-store";
@@ -13,8 +13,14 @@ import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Modal, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const GOAL_OPTIONS: { id: DailyGoal; icon: string; labelKey: string; detailKey: string }[] = [
+  { id: "casual", icon: "leaf.fill", labelKey: "onboarding.goalCasual", detailKey: "onboarding.goalCasualDetail" },
+  { id: "steady", icon: "flame.fill", labelKey: "onboarding.goalSteady", detailKey: "onboarding.goalSteadyDetail" },
+  { id: "intensive", icon: "bolt.fill", labelKey: "onboarding.goalIntensive", detailKey: "onboarding.goalIntensiveDetail" },
+];
 
 function StatCard({ icon, label, value }: Readonly<{ icon: string; label: string; value: string }>) {
   return (
@@ -80,6 +86,8 @@ export default function ProfileScreen() {
   const { user } = useUser();
   const { data: currentUser } = useCurrentUser();
   const [feedbackVisible, setFeedbackVisible] = useState(false);
+  const [goalPickerVisible, setGoalPickerVisible] = useState(false);
+  const updateDailyGoal = useUpdateDailyGoal();
   const { data: summary } = useProgressSummary();
   const { data: config } = useAppConfig();
   const { selectedLanguageId } = useLanguageStore();
@@ -200,6 +208,51 @@ export default function ProfileScreen() {
             onPress={() => router.push("/dashboard")}
           />
           <MenuRow
+            icon="book.fill"
+            label={t("profile.learning")}
+            detail={getLanguageName(selectedLanguageId)}
+            onPress={() => router.push("/(tabs)/learn")}
+          />
+          <MenuRow
+            icon="target"
+            label={t("profile.dailyGoal")}
+            detail={currentUser?.dailyGoal ? t(`onboarding.goal${currentUser.dailyGoal.charAt(0).toUpperCase()}${currentUser.dailyGoal.slice(1)}` as any) : undefined}
+            onPress={() => setGoalPickerVisible(true)}
+          />
+          <MenuRow
+            icon="character.book.closed"
+            label={t("profile.dictionary")}
+            onPress={() => router.push("/dictionary")}
+          />
+          {currentUser?.isAdmin ? (
+            <>
+              <MenuRow
+                icon="shield.fill"
+                label={t("educator.panelTitle")}
+                onPress={() => router.push("/(tabs)/educator")}
+              />
+              <MenuRow
+                icon="gearshape.fill"
+                label={t("educator.adminPanel")}
+                onPress={() => router.push("/(tabs)/admin")}
+              />
+            </>
+          ) : null}
+          {!isAdmin && canAccessEducator ? (
+            <MenuRow
+              icon="shield.fill"
+              label={t("educator.panelTitle")}
+              onPress={() => router.push("/(tabs)/educator")}
+            />
+          ) : null}
+          {(isAdmin || currentUser?.isReviewer) && (
+            <MenuRow
+              icon="checkmark.shield.fill"
+              label={t("profile.reviewContributions")}
+              onPress={() => router.push("/review")}
+            />
+          )}
+          <MenuRow
             icon="doc.text.fill"
             label={t("profile.myContributions")}
             onPress={() => router.push("/my-contributions")}
@@ -255,6 +308,68 @@ export default function ProfileScreen() {
         visible={feedbackVisible}
         onClose={() => setFeedbackVisible(false)}
       />
+
+      <Modal
+        visible={goalPickerVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setGoalPickerVisible(false)}
+      >
+        <Pressable
+          className="flex-1 bg-black/50"
+          onPress={() => setGoalPickerVisible(false)}
+        />
+        <View className="rounded-t-3xl bg-white px-5 pb-10 pt-5 dark:bg-neutral-900">
+          <View className="mb-1 h-1 w-10 self-center rounded-full bg-neutral-300 dark:bg-neutral-600" />
+          <Text className="mb-5 mt-3 text-center text-lg font-bold text-neutral-900 dark:text-white">
+            {t("profile.dailyGoal")}
+          </Text>
+          {GOAL_OPTIONS.map((opt) => {
+            const selected = currentUser?.dailyGoal === opt.id;
+            return (
+              <Pressable
+                key={opt.id}
+                onPress={() => {
+                  updateDailyGoal.mutate(opt.id);
+                  setGoalPickerVisible(false);
+                }}
+                className={`mb-3 flex-row items-center rounded-2xl border-2 px-5 py-4 active:opacity-70 ${
+                  selected
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
+                    : "border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800"
+                }`}
+              >
+                <View
+                  className={`mr-4 h-11 w-11 items-center justify-center rounded-full ${
+                    selected ? "bg-blue-500" : "bg-neutral-200 dark:bg-neutral-700"
+                  }`}
+                >
+                  <IconSymbol
+                    name={opt.icon as any}
+                    size={20}
+                    color={selected ? "#fff" : "#9ca3af"}
+                  />
+                </View>
+                <View className="flex-1">
+                  <Text
+                    className={`text-base font-bold ${
+                      selected ? "text-blue-700 dark:text-blue-300" : "text-neutral-900 dark:text-white"
+                    }`}
+                  >
+                    {t(opt.labelKey as any)}
+                  </Text>
+                  <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+                    {t(opt.detailKey as any)}
+                  </Text>
+                </View>
+                {selected && (
+                  <IconSymbol name="checkmark.circle.fill" size={22} color="#3b82f6" />
+                )}
+              </Pressable>
+            );
+          })}
+        </View>
+      </Modal>
 
     </SafeAreaView>
   );

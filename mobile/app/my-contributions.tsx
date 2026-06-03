@@ -2,7 +2,9 @@ import { WordAudioButton } from "@/components/dictionary/word-audio-button";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDeleteContribution, useMyContributions, useUpdateContribution, type MyContribution } from "@/lib/hooks/use-contributions";
 import { getLanguageName } from "@/lib/mock-data";
-import { Stack } from "expo-router";
+import { useContributionStore } from "@/store/contribution-store";
+import * as ImagePicker from "expo-image-picker";
+import { Stack, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Alert, FlatList, Image, KeyboardAvoidingView, Platform, Pressable, RefreshControl, Text, TextInput, View } from "react-native";
@@ -57,10 +59,11 @@ function StatusTimeline({ status }: { status: string }) {
   );
 }
 
-const EDITABLE_TYPES = ["word", "phrase", "entry_meaning"];
+const EDITABLE_TYPES = ["word", "phrase", "entry_meaning", "audio", "entry_audio", "entry_image"];
 
 function ContributionRow({ item }: { item: MyContribution }) {
   const { t } = useTranslation();
+  const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({
     word: item.word,
@@ -69,8 +72,45 @@ function ContributionRow({ item }: { item: MyContribution }) {
     example: item.example ?? "",
     exampleTranslation: item.exampleTranslation ?? "",
   });
+  const [newImageUri, setNewImageUri] = useState<string | null>(null);
+  const {
+    isRecording,
+    isPlaying,
+    recordingUri,
+    startRecording,
+    stopRecording,
+    discardRecording,
+    playRecording,
+    stopPlayback,
+  } = useContributionStore();
   const updateContribution = useUpdateContribution();
   const deleteContribution = useDeleteContribution();
+
+
+  const handlePickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setNewImageUri(result.assets[0].uri);
+    }
+  };
+
+  const handleTakePhoto = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Permission required", "Camera access is needed to take a photo.");
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setNewImageUri(result.assets[0].uri);
+    }
+  };
 
   const config = STATUS_CONFIG[item.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.submitted;
   const categoryLabel = item.category
@@ -79,7 +119,7 @@ function ContributionRow({ item }: { item: MyContribution }) {
 
   const hasAudio = item.type === "entry_audio" || item.type === "audio" || !!item.audioUrl;
   const hasImage = item.type === "entry_image" || !!item.imageUrl;
-  const canEdit = item.status === "submitted" && EDITABLE_TYPES.includes(item.type);
+  const canEdit = (item.status === "submitted" || item.status === "rejected") && EDITABLE_TYPES.includes(item.type);
 
   const handleSave = () => {
     updateContribution.mutate(
@@ -91,10 +131,28 @@ function ContributionRow({ item }: { item: MyContribution }) {
           pronunciation: draft.pronunciation || null,
           example: draft.example || null,
           exampleTranslation: draft.exampleTranslation || null,
+          ...(recordingUri ? { audioUri: recordingUri } : {}),
+          ...(newImageUri ? { imageUri: newImageUri } : {}),
         },
       },
-      { onSuccess: () => setEditing(false) }
+      {
+        onSuccess: () => {
+          setEditing(false);
+          setNewImageUri(null);
+          discardRecording();
+        },
+        onError: (err: unknown) => {
+          const message = err instanceof Error ? err.message : "Failed to save. Please try again.";
+          Alert.alert("Save failed", message);
+        },
+      }
     );
+  };
+
+  const handleCancelEdit = () => {
+    setEditing(false);
+    setNewImageUri(null);
+    discardRecording();
   };
 
   const handleDelete = () => {
@@ -158,6 +216,93 @@ function ContributionRow({ item }: { item: MyContribution }) {
             value={draft.example}
             onChangeText={(v) => setDraft((d) => ({ ...d, example: v }))}
           />
+          <>
+              <Text className="mb-1 text-xs font-medium text-neutral-500">Audio</Text>
+              <View className="mb-3 items-center rounded-xl border border-neutral-200 p-3 dark:border-neutral-700">
+                {recordingUri ? (
+                  <View className="w-full items-center">
+                    <View className="flex-row gap-3">
+                      <Pressable
+                        onPress={isPlaying ? stopPlayback : playRecording}
+                        className={`h-12 w-12 items-center justify-center rounded-full ${isPlaying ? "bg-blue-500" : "bg-emerald-100 dark:bg-emerald-900"}`}
+                      >
+                        <IconSymbol name={isPlaying ? "stop.fill" : "play.fill"} size={20} color={isPlaying ? "#fff" : "#10b981"} />
+                      </Pressable>
+                      <Pressable
+                        onPress={discardRecording}
+                        className="h-12 w-12 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-700"
+                      >
+                        <IconSymbol name="trash" size={18} color="#ef4444" />
+                      </Pressable>
+                    </View>
+                    <Text className="mt-1.5 text-xs text-green-600 dark:text-green-400">New recording ready</Text>
+                  </View>
+                ) : (
+                  <View className="w-full items-center">
+                    {item.audioUrl && !recordingUri && (
+                      <Text className="mb-2 text-xs text-neutral-400 dark:text-neutral-500">
+                        Current audio on file · tap mic to replace
+                      </Text>
+                    )}
+                    <Pressable
+                      onPress={isRecording ? stopRecording : startRecording}
+                      className={`h-12 w-12 items-center justify-center rounded-full ${isRecording ? "bg-red-500" : "bg-red-100 dark:bg-red-900"}`}
+                    >
+                      {isRecording ? (
+                        <View className="h-5 w-5 rounded-sm bg-white" />
+                      ) : (
+                        <IconSymbol name="mic.fill" size={20} color="#ef4444" />
+                      )}
+                    </Pressable>
+                    {isRecording && <Text className="mt-1.5 text-xs text-red-500">Tap to stop</Text>}
+                  </View>
+                )}
+              </View>
+            </>
+
+          <>
+              <Text className="mb-1 text-xs font-medium text-neutral-500">Image</Text>
+              {newImageUri ? (
+                <View className="mb-3 overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
+                  <Image source={{ uri: newImageUri }} className="h-32 w-full" resizeMode="cover" />
+                  <View className="flex-row justify-center gap-4 py-2">
+                    <Pressable onPress={handleTakePhoto} className="flex-row items-center gap-1">
+                      <IconSymbol name="camera.fill" size={13} color="#3b82f6" />
+                      <Text className="text-xs font-medium text-blue-500">Retake</Text>
+                    </Pressable>
+                    <Pressable onPress={handlePickImage} className="flex-row items-center gap-1">
+                      <IconSymbol name="photo" size={13} color="#3b82f6" />
+                      <Text className="text-xs font-medium text-blue-500">Gallery</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ) : (
+                <View className="mb-3 rounded-xl border border-dashed border-neutral-300 py-4 dark:border-neutral-600">
+                  {item.imageUrl && (
+                    <Text className="mb-2 text-center text-xs text-neutral-400 dark:text-neutral-500">
+                      Current image on file · replace with:
+                    </Text>
+                  )}
+                  <View className="flex-row justify-center gap-4">
+                    <Pressable
+                      onPress={handleTakePhoto}
+                      className="items-center gap-1"
+                    >
+                      <IconSymbol name="camera.fill" size={24} color="#9ca3af" />
+                      <Text className="text-xs text-neutral-400 dark:text-neutral-500">Camera</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={handlePickImage}
+                      className="items-center gap-1"
+                    >
+                      <IconSymbol name="photo.badge.plus" size={24} color="#9ca3af" />
+                      <Text className="text-xs text-neutral-400 dark:text-neutral-500">Gallery</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              )}
+            </>
+
           <Text className="mb-1 text-xs font-medium text-neutral-500">{t("myContributions.fieldExampleTranslation")}</Text>
           <TextInput
             className={`${inputCls} mb-3`}
@@ -166,7 +311,7 @@ function ContributionRow({ item }: { item: MyContribution }) {
           />
           <View className="flex-row justify-end gap-2">
             <Pressable
-              onPress={() => setEditing(false)}
+              onPress={handleCancelEdit}
               className="rounded-lg px-3 py-1.5"
             >
               <Text className="text-sm font-medium text-neutral-500">{t("myContributions.cancelEdit")}</Text>
@@ -176,7 +321,9 @@ function ContributionRow({ item }: { item: MyContribution }) {
               disabled={updateContribution.isPending}
               className="rounded-lg bg-blue-500 px-3 py-1.5 disabled:opacity-50"
             >
-              <Text className="text-sm font-semibold text-white">{t("myContributions.saveChanges")}</Text>
+              <Text className="text-sm font-semibold text-white">
+                {updateContribution.isPending ? t("myContributions.saving") : t("myContributions.saveChanges")}
+              </Text>
             </Pressable>
           </View>
         </View>
@@ -256,10 +403,34 @@ function ContributionRow({ item }: { item: MyContribution }) {
             </View>
           )}
           {canEdit && !editing && (
-            <View className="mt-1 flex-row gap-2">
-              <Pressable onPress={() => setEditing(true)} hitSlop={8}>
-                <IconSymbol name="pencil" size={15} color="#6b7280" />
-              </Pressable>
+            <View className="mt-1 flex-row items-center gap-2">
+              {item.status === "rejected" ? (
+                <Pressable
+                  onPress={() =>
+                    router.push({
+                      pathname: "/contribute",
+                      params: {
+                        languageId: item.languageId,
+                        ...(item.category ? { category: item.category } : {}),
+                        word: item.word,
+                        english: item.english,
+                        ...(item.pronunciation ? { pronunciation: item.pronunciation } : {}),
+                        ...(item.example ? { example: item.example } : {}),
+                        ...(item.exampleTranslation ? { exampleTranslation: item.exampleTranslation } : {}),
+                      },
+                    })
+                  }
+                  hitSlop={8}
+                  className="flex-row items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 dark:bg-amber-900/40"
+                >
+                  <IconSymbol name="arrow.counterclockwise" size={11} color="#d97706" />
+                  <Text className="text-xs font-semibold text-amber-600 dark:text-amber-400">Retry</Text>
+                </Pressable>
+              ) : (
+                <Pressable onPress={() => setEditing(true)} hitSlop={8}>
+                  <IconSymbol name="pencil" size={15} color="#6b7280" />
+                </Pressable>
+              )}
               <Pressable onPress={handleDelete} disabled={deleteContribution.isPending} hitSlop={8}>
                 <IconSymbol name="trash" size={15} color="#ef4444" />
               </Pressable>
@@ -355,6 +526,7 @@ export default function MyContributionsScreen() {
           data={submissions}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           renderItem={({ item }) => <ContributionRow item={item} />}
           ListEmptyComponent={

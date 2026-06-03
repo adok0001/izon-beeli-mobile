@@ -7,6 +7,7 @@ import {
   culturalContent,
   culturalKeyTerms,
   dictionaryEntries,
+  englishWordbank,
   feedItems,
   languages,
   lessons,
@@ -27,6 +28,7 @@ import { ALL_LESSONS } from "../../../mobile/lib/data/lessons/index.js";
 // ---------------------------------------------------------------------------
 // Dictionaries
 // ---------------------------------------------------------------------------
+import { ENGLISH_WORDBANK } from "../../../mobile/lib/data/english.js";
 import { AKAN_DICTIONARY } from "../../../mobile/lib/data/akan.js";
 import { AMHARIC_DICTIONARY } from "../../../mobile/lib/data/amharic.js";
 import { ARABIC_EGYPTIAN_DICTIONARY } from "../../../mobile/lib/data/arabic-egyptian.js";
@@ -204,6 +206,19 @@ async function seed() {
     }
   }
 
+  // 5a. English wordbank (must seed before dictionary_entries due to FK)
+  console.log("  Inserting English wordbank...");
+  const ewRows = ENGLISH_WORDBANK.map((e) => ({
+    id: e.id,
+    word: e.word,
+    definition: e.definition ?? null,
+    category: e.category,
+    posType: e.posType ?? null,
+  }));
+  for (let i = 0; i < ewRows.length; i += 100) {
+    await db.insert(englishWordbank).values(ewRows.slice(i, i + 100)).onConflictDoNothing();
+  }
+
   // 5. Dictionary entries
   console.log("  Inserting dictionary entries...");
   const allDictEntries = [
@@ -236,6 +251,7 @@ async function seed() {
     audioUrl: typeof e.audioUrl === "string" ? e.audioUrl : null,
     contributorName: e.contributorName ?? null,
     contributorId: e.contributorId ?? null,
+    englishWordId: e.englishWordId ?? null,
   }));
   for (let i = 0; i < dictRows.length; i += 100) {
     const chunk = dictRows.slice(i, i + 100);
@@ -245,6 +261,7 @@ async function seed() {
         pronunciation: sql`excluded.pronunciation`,
         example: sql`excluded.example`,
         exampleTranslation: sql`excluded.example_translation`,
+        englishWordId: sql`excluded.english_word_id`,
       },
     });
   }

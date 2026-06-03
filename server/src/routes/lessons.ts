@@ -26,6 +26,7 @@ lessonsRouter.get("/", async (c) => {
     if (languageId.length > 64) {
       return c.json({ error: "Invalid languageId" }, 400);
     }
+    const type = c.req.query("type");
     // Fetch all courses for the language, then all lessons for those courses
     const langCourses = await db
       .select({ id: courses.id })
@@ -37,10 +38,13 @@ lessonsRouter.get("/", async (c) => {
     }
 
     const courseIds = langCourses.map((c) => c.id);
+    const conditions = [inArray(lessons.courseId, courseIds), eq(lessons.isActive, true)];
+    if (type && type.length <= 16) conditions.push(eq(lessons.type, type));
+
     const result = await db
       .select()
       .from(lessons)
-      .where(and(inArray(lessons.courseId, courseIds), eq(lessons.isActive, true)))
+      .where(and(...conditions))
       .orderBy(asc(lessons.courseId), asc(lessons.order));
 
     return c.json(result);

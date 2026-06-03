@@ -10,13 +10,22 @@ import { useTranslation } from "react-i18next";
 import { FlatList, Pressable, RefreshControl, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-function BountyCard({ bounty }: { bounty: Bounty }) {
+function BountyCard({ bounty, isAdmin }: { bounty: Bounty; isAdmin?: boolean }) {
   const { t } = useTranslation();
   const router = useRouter();
 
   return (
     <View className="mb-3 rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
       <View className="mb-2 flex-row items-center justify-between">
+        {isAdmin && (
+          <Pressable
+            onPress={() => router.push({ pathname: "/bounty-edit", params: { id: bounty.id } } as any)}
+            hitSlop={8}
+            className="absolute right-0 top-0 z-10 p-1"
+          >
+            <IconSymbol name="pencil" size={16} color="#9ca3af" />
+          </Pressable>
+        )}
         <View className="flex-row gap-1.5">
           <View className="rounded-full bg-blue-100 px-2.5 py-0.5 dark:bg-blue-900">
             <Text className="text-xs font-semibold text-blue-700 dark:text-blue-300">
@@ -111,7 +120,9 @@ export default function BountiesScreen() {
           contentContainerClassName="px-5 pb-8 pt-4"
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-          renderItem={({ item }) => <BountyCard bounty={item} />}
+          renderItem={({ item }) => (
+            <BountyCard bounty={item} isAdmin={!!(currentUser && canManageBounties(currentUser))} />
+          )}
           ListEmptyComponent={
             <View className="items-center px-8 py-20">
               <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
