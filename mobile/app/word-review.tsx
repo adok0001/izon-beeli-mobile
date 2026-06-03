@@ -10,11 +10,14 @@ import { useLanguageStore } from "@/store/language-store";
 import type { AudioSource } from "@/types";
 import { useQueries } from "@tanstack/react-query";
 import { Audio } from "expo-av";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { LoadingScreen } from "@/components/loading-screen";
+import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useLesson } from "@/lib/hooks/use-courses";
+import { useDictionary } from "@/lib/hooks/use-dictionary";
 
 type CardFace = "question" | "answer";
 
@@ -52,14 +55,14 @@ function AudioButton({ audioSource }: { audioSource: AudioSource }) {
     <Pressable
       onPress={handlePress}
       disabled={isPlaying}
-      className="mt-4 flex-row items-center gap-2 rounded-full bg-blue-50 px-5 py-2.5 active:opacity-70 dark:bg-blue-900/30"
+      className="mt-4 flex-row items-center gap-2 rounded-full bg-violet-50 px-5 py-2.5 active:opacity-70 dark:bg-violet-900/30"
     >
       <IconSymbol
         name={isPlaying ? "speaker.wave.3.fill" : "speaker.wave.2.fill"}
         size={18}
-        color="#3b82f6"
+        color="#8b5cf6"
       />
-      <Text className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+      <Text className="text-sm font-semibold text-violet-600 dark:text-violet-400">
         {isPlaying ? t("wordReview.playing") : t("wordReview.playAudio")}
       </Text>
     </Pressable>
@@ -177,8 +180,20 @@ function ReviewCard({
 
 export default function WordReviewScreen() {
   const router = useRouter();
+  const { lessonId } = useLocalSearchParams<{ lessonId?: string }>();
   const { selectedLanguageId } = useLanguageStore();
-  const { data: dueEntries = [], isLoading: isDueLoading } = useWordsDueForReview(selectedLanguageId);
+  const { t } = useTranslation();
+
+  // Lesson mode: load lesson transcript and match to dictionary
+  const { data: lessonData, isLoading: isLessonLoading } = useLesson(lessonId ?? "");
+  const { data: lessonDictionary = [], isLoading: isLessonDictLoading } = useDictionary(
+    lessonId ? selectedLanguageId : ""
+  );
+
+  // SRS mode: words due for review from the user's wordbank
+  const { data: dueEntries = [], isLoading: isDueLoading } = useWordsDueForReview(
+    lessonId ? null : selectedLanguageId
+  );
   const languageIds = useMemo(
     () => [...new Set(dueEntries.map((e) => e.languageId))],
     [dueEntries]
@@ -190,12 +205,12 @@ export default function WordReviewScreen() {
     })),
   });
   const isDictLoading = dictionaryQueries.some((q) => q.isLoading);
-  const dictionary = dictionaryQueries.flatMap((q) => q.data ?? []);
+  const srsDictionary = dictionaryQueries.flatMap((q) => q.data ?? []);
+
   const reviewWord = useReviewWord();
   const queryClient = useQueryClient();
   const invalidateReviewQueue = useInvalidateReviewQueue();
   const invalidateDailyChallenges = useInvalidateDailyChallenges();
-  const { t } = useTranslation();
 
   useEffect(() => {
     return () => {
@@ -205,7 +220,28 @@ export default function WordReviewScreen() {
     };
   }, [invalidateReviewQueue, invalidateDailyChallenges, queryClient]);
 
-  const isLoading = isDueLoading || isDictLoading;
+  // Lesson-mode: match transcript words to dictionary entries
+  const lessonEntries = useMemo(() => {
+    if (!lessonId || !lessonData?.transcript?.length || !lessonDictionary.length) return [];
+    const transcriptWords = new Set(
+      lessonData.transcript
+        .flatMap((seg) =>
+          seg.text.split(/\s+/).map((w) => w.toLowerCase().replace(/[.,!?;:'"()\[\]]/g, "").trim())
+        )
+        .filter(Boolean)
+    );
+    return lessonDictionary.filter((e) => transcriptWords.has(e.word.toLowerCase().trim()));
+  }, [lessonId, lessonData, lessonDictionary]);
+
+  const isLoading = lessonId
+    ? isLessonLoading || isLessonDictLoading
+    : isDueLoading || isDictLoading;
+
+  const reviewCountMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const e of dueEntries) map.set(e.dictionaryEntryId, e.reviewCount);
+    return map;
+  }, [dueEntries]);
 
   const [queue, setQueue] = useState<DictionaryEntry[]>([]);
   const [queueBuilt, setQueueBuilt] = useState(false);
@@ -214,14 +250,23 @@ export default function WordReviewScreen() {
   const [xpToast, setXpToast] = useState<string | null>(null);
 
   useEffect(() => {
-    if (queueBuilt || isLoading || dueEntries.length === 0 || dictionary.length === 0) return;
-    const dictMap = new Map(dictionary.map((e) => [e.id, e]));
-    const resolved = dueEntries
-      .map((e) => dictMap.get(e.dictionaryEntryId))
-      .filter(Boolean) as DictionaryEntry[];
-    setQueue(resolved);
-    setQueueBuilt(true);
-  }, [isLoading, dueEntries, dictionary, queueBuilt]);
+    if (queueBuilt || isLoading) return;
+    if (lessonId) {
+      // Lesson mode: use transcript-matched entries (fall back to full dictionary if no matches)
+      const entries = lessonEntries.length > 0 ? lessonEntries : lessonDictionary;
+      if (entries.length === 0) return;
+      setQueue(entries);
+      setQueueBuilt(true);
+    } else {
+      if (dueEntries.length === 0 || srsDictionary.length === 0) return;
+      const dictMap = new Map(srsDictionary.map((e) => [e.id, e]));
+      const resolved = dueEntries
+        .map((e) => dictMap.get(e.dictionaryEntryId))
+        .filter(Boolean) as DictionaryEntry[];
+      setQueue(resolved);
+      setQueueBuilt(true);
+    }
+  }, [isLoading, lessonId, lessonEntries, lessonDictionary, dueEntries, srsDictionary, queueBuilt]);
 
   const currentEntry = queue[currentIndex];
   const isFinished = queueBuilt && currentIndex >= queue.length;
@@ -269,16 +314,15 @@ export default function WordReviewScreen() {
   );
 
   const uniqueReviewed = reviewedIds.size;
-  const showLoading = isLoading || (!queueBuilt && dueEntries.length > 0);
+  const hasSource = lessonId ? (lessonDictionary.length > 0) : (dueEntries.length > 0);
+  const showLoading = isLoading || (!queueBuilt && hasSource);
 
   return (
     <>
-      <Stack.Screen options={{ title: t("wordReview.title"), headerShown: true }} />
+      <Stack.Screen options={{ title: lessonId ? t("wordReview.lessonTitle") : t("wordReview.title"), headerShown: true }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
         {showLoading ? (
-          <View className="flex-1 items-center justify-center">
-            <ActivityIndicator size="large" color="#3b82f6" />
-          </View>
+          <LoadingScreen />
         ) : queue.length === 0 ? (
           <View className="flex-1 items-center justify-center px-8">
             <IconSymbol name="checkmark.circle.fill" size={56} color="#22c55e" />
@@ -286,18 +330,18 @@ export default function WordReviewScreen() {
               {t("wordReview.allCaughtUp")}
             </Text>
             <Text className="mt-2 text-center text-sm text-neutral-500 dark:text-neutral-400">
-              {t("wordReview.noWordsDue")}
+              {lessonId ? t("wordReview.noLessonWords") : t("wordReview.noWordsDue")}
             </Text>
             <Pressable
               onPress={() => router.back()}
-              className="mt-6 rounded-xl bg-blue-500 px-8 py-3 active:opacity-80"
+              className="mt-6 rounded-xl bg-violet-500 px-8 py-3 active:opacity-80"
             >
               <Text className="font-semibold text-white">{t("wordReview.done")}</Text>
             </Pressable>
           </View>
         ) : isFinished ? (
           <View className="flex-1 items-center justify-center px-8">
-            <IconSymbol name="checkmark.seal.fill" size={56} color="#3b82f6" />
+            <IconSymbol name="checkmark.seal.fill" size={56} color="#8b5cf6" />
             <Text className="mt-4 text-center text-xl font-bold text-neutral-900 dark:text-white">
               {t("wordReview.sessionComplete")}
             </Text>
@@ -306,9 +350,32 @@ export default function WordReviewScreen() {
                 ? t("wordReview.sessionReviewedPlural", { count: uniqueReviewed })
                 : t("wordReview.sessionReviewed", { count: uniqueReviewed })}
             </Text>
+
+            {/* Retention curve */}
+            {uniqueReviewed > 0 && (() => {
+              const reviewed = [...reviewedIds];
+              const counts = reviewed.map((id) => reviewCountMap.get(id) ?? 1);
+              const avg = counts.reduce((s, n) => s + n, 0) / counts.length;
+              const retention = avg >= 5 ? 95 : avg >= 4 ? 85 : avg >= 3 ? 70 : avg >= 2 ? 50 : 30;
+              const barWidth = retention;
+              return (
+                <View className="mt-5 w-full rounded-2xl bg-violet-50 p-4 dark:bg-violet-900/20">
+                  <Text className="mb-1 text-center text-sm text-violet-800 dark:text-violet-300">
+                    {t("wordReview.retentionDesc", { avg: avg.toFixed(1), pct: retention })}
+                  </Text>
+                  <View className="mt-2 h-2 overflow-hidden rounded-full bg-violet-200 dark:bg-violet-800">
+                    <View
+                      className="h-2 rounded-full bg-violet-500"
+                      style={{ width: `${barWidth}%` }}
+                    />
+                  </View>
+                </View>
+              );
+            })()}
+
             <Pressable
               onPress={() => router.back()}
-              className="mt-6 rounded-xl bg-blue-500 px-8 py-3 active:opacity-80"
+              className="mt-6 rounded-xl bg-violet-500 px-8 py-3 active:opacity-80"
             >
               <Text className="font-semibold text-white">{t("wordReview.done")}</Text>
             </Pressable>
@@ -326,7 +393,7 @@ export default function WordReviewScreen() {
               </View>
               <View className="h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-700">
                 <View
-                  className="h-1.5 rounded-full bg-blue-500"
+                  className="h-1.5 rounded-full bg-violet-500"
                   style={{ width: `${(currentIndex / queue.length) * 100}%` }}
                 />
               </View>

@@ -92,7 +92,7 @@ export default function SignInScreen() {
         />
 
         <TextInput
-          className="mb-6 rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+          className="mb-2 rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
           placeholder={t("auth.password")}
           placeholderTextColor="#9ca3af"
           value={password}
@@ -103,6 +103,14 @@ export default function SignInScreen() {
           onSubmitEditing={onSignIn}
           returnKeyType="go"
         />
+
+        <Link href="/(auth)/forgot-password" asChild>
+          <Pressable disabled={loading} className="mb-6 self-end">
+            <Text className="text-sm text-blue-600 dark:text-blue-400">
+              {t("auth.forgotPassword")}
+            </Text>
+          </Pressable>
+        </Link>
 
         <Pressable
           onPress={onSignIn}

@@ -817,7 +817,6 @@ interface ReviewerApp {
 }
 
 function ReviewerFlow({ onBack }: Readonly<{ onBack: () => void }>) {
-  const { t } = useTranslation();
   const { getToken } = useAuth();
   const qc = useQueryClient();
 

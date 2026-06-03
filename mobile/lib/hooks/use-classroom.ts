@@ -117,6 +117,95 @@ export function useCreateAssignment() {
   });
 }
 
+export function useLeaveGroup() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (groupId: string) => {
+      const token = await getToken();
+      return apiFetch<{ ok: boolean }>(`/classroom/groups/${groupId}/leave`, {
+        method: "DELETE",
+        token: token!,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["classroom-groups"] });
+    },
+  });
+}
+
+export function useRemoveMember() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ groupId, memberId }: { groupId: string; memberId: string }) => {
+      const token = await getToken();
+      return apiFetch<{ ok: boolean }>(`/classroom/groups/${groupId}/members/${memberId}`, {
+        method: "DELETE",
+        token: token!,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["classroom-groups"] });
+    },
+  });
+}
+
+export function useDeleteAssignment() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ assignmentId, groupId }: { assignmentId: string; groupId: string }) => {
+      const token = await getToken();
+      return apiFetch<{ ok: boolean }>(`/classroom/assignments/${assignmentId}`, {
+        method: "DELETE",
+        token: token!,
+      });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["classroom-assignments", variables.groupId],
+      });
+    },
+  });
+}
+
+export function useAssignStoryArc() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      groupId,
+      lessonIds,
+      dueDate,
+    }: {
+      groupId: string;
+      lessonIds: string[];
+      dueDate?: string;
+    }) => {
+      const token = await getToken();
+      await Promise.all(
+        lessonIds.map((lessonId) =>
+          apiFetch<ServerAssignment>("/classroom/assignments", {
+            method: "POST",
+            token: token!,
+            body: JSON.stringify({ groupId, lessonId, dueDate }),
+          })
+        )
+      );
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["classroom-assignments", variables.groupId],
+      });
+    },
+  });
+}
+
 export function useGroupProgress(groupId: string) {
   const { getToken } = useAuth();
 

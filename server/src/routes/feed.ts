@@ -1,5 +1,6 @@
-import { and, desc, eq, lt, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import { Hono } from "hono";
+import { verifyToken } from "@clerk/backend";
 import { db } from "../db/index.js";
 import { comments, feedItems, likes, users } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
@@ -9,7 +10,8 @@ const VALID_FEED_TYPES = ["lesson_completed", "achievement", "contribution", "co
 // Public read-only feed router (no auth required)
 export const feedPublicRouter = new Hono();
 
-// GET /api/feed?cursor=&limit=20&type= - paginated feed, isLiked always false for guests
+// GET /api/feed?cursor=&limit=20&type=
+// Optionally resolves isLiked for authenticated callers via the Bearer token.
 feedPublicRouter.get("/", async (c) => {
   const cursor = c.req.query("cursor");
   const typeFilter = c.req.query("type");
@@ -28,15 +30,49 @@ feedPublicRouter.get("/", async (c) => {
     conditions.push(eq(feedItems.type, typeFilter as (typeof VALID_FEED_TYPES)[number]));
   }
 
-  const items = await db
+  const rows = await db
     .select()
     .from(feedItems)
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(feedItems.createdAt))
     .limit(limit + 1);
 
-  const hasMore = items.length > limit;
-  const page = hasMore ? items.slice(0, limit) : items;
+  const hasMore = rows.length > limit;
+  const page = hasMore ? rows.slice(0, limit) : rows;
+
+  // Resolve isLiked for signed-in callers without requiring auth middleware.
+  const likedSet = new Set<string>();
+  const authHeader = c.req.header("Authorization");
+  if (authHeader?.startsWith("Bearer ") && page.length > 0) {
+    try {
+      const token = authHeader.slice(7);
+      const payload = await verifyToken(token, {
+        secretKey: process.env.CLERK_SECRET_KEY!,
+      });
+      if (payload.sub) {
+        const [internalUser] = await db
+          .select({ id: users.id })
+          .from(users)
+          .where(eq(users.clerkId, payload.sub))
+          .limit(1);
+        if (internalUser) {
+          const pageIds = page.map((item) => item.id);
+          const userLikes = await db
+            .select({ feedItemId: likes.feedItemId })
+            .from(likes)
+            .where(
+              and(
+                eq(likes.userId, internalUser.id),
+                inArray(likes.feedItemId, pageIds)
+              )
+            );
+          for (const l of userLikes) likedSet.add(l.feedItemId);
+        }
+      }
+    } catch {
+      // Invalid token — treat as unauthenticated, isLiked stays false
+    }
+  }
 
   const result = page.map((item) => ({
     id: item.id,
@@ -50,7 +86,7 @@ feedPublicRouter.get("/", async (c) => {
     audioUrl: item.audioUrl,
     likes: item.likesCount,
     comments: item.commentsCount,
-    isLiked: false,
+    isLiked: likedSet.has(item.id),
     createdAt: item.createdAt.toISOString(),
   }));
 
@@ -59,6 +95,7 @@ feedPublicRouter.get("/", async (c) => {
     nextCursor: hasMore ? page[page.length - 1].createdAt.toISOString() : null,
   });
 });
+
 
 // GET /api/feed/:id/comments - public read
 feedPublicRouter.get("/:id/comments", async (c) => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMultiplayerStore } from "@/store/multiplayer-store";
-import { Loader2, RotateCcw, Trophy } from "lucide-react";
+import { Loader2, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -11,11 +11,13 @@ export default function BattleResultsPage() {
 
   useEffect(() => {
     if (!gameResults && !myPlayerId) { router.replace("/battle"); }
+  // router is stable; run once on mount as a redirect guard
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (phase === "lobby" && !gameResults) { router.replace("/battle/quiz"); }
-  }, [phase, gameResults]);
+  }, [phase, gameResults, router]);
 
   if (!gameResults) {
     return (

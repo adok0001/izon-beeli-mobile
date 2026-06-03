@@ -7,7 +7,9 @@ import {
     EducatorStubCourseType,
     useEducatorCourses,
     useGenerateEducatorStubs,
+    useToggleCourseActive,
 } from "@/lib/hooks/use-educator-panel";
+import { friendlyError } from "@/lib/api";
 import { useToast } from "@/lib/hooks/use-toast";
 import { getLanguageName } from "@/lib/mock-data";
 import { Stack, useRouter } from "expo-router";
@@ -36,28 +38,62 @@ const STUB_TYPES: { value: EducatorStubCourseType; label: string }[] = [
 function CourseCard({
   course,
   onPress,
-}: Readonly<{ course: EducatorCourse; onPress: () => void }>) {
+  onToggleActive,
+  toggling,
+}: Readonly<{
+  course: EducatorCourse;
+  onPress: () => void;
+  onToggleActive: () => void;
+  toggling: boolean;
+}>) {
   return (
     <Pressable
       onPress={onPress}
-      className="flex-row items-center rounded-2xl border border-neutral-200 bg-white p-4 active:opacity-70 dark:border-neutral-700 dark:bg-neutral-900"
+      className="rounded-2xl border border-neutral-200 bg-white p-4 active:opacity-70 dark:border-neutral-700 dark:bg-neutral-900"
     >
-      <View className="flex-1">
-        <Text className="text-base font-semibold text-neutral-900 dark:text-white">{course.title}</Text>
-        {course.description ? (
-          <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400" numberOfLines={2}>
-            {course.description}
-          </Text>
-        ) : null}
-        {course.courseType ? (
-          <View className="mt-2 self-start rounded-full bg-neutral-100 px-2 py-0.5 dark:bg-neutral-800">
-            <Text className="text-xs text-neutral-500 dark:text-neutral-400">{course.courseType}</Text>
-          </View>
-        ) : null}
+      <View className="flex-row items-center">
+        <View className="flex-1">
+          <Text className="text-base font-semibold text-neutral-900 dark:text-white">{course.title}</Text>
+          {course.description ? (
+            <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400" numberOfLines={2}>
+              {course.description}
+            </Text>
+          ) : null}
+          {course.courseType ? (
+            <View className="mt-2 self-start rounded-full bg-neutral-100 px-2 py-0.5 dark:bg-neutral-800">
+              <Text className="text-xs text-neutral-500 dark:text-neutral-400">{course.courseType}</Text>
+            </View>
+          ) : null}
+        </View>
+        <View className="ml-3 flex-row items-center gap-1">
+          <Text className="text-xs font-semibold text-blue-500">Open</Text>
+          <IconSymbol name="chevron.right" size={14} color="#3b82f6" />
+        </View>
       </View>
-      <View className="ml-3 flex-row items-center gap-1">
-        <Text className="text-xs font-semibold text-blue-500">Open</Text>
-        <IconSymbol name="chevron.right" size={14} color="#3b82f6" />
+      <View className="mt-3 flex-row items-center justify-between border-t border-neutral-100 pt-3 dark:border-neutral-700/60">
+        <Pressable
+          onPress={(e) => { e.stopPropagation?.(); onToggleActive(); }}
+          disabled={toggling}
+          className={`flex-row items-center gap-1.5 rounded-full px-3 py-1 ${
+            course.isActive !== false
+              ? "bg-emerald-50 dark:bg-emerald-950/30"
+              : "bg-neutral-100 dark:bg-neutral-800"
+          }`}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <IconSymbol
+            name={course.isActive !== false ? "eye" : "eye.slash"}
+            size={12}
+            color={course.isActive !== false ? "#10b981" : "#9ca3af"}
+          />
+          <Text
+            className={`text-xs font-semibold ${
+              course.isActive !== false ? "text-emerald-600 dark:text-emerald-400" : "text-neutral-500 dark:text-neutral-400"
+            }`}
+          >
+            {toggling ? "…" : course.isActive !== false ? "Active" : "Inactive"}
+          </Text>
+        </Pressable>
       </View>
     </Pressable>
   );
@@ -77,6 +113,7 @@ export default function EducatorCoursesScreen() {
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
   const { data: courses = [] } = useEducatorCourses(canAccess);
   const generateStubs = useGenerateEducatorStubs();
+  const toggleCourse = useToggleCourseActive();
 
   const allowedLanguages = useMemo(() => {
     if (!currentUser) return [] as string[];
@@ -132,7 +169,7 @@ export default function EducatorCoursesScreen() {
           `Created ${result.courses} course(s) and ${result.lessons} lesson(s).`,
         );
       },
-      onError: (error: Error) => toastError("Action failed", error.message),
+      onError: (error: Error) => toastError("Action failed", friendlyError(error)),
     });
   };
 
@@ -214,6 +251,20 @@ export default function EducatorCoursesScreen() {
                         params: { courseId: course.id },
                       })
                     }
+                    onToggleActive={() =>
+                      toggleCourse.mutate(
+                        { id: course.id, isActive: course.isActive === false },
+                        {
+                          onSuccess: () =>
+                            toastSuccess(
+                              course.isActive !== false ? "Course hidden" : "Course published",
+                              course.title,
+                            ),
+                          onError: (err: Error) => toastError("Failed", err.message),
+                        },
+                      )
+                    }
+                    toggling={toggleCourse.isPending && toggleCourse.variables?.id === course.id}
                   />
                 ))}
               </View>

@@ -1,15 +1,17 @@
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, Alert } from "react-native";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useLesson } from "@/lib/hooks/use-courses";
+import { useTranslation } from "react-i18next";
 import type { AssignedLesson } from "@/types";
 
-export function AssignmentCard({
-  assignment,
-  onPress,
-}: {
+interface AssignmentCardProps {
   assignment: AssignedLesson;
   onPress: () => void;
-}) {
+  onDelete?: (assignment: AssignedLesson) => void;
+}
+
+export function AssignmentCard({ assignment, onPress, onDelete }: AssignmentCardProps) {
+  const { t } = useTranslation();
   const { data: lesson } = useLesson(assignment.lessonId);
   const isOverdue =
     assignment.dueDate && new Date(assignment.dueDate) < new Date();
@@ -19,6 +21,21 @@ export function AssignmentCard({
         day: "numeric",
       })
     : null;
+
+  const handleDeletePress = () => {
+    Alert.alert(
+      t("classroom.deleteAssignment"),
+      t("classroom.deleteAssignmentConfirm"),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("classroom.delete"),
+          style: "destructive",
+          onPress: () => onDelete?.(assignment),
+        },
+      ]
+    );
+  };
 
   return (
     <Pressable
@@ -32,7 +49,14 @@ export function AssignmentCard({
         >
           {lesson?.title ?? "Unknown Lesson"}
         </Text>
-        <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
+        <View className="flex-row items-center gap-2">
+          {onDelete && (
+            <Pressable onPress={handleDeletePress} hitSlop={8}>
+              <IconSymbol name="trash" size={16} color="#ef4444" />
+            </Pressable>
+          )}
+          <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
+        </View>
       </View>
       <View className="mt-1 flex-row items-center gap-3">
         <Text className="text-xs text-neutral-500 dark:text-neutral-400">
@@ -52,7 +76,7 @@ export function AssignmentCard({
                   : "text-neutral-500 dark:text-neutral-400"
               }`}
             >
-              Due {dueDateStr}
+              {t("classroom.dueLabel", { date: dueDateStr })}
             </Text>
           </View>
         )}

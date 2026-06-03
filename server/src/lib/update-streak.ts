@@ -16,6 +16,7 @@ export function diffDaysFromToday(dateStr: string | null | undefined): number {
 
 export interface StreakResult {
   newStreak: number;
+  streakIncremented: boolean;
   streakMilestone: number | null;
   freezeGranted: number | null;
   freezeCount: number;
@@ -45,6 +46,7 @@ export async function updateStreak(userId: string): Promise<StreakResult> {
   if (diff === 0) {
     return {
       newStreak,
+      streakIncremented: false,
       streakMilestone: null,
       freezeGranted: null,
       freezeCount: user.streakFreezes ?? 0,
@@ -76,6 +78,7 @@ export async function updateStreak(userId: string): Promise<StreakResult> {
 
   return {
     newStreak,
+    streakIncremented: true,
     streakMilestone: STREAK_MILESTONES.has(newStreak) ? newStreak : null,
     freezeGranted: totalFreezeGrant > 0 ? totalFreezeGrant : null,
     freezeCount: (user.streakFreezes ?? 0) + totalFreezeGrant,

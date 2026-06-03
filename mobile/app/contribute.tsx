@@ -1,13 +1,19 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
-import { ApiError } from "@/lib/api";
+import { ApiError, friendlyError } from "@/lib/api";
 import {
     ALL_CATEGORIES,
     CATEGORY_LABELS,
     type DictionaryCategory,
+    type DictionaryEntry,
 } from "@/lib/dictionary";
 import { useBounties } from "@/lib/hooks/use-bounties";
-import { useSubmitContribution } from "@/lib/hooks/use-contributions";
+import {
+    useSubmitContribution,
+    useSubmitEntryContribution,
+} from "@/lib/hooks/use-contributions";
+import { useDictionary } from "@/lib/hooks/use-dictionary";
+import { useContributors } from "@/lib/hooks/use-contributors";
 import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES } from "@/lib/mock-data";
 import { wordContributionSchema } from "@/lib/validation";
@@ -46,9 +52,11 @@ export default function ContributeScreen() {
     stopPlayback,
   } = useContributionStore();
   const submitContribution = useSubmitContribution();
+  const submitEntryContribution = useSubmitEntryContribution();
 
   const [step, setStep] = useState<Step>(params.languageId ? "entry" : "type");
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(params.languageId ?? null);
+  const [selectedEntry, setSelectedEntry] = useState<DictionaryEntry | null>(null);
   const [langSearch, setLangSearch] = useState("");
   const [word, setWord] = useState("");
   const [english, setEnglish] = useState("");
@@ -62,12 +70,42 @@ export default function ContributeScreen() {
 
   const isPhrase = word.trim().includes(" ");
 
+  // Dictionary lookup for duplicate detection
+  const { data: dictionaryEntries = [] } = useDictionary(selectedLanguage ?? "");
+  const wordTrimmed = word.trim();
+  const dictMatches =
+    wordTrimmed.length >= 2 && !selectedEntry
+      ? dictionaryEntries
+          .filter((e) =>
+            e.word.toLowerCase().startsWith(wordTrimmed.toLowerCase())
+          )
+          .slice(0, 5)
+      : [];
+
+  const handleSelectEntry = (entry: DictionaryEntry) => {
+    setSelectedEntry(entry);
+    setWord(entry.word);
+    setEnglish("");
+    setCategory(entry.category);
+  };
+
+  const handleClearEntry = () => {
+    setSelectedEntry(null);
+    setWord("");
+    setEnglish("");
+    setCategory(null);
+  };
+
   // Bounty matching
   const { data: matchingBounties } = useBounties(
     selectedLanguage ?? undefined,
     category ?? undefined
   );
   const activeBounty = matchingBounties?.[0]; // highest xpReward first
+
+  const { data: contributors = [] } = useContributors();
+  const totalContributors = contributors.length;
+  const totalApproved = contributors.reduce((sum, c) => sum + c.approvedCount, 0);
 
   const handlePickImage = async () => {
     const result = await DocumentPicker.getDocumentAsync({
@@ -80,6 +118,38 @@ export default function ContributeScreen() {
   };
 
   const handleSubmit = () => {
+    const onSuccess = () => {
+      toastSuccess(t("contribute.submitted"), t("contribute.submittedWordDesc"));
+      setTimeout(() => router.back(), 1500);
+    };
+    const onError = (err: unknown) => {
+      console.error("Contribution submit error:", err);
+      if (err instanceof ApiError && err.status === 409) {
+        toastError(
+          t("contribute.alreadyExists"),
+          friendlyError(err, "This entry may already exist. Try a different word or refine this one.")
+        );
+      } else {
+        toastError(t("common.error"), friendlyError(err));
+      }
+    };
+
+    if (selectedEntry) {
+      // Update request for an existing dictionary entry
+      submitEntryContribution.mutate(
+        {
+          type: "entry_meaning",
+          languageId: selectedLanguage!,
+          dictionaryEntryId: selectedEntry.id,
+          word: selectedEntry.word,
+          english,
+          category: selectedEntry.category,
+        },
+        { onSuccess, onError }
+      );
+      return;
+    }
+
     const validation = wordContributionSchema.safeParse({
       languageId: selectedLanguage ?? "",
       word,
@@ -113,23 +183,7 @@ export default function ContributeScreen() {
         audioUri: data.audioUri,
         imageUri: data.imageUri,
       },
-      {
-        onSuccess: () => {
-          toastSuccess(t("contribute.submitted"), t("contribute.submittedWordDesc"));
-          setTimeout(() => router.back(), 1500);
-        },
-        onError: (err) => {
-          console.error("Contribution submit error:", err);
-          if (err instanceof ApiError && err.status === 409) {
-            toastError(
-              t("contribute.alreadyExists"),
-              err.message + " Try contributing a different word or refine this one."
-            );
-          } else {
-            toastError(t("common.error"), err.message || t("common.tryAgain"));
-          }
-        },
-      }
+      { onSuccess, onError }
     );
   };
 
@@ -138,7 +192,8 @@ export default function ContributeScreen() {
     word.trim() &&
     english.trim() &&
     category &&
-    !submitContribution.isPending;
+    !submitContribution.isPending &&
+    !submitEntryContribution.isPending;
 
   // Progress bar steps (excluding the type chooser which is a landing)
   const wizardSteps: Step[] = ["language", "entry", "details"];
@@ -182,9 +237,21 @@ export default function ContributeScreen() {
                 <Text className="mb-1 text-2xl font-bold text-neutral-900 dark:text-white">
                   {t("contribute.title")}
                 </Text>
-                <Text className="mb-6 text-sm text-neutral-500 dark:text-neutral-400">
+                <Text className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
                   {t("contribute.subtitle")}
                 </Text>
+
+                {totalContributors > 0 && (
+                  <View className="mb-5 flex-row items-center gap-2 rounded-xl bg-amber-50 px-4 py-2.5 dark:bg-amber-900/20">
+                    <IconSymbol name="person.2.fill" size={16} color="#d97706" />
+                    <Text className="text-sm text-amber-800 dark:text-amber-300">
+                      {t("contribute.socialProof", {
+                        contributors: totalContributors,
+                        words: totalApproved.toLocaleString(),
+                      })}
+                    </Text>
+                  </View>
+                )}
 
                 {/* Word / Phrase card */}
                 <Pressable
@@ -432,25 +499,73 @@ export default function ContributeScreen() {
                   </Pressable>
                 )}
 
+                {/* Update-mode banner */}
+                {selectedEntry && (
+                  <View className="mb-4 flex-row items-center rounded-xl bg-amber-50 px-4 py-3 dark:bg-amber-950">
+                    <IconSymbol name="arrow.up.circle.fill" size={16} color="#d97706" />
+                    <Text className="ml-2 flex-1 text-sm text-amber-800 dark:text-amber-300">
+                      {t("contribute.updateBanner")}
+                    </Text>
+                    <Pressable onPress={handleClearEntry} hitSlop={8}>
+                      <IconSymbol name="xmark.circle.fill" size={18} color="#d97706" />
+                    </Pressable>
+                  </View>
+                )}
+
                 <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
                   {t("contribute.wordPhrase")}
                 </Text>
                 <TextInput
                   value={word}
-                  onChangeText={setWord}
+                  onChangeText={(text) => {
+                    setWord(text);
+                    if (selectedEntry) setSelectedEntry(null);
+                  }}
                   placeholder="e.g. Baid\u1EB9"
                   placeholderTextColor="#9ca3af"
-                  className="mb-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                  editable={!selectedEntry}
+                  className={`rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white ${dictMatches.length > 0 ? "mb-0 rounded-b-none border-b-0" : "mb-4"} ${selectedEntry ? "opacity-60" : ""}`}
                   autoFocus
                 />
 
+                {/* Dictionary match picker */}
+                {dictMatches.length > 0 && (
+                  <View className="mb-4 overflow-hidden rounded-b-xl border border-t-0 border-neutral-200 dark:border-neutral-700">
+                    <View className="flex-row items-center bg-neutral-100 px-3 py-1.5 dark:bg-neutral-800">
+                      <IconSymbol name="magnifyingglass" size={12} color="#9ca3af" />
+                      <Text className="ml-1.5 text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                        {t("contribute.foundInDictionary")}
+                      </Text>
+                    </View>
+                    {dictMatches.map((entry, i) => (
+                      <Pressable
+                        key={entry.id}
+                        onPress={() => handleSelectEntry(entry)}
+                        className={`flex-row items-center px-4 py-3 active:bg-neutral-50 dark:active:bg-neutral-800 ${i < dictMatches.length - 1 ? "border-b border-neutral-100 dark:border-neutral-800" : ""}`}
+                      >
+                        <View className="flex-1">
+                          <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
+                            {entry.word}
+                          </Text>
+                          <Text className="text-xs text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
+                            {entry.english}
+                          </Text>
+                        </View>
+                        <Text className="ml-2 text-xs text-blue-500 dark:text-blue-400">
+                          {CATEGORY_LABELS[entry.category]}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
+
                 <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  {t("dictionaryPage.fieldEnglish")}
+                  {selectedEntry ? t("contribute.suggestedMeaning") : t("dictionaryPage.fieldEnglish")}
                 </Text>
                 <TextInput
                   value={english}
                   onChangeText={setEnglish}
-                  placeholder="e.g. Good morning"
+                  placeholder={selectedEntry ? t("contribute.suggestedMeaningPlaceholder") : "e.g. Good morning"}
                   placeholderTextColor="#9ca3af"
                   className="mb-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                 />
@@ -462,12 +577,14 @@ export default function ContributeScreen() {
                   {ALL_CATEGORIES.map((cat) => (
                     <Pressable
                       key={cat}
-                      onPress={() => setCategory(cat)}
+                      onPress={() => { if (!selectedEntry) setCategory(cat); }}
+                      disabled={!!selectedEntry}
+                      accessibilityState={{ disabled: !!selectedEntry }}
                       className={`rounded-lg px-3 py-2 ${
                         category === cat
                           ? "bg-blue-500"
                           : "bg-neutral-100 dark:bg-neutral-800"
-                      }`}
+                      } ${selectedEntry ? "opacity-60" : ""}`}
                     >
                       <Text
                         className={`text-sm font-medium ${
@@ -648,6 +765,10 @@ export default function ContributeScreen() {
                 {step === "entry" && (
                   <Pressable
                     onPress={() => {
+                      if (selectedEntry) {
+                        handleSubmit();
+                        return;
+                      }
                       const entryCheck = wordContributionSchema.pick({ word: true, english: true, category: true }).safeParse({ word, english, category });
                       if (entryCheck.success) {
                         setStep("details");
@@ -663,7 +784,9 @@ export default function ContributeScreen() {
                         : "bg-blue-300 dark:bg-blue-800"
                     }`}
                   >
-                    <Text className="font-semibold text-white">{t("common.next")}</Text>
+                    <Text className="font-semibold text-white">
+                      {selectedEntry ? t("contribute.submitUpdate") : t("common.next")}
+                    </Text>
                   </Pressable>
                 )}
                 {step === "details" && (
@@ -675,7 +798,11 @@ export default function ContributeScreen() {
                     }`}
                   >
                     <Text className="font-semibold text-white">
-                      {submitContribution.isPending ? t("contribute.submitting") : t("common.submit")}
+                      {(submitContribution.isPending || submitEntryContribution.isPending)
+                        ? t("contribute.submitting")
+                        : selectedEntry
+                          ? t("contribute.submitUpdate")
+                          : t("common.submit")}
                     </Text>
                   </Pressable>
                 )}

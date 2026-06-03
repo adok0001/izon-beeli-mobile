@@ -1,26 +1,29 @@
 import { EnrolledLanguageBar } from "@/components/language-picker";
+import { LoadingScreen } from "@/components/loading-screen";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { NotificationBell } from "@/components/notifications/notification-center";
-
 import { StreakFreezeModal } from "@/components/streak-freeze-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { UpNextCard } from "@/components/up-next-card";
-import { XpLevelBadge } from "@/components/xp-level-badge";
+import { getCourseTypeColors, getLevelColors } from "@/constants/course-colors";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { getStoryForCourse } from "@/lib/data/stories";
 import { useBounties } from "@/lib/hooks/use-bounties";
 import { useCourseLessons, useCourses, useLesson } from "@/lib/hooks/use-courses";
 import { useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
 import { useCompletedLessons, useProgressSummary } from "@/lib/hooks/use-progress";
+import { useStoryArcs } from "@/lib/hooks/use-story-arc";
+import { useToast } from "@/lib/hooks/use-toast";
 import { useWordsDueForReview } from "@/lib/hooks/use-wordbank";
 import { localizeField } from "@/lib/localize";
 import { BUNDLED_AUDIO, formatDuration } from "@/lib/mock-data";
+import { useUser } from "@clerk/clerk-expo";
 import { useAudioStore } from "@/store/audio-store";
 import { useLanguageStore } from "@/store/language-store";
 import { useTourStore } from "@/store/tour-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course, Lesson } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from "react-native";
@@ -82,7 +85,7 @@ const ContinueCard = memo(function ContinueCard({ lessonId, positionSeconds }: {
   );
 });
 
-const CourseCard = memo(function CourseCard({ course, completedIds }: { course: Course; completedIds: Set<string> }) {
+const CourseCard = memo(function CourseCard({ course, completedIds, hasStoryArc }: { course: Course; completedIds: Set<string>; hasStoryArc: boolean }) {
   const { t } = useTranslation();
   const router = useRouter();
   const colorScheme = useColorScheme();
@@ -92,9 +95,11 @@ const CourseCard = memo(function CourseCard({ course, completedIds }: { course: 
   const progressPercent =
     lessons.length > 0 ? (completedCount / lessons.length) * 100 : 0;
   const [collapsed, setCollapsed] = useState(false);
+  const typeColors = getCourseTypeColors(course.courseType);
+  const levelColors = getLevelColors(course.level);
 
   return (
-    <View className="mb-4 overflow-hidden rounded-2xl bg-neutral-50 dark:bg-neutral-800">
+    <View className={`mb-4 overflow-hidden rounded-2xl ${typeColors.headerBg}`}>
       {/* Tappable header — always visible */}
       <Pressable
         onPress={() => setCollapsed((c) => !c)}
@@ -105,8 +110,8 @@ const CourseCard = memo(function CourseCard({ course, completedIds }: { course: 
         accessibilityState={{ expanded: !collapsed }}
       >
         <View className="mb-2 flex-row items-center justify-between">
-          <View className="rounded-full bg-blue-100 px-3 py-1 dark:bg-blue-900">
-            <Text className="text-xs font-semibold capitalize text-blue-700 dark:text-blue-300">
+          <View className={`rounded-full px-3 py-1 ${levelColors.badgeBg}`}>
+            <Text className={`text-xs font-semibold capitalize ${levelColors.badgeText}`}>
               {t(`levels.${course.level}`, { defaultValue: course.level })}
             </Text>
           </View>
@@ -129,16 +134,24 @@ const CourseCard = memo(function CourseCard({ course, completedIds }: { course: 
           {localizeField(course.description, course.descriptionFr, uiLanguage)}
         </Text>
 
+        {course.courseType && typeColors.label ? (
+          <View className={`mt-2 self-start rounded-full px-2.5 py-0.5 ${typeColors.badgeBg}`}>
+            <Text className={`text-xs font-semibold ${typeColors.badgeText}`}>
+              {typeColors.label}
+            </Text>
+          </View>
+        ) : null}
+
         {progressPercent > 0 && (
           <View className="mt-3">
             <View className="relative h-2 rounded-full bg-neutral-200 dark:bg-neutral-700">
               <View
-                className="h-2 rounded-full bg-blue-500"
+                className={`h-2 rounded-full ${typeColors.progressBar}`}
                 style={{ width: `${progressPercent}%` }}
               />
               {[25, 50, 75].map((pct) => {
                 const inactiveColor = colorScheme === "dark" ? "#4b5563" : "#d1d5db";
-                const tickColor = progressPercent >= pct ? "#93c5fd" : inactiveColor;
+                const tickColor = progressPercent >= pct ? typeColors.tickActive : inactiveColor;
                 return (
                   <View
                     key={pct}
@@ -161,7 +174,7 @@ const CourseCard = memo(function CourseCard({ course, completedIds }: { course: 
       {!collapsed && (
         <View className="px-4 pb-4">
           {lessonsLoading ? (
-            <ActivityIndicator size="small" color="#3b82f6" />
+            <ActivityIndicator size="small" color={typeColors.tickActive} />
           ) : (
             lessons.map((lesson) => (
               <LessonRow
@@ -178,13 +191,13 @@ const CourseCard = memo(function CourseCard({ course, completedIds }: { course: 
               onPress={() =>
                 router.push({ pathname: "/quiz", params: { courseId: course.id } })
               }
-              className="flex-1 flex-row items-center justify-center rounded-lg border border-blue-200 py-2.5 active:opacity-70 dark:border-blue-800"
+              className={`flex-1 flex-row items-center justify-center rounded-lg border py-2.5 active:opacity-70 ${typeColors.badgeBg} ${typeColors.badgeBorder}`}
               accessibilityRole="button"
               accessibilityLabel={t("learn.practiceQuiz")}
               accessibilityHint="Start a practice quiz for this course"
             >
-              <IconSymbol name="trophy.fill" size={16} color="#3b82f6" />
-              <Text className="ml-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400">
+              <IconSymbol name="trophy.fill" size={16} color={typeColors.tickActive} />
+              <Text className={`ml-1.5 text-sm font-semibold ${typeColors.badgeText}`}>
                 {t("learn.practiceQuiz")}
               </Text>
             </Pressable>
@@ -203,7 +216,7 @@ const CourseCard = memo(function CourseCard({ course, completedIds }: { course: 
               </Text>
             </Pressable>
           </View>
-          {getStoryForCourse(course.id) && (
+          {hasStoryArc && (
             <Pressable
               onPress={() => router.push(`/story/${course.id}` as any)}
               className="mt-2 flex-row items-center justify-center rounded-lg border border-amber-200 py-2.5 active:opacity-70 dark:border-amber-800"
@@ -404,12 +417,19 @@ function DailyGoalRing({ completedToday }: { completedToday: number }) {
 export default function LearnScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const { user } = useUser();
+  const avatarInitial = (user?.username ?? "L")[0]?.toUpperCase() ?? "L";
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
   const { data: courses = [], isLoading: coursesLoading, refetch: refetchCourses } = useCourses(selectedLanguageId);
   const { data: completedLessonIds, isLoading: progressLoading, refetch } = useCompletedLessons();
   const { data: summary, refetch: refetchSummary } = useProgressSummary();
   const { refetch: refetchDue } = useWordsDueForReview(selectedLanguageId);
   const { data: todayChallenges = [] } = useTodayChallenges();
+  const { data: storyArcSummaries = [] } = useStoryArcs();
+  const storyArcCourseIds = useMemo(
+    () => new Set(storyArcSummaries.map((a) => a.courseId)),
+    [storyArcSummaries]
+  );
   const completedIds = useMemo(() => new Set(completedLessonIds ?? []), [completedLessonIds]);
   const completedToday = useMemo(
     () => todayChallenges.filter((c) => c.completed).length,
@@ -418,6 +438,8 @@ export default function LearnScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [freezeModalVisible, setFreezeModalVisible] = useState(false);
   const freezeChecked = useRef(false);
+  const goalCelebrationChecked = useRef(false);
+  const { toast, success: toastSuccess, dismiss: dismissToast } = useToast();
   const resumeState = useAudioStore((s) => s.resumeState);
   const loadResumeState = useAudioStore((s) => s.loadResumeState);
   const activeTour = useTourStore((s) => s.activeTour);
@@ -425,6 +447,10 @@ export default function LearnScreen() {
   useEffect(() => {
     loadResumeState();
   }, []);
+
+  useFocusEffect(useCallback(() => {
+    refetchSummary();
+  }, [refetchSummary]));
 
   // Show freeze modal once per day when we detect a broken streak (wait for any tour to finish)
   useEffect(() => {
@@ -444,6 +470,21 @@ export default function LearnScreen() {
       setFreezeModalVisible(true);
     }).catch(() => {});
   }, [summary?.streakBroken, summary?.streak, activeTour]);
+
+  const DAILY_GOAL = 3;
+
+  useEffect(() => {
+    if (completedToday < DAILY_GOAL || goalCelebrationChecked.current) return;
+
+    goalCelebrationChecked.current = true;
+    const today = new Date().toISOString().slice(0, 10);
+    AsyncStorage.getItem("daily-goal-celebration-shown").then((lastShown) => {
+      if (lastShown === today) return;
+      AsyncStorage.setItem("daily-goal-celebration-shown", today).catch(() => {});
+      toastSuccess(t("dailyGoal.celebrationTitle"), t("dailyGoal.celebrationBody"));
+    }).catch(() => {});
+
+  }, [completedToday]);
 
   const isLoading = coursesLoading || progressLoading;
 
@@ -483,76 +524,81 @@ export default function LearnScreen() {
           >
             <IconSymbol name="character.book.closed" size={18} color="#f59e0b" />
           </Pressable>
+          <Pressable
+            onPress={() => router.push("/(tabs)/profile")}
+            className="h-9 w-9 items-center justify-center rounded-full bg-blue-500"
+            accessibilityRole="button"
+            accessibilityLabel="Profile"
+          >
+            <Text className="text-sm font-bold text-white">{avatarInitial}</Text>
+          </Pressable>
         </View>
       </View>
 
       <EnrolledLanguageBar />
 
-      {/* Stats card */}
-      <View className="mx-5 mb-3 flex-row rounded-2xl bg-neutral-50 px-2 py-3 dark:bg-neutral-800">
-        {/* Streak */}
-        <Pressable
-          onPress={() => summary?.streakBroken && summary.streak > 0 && setFreezeModalVisible(true)}
-          className="flex-row items-center gap-1"
-          accessibilityRole="button"
-          accessibilityLabel={`${summary?.streakBroken ? "Broken streak" : "Streak"}: ${summary?.streak ?? 0} days`}
-          accessibilityHint={summary?.streakBroken && (summary?.streak ?? 0) > 0 ? "Tap to use a streak freeze" : undefined}
-        >
-          <View className="flex-row items-center gap-1">
-            <IconSymbol
-              name="flame.fill"
-              size={16}
-              color={summary?.streakBroken ? "#9ca3af" : "#f59e0b"}
-            />
-            <Text className={`text-base font-bold ${summary?.streakBroken ? "text-neutral-400 line-through dark:text-neutral-500" : "text-neutral-800 dark:text-white"}`}>
-              {summary?.streak ?? 0}
-            </Text>
+     {/* Stats bar */}
+      <View className="border-b border-neutral-100 dark:border-neutral-800">
+        <View className="flex-row items-center justify-between gap-4 px-5 py-3.5">
+          {/* Streak */}
+          <Pressable
+            onPress={() => summary?.streakBroken && summary.streak > 0 && setFreezeModalVisible(true)}
+            className="flex-1 flex-row items-center gap-2 rounded-lg px-2.5 py-1.5 active:bg-neutral-100 dark:active:bg-neutral-800"
+            accessibilityRole="button"
+            accessibilityLabel={`${summary?.streakBroken ? "Broken streak" : "Streak"}: ${summary?.streak ?? 0} days`}
+            accessibilityHint={summary?.streakBroken && (summary?.streak ?? 0) > 0 ? "Tap to use a streak freeze" : undefined}
+          >
+            <View className="h-8 w-8 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30">
+              <IconSymbol
+                name="flame.fill"
+                size={16}
+                color={summary?.streakBroken || summary?.refreshedToday === false ? "#9ca3af" : "#f59e0b"}
+              />
+            </View>
+            <View className="flex-1">
+              <Text className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+                Streak
+              </Text>
+              <Text className={`text-base font-bold ${summary?.streakBroken ? "text-neutral-400 line-through dark:text-neutral-500" : summary?.refreshedToday === false ? "text-neutral-400 dark:text-neutral-500" : "text-neutral-900 dark:text-white"}`}>
+                {summary?.streak ?? 0}d
+              </Text>
+            </View>
             {(summary?.freezeCount ?? 0) > 0 && (
-              <View className="flex-row items-center rounded-full bg-blue-100 px-1 dark:bg-blue-900">
-                <IconSymbol name="snowflake" size={9} color="#3b82f6" />
+              <View className="flex-row items-center rounded-full bg-blue-100 px-2 py-0.5 dark:bg-blue-900/40">
+                <IconSymbol name="snowflake" size={11} color="#3b82f6" />
                 <Text className="ml-0.5 text-xs font-bold text-blue-600 dark:text-blue-400">
                   {summary!.freezeCount}
                 </Text>
               </View>
             )}
+          </Pressable>
+
+          {/* Divider */}
+          <View className="h-8 w-px bg-neutral-200 dark:bg-neutral-700" />
+
+          {/* Daily Goal */}
+          <View className="flex-1 flex-row items-center gap-2 rounded-lg px-2.5 py-1.5">
+            <View className="h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+              <Text className="text-xs font-bold text-blue-600 dark:text-blue-400">🎯</Text>
+            </View>
+            <View className="flex-1">
+              <Text className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+                Goal
+              </Text>
+              <View className="flex-row items-center gap-1">
+                <Text className="text-base font-bold text-neutral-900 dark:text-white">
+                  {completedToday}
+                </Text>
+                <Text className="text-xs text-neutral-500 dark:text-neutral-400">/3</Text>
+              </View>
+            </View>
+            <DailyGoalRing completedToday={completedToday} />
           </View>
-          <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">{t("learn.streak")}</Text>
-        </Pressable>
-
-        <View className="w-px self-stretch bg-neutral-200 dark:bg-neutral-700" />
-
-        {/* XP Level */}
-        <View className="flex-1 items-center">
-          <XpLevelBadge points={summary?.points ?? 0} variant="compact" />
-          <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">{t("learn.level")}</Text>
-        </View>
-
-        <View className="w-px self-stretch bg-neutral-200 dark:bg-neutral-700" />
-
-        {/* Lessons done */}
-        <View className="flex-1 items-center">
-          <View className="flex-row items-center gap-1">
-            <IconSymbol name="checkmark.circle.fill" size={16} color="#22c55e" />
-            <Text className="text-base font-bold text-neutral-800 dark:text-white">
-              {summary?.completedCount ?? 0}
-            </Text>
-          </View>
-          <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">{t("learn.statsLessonsDone")}</Text>
-        </View>
-
-        <View className="w-px self-stretch bg-neutral-200 dark:bg-neutral-700" />
-
-        {/* Daily goal */}
-        <View className="flex-1 items-center">
-          <DailyGoalRing completedToday={completedToday} />
-          <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">{t("learn.today")}</Text>
         </View>
       </View>
 
       {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#3b82f6" />
-        </View>
+        <LoadingScreen />
       ) : courses.length === 0 ? (
         <View className="flex-1 items-center justify-center px-8">
           <IconSymbol name="book.fill" size={48} color="#d1d5db" />
@@ -565,16 +611,16 @@ export default function LearnScreen() {
           data={courses}
           keyExtractor={(item) => item.id}
           contentContainerClassName="px-5 pb-8 pt-2"
-          renderItem={({ item }) => <CourseCard course={item} completedIds={completedIds} />}
+          renderItem={({ item }) => <CourseCard course={item} completedIds={completedIds} hasStoryArc={storyArcCourseIds.has(item.id)} />}
           ListHeaderComponent={
             <View className="mb-4 gap-3">
-              <ReviewBanner languageId={selectedLanguageId} />
-              {resumeState && resumeState.positionSeconds > 5 && (
+              {/* <ReviewBanner languageId={selectedLanguageId} /> */}
+              {/* {resumeState && resumeState.positionSeconds > 5 && (
                 <ContinueCard
                   lessonId={resumeState.lessonId}
                   positionSeconds={resumeState.positionSeconds}
                 />
-              )}
+              )} */}
               <UpNextCard languageId={selectedLanguageId} />
               <BountyTeaser languageId={selectedLanguageId} />
               <ContributorBanner />
@@ -594,6 +640,13 @@ export default function LearnScreen() {
         onDismiss={() => setFreezeModalVisible(false)}
       />
 
+      <NotificationBanner
+        visible={toast.visible}
+        title={toast.title}
+        body={toast.body}
+        type={toast.type}
+        onDismiss={dismissToast}
+      />
     </SafeAreaView>
   );
 }

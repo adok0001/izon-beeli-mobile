@@ -98,11 +98,9 @@ function SongsCard({ languageId }: { languageId: string }) {
 
   if (songs.length === 0) return null;
 
-  const first = songs[0];
-
   return (
     <Pressable
-      onPress={() => router.push(`/lesson/${first.id}` as any)}
+      onPress={() => router.push(`/songs/${languageId}` as any)}
       className="rounded-2xl bg-pink-50 p-4 active:opacity-70 dark:bg-pink-900/20"
     >
       <View className="flex-row items-center">
@@ -114,7 +112,7 @@ function SongsCard({ languageId }: { languageId: string }) {
             {t("songs.title")} · {songs.length}
           </Text>
           <Text className="text-sm text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
-            {first.title}
+            {t("songs.browseSongs", { defaultValue: "Browse all songs" })}
           </Text>
         </View>
         <IconSymbol name="chevron.right" size={16} color="#db2777" />
@@ -143,7 +141,7 @@ export default function PracticeScreen() {
           <Text className="font-heading text-2xl font-bold text-neutral-900 dark:text-white">
             {t("practice.title")}
           </Text>
-          <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+          <Text className="mt-1 text-sm text-teal-600 dark:text-teal-400">
             {t("practice.subtitle")}
           </Text>
         </View>

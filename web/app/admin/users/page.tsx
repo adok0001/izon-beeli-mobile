@@ -24,8 +24,7 @@ interface AdminUser {
   createdAt: string;
 }
 
-const REVIEWER_ROLES = ["teacher", "professor", "elder"] as const;
-type ReviewerRole = (typeof REVIEWER_ROLES)[number];
+type ReviewerRole = "teacher" | "professor" | "elder";
 
 const ROLE_STYLES: Record<ReviewerRole, string> = {
   teacher:   "bg-blue-500/[0.1] text-blue-700 dark:text-blue-400 border-blue-500/[0.2]",

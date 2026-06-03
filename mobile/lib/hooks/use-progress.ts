@@ -12,6 +12,7 @@ export interface ProgressSummary {
   quizCount: number;
   freezeCount: number;
   streakBroken: boolean;
+  refreshedToday: boolean;
 }
 
 interface CompleteLessonResponse {
@@ -20,6 +21,7 @@ interface CompleteLessonResponse {
   pointsEarned?: number;
   totalPoints?: number;
   streak?: number;
+  streakIncremented?: boolean;
   leveledUp?: boolean;
   newLevel?: number;
   newTitle?: string;
@@ -56,6 +58,7 @@ export function useCompletedLessons() {
 
 export function useCompleteLesson(callbacks?: {
   onLevelUp?: (level: number, title: string) => void;
+  onStreakUpdate?: (streak: number, isMilestone: boolean) => void;
 }) {
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
@@ -84,8 +87,14 @@ export function useCompleteLesson(callbacks?: {
       Alert.alert("Error", "Failed to mark lesson as complete. Please try again.");
     },
     onSuccess: (data) => {
+      queryClient.setQueryData<ProgressSummary>(["progress", "summary"], (old) =>
+        old ? { ...old, refreshedToday: true, ...(data.streak ? { streak: data.streak } : {}) } : old
+      );
       if (data.streakMilestone) {
         hapticHeavy();
+      }
+      if (data.streak && data.streakIncremented) {
+        callbacks?.onStreakUpdate?.(data.streak, !!data.streakMilestone);
       }
       if (data.leveledUp && data.newLevel && data.newTitle) {
         callbacks?.onLevelUp?.(data.newLevel, data.newTitle);

@@ -1,6 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, friendlyError } from "@/lib/api";
 import { type CurrentUser, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES } from "@/lib/mock-data";
@@ -290,7 +290,7 @@ export default function ReviewerApplicationScreen() {
       toastSuccess(t("reviewerApplication.cancelSuccessTitle"), t("reviewerApplication.cancelSuccessMessage"));
     },
     onError: (err: Error) => {
-      toastError(t("reviewerApplication.failedTitle"), err.message);
+      toastError(t("reviewerApplication.failedTitle"), friendlyError(err));
     },
   });
 
@@ -328,7 +328,7 @@ export default function ReviewerApplicationScreen() {
       toastSuccess(title, message);
     },
     onError: (err: Error) => {
-      toastError(t("reviewerApplication.failedTitle"), err.message);
+      toastError(t("reviewerApplication.failedTitle"), friendlyError(err));
     },
   });
 

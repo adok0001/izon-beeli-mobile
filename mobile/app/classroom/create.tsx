@@ -1,5 +1,6 @@
+import { friendlyError } from "@/lib/api";
 import { useState } from "react";
-import { View, Text, TextInput, Pressable } from "react-native";
+import { KeyboardAvoidingView, Platform, View, Text, TextInput, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
@@ -27,7 +28,7 @@ export default function CreateGroupScreen() {
       { name: name.trim(), languageId: selectedLanguageId },
       {
         onSuccess: (group) => router.replace(`/classroom/${group.id}`),
-        onError: (err) => toastError("Error", err.message),
+        onError: (err) => toastError("Error", friendlyError(err)),
       }
     );
   };
@@ -63,7 +64,7 @@ export default function CreateGroupScreen() {
           <View className="w-14" />
         </View>
 
-        <View className="flex-1 px-5 pt-6">
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 px-5 pt-6">
           {/* Mode toggle */}
           <View className="mb-6 flex-row gap-2">
             <Pressable
@@ -155,7 +156,7 @@ export default function CreateGroupScreen() {
               </Pressable>
             </>
           )}
-        </View>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </>
   );

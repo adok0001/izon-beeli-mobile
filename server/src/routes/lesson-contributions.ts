@@ -219,6 +219,31 @@ lessonContributionsRouter.get("/pending", async (c) => {
   return c.json(result);
 });
 
+// DELETE /api/lesson-contributions/:id - delete a lesson contribution (owner while not approved, or admin)
+lessonContributionsRouter.delete("/:id", async (c) => {
+  const userId = c.get("userId");
+  const { id } = c.req.param();
+
+  const [existing] = await db
+    .select({ userId: lessonContributions.userId, status: lessonContributions.status })
+    .from(lessonContributions)
+    .where(eq(lessonContributions.id, id))
+    .limit(1);
+  if (!existing) return c.json({ error: "Not found" }, 404);
+
+  const [user] = await db.select({ isAdmin: users.isAdmin }).from(users).where(eq(users.id, userId)).limit(1);
+  if (!user?.isAdmin) {
+    if (existing.userId !== userId) return c.json({ error: "Forbidden" }, 403);
+    if (existing.status === "approved") return c.json({ error: "Approved contributions cannot be deleted" }, 409);
+  } else if (existing.status === "approved") {
+    return c.json({ error: "Approved contributions cannot be deleted" }, 409);
+  }
+
+  await db.delete(lessonContributionSegments).where(eq(lessonContributionSegments.lessonContributionId, id));
+  await db.delete(lessonContributions).where(eq(lessonContributions.id, id));
+  return c.json({ deleted: true });
+});
+
 // PATCH /api/lesson-contributions/:id/review (admin only)
 lessonContributionsRouter.patch("/:id/review", adminMiddleware, async (c) => {
   const reviewerId = c.get("userId");

@@ -229,6 +229,7 @@ function FeedCard({ item, onSignInRequired }: Readonly<{ item: FeedItem; onSignI
         }
       }
     },
+    onSettled: () => void qc.invalidateQueries({ queryKey: ["feed"] }),
   });
 
   return (

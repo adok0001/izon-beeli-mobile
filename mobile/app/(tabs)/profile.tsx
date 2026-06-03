@@ -2,8 +2,10 @@ import { FeedbackModal } from "@/components/feedback-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { XpLevelBadge } from "@/components/xp-level-badge";
 import { canAccessEducatorPanel, type DailyGoal, useCurrentUser, useUpdateDailyGoal } from "@/lib/hooks/use-current-user";
+import { analytics } from "@/lib/analytics";
+import { useAppConfig } from "@/lib/hooks/use-app-config";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
-import { getLanguageName } from "@/lib/mock-data";
+import { getLevelInfo } from "@/lib/xp-levels";
 import { useLanguageStore } from "@/store/language-store";
 import { useTourStore } from "@/store/tour-store";
 import { useWelcomeChecklistStore } from "@/store/welcome-checklist-store";
@@ -23,7 +25,7 @@ const GOAL_OPTIONS: { id: DailyGoal; icon: string; labelKey: string; detailKey: 
 function StatCard({ icon, label, value }: Readonly<{ icon: string; label: string; value: string }>) {
   return (
     <View className="flex-1 items-center rounded-xl bg-neutral-50 px-2 py-4 dark:bg-neutral-800">
-      <IconSymbol name={icon as any} size={22} color="#3b82f6" />
+      <IconSymbol name={icon as any} size={22} color="#6366f1" />
       <Text className="mt-1.5 text-lg font-bold text-neutral-900 dark:text-white">
         {value}
       </Text>
@@ -87,6 +89,7 @@ export default function ProfileScreen() {
   const [goalPickerVisible, setGoalPickerVisible] = useState(false);
   const updateDailyGoal = useUpdateDailyGoal();
   const { data: summary } = useProgressSummary();
+  const { data: config } = useAppConfig();
   const { selectedLanguageId } = useLanguageStore();
   const { t } = useTranslation();
   const showTour = useTourStore((s) => s.showTour);
@@ -94,6 +97,11 @@ export default function ProfileScreen() {
   const resetChecklist = useWelcomeChecklistStore((s) => s.reset);
   const resetTours = useTourStore((s) => s.reset);
   const isAdmin = currentUser?.isAdmin ?? false;
+  const levelInfo = getLevelInfo(summary?.points ?? 0);
+  const showPlusCta =
+    config?.plusEnabled &&
+    currentUser?.planTier !== "plus" &&
+    levelInfo.level >= 5;
   const canAccessEducator = currentUser ? canAccessEducatorPanel(currentUser) : false;
   const reviewerRole = currentUser?.reviewerRole ?? null;
   const displayName = user?.username ?? "Learner";
@@ -105,7 +113,7 @@ export default function ProfileScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Profile header */}
         <View className="items-center border-b border-neutral-100 px-5 pb-6 pt-6 dark:border-neutral-800">
-          <View className="mb-3 h-20 w-20 items-center justify-center rounded-full bg-blue-500">
+          <View className="mb-3 h-20 w-20 items-center justify-center rounded-full bg-indigo-500">
             <Text className="text-2xl font-bold text-white">{initial}</Text>
           </View>
           <Text className="font-heading text-xl font-bold text-neutral-900 dark:text-white">
@@ -167,6 +175,30 @@ export default function ProfileScreen() {
             />
           </View>
         </View>
+
+        {/* Support Beeli CTA — shown to Level 5+ (Scholar) free users */}
+        {showPlusCta ? (
+          <Pressable
+            onPress={() => {
+              analytics.plusCtaTapped("profile");
+              router.push("/plus-paywall");
+            }}
+            className="mx-5 mb-4 flex-row items-center gap-4 rounded-2xl bg-indigo-50 p-4 active:opacity-80 dark:bg-indigo-900/20"
+          >
+            <View className="h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 dark:bg-indigo-900/40">
+              <IconSymbol name="heart.fill" size={20} color="#6366f1" />
+            </View>
+            <View className="flex-1">
+              <Text className="font-semibold text-indigo-900 dark:text-indigo-200 text-sm">
+                Support Beeli
+              </Text>
+              <Text className="mt-0.5 text-xs text-indigo-600 dark:text-indigo-400">
+                You've reached {levelInfo.title}. Unlock Plus and keep us growing.
+              </Text>
+            </View>
+            <IconSymbol name="chevron.right" size={16} color="#6366f1" />
+          </Pressable>
+        ) : null}
 
         {/* Menu */}
         <View className="px-5">
@@ -241,11 +273,6 @@ export default function ProfileScreen() {
             onPress={() => router.push("/classroom")}
           />
           <MenuRow
-            icon="bell.fill"
-            label={t("profile.notifications")}
-            onPress={() => router.push("/notifications")}
-          />
-          <MenuRow
             icon="exclamationmark.bubble"
             label={t("profile.sendFeedback")}
             onPress={() => setFeedbackVisible(true)}
@@ -268,7 +295,7 @@ export default function ProfileScreen() {
             <MenuRow
               icon="xmark"
               label={t("profile.signOut")}
-              onPress={() => signOut()}
+              onPress={() => { analytics.reset(); signOut(); }}
               danger
             />
           </View>

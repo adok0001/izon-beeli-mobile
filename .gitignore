@@ -1,7 +1,9 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 userio-*
 .vscode/
-.claude/
+.claude/settings.local.json
+.claude/**/.DS_Store
+scripts/.cache/
 
 # dependencies
 node_modules/

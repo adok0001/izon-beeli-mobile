@@ -13,15 +13,18 @@ import {
   contributions,
   courses,
   dictionaryEntries,
+  feedItems,
   languages,
   lessonContributions,
   lessonContributionSegments,
   lessons,
+  storyArcs,
+  storyChapters,
   transcriptSegments,
   users,
 } from "../db/schema.js";
 import { AuthEnv, authMiddleware, reviewerMiddleware } from "../middleware/auth.js";
-import { stubForCourse, stubForLanguage, STUB_COURSE_TYPES } from "../lib/lesson-stubs.js";
+import { stubForCourse, stubForLanguage } from "../lib/lesson-stubs.js";
 
 export const educatorRouter = new Hono<AuthEnv>();
 educatorRouter.use("*", authMiddleware);
@@ -250,6 +253,28 @@ educatorRouter.patch("/contributions/:id", async (c) => {
   return c.json(updated);
 });
 
+// ─── DELETE /educator/contributions/:id ──────────────────────────────────────
+
+educatorRouter.delete("/contributions/:id", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const { id } = c.req.param();
+
+  const [existing] = await db
+    .select({ status: contributions.status, languageId: contributions.languageId })
+    .from(contributions)
+    .where(eq(contributions.id, id))
+    .limit(1);
+
+  if (!existing) return c.json({ error: "Not found" }, 404);
+  if (!isAdmin && !reviewerLanguages.includes(existing.languageId)) return c.json({ error: "Forbidden" }, 403);
+  if (existing.status === "approved") return c.json({ error: "Approved contributions cannot be deleted" }, 409);
+
+  await db.delete(feedItems).where(eq(feedItems.contributionId, id));
+  await db.delete(contributions).where(eq(contributions.id, id));
+  return c.json({ deleted: true });
+});
+
 // ─── GET /educator/lesson-contributions ──────────────────────────────────────
 
 educatorRouter.get("/lesson-contributions", async (c) => {
@@ -383,6 +408,28 @@ educatorRouter.post("/lesson-contributions/:id/review", async (c) => {
     .returning({ id: lessonContributions.id, status: lessonContributions.status });
 
   return c.json({ ...updated, lessonId });
+});
+
+// ─── DELETE /educator/lesson-contributions/:id ────────────────────────────────
+
+educatorRouter.delete("/lesson-contributions/:id", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const { id } = c.req.param();
+
+  const [existing] = await db
+    .select({ status: lessonContributions.status, languageId: lessonContributions.languageId })
+    .from(lessonContributions)
+    .where(eq(lessonContributions.id, id))
+    .limit(1);
+
+  if (!existing) return c.json({ error: "Not found" }, 404);
+  if (!isAdmin && !reviewerLanguages.includes(existing.languageId)) return c.json({ error: "Forbidden" }, 403);
+  if (existing.status === "approved") return c.json({ error: "Approved lesson contributions cannot be deleted" }, 409);
+
+  await db.delete(lessonContributionSegments).where(eq(lessonContributionSegments.lessonContributionId, id));
+  await db.delete(lessonContributions).where(eq(lessonContributions.id, id));
+  return c.json({ deleted: true });
 });
 
 // ─── DICTIONARY CRUD ──────────────────────────────────────────────────────────
@@ -629,21 +676,27 @@ educatorRouter.get("/courses", async (c) => {
   const reviewerLanguages = c.get("reviewerLanguages");
 
   const rows = await db
-    .select({ id: courses.id, title: courses.title, description: courses.description, languageId: courses.languageId, level: courses.level, order: courses.order })
+    .select({ id: courses.id, title: courses.title, description: courses.description, languageId: courses.languageId, level: courses.level, order: courses.order, isActive: courses.isActive })
     .from(courses)
     .where(!isAdmin && reviewerLanguages.length > 0 ? inArray(courses.languageId, reviewerLanguages) : undefined)
     .orderBy(courses.languageId, courses.order);
 
-  const abbrevToType = Object.fromEntries(STUB_COURSE_TYPES.map((c) => [c.abbrev, c.type]));
+  return c.json(rows);
+});
 
-  return c.json(
-    rows.map((row) => {
-      const suffix = row.id.startsWith(`course-${row.languageId}-`)
-        ? row.id.slice(`course-${row.languageId}-`.length)
-        : null;
-      return { ...row, courseType: suffix ? (abbrevToType[suffix] ?? null) : null };
-    })
-  );
+// PATCH /educator/courses/:id
+educatorRouter.patch("/courses/:id", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const courseId = c.req.param("id");
+  const { isActive } = await c.req.json<{ isActive: boolean }>();
+
+  const [course] = await db.select({ languageId: courses.languageId }).from(courses).where(eq(courses.id, courseId)).limit(1);
+  if (!course) return c.json({ error: "Course not found" }, 404);
+  if (!isAdmin && !reviewerLanguages.includes(course.languageId)) return c.json({ error: "Forbidden" }, 403);
+
+  await db.update(courses).set({ isActive }).where(eq(courses.id, courseId));
+  return c.json({ ok: true });
 });
 
 // GET /educator/lessons
@@ -1013,6 +1066,7 @@ educatorRouter.post("/generate-stubs", async (c) => {
       level: course.level,
       lessonsCount: course.lessonsCount,
       order: course.order,
+      courseType: course.courseType ?? null,
     }).onConflictDoNothing();
 
     for (const lesson of stubLessons) {
@@ -1063,6 +1117,7 @@ educatorRouter.post("/generate-stubs", async (c) => {
       level: course.level,
       lessonsCount: course.lessonsCount,
       order: course.order,
+      courseType: course.courseType ?? null,
     }).onConflictDoNothing();
   }
 
@@ -1088,4 +1143,185 @@ educatorRouter.post("/generate-stubs", async (c) => {
   }
 
   return c.json({ courses: stubCourses.length, lessons: stubLessons.length });
+});
+
+// ─── Story Arcs ───────────────────────────────────────────────────────────────
+
+// GET /educator/story-arcs — arcs within the educator's language scope
+educatorRouter.get("/story-arcs", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+
+  const rows = await db
+    .select({
+      id: storyArcs.id,
+      courseId: storyArcs.courseId,
+      title: storyArcs.title,
+      description: storyArcs.description,
+      updatedAt: storyArcs.updatedAt,
+    })
+    .from(storyArcs)
+    .innerJoin(courses, eq(storyArcs.courseId, courses.id))
+    .where(!isAdmin && reviewerLanguages.length > 0 ? inArray(courses.languageId, reviewerLanguages) : undefined)
+    .orderBy(courses.languageId, storyArcs.courseId);
+
+  return c.json(rows);
+});
+
+// GET /educator/story-arcs/:courseId — arc with chapters for a specific course
+educatorRouter.get("/story-arcs/:courseId", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const { courseId } = c.req.param();
+
+  const [arc] = await db
+    .select({
+      id: storyArcs.id,
+      courseId: storyArcs.courseId,
+      title: storyArcs.title,
+      description: storyArcs.description,
+      languageId: courses.languageId,
+    })
+    .from(storyArcs)
+    .innerJoin(courses, eq(storyArcs.courseId, courses.id))
+    .where(eq(storyArcs.courseId, courseId))
+    .limit(1);
+
+  if (!arc) return c.json({ error: "Not found" }, 404);
+  if (!isAdmin && !reviewerLanguages.includes(arc.languageId)) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  const chapters = await db
+    .select()
+    .from(storyChapters)
+    .where(eq(storyChapters.storyArcId, arc.id))
+    .orderBy(storyChapters.order);
+
+  return c.json({ id: arc.id, courseId: arc.courseId, title: arc.title, description: arc.description, chapters });
+});
+
+// POST /educator/story-arcs — create a story arc for a course
+educatorRouter.post("/story-arcs", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+
+  const body = await c.req.json<{ courseId: string; title: string; description: string }>();
+  const { courseId, title, description } = body;
+
+  if (!courseId || !title?.trim() || !description?.trim()) {
+    return c.json({ error: "courseId, title, and description are required" }, 400);
+  }
+
+  const [course] = await db.select({ languageId: courses.languageId }).from(courses)
+    .where(eq(courses.id, courseId)).limit(1);
+  if (!course) return c.json({ error: "Course not found" }, 404);
+  if (!isAdmin && !reviewerLanguages.includes(course.languageId)) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  const id = `story-arc-${randomUUID()}`;
+  await db.insert(storyArcs).values({ id, courseId, title: title.trim(), description: description.trim() });
+
+  return c.json({ id }, 201);
+});
+
+// PUT /educator/story-arcs/:id — update arc title and description
+educatorRouter.put("/story-arcs/:id", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const { id } = c.req.param();
+
+  const [arc] = await db
+    .select({ courseId: storyArcs.courseId, languageId: courses.languageId })
+    .from(storyArcs)
+    .innerJoin(courses, eq(storyArcs.courseId, courses.id))
+    .where(eq(storyArcs.id, id))
+    .limit(1);
+
+  if (!arc) return c.json({ error: "Not found" }, 404);
+  if (!isAdmin && !reviewerLanguages.includes(arc.languageId)) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  const body = await c.req.json<{ title?: string; description?: string }>();
+  const updates: Record<string, unknown> = { updatedAt: new Date() };
+  if (body.title !== undefined) updates.title = body.title.trim();
+  if (body.description !== undefined) updates.description = body.description.trim();
+
+  await db.update(storyArcs).set(updates).where(eq(storyArcs.id, id));
+  return c.json({ success: true });
+});
+
+// DELETE /educator/story-arcs/:id — delete arc and all its chapters
+educatorRouter.delete("/story-arcs/:id", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const { id } = c.req.param();
+
+  const [arc] = await db
+    .select({ languageId: courses.languageId })
+    .from(storyArcs)
+    .innerJoin(courses, eq(storyArcs.courseId, courses.id))
+    .where(eq(storyArcs.id, id))
+    .limit(1);
+
+  if (!arc) return c.json({ error: "Not found" }, 404);
+  if (!isAdmin && !reviewerLanguages.includes(arc.languageId)) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  await db.delete(storyChapters).where(eq(storyChapters.storyArcId, id));
+  await db.delete(storyArcs).where(eq(storyArcs.id, id));
+
+  return c.json({ success: true });
+});
+
+// PUT /educator/story-arcs/:id/chapters — replace all chapters (bulk upsert)
+educatorRouter.put("/story-arcs/:id/chapters", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const { id } = c.req.param();
+
+  const [arc] = await db
+    .select({ languageId: courses.languageId })
+    .from(storyArcs)
+    .innerJoin(courses, eq(storyArcs.courseId, courses.id))
+    .where(eq(storyArcs.id, id))
+    .limit(1);
+
+  if (!arc) return c.json({ error: "Not found" }, 404);
+  if (!isAdmin && !reviewerLanguages.includes(arc.languageId)) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  const body = await c.req.json<{
+    chapters: { id?: string; lessonId: string; title: string; narrativeIntro: string; narrativeOutro: string; order: number }[];
+  }>();
+
+  for (const ch of body.chapters) {
+    if (!ch.lessonId || !ch.title?.trim() || !ch.narrativeIntro?.trim() || !ch.narrativeOutro?.trim()) {
+      return c.json({ error: "Each chapter requires lessonId, title, narrativeIntro, and narrativeOutro" }, 400);
+    }
+  }
+
+  await db.delete(storyChapters).where(eq(storyChapters.storyArcId, id));
+
+  if (body.chapters.length > 0) {
+    await db.insert(storyChapters).values(
+      body.chapters.map((ch, i) => ({
+        id: `story-ch-${randomUUID()}`,
+        storyArcId: id,
+        lessonId: ch.lessonId,
+        title: ch.title.trim(),
+        narrativeIntro: ch.narrativeIntro.trim(),
+        narrativeOutro: ch.narrativeOutro.trim(),
+        order: ch.order ?? i + 1,
+      }))
+    );
+  }
+
+  await db.update(storyArcs).set({ updatedAt: new Date() }).where(eq(storyArcs.id, id));
+
+  return c.json({ success: true, count: body.chapters.length });
 });

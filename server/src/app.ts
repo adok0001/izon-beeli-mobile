@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
+import { billingAdminRouter, billingRouter, billingWebhookRouter } from "./routes/billing.js";
 import { bountiesAdminRouter, bountiesRouter } from "./routes/bounties.js";
 import { classroomRouter } from "./routes/classroom.js";
 import { contributionsPublicRouter, contributionsRouter } from "./routes/contributions.js";
@@ -23,12 +24,21 @@ import { notificationsAdminRouter, notificationsRouter } from "./routes/notifica
 import { progressRouter } from "./routes/progress.js";
 import { proverbsAdminRouter, proverbsRouter } from "./routes/proverbs.js";
 import { pushTokensRouter } from "./routes/push-tokens.js";
+import { matchingResultsRouter } from "./routes/matching-results.js";
 import { quizResultsRouter } from "./routes/quiz-results.js";
 import { quizRouter } from "./routes/quiz.js";
 import { reviewerApplicationsAdminRouter, reviewerApplicationsRouter } from "./routes/reviewer-applications.js";
 import { sentencesRouter } from "./routes/sentences.js";
+import { storyArcsRouter } from "./routes/story-arcs.js";
 import { adminStatsRouter, adminUsersRouter, purgeExpiredDeletedUsers, usersRouter } from "./routes/users.js";
+import { isPlusGloballyEnabled } from "./middleware/plus-gate.js";
+import { restockPlusFreezes } from "./lib/restock-freezes.js";
+import { sendReengagementNotifications } from "./lib/send-reengagement-notifications.js";
+import { eq } from "drizzle-orm";
+import { appConfig } from "./db/schema.js";
+import { db } from "./db/index.js";
 import { wordbankRouter } from "./routes/wordbank.js";
+import { authMiddleware, adminMiddleware } from "./middleware/auth.js";
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -62,6 +72,15 @@ app.onError((err, c) => {
   );
 });
 
+// Stripe webhooks — raw body required, no auth
+app.route("/billing", billingWebhookRouter);
+
+// Public config
+app.get("/config/public", async (c) => {
+  const plusEnabled = await isPlusGloballyEnabled();
+  return c.json({ plusEnabled });
+});
+
 // Public routes (no auth required)
 app.route("/quiz", quizRouter);
 app.route("/feed", feedPublicRouter);
@@ -77,6 +96,7 @@ app.route("/proverbs/admin", proverbsAdminRouter);
 app.route("/cultural", culturalRouter);
 app.route("/cultural/admin", culturalAdminRouter);
 app.route("/sentences", sentencesRouter);
+app.route("/story-arcs", storyArcsRouter);
 app.get("/health", (c) => c.json({ status: "ok" }));
 
 // Authenticated routes
@@ -92,6 +112,7 @@ app.route("/feedback/admin", feedbackAdminRouter);
 app.route("/multiplayer", multiplayerRouter);
 app.route("/multiplayer", multiplayerInternalRouter);
 app.route("/quiz-results", quizResultsRouter);
+app.route("/matching-results", matchingResultsRouter);
 app.route("/push-tokens", pushTokensRouter);
 app.route("/classroom", classroomRouter);
 app.route("/daily-challenges", dailyChallengesRouter);
@@ -100,11 +121,34 @@ app.route("/notifications", notificationsRouter);
 app.route("/notifications/admin", notificationsAdminRouter);
 app.route("/bounties", bountiesRouter);
 app.route("/bounties/admin", bountiesAdminRouter);
+app.route("/billing", billingRouter);
+app.route("/admin/billing", billingAdminRouter);
 app.route("/admin/users", adminUsersRouter);
 app.route("/admin", adminStatsRouter);
 app.route("/educator", educatorRouter);
 app.route("/reviewer-applications", reviewerApplicationsRouter);
 app.route("/reviewer-applications/admin", reviewerApplicationsAdminRouter);
+
+// POST /api/internal/restock-plus-freezes
+// Called monthly by Vercel cron. Protected by CRON_SECRET header.
+app.post("/internal/restock-plus-freezes", async (c) => {
+  const secret = c.req.header("x-cron-secret");
+  if (!secret || secret !== process.env.CRON_SECRET) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+  const restocked = await restockPlusFreezes();
+  return c.json({ restocked });
+});
+
+// PATCH /api/admin/config — toggle app config values (admin only)
+app.patch("/admin/config", authMiddleware, adminMiddleware, async (c) => {
+  const body = await c.req.json<{ key: string; value: string }>();
+  await db
+    .insert(appConfig)
+    .values({ key: body.key, value: body.value })
+    .onConflictDoUpdate({ target: appConfig.key, set: { value: body.value } });
+  return c.json({ ok: true });
+});
 
 // POST /api/internal/purge-deleted-users
 // Called daily by Vercel cron (see vercel.json). Protected by CRON_SECRET header.
@@ -115,6 +159,15 @@ app.post("/internal/purge-deleted-users", async (c) => {
   }
   const purged = await purgeExpiredDeletedUsers();
   return c.json({ purged });
+});
+
+app.post("/internal/send-reengagement", async (c) => {
+  const secret = c.req.header("x-cron-secret");
+  if (!secret || secret !== process.env.CRON_SECRET) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+  const result = await sendReengagementNotifications();
+  return c.json(result);
 });
 
 export default app;

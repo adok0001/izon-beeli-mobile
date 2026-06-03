@@ -78,7 +78,6 @@ function FileUploadField({
       <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1.5 block">{label}</label>
       <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50 p-3 space-y-2">
         {previewUrl && previewType === "audio" && (
-          // eslint-disable-next-line jsx-a11y/media-has-caption
           <audio controls src={previewUrl} className="w-full h-8" />
         )}
         {previewUrl && previewType === "image" && (
@@ -658,7 +657,6 @@ export default function EducatorDictionaryPage() {
                       <td colSpan={7} className="px-4 py-2">
                         <div className="flex items-center gap-2">
                           <Volume2 className="h-4 w-4 text-teal-600 dark:text-teal-400 shrink-0" />
-                          {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
                           <audio controls autoPlay className="flex-1 h-8" src={entry.audioUrl} />
                         </div>
                       </td>

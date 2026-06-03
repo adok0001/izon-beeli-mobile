@@ -5,7 +5,9 @@ import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
     Alert,
+    KeyboardAvoidingView,
     Modal,
+    Platform,
     Pressable,
     ScrollView,
     Text,
@@ -90,6 +92,7 @@ export function ReviewerApplicationModal({ visible, onClose }: ReviewerApplicati
       presentationStyle="pageSheet"
       onRequestClose={handleClose}
     >
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
       <ScrollView
         className="flex-1 bg-white dark:bg-neutral-900"
         contentContainerClassName="px-5 pt-6 pb-10"
@@ -202,6 +205,7 @@ export function ReviewerApplicationModal({ visible, onClose }: ReviewerApplicati
           )}
         </Pressable>
       </ScrollView>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

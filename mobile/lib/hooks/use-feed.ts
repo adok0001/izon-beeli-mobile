@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api";
 import type { Comment, FeedItem } from "@/types";
+import { useFeedLikesStore } from "@/store/feed-likes-store";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert } from "react-native";
@@ -97,6 +98,7 @@ export function useCreatePost() {
 export function useToggleLike() {
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
+  const setLike = useFeedLikesStore((s) => s.setLike);
 
   return useMutation({
     mutationFn: async (feedItemId: string) => {
@@ -108,31 +110,55 @@ export function useToggleLike() {
     },
     onMutate: async (feedItemId) => {
       await queryClient.cancelQueries({ queryKey: ["feed"] });
-      const previous = queryClient.getQueryData<{ pages: FeedPage[]; pageParams: unknown[] }>(["feed"]);
-      if (previous) {
-        const newPages = previous.pages.map((page) => ({
-          ...page,
-          items: page.items.map((item) =>
-            item.id === feedItemId
-              ? {
-                  ...item,
-                  isLiked: !item.isLiked,
-                  likes: item.isLiked ? item.likes - 1 : item.likes + 1,
-                }
-              : item
-          ),
-        }));
-        queryClient.setQueryData(["feed"], { ...previous, pages: newPages });
-      }
-      return { previous };
+      const allFeedData = queryClient.getQueriesData<{ pages: FeedPage[]; pageParams: unknown[] }>({ queryKey: ["feed"] });
+      queryClient.setQueriesData<{ pages: FeedPage[]; pageParams: unknown[] }>(
+        { queryKey: ["feed"] },
+        (previous) => {
+          if (!previous) return previous;
+          return {
+            ...previous,
+            pages: previous.pages.map((page) => ({
+              ...page,
+              items: page.items.map((item) =>
+                item.id === feedItemId
+                  ? {
+                      ...item,
+                      isLiked: !item.isLiked,
+                      likes: item.isLiked ? item.likes - 1 : item.likes + 1,
+                    }
+                  : item
+              ),
+            })),
+          };
+        }
+      );
+      return { allFeedData };
+    },
+    onSuccess: (data, feedItemId) => {
+      // Persist the server-confirmed state so it survives cache refreshes.
+      setLike(feedItemId, data.liked);
+      queryClient.setQueriesData<{ pages: FeedPage[]; pageParams: unknown[] }>(
+        { queryKey: ["feed"] },
+        (previous) => {
+          if (!previous) return previous;
+          return {
+            ...previous,
+            pages: previous.pages.map((page) => ({
+              ...page,
+              items: page.items.map((item) =>
+                item.id === feedItemId ? { ...item, isLiked: data.liked } : item
+              ),
+            })),
+          };
+        }
+      );
     },
     onError: (_err, _feedItemId, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(["feed"], context.previous);
+      if (context?.allFeedData) {
+        for (const [queryKey, data] of context.allFeedData) {
+          queryClient.setQueryData(queryKey, data);
+        }
       }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["feed"] });
     },
   });
 }

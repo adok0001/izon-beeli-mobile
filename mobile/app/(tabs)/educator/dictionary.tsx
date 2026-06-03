@@ -8,12 +8,13 @@ import {
     useEducatorDictionary,
     useUpsertEducatorDictionary,
 } from "@/lib/hooks/use-educator-panel";
+import { friendlyError } from "@/lib/api";
 import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { Stack } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, FlatList, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const CATEGORIES: EducatorDictionaryCategory[] = [
@@ -127,7 +128,7 @@ export default function EducatorDictionaryScreen() {
           resetEditor();
           toastSuccess(isEditing ? "Entry updated" : "Entry created", `"${editor.word}" saved to dictionary.`);
         },
-        onError: (err: Error) => toastError("Save failed", err.message),
+        onError: (err: Error) => toastError("Save failed", friendlyError(err)),
       },
     );
   };
@@ -141,7 +142,7 @@ export default function EducatorDictionaryScreen() {
         onPress: () =>
           deleteEntry.mutate(id, {
             onSuccess: () => toastSuccess("Entry deleted"),
-            onError: (err: Error) => toastError("Delete failed", err.message),
+            onError: (err: Error) => toastError("Delete failed", friendlyError(err)),
           }),
       },
     ]);
@@ -390,6 +391,7 @@ export default function EducatorDictionaryScreen() {
     <>
       <Stack.Screen options={{ title: t("educator.nav.dictionary"), headerBackTitle: "Back" }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         <NotificationBanner
           visible={toast.visible}
           title={toast.title}
@@ -409,6 +411,7 @@ export default function EducatorDictionaryScreen() {
           ListHeaderComponent={listHeader}
           ListEmptyComponent={listEmpty}
         />
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </>
   );

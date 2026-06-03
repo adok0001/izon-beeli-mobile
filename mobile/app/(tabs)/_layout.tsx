@@ -1,4 +1,4 @@
-import { ONBOARDING_KEY } from "@/app/(onboarding)/index";
+import { ONBOARDING_KEY } from "@/lib/constants";
 import { AudioPlayer } from "@/components/audio/audio-player";
 import { FeatureTourModal } from "@/components/feature-tour-modal";
 import { HapticTab } from "@/components/haptic-tab";
@@ -71,6 +71,10 @@ function AdminTabIcon({ color }: Readonly<{ color: string }>) {
   return <IconSymbol size={28} name="gearshape.fill" color={color} />;
 }
 
+function LeaderboardTabIcon({ color }: Readonly<{ color: string }>) {
+  return <IconSymbol size={28} name="trophy.fill" color={color} />;
+}
+
 function ProfileTabIcon({ color }: Readonly<{ color: string }>) {
   return <IconSymbol size={28} name="person.fill" color={color} />;
 }
@@ -82,7 +86,7 @@ export default function TabLayout() {
   const { data: summary } = useProgressSummary();
   const { data: currentUser } = useCurrentUser();
   useSyncUser();
-  useDailyReminder(selectedLanguageId, summary?.streak ?? 0);
+  useDailyReminder(selectedLanguageId, summary?.streak ?? 0, currentUser?.dailyGoal);
 
   const hydrateNotifications = useNotificationStore((s) => s.hydrate);
   const hydrateChecklist = useWelcomeChecklistStore((s) => s.hydrate);
@@ -159,6 +163,13 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
+          name="leaderboard"
+          options={{
+            title: t("tabs.leaderboard"),
+            tabBarIcon: LeaderboardTabIcon,
+          }}
+        />
+        <Tabs.Screen
           name="educator"
           options={{
             title: t("educator.panelTitle"),
@@ -183,6 +194,7 @@ export default function TabLayout() {
           name="profile"
           options={{
             title: t("tabs.profile"),
+            href: null,
             tabBarIcon: ProfileTabIcon,
           }}
         />

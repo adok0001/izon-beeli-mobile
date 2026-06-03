@@ -11,9 +11,11 @@ import {
 import i18n from "@/lib/i18n";
 import { localizeField } from "@/lib/localize";
 import { useAudioStore } from "@/store/audio-store";
+import { useFeedLikesStore } from "@/store/feed-likes-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { AudioSource, FeedItem } from "@/types";
 import { useRouter } from "expo-router";
+import { LoadingScreen } from "@/components/loading-screen";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -331,15 +333,16 @@ function FeedCard({
   item,
   onOpenComments,
 }: Readonly<{
-  item: FeedItem & { isLiked?: boolean };
+  item: FeedItem;
   onOpenComments: (id: string) => void;
 }>) {
   const { t } = useTranslation();
   const router = useRouter();
   const toggleLike = useToggleLike();
   const { uiLanguage } = useUiLanguageStore();
+  const likeOverrides = useFeedLikesStore((s) => s.overrides);
   const config = TYPE_CONFIG[item.type];
-  const liked = (item as any).isLiked ?? false;
+  const liked = item.id in likeOverrides ? likeOverrides[item.id] : item.isLiked;
 
   const localTitle = localizeField(item.title, item.titleFr, uiLanguage);
   const localDescription = localizeField(item.description, item.descriptionFr, uiLanguage);
@@ -572,9 +575,7 @@ export default function FeedScreen() {
       </View>
 
       {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#3b82f6" />
-        </View>
+        <LoadingScreen />
       ) : (
         <FlatList
           data={items}

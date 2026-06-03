@@ -15,8 +15,10 @@ import { useLanguageStore } from "@/store/language-store";
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { LoadingScreen } from "@/components/loading-screen";
 import {
-  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -277,6 +279,7 @@ export default function DictionaryScreen() {
     <>
       <Stack.Screen options={{ title: "Dictionary", headerBackTitle: "Back" }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         {/* Search bar */}
         <View className="border-b border-neutral-200 px-5 pb-3 pt-2 dark:border-neutral-700">
           <View className="flex-row items-center rounded-xl bg-neutral-100 px-3 dark:bg-neutral-800">
@@ -302,7 +305,7 @@ export default function DictionaryScreen() {
             <Pressable
               onPress={() => setViewMode("all")}
               className={`flex-1 items-center rounded-lg py-2 ${
-                viewMode === "all" ? "bg-blue-500" : "bg-neutral-100 dark:bg-neutral-800"
+                viewMode === "all" ? "bg-sky-500" : "bg-neutral-100 dark:bg-neutral-800"
               }`}
             >
               <Text
@@ -388,7 +391,7 @@ export default function DictionaryScreen() {
                 onPress={() => setSelectedCategory(null)}
                 className={`rounded-full px-3.5 py-1.5 ${
                   selectedCategory === null
-                    ? "bg-blue-500"
+                    ? "bg-sky-500"
                     : "bg-neutral-100 dark:bg-neutral-800"
                 }`}
               >
@@ -408,7 +411,7 @@ export default function DictionaryScreen() {
                   onPress={() => handleCategoryChip(category)}
                   className={`rounded-full px-3.5 py-1.5 ${
                     selectedCategory === category
-                      ? "bg-blue-500"
+                      ? "bg-sky-500"
                       : "bg-neutral-100 dark:bg-neutral-800"
                   }`}
                 >
@@ -429,9 +432,7 @@ export default function DictionaryScreen() {
 
         {/* Loading state */}
         {isLoading ? (
-          <View className="flex-1 items-center justify-center">
-            <ActivityIndicator size="large" color="#3b82f6" />
-          </View>
+          <LoadingScreen />
         ) : (
           <SectionList
             sections={sections}
@@ -489,6 +490,7 @@ export default function DictionaryScreen() {
             }
           />
         )}
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </>
   );

@@ -1,7 +1,8 @@
 import { eq } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { feedItems, users } from "../db/schema.js";
+import { feedItems, pushTokens, users } from "../db/schema.js";
 import { getLevelInfo } from "./xp-levels.js";
+import { sendPushBatch, chunk } from "./send-push.js";
 
 export const CONTRIBUTION_BASE_XP = { word: 15, phrase: 20, audio: 25 } as const;
 
@@ -40,7 +41,25 @@ export async function awardXP(
       description: `${user.name} leveled up to ${newLevelInfo.title}!`,
       descriptionFr: `${user.name} est passé au niveau ${newLevelInfo.titleFr} !`,
       userName: user.name,
-    }).catch(() => {}); // fire-and-forget, don't fail if feed insert errors
+    }).catch(() => {});
+
+    // Push notification — fire-and-forget
+    db.select({ token: pushTokens.token })
+      .from(pushTokens)
+      .where(eq(pushTokens.userId, userId))
+      .then((rows) => {
+        const tokens = rows.map((r) => r.token);
+        if (tokens.length === 0) return;
+        const messages = tokens.map((token) => ({
+          to: token,
+          title: `You reached ${newLevelInfo.title}!`,
+          body: "Keep learning to reach the next level.",
+          data: { type: "level_up" },
+          sound: "default" as const,
+        }));
+        return Promise.all(chunk(messages, 100).map((batch) => sendPushBatch(batch)));
+      })
+      .catch(() => {});
   }
 
   return {

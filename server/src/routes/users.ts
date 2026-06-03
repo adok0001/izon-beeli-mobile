@@ -145,6 +145,7 @@ usersRouter.get("/me", authMiddleware, async (c) => {
     isReviewer: user.isReviewer,
     reviewerLanguages: user.reviewerLanguages,
     reviewerRole: user.reviewerRole,
+    dailyGoal: user.dailyGoal,
     createdAt: user.createdAt,
   });
 });

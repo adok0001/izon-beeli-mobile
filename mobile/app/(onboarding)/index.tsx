@@ -1,16 +1,25 @@
 
+import { ProgressBar } from "@/components/quiz/progress-bar";
+import { QuestionTypeLabel } from "@/components/quiz/question-type-label";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { apiFetch } from "@/lib/api";
-import { hapticSuccess } from "@/lib/haptics";
+import type { DictionaryEntry } from "@/lib/dictionary";
+import { hapticError, hapticSuccess } from "@/lib/haptics";
+import { ONBOARDING_KEY } from "@/lib/constants";
 import { ACTIVE_LANGUAGES } from "@/lib/mock-data";
-import { playCorrectSound } from "@/lib/sounds";
+import { generateQuiz } from "@/lib/quiz-engine";
+import {
+    playCorrectSound,
+    playFinishSound,
+    playIncorrectSound,
+} from "@/lib/sounds";
 import { useLanguageStore } from "@/store/language-store";
+import { useQuizStore } from "@/store/quiz-store";
 import { useTourStore } from "@/store/tour-store";
 import { useAuth } from "@clerk/clerk-expo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Audio } from "expo-av";
 import { useRouter } from "expo-router";
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
@@ -22,13 +31,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export const ONBOARDING_KEY = "onboarding-completed-v2";
 
 type DailyGoal = "casual" | "steady" | "intensive";
 type Step = "language" | "tryit" | "goal" | "ready";
 
 const ALL_STEPS: Step[] = ["language", "tryit", "goal", "ready"];
 const TOTAL_STEPS = ALL_STEPS.length;
+const FEEDBACK_DELAY = 1200;
 
 const GOAL_OPTIONS: { id: DailyGoal; icon: string }[] = [
   { id: "casual", icon: "leaf.fill" },
@@ -36,30 +45,17 @@ const GOAL_OPTIONS: { id: DailyGoal; icon: string }[] = [
   { id: "intensive", icon: "bolt.fill" },
 ];
 
-const GOAL_LABEL_KEYS: Record<DailyGoal, "onboarding.goalCasual" | "onboarding.goalSteady" | "onboarding.goalIntensive"> = {
+const GOAL_LABEL_KEYS: Record<DailyGoal, string> = {
   casual: "onboarding.goalCasual",
   steady: "onboarding.goalSteady",
   intensive: "onboarding.goalIntensive",
 };
 
-const GOAL_DETAIL_KEYS: Record<
-  DailyGoal,
-  | "onboarding.goalCasualDetail"
-  | "onboarding.goalSteadyDetail"
-  | "onboarding.goalIntensiveDetail"
-> = {
+const GOAL_DETAIL_KEYS: Record<DailyGoal, string> = {
   casual: "onboarding.goalCasualDetail",
   steady: "onboarding.goalSteadyDetail",
   intensive: "onboarding.goalIntensiveDetail",
 };
-
-interface DictionaryEntry {
-  id: string;
-  word: string;
-  english: string;
-  pronunciation?: string;
-  audioUrl?: string;
-}
 
 function stepIndex(step: Step): number {
   return ALL_STEPS.indexOf(step);
@@ -70,75 +66,107 @@ export default function OnboardingScreen() {
   const { getToken } = useAuth();
   const { setLanguage } = useLanguageStore();
   const showTour = useTourStore((s) => s.showTour);
+  const { t } = useTranslation();
 
   const [step, setStep] = useState<Step>("language");
   const [selectedLangId, setSelectedLangId] = useState("izon");
   const [langSearch, setLangSearch] = useState("");
   const [selectedGoal, setSelectedGoal] = useState<DailyGoal>("steady");
   const [saving, setSaving] = useState(false);
-  const { t } = useTranslation();
-
-  // Tryit step state
-  const [tryItEntry, setTryItEntry] = useState<DictionaryEntry | null>(null);
   const [tryItLoading, setTryItLoading] = useState(false);
-  const [revealed, setRevealed] = useState(false);
+  const [noWords, setNoWords] = useState(false);
 
-  const soundRef = useRef<Audio.Sound | null>(null);
+  // Quiz store — drives the tryit step
+  const { phase, questions, currentIndex, lastAnswerCorrect, startQuiz, answerQuestion, nextQuestion, getResult, reset } = useQuizStore();
+
+  // Local per-question answer state (mirrors quiz.tsx ActiveView pattern)
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [locked, setLocked] = useState(false);
+
+  const question = questions[currentIndex];
+  const isLastQuestion = currentIndex === questions.length - 1;
+
+  // Reset local lock state when question advances
+  useEffect(() => {
+    setSelectedAnswer(null);
+    setLocked(false);
+  }, [currentIndex]);
+
+  // Clean up quiz store when leaving the tryit step
+  useEffect(() => {
+    if (step !== "tryit") reset();
+  }, [step]);
 
   const currentIdx = stepIndex(step);
 
   const goNext = () => {
     const nextIdx = currentIdx + 1;
-    if (nextIdx < TOTAL_STEPS) {
-      setStep(ALL_STEPS[nextIdx]);
-    }
+    if (nextIdx < TOTAL_STEPS) setStep(ALL_STEPS[nextIdx]);
   };
 
   const goBack = () => {
     const prevIdx = currentIdx - 1;
-    if (prevIdx >= 0) {
-      setStep(ALL_STEPS[prevIdx]);
-    }
+    if (prevIdx >= 0) setStep(ALL_STEPS[prevIdx]);
   };
 
   const handleLanguageContinue = async () => {
     setTryItLoading(true);
-    setRevealed(false);
-    setTryItEntry(null);
+    setNoWords(false);
+    reset();
     try {
-      const entry = await apiFetch<DictionaryEntry[]>(
-        `/dictionary?languageId=${selectedLangId}&limit=1`
+      const entries = await apiFetch<DictionaryEntry[]>(
+        `/dictionary?languageId=${selectedLangId}&limit=40`
       );
-      setTryItEntry(entry[0] ?? null);
+      const languageName =
+        ACTIVE_LANGUAGES.find((l) => l.id === selectedLangId)?.name ?? selectedLangId;
+      const questions = generateQuiz(
+        { languageId: selectedLangId, questionCount: 5 },
+        entries,
+        [],
+        (key, opts) => t(key as any, { language: languageName, ...opts } as any)
+      );
+      if (questions.length === 0) {
+        setNoWords(true);
+      } else {
+        startQuiz(questions);
+      }
     } catch {
-      setTryItEntry(null);
+      setNoWords(true);
     } finally {
       setTryItLoading(false);
     }
     setStep("tryit");
   };
 
-  const handlePlayAudio = async () => {
-    if (!tryItEntry?.audioUrl) return;
-    try {
-      if (soundRef.current) {
-        await soundRef.current.replayAsync();
+  const handleSelect = useCallback(
+    (answer: string) => {
+      if (locked) return;
+      setLocked(true);
+      setSelectedAnswer(answer);
+      const correct = answerQuestion(answer);
+      if (correct) {
+        playCorrectSound();
+        hapticSuccess();
+        if (isLastQuestion) setTimeout(() => playFinishSound(), FEEDBACK_DELAY - 200);
+        setTimeout(() => nextQuestion(), FEEDBACK_DELAY);
       } else {
-        const { sound } = await Audio.Sound.createAsync(
-          { uri: tryItEntry.audioUrl },
-          { shouldPlay: true }
-        );
-        soundRef.current = sound;
+        playIncorrectSound();
+        hapticError();
       }
-    } catch {
-      // Ignore audio errors
-    }
-  };
+    },
+    [locked, answerQuestion, nextQuestion, isLastQuestion]
+  );
 
-  const handleReveal = () => {
-    setRevealed(true);
-    hapticSuccess();
-    playCorrectSound().catch(() => {});
+  const handleContinueAfterWrong = useCallback(() => {
+    if (isLastQuestion) playFinishSound();
+    nextQuestion();
+  }, [nextQuestion, isLastQuestion]);
+
+  const getOptionState = (option: string) => {
+    if (!locked) return "default" as const;
+    if (option === question?.correctAnswer) return "correct" as const;
+    if (option === selectedAnswer) return "incorrect" as const;
+    return "dimmed" as const;
   };
 
   const handleFinish = async () => {
@@ -168,9 +196,11 @@ export default function OnboardingScreen() {
     }
   };
 
+  const result = phase === "results" ? getResult() : null;
+
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top", "bottom"]}>
-      {/* Progress bar */}
+      {/* Outer progress bar — onboarding steps */}
       <View className="flex-row items-center justify-center gap-1.5 px-6 pt-4">
         {ALL_STEPS.map((_, i) => (
           <View
@@ -200,7 +230,6 @@ export default function OnboardingScreen() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {/* Search */}
             <View className="mb-3 flex-row items-center rounded-xl border border-neutral-200 bg-neutral-50 px-3 dark:border-neutral-700 dark:bg-neutral-800">
               <IconSymbol name="magnifyingglass" size={16} color="#9ca3af" />
               <TextInput
@@ -245,9 +274,7 @@ export default function OnboardingScreen() {
                   <View className="flex-1">
                     <Text
                       className={`text-base font-semibold ${
-                        selected
-                          ? "text-blue-700 dark:text-blue-300"
-                          : "text-neutral-900 dark:text-white"
+                        selected ? "text-blue-700 dark:text-blue-300" : "text-neutral-900 dark:text-white"
                       }`}
                     >
                       {lang.name}
@@ -257,11 +284,7 @@ export default function OnboardingScreen() {
                     </Text>
                   </View>
                   {selected && (
-                    <IconSymbol
-                      name="checkmark.circle.fill"
-                      size={22}
-                      color="#3b82f6"
-                    />
+                    <IconSymbol name="checkmark.circle.fill" size={22} color="#3b82f6" />
                   )}
                 </Pressable>
               );
@@ -319,89 +342,187 @@ export default function OnboardingScreen() {
         </>
       )}
 
-      {/* ── Step: Try a word ── */}
+      {/* ── Step: Quiz (powered by quiz store + engine) ── */}
       {step === "tryit" && (
         <>
-          <View className="px-6 pt-8 pb-6">
-            <Text className="text-3xl font-bold text-neutral-900 dark:text-white">
-              {t("onboarding.tryWord")}
-            </Text>
-            <Text className="mt-2 text-base text-neutral-500 dark:text-neutral-400">
-              {t("onboarding.firstWordIn")}{" "}
-              {ACTIVE_LANGUAGES.find((l) => l.id === selectedLangId)?.name ?? t("onboarding.yourLanguage")}.
-            </Text>
-          </View>
+          {/* Quiz inner progress bar */}
+          {phase === "active" && (
+            <ProgressBar
+              current={currentIndex + (locked ? 1 : 0)}
+              total={questions.length}
+            />
+          )}
 
-          <View className="flex-1 px-6 items-center justify-center">
-            {tryItEntry ? (
-              <View className="w-full items-center gap-4">
-                <Text className="text-5xl font-bold text-neutral-900 dark:text-white text-center">
-                  {tryItEntry.word}
+          {phase === "active" && question ? (
+            <View className="flex-1 px-5 pt-6">
+              <View className="flex-row items-center justify-between mb-1">
+                <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+                  {t("quiz.questionOf", { current: currentIndex + 1, total: questions.length })}
                 </Text>
-                {tryItEntry.pronunciation && (
-                  <Text className="text-lg text-neutral-500 dark:text-neutral-400">
-                    /{tryItEntry.pronunciation}/
-                  </Text>
-                )}
-
-                {tryItEntry.audioUrl && (
-                  <Pressable
-                    onPress={handlePlayAudio}
-                    className="flex-row items-center gap-2 rounded-full bg-blue-100 px-6 py-3 active:opacity-70 dark:bg-blue-900"
+                {lastAnswerCorrect !== null && locked && (
+                  <View
+                    className={`rounded-full px-3 py-1 ${
+                      lastAnswerCorrect ? "bg-green-100 dark:bg-green-900" : "bg-red-100 dark:bg-red-900"
+                    }`}
                   >
-                    <IconSymbol name="speaker.wave.2.fill" size={18} color="#3b82f6" />
-                    <Text className="font-semibold text-blue-600 dark:text-blue-400">
-                      {t("onboarding.tapToHear")}
-                    </Text>
-                  </Pressable>
-                )}
-
-                <View className="w-full items-center mt-4">
-                  {revealed ? (
-                    <View className="items-center gap-2">
-                      <Text className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                        {tryItEntry.english}
-                      </Text>
-                      <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-                        {t("onboarding.englishTranslation")}
-                      </Text>
-                    </View>
-                  ) : (
-                    <Pressable
-                      onPress={handleReveal}
-                      className="rounded-xl bg-neutral-100 px-8 py-3 active:opacity-70 dark:bg-neutral-800"
+                    <Text
+                      className={`text-xs font-semibold ${
+                        lastAnswerCorrect
+                          ? "text-green-700 dark:text-green-300"
+                          : "text-red-700 dark:text-red-300"
+                      }`}
                     >
-                      <Text className="font-semibold text-neutral-700 dark:text-neutral-300">
-                        {t("onboarding.revealTranslation")}
-                      </Text>
-                    </Pressable>
-                  )}
-                </View>
+                      {lastAnswerCorrect ? t("quiz.correct") : t("quiz.incorrect")}
+                    </Text>
+                  </View>
+                )}
               </View>
-            ) : (
-              <View className="items-center gap-3">
-                <IconSymbol name="book.fill" size={48} color="#d1d5db" />
-                <Text className="text-center text-neutral-400 dark:text-neutral-500">
-                  {t("onboarding.noWordYet")}
+
+              <QuestionTypeLabel type={question.type} />
+
+              <Text className="mb-8 text-xl font-bold text-neutral-900 dark:text-white">
+                {question.prompt}
+              </Text>
+
+              {question.options.map((option, idx) => {
+                const state = getOptionState(option);
+                const bgClass = {
+                  default: "bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700",
+                  correct: "bg-green-50 dark:bg-green-900/40 border-green-500",
+                  incorrect: "bg-red-50 dark:bg-red-900/40 border-red-500",
+                  dimmed: "bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 opacity-50",
+                }[state];
+                const textClass = {
+                  default: "text-neutral-900 dark:text-white",
+                  correct: "text-green-700 dark:text-green-300",
+                  incorrect: "text-red-700 dark:text-red-300",
+                  dimmed: "text-neutral-400 dark:text-neutral-500",
+                }[state];
+                return (
+                  <Pressable
+                    key={`${question.id}-${idx}`}
+                    onPress={() => handleSelect(option)}
+                    disabled={state !== "default"}
+                    className={`mb-3 rounded-xl border-2 px-5 py-4 ${bgClass}`}
+                  >
+                    <Text className={`text-base font-medium ${textClass}`}>{option}</Text>
+                  </Pressable>
+                );
+              })}
+
+              {locked && lastAnswerCorrect === false && (
+                <View className="mt-3 rounded-2xl bg-red-50 px-4 py-3 dark:bg-red-900/20">
+                  <View className="flex-row items-center gap-1.5">
+                    <IconSymbol name="lightbulb.fill" size={14} color="#f97316" />
+                    <Text className="text-xs font-semibold text-orange-700 dark:text-orange-400">
+                      {t("quiz.correctAnswerLabel")}
+                    </Text>
+                  </View>
+                  <Text className="mt-1 text-sm font-bold text-neutral-800 dark:text-neutral-200">
+                    {question.correctAnswer}
+                  </Text>
+                  {question.explanation && (
+                    <Text className="mt-1 text-xs text-neutral-600 dark:text-neutral-300">
+                      {question.explanation}
+                    </Text>
+                  )}
+                  {question.exampleSentence && (
+                    <View className="mt-2 border-t border-red-200 pt-2 dark:border-red-800">
+                      <Text className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                        {t("wordDetail.example")}
+                      </Text>
+                      <Text className="mt-0.5 text-xs italic text-neutral-700 dark:text-neutral-300">
+                        {question.exampleSentence}
+                      </Text>
+                      {question.exampleSentenceTranslation && (
+                        <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                          {question.exampleSentenceTranslation}
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                  <Pressable
+                    onPress={handleContinueAfterWrong}
+                    className="mt-3 items-center rounded-xl bg-red-500 py-3 active:opacity-70"
+                  >
+                    <Text className="text-sm font-semibold text-white">{t("common.continue")}</Text>
+                  </Pressable>
+                </View>
+              )}
+            </View>
+
+          ) : phase === "results" && result ? (
+            /* ── Results summary ── */
+            <ScrollView
+              className="flex-1 px-6"
+              contentContainerStyle={{ paddingTop: 24, paddingBottom: 8 }}
+              showsVerticalScrollIndicator={false}
+            >
+              <View className="items-center gap-4 mb-6">
+                <View
+                  className={`h-28 w-28 items-center justify-center rounded-full ${
+                    result.accuracy >= 80
+                      ? "bg-green-100 dark:bg-green-900/40"
+                      : result.accuracy >= 50
+                      ? "bg-amber-100 dark:bg-amber-900/40"
+                      : "bg-red-100 dark:bg-red-900/40"
+                  }`}
+                >
+                  <Text
+                    className={`text-3xl font-bold ${
+                      result.accuracy >= 80
+                        ? "text-green-600 dark:text-green-400"
+                        : result.accuracy >= 50
+                        ? "text-amber-600 dark:text-amber-400"
+                        : "text-red-600 dark:text-red-400"
+                    }`}
+                  >
+                    {result.correctCount}/{result.totalQuestions}
+                  </Text>
+                </View>
+                <Text className="text-3xl font-bold text-neutral-900 dark:text-white">
+                  {t("onboarding.quizDoneTitle")}
+                </Text>
+                <Text className="text-base text-neutral-500 dark:text-neutral-400 text-center">
+                  {t("onboarding.quizDoneSubtitle", {
+                    score: result.correctCount,
+                    total: result.totalQuestions,
+                  })}
                 </Text>
               </View>
-            )}
-          </View>
 
-          <View className="px-6 pb-6 pt-2 gap-3">
-            <Pressable
-              onPress={goNext}
-              className="items-center rounded-2xl bg-blue-500 py-4 active:opacity-80"
-            >
-              <Text className="text-base font-bold text-white">{t("onboarding.continue")}</Text>
-            </Pressable>
-            <Pressable
-              onPress={goBack}
-              className="items-center py-2"
-            >
-              <Text className="text-sm text-neutral-500 dark:text-neutral-400">{t("onboarding.back")}</Text>
-            </Pressable>
-          </View>
+              <Pressable
+                onPress={goNext}
+                className="items-center rounded-2xl bg-blue-500 py-4 active:opacity-80"
+              >
+                <Text className="text-base font-bold text-white">{t("onboarding.continue")}</Text>
+              </Pressable>
+            </ScrollView>
+
+          ) : (
+            /* No words available */
+            <View className="flex-1 items-center justify-center px-6 gap-4">
+              <IconSymbol name="book.fill" size={48} color="#d1d5db" />
+              <Text className="text-center text-neutral-400 dark:text-neutral-500">
+                {t("onboarding.noWordYet")}
+              </Text>
+              <Pressable
+                onPress={goNext}
+                className="items-center rounded-2xl bg-blue-500 px-8 py-4 active:opacity-80"
+              >
+                <Text className="text-base font-bold text-white">{t("onboarding.continue")}</Text>
+              </Pressable>
+            </View>
+          )}
+
+          {/* Back link — only show when not mid-question */}
+          {(phase === "results" || noWords) && (
+            <View className="px-6 pb-6 pt-2">
+              <Pressable onPress={goBack} className="items-center py-2">
+                <Text className="text-sm text-neutral-500 dark:text-neutral-400">{t("onboarding.back")}</Text>
+              </Pressable>
+            </View>
+          )}
         </>
       )}
 
@@ -444,23 +565,17 @@ export default function OnboardingScreen() {
                   <View className="flex-1">
                     <Text
                       className={`text-lg font-bold ${
-                        selected
-                          ? "text-blue-700 dark:text-blue-300"
-                          : "text-neutral-900 dark:text-white"
+                        selected ? "text-blue-700 dark:text-blue-300" : "text-neutral-900 dark:text-white"
                       }`}
                     >
-                      {t(GOAL_LABEL_KEYS[opt.id])}
+                      {t(GOAL_LABEL_KEYS[opt.id] as any)}
                     </Text>
                     <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-                      {t(GOAL_DETAIL_KEYS[opt.id])}
+                      {t(GOAL_DETAIL_KEYS[opt.id] as any)}
                     </Text>
                   </View>
                   {selected && (
-                    <IconSymbol
-                      name="checkmark.circle.fill"
-                      size={22}
-                      color="#3b82f6"
-                    />
+                    <IconSymbol name="checkmark.circle.fill" size={22} color="#3b82f6" />
                   )}
                 </Pressable>
               );
@@ -474,13 +589,8 @@ export default function OnboardingScreen() {
             >
               <Text className="text-base font-bold text-white">{t("onboarding.continue")}</Text>
             </Pressable>
-            <Pressable
-              onPress={goBack}
-              className="items-center py-2"
-            >
-              <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-                {t("onboarding.back")}
-              </Text>
+            <Pressable onPress={goBack} className="items-center py-2">
+              <Text className="text-sm text-neutral-500 dark:text-neutral-400">{t("onboarding.back")}</Text>
             </Pressable>
           </View>
         </>
@@ -510,23 +620,15 @@ export default function OnboardingScreen() {
               {saving ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text className="text-base font-bold text-white">
-                  {t("onboarding.letsGo")}
-                </Text>
+                <Text className="text-base font-bold text-white">{t("onboarding.letsGo")}</Text>
               )}
             </Pressable>
-            <Pressable
-              onPress={goBack}
-              className="items-center py-2"
-            >
-              <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-                {t("onboarding.back")}
-              </Text>
+            <Pressable onPress={goBack} className="items-center py-2">
+              <Text className="text-sm text-neutral-500 dark:text-neutral-400">{t("onboarding.back")}</Text>
             </Pressable>
           </View>
         </>
       )}
-
     </SafeAreaView>
   );
 }

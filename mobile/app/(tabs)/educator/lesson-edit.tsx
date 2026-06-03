@@ -12,13 +12,14 @@ import {
     useReplaceEducatorLessonSegments,
     useUpdateEducatorLesson,
 } from "@/lib/hooks/use-educator-panel";
+import { friendlyError } from "@/lib/api";
 import { useToast } from "@/lib/hooks/use-toast";
 import * as DocumentPicker from "expo-document-picker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Audio } from "expo-av";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type SegmentEditor = {
@@ -353,6 +354,7 @@ export default function EducatorLessonEditScreen() {
   const [audioUri, setAudioUri] = useState<string | undefined>(undefined);
   const [segments, setSegments] = useState<SegmentEditor[]>([EMPTY_SEGMENT()]);
   const [playbackPos, setPlaybackPos] = useState(0);
+  const [previewVisible, setPreviewVisible] = useState(false);
 
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
 
@@ -404,7 +406,7 @@ export default function EducatorLessonEditScreen() {
       { id: lessonId, audioUri: uri },
       {
         onSuccess: () => toastSuccess("Audio replaced", "Lesson audio updated."),
-        onError: (err: Error) => toastError("Audio failed", err.message),
+        onError: (err: Error) => toastError("Audio failed", friendlyError(err)),
       },
     );
   };
@@ -428,7 +430,7 @@ export default function EducatorLessonEditScreen() {
       },
       {
         onSuccess: () => router.back(),
-        onError: (err: Error) => toastError("Create failed", err.message),
+        onError: (err: Error) => toastError("Create failed", friendlyError(err)),
       },
     );
   };
@@ -446,13 +448,13 @@ export default function EducatorLessonEditScreen() {
           genre: genre.trim() || undefined,
         },
       },
-      { onError: (err: Error) => toastError("Save failed", err.message) },
+      { onError: (err: Error) => toastError("Save failed", friendlyError(err)) },
     );
     replaceSegments.mutate(
       { id: lessonId, segments: toSegmentsPayload(segments) },
       {
         onSuccess: () => toastSuccess("Saved", "Lesson and segments updated."),
-        onError: (err: Error) => toastError("Segments failed", err.message),
+        onError: (err: Error) => toastError("Segments failed", friendlyError(err)),
       },
     );
   };
@@ -482,7 +484,7 @@ export default function EducatorLessonEditScreen() {
           onPress: () => {
             deleteLesson.mutate(lessonId, {
               onSuccess: () => router.back(),
-              onError: (err: Error) => toastError("Delete failed", err.message),
+              onError: (err: Error) => toastError("Delete failed", friendlyError(err)),
             });
           },
         },
@@ -533,6 +535,7 @@ export default function EducatorLessonEditScreen() {
         options={{ title: screenTitle, headerBackTitle: course?.title ?? "Lessons" }}
       />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         <NotificationBanner
           visible={toast.visible}
           title={toast.title}
@@ -644,6 +647,67 @@ export default function EducatorLessonEditScreen() {
             </View>
           </View>
 
+          {/* Learner Preview */}
+          <View className="mt-4 px-5">
+            <Pressable
+              onPress={() => setPreviewVisible((v) => !v)}
+              className="flex-row items-center justify-between rounded-2xl bg-neutral-50 px-4 py-3 active:opacity-70 dark:bg-neutral-800"
+            >
+              <View className="flex-row items-center gap-2">
+                <IconSymbol name="eye.fill" size={16} color="#3b82f6" />
+                <Text className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                  {t("educator.lessonEdit.previewTitle")}
+                </Text>
+              </View>
+              <IconSymbol
+                name={previewVisible ? "chevron.up" : "chevron.down"}
+                size={14}
+                color="#9ca3af"
+              />
+            </Pressable>
+            {previewVisible && (
+              <View className="mt-2 overflow-hidden rounded-2xl border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900">
+                <View className="border-b border-neutral-100 px-4 py-4 dark:border-neutral-800">
+                  <Text className="text-xl font-bold text-neutral-900 dark:text-white">
+                    {title || t("educator.lessonEdit.untitled")}
+                  </Text>
+                  {description ? (
+                    <Text className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+                      {description}
+                    </Text>
+                  ) : null}
+                </View>
+                {segments.some((s) => s.text.trim().length > 0) ? (
+                  <View className="px-4 py-3">
+                    <Text className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                      {t("review.transcript")}
+                    </Text>
+                    {segments
+                      .filter((s) => s.text.trim().length > 0)
+                      .map((s, i) => (
+                        <View key={s.uid} className={`${i > 0 ? "mt-3" : ""}`}>
+                          <Text className="text-base text-neutral-900 dark:text-white">
+                            {s.text}
+                          </Text>
+                          {s.translation ? (
+                            <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
+                              {s.translation}
+                            </Text>
+                          ) : null}
+                        </View>
+                      ))}
+                  </View>
+                ) : (
+                  <View className="px-4 py-6 items-center">
+                    <Text className="text-sm text-neutral-400 dark:text-neutral-500">
+                      {t("educator.lessonEdit.noSegments")}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
+
           {/* Actions */}
           <View className="mt-5 gap-2 px-5">
             <Pressable
@@ -664,6 +728,7 @@ export default function EducatorLessonEditScreen() {
             ) : null}
           </View>
         </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </>
   );

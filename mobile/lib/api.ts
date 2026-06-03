@@ -1,3 +1,4 @@
+import i18n from "./i18n";
 import { QueryClient, focusManager } from "@tanstack/react-query";
 import { AppState, Platform } from "react-native";
 import { API_BASE_URL } from "./constants";
@@ -29,6 +30,18 @@ export class ApiError extends Error {
     this.status = status;
     this.body = body;
   }
+}
+
+export function friendlyError(err: unknown, fallback?: string): string {
+  if (err instanceof ApiError) {
+    if (err.status === 401 || err.status === 403) return i18n.t("common.permissionDenied");
+    if (err.status === 404) return i18n.t("common.notFound");
+    if (err.status >= 500) return i18n.t("common.serverError");
+  }
+  if (err instanceof Error && err.message === "Network request failed") {
+    return i18n.t("common.networkError");
+  }
+  return fallback ?? i18n.t("common.unknownError");
 }
 
 export async function apiFetch<T>(

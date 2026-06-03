@@ -1,6 +1,7 @@
 import { Modal, View, Text, Pressable } from "react-native";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import type { StoryChapter } from "@/types";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   visible: boolean;
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function ChapterIntro({ visible, chapter, onStart, onClose }: Props) {
+  const { t } = useTranslation();
   return (
     <Modal
       visible={visible}
@@ -29,7 +31,7 @@ export function ChapterIntro({ visible, chapter, onStart, onClose }: Props) {
 
           {/* Chapter number */}
           <Text className="mb-1 text-sm font-semibold uppercase tracking-wide text-blue-500 dark:text-blue-400">
-            Chapter {chapter.order}
+            {t("educator.story.chapterLabel", { number: chapter.order })}
           </Text>
 
           {/* Title */}
@@ -50,7 +52,7 @@ export function ChapterIntro({ visible, chapter, onStart, onClose }: Props) {
             className="items-center rounded-xl bg-blue-500 py-4 active:opacity-80 dark:bg-blue-600"
           >
             <Text className="text-base font-bold text-white">
-              Begin Chapter
+              {t("educator.story.beginChapter")}
             </Text>
           </Pressable>
         </View>

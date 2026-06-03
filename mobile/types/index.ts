@@ -6,7 +6,8 @@ export type CourseType =
   | "oral_tradition"
   | "communicative"
   | "contemporary"
-  | "songs";
+  | "songs"
+  | "colors";
 
 export interface Course {
   id: string;
@@ -53,6 +54,7 @@ export interface TranscriptSegment {
   text: string;
   translation?: string | null;
   translationFr?: string | null;
+  colorHex?: string | null;
 }
 
 export interface JournalEntry {
@@ -84,6 +86,7 @@ export interface FeedItem {
   createdAt: string;
   likes: number;
   comments: number;
+  isLiked: boolean;
   audioUrl?: AudioSource; // for contribution cards with audio
 }
 
@@ -145,6 +148,8 @@ export interface Proverb {
   literal?: string;
   context?: string;
   tags?: string[];
+  audioUrl?: string;
+  relatedLessonId?: string;
 }
 
 // --- Sentence Templates (for fill-in-the-blank) ---
@@ -252,6 +257,8 @@ export interface Group {
   languageId: string;
   createdAt: string;
   members: GroupMember[];
+  /** The current authenticated user's role in this group */
+  myRole?: GroupRole;
 }
 
 export interface GroupMember {
@@ -306,6 +313,9 @@ export interface QuizQuestion {
   correctAnswer: string;
   options: string[]; // 4 options, shuffled
   audioSource?: AudioSource; // for listening questions
+  explanation?: string; // optional explanation shown after incorrect answer
+  exampleSentence?: string;
+  exampleSentenceTranslation?: string;
 }
 
 export interface QuizConfig {

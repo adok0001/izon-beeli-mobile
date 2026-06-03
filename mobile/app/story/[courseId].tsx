@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { LoadingScreen } from "@/components/loading-screen";
 import {
   View,
   Text,
@@ -11,14 +12,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { StoryProgressBar } from "@/components/story/story-progress-bar";
 import { ChapterIntro } from "@/components/story/chapter-intro";
-import { getStoryForCourse } from "@/lib/data/stories";
+import { useStoryArc } from "@/lib/hooks/use-story-arc";
 import { useStoryStore } from "@/store/story-store";
 import type { StoryChapter } from "@/types";
+import { useTranslation } from "react-i18next";
 
 export default function StoryScreen() {
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
   const router = useRouter();
-  const story = getStoryForCourse(courseId ?? "");
+  const { t } = useTranslation();
+  const { data: story, isLoading } = useStoryArc(courseId ?? "");
 
   const hydrate = useStoryStore((s) => s.hydrate);
   const hydrated = useStoryStore((s) => s._hydrated);
@@ -35,14 +38,23 @@ export default function StoryScreen() {
     hydrate();
   }, []);
 
+  if (isLoading) {
+    return (
+      <>
+        <Stack.Screen options={{ title: t("educator.story.screenTitle") }} />
+        <LoadingScreen color="#f59e0b" />
+      </>
+    );
+  }
+
   if (!story) {
     return (
       <>
-        <Stack.Screen options={{ title: "Story Mode" }} />
+        <Stack.Screen options={{ title: t("educator.story.screenTitle") }} />
         <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-neutral-900">
           <IconSymbol name="book.fill" size={48} color="#d1d5db" />
           <Text className="mt-4 text-base text-neutral-400 dark:text-neutral-500">
-            No story available for this course.
+            {t("educator.story.noStoryAvailable")}
           </Text>
         </SafeAreaView>
       </>
@@ -126,7 +138,7 @@ export default function StoryScreen() {
                   disabled={!unlocked}
                   className={`mb-3 rounded-2xl border p-4 active:opacity-80 ${
                     isCurrent
-                      ? "border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-950/30"
+                      ? "border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30"
                       : completed
                       ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20"
                       : unlocked
@@ -147,7 +159,7 @@ export default function StoryScreen() {
                         <IconSymbol
                           name="play.fill"
                           size={24}
-                          color={isCurrent ? "#3b82f6" : "#9ca3af"}
+                          color={isCurrent ? "#f59e0b" : "#9ca3af"}
                         />
                       ) : (
                         <IconSymbol name="circle" size={24} color="#d1d5db" />
@@ -156,7 +168,7 @@ export default function StoryScreen() {
 
                     <View className="flex-1">
                       <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
-                        Chapter {chapter.order}
+                        {t("educator.story.chapterLabel", { number: chapter.order })}
                       </Text>
                       <Text
                         className={`text-base font-bold ${
@@ -214,7 +226,7 @@ export default function StoryScreen() {
             <View className="flex-1 justify-end bg-black/50">
               <View className="rounded-t-3xl bg-white px-6 pb-10 pt-6 dark:bg-neutral-900">
                 <Text className="mb-1 text-sm font-semibold uppercase tracking-wide text-green-500 dark:text-green-400">
-                  Chapter {outroChapter.order} Complete
+                  {t("educator.story.chapterComplete", { number: outroChapter.order })}
                 </Text>
                 <Text className="mb-4 text-2xl font-bold text-neutral-900 dark:text-white">
                   {outroChapter.title}
@@ -226,10 +238,10 @@ export default function StoryScreen() {
                 </View>
                 <Pressable
                   onPress={() => setOutroChapter(null)}
-                  className="items-center rounded-xl bg-green-500 py-4 active:opacity-80 dark:bg-green-600"
+                  className="items-center rounded-xl bg-amber-500 py-4 active:opacity-80 dark:bg-amber-600"
                 >
                   <Text className="text-base font-bold text-white">
-                    Continue
+                    {t("educator.story.continueButton")}
                   </Text>
                 </Pressable>
               </View>

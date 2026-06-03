@@ -1,6 +1,6 @@
 {
   "name": "izon-beeli-server",
-  "version": "1.2.0",
+  "version": "1.24.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,6 +9,12 @@
     "start": "node dist/index.js",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx src/seed/index.ts",
+    "db:sync": "tsx src/seed/sync-content.ts all",
+    "db:sync-dict": "tsx src/seed/sync-content.ts dict",
+    "db:sync-lessons": "tsx src/seed/sync-content.ts lessons",
+    "db:sync-proverbs": "tsx src/seed/sync-content.ts proverbs",
+    "db:sync-cultural": "tsx src/seed/sync-content.ts cultural",
+    "db:sync-sentences": "tsx src/seed/sync-content.ts sentences",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
@@ -19,6 +25,7 @@
     "dotenv": "^16.5.0",
     "drizzle-orm": "^0.44.2",
     "hono": "^4.7.11",
+    "stripe": "^22.2.0",
     "zod": "^3.25.17"
   },
   "devDependencies": {

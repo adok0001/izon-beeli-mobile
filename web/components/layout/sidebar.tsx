@@ -266,12 +266,24 @@ export function Sidebar() {
 
       {/* User account */}
       <div className="px-4 py-4 border-t border-white/[0.055]">
-        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.07] hover:bg-white/[0.06] transition-colors cursor-pointer">
-          <UserButton />
-          <span className="text-sm text-neutral-400 truncate font-medium">
-            {t("common.myAccount")}
-          </span>
-        </div>
+        {isSignedIn ? (
+          <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.07] hover:bg-white/[0.06] transition-colors cursor-pointer">
+            <UserButton />
+            <span className="text-sm text-neutral-400 truncate font-medium">
+              {t("common.myAccount")}
+            </span>
+          </div>
+        ) : (
+          <Link
+            href="/sign-in"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.07] hover:bg-white/[0.06] transition-colors"
+          >
+            <UserRound className="h-4 w-4 shrink-0 text-neutral-500" />
+            <span className="text-sm text-neutral-400 truncate font-medium">
+              {t("common.signIn")}
+            </span>
+          </Link>
+        )}
       </div>
     </aside>
   );

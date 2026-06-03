@@ -17,6 +17,10 @@ export interface CurrentUser {
   isReviewer: boolean;
   reviewerLanguages: string[];
   reviewerRole: "teacher" | "professor" | "elder" | null;
+  dailyGoal: "casual" | "steady" | "intensive" | null;
+  planTier: "free" | "plus";
+  accentColor: string | null;
+  profileTheme: string | null;
   createdAt: string;
 }
 

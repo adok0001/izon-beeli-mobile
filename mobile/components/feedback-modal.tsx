@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
   Linking,
   Modal,
   Platform,
@@ -96,6 +97,7 @@ export function FeedbackModal({ visible, onClose }: FeedbackModalProps) {
       presentationStyle="pageSheet"
       onRequestClose={handleClose}
     >
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
       <View className="flex-1 bg-white px-5 pt-6 dark:bg-neutral-900">
         {/* Header */}
         <View className="mb-6 flex-row items-center justify-between">
@@ -175,6 +177,7 @@ export function FeedbackModal({ visible, onClose }: FeedbackModalProps) {
           )}
         </Pressable>
       </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

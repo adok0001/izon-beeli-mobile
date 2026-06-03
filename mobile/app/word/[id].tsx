@@ -1,5 +1,8 @@
-import { useState, useEffect } from "react";
-import { View, Text, Pressable, ScrollView, ActivityIndicator, TextInput, Image } from "react-native";
+import { friendlyError } from "@/lib/api";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { LoadingScreen } from "@/components/loading-screen";
+import { KeyboardAvoidingView, Platform, View, Text, Pressable, ScrollView, TextInput, Image } from "react-native";
+import { Audio } from "expo-av";
 import * as DocumentPicker from "expo-document-picker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,6 +18,36 @@ import { useDictionaryNavStore } from "@/store/dictionary-nav-store";
 import { useSaveWord, useRemoveWord, useWordBank } from "@/lib/hooks/use-wordbank";
 import { addRecentlyViewed } from "@/lib/hooks/use-recently-viewed";
 import { useTranslation } from "react-i18next";
+
+function InlineAudioButton({ audioUrl }: { audioUrl: string }) {
+  const [playing, setPlaying] = useState(false);
+  const soundRef = useRef<Audio.Sound | null>(null);
+
+  useEffect(() => {
+    return () => { soundRef.current?.unloadAsync(); };
+  }, []);
+
+  const handlePress = useCallback(async () => {
+    try {
+      if (soundRef.current) { await soundRef.current.unloadAsync(); soundRef.current = null; }
+      const { sound } = await Audio.Sound.createAsync({ uri: audioUrl });
+      soundRef.current = sound;
+      sound.setOnPlaybackStatusUpdate((s) => { if (s.isLoaded && s.didJustFinish) setPlaying(false); });
+      setPlaying(true);
+      await sound.playAsync();
+    } catch { setPlaying(false); }
+  }, [audioUrl]);
+
+  return (
+    <Pressable onPress={handlePress} disabled={playing} hitSlop={8} className="ml-2 p-1">
+      <IconSymbol
+        name={playing ? "speaker.wave.3.fill" : "speaker.wave.2.fill"}
+        size={18}
+        color={playing ? "#0ea5e9" : "#9ca3af"}
+      />
+    </Pressable>
+  );
+}
 
 export default function WordDetailScreen() {
   const { id, languageId } = useLocalSearchParams<{
@@ -83,7 +116,7 @@ export default function WordDetailScreen() {
           toastSuccess(t("entryContribute.submitted"), t("entryContribute.audioSubmittedDesc"));
         },
         onError: (err) => {
-          toastError(t("common.error"), err.message || t("common.tryAgain"));
+          toastError(t("common.error"), friendlyError(err));
         },
       }
     );
@@ -117,7 +150,7 @@ export default function WordDetailScreen() {
           toastSuccess(t("entryContribute.submitted"), t("entryContribute.imageSubmittedDesc"));
         },
         onError: (err) => {
-          toastError(t("common.error"), err.message || t("common.tryAgain"));
+          toastError(t("common.error"), friendlyError(err));
         },
       }
     );
@@ -141,7 +174,7 @@ export default function WordDetailScreen() {
           toastSuccess(t("entryContribute.submitted"), t("entryContribute.meaningSubmittedDesc"));
         },
         onError: (err) => {
-          toastError(t("common.error"), err.message || t("common.tryAgain"));
+          toastError(t("common.error"), friendlyError(err));
         },
       }
     );
@@ -181,12 +214,7 @@ export default function WordDetailScreen() {
     return (
       <>
         <Stack.Screen options={{ title: "", headerBackTitle: "Back" }} />
-        <SafeAreaView
-          className="flex-1 items-center justify-center bg-white dark:bg-neutral-900"
-          edges={[]}
-        >
-          <ActivityIndicator size="large" color="#3b82f6" />
-        </SafeAreaView>
+        <LoadingScreen />
       </>
     );
   }
@@ -221,6 +249,7 @@ export default function WordDetailScreen() {
         className="flex-1 bg-white dark:bg-neutral-900"
         edges={[]}
       >
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         <NotificationBanner
           visible={toast.visible}
           title={toast.title}
@@ -264,7 +293,7 @@ export default function WordDetailScreen() {
                 <View className="mt-3 items-center gap-1">
                   {meanings.map((meaning, i) => (
                     <View key={i} className="flex-row items-baseline gap-2">
-                      <Text className="text-sm font-semibold text-blue-500 dark:text-blue-400">
+                      <Text className="text-sm font-semibold text-sky-500 dark:text-sky-400">
                         {i + 1}.
                       </Text>
                       <Text className="text-lg text-neutral-600 dark:text-neutral-300">
@@ -279,8 +308,8 @@ export default function WordDetailScreen() {
             {/* French translation */}
             {!!entry.french && (
               <View className="mt-2 flex-row items-center gap-2">
-                <View className="rounded-full bg-blue-50 px-2 py-0.5 dark:bg-blue-900/30">
-                  <Text className="text-[10px] font-semibold text-blue-500 dark:text-blue-400">
+                <View className="rounded-full bg-sky-50 px-2 py-0.5 dark:bg-sky-900/30">
+                  <Text className="text-[10px] font-semibold text-sky-500 dark:text-sky-400">
                     {t("wordDetail.french")}
                   </Text>
                 </View>
@@ -290,28 +319,24 @@ export default function WordDetailScreen() {
               </View>
             )}
 
-            {/* Audio button */}
-            <View className="mt-5 flex-row items-center gap-3">
-              <WordAudioButton
-                audioSource={entry.audioUrl}
-                word={entry.word}
-                size={26}
-              />
-              {!entry.audioUrl && (
-                <Text className="text-xs text-neutral-400 dark:text-neutral-500">
-                  {t("wordDetail.textToSpeech")}
-                </Text>
-              )}
+            {/* Audio button — primary action */}
+            <View className="mt-6 items-center">
+              <View className="h-16 w-16 items-center justify-center rounded-full bg-sky-500 shadow-sm">
+                <WordAudioButton audioSource={entry.audioUrl} word={entry.word} size={28} />
+              </View>
+              <Text className="mt-2 text-xs font-semibold text-sky-500 dark:text-sky-400">
+                {entry.audioUrl ? t("wordDetail.hearPronunciation") : t("wordDetail.textToSpeech")}
+              </Text>
             </View>
 
             {/* Category badge */}
-            <View className="mt-4 flex-row items-center rounded-full bg-blue-50 px-4 py-1.5 dark:bg-blue-900/30">
+            <View className="mt-4 flex-row items-center rounded-full bg-sky-50 px-4 py-1.5 dark:bg-sky-900/30">
               <IconSymbol
                 name={categoryIcon as any}
                 size={13}
-                color="#3b82f6"
+                color="#0ea5e9"
               />
-              <Text className="ml-1.5 text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+              <Text className="ml-1.5 text-xs font-semibold uppercase tracking-wider text-sky-600 dark:text-sky-400">
                 {categoryLabel}
               </Text>
             </View>
@@ -326,9 +351,14 @@ export default function WordDetailScreen() {
               <Text className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
                 {t("wordDetail.example")}
               </Text>
-              <Text className="text-base text-neutral-800 dark:text-neutral-200">
-                {entry.example}
-              </Text>
+              <View className="flex-row items-start">
+                <Text className="flex-1 text-base text-neutral-800 dark:text-neutral-200">
+                  {entry.example}
+                </Text>
+                {entry.exampleAudioUrl && (
+                  <InlineAudioButton audioUrl={entry.exampleAudioUrl} />
+                )}
+              </View>
               {entry.exampleTranslation && (
                 <Text className="mt-1.5 text-sm text-neutral-500 dark:text-neutral-400">
                   {entry.exampleTranslation}
@@ -336,6 +366,42 @@ export default function WordDetailScreen() {
               )}
             </View>
           )}
+
+          {/* Related words (same category) */}
+          {(() => {
+            const related = entries
+              .filter((e) => e.category === entry.category && e.id !== entry.id)
+              .slice(0, 5);
+            if (related.length === 0) return null;
+            return (
+              <View className="mt-5">
+                <Text className="mx-5 mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                  {t("wordDetail.moreInCategory", { category: categoryLabel })}
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  className="-mx-0 px-5"
+                  contentContainerStyle={{ gap: 8 }}
+                >
+                  {related.map((rel) => (
+                    <Pressable
+                      key={rel.id}
+                      onPress={() => router.push(`/word/${rel.id}?languageId=${languageId}` as any)}
+                      className="rounded-xl bg-neutral-50 px-3 py-2.5 active:opacity-70 dark:bg-neutral-800"
+                    >
+                      <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
+                        {rel.word}
+                      </Text>
+                      <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
+                        {rel.english}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+            );
+          })()}
 
           {/* Contributor */}
           {entry.contributorName && (
@@ -426,8 +492,8 @@ export default function WordDetailScreen() {
                 className="flex-row items-center justify-between rounded-2xl border border-neutral-200 px-4 py-3.5 active:opacity-80 dark:border-neutral-700"
               >
                 <View className="flex-row items-center">
-                  <IconSymbol name="plus.circle.fill" size={18} color="#3b82f6" />
-                  <Text className="ml-2 text-base font-medium text-blue-600 dark:text-blue-400">
+                  <IconSymbol name="plus.circle.fill" size={18} color="#0ea5e9" />
+                  <Text className="ml-2 text-base font-medium text-sky-600 dark:text-sky-400">
                     {t("wordDetail.contributeExpand")}
                   </Text>
                 </View>
@@ -459,7 +525,7 @@ export default function WordDetailScreen() {
                             <Pressable
                               onPress={isPlaying ? stopPlayback : playRecording}
                               className={`h-14 w-14 items-center justify-center rounded-full ${
-                                isPlaying ? "bg-blue-500" : "bg-emerald-100 dark:bg-emerald-900"
+                                isPlaying ? "bg-sky-500" : "bg-emerald-100 dark:bg-emerald-900"
                               }`}
                             >
                               <IconSymbol
@@ -483,7 +549,7 @@ export default function WordDetailScreen() {
                               <Pressable
                                 onPress={handleSubmitAudio}
                                 disabled={submitEntry.isPending}
-                                className="rounded-lg bg-blue-500 px-4 py-2"
+                                className="rounded-lg bg-sky-500 px-4 py-2"
                               >
                                 <Text className="text-sm font-medium text-white">
                                   {submitEntry.isPending ? t("contribute.submitting") : t("common.submit")}
@@ -600,8 +666,8 @@ export default function WordDetailScreen() {
                           disabled={!newMeaning.trim() || submitEntry.isPending}
                           className={`flex-1 items-center rounded-xl py-3 ${
                             newMeaning.trim() && !submitEntry.isPending
-                              ? "bg-blue-500"
-                              : "bg-blue-300 dark:bg-blue-800"
+                              ? "bg-sky-500"
+                              : "bg-sky-300 dark:bg-sky-800"
                           }`}
                         >
                           <Text className="font-semibold text-white">
@@ -615,8 +681,8 @@ export default function WordDetailScreen() {
                       onPress={() => setShowMeaningInput(true)}
                       className="flex-row items-center rounded-2xl border border-neutral-200 px-4 py-3.5 active:opacity-80 dark:border-neutral-700"
                     >
-                      <IconSymbol name="plus.circle.fill" size={20} color="#3b82f6" />
-                      <Text className="ml-2 text-base font-medium text-blue-600 dark:text-blue-400">
+                      <IconSymbol name="plus.circle.fill" size={20} color="#0ea5e9" />
+                      <Text className="ml-2 text-base font-medium text-sky-600 dark:text-sky-400">
                         {t("entryContribute.addMeaning")}
                       </Text>
                     </Pressable>
@@ -626,6 +692,7 @@ export default function WordDetailScreen() {
             </View>
           )}
         </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </>
   );

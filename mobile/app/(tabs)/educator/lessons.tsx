@@ -1,10 +1,13 @@
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
 import {
     EducatorLesson,
     useEducatorCourses,
     useEducatorLessons,
+    useUpdateEducatorLesson,
 } from "@/lib/hooks/use-educator-panel";
+import { useToast } from "@/lib/hooks/use-toast";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -13,41 +16,69 @@ import { SafeAreaView } from "react-native-safe-area-context";
 function LessonRow({
   lesson,
   onPress,
-}: Readonly<{ lesson: EducatorLesson; onPress: () => void }>) {
+  onToggleActive,
+  toggling,
+}: Readonly<{
+  lesson: EducatorLesson;
+  onPress: () => void;
+  onToggleActive: () => void;
+  toggling: boolean;
+}>) {
+  const isActive = lesson.isActive !== false;
   return (
     <Pressable
       onPress={onPress}
-      className="flex-row items-center rounded-2xl border border-neutral-200 bg-white p-4 active:opacity-70 dark:border-neutral-700 dark:bg-neutral-900"
+      className="rounded-2xl border border-neutral-200 bg-white p-4 active:opacity-70 dark:border-neutral-700 dark:bg-neutral-900"
     >
-      <View className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/30">
-        <IconSymbol name="waveform" size={18} color="#3b82f6" />
-      </View>
-      <View className="flex-1">
-        <Text className="text-base font-semibold text-neutral-900 dark:text-white">{lesson.title}</Text>
-        {lesson.description ? (
-          <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
-            {lesson.description}
-          </Text>
-        ) : null}
-        <View className="mt-1.5 flex-row gap-2">
-          {lesson.type ? (
-            <View className="rounded-full bg-neutral-100 px-2 py-0.5 dark:bg-neutral-800">
-              <Text className="text-xs text-neutral-500 dark:text-neutral-400">{lesson.type}</Text>
-            </View>
-          ) : null}
-          {lesson.audioUrl ? (
-            <View className="rounded-full bg-blue-50 px-2 py-0.5 dark:bg-blue-950/30">
-              <Text className="text-xs font-semibold text-blue-500">Audio</Text>
-            </View>
-          ) : null}
-          {lesson.isActive === false ? (
-            <View className="rounded-full bg-amber-50 px-2 py-0.5 dark:bg-amber-950/30">
-              <Text className="text-xs font-semibold text-amber-600">Draft</Text>
-            </View>
-          ) : null}
+      <View className="flex-row items-center">
+        <View className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/30">
+          <IconSymbol name="waveform" size={18} color="#3b82f6" />
         </View>
+        <View className="flex-1">
+          <Text className="text-base font-semibold text-neutral-900 dark:text-white">{lesson.title}</Text>
+          {lesson.description ? (
+            <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
+              {lesson.description}
+            </Text>
+          ) : null}
+          <View className="mt-1.5 flex-row gap-2">
+            {lesson.type ? (
+              <View className="rounded-full bg-neutral-100 px-2 py-0.5 dark:bg-neutral-800">
+                <Text className="text-xs text-neutral-500 dark:text-neutral-400">{lesson.type}</Text>
+              </View>
+            ) : null}
+            {lesson.audioUrl ? (
+              <View className="rounded-full bg-blue-50 px-2 py-0.5 dark:bg-blue-950/30">
+                <Text className="text-xs font-semibold text-blue-500">Audio</Text>
+              </View>
+            ) : null}
+          </View>
+        </View>
+        <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
       </View>
-      <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
+      <View className="mt-3 flex-row items-center justify-between border-t border-neutral-100 pt-3 dark:border-neutral-700/60">
+        <Pressable
+          onPress={(e) => { e.stopPropagation?.(); onToggleActive(); }}
+          disabled={toggling}
+          className={`flex-row items-center gap-1.5 rounded-full px-3 py-1 ${
+            isActive ? "bg-emerald-50 dark:bg-emerald-950/30" : "bg-neutral-100 dark:bg-neutral-800"
+          }`}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <IconSymbol
+            name={isActive ? "eye" : "eye.slash"}
+            size={12}
+            color={isActive ? "#10b981" : "#9ca3af"}
+          />
+          <Text
+            className={`text-xs font-semibold ${
+              isActive ? "text-emerald-600 dark:text-emerald-400" : "text-neutral-500 dark:text-neutral-400"
+            }`}
+          >
+            {toggling ? "…" : isActive ? "Active" : "Inactive"}
+          </Text>
+        </Pressable>
+      </View>
     </Pressable>
   );
 }
@@ -61,6 +92,8 @@ export default function EducatorLessonsScreen() {
 
   const { data: courses = [] } = useEducatorCourses(canAccess);
   const { data: lessons = [] } = useEducatorLessons(canAccess);
+  const updateLesson = useUpdateEducatorLesson();
+  const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
 
   const course = courses.find((c) => c.id === courseId);
   const courseLessons = lessons.filter((l) => l.courseId === courseId);
@@ -84,6 +117,13 @@ export default function EducatorLessonsScreen() {
         options={{ title: course?.title ?? "Lessons", headerBackTitle: "Courses" }}
       />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+        <NotificationBanner
+          visible={toast.visible}
+          title={toast.title}
+          body={toast.body}
+          type={toast.type}
+          onDismiss={dismissToast}
+        />
         <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
           {/* Header */}
           <View className="px-5 pt-4">
@@ -137,6 +177,20 @@ export default function EducatorLessonsScreen() {
                         params: { lessonId: lesson.id, courseId: lesson.courseId },
                       })
                     }
+                    onToggleActive={() =>
+                      updateLesson.mutate(
+                        { id: lesson.id, payload: { isActive: lesson.isActive === false } },
+                        {
+                          onSuccess: () =>
+                            toastSuccess(
+                              lesson.isActive === false ? "Lesson published" : "Lesson hidden",
+                              lesson.title,
+                            ),
+                          onError: (err: Error) => toastError("Failed", err.message),
+                        },
+                      )
+                    }
+                    toggling={updateLesson.isPending && updateLesson.variables?.id === lesson.id}
                   />
                 ))}
               </View>

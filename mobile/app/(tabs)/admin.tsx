@@ -105,23 +105,12 @@ export default function AdminPanelScreen() {
                 detail={t("educator.nav.overview")}
                 onPress={() => router.push("/(tabs)/educator")}
               />
+
               <ActionRow
-                icon="checkmark.circle.fill"
-                label={t("educator.nav.review")}
-                detail={t("educator.review.subtitle")}
-                onPress={() => router.push("/review")}
-              />
-              <ActionRow
-                icon="character.book.closed"
-                label={t("educator.nav.dictionary")}
-                detail={t("profile.dictionary")}
-                onPress={() => router.push("/educator/dictionary")}
-              />
-              <ActionRow
-                icon="book.fill"
-                label={t("educator.nav.lessons")}
-                detail={t("learn.webSubtitle")}
-                onPress={() => router.push("/educator/courses")}
+                icon="bell.fill"
+                label={t("admin.notifications.title", "Push Notifications")}
+                detail={t("admin.notifications.subtitle", "Broadcast a message to all users")}
+                onPress={() => router.push("/admin/broadcast")}
               />
               {currentUser && canManageBounties(currentUser) ? (
                 <ActionRow

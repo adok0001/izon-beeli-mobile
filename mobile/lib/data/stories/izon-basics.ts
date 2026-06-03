@@ -2,14 +2,14 @@ import type { StoryArc } from "@/types";
 
 export const IZON_BASICS_STORY: StoryArc = {
   id: "story-izon-basics",
-  courseId: "course-1",
+  courseId: "course-izon-fw",
   title: "Tari's Journey Home",
   description:
     "Follow Tari, a young Izon person returning to the Niger Delta to visit their grandmother. Along the way, Tari rediscovers the beauty of the Izon language through everyday conversations, stories, and family traditions.",
   chapters: [
     {
       id: "ch-1",
-      lessonId: "lesson-1",
+      lessonId: "izon-fw-1",
       title: "Arriving at the Waterside",
       narrativeIntro:
         "Tari steps off the boat onto the wooden jetty at Grandmother Ebiere's village. The air smells of river water and woodsmoke. Grandmother is waiting with open arms, but she greets Tari only in Izon — it is time to learn the old words again.",
@@ -19,7 +19,7 @@ export const IZON_BASICS_STORY: StoryArc = {
     },
     {
       id: "ch-2",
-      lessonId: "lesson-2",
+      lessonId: "izon-fw-2",
       title: "Stories by the Fireside",
       narrativeIntro:
         "That evening, the family gathers around the fire pit behind the house. Grandmother begins to tell the old story of the tortoise who outsmarted the river spirits. She tells it in Izon, pausing to make sure Tari follows along.",
@@ -29,7 +29,7 @@ export const IZON_BASICS_STORY: StoryArc = {
     },
     {
       id: "ch-3",
-      lessonId: "lesson-3",
+      lessonId: "izon-fw-3",
       title: "Counting at the Market",
       narrativeIntro:
         "Morning light dances across the creek as Tari and Grandmother paddle to the floating market. Stalls overflow with plantains, dried fish, and woven baskets. Grandmother hands Tari a few naira notes and says: 'Today, you buy everything yourself — in Izon.'",
@@ -39,7 +39,7 @@ export const IZON_BASICS_STORY: StoryArc = {
     },
     {
       id: "ch-4",
-      lessonId: "lesson-4",
+      lessonId: "izon-fw-4",
       title: "The Family Gathering",
       narrativeIntro:
         "Aunties, uncles, and cousins have come from neighboring villages for a family gathering. Grandmother insists that Tari greet each relative with the proper Izon title. 'In our language, how you address someone shows respect,' she explains.",
@@ -49,7 +49,7 @@ export const IZON_BASICS_STORY: StoryArc = {
     },
     {
       id: "ch-5",
-      lessonId: "lesson-5",
+      lessonId: "izon-fw-5",
       title: "A Day in the Village",
       narrativeIntro:
         "It is Tari's last full day in the village. From dawn prayers to the evening meal, Grandmother walks Tari through the rhythm of daily life — waking, cooking, fishing, resting — describing each activity in Izon. 'When you return to the city, carry these words with you,' she says.",

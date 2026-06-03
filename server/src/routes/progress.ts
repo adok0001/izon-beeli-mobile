@@ -1,9 +1,10 @@
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index.js";
-import { courses, lessons, quizResults, userProgress, users } from "../db/schema.js";
+import { courses, lessons, pushTokens, quizResults, userProgress, users } from "../db/schema.js";
 import { awardXP } from "../lib/award-xp.js";
 import { incrementDailyChallenge } from "../lib/daily-challenge.js";
+import { sendPushBatch, chunk } from "../lib/send-push.js";
 import { updateStreak, diffDaysFromToday } from "../lib/update-streak.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
 
@@ -41,6 +42,9 @@ progressRouter.get("/summary", async (c) => {
   const diff = diffDaysFromToday(user?.lastActiveDate);
   const streakBroken = diff >= 2 && (user?.streak ?? 0) > 0;
 
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const refreshedToday = user?.lastActiveDate === todayStr;
+
   return c.json({
     points: user?.points ?? 0,
     streak: user?.streak ?? 0,
@@ -48,6 +52,7 @@ progressRouter.get("/summary", async (c) => {
     quizCount: quizCountResult?.count ?? 0,
     freezeCount: user?.streakFreezes ?? 0,
     streakBroken,
+    refreshedToday,
   });
 });
 
@@ -105,11 +110,33 @@ progressRouter.post("/:lessonId/complete", async (c) => {
 
   await incrementDailyChallenge(userId, "complete_lesson").catch(() => {});
 
+  // Streak milestone push — fire-and-forget
+  if (streakResult.streakMilestone) {
+    const milestone = streakResult.streakMilestone;
+    db.select({ token: pushTokens.token })
+      .from(pushTokens)
+      .where(eq(pushTokens.userId, userId))
+      .then((rows) => {
+        const tokens = rows.map((r) => r.token);
+        if (tokens.length === 0) return;
+        const messages = tokens.map((token) => ({
+          to: token,
+          title: `${milestone}-day streak!`,
+          body: "Keep it going.",
+          data: { type: "streak_milestone" },
+          sound: "default" as const,
+        }));
+        return Promise.all(chunk(messages, 100).map((batch) => sendPushBatch(batch)));
+      })
+      .catch(() => {});
+  }
+
   return c.json({
     completed: true,
     pointsEarned: 50,
     totalPoints: xpResult.totalPoints,
     streak: streakResult.newStreak,
+    streakIncremented: streakResult.streakIncremented,
     leveledUp: xpResult.leveledUp,
     newLevel: xpResult.newLevel,
     newTitle: xpResult.newTitle,

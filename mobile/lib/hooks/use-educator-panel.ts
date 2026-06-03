@@ -79,6 +79,7 @@ export interface EducatorCourse {
   level: string;
   order: number;
   courseType?: string | null;
+  isActive?: boolean;
 }
 
 export interface EducatorLesson {
@@ -468,6 +469,305 @@ export function useDeleteEducatorLesson() {
       queryClient.invalidateQueries({ queryKey: ["educator", "lessons"] });
       queryClient.invalidateQueries({ queryKey: ["educator", "courses"] });
       queryClient.invalidateQueries({ queryKey: ["educator", "stats"] });
+    },
+  });
+}
+
+export function useToggleCourseActive() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      const token = await getToken();
+      return apiFetch<{ ok: true }>(`/educator/courses/${id}`, {
+        method: "PATCH",
+        token,
+        body: JSON.stringify({ isActive }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["educator", "courses"] });
+    },
+  });
+}
+
+// ─── Proverbs ─────────────────────────────────────────────────────────────────
+
+export interface Proverb {
+  id: string;
+  languageId: string;
+  text: string;
+  translation: string;
+  translationFr?: string | null;
+  meaning: string;
+  meaningFr?: string | null;
+  literal?: string | null;
+  context?: string | null;
+  tags?: string[] | null;
+}
+
+export interface UpsertProverbInput {
+  id?: string;
+  languageId: string;
+  text: string;
+  translation: string;
+  translationFr?: string;
+  meaning: string;
+  meaningFr?: string;
+  literal?: string;
+  context?: string;
+  tags?: string[];
+}
+
+export function useProverbs(languageId?: string, enabled = true) {
+  const { getToken, isSignedIn } = useAuth();
+  return useQuery<Proverb[]>({
+    queryKey: ["proverbs", languageId ?? null],
+    queryFn: async () => {
+      const token = await getToken();
+      const q = languageId ? `?languageId=${encodeURIComponent(languageId)}` : "";
+      return apiFetch<Proverb[]>(`/proverbs${q}`, { token: token ?? undefined });
+    },
+    enabled: !!isSignedIn && enabled,
+    staleTime: 30_000,
+  });
+}
+
+export function useUpsertProverb() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...body }: UpsertProverbInput) => {
+      const token = await getToken();
+      const path = id ? `/proverbs/admin/${id}` : "/proverbs/admin";
+      return apiFetch<Proverb>(path, {
+        method: id ? "PATCH" : "POST",
+        token: token ?? undefined,
+        body: JSON.stringify(body),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["proverbs"] });
+    },
+  });
+}
+
+export function useDeleteProverb() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const token = await getToken();
+      return apiFetch<{ deleted: true }>(`/proverbs/admin/${id}`, {
+        method: "DELETE",
+        token: token ?? undefined,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["proverbs"] });
+    },
+  });
+}
+
+// ─── Cultural Content ──────────────────────────────────────────────────────────
+
+export interface CulturalKeyTerm {
+  word: string;
+  english: string;
+}
+
+export interface CulturalItem {
+  id: string;
+  languageId: string;
+  category: string;
+  title: string;
+  titleFr?: string | null;
+  description: string;
+  descriptionFr?: string | null;
+  imageEmoji: string;
+  keyTerms?: CulturalKeyTerm[];
+}
+
+export interface UpsertCulturalInput {
+  id?: string;
+  languageId: string;
+  category: string;
+  title: string;
+  titleFr?: string;
+  description: string;
+  descriptionFr?: string;
+  imageEmoji: string;
+  keyTerms?: CulturalKeyTerm[];
+}
+
+export function useCulturalItems(languageId?: string, enabled = true) {
+  const { getToken, isSignedIn } = useAuth();
+  return useQuery<CulturalItem[]>({
+    queryKey: ["cultural", languageId ?? null],
+    queryFn: async () => {
+      const token = await getToken();
+      const q = languageId ? `?languageId=${encodeURIComponent(languageId)}` : "";
+      return apiFetch<CulturalItem[]>(`/cultural${q}`, { token: token ?? undefined });
+    },
+    enabled: !!isSignedIn && enabled,
+    staleTime: 30_000,
+  });
+}
+
+export function useUpsertCulturalItem() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...body }: UpsertCulturalInput) => {
+      const token = await getToken();
+      const path = id ? `/cultural/admin/${id}` : "/cultural/admin";
+      return apiFetch<CulturalItem>(path, {
+        method: id ? "PATCH" : "POST",
+        token: token ?? undefined,
+        body: JSON.stringify(body),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cultural"] });
+    },
+  });
+}
+
+export function useDeleteCulturalItem() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const token = await getToken();
+      return apiFetch<{ deleted: true }>(`/cultural/admin/${id}`, {
+        method: "DELETE",
+        token: token ?? undefined,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cultural"] });
+    },
+  });
+}
+
+// ─── Story Arcs ───────────────────────────────────────────────────────────────
+
+export interface EducatorStoryArc {
+  id: string;
+  courseId: string;
+  title: string;
+  description: string;
+  updatedAt?: string;
+}
+
+export interface EducatorStoryChapter {
+  id?: string;
+  lessonId: string;
+  title: string;
+  narrativeIntro: string;
+  narrativeOutro: string;
+  order: number;
+}
+
+export interface EducatorStoryArcDetail extends EducatorStoryArc {
+  chapters: EducatorStoryChapter[];
+}
+
+export function useEducatorStoryArcs(enabled = true) {
+  const { getToken, isSignedIn } = useAuth();
+  return useQuery<EducatorStoryArc[]>({
+    queryKey: ["educator", "story-arcs"],
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch<EducatorStoryArc[]>("/educator/story-arcs", { token: token ?? undefined });
+    },
+    enabled: !!isSignedIn && enabled,
+    staleTime: 30_000,
+  });
+}
+
+export function useEducatorStoryArc(courseId?: string, enabled = true) {
+  const { getToken, isSignedIn } = useAuth();
+  return useQuery<EducatorStoryArcDetail>({
+    queryKey: ["educator", "story-arcs", courseId ?? null],
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch<EducatorStoryArcDetail>(`/educator/story-arcs/${courseId}`, { token: token ?? undefined });
+    },
+    enabled: !!isSignedIn && !!courseId && enabled,
+    staleTime: 30_000,
+  });
+}
+
+export function useCreateStoryArc() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: { courseId: string; title: string; description: string }) => {
+      const token = await getToken();
+      return apiFetch<{ id: string }>("/educator/story-arcs", {
+        method: "POST",
+        token: token ?? undefined,
+        body: JSON.stringify(body),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["educator", "story-arcs"] });
+    },
+  });
+}
+
+export function useUpdateStoryArc() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, title, description }: { id: string; title: string; description: string }) => {
+      const token = await getToken();
+      return apiFetch<{ success: true }>(`/educator/story-arcs/${id}`, {
+        method: "PUT",
+        token: token ?? undefined,
+        body: JSON.stringify({ title, description }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["educator", "story-arcs"] });
+    },
+  });
+}
+
+export function useDeleteStoryArc() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const token = await getToken();
+      return apiFetch<{ success: true }>(`/educator/story-arcs/${id}`, {
+        method: "DELETE",
+        token: token ?? undefined,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["educator", "story-arcs"] });
+    },
+  });
+}
+
+export function useReplaceStoryChapters() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, chapters }: { id: string; chapters: EducatorStoryChapter[] }) => {
+      const token = await getToken();
+      return apiFetch<{ success: true; count: number }>(`/educator/story-arcs/${id}/chapters`, {
+        method: "PUT",
+        token: token ?? undefined,
+        body: JSON.stringify({ chapters }),
+      });
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["educator", "story-arcs"] });
+      queryClient.invalidateQueries({ queryKey: ["educator", "story-arcs", vars.id] });
     },
   });
 }

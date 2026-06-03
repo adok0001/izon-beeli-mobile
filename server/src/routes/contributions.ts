@@ -6,6 +6,11 @@ import { bounties, contributions, dictionaryEntries, feedItems, users } from "..
 import { awardXP, CONTRIBUTION_BASE_XP } from "../lib/award-xp.js";
 import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
 import { updateStreak } from "../lib/update-streak.js";
+import {
+  sendEmail,
+  contributionStatusEmailHtml,
+  contributionStatusEmailText,
+} from "../lib/send-email.js";
 
 const VALID_TYPES = ["word", "phrase", "audio", "entry_audio", "entry_meaning", "entry_image"] as const;
 const VALID_REVIEW_ACTIONS = ["approve", "reject"] as const;
@@ -521,11 +526,35 @@ contributionsRouter.patch("/:id/review", adminMiddleware, async (c) => {
     .where(eq(contributions.id, id))
     .returning();
 
+  // Email notification to contributor
+  const [contributor] = await db
+    .select({
+      email: users.email,
+      name: users.name,
+      emailContributionStatusEnabled: users.emailContributionStatusEnabled,
+    })
+    .from(users)
+    .where(eq(users.id, existing.userId))
+    .limit(1);
+
+  if (contributor?.emailContributionStatusEnabled) {
+    const note = body.note?.trim() || null;
+    await sendEmail({
+      to: { email: contributor.email, name: contributor.name },
+      subject: newStatus === "approved"
+        ? `Your contribution was approved: ${existing.word}`
+        : `Contribution update: ${existing.word}`,
+      htmlContent: contributionStatusEmailHtml(contributor.name, existing.word, newStatus as "approved" | "rejected", note),
+      textContent: contributionStatusEmailText(contributor.name, existing.word, newStatus as "approved" | "rejected", note),
+    });
+  }
+
   return c.json(updated);
 });
 
-// PATCH /api/contributions/:id - edit contribution fields (admin only)
-contributionsRouter.patch("/:id", adminMiddleware, async (c) => {
+// PATCH /api/contributions/:id - edit contribution fields (owner while submitted, or admin)
+contributionsRouter.patch("/:id", async (c) => {
+  const userId = c.get("userId");
   const { id } = c.req.param();
   const body = await c.req.json<{
     word?: string;
@@ -536,8 +565,18 @@ contributionsRouter.patch("/:id", adminMiddleware, async (c) => {
     category?: string;
   }>();
 
-  const [existing] = await db.select({ id: contributions.id }).from(contributions).where(eq(contributions.id, id)).limit(1);
+  const [existing] = await db
+    .select({ id: contributions.id, userId: contributions.userId, status: contributions.status })
+    .from(contributions)
+    .where(eq(contributions.id, id))
+    .limit(1);
   if (!existing) return c.json({ error: "Not found" }, 404);
+
+  const [user] = await db.select({ isAdmin: users.isAdmin }).from(users).where(eq(users.id, userId)).limit(1);
+  if (!user?.isAdmin) {
+    if (existing.userId !== userId) return c.json({ error: "Forbidden" }, 403);
+    if (existing.status !== "submitted") return c.json({ error: "Only pending contributions can be edited" }, 409);
+  }
 
   const updates: Record<string, unknown> = {};
   if (body.word?.trim()) updates.word = body.word.trim();
@@ -551,4 +590,29 @@ contributionsRouter.patch("/:id", adminMiddleware, async (c) => {
 
   const [updated] = await db.update(contributions).set(updates).where(eq(contributions.id, id)).returning();
   return c.json(updated);
+});
+
+// DELETE /api/contributions/:id - delete a contribution (owner while not approved, or admin)
+contributionsRouter.delete("/:id", async (c) => {
+  const userId = c.get("userId");
+  const { id } = c.req.param();
+
+  const [existing] = await db
+    .select({ userId: contributions.userId, status: contributions.status })
+    .from(contributions)
+    .where(eq(contributions.id, id))
+    .limit(1);
+  if (!existing) return c.json({ error: "Not found" }, 404);
+
+  const [user] = await db.select({ isAdmin: users.isAdmin }).from(users).where(eq(users.id, userId)).limit(1);
+  if (!user?.isAdmin) {
+    if (existing.userId !== userId) return c.json({ error: "Forbidden" }, 403);
+    if (existing.status === "approved") return c.json({ error: "Approved contributions cannot be deleted" }, 409);
+  } else if (existing.status === "approved") {
+    return c.json({ error: "Approved contributions cannot be deleted" }, 409);
+  }
+
+  await db.delete(feedItems).where(eq(feedItems.contributionId, id));
+  await db.delete(contributions).where(eq(contributions.id, id));
+  return c.json({ deleted: true });
 });

@@ -232,6 +232,13 @@ export default function SettingsPage() {
           </div>
         </div>
       </section>
+      {/* App info */}
+      <div className="mt-4 pb-4 text-center">
+        <p className="text-sm font-bold text-neutral-900 dark:text-white">Beeli</p>
+        <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5">
+          Version {process.env.NEXT_PUBLIC_APP_VERSION ?? "1.0.0"}
+        </p>
+      </div>
     </div>
   );
 }

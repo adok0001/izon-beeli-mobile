@@ -1,11 +1,11 @@
 import { WordAudioButton } from "@/components/dictionary/word-audio-button";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useMyContributions, type MyContribution } from "@/lib/hooks/use-contributions";
+import { useDeleteContribution, useMyContributions, useUpdateContribution, type MyContribution } from "@/lib/hooks/use-contributions";
 import { getLanguageName } from "@/lib/mock-data";
 import { Stack } from "expo-router";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FlatList, Image, RefreshControl, Text, View } from "react-native";
+import { Alert, FlatList, Image, KeyboardAvoidingView, Platform, Pressable, RefreshControl, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const STATUS_CONFIG = {
@@ -14,8 +14,64 @@ const STATUS_CONFIG = {
   rejected: { label: "myContributions.statusRejected", color: "#ef4444", bg: "bg-red-100 dark:bg-red-900" },
 } as const;
 
+function StatusTimeline({ status }: { status: string }) {
+  const { t } = useTranslation();
+  const steps = [
+    { key: "submitted", label: t("myContributions.timelineSubmitted") },
+    { key: "review", label: t("myContributions.timelineInReview") },
+    { key: "done", label: status === "rejected" ? t("myContributions.statusRejected") : t("myContributions.statusApproved") },
+  ];
+  const activeIndex = status === "submitted" ? 0 : 2;
+  const isRejected = status === "rejected";
+
+  return (
+    <View className="mt-3 flex-row items-center">
+      {steps.map((step, i) => {
+        const done = i <= activeIndex;
+        const isLast = i === steps.length - 1;
+        const dotColor = done ? (isLast && isRejected ? "#ef4444" : "#3b82f6") : "#d1d5db";
+        return (
+          <View key={step.key} className="flex-1 flex-row items-center">
+            <View className="items-center" style={{ minWidth: 40 }}>
+              <View
+                className="h-3 w-3 rounded-full border-2"
+                style={{
+                  backgroundColor: done ? dotColor : "transparent",
+                  borderColor: dotColor,
+                }}
+              />
+              <Text className="mt-1 text-center text-[9px] text-neutral-400 dark:text-neutral-500" style={{ width: 44 }}>
+                {step.label}
+              </Text>
+            </View>
+            {!isLast && (
+              <View
+                className="mb-4 h-0.5 flex-1"
+                style={{ backgroundColor: i < activeIndex ? dotColor : "#d1d5db" }}
+              />
+            )}
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+const EDITABLE_TYPES = ["word", "phrase", "entry_meaning"];
+
 function ContributionRow({ item }: { item: MyContribution }) {
   const { t } = useTranslation();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState({
+    word: item.word,
+    english: item.english,
+    pronunciation: item.pronunciation ?? "",
+    example: item.example ?? "",
+    exampleTranslation: item.exampleTranslation ?? "",
+  });
+  const updateContribution = useUpdateContribution();
+  const deleteContribution = useDeleteContribution();
+
   const config = STATUS_CONFIG[item.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.submitted;
   const categoryLabel = item.category
     ? t(`dictionaryPage.categoryLabels.${item.category}` as any, { defaultValue: item.category })
@@ -23,6 +79,40 @@ function ContributionRow({ item }: { item: MyContribution }) {
 
   const hasAudio = item.type === "entry_audio" || item.type === "audio" || !!item.audioUrl;
   const hasImage = item.type === "entry_image" || !!item.imageUrl;
+  const canEdit = item.status === "submitted" && EDITABLE_TYPES.includes(item.type);
+
+  const handleSave = () => {
+    updateContribution.mutate(
+      {
+        id: item.id,
+        updates: {
+          word: draft.word,
+          english: draft.english,
+          pronunciation: draft.pronunciation || null,
+          example: draft.example || null,
+          exampleTranslation: draft.exampleTranslation || null,
+        },
+      },
+      { onSuccess: () => setEditing(false) }
+    );
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      t("myContributions.deleteConfirmTitle"),
+      t("myContributions.deleteConfirmMessage"),
+      [
+        { text: t("myContributions.cancelEdit"), style: "cancel" },
+        {
+          text: t("myContributions.deleteButton"),
+          style: "destructive",
+          onPress: () => deleteContribution.mutate(item.id),
+        },
+      ]
+    );
+  };
+
+  const inputCls = "rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white";
 
   return (
     <View className="border-b border-neutral-100 px-5 py-4 dark:border-neutral-800">
@@ -33,6 +123,65 @@ function ContributionRow({ item }: { item: MyContribution }) {
           resizeMode="cover"
         />
       )}
+
+      {/* Inline edit form */}
+      {editing && (
+        <View className="mb-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-700 dark:bg-neutral-800/60">
+          <View className="mb-2 flex-row gap-2">
+            <View className="flex-1">
+              <Text className="mb-1 text-xs font-medium text-neutral-500">{t("myContributions.fieldWord")}</Text>
+              <TextInput
+                className={inputCls}
+                value={draft.word}
+                onChangeText={(v) => setDraft((d) => ({ ...d, word: v }))}
+              />
+            </View>
+            <View className="flex-1">
+              <Text className="mb-1 text-xs font-medium text-neutral-500">{t("myContributions.fieldEnglish")}</Text>
+              <TextInput
+                className={inputCls}
+                value={draft.english}
+                onChangeText={(v) => setDraft((d) => ({ ...d, english: v }))}
+              />
+            </View>
+          </View>
+          <Text className="mb-1 text-xs font-medium text-neutral-500">{t("myContributions.fieldPronunciation")}</Text>
+          <TextInput
+            className={`${inputCls} mb-2`}
+            value={draft.pronunciation}
+            onChangeText={(v) => setDraft((d) => ({ ...d, pronunciation: v }))}
+            placeholder="e.g. /ɪˈzɒn/"
+          />
+          <Text className="mb-1 text-xs font-medium text-neutral-500">{t("myContributions.fieldExample")}</Text>
+          <TextInput
+            className={`${inputCls} mb-2`}
+            value={draft.example}
+            onChangeText={(v) => setDraft((d) => ({ ...d, example: v }))}
+          />
+          <Text className="mb-1 text-xs font-medium text-neutral-500">{t("myContributions.fieldExampleTranslation")}</Text>
+          <TextInput
+            className={`${inputCls} mb-3`}
+            value={draft.exampleTranslation}
+            onChangeText={(v) => setDraft((d) => ({ ...d, exampleTranslation: v }))}
+          />
+          <View className="flex-row justify-end gap-2">
+            <Pressable
+              onPress={() => setEditing(false)}
+              className="rounded-lg px-3 py-1.5"
+            >
+              <Text className="text-sm font-medium text-neutral-500">{t("myContributions.cancelEdit")}</Text>
+            </Pressable>
+            <Pressable
+              onPress={handleSave}
+              disabled={updateContribution.isPending}
+              className="rounded-lg bg-blue-500 px-3 py-1.5 disabled:opacity-50"
+            >
+              <Text className="text-sm font-semibold text-white">{t("myContributions.saveChanges")}</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+
       <View className="flex-row items-start justify-between">
         <View className="flex-1 pr-3">
           <View className="flex-row items-center gap-2">
@@ -106,8 +255,32 @@ function ContributionRow({ item }: { item: MyContribution }) {
               )}
             </View>
           )}
+          {canEdit && !editing && (
+            <View className="mt-1 flex-row gap-2">
+              <Pressable onPress={() => setEditing(true)} hitSlop={8}>
+                <IconSymbol name="pencil" size={15} color="#6b7280" />
+              </Pressable>
+              <Pressable onPress={handleDelete} disabled={deleteContribution.isPending} hitSlop={8}>
+                <IconSymbol name="trash" size={15} color="#ef4444" />
+              </Pressable>
+            </View>
+          )}
         </View>
       </View>
+
+      <StatusTimeline status={item.status} />
+
+      {item.status === "submitted" && (
+        <Text className="mt-2 text-xs text-neutral-400 dark:text-neutral-500">
+          {t("myContributions.reviewEstimate")}
+        </Text>
+      )}
+
+      {item.status === "approved" && item.practiceCount != null && item.practiceCount > 0 && (
+        <Text className="mt-2 text-xs text-blue-500 dark:text-blue-400">
+          {t(item.practiceCount === 1 ? "myContributions.practiceCount_one" : "myContributions.practiceCount_other", { count: item.practiceCount })}
+        </Text>
+      )}
 
       {item.status === "rejected" && item.reviewNote && (
         <View className="mt-2.5 rounded-xl bg-red-50 px-3 py-2 dark:bg-red-900/20">
@@ -146,6 +319,7 @@ export default function MyContributionsScreen() {
     <>
       <Stack.Screen options={{ title: t("myContributions.title"), headerBackTitle: "Back" }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         {/* Stats row */}
         {submissions.length > 0 && (
           <View className="flex-row border-b border-neutral-100 px-5 py-3 dark:border-neutral-800">
@@ -199,6 +373,7 @@ export default function MyContributionsScreen() {
             </View>
           }
         />
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </>
   );
