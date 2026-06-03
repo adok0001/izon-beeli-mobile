@@ -7,14 +7,14 @@ import { WordOfTheDay } from "@/components/word-of-the-day";
 import { ALL_LESSONS } from "@/lib/data/lessons";
 import { useCourses } from "@/lib/hooks/use-courses";
 import { useProverbOfTheMonth } from "@/lib/hooks/use-proverb-of-the-month";
-import { useSongOfTheWeek } from "@/lib/hooks/use-song-of-the-week";
 import { useProverbs } from "@/lib/hooks/use-proverbs";
+import { useSongOfTheWeek } from "@/lib/hooks/use-song-of-the-week";
 import { useWordsDueForReview } from "@/lib/hooks/use-wordbank";
 import { localizeField } from "@/lib/localize";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useRouter } from "expo-router";
-import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -126,72 +126,96 @@ function SongOfTheWeekCard({ languageId }: { languageId: string }) {
 
   if (!song) {
     return (
-      <Pressable
-        onPress={() => router.push(`/songs/${languageId}` as any)}
+      <View
         style={{
           borderRadius: 16, backgroundColor: M.card,
           borderWidth: 1, borderColor: M.border,
           borderLeftWidth: 4, borderLeftColor: "#f43f5e",
           overflow: "hidden",
         }}
-        className="active:opacity-70"
       >
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 14, paddingVertical: 12 }}>
-          <Text style={{ fontSize: 13, color: M.sub }}>{t("practice.noSongThisWeek")}</Text>
-          <IconSymbol name="chevron.right" size={14} color="#f43f5e" />
-        </View>
-      </Pressable>
+        <Pressable
+          onPress={() => router.push(`/songs/${languageId}` as any)}
+          className="active:opacity-70"
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 14, paddingVertical: 12 }}>
+            <Text style={{ fontSize: 13, color: M.sub }}>{t("practice.noSongThisWeek")}</Text>
+            <IconSymbol name="chevron.right" size={14} color="#f43f5e" />
+          </View>
+        </Pressable>
+        <View style={{ height: 1, backgroundColor: M.border }} />
+        <Pressable
+          onPress={() => router.push(`/songs/${languageId}` as any)}
+          style={{ paddingHorizontal: 14, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "flex-start" }}
+          className="active:opacity-60"
+        >
+          <Text style={{ fontSize: 11, fontWeight: "700", color: M.accent }}>Browse all songs</Text>
+          <IconSymbol name="chevron.right" size={11} color={M.accent} />
+        </Pressable>
+      </View>
     );
   }
 
   return (
-    <Pressable
-      onPress={() => router.push(`/lesson/${song.id}` as any)}
+    <View
       style={{
         borderRadius: 16, backgroundColor: M.card,
         borderWidth: 1, borderColor: M.border,
         borderLeftWidth: 4, borderLeftColor: "#f43f5e",
         overflow: "hidden",
       }}
-      className="active:opacity-70"
     >
-      <View
-        style={{
-          flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-          backgroundColor: "rgba(244, 63, 94, 0.08)",
-          paddingHorizontal: 14, paddingVertical: 8,
-          borderBottomWidth: 1, borderBottomColor: "rgba(244, 63, 94, 0.15)",
-        }}
+      <Pressable
+        onPress={() => router.push(`/lesson/${song.id}` as any)}
+        className="active:opacity-70"
       >
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
-          <IconSymbol name="music.note" size={12} color="#f43f5e" />
-          <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 2, color: "#f43f5e" }}>
-            {t("practice.songOfTheWeek").toUpperCase()}
-          </Text>
-        </View>
-        <View style={{ borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, backgroundColor: "rgba(244, 63, 94, 0.15)" }}>
-          <Text style={{ fontSize: 8, fontWeight: "700", letterSpacing: 1, color: "#f43f5e" }}>
-            {t("practice.thisWeeksSelection").toUpperCase()}
-          </Text>
-        </View>
-      </View>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 14, padding: 14 }}>
-        <View style={{ width: 48, height: 48, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(244, 63, 94, 0.12)" }}>
-          <IconSymbol name="music.note.list" size={22} color="#f43f5e" />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 14, fontWeight: "700", color: M.text }} numberOfLines={1}>
-            {localizeField(song.title, song.titleFr, uiLanguage)}
-          </Text>
-          {song.description ? (
-            <Text style={{ marginTop: 2, fontSize: 12, color: M.sub }} numberOfLines={1}>
-              {localizeField(song.description, song.descriptionFr, uiLanguage)}
+        <View
+          style={{
+            flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+            backgroundColor: "rgba(244, 63, 94, 0.08)",
+            paddingHorizontal: 14, paddingVertical: 8,
+            borderBottomWidth: 1, borderBottomColor: "rgba(244, 63, 94, 0.15)",
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
+            <IconSymbol name="music.note" size={12} color="#f43f5e" />
+            <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 2, color: "#f43f5e" }}>
+              {t("practice.songOfTheWeek").toUpperCase()}
             </Text>
-          ) : null}
+          </View>
+          <View style={{ borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, backgroundColor: "rgba(244, 63, 94, 0.15)" }}>
+            <Text style={{ fontSize: 8, fontWeight: "700", letterSpacing: 1, color: "#f43f5e" }}>
+              {t("practice.thisWeeksSelection").toUpperCase()}
+            </Text>
+          </View>
         </View>
-        <IconSymbol name="play.circle.fill" size={32} color="#f43f5e" />
-      </View>
-    </Pressable>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 14, padding: 14 }}>
+          <View style={{ width: 48, height: 48, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(244, 63, 94, 0.12)" }}>
+            <IconSymbol name="music.note.list" size={22} color="#f43f5e" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 14, fontWeight: "700", color: M.text }} numberOfLines={1}>
+              {localizeField(song.title, song.titleFr, uiLanguage)}
+            </Text>
+            {song.description ? (
+              <Text style={{ marginTop: 2, fontSize: 12, color: M.sub }} numberOfLines={1}>
+                {localizeField(song.description, song.descriptionFr, uiLanguage)}
+              </Text>
+            ) : null}
+          </View>
+          <IconSymbol name="play.circle.fill" size={32} color="#f43f5e" />
+        </View>
+      </Pressable>
+      <View style={{ height: 1, backgroundColor: M.border }} />
+      <Pressable
+        onPress={() => router.push(`/songs/${languageId}` as any)}
+        style={{ paddingHorizontal: 14, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "flex-start" }}
+        className="active:opacity-60"
+      >
+        <Text style={{ fontSize: 11, fontWeight: "700", color: "#f43f5e" }}>Browse all songs</Text>
+        <IconSymbol name="chevron.right" size={11} color="#f43f5e" />
+      </Pressable>
+    </View>
   );
 }
 
@@ -403,8 +427,8 @@ export default function DiscoverScreen() {
         {/* ── Cultural Hall ── */}
         <ExhibitHeader label={t("practice.sectionCulture")} />
         <View style={{ gap: 10 }}>
-          <SongsCard languageId={selectedLanguageId} />
-          <ProverbsCollectionCard languageId={selectedLanguageId} />
+          {/* <SongsCard languageId={selectedLanguageId} /> */}
+          {/* <ProverbsCollectionCard languageId={selectedLanguageId} /> */}
           <CulturalSection
             languageId={selectedLanguageId}
             onViewAll={() => router.push(`/cultural/${selectedLanguageId}` as any)}

@@ -4452,4 +4452,21 @@ export const IZON_DICTIONARY: DictionaryEntry[] = [
   e(4269, "zuzuí", "falling off or apart on its own through age, or sometimes by accident, as a decomposed palm bunch shedding all its fruits", "verbs", undefined, undefined, undefined, "ew-3590"),
   e(4270, "owéí", "Saviour", "nouns", undefined, undefined, undefined, "ew-3592"),
   e(4271, "èmí", "personal name", "nouns", undefined, undefined, undefined, "ew-3552"),
+
+  // --- Lesson 03-06-2026: More short sentences and phrases ---
+  // Section I–III: nouns, body parts, objects
+  e(4272, "ere", "woman", "nouns", undefined, "Mị ere.", "This is a woman."),
+  e(4273, "ekpe", "chin", "body", undefined, "Mị ekpe.", "This is a chin."),
+  e(4274, "bụọ", "leg", "body", undefined, "Mị bụọ.", "This is a leg."),
+  e(4275, "kasị", "chair", "nouns", undefined, "Mị kasị.", "This is a chair."),
+  e(4276, "beribe", "plantain", "food", undefined, "Mị beribe.", "This is a plantain."),
+  e(4277, "fun", "book", "nouns", undefined, "Mị fun.", "This is a book."),
+  e(4278, "lọọsị", "head-tie", "nouns", undefined, "Mị lọọsị.", "This is a head-tie."),
+  e(4279, "mịmị", "this one", "phrases", undefined, "Mịmị te ye?", "What is this one?"),
+  // Section VI: animals
+  e(4280, "okodi", "he-goat", "animals", undefined, "Mị okodi.", "This is a he-goat."),
+  e(4281, "abedi", "iguana", "animals", undefined, "Mị abedi.", "This is an iguana."),
+  e(4282, "ofoni", "fowl; bird", "animals", undefined, "Mị ofoni.", "This is a fowl."),
+  e(4283, "ewiri", "tortoise", "animals", undefined, "Mị ewiri.", "This is a tortoise."),
+  e(4284, "erefawei", "tortoise (alternative form)", "animals", undefined, "Mị erefawei.", "This is a tortoise."),
 ];
