@@ -651,6 +651,11 @@ contributionsRouter.patch("/:id", async (c) => {
   }
 
   const [updated] = await db.update(contributions).set(updates).where(eq(contributions.id, id)).returning();
+
+  if (audioUrl) {
+    await db.update(feedItems).set({ audioUrl }).where(eq(feedItems.contributionId, id));
+  }
+
   return c.json(updated);
 });
 
