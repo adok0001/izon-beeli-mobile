@@ -39,7 +39,15 @@ type Step = "type" | "language" | "entry" | "details";
 export default function ContributeScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const params = useLocalSearchParams<{ languageId?: string; category?: string }>();
+  const params = useLocalSearchParams<{
+    languageId?: string;
+    category?: string;
+    word?: string;
+    english?: string;
+    pronunciation?: string;
+    example?: string;
+    exampleTranslation?: string;
+  }>();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
   const {
     isRecording,
@@ -54,18 +62,18 @@ export default function ContributeScreen() {
   const submitContribution = useSubmitContribution();
   const submitEntryContribution = useSubmitEntryContribution();
 
-  const [step, setStep] = useState<Step>(params.languageId ? "entry" : "type");
+  const [step, setStep] = useState<Step>(params.word ? "details" : params.languageId ? "entry" : "type");
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(params.languageId ?? null);
   const [selectedEntry, setSelectedEntry] = useState<DictionaryEntry | null>(null);
   const [langSearch, setLangSearch] = useState("");
-  const [word, setWord] = useState("");
-  const [english, setEnglish] = useState("");
+  const [word, setWord] = useState(params.word ?? "");
+  const [english, setEnglish] = useState(params.english ?? "");
   const [category, setCategory] = useState<DictionaryCategory | null>(
     params.category ? (params.category as DictionaryCategory) : null
   );
-  const [pronunciation, setPronunciation] = useState("");
-  const [example, setExample] = useState("");
-  const [exampleTranslation, setExampleTranslation] = useState("");
+  const [pronunciation, setPronunciation] = useState(params.pronunciation ?? "");
+  const [example, setExample] = useState(params.example ?? "");
+  const [exampleTranslation, setExampleTranslation] = useState(params.exampleTranslation ?? "");
   const [imageUri, setImageUri] = useState<string | null>(null);
 
   const isPhrase = word.trim().includes(" ");

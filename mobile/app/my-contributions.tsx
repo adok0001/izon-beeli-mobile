@@ -4,7 +4,7 @@ import { useDeleteContribution, useMyContributions, useUpdateContribution, type 
 import { getLanguageName } from "@/lib/mock-data";
 import { useContributionStore } from "@/store/contribution-store";
 import * as ImagePicker from "expo-image-picker";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Alert, FlatList, Image, KeyboardAvoidingView, Platform, Pressable, RefreshControl, Text, TextInput, View } from "react-native";
@@ -63,6 +63,7 @@ const EDITABLE_TYPES = ["word", "phrase", "entry_meaning", "audio", "entry_audio
 
 function ContributionRow({ item }: { item: MyContribution }) {
   const { t } = useTranslation();
+  const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({
     word: item.word,
@@ -139,6 +140,10 @@ function ContributionRow({ item }: { item: MyContribution }) {
           setEditing(false);
           setNewImageUri(null);
           discardRecording();
+        },
+        onError: (err: unknown) => {
+          const message = err instanceof Error ? err.message : "Failed to save. Please try again.";
+          Alert.alert("Save failed", message);
         },
       }
     );
@@ -316,7 +321,9 @@ function ContributionRow({ item }: { item: MyContribution }) {
               disabled={updateContribution.isPending}
               className="rounded-lg bg-blue-500 px-3 py-1.5 disabled:opacity-50"
             >
-              <Text className="text-sm font-semibold text-white">{t("myContributions.saveChanges")}</Text>
+              <Text className="text-sm font-semibold text-white">
+                {updateContribution.isPending ? t("myContributions.saving") : t("myContributions.saveChanges")}
+              </Text>
             </Pressable>
           </View>
         </View>
@@ -398,7 +405,24 @@ function ContributionRow({ item }: { item: MyContribution }) {
           {canEdit && !editing && (
             <View className="mt-1 flex-row items-center gap-2">
               {item.status === "rejected" ? (
-                <Pressable onPress={() => setEditing(true)} hitSlop={8} className="flex-row items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 dark:bg-amber-900/40">
+                <Pressable
+                  onPress={() =>
+                    router.push({
+                      pathname: "/contribute",
+                      params: {
+                        languageId: item.languageId,
+                        ...(item.category ? { category: item.category } : {}),
+                        word: item.word,
+                        english: item.english,
+                        ...(item.pronunciation ? { pronunciation: item.pronunciation } : {}),
+                        ...(item.example ? { example: item.example } : {}),
+                        ...(item.exampleTranslation ? { exampleTranslation: item.exampleTranslation } : {}),
+                      },
+                    })
+                  }
+                  hitSlop={8}
+                  className="flex-row items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 dark:bg-amber-900/40"
+                >
                   <IconSymbol name="arrow.counterclockwise" size={11} color="#d97706" />
                   <Text className="text-xs font-semibold text-amber-600 dark:text-amber-400">Retry</Text>
                 </Pressable>
