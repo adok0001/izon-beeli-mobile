@@ -155,11 +155,11 @@ export default function ProfileScreen() {
           >
             <Text style={{ fontSize: 24, fontWeight: "900", color: M.ink }}>{initial}</Text>
           </View>
-          <Text style={{ fontSize: 22, fontWeight: "900", color: M.text, letterSpacing: -0.3 }}>
+          <Text style={{ fontSize: 22, fontWeight: "900", color: M.parchment, letterSpacing: -0.3 }}>
             {displayName}
           </Text>
           {email ? (
-            <Text style={{ marginTop: 3, fontSize: 12, color: M.sub }}>{email}</Text>
+            <Text style={{ marginTop: 3, fontSize: 12, color: M.textDim }}>{email}</Text>
           ) : null}
           {/* Role badges */}
           <View style={{ flexDirection: "row", gap: 8, marginTop: 10, flexWrap: "wrap", justifyContent: "center" }}>
@@ -289,7 +289,7 @@ export default function ProfileScreen() {
           }}
         >
           <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: M.border, alignSelf: "center", marginBottom: 16 }} />
-          <Text style={{ marginBottom: 20, textAlign: "center", fontSize: 17, fontWeight: "800", color: M.text }}>
+          <Text style={{ marginBottom: 20, textAlign: "center", fontSize: 17, fontWeight: "800", color: M.parchment }}>
             {t("profile.dailyGoal")}
           </Text>
           {GOAL_OPTIONS.map((opt) => {

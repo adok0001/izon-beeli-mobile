@@ -175,7 +175,7 @@ export default function SettingsScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: t("settings.title"), headerStyle: { backgroundColor: M.ink }, headerTintColor: M.text, headerShadowVisible: false }} />
+      <Stack.Screen options={{ title: t("settings.title"), headerStyle: { backgroundColor: M.ink }, headerTintColor: M.parchment, headerShadowVisible: false }} />
       <SafeAreaView style={{ flex: 1, backgroundColor: M.card }} edges={[]}>
         <NotificationBanner
           visible={toast.visible}

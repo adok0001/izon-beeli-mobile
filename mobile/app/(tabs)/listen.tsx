@@ -277,10 +277,10 @@ export default function DiscoverScreen() {
       <View style={{ backgroundColor: M.ink, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20 }}>
         <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
           <View>
-            <Text style={{ fontSize: 32, fontWeight: "900", color: M.text, letterSpacing: -0.5 }}>
+            <Text style={{ fontSize: 32, fontWeight: "900", color: M.parchment, letterSpacing: -0.5 }}>
               {t("practice.title")}
             </Text>
-            <Text style={{ fontSize: 13, color: M.sub, marginTop: 4 }}>
+            <Text style={{ fontSize: 13, color: M.textDim, marginTop: 4 }}>
               {t("practice.subtitle")}
             </Text>
           </View>

@@ -157,10 +157,10 @@ export default function LeaderboardScreen() {
             <IconSymbol name="trophy.fill" size={20} color={M.accent} />
           </View>
           <View>
-            <Text style={{ fontSize: 28, fontWeight: "900", color: M.text, letterSpacing: -0.4 }}>
+            <Text style={{ fontSize: 28, fontWeight: "900", color: M.parchment, letterSpacing: -0.4 }}>
               {t("leaderboard.title")}
             </Text>
-            <Text style={{ fontSize: 12, color: M.sub, marginTop: 2 }}>
+            <Text style={{ fontSize: 12, color: M.textDim, marginTop: 2 }}>
               {t("leaderboard.subtitle")}
             </Text>
           </View>

@@ -205,10 +205,10 @@ export default function JournalScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
       {/* Header */}
       <View style={{ backgroundColor: M.ink, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20 }}>
-        <Text style={{ fontSize: 32, fontWeight: "900", color: M.text, letterSpacing: -0.5 }}>
+        <Text style={{ fontSize: 32, fontWeight: "900", color: M.parchment, letterSpacing: -0.5 }}>
           {t("journal.title")}
         </Text>
-        <Text style={{ fontSize: 13, color: M.sub, marginTop: 4 }}>
+        <Text style={{ fontSize: 13, color: M.textDim, marginTop: 4 }}>
           {entryCount > 0
             ? t("journal.entryCount", { count: entryCount, defaultValue: `${entryCount} ${entryCount === 1 ? "entry" : "entries"}` })
             : t("journal.subtitle")}
@@ -318,9 +318,9 @@ export default function JournalScreen() {
               }}
             >
               <Pressable onPress={handleClose} hitSlop={8}>
-                <Text style={{ fontSize: 14, color: M.sub }}>{t("common.cancel")}</Text>
+                <Text style={{ fontSize: 14, color: M.textDim }}>{t("common.cancel")}</Text>
               </Pressable>
-              <Text style={{ fontSize: 15, fontWeight: "800", color: M.text }}>
+              <Text style={{ fontSize: 15, fontWeight: "800", color: M.parchment }}>
                 {isEditing ? t("journal.editEntry") : t("journal.newEntry")}
               </Text>
               <Pressable onPress={handleSave} disabled={!canSave} hitSlop={8}>
@@ -344,7 +344,7 @@ export default function JournalScreen() {
                 style={{
                   marginBottom: 16, paddingBottom: 14,
                   borderBottomWidth: 1, borderBottomColor: M.border,
-                  fontSize: 20, fontWeight: "800", color: M.text,
+                  fontSize: 20, fontWeight: "800", color: M.parchment,
                 }}
               />
               <TextInput
@@ -352,10 +352,10 @@ export default function JournalScreen() {
                 value={content}
                 onChangeText={setContent}
                 placeholder={t("journal.contentPlaceholder")}
-                placeholderTextColor={M.muted}
+                placeholderTextColor={M.textDimDark}
                 multiline
                 textAlignVertical="top"
-                style={{ flex: 1, fontSize: 14, lineHeight: 22, color: M.sub }}
+                style={{ flex: 1, fontSize: 14, lineHeight: 22, color: M.textDim }}
               />
             </View>
 

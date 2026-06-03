@@ -143,7 +143,7 @@ function CommentsModal({
               paddingHorizontal: 20, paddingVertical: 14,
             }}
           >
-            <Text style={{ fontSize: 16, fontWeight: "800", color: M.text }}>
+            <Text style={{ fontSize: 16, fontWeight: "800", color: M.parchment }}>
               {t("feed.comments")}
             </Text>
             <Pressable onPress={onClose} hitSlop={8} accessibilityRole="button" accessibilityLabel="Close">
@@ -263,9 +263,9 @@ function NewPostModal({ visible, onClose }: Readonly<{ visible: boolean; onClose
             }}
           >
             <Pressable onPress={handleClose} accessibilityRole="button" accessibilityLabel={t("feed.cancel")}>
-              <Text style={{ fontSize: 14, color: M.sub }}>{t("feed.cancel")}</Text>
+              <Text style={{ fontSize: 14, color: M.textDim }}>{t("feed.cancel")}</Text>
             </Pressable>
-            <Text style={{ fontSize: 15, fontWeight: "800", color: M.text }}>{t("feed.newPost")}</Text>
+            <Text style={{ fontSize: 15, fontWeight: "800", color: M.parchment }}>{t("feed.newPost")}</Text>
             <Pressable onPress={handlePost} disabled={!canPost} accessibilityRole="button">
               <Text style={{ fontSize: 14, fontWeight: "800", color: canPost ? M.accent : M.muted }}>
                 {t("feed.post")}
@@ -281,17 +281,17 @@ function NewPostModal({ visible, onClose }: Readonly<{ visible: boolean; onClose
               style={{
                 marginBottom: 16, paddingBottom: 14,
                 borderBottomWidth: 1, borderBottomColor: M.border,
-                fontSize: 20, fontWeight: "800", color: M.text,
+                fontSize: 20, fontWeight: "800", color: M.parchment,
               }}
             />
             <TextInput
               value={description}
               onChangeText={setDescription}
               placeholder={t("feed.contentPlaceholder")}
-              placeholderTextColor={M.muted}
+              placeholderTextColor={M.textDimDark}
               multiline
               textAlignVertical="top"
-              style={{ flex: 1, fontSize: 14, lineHeight: 22, color: M.sub }}
+              style={{ flex: 1, fontSize: 14, lineHeight: 22, color: M.textDim }}
               autoFocus
             />
           </View>
@@ -484,10 +484,10 @@ export default function FeedScreen() {
       <View style={{ backgroundColor: M.ink, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 16 }}>
         <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
           <View>
-            <Text style={{ fontSize: 32, fontWeight: "900", color: M.text, letterSpacing: -0.5 }}>
+            <Text style={{ fontSize: 32, fontWeight: "900", color: M.parchment, letterSpacing: -0.5 }}>
               {t("feed.title")}
             </Text>
-            <Text style={{ fontSize: 13, color: M.sub, marginTop: 4 }}>
+            <Text style={{ fontSize: 13, color: M.textDim, marginTop: 4 }}>
               {t("feed.subtitle")}
             </Text>
           </View>
