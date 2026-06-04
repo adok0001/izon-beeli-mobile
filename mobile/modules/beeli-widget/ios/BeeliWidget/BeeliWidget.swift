@@ -20,6 +20,17 @@ private struct WidgetColors {
   static let muted = Color(red: 0.70, green: 0.68, blue: 0.64)
 }
 
+private extension View {
+  @ViewBuilder
+  func widgetBackground(_ color: Color) -> some View {
+    if #available(iOS 17.0, *) {
+      containerBackground(color, for: .widget)
+    } else {
+      background(color)
+    }
+  }
+}
+
 // MARK: - Word of the Day
 
 private struct WotdEntry: TimelineEntry {
@@ -83,7 +94,7 @@ private struct WotdWidgetView: View {
     }
     .padding(14)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    .containerBackground(WidgetColors.bg, for: .widget)
+    .widgetBackground(WidgetColors.bg)
   }
 }
 
@@ -159,7 +170,7 @@ private struct PotmWidgetView: View {
     }
     .padding(14)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    .containerBackground(WidgetColors.bg, for: .widget)
+    .widgetBackground(WidgetColors.bg)
   }
 }
 
@@ -217,24 +228,22 @@ private struct SotwWidgetView: View {
   let entry: SotwEntry
 
   var body: some View {
-    ZStack {
-      WidgetColors.bg
-      VStack(alignment: .leading, spacing: 4) {
-        Label("Song of the Week", systemImage: "music.note")
-          .font(.system(size: 10, weight: .semibold))
-          .foregroundColor(WidgetColors.gold)
-        Spacer()
-        Image(systemName: "play.circle.fill")
-          .font(.system(size: 28))
-          .foregroundColor(WidgetColors.gold)
-        Text(entry.title)
-          .font(.system(size: 14, weight: .semibold))
-          .foregroundColor(WidgetColors.text)
-          .lineLimit(2)
-      }
-      .padding(14)
-      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    VStack(alignment: .leading, spacing: 4) {
+      Label("Song of the Week", systemImage: "music.note")
+        .font(.system(size: 10, weight: .semibold))
+        .foregroundColor(WidgetColors.gold)
+      Spacer()
+      Image(systemName: "play.circle.fill")
+        .font(.system(size: 28))
+        .foregroundColor(WidgetColors.gold)
+      Text(entry.title)
+        .font(.system(size: 14, weight: .semibold))
+        .foregroundColor(WidgetColors.text)
+        .lineLimit(2)
     }
+    .padding(14)
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    .widgetBackground(WidgetColors.bg)
   }
 }
 
