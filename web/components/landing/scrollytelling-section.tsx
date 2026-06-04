@@ -24,19 +24,23 @@ function useActiveStep(count: number) {
   const stepRefs = useRef<(HTMLDivElement | null)[]>(Array(count).fill(null));
 
   useEffect(() => {
-    const observers: IntersectionObserver[] = [];
+    function onScroll() {
+      const mid = window.innerHeight * 0.5;
+      let best = 0;
+      let bestDist = Infinity;
+      stepRefs.current.forEach((el, i) => {
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const center = (rect.top + rect.bottom) / 2;
+        const dist = Math.abs(center - mid);
+        if (dist < bestDist) { bestDist = dist; best = i; }
+      });
+      setActive(best);
+    }
 
-    stepRefs.current.forEach((el, i) => {
-      if (!el) return;
-      const obs = new IntersectionObserver(
-        ([entry]) => { if (entry.isIntersecting) setActive(i); },
-        { threshold: 0.5, rootMargin: "0px 0px -20% 0px" }
-      );
-      obs.observe(el);
-      observers.push(obs);
-    });
-
-    return () => observers.forEach((o) => o.disconnect());
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return { active, stepRefs };
@@ -46,13 +50,13 @@ function useActiveStep(count: number) {
 
 function VisualShell({ accent, label, children }: { accent: string; label: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col h-full">
-      <div className="px-10 pt-8 pb-4">
-        <span className="font-mono text-[9px] uppercase tracking-[0.3em]" style={{ color: accent + "90" }}>
+    <div className="flex flex-col h-full w-full" style={{ background: "rgb(10,10,20)" }}>
+      <div className="px-10 pt-7 pb-4 border-b shrink-0" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+        <span className="font-mono text-[9px] uppercase tracking-[0.3em]" style={{ color: accent }}>
           {label}
         </span>
       </div>
-      <div className="flex-1 flex flex-col justify-center px-10 pb-10">
+      <div className="flex-1 flex flex-col justify-start px-10 pt-8 pb-8 overflow-y-auto">
         {children}
       </div>
     </div>
@@ -122,141 +126,104 @@ function MapVisual({ accent }: { accent: string }) {
 function WaveformVisual({ accent }: { accent: string }) {
   const heights = [3,6,9,12,8,14,10,7,13,9,5,11,8,6,10,13,7,9,4,12,8,11,6,9,3];
   return (
-    <div className="flex flex-col items-center justify-center h-full gap-8 px-12">
-      {/* Cassette-like label */}
-      <div
-        className="w-full max-w-[240px] rounded-xl border px-5 py-4"
-        style={{ borderColor: accent + "40", background: accent + "08" }}
-      >
-        <div className="flex items-center gap-2 mb-4">
-          <span
-            className="text-[9px] uppercase tracking-[0.24em] font-mono font-semibold"
-            style={{ color: accent }}
-          >
-            ◉ Recording
-          </span>
-          <span className="flex-1 h-px" style={{ background: accent + "30" }} />
-        </div>
-        <div className="flex items-end gap-[3px] h-16 mb-4">
-          {heights.map((h, i) => (
-            <div
-              key={i}
-              className="w-[3px] rounded-full"
-              style={{
-                height: `${h * 3.5}px`,
-                background: accent,
-                opacity: 0.5 + (h / 14) * 0.45,
-                animation: `wave-bar ${0.6 + i * 0.09}s ease-in-out infinite alternate`,
-              }}
-            />
-          ))}
-        </div>
-        <span className="block font-display italic text-white/50 text-xs leading-relaxed">
-          Izon elder · Bayelsa State, 2023
-        </span>
+    <VisualShell accent={accent} label="◉ Recording — Bayelsa State, 2023">
+      <div className="flex items-end gap-[3px] h-20 mb-8">
+        {heights.map((h, i) => (
+          <div
+            key={i}
+            className="w-[4px] rounded-full"
+            style={{
+              height: `${h * 5}px`,
+              background: accent,
+              opacity: 0.4 + (h / 14) * 0.55,
+              animation: `wave-bar ${0.6 + i * 0.09}s ease-in-out infinite alternate`,
+            }}
+          />
+        ))}
       </div>
-      <div className="text-center max-w-[200px]">
-        <span className="block font-display font-bold text-2xl text-white/80 mb-1">
-          2M
-        </span>
-        <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-neutral-500">
-          Izon speakers · 0 keyboards
-        </span>
-      </div>
-    </div>
+      <span className="font-display font-bold text-white leading-none mb-3" style={{ fontSize: "clamp(3rem,8vw,5rem)" }}>
+        2M
+      </span>
+      <div className="h-px w-12 mb-3" style={{ background: accent }} />
+      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-500">
+        Izon speakers
+      </span>
+      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-700 mt-1">
+        0 digital keyboards, until now
+      </span>
+    </VisualShell>
   );
 }
 
 function ArchiveVisual({ accent }: { accent: string }) {
   const rows = [
-    { lang: "Yoruba",   speakers: "45M",  status: "active" },
-    { lang: "Izon",     speakers: "2M",   status: "active" },
-    { lang: "Afar",     speakers: "3M",   status: "growing" },
-    { lang: "Itsekiri", speakers: "800K", status: "active" },
-    { lang: "Oromo",    speakers: "40M",  status: "growing" },
-    { lang: "Urhobo",   speakers: "1.5M", status: "active" },
+    { lang: "Yoruba",   speakers: "45M"  },
+    { lang: "Izon",     speakers: "2M"   },
+    { lang: "Afar",     speakers: "3M"   },
+    { lang: "Itsekiri", speakers: "800K" },
+    { lang: "Oromo",    speakers: "40M"  },
+    { lang: "Urhobo",   speakers: "1.5M" },
   ];
   return (
-    <div className="flex flex-col justify-center h-full px-8 py-12">
+    <VisualShell accent={accent} label="Archive — beeli.app">
       <span
-        className="block font-mono text-[9px] uppercase tracking-[0.3em] mb-6 opacity-50"
-        style={{ color: accent }}
+        className="block font-display font-bold leading-none text-white mb-5"
+        style={{ fontSize: "clamp(3rem,6vw,5rem)" }}
       >
-        Archive — beeli.app
+        70+
       </span>
-      <div className="space-y-2">
+      <div className="space-y-0">
         {rows.map((r, i) => (
           <div
             key={r.lang}
-            className="flex items-center justify-between py-2.5 px-3 rounded-lg border"
-            style={{
-              background: "rgba(255,255,255,0.02)",
-              borderColor: i === 1 ? accent + "50" : "rgba(255,255,255,0.06)",
-              animation: `fade-in 0.4s ease-out ${i * 80}ms both`,
-            }}
+            className="flex items-center justify-between py-2 border-b"
+            style={{ borderColor: "rgba(255,255,255,0.07)" }}
           >
-            <span className="text-sm text-white/80 font-medium">{r.lang}</span>
-            <div className="flex items-center gap-3">
-              <span className="font-mono text-[10px] text-neutral-600">{r.speakers}</span>
-              <span
-                className="text-[9px] uppercase tracking-[0.16em] font-semibold px-1.5 py-0.5 rounded"
-                style={{
-                  color: accent,
-                  background: accent + "18",
-                }}
-              >
-                {r.status}
-              </span>
-            </div>
+            <span className="text-sm font-medium" style={{ color: i === 1 ? "white" : "rgba(255,255,255,0.5)" }}>
+              {r.lang}
+            </span>
+            <span className="font-mono text-[10px]" style={{ color: i === 1 ? accent : "rgba(255,255,255,0.2)" }}>
+              {r.speakers}
+            </span>
           </div>
         ))}
-        <div className="pt-2 pl-3">
-          <span className="font-mono text-[9px] text-neutral-700">+ 64 more languages</span>
+        <div className="pt-3">
+          <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-neutral-700">
+            + 64 more languages
+          </span>
         </div>
       </div>
-    </div>
+    </VisualShell>
   );
 }
 
 function RecoveryVisual({ accent }: { accent: string }) {
+  const facts = [
+    { n: "500M+", label: "diaspora speakers globally" },
+    { n: "1 in 3", label: "grew up without their mother tongue" },
+    { n: "∞",     label: "latency is not loss" },
+  ];
   return (
-    <div className="flex flex-col items-center justify-center h-full gap-10 px-12">
-      {/* Progress rings */}
-      <div className="relative w-48 h-48">
-        <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-          <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="4" />
-          <circle
-            cx="50" cy="50" r="42" fill="none"
-            stroke={accent} strokeWidth="4"
-            strokeLinecap="round"
-            strokeDasharray="264"
-            strokeDashoffset="66"
-            opacity="0.8"
-          />
-          <circle cx="50" cy="50" r="30" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="3" />
-          <circle
-            cx="50" cy="50" r="30" fill="none"
-            stroke={accent} strokeWidth="3"
-            strokeLinecap="round"
-            strokeDasharray="188"
-            strokeDashoffset="94"
-            opacity="0.5"
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="font-display font-bold text-3xl text-white">75%</span>
-          <span className="font-mono text-[9px] text-neutral-600 uppercase tracking-wider mt-1">of goal</span>
-        </div>
+    <VisualShell accent={accent} label="Diaspora · Global data">
+      <div className="space-y-5">
+        {facts.map((f, i) => (
+          <div key={i}>
+            <span
+              className="block font-display font-bold leading-none text-white mb-1"
+              style={{ fontSize: i === 0 ? "clamp(2.4rem,5vw,3.5rem)" : "clamp(1.8rem,4vw,2.5rem)" }}
+            >
+              {f.n}
+            </span>
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+              {f.label}
+            </span>
+            {i < facts.length - 1 && (
+              <div className="mt-4 h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
+            )}
+          </div>
+        ))}
       </div>
-      <div className="text-center">
-        <span className="block text-sm text-white/60 font-display italic">
-          Languages documented this year
-        </span>
-        <span className="block mt-2 font-mono text-[9px] uppercase tracking-[0.24em] opacity-40" style={{ color: accent }}>
-          Community · Native speakers · Scholars
-        </span>
-      </div>
-    </div>
+    </VisualShell>
   );
 }
 
@@ -386,11 +353,46 @@ function ChapterNav({
   );
 }
 
+// ── Fixed visual panel (bypasses overflow-x:hidden sticky bug) ────────────────
+
+function useFixedPanel(sectionRef: React.RefObject<HTMLElement | null>) {
+  const [visible, setVisible] = useState(false);
+  const [rect, setRect] = useState({ left: 0, width: 0 });
+
+  useEffect(() => {
+    function update() {
+      if (!sectionRef.current) return;
+      const sr = sectionRef.current.getBoundingClientRect();
+      // Only show once section header has scrolled off top; hide once section bottom exits
+      const navH = 64; // sticky nav height
+      const inView = sr.top < navH && sr.bottom > window.innerHeight * 0.6;
+      setVisible(inView);
+      // Mirror the left column of the max-w-7xl grid exactly
+      if (window.innerWidth >= 1024) {
+        const containerW = Math.min(1280, window.innerWidth - 48);
+        const containerLeft = (window.innerWidth - containerW) / 2 + 24;
+        setRect({ left: containerLeft, width: containerW / 2 });
+      }
+    }
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    update();
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [sectionRef]);
+
+  return { visible, ...rect };
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function ScrollytellingSection() {
   const chapters = buildChapters();
   const { active, stepRefs } = useActiveStep(chapters.length);
+  const sectionRef = useRef<HTMLElement>(null);
+  const { visible, left, width } = useFixedPanel(sectionRef);
 
   const currentChapter = chapters[active];
 
@@ -408,6 +410,7 @@ export function ScrollytellingSection() {
 
   return (
     <section
+      ref={sectionRef}
       className="relative bg-[#04040c] border-y border-white/[0.04]"
       aria-label="Interactive documentary: African languages"
     >
@@ -431,67 +434,68 @@ export function ScrollytellingSection() {
         </p>
       </div>
 
+      {/* Fixed left visual panel — position:fixed bypasses overflow-x:hidden sticky bug */}
+      {visible && (
+        <div
+          className="hidden lg:flex flex-col justify-center fixed z-30 pointer-events-none"
+          style={{ left, width, top: 64, bottom: 0 }}
+        >
+          {/* Chapter label */}
+          <div className="absolute top-6 left-6">
+            <span
+              className="font-mono text-[9px] uppercase tracking-[0.28em] transition-colors duration-500"
+              style={{ color: currentChapter.accent + "80" }}
+            >
+              {String(active + 1).padStart(2, "0")} / {String(chapters.length).padStart(2, "0")} — {currentChapter.label}
+            </span>
+          </div>
+
+          {/* Visual content — capped height so it looks right on tall viewports */}
+          <div
+            className="relative mx-6 rounded-2xl overflow-hidden border pointer-events-auto"
+            style={{
+              height: "min(60vh, 520px)",
+              background: "rgb(10,10,20)",
+              transition: "border-color 0.6s ease",
+              borderColor: currentChapter.accent + "50",
+              boxShadow: `0 0 0 1px rgba(255,255,255,0.04), 0 24px 60px -16px rgba(0,0,0,0.6)`,
+            }}
+          >
+            <div
+              className="absolute top-0 left-0 right-0 h-[1px]"
+              style={{ background: `linear-gradient(to right, transparent, ${currentChapter.accent}60, transparent)` }}
+            />
+            {visuals.map((v, i) => (
+              <div
+                key={i}
+                className="absolute inset-0"
+                style={{
+                  opacity: i === active ? 1 : 0,
+                  transition: "opacity 0.7s cubic-bezier(0.16,1,0.3,1)",
+                  pointerEvents: i === active ? "auto" : "none",
+                }}
+              >
+                {v}
+              </div>
+            ))}
+          </div>
+
+          {/* Progress bar */}
+          <div className="mx-6 mt-5 h-px bg-white/[0.06] rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${((active + 1) / chapters.length) * 100}%`, background: currentChapter.accent }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Scrollytelling layout */}
       <div className="relative max-w-7xl mx-auto px-6">
         <div className="lg:grid lg:grid-cols-2 lg:gap-0">
 
-          {/* Left: sticky visual panel */}
-          <div className="hidden lg:block relative">
-            <div className="sticky top-0 h-screen flex flex-col justify-center">
-              {/* Chapter label */}
-              <div className="absolute top-8 left-0">
-                <span
-                  className="font-mono text-[9px] uppercase tracking-[0.28em] transition-colors duration-500"
-                  style={{ color: currentChapter.accent + "80" }}
-                >
-                  {String(active + 1).padStart(2, "0")} / {String(chapters.length).padStart(2, "0")} — {currentChapter.label}
-                </span>
-              </div>
-
-              {/* Visual content */}
-              <div
-                className="relative h-[60vh] rounded-2xl overflow-hidden border"
-                style={{
-                  background: "rgba(255,255,255,0.03)",
-                  transition: "border-color 0.6s ease, background 0.6s ease",
-                  borderColor: currentChapter.accent + "30",
-                  boxShadow: `inset 0 0 60px -20px ${currentChapter.accent}10`,
-                }}
-              >
-                {/* Top accent line */}
-                <div
-                  className="absolute top-0 left-0 right-0 h-[1px] transition-colors duration-600"
-                  style={{ background: `linear-gradient(to right, transparent, ${currentChapter.accent}60, transparent)` }}
-                />
-
-                {/* Crossfade visual */}
-                {visuals.map((v, i) => (
-                  <div
-                    key={i}
-                    className="absolute inset-0"
-                    style={{
-                      opacity: i === active ? 1 : 0,
-                      transition: "opacity 0.7s cubic-bezier(0.16,1,0.3,1)",
-                      pointerEvents: i === active ? "auto" : "none",
-                    }}
-                  >
-                    {v}
-                  </div>
-                ))}
-              </div>
-
-              {/* Progress bar */}
-              <div className="mt-6 h-px bg-white/[0.06] rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{
-                    width: `${((active + 1) / chapters.length) * 100}%`,
-                    background: currentChapter.accent,
-                  }}
-                />
-              </div>
-            </div>
-          </div>
+          {/* Left column spacer — keeps grid layout, actual visual is fixed above */}
+          <div className="hidden lg:block" />
 
           {/* Right: scrolling narrative */}
           <div className="lg:pl-16 xl:pl-24">
@@ -499,7 +503,8 @@ export function ScrollytellingSection() {
               <div
                 key={ch.id}
                 ref={(el) => { stepRefs.current[i] = el; }}
-                className="min-h-screen flex flex-col justify-center py-24"
+                className="flex flex-col justify-center py-24"
+                style={{ minHeight: "min(100vh, 820px)" }}
               >
                 {/* Mobile: show stat above text */}
                 <div className="lg:hidden mb-8">
@@ -531,11 +536,11 @@ export function ScrollytellingSection() {
                   </span>
                 </div>
 
-                <h3 className="font-display font-bold text-2xl sm:text-3xl text-white leading-snug mb-8 max-w-md">
+                <h3 className="font-display font-bold text-2xl sm:text-3xl xl:text-4xl text-white leading-snug mb-8 max-w-lg">
                   {ch.headline}
                 </h3>
 
-                <div className="space-y-5 max-w-md">
+                <div className="space-y-5 max-w-lg">
                   {ch.body.map((para, j) => (
                     <p
                       key={j}

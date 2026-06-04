@@ -42,7 +42,7 @@ const FAQS: FaqItem[] = [
   {
     q: "What is the simplest way to keep my streak alive every day?",
     a: [
-      "Complete at least one lesson or one quiz before your device’s local day ends.",
+      "Complete at least one lesson or one quiz before your device's local day ends.",
       "If you are short on time, do a quick quiz and then check your streak count on the Learn or Profile screen.",
     ],
   },
@@ -60,7 +60,7 @@ const FAQS: FaqItem[] = [
   },
   {
     q: "How does multiplayer work?",
-    a: "Go to the Multiplayer section to join a public matchmaking queue or create a private session with an invite code. You'll compete against another learner in real-time vocabulary quizzes.",
+    a: "Go to the Multiplayer section to join a public matchmaking queue or create a private session with an invite code. You&apos;ll compete against another learner in real-time vocabulary quizzes.",
   },
   {
     q: "Can I use Beeli offline?",
@@ -80,83 +80,113 @@ export default function SupportPage() {
   const faqJsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-      mainEntity: FAQS.map(({ q, a }) => ({
-        "@type": "Question",
-        name: q,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: Array.isArray(a) ? a.join(" ") : a,
-        },
-      })),
+    mainEntity: FAQS.map(({ q, a }) => ({
+      "@type": "Question",
+      name: q,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: Array.isArray(a) ? a.join(" ") : a,
+      },
+    })),
   };
 
   return (
-    <main className="min-h-screen bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100">
+    <main className="min-h-screen bg-neutral-950 text-white">
       <Script id="ld-support-faq" type="application/ld+json">
         {JSON.stringify(faqJsonLd)}
       </Script>
-      <div className="max-w-3xl mx-auto px-6 py-16">
+
+      {/* Subtle top glow */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div
+          className="absolute -top-40 left-1/2 -translate-x-1/2 w-[600px] h-[400px] opacity-[0.06] blur-3xl rounded-full"
+          style={{ background: "radial-gradient(ellipse, rgb(168,85,247), transparent 70%)" }}
+        />
+      </div>
+
+      <div className="relative max-w-3xl mx-auto px-6 py-16">
+        {/* Back nav */}
         <Link
-          href="/learn"
-          className="text-sm text-amber-600 dark:text-amber-400 hover:underline"
+          href="/home"
+          className="inline-flex items-center gap-2 text-sm text-neutral-500 hover:text-white transition-colors duration-200"
         >
-          ← Back to Beeli
+          <span aria-hidden>←</span> Back to Aurufie
         </Link>
 
-        <h1 className="mt-8 font-display font-bold text-4xl tracking-tight">Support</h1>
-        <p className="mt-3 text-lg text-neutral-500 dark:text-neutral-400">
-          Learn African languages, interactively.
-        </p>
+        {/* Header */}
+        <div className="mt-12 mb-10">
+          <span className="inline-block font-mono text-[10px] uppercase tracking-[0.28em] text-brand-400 mb-4">
+            Help Centre
+          </span>
+          <h1 className="font-display text-5xl sm:text-6xl text-white tracking-[-0.02em] leading-[1.05] mb-4">
+            Support.
+          </h1>
+          <p className="text-neutral-400 text-lg leading-relaxed">
+            Learn African languages, interactively. Find answers below or reach us directly.
+          </p>
+        </div>
 
         {/* Contact card */}
-        <div className="mt-8 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 p-6">
-          <h2 className="text-lg font-semibold">Contact Us</h2>
-          <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-            Can&rsquo;t find the answer below? Email us and we&rsquo;ll get back
-            to you as soon as possible.
+        <div className="rounded-2xl p-6 border border-brand-500/20 mb-12"
+          style={{ background: "rgba(168,85,247,0.07)" }}>
+          <h2 className="font-semibold text-white text-base mb-2">Can&rsquo;t find your answer?</h2>
+          <p className="text-neutral-400 text-sm mb-5 leading-relaxed">
+            Email us and we&rsquo;ll get back to you as soon as possible.
           </p>
-          <a
-            href="mailto:support@izon-beeli.com"
-            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
-          >
-            Email Support
-          </a>
+          <div className="flex flex-wrap gap-3">
+            <a
+              href="mailto:support@izon-beeli.com"
+              className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-500 text-white font-semibold px-5 py-2.5 rounded-full text-sm transition-all duration-200"
+            >
+              Email Support
+            </a>
+            <Link
+              href="/contact"
+              className="inline-flex items-center gap-2 border border-white/15 hover:border-white/30 text-white font-semibold px-5 py-2.5 rounded-full text-sm transition-all duration-200 hover:bg-white/5"
+            >
+              Partnership or Access Requests
+            </Link>
+          </div>
         </div>
 
         {/* FAQ */}
-        <h2 className="mt-12 text-2xl font-bold">Frequently Asked Questions</h2>
-        <div className="mt-6 divide-y divide-neutral-200 dark:divide-neutral-800">
+        <div className="mb-4">
+          <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-neutral-500">
+            Frequently Asked Questions
+          </span>
+        </div>
+
+        <div className="divide-y divide-white/[0.05]">
           {FAQS.map(({ q, a }) => (
-            <details
-              key={q}
-              className="group py-5 cursor-pointer"
-            >
-              <summary className="flex items-center justify-between gap-4 list-none font-medium text-neutral-900 dark:text-white">
+            <details key={q} className="group py-5 cursor-pointer">
+              <summary className="flex items-center justify-between gap-4 list-none font-medium text-neutral-200 hover:text-white transition-colors duration-150">
                 {q}
-                <span className="shrink-0 text-neutral-400 group-open:rotate-180 transition-transform duration-200 select-none">
+                <span className="shrink-0 text-neutral-600 group-open:rotate-180 transition-transform duration-200 select-none text-xs">
                   ▾
                 </span>
               </summary>
               {Array.isArray(a) ? (
-                <ul className="mt-3 list-disc pl-5 space-y-2 text-neutral-600 dark:text-neutral-400 text-sm leading-relaxed">
+                <ul className="mt-3 space-y-2 pl-0 text-neutral-500 text-sm leading-relaxed">
                   {a.map((line, index) => (
-                    <li key={`${q}-line-${index}`}>{line}</li>
+                    <li key={`${q}-line-${index}`} className="flex items-start gap-2">
+                      <span className="mt-1.5 w-1 h-1 rounded-full bg-brand-500/50 shrink-0" />
+                      {line}
+                    </li>
                   ))}
                 </ul>
               ) : (
-                <p className="mt-3 text-neutral-600 dark:text-neutral-400 text-sm leading-relaxed">
-                  {a}
-                </p>
+                <p className="mt-3 text-neutral-500 text-sm leading-relaxed">{a}</p>
               )}
             </details>
           ))}
         </div>
 
-        <div className="mt-16 pt-8 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-sm text-neutral-400 dark:text-neutral-500">
-          <span>© {new Date().getFullYear()} Beeli (Aurufie). All rights reserved.</span>
+        {/* Footer */}
+        <div className="mt-16 pt-8 border-t border-white/[0.05] flex items-center justify-between text-xs text-neutral-600 font-mono">
+          <span>© {new Date().getFullYear()} Aurufie · Beeli</span>
           <Link
             href="/privacy"
-            className="text-blue-600 dark:text-blue-400 hover:underline"
+            className="hover:text-white transition-colors duration-150"
           >
             Privacy Policy
           </Link>

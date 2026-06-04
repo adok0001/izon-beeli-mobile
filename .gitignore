@@ -65,3 +65,4 @@ build/
 *.xcarchive
 partykit/.env
 *.swp
+.vercel
