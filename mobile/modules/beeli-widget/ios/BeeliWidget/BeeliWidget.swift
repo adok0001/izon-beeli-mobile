@@ -217,24 +217,22 @@ private struct SotwWidgetView: View {
   let entry: SotwEntry
 
   var body: some View {
-    ZStack {
-      WidgetColors.bg
-      VStack(alignment: .leading, spacing: 4) {
-        Label("Song of the Week", systemImage: "music.note")
-          .font(.system(size: 10, weight: .semibold))
-          .foregroundColor(WidgetColors.gold)
-        Spacer()
-        Image(systemName: "play.circle.fill")
-          .font(.system(size: 28))
-          .foregroundColor(WidgetColors.gold)
-        Text(entry.title)
-          .font(.system(size: 14, weight: .semibold))
-          .foregroundColor(WidgetColors.text)
-          .lineLimit(2)
-      }
-      .padding(14)
-      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    VStack(alignment: .leading, spacing: 4) {
+      Label("Song of the Week", systemImage: "music.note")
+        .font(.system(size: 10, weight: .semibold))
+        .foregroundColor(WidgetColors.gold)
+      Spacer()
+      Image(systemName: "play.circle.fill")
+        .font(.system(size: 28))
+        .foregroundColor(WidgetColors.gold)
+      Text(entry.title)
+        .font(.system(size: 14, weight: .semibold))
+        .foregroundColor(WidgetColors.text)
+        .lineLimit(2)
     }
+    .padding(14)
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    .containerBackground(WidgetColors.bg, for: .widget)
   }
 }
 
