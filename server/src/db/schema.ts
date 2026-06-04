@@ -802,6 +802,29 @@ export const storyChapters = pgTable(
   (t) => [index("story_chapters_arc_id_idx").on(t.storyArcId)]
 );
 
+export const activities = pgTable(
+  "activities",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    languageId: varchar("language_id", { length: 64 }).notNull(),
+    type: varchar("type", { length: 32 }).notNull(), // "soundboard" | "placement"
+    // soundboard fields
+    sentence: text("sentence"),
+    targetWord: varchar("target_word", { length: 255 }),
+    targetWordNative: varchar("target_word_native", { length: 255 }),
+    audioUrl: text("audio_url"),
+    channels: text("channels"), // JSON array of SoundboardChannel
+    // placement fields
+    imageUrl: text("image_url"),
+    imageAlt: text("image_alt"),
+    zones: text("zones"),  // JSON array of PlacementZone
+    tokens: text("tokens"), // JSON array of WordToken
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (t) => [index("activities_language_id_idx").on(t.languageId)]
+);
+
 // ---------- Relations ----------
 
 export const organizationsRelations = relations(organizations, ({ one, many }) => ({

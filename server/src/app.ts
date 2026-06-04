@@ -40,6 +40,8 @@ import { eq } from "drizzle-orm";
 import { appConfig } from "./db/schema.js";
 import { db } from "./db/index.js";
 import { wordbankRouter } from "./routes/wordbank.js";
+import { activitiesRouter, activitiesAdminRouter } from "./routes/activities.js";
+import { uploadAdminRouter } from "./routes/upload.js";
 import { authMiddleware, adminMiddleware } from "./middleware/auth.js";
 
 const isDev = process.env.NODE_ENV !== "production";
@@ -101,6 +103,7 @@ app.route("/cultural/admin", culturalAdminRouter);
 app.route("/sentences", sentencesRouter);
 app.route("/story-arcs", storyArcsRouter);
 app.route("/daily-content", dailyContentRouter);
+app.route("/activities", activitiesRouter);
 app.get("/health", (c) => c.json({ status: "ok" }));
 
 // Authenticated routes
@@ -129,6 +132,8 @@ app.route("/billing", billingRouter);
 app.route("/admin/billing", billingAdminRouter);
 app.route("/admin/users", adminUsersRouter);
 app.route("/daily-content/admin", dailyContentAdminRouter);
+app.route("/activities/admin", activitiesAdminRouter);
+app.route("/upload", uploadAdminRouter);
 app.route("/admin", adminStatsRouter);
 app.route("/educator", educatorRouter);
 app.route("/reviewer-applications", reviewerApplicationsRouter);
