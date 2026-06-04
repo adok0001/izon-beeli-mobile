@@ -1,6 +1,6 @@
 {
-  "name": "sabidata",
-  "version": "0.1.0",
+  "name": "beelidata",
+  "version": "1.33.1",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3002",
