@@ -1,8 +1,8 @@
 "use client";
 
+import { ArrowRight, BookOpen, Globe, GraduationCap, Headphones, Languages, Mic, Monitor, Search, Smartphone, Users, Volume2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Languages, Volume2, Globe, Users } from "lucide-react";
 
 // ── Scroll reveal ─────────────────────────────────────────────────────────────
 
@@ -96,7 +96,7 @@ const HERO_PHRASES = [
   { text: "Luqadaada",        lang: "Somali" },
   { text: "ቋንቋህ",             lang: "Amharic" },
   { text: "Wo kasa",          lang: "Twi" },
-  { text: "Edem mi",          lang: "Izon" },
+  { text: "Enị beeli",          lang: "Izon" },
 ];
 
 function CyclingHeroLine() {
@@ -123,10 +123,10 @@ function CyclingHeroLine() {
   const isIn = phase === "in";
 
   return (
-    <div className="relative overflow-hidden" style={{ minHeight: "1.05em" }}>
+    <div className="relative overflow-visible" style={{ minHeight: "1.25em", paddingBottom: "0.2em" }}>
       {/* Main text */}
       <span
-        className="block font-display font-bold leading-[0.92] tracking-tight text-white"
+        className="block font-display font-bold leading-[1.05] tracking-tight text-white"
         style={{
           fontSize: "clamp(3.5rem,9vw,7.5rem)",
           opacity: isIn ? 1 : 0,
@@ -151,12 +151,208 @@ function CyclingHeroLine() {
   );
 }
 
+// ── Circular orbit text (Wispr-style) ────────────────────────────────────────
+
+function CircularOrbit({ text, radius = 130 }: { text: string; radius?: number }) {
+  const size = (radius + 18) * 2;
+  const cx = radius + 18;
+  const arc = `M ${cx},${cx} m -${radius},0 a ${radius},${radius} 0 1,1 ${radius * 2},0 a ${radius},${radius} 0 1,1 -${radius * 2},0`;
+  return (
+    <svg
+      width={size} height={size}
+      aria-hidden
+      className="animate-spin-slow select-none pointer-events-none"
+    >
+      <defs><path id="orbit-path" d={arc} fill="none" /></defs>
+      <text fontSize="10" letterSpacing="3" fontWeight="500">
+        <textPath href="#orbit-path" className="fill-neutral-700 uppercase">
+          {text}
+        </textPath>
+      </text>
+    </svg>
+  );
+}
+
+// ── Word-by-word audio demo strip (Wispr-style) ───────────────────────────────
+
+const DEMO_PHRASES = [
+  { words: ["Ẹ", "káàbọ̀", "sí", "ilé", "-", "welcome", "home"], badge: "Yoruba" },
+  { words: ["Karibu", "kujifunza", "-", "welcome", "to", "learn"], badge: "Swahili" },
+  { words: ["Nnọọ", "n'asụsụ", "gị", "-", "hear", "your", "tongue"], badge: "Igbo" },
+  { words: ["Akwaaba", "-", "you", "are", "welcome", "here"], badge: "Twi" },
+  { words: ["Nụa", "ẹbodẹ-a", "-", "welcome,", "welcome"], badge: "Izon" }
+];
+
+function AudioDemoStrip() {
+  const [phraseIdx, setPhraseIdx] = useState(0);
+  const [wordIdx, setWordIdx] = useState(0);
+  const [showBadge, setShowBadge] = useState(false);
+
+  useEffect(() => {
+    const phrase = DEMO_PHRASES[phraseIdx];
+    if (wordIdx < phrase.words.length) {
+      const t = setTimeout(() => setWordIdx((w) => w + 1), 280);
+      return () => clearTimeout(t);
+    }
+    // all words shown — show badge after short pause
+    const t1 = setTimeout(() => setShowBadge(true), 350);
+    // hold then advance to next phrase
+    const t2 = setTimeout(() => {
+      setShowBadge(false);
+      setWordIdx(0);
+      setPhraseIdx((i) => (i + 1) % DEMO_PHRASES.length);
+    }, 2400);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [phraseIdx, wordIdx]);
+
+  const phrase = DEMO_PHRASES[phraseIdx];
+  const visibleWords = phrase.words.slice(0, wordIdx);
+
+  return (
+    <div className="relative flex items-center gap-3 mt-10">
+      {/* Waveform pill */}
+      <div className="shrink-0 w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center">
+        <div className="flex items-end gap-[2px] h-4">
+          {[3,5,7,5,8,4,6,3,5,7].map((h, i) => (
+            <div
+              key={i}
+              className="w-[2px] bg-amber-500/60 rounded-full"
+              style={{ height: `${h * 2}px`, animation: `pulse-glow ${0.4 + i * 0.07}s ease-in-out infinite alternate` }}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Words + badge */}
+      <div className="relative min-h-[2rem] flex flex-wrap items-center gap-x-1.5 gap-y-1">
+        {visibleWords.map((word, i) => (
+          <span
+            key={`${phraseIdx}-${i}`}
+            className="text-sm font-medium text-neutral-300"
+            style={{ animation: "fade-in 0.18s ease-out both" }}
+          >
+            {word}
+          </span>
+        ))}
+        {showBadge && (
+          <span
+            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-[11px] text-amber-400 font-semibold"
+            style={{ animation: "scale-in 0.22s ease-out both" }}
+          >
+            <Volume2 className="h-2.5 w-2.5" />
+            {phrase.badge} · Native speaker audio
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Interactive persona pill selector (Wispr-style) ──────────────────────────
+
+function PersonaPillSelector() {
+  const [active, setActive] = useState(0);
+  const current = PERSONAS[active];
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      {/* Pills */}
+      <div className="flex flex-wrap gap-3">
+        {PERSONAS.map((p, i) => (
+          <button
+            key={p.label}
+            onClick={() => setActive(i)}
+            className={[
+              "inline-flex items-center gap-2 px-5 py-2.5 rounded-full border text-sm font-medium transition-all duration-200",
+              active === i
+                ? "bg-amber-500/15 border-amber-500/50 text-amber-300"
+                : "bg-white/[0.03] border-white/[0.08] text-neutral-500 hover:border-white/20 hover:text-neutral-300",
+            ].join(" ")}
+          >
+            <p.icon className="h-3.5 w-3.5" />
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Content panel */}
+      <div
+        key={active}
+        className="relative bg-white/[0.03] border border-white/[0.07] rounded-2xl p-8 overflow-hidden"
+        style={{ animation: "fade-in 0.28s ease-out both" }}
+      >
+        <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-amber-500/40 to-transparent" />
+        <span className="text-[10px] uppercase tracking-[0.28em] text-amber-600/70 font-semibold">
+          {current.label}
+        </span>
+        <h3 className="font-display font-bold text-2xl text-white mt-3 mb-3 leading-snug">
+          {current.headline}
+        </h3>
+        <p className="text-sm text-neutral-500 leading-relaxed">{current.desc}</p>
+        <Link
+          href="/sign-up"
+          className="inline-flex items-center gap-1.5 mt-6 text-sm text-amber-400 hover:text-amber-300 font-medium transition-colors"
+        >
+          Start free <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 // ── Data ──────────────────────────────────────────────────────────────────────
 
 const STATS = [
   { value: "70+",   label: "African Languages", ref: "Cat. No. 001" },
   { value: "7",     label: "Regions Covered",   ref: "Cat. No. 002" },
   { value: "500M+", label: "Diaspora Speakers", ref: "Cat. No. 003" },
+];
+
+const HOW_IT_WORKS = [
+  {
+    step: "01",
+    icon: Search,
+    title: "Find your language",
+    desc: "Browse 70+ African languages by name, region, or dialect. Chances are yours is already here.",
+  },
+  {
+    step: "02",
+    icon: Headphones,
+    title: "Hear it first",
+    desc: "Every word is recorded by native speakers. You train your ear before your eye. Sound before script.",
+  },
+  {
+    step: "03",
+    icon: Mic,
+    title: "Speak with confidence",
+    desc: "Practice pronunciation, build vocabulary, and track your progress — free, forever.",
+  },
+];
+
+const PERSONAS = [
+  {
+    icon: Globe,
+    label: "Diaspora",
+    headline: "Reconnect with home",
+    desc: "Millions of Africans abroad grew up without access to their mother tongue. Beeli closes that gap.",
+  },
+  {
+    icon: Users,
+    label: "Heritage Learners",
+    headline: "It's your language",
+    desc: "You hear it at family gatherings but never formally learned it. Start now — no textbook required.",
+  },
+  {
+    icon: GraduationCap,
+    label: "Educators",
+    headline: "Teach it properly",
+    desc: "Build structured lessons backed by native-speaker audio. Import to your class in minutes.",
+  },
+  {
+    icon: BookOpen,
+    label: "Researchers",
+    headline: "Document, preserve",
+    desc: "African languages are disappearing at speed. Contribute audio, vocabulary, and context to keep them alive.",
+  },
 ];
 
 const FEATURES = [
@@ -261,6 +457,11 @@ export function LandingPage() {
 
       {/* ── Hero ── */}
       <section className="relative min-h-[92vh] flex flex-col justify-center px-6 py-32 overflow-hidden">
+        {/* Circular orbit — positioned left of headline, like Wispr */}
+        <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 hidden lg:block opacity-60">
+          <CircularOrbit text="Hear it · Speak it · Live it · Hear it · Speak it · Live it · " radius={120} />
+        </div>
+
         <div className="max-w-7xl mx-auto w-full">
           <div className="max-w-3xl animate-fade-in">
             <SectionLabel>Collection No. 001 — African Languages</SectionLabel>
@@ -298,6 +499,27 @@ export function LandingPage() {
               >
                 Sign In
               </Link>
+            </div>
+
+            {/* Word-by-word audio demo strip */}
+            <AudioDemoStrip />
+
+            {/* Platform availability badges */}
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <span className="text-[10px] uppercase tracking-[0.28em] text-neutral-700 font-medium">Available on</span>
+              {[
+                { icon: Smartphone, label: "iOS" },
+                { icon: Smartphone, label: "Android" },
+                { icon: Monitor,    label: "Web" },
+              ].map(({ icon: Icon, label }) => (
+                <span
+                  key={label}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/[0.04] border border-white/[0.07] text-[11px] text-neutral-500"
+                >
+                  <Icon className="h-3 w-3" />
+                  {label}
+                </span>
+              ))}
             </div>
           </div>
 
@@ -345,6 +567,40 @@ export function LandingPage() {
           ))}
         </div>
       </div>
+
+      {/* ── How it works ── */}
+      <section className="relative py-28 px-6 border-b border-white/[0.04]">
+        <div className="max-w-7xl mx-auto">
+          <Reveal>
+            <div className="mb-16">
+              <SectionLabel>How It Works</SectionLabel>
+              <h2 className="font-display font-bold text-4xl sm:text-5xl text-white leading-tight">
+                Three steps. One language.
+              </h2>
+              <p className="mt-4 text-neutral-500 max-w-sm text-sm leading-relaxed">
+                No app store required to try it. Free forever. No card.
+              </p>
+            </div>
+          </Reveal>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/[0.04] rounded-2xl overflow-hidden border border-white/[0.06]">
+            {HOW_IT_WORKS.map((item, i) => (
+              <Reveal key={item.step} delay={i * 100}>
+                <div className="group relative bg-[#06060e] p-10 h-full hover:bg-white/[0.02] transition-colors duration-300">
+                  <div className="absolute top-8 right-9 font-display font-bold text-6xl text-white/[0.04] leading-none select-none">
+                    {item.step}
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-6">
+                    <item.icon className="h-4 w-4 text-amber-400" />
+                  </div>
+                  <h3 className="font-display font-semibold text-lg text-white mb-3">{item.title}</h3>
+                  <p className="text-sm text-neutral-500 leading-relaxed">{item.desc}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* ── Feature halls ── */}
       <section className="relative py-28 px-6">
@@ -412,6 +668,26 @@ export function LandingPage() {
               </Reveal>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ── Who it's for ── */}
+      <section className="relative py-28 px-6">
+        <div className="max-w-7xl mx-auto">
+          <Reveal>
+            <div className="mb-16">
+              <SectionLabel>Who It&apos;s For</SectionLabel>
+              <h2 className="font-display font-bold text-4xl sm:text-5xl text-white leading-tight">
+                Built for the diaspora.
+                <br />
+                <span className="text-amber-400">Open to everyone.</span>
+              </h2>
+            </div>
+          </Reveal>
+
+          <Reveal delay={100}>
+            <PersonaPillSelector />
+          </Reveal>
         </div>
       </section>
 
