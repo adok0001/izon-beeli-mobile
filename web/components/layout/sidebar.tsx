@@ -108,7 +108,7 @@ export function Sidebar() {
     >
       {/* Logo */}
       <div className="px-5 py-[18px] border-b border-white/[0.055]">
-        <Link href="/learn" className="flex items-center gap-3 group">
+        <Link href="/" className="flex items-center gap-3 group">
           <div className="relative w-9 h-9 rounded-xl overflow-hidden shrink-0 shadow-[0_0_20px_-4px_rgb(245_158_11_/0.55)]">
             <div className="absolute inset-0 bg-gradient-to-br from-amber-400 to-amber-700" />
             <div className="absolute inset-0 flex items-center justify-center">

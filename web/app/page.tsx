@@ -1,5 +1,3 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { LandingPage } from "@/components/landing/landing-page";
 
@@ -10,8 +8,6 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-export default async function RootPage() {
-  const { userId } = await auth();
-  if (userId) redirect("/learn");
+export default function RootPage() {
   return <LandingPage />;
 }

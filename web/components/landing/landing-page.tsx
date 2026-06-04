@@ -289,7 +289,7 @@ function PersonaPillSelector() {
         </h3>
         <p className="text-sm text-neutral-500 leading-relaxed">{current.desc}</p>
         <Link
-          href="/sign-up"
+          href="/learn"
           className="inline-flex items-center gap-1.5 mt-6 text-sm text-amber-400 hover:text-amber-300 font-medium transition-colors"
         >
           Start free <ArrowRight className="h-3.5 w-3.5" />
@@ -444,12 +444,11 @@ export function LandingPage() {
             </Link>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/sign-in" className="btn-ghost text-sm">Sign In</Link>
             <Link
-              href="/sign-up"
+              href="/learn"
               className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#06060e] font-bold text-sm transition-all duration-200 shadow-[0_0_24px_-6px_rgb(245_158_11_/0.5)] hover:shadow-[0_0_36px_-6px_rgb(245_158_11_/0.7)]"
             >
-              Start Free
+              Start Learning
             </Link>
           </div>
         </div>
@@ -487,17 +486,17 @@ export function LandingPage() {
 
             <div className="mt-12 flex flex-col sm:flex-row items-start gap-4">
               <Link
-                href="/sign-up"
+                href="/learn"
                 className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#06060e] font-bold text-sm transition-all duration-200 shadow-[0_0_60px_-12px_rgb(245_158_11_/0.65)] hover:shadow-[0_0_80px_-12px_rgb(245_158_11_/0.85)]"
               >
                 Start Learning Free
                 <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
               </Link>
               <Link
-                href="/sign-in"
+                href="/learn"
                 className="inline-flex items-center gap-2 px-8 py-4 rounded-xl border border-white/[0.1] text-neutral-400 hover:text-white hover:border-white/20 font-medium text-sm transition-all duration-200"
               >
-                Sign In
+                Explore languages
               </Link>
             </div>
 
@@ -749,7 +748,7 @@ export function LandingPage() {
               Free forever. No credit card. Start in 60 seconds.
             </p>
             <Link
-              href="/sign-up"
+              href="/learn"
               className="group inline-flex items-center gap-2 px-10 py-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#06060e] font-bold text-base transition-all duration-200 shadow-[0_0_72px_-12px_rgb(245_158_11_/0.65)] hover:shadow-[0_0_100px_-12px_rgb(245_158_11_/0.85)]"
             >
               Start Learning Free
@@ -767,7 +766,7 @@ export function LandingPage() {
             <Link href="/privacy" className="hover:text-neutral-400 transition-colors">Privacy</Link>
             <Link href="/support" className="hover:text-neutral-400 transition-colors">Support</Link>
             <Link href="/for-educators" className="hover:text-neutral-400 transition-colors">For Educators</Link>
-            <Link href="/sign-up" className="text-amber-500 hover:text-amber-400 font-semibold transition-colors">
+            <Link href="/learn" className="text-amber-500 hover:text-amber-400 font-semibold transition-colors">
               Get Started
             </Link>
           </div>
