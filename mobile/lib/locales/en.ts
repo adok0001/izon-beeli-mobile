@@ -41,7 +41,7 @@ export const en = {
     practice: "Discover",
     journal: "Journal",
     feed: "Feed",
-    leaderboard: "Leaderboard",
+    leaderboard: "Rank",
     profile: "Profile",
     listen: "Listen",
     contribute: "Contribute",

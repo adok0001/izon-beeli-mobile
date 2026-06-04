@@ -41,7 +41,7 @@ export const pcm = {
     practice: "Practice",
     journal: "Journal",
     feed: "Feed",
-    leaderboard: "Leaderboard",
+    leaderboard: "Rank",
     profile: "Profile",
     listen: "Listen",
     contribute: "Contribute",

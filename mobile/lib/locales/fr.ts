@@ -37,11 +37,11 @@ export const fr = {
     unknownError: "Une erreur est survenue. Veuillez réessayer.",
   },
   tabs: {
-    learn: "Apprendre",
+    learn: "Cours",
     practice: "Découvrir",
     journal: "Journal",
     feed: "Fil",
-    leaderboard: "Classement",
+    leaderboard: "Rang",
     profile: "Profil",
     listen: "Écouter",
     contribute: "Contribuer"
