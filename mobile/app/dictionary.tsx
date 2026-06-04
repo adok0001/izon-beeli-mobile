@@ -1,6 +1,7 @@
 import { WordAudioButton } from "@/components/dictionary/word-audio-button";
 import { NsibidiText } from "@/components/nsibidi/nsibidi-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { ActivityIndicator } from "react-native";
 import {
   ALL_CATEGORIES,
@@ -41,29 +42,20 @@ type Section = {
   data: DictionaryEntry[];
 };
 
-function SwipeActions({
-  saved,
-  onToggle,
-  side,
-}: {
-  saved: boolean;
-  onToggle: () => void;
-  side: "left" | "right";
-}) {
+function SwipeActions({ saved, onToggle, side }: { saved: boolean; onToggle: () => void; side: "left" | "right" }) {
+  const M = useMuseumTheme();
   if (side === "right" && saved) return null;
   if (side === "left" && !saved) return null;
 
   return (
     <Pressable
       onPress={onToggle}
-      className={`w-16 items-center justify-center ${
-        side === "right" ? "bg-amber-400" : "bg-neutral-200 dark:bg-neutral-700"
-      }`}
+      style={{ width: 64, alignItems: "center", justifyContent: "center", backgroundColor: side === "right" ? M.accent : M.border }}
     >
       <IconSymbol
         name={side === "right" ? "star.fill" : "star.slash"}
         size={22}
-        color={side === "right" ? "#fff" : "#9ca3af"}
+        color={side === "right" ? M.ink : M.sub}
       />
     </Pressable>
   );
@@ -82,6 +74,7 @@ function WordRow({
   onToggle: () => void;
   onPress: () => void;
 }) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const hasAudio = !!entry.audioUrl;
   const swipeRef = useRef<Swipeable>(null);
@@ -113,39 +106,40 @@ function WordRow({
     >
       <Pressable
         onPress={onPress}
-        className="border-b border-neutral-100 bg-white px-5 py-3 active:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:active:bg-neutral-800/60"
+        style={{ borderBottomWidth: 1, borderBottomColor: M.border, backgroundColor: M.card, paddingHorizontal: 20, paddingVertical: 12 }}
+        className="active:opacity-80"
       >
-        <View className="flex-row items-center">
-          <View className="flex-1">
-            <View className="flex-row items-center gap-1.5">
-              <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <Text style={{ fontSize: 16, fontWeight: "600", color: M.text }}>
                 {entry.word}
               </Text>
               {isEducator && !hasAudio && (
-                <View className="rounded bg-orange-100 px-1.5 py-0.5 dark:bg-orange-900/30">
-                  <Text className="text-[10px] font-semibold text-orange-600 dark:text-orange-400">
+                <View style={{ borderRadius: 4, backgroundColor: "#f9731620", paddingHorizontal: 6, paddingVertical: 2 }}>
+                  <Text style={{ fontSize: 10, fontWeight: "600", color: "#f97316" }}>
                     {t("dictionaryPage.needsAudio")}
                   </Text>
                 </View>
               )}
             </View>
-            <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
+            <Text style={{ marginTop: 2, fontSize: 13, color: M.sub }}>
               {entry.english.includes(";")
                 ? entry.english.split(";").map((m) => m.trim()).filter(Boolean).join(" · ")
                 : entry.english}
             </Text>
             {!!entry.nsibidi && (
-              <NsibidiText size={18} color="#f59e0b" style={{ marginTop: 2 }}>
+              <NsibidiText size={18} color={M.accent} style={{ marginTop: 2 }}>
                 {entry.nsibidi}
               </NsibidiText>
             )}
           </View>
           <WordAudioButton audioSource={entry.audioUrl} word={entry.word} />
-          <Pressable onPress={onToggle} hitSlop={8} className="ml-1">
+          <Pressable onPress={onToggle} hitSlop={8} style={{ marginLeft: 4 }}>
             <IconSymbol
               name={saved ? "star.fill" : "star"}
               size={20}
-              color={saved ? "#f59e0b" : "#d1d5db"}
+              color={saved ? M.accent : M.border}
             />
           </Pressable>
         </View>
@@ -154,38 +148,26 @@ function WordRow({
   );
 }
 
-function RecentlyViewedStrip({
-  entries,
-  onPress,
-}: {
-  entries: DictionaryEntry[];
-  onPress: (entry: DictionaryEntry) => void;
-}) {
+function RecentlyViewedStrip({ entries, onPress }: { entries: DictionaryEntry[]; onPress: (entry: DictionaryEntry) => void }) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   if (entries.length === 0) return null;
 
   return (
-    <View className="border-b border-neutral-100 py-3 dark:border-neutral-800">
-      <Text className="mb-2 px-5 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+    <View style={{ borderBottomWidth: 1, borderBottomColor: M.border, paddingVertical: 12 }}>
+      <Text style={{ marginBottom: 8, paddingHorizontal: 20, fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
         {t("dictionaryPage.recentlyViewed")}
       </Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
-      >
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
         {entries.map((entry) => (
           <Pressable
             key={entry.id}
             onPress={() => onPress(entry)}
-            className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 active:opacity-70 dark:border-neutral-700 dark:bg-neutral-800"
+            style={{ borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, paddingHorizontal: 12, paddingVertical: 8 }}
+            className="active:opacity-70"
           >
-            <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-              {entry.word}
-            </Text>
-            <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-              {entry.english.split(";")[0].trim()}
-            </Text>
+            <Text style={{ fontSize: 13, fontWeight: "600", color: M.text }}>{entry.word}</Text>
+            <Text style={{ fontSize: 11, color: M.sub }}>{entry.english.split(";")[0].trim()}</Text>
           </Pressable>
         ))}
       </ScrollView>
@@ -194,6 +176,7 @@ function RecentlyViewedStrip({
 }
 
 export default function DictionaryScreen() {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -298,103 +281,66 @@ export default function DictionaryScreen() {
   return (
     <>
       <Stack.Screen options={{ title: "Dictionary", headerBackTitle: "Back" }} />
-      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={[]}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
         {/* Search bar */}
-        <View className="border-b border-neutral-200 px-5 pb-3 pt-2 dark:border-neutral-700">
-          <View className="flex-row items-center rounded-xl bg-neutral-100 px-3 dark:bg-neutral-800">
-            <IconSymbol name="magnifyingglass" size={18} color="#9ca3af" />
+        <View style={{ borderBottomWidth: 1, borderBottomColor: M.border, paddingHorizontal: 20, paddingBottom: 12, paddingTop: 8 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", borderRadius: 12, backgroundColor: M.card, paddingHorizontal: 12, borderWidth: 1, borderColor: M.border }}>
+            <IconSymbol name="magnifyingglass" size={18} color={M.muted} />
             <TextInput
               value={query}
               onChangeText={(v) => { setQuery(v); setSelectedCategory(null); }}
               placeholder={t("dictionaryPage.searchPlaceholderMobile")}
-              placeholderTextColor="#9ca3af"
-              className="ml-2 flex-1 py-2.5 text-base text-neutral-900 dark:text-white"
+              placeholderTextColor={M.inputPlaceholder}
+              style={{ marginLeft: 8, flex: 1, paddingVertical: 10, fontSize: 16, color: M.inputText }}
               autoCapitalize="none"
               autoCorrect={false}
             />
             {igboFetching && isIgbo && query.length >= 2 && (
-              <ActivityIndicator size="small" color="#f59e0b" style={{ marginRight: 4 }} />
+              <ActivityIndicator size="small" color={M.accent} style={{ marginRight: 4 }} />
             )}
             {query.length > 0 && (
               <Pressable onPress={() => setQuery("")} hitSlop={8}>
-                <IconSymbol name="xmark" size={16} color="#9ca3af" />
+                <IconSymbol name="xmark" size={16} color={M.muted} />
               </Pressable>
             )}
           </View>
 
-          {/* View toggle — All / My Words / Needs Audio (educator only) */}
-          <View className="mt-3 flex-row gap-2">
-            <Pressable
-              onPress={() => setViewMode("all")}
-              className={`flex-1 items-center rounded-lg py-2 ${
-                viewMode === "all" ? "bg-sky-500" : "bg-neutral-100 dark:bg-neutral-800"
-              }`}
-            >
-              <Text
-                className={`text-sm font-semibold ${
-                  viewMode === "all" ? "text-white" : "text-neutral-600 dark:text-neutral-400"
-                }`}
-              >
-                {t("dictionaryPage.allWordsCount", { count: allEntries.length })}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setViewMode("saved")}
-              className={`flex-1 items-center rounded-lg py-2 ${
-                viewMode === "saved" ? "bg-amber-500" : "bg-neutral-100 dark:bg-neutral-800"
-              }`}
-            >
-              <Text
-                className={`text-sm font-semibold ${
-                  viewMode === "saved" ? "text-white" : "text-neutral-600 dark:text-neutral-400"
-                }`}
-              >
-                {t("dictionaryPage.myWordsCount", { count: savedCount })}
-              </Text>
-            </Pressable>
-            {isEducator && needsAudioCount > 0 && (
+          <View style={{ marginTop: 12, flexDirection: "row", gap: 8 }}>
+            {[
+              { mode: "all" as ViewMode, label: t("dictionaryPage.allWordsCount", { count: allEntries.length }), activeColor: M.accent },
+              { mode: "saved" as ViewMode, label: t("dictionaryPage.myWordsCount", { count: savedCount }), activeColor: M.accent },
+              ...(isEducator && needsAudioCount > 0 ? [{ mode: "needs_audio" as ViewMode, label: t("dictionaryPage.needsAudioCount", { count: needsAudioCount }), activeColor: "#f97316" }] : []),
+            ].map(({ mode, label, activeColor }) => (
               <Pressable
-                onPress={() => setViewMode("needs_audio")}
-                className={`flex-1 items-center rounded-lg py-2 ${
-                  viewMode === "needs_audio"
-                    ? "bg-orange-500"
-                    : "bg-neutral-100 dark:bg-neutral-800"
-                }`}
+                key={mode}
+                onPress={() => setViewMode(mode)}
+                style={{ flex: 1, alignItems: "center", borderRadius: 8, paddingVertical: 8, backgroundColor: viewMode === mode ? activeColor : M.card, borderWidth: 1, borderColor: viewMode === mode ? activeColor : M.border }}
               >
-                <Text
-                  className={`text-sm font-semibold ${
-                    viewMode === "needs_audio"
-                      ? "text-white"
-                      : "text-neutral-600 dark:text-neutral-400"
-                  }`}
-                >
-                  {t("dictionaryPage.needsAudioCount", { count: needsAudioCount })}
-                </Text>
+                <Text style={{ fontSize: 13, fontWeight: "600", color: viewMode === mode ? M.ink : M.sub }}>{label}</Text>
               </Pressable>
-            )}
+            ))}
           </View>
 
-          {/* Review CTA */}
           {viewMode === "saved" && savedCount > 0 && (
             <Pressable
               onPress={() => router.push("/word-review")}
-              className="mt-3 flex-row items-center justify-center rounded-xl bg-emerald-500 py-2.5 active:opacity-80"
+              style={{ marginTop: 12, flexDirection: "row", alignItems: "center", justifyContent: "center", borderRadius: 12, backgroundColor: "#22c55e", paddingVertical: 10 }}
+              className="active:opacity-80"
             >
               <IconSymbol name="brain.head.profile" size={16} color="#fff" />
-              <Text className="ml-2 text-sm font-semibold text-white">
+              <Text style={{ marginLeft: 8, fontSize: 13, fontWeight: "600", color: "#fff" }}>
                 {t("dictionaryPage.reviewSavedWords")}
               </Text>
             </Pressable>
           )}
 
-          {/* Contribute CTA — educator only */}
           {isEducator && viewMode === "needs_audio" && needsAudioCount > 0 && (
-            <View className="mt-3 rounded-xl bg-orange-50 px-4 py-3 dark:bg-orange-900/20">
-              <Text className="text-sm font-medium text-orange-800 dark:text-orange-200">
+            <View style={{ marginTop: 12, borderRadius: 12, backgroundColor: "#f9731615", paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: "#f9731630" }}>
+              <Text style={{ fontSize: 13, fontWeight: "500", color: "#f97316" }}>
                 {t("dictionaryPage.needsAudioCta", { count: needsAudioCount })}
               </Text>
-              <Text className="mt-0.5 text-xs text-orange-600 dark:text-orange-400">
+              <Text style={{ marginTop: 2, fontSize: 11, color: "#f97316" }}>
                 {t("dictionaryPage.needsAudioCtaDesc")}
               </Text>
             </View>
@@ -403,57 +349,24 @@ export default function DictionaryScreen() {
 
         {/* Category chip row */}
         {!isLoading && presentCategories.length > 0 && (
-          <View className="border-b border-neutral-100 dark:border-neutral-800">
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}
-            >
-              <Pressable
-                key="all"
-                onPress={() => setSelectedCategory(null)}
-                className={`rounded-full px-3.5 py-1.5 ${
-                  selectedCategory === null
-                    ? "bg-sky-500"
-                    : "bg-neutral-100 dark:bg-neutral-800"
-                }`}
-              >
-                <Text
-                  className={`text-xs font-semibold ${
-                    selectedCategory === null
-                      ? "text-white"
-                      : "text-neutral-600 dark:text-neutral-400"
-                  }`}
-                >
-                  {t("dictionaryPage.allCategory")}
-                </Text>
-              </Pressable>
-              {presentCategories.map(({ category, title }) => (
-                <Pressable
-                  key={category}
-                  onPress={() => handleCategoryChip(category)}
-                  className={`rounded-full px-3.5 py-1.5 ${
-                    selectedCategory === category
-                      ? "bg-sky-500"
-                      : "bg-neutral-100 dark:bg-neutral-800"
-                  }`}
-                >
-                  <Text
-                    className={`text-xs font-semibold ${
-                      selectedCategory === category
-                        ? "text-white"
-                        : "text-neutral-600 dark:text-neutral-400"
-                    }`}
+          <View style={{ borderBottomWidth: 1, borderBottomColor: M.border }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}>
+              {[{ category: null, title: t("dictionaryPage.allCategory") }, ...presentCategories].map(({ category, title }) => {
+                const active = selectedCategory === category;
+                return (
+                  <Pressable
+                    key={category ?? "all"}
+                    onPress={() => setSelectedCategory(category as DictionaryCategory | null)}
+                    style={{ borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6, backgroundColor: active ? M.accent : M.card, borderWidth: 1, borderColor: active ? M.accent : M.border }}
                   >
-                    {title}
-                  </Text>
-                </Pressable>
-              ))}
+                    <Text style={{ fontSize: 12, fontWeight: "600", color: active ? M.ink : M.sub }}>{title}</Text>
+                  </Pressable>
+                );
+              })}
             </ScrollView>
           </View>
         )}
 
-        {/* Loading state */}
         {isLoading ? (
           <LoadingScreen />
         ) : (
@@ -464,7 +377,7 @@ export default function DictionaryScreen() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />
             }
             ListHeaderComponent={
               query === "" && viewMode === "all" && recentEntries.length > 0 ? (
@@ -473,17 +386,14 @@ export default function DictionaryScreen() {
                   onPress={(entry) => {
                     const allIds = sections.flatMap((s) => s.data.map((e) => e.id));
                     setNavContext(allIds, entry.id, entry.languageId);
-                    router.push({
-                      pathname: "/word/[id]",
-                      params: { id: entry.id, languageId: entry.languageId },
-                    });
+                    router.push({ pathname: "/word/[id]", params: { id: entry.id, languageId: entry.languageId } });
                   }}
                 />
               ) : null
             }
             renderSectionHeader={({ section }) => (
-              <View className="bg-neutral-50 px-5 py-2 dark:bg-neutral-800/80">
-                <Text className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+              <View style={{ backgroundColor: M.bg, paddingHorizontal: 20, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: M.border }}>
+                <Text style={{ fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
                   {section.title}
                 </Text>
               </View>
@@ -498,16 +408,10 @@ export default function DictionaryScreen() {
               />
             )}
             ListEmptyComponent={
-              <View className="items-center px-8 py-16">
-                <IconSymbol
-                  name={viewMode === "saved" ? "star.fill" : "magnifyingglass"}
-                  size={40}
-                  color="#d1d5db"
-                />
-                <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
-                  {viewMode === "saved"
-                    ? t("dictionaryPage.noSavedWords")
-                    : t("dictionaryPage.noResults")}
+              <View style={{ alignItems: "center", paddingHorizontal: 32, paddingVertical: 64 }}>
+                <IconSymbol name={viewMode === "saved" ? "star.fill" : "magnifyingglass"} size={40} color={M.border} />
+                <Text style={{ marginTop: 16, textAlign: "center", fontSize: 15, color: M.sub }}>
+                  {viewMode === "saved" ? t("dictionaryPage.noSavedWords") : t("dictionaryPage.noResults")}
                 </Text>
               </View>
             }

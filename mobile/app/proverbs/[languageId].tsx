@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useProverbs } from "@/lib/hooks/use-proverbs";
 import { getLanguageName } from "@/lib/mock-data";
 import type { Proverb } from "@/types";
@@ -17,6 +18,7 @@ function ProverbCard({
   proverb: Proverb;
   languageId: string;
 }) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
@@ -64,71 +66,84 @@ function ProverbCard({
   }, [proverb, languageId, t]);
 
   return (
-    <View className="mb-3 rounded-2xl bg-amber-50 p-4 dark:bg-amber-900/20">
-      {/* Proverb text */}
-      <Text className="text-base font-semibold italic text-neutral-900 dark:text-white">
+    <View
+      style={{
+        marginBottom: 12, borderRadius: 16, backgroundColor: M.card,
+        borderWidth: 1, borderColor: M.border,
+        borderLeftWidth: 4, borderLeftColor: M.accent,
+        padding: 16,
+      }}
+    >
+      <Text style={{ fontSize: 16, fontWeight: "600", fontStyle: "italic", color: M.text }}>
         &ldquo;{proverb.text}&rdquo;
       </Text>
-      <Text className="mt-1.5 text-sm text-neutral-600 dark:text-neutral-400">
+      <Text style={{ marginTop: 6, fontSize: 13, lineHeight: 18, color: M.sub }}>
         {proverb.translation}
       </Text>
 
-      {/* Expandable meaning */}
       {expanded && (
-        <View className="mt-3 rounded-lg bg-amber-100/60 px-3 py-2 dark:bg-amber-900/30">
-          <Text className="text-xs font-medium text-amber-800 dark:text-amber-300">
+        <View style={{ marginTop: 12, borderRadius: 8, backgroundColor: M.accentGlow, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: M.accentBorder }}>
+          <Text style={{ fontSize: 12, lineHeight: 17, color: M.sub }}>
             {proverb.meaning}
           </Text>
           {proverb.literal && proverb.literal !== proverb.translation && (
-            <Text className="mt-1 text-xs italic text-neutral-500 dark:text-neutral-400">
+            <Text style={{ marginTop: 4, fontSize: 11, fontStyle: "italic", color: M.muted }}>
               Literal: {proverb.literal}
             </Text>
           )}
         </View>
       )}
 
-      {/* Related lesson link */}
       {proverb.relatedLessonId && (
         <Pressable
           onPress={() => router.push(`/lesson/${proverb.relatedLessonId}` as any)}
-          className="mt-3 flex-row items-center gap-1.5 active:opacity-70"
+          style={{ marginTop: 12, flexDirection: "row", alignItems: "center", gap: 6 }}
+          className="active:opacity-70"
         >
-          <IconSymbol name="book.fill" size={12} color="#d97706" />
-          <Text className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+          <IconSymbol name="book.fill" size={12} color={M.accent} />
+          <Text style={{ fontSize: 12, fontWeight: "600", color: M.accent }}>
             {t("proverbs.practiceInLesson")}
           </Text>
         </Pressable>
       )}
 
-      {/* Bottom action row */}
-      <View className="mt-3 flex-row items-center justify-between">
+      <View style={{ marginTop: 12, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
         <Pressable
           onPress={() => setExpanded((v) => !v)}
           hitSlop={8}
-          className="flex-row items-center gap-1"
+          style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
         >
           <IconSymbol
             name={expanded ? "chevron.up" : "chevron.down"}
             size={12}
-            color="#d97706"
+            color={M.accent}
           />
-          <Text className="text-xs text-amber-600 dark:text-amber-400">
+          <Text style={{ fontSize: 12, color: M.accent }}>
             {expanded ? t("proverbs.less") : t("proverbs.meaning")}
           </Text>
         </Pressable>
 
-        <View className="flex-row items-center gap-4">
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
           {proverb.audioUrl && (
-            <Pressable onPress={handleAudio} hitSlop={8}>
+            <Pressable
+              onPress={handleAudio}
+              hitSlop={8}
+              style={{
+                width: 32, height: 32, borderRadius: 16,
+                alignItems: "center", justifyContent: "center",
+                backgroundColor: playing ? M.accent : M.accentGlow,
+                borderWidth: 1, borderColor: playing ? M.accent : M.accentBorder,
+              }}
+            >
               <IconSymbol
-                name={playing ? "speaker.wave.3.fill" : "speaker.wave.2.fill"}
-                size={20}
-                color={playing ? "#3b82f6" : "#d97706"}
+                name={playing ? "pause.fill" : "play.fill"}
+                size={14}
+                color={playing ? M.ink : M.accent}
               />
             </Pressable>
           )}
           <Pressable onPress={handleShare} hitSlop={8}>
-            <IconSymbol name="square.and.arrow.up" size={20} color="#d97706" />
+            <IconSymbol name="square.and.arrow.up" size={18} color={M.sub} />
           </Pressable>
         </View>
       </View>
@@ -137,14 +152,14 @@ function ProverbCard({
 }
 
 export default function ProverbsScreen() {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const { languageId } = useLocalSearchParams<{ languageId: string }>();
   const { data: proverbs = [], isLoading } = useProverbs(languageId ?? "");
-
   const languageName = getLanguageName(languageId ?? "");
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["bottom"]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["bottom"]}>
       <Stack.Screen
         options={{
           title: `${languageName} ${t("proverbs.titleSuffix")}`,
@@ -153,11 +168,13 @@ export default function ProverbsScreen() {
       />
 
       {isLoading ? (
-        <LoadingScreen color="#d97706" />
+        <LoadingScreen />
       ) : proverbs.length === 0 ? (
-        <View className="flex-1 items-center justify-center px-8">
-          <IconSymbol name="text.quote" size={48} color="#d1d5db" />
-          <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+          <View style={{ width: 64, height: 64, borderRadius: 32, alignItems: "center", justifyContent: "center", backgroundColor: M.accentGlow, borderWidth: 1, borderColor: M.accentBorder, marginBottom: 16 }}>
+            <IconSymbol name="text.quote" size={28} color={M.accent} />
+          </View>
+          <Text style={{ textAlign: "center", fontSize: 15, fontWeight: "700", color: M.text }}>
             {t("proverbs.noProverbs")}
           </Text>
         </View>
@@ -168,7 +185,7 @@ export default function ProverbsScreen() {
           renderItem={({ item }) => (
             <ProverbCard proverb={item} languageId={languageId ?? ""} />
           )}
-          contentContainerClassName="px-4 py-4"
+          contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 16 }}
           showsVerticalScrollIndicator={false}
         />
       )}

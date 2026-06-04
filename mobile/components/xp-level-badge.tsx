@@ -1,4 +1,5 @@
 import { getLevelInfo } from "@/lib/xp-levels";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 
@@ -8,6 +9,7 @@ interface XpLevelBadgeProps {
 }
 
 export function XpLevelBadge({ points, variant = "compact" }: XpLevelBadgeProps) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const info = getLevelInfo(points);
   const translatedTitle = info.legendNumeral
@@ -16,41 +18,41 @@ export function XpLevelBadge({ points, variant = "compact" }: XpLevelBadgeProps)
 
   if (variant === "compact") {
     return (
-      <View className="flex-row items-center gap-1.5">
-        <View className="rounded-full bg-blue-500 px-2 py-0.5">
-          <Text className="text-xs font-bold text-white">{t("xp.levelShort", { level: info.level })}</Text>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+        <View style={{ borderRadius: 999, backgroundColor: M.accent, paddingHorizontal: 8, paddingVertical: 2 }}>
+          <Text style={{ fontSize: 12, fontWeight: "700", color: M.ink }}>{t("xp.levelShort", { level: info.level })}</Text>
         </View>
-        <View className="h-1.5 w-16 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
+        <View style={{ height: 6, width: 64, overflow: "hidden", borderRadius: 999, backgroundColor: M.border }}>
           <View
-            className="h-full rounded-full bg-blue-500"
-            style={{ width: `${Math.round(info.progress * 100)}%` }}
+            style={{ height: "100%", borderRadius: 999, backgroundColor: M.accent, width: `${Math.round(info.progress * 100)}%` }}
           />
         </View>
       </View>
     );
   }
 
-  // Full variant
   return (
-    <View className="items-center">
-      <View className="mb-2 h-16 w-16 items-center justify-center rounded-full border-4 border-blue-500 bg-blue-50 dark:bg-blue-950">
-        <Text className="text-xl font-bold text-blue-600 dark:text-blue-400">
+    <View style={{ alignItems: "center" }}>
+      <View style={{
+        marginBottom: 8, height: 64, width: 64, alignItems: "center", justifyContent: "center",
+        borderRadius: 32, borderWidth: 3, borderColor: M.accent, backgroundColor: M.accentGlow,
+      }}>
+        <Text style={{ fontSize: 20, fontWeight: "700", color: M.accent }}>
           {info.level}
         </Text>
       </View>
-      <Text className="text-base font-bold text-neutral-900 dark:text-white">
+      <Text style={{ fontSize: 16, fontWeight: "700", color: M.text }}>
         {translatedTitle}
       </Text>
-      <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+      <Text style={{ marginTop: 2, fontSize: 12, color: M.sub }}>
         {t("xp.progressLabel", { current: info.currentXP, needed: info.xpForNextLevel })}
       </Text>
-      <View className="mt-2 h-2 w-48 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
+      <View style={{ marginTop: 8, height: 8, width: 192, overflow: "hidden", borderRadius: 999, backgroundColor: M.border }}>
         <View
-          className="h-full rounded-full bg-blue-500"
-          style={{ width: `${Math.round(info.progress * 100)}%` }}
+          style={{ height: "100%", borderRadius: 999, backgroundColor: M.accent, width: `${Math.round(info.progress * 100)}%` }}
         />
       </View>
-      <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">
+      <Text style={{ marginTop: 4, fontSize: 12, color: M.muted }}>
         {t("xp.totalXP", { total: info.totalXP })}
       </Text>
     </View>

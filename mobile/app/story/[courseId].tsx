@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { LoadingScreen } from "@/components/loading-screen";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import {
   View,
   Text,
@@ -18,6 +19,7 @@ import type { StoryChapter } from "@/types";
 import { useTranslation } from "react-i18next";
 
 export default function StoryScreen() {
+  const M = useMuseumTheme();
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
   const router = useRouter();
   const { t } = useTranslation();
@@ -51,11 +53,9 @@ export default function StoryScreen() {
     return (
       <>
         <Stack.Screen options={{ title: t("educator.story.screenTitle") }} />
-        <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-neutral-900">
-          <IconSymbol name="book.fill" size={48} color="#d1d5db" />
-          <Text className="mt-4 text-base text-neutral-400 dark:text-neutral-500">
-            {t("educator.story.noStoryAvailable")}
-          </Text>
+        <SafeAreaView style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: M.bg }}>
+          <IconSymbol name="book.fill" size={48} color={M.muted} />
+          <Text style={{ marginTop: 16, fontSize: 16, color: M.sub }}>{t("educator.story.noStoryAvailable")}</Text>
         </SafeAreaView>
       </>
     );
@@ -98,104 +98,60 @@ export default function StoryScreen() {
   return (
     <>
       <Stack.Screen options={{ title: story.title }} />
-      <SafeAreaView
-        className="flex-1 bg-white dark:bg-neutral-900"
-        edges={["bottom"]}
-      >
-        <ScrollView
-          contentContainerStyle={{ paddingBottom: 40 }}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Description */}
-          <View className="px-5 pt-4">
-            <Text className="text-base leading-relaxed text-neutral-600 dark:text-neutral-400">
-              {story.description}
-            </Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["bottom"]}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+          <View style={{ paddingHorizontal: 20, paddingTop: 16 }}>
+            <Text style={{ fontSize: 16, lineHeight: 24, color: M.sub }}>{story.description}</Text>
           </View>
 
-          {/* Progress bar */}
           <StoryProgressBar
             chapters={story.chapters}
             completedIds={completedIds}
             currentChapterId={currentChapter?.id}
           />
 
-          {/* Chapter list */}
-          <View className="mt-2 px-5">
+          <View style={{ marginTop: 8, paddingHorizontal: 20 }}>
             {sorted.map((chapter) => {
-              const unlocked = isChapterUnlocked(
-                story.id,
-                chapter.id,
-                story.chapters
-              );
+              const unlocked = isChapterUnlocked(story.id, chapter.id, story.chapters);
               const completed = completedIds.includes(chapter.id);
               const isCurrent = currentChapter?.id === chapter.id;
+
+              const borderColor = isCurrent ? M.accentBorder : completed ? "#22c55e40" : unlocked ? M.border : M.border;
+              const bgColor = isCurrent ? M.accentGlow : completed ? "#22c55e10" : M.card;
 
               return (
                 <Pressable
                   key={chapter.id}
                   onPress={() => handleChapterPress(chapter)}
                   disabled={!unlocked}
-                  className={`mb-3 rounded-2xl border p-4 active:opacity-80 ${
-                    isCurrent
-                      ? "border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30"
-                      : completed
-                      ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20"
-                      : unlocked
-                      ? "border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800"
-                      : "border-neutral-100 bg-neutral-100 opacity-50 dark:border-neutral-800 dark:bg-neutral-850"
-                  }`}
+                  style={{ marginBottom: 12, borderRadius: 16, borderWidth: 1, padding: 16, borderColor, backgroundColor: bgColor, opacity: unlocked ? 1 : 0.4 }}
+                  className={unlocked ? "active:opacity-80" : ""}
                 >
-                  <View className="flex-row items-center">
-                    {/* Status icon */}
-                    <View className="mr-3">
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <View style={{ marginRight: 12 }}>
                       {completed ? (
-                        <IconSymbol
-                          name="checkmark.circle.fill"
-                          size={24}
-                          color="#22c55e"
-                        />
+                        <IconSymbol name="checkmark.circle.fill" size={24} color="#22c55e" />
                       ) : unlocked ? (
-                        <IconSymbol
-                          name="play.fill"
-                          size={24}
-                          color={isCurrent ? "#f59e0b" : "#9ca3af"}
-                        />
+                        <IconSymbol name="play.fill" size={24} color={isCurrent ? M.accent : M.muted} />
                       ) : (
-                        <IconSymbol name="circle" size={24} color="#d1d5db" />
+                        <IconSymbol name="circle" size={24} color={M.border} />
                       )}
                     </View>
 
-                    <View className="flex-1">
-                      <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 10, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: M.muted }}>
                         {t("educator.story.chapterLabel", { number: chapter.order })}
                       </Text>
-                      <Text
-                        className={`text-base font-bold ${
-                          unlocked
-                            ? "text-neutral-900 dark:text-white"
-                            : "text-neutral-400 dark:text-neutral-600"
-                        }`}
-                      >
+                      <Text style={{ fontSize: 16, fontWeight: "700", color: unlocked ? M.text : M.muted }}>
                         {chapter.title}
                       </Text>
                     </View>
 
-                    {unlocked && (
-                      <IconSymbol
-                        name="chevron.right"
-                        size={16}
-                        color="#9ca3af"
-                      />
-                    )}
+                    {unlocked && <IconSymbol name="chevron.right" size={16} color={M.muted} />}
                   </View>
 
-                  {/* Show a preview of the narrative for unlocked, uncompleted chapters */}
                   {unlocked && !completed && (
-                    <Text
-                      className="mt-2 text-sm text-neutral-500 dark:text-neutral-400"
-                      numberOfLines={2}
-                    >
+                    <Text style={{ marginTop: 8, fontSize: 13, color: M.sub }} numberOfLines={2}>
                       {chapter.narrativeIntro}
                     </Text>
                   )}
@@ -223,24 +179,25 @@ export default function StoryScreen() {
             transparent
             onRequestClose={() => setOutroChapter(null)}
           >
-            <View className="flex-1 justify-end bg-black/50">
-              <View className="rounded-t-3xl bg-white px-6 pb-10 pt-6 dark:bg-neutral-900">
-                <Text className="mb-1 text-sm font-semibold uppercase tracking-wide text-green-500 dark:text-green-400">
+            <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.5)" }}>
+              <View style={{ borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: M.card, paddingHorizontal: 24, paddingBottom: 40, paddingTop: 24, borderWidth: 1, borderColor: M.border }}>
+                <Text style={{ marginBottom: 4, fontSize: 13, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: "#22c55e" }}>
                   {t("educator.story.chapterComplete", { number: outroChapter.order })}
                 </Text>
-                <Text className="mb-4 text-2xl font-bold text-neutral-900 dark:text-white">
+                <Text style={{ marginBottom: 16, fontSize: 24, fontWeight: "700", color: M.text }}>
                   {outroChapter.title}
                 </Text>
-                <View className="mb-6 rounded-2xl bg-green-50 p-4 dark:bg-green-950/30">
-                  <Text className="text-base leading-relaxed text-neutral-800 dark:text-neutral-200">
+                <View style={{ marginBottom: 24, borderRadius: 16, backgroundColor: "#22c55e10", padding: 16, borderWidth: 1, borderColor: "#22c55e30" }}>
+                  <Text style={{ fontSize: 16, lineHeight: 24, color: M.sub }}>
                     {outroChapter.narrativeOutro}
                   </Text>
                 </View>
                 <Pressable
                   onPress={() => setOutroChapter(null)}
-                  className="items-center rounded-xl bg-amber-500 py-4 active:opacity-80 dark:bg-amber-600"
+                  style={{ alignItems: "center", borderRadius: 12, backgroundColor: M.accent, paddingVertical: 16 }}
+                  className="active:opacity-80"
                 >
-                  <Text className="text-base font-bold text-white">
+                  <Text style={{ fontSize: 16, fontWeight: "700", color: M.ink }}>
                     {t("educator.story.continueButton")}
                   </Text>
                 </Pressable>

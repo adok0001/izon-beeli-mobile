@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { FeedbackCategory } from "@/types";
 import { useAuth } from "@clerk/clerk-expo";
 import Constants from "expo-constants";
@@ -33,6 +34,7 @@ interface FeedbackModalProps {
 }
 
 export function FeedbackModal({ visible, onClose }: FeedbackModalProps) {
+  const M = useMuseumTheme();
   const { getToken } = useAuth();
   const { t } = useTranslation();
   const [category, setCategory] = useState<FeedbackCategory>("bug");
@@ -97,42 +99,27 @@ export function FeedbackModal({ visible, onClose }: FeedbackModalProps) {
       presentationStyle="pageSheet"
       onRequestClose={handleClose}
     >
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
-      <View className="flex-1 bg-white px-5 pt-6 dark:bg-neutral-900">
-        {/* Header */}
-        <View className="mb-6 flex-row items-center justify-between">
-          <Text className="text-xl font-bold text-neutral-900 dark:text-white">
-            {t("feedback.title")}
-          </Text>
-          <Pressable onPress={handleClose} className="p-1 active:opacity-60">
-            <Text className="text-base text-blue-500">{t("common.cancel")}</Text>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+      <View style={{ flex: 1, backgroundColor: M.ink, paddingHorizontal: 20, paddingTop: 24 }}>
+        <View style={{ marginBottom: 24, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <Text style={{ fontSize: 20, fontWeight: "700", color: M.parchment }}>{t("feedback.title")}</Text>
+          <Pressable onPress={handleClose} style={{ padding: 4 }} className="active:opacity-60">
+            <Text style={{ fontSize: 16, color: M.accent }}>{t("common.cancel")}</Text>
           </Pressable>
         </View>
 
-        {/* Category chips */}
-        <Text className="mb-2 text-sm font-semibold text-neutral-500 dark:text-neutral-400">
-          {t("feedback.categoryLabel")}
-        </Text>
-        <View className="mb-5 flex-row gap-2">
+        <Text style={{ marginBottom: 8, fontSize: 13, fontWeight: "600", color: M.textDim }}>{t("feedback.categoryLabel")}</Text>
+        <View style={{ marginBottom: 20, flexDirection: "row", gap: 8 }}>
           {CATEGORY_KEYS.map((c) => {
             const active = category === c.value;
             return (
               <Pressable
                 key={c.value}
                 onPress={() => setCategory(c.value)}
-                className={`rounded-full px-4 py-2 active:opacity-70 ${
-                  active
-                    ? "bg-blue-500"
-                    : "border border-neutral-300 dark:border-neutral-600"
-                }`}
+                style={{ borderRadius: 999, paddingHorizontal: 16, paddingVertical: 8, backgroundColor: active ? M.accent : "transparent", borderWidth: 1, borderColor: active ? M.accent : M.border }}
+                className="active:opacity-70"
               >
-                <Text
-                  className={`text-sm font-semibold ${
-                    active
-                      ? "text-white"
-                      : "text-neutral-700 dark:text-neutral-300"
-                  }`}
-                >
+                <Text style={{ fontSize: 13, fontWeight: "600", color: active ? M.ink : M.textDim }}>
                   {t(c.labelKey as any)}
                 </Text>
               </Pressable>
@@ -140,40 +127,28 @@ export function FeedbackModal({ visible, onClose }: FeedbackModalProps) {
           })}
         </View>
 
-        {/* Message input */}
-        <Text className="mb-2 text-sm font-semibold text-neutral-500 dark:text-neutral-400">
-          {t("feedback.descriptionLabel")}
-        </Text>
+        <Text style={{ marginBottom: 8, fontSize: 13, fontWeight: "600", color: M.textDim }}>{t("feedback.descriptionLabel")}</Text>
         <TextInput
-          className="min-h-[120px] rounded-xl border border-neutral-200 bg-neutral-50 p-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+          style={{ minHeight: 120, borderRadius: 12, borderWidth: 1, borderColor: M.inputBorder, backgroundColor: M.inputBg, padding: 12, fontSize: 16, color: M.inputText, textAlignVertical: "top" }}
           placeholder={t("feedback.descriptionPlaceholder")}
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={M.inputPlaceholder}
           multiline
           numberOfLines={5}
-          textAlignVertical="top"
           maxLength={2000}
           value={message}
           onChangeText={setMessage}
         />
-        <Text className="mt-1 text-right text-xs text-neutral-400">
-          {message.length}/2000
-        </Text>
+        <Text style={{ marginTop: 4, textAlign: "right", fontSize: 11, color: M.muted }}>{message.length}/2000</Text>
 
-        {/* Device info */}
-        <Text className="mt-4 text-xs text-neutral-400 dark:text-neutral-500">
+        <Text style={{ marginTop: 16, fontSize: 11, color: M.textDimDark }}>
           {`Platform: ${platform}  •  OS: ${osVersion}  •  App: ${appVersion}`}
         </Text>
 
-        {/* Submit */}
-        <Pressable
-          onPress={handleSubmit}
-          disabled={loading}
-          className="mt-6 items-center rounded-xl bg-blue-500 py-3.5 active:opacity-80"
-        >
+        <Pressable onPress={handleSubmit} disabled={loading} style={{ marginTop: 24, alignItems: "center", borderRadius: 12, backgroundColor: M.accent, paddingVertical: 14 }} className="active:opacity-80">
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={M.ink} />
           ) : (
-            <Text className="text-base font-semibold text-white">{t("feedback.submit")}</Text>
+            <Text style={{ fontSize: 16, fontWeight: "600", color: M.ink }}>{t("feedback.submit")}</Text>
           )}
         </Pressable>
       </View>

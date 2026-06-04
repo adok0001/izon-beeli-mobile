@@ -1,4 +1,5 @@
 import { localizeField } from "@/lib/localize";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { CulturalContent } from "@/types";
 import { useTranslation } from "react-i18next";
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function CulturalCard({ item, onPress }: Props) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const { uiLanguage } = useUiLanguageStore();
   const categoryLabel = t(`cultural.categories.${item.category}` as any, { defaultValue: item.category });
@@ -17,24 +19,25 @@ export function CulturalCard({ item, onPress }: Props) {
   return (
     <Pressable
       onPress={onPress}
-      className="mr-3 w-56 rounded-2xl bg-neutral-50 p-4 active:opacity-70 dark:bg-neutral-800"
+      style={{ marginRight: 12, width: 224, borderRadius: 16, backgroundColor: M.card, padding: 16, borderWidth: 1, borderColor: M.border }}
+      className="active:opacity-70"
     >
-      <Text className="text-4xl">{item.imageEmoji}</Text>
+      <Text style={{ fontSize: 36 }}>{item.imageEmoji}</Text>
 
-      <View className="mt-2 self-start rounded-full bg-amber-100 px-2.5 py-0.5 dark:bg-amber-900/40">
-        <Text className="text-xs font-medium text-amber-700 dark:text-amber-400">
+      <View style={{ marginTop: 8, alignSelf: "flex-start", borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 10, paddingVertical: 2, borderWidth: 1, borderColor: M.accentBorder }}>
+        <Text style={{ fontSize: 11, fontWeight: "500", color: M.accent }}>
           {categoryLabel}
         </Text>
       </View>
 
       <Text
-        className="mt-2 text-base font-bold text-neutral-900 dark:text-white"
+        style={{ marginTop: 8, fontSize: 16, fontWeight: "700", color: M.text }}
         numberOfLines={1}
       >
         {localizeField(item.title, item.titleFr, uiLanguage)}
       </Text>
       <Text
-        className="mt-1 text-sm text-neutral-600 dark:text-neutral-400"
+        style={{ marginTop: 4, fontSize: 13, lineHeight: 18, color: M.sub }}
         numberOfLines={2}
       >
         {localizeField(item.description, item.descriptionFr, uiLanguage)}

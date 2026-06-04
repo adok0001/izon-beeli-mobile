@@ -1,3 +1,4 @@
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { Pressable, Text } from "react-native";
 
 export type OptionState = "default" | "correct" | "incorrect" | "dimmed";
@@ -11,34 +12,39 @@ export function OptionCard({
   state: OptionState;
   onPress: () => void;
 }) {
-  const bgClass = {
-    default:
-      "bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700",
-    correct: "bg-green-50 dark:bg-green-900/40 border-green-500",
-    incorrect: "bg-red-50 dark:bg-red-900/40 border-red-500",
-    dimmed:
-      "bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 opacity-50",
+  const M = useMuseumTheme();
+
+  const bgColor = {
+    default: M.card,
+    correct: "#22c55e20",
+    incorrect: "#ef444420",
+    dimmed: M.card,
   }[state];
 
-  const textClass = {
-    default: "text-neutral-900 dark:text-white",
-    correct: "text-green-700 dark:text-green-300",
-    incorrect: "text-red-700 dark:text-red-300",
-    dimmed: "text-neutral-400 dark:text-neutral-500",
+  const borderColor = {
+    default: M.border,
+    correct: "#22c55e",
+    incorrect: "#ef4444",
+    dimmed: M.border,
   }[state];
 
-  const accessibilityHintMap: Record<OptionState, string | undefined> = {
-    default: "Tap to select this answer",
-    correct: undefined,
-    incorrect: undefined,
-    dimmed: undefined,
-  };
+  const textColor = {
+    default: M.text,
+    correct: "#22c55e",
+    incorrect: "#ef4444",
+    dimmed: M.muted,
+  }[state];
 
   return (
     <Pressable
       onPress={onPress}
       disabled={state !== "default"}
-      className={`mb-3 rounded-xl border-2 px-5 py-4 ${bgClass}`}
+      style={{
+        marginBottom: 12, borderRadius: 12, borderWidth: 2,
+        paddingHorizontal: 20, paddingVertical: 16,
+        backgroundColor: bgColor, borderColor,
+        opacity: state === "dimmed" ? 0.5 : 1,
+      }}
       accessibilityRole="button"
       accessibilityLabel={
         state === "correct"
@@ -47,10 +53,10 @@ export function OptionCard({
             ? `${label}, incorrect`
             : label
       }
-      accessibilityHint={accessibilityHintMap[state]}
+      accessibilityHint={state === "default" ? "Tap to select this answer" : undefined}
       accessibilityState={{ disabled: state !== "default", selected: state === "correct" || state === "incorrect" }}
     >
-      <Text className={`text-base font-medium ${textClass}`}>{label}</Text>
+      <Text style={{ fontSize: 16, fontWeight: "500", color: textColor }}>{label}</Text>
     </Pressable>
   );
 }

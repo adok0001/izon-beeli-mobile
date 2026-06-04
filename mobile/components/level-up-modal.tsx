@@ -1,6 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { hapticHeavy } from "@/lib/haptics";
 import { playFinishSound } from "@/lib/sounds";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Animated, Modal, Pressable, Text, View } from "react-native";
@@ -13,6 +14,7 @@ interface LevelUpModalProps {
 }
 
 export function LevelUpModal({ visible, level, title, onDismiss }: LevelUpModalProps) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const scale = useRef(new Animated.Value(0.5)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -55,22 +57,24 @@ export function LevelUpModal({ visible, level, title, onDismiss }: LevelUpModalP
         className="flex-1 items-center justify-center bg-black/50"
       >
         <Animated.View
-          style={{ transform: [{ scale }], opacity }}
-          className="mx-8 items-center rounded-3xl bg-white p-8 shadow-2xl dark:bg-neutral-900"
+          style={[
+            { transform: [{ scale }], opacity },
+            { marginHorizontal: 32, alignItems: "center", borderRadius: 24, backgroundColor: M.card, padding: 32, borderWidth: 1, borderColor: M.border }
+          ]}
         >
-          <View className="mb-4 h-20 w-20 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900">
-            <IconSymbol name="star.fill" size={40} color="#f59e0b" />
+          <View style={{ marginBottom: 16, height: 80, width: 80, alignItems: "center", justifyContent: "center", borderRadius: 40, backgroundColor: `${M.accent}20`, borderWidth: 1, borderColor: `${M.accent}40` }}>
+            <IconSymbol name="star.fill" size={40} color={M.accent} />
           </View>
-          <Text className="text-xs font-semibold uppercase tracking-widest text-blue-500">
+          <Text style={{ fontSize: 10, fontWeight: "600", letterSpacing: 2, textTransform: "uppercase", color: M.accent }}>
             {t("xp.levelUp")}
           </Text>
-          <Text className="mt-1 text-3xl font-bold text-neutral-900 dark:text-white">
+          <Text style={{ marginTop: 4, fontSize: 30, fontWeight: "700", color: M.text }}>
             {t("xp.levelLabel", { level })}
           </Text>
-          <Text className="mt-1 text-lg font-semibold text-blue-600 dark:text-blue-400">
+          <Text style={{ marginTop: 4, fontSize: 18, fontWeight: "600", color: M.accent }}>
             {title}
           </Text>
-          <Text className="mt-3 text-center text-sm text-neutral-500 dark:text-neutral-400">
+          <Text style={{ marginTop: 12, textAlign: "center", fontSize: 14, color: M.sub }}>
             {t("xp.levelUpEncouragement")}
           </Text>
         </Animated.View>

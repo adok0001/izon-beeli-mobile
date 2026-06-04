@@ -3,6 +3,7 @@ import { XpLevelBadge } from "@/components/xp-level-badge";
 import { useChallengeHistory } from "@/lib/hooks/use-daily-challenge";
 import { useStreakCalendar, useWeeklyStats } from "@/lib/hooks/use-dashboard";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { DayActivity } from "@/types";
 import { Stack } from "expo-router";
 import { useTranslation } from "react-i18next";
@@ -18,6 +19,7 @@ function getDayLabel(dateStr: string): string {
 }
 
 function WeeklyBar({ day }: { day: DayActivity }) {
+  const M = useMuseumTheme();
   const total = day.lessonsCompleted + day.wordsReviewed;
   const maxHeight = 64;
   const lessonH = total > 0 ? Math.max(4, Math.round((day.lessonsCompleted / Math.max(total, 5)) * maxHeight)) : 0;
@@ -25,24 +27,19 @@ function WeeklyBar({ day }: { day: DayActivity }) {
   const isToday = day.date === TODAY;
 
   return (
-    <View className="flex-1 items-center">
-      <View className="items-center justify-end" style={{ height: maxHeight }}>
+    <View style={{ flex: 1, alignItems: "center" }}>
+      <View style={{ alignItems: "center", justifyContent: "flex-end", height: maxHeight }}>
         {wordH > 0 && (
-          <View
-            className="w-6 rounded-t bg-violet-400"
-            style={{ height: wordH, marginBottom: lessonH > 0 ? 1 : 0 }}
-          />
+          <View style={{ width: 24, borderTopLeftRadius: 4, borderTopRightRadius: 4, backgroundColor: "#a78bfa", height: wordH, marginBottom: lessonH > 0 ? 1 : 0 }} />
         )}
         {lessonH > 0 && (
-          <View className="w-6 rounded-t bg-blue-500" style={{ height: lessonH }} />
+          <View style={{ width: 24, borderTopLeftRadius: 4, borderTopRightRadius: 4, backgroundColor: M.accent, height: lessonH }} />
         )}
         {total === 0 && (
-          <View className="w-6 rounded bg-neutral-200 dark:bg-neutral-700" style={{ height: 4 }} />
+          <View style={{ width: 24, borderRadius: 4, backgroundColor: M.border, height: 4 }} />
         )}
       </View>
-      <Text
-        className={`mt-1 text-xs ${isToday ? "font-bold text-blue-500" : "text-neutral-400 dark:text-neutral-500"}`}
-      >
+      <Text style={{ marginTop: 4, fontSize: 12, fontWeight: isToday ? "700" : "400", color: isToday ? M.accent : M.muted }}>
         {getDayLabel(day.date)}
       </Text>
     </View>
@@ -50,6 +47,7 @@ function WeeklyBar({ day }: { day: DayActivity }) {
 }
 
 export default function DashboardScreen() {
+  const M = useMuseumTheme();
   const { data: summary } = useProgressSummary();
   const { data: weeklyStats, isLoading: statsLoading } = useWeeklyStats();
   const { data: calendar, isLoading: calendarLoading } = useStreakCalendar();
@@ -68,99 +66,83 @@ export default function DashboardScreen() {
   return (
     <>
       <Stack.Screen options={{ title: "Progress", headerBackTitle: "Back" }} />
-      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={[]}>
         <ScrollView
-          contentContainerClassName="px-5 pb-10 pt-4"
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40, paddingTop: 16 }}
           showsVerticalScrollIndicator={false}
         >
           {/* XP / Level */}
-          <View className="mb-6 items-center rounded-2xl bg-neutral-50 py-6 dark:bg-neutral-800">
+          <View style={{ marginBottom: 24, alignItems: "center", borderRadius: 16, backgroundColor: M.card, paddingVertical: 24, borderWidth: 1, borderColor: M.border }}>
             <XpLevelBadge points={summary?.points ?? 0} variant="full" />
           </View>
 
           {/* Weekly Activity */}
-          <Text className="mb-3 text-base font-bold text-neutral-900 dark:text-white">
+          <Text style={{ marginBottom: 12, fontSize: 16, fontWeight: "700", color: M.text }}>
             {t("dashboard.thisWeek")}
           </Text>
           {statsLoading ? (
-            <ActivityIndicator size="small" color="#3b82f6" />
+            <ActivityIndicator size="small" color={M.accent} />
           ) : weeklyStats ? (
             <>
-              <View className="mb-4 rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
-                <View className="flex-row items-end gap-1">
+              <View style={{ marginBottom: 16, borderRadius: 16, backgroundColor: M.card, padding: 16, borderWidth: 1, borderColor: M.border }}>
+                <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 4 }}>
                   {weeklyStats.weeklyActivity.map((day) => (
                     <WeeklyBar key={day.date} day={day} />
                   ))}
                 </View>
-                <View className="mt-3 flex-row gap-4">
-                  <View className="flex-row items-center gap-1">
-                    <View className="h-3 w-3 rounded-sm bg-blue-500" />
-                    <Text className="text-xs text-neutral-500 dark:text-neutral-400">{t("dashboard.lessonsLabel")}</Text>
+                <View style={{ marginTop: 12, flexDirection: "row", gap: 16 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                    <View style={{ height: 12, width: 12, borderRadius: 2, backgroundColor: M.accent }} />
+                    <Text style={{ fontSize: 12, color: M.sub }}>{t("dashboard.lessonsLabel")}</Text>
                   </View>
-                  <View className="flex-row items-center gap-1">
-                    <View className="h-3 w-3 rounded-sm bg-violet-400" />
-                    <Text className="text-xs text-neutral-500 dark:text-neutral-400">{t("dashboard.wordsLabel")}</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                    <View style={{ height: 12, width: 12, borderRadius: 2, backgroundColor: "#a78bfa" }} />
+                    <Text style={{ fontSize: 12, color: M.sub }}>{t("dashboard.wordsLabel")}</Text>
                   </View>
                 </View>
               </View>
 
-              {/* Stats Summary */}
-              <View className="mb-6 flex-row gap-3">
-                <View className="flex-1 items-center rounded-xl bg-neutral-50 py-3 dark:bg-neutral-800">
-                  <Text className="text-xl font-bold text-neutral-900 dark:text-white">
-                    {weeklyStats.totalLessonsThisWeek}
-                  </Text>
-                  <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-                    {t("dashboard.lessonsLabel")}
-                  </Text>
-                </View>
-                <View className="flex-1 items-center rounded-xl bg-neutral-50 py-3 dark:bg-neutral-800">
-                  <Text className="text-xl font-bold text-neutral-900 dark:text-white">
-                    {weeklyStats.avgQuizAccuracyThisWeek != null
-                      ? `${weeklyStats.avgQuizAccuracyThisWeek}%`
-                      : "—"}
-                  </Text>
-                  <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-                    {t("dashboard.avgQuizShort")}
-                  </Text>
-                </View>
-                <View className="flex-1 items-center rounded-xl bg-neutral-50 py-3 dark:bg-neutral-800">
-                  <Text className="text-xl font-bold text-neutral-900 dark:text-white">
-                    {weeklyStats.totalWordsReviewedThisWeek}
-                  </Text>
-                  <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-                    {t("dashboard.wordsLabel")}
-                  </Text>
-                </View>
+              <View style={{ marginBottom: 24, flexDirection: "row", gap: 12 }}>
+                {[
+                  { value: weeklyStats.totalLessonsThisWeek, label: t("dashboard.lessonsLabel") },
+                  { value: weeklyStats.avgQuizAccuracyThisWeek != null ? `${weeklyStats.avgQuizAccuracyThisWeek}%` : "—", label: t("dashboard.avgQuizShort") },
+                  { value: weeklyStats.totalWordsReviewedThisWeek, label: t("dashboard.wordsLabel") },
+                ].map((item, i) => (
+                  <View key={i} style={{ flex: 1, alignItems: "center", borderRadius: 12, backgroundColor: M.card, paddingVertical: 12, borderWidth: 1, borderColor: M.border }}>
+                    <Text style={{ fontSize: 20, fontWeight: "700", color: M.text }}>{item.value}</Text>
+                    <Text style={{ marginTop: 2, fontSize: 11, color: M.sub }}>{item.label}</Text>
+                  </View>
+                ))}
               </View>
             </>
           ) : null}
 
           {/* Streak Calendar */}
-          <View className="mb-3 flex-row items-center justify-between">
-            <Text className="text-base font-bold text-neutral-900 dark:text-white">
+          <View style={{ marginBottom: 12, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <Text style={{ fontSize: 16, fontWeight: "700", color: M.text }}>
               {t("dashboard.thirtyDayActivity")}
             </Text>
-            <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+            <Text style={{ fontSize: 13, color: M.sub }}>
               {new Date().toLocaleDateString(undefined, { month: "long", year: "numeric" })}
             </Text>
           </View>
-          <View className="mb-6 rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
+          <View style={{ marginBottom: 24, borderRadius: 16, backgroundColor: M.card, padding: 16, borderWidth: 1, borderColor: M.border }}>
             {calendarLoading ? (
-              <ActivityIndicator size="small" color="#3b82f6" />
+              <ActivityIndicator size="small" color={M.accent} />
             ) : (
-              <View className="flex-row flex-wrap gap-1">
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>
                 {calendarDays.map((date) => {
                   const isToday = date === TODAY;
                   const isActive = activeDaysSet.has(date);
                   return (
                     <View
                       key={date}
-                      className={`h-7 w-7 rounded-full ${
-                        isActive
-                          ? "bg-blue-500"
-                          : "bg-neutral-200 dark:bg-neutral-700"
-                      } ${isToday ? "border-2 border-blue-400 dark:border-blue-300" : ""}`}
+                      style={{
+                        height: 28, width: 28, borderRadius: 14,
+                        backgroundColor: isActive ? M.accent : M.border,
+                        borderWidth: isToday ? 2 : 0,
+                        borderColor: M.accent,
+                      }}
                     />
                   );
                 })}
@@ -171,36 +153,26 @@ export default function DashboardScreen() {
           {/* Challenge History */}
           {history.length > 0 && (
             <>
-              <Text className="mb-3 text-base font-bold text-neutral-900 dark:text-white">
+              <Text style={{ marginBottom: 12, fontSize: 16, fontWeight: "700", color: M.text }}>
                 {t("dashboard.recentChallenges")}
               </Text>
-              <View className="rounded-2xl bg-neutral-50 dark:bg-neutral-800">
+              <View style={{ borderRadius: 16, backgroundColor: M.card, borderWidth: 1, borderColor: M.border, overflow: "hidden" }}>
                 {history.map((c, i) => (
                   <View
                     key={c.id}
-                    className={`flex-row items-center px-4 py-3 ${
-                      i < history.length - 1
-                        ? "border-b border-neutral-200 dark:border-neutral-700"
-                        : ""
-                    }`}
+                    style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: i < history.length - 1 ? 1 : 0, borderBottomColor: M.border }}
                   >
                     <IconSymbol
                       name={c.completed ? "checkmark.circle.fill" : "circle"}
                       size={20}
-                      color={c.completed ? "#22c55e" : "#9ca3af"}
+                      color={c.completed ? "#22c55e" : M.muted}
                     />
-                    <View className="ml-3 flex-1">
-                      <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-                        {c.title}
-                      </Text>
-                      <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-                        {c.date}
-                      </Text>
+                    <View style={{ marginLeft: 12, flex: 1 }}>
+                      <Text style={{ fontSize: 13, fontWeight: "600", color: M.text }}>{c.title}</Text>
+                      <Text style={{ fontSize: 11, color: M.muted }}>{c.date}</Text>
                     </View>
                     {c.completed && (
-                      <Text className="text-xs font-semibold text-green-500">
-                        +{c.xpReward} XP
-                      </Text>
+                      <Text style={{ fontSize: 11, fontWeight: "600", color: "#22c55e" }}>+{c.xpReward} XP</Text>
                     )}
                   </View>
                 ))}

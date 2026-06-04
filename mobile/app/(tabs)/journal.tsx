@@ -16,18 +16,17 @@ import { useTranslation } from "react-i18next";
 import { LoadingScreen } from "@/components/loading-screen";
 import {
   Alert,
-  FlatList,
   KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
   RefreshControl,
+  SectionList,
   Text,
   TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
@@ -38,10 +37,53 @@ function wordCount(text: string) {
   return text.trim() ? text.trim().split(/\s+/).length : 0;
 }
 
+function readingTime(text: string) {
+  return Math.max(1, Math.ceil(wordCount(text) / 200));
+}
+
+function groupEntriesBySections(entries: JournalEntry[]): { title: string; data: JournalEntry[] }[] {
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0, 10);
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().slice(0, 10);
+  const weekAgo = new Date(now);
+  weekAgo.setDate(weekAgo.getDate() - 7);
+
+  const groups: Record<string, JournalEntry[]> = {
+    today: [],
+    yesterday: [],
+    thisWeek: [],
+    earlier: [],
+  };
+
+  for (const entry of entries) {
+    const dateStr = entry.createdAt.slice(0, 10);
+    const entryDate = new Date(entry.createdAt);
+    if (dateStr === todayStr) {
+      groups.today.push(entry);
+    } else if (dateStr === yesterdayStr) {
+      groups.yesterday.push(entry);
+    } else if (entryDate >= weekAgo) {
+      groups.thisWeek.push(entry);
+    } else {
+      groups.earlier.push(entry);
+    }
+  }
+
+  const sections: { title: string; data: JournalEntry[] }[] = [];
+  if (groups.today.length) sections.push({ title: "Today", data: groups.today });
+  if (groups.yesterday.length) sections.push({ title: "Yesterday", data: groups.yesterday });
+  if (groups.thisWeek.length) sections.push({ title: "This Week", data: groups.thisWeek });
+  if (groups.earlier.length) sections.push({ title: "Earlier", data: groups.earlier });
+  return sections;
+}
+
 function EntryCard({ entry, onPress }: { entry: JournalEntry; onPress: () => void }) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const count = wordCount(entry.content);
+  const mins = readingTime(entry.content);
 
   return (
     <Pressable
@@ -57,15 +99,15 @@ function EntryCard({ entry, onPress }: { entry: JournalEntry; onPress: () => voi
         borderColor: M.border,
         borderLeftWidth: 4,
         borderLeftColor: M.accent,
-        padding: 16,
+        padding: 18,
       }}
       className="active:opacity-70"
     >
-      <Text style={{ fontSize: 15, fontWeight: "700", color: M.text }} numberOfLines={1}>
+      <Text style={{ fontSize: 16, fontWeight: "700", color: M.text }} numberOfLines={1}>
         {entry.title}
       </Text>
       <Text
-        style={{ marginTop: 6, fontSize: 13, lineHeight: 19, color: M.sub }}
+        style={{ marginTop: 6, fontSize: 13, lineHeight: 20, color: M.sub }}
         numberOfLines={3}
       >
         {entry.content}
@@ -83,8 +125,28 @@ function EntryCard({ entry, onPress }: { entry: JournalEntry; onPress: () => voi
         <Text style={{ fontSize: 10, color: M.muted }}>
           {t("journal.words", { count, defaultValue: `${count} words` })}
         </Text>
+        <Text style={{ fontSize: 10, color: M.muted, marginLeft: 6 }}>
+          · ~{mins} min read
+        </Text>
       </View>
     </Pressable>
+  );
+}
+
+function SectionHeader({ title }: { title: string }) {
+  const M = useMuseumTheme();
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 20, marginBottom: 8, paddingHorizontal: 16 }}>
+      <View style={{ flex: 1, height: 1, backgroundColor: M.border }} />
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+        <View style={{ width: 3, height: 3, borderRadius: 2, backgroundColor: M.accent }} />
+        <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 2, textTransform: "uppercase", color: M.muted }}>
+          {title}
+        </Text>
+        <View style={{ width: 3, height: 3, borderRadius: 2, backgroundColor: M.accent }} />
+      </View>
+      <View style={{ flex: 1, height: 1, backgroundColor: M.border }} />
+    </View>
   );
 }
 
@@ -200,6 +262,8 @@ export default function JournalScreen() {
 
   const entryCount = entries?.length ?? 0;
   const editorWordCount = wordCount(content);
+  const editorReadingMins = readingTime(content);
+  const sections = entries && entries.length > 0 ? groupEntriesBySections(entries) : [];
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
@@ -254,14 +318,19 @@ export default function JournalScreen() {
                 {t("journal.writeFirst", { defaultValue: "Write your first entry" })}
               </Text>
             </Pressable>
+            <Text style={{ marginTop: 10, fontSize: 11, color: M.muted }}>
+              Your entries are private.
+            </Text>
           </View>
         ) : (
-          <FlatList
-            data={entries}
+          <SectionList
+            sections={sections}
             keyExtractor={(item) => item.id}
-            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100, paddingTop: 12 }}
             renderItem={({ item }) => <EntryCard entry={item} onPress={() => openEdit(item)} />}
+            renderSectionHeader={({ section }) => <SectionHeader title={section.title} />}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
             showsVerticalScrollIndicator={false}
+            stickySectionHeadersEnabled={false}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -343,19 +412,20 @@ export default function JournalScreen() {
                 blurOnSubmit={false}
                 style={{
                   marginBottom: 16, paddingBottom: 14,
-                  borderBottomWidth: 1, borderBottomColor: M.border,
-                  fontSize: 20, fontWeight: "800", color: M.parchment,
+                  borderBottomWidth: 2,
+                  borderBottomColor: title.length > 0 ? M.accent : M.border,
+                  fontSize: 24, fontWeight: "800", color: M.parchment,
                 }}
               />
               <TextInput
                 ref={contentInputRef}
                 value={content}
                 onChangeText={setContent}
-                placeholder={t("journal.contentPlaceholder")}
+                placeholder={t("journal.contentPlaceholder", { defaultValue: "What are you thinking about…" })}
                 placeholderTextColor={M.textDimDark}
                 multiline
                 textAlignVertical="top"
-                style={{ flex: 1, fontSize: 14, lineHeight: 22, color: M.textDim }}
+                style={{ flex: 1, fontSize: 15, lineHeight: 24, color: M.textDim }}
               />
             </View>
 
@@ -367,9 +437,16 @@ export default function JournalScreen() {
                 paddingHorizontal: 20, paddingVertical: 12,
               }}
             >
-              <Text style={{ fontSize: 11, color: M.muted }}>
-                {t("journal.words", { count: editorWordCount, defaultValue: `${editorWordCount} words` })}
-              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <Text style={{ fontSize: 11, color: editorWordCount > 150 ? M.accent : M.muted }}>
+                  {t("journal.words", { count: editorWordCount, defaultValue: `${editorWordCount} words` })}
+                </Text>
+                {editorWordCount > 0 && (
+                  <Text style={{ fontSize: 11, color: M.muted }}>
+                    · ~{editorReadingMins} min read
+                  </Text>
+                )}
+              </View>
               {isEditing && (
                 <Pressable
                   onPress={() => handleDelete(editingId!, title)}

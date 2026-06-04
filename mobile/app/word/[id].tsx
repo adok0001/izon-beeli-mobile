@@ -1,4 +1,5 @@
 import { friendlyError } from "@/lib/api";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { LoadingScreen } from "@/components/loading-screen";
 import { KeyboardAvoidingView, Platform, View, Text, Pressable, ScrollView, TextInput, Image } from "react-native";
@@ -20,6 +21,7 @@ import { addRecentlyViewed } from "@/lib/hooks/use-recently-viewed";
 import { useTranslation } from "react-i18next";
 
 function InlineAudioButton({ audioUrl }: { audioUrl: string }) {
+  const M = useMuseumTheme();
   const [playing, setPlaying] = useState(false);
   const soundRef = useRef<Audio.Sound | null>(null);
 
@@ -39,17 +41,18 @@ function InlineAudioButton({ audioUrl }: { audioUrl: string }) {
   }, [audioUrl]);
 
   return (
-    <Pressable onPress={handlePress} disabled={playing} hitSlop={8} className="ml-2 p-1">
+    <Pressable onPress={handlePress} disabled={playing} hitSlop={8} style={{ marginLeft: 8, padding: 4 }}>
       <IconSymbol
         name={playing ? "speaker.wave.3.fill" : "speaker.wave.2.fill"}
         size={18}
-        color={playing ? "#0ea5e9" : "#9ca3af"}
+        color={playing ? M.accent : M.muted}
       />
     </Pressable>
   );
 }
 
 export default function WordDetailScreen() {
+  const M = useMuseumTheme();
   const { id, languageId } = useLocalSearchParams<{
     id: string;
     languageId: string;
@@ -223,12 +226,9 @@ export default function WordDetailScreen() {
     return (
       <>
         <Stack.Screen options={{ title: "Word", headerBackTitle: "Back" }} />
-        <SafeAreaView
-          className="flex-1 items-center justify-center bg-white px-8 dark:bg-neutral-900"
-          edges={[]}
-        >
-          <IconSymbol name="questionmark.circle" size={48} color="#d1d5db" />
-          <Text className="mt-4 text-center text-base text-neutral-400">
+        <SafeAreaView style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: M.bg, paddingHorizontal: 32 }} edges={[]}>
+          <IconSymbol name="questionmark.circle" size={48} color={M.muted} />
+          <Text style={{ marginTop: 16, textAlign: "center", fontSize: 15, color: M.sub }}>
             {t("wordDetail.notFound")}
           </Text>
         </SafeAreaView>
@@ -245,10 +245,7 @@ export default function WordDetailScreen() {
       <Stack.Screen
         options={{ title: entry.word, headerBackTitle: "Back" }}
       />
-      <SafeAreaView
-        className="flex-1 bg-white dark:bg-neutral-900"
-        edges={[]}
-      >
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={[]}>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         <NotificationBanner
           visible={toast.visible}
@@ -262,20 +259,20 @@ export default function WordDetailScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* Hero section */}
-          <View className="items-center px-6 pb-6 pt-10">
+          <View style={{ alignItems: "center", paddingHorizontal: 24, paddingBottom: 24, paddingTop: 40 }}>
             {entry.imageUrl && (
               <Image
                 source={{ uri: entry.imageUrl }}
-                className="mb-5 h-48 w-full rounded-2xl"
+                style={{ marginBottom: 20, height: 192, width: "100%", borderRadius: 16 }}
                 resizeMode="cover"
               />
             )}
-            <Text className="text-center text-6xl font-bold text-neutral-900 dark:text-white">
+            <Text style={{ textAlign: "center", fontSize: 60, fontWeight: "700", color: M.text }}>
               {entry.word}
             </Text>
 
             {entry.pronunciation && (
-              <Text className="mt-2 text-base italic text-neutral-500 dark:text-neutral-400">
+              <Text style={{ marginTop: 8, fontSize: 16, fontStyle: "italic", color: M.sub }}>
                 /{entry.pronunciation}/
               </Text>
             )}
@@ -284,19 +281,19 @@ export default function WordDetailScreen() {
               const meanings = entry.english.split(";").map((m) => m.trim()).filter(Boolean);
               if (meanings.length <= 1) {
                 return (
-                  <Text className="mt-3 text-center text-xl text-neutral-600 dark:text-neutral-300">
+                  <Text style={{ marginTop: 12, textAlign: "center", fontSize: 20, color: M.sub }}>
                     {entry.english}
                   </Text>
                 );
               }
               return (
-                <View className="mt-3 items-center gap-1">
+                <View style={{ marginTop: 12, alignItems: "center", gap: 4 }}>
                   {meanings.map((meaning, i) => (
-                    <View key={i} className="flex-row items-baseline gap-2">
-                      <Text className="text-sm font-semibold text-sky-500 dark:text-sky-400">
+                    <View key={i} style={{ flexDirection: "row", alignItems: "baseline", gap: 8 }}>
+                      <Text style={{ fontSize: 13, fontWeight: "600", color: M.accent }}>
                         {i + 1}.
                       </Text>
-                      <Text className="text-lg text-neutral-600 dark:text-neutral-300">
+                      <Text style={{ fontSize: 18, color: M.sub }}>
                         {meaning}
                       </Text>
                     </View>
@@ -305,54 +302,48 @@ export default function WordDetailScreen() {
               );
             })()}
 
-            {/* French translation */}
             {!!entry.french && (
-              <View className="mt-2 flex-row items-center gap-2">
-                <View className="rounded-full bg-sky-50 px-2 py-0.5 dark:bg-sky-900/30">
-                  <Text className="text-[10px] font-semibold text-sky-500 dark:text-sky-400">
+              <View style={{ marginTop: 8, flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <View style={{ borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: M.accentBorder }}>
+                  <Text style={{ fontSize: 10, fontWeight: "600", color: M.accent }}>
                     {t("wordDetail.french")}
                   </Text>
                 </View>
-                <Text className="text-base text-neutral-500 dark:text-neutral-400">
+                <Text style={{ fontSize: 16, color: M.sub }}>
                   {entry.french}
                 </Text>
               </View>
             )}
 
-            {/* Audio button — primary action */}
-            <View className="mt-6 items-center">
-              <View className="h-16 w-16 items-center justify-center rounded-full bg-sky-500 shadow-sm">
+            {/* Audio button */}
+            <View style={{ marginTop: 24, alignItems: "center" }}>
+              <View style={{ height: 64, width: 64, alignItems: "center", justifyContent: "center", borderRadius: 32, backgroundColor: M.accent }}>
                 <WordAudioButton audioSource={entry.audioUrl} word={entry.word} size={28} />
               </View>
-              <Text className="mt-2 text-xs font-semibold text-sky-500 dark:text-sky-400">
+              <Text style={{ marginTop: 8, fontSize: 11, fontWeight: "600", color: M.accent }}>
                 {entry.audioUrl ? t("wordDetail.hearPronunciation") : t("wordDetail.textToSpeech")}
               </Text>
             </View>
 
             {/* Category badge */}
-            <View className="mt-4 flex-row items-center rounded-full bg-sky-50 px-4 py-1.5 dark:bg-sky-900/30">
-              <IconSymbol
-                name={categoryIcon as any}
-                size={13}
-                color="#0ea5e9"
-              />
-              <Text className="ml-1.5 text-xs font-semibold uppercase tracking-wider text-sky-600 dark:text-sky-400">
+            <View style={{ marginTop: 16, flexDirection: "row", alignItems: "center", borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 16, paddingVertical: 6, borderWidth: 1, borderColor: M.accentBorder }}>
+              <IconSymbol name={categoryIcon as any} size={13} color={M.accent} />
+              <Text style={{ marginLeft: 6, fontSize: 11, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: M.accent }}>
                 {categoryLabel}
               </Text>
             </View>
           </View>
 
-          {/* Divider */}
-          <View className="mx-5 h-px bg-neutral-100 dark:bg-neutral-800" />
+          <View style={{ marginHorizontal: 20, height: 1, backgroundColor: M.border }} />
 
           {/* Example sentence */}
           {entry.example && (
-            <View className="mx-5 mt-5 rounded-xl bg-neutral-50 px-4 py-4 dark:bg-neutral-800">
-              <Text className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+            <View style={{ marginHorizontal: 20, marginTop: 20, borderRadius: 12, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 16, borderWidth: 1, borderColor: M.border }}>
+              <Text style={{ marginBottom: 6, fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
                 {t("wordDetail.example")}
               </Text>
-              <View className="flex-row items-start">
-                <Text className="flex-1 text-base text-neutral-800 dark:text-neutral-200">
+              <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+                <Text style={{ flex: 1, fontSize: 16, color: M.text }}>
                   {entry.example}
                 </Text>
                 {entry.exampleAudioUrl && (
@@ -360,40 +351,41 @@ export default function WordDetailScreen() {
                 )}
               </View>
               {entry.exampleTranslation && (
-                <Text className="mt-1.5 text-sm text-neutral-500 dark:text-neutral-400">
+                <Text style={{ marginTop: 6, fontSize: 13, color: M.sub }}>
                   {entry.exampleTranslation}
                 </Text>
               )}
             </View>
           )}
 
-          {/* Related words (same category) */}
+          {/* Related words */}
           {(() => {
             const related = entries
               .filter((e) => e.category === entry.category && e.id !== entry.id)
               .slice(0, 5);
             if (related.length === 0) return null;
             return (
-              <View className="mt-5">
-                <Text className="mx-5 mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+              <View style={{ marginTop: 20 }}>
+                <Text style={{ marginHorizontal: 20, marginBottom: 8, fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
                   {t("wordDetail.moreInCategory", { category: categoryLabel })}
                 </Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
-                  className="-mx-0 px-5"
+                  style={{ paddingHorizontal: 20 }}
                   contentContainerStyle={{ gap: 8 }}
                 >
                   {related.map((rel) => (
                     <Pressable
                       key={rel.id}
                       onPress={() => router.push(`/word/${rel.id}?languageId=${languageId}` as any)}
-                      className="rounded-xl bg-neutral-50 px-3 py-2.5 active:opacity-70 dark:bg-neutral-800"
+                      style={{ borderRadius: 12, backgroundColor: M.card, paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1, borderColor: M.border }}
+                      className="active:opacity-70"
                     >
-                      <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
+                      <Text style={{ fontSize: 13, fontWeight: "600", color: M.text }}>
                         {rel.word}
                       </Text>
-                      <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
+                      <Text style={{ marginTop: 2, fontSize: 11, color: M.sub }} numberOfLines={1}>
                         {rel.english}
                       </Text>
                     </Pressable>
@@ -405,46 +397,39 @@ export default function WordDetailScreen() {
 
           {/* Contributor */}
           {entry.contributorName && (
-            <View className="mx-5 mt-4 flex-row items-center">
-              <IconSymbol name="person.fill" size={13} color="#9ca3af" />
-              <Text className="ml-1.5 text-sm text-neutral-400 dark:text-neutral-500">
+            <View style={{ marginHorizontal: 20, marginTop: 16, flexDirection: "row", alignItems: "center" }}>
+              <IconSymbol name="person.fill" size={13} color={M.muted} />
+              <Text style={{ marginLeft: 6, fontSize: 13, color: M.muted }}>
                 {t("wordDetail.contributedBy", { name: entry.contributorName })}
               </Text>
             </View>
           )}
 
           {/* Actions */}
-          <View className="mx-5 mt-8 gap-3">
+          <View style={{ marginHorizontal: 20, marginTop: 32, gap: 12 }}>
             <Pressable
               onPress={handlePractice}
-              className="flex-row items-center justify-center rounded-2xl bg-emerald-500 py-4 active:opacity-80"
+              style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", borderRadius: 16, backgroundColor: "#22c55e", paddingVertical: 16 }}
+              className="active:opacity-80"
             >
               <IconSymbol name="brain.head.profile" size={18} color="#fff" />
-              <Text className="ml-2 text-base font-semibold text-white">
+              <Text style={{ marginLeft: 8, fontSize: 16, fontWeight: "600", color: "#fff" }}>
                 {t("wordDetail.practiceWord")}
               </Text>
             </Pressable>
 
             <Pressable
               onPress={handleToggleSave}
-              className={`flex-row items-center justify-center rounded-2xl border py-4 active:opacity-80 ${
-                saved
-                  ? "border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20"
-                  : "border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800"
-              }`}
+              style={{
+                flexDirection: "row", alignItems: "center", justifyContent: "center",
+                borderRadius: 16, borderWidth: 1, paddingVertical: 16,
+                backgroundColor: saved ? M.accentGlow : M.card,
+                borderColor: saved ? M.accentBorder : M.border,
+              }}
+              className="active:opacity-80"
             >
-              <IconSymbol
-                name={saved ? "star.fill" : "star"}
-                size={18}
-                color={saved ? "#f59e0b" : "#9ca3af"}
-              />
-              <Text
-                className={`ml-2 text-base font-semibold ${
-                  saved
-                    ? "text-amber-600 dark:text-amber-400"
-                    : "text-neutral-700 dark:text-neutral-300"
-                }`}
-              >
+              <IconSymbol name={saved ? "star.fill" : "star"} size={18} color={saved ? M.accent : M.muted} />
+              <Text style={{ marginLeft: 8, fontSize: 16, fontWeight: "600", color: saved ? M.accent : M.sub }}>
                 {saved ? t("wordDetail.savedToWordBank") : t("wordDetail.saveToWordBank")}
               </Text>
             </Pressable>
@@ -452,108 +437,79 @@ export default function WordDetailScreen() {
 
           {/* Prev / Next navigation */}
           {hasNavContext && (
-            <View className="mx-5 mt-5 flex-row gap-3">
+            <View style={{ marginHorizontal: 20, marginTop: 20, flexDirection: "row", gap: 12 }}>
               <Pressable
                 onPress={() => prevId && navigateTo(prevId)}
                 disabled={!prevId}
-                className={`flex-1 flex-row items-center justify-center rounded-xl py-3 ${
-                  prevId
-                    ? "bg-neutral-100 active:opacity-70 dark:bg-neutral-800"
-                    : "opacity-30 bg-neutral-100 dark:bg-neutral-800"
-                }`}
+                style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", borderRadius: 12, paddingVertical: 12, backgroundColor: M.card, borderWidth: 1, borderColor: M.border, opacity: prevId ? 1 : 0.3 }}
+                className={prevId ? "active:opacity-70" : ""}
               >
-                <IconSymbol name="chevron.left" size={14} color="#6b7280" />
-                <Text className="ml-1 text-sm font-medium text-neutral-600 dark:text-neutral-400">
+                <IconSymbol name="chevron.left" size={14} color={M.sub} />
+                <Text style={{ marginLeft: 4, fontSize: 13, fontWeight: "500", color: M.sub }}>
                   {t("wordDetail.prevWord")}
                 </Text>
               </Pressable>
               <Pressable
                 onPress={() => nextId && navigateTo(nextId)}
                 disabled={!nextId}
-                className={`flex-1 flex-row items-center justify-center rounded-xl py-3 ${
-                  nextId
-                    ? "bg-neutral-100 active:opacity-70 dark:bg-neutral-800"
-                    : "opacity-30 bg-neutral-100 dark:bg-neutral-800"
-                }`}
+                style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", borderRadius: 12, paddingVertical: 12, backgroundColor: M.card, borderWidth: 1, borderColor: M.border, opacity: nextId ? 1 : 0.3 }}
+                className={nextId ? "active:opacity-70" : ""}
               >
-                <Text className="mr-1 text-sm font-medium text-neutral-600 dark:text-neutral-400">
+                <Text style={{ marginRight: 4, fontSize: 13, fontWeight: "500", color: M.sub }}>
                   {t("wordDetail.nextWord")}
                 </Text>
-                <IconSymbol name="chevron.right" size={14} color="#6b7280" />
+                <IconSymbol name="chevron.right" size={14} color={M.sub} />
               </Pressable>
             </View>
           )}
 
           {/* Contribute section — collapsible */}
           {hasContributable && (
-            <View className="mx-5 mt-8">
+            <View style={{ marginHorizontal: 20, marginTop: 32, marginBottom: 8 }}>
               <Pressable
                 onPress={() => setShowContribute((v) => !v)}
-                className="flex-row items-center justify-between rounded-2xl border border-neutral-200 px-4 py-3.5 active:opacity-80 dark:border-neutral-700"
+                style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderRadius: 16, borderWidth: 1, borderColor: M.border, paddingHorizontal: 16, paddingVertical: 14 }}
+                className="active:opacity-80"
               >
-                <View className="flex-row items-center">
-                  <IconSymbol name="plus.circle.fill" size={18} color="#0ea5e9" />
-                  <Text className="ml-2 text-base font-medium text-sky-600 dark:text-sky-400">
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <IconSymbol name="plus.circle.fill" size={18} color={M.accent} />
+                  <Text style={{ marginLeft: 8, fontSize: 16, fontWeight: "500", color: M.accent }}>
                     {t("wordDetail.contributeExpand")}
                   </Text>
                 </View>
-                <IconSymbol
-                  name={showContribute ? "chevron.up" : "chevron.down"}
-                  size={14}
-                  color="#9ca3af"
-                />
+                <IconSymbol name={showContribute ? "chevron.up" : "chevron.down"} size={14} color={M.muted} />
               </Pressable>
 
               {showContribute && (
-                <View className="mt-3 gap-3">
-                  <Text className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                <View style={{ marginTop: 12, gap: 12 }}>
+                  <Text style={{ fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
                     {t("entryContribute.title")}
                   </Text>
 
-                  {/* Record Audio */}
                   {!entry.audioUrl && (
-                    <View className="rounded-2xl border border-neutral-200 p-4 dark:border-neutral-700">
-                      <Text className="mb-1 text-sm font-semibold text-neutral-900 dark:text-white">
+                    <View style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, padding: 16 }}>
+                      <Text style={{ marginBottom: 4, fontSize: 14, fontWeight: "600", color: M.text }}>
                         {t("entryContribute.recordAudio")}
                       </Text>
-                      <Text className="mb-3 text-xs text-neutral-500 dark:text-neutral-400">
+                      <Text style={{ marginBottom: 12, fontSize: 12, color: M.sub }}>
                         {t("entryContribute.recordAudioDesc")}
                       </Text>
-                      <View className="items-center">
+                      <View style={{ alignItems: "center" }}>
                         {recordingUri ? (
-                          <View className="items-center gap-2">
+                          <View style={{ alignItems: "center", gap: 8 }}>
                             <Pressable
                               onPress={isPlaying ? stopPlayback : playRecording}
-                              className={`h-14 w-14 items-center justify-center rounded-full ${
-                                isPlaying ? "bg-sky-500" : "bg-emerald-100 dark:bg-emerald-900"
-                              }`}
+                              style={{ height: 56, width: 56, alignItems: "center", justifyContent: "center", borderRadius: 28, backgroundColor: isPlaying ? M.accent : "#22c55e20" }}
                             >
-                              <IconSymbol
-                                name={isPlaying ? "stop.fill" : "play.fill"}
-                                size={22}
-                                color={isPlaying ? "#fff" : "#10b981"}
-                              />
+                              <IconSymbol name={isPlaying ? "stop.fill" : "play.fill"} size={22} color={isPlaying ? M.ink : "#22c55e"} />
                             </Pressable>
-                            <Text className="text-sm text-green-600 dark:text-green-400">
-                              {t("contribute.recordingSaved")}
-                            </Text>
-                            <View className="flex-row gap-2">
-                              <Pressable
-                                onPress={() => discardRecording()}
-                                className="rounded-lg bg-neutral-200 px-4 py-2 dark:bg-neutral-700"
-                              >
-                                <Text className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                  {t("contribute.reRecord")}
-                                </Text>
+                            <Text style={{ fontSize: 13, color: "#22c55e" }}>{t("contribute.recordingSaved")}</Text>
+                            <View style={{ flexDirection: "row", gap: 8 }}>
+                              <Pressable onPress={() => discardRecording()} style={{ borderRadius: 8, backgroundColor: M.border, paddingHorizontal: 16, paddingVertical: 8 }}>
+                                <Text style={{ fontSize: 13, fontWeight: "500", color: M.sub }}>{t("contribute.reRecord")}</Text>
                               </Pressable>
-                              <Pressable
-                                onPress={handleSubmitAudio}
-                                disabled={submitEntry.isPending}
-                                className="rounded-lg bg-sky-500 px-4 py-2"
-                              >
-                                <Text className="text-sm font-medium text-white">
-                                  {submitEntry.isPending ? t("contribute.submitting") : t("common.submit")}
-                                </Text>
+                              <Pressable onPress={handleSubmitAudio} disabled={submitEntry.isPending} style={{ borderRadius: 8, backgroundColor: M.accent, paddingHorizontal: 16, paddingVertical: 8 }}>
+                                <Text style={{ fontSize: 13, fontWeight: "500", color: M.ink }}>{submitEntry.isPending ? t("contribute.submitting") : t("common.submit")}</Text>
                               </Pressable>
                             </View>
                           </View>
@@ -561,20 +517,16 @@ export default function WordDetailScreen() {
                           <>
                             <Pressable
                               onPress={isRecording ? stopRecording : startRecording}
-                              className={`h-14 w-14 items-center justify-center rounded-full ${
-                                isRecording ? "bg-red-500" : "bg-red-100 dark:bg-red-900"
-                              }`}
+                              style={{ height: 56, width: 56, alignItems: "center", justifyContent: "center", borderRadius: 28, backgroundColor: isRecording ? "#ef4444" : "#ef444420" }}
                             >
                               {isRecording ? (
-                                <View className="h-5 w-5 rounded-sm bg-white" />
+                                <View style={{ height: 20, width: 20, borderRadius: 4, backgroundColor: "#fff" }} />
                               ) : (
                                 <IconSymbol name="mic.fill" size={22} color="#ef4444" />
                               )}
                             </Pressable>
-                            <Text className="mt-2 text-xs text-neutral-400 dark:text-neutral-500">
-                              {isRecording
-                                ? t("contribute.recordingTapToStop")
-                                : t("entryContribute.tapToRecord")}
+                            <Text style={{ marginTop: 8, fontSize: 12, color: M.muted }}>
+                              {isRecording ? t("contribute.recordingTapToStop") : t("entryContribute.tapToRecord")}
                             </Text>
                           </>
                         )}
@@ -582,109 +534,56 @@ export default function WordDetailScreen() {
                     </View>
                   )}
 
-                  {/* Add Image */}
                   {!entry.imageUrl && (
-                    <View className="rounded-2xl border border-neutral-200 p-4 dark:border-neutral-700">
-                      <Text className="mb-1 text-sm font-semibold text-neutral-900 dark:text-white">
-                        {t("entryContribute.addImage")}
-                      </Text>
-                      <Text className="mb-3 text-xs text-neutral-500 dark:text-neutral-400">
-                        {t("entryContribute.addImageDesc")}
-                      </Text>
+                    <View style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, padding: 16 }}>
+                      <Text style={{ marginBottom: 4, fontSize: 14, fontWeight: "600", color: M.text }}>{t("entryContribute.addImage")}</Text>
+                      <Text style={{ marginBottom: 12, fontSize: 12, color: M.sub }}>{t("entryContribute.addImageDesc")}</Text>
                       {imageUri ? (
-                        <View className="items-center gap-3">
-                          <Image
-                            source={{ uri: imageUri }}
-                            className="h-40 w-full rounded-xl"
-                            resizeMode="cover"
-                          />
-                          <View className="flex-row gap-2">
-                            <Pressable
-                              onPress={() => setImageUri(null)}
-                              className="rounded-lg bg-neutral-200 px-4 py-2 dark:bg-neutral-700"
-                            >
-                              <Text className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                {t("common.cancel")}
-                              </Text>
+                        <View style={{ alignItems: "center", gap: 12 }}>
+                          <Image source={{ uri: imageUri }} style={{ height: 160, width: "100%", borderRadius: 12 }} resizeMode="cover" />
+                          <View style={{ flexDirection: "row", gap: 8 }}>
+                            <Pressable onPress={() => setImageUri(null)} style={{ borderRadius: 8, backgroundColor: M.border, paddingHorizontal: 16, paddingVertical: 8 }}>
+                              <Text style={{ fontSize: 13, fontWeight: "500", color: M.sub }}>{t("common.cancel")}</Text>
                             </Pressable>
-                            <Pressable
-                              onPress={handleSubmitImage}
-                              disabled={submitEntry.isPending}
-                              className="rounded-lg bg-blue-500 px-4 py-2"
-                            >
-                              <Text className="text-sm font-medium text-white">
-                                {submitEntry.isPending ? t("contribute.submitting") : t("common.submit")}
-                              </Text>
+                            <Pressable onPress={handleSubmitImage} disabled={submitEntry.isPending} style={{ borderRadius: 8, backgroundColor: M.accent, paddingHorizontal: 16, paddingVertical: 8 }}>
+                              <Text style={{ fontSize: 13, fontWeight: "500", color: M.ink }}>{submitEntry.isPending ? t("contribute.submitting") : t("common.submit")}</Text>
                             </Pressable>
                           </View>
                         </View>
                       ) : (
-                        <Pressable
-                          onPress={handlePickImage}
-                          className="items-center gap-2 rounded-xl border border-dashed border-neutral-300 py-6 dark:border-neutral-600"
-                        >
-                          <IconSymbol name="photo.badge.plus" size={28} color="#9ca3af" />
-                          <Text className="text-sm text-neutral-400 dark:text-neutral-500">
-                            {t("entryContribute.tapToPickImage")}
-                          </Text>
+                        <Pressable onPress={handlePickImage} style={{ alignItems: "center", gap: 8, borderRadius: 12, borderWidth: 1, borderStyle: "dashed", borderColor: M.border, paddingVertical: 24 }}>
+                          <IconSymbol name="photo.badge.plus" size={28} color={M.muted} />
+                          <Text style={{ fontSize: 13, color: M.muted }}>{t("entryContribute.tapToPickImage")}</Text>
                         </Pressable>
                       )}
                     </View>
                   )}
 
-                  {/* Add Meaning */}
                   {showMeaningInput ? (
-                    <View className="rounded-2xl border border-neutral-200 p-4 dark:border-neutral-700">
-                      <Text className="mb-1 text-sm font-semibold text-neutral-900 dark:text-white">
-                        {t("entryContribute.addMeaning")}
-                      </Text>
-                      <Text className="mb-3 text-xs text-neutral-500 dark:text-neutral-400">
-                        {t("entryContribute.addMeaningDesc")}
-                      </Text>
+                    <View style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, padding: 16 }}>
+                      <Text style={{ marginBottom: 4, fontSize: 14, fontWeight: "600", color: M.text }}>{t("entryContribute.addMeaning")}</Text>
+                      <Text style={{ marginBottom: 12, fontSize: 12, color: M.sub }}>{t("entryContribute.addMeaningDesc")}</Text>
                       <TextInput
                         value={newMeaning}
                         onChangeText={setNewMeaning}
                         placeholder={t("entryContribute.meaningPlaceholder")}
-                        placeholderTextColor="#9ca3af"
-                        className="mb-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                        placeholderTextColor={M.inputPlaceholder}
+                        style={{ marginBottom: 12, borderRadius: 12, borderWidth: 1, borderColor: M.inputBorder, backgroundColor: M.inputBg, paddingHorizontal: 16, paddingVertical: 12, fontSize: 16, color: M.inputText }}
                         autoFocus
                       />
-                      <View className="flex-row gap-2">
-                        <Pressable
-                          onPress={() => {
-                            setShowMeaningInput(false);
-                            setNewMeaning("");
-                          }}
-                          className="flex-1 items-center rounded-xl bg-neutral-100 py-3 dark:bg-neutral-800"
-                        >
-                          <Text className="font-semibold text-neutral-700 dark:text-neutral-300">
-                            {t("common.cancel")}
-                          </Text>
+                      <View style={{ flexDirection: "row", gap: 8 }}>
+                        <Pressable onPress={() => { setShowMeaningInput(false); setNewMeaning(""); }} style={{ flex: 1, alignItems: "center", borderRadius: 12, backgroundColor: M.border, paddingVertical: 12 }}>
+                          <Text style={{ fontWeight: "600", color: M.sub }}>{t("common.cancel")}</Text>
                         </Pressable>
-                        <Pressable
-                          onPress={handleSubmitMeaning}
-                          disabled={!newMeaning.trim() || submitEntry.isPending}
-                          className={`flex-1 items-center rounded-xl py-3 ${
-                            newMeaning.trim() && !submitEntry.isPending
-                              ? "bg-sky-500"
-                              : "bg-sky-300 dark:bg-sky-800"
-                          }`}
-                        >
-                          <Text className="font-semibold text-white">
-                            {submitEntry.isPending ? t("contribute.submitting") : t("common.submit")}
-                          </Text>
+                        <Pressable onPress={handleSubmitMeaning} disabled={!newMeaning.trim() || submitEntry.isPending} style={{ flex: 1, alignItems: "center", borderRadius: 12, backgroundColor: newMeaning.trim() && !submitEntry.isPending ? M.accent : M.accentGlow, paddingVertical: 12 }}>
+                          <Text style={{ fontWeight: "600", color: newMeaning.trim() ? M.ink : M.muted }}>{submitEntry.isPending ? t("contribute.submitting") : t("common.submit")}</Text>
                         </Pressable>
                       </View>
                     </View>
                   ) : (
-                    <Pressable
-                      onPress={() => setShowMeaningInput(true)}
-                      className="flex-row items-center rounded-2xl border border-neutral-200 px-4 py-3.5 active:opacity-80 dark:border-neutral-700"
-                    >
-                      <IconSymbol name="plus.circle.fill" size={20} color="#0ea5e9" />
-                      <Text className="ml-2 text-base font-medium text-sky-600 dark:text-sky-400">
-                        {t("entryContribute.addMeaning")}
-                      </Text>
+                    <Pressable onPress={() => setShowMeaningInput(true)} style={{ flexDirection: "row", alignItems: "center", borderRadius: 16, borderWidth: 1, borderColor: M.border, paddingHorizontal: 16, paddingVertical: 14 }} className="active:opacity-80">
+                      <IconSymbol name="plus.circle.fill" size={20} color={M.accent} />
+                      <Text style={{ marginLeft: 8, fontSize: 16, fontWeight: "500", color: M.accent }}>{t("entryContribute.addMeaning")}</Text>
                     </Pressable>
                   )}
                 </View>

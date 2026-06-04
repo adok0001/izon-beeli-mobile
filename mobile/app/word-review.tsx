@@ -1,5 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { apiFetch } from "@/lib/api";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { DictionaryEntry } from "@/lib/dictionary";
 import { hapticError, hapticSuccess, hapticTap } from "@/lib/haptics";
 import { useInvalidateDailyChallenges } from "@/lib/hooks/use-daily-challenge";
@@ -51,18 +52,16 @@ function AudioButton({ audioSource }: { audioSource: AudioSource }) {
     }
   }, [audioSource]);
 
+  const M = useMuseumTheme();
   return (
     <Pressable
       onPress={handlePress}
       disabled={isPlaying}
-      className="mt-4 flex-row items-center gap-2 rounded-full bg-violet-50 px-5 py-2.5 active:opacity-70 dark:bg-violet-900/30"
+      style={{ marginTop: 16, flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 20, paddingVertical: 10, borderWidth: 1, borderColor: M.accentBorder }}
+      className="active:opacity-70"
     >
-      <IconSymbol
-        name={isPlaying ? "speaker.wave.3.fill" : "speaker.wave.2.fill"}
-        size={18}
-        color="#8b5cf6"
-      />
-      <Text className="text-sm font-semibold text-violet-600 dark:text-violet-400">
+      <IconSymbol name={isPlaying ? "speaker.wave.3.fill" : "speaker.wave.2.fill"} size={18} color={M.accent} />
+      <Text style={{ fontSize: 13, fontWeight: "600", color: M.accent }}>
         {isPlaying ? t("wordReview.playing") : t("wordReview.playAudio")}
       </Text>
     </Pressable>
@@ -78,51 +77,51 @@ function ReviewCard({
   onRate: (confidence: "again" | "hard" | "good" | "easy") => void;
   isSubmitting: boolean;
 }) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const [face, setFace] = useState<CardFace>("question");
 
   return (
-    <View className="flex-1 px-5">
+    <View style={{ flex: 1, paddingHorizontal: 20 }}>
       <Pressable
         onPress={() => setFace(face === "question" ? "answer" : "question")}
-        className="flex-1 items-center justify-center rounded-3xl bg-neutral-50 p-8 active:opacity-90 dark:bg-neutral-800"
+        style={{ flex: 1, alignItems: "center", justifyContent: "center", borderRadius: 24, backgroundColor: M.card, padding: 32, borderWidth: 1, borderColor: M.border }}
+        className="active:opacity-90"
       >
         {face === "question" ? (
           <>
-            <Text className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+            <Text style={{ marginBottom: 8, fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
               {t("wordReview.translateToEnglish")}
             </Text>
-            <Text className="text-center text-4xl font-bold text-neutral-900 dark:text-white">
+            <Text style={{ textAlign: "center", fontSize: 40, fontWeight: "700", color: M.text }}>
               {entry.word}
             </Text>
             {entry.pronunciation && (
-              <Text className="mt-2 text-center text-base text-neutral-500 dark:text-neutral-400">
+              <Text style={{ marginTop: 8, textAlign: "center", fontSize: 16, color: M.sub }}>
                 /{entry.pronunciation}/
               </Text>
             )}
             {entry.audioUrl && <AudioButton audioSource={entry.audioUrl} />}
-            <View className="mt-6 flex-row items-center gap-1">
-              <IconSymbol name="hand.tap" size={16} color="#9ca3af" />
-              <Text className="text-sm text-neutral-400 dark:text-neutral-500">
-                {t("wordReview.tapToReveal")}
-              </Text>
+            <View style={{ marginTop: 24, flexDirection: "row", alignItems: "center", gap: 4 }}>
+              <IconSymbol name="hand.tap" size={16} color={M.muted} />
+              <Text style={{ fontSize: 13, color: M.muted }}>{t("wordReview.tapToReveal")}</Text>
             </View>
           </>
         ) : (
           <>
-            <Text className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+            <Text style={{ marginBottom: 8, fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
               {t("wordReview.english")}
             </Text>
-            <Text className="text-center text-4xl font-bold text-neutral-900 dark:text-white">
+            <Text style={{ textAlign: "center", fontSize: 40, fontWeight: "700", color: M.text }}>
               {entry.english}
             </Text>
             {entry.example && (
-              <Text className="mt-4 text-center text-sm italic text-neutral-500 dark:text-neutral-400">
+              <Text style={{ marginTop: 16, textAlign: "center", fontSize: 13, fontStyle: "italic", color: M.sub }}>
                 {entry.example}
               </Text>
             )}
             {entry.exampleTranslation && (
-              <Text className="mt-1 text-center text-sm text-neutral-400 dark:text-neutral-500">
+              <Text style={{ marginTop: 4, textAlign: "center", fontSize: 13, color: M.muted }}>
                 {entry.exampleTranslation}
               </Text>
             )}
@@ -131,47 +130,26 @@ function ReviewCard({
       </Pressable>
 
       {face === "answer" && (
-        <View className="mt-4 flex-row gap-3 pb-4">
-          <Pressable
-            onPress={() => onRate("again")}
-            disabled={isSubmitting}
-            className="flex-1 items-center rounded-2xl border-2 border-red-200 bg-red-50 py-4 active:opacity-70 dark:border-red-800 dark:bg-red-950"
-          >
-            <IconSymbol name="arrow.counterclockwise" size={20} color="#ef4444" />
-            <Text className="mt-1 text-xs font-semibold text-red-600 dark:text-red-400">
-              {t("wordReview.again")}
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => onRate("hard")}
-            disabled={isSubmitting}
-            className="flex-1 items-center rounded-2xl border-2 border-amber-200 bg-amber-50 py-4 active:opacity-70 dark:border-amber-800 dark:bg-amber-950"
-          >
-            <IconSymbol name="minus.circle" size={20} color="#f59e0b" />
-            <Text className="mt-1 text-xs font-semibold text-amber-600 dark:text-amber-400">
-              {t("wordReview.hard")}
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => onRate("good")}
-            disabled={isSubmitting}
-            className="flex-1 items-center rounded-2xl border-2 border-green-200 bg-green-50 py-4 active:opacity-70 dark:border-green-800 dark:bg-green-950"
-          >
-            <IconSymbol name="checkmark.circle" size={20} color="#22c55e" />
-            <Text className="mt-1 text-xs font-semibold text-green-600 dark:text-green-400">
-              {t("wordReview.good")}
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => onRate("easy")}
-            disabled={isSubmitting}
-            className="flex-1 items-center rounded-2xl border-2 border-blue-200 bg-blue-50 py-4 active:opacity-70 dark:border-blue-800 dark:bg-blue-950"
-          >
-            <IconSymbol name="checkmark.seal.fill" size={20} color="#3b82f6" />
-            <Text className="mt-1 text-xs font-semibold text-blue-600 dark:text-blue-400">
-              {t("wordReview.easy")}
-            </Text>
-          </Pressable>
+        <View style={{ marginTop: 16, flexDirection: "row", gap: 12, paddingBottom: 16 }}>
+          {[
+            { key: "again" as const, icon: "arrow.counterclockwise", color: "#ef4444" },
+            { key: "hard" as const, icon: "minus.circle", color: M.accent },
+            { key: "good" as const, icon: "checkmark.circle", color: "#22c55e" },
+            { key: "easy" as const, icon: "checkmark.seal.fill", color: "#a78bfa" },
+          ].map(({ key, icon, color }) => (
+            <Pressable
+              key={key}
+              onPress={() => onRate(key)}
+              disabled={isSubmitting}
+              style={{ flex: 1, alignItems: "center", borderRadius: 16, borderWidth: 1, borderColor: `${color}40`, backgroundColor: `${color}15`, paddingVertical: 16 }}
+              className="active:opacity-70"
+            >
+              <IconSymbol name={icon as any} size={20} color={color} />
+              <Text style={{ marginTop: 4, fontSize: 11, fontWeight: "600", color }}>
+                {t(`wordReview.${key}` as any)}
+              </Text>
+            </Pressable>
+          ))}
         </View>
       )}
     </View>
@@ -317,85 +295,69 @@ export default function WordReviewScreen() {
   const hasSource = lessonId ? (lessonDictionary.length > 0) : (dueEntries.length > 0);
   const showLoading = isLoading || (!queueBuilt && hasSource);
 
+  const M = useMuseumTheme();
+
   return (
     <>
       <Stack.Screen options={{ title: lessonId ? t("wordReview.lessonTitle") : t("wordReview.title"), headerShown: true }} />
-      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={[]}>
         {showLoading ? (
           <LoadingScreen />
         ) : queue.length === 0 ? (
-          <View className="flex-1 items-center justify-center px-8">
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
             <IconSymbol name="checkmark.circle.fill" size={56} color="#22c55e" />
-            <Text className="mt-4 text-center text-xl font-bold text-neutral-900 dark:text-white">
+            <Text style={{ marginTop: 16, textAlign: "center", fontSize: 20, fontWeight: "700", color: M.text }}>
               {t("wordReview.allCaughtUp")}
             </Text>
-            <Text className="mt-2 text-center text-sm text-neutral-500 dark:text-neutral-400">
+            <Text style={{ marginTop: 8, textAlign: "center", fontSize: 13, color: M.sub }}>
               {lessonId ? t("wordReview.noLessonWords") : t("wordReview.noWordsDue")}
             </Text>
-            <Pressable
-              onPress={() => router.back()}
-              className="mt-6 rounded-xl bg-violet-500 px-8 py-3 active:opacity-80"
-            >
-              <Text className="font-semibold text-white">{t("wordReview.done")}</Text>
+            <Pressable onPress={() => router.back()} style={{ marginTop: 24, borderRadius: 12, backgroundColor: "#a78bfa", paddingHorizontal: 32, paddingVertical: 12 }} className="active:opacity-80">
+              <Text style={{ fontWeight: "600", color: "#fff" }}>{t("wordReview.done")}</Text>
             </Pressable>
           </View>
         ) : isFinished ? (
-          <View className="flex-1 items-center justify-center px-8">
-            <IconSymbol name="checkmark.seal.fill" size={56} color="#8b5cf6" />
-            <Text className="mt-4 text-center text-xl font-bold text-neutral-900 dark:text-white">
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+            <IconSymbol name="checkmark.seal.fill" size={56} color="#a78bfa" />
+            <Text style={{ marginTop: 16, textAlign: "center", fontSize: 20, fontWeight: "700", color: M.text }}>
               {t("wordReview.sessionComplete")}
             </Text>
-            <Text className="mt-2 text-center text-sm text-neutral-500 dark:text-neutral-400">
+            <Text style={{ marginTop: 8, textAlign: "center", fontSize: 13, color: M.sub }}>
               {uniqueReviewed !== 1
                 ? t("wordReview.sessionReviewedPlural", { count: uniqueReviewed })
                 : t("wordReview.sessionReviewed", { count: uniqueReviewed })}
             </Text>
 
-            {/* Retention curve */}
             {uniqueReviewed > 0 && (() => {
               const reviewed = [...reviewedIds];
               const counts = reviewed.map((id) => reviewCountMap.get(id) ?? 1);
               const avg = counts.reduce((s, n) => s + n, 0) / counts.length;
               const retention = avg >= 5 ? 95 : avg >= 4 ? 85 : avg >= 3 ? 70 : avg >= 2 ? 50 : 30;
-              const barWidth = retention;
               return (
-                <View className="mt-5 w-full rounded-2xl bg-violet-50 p-4 dark:bg-violet-900/20">
-                  <Text className="mb-1 text-center text-sm text-violet-800 dark:text-violet-300">
+                <View style={{ marginTop: 20, width: "100%", borderRadius: 16, backgroundColor: "#a78bfa15", padding: 16, borderWidth: 1, borderColor: "#a78bfa30" }}>
+                  <Text style={{ marginBottom: 4, textAlign: "center", fontSize: 13, color: "#a78bfa" }}>
                     {t("wordReview.retentionDesc", { avg: avg.toFixed(1), pct: retention })}
                   </Text>
-                  <View className="mt-2 h-2 overflow-hidden rounded-full bg-violet-200 dark:bg-violet-800">
-                    <View
-                      className="h-2 rounded-full bg-violet-500"
-                      style={{ width: `${barWidth}%` }}
-                    />
+                  <View style={{ marginTop: 8, height: 8, overflow: "hidden", borderRadius: 999, backgroundColor: "#a78bfa30" }}>
+                    <View style={{ height: 8, borderRadius: 999, backgroundColor: "#a78bfa", width: `${retention}%` }} />
                   </View>
                 </View>
               );
             })()}
 
-            <Pressable
-              onPress={() => router.back()}
-              className="mt-6 rounded-xl bg-violet-500 px-8 py-3 active:opacity-80"
-            >
-              <Text className="font-semibold text-white">{t("wordReview.done")}</Text>
+            <Pressable onPress={() => router.back()} style={{ marginTop: 24, borderRadius: 12, backgroundColor: "#a78bfa", paddingHorizontal: 32, paddingVertical: 12 }} className="active:opacity-80">
+              <Text style={{ fontWeight: "600", color: "#fff" }}>{t("wordReview.done")}</Text>
             </Pressable>
           </View>
         ) : (
           <>
-            <View className="mx-5 mt-3">
-              <View className="mb-1 flex-row items-center justify-between">
-                <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-                  {t("wordReview.of", { current: currentIndex + 1, total: queue.length })}
-                </Text>
-                <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-                  {t("wordReview.reviewed", { count: uniqueReviewed })}
-                </Text>
+            <View style={{ marginHorizontal: 20, marginTop: 12 }}>
+              <View style={{ marginBottom: 4, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                <Text style={{ fontSize: 11, color: M.sub }}>{t("wordReview.of", { current: currentIndex + 1, total: queue.length })}</Text>
+                <Text style={{ fontSize: 11, color: M.sub }}>{t("wordReview.reviewed", { count: uniqueReviewed })}</Text>
               </View>
-              <View className="h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-700">
-                <View
-                  className="h-1.5 rounded-full bg-violet-500"
-                  style={{ width: `${(currentIndex / queue.length) * 100}%` }}
-                />
+              <View style={{ height: 6, borderRadius: 999, backgroundColor: M.border }}>
+                <View style={{ height: 6, borderRadius: 999, backgroundColor: "#a78bfa", width: `${(currentIndex / queue.length) * 100}%` }} />
               </View>
             </View>
 
@@ -407,8 +369,8 @@ export default function WordReviewScreen() {
             />
 
             {xpToast && (
-              <View className="absolute right-6 top-20 rounded-full bg-amber-100 px-4 py-1.5 dark:bg-amber-900/40">
-                <Text className="text-sm font-bold text-amber-700 dark:text-amber-300">{xpToast}</Text>
+              <View style={{ position: "absolute", right: 24, top: 80, borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 16, paddingVertical: 6, borderWidth: 1, borderColor: M.accentBorder }}>
+                <Text style={{ fontSize: 13, fontWeight: "700", color: M.accent }}>{xpToast}</Text>
               </View>
             )}
           </>

@@ -8,12 +8,14 @@ import {
   type GestureResponderEvent,
 } from "react-native";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useAudioStore } from "@/store/audio-store";
 import { formatDuration } from "@/lib/mock-data";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 
 export function AudioPlayer({ compact = false, position = "bottom", onPress }: { compact?: boolean; position?: "top" | "bottom"; onPress?: () => void }) {
+  const M = useMuseumTheme();
   const {
     isPlaying,
     isLoading,
@@ -51,29 +53,33 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
     setBarWidth(e.nativeEvent.layout.width);
   };
 
+  const borderPos = position === "top"
+    ? { borderBottomWidth: 1, borderBottomColor: M.border }
+    : { borderTopWidth: 1, borderTopColor: M.border };
+
   if (compact) {
     return (
-      <View className={`bg-white px-4 py-2 dark:bg-neutral-900 ${position === "top" ? "border-b border-neutral-200 dark:border-neutral-700" : "border-t border-neutral-200 dark:border-neutral-700"}`}>
-        <View className="flex-row items-center">
+      <View style={[{ backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 8 }, borderPos]}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Pressable
             onPress={togglePlayback}
-            className="mr-3"
+            style={{ marginRight: 12 }}
             hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel={isPlaying ? "Pause audio" : "Play audio"}
             accessibilityState={{ busy: isLoading }}
           >
             {isLoading ? (
-              <ActivityIndicator size="small" color="#3b82f6" />
+              <ActivityIndicator size="small" color={M.accent} />
             ) : (
               <IconSymbol
                 name={isPlaying ? "pause.fill" : "play.fill"}
                 size={24}
-                color="#3b82f6"
+                color={M.accent}
               />
             )}
           </Pressable>
-          <View className="flex-1">
+          <View style={{ flex: 1 }}>
             <Pressable
               onPress={onPress}
               disabled={!onPress}
@@ -81,30 +87,24 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
               accessibilityLabel={currentTrackTitle ?? "Now Playing"}
               accessibilityHint={onPress ? "Open lesson" : undefined}
             >
-              <Text
-                className="text-sm font-medium text-neutral-900 dark:text-white"
-                numberOfLines={1}
-              >
+              <Text style={{ fontSize: 14, fontWeight: "500", color: M.text }} numberOfLines={1}>
                 {currentTrackTitle ?? "Now Playing"}
               </Text>
             </Pressable>
             <Pressable
               onPress={handleSeek}
               onLayout={onBarLayout}
-              className="mt-1 py-1"
+              style={{ marginTop: 4, paddingVertical: 4 }}
               accessibilityRole="button"
               accessibilityLabel="Seek audio"
               accessibilityHint="Tap to seek to position"
             >
-              <View className="h-1 rounded-full bg-neutral-200 dark:bg-neutral-700">
-                <View
-                  className="h-1 rounded-full bg-blue-500"
-                  style={{ width: `${progressPercent}%` }}
-                />
+              <View style={{ height: 4, borderRadius: 999, backgroundColor: M.border }}>
+                <View style={{ height: 4, borderRadius: 999, backgroundColor: M.accent, width: `${progressPercent}%` }} />
               </View>
             </Pressable>
           </View>
-          <Text className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">
+          <Text style={{ marginLeft: 8, fontSize: 12, color: M.sub }}>
             {formatDuration(progress)}
           </Text>
         </View>
@@ -113,98 +113,75 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
   }
 
   return (
-    <View className="border-t border-neutral-200 bg-white px-4 pb-6 pt-4 dark:border-neutral-700 dark:bg-neutral-900">
-      {/* Track title */}
-      <Text
-        className="mb-3 text-center text-base font-semibold text-neutral-900 dark:text-white"
-        numberOfLines={1}
-      >
+    <View style={[{ backgroundColor: M.card, paddingHorizontal: 16, paddingBottom: 24, paddingTop: 16 }, borderPos]}>
+      <Text style={{ marginBottom: 12, textAlign: "center", fontSize: 16, fontWeight: "600", color: M.text }} numberOfLines={1}>
         {currentTrackTitle ?? "Now Playing"}
       </Text>
 
-      {/* Progress bar */}
       <Pressable
         onPress={handleSeek}
-        className="py-2"
+        style={{ paddingVertical: 8 }}
         onLayout={onBarLayout}
         accessibilityRole="button"
         accessibilityLabel={`Audio progress, ${formatDuration(progress)} of ${formatDuration(duration)}`}
         accessibilityHint="Tap to seek to position"
       >
-        <View className="h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-700">
-          <View
-            className="h-1.5 rounded-full bg-blue-500"
-            style={{ width: `${progressPercent}%` }}
-          />
+        <View style={{ height: 6, borderRadius: 999, backgroundColor: M.border }}>
+          <View style={{ height: 6, borderRadius: 999, backgroundColor: M.accent, width: `${progressPercent}%` }} />
         </View>
       </Pressable>
 
-      {/* Time labels */}
-      <View className="mb-4 flex-row justify-between">
-        <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-          {formatDuration(progress)}
-        </Text>
-        <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-          {formatDuration(duration)}
-        </Text>
+      <View style={{ marginBottom: 16, flexDirection: "row", justifyContent: "space-between" }}>
+        <Text style={{ fontSize: 12, color: M.sub }}>{formatDuration(progress)}</Text>
+        <Text style={{ fontSize: 12, color: M.sub }}>{formatDuration(duration)}</Text>
       </View>
 
-      {/* Controls */}
-      <View className="flex-row items-center justify-center gap-6">
-        {/* Speed */}
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 24 }}>
         <Pressable
           onPress={cycleSpeed}
           hitSlop={8}
-          className="min-w-[40px] items-center"
+          style={{ minWidth: 40, alignItems: "center" }}
           accessibilityRole="button"
           accessibilityLabel={`Playback speed: ${playbackSpeed}x`}
           accessibilityHint="Tap to cycle through playback speeds"
         >
-          <Text className="text-sm font-bold text-blue-500">{playbackSpeed}x</Text>
+          <Text style={{ fontSize: 14, fontWeight: "700", color: M.accent }}>{playbackSpeed}x</Text>
         </Pressable>
 
-        {/* Skip backward */}
         <Pressable
           onPress={() => skipBackward(10)}
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel="Skip back 10 seconds"
         >
-          <IconSymbol name="backward.fill" size={28} color="#6b7280" />
+          <IconSymbol name="backward.fill" size={28} color={M.sub} />
         </Pressable>
 
-        {/* Play/Pause */}
         <Pressable
           onPress={togglePlayback}
-          className="h-14 w-14 items-center justify-center rounded-full bg-blue-500"
+          style={{ height: 56, width: 56, alignItems: "center", justifyContent: "center", borderRadius: 28, backgroundColor: M.accent }}
           hitSlop={4}
           accessibilityRole="button"
           accessibilityLabel={isPlaying ? "Pause audio" : "Play audio"}
           accessibilityState={{ busy: isLoading }}
         >
           {isLoading ? (
-            <ActivityIndicator size="small" color="#fff" />
+            <ActivityIndicator size="small" color={M.ink} />
           ) : (
-            <IconSymbol
-              name={isPlaying ? "pause.fill" : "play.fill"}
-              size={28}
-              color="#ffffff"
-            />
+            <IconSymbol name={isPlaying ? "pause.fill" : "play.fill"} size={28} color={M.ink} />
           )}
         </Pressable>
 
-        {/* Skip forward */}
         <Pressable
           onPress={() => skipForward(10)}
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel="Skip forward 10 seconds"
         >
-          <IconSymbol name="forward.fill" size={28} color="#6b7280" />
+          <IconSymbol name="forward.fill" size={28} color={M.sub} />
         </Pressable>
 
-        {/* Spacer to balance speed button */}
-        <View className="min-w-[40px]" />
+        <View style={{ minWidth: 40 }} />
       </View>
     </View>
   );

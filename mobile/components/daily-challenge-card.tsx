@@ -4,6 +4,7 @@ import { useState } from "react";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useRegenerateDailyChallenges, useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
 import { ApiError } from "@/lib/api";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useTranslation } from "react-i18next";
 import type { ChallengeType, DailyChallenge } from "@/types";
 
@@ -19,6 +20,7 @@ const CHALLENGE_CONFIG: Record<
 };
 
 function ChallengeItem({ challenge }: { challenge: DailyChallenge }) {
+  const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
 
@@ -33,44 +35,44 @@ function ChallengeItem({ challenge }: { challenge: DailyChallenge }) {
   return (
     <Pressable
       onPress={() => router.push(config.route as any)}
-      className="rounded-xl bg-neutral-50 px-3 py-2.5 active:opacity-70 dark:bg-neutral-800"
+      style={{ borderRadius: 12, backgroundColor: M.card, paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1, borderColor: M.border }}
+      className="active:opacity-70"
     >
-      <View className="flex-row items-center">
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
         <View
-          className="mr-2.5 h-9 w-9 items-center justify-center rounded-lg"
-          style={{ backgroundColor: `${config.color}20` }}
+          style={{ marginRight: 10, height: 36, width: 36, alignItems: "center", justifyContent: "center", borderRadius: 8, backgroundColor: `${config.color}20` }}
         >
           <IconSymbol name={config.icon as any} size={17} color={config.color} />
         </View>
-        <View className="flex-1">
-          <View className="flex-row items-center justify-between">
-            <Text className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <Text style={{ fontSize: 10, fontWeight: "600", letterSpacing: 0.5, textTransform: "uppercase", color: M.muted }}>
               {challenge.title}
             </Text>
-            <Text className="text-[10px] font-semibold" style={{ color: config.color }}>
+            <Text style={{ fontSize: 10, fontWeight: "600", color: config.color }}>
               +{challenge.xpReward} XP
             </Text>
           </View>
-          <View className="mt-1 h-1 rounded-full bg-neutral-200 dark:bg-neutral-700">
+          <View style={{ marginTop: 4, height: 4, borderRadius: 999, backgroundColor: M.border }}>
             <View
-              className="h-full rounded-full"
               style={{
+                height: "100%", borderRadius: 999,
                 width: `${Math.round(progress * 100)}%`,
                 backgroundColor: challenge.completed ? "#22c55e" : config.color,
               }}
             />
           </View>
-          <Text className="mt-0.5 text-[10px] text-neutral-400 dark:text-neutral-500">
+          <Text style={{ marginTop: 2, fontSize: 10, color: M.muted }}>
             {challenge.progress} / {challenge.target}
             {challenge.completed && (
-              <Text className="font-semibold text-green-500"> · {t("learn.complete")}</Text>
+              <Text style={{ fontWeight: "600", color: "#22c55e" }}> · {t("learn.complete")}</Text>
             )}
           </Text>
         </View>
         {challenge.completed ? (
-          <IconSymbol name="checkmark.circle.fill" size={18} color="#22c55e" className="ml-2" />
+          <IconSymbol name="checkmark.circle.fill" size={18} color="#22c55e" style={{ marginLeft: 8 }} />
         ) : (
-          <IconSymbol name="chevron.right" size={14} color="#9ca3af" className="ml-2" />
+          <IconSymbol name="chevron.right" size={14} color={M.muted} style={{ marginLeft: 8 }} />
         )}
       </View>
     </Pressable>
@@ -101,7 +103,7 @@ export function DailyChallengeCards() {
   const allCompleted = challenges.every((c) => c.completed);
 
   return (
-    <View className="gap-3">
+    <View style={{ gap: 12 }}>
       {challenges.map((challenge) => (
         <ChallengeItem key={challenge.id} challenge={challenge} />
       ))}
@@ -109,15 +111,15 @@ export function DailyChallengeCards() {
         <Pressable
           onPress={handleRefresh}
           disabled={isRefreshing}
-          className="flex-row items-center justify-center gap-1.5 py-1 active:opacity-60"
-          style={{ opacity: isRefreshing ? 0.5 : 1 }}
+          style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 4, opacity: isRefreshing ? 0.5 : 1 }}
+          className="active:opacity-60"
         >
           {isRefreshing ? (
             <ActivityIndicator size="small" color="#9ca3af" />
           ) : (
             <>
               <IconSymbol name="arrow.clockwise" size={13} color="#9ca3af" />
-              <Text className="text-xs text-neutral-400 dark:text-neutral-500">
+              <Text style={{ fontSize: 12, color: "#9ca3af" }}>
                 {t("dailyChallenge.refresh")}
               </Text>
             </>

@@ -12,6 +12,7 @@ import {
     playFinishSound,
     playIncorrectSound,
 } from "@/lib/sounds";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import { useQuizStore } from "@/store/quiz-store";
 import type { QuizQuestion } from "@/types";
@@ -29,25 +30,18 @@ const TIME_ESTIMATE_MINUTES: Record<number, number> = { 5: 3, 10: 6, 15: 9, 20: 
 
 const FEEDBACK_DELAY = 1200;
 
-function ProgressBar({
-  current,
-  total,
-}: {
-  current: number;
-  total: number;
-}) {
-  const pct = total > 0 ? ((current) / total) * 100 : 0;
+function ProgressBar({ current, total }: { current: number; total: number }) {
+  const M = useMuseumTheme();
+  const pct = total > 0 ? (current / total) * 100 : 0;
   return (
-    <View className="mx-5 mt-2 h-2 rounded-full bg-neutral-200 dark:bg-neutral-700">
-      <View
-        className="h-2 rounded-full bg-blue-500"
-        style={{ width: `${pct}%` }}
-      />
+    <View style={{ marginHorizontal: 20, marginTop: 8, height: 8, borderRadius: 999, backgroundColor: M.border }}>
+      <View style={{ height: 8, borderRadius: 999, backgroundColor: M.accent, width: `${pct}%` }} />
     </View>
   );
 }
 
 function QuestionTypeLabel({ type }: { type: QuizQuestion["type"] }) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const labels: Record<string, string> = {
     "word-to-english": t("quiz.wordToEnglish"),
@@ -56,8 +50,8 @@ function QuestionTypeLabel({ type }: { type: QuizQuestion["type"] }) {
     listening: t("quiz.listening"),
   };
   return (
-    <View className="mb-2 self-start rounded-full bg-blue-100 px-3 py-1 dark:bg-blue-900">
-      <Text className="text-xs font-semibold text-blue-700 dark:text-blue-300">
+    <View style={{ marginBottom: 8, alignSelf: "flex-start", borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 12, paddingVertical: 4, borderWidth: 1, borderColor: M.accentBorder }}>
+      <Text style={{ fontSize: 12, fontWeight: "600", color: M.accent }}>
         {labels[type] ?? type}
       </Text>
     </View>
@@ -73,67 +67,55 @@ function OptionCard({
   state: "default" | "correct" | "incorrect" | "dimmed";
   onPress: () => void;
 }) {
-  const bgClass = {
-    default: "bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700",
-    correct: "bg-green-50 dark:bg-green-900/40 border-green-500",
-    incorrect: "bg-red-50 dark:bg-red-900/40 border-red-500",
-    dimmed: "bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 opacity-50",
-  }[state];
-
-  const textClass = {
-    default: "text-neutral-900 dark:text-white",
-    correct: "text-green-700 dark:text-green-300",
-    incorrect: "text-red-700 dark:text-red-300",
-    dimmed: "text-neutral-400 dark:text-neutral-500",
-  }[state];
+  const M = useMuseumTheme();
+  const bgColor = { default: M.card, correct: "#22c55e20", incorrect: "#ef444420", dimmed: M.card }[state];
+  const borderColor = { default: M.border, correct: "#22c55e", incorrect: "#ef4444", dimmed: M.border }[state];
+  const textColor = { default: M.text, correct: "#22c55e", incorrect: "#ef4444", dimmed: M.muted }[state];
 
   return (
     <Pressable
       onPress={onPress}
       disabled={state !== "default"}
-      className={`mb-3 rounded-xl border-2 px-5 py-4 ${bgClass}`}
+      style={{ marginBottom: 12, borderRadius: 12, borderWidth: 2, paddingHorizontal: 20, paddingVertical: 16, backgroundColor: bgColor, borderColor, opacity: state === "dimmed" ? 0.5 : 1 }}
     >
-      <Text className={`text-base font-medium ${textClass}`}>{label}</Text>
+      <Text style={{ fontSize: 16, fontWeight: "500", color: textColor }}>{label}</Text>
     </Pressable>
   );
 }
 
 function ConfigView({ onStart }: { onStart: (count: number) => void }) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const [count, setCount] = useState(10);
 
   return (
-    <View className="flex-1 items-center justify-center px-8">
-      <IconSymbol name="trophy.fill" size={56} color="#3b82f6" />
-      <Text className="mt-4 text-xl font-bold text-neutral-900 dark:text-white">
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+      <View style={{ width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", backgroundColor: M.accentGlow, borderWidth: 1, borderColor: M.accentBorder }}>
+        <IconSymbol name="trophy.fill" size={36} color={M.accent} />
+      </View>
+      <Text style={{ marginTop: 16, fontSize: 20, fontWeight: "700", color: M.text }}>
         {t("quiz.title")}
       </Text>
-      <Text className="mt-2 mb-8 text-center text-sm text-neutral-500 dark:text-neutral-400">
+      <Text style={{ marginTop: 8, marginBottom: 32, textAlign: "center", fontSize: 14, color: M.sub }}>
         {t("quiz.subtitle")}
       </Text>
 
-      <Text className="mb-3 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+      <Text style={{ marginBottom: 12, fontSize: 13, fontWeight: "500", color: M.sub }}>
         {t("quiz.numberOfQuestions")}
       </Text>
-      <View className="mb-8 flex-row gap-3">
+      <View style={{ marginBottom: 32, flexDirection: "row", gap: 12 }}>
         {QUESTION_COUNTS.map((n) => (
           <Pressable
             key={n}
             onPress={() => setCount(n)}
-            className={`h-16 w-16 items-center justify-center rounded-xl border-2 ${
-              count === n
-                ? "border-blue-500 bg-blue-500"
-                : "border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800"
-            }`}
+            style={{
+              height: 64, width: 64, alignItems: "center", justifyContent: "center", borderRadius: 12, borderWidth: 2,
+              borderColor: count === n ? M.accent : M.border,
+              backgroundColor: count === n ? M.accent : M.card,
+            }}
           >
-            <Text
-              className={`text-base font-bold ${
-                count === n ? "text-white" : "text-neutral-700 dark:text-neutral-300"
-              }`}
-            >
-              {n}
-            </Text>
-            <Text className={`text-[10px] ${count === n ? "text-blue-100" : "text-neutral-400 dark:text-neutral-500"}`}>
+            <Text style={{ fontSize: 16, fontWeight: "700", color: count === n ? M.ink : M.text }}>{n}</Text>
+            <Text style={{ fontSize: 10, color: count === n ? `${M.ink}99` : M.muted }}>
               {t("quiz.minutesEstimate", { minutes: TIME_ESTIMATE_MINUTES[n] })}
             </Text>
           </Pressable>
@@ -142,9 +124,10 @@ function ConfigView({ onStart }: { onStart: (count: number) => void }) {
 
       <Pressable
         onPress={() => onStart(count)}
-        className="w-full items-center rounded-xl bg-blue-500 py-4 active:opacity-80"
+        style={{ width: "100%", alignItems: "center", borderRadius: 12, backgroundColor: M.accent, paddingVertical: 16 }}
+        className="active:opacity-80"
       >
-        <Text className="text-base font-semibold text-white">{t("quiz.startQuiz")}</Text>
+        <Text style={{ fontSize: 16, fontWeight: "600", color: M.ink }}>{t("quiz.startQuiz")}</Text>
       </Pressable>
     </View>
   );
@@ -208,30 +191,20 @@ function ActiveView() {
     return "dimmed" as const;
   };
 
+  const M = useMuseumTheme();
+
   return (
-    <View className="flex-1">
+    <View style={{ flex: 1 }}>
       <ProgressBar current={currentIndex + (locked ? 1 : 0)} total={questions.length} />
 
-      <View className="flex-1 px-5 pt-6">
-        <View className="flex-row items-center justify-between">
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+      <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 24 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <Text style={{ fontSize: 13, color: M.sub }}>
             {t("quiz.questionOf", { current: currentIndex + 1, total: questions.length })}
           </Text>
           {lastAnswerCorrect !== null && locked && (
-            <View
-              className={`rounded-full px-3 py-1 ${
-                lastAnswerCorrect
-                  ? "bg-green-100 dark:bg-green-900"
-                  : "bg-red-100 dark:bg-red-900"
-              }`}
-            >
-              <Text
-                className={`text-xs font-semibold ${
-                  lastAnswerCorrect
-                    ? "text-green-700 dark:text-green-300"
-                    : "text-red-700 dark:text-red-300"
-                }`}
-              >
+            <View style={{ borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: lastAnswerCorrect ? "#22c55e20" : "#ef444420" }}>
+              <Text style={{ fontSize: 12, fontWeight: "600", color: lastAnswerCorrect ? "#22c55e" : "#ef4444" }}>
                 {lastAnswerCorrect ? t("quiz.correct") : t("quiz.incorrect")}
               </Text>
             </View>
@@ -243,7 +216,7 @@ function ActiveView() {
         {question.type === "listening" && question.audioSource ? (
           <ListeningQuestion audioSource={question.audioSource} />
         ) : (
-          <Text className="mb-8 text-xl font-bold text-neutral-900 dark:text-white">
+          <Text style={{ marginBottom: 32, fontSize: 20, fontWeight: "700", color: M.text }}>
             {question.prompt}
           </Text>
         )}
@@ -258,31 +231,31 @@ function ActiveView() {
         ))}
 
         {locked && lastAnswerCorrect === false && (
-          <View className="mt-3 rounded-2xl bg-red-50 px-4 py-3 dark:bg-red-900/20">
-            <View className="flex-row items-center gap-1.5">
+          <View style={{ marginTop: 12, borderRadius: 16, backgroundColor: "#ef444215", paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: "#ef444430" }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
               <IconSymbol name="lightbulb.fill" size={14} color="#f97316" />
-              <Text className="text-xs font-semibold text-orange-700 dark:text-orange-400">
+              <Text style={{ fontSize: 11, fontWeight: "600", color: "#f97316" }}>
                 {t("quiz.correctAnswerLabel")}
               </Text>
             </View>
-            <Text className="mt-1 text-sm font-bold text-neutral-800 dark:text-neutral-200">
+            <Text style={{ marginTop: 4, fontSize: 14, fontWeight: "700", color: M.text }}>
               {question.correctAnswer}
             </Text>
             {question.explanation && (
-              <Text className="mt-1 text-xs text-neutral-600 dark:text-neutral-300">
+              <Text style={{ marginTop: 4, fontSize: 12, color: M.sub }}>
                 {question.explanation}
               </Text>
             )}
             {question.exampleSentence && (
-              <View className="mt-2 border-t border-red-200 pt-2 dark:border-red-800">
-                <Text className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+              <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: "#ef444430", paddingTop: 8 }}>
+                <Text style={{ fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
                   {t("wordDetail.example")}
                 </Text>
-                <Text className="mt-0.5 text-xs italic text-neutral-700 dark:text-neutral-300">
+                <Text style={{ marginTop: 2, fontSize: 12, fontStyle: "italic", color: M.sub }}>
                   {question.exampleSentence}
                 </Text>
                 {question.exampleSentenceTranslation && (
-                  <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                  <Text style={{ marginTop: 2, fontSize: 12, color: M.muted }}>
                     {question.exampleSentenceTranslation}
                   </Text>
                 )}
@@ -290,9 +263,10 @@ function ActiveView() {
             )}
             <Pressable
               onPress={handleContinue}
-              className="mt-3 items-center rounded-xl bg-red-500 py-3 active:opacity-70 dark:bg-red-500"
+              style={{ marginTop: 12, alignItems: "center", borderRadius: 12, backgroundColor: "#ef4444", paddingVertical: 12 }}
+              className="active:opacity-70"
             >
-              <Text className="text-sm font-semibold text-white">
+              <Text style={{ fontSize: 13, fontWeight: "600", color: "#fff" }}>
                 {t("common.continue")}
               </Text>
             </Pressable>
@@ -304,6 +278,7 @@ function ActiveView() {
 }
 
 function ResultsView({ languageId }: { languageId: string }) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const { getResult, reset, startQuiz, questions, answeredQuestions } = useQuizStore();
   const router = useRouter();
@@ -343,19 +318,8 @@ function ResultsView({ languageId }: { languageId: string }) {
     post();
   }, []);
 
-  const scoreColor =
-    result.accuracy >= 80
-      ? "text-green-600 dark:text-green-400"
-      : result.accuracy >= 50
-        ? "text-amber-600 dark:text-amber-400"
-        : "text-red-600 dark:text-red-400";
-
-  const bgScoreColor =
-    result.accuracy >= 80
-      ? "bg-green-100 dark:bg-green-900/40"
-      : result.accuracy >= 50
-        ? "bg-amber-100 dark:bg-amber-900/40"
-        : "bg-red-100 dark:bg-red-900/40";
+  const scoreValue = result.accuracy >= 80 ? "#22c55e" : result.accuracy >= 50 ? M.accent : "#ef4444";
+  const scoreBg = result.accuracy >= 80 ? "#22c55e20" : result.accuracy >= 50 ? M.accentGlow : "#ef444420";
 
   const mins = Math.floor(result.timeElapsed / 60);
   const secs = result.timeElapsed % 60;
@@ -367,8 +331,6 @@ function ResultsView({ languageId }: { languageId: string }) {
       ...q,
       options: [...q.options].sort(() => Math.random() - 0.5),
     }));
-    // Call startQuiz directly — transitions from "results" → "active" without
-    // passing through "idle" (which would briefly flash the config screen).
     startQuiz(reshuffledQuestions);
   };
 
@@ -378,97 +340,69 @@ function ResultsView({ languageId }: { languageId: string }) {
     .filter((a) => a.question != null);
 
   return (
-    <ScrollView className="flex-1" contentContainerClassName="px-8 pb-8 pt-6" showsVerticalScrollIndicator={false}>
-      <View className="items-center">
-        <View className={`mb-6 h-28 w-28 items-center justify-center rounded-full ${bgScoreColor}`}>
-          <Text className={`text-3xl font-bold ${scoreColor}`}>
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 32, paddingBottom: 32, paddingTop: 24 }} showsVerticalScrollIndicator={false}>
+      <View style={{ alignItems: "center" }}>
+        <View style={{ marginBottom: 24, height: 112, width: 112, alignItems: "center", justifyContent: "center", borderRadius: 56, backgroundColor: scoreBg, borderWidth: 2, borderColor: scoreValue }}>
+          <Text style={{ fontSize: 28, fontWeight: "700", color: scoreValue }}>
             {result.correctCount}/{result.totalQuestions}
           </Text>
         </View>
 
-        <Text className={`mb-2 text-4xl font-bold ${scoreColor}`}>
+        <Text style={{ marginBottom: 8, fontSize: 40, fontWeight: "700", color: scoreValue }}>
           {result.accuracy}%
         </Text>
         {xpResult && (
-          <View className="mb-3 flex-row items-center gap-2">
-            <View className="rounded-full bg-amber-100 px-4 py-1.5 dark:bg-amber-900/40">
-              <Text className="text-sm font-bold text-amber-700 dark:text-amber-300">
+          <View style={{ marginBottom: 12, flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <View style={{ borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 16, paddingVertical: 6, borderWidth: 1, borderColor: M.accentBorder }}>
+              <Text style={{ fontSize: 13, fontWeight: "700", color: M.accent }}>
                 {t("quiz.xpEarned", { xp: xpResult.xpEarned })}
               </Text>
             </View>
             {xpResult.leveledUp && (
-              <View className="rounded-full bg-purple-100 px-4 py-1.5 dark:bg-purple-900/40">
-                <Text className="text-sm font-bold text-purple-700 dark:text-purple-300">
+              <View style={{ borderRadius: 999, backgroundColor: "#a78bfa20", paddingHorizontal: 16, paddingVertical: 6, borderWidth: 1, borderColor: "#a78bfa40" }}>
+                <Text style={{ fontSize: 13, fontWeight: "700", color: "#a78bfa" }}>
                   {t("quiz.leveledUp")}
                 </Text>
               </View>
             )}
           </View>
         )}
-        <Text className="mb-6 text-base text-neutral-500 dark:text-neutral-400">
+        <Text style={{ marginBottom: 24, fontSize: 16, color: M.sub }}>
           {t("quiz.completedIn", { time: timeStr })}
         </Text>
 
-        <View className="w-full gap-3">
-          <Pressable
-            onPress={handleTryAgain}
-            className="items-center rounded-xl bg-blue-500 py-4 active:opacity-80"
-          >
-            <Text className="text-base font-semibold text-white">{t("quiz.tryAgain")}</Text>
+        <View style={{ width: "100%", gap: 12 }}>
+          <Pressable onPress={handleTryAgain} style={{ alignItems: "center", borderRadius: 12, backgroundColor: M.accent, paddingVertical: 16 }} className="active:opacity-80">
+            <Text style={{ fontSize: 16, fontWeight: "600", color: M.ink }}>{t("quiz.tryAgain")}</Text>
           </Pressable>
-
-          <Pressable
-            onPress={() => {
-              reset();
-              router.back();
-            }}
-            className="items-center rounded-xl border-2 border-neutral-200 py-4 active:opacity-80 dark:border-neutral-700"
-          >
-            <Text className="text-base font-semibold text-neutral-700 dark:text-neutral-300">
-              {t("quiz.backToLearn")}
-            </Text>
+          <Pressable onPress={() => { reset(); router.back(); }} style={{ alignItems: "center", borderRadius: 12, borderWidth: 2, borderColor: M.border, paddingVertical: 16 }} className="active:opacity-80">
+            <Text style={{ fontSize: 16, fontWeight: "600", color: M.sub }}>{t("quiz.backToLearn")}</Text>
           </Pressable>
         </View>
       </View>
 
-      {/* Missed questions review */}
       {missedItems.length > 0 && (
-        <View className="mt-8">
-          <Text className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+        <View style={{ marginTop: 32 }}>
+          <Text style={{ marginBottom: 12, fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
             {t(missedItems.length === 1 ? "quiz.missedCount_one" : "quiz.missedCount_other", { count: missedItems.length })}
           </Text>
           {missedItems.map(({ question, selectedAnswer }) => (
-            <View
-              key={question!.id}
-              className="mb-3 rounded-2xl bg-red-50 p-4 dark:bg-red-900/10"
-            >
-              <Text className="mb-1.5 text-sm font-semibold text-neutral-800 dark:text-neutral-200">
-                {question!.prompt}
-              </Text>
-              <View className="flex-row items-center gap-2">
+            <View key={question!.id} style={{ marginBottom: 12, borderRadius: 16, backgroundColor: "#ef444212", padding: 16, borderWidth: 1, borderColor: "#ef444428" }}>
+              <Text style={{ marginBottom: 6, fontSize: 13, fontWeight: "600", color: M.text }}>{question!.prompt}</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                 <IconSymbol name="xmark.circle.fill" size={14} color="#ef4444" />
-                <Text className="text-xs text-neutral-500 dark:text-neutral-400 line-through">
-                  {selectedAnswer}
-                </Text>
+                <Text style={{ fontSize: 12, color: M.muted, textDecorationLine: "line-through" }}>{selectedAnswer}</Text>
               </View>
-              <View className="mt-1 flex-row items-center gap-2">
+              <View style={{ marginTop: 4, flexDirection: "row", alignItems: "center", gap: 8 }}>
                 <IconSymbol name="checkmark.circle.fill" size={14} color="#22c55e" />
-                <Text className="text-xs font-semibold text-green-700 dark:text-green-400">
-                  {question!.correctAnswer}
-                </Text>
+                <Text style={{ fontSize: 12, fontWeight: "600", color: "#22c55e" }}>{question!.correctAnswer}</Text>
               </View>
               {question!.exampleSentence && (
-                <View className="mt-2 border-t border-red-200 pt-2 dark:border-red-800">
-                  <Text className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-                    {t("wordDetail.example")}
-                  </Text>
-                  <Text className="mt-0.5 text-xs italic text-neutral-600 dark:text-neutral-400">
-                    {question!.exampleSentence}
-                  </Text>
+                <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: "#ef444428", paddingTop: 8 }}>
+                  <Text style={{ fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>{t("wordDetail.example")}</Text>
+                  <Text style={{ marginTop: 2, fontSize: 11, fontStyle: "italic", color: M.sub }}>{question!.exampleSentence}</Text>
                   {question!.exampleSentenceTranslation && (
-                    <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-500">
-                      {question!.exampleSentenceTranslation}
-                    </Text>
+                    <Text style={{ marginTop: 2, fontSize: 11, color: M.muted }}>{question!.exampleSentenceTranslation}</Text>
                   )}
                 </View>
               )}
@@ -481,33 +415,35 @@ function ResultsView({ languageId }: { languageId: string }) {
 }
 
 function EmptyView() {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
   const { reset } = useQuizStore();
 
   return (
-    <View className="flex-1 items-center justify-center px-8">
-      <IconSymbol name="character.book.closed" size={56} color="#d1d5db" />
-      <Text className="mt-4 text-center text-lg font-semibold text-neutral-700 dark:text-neutral-300">
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+      <View style={{ width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", backgroundColor: M.card, borderWidth: 1, borderColor: M.border, marginBottom: 16 }}>
+        <IconSymbol name="character.book.closed" size={36} color={M.muted} />
+      </View>
+      <Text style={{ textAlign: "center", fontSize: 18, fontWeight: "600", color: M.text }}>
         {t("quiz.notEnoughVocab")}
       </Text>
-      <Text className="mt-2 text-center text-sm text-neutral-500 dark:text-neutral-400">
+      <Text style={{ marginTop: 8, textAlign: "center", fontSize: 14, color: M.sub }}>
         {t("quiz.notEnoughVocabDesc")}
       </Text>
       <Pressable
-        onPress={() => {
-          reset();
-          router.back();
-        }}
-        className="mt-6 rounded-xl bg-blue-500 px-8 py-3 active:opacity-80"
+        onPress={() => { reset(); router.back(); }}
+        style={{ marginTop: 24, borderRadius: 12, backgroundColor: M.accent, paddingHorizontal: 32, paddingVertical: 12 }}
+        className="active:opacity-80"
       >
-        <Text className="font-semibold text-white">{t("common.goBack")}</Text>
+        <Text style={{ fontWeight: "600", color: M.ink }}>{t("common.goBack")}</Text>
       </Pressable>
     </View>
   );
 }
 
 export default function QuizScreen() {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{
@@ -641,10 +577,7 @@ export default function QuizScreen() {
           ),
         }}
       />
-      <SafeAreaView
-        className="flex-1 bg-white dark:bg-neutral-900"
-        edges={[]}
-      >
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={[]}>
         {isEmpty ? (
           <EmptyView />
         ) : phase === "results" ? (

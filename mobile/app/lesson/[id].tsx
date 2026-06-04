@@ -17,6 +17,7 @@ import { cancelDailyStreakReminder } from "@/lib/hooks/use-daily-reminder";
 import { useReviewPrompt } from "@/lib/hooks/use-review-prompt";
 import { useAudioStore } from "@/store/audio-store";
 import { analytics } from "@/lib/analytics";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useTourStore } from "@/store/tour-store";
@@ -29,6 +30,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
 export default function LessonScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: lesson, isLoading, isError } = useLesson(id ?? "");
@@ -90,8 +92,8 @@ export default function LessonScreen() {
     return (
       <>
         <Stack.Screen options={{ title: t("lesson.title") }} />
-        <View className="flex-1 items-center justify-center bg-white dark:bg-neutral-900">
-          <Text className="text-lg text-neutral-500 dark:text-neutral-400">
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: M.bg }}>
+          <Text style={{ fontSize: 18, color: M.sub }}>
             {t("lesson.notFound")}
           </Text>
         </View>

@@ -1,5 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { localizeField } from "@/lib/localize";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Proverb } from "@/types";
 import { useTranslation } from "react-i18next";
@@ -11,29 +12,30 @@ interface Props {
 }
 
 export function ProverbCard({ proverb, compact = false }: Props) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const { uiLanguage } = useUiLanguageStore();
 
   return (
-    <View className="rounded-2xl bg-amber-50 p-4 dark:bg-amber-900/20">
-      <View className="mb-2 flex-row items-center">
-        <IconSymbol name="text.quote" size={16} color="#d97706" />
-        <Text className="ml-1.5 text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+    <View style={{ borderRadius: 16, backgroundColor: M.card, padding: 16, borderWidth: 1, borderColor: M.border, borderLeftWidth: 4, borderLeftColor: M.accent }}>
+      <View style={{ marginBottom: 8, flexDirection: "row", alignItems: "center" }}>
+        <IconSymbol name="text.quote" size={14} color={M.accent} />
+        <Text style={{ marginLeft: 6, fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.accent }}>
           {t("proverbs.label")}
         </Text>
       </View>
 
-      <Text className="text-base font-semibold italic text-neutral-900 dark:text-white">
+      <Text style={{ fontSize: 16, fontWeight: "600", fontStyle: "italic", color: M.text }}>
         &ldquo;{proverb.text}&rdquo;
       </Text>
 
-      <Text className="mt-1.5 text-sm text-neutral-600 dark:text-neutral-400">
+      <Text style={{ marginTop: 6, fontSize: 13, lineHeight: 18, color: M.sub }}>
         {localizeField(proverb.translation, proverb.translationFr, uiLanguage)}
       </Text>
 
       {!compact && (
-        <View className="mt-3 rounded-lg bg-amber-100/60 px-3 py-2 dark:bg-amber-900/30">
-          <Text className="text-xs font-medium text-amber-800 dark:text-amber-300">
+        <View style={{ marginTop: 12, borderRadius: 8, backgroundColor: M.accentGlow, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: M.accentBorder }}>
+          <Text style={{ fontSize: 12, lineHeight: 17, color: M.sub }}>
             {localizeField(proverb.meaning, proverb.meaningFr, uiLanguage)}
           </Text>
         </View>

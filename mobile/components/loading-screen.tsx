@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 import { Image } from "expo-image";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 
 const TIPS = [
   // Language learning
@@ -39,26 +40,28 @@ interface LoadingScreenProps {
   color?: string;
 }
 
-export function LoadingScreen({ showBranding = false, color = "#3b82f6" }: LoadingScreenProps) {
+export function LoadingScreen({ showBranding = false, color }: LoadingScreenProps) {
+  const M = useMuseumTheme();
   const tip = useMemo(() => TIPS[Math.floor(Math.random() * TIPS.length)], []);
+  const spinnerColor = color ?? M.accent;
 
   return (
-    <View className="flex-1 items-center justify-center bg-white px-8 dark:bg-neutral-900">
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: M.bg, paddingHorizontal: 32 }}>
       {showBranding && (
         <>
           <Image source={mascot} style={{ width: 120, height: 80 }} contentFit="contain" />
-          <Text className="mb-1 mt-4 text-3xl font-bold text-blue-600">Beeli</Text>
-          <Text className="mb-8 text-sm text-neutral-500 dark:text-neutral-400">
+          <Text style={{ marginBottom: 4, marginTop: 16, fontSize: 30, fontWeight: "700", color: M.accent }}>Beeli</Text>
+          <Text style={{ marginBottom: 32, fontSize: 14, color: M.sub }}>
             Learn African Languages
           </Text>
         </>
       )}
-      <ActivityIndicator size="large" color={color} />
-      <View className="mt-8 rounded-2xl bg-blue-50 px-5 py-4 dark:bg-blue-950">
-        <Text className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-blue-500 dark:text-blue-400">
+      <ActivityIndicator size="large" color={spinnerColor} />
+      <View style={{ marginTop: 32, borderRadius: 16, backgroundColor: M.card, paddingHorizontal: 20, paddingVertical: 16, borderWidth: 1, borderColor: M.border }}>
+        <Text style={{ marginBottom: 6, fontSize: 10, fontWeight: "600", letterSpacing: 2, textTransform: "uppercase", color: M.accent }}>
           Tip
         </Text>
-        <Text className="text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
+        <Text style={{ fontSize: 14, lineHeight: 22, color: M.sub }}>
           {tip}
         </Text>
       </View>

@@ -1,5 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useCultural } from "@/lib/hooks/use-cultural";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { CulturalCategory, CulturalContent } from "@/types";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
@@ -9,26 +10,27 @@ import { FlatList, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const CULTURAL_CATEGORIES: { id: CulturalCategory; label: string; emoji: string }[] = [
-  { id: "colors", label: "Colors", emoji: "\uD83C\uDFA8" },
-  { id: "naming_ceremonies", label: "Naming", emoji: "\uD83D\uDC76" },
-  { id: "festivals", label: "Festivals", emoji: "\uD83C\uDF89" },
-  { id: "creation_myths", label: "Myths & Stories", emoji: "\uD83C\uDF1F" },
-  { id: "music", label: "Music", emoji: "\uD83C\uDFB5" },
-  { id: "clothing", label: "Clothing", emoji: "\uD83E\udDE3" },
-  { id: "cuisine", label: "Cuisine", emoji: "\uD83C\uDF5C" },
-  { id: "greetings_etiquette", label: "Greetings", emoji: "\uD83D\uDC4B" },
+  { id: "colors", label: "Colors", emoji: "🎨" },
+  { id: "naming_ceremonies", label: "Naming", emoji: "👶" },
+  { id: "festivals", label: "Festivals", emoji: "🎉" },
+  { id: "creation_myths", label: "Myths & Stories", emoji: "🌟" },
+  { id: "music", label: "Music", emoji: "🎵" },
+  { id: "clothing", label: "Clothing", emoji: "🧣" },
+  { id: "cuisine", label: "Cuisine", emoji: "🍜" },
+  { id: "greetings_etiquette", label: "Greetings", emoji: "👋" },
 ];
 
 function KeyTermPill({ word, english }: { word: string; english: string }) {
+  const M = useMuseumTheme();
   return (
-    <View className="mb-1.5 mr-1.5 flex-row items-center rounded-full bg-amber-100/60 px-3 py-1.5 dark:bg-amber-900/30">
-      <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
+    <View style={{ marginBottom: 6, marginRight: 6, flexDirection: "row", alignItems: "center", borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: M.accentBorder }}>
+      <Text style={{ fontSize: 13, fontWeight: "600", color: M.text }}>
         {word}
       </Text>
-      <Text className="mx-1 text-neutral-400 dark:text-neutral-500">
-        {"\u2192"}
+      <Text style={{ marginHorizontal: 4, color: M.muted }}>
+        {"→"}
       </Text>
-      <Text className="text-sm text-neutral-600 dark:text-neutral-400">
+      <Text style={{ fontSize: 13, color: M.sub }}>
         {english}
       </Text>
     </View>
@@ -36,33 +38,34 @@ function KeyTermPill({ word, english }: { word: string; english: string }) {
 }
 
 function ExpandedCulturalCard({ item }: { item: CulturalContent }) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   return (
-    <View className="mb-4 rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
-      <View className="flex-row items-start">
-        <Text className="text-5xl">{item.imageEmoji}</Text>
-        <View className="ml-3 flex-1">
-          <View className="self-start rounded-full bg-amber-100 px-2.5 py-0.5 dark:bg-amber-900/40">
-            <Text className="text-xs font-medium text-amber-700 dark:text-amber-400">
+    <View style={{ marginBottom: 16, borderRadius: 16, backgroundColor: M.card, padding: 16, borderWidth: 1, borderColor: M.border }}>
+      <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+        <Text style={{ fontSize: 48 }}>{item.imageEmoji}</Text>
+        <View style={{ marginLeft: 12, flex: 1 }}>
+          <View style={{ alignSelf: "flex-start", borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 10, paddingVertical: 2, borderWidth: 1, borderColor: M.accentBorder }}>
+            <Text style={{ fontSize: 11, fontWeight: "500", color: M.accent }}>
               {t(`cultural.categories.${item.category}` as any)}
             </Text>
           </View>
-          <Text className="mt-1.5 text-lg font-bold text-neutral-900 dark:text-white">
+          <Text style={{ marginTop: 6, fontSize: 18, fontWeight: "700", color: M.text }}>
             {item.title}
           </Text>
         </View>
       </View>
 
-      <Text className="mt-3 text-sm leading-5 text-neutral-700 dark:text-neutral-300">
+      <Text style={{ marginTop: 12, fontSize: 13, lineHeight: 20, color: M.sub }}>
         {item.description}
       </Text>
 
       {item.keyTerms.length > 0 && (
-        <View className="mt-3">
-          <Text className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+        <View style={{ marginTop: 12 }}>
+          <Text style={{ marginBottom: 8, fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
             {t("cultural.keyTerms")}
           </Text>
-          <View className="flex-row flex-wrap">
+          <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
             {item.keyTerms.map((term) => (
               <KeyTermPill
                 key={term.word}
@@ -77,35 +80,19 @@ function ExpandedCulturalCard({ item }: { item: CulturalContent }) {
   );
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  colors: "Colors",
-  naming_ceremonies: "Naming",
-  festivals: "Festivals",
-  creation_myths: "Myths & Stories",
-  music: "Music",
-  clothing: "Clothing",
-  cuisine: "Cuisine",
-  greetings_etiquette: "Greetings",
-};
-
-function getCategoryLabel(category: string): string {
-  return CATEGORY_LABELS[category] ?? category;
-}
-
 export default function CulturalScreen() {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const { languageId } = useLocalSearchParams<{ languageId: string }>();
   const { data: allContent = [], isLoading } = useCultural(languageId ?? "");
   const categories = CULTURAL_CATEGORIES;
-  const [selectedCategory, setSelectedCategory] =
-    useState<CulturalCategory | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<CulturalCategory | null>(null);
 
   const filteredContent = useMemo(() => {
     if (!selectedCategory) return allContent;
     return allContent.filter((item) => item.category === selectedCategory);
   }, [allContent, selectedCategory]);
 
-  // Only show categories that have content for this language
   const availableCategories = useMemo(() => {
     const categorySet = new Set(allContent.map((item) => item.category));
     return categories.filter((cat) => categorySet.has(cat.id));
@@ -115,17 +102,12 @@ export default function CulturalScreen() {
     (languageId ?? "").charAt(0).toUpperCase() + (languageId ?? "").slice(1);
 
   const renderItem = useCallback(
-    ({ item }: { item: CulturalContent }) => (
-      <ExpandedCulturalCard item={item} />
-    ),
+    ({ item }: { item: CulturalContent }) => <ExpandedCulturalCard item={item} />,
     []
   );
 
   return (
-    <SafeAreaView
-      className="flex-1 bg-white dark:bg-neutral-900"
-      edges={["bottom"]}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["bottom"]}>
       <Stack.Screen
         options={{
           title: `${languageTitle} ${t("cultural.titleSuffix")}`,
@@ -137,61 +119,50 @@ export default function CulturalScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        className="border-b border-neutral-100 dark:border-neutral-800"
-        contentContainerClassName="px-4 py-3 gap-2"
+        style={{ borderBottomWidth: 1, borderBottomColor: M.border, flexGrow: 0 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12, gap: 8 }}
       >
         <Pressable
           onPress={() => setSelectedCategory(null)}
-          className={`rounded-full px-4 py-2 ${
-            selectedCategory === null
-              ? "bg-amber-500 dark:bg-amber-600"
-              : "bg-neutral-100 dark:bg-neutral-800"
-          }`}
+          style={{
+            borderRadius: 999, paddingHorizontal: 16, paddingVertical: 8,
+            backgroundColor: selectedCategory === null ? M.accent : M.card,
+            borderWidth: 1, borderColor: selectedCategory === null ? M.accent : M.border,
+          }}
         >
-          <Text
-            className={`text-sm font-medium ${
-              selectedCategory === null
-                ? "text-white"
-                : "text-neutral-700 dark:text-neutral-300"
-            }`}
-          >
+          <Text style={{ fontSize: 13, fontWeight: "500", color: selectedCategory === null ? M.ink : M.sub }}>
             {t("cultural.all")}
           </Text>
         </Pressable>
 
-        {availableCategories.map((cat) => (
-          <Pressable
-            key={cat.id}
-            onPress={() =>
-              setSelectedCategory(
-                selectedCategory === cat.id ? null : cat.id
-              )
-            }
-            className={`rounded-full px-4 py-2 ${
-              selectedCategory === cat.id
-                ? "bg-amber-500 dark:bg-amber-600"
-                : "bg-neutral-100 dark:bg-neutral-800"
-            }`}
-          >
-            <Text
-              className={`text-sm font-medium ${
-                selectedCategory === cat.id
-                  ? "text-white"
-                  : "text-neutral-700 dark:text-neutral-300"
-              }`}
+        {availableCategories.map((cat) => {
+          const active = selectedCategory === cat.id;
+          return (
+            <Pressable
+              key={cat.id}
+              onPress={() => setSelectedCategory(active ? null : cat.id)}
+              style={{
+                borderRadius: 999, paddingHorizontal: 16, paddingVertical: 8,
+                backgroundColor: active ? M.accent : M.card,
+                borderWidth: 1, borderColor: active ? M.accent : M.border,
+              }}
             >
-              {cat.emoji} {t(`cultural.categories.${cat.id}` as any)}
-            </Text>
-          </Pressable>
-        ))}
+              <Text style={{ fontSize: 13, fontWeight: "500", color: active ? M.ink : M.sub }}>
+                {cat.emoji} {t(`cultural.categories.${cat.id}` as any)}
+              </Text>
+            </Pressable>
+          );
+        })}
       </ScrollView>
 
       {isLoading ? (
-        <LoadingScreen color="#f59e0b" />
+        <LoadingScreen />
       ) : filteredContent.length === 0 ? (
-        <View className="flex-1 items-center justify-center px-8">
-          <IconSymbol name="book.fill" size={48} color="#d1d5db" />
-          <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+          <View style={{ width: 64, height: 64, borderRadius: 32, alignItems: "center", justifyContent: "center", backgroundColor: M.accentGlow, borderWidth: 1, borderColor: M.accentBorder, marginBottom: 16 }}>
+            <IconSymbol name="book.fill" size={28} color={M.accent} />
+          </View>
+          <Text style={{ textAlign: "center", fontSize: 15, fontWeight: "700", color: M.text }}>
             {t("cultural.noContent")}
           </Text>
         </View>
@@ -200,7 +171,7 @@ export default function CulturalScreen() {
           data={filteredContent}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
-          contentContainerClassName="px-4 py-4"
+          contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 16 }}
           showsVerticalScrollIndicator={false}
         />
       )}

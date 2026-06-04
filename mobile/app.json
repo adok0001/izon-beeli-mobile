@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Beeli - African Language Learning",
+    "name": "Beeli",
     "slug": "izon-beeli-mobile",
-    "version": "1.28.5",
+    "version": "1.29.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "izonbeelimobile",
