@@ -3,6 +3,7 @@ import { View, Text, Pressable } from "react-native";
 import { useRouter, useLocalSearchParams, Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { MatchingBoard } from "@/components/quiz/matching-board";
 import { useMatchingStore } from "@/store/matching-store";
 import { generateMatchingPairs } from "@/lib/quiz-engine";
@@ -17,6 +18,7 @@ import { useAuth } from "@clerk/clerk-expo";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function MatchingGameScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const params = useLocalSearchParams<{ courseId?: string }>();
   const { selectedLanguageId } = useLanguageStore();
@@ -96,10 +98,10 @@ export default function MatchingGameScreen() {
   const headerLeft = useCallback(
     () => (
       <Pressable onPress={() => { reset(); router.back(); }} hitSlop={8}>
-        <IconSymbol name="xmark" size={22} color="#9ca3af" />
+        <IconSymbol name="xmark" size={22} color={M.muted} />
       </Pressable>
     ),
-    [reset, router]
+    [reset, router, M.muted]
   );
 
   const screenOptions = useMemo(
@@ -115,69 +117,58 @@ export default function MatchingGameScreen() {
   return (
     <>
       <Stack.Screen options={screenOptions} />
-      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={[]}>
         {isEmpty ? (
-          <View className="flex-1 items-center justify-center px-8">
-            <IconSymbol name="rectangle.grid.2x2" size={56} color="#d1d5db" />
-            <Text className="mt-4 text-center text-lg font-semibold text-neutral-700 dark:text-neutral-300">
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+            <IconSymbol name="rectangle.grid.2x2" size={56} color={M.border} />
+            <Text style={{ marginTop: 16, textAlign: "center", fontSize: 17, fontWeight: "600", color: M.sub }}>
               {t("matching.notEnoughVocab")}
             </Text>
-            <Text className="mt-2 text-center text-sm text-neutral-500 dark:text-neutral-400">
+            <Text style={{ marginTop: 8, textAlign: "center", fontSize: 13, color: M.muted }}>
               {t("matching.notEnoughVocabDesc")}
             </Text>
             <Pressable
-              onPress={() => {
-                reset();
-                router.back();
-              }}
-              className="mt-6 rounded-xl bg-blue-500 px-8 py-3 active:opacity-80"
+              onPress={() => { reset(); router.back(); }}
+              style={{ marginTop: 24, borderRadius: 12, backgroundColor: M.accent, paddingHorizontal: 32, paddingVertical: 12 }}
+              className="active:opacity-80"
             >
-              <Text className="font-semibold text-white">{t("matching.goBack")}</Text>
+              <Text style={{ fontWeight: "600", color: M.ink }}>{t("matching.goBack")}</Text>
             </Pressable>
           </View>
         ) : phase === "results" && result ? (
-          <View className="flex-1 items-center justify-center px-8">
-            <View className="mb-6 h-28 w-28 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/40">
-              <Text className="text-3xl font-bold text-green-600 dark:text-green-400">
-                {result.accuracy}%
-              </Text>
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+            <View style={{ marginBottom: 24, height: 112, width: 112, alignItems: "center", justifyContent: "center", borderRadius: 56, backgroundColor: "#22c55e20", borderWidth: 1, borderColor: "#22c55e40" }}>
+              <Text style={{ fontSize: 28, fontWeight: "700", color: "#22c55e" }}>{result.accuracy}%</Text>
             </View>
 
-            <Text className="mb-2 text-2xl font-bold text-neutral-900 dark:text-white">
-              {t("matching.allMatched")}
-            </Text>
-            <Text className="mb-1 text-base text-neutral-500 dark:text-neutral-400">
+            <Text style={{ marginBottom: 8, fontSize: 24, fontWeight: "700", color: M.text }}>{t("matching.allMatched")}</Text>
+            <Text style={{ marginBottom: 4, fontSize: 15, color: M.sub }}>
               {t("matching.pairsAttempts", { total: result.totalPairs, attempts: result.attempts })}
             </Text>
-            <Text className="mb-6 text-base text-neutral-500 dark:text-neutral-400">
+            <Text style={{ marginBottom: 24, fontSize: 15, color: M.sub }}>
               {t("matching.time", { time: result.timeElapsed })}
             </Text>
 
-            <View className="w-full gap-3">
+            <View style={{ width: "100%", gap: 12 }}>
               <Pressable
                 onPress={handlePlayAgain}
-                className="items-center rounded-xl bg-blue-500 py-4 active:opacity-80"
+                style={{ alignItems: "center", borderRadius: 12, backgroundColor: M.accent, paddingVertical: 16 }}
+                className="active:opacity-80"
               >
-                <Text className="text-base font-semibold text-white">
-                  {t("matching.playAgain")}
-                </Text>
+                <Text style={{ fontSize: 15, fontWeight: "600", color: M.ink }}>{t("matching.playAgain")}</Text>
               </Pressable>
               <Pressable
-                onPress={() => {
-                  reset();
-                  router.back();
-                }}
-                className="items-center rounded-xl border-2 border-neutral-200 py-4 active:opacity-80 dark:border-neutral-700"
+                onPress={() => { reset(); router.back(); }}
+                style={{ alignItems: "center", borderRadius: 12, borderWidth: 2, borderColor: M.border, paddingVertical: 16 }}
+                className="active:opacity-80"
               >
-                <Text className="text-base font-semibold text-neutral-700 dark:text-neutral-300">
-                  {t("matching.backToLearn")}
-                </Text>
+                <Text style={{ fontSize: 15, fontWeight: "600", color: M.sub }}>{t("matching.backToLearn")}</Text>
               </Pressable>
             </View>
           </View>
         ) : (
-          <View className="flex-1 px-5 pt-4">
-            <Text className="mb-4 text-center text-base text-neutral-600 dark:text-neutral-400">
+          <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 16 }}>
+            <Text style={{ marginBottom: 16, textAlign: "center", fontSize: 15, color: M.sub }}>
               {t("matching.instruction")}
             </Text>
             <MatchingBoard />

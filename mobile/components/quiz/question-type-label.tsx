@@ -1,5 +1,6 @@
 import { View, Text } from "react-native";
 import type { QuizQuestion } from "@/types";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 
 const labels: Record<string, string> = {
   "word-to-english": "Translate to English",
@@ -9,9 +10,10 @@ const labels: Record<string, string> = {
 };
 
 export function QuestionTypeLabel({ type }: { type: QuizQuestion["type"] }) {
+  const M = useMuseumTheme();
   return (
-    <View className="mb-2 self-start rounded-full bg-blue-100 px-3 py-1 dark:bg-blue-900">
-      <Text className="text-xs font-semibold text-blue-700 dark:text-blue-300">
+    <View style={{ marginBottom: 8, alignSelf: "flex-start", borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 12, paddingVertical: 4, borderWidth: 1, borderColor: M.accentBorder }}>
+      <Text style={{ fontSize: 11, fontWeight: "600", color: M.accent }}>
         {labels[type] ?? type}
       </Text>
     </View>

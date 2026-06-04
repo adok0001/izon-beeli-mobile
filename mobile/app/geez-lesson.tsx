@@ -3,6 +3,7 @@ import { FidelGrid } from "@/components/geez/fidel-grid";
 import { TracingCanvas } from "@/components/geez/tracing-canvas";
 import { FIDEL_CHART, type GeezCharacter } from "@/lib/data/geez";
 import { hapticSuccess } from "@/lib/haptics";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useGeezStore } from "@/store/geez-store";
 import { Stack } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -14,34 +15,21 @@ type Tab = "chart" | "practice";
 
 const TOTAL_CHARS = FIDEL_CHART.length;
 
-function TabSegment({
-  active,
-  onPress,
-  label,
-}: {
-  active: boolean;
-  onPress: () => void;
-  label: string;
-}) {
+function TabSegment({ active, onPress, label }: { active: boolean; onPress: () => void; label: string }) {
+  const M = useMuseumTheme();
   return (
     <Pressable
       onPress={onPress}
-      className={`flex-1 items-center rounded-lg py-2 ${
-        active ? "bg-blue-500" : "bg-transparent"
-      }`}
+      style={{ flex: 1, alignItems: "center", borderRadius: 8, paddingVertical: 8, backgroundColor: active ? M.accent : "transparent" }}
+      className="active:opacity-80"
     >
-      <Text
-        className={`text-sm font-semibold ${
-          active ? "text-white" : "text-neutral-600 dark:text-neutral-400"
-        }`}
-      >
-        {label}
-      </Text>
+      <Text style={{ fontSize: 13, fontWeight: "600", color: active ? M.ink : M.sub }}>{label}</Text>
     </Pressable>
   );
 }
 
 export default function GeezLessonScreen() {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>("chart");
   const [selectedChar, setSelectedChar] = useState<GeezCharacter | null>(null);
@@ -119,126 +107,91 @@ export default function GeezLessonScreen() {
           headerBackTitle: t("common.back"),
         }}
       />
-      <SafeAreaView
-        className="flex-1 bg-white dark:bg-neutral-900"
-        edges={[]}
-      >
-        {/* Progress bar */}
-        <View className="px-5 pt-4 pb-2">
-          <View className="flex-row items-center justify-between">
-            <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-              {t("geez.progress")}
-            </Text>
-            <Text className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={[]}>
+        <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <Text style={{ fontSize: 13, color: M.sub }}>{t("geez.progress")}</Text>
+            <Text style={{ fontSize: 13, fontWeight: "600", color: M.text }}>
               {t("geez.learnedCount", { count: learnedCount, total: TOTAL_CHARS })}
             </Text>
           </View>
-          <View className="mt-2 h-2 rounded-full bg-neutral-200 dark:bg-neutral-700">
-            <View
-              className="h-2 rounded-full bg-green-500"
-              style={{
-                width: `${TOTAL_CHARS > 0 ? (learnedCount / TOTAL_CHARS) * 100 : 0}%`,
-              }}
-            />
+          <View style={{ marginTop: 8, height: 6, borderRadius: 999, backgroundColor: M.border }}>
+            <View style={{ height: 6, borderRadius: 999, backgroundColor: "#22c55e", width: `${TOTAL_CHARS > 0 ? (learnedCount / TOTAL_CHARS) * 100 : 0}%` }} />
           </View>
         </View>
 
-        {/* Tab segments */}
-        <View className="mx-5 mt-3 flex-row rounded-lg bg-neutral-100 p-1 dark:bg-neutral-800">
-          <TabSegment
-            active={tab === "chart"}
-            onPress={() => setTab("chart")}
-            label={t("geez.chart", { count: TOTAL_CHARS })}
-          />
+        <View style={{ marginHorizontal: 20, marginTop: 12, flexDirection: "row", borderRadius: 10, backgroundColor: M.card, padding: 4, borderWidth: 1, borderColor: M.border }}>
+          <TabSegment active={tab === "chart"} onPress={() => setTab("chart")} label={t("geez.chart", { count: TOTAL_CHARS })} />
           <TabSegment
             active={tab === "practice"}
             onPress={() => setTab("practice")}
-            label={
-              allLearned
-                ? t("geez.practiceComplete")
-                : t("geez.practiceTab", { remaining: unlearnedChars.length })
-            }
+            label={allLearned ? t("geez.practiceComplete") : t("geez.practiceTab", { remaining: unlearnedChars.length })}
           />
         </View>
 
-        {/* Content */}
         {tab === "chart" ? (
           <FidelGrid learnedIds={learnedIds} onSelect={setSelectedChar} />
         ) : (
-          <View className="flex-1 px-5">
+          <View style={{ flex: 1, paddingHorizontal: 20 }}>
             {allLearned ? (
-              <View className="flex-1 items-center justify-center gap-3">
-                <Text className="text-5xl">🎉</Text>
-                <Text className="text-xl font-bold text-neutral-900 dark:text-white">
+              <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12 }}>
+                <Text style={{ fontSize: 48 }}>🎉</Text>
+                <Text style={{ fontSize: 20, fontWeight: "700", color: M.text }}>
                   {t("geez.allLearned", { count: TOTAL_CHARS })}
                 </Text>
                 <Pressable
                   onPress={() => setTab("chart")}
-                  className="mt-2 rounded-xl bg-blue-500 px-6 py-3 active:opacity-80"
+                  style={{ marginTop: 8, borderRadius: 12, backgroundColor: M.accent, paddingHorizontal: 24, paddingVertical: 12 }}
+                  className="active:opacity-80"
                 >
-                  <Text className="font-semibold text-white">{t("geez.backToChart")}</Text>
+                  <Text style={{ fontWeight: "600", color: M.ink }}>{t("geez.backToChart")}</Text>
                 </Pressable>
               </View>
             ) : (
-              <View className="flex-1">
-                {/* Navigation header */}
-                <View className="flex-row items-center justify-between py-3">
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 12 }}>
                   <Pressable
                     onPress={handlePrev}
                     disabled={practiceIndex <= 0}
-                    className={`rounded-lg px-4 py-2 ${
-                      practiceIndex <= 0
-                        ? "opacity-30"
-                        : "bg-neutral-100 active:opacity-70 dark:bg-neutral-800"
-                    }`}
+                    style={{ borderRadius: 8, paddingHorizontal: 16, paddingVertical: 8, backgroundColor: M.card, borderWidth: 1, borderColor: M.border, opacity: practiceIndex <= 0 ? 0.3 : 1 }}
+                    className="active:opacity-70"
                   >
-                    <Text className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-                      {t("geez.prev")}
-                    </Text>
+                    <Text style={{ fontSize: 13, fontWeight: "600", color: M.sub }}>{t("geez.prev")}</Text>
                   </Pressable>
 
-                  <Text className="text-xs text-neutral-500 dark:text-neutral-400">
+                  <Text style={{ fontSize: 11, color: M.muted }}>
                     {t("geez.remaining", { current: practiceIndex + 1, total: unlearnedChars.length })}
                   </Text>
 
                   <Pressable
                     onPress={handleNext}
                     disabled={unlearnedChars.length <= 1}
-                    className={`rounded-lg px-4 py-2 ${
-                      unlearnedChars.length <= 1
-                        ? "opacity-30"
-                        : "bg-neutral-100 active:opacity-70 dark:bg-neutral-800"
-                    }`}
+                    style={{ borderRadius: 8, paddingHorizontal: 16, paddingVertical: 8, backgroundColor: M.card, borderWidth: 1, borderColor: M.border, opacity: unlearnedChars.length <= 1 ? 0.3 : 1 }}
+                    className="active:opacity-70"
                   >
-                    <Text className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-                      {t("geez.next")}
-                    </Text>
+                    <Text style={{ fontSize: 13, fontWeight: "600", color: M.sub }}>{t("geez.next")}</Text>
                   </Pressable>
                 </View>
 
-                {/* Tracing canvas */}
-                <View className="flex-1 items-center justify-center">
+                <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
                   <TracingCanvas character={practiceChar} />
                 </View>
 
-                {/* Actions */}
-                <View className="gap-2 pb-6 pt-2">
+                <View style={{ gap: 8, paddingBottom: 24, paddingTop: 8 }}>
                   <Pressable
                     onPress={handleMarkPracticeLearned}
-                    className="items-center rounded-2xl bg-green-500 py-4 active:opacity-80"
+                    style={{ alignItems: "center", borderRadius: 16, backgroundColor: "#22c55e", paddingVertical: 16 }}
+                    className="active:opacity-80"
                   >
-                    <Text className="text-base font-bold text-white">
-                      {t("geez.gotItMarkLearned")}
-                    </Text>
+                    <Text style={{ fontSize: 15, fontWeight: "700", color: "#fff" }}>{t("geez.gotItMarkLearned")}</Text>
                   </Pressable>
                   <Pressable
                     onPress={handleNext}
                     disabled={unlearnedChars.length <= 1}
-                    className="items-center rounded-2xl border border-neutral-200 py-3 active:opacity-70 dark:border-neutral-700"
+                    style={{ alignItems: "center", borderRadius: 16, borderWidth: 1, borderColor: M.border, paddingVertical: 12 }}
+                    className="active:opacity-70"
                   >
-                    <Text className="text-sm font-semibold text-neutral-600 dark:text-neutral-400">
-                      {t("geez.skipNext")}
-                    </Text>
+                    <Text style={{ fontSize: 13, fontWeight: "600", color: M.sub }}>{t("geez.skipNext")}</Text>
                   </Pressable>
                 </View>
               </View>

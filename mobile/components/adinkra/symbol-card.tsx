@@ -2,6 +2,7 @@ import { Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import type { AdinkraSymbol } from "@/lib/data/adinkra";
 import { AdinkraSymbolView } from "./adinkra-symbol";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 
 interface Props {
   symbol: AdinkraSymbol;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function SymbolCard({ symbol, onPress }: Props) {
+  const M = useMuseumTheme();
   const router = useRouter();
 
   const handlePress = () => {
@@ -22,21 +24,16 @@ export function SymbolCard({ symbol, onPress }: Props) {
   return (
     <Pressable
       onPress={handlePress}
-      className="flex-1 items-center rounded-2xl bg-neutral-50 p-3 active:opacity-70 dark:bg-neutral-800"
+      style={{ flex: 1, alignItems: "center", borderRadius: 16, backgroundColor: M.card, padding: 12, borderWidth: 1, borderColor: M.border }}
+      className="active:opacity-70"
     >
-      <View className="mb-2 h-16 w-16 items-center justify-center rounded-xl bg-white dark:bg-neutral-700">
+      <View style={{ marginBottom: 8, height: 64, width: 64, alignItems: "center", justifyContent: "center", borderRadius: 12, backgroundColor: M.bg }}>
         <AdinkraSymbolView symbol={symbol} size={40} color="#6366f1" />
       </View>
-      <Text
-        className="text-center text-xs font-bold text-neutral-900 dark:text-white"
-        numberOfLines={1}
-      >
+      <Text style={{ textAlign: "center", fontSize: 12, fontWeight: "700", color: M.text }} numberOfLines={1}>
         {symbol.name}
       </Text>
-      <Text
-        className="mt-0.5 text-center text-[10px] text-neutral-500 dark:text-neutral-400"
-        numberOfLines={1}
-      >
+      <Text style={{ marginTop: 2, textAlign: "center", fontSize: 10, color: M.sub }} numberOfLines={1}>
         {symbol.meaning}
       </Text>
     </Pressable>

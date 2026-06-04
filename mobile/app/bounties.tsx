@@ -1,5 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useBounties, type Bounty } from "@/lib/hooks/use-bounties";
 import { canManageBounties, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { getLanguageName } from "@/lib/mock-data";
@@ -11,92 +11,75 @@ import { FlatList, Pressable, RefreshControl, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function BountyCard({ bounty, isAdmin }: { bounty: Bounty; isAdmin?: boolean }) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
 
   return (
-    <View className="mb-3 rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
-      <View className="mb-2 flex-row items-center justify-between">
+    <View style={{ marginBottom: 12, borderRadius: 16, backgroundColor: M.card, padding: 16, borderWidth: 1, borderColor: M.border, borderLeftWidth: 4, borderLeftColor: M.accent }}>
+      <View style={{ marginBottom: 8, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
         {isAdmin && (
           <Pressable
             onPress={() => router.push({ pathname: "/bounty-edit", params: { id: bounty.id } } as any)}
             hitSlop={8}
-            className="absolute right-0 top-0 z-10 p-1"
+            style={{ position: "absolute", right: 0, top: 0, zIndex: 10, padding: 4 }}
           >
-            <IconSymbol name="pencil" size={16} color="#9ca3af" />
+            <IconSymbol name="pencil" size={16} color={M.muted} />
           </Pressable>
         )}
-        <View className="flex-row gap-1.5">
-          <View className="rounded-full bg-blue-100 px-2.5 py-0.5 dark:bg-blue-900">
-            <Text className="text-xs font-semibold text-blue-700 dark:text-blue-300">
+        <View style={{ flexDirection: "row", gap: 6 }}>
+          <View style={{ borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 10, paddingVertical: 2, borderWidth: 1, borderColor: M.accentBorder }}>
+            <Text style={{ fontSize: 11, fontWeight: "600", color: M.accent }}>
               {getLanguageName(bounty.languageId)}
             </Text>
           </View>
           {bounty.category && (
-            <View className="rounded-full bg-neutral-200 px-2.5 py-0.5 dark:bg-neutral-700">
-              <Text className="text-xs text-neutral-600 dark:text-neutral-400">
+            <View style={{ borderRadius: 999, backgroundColor: M.bg, paddingHorizontal: 10, paddingVertical: 2, borderWidth: 1, borderColor: M.border }}>
+              <Text style={{ fontSize: 11, color: M.sub }}>
                 {t(`dictionaryPage.categoryLabels.${bounty.category}`, { defaultValue: bounty.category })}
               </Text>
             </View>
           )}
         </View>
-        <View className="rounded-full bg-amber-100 px-2.5 py-1 dark:bg-amber-900">
-          <Text className="text-xs font-bold text-amber-700 dark:text-amber-300">
+        <View style={{ borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: M.accentBorder }}>
+          <Text style={{ fontSize: 11, fontWeight: "700", color: M.accent }}>
             {t("bounties.xpBonus", { xp: bounty.xpReward })}
           </Text>
         </View>
       </View>
 
-      <Text className="mb-1 text-base font-bold text-neutral-900 dark:text-white">
-        {bounty.title}
-      </Text>
-      <Text className="mb-3 text-sm text-neutral-500 dark:text-neutral-400" numberOfLines={2}>
-        {bounty.description}
-      </Text>
+      <Text style={{ marginBottom: 4, fontSize: 15, fontWeight: "700", color: M.text }}>{bounty.title}</Text>
+      <Text style={{ marginBottom: 12, fontSize: 13, color: M.sub }} numberOfLines={2}>{bounty.description}</Text>
 
       {bounty.createdByName && (
-        <Text className="mb-3 text-xs text-neutral-400 dark:text-neutral-500">
+        <Text style={{ marginBottom: 12, fontSize: 11, color: M.muted }}>
           {t("bounties.createdBy", { name: bounty.createdByName })}
         </Text>
       )}
 
-      {/* Progress bar */}
-      <View className="mb-3">
-        <View className="flex-row items-center justify-between mb-1">
-          <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-            {bounty.currentCount} / {bounty.targetCount}
-          </Text>
-          <Text className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
-            {bounty.progressPercent}%
-          </Text>
+      <View style={{ marginBottom: 12 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+          <Text style={{ fontSize: 11, color: M.sub }}>{bounty.currentCount} / {bounty.targetCount}</Text>
+          <Text style={{ fontSize: 11, fontWeight: "600", color: M.sub }}>{bounty.progressPercent}%</Text>
         </View>
-        <View className="h-2 rounded-full bg-neutral-200 dark:bg-neutral-700">
-          <View
-            className="h-2 rounded-full bg-amber-500"
-            style={{ width: `${bounty.progressPercent}%` }}
-          />
+        <View style={{ height: 6, borderRadius: 999, backgroundColor: M.border }}>
+          <View style={{ height: 6, borderRadius: 999, backgroundColor: M.accent, width: `${bounty.progressPercent}%` }} />
         </View>
       </View>
 
       <Pressable
-        onPress={() =>
-          router.push({
-            pathname: "/contribute",
-            params: {
-              languageId: bounty.languageId,
-              ...(bounty.category ? { category: bounty.category } : {}),
-            },
-          } as any)
-        }
-        className="items-center rounded-xl bg-amber-500 py-3 active:opacity-80"
+        onPress={() => router.push({ pathname: "/contribute", params: { languageId: bounty.languageId, ...(bounty.category ? { category: bounty.category } : {}) } } as any)}
+        style={{ alignItems: "center", borderRadius: 12, backgroundColor: M.accent, paddingVertical: 12 }}
+        className="active:opacity-80"
       >
-        <Text className="font-semibold text-white">{t("bounties.claim")}</Text>
+        <Text style={{ fontWeight: "600", color: M.ink }}>{t("bounties.claim")}</Text>
       </Pressable>
     </View>
   );
 }
 
 export default function BountiesScreen() {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
   const { selectedLanguageId } = useLanguageStore();
@@ -113,26 +96,26 @@ export default function BountiesScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("bounties.title"), headerBackTitle: t("common.goBack") }} />
-      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={[]}>
         <FlatList
           data={data ?? []}
           keyExtractor={(item) => item.id}
-          contentContainerClassName="px-5 pb-8 pt-4"
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32, paddingTop: 16 }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           renderItem={({ item }) => (
             <BountyCard bounty={item} isAdmin={!!(currentUser && canManageBounties(currentUser))} />
           )}
           ListEmptyComponent={
-            <View className="items-center px-8 py-20">
-              <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
-                <IconSymbol name="star.fill" size={28} color="#f59e0b" />
+            <View style={{ alignItems: "center", paddingHorizontal: 32, paddingVertical: 80 }}>
+              <View style={{ marginBottom: 16, height: 64, width: 64, alignItems: "center", justifyContent: "center", borderRadius: 32, backgroundColor: M.accentGlow, borderWidth: 1, borderColor: M.accentBorder }}>
+                <IconSymbol name="star.fill" size={28} color={M.accent} />
               </View>
-              <Text className="text-center text-base font-semibold text-neutral-500 dark:text-neutral-400">
+              <Text style={{ textAlign: "center", fontSize: 15, fontWeight: "600", color: M.sub }}>
                 {isLoading ? t("bounties.loading") : t("bounties.noActive")}
               </Text>
               {!isLoading && (
-                <Text className="mt-1 text-center text-sm text-neutral-400 dark:text-neutral-500">
+                <Text style={{ marginTop: 4, textAlign: "center", fontSize: 13, color: M.muted }}>
                   {t("bounties.noActiveDesc")}
                 </Text>
               )}
@@ -140,13 +123,13 @@ export default function BountiesScreen() {
           }
         />
 
-        {/* Admin FAB */}
         {currentUser && canManageBounties(currentUser) && (
           <Pressable
             onPress={() => router.push("/bounty-create" as any)}
-            className="absolute bottom-8 right-5 h-14 w-14 items-center justify-center rounded-full bg-amber-500 shadow-md active:opacity-80"
+            style={{ position: "absolute", bottom: 32, right: 20, height: 56, width: 56, alignItems: "center", justifyContent: "center", borderRadius: 28, backgroundColor: M.accent, elevation: 8 }}
+            className="active:opacity-80"
           >
-            <IconSymbol name="plus" size={26} color="#fff" />
+            <IconSymbol name="plus" size={26} color={M.ink} />
           </Pressable>
         )}
       </SafeAreaView>

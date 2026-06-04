@@ -1,6 +1,7 @@
 import { ScrollView, View, Text, Pressable } from "react-native";
 import { NSIBIDI_CHARACTERS, NSIBIDI_CATEGORY_LABELS, type NsibidiCharacter, type NsibidiCategory } from "@/lib/data/nsibidi";
 import { NsibidiText } from "./nsibidi-text";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 
 const CATEGORIES = Object.keys(NSIBIDI_CATEGORY_LABELS) as NsibidiCategory[];
 
@@ -12,9 +13,10 @@ interface NsibidiGridProps {
 }
 
 export function NsibidiGrid({ learnedIds, onSelect }: NsibidiGridProps) {
+  const M = useMuseumTheme();
   return (
     <ScrollView
-      className="flex-1"
+      style={{ flex: 1 }}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingBottom: 32, paddingHorizontal: 16 }}
     >
@@ -45,7 +47,7 @@ export function NsibidiGrid({ learnedIds, onSelect }: NsibidiGridProps) {
                     }}
                     className="active:opacity-70"
                   >
-                    <NsibidiText size={30} color={learned ? ACCENT : "#6b7280"}>
+                    <NsibidiText size={30} color={learned ? ACCENT : M.muted}>
                       {char.character}
                     </NsibidiText>
                     {learned && (

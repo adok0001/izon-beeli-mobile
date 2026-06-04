@@ -2,6 +2,7 @@ import { View, Text, FlatList, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useNotificationStore } from "@/store/notification-store";
 import type { InAppNotification, NotificationType } from "@/types";
 import { useTranslation } from "react-i18next";
@@ -30,6 +31,7 @@ function timeAgo(dateStr: string): string {
 }
 
 function NotificationRow({ item }: { item: InAppNotification }) {
+  const M = useMuseumTheme();
   const markRead = useNotificationStore((s) => s.markRead);
   const config = TYPE_CONFIG[item.type] ?? { icon: "bell.fill", color: "#6b7280" };
   const iconName = (item.icon ?? config.icon) as any;
@@ -37,37 +39,24 @@ function NotificationRow({ item }: { item: InAppNotification }) {
   return (
     <Pressable
       onPress={() => markRead(item.id)}
-      className={`mb-2 rounded-xl p-4 ${
-        item.read
-          ? "bg-neutral-50 dark:bg-neutral-800/50"
-          : "bg-blue-50 dark:bg-blue-900/20"
-      }`}
+      style={{ marginBottom: 8, borderRadius: 12, padding: 16, backgroundColor: item.read ? M.card : M.accentGlow, borderWidth: 1, borderColor: item.read ? M.border : M.accentBorder, borderLeftWidth: item.read ? 1 : 4, borderLeftColor: item.read ? M.border : M.accent }}
+      className="active:opacity-70"
     >
-      <View className="flex-row items-start">
-        <View className="mr-3 mt-0.5 h-8 w-8 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-700">
+      <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+        <View style={{ marginRight: 12, marginTop: 2, height: 32, width: 32, alignItems: "center", justifyContent: "center", borderRadius: 16, backgroundColor: M.bg, borderWidth: 1, borderColor: M.border }}>
           <IconSymbol name={iconName} size={16} color={config.color} />
         </View>
-        <View className="flex-1">
-          <View className="flex-row items-center justify-between">
-            <Text
-              className={`text-sm font-semibold ${
-                item.read
-                  ? "text-neutral-600 dark:text-neutral-400"
-                  : "text-neutral-900 dark:text-white"
-              }`}
-            >
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <Text style={{ fontSize: 13, fontWeight: "600", color: item.read ? M.sub : M.text }} numberOfLines={1}>
               {item.title}
             </Text>
             {!item.read && (
-              <View className="h-2 w-2 rounded-full bg-blue-500" />
+              <View style={{ height: 8, width: 8, borderRadius: 4, backgroundColor: M.accent }} />
             )}
           </View>
-          <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
-            {item.body}
-          </Text>
-          <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">
-            {timeAgo(item.createdAt)}
-          </Text>
+          <Text style={{ marginTop: 2, fontSize: 13, color: M.sub }}>{item.body}</Text>
+          <Text style={{ marginTop: 4, fontSize: 11, color: M.muted }}>{timeAgo(item.createdAt)}</Text>
         </View>
       </View>
     </Pressable>
@@ -75,8 +64,8 @@ function NotificationRow({ item }: { item: InAppNotification }) {
 }
 
 export default function NotificationsScreen() {
-  const { notifications, markAllRead, unreadCount } =
-    useNotificationStore();
+  const M = useMuseumTheme();
+  const { notifications, markAllRead, unreadCount } = useNotificationStore();
   const { t } = useTranslation();
 
   return (
@@ -87,24 +76,24 @@ export default function NotificationsScreen() {
           headerRight: () =>
             unreadCount > 0 ? (
               <Pressable onPress={markAllRead} hitSlop={8}>
-                <Text className="text-sm font-medium text-blue-500">
+                <Text style={{ fontSize: 13, fontWeight: "500", color: M.accent }}>
                   {t("notifications.markAllRead")}
                 </Text>
               </Pressable>
             ) : null,
         }}
       />
-      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={[]}>
         <FlatList
           data={notifications}
           keyExtractor={(item) => item.id}
-          contentContainerClassName="px-5 pb-8 pt-4"
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32, paddingTop: 16 }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => <NotificationRow item={item} />}
           ListEmptyComponent={
-            <View className="items-center px-8 py-16">
-              <IconSymbol name="bell" size={48} color="#d1d5db" />
-              <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
+            <View style={{ alignItems: "center", paddingHorizontal: 32, paddingVertical: 64 }}>
+              <IconSymbol name="bell" size={48} color={M.border} />
+              <Text style={{ marginTop: 16, textAlign: "center", fontSize: 15, color: M.muted }}>
                 {t("notifications.noNotifications")}
               </Text>
             </View>

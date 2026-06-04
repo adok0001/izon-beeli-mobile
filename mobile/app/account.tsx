@@ -1,5 +1,6 @@
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { useToast } from "@/lib/hooks/use-toast";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUser } from "@clerk/clerk-expo";
 import { Stack } from "expo-router";
 import { useEffect, useState } from "react";
@@ -17,22 +18,25 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function SectionHeader({ label }: { label: string }) {
+  const M = useMuseumTheme();
   return (
-    <Text className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+    <Text style={{ marginBottom: 12, fontSize: 11, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
       {label}
     </Text>
   );
 }
 
 function FieldLabel({ label }: { label: string }) {
+  const M = useMuseumTheme();
   return (
-    <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+    <Text style={{ marginBottom: 6, fontSize: 13, fontWeight: "500", color: M.sub }}>
       {label}
     </Text>
   );
 }
 
 export default function AccountScreen() {
+  const M = useMuseumTheme();
   const { user } = useUser();
   const { t } = useTranslation();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
@@ -107,7 +111,7 @@ export default function AccountScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("account.title") }} />
-      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={[]}>
         <NotificationBanner
           visible={toast.visible}
           title={toast.title}
@@ -117,18 +121,17 @@ export default function AccountScreen() {
         />
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
-          className="flex-1"
+          style={{ flex: 1 }}
         >
           <ScrollView
-            className="flex-1 px-5 pt-4"
+            style={{ flex: 1, paddingHorizontal: 20, paddingTop: 16 }}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            {/* Username */}
             <SectionHeader label={t("account.usernameSection")} />
             <FieldLabel label={t("auth.username")} />
             <TextInput
-              className="mb-4 rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+              style={{ marginBottom: 16, borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: M.text }}
               value={username}
               onChangeText={setUsername}
               autoCapitalize="none"
@@ -136,32 +139,29 @@ export default function AccountScreen() {
               editable={!usernameLoading}
               returnKeyType="done"
               onSubmitEditing={onSaveUsername}
+              placeholderTextColor={M.muted}
             />
             <Pressable
               onPress={onSaveUsername}
               disabled={!canSaveUsername}
-              className={`mb-8 flex-row items-center justify-center rounded-xl py-3.5 ${
-                canSaveUsername
-                  ? "bg-blue-600 active:opacity-80"
-                  : "bg-blue-300 dark:bg-blue-800"
-              }`}
+              style={{ marginBottom: 32, flexDirection: "row", alignItems: "center", justifyContent: "center", borderRadius: 12, paddingVertical: 14, backgroundColor: canSaveUsername ? M.accent : M.border, opacity: canSaveUsername ? 1 : 0.6 }}
+              className="active:opacity-80"
             >
               {usernameLoading ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color={M.ink} />
               ) : (
-                <Text className="font-semibold text-white">
+                <Text style={{ fontWeight: "600", color: canSaveUsername ? M.ink : M.sub }}>
                   {t("account.saveUsername")}
                 </Text>
               )}
             </Pressable>
 
-            {/* Password */}
             <SectionHeader label={t("account.passwordSection")} />
             <FieldLabel label={t("account.currentPassword")} />
             <TextInput
-              className="mb-4 rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+              style={{ marginBottom: 16, borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: M.text }}
               placeholder="••••••••"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={M.muted}
               value={currentPassword}
               onChangeText={setCurrentPassword}
               secureTextEntry
@@ -171,13 +171,9 @@ export default function AccountScreen() {
 
             <FieldLabel label={t("auth.newPassword")} />
             <TextInput
-              className={`mb-1 rounded-xl border bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:bg-neutral-800 dark:text-white ${
-                newPasswordTooShort
-                  ? "border-amber-400 dark:border-amber-600"
-                  : "border-neutral-300 dark:border-neutral-700"
-              }`}
+              style={{ marginBottom: 4, borderRadius: 12, borderWidth: 1, borderColor: newPasswordTooShort ? "#f59e0b" : M.border, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: M.text }}
               placeholder="••••••••"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={M.muted}
               value={newPassword}
               onChangeText={setNewPassword}
               secureTextEntry
@@ -185,22 +181,18 @@ export default function AccountScreen() {
               editable={!passwordLoading}
             />
             {newPasswordTooShort ? (
-              <Text className="mb-3 ml-1 text-xs text-amber-600 dark:text-amber-400">
+              <Text style={{ marginBottom: 12, marginLeft: 4, fontSize: 12, color: "#f59e0b" }}>
                 {t("auth.passwordTooShort")}
               </Text>
             ) : (
-              <View className="mb-3" />
+              <View style={{ marginBottom: 12 }} />
             )}
 
             <FieldLabel label={t("auth.confirmPassword")} />
             <TextInput
-              className={`mb-1 rounded-xl border bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:bg-neutral-800 dark:text-white ${
-                passwordsMismatch
-                  ? "border-red-400 dark:border-red-600"
-                  : "border-neutral-300 dark:border-neutral-700"
-              }`}
+              style={{ marginBottom: 4, borderRadius: 12, borderWidth: 1, borderColor: passwordsMismatch ? "#ef4444" : M.border, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: M.text }}
               placeholder="••••••••"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={M.muted}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry
@@ -209,32 +201,29 @@ export default function AccountScreen() {
               onSubmitEditing={onSavePassword}
             />
             {passwordsMismatch ? (
-              <Text className="mb-5 ml-1 text-xs text-red-500">
+              <Text style={{ marginBottom: 20, marginLeft: 4, fontSize: 12, color: "#ef4444" }}>
                 {t("auth.passwordsMismatch")}
               </Text>
             ) : (
-              <View className="mb-5" />
+              <View style={{ marginBottom: 20 }} />
             )}
 
             <Pressable
               onPress={onSavePassword}
               disabled={!canSavePassword}
-              className={`mb-8 flex-row items-center justify-center rounded-xl py-3.5 ${
-                canSavePassword
-                  ? "bg-blue-600 active:opacity-80"
-                  : "bg-blue-300 dark:bg-blue-800"
-              }`}
+              style={{ marginBottom: 32, flexDirection: "row", alignItems: "center", justifyContent: "center", borderRadius: 12, paddingVertical: 14, backgroundColor: canSavePassword ? M.accent : M.border, opacity: canSavePassword ? 1 : 0.6 }}
+              className="active:opacity-80"
             >
               {passwordLoading ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color={M.ink} />
               ) : (
-                <Text className="font-semibold text-white">
+                <Text style={{ fontWeight: "600", color: canSavePassword ? M.ink : M.sub }}>
                   {t("account.savePassword")}
                 </Text>
               )}
             </Pressable>
 
-            <View className="h-4" />
+            <View style={{ height: 16 }} />
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>

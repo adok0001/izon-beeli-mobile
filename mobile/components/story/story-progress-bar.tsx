@@ -8,6 +8,7 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import type { StoryChapter } from "@/types";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 
 interface Props {
   chapters: StoryChapter[];
@@ -16,6 +17,7 @@ interface Props {
 }
 
 function PulsingDot() {
+  const M = useMuseumTheme();
   const opacity = useSharedValue(1);
 
   useEffect(() => {
@@ -32,8 +34,7 @@ function PulsingDot() {
 
   return (
     <Animated.View
-      style={animatedStyle}
-      className="h-5 w-5 rounded-full bg-blue-500 dark:bg-blue-400"
+      style={[animatedStyle, { height: 20, width: 20, borderRadius: 10, backgroundColor: M.accent }]}
     />
   );
 }
@@ -43,6 +44,7 @@ export function StoryProgressBar({
   completedIds,
   currentChapterId,
 }: Props) {
+  const M = useMuseumTheme();
   const sorted = [...chapters].sort((a, b) => a.order - b.order);
   const scrollRef = useRef<ScrollView>(null);
 
@@ -59,35 +61,26 @@ export function StoryProgressBar({
         const isLast = index === sorted.length - 1;
 
         return (
-          <View key={chapter.id} className="flex-row items-start">
-            <View className="items-center" style={{ width: 72 }}>
-              {/* Dot */}
-              <View className="h-5 w-5 items-center justify-center">
+          <View key={chapter.id} style={{ flexDirection: "row", alignItems: "flex-start" }}>
+            <View style={{ alignItems: "center", width: 72 }}>
+              <View style={{ height: 20, width: 20, alignItems: "center", justifyContent: "center" }}>
                 {isCurrent ? (
                   <PulsingDot />
                 ) : isCompleted ? (
-                  <View className="h-5 w-5 rounded-full bg-green-500 dark:bg-green-400" />
+                  <View style={{ height: 20, width: 20, borderRadius: 10, backgroundColor: "#22c55e" }} />
                 ) : (
-                  <View className="h-5 w-5 rounded-full bg-neutral-300 dark:bg-neutral-600" />
+                  <View style={{ height: 20, width: 20, borderRadius: 10, backgroundColor: M.border }} />
                 )}
               </View>
-              {/* Label */}
               <Text
-                className={`mt-1.5 text-center text-[10px] leading-tight ${
-                  isCurrent
-                    ? "font-semibold text-blue-600 dark:text-blue-400"
-                    : isCompleted
-                    ? "font-medium text-green-700 dark:text-green-400"
-                    : "text-neutral-400 dark:text-neutral-500"
-                }`}
+                style={{ marginTop: 6, textAlign: "center", fontSize: 10, lineHeight: 14, color: isCurrent ? M.accent : isCompleted ? "#22c55e" : M.muted, fontWeight: isCurrent || isCompleted ? "600" : "400" }}
                 numberOfLines={2}
               >
                 {chapter.title}
               </Text>
             </View>
-            {/* Connector line */}
             {!isLast && (
-              <View className="mt-2 h-0.5 w-6 self-start bg-neutral-300 dark:bg-neutral-600" />
+              <View style={{ marginTop: 8, height: 2, width: 24, alignSelf: "flex-start", backgroundColor: M.border }} />
             )}
           </View>
         );

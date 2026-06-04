@@ -1,4 +1,5 @@
 import { View } from "react-native";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 
 export function ProgressBar({
   current,
@@ -7,17 +8,17 @@ export function ProgressBar({
   current: number;
   total: number;
 }) {
+  const M = useMuseumTheme();
   const pct = total > 0 ? (current / total) * 100 : 0;
   return (
     <View
-      className="mx-5 mt-2 h-2 rounded-full bg-neutral-200 dark:bg-neutral-700"
+      style={{ marginHorizontal: 20, marginTop: 8, height: 8, borderRadius: 999, backgroundColor: M.border }}
       accessibilityRole="progressbar"
       accessibilityLabel="Quiz progress"
       accessibilityValue={{ min: 0, max: total, now: current }}
     >
       <View
-        className="h-2 rounded-full bg-blue-500"
-        style={{ width: `${pct}%` }}
+        style={{ height: 8, borderRadius: 999, backgroundColor: M.accent, width: `${pct}%` }}
       />
     </View>
   );

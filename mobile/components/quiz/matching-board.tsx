@@ -9,6 +9,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useMatchingStore, type Tile } from "@/store/matching-store";
 import { hapticSuccess, hapticError, hapticTap } from "@/lib/haptics";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 
 const FLASH_DURATION = 600;
 const COLUMNS = 4;
@@ -16,8 +17,19 @@ const GAP = 8;
 const screenWidth = Dimensions.get("window").width;
 const tileSize = (screenWidth - 40 - GAP * (COLUMNS - 1)) / COLUMNS;
 
+function getTileColors(tile: Tile): { bg: string; border: string; text: string } {
+  if (tile.matched) return { bg: "#22c55e20", border: "#22c55e60", text: "#22c55e" };
+  if (tile.flash === "correct") return { bg: "#22c55e30", border: "#22c55e", text: "#22c55e" };
+  if (tile.flash === "incorrect") return { bg: "#ef444430", border: "#ef4444", text: "#ef4444" };
+  if (tile.selected) return { bg: "#C4862A20", border: "#C4862A", text: "#C4862A" };
+  if (tile.kind === "word") return { bg: "#a78bfa15", border: "#a78bfa50", text: "#a78bfa" };
+  return { bg: "#f59e0b10", border: "#f59e0b40", text: "#f59e0b" };
+}
+
 function MatchingTile({ tile, onPress }: { tile: Tile; onPress: () => void }) {
+  const M = useMuseumTheme();
   const scale = useSharedValue(1);
+  const colors = getTileColors(tile);
 
   useEffect(() => {
     if (tile.flash !== "none") {
@@ -32,34 +44,16 @@ function MatchingTile({ tile, onPress }: { tile: Tile; onPress: () => void }) {
     transform: [{ scale: scale.value }],
   }));
 
-  const bgColor = tile.matched
-    ? "bg-green-100 dark:bg-green-900/40 border-green-400"
-    : tile.flash === "correct"
-      ? "bg-green-200 dark:bg-green-800/50 border-green-500"
-      : tile.flash === "incorrect"
-        ? "bg-red-200 dark:bg-red-800/50 border-red-500"
-        : tile.selected
-          ? "bg-blue-100 dark:bg-blue-900/40 border-blue-500"
-          : tile.kind === "word"
-            ? "bg-violet-50 dark:bg-violet-900/20 border-violet-300 dark:border-violet-700"
-            : "bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700";
-
-  const textColor = tile.matched
-    ? "text-green-700 dark:text-green-300"
-    : tile.kind === "word"
-      ? "text-violet-800 dark:text-violet-200"
-      : "text-amber-800 dark:text-amber-200";
-
   return (
     <Animated.View style={animStyle}>
       <Pressable
         onPress={onPress}
         disabled={tile.matched}
-        className={`items-center justify-center rounded-xl border-2 p-1.5 ${bgColor}`}
-        style={{ width: tileSize, height: tileSize }}
+        style={{ width: tileSize, height: tileSize, alignItems: "center", justifyContent: "center", borderRadius: 12, borderWidth: 2, padding: 6, backgroundColor: colors.bg, borderColor: colors.border }}
+        className="active:opacity-70"
       >
         <Text
-          className={`text-center text-xs font-semibold ${textColor}`}
+          style={{ textAlign: "center", fontSize: 12, fontWeight: "600", color: tile.matched || tile.flash !== "none" ? colors.text : M.text }}
           numberOfLines={3}
           adjustsFontSizeToFit
         >
@@ -71,6 +65,7 @@ function MatchingTile({ tile, onPress }: { tile: Tile; onPress: () => void }) {
 }
 
 export function MatchingBoard() {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const { tiles, selectTile, clearFlash, matchedCount, totalPairs, attempts } =
     useMatchingStore();
@@ -85,7 +80,6 @@ export function MatchingBoard() {
         } else {
           hapticError();
         }
-        // Clear flash after delay
         setTimeout(() => clearFlash(), FLASH_DURATION);
       }
     },
@@ -94,16 +88,16 @@ export function MatchingBoard() {
 
   return (
     <View>
-      <View className="mb-3 flex-row items-center justify-between px-1">
-        <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+      <View style={{ marginBottom: 12, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 4 }}>
+        <Text style={{ fontSize: 13, color: M.sub }}>
           {t("matching.matched", { matched: matchedCount, total: totalPairs })}
         </Text>
-        <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+        <Text style={{ fontSize: 13, color: M.sub }}>
           {t("matching.attempts", { count: attempts })}
         </Text>
       </View>
 
-      <View className="flex-row flex-wrap" style={{ gap: GAP }}>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: GAP }}>
         {tiles.map((tile) => (
           <MatchingTile
             key={tile.id}
@@ -113,18 +107,14 @@ export function MatchingBoard() {
         ))}
       </View>
 
-      <View className="mt-3 flex-row items-center justify-center gap-4">
-        <View className="flex-row items-center">
-          <View className="mr-1.5 h-3 w-3 rounded bg-violet-300 dark:bg-violet-700" />
-          <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-            {t("matching.wordLabel")}
-          </Text>
+      <View style={{ marginTop: 12, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 16 }}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View style={{ marginRight: 6, height: 12, width: 12, borderRadius: 4, backgroundColor: "#a78bfa50" }} />
+          <Text style={{ fontSize: 11, color: M.sub }}>{t("matching.wordLabel")}</Text>
         </View>
-        <View className="flex-row items-center">
-          <View className="mr-1.5 h-3 w-3 rounded bg-amber-300 dark:bg-amber-700" />
-          <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-            {t("matching.englishLabel")}
-          </Text>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View style={{ marginRight: 6, height: 12, width: 12, borderRadius: 4, backgroundColor: "#f59e0b40" }} />
+          <Text style={{ fontSize: 11, color: M.sub }}>{t("matching.englishLabel")}</Text>
         </View>
       </View>
     </View>

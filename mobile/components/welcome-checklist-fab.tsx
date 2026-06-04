@@ -3,6 +3,7 @@ import { useAwardChecklistBonus, useProgressSummary } from "@/lib/hooks/use-prog
 import { useMyContributions } from "@/lib/hooks/use-contributions";
 import { useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useJournal } from "@/lib/hooks/use-journal";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { playFinishSound } from "@/lib/sounds";
 import {
     MOBILE_CHECKLIST_REGISTRY,
@@ -48,6 +49,7 @@ function audienceLabel(audience: MobileChecklistAudience, t: (key: string) => st
 }
 
 function AllCompleteModal({ visible, onDismiss }: { visible: boolean; onDismiss: () => void }) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const scale = useRef(new Animated.Value(0.5)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -74,35 +76,38 @@ function AllCompleteModal({ visible, onDismiss }: { visible: boolean; onDismiss:
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onDismiss}>
-      <Pressable onPress={onDismiss} className="flex-1 items-center justify-center bg-black/60">
+      <Pressable
+        onPress={onDismiss}
+        style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.6)" }}
+      >
         <Animated.View
-          style={{ transform: [{ scale }], opacity }}
-          className="mx-8 items-center rounded-3xl bg-white px-8 py-10 shadow-2xl dark:bg-neutral-900"
+          style={{ transform: [{ scale }], opacity, marginHorizontal: 32, alignItems: "center", borderRadius: 24, backgroundColor: M.card, paddingHorizontal: 32, paddingVertical: 40, borderWidth: 1, borderColor: M.border }}
         >
           <Animated.View style={{ transform: [{ rotate }] }}>
-            <View className="mb-4 h-24 w-24 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900">
-              <IconSymbol name="checkmark.seal.fill" size={52} color="#f59e0b" />
+            <View style={{ marginBottom: 16, height: 96, width: 96, alignItems: "center", justifyContent: "center", borderRadius: 48, backgroundColor: M.accentGlow, borderWidth: 1, borderColor: M.accentBorder }}>
+              <IconSymbol name="checkmark.seal.fill" size={52} color={M.accent} />
             </View>
           </Animated.View>
 
-          <Text className="text-center text-2xl font-bold text-neutral-900 dark:text-white">
+          <Text style={{ textAlign: "center", fontSize: 22, fontWeight: "700", color: M.text }}>
             {t("welcomeChecklist.allCompleteTitle")}
           </Text>
-          <Text className="mt-2 text-center text-sm text-neutral-500 dark:text-neutral-400">
+          <Text style={{ marginTop: 8, textAlign: "center", fontSize: 13, color: M.sub }}>
             {t("welcomeChecklist.allCompleteBody")}
           </Text>
 
-          <View className="mt-5 rounded-2xl bg-amber-50 px-6 py-3 dark:bg-amber-900/30">
-            <Text className="text-center text-xl font-bold text-amber-600 dark:text-amber-400">
+          <View style={{ marginTop: 20, borderRadius: 16, backgroundColor: M.accentGlow, paddingHorizontal: 24, paddingVertical: 12, borderWidth: 1, borderColor: M.accentBorder }}>
+            <Text style={{ textAlign: "center", fontSize: 20, fontWeight: "700", color: M.accent }}>
               {t("welcomeChecklist.allCompleteBonus")}
             </Text>
           </View>
 
           <Pressable
             onPress={onDismiss}
-            className="mt-6 rounded-xl bg-blue-600 px-8 py-3 active:opacity-80"
+            style={{ marginTop: 24, borderRadius: 12, backgroundColor: M.accent, paddingHorizontal: 32, paddingVertical: 12 }}
+            className="active:opacity-80"
           >
-            <Text className="text-sm font-bold text-white">
+            <Text style={{ fontSize: 13, fontWeight: "700", color: M.ink }}>
               {t("welcomeChecklist.allCompleteDismiss")}
             </Text>
           </Pressable>
@@ -113,6 +118,7 @@ function AllCompleteModal({ visible, onDismiss }: { visible: boolean; onDismiss:
 }
 
 export function WelcomeChecklistFab() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
@@ -213,7 +219,6 @@ export function WelcomeChecklistFab() {
     [tr, visibleItems]
   );
 
-  // Auto-complete actions based on real progress signals
   useEffect(() => {
     const toComplete: MobileChecklistId[] = [];
 
@@ -235,7 +240,6 @@ export function WelcomeChecklistFab() {
     }
   }, [summary?.completedCount, summary?.quizCount, myContributions?.length, journalEntries?.length, completedActionIds, markCompleted]);
 
-  // Detect when all tasks just became complete — trigger celebration once
   useEffect(() => {
     if (!isHydrated) return;
 
@@ -256,7 +260,6 @@ export function WelcomeChecklistFab() {
 
   return (
     <>
-      {/* Modal lives outside the pendingCount guard so it can show after the last task completes */}
       <AllCompleteModal
         visible={celebrationVisible}
         onDismiss={() => setCelebrationVisible(false)}
@@ -266,61 +269,61 @@ export function WelcomeChecklistFab() {
       <View pointerEvents="box-none" style={{ position: "absolute", right: 16, bottom: 72 + insets.bottom, zIndex: 60 }}>
 
       {open ? (
-        <View className="mb-3 w-[320px] overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-900">
-          <View className="flex-row items-center justify-between border-b border-neutral-200 px-4 py-3 dark:border-neutral-700">
+        <View style={{ marginBottom: 12, width: 320, overflow: "hidden", borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.card }}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderBottomWidth: 1, borderBottomColor: M.border, paddingHorizontal: 16, paddingVertical: 12 }}>
             <View>
-              <Text className="text-sm font-bold text-neutral-900 dark:text-white">{t("welcomeChecklist.title")}</Text>
-              <Text className="text-xs text-neutral-500 dark:text-neutral-400">{t("welcomeChecklist.tasksRemaining", { count: pendingCount })}</Text>
+              <Text style={{ fontSize: 13, fontWeight: "700", color: M.text }}>{t("welcomeChecklist.title")}</Text>
+              <Text style={{ fontSize: 11, color: M.sub }}>{t("welcomeChecklist.tasksRemaining", { count: pendingCount })}</Text>
             </View>
             <Pressable onPress={() => setOpen(false)} hitSlop={8}>
-              <IconSymbol name="xmark" size={16} color="#9ca3af" />
+              <IconSymbol name="xmark" size={16} color={M.muted} />
             </Pressable>
           </View>
 
-          <ScrollView className="max-h-96" contentContainerStyle={{ padding: 12 }}>
+          <ScrollView style={{ maxHeight: 384 }} contentContainerStyle={{ padding: 12 }}>
             {grouped.map((group) => (
-              <View key={group.audience} className="mb-4">
-                <Text className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+              <View key={group.audience} style={{ marginBottom: 16 }}>
+                <Text style={{ marginBottom: 8, fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
                   {group.label}
                 </Text>
-                <View className="gap-2">
+                <View style={{ gap: 8 }}>
                   {group.items.map((item) => {
                     const done = completedActionIds.includes(item.id);
                     return (
                       <View
                         key={item.id}
-                        className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 dark:border-neutral-700 dark:bg-neutral-800/60"
+                        style={{ borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, paddingHorizontal: 12, paddingVertical: 10 }}
                       >
-                        <View className="flex-row items-start">
+                        <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
                           <Pressable
                             onPress={() => {
                               if (!done) markCompleted([item.id]);
                             }}
                             hitSlop={8}
-                            className="mr-2 mt-0.5"
+                            style={{ marginRight: 8, marginTop: 2 }}
                           >
                             <IconSymbol
                               name={done ? "checkmark.circle.fill" : "circle"}
                               size={16}
-                              color={done ? "#22c55e" : "#9ca3af"}
+                              color={done ? "#22c55e" : M.muted}
                             />
                           </Pressable>
 
-                          <View className="flex-1">
-                            <Text className="text-sm font-semibold text-neutral-900 dark:text-white">{tr(item.titleKey)}</Text>
-                            <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">{tr(item.descriptionKey)}</Text>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 13, fontWeight: "600", color: M.text }}>{tr(item.titleKey)}</Text>
+                            <Text style={{ marginTop: 2, fontSize: 11, color: M.sub }}>{tr(item.descriptionKey)}</Text>
                             <Pressable
                               onPress={() => {
                                 if (!done) markCompleted([item.id]);
                                 setOpen(false);
                                 router.push(item.route as any);
                               }}
-                              className="mt-2 flex-row items-center"
+                              style={{ marginTop: 8, flexDirection: "row", alignItems: "center" }}
                             >
-                              <IconSymbol name={item.icon as any} size={14} color="#2563eb" />
-                              <Text className="ml-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400">{t("welcomeChecklist.openAction")}</Text>
-                              <View className="ml-1">
-                                <IconSymbol name="chevron.right" size={12} color="#2563eb" />
+                              <IconSymbol name={item.icon as any} size={14} color={M.accent} />
+                              <Text style={{ marginLeft: 6, fontSize: 11, fontWeight: "600", color: M.accent }}>{t("welcomeChecklist.openAction")}</Text>
+                              <View style={{ marginLeft: 4 }}>
+                                <IconSymbol name="chevron.right" size={12} color={M.accent} />
                               </View>
                             </Pressable>
                           </View>
@@ -350,7 +353,7 @@ export function WelcomeChecklistFab() {
               />
             </Reanimated.View>
             <IconSymbol name="checkmark.circle.fill" size={16} color="#ffffff" />
-            <Text className="ml-2 text-sm font-bold text-white">{t("welcomeChecklist.pendingTasks", { count: pendingCount })}</Text>
+            <Text style={{ marginLeft: 8, fontSize: 13, fontWeight: "700", color: "#ffffff" }}>{t("welcomeChecklist.pendingTasks", { count: pendingCount })}</Text>
           </Pressable>
         </View>
       </Reanimated.View>
@@ -364,7 +367,7 @@ const styles = StyleSheet.create({
   fabShell: {
     borderRadius: 999,
     overflow: "hidden",
-    backgroundColor: "#2563eb",
+    backgroundColor: "#C4862A",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,

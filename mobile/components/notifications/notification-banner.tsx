@@ -1,6 +1,7 @@
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useEffect } from "react";
 import { Pressable, Text } from "react-native";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import Animated, {
     runOnJS,
     useAnimatedStyle,
@@ -22,11 +23,11 @@ interface Props {
   type?: ToastType;
 }
 
-const TYPE_CLASSES: Record<ToastType, { bar: string; bg: string }> = {
-  success: { bar: "bg-emerald-500", bg: "bg-white dark:bg-neutral-800" },
-  error:   { bar: "bg-red-500",     bg: "bg-white dark:bg-neutral-800" },
-  warning: { bar: "bg-amber-500",   bg: "bg-white dark:bg-neutral-800" },
-  info:    { bar: "bg-blue-500",    bg: "bg-white dark:bg-neutral-800" },
+const TYPE_BAR_COLORS: Record<ToastType, string> = {
+  success: "#22c55e",
+  error:   "#ef4444",
+  warning: "#f59e0b",
+  info:    "#C4862A",
 };
 
 export function NotificationBanner({
@@ -37,8 +38,9 @@ export function NotificationBanner({
   duration = 4000,
   type = "info",
 }: Props) {
+  const M = useMuseumTheme();
+  const barColor = TYPE_BAR_COLORS[type];
   const translateY = useSharedValue(-150);
-  const { bar, bg } = TYPE_CLASSES[type];
   const headerHeight = useHeaderHeight();
   const { top: topInset } = useSafeAreaInsets();
   const topPosition = Math.max(headerHeight, topInset) + 8;
@@ -80,22 +82,15 @@ export function NotificationBanner({
     >
       <Pressable
         onPress={onDismiss}
-        className={`overflow-hidden rounded-xl shadow-lg ${bg}`}
-        style={{ elevation: 8 }}
+        style={{ overflow: "hidden", borderRadius: 12, backgroundColor: M.card, borderWidth: 1, borderColor: M.border, elevation: 8 }}
       >
-        <Animated.View className={`h-1 w-full ${bar}`} />
-        <Animated.View className="px-4 py-3">
-          <Text
-            className="text-sm font-semibold text-neutral-900 dark:text-white"
-            numberOfLines={1}
-          >
+        <Animated.View style={{ height: 3, width: "100%", backgroundColor: barColor }} />
+        <Animated.View style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
+          <Text style={{ fontSize: 13, fontWeight: "600", color: M.text }} numberOfLines={1}>
             {title}
           </Text>
           {body ? (
-            <Text
-              className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400"
-              numberOfLines={2}
-            >
+            <Text style={{ marginTop: 2, fontSize: 12, color: M.sub }} numberOfLines={2}>
               {body}
             </Text>
           ) : null}

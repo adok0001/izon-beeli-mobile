@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { MOBILE_TOUR_REGISTRY } from "@/lib/tours/mobile-tour-registry";
 import { useTourStore } from "@/store/tour-store";
 import { useTranslation } from "react-i18next";
@@ -21,19 +22,19 @@ const resolveText = (
 };
 
 function FeatureCard({ item, t }: Readonly<{ item: FeatureItem; t: (key: string) => string }>) {
+  const M = useMuseumTheme();
   return (
-    <View className="flex-row items-start rounded-2xl border border-neutral-100 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800">
+    <View style={{ flexDirection: "row", alignItems: "flex-start", borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, padding: 16 }}>
       <View
-        className="mr-4 h-11 w-11 items-center justify-center rounded-xl"
-        style={{ backgroundColor: item.bgColor }}
+        style={{ marginRight: 16, height: 44, width: 44, alignItems: "center", justifyContent: "center", borderRadius: 12, backgroundColor: item.bgColor }}
       >
         <IconSymbol name={item.icon as any} size={20} color={item.color} />
       </View>
-      <View className="flex-1">
-        <Text className="text-base font-bold text-neutral-900 dark:text-white">
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 15, fontWeight: "700", color: M.text }}>
           {resolveText(t, item.titleKey)}
         </Text>
-        <Text className="mt-1 text-sm leading-5 text-neutral-500 dark:text-neutral-400">
+        <Text style={{ marginTop: 4, fontSize: 13, lineHeight: 20, color: M.sub }}>
           {resolveText(t, item.detailKey)}
         </Text>
       </View>
@@ -42,6 +43,7 @@ function FeatureCard({ item, t }: Readonly<{ item: FeatureItem; t: (key: string)
 }
 
 export function FeatureTourModal() {
+  const M = useMuseumTheme();
   const { activeTour, dismissTour } = useTourStore();
   const { t } = useTranslation();
   const tr = (key: string) => t(key as any) as string;
@@ -58,63 +60,59 @@ export function FeatureTourModal() {
       presentationStyle="pageSheet"
       onRequestClose={dismissTour}
     >
-      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900">
-        {/* Close button */}
-        <View className="flex-row justify-end px-5 pt-3">
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }}>
+        <View style={{ flexDirection: "row", justifyContent: "flex-end", paddingHorizontal: 20, paddingTop: 12 }}>
           <Pressable
             onPress={dismissTour}
             hitSlop={8}
-            className="h-8 w-8 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800"
+            style={{ height: 32, width: 32, alignItems: "center", justifyContent: "center", borderRadius: 16, backgroundColor: M.border }}
           >
-            <IconSymbol name="xmark" size={16} color="#9ca3af" />
+            <IconSymbol name="xmark" size={16} color={M.muted} />
           </Pressable>
         </View>
 
         <ScrollView
-          className="flex-1"
+          style={{ flex: 1 }}
           contentContainerStyle={{ paddingBottom: 24 }}
           showsVerticalScrollIndicator={false}
         >
-          {/* Hero */}
-          <View className="items-center px-6 pt-4 pb-6">
+          <View style={{ alignItems: "center", paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24 }}>
             <View
-              className="mb-5 h-20 w-20 items-center justify-center rounded-3xl"
-              style={{ backgroundColor: config.heroBg }}
+              style={{ marginBottom: 20, height: 80, width: 80, alignItems: "center", justifyContent: "center", borderRadius: 24, backgroundColor: config.heroBg }}
             >
               <IconSymbol name={config.heroIcon as any} size={36} color={config.heroColor} />
             </View>
-            <Text className="text-3xl font-bold text-neutral-900 dark:text-white text-center">
+            <Text style={{ fontSize: 28, fontWeight: "700", color: M.text, textAlign: "center" }}>
               {resolveText(tr, config.titleKey)}
             </Text>
-            <Text className="mt-2 text-base text-neutral-500 dark:text-neutral-400 text-center">
+            <Text style={{ marginTop: 8, fontSize: 15, color: M.sub, textAlign: "center" }}>
               {resolveText(tr, config.subtitleKey)}
             </Text>
           </View>
 
-          {/* Feature cards */}
-          <View className="px-6 gap-3">
+          <View style={{ paddingHorizontal: 24, gap: 12 }}>
             {config.features.map((f, index) => (
               <FeatureCard key={`${f.titleKey}-${index}`} item={f} t={tr} />
             ))}
           </View>
 
-          <View className="mx-6 mt-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/40">
-            <Text className="text-sm font-semibold text-blue-700 dark:text-blue-300">
+          <View style={{ marginHorizontal: 24, marginTop: 16, borderRadius: 16, borderWidth: 1, borderColor: M.accentBorder, backgroundColor: M.accentGlow, padding: 16 }}>
+            <Text style={{ fontSize: 13, fontWeight: "600", color: M.accent }}>
               {t("onboarding.floatingChecklistTitle")}
             </Text>
-            <Text className="mt-1 text-sm leading-5 text-blue-700/90 dark:text-blue-300/90">
+            <Text style={{ marginTop: 4, fontSize: 13, lineHeight: 20, color: M.sub }}>
               {t("onboarding.floatingChecklistDetail")}
             </Text>
           </View>
         </ScrollView>
 
-        {/* Got it button */}
-        <View className="px-6 pb-6 pt-4">
+        <View style={{ paddingHorizontal: 24, paddingBottom: 24, paddingTop: 16 }}>
           <Pressable
             onPress={dismissTour}
-            className="items-center rounded-2xl bg-blue-500 py-4 active:opacity-80"
+            style={{ alignItems: "center", borderRadius: 16, backgroundColor: M.accent, paddingVertical: 16 }}
+            className="active:opacity-80"
           >
-            <Text className="text-base font-bold text-white">{t("onboarding.gotIt")}</Text>
+            <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>{t("onboarding.gotIt")}</Text>
           </Pressable>
         </View>
       </SafeAreaView>

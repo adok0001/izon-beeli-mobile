@@ -1,5 +1,6 @@
 import { Modal, View, Text, Pressable } from "react-native";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { StoryChapter } from "@/types";
 import { useTranslation } from "react-i18next";
 
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function ChapterIntro({ visible, chapter, onStart, onClose }: Props) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   return (
     <Modal
@@ -19,39 +21,36 @@ export function ChapterIntro({ visible, chapter, onStart, onClose }: Props) {
       transparent
       onRequestClose={onClose}
     >
-      <View className="flex-1 justify-end bg-black/50">
-        <View className="rounded-t-3xl bg-white px-6 pb-10 pt-6 dark:bg-neutral-900">
-          {/* Close button */}
+      <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.5)" }}>
+        <View style={{ borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: M.card, paddingHorizontal: 24, paddingBottom: 40, paddingTop: 24, borderTopWidth: 1, borderColor: M.border }}>
           <Pressable
             onPress={onClose}
-            className="absolute right-4 top-4 h-8 w-8 items-center justify-center rounded-full bg-neutral-100 active:opacity-70 dark:bg-neutral-800"
+            style={{ position: "absolute", right: 16, top: 16, height: 32, width: 32, alignItems: "center", justifyContent: "center", borderRadius: 16, backgroundColor: M.border }}
+            className="active:opacity-70"
           >
-            <IconSymbol name="xmark" size={16} color="#9ca3af" />
+            <IconSymbol name="xmark" size={16} color={M.muted} />
           </Pressable>
 
-          {/* Chapter number */}
-          <Text className="mb-1 text-sm font-semibold uppercase tracking-wide text-blue-500 dark:text-blue-400">
+          <Text style={{ marginBottom: 4, fontSize: 13, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: M.accent }}>
             {t("educator.story.chapterLabel", { number: chapter.order })}
           </Text>
 
-          {/* Title */}
-          <Text className="mb-4 text-2xl font-bold text-neutral-900 dark:text-white">
+          <Text style={{ marginBottom: 16, fontSize: 22, fontWeight: "700", color: M.text }}>
             {chapter.title}
           </Text>
 
-          {/* Narrative intro */}
-          <View className="mb-6 rounded-2xl bg-amber-50 p-4 dark:bg-amber-950/30">
-            <Text className="text-base leading-relaxed text-neutral-800 dark:text-neutral-200">
+          <View style={{ marginBottom: 24, borderRadius: 16, backgroundColor: M.accentGlow, padding: 16, borderWidth: 1, borderColor: M.accentBorder }}>
+            <Text style={{ fontSize: 15, lineHeight: 24, color: M.text }}>
               {chapter.narrativeIntro}
             </Text>
           </View>
 
-          {/* Begin button */}
           <Pressable
             onPress={onStart}
-            className="items-center rounded-xl bg-blue-500 py-4 active:opacity-80 dark:bg-blue-600"
+            style={{ alignItems: "center", borderRadius: 12, backgroundColor: M.accent, paddingVertical: 16 }}
+            className="active:opacity-80"
           >
-            <Text className="text-base font-bold text-white">
+            <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>
               {t("educator.story.beginChapter")}
             </Text>
           </Pressable>
