@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { ApiError, friendlyError } from "@/lib/api";
 import {
@@ -37,6 +38,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 type Step = "type" | "language" | "entry" | "details";
 
 export default function ContributeScreen() {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{
@@ -210,7 +212,7 @@ export default function ContributeScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("contribute.title"), presentation: "modal" }} />
-      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={[]}>
         <NotificationBanner
           visible={toast.visible}
           title={toast.title}
@@ -220,39 +222,33 @@ export default function ContributeScreen() {
         />
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
-          className="flex-1"
+          style={{ flex: 1 }}
         >
-          {/* Progress bar — hidden on type chooser */}
           {step !== "type" && (
-            <View className="flex-row px-5 pt-2">
+            <View style={{ flexDirection: "row", paddingHorizontal: 20, paddingTop: 8 }}>
               {wizardSteps.map((s, i) => (
                 <View
                   key={s}
-                  className={`mr-1 h-1 flex-1 rounded-full ${
-                    wizardIndex >= i
-                      ? "bg-blue-500"
-                      : "bg-neutral-200 dark:bg-neutral-700"
-                  }`}
+                  style={{ marginRight: 4, height: 4, flex: 1, borderRadius: 999, backgroundColor: wizardIndex >= i ? M.accent : M.border }}
                 />
               ))}
             </View>
           )}
 
-          <ScrollView className="flex-1 px-5 pt-4" showsVerticalScrollIndicator={false}>
-            {/* Type chooser */}
+          <ScrollView style={{ flex: 1, paddingHorizontal: 20, paddingTop: 16 }} showsVerticalScrollIndicator={false}>
             {step === "type" && (
               <View>
-                <Text className="mb-1 text-2xl font-bold text-neutral-900 dark:text-white">
+                <Text style={{ marginBottom: 4, fontSize: 24, fontWeight: "900", color: M.text, letterSpacing: -0.5 }}>
                   {t("contribute.title")}
                 </Text>
-                <Text className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
+                <Text style={{ marginBottom: 16, fontSize: 13, color: M.sub }}>
                   {t("contribute.subtitle")}
                 </Text>
 
                 {totalContributors > 0 && (
-                  <View className="mb-5 flex-row items-center gap-2 rounded-xl bg-amber-50 px-4 py-2.5 dark:bg-amber-900/20">
-                    <IconSymbol name="person.2.fill" size={16} color="#d97706" />
-                    <Text className="text-sm text-amber-800 dark:text-amber-300">
+                  <View style={{ marginBottom: 20, flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 12, backgroundColor: M.accentGlow, paddingHorizontal: 16, paddingVertical: 10, borderWidth: 1, borderColor: M.accentBorder }}>
+                    <IconSymbol name="person.2.fill" size={16} color={M.accent} />
+                    <Text style={{ fontSize: 13, color: M.text }}>
                       {t("contribute.socialProof", {
                         contributors: totalContributors,
                         words: totalApproved.toLocaleString(),
@@ -261,139 +257,58 @@ export default function ContributeScreen() {
                   </View>
                 )}
 
-                {/* Word / Phrase card */}
-                <Pressable
-                  onPress={() => setStep("language")}
-                  className="mb-3 rounded-2xl bg-blue-50 p-5 active:opacity-80 dark:bg-blue-950"
-                >
-                  <View className="flex-row items-center">
-                    <View className="mr-4 h-12 w-12 items-center justify-center rounded-xl bg-blue-500">
-                      <IconSymbol name="character.book.closed" size={24} color="white" />
+                {([
+                  { onPress: () => setStep("language"), bg: M.accentGlow, iconBg: M.accent, icon: "character.book.closed", iconColor: M.ink, title: t("contribute.wordOrPhrase"), desc: t("contribute.wordOrPhraseDesc"), chevronColor: M.accent },
+                  { onPress: () => router.push("/contribute-bulk"), bg: "#22c55e10", iconBg: "#22c55e", icon: "list.bullet.clipboard", iconColor: "#fff", title: t("contribute.bulkWords"), desc: t("contribute.bulkWordsDesc"), chevronColor: "#22c55e" },
+                  { onPress: () => router.push("/contribute-lesson"), bg: "#a855f710", iconBg: "#a855f7", icon: "waveform", iconColor: "#fff", title: t("contribute.fullLesson"), desc: t("contribute.fullLessonDesc"), chevronColor: "#a855f7" },
+                  { onPress: () => router.push("/bounties"), bg: `${M.accent}10`, iconBg: M.accent, icon: "star.fill", iconColor: M.ink, title: t("contribute.activeBounties"), desc: t("contribute.activeBountiesDesc"), chevronColor: M.accent },
+                  { onPress: () => router.push("/reviewer-application"), bg: "#6366f110", iconBg: "#6366f1", icon: "shield.fill", iconColor: "#fff", title: "Become a Reviewer", desc: "Apply to review contributions and help maintain content quality.", chevronColor: "#6366f1" },
+                ] as const).map((card, i) => (
+                  <Pressable
+                    key={i}
+                    onPress={card.onPress as any}
+                    style={{ marginBottom: 12, borderRadius: 16, backgroundColor: card.bg, padding: 20, borderWidth: 1, borderColor: M.border }}
+                    className="active:opacity-80"
+                  >
+                    <View style={{ flexDirection: "row", alignItems: "center" }}>
+                      <View style={{ marginRight: 16, height: 48, width: 48, alignItems: "center", justifyContent: "center", borderRadius: 12, backgroundColor: card.iconBg }}>
+                        <IconSymbol name={card.icon as any} size={24} color={card.iconColor} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 15, fontWeight: "700", color: M.text }}>{card.title}</Text>
+                        <Text style={{ marginTop: 2, fontSize: 13, color: M.sub }}>{card.desc}</Text>
+                      </View>
+                      <IconSymbol name="chevron.right" size={16} color={card.chevronColor} />
                     </View>
-                    <View className="flex-1">
-                      <Text className="text-base font-bold text-neutral-900 dark:text-white">
-                        {t("contribute.wordOrPhrase")}
-                      </Text>
-                      <Text className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">
-                        {t("contribute.wordOrPhraseDesc")}
-                      </Text>
-                    </View>
-                    <IconSymbol name="chevron.right" size={16} color="#3b82f6" />
-                  </View>
-                </Pressable>
-
-                {/* Bulk words card */}
-                <Pressable
-                  onPress={() => router.push("/contribute-bulk")}
-                  className="mb-3 rounded-2xl bg-green-50 p-5 active:opacity-80 dark:bg-green-950"
-                >
-                  <View className="flex-row items-center">
-                    <View className="mr-4 h-12 w-12 items-center justify-center rounded-xl bg-green-500">
-                      <IconSymbol name="list.bullet.clipboard" size={24} color="white" />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-base font-bold text-neutral-900 dark:text-white">
-                        {t("contribute.bulkWords")}
-                      </Text>
-                      <Text className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">
-                        {t("contribute.bulkWordsDesc")}
-                      </Text>
-                    </View>
-                    <IconSymbol name="chevron.right" size={16} color="#22c55e" />
-                  </View>
-                </Pressable>
-
-                {/* Lesson card */}
-                <Pressable
-                  onPress={() => router.push("/contribute-lesson")}
-                  className="mb-3 rounded-2xl bg-purple-50 p-5 active:opacity-80 dark:bg-purple-950"
-                >
-                  <View className="flex-row items-center">
-                    <View className="mr-4 h-12 w-12 items-center justify-center rounded-xl bg-purple-500">
-                      <IconSymbol name="waveform" size={24} color="white" />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-base font-bold text-neutral-900 dark:text-white">
-                        {t("contribute.fullLesson")}
-                      </Text>
-                      <Text className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">
-                        {t("contribute.fullLessonDesc")}
-                      </Text>
-                    </View>
-                    <IconSymbol name="chevron.right" size={16} color="#a855f7" />
-                  </View>
-                </Pressable>
-
-                {/* Active Bounties card */}
-                <Pressable
-                  onPress={() => router.push("/bounties")}
-                  className="mb-3 rounded-2xl bg-amber-50 p-5 active:opacity-80 dark:bg-amber-950"
-                >
-                  <View className="flex-row items-center">
-                    <View className="mr-4 h-12 w-12 items-center justify-center rounded-xl bg-amber-500">
-                      <IconSymbol name="star.fill" size={24} color="white" />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-base font-bold text-neutral-900 dark:text-white">
-                        {t("contribute.activeBounties")}
-                      </Text>
-                      <Text className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">
-                        {t("contribute.activeBountiesDesc")}
-                      </Text>
-                    </View>
-                    <IconSymbol name="chevron.right" size={16} color="#f59e0b" />
-                  </View>
-                </Pressable>
-
-                {/* Become a Reviewer card */}
-                <Pressable
-                  onPress={() => router.push("/reviewer-application")}
-                  className="mb-3 rounded-2xl bg-indigo-50 p-5 active:opacity-80 dark:bg-indigo-950"
-                >
-                  <View className="flex-row items-center">
-                    <View className="mr-4 h-12 w-12 items-center justify-center rounded-xl bg-indigo-500">
-                      <IconSymbol name="shield.fill" size={24} color="white" />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-base font-bold text-neutral-900 dark:text-white">
-                        Become a Reviewer
-                      </Text>
-                      <Text className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">
-                        Apply to review contributions and help maintain content quality.
-                      </Text>
-                    </View>
-                    <IconSymbol name="chevron.right" size={16} color="#6366f1" />
-                  </View>
-                </Pressable>
+                  </Pressable>
+                ))}
               </View>
             )}
 
-            {/* Step 1: Language */}
             {step === "language" && (
               <View>
-                <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
+                <Text style={{ marginBottom: 4, fontSize: 20, fontWeight: "700", color: M.text }}>
                   {t("contribute.selectLanguage")}
                 </Text>
-                <Text className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
+                <Text style={{ marginBottom: 16, fontSize: 13, color: M.sub }}>
                   {t("contribute.selectLanguageDesc")}
                 </Text>
 
-                {/* Search */}
-                <View className="mb-4 flex-row items-center rounded-xl border border-neutral-200 bg-neutral-50 px-3 dark:border-neutral-700 dark:bg-neutral-800">
-                  <IconSymbol name="magnifyingglass" size={16} color="#9ca3af" />
+                <View style={{ marginBottom: 16, flexDirection: "row", alignItems: "center", borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, paddingHorizontal: 12 }}>
+                  <IconSymbol name="magnifyingglass" size={16} color={M.muted} />
                   <TextInput
                     value={langSearch}
                     onChangeText={setLangSearch}
                     placeholder={t("contribute.searchLanguage")}
-                    placeholderTextColor="#9ca3af"
+                    placeholderTextColor={M.muted}
                     autoCorrect={false}
                     autoCapitalize="none"
                     returnKeyType="search"
-                    className="ml-2 flex-1 py-3 text-sm text-neutral-900 dark:text-white"
+                    style={{ marginLeft: 8, flex: 1, paddingVertical: 12, fontSize: 14, color: M.text }}
                   />
                   {langSearch.length > 0 && (
                     <Pressable onPress={() => setLangSearch("")} hitSlop={8}>
-                      <IconSymbol name="xmark.circle.fill" size={16} color="#9ca3af" />
+                      <IconSymbol name="xmark.circle.fill" size={16} color={M.muted} />
                     </Pressable>
                   )}
                 </View>
@@ -416,26 +331,27 @@ export default function ContributeScreen() {
                         setSelectedLanguage(customName);
                         setStep("entry");
                       }}
-                      className="mt-1 mb-4 flex-row items-center rounded-xl border-2 border-dashed border-violet-300 p-4 active:opacity-70 dark:border-violet-700"
+                      style={{ marginTop: 4, marginBottom: 16, flexDirection: "row", alignItems: "center", borderRadius: 12, borderWidth: 2, borderStyle: "dashed", borderColor: M.accentBorder, padding: 16 }}
+                      className="active:opacity-70"
                     >
-                      <View className="mr-3 h-9 w-9 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900">
-                        <IconSymbol name="plus.circle" size={20} color="#8b5cf6" />
+                      <View style={{ marginRight: 12, height: 36, width: 36, alignItems: "center", justifyContent: "center", borderRadius: 8, backgroundColor: M.accentGlow }}>
+                        <IconSymbol name="plus.circle" size={20} color={M.accent} />
                       </View>
-                      <View className="flex-1">
-                        <Text className="text-sm font-semibold text-violet-700 dark:text-violet-300">
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 13, fontWeight: "600", color: M.accent }}>
                           {t("contribute.useCustomLanguage", { name: customName })}
                         </Text>
                       </View>
-                      <IconSymbol name="chevron.right" size={16} color="#8b5cf6" />
+                      <IconSymbol name="chevron.right" size={16} color={M.accent} />
                     </Pressable>
                   );
 
                   if (filtered.length === 0) {
                     return (
                       <View>
-                        <View className="mb-4 items-center py-6">
-                          <IconSymbol name="magnifyingglass" size={32} color="#d1d5db" />
-                          <Text className="mt-2 text-sm text-neutral-400 dark:text-neutral-500">
+                        <View style={{ marginBottom: 16, alignItems: "center", paddingVertical: 24 }}>
+                          <IconSymbol name="magnifyingglass" size={32} color={M.border} />
+                          <Text style={{ marginTop: 8, fontSize: 13, color: M.muted }}>
                             {t("contribute.noLanguageFound")}
                           </Text>
                         </View>
@@ -453,21 +369,18 @@ export default function ContributeScreen() {
                             setSelectedLanguage(lang.id);
                             setStep("entry");
                           }}
-                          className={`mb-3 flex-row items-center rounded-xl border-2 p-4 ${
-                            selectedLanguage === lang.id
-                              ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
-                              : "border-neutral-200 dark:border-neutral-700"
-                          }`}
+                          style={{ marginBottom: 12, flexDirection: "row", alignItems: "center", borderRadius: 12, borderWidth: 2, padding: 16, backgroundColor: selectedLanguage === lang.id ? M.accentGlow : M.card, borderColor: selectedLanguage === lang.id ? M.accent : M.border }}
+                          className="active:opacity-70"
                         >
-                          <View className="flex-1">
-                            <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 15, fontWeight: "600", color: selectedLanguage === lang.id ? M.accent : M.text }}>
                               {lang.name}
                             </Text>
-                            <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
+                            <Text style={{ marginTop: 2, fontSize: 13, color: M.sub }}>
                               {lang.nativeName} · {lang.region}
                             </Text>
                           </View>
-                          <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
+                          <IconSymbol name="chevron.right" size={16} color={M.muted} />
                         </Pressable>
                       ))}
                       {customLangButton}
@@ -477,50 +390,48 @@ export default function ContributeScreen() {
               </View>
             )}
 
-            {/* Step 2: Word/Phrase Entry */}
             {step === "entry" && (
               <View>
-                <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
+                <Text style={{ marginBottom: 4, fontSize: 20, fontWeight: "700", color: M.text }}>
                   {t("contribute.enterWord")}
                 </Text>
-                <Text className="mb-5 text-sm text-neutral-500 dark:text-neutral-400">
+                <Text style={{ marginBottom: 20, fontSize: 13, color: M.sub }}>
                   {t("contribute.enterWordDesc")}
                 </Text>
 
-                {/* Bounty banner */}
                 {activeBounty && (
                   <Pressable
                     onPress={() => router.push("/bounties")}
-                    className="mb-4 rounded-xl bg-amber-50 px-4 py-3 active:opacity-80 dark:bg-amber-950"
+                    style={{ marginBottom: 16, borderRadius: 12, backgroundColor: M.accentGlow, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: M.accentBorder }}
+                    className="active:opacity-80"
                   >
-                    <View className="flex-row items-center justify-between">
-                      <Text className="text-xs font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                      <Text style={{ fontSize: 10, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase", color: M.accent }}>
                         {t("contribute.activeBountyBanner", { xp: activeBounty.xpReward })}
                       </Text>
-                      <Text className="text-xs text-amber-500 dark:text-amber-400">
+                      <Text style={{ fontSize: 11, color: M.accent }}>
                         {activeBounty.currentCount}/{activeBounty.targetCount}
                       </Text>
                     </View>
-                    <Text className="mt-0.5 text-sm font-medium text-neutral-700 dark:text-neutral-300" numberOfLines={1}>
+                    <Text style={{ marginTop: 2, fontSize: 13, fontWeight: "500", color: M.text }} numberOfLines={1}>
                       {activeBounty.title}
                     </Text>
                   </Pressable>
                 )}
 
-                {/* Update-mode banner */}
                 {selectedEntry && (
-                  <View className="mb-4 flex-row items-center rounded-xl bg-amber-50 px-4 py-3 dark:bg-amber-950">
-                    <IconSymbol name="arrow.up.circle.fill" size={16} color="#d97706" />
-                    <Text className="ml-2 flex-1 text-sm text-amber-800 dark:text-amber-300">
+                  <View style={{ marginBottom: 16, flexDirection: "row", alignItems: "center", borderRadius: 12, backgroundColor: M.accentGlow, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: M.accentBorder }}>
+                    <IconSymbol name="arrow.up.circle.fill" size={16} color={M.accent} />
+                    <Text style={{ marginLeft: 8, flex: 1, fontSize: 13, color: M.text }}>
                       {t("contribute.updateBanner")}
                     </Text>
                     <Pressable onPress={handleClearEntry} hitSlop={8}>
-                      <IconSymbol name="xmark.circle.fill" size={18} color="#d97706" />
+                      <IconSymbol name="xmark.circle.fill" size={18} color={M.muted} />
                     </Pressable>
                   </View>
                 )}
 
-                <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                <Text style={{ marginBottom: 6, fontSize: 13, fontWeight: "500", color: M.sub }}>
                   {t("contribute.wordPhrase")}
                 </Text>
                 <TextInput
@@ -530,18 +441,17 @@ export default function ContributeScreen() {
                     if (selectedEntry) setSelectedEntry(null);
                   }}
                   placeholder="e.g. Baid\u1EB9"
-                  placeholderTextColor="#9ca3af"
+                  placeholderTextColor={M.muted}
                   editable={!selectedEntry}
-                  className={`rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white ${dictMatches.length > 0 ? "mb-0 rounded-b-none border-b-0" : "mb-4"} ${selectedEntry ? "opacity-60" : ""}`}
+                  style={{ borderRadius: dictMatches.length > 0 ? 0 : 12, borderTopLeftRadius: 12, borderTopRightRadius: 12, borderWidth: 1, borderBottomWidth: dictMatches.length > 0 ? 0 : 1, borderColor: M.border, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 12, fontSize: 15, color: M.text, marginBottom: dictMatches.length > 0 ? 0 : 16, opacity: selectedEntry ? 0.6 : 1 }}
                   autoFocus
                 />
 
-                {/* Dictionary match picker */}
                 {dictMatches.length > 0 && (
-                  <View className="mb-4 overflow-hidden rounded-b-xl border border-t-0 border-neutral-200 dark:border-neutral-700">
-                    <View className="flex-row items-center bg-neutral-100 px-3 py-1.5 dark:bg-neutral-800">
-                      <IconSymbol name="magnifyingglass" size={12} color="#9ca3af" />
-                      <Text className="ml-1.5 text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                  <View style={{ marginBottom: 16, borderRadius: 12, borderTopLeftRadius: 0, borderTopRightRadius: 0, borderWidth: 1, borderTopWidth: 0, borderColor: M.border, overflow: "hidden" }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: M.bg, paddingHorizontal: 12, paddingVertical: 6 }}>
+                      <IconSymbol name="magnifyingglass" size={12} color={M.muted} />
+                      <Text style={{ marginLeft: 6, fontSize: 11, fontWeight: "500", color: M.muted }}>
                         {t("contribute.foundInDictionary")}
                       </Text>
                     </View>
@@ -549,17 +459,14 @@ export default function ContributeScreen() {
                       <Pressable
                         key={entry.id}
                         onPress={() => handleSelectEntry(entry)}
-                        className={`flex-row items-center px-4 py-3 active:bg-neutral-50 dark:active:bg-neutral-800 ${i < dictMatches.length - 1 ? "border-b border-neutral-100 dark:border-neutral-800" : ""}`}
+                        style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: i === 0 ? 1 : 0, borderBottomWidth: i < dictMatches.length - 1 ? 1 : 0, borderColor: M.border }}
+                        className="active:opacity-70"
                       >
-                        <View className="flex-1">
-                          <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-                            {entry.word}
-                          </Text>
-                          <Text className="text-xs text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
-                            {entry.english}
-                          </Text>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 13, fontWeight: "600", color: M.text }}>{entry.word}</Text>
+                          <Text style={{ fontSize: 11, color: M.sub }} numberOfLines={1}>{entry.english}</Text>
                         </View>
-                        <Text className="ml-2 text-xs text-blue-500 dark:text-blue-400">
+                        <Text style={{ marginLeft: 8, fontSize: 11, color: M.accent }}>
                           {CATEGORY_LABELS[entry.category]}
                         </Text>
                       </Pressable>
@@ -567,40 +474,30 @@ export default function ContributeScreen() {
                   </View>
                 )}
 
-                <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                <Text style={{ marginBottom: 6, fontSize: 13, fontWeight: "500", color: M.sub }}>
                   {selectedEntry ? t("contribute.suggestedMeaning") : t("dictionaryPage.fieldEnglish")}
                 </Text>
                 <TextInput
                   value={english}
                   onChangeText={setEnglish}
                   placeholder={selectedEntry ? t("contribute.suggestedMeaningPlaceholder") : "e.g. Good morning"}
-                  placeholderTextColor="#9ca3af"
-                  className="mb-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                  placeholderTextColor={M.muted}
+                  style={{ marginBottom: 16, borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 12, fontSize: 15, color: M.text }}
                 />
 
-                <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                <Text style={{ marginBottom: 6, fontSize: 13, fontWeight: "500", color: M.sub }}>
                   {t("dictionaryPage.fieldCategory")}
                 </Text>
-                <View className="mb-4 flex-row flex-wrap gap-2">
+                <View style={{ marginBottom: 16, flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
                   {ALL_CATEGORIES.map((cat) => (
                     <Pressable
                       key={cat}
                       onPress={() => { if (!selectedEntry) setCategory(cat); }}
                       disabled={!!selectedEntry}
                       accessibilityState={{ disabled: !!selectedEntry }}
-                      className={`rounded-lg px-3 py-2 ${
-                        category === cat
-                          ? "bg-blue-500"
-                          : "bg-neutral-100 dark:bg-neutral-800"
-                      } ${selectedEntry ? "opacity-60" : ""}`}
+                      style={{ borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: category === cat ? M.accent : M.card, borderWidth: 1, borderColor: category === cat ? M.accent : M.border, opacity: selectedEntry ? 0.6 : 1 }}
                     >
-                      <Text
-                        className={`text-sm font-medium ${
-                          category === cat
-                            ? "text-white"
-                            : "text-neutral-700 dark:text-neutral-300"
-                        }`}
-                      >
+                      <Text style={{ fontSize: 13, fontWeight: "500", color: category === cat ? M.ink : M.sub }}>
                         {CATEGORY_LABELS[cat]}
                       </Text>
                     </Pressable>
@@ -609,89 +506,64 @@ export default function ContributeScreen() {
               </View>
             )}
 
-            {/* Step 3: Optional Details */}
             {step === "details" && (
               <View>
-                <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
+                <Text style={{ marginBottom: 4, fontSize: 20, fontWeight: "700", color: M.text }}>
                   {t("contribute.additionalDetails")}
                 </Text>
-                <Text className="mb-5 text-sm text-neutral-500 dark:text-neutral-400">
+                <Text style={{ marginBottom: 20, fontSize: 13, color: M.sub }}>
                   {t("contribute.additionalDetailsDesc")}
                 </Text>
 
-                {/* Summary card */}
-                <View className="mb-4 rounded-2xl bg-blue-50 p-4 dark:bg-blue-950">
-                  <Text className="text-lg font-bold text-neutral-900 dark:text-white">
-                    {word}
-                  </Text>
-                  <Text className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">
-                    {english}
-                  </Text>
-                  <Text className="mt-1 text-xs text-blue-600 dark:text-blue-400">
-                    {category ? CATEGORY_LABELS[category] : ""}
-                  </Text>
+                <View style={{ marginBottom: 16, borderRadius: 16, backgroundColor: M.accentGlow, padding: 16, borderWidth: 1, borderColor: M.accentBorder, borderLeftWidth: 4, borderLeftColor: M.accent }}>
+                  <Text style={{ fontSize: 17, fontWeight: "700", color: M.text }}>{word}</Text>
+                  <Text style={{ marginTop: 2, fontSize: 13, color: M.sub }}>{english}</Text>
+                  <Text style={{ marginTop: 4, fontSize: 11, color: M.accent }}>{category ? CATEGORY_LABELS[category] : ""}</Text>
                 </View>
 
-                <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  {t("dictionaryPage.fieldPronunciation")}
-                </Text>
-                <TextInput
-                  value={pronunciation}
-                  onChangeText={setPronunciation}
-                  placeholder="e.g. bah-ee-DEH"
-                  placeholderTextColor="#9ca3af"
-                  className="mb-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-                />
+                {([
+                  { label: t("dictionaryPage.fieldPronunciation"), value: pronunciation, setter: setPronunciation, placeholder: "e.g. bah-ee-DEH" },
+                  { label: t("dictionaryPage.fieldExample"), value: example, setter: setExample, placeholder: "An example sentence using this word..." },
+                  { label: t("dictionaryPage.fieldExampleTranslation"), value: exampleTranslation, setter: setExampleTranslation, placeholder: "English translation of the example..." },
+                ] as const).map((field) => (
+                  <View key={field.label}>
+                    <Text style={{ marginBottom: 6, fontSize: 13, fontWeight: "500", color: M.sub }}>{field.label}</Text>
+                    <TextInput
+                      value={field.value}
+                      onChangeText={field.setter as (t: string) => void}
+                      placeholder={field.placeholder}
+                      placeholderTextColor={M.muted}
+                      style={{ marginBottom: 16, borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 12, fontSize: 15, color: M.text }}
+                    />
+                  </View>
+                ))}
 
-                <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  {t("dictionaryPage.fieldExample")}
-                </Text>
-                <TextInput
-                  value={example}
-                  onChangeText={setExample}
-                  placeholder="An example sentence using this word..."
-                  placeholderTextColor="#9ca3af"
-                  className="mb-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-                />
-
-                <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  {t("dictionaryPage.fieldExampleTranslation")}
-                </Text>
-                <TextInput
-                  value={exampleTranslation}
-                  onChangeText={setExampleTranslation}
-                  placeholder="English translation of the example..."
-                  placeholderTextColor="#9ca3af"
-                  className="mb-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-                />
-
-                {/* Audio recording */}
-                <Text className="mb-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                <Text style={{ marginBottom: 6, fontSize: 13, fontWeight: "500", color: M.sub }}>
                   {t("contribute.audioPronunciation")}
                 </Text>
-                <View className="mb-4 items-center rounded-xl border border-neutral-200 p-4 dark:border-neutral-700">
+                <View style={{ marginBottom: 16, alignItems: "center", borderRadius: 12, borderWidth: 1, borderColor: M.border, padding: 16, backgroundColor: M.card }}>
                   {recordingUri ? (
-                    <View className="items-center">
+                    <View style={{ alignItems: "center" }}>
                       <Pressable
                         onPress={isPlaying ? stopPlayback : playRecording}
-                        className={`h-16 w-16 items-center justify-center rounded-full ${
-                          isPlaying ? "bg-blue-500" : "bg-emerald-100 dark:bg-emerald-900"
-                        }`}
+                        style={{ height: 64, width: 64, alignItems: "center", justifyContent: "center", borderRadius: 32, backgroundColor: isPlaying ? M.accent : "#10b98120" }}
+                        className="active:opacity-70"
                       >
                         <IconSymbol
                           name={isPlaying ? "stop.fill" : "play.fill"}
                           size={24}
-                          color={isPlaying ? "#fff" : "#10b981"}
+                          color={isPlaying ? M.ink : "#10b981"}
                         />
                       </Pressable>
-                      <Text className="mt-2 text-sm text-green-600 dark:text-green-400">
+                      <Text style={{ marginTop: 8, fontSize: 13, color: "#10b981" }}>
                         {t("contribute.recordingSaved")}
                       </Text>
                       <Pressable
                         onPress={() => discardRecording()}
-                        className="mt-2 rounded-lg bg-neutral-200 px-4 py-2 dark:bg-neutral-700"
+                        style={{ marginTop: 8, borderRadius: 8, backgroundColor: M.border, paddingHorizontal: 16, paddingVertical: 8 }}
+                        className="active:opacity-70"
                       >
-                        <Text className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                        <Text style={{ fontSize: 13, fontWeight: "500", color: M.sub }}>
                           {t("contribute.reRecord")}
                         </Text>
                       </Pressable>
@@ -699,74 +571,74 @@ export default function ContributeScreen() {
                   ) : (
                     <Pressable
                       onPress={isRecording ? stopRecording : startRecording}
-                      className={`h-16 w-16 items-center justify-center rounded-full ${
-                        isRecording ? "bg-red-500" : "bg-red-100 dark:bg-red-900"
-                      }`}
+                      style={{ height: 64, width: 64, alignItems: "center", justifyContent: "center", borderRadius: 32, backgroundColor: isRecording ? "#ef4444" : "#ef444420" }}
+                      className="active:opacity-70"
                     >
                       {isRecording ? (
-                        <View className="h-6 w-6 rounded-sm bg-white" />
+                        <View style={{ height: 24, width: 24, borderRadius: 4, backgroundColor: "#fff" }} />
                       ) : (
                         <IconSymbol name="mic.fill" size={24} color="#ef4444" />
                       )}
                     </Pressable>
                   )}
                   {isRecording && (
-                    <Text className="mt-2 text-sm text-red-500">
+                    <Text style={{ marginTop: 8, fontSize: 13, color: "#ef4444" }}>
                       {t("contribute.recordingTapToStop")}
                     </Text>
                   )}
                   {!recordingUri && !isRecording && (
-                    <Text className="mt-2 text-xs text-neutral-400 dark:text-neutral-500">
+                    <Text style={{ marginTop: 8, fontSize: 11, color: M.muted }}>
                       {t("contribute.recordingHint")}
                     </Text>
                   )}
                 </View>
 
-              {/* Image */}
-              <Text className="mb-1.5 mt-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                {t("contribute.imagePicker")}
-              </Text>
-              {imageUri ? (
-                <View className="mb-4 overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
-                  <Image source={{ uri: imageUri }} className="h-44 w-full" resizeMode="cover" />
+                <Text style={{ marginBottom: 6, marginTop: 8, fontSize: 13, fontWeight: "500", color: M.sub }}>
+                  {t("contribute.imagePicker")}
+                </Text>
+                {imageUri ? (
+                  <View style={{ marginBottom: 16, borderRadius: 12, borderWidth: 1, borderColor: M.border, overflow: "hidden" }}>
+                    <Image source={{ uri: imageUri }} style={{ height: 176, width: "100%" }} resizeMode="cover" />
+                    <Pressable
+                      onPress={handlePickImage}
+                      style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 10 }}
+                      className="active:opacity-70"
+                    >
+                      <IconSymbol name="photo" size={15} color={M.accent} />
+                      <Text style={{ fontSize: 13, fontWeight: "500", color: M.accent }}>
+                        {t("contribute.changeImage")}
+                      </Text>
+                    </Pressable>
+                  </View>
+                ) : (
                   <Pressable
                     onPress={handlePickImage}
-                    className="flex-row items-center justify-center gap-2 py-2.5"
+                    style={{ marginBottom: 16, alignItems: "center", gap: 8, borderRadius: 12, borderWidth: 1, borderStyle: "dashed", borderColor: M.border, paddingVertical: 24 }}
+                    className="active:opacity-70"
                   >
-                    <IconSymbol name="photo" size={15} color="#3b82f6" />
-                    <Text className="text-sm font-medium text-blue-500">
-                      {t("contribute.changeImage")}
+                    <IconSymbol name="photo.badge.plus" size={28} color={M.muted} />
+                    <Text style={{ fontSize: 11, color: M.muted }}>
+                      {t("contribute.imageHint")}
                     </Text>
                   </Pressable>
-                </View>
-              ) : (
-                <Pressable
-                  onPress={handlePickImage}
-                  className="mb-4 items-center gap-2 rounded-xl border border-dashed border-neutral-300 py-6 dark:border-neutral-600"
-                >
-                  <IconSymbol name="photo.badge.plus" size={28} color="#9ca3af" />
-                  <Text className="text-xs text-neutral-400 dark:text-neutral-500">
-                    {t("contribute.imageHint")}
-                  </Text>
-                </Pressable>
-              )}
-            </View>
+                )}
+              </View>
             )}
           </ScrollView>
 
-          {/* Bottom actions */}
           {step !== "type" && (
-            <View className="border-t border-neutral-200 px-5 py-4 dark:border-neutral-700">
-              <View className="flex-row gap-3">
+            <View style={{ borderTopWidth: 1, borderTopColor: M.border, paddingHorizontal: 20, paddingVertical: 16 }}>
+              <View style={{ flexDirection: "row", gap: 12 }}>
                 <Pressable
                   onPress={() => {
                     if (step === "language") setStep("type");
                     else if (step === "entry") setStep("language");
                     else if (step === "details") setStep("entry");
                   }}
-                  className="flex-1 items-center rounded-xl bg-neutral-100 py-3.5 dark:bg-neutral-800"
+                  style={{ flex: 1, alignItems: "center", borderRadius: 12, backgroundColor: M.card, paddingVertical: 14, borderWidth: 1, borderColor: M.border }}
+                  className="active:opacity-70"
                 >
-                  <Text className="font-semibold text-neutral-700 dark:text-neutral-300">
+                  <Text style={{ fontWeight: "600", color: M.sub }}>
                     {t("common.back")}
                   </Text>
                 </Pressable>
@@ -786,13 +658,10 @@ export default function ContributeScreen() {
                       }
                     }}
                     disabled={!word.trim() || !english.trim() || !category}
-                    className={`flex-1 items-center rounded-xl py-3.5 ${
-                      word.trim() && english.trim() && category
-                        ? "bg-blue-500"
-                        : "bg-blue-300 dark:bg-blue-800"
-                    }`}
+                    style={{ flex: 1, alignItems: "center", borderRadius: 12, paddingVertical: 14, backgroundColor: word.trim() && english.trim() && category ? M.accent : M.border }}
+                    className="active:opacity-80"
                   >
-                    <Text className="font-semibold text-white">
+                    <Text style={{ fontWeight: "600", color: word.trim() && english.trim() && category ? M.ink : M.muted }}>
                       {selectedEntry ? t("contribute.submitUpdate") : t("common.next")}
                     </Text>
                   </Pressable>
@@ -801,11 +670,10 @@ export default function ContributeScreen() {
                   <Pressable
                     onPress={handleSubmit}
                     disabled={!canSubmit}
-                    className={`flex-1 items-center rounded-xl py-3.5 ${
-                      canSubmit ? "bg-blue-500" : "bg-blue-300 dark:bg-blue-800"
-                    }`}
+                    style={{ flex: 1, alignItems: "center", borderRadius: 12, paddingVertical: 14, backgroundColor: canSubmit ? M.accent : M.border }}
+                    className="active:opacity-80"
                   >
-                    <Text className="font-semibold text-white">
+                    <Text style={{ fontWeight: "600", color: canSubmit ? M.ink : M.muted }}>
                       {(submitContribution.isPending || submitEntryContribution.isPending)
                         ? t("contribute.submitting")
                         : selectedEntry

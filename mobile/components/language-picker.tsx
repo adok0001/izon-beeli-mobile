@@ -1,5 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ACTIVE_LANGUAGES, getLanguageName } from "@/lib/mock-data";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import type { Language } from "@/types";
 import { useMemo, useState } from "react";
@@ -48,6 +49,7 @@ function groupByRegion(languages: Language[]): Section[] {
 // ─── LanguagePickerButton (used on Listen tab and elsewhere) ─────────────────
 
 export function LanguagePickerButton() {
+  const M = useMuseumTheme();
   const [visible, setVisible] = useState(false);
   const { selectedLanguageId, setLanguage } = useLanguageStore();
   const selectedName = getLanguageName(selectedLanguageId);
@@ -56,20 +58,21 @@ export function LanguagePickerButton() {
     <>
       <Pressable
         onPress={() => setVisible(true)}
-        className="flex-row items-center rounded-full bg-blue-50 px-3.5 py-2 active:opacity-70 dark:bg-blue-950"
+        style={{ flexDirection: "row", alignItems: "center", borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: M.accentBorder }}
+        className="active:opacity-70"
       >
-        <IconSymbol name="book.fill" size={16} color="#3b82f6" />
-        <Text className="ml-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400">
+        <IconSymbol name="book.fill" size={16} color={M.accent} />
+        <Text style={{ marginLeft: 6, fontSize: 13, fontWeight: "600", color: M.accent }}>
           {selectedName}
         </Text>
-        <IconSymbol name="chevron.right" size={14} color="#3b82f6" style={{ marginLeft: 2 }} />
+        <IconSymbol name="chevron.right" size={14} color={M.accent} style={{ marginLeft: 2 }} />
       </Pressable>
 
       <LanguagePickerModal
         visible={visible}
         selectedId={selectedLanguageId}
         onSelect={(id) => {
-          setLanguage(id); // auto-enrolls
+          setLanguage(id);
           setVisible(false);
         }}
         onClose={() => setVisible(false)}
@@ -81,13 +84,14 @@ export function LanguagePickerButton() {
 // ─── EnrolledLanguageBar (used on Learn tab) ─────────────────────────────────
 
 export function EnrolledLanguageBar() {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const { selectedLanguageId, enrolledLanguageIds, enrollLanguage, unenrollLanguage } =
     useLanguageStore();
   const [addVisible, setAddVisible] = useState(false);
 
   const handleUnenroll = (id: string) => {
-    if (enrolledLanguageIds.length === 1) return; // keep at least one
+    if (enrolledLanguageIds.length === 1) return;
     Alert.alert(
       t("languagePicker.removeTitle"),
       t("languagePicker.removeDesc", { name: getLanguageName(id) }),
@@ -99,7 +103,7 @@ export function EnrolledLanguageBar() {
   };
 
   return (
-    <View className="border-b border-neutral-100 dark:border-neutral-800">
+    <View style={{ borderBottomWidth: 1, borderBottomColor: M.border }}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -112,30 +116,26 @@ export function EnrolledLanguageBar() {
               key={id}
               onPress={() => enrollLanguage(id)}
               onLongPress={() => handleUnenroll(id)}
-              className={`flex-row items-center rounded-full px-3.5 py-1.5 ${
-                isActive
-                  ? "bg-blue-500"
-                  : "bg-neutral-100 dark:bg-neutral-800"
-              }`}
+              style={{
+                flexDirection: "row", alignItems: "center", borderRadius: 999,
+                paddingHorizontal: 14, paddingVertical: 6, borderWidth: 1,
+                backgroundColor: isActive ? M.accent : M.card,
+                borderColor: isActive ? M.accent : M.border,
+              }}
             >
-              <Text
-                className={`text-sm font-semibold ${
-                  isActive ? "text-white" : "text-neutral-600 dark:text-neutral-300"
-                }`}
-              >
+              <Text style={{ fontSize: 13, fontWeight: "600", color: isActive ? M.ink : M.sub }}>
                 {getLanguageName(id)}
               </Text>
             </Pressable>
           );
         })}
 
-        {/* Add button */}
         <Pressable
           onPress={() => setAddVisible(true)}
-          className="flex-row items-center rounded-full border border-dashed border-neutral-300 px-3.5 py-1.5 dark:border-neutral-600"
+          style={{ flexDirection: "row", alignItems: "center", borderRadius: 999, borderWidth: 1, borderStyle: "dashed", borderColor: M.muted, paddingHorizontal: 14, paddingVertical: 6 }}
         >
-          <IconSymbol name="plus" size={14} color="#9ca3af" />
-          <Text className="ml-1 text-sm font-medium text-neutral-400 dark:text-neutral-500">
+          <IconSymbol name="plus" size={14} color={M.muted} />
+          <Text style={{ marginLeft: 4, fontSize: 13, fontWeight: "500", color: M.muted }}>
             {t("languagePicker.addLanguage")}
           </Text>
         </Pressable>
@@ -167,6 +167,7 @@ function AddLanguageModal({
   onAdd: (id: string) => void;
   onClose: () => void;
 }>) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
 
@@ -186,90 +187,90 @@ function AddLanguageModal({
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900">
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
-        <View className="flex-row items-center justify-between border-b border-neutral-200 px-5 py-3 dark:border-neutral-700">
-          <Text className="text-lg font-bold text-neutral-900 dark:text-white">
-            {t("languagePicker.addLanguage")}
-          </Text>
-          <Pressable onPress={onClose} hitSlop={8}>
-            <IconSymbol name="xmark" size={20} color="#6b7280" />
-          </Pressable>
-        </View>
-
-        <View className="border-b border-neutral-200 px-5 py-3 dark:border-neutral-700">
-          <View className="flex-row items-center rounded-xl bg-neutral-100 px-3 py-2.5 dark:bg-neutral-800">
-            <IconSymbol name="magnifyingglass" size={18} color="#9ca3af" />
-            <TextInput
-              value={search}
-              onChangeText={setSearch}
-              placeholder={t("languagePicker.searchPlaceholder")}
-              placeholderTextColor="#9ca3af"
-              autoCorrect={false}
-              className="ml-2 flex-1 text-base text-neutral-900 dark:text-white"
-            />
-            {search.length > 0 && (
-              <Pressable onPress={() => setSearch("")} hitSlop={8}>
-                <IconSymbol name="xmark" size={16} color="#9ca3af" />
-              </Pressable>
-            )}
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderBottomWidth: 1, borderBottomColor: M.border, paddingHorizontal: 20, paddingVertical: 12 }}>
+            <Text style={{ fontSize: 18, fontWeight: "700", color: M.text }}>
+              {t("languagePicker.addLanguage")}
+            </Text>
+            <Pressable onPress={onClose} hitSlop={8}>
+              <IconSymbol name="xmark" size={20} color={M.sub} />
+            </Pressable>
           </View>
-        </View>
 
-        <SectionList
-          sections={sections}
-          keyExtractor={(item) => item.id}
-          stickySectionHeadersEnabled
-          keyboardShouldPersistTaps="handled"
-          renderSectionHeader={({ section }) => (
-            <View className="bg-neutral-50 px-5 py-2 dark:bg-neutral-800/80">
-              <Text className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-                {REGION_KEY_MAP[section.title]
-                  ? t(REGION_KEY_MAP[section.title] as any)
-                  : section.title}
-              </Text>
+          <View style={{ borderBottomWidth: 1, borderBottomColor: M.border, paddingHorizontal: 20, paddingVertical: 12 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", borderRadius: 12, backgroundColor: M.card, paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1, borderColor: M.border }}>
+              <IconSymbol name="magnifyingglass" size={18} color={M.muted} />
+              <TextInput
+                value={search}
+                onChangeText={setSearch}
+                placeholder={t("languagePicker.searchPlaceholder")}
+                placeholderTextColor={M.muted}
+                autoCorrect={false}
+                style={{ marginLeft: 8, flex: 1, fontSize: 15, color: M.text }}
+              />
+              {search.length > 0 && (
+                <Pressable onPress={() => setSearch("")} hitSlop={8}>
+                  <IconSymbol name="xmark" size={16} color={M.muted} />
+                </Pressable>
+              )}
             </View>
-          )}
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() => onAdd(item.id)}
-              className="flex-row items-center border-b border-neutral-100 px-5 py-3.5 active:bg-neutral-50 dark:border-neutral-800 dark:active:bg-neutral-800"
-            >
-              <View className="flex-1">
-                <Text className="text-base text-neutral-900 dark:text-white">{item.name}</Text>
-                <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
-                  {item.nativeName}
+          </View>
+
+          <SectionList
+            sections={sections}
+            keyExtractor={(item) => item.id}
+            stickySectionHeadersEnabled
+            keyboardShouldPersistTaps="handled"
+            renderSectionHeader={({ section }) => (
+              <View style={{ backgroundColor: M.card, paddingHorizontal: 20, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: M.border }}>
+                <Text style={{ fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
+                  {REGION_KEY_MAP[section.title]
+                    ? t(REGION_KEY_MAP[section.title] as any)
+                    : section.title}
                 </Text>
               </View>
-              <IconSymbol name="plus.circle" size={22} color="#3b82f6" />
-            </Pressable>
-          )}
-          ListEmptyComponent={
-            <View className="items-center py-12">
-              <IconSymbol name="checkmark.circle.fill" size={32} color="#22c55e" />
-              <Text className="mt-3 text-center text-sm text-neutral-400 dark:text-neutral-500">
-                {search ? t("languagePicker.noResults", { query: search }) : t("languagePicker.allEnrolled")}
-              </Text>
-            </View>
-          }
-          ListFooterComponent={
-            search.trim().length > 0 ? (
+            )}
+            renderItem={({ item }) => (
               <Pressable
-                onPress={() => { onAdd(search.trim()); }}
-                className="flex-row items-center border-t-2 border-dashed border-violet-200 px-5 py-4 active:opacity-70 dark:border-violet-800"
+                onPress={() => onAdd(item.id)}
+                style={{ flexDirection: "row", alignItems: "center", borderBottomWidth: 1, borderBottomColor: M.border, paddingHorizontal: 20, paddingVertical: 14 }}
+                className="active:opacity-70"
               >
-                <View className="mr-4 h-9 w-9 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900">
-                  <IconSymbol name="plus.circle" size={20} color="#8b5cf6" />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 15, color: M.text }}>{item.name}</Text>
+                  <Text style={{ marginTop: 2, fontSize: 13, color: M.sub }}>{item.nativeName}</Text>
                 </View>
-                <View className="flex-1">
-                  <Text className="text-base text-violet-700 dark:text-violet-300">
-                    {t("languagePicker.useCustomLanguage", { name: search.trim() })}
-                  </Text>
-                </View>
+                <IconSymbol name="plus.circle" size={22} color={M.accent} />
               </Pressable>
-            ) : null
-          }
-        />
+            )}
+            ListEmptyComponent={
+              <View style={{ alignItems: "center", paddingVertical: 48 }}>
+                <IconSymbol name="checkmark.circle.fill" size={32} color="#22c55e" />
+                <Text style={{ marginTop: 12, textAlign: "center", fontSize: 13, color: M.muted }}>
+                  {search ? t("languagePicker.noResults", { query: search }) : t("languagePicker.allEnrolled")}
+                </Text>
+              </View>
+            }
+            ListFooterComponent={
+              search.trim().length > 0 ? (
+                <Pressable
+                  onPress={() => { onAdd(search.trim()); }}
+                  style={{ flexDirection: "row", alignItems: "center", borderTopWidth: 2, borderStyle: "dashed", borderColor: M.accentBorder, paddingHorizontal: 20, paddingVertical: 16 }}
+                  className="active:opacity-70"
+                >
+                  <View style={{ marginRight: 16, height: 36, width: 36, alignItems: "center", justifyContent: "center", borderRadius: 10, backgroundColor: M.accentGlow, borderWidth: 1, borderColor: M.accentBorder }}>
+                    <IconSymbol name="plus.circle" size={20} color={M.accent} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 15, color: M.accent }}>
+                      {t("languagePicker.useCustomLanguage", { name: search.trim() })}
+                    </Text>
+                  </View>
+                </Pressable>
+              ) : null
+            }
+          />
         </KeyboardAvoidingView>
       </SafeAreaView>
     </Modal>
@@ -291,6 +292,7 @@ export function LanguagePickerModal({
   onClose: () => void;
   allowedIds?: string[];
 }>) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
 
@@ -313,116 +315,107 @@ export function LanguagePickerModal({
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900">
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
-        <View className="flex-row items-center justify-between border-b border-neutral-200 px-5 py-3 dark:border-neutral-700">
-          <Text className="text-lg font-bold text-neutral-900 dark:text-white">
-            {t("languagePicker.title")}
-          </Text>
-          <Pressable onPress={onClose} hitSlop={8}>
-            <IconSymbol name="xmark" size={20} color="#6b7280" />
-          </Pressable>
-        </View>
-
-        <View className="border-b border-neutral-200 px-5 py-3 dark:border-neutral-700">
-          <View className="flex-row items-center rounded-xl bg-neutral-100 px-3 py-2.5 dark:bg-neutral-800">
-            <IconSymbol name="magnifyingglass" size={18} color="#9ca3af" />
-            <TextInput
-              value={search}
-              onChangeText={setSearch}
-              placeholder={t("languagePicker.searchPlaceholder")}
-              placeholderTextColor="#9ca3af"
-              autoCorrect={false}
-              className="ml-2 flex-1 text-base text-neutral-900 dark:text-white"
-            />
-            {search.length > 0 && (
-              <Pressable onPress={() => setSearch("")} hitSlop={8}>
-                <IconSymbol name="xmark" size={16} color="#9ca3af" />
-              </Pressable>
-            )}
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderBottomWidth: 1, borderBottomColor: M.border, paddingHorizontal: 20, paddingVertical: 12 }}>
+            <Text style={{ fontSize: 18, fontWeight: "700", color: M.text }}>
+              {t("languagePicker.title")}
+            </Text>
+            <Pressable onPress={onClose} hitSlop={8}>
+              <IconSymbol name="xmark" size={20} color={M.sub} />
+            </Pressable>
           </View>
-        </View>
 
-        <SectionList
-          sections={sections}
-          keyExtractor={(item) => item.id}
-          stickySectionHeadersEnabled
-          keyboardShouldPersistTaps="handled"
-          renderSectionHeader={({ section }) => (
-            <View className="bg-neutral-50 px-5 py-2 dark:bg-neutral-800/80">
-              <Text className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-                {REGION_KEY_MAP[section.title]
-                  ? t(REGION_KEY_MAP[section.title] as any)
-                  : section.title}
-              </Text>
+          <View style={{ borderBottomWidth: 1, borderBottomColor: M.border, paddingHorizontal: 20, paddingVertical: 12 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", borderRadius: 12, backgroundColor: M.card, paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1, borderColor: M.border }}>
+              <IconSymbol name="magnifyingglass" size={18} color={M.muted} />
+              <TextInput
+                value={search}
+                onChangeText={setSearch}
+                placeholder={t("languagePicker.searchPlaceholder")}
+                placeholderTextColor={M.muted}
+                autoCorrect={false}
+                style={{ marginLeft: 8, flex: 1, fontSize: 15, color: M.text }}
+              />
+              {search.length > 0 && (
+                <Pressable onPress={() => setSearch("")} hitSlop={8}>
+                  <IconSymbol name="xmark" size={16} color={M.muted} />
+                </Pressable>
+              )}
             </View>
-          )}
-          renderItem={({ item }) => {
-            const isSelected = item.id === selectedId;
-            return (
-              <Pressable
-                onPress={() => onSelect(item.id)}
-                className={`flex-row items-center border-b border-neutral-100 px-5 py-3.5 active:bg-neutral-50 dark:border-neutral-800 dark:active:bg-neutral-800 ${
-                  isSelected ? "bg-blue-50 dark:bg-blue-950" : ""
-                }`}
-              >
-                <View className="flex-1">
-                  <Text
-                    className={`text-base ${
-                      isSelected
-                        ? "font-semibold text-blue-600 dark:text-blue-400"
-                        : "text-neutral-900 dark:text-white"
-                    }`}
-                  >
-                    {item.name}
-                  </Text>
-                  <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
-                    {item.nativeName}
-                  </Text>
-                </View>
-                {isSelected && (
-                  <IconSymbol name="checkmark.circle.fill" size={22} color="#3b82f6" />
-                )}
-              </Pressable>
-            );
-          }}
-          ListEmptyComponent={
-            <View className="items-center py-12">
-              <IconSymbol name="magnifyingglass" size={32} color="#d1d5db" />
-              <Text className="mt-3 text-sm text-neutral-400 dark:text-neutral-500">
-                {t("languagePicker.noResults", { query: search })}
-              </Text>
-            </View>
-          }
-          ListFooterComponent={
-            search.trim().length > 0 && !allowedIds ? (
-              <Pressable
-                onPress={() => { onSelect(search.trim()); }}
-                className={`flex-row items-center border-t-2 border-dashed px-5 py-4 active:opacity-70 ${
-                  selectedId === search.trim()
-                    ? "border-violet-400 bg-violet-50 dark:bg-violet-950"
-                    : "border-violet-200 dark:border-violet-800"
-                }`}
-              >
-                <View className="mr-4 h-9 w-9 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900">
-                  <IconSymbol name="plus.circle" size={20} color="#8b5cf6" />
-                </View>
-                <View className="flex-1">
-                  <Text className={`text-base ${
-                    selectedId === search.trim()
-                      ? "font-semibold text-violet-700 dark:text-violet-300"
-                      : "text-violet-700 dark:text-violet-300"
-                  }`}>
-                    {t("languagePicker.useCustomLanguage", { name: search.trim() })}
-                  </Text>
-                </View>
-                {selectedId === search.trim() && (
-                  <IconSymbol name="checkmark.circle.fill" size={22} color="#8b5cf6" />
-                )}
-              </Pressable>
-            ) : null
-          }
-        />
+          </View>
+
+          <SectionList
+            sections={sections}
+            keyExtractor={(item) => item.id}
+            stickySectionHeadersEnabled
+            keyboardShouldPersistTaps="handled"
+            renderSectionHeader={({ section }) => (
+              <View style={{ backgroundColor: M.card, paddingHorizontal: 20, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: M.border }}>
+                <Text style={{ fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
+                  {REGION_KEY_MAP[section.title]
+                    ? t(REGION_KEY_MAP[section.title] as any)
+                    : section.title}
+                </Text>
+              </View>
+            )}
+            renderItem={({ item }) => {
+              const isSelected = item.id === selectedId;
+              return (
+                <Pressable
+                  onPress={() => onSelect(item.id)}
+                  style={{ flexDirection: "row", alignItems: "center", borderBottomWidth: 1, borderBottomColor: M.border, paddingHorizontal: 20, paddingVertical: 14, backgroundColor: isSelected ? M.accentGlow : "transparent" }}
+                  className="active:opacity-70"
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 15, fontWeight: isSelected ? "600" : "400", color: isSelected ? M.accent : M.text }}>
+                      {item.name}
+                    </Text>
+                    <Text style={{ marginTop: 2, fontSize: 13, color: M.sub }}>
+                      {item.nativeName}
+                    </Text>
+                  </View>
+                  {isSelected && (
+                    <IconSymbol name="checkmark.circle.fill" size={22} color={M.accent} />
+                  )}
+                </Pressable>
+              );
+            }}
+            ListEmptyComponent={
+              <View style={{ alignItems: "center", paddingVertical: 48 }}>
+                <IconSymbol name="magnifyingglass" size={32} color={M.border} />
+                <Text style={{ marginTop: 12, fontSize: 13, color: M.muted }}>
+                  {t("languagePicker.noResults", { query: search })}
+                </Text>
+              </View>
+            }
+            ListFooterComponent={
+              search.trim().length > 0 && !allowedIds ? (
+                <Pressable
+                  onPress={() => { onSelect(search.trim()); }}
+                  style={{
+                    flexDirection: "row", alignItems: "center", borderTopWidth: 2, borderStyle: "dashed",
+                    borderColor: selectedId === search.trim() ? M.accent : M.accentBorder,
+                    paddingHorizontal: 20, paddingVertical: 16,
+                    backgroundColor: selectedId === search.trim() ? M.accentGlow : "transparent",
+                  }}
+                  className="active:opacity-70"
+                >
+                  <View style={{ marginRight: 16, height: 36, width: 36, alignItems: "center", justifyContent: "center", borderRadius: 10, backgroundColor: M.accentGlow, borderWidth: 1, borderColor: M.accentBorder }}>
+                    <IconSymbol name="plus.circle" size={20} color={M.accent} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 15, fontWeight: selectedId === search.trim() ? "600" : "400", color: M.accent }}>
+                      {t("languagePicker.useCustomLanguage", { name: search.trim() })}
+                    </Text>
+                  </View>
+                  {selectedId === search.trim() && (
+                    <IconSymbol name="checkmark.circle.fill" size={22} color={M.accent} />
+                  )}
+                </Pressable>
+              ) : null
+            }
+          />
         </KeyboardAvoidingView>
       </SafeAreaView>
     </Modal>

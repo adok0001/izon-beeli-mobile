@@ -8,6 +8,7 @@ import { hapticError, hapticSuccess } from "@/lib/haptics";
 import { ONBOARDING_KEY } from "@/lib/constants";
 import { ACTIVE_LANGUAGES } from "@/lib/mock-data";
 import { generateQuiz } from "@/lib/quiz-engine";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import {
     playCorrectSound,
     playFinishSound,
@@ -62,6 +63,7 @@ function stepIndex(step: Step): number {
 }
 
 export default function OnboardingScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const { getToken } = useAuth();
   const { setLanguage } = useLanguageStore();
@@ -199,15 +201,13 @@ export default function OnboardingScreen() {
   const result = phase === "results" ? getResult() : null;
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top", "bottom"]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["top", "bottom"]}>
       {/* Outer progress bar — onboarding steps */}
-      <View className="flex-row items-center justify-center gap-1.5 px-6 pt-4">
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingHorizontal: 24, paddingTop: 16 }}>
         {ALL_STEPS.map((_, i) => (
           <View
             key={i}
-            className={`h-1.5 flex-1 rounded-full ${
-              i <= currentIdx ? "bg-blue-500" : "bg-neutral-200 dark:bg-neutral-700"
-            }`}
+            style={{ height: 6, flex: 1, borderRadius: 999, backgroundColor: i <= currentIdx ? M.accent : M.border }}
           />
         ))}
       </View>
@@ -215,36 +215,36 @@ export default function OnboardingScreen() {
       {/* ── Step: Language selection ── */}
       {step === "language" && (
         <>
-          <View className="px-6 pt-8 pb-4">
-            <Text className="text-3xl font-bold text-neutral-900 dark:text-white">
+          <View style={{ paddingHorizontal: 24, paddingTop: 32, paddingBottom: 16 }}>
+            <Text style={{ fontSize: 30, fontWeight: "900", color: M.text, letterSpacing: -0.5 }}>
               {t("onboarding.welcome")}
             </Text>
-            <Text className="mt-2 text-base text-neutral-500 dark:text-neutral-400">
+            <Text style={{ marginTop: 8, fontSize: 15, color: M.sub }}>
               {t("onboarding.whichLanguage")}
             </Text>
           </View>
 
           <ScrollView
-            className="flex-1 px-4"
+            style={{ flex: 1, paddingHorizontal: 16 }}
             contentContainerStyle={{ paddingBottom: 16 }}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <View className="mb-3 flex-row items-center rounded-xl border border-neutral-200 bg-neutral-50 px-3 dark:border-neutral-700 dark:bg-neutral-800">
-              <IconSymbol name="magnifyingglass" size={16} color="#9ca3af" />
+            <View style={{ marginBottom: 12, flexDirection: "row", alignItems: "center", borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, paddingHorizontal: 12 }}>
+              <IconSymbol name="magnifyingglass" size={16} color={M.muted} />
               <TextInput
                 value={langSearch}
                 onChangeText={setLangSearch}
                 placeholder={t("contribute.searchLanguage")}
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={M.muted}
                 autoCorrect={false}
                 autoCapitalize="none"
                 returnKeyType="search"
-                className="ml-2 flex-1 py-3 text-sm text-neutral-900 dark:text-white"
+                style={{ marginLeft: 8, flex: 1, paddingVertical: 12, fontSize: 14, color: M.text }}
               />
               {langSearch.length > 0 && (
                 <Pressable onPress={() => setLangSearch("")} hitSlop={8}>
-                  <IconSymbol name="xmark.circle.fill" size={16} color="#9ca3af" />
+                  <IconSymbol name="xmark.circle.fill" size={16} color={M.muted} />
                 </Pressable>
               )}
             </View>
@@ -265,26 +265,19 @@ export default function OnboardingScreen() {
                 <Pressable
                   key={lang.id}
                   onPress={() => setSelectedLangId(lang.id)}
-                  className={`mb-2 flex-row items-center rounded-xl border-2 px-4 py-3.5 active:opacity-70 ${
-                    selected
-                      ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
-                      : "border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800"
-                  }`}
+                  style={{ marginBottom: 8, flexDirection: "row", alignItems: "center", borderRadius: 12, borderWidth: 2, paddingHorizontal: 16, paddingVertical: 14, backgroundColor: selected ? M.accentGlow : M.card, borderColor: selected ? M.accent : M.border }}
+                  className="active:opacity-70"
                 >
-                  <View className="flex-1">
-                    <Text
-                      className={`text-base font-semibold ${
-                        selected ? "text-blue-700 dark:text-blue-300" : "text-neutral-900 dark:text-white"
-                      }`}
-                    >
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 15, fontWeight: "600", color: selected ? M.accent : M.text }}>
                       {lang.name}
                     </Text>
-                    <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
+                    <Text style={{ marginTop: 2, fontSize: 13, color: M.sub }}>
                       {lang.nativeName} · {lang.region}
                     </Text>
                   </View>
                   {selected && (
-                    <IconSymbol name="checkmark.circle.fill" size={22} color="#3b82f6" />
+                    <IconSymbol name="checkmark.circle.fill" size={22} color={M.accent} />
                   )}
                 </Pressable>
               );
@@ -293,48 +286,45 @@ export default function OnboardingScreen() {
             {langSearch.trim().length > 0 && (
               <Pressable
                 onPress={() => setSelectedLangId(langSearch.trim())}
-                className={`mb-2 flex-row items-center rounded-xl border-2 border-dashed px-4 py-3.5 active:opacity-70 ${
+                style={{ marginBottom: 8, flexDirection: "row", alignItems: "center", borderRadius: 12, borderWidth: 2, borderStyle: "dashed", paddingHorizontal: 16, paddingVertical: 14, borderColor: selectedLangId === langSearch.trim() ? M.accent : M.accentBorder, backgroundColor: selectedLangId === langSearch.trim() ? M.accentGlow : "transparent" }}
+                className={`active:opacity-70 ${
                   selectedLangId === langSearch.trim()
-                    ? "border-violet-500 bg-violet-50 dark:bg-violet-950"
-                    : "border-violet-300 dark:border-violet-700"
+                    ? ""
+                    : ""
                 }`}
               >
-                <View className="flex-1">
-                  <Text
-                    className={`text-base font-semibold ${
-                      selectedLangId === langSearch.trim()
-                        ? "text-violet-700 dark:text-violet-300"
-                        : "text-neutral-600 dark:text-neutral-300"
-                    }`}
-                  >
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 15, fontWeight: "600", color: M.accent }}>
                     {t("contribute.useCustomLanguage", { name: langSearch.trim() })}
                   </Text>
                 </View>
                 {selectedLangId === langSearch.trim() && (
-                  <IconSymbol name="checkmark.circle.fill" size={22} color="#8b5cf6" />
+                  <IconSymbol name="checkmark.circle.fill" size={22} color={M.accent} />
                 )}
               </Pressable>
             )}
           </ScrollView>
 
-          <View className="px-6 pb-6 pt-2 gap-3">
+          <View style={{ paddingHorizontal: 24, paddingBottom: 24, paddingTop: 8, gap: 12 }}>
             <Pressable
               onPress={handleLanguageContinue}
               disabled={tryItLoading}
-              className="items-center rounded-2xl bg-blue-500 py-4 active:opacity-80"
+              style={{ alignItems: "center", borderRadius: 16, backgroundColor: M.accent, paddingVertical: 16 }}
+              className="active:opacity-80"
             >
               {tryItLoading ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color={M.ink} />
               ) : (
-                <Text className="text-base font-bold text-white">{t("onboarding.continue")}</Text>
+                <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>{t("onboarding.continue")}</Text>
               )}
             </Pressable>
             <Pressable
               onPress={() => router.push("/reviewer-application")}
-              className="flex-row items-center justify-center gap-2 rounded-2xl border-2 border-emerald-500 py-4 active:opacity-80"
+              style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 16, borderWidth: 2, borderColor: "#10b981", paddingVertical: 16 }}
+              className="active:opacity-80"
             >
               <IconSymbol name="person.badge.plus" size={18} color="#10b981" />
-              <Text className="text-base font-bold text-emerald-600 dark:text-emerald-400">
+              <Text style={{ fontSize: 15, fontWeight: "700", color: "#10b981" }}>
                 {t("onboarding.applyContributor")}
               </Text>
             </Pressable>
@@ -354,24 +344,14 @@ export default function OnboardingScreen() {
           )}
 
           {phase === "active" && question ? (
-            <View className="flex-1 px-5 pt-6">
-              <View className="flex-row items-center justify-between mb-1">
-                <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+            <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 24 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                <Text style={{ fontSize: 13, color: M.sub }}>
                   {t("quiz.questionOf", { current: currentIndex + 1, total: questions.length })}
                 </Text>
                 {lastAnswerCorrect !== null && locked && (
-                  <View
-                    className={`rounded-full px-3 py-1 ${
-                      lastAnswerCorrect ? "bg-green-100 dark:bg-green-900" : "bg-red-100 dark:bg-red-900"
-                    }`}
-                  >
-                    <Text
-                      className={`text-xs font-semibold ${
-                        lastAnswerCorrect
-                          ? "text-green-700 dark:text-green-300"
-                          : "text-red-700 dark:text-red-300"
-                      }`}
-                    >
+                  <View style={{ borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: lastAnswerCorrect ? "#22c55e20" : "#ef444420" }}>
+                    <Text style={{ fontSize: 11, fontWeight: "600", color: lastAnswerCorrect ? "#22c55e" : "#ef4444" }}>
                       {lastAnswerCorrect ? t("quiz.correct") : t("quiz.incorrect")}
                     </Text>
                   </View>
@@ -380,62 +360,52 @@ export default function OnboardingScreen() {
 
               <QuestionTypeLabel type={question.type} />
 
-              <Text className="mb-8 text-xl font-bold text-neutral-900 dark:text-white">
+              <Text style={{ marginBottom: 32, fontSize: 20, fontWeight: "700", color: M.text }}>
                 {question.prompt}
               </Text>
 
               {question.options.map((option, idx) => {
                 const state = getOptionState(option);
-                const bgClass = {
-                  default: "bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700",
-                  correct: "bg-green-50 dark:bg-green-900/40 border-green-500",
-                  incorrect: "bg-red-50 dark:bg-red-900/40 border-red-500",
-                  dimmed: "bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 opacity-50",
-                }[state];
-                const textClass = {
-                  default: "text-neutral-900 dark:text-white",
-                  correct: "text-green-700 dark:text-green-300",
-                  incorrect: "text-red-700 dark:text-red-300",
-                  dimmed: "text-neutral-400 dark:text-neutral-500",
-                }[state];
+                const bg = { default: M.card, correct: "#22c55e20", incorrect: "#ef444420", dimmed: M.card }[state];
+                const border = { default: M.border, correct: "#22c55e", incorrect: "#ef4444", dimmed: M.border }[state];
+                const textColor = { default: M.text, correct: "#22c55e", incorrect: "#ef4444", dimmed: M.muted }[state];
                 return (
                   <Pressable
                     key={`${question.id}-${idx}`}
                     onPress={() => handleSelect(option)}
                     disabled={state !== "default"}
-                    className={`mb-3 rounded-xl border-2 px-5 py-4 ${bgClass}`}
+                    style={{ marginBottom: 12, borderRadius: 12, borderWidth: 2, paddingHorizontal: 20, paddingVertical: 16, backgroundColor: bg, borderColor: border, opacity: state === "dimmed" ? 0.5 : 1 }}
+                    className="active:opacity-70"
                   >
-                    <Text className={`text-base font-medium ${textClass}`}>{option}</Text>
+                    <Text style={{ fontSize: 15, fontWeight: "500", color: textColor }}>{option}</Text>
                   </Pressable>
                 );
               })}
 
               {locked && lastAnswerCorrect === false && (
-                <View className="mt-3 rounded-2xl bg-red-50 px-4 py-3 dark:bg-red-900/20">
-                  <View className="flex-row items-center gap-1.5">
+                <View style={{ marginTop: 12, borderRadius: 16, backgroundColor: "#ef444415", paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: "#ef444430" }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                     <IconSymbol name="lightbulb.fill" size={14} color="#f97316" />
-                    <Text className="text-xs font-semibold text-orange-700 dark:text-orange-400">
+                    <Text style={{ fontSize: 11, fontWeight: "600", color: "#f97316" }}>
                       {t("quiz.correctAnswerLabel")}
                     </Text>
                   </View>
-                  <Text className="mt-1 text-sm font-bold text-neutral-800 dark:text-neutral-200">
+                  <Text style={{ marginTop: 4, fontSize: 13, fontWeight: "700", color: M.text }}>
                     {question.correctAnswer}
                   </Text>
                   {question.explanation && (
-                    <Text className="mt-1 text-xs text-neutral-600 dark:text-neutral-300">
-                      {question.explanation}
-                    </Text>
+                    <Text style={{ marginTop: 4, fontSize: 12, color: M.sub }}>{question.explanation}</Text>
                   )}
                   {question.exampleSentence && (
-                    <View className="mt-2 border-t border-red-200 pt-2 dark:border-red-800">
-                      <Text className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                    <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: "#ef444430", paddingTop: 8 }}>
+                      <Text style={{ fontSize: 10, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: M.muted }}>
                         {t("wordDetail.example")}
                       </Text>
-                      <Text className="mt-0.5 text-xs italic text-neutral-700 dark:text-neutral-300">
+                      <Text style={{ marginTop: 2, fontSize: 12, fontStyle: "italic", color: M.sub }}>
                         {question.exampleSentence}
                       </Text>
                       {question.exampleSentenceTranslation && (
-                        <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                        <Text style={{ marginTop: 2, fontSize: 12, color: M.muted }}>
                           {question.exampleSentenceTranslation}
                         </Text>
                       )}
@@ -443,47 +413,34 @@ export default function OnboardingScreen() {
                   )}
                   <Pressable
                     onPress={handleContinueAfterWrong}
-                    className="mt-3 items-center rounded-xl bg-red-500 py-3 active:opacity-70"
+                    style={{ marginTop: 12, alignItems: "center", borderRadius: 12, backgroundColor: "#ef4444", paddingVertical: 12 }}
+                    className="active:opacity-70"
                   >
-                    <Text className="text-sm font-semibold text-white">{t("common.continue")}</Text>
+                    <Text style={{ fontSize: 13, fontWeight: "600", color: "#fff" }}>{t("common.continue")}</Text>
                   </Pressable>
                 </View>
               )}
             </View>
 
           ) : phase === "results" && result ? (
-            /* ── Results summary ── */
             <ScrollView
-              className="flex-1 px-6"
+              style={{ flex: 1, paddingHorizontal: 24 }}
               contentContainerStyle={{ paddingTop: 24, paddingBottom: 8 }}
               showsVerticalScrollIndicator={false}
             >
-              <View className="items-center gap-4 mb-6">
-                <View
-                  className={`h-28 w-28 items-center justify-center rounded-full ${
-                    result.accuracy >= 80
-                      ? "bg-green-100 dark:bg-green-900/40"
-                      : result.accuracy >= 50
-                      ? "bg-amber-100 dark:bg-amber-900/40"
-                      : "bg-red-100 dark:bg-red-900/40"
-                  }`}
-                >
-                  <Text
-                    className={`text-3xl font-bold ${
-                      result.accuracy >= 80
-                        ? "text-green-600 dark:text-green-400"
-                        : result.accuracy >= 50
-                        ? "text-amber-600 dark:text-amber-400"
-                        : "text-red-600 dark:text-red-400"
-                    }`}
-                  >
+              <View style={{ alignItems: "center", gap: 16, marginBottom: 24 }}>
+                <View style={{
+                  height: 112, width: 112, alignItems: "center", justifyContent: "center", borderRadius: 56,
+                  backgroundColor: result.accuracy >= 80 ? "#22c55e20" : result.accuracy >= 50 ? `${M.accent}20` : "#ef444420",
+                }}>
+                  <Text style={{ fontSize: 28, fontWeight: "700", color: result.accuracy >= 80 ? "#22c55e" : result.accuracy >= 50 ? M.accent : "#ef4444" }}>
                     {result.correctCount}/{result.totalQuestions}
                   </Text>
                 </View>
-                <Text className="text-3xl font-bold text-neutral-900 dark:text-white">
+                <Text style={{ fontSize: 28, fontWeight: "900", color: M.text, letterSpacing: -0.5 }}>
                   {t("onboarding.quizDoneTitle")}
                 </Text>
-                <Text className="text-base text-neutral-500 dark:text-neutral-400 text-center">
+                <Text style={{ fontSize: 15, color: M.sub, textAlign: "center" }}>
                   {t("onboarding.quizDoneSubtitle", {
                     score: result.correctCount,
                     total: result.totalQuestions,
@@ -493,33 +450,33 @@ export default function OnboardingScreen() {
 
               <Pressable
                 onPress={goNext}
-                className="items-center rounded-2xl bg-blue-500 py-4 active:opacity-80"
+                style={{ alignItems: "center", borderRadius: 16, backgroundColor: M.accent, paddingVertical: 16 }}
+                className="active:opacity-80"
               >
-                <Text className="text-base font-bold text-white">{t("onboarding.continue")}</Text>
+                <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>{t("onboarding.continue")}</Text>
               </Pressable>
             </ScrollView>
 
           ) : (
-            /* No words available */
-            <View className="flex-1 items-center justify-center px-6 gap-4">
-              <IconSymbol name="book.fill" size={48} color="#d1d5db" />
-              <Text className="text-center text-neutral-400 dark:text-neutral-500">
+            <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24, gap: 16 }}>
+              <IconSymbol name="book.fill" size={48} color={M.border} />
+              <Text style={{ textAlign: "center", color: M.muted }}>
                 {t("onboarding.noWordYet")}
               </Text>
               <Pressable
                 onPress={goNext}
-                className="items-center rounded-2xl bg-blue-500 px-8 py-4 active:opacity-80"
+                style={{ alignItems: "center", borderRadius: 16, backgroundColor: M.accent, paddingHorizontal: 32, paddingVertical: 16 }}
+                className="active:opacity-80"
               >
-                <Text className="text-base font-bold text-white">{t("onboarding.continue")}</Text>
+                <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>{t("onboarding.continue")}</Text>
               </Pressable>
             </View>
           )}
 
-          {/* Back link — only show when not mid-question */}
           {(phase === "results" || noWords) && (
-            <View className="px-6 pb-6 pt-2">
-              <Pressable onPress={goBack} className="items-center py-2">
-                <Text className="text-sm text-neutral-500 dark:text-neutral-400">{t("onboarding.back")}</Text>
+            <View style={{ paddingHorizontal: 24, paddingBottom: 24, paddingTop: 8 }}>
+              <Pressable onPress={goBack} style={{ alignItems: "center", paddingVertical: 8 }}>
+                <Text style={{ fontSize: 13, color: M.muted }}>{t("onboarding.back")}</Text>
               </Pressable>
             </View>
           )}
@@ -529,68 +486,58 @@ export default function OnboardingScreen() {
       {/* ── Step: Daily goal ── */}
       {step === "goal" && (
         <>
-          <View className="px-6 pt-8 pb-6">
-            <Text className="text-3xl font-bold text-neutral-900 dark:text-white">
+          <View style={{ paddingHorizontal: 24, paddingTop: 32, paddingBottom: 24 }}>
+            <Text style={{ fontSize: 30, fontWeight: "900", color: M.text, letterSpacing: -0.5 }}>
               {t("onboarding.setGoal")}
             </Text>
-            <Text className="mt-2 text-base text-neutral-500 dark:text-neutral-400">
+            <Text style={{ marginTop: 8, fontSize: 15, color: M.sub }}>
               {t("onboarding.howMuchTime")}
             </Text>
           </View>
 
-          <View className="flex-1 px-6 gap-3">
+          <View style={{ flex: 1, paddingHorizontal: 24, gap: 12 }}>
             {GOAL_OPTIONS.map((opt) => {
               const selected = opt.id === selectedGoal;
               return (
                 <Pressable
                   key={opt.id}
                   onPress={() => setSelectedGoal(opt.id)}
-                  className={`flex-row items-center rounded-2xl border-2 px-5 py-5 active:opacity-70 ${
-                    selected
-                      ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
-                      : "border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800"
-                  }`}
+                  style={{ flexDirection: "row", alignItems: "center", borderRadius: 16, borderWidth: 2, paddingHorizontal: 20, paddingVertical: 20, backgroundColor: selected ? M.accentGlow : M.card, borderColor: selected ? M.accent : M.border }}
+                  className="active:opacity-70"
                 >
-                  <View
-                    className={`mr-4 h-12 w-12 items-center justify-center rounded-full ${
-                      selected ? "bg-blue-500" : "bg-neutral-200 dark:bg-neutral-700"
-                    }`}
-                  >
+                  <View style={{ marginRight: 16, height: 48, width: 48, alignItems: "center", justifyContent: "center", borderRadius: 24, backgroundColor: selected ? M.accent : M.border }}>
                     <IconSymbol
                       name={opt.icon as any}
                       size={22}
-                      color={selected ? "#fff" : "#9ca3af"}
+                      color={selected ? M.ink : M.sub}
                     />
                   </View>
-                  <View className="flex-1">
-                    <Text
-                      className={`text-lg font-bold ${
-                        selected ? "text-blue-700 dark:text-blue-300" : "text-neutral-900 dark:text-white"
-                      }`}
-                    >
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 17, fontWeight: "700", color: selected ? M.accent : M.text }}>
                       {t(GOAL_LABEL_KEYS[opt.id] as any)}
                     </Text>
-                    <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+                    <Text style={{ fontSize: 13, color: M.sub }}>
                       {t(GOAL_DETAIL_KEYS[opt.id] as any)}
                     </Text>
                   </View>
                   {selected && (
-                    <IconSymbol name="checkmark.circle.fill" size={22} color="#3b82f6" />
+                    <IconSymbol name="checkmark.circle.fill" size={22} color={M.accent} />
                   )}
                 </Pressable>
               );
             })}
           </View>
 
-          <View className="px-6 pb-6 pt-6 gap-3">
+          <View style={{ paddingHorizontal: 24, paddingBottom: 24, paddingTop: 24, gap: 12 }}>
             <Pressable
               onPress={goNext}
-              className="items-center rounded-2xl bg-blue-500 py-4 active:opacity-80"
+              style={{ alignItems: "center", borderRadius: 16, backgroundColor: M.accent, paddingVertical: 16 }}
+              className="active:opacity-80"
             >
-              <Text className="text-base font-bold text-white">{t("onboarding.continue")}</Text>
+              <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>{t("onboarding.continue")}</Text>
             </Pressable>
-            <Pressable onPress={goBack} className="items-center py-2">
-              <Text className="text-sm text-neutral-500 dark:text-neutral-400">{t("onboarding.back")}</Text>
+            <Pressable onPress={goBack} style={{ alignItems: "center", paddingVertical: 8 }}>
+              <Text style={{ fontSize: 13, color: M.muted }}>{t("onboarding.back")}</Text>
             </Pressable>
           </View>
         </>
@@ -599,32 +546,33 @@ export default function OnboardingScreen() {
       {/* ── Step: Ready / Celebration ── */}
       {step === "ready" && (
         <>
-          <View className="flex-1 items-center justify-center px-6">
-            <View className="mb-6 h-24 w-24 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 }}>
+            <View style={{ marginBottom: 24, height: 96, width: 96, alignItems: "center", justifyContent: "center", borderRadius: 48, backgroundColor: "#22c55e20", borderWidth: 1, borderColor: "#22c55e40" }}>
               <IconSymbol name="checkmark.seal.fill" size={48} color="#22c55e" />
             </View>
-            <Text className="text-3xl font-bold text-neutral-900 dark:text-white text-center">
+            <Text style={{ fontSize: 30, fontWeight: "900", color: M.text, textAlign: "center", letterSpacing: -0.5 }}>
               {t("onboarding.readyTitle")}
             </Text>
-            <Text className="mt-3 text-base text-neutral-500 dark:text-neutral-400 text-center leading-6 px-4">
+            <Text style={{ marginTop: 12, fontSize: 15, color: M.sub, textAlign: "center", lineHeight: 24, paddingHorizontal: 16 }}>
               {t("onboarding.readySubtitle")}
             </Text>
           </View>
 
-          <View className="px-6 pb-6 pt-4 gap-3">
+          <View style={{ paddingHorizontal: 24, paddingBottom: 24, paddingTop: 16, gap: 12 }}>
             <Pressable
               onPress={handleFinish}
               disabled={saving}
-              className="items-center rounded-2xl bg-green-500 py-4 active:opacity-80"
+              style={{ alignItems: "center", borderRadius: 16, backgroundColor: "#22c55e", paddingVertical: 16 }}
+              className="active:opacity-80"
             >
               {saving ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text className="text-base font-bold text-white">{t("onboarding.letsGo")}</Text>
+                <Text style={{ fontSize: 15, fontWeight: "700", color: "#fff" }}>{t("onboarding.letsGo")}</Text>
               )}
             </Pressable>
-            <Pressable onPress={goBack} className="items-center py-2">
-              <Text className="text-sm text-neutral-500 dark:text-neutral-400">{t("onboarding.back")}</Text>
+            <Pressable onPress={goBack} style={{ alignItems: "center", paddingVertical: 8 }}>
+              <Text style={{ fontSize: 13, color: M.muted }}>{t("onboarding.back")}</Text>
             </Pressable>
           </View>
         </>
