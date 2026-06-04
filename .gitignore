@@ -41,6 +41,7 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 mobile/lib/**/*.d.ts
+*.d.ts
 
 # generated native folders (Expo prebuild)
 /ios
@@ -55,7 +56,7 @@ server/drizzle/
 server/.env
 
 # web
-web/.next/
+.next/
 
 # local builds
 build/
