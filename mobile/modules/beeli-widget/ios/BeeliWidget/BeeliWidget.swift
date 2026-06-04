@@ -62,8 +62,14 @@ private struct WotdProvider: TimelineProvider {
   }
 
   private func entry() -> WotdEntry {
+    let defaults = UserDefaults(suiteName: "group.com.izonbeeli.shared")
+    let raw = defaults?.string(forKey: "wotd_content")
+    NSLog("[BeeliWidget] wotd raw: %@", raw ?? "nil")
     if let c = readDefaults("wotd_content", as: WotdCodable.self) {
       return WotdEntry(date: .now, word: c.word, pronunciation: c.pronunciation, english: c.english)
+    }
+    if let raw = raw {
+      NSLog("[BeeliWidget] wotd decode failed for: %@", raw)
     }
     return WotdEntry(date: .now, word: "—", pronunciation: nil, english: "Open Beeli to load")
   }

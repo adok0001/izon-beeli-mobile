@@ -55,3 +55,7 @@ export function reloadWidgetTimelines(): void {
     BeeliWidgetModule?.reloadWidgetTimelines();
   } catch {}
 }
+
+export function isNativeModuleLoaded(): boolean {
+  return BeeliWidgetModule !== null;
+}

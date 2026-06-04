@@ -14,7 +14,10 @@ function getWidgetModule() {
 
 async function syncWidgets(languageId: string) {
   const mod = getWidgetModule();
-  if (!mod) return;
+  if (!mod) {
+    console.warn("[WidgetSync] Native BeeliWidget module not available");
+    return;
+  }
 
   const encoded = encodeURIComponent(languageId);
 
@@ -24,17 +27,44 @@ async function syncWidgets(languageId: string) {
     apiFetch<{ lesson: { title: string } | null }>(`/daily-content/sotw?languageId=${encoded}`),
   ]);
 
+  const nativeAvailable = mod.isNativeModuleLoaded?.() ?? false;
+  console.warn("[WidgetSync] native module loaded:", nativeAvailable);
+
+  let wrote = false;
+
   if (wotd.status === "fulfilled" && wotd.value.entry) {
     mod.writeWotd({ ...wotd.value.entry, languageId });
-  }
-  if (potm.status === "fulfilled" && potm.value.proverb) {
-    mod.writePotm({ ...potm.value.proverb, languageId });
-  }
-  if (sotw.status === "fulfilled" && sotw.value.lesson) {
-    mod.writeSotw({ title: sotw.value.lesson.title, languageId });
+    wrote = true;
+  } else if (wotd.status === "rejected") {
+    console.warn("[WidgetSync] wotd fetch failed:", wotd.reason);
+  } else if (wotd.status === "fulfilled" && !wotd.value.entry) {
+    console.warn("[WidgetSync] wotd: no entry in DB for language", languageId);
   }
 
-  mod.reloadWidgetTimelines();
+  if (potm.status === "fulfilled" && potm.value.proverb) {
+    mod.writePotm({ ...potm.value.proverb, languageId });
+    wrote = true;
+  } else if (potm.status === "rejected") {
+    console.warn("[WidgetSync] potm fetch failed:", potm.reason);
+  } else if (potm.status === "fulfilled" && !potm.value.proverb) {
+    console.warn("[WidgetSync] potm: no proverb in DB for language", languageId);
+  }
+
+  if (sotw.status === "fulfilled" && sotw.value.lesson) {
+    mod.writeSotw({ title: sotw.value.lesson.title, languageId });
+    wrote = true;
+  } else if (sotw.status === "rejected") {
+    console.warn("[WidgetSync] sotw fetch failed:", sotw.reason);
+  } else if (sotw.status === "fulfilled" && !sotw.value.lesson) {
+    console.warn("[WidgetSync] sotw: no song in DB for language", languageId);
+  }
+
+  if (wrote) {
+    console.warn("[WidgetSync] wrote data, reloading timelines");
+    mod.reloadWidgetTimelines();
+  } else {
+    console.warn("[WidgetSync] nothing written — all API results were null or failed");
+  }
 }
 
 export function useWidgetSync() {
@@ -46,8 +76,9 @@ export function useWidgetSync() {
     if (Platform.OS === "web") return;
     if (!languageId) return;
 
+    console.warn("[WidgetSync] starting sync for language:", languageId);
     // Sync immediately on mount
-    syncWidgets(languageId).catch(() => {});
+    syncWidgets(languageId).catch((e) => console.warn("[WidgetSync] uncaught:", e));
     lastSynced.current = languageId;
 
     const handler = (state: AppStateStatus) => {

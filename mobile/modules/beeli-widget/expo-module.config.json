@@ -1,0 +1,7 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["BeeliWidgetModule"],
+    "podspecPath": "ios/beeli-widget.podspec"
+  }
+}
