@@ -12,7 +12,9 @@ import {
     ChevronRight,
     ChevronUp,
     Globe2,
+    Music,
     Quote,
+    Sparkles,
     Swords,
     Trophy,
     Users,
@@ -21,12 +23,17 @@ import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SoundboardMixQuiz, WordPlacementQuiz } from "@/components/learn/mini-apps";
+import type { SoundboardChannel, PlacementZone, WordToken } from "@/components/learn/mini-apps";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface Proverb { id: string; text: string; translation?: string | null; }
 interface DueEntry { dictionaryEntryId: string; }
 interface CulturalItem { id: string; title: string; category: string; description: string; emoji?: string | null; }
+
+interface Wotd { entry: { id: string; word: string; english: string; pronunciation: string | null } | null }
+interface Potm { proverb: { id: string; text: string; translation: string } | null }
+interface Sotw { lesson: { id: string; title: string; artist: string | null; genre: string | null } | null }
 
 // ── Collapsible Section ───────────────────────────────────────────────────────
 
@@ -82,8 +89,6 @@ function ActivityCard({
 }
 
 // ── Activity types (mirrored from admin) ─────────────────────────────────────
-
-import type { SoundboardChannel, PlacementZone, WordToken } from "@/components/learn/mini-apps";
 
 interface SoundboardActivity {
   id: string; type: "soundboard"; languageId: string;
@@ -204,6 +209,81 @@ function CulturalCard({ languageId }: Readonly<{ languageId: string }>) {
   );
 }
 
+// ── Featured strip (wotd / potm / sotw) ──────────────────────────────────────
+
+function FeaturedStrip({ languageId }: { languageId: string }) {
+  const { t } = useTranslation();
+  const { data: wotd } = useQuery<Wotd>({
+    queryKey: ["wotd", languageId],
+    queryFn: () => apiFetch<Wotd>(`/daily-content/wotd?languageId=${encodeURIComponent(languageId)}`),
+    staleTime: 60 * 60 * 1000,
+  });
+  const { data: potm } = useQuery<Potm>({
+    queryKey: ["potm", languageId],
+    queryFn: () => apiFetch<Potm>(`/daily-content/potm?languageId=${encodeURIComponent(languageId)}`),
+    staleTime: 60 * 60 * 1000,
+  });
+  const { data: sotw } = useQuery<Sotw>({
+    queryKey: ["sotw", languageId],
+    queryFn: () => apiFetch<Sotw>(`/daily-content/sotw?languageId=${encodeURIComponent(languageId)}`),
+    staleTime: 60 * 60 * 1000,
+  });
+
+  const hasAny = wotd?.entry || potm?.proverb || sotw?.lesson;
+  if (!hasAny) return null;
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      {wotd?.entry && (
+        <div className="flex items-start gap-3 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/40">
+          <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
+            <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500 mb-0.5">{t("notifications.wordOfDay")}</p>
+            <p className="text-base font-bold text-neutral-900 dark:text-white truncate">{wotd.entry.word}</p>
+            {wotd.entry.pronunciation && (
+              <p className="text-[11px] text-neutral-500 font-mono">{wotd.entry.pronunciation}</p>
+            )}
+            <p className="text-xs text-neutral-500 truncate">{wotd.entry.english}</p>
+          </div>
+        </div>
+      )}
+      {potm?.proverb && (
+        <div className="flex items-start gap-3 p-4 rounded-2xl bg-purple-50 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/40">
+          <div className="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center shrink-0">
+            <Quote className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-500 mb-0.5">{t("practice.proverbOfTheMonth")}</p>
+            <p className="text-sm italic text-neutral-700 dark:text-neutral-300 line-clamp-2">&ldquo;{potm.proverb.text}&rdquo;</p>
+            {potm.proverb.translation && (
+              <p className="text-xs text-neutral-500 mt-0.5 truncate">{potm.proverb.translation}</p>
+            )}
+          </div>
+        </div>
+      )}
+      {sotw?.lesson && (
+        <div className="flex items-start gap-3 p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40">
+          <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0">
+            <Music className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-500 mb-0.5">{t("practice.songOfTheWeek")}</p>
+            <p className="text-sm font-semibold text-neutral-900 dark:text-white truncate">{sotw.lesson.title}</p>
+            {sotw.lesson.artist && (
+              <p className="text-xs text-neutral-500 truncate">{sotw.lesson.artist}</p>
+            )}
+            {sotw.lesson.genre && (
+              <p className="text-[10px] font-mono text-neutral-400 uppercase">{sotw.lesson.genre}</p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function ListenPage() {
@@ -240,6 +320,9 @@ export default function ListenPage() {
         </p>
       </div>
 
+      {/* ── Featured daily content ── */}
+      <FeaturedStrip languageId={selectedLanguageId} />
+
       {/* ── Activities ── */}
       <Section title={t("practice.sectionActivities")}>
         <div className="flex gap-3">
@@ -273,13 +356,13 @@ export default function ListenPage() {
 
       {/* ── Interactive mini-apps ── */}
       {activities.length > 0 && (
-        <Section title="Interactive">
+        <Section title={t("practice.sectionInteractive")}>
           {activities.map((activity) =>
             activity.type === "soundboard" ? (
               <MiniAppCard
                 key={activity.id}
-                label="Soundboard Mix"
-                tag="Listening"
+                label={t("practice.miniAppSoundboard")}
+                tag={t("practice.miniAppTagListening")}
                 description={activity.sentence}
               >
                 <SoundboardMixQuiz
@@ -292,8 +375,8 @@ export default function ListenPage() {
             ) : (
               <MiniAppCard
                 key={activity.id}
-                label="Word Placement"
-                tag="Reading"
+                label={t("practice.miniAppPlacement")}
+                tag={t("practice.miniAppTagReading")}
                 description={activity.imageAlt}
               >
                 <WordPlacementQuiz

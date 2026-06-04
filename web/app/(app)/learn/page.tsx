@@ -5,11 +5,12 @@ import { SoundMap } from "@/components/learn/sound-map";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { apiFetch } from "@/lib/api";
+import { generateIzonDefaults } from "@/lib/izon-map-defaults";
 import { useLanguageStore } from "@/store/language-store";
-import type { Course, UserMe } from "@/types";
+import type { Course, MapNodeConfig, UserMe } from "@/types";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Brain, Flame, LayoutGrid, Map, Star, Zap } from "lucide-react";
+import { ArrowRight, Flame, LayoutGrid, Map, Star, Zap } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -54,36 +55,6 @@ function BountyTeaser({ languageId }: Readonly<{ languageId: string }>) {
         <p className="text-sm font-semibold text-neutral-900 dark:text-white truncate">{top.title}</p>
       </div>
       <ArrowRight className="h-4 w-4 text-amber-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
-    </Link>
-  );
-}
-
-function ReviewBanner() {
-  const { t } = useTranslation();
-  const { getToken } = useAuth();
-  const { isSignedIn } = useUser();
-  const { data: dueWords = [] } = useQuery<DueEntry[]>({
-    queryKey: ["wordbank-due"],
-    queryFn: async () => {
-      const token = await getToken();
-      return apiFetch<DueEntry[]>("/wordbank/due", { token: token ?? undefined });
-    },
-    enabled: !!isSignedIn,
-  });
-  if (dueWords.length === 0) return null;
-  return (
-    <Link
-      href="/word-review"
-      className="group flex items-center gap-4 p-4 rounded-2xl bg-brand-500/[0.06] border border-brand-500/[0.15] hover:border-brand-400/35 hover:bg-brand-500/[0.1] transition-all duration-200"
-    >
-      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shrink-0 shadow-glow-xs">
-        <Brain className="h-5 w-5 text-white" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-brand-700 dark:text-brand-300">{t("learn.reviewBanner", { count: dueWords.length })}</p>
-        <p className="text-xs text-brand-500/70 dark:text-brand-500 mt-0.5">{t("learn.reviewBannerCta")}</p>
-      </div>
-      <ArrowRight className="h-4 w-4 text-brand-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
     </Link>
   );
 }
@@ -194,6 +165,18 @@ export default function LearnPage() {
     },
   });
 
+  const { data: rawMapNodes = [] } = useQuery<MapNodeConfig[]>({
+    queryKey: ["map-nodes", selectedLanguageId],
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch<MapNodeConfig[]>(`/map-nodes?languageId=${selectedLanguageId}`, { token: token ?? undefined });
+    },
+    enabled: view === "map",
+  });
+
+  const mapNodes: MapNodeConfig[] =
+    rawMapNodes.length > 0 ? rawMapNodes : generateIzonDefaults(allCourses);
+
   const coursesByLevel = LEVEL_ORDER.reduce<Record<Level, Course[]>>(
     (acc, level) => { acc[level] = allCourses.filter((c) => c.level === level); return acc; },
     { beginner: [], intermediate: [], advanced: [] }
@@ -280,7 +263,6 @@ export default function LearnPage() {
 
       {/* ── Banners ── */}
       <div className="max-w-4xl mx-auto px-4 space-y-3">
-        <ReviewBanner />
         <BountyTeaser languageId={selectedLanguageId} />
       </div>
 
@@ -292,7 +274,7 @@ export default function LearnPage() {
       )}
       {view === "map" && !isLoading && allCourses.length > 0 && (
         <div className="max-w-5xl mx-auto px-4">
-          <SoundMap courses={allCourses} />
+          <SoundMap courses={allCourses} mapNodes={mapNodes} />
         </div>
       )}
 

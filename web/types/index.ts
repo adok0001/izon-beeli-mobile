@@ -23,6 +23,18 @@ export interface Course {
 
 export type AudioSource = string | number; // URI string or require() module ID
 
+export interface MapNodeConfig {
+  id: string;
+  languageId: string;
+  courseId: string;
+  communityName: string;    // e.g. "Yenagoa Town Square"
+  zoneName: string;         // e.g. "The Waterside" — replaces level label on map
+  x: number;                // 0–100, percentage of canvas width
+  y: number;                // 0–100, percentage of canvas height
+  order: number;            // path sequencing within a zone
+  previewAudioUrl?: string;
+}
+
 export interface Lesson {
   id: string;
   courseId: string;

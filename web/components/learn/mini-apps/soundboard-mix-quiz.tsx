@@ -42,7 +42,7 @@ function WaveformBars({ level, color }: { level: number; color: string }) {
   );
 }
 
-function VerticalFader({
+export function VerticalFader({
   level,
   label,
   color,

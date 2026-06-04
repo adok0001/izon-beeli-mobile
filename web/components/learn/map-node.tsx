@@ -32,6 +32,7 @@ interface MapNodeProps {
   isSelected: boolean;
   onSelect: () => void;
   onUnlock: (courseId: string) => void;
+  label?: string; // community name override; falls back to course title
 }
 
 export function MapNode({
@@ -41,10 +42,11 @@ export function MapNode({
   isSelected,
   onSelect,
   onUnlock,
+  label,
 }: Readonly<MapNodeProps>) {
   const uiLanguage = useUiLanguageStore((s) => s.uiLanguage);
   const colors = LEVEL_COLORS[course.level as keyof typeof LEVEL_COLORS] ?? LEVEL_COLORS.beginner;
-  const title = localizeField(course.title, course.titleFr, uiLanguage);
+  const title = label ?? localizeField(course.title, course.titleFr, uiLanguage);
 
   const isUnlocked = nodeState === "unlocked" || nodeState === "complete";
   const isLocked = nodeState === "locked";
