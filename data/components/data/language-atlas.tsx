@@ -169,7 +169,7 @@ function LanguageCard({ lang }: { lang: Language }) {
         {/* Stats */}
         <div style={{ display: 'flex', gap: '1.5rem' }}>
           <div>
-            <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '1.25rem', color: 'var(--cream)', lineHeight: 1 }}>{lang.submissions.toLocaleString()}</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '1.25rem', color: 'var(--cream)', lineHeight: 1 }}>{lang.submissions.toLocaleString('en-US')}</div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: 'var(--muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: '0.2rem' }}>sentences</div>
           </div>
           <div>

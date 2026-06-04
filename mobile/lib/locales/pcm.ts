@@ -1396,7 +1396,7 @@ export const pcm = {
     guide: {
       title: "Educator Guide",
       heading: "Welcome to Beeli",
-      intro: "Beeli na platform wey community dey power am to learn language. As educator, you go help make language dey live — through courses, lessons, stories, and cultural content wey dem go check before e reach learners.",
+      intro: "Beeli na platform wey community dey power am to learn language. As educator, you go help make language dey alive - through courses, lessons, stories, and cultural content wey dem go check before e reach learners.",
       rolesLabel: "Your role as educator",
       contentTitle: "Create content",
       contentBody: "Build courses, lessons, story modules, dictionary entries, and cultural content for the Educator panel. All content go through review before dem publish am.",

@@ -20,6 +20,7 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { SoundboardMixQuiz, WordPlacementQuiz } from "@/components/learn/mini-apps";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -77,6 +78,67 @@ function ActivityCard({
       )}
       <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">{label}</span>
     </Link>
+  );
+}
+
+// ── Activity types (mirrored from admin) ─────────────────────────────────────
+
+import type { SoundboardChannel, PlacementZone, WordToken } from "@/components/learn/mini-apps";
+
+interface SoundboardActivity {
+  id: string; type: "soundboard"; languageId: string;
+  sentence: string; targetWord: string; targetWordNative: string;
+  channels: SoundboardChannel[];
+}
+interface PlacementActivity {
+  id: string; type: "placement"; languageId: string;
+  imageUrl: string; imageAlt: string;
+  zones: PlacementZone[]; tokens: WordToken[];
+}
+type Activity = SoundboardActivity | PlacementActivity;
+
+// ── Mini-app card (expandable) ────────────────────────────────────────────────
+
+function MiniAppCard({
+  label,
+  tag,
+  description,
+  children,
+}: {
+  label: string;
+  tag: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className={cn(
+      "rounded-2xl border overflow-hidden transition-all duration-200",
+      open
+        ? "border-white/[0.1] dark:bg-white/[0.015]"
+        : "border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900"
+    )}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-start gap-3 p-4 text-left hover:bg-neutral-50 dark:hover:bg-white/[0.03] transition-colors"
+      >
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-sm font-semibold text-neutral-900 dark:text-white">{label}</span>
+            <span className="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-full border border-neutral-200 dark:border-white/10 text-neutral-500">
+              {tag}
+            </span>
+          </div>
+          <p className="text-xs text-neutral-500">{description}</p>
+        </div>
+        <ChevronDown className={cn(
+          "h-4 w-4 text-neutral-400 shrink-0 mt-0.5 transition-transform duration-200",
+          open && "rotate-180"
+        )} />
+      </button>
+      {open && <div className="px-4 pb-4">{children}</div>}
+    </div>
   );
 }
 
@@ -159,6 +221,12 @@ export default function ListenPage() {
     enabled: !!isSignedIn,
   });
 
+  const { data: activities = [] } = useQuery<Activity[]>({
+    queryKey: ["activities", selectedLanguageId],
+    queryFn: () => apiFetch<Activity[]>(`/activities?languageId=${selectedLanguageId}`),
+    staleTime: 5 * 60 * 1000,
+  });
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
       <div>
@@ -202,6 +270,43 @@ export default function ListenPage() {
           />
         </div>
       </Section>
+
+      {/* ── Interactive mini-apps ── */}
+      {activities.length > 0 && (
+        <Section title="Interactive">
+          {activities.map((activity) =>
+            activity.type === "soundboard" ? (
+              <MiniAppCard
+                key={activity.id}
+                label="Soundboard Mix"
+                tag="Listening"
+                description={activity.sentence}
+              >
+                <SoundboardMixQuiz
+                  sentence={activity.sentence}
+                  targetWord={activity.targetWord}
+                  targetWordNative={activity.targetWordNative}
+                  channels={activity.channels}
+                />
+              </MiniAppCard>
+            ) : (
+              <MiniAppCard
+                key={activity.id}
+                label="Word Placement"
+                tag="Reading"
+                description={activity.imageAlt}
+              >
+                <WordPlacementQuiz
+                  imageUrl={activity.imageUrl}
+                  imageAlt={activity.imageAlt}
+                  zones={activity.zones}
+                  tokens={activity.tokens}
+                />
+              </MiniAppCard>
+            )
+          )}
+        </Section>
+      )}
 
       {/* ── Culture & Language ── */}
       <Section title={t("practice.sectionCulture")} defaultOpen={false}>

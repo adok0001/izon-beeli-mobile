@@ -1,17 +1,17 @@
 "use client";
 
+import { MazeRoomCard } from "@/components/learn/maze-room-card";
+import { SoundMap } from "@/components/learn/sound-map";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { apiFetch } from "@/lib/api";
-import { localizeField } from "@/lib/localize";
 import { useLanguageStore } from "@/store/language-store";
-import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course, UserMe } from "@/types";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Brain, Flame, Star, Zap } from "lucide-react";
+import { ArrowRight, Brain, Flame, LayoutGrid, Map, Star, Zap } from "lucide-react";
 import Link from "next/link";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -88,60 +88,6 @@ function ReviewBanner() {
   );
 }
 
-// ── Exhibit card ──────────────────────────────────────────────────────────────
-
-function CourseCard({ course }: Readonly<{ course: Course }>) {
-  const { t } = useTranslation();
-  const uiLanguage = useUiLanguageStore((s) => s.uiLanguage);
-  const meta = LEVEL_META[course.level];
-
-  return (
-    <div className="w-64 shrink-0 group relative bg-white dark:bg-[#0d0d18] rounded-2xl border border-neutral-100 dark:border-white/[0.06] overflow-hidden hover:border-neutral-200 dark:hover:border-white/[0.12] hover:shadow-card-hover dark:hover:shadow-float transition-all duration-250 flex flex-col">
-      {/* Level stripe */}
-      <div className={`h-[3px] bg-gradient-to-r ${meta.bar}`} />
-
-      <div className="p-5 flex flex-col flex-1">
-        <span className={`self-start text-[10px] font-bold uppercase tracking-[0.22em] px-2.5 py-1 rounded-full border mb-4 ${meta.badge}`}>
-          {t(`levels.${course.level}`)}
-        </span>
-
-        <h3 className="font-display font-semibold text-neutral-900 dark:text-white text-lg leading-snug mb-2">
-          {localizeField(course.title, course.titleFr, uiLanguage)}
-        </h3>
-        <p className="text-xs text-neutral-500 dark:text-neutral-500 line-clamp-2 leading-relaxed flex-1">
-          {localizeField(course.description, course.descriptionFr, uiLanguage)}
-        </p>
-
-        {course.progress !== undefined && course.progress > 0 && (
-          <div className="mt-5">
-            <div className="flex justify-between text-[10px] mb-2">
-              <span className="text-neutral-400 uppercase tracking-wider">{t("learn.progress")}</span>
-              <span className="font-bold text-neutral-500 dark:text-neutral-400">{course.progress}%</span>
-            </div>
-            <div className="h-[3px] bg-neutral-100 dark:bg-white/[0.06] rounded-full overflow-hidden">
-              <div
-                className={`h-full bg-gradient-to-r ${meta.bar} rounded-full transition-all`}
-                style={{ width: `${course.progress}%` }}
-              />
-            </div>
-          </div>
-        )}
-
-        <div className="mt-5 pt-4 border-t border-neutral-100 dark:border-white/[0.05] flex items-center justify-between">
-          <span className="text-[10px] text-neutral-400 dark:text-neutral-600 uppercase tracking-wider">
-            {t("learn.totalLessons", { count: course.lessonsCount })}
-          </span>
-          <Link
-            href={`/course/${course.id}`}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 group-hover:gap-2 transition-all uppercase tracking-wide"
-          >
-            {t("common.start")} <ArrowRight className="h-3 w-3" />
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ── Skeleton card ─────────────────────────────────────────────────────────────
 
@@ -210,7 +156,7 @@ function CarouselSection({ level, courses }: Readonly<{ level: Level; courses: C
         <div ref={scrollRef} className="overflow-x-auto scrollbar-hide">
           <div className="flex gap-4 px-4 pb-2">
             {courses.map((course) => (
-              <CourseCard key={course.id} course={course} />
+              <MazeRoomCard key={course.id} course={course} />
             ))}
             <div className="w-4 shrink-0" />
           </div>
@@ -222,11 +168,14 @@ function CarouselSection({ level, courses }: Readonly<{ level: Level; courses: C
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
+type ViewMode = "grid" | "map";
+
 export default function LearnPage() {
   const { getToken } = useAuth();
   const { isSignedIn } = useUser();
   const { selectedLanguageId, setLanguage } = useLanguageStore();
   const { t } = useTranslation();
+  const [view, setView] = useState<ViewMode>("grid");
 
   const { data: me } = useQuery<UserMe>({
     queryKey: ["me"],
@@ -273,20 +222,50 @@ export default function LearnPage() {
             </p>
           </div>
 
-          {me && (
-            <div className="flex items-center gap-2 shrink-0 mt-1">
-              {me.streak > 0 && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/[0.1] border border-orange-500/[0.2]">
-                  <Flame className="h-3.5 w-3.5 text-orange-500" />
-                  <span className="text-xs font-bold text-orange-600 dark:text-orange-400">{me.streak}</span>
+          <div className="flex items-center gap-2 shrink-0 mt-1">
+            {me && (
+              <>
+                {me.streak > 0 && (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/[0.1] border border-orange-500/[0.2]">
+                    <Flame className="h-3.5 w-3.5 text-orange-500" />
+                    <span className="text-xs font-bold text-orange-600 dark:text-orange-400">{me.streak}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/[0.1] border border-amber-500/[0.2]">
+                  <Zap className="h-3.5 w-3.5 text-amber-500" />
+                  <span className="text-xs font-bold text-amber-600 dark:text-amber-400">{me.points} XP</span>
                 </div>
-              )}
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/[0.1] border border-amber-500/[0.2]">
-                <Zap className="h-3.5 w-3.5 text-amber-500" />
-                <span className="text-xs font-bold text-amber-600 dark:text-amber-400">{me.points} XP</span>
-              </div>
+              </>
+            )}
+
+            {/* View toggle */}
+            <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-neutral-100 dark:bg-white/[0.06] border border-neutral-200 dark:border-white/[0.08]">
+              <button
+                type="button"
+                onClick={() => setView("grid")}
+                aria-label="Grid view"
+                className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 ${
+                  view === "grid"
+                    ? "bg-white dark:bg-white/[0.12] text-neutral-800 dark:text-white shadow-sm"
+                    : "text-neutral-400 dark:text-neutral-600 hover:text-neutral-600 dark:hover:text-neutral-400"
+                }`}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setView("map")}
+                aria-label="Map view"
+                className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 ${
+                  view === "map"
+                    ? "bg-white dark:bg-white/[0.12] text-neutral-800 dark:text-white shadow-sm"
+                    : "text-neutral-400 dark:text-neutral-600 hover:text-neutral-600 dark:hover:text-neutral-400"
+                }`}
+              >
+                <Map className="h-3.5 w-3.5" />
+              </button>
             </div>
-          )}
+          </div>
         </div>
 
         <div className="mt-5">
@@ -305,8 +284,19 @@ export default function LearnPage() {
         <BountyTeaser languageId={selectedLanguageId} />
       </div>
 
-      {/* ── Gallery wings ── */}
-      {isLoading ? (
+      {/* ── Sound map ── */}
+      {view === "map" && !isLoading && allCourses.length === 0 && (
+        <div className="max-w-4xl mx-auto px-4">
+          <EmptyState variant="courses" title={t("learn.emptyTitle")} description={t("learn.emptyDescription")} />
+        </div>
+      )}
+      {view === "map" && !isLoading && allCourses.length > 0 && (
+        <div className="max-w-5xl mx-auto px-4">
+          <SoundMap courses={allCourses} />
+        </div>
+      )}
+
+      {view === "grid" && (isLoading ? (
         <div className="space-y-10">
           {LEVEL_ORDER.map((level) => (
             <div key={level}>
@@ -338,7 +328,7 @@ export default function LearnPage() {
             <CarouselSection key={level} level={level} courses={coursesByLevel[level]} />
           ))}
         </div>
-      )}
+      ))}
     </div>
   );
 }

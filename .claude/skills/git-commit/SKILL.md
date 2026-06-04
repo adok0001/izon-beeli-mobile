@@ -73,6 +73,7 @@ Before running builds or staging files, bump versions across all app surfaces.
 	- `web/package.json` -> `version`
 	- `server/package.json` -> `version`
 	- `partykit/package.json` -> `version`
+	- `data/package.json` -> `version`
 - Use one shared version value across all four files.
 - Do not assume patch by default. Review the actual changes and choose `major`, `minor`, or `patch` using the principles below.
 
@@ -122,6 +123,7 @@ cd server && npm version <major|minor|patch> --no-git-tag-version && cd ..
 NEXT_VERSION=$(node -p "require('./server/package.json').version")
 cd web && npm version "$NEXT_VERSION" --no-git-tag-version && cd ..
 cd partykit && npm version "$NEXT_VERSION" --no-git-tag-version && cd ..
+cd data && npm version "$NEXT_VERSION" --no-git-tag-version && cd ..
 node -e "const fs=require('fs');const p='mobile/app.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.expo.version='$NEXT_VERSION';fs.writeFileSync(p,JSON.stringify(j,null,2)+'\\n');"
 ```
 
@@ -134,6 +136,7 @@ Run a build command before every commit, based on what changed:
 - Web changes: `cd web && npm run build`
 - Server changes: `cd server && npm run build`
 - Mobile changes: `cd mobile && npx expo export --platform web`
+- Data changes: `cd data && npm run build`
 - Multi-package changes: run all relevant commands above
 
 If any build fails:
@@ -148,6 +151,6 @@ If any build fails:
 2. Run `git diff` to review changes
 3. Bump versions across `mobile/app.json`, `web/package.json`, `server/package.json`, and `partykit/package.json`
 4. Run required build command(s) for changed package(s)
-5. Stage relevant files individually: `git add mobile/...` / `git add web/...` / `git add server/...` / `git add partykit/...`
+5. Stage relevant files individually: `git add mobile/...` / `git add web/...` / `git add server/...` / `git add partykit/...` / `git add data/...`
 6. Verify staged changes: `git diff --staged`
 7. Confirm success with `git status`

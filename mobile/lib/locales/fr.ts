@@ -1376,7 +1376,7 @@ export const fr = {
     guide: {
       title: "Guide de l'éducateur",
       heading: "Bienvenue sur Beeli",
-      intro: "Beeli est une plateforme d'apprentissage des langues alimentée par la communauté. En tant qu'éducateur, vous contribuez à donner vie aux langues — via des cours, leçons, histoires et contenus culturels vérifiés avant de parvenir aux apprenants.",
+      intro: "Beeli est une plateforme d'apprentissage des langues alimentée par la communauté. En tant qu'éducateur, vous contribuez à donner vie aux langues - via des cours, leçons, histoires et contenus culturels vérifiés avant de parvenir aux apprenants.",
       rolesLabel: "Votre rôle en tant qu'éducateur",
       contentTitle: "Créer du contenu",
       contentBody: "Construisez des cours, leçons, modules narratifs, entrées de dictionnaire et contenus culturels via le panneau Éducateur. Tout le contenu passe par un processus de validation avant publication.",

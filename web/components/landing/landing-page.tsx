@@ -2,6 +2,7 @@
 
 import { ArrowRight, BookOpen, Globe, GraduationCap, Headphones, Languages, Mic, Monitor, Search, Smartphone, Users, Volume2 } from "lucide-react";
 import Link from "next/link";
+import { ScrollytellingSection } from "@/components/landing/scrollytelling-section";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 // ── Scroll reveal ─────────────────────────────────────────────────────────────
@@ -128,6 +129,7 @@ function useAmbientTone() {
   const ctxRef = useRef<AudioContext | null>(null);
   const nodesRef = useRef<{ osc: OscillatorNode; gain: GainNode } | null>(null);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const play = useCallback((freq: number, accent: string) => {
     try {
       if (!ctxRef.current) ctxRef.current = new AudioContext();
@@ -266,7 +268,7 @@ function AmbientSoundscapeGrid() {
           <div className="flex items-center gap-3 mb-4">
             <div className="w-2 h-2 rounded-full" style={{ background: color.accent }} />
             <span
-              className="text-[10px] uppercase tracking-[0.28em] font-semibold"
+              className="font-mono text-[9px] uppercase tracking-[0.2em]"
               style={{ color: color.accent + "99" }}
             >
               {label}
@@ -325,7 +327,7 @@ function AnimatedStat({ value, label, refLabel }: { value: string; label: string
   const count = useCountUp(num, 1600, visible);
   return (
     <div ref={ref} className="flex flex-col">
-      <span className="text-[10px] uppercase tracking-[0.28em] text-neutral-700 mb-3 font-medium">
+      <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-neutral-700 mb-3">
         {refLabel}
       </span>
       <span className="font-display font-bold text-5xl text-amber-400 leading-none tabular-nums">
@@ -632,13 +634,151 @@ const TICKER_LANGS = [
   "Wolof", "Somali", "Zulu", "Fula", "Shona", "Kikuyu", "Lingala", "Bambara",
 ];
 
+// ── OS Window chrome ─────────────────────────────────────────────────────────
+
+function WindowTitleBar({ title }: { title: string }) {
+  return (
+    <div className="flex items-center gap-2 px-3 py-2.5 border-b border-white/[0.06] bg-white/[0.02]">
+      <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#ff5f56", opacity: 0.5 }} />
+      <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#ffbd2e", opacity: 0.5 }} />
+      <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#27c93f", opacity: 0.5 }} />
+      <span className="flex-1 text-center font-mono text-[9px] text-neutral-600 tracking-wide select-none">
+        {title}
+      </span>
+    </div>
+  );
+}
+
+// ── Draggable lesson preview window ──────────────────────────────────────────
+
+const LESSON_PREVIEW = {
+  lang: "Izon",
+  script: "Enị beeli",
+  translation: "Hear your tongue",
+  words: ["Ebe", "ami", "beeli", "—", "hear", "my", "tongue"],
+};
+
+function DraggableWindow() {
+  const posRef = useRef({ x: 0, y: 0 });
+  const dragStart = useRef<{ mx: number; my: number; ox: number; oy: number } | null>(null);
+  const elRef = useRef<HTMLDivElement>(null);
+  const [wordIdx, setWordIdx] = useState(0);
+  const [playing, setPlaying] = useState(false);
+
+  // Word-by-word playback when "playing"
+  useEffect(() => {
+    if (!playing) return;
+    if (wordIdx >= LESSON_PREVIEW.words.length) {
+      const t = setTimeout(() => { setWordIdx(0); setPlaying(false); }, 900);
+      return () => clearTimeout(t);
+    }
+    const t = setTimeout(() => setWordIdx((w) => w + 1), 300);
+    return () => clearTimeout(t);
+  }, [playing, wordIdx]);
+
+  function onPointerDown(e: React.PointerEvent) {
+    dragStart.current = {
+      mx: e.clientX, my: e.clientY,
+      ox: posRef.current.x, oy: posRef.current.y,
+    };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  }
+
+  function onPointerMove(e: React.PointerEvent) {
+    if (!dragStart.current || !elRef.current) return;
+    const dx = e.clientX - dragStart.current.mx;
+    const dy = e.clientY - dragStart.current.my;
+    const x = dragStart.current.ox + dx;
+    const y = dragStart.current.oy + dy;
+    posRef.current = { x, y };
+    elRef.current.style.transform = `translate(${x}px,${y}px)`;
+  }
+
+  function onPointerUp() { dragStart.current = null; }
+
+  return (
+    <div
+      ref={elRef}
+      className="absolute right-8 top-1/2 -translate-y-1/2 hidden lg:block w-72 rounded-2xl overflow-hidden z-20"
+      style={{
+        background: "rgba(12,12,22,0.85)",
+        border: "1px solid rgba(255,255,255,0.1)",
+        backdropFilter: "blur(24px)",
+        boxShadow: "0 32px 80px -16px rgba(0,0,0,0.7), 0 0 0 0.5px rgba(255,255,255,0.05)",
+        transition: "box-shadow 0.4s ease",
+        willChange: "transform",
+      }}
+    >
+      {/* Title bar — drag handle */}
+      <div
+        className="cursor-grab active:cursor-grabbing touch-none"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+      >
+        <WindowTitleBar title="Beeli — Lesson Preview" />
+      </div>
+
+      {/* Content */}
+      <div className="p-5">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <div className="font-mono text-[9px] text-amber-500/60 uppercase tracking-[0.2em] mb-1">
+              Niger Delta · Izon
+            </div>
+            <div className="font-display font-bold text-2xl text-white leading-none">
+              {LESSON_PREVIEW.script}
+            </div>
+            <div className="font-display italic text-neutral-500 text-sm mt-1">
+              {LESSON_PREVIEW.translation}
+            </div>
+          </div>
+          <span className="text-2xl select-none">🇳🇬</span>
+        </div>
+
+        {/* Waveform + word strip */}
+        <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 mb-4">
+          <div className="flex items-end gap-[2px] h-5 mb-3">
+            {[2,4,6,8,5,7,4,6,3,5,7,4,8,5,3,6,4,7].map((h, i) => (
+              <div
+                key={i}
+                className="w-[2px] rounded-full"
+                style={{
+                  height: `${h * 2}px`,
+                  background: playing ? "#f59e0b" : "rgba(245,158,11,0.3)",
+                  animation: playing ? `wave-bar ${0.35 + i * 0.05}s ease-in-out infinite alternate` : "none",
+                  transition: "background 0.3s ease",
+                }}
+              />
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-x-1.5 gap-y-1 min-h-[1.4rem]">
+            {LESSON_PREVIEW.words.slice(0, wordIdx).map((w, i) => (
+              <span key={i} className="text-xs font-medium text-neutral-300" style={{ animation: "fade-in 0.15s ease-out both" }}>
+                {w}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <button
+          onClick={() => { setWordIdx(0); setPlaying(true); }}
+          className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-mono hover:bg-amber-500/20 transition-colors duration-200"
+        >
+          {playing ? "▐▐  Playing…" : "▶  Play lesson"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Section label ─────────────────────────────────────────────────────────────
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-4 mb-5">
       <div className="w-10 h-px bg-amber-500/50" />
-      <span className="text-[10px] uppercase tracking-[0.32em] text-amber-500/70 font-semibold">
+      <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-amber-500/70">
         {children}
       </span>
     </div>
@@ -674,7 +814,7 @@ export function LandingPage() {
             </div>
             <Link
               href="/for-educators"
-              className="hidden sm:block text-[11px] uppercase tracking-widest text-neutral-500 hover:text-neutral-300 transition-colors"
+              className="hidden sm:block font-mono text-[9px] uppercase tracking-[0.2em] text-neutral-500 hover:text-neutral-300 transition-colors"
             >
               For Educators
             </Link>
@@ -742,7 +882,7 @@ export function LandingPage() {
 
             {/* Platform availability badges */}
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <span className="text-[10px] uppercase tracking-[0.28em] text-neutral-700 font-medium">Available on</span>
+              <span className="font-mono text-[9px] uppercase tracking-[0.24em] text-neutral-700">Available on</span>
               {[
                 { icon: Smartphone, label: "iOS" },
                 { icon: Smartphone, label: "Android" },
@@ -759,18 +899,7 @@ export function LandingPage() {
             </div>
           </div>
 
-          {/* Decorative letterform */}
-          <div
-            aria-hidden
-            className="absolute right-0 bottom-0 hidden lg:flex items-end opacity-[0.03] select-none pointer-events-none overflow-hidden h-[70vh]"
-          >
-            <span
-              className="font-display font-bold leading-none text-white"
-              style={{ fontSize: "clamp(18rem, 28vw, 32rem)", lineHeight: 0.85 }}
-            >
-              Aː
-            </span>
-          </div>
+          <DraggableWindow />
         </div>
       </section>
 
@@ -795,7 +924,7 @@ export function LandingPage() {
         <div className="flex items-center animate-ticker" style={{ width: "max-content" }}>
           {[...TICKER_LANGS, ...TICKER_LANGS].map((lang, i) => (
             <span key={i} className="flex items-center gap-5 px-5">
-              <span className="text-[11px] text-neutral-600 uppercase tracking-[0.22em] whitespace-nowrap font-medium">
+              <span className="font-mono text-[10px] text-neutral-600 uppercase tracking-[0.18em] whitespace-nowrap">
                 {lang}
               </span>
               <span className="w-1 h-1 rounded-full bg-amber-500/35 shrink-0" />
@@ -856,18 +985,18 @@ export function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {FEATURES.map((f, i) => (
               <Reveal key={f.title} delay={i * 110}>
-                <div className="group relative h-full bg-white/[0.025] border border-white/[0.06] rounded-2xl p-8 hover:border-amber-500/25 hover:bg-white/[0.04] transition-all duration-300 overflow-hidden">
-                  <span className="absolute top-6 right-7 text-[10px] uppercase tracking-[0.28em] text-neutral-700 font-medium">
-                    {f.roman}
-                  </span>
-                  <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-amber-500/35 to-transparent group-hover:via-amber-500/65 transition-all duration-300" />
-                  <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-6 group-hover:bg-amber-500/15 transition-colors duration-300">
-                    <f.icon className="h-5 w-5 text-amber-400" />
+                <div className="group relative h-full bg-white/[0.025] border border-white/[0.06] rounded-2xl hover:border-amber-500/25 hover:bg-white/[0.04] transition-all duration-400 overflow-hidden">
+                  {/* Poolsuite-style window title bar */}
+                  <WindowTitleBar title={`hall.${f.roman.toLowerCase()} — ${f.title}`} />
+                  <div className="p-8">
+                    <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-6 group-hover:bg-amber-500/15 transition-colors duration-300">
+                      <f.icon className="h-5 w-5 text-amber-400" />
+                    </div>
+                    <h3 className="font-display font-semibold text-xl text-white mb-3 leading-snug">
+                      {f.title}
+                    </h3>
+                    <p className="text-sm text-neutral-500 leading-relaxed">{f.desc}</p>
                   </div>
-                  <h3 className="font-display font-semibold text-xl text-white mb-3 leading-snug">
-                    {f.title}
-                  </h3>
-                  <p className="text-sm text-neutral-500 leading-relaxed">{f.desc}</p>
                 </div>
               </Reveal>
             ))}
@@ -881,6 +1010,9 @@ export function LandingPage() {
         It is a carrier of culture, of identity,
         of the very sense of self.&rdquo;
       </PullQuote>
+
+      {/* ── Interactive Documentary ── */}
+      <ScrollytellingSection />
 
       {/* ── Ambient Soundscape Grid ── */}
       <section className="relative py-24 px-6 bg-white/[0.01]">

@@ -1,7 +1,7 @@
-import Link from 'next/link'
-import { SignedIn, SignedOut } from '@clerk/nextjs'
-import { LanguageAtlas } from '@/components/data/language-atlas'
 import { HowItWorks } from '@/components/data/how-it-works'
+import { LanguageAtlas } from '@/components/data/language-atlas'
+import { SignedIn, SignedOut } from '@clerk/nextjs'
+import Link from 'next/link'
 
 export default function HomePage() {
   return (
@@ -17,7 +17,7 @@ export default function HomePage() {
         backdropFilter: 'blur(12px)',
       }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-          <span style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '1.35rem', color: 'var(--cream)', letterSpacing: '-0.02em' }}>Sabidata</span>
+          <span style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '1.35rem', color: 'var(--cream)', letterSpacing: '-0.02em' }}>Beelidata</span>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--gold)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>β</span>
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
@@ -116,7 +116,7 @@ export default function HomePage() {
             fontSize: 'clamp(1rem, 2vw, 1.2rem)',
             color: 'var(--muted)', marginTop: '2rem', maxWidth: '520px', lineHeight: 1.7,
           }}>
-            Sabidata is infrastructure for African language AI. Collect, verify,
+            Beelidata is infrastructure for African language AI. Collect, verify,
             and export high-quality text datasets — one community at a time.
           </p>
 
@@ -254,7 +254,7 @@ export default function HomePage() {
         padding: '3rem 2.5rem',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       }}>
-        <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '1.1rem', color: 'var(--muted)' }}>Sabidata</div>
+        <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '1.1rem', color: 'var(--muted)' }}>Beelidata</div>
         <div style={{ display: 'flex', gap: '2rem' }}>
           {[['Privacy', '/privacy'], ['Terms', '/terms'], ['Sign in', '/sign-in']].map(([label, href]) => (
             <Link key={href} href={href} style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--muted)', textDecoration: 'none', letterSpacing: '0.08em' }}>

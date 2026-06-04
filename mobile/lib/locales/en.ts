@@ -1361,7 +1361,7 @@ export const en = {
     guide: {
       title: "Educator Guide",
       heading: "Welcome to Beeli",
-      intro: "Beeli is a community-powered language learning platform. As an educator, you help bring languages to life — through courses, lessons, stories, and cultural content reviewed for quality before it reaches learners.",
+      intro: "Beeli is a community-powered language learning platform. As an educator, you help bring languages to life - through courses, lessons, stories, and cultural content reviewed for quality before it reaches learners.",
       rolesLabel: "Your role as an educator",
       contentTitle: "Create content",
       contentBody: "Build courses, lessons, story modules, dictionary entries, and cultural content through the Educator panel. All content goes through a review pipeline before publication.",

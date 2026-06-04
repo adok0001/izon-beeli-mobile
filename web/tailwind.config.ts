@@ -41,6 +41,7 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-jakarta)", "Inter", "system-ui", "sans-serif"],
         display: ["var(--font-display)", "Georgia", "serif"],
+        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
       },
       borderWidth: {
         "3": "3px",
