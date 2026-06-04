@@ -20,6 +20,17 @@ private struct WidgetColors {
   static let muted = Color(red: 0.70, green: 0.68, blue: 0.64)
 }
 
+private extension View {
+  @ViewBuilder
+  func widgetBackground(_ color: Color) -> some View {
+    if #available(iOS 17.0, *) {
+      containerBackground(color, for: .widget)
+    } else {
+      background(color)
+    }
+  }
+}
+
 // MARK: - Word of the Day
 
 private struct WotdEntry: TimelineEntry {
@@ -83,7 +94,7 @@ private struct WotdWidgetView: View {
     }
     .padding(14)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    .containerBackground(WidgetColors.bg, for: .widget)
+    .widgetBackground(WidgetColors.bg)
   }
 }
 
@@ -159,7 +170,7 @@ private struct PotmWidgetView: View {
     }
     .padding(14)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    .containerBackground(WidgetColors.bg, for: .widget)
+    .widgetBackground(WidgetColors.bg)
   }
 }
 
@@ -232,7 +243,7 @@ private struct SotwWidgetView: View {
     }
     .padding(14)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    .containerBackground(WidgetColors.bg, for: .widget)
+    .widgetBackground(WidgetColors.bg)
   }
 }
 
