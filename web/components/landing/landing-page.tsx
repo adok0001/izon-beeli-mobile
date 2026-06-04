@@ -2,7 +2,7 @@
 
 import { ArrowRight, BookOpen, Globe, GraduationCap, Headphones, Languages, Mic, Monitor, Search, Smartphone, Users, Volume2 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // ── Scroll reveal ─────────────────────────────────────────────────────────────
 
@@ -35,6 +35,256 @@ function Reveal({ children, className = "", delay = 0 }: { children: React.React
       }}
     >
       {children}
+    </div>
+  );
+}
+
+// ── Fractal SVG background ────────────────────────────────────────────────────
+
+function FractalBackground() {
+  return (
+    <svg
+      aria-hidden
+      className="pointer-events-none absolute inset-0 w-full h-full opacity-[0.025] select-none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        <pattern id="tri" x="0" y="0" width="80" height="69.28" patternUnits="userSpaceOnUse">
+          <polygon points="40,0 80,69.28 0,69.28" fill="none" stroke="rgb(245,158,11)" strokeWidth="0.5" />
+          <polygon points="0,0 40,69.28 80,0" fill="none" stroke="rgb(245,158,11)" strokeWidth="0.5" />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#tri)" />
+    </svg>
+  );
+}
+
+// ── Editorial pull-quote ──────────────────────────────────────────────────────
+
+function PullQuote({ children, attribution }: { children: React.ReactNode; attribution: string }) {
+  const { ref, visible } = useReveal(0.2);
+  return (
+    <div
+      ref={ref}
+      className="relative py-20 px-6 overflow-hidden border-y border-white/[0.05]"
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "none" : "translateY(24px)",
+        transition: "opacity 1s cubic-bezier(0.16,1,0.3,1), transform 1s cubic-bezier(0.16,1,0.3,1)",
+      }}
+    >
+      <div className="max-w-4xl mx-auto text-center">
+        <span className="block font-display italic text-3xl sm:text-4xl md:text-5xl text-white/80 leading-[1.2] tracking-[-0.01em]">
+          {children}
+        </span>
+        <span className="mt-8 block text-[10px] uppercase tracking-[0.32em] text-amber-500/50 font-semibold">
+          — {attribution}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ── Ambient Soundscape Grid ───────────────────────────────────────────────────
+
+type RegionKey = "west" | "east" | "southern" | "horn" | "delta";
+
+const REGION_COLORS: Record<RegionKey, { bg: string; border: string; accent: string; tone: number }> = {
+  west:     { bg: "rgba(245,158,11,0.06)",  border: "rgba(245,158,11,0.2)",  accent: "#f59e0b", tone: 110 },
+  east:     { bg: "rgba(16,185,129,0.06)",  border: "rgba(16,185,129,0.2)",  accent: "#10b981", tone: 146 },
+  southern: { bg: "rgba(99,102,241,0.06)",  border: "rgba(99,102,241,0.2)",  accent: "#6366f1", tone: 196 },
+  horn:     { bg: "rgba(239,68,68,0.06)",   border: "rgba(239,68,68,0.2)",   accent: "#ef4444", tone: 164 },
+  delta:    { bg: "rgba(168,85,247,0.06)",  border: "rgba(168,85,247,0.2)",  accent: "#a855f7", tone: 130 },
+};
+
+const SOUNDSCAPE_LANGS = [
+  { name: "Yoruba",   region: "West Africa",     regionKey: "west" as RegionKey,     ambient: "City market · Lagos",     flag: "🇳🇬" },
+  { name: "Igbo",     region: "West Africa",     regionKey: "west" as RegionKey,     ambient: "Village drums · Enugu",   flag: "🇳🇬" },
+  { name: "Hausa",    region: "West Africa",     regionKey: "west" as RegionKey,     ambient: "Desert wind · Kano",      flag: "🇳🇬" },
+  { name: "Twi",      region: "West Africa",     regionKey: "west" as RegionKey,     ambient: "Rain on iron roofs",      flag: "🇬🇭" },
+  { name: "Wolof",    region: "West Africa",     regionKey: "west" as RegionKey,     ambient: "Ocean breeze · Dakar",    flag: "🇸🇳" },
+  { name: "Bambara",  region: "West Africa",     regionKey: "west" as RegionKey,     ambient: "River canoe · Mali",      flag: "🇲🇱" },
+  { name: "Fula",     region: "West Africa",     regionKey: "west" as RegionKey,     ambient: "Cattle bells · Sahel",    flag: "🇬🇳" },
+  { name: "Swahili",  region: "East Africa",     regionKey: "east" as RegionKey,     ambient: "Dhow harbour · Mombasa",  flag: "🇰🇪" },
+  { name: "Amharic",  region: "East Africa",     regionKey: "east" as RegionKey,     ambient: "Church bells · Addis",    flag: "🇪🇹" },
+  { name: "Kikuyu",   region: "East Africa",     regionKey: "east" as RegionKey,     ambient: "Tea farm mist",           flag: "🇰🇪" },
+  { name: "Oromo",    region: "East Africa",     regionKey: "east" as RegionKey,     ambient: "Highland plains",         flag: "🇪🇹" },
+  { name: "Zulu",     region: "Southern Africa", regionKey: "southern" as RegionKey, ambient: "Isicathamiya harmonics",  flag: "🇿🇦" },
+  { name: "Shona",    region: "Southern Africa", regionKey: "southern" as RegionKey, ambient: "Mbira in the evening",    flag: "🇿🇼" },
+  { name: "Somali",   region: "Horn of Africa",  regionKey: "horn" as RegionKey,     ambient: "Port wind · Mogadishu",   flag: "🇸🇴" },
+  { name: "Afar",     region: "Horn of Africa",  regionKey: "horn" as RegionKey,     ambient: "Salt lake silence",       flag: "🇩🇯" },
+  { name: "Izon",     region: "Niger Delta",     regionKey: "delta" as RegionKey,    ambient: "Creek water at dusk",     flag: "🇳🇬" },
+  { name: "Itsekiri", region: "Niger Delta",     regionKey: "delta" as RegionKey,    ambient: "Mangrove birds",          flag: "🇳🇬" },
+  { name: "Urhobo",   region: "Niger Delta",     regionKey: "delta" as RegionKey,    ambient: "Udje song circles",       flag: "🇳🇬" },
+];
+
+const REGION_ORDER: RegionKey[] = ["west", "east", "southern", "horn", "delta"];
+const REGION_LABELS: Record<RegionKey, string> = {
+  west: "West Africa", east: "East Africa", southern: "Southern Africa",
+  horn: "Horn of Africa", delta: "Niger Delta",
+};
+
+function useAmbientTone() {
+  const ctxRef = useRef<AudioContext | null>(null);
+  const nodesRef = useRef<{ osc: OscillatorNode; gain: GainNode } | null>(null);
+
+  const play = useCallback((freq: number, accent: string) => {
+    try {
+      if (!ctxRef.current) ctxRef.current = new AudioContext();
+      const ctx = ctxRef.current;
+
+      // Stop any current tone
+      if (nodesRef.current) {
+        nodesRef.current.gain.gain.setTargetAtTime(0, ctx.currentTime, 0.05);
+        const { osc } = nodesRef.current;
+        setTimeout(() => { try { osc.stop(); } catch { /* noop */ } }, 200);
+        nodesRef.current = null;
+      }
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+
+      osc.type = "sine";
+      osc.frequency.value = freq;
+
+      // Add a gentle fifth overtone
+      const osc2 = ctx.createOscillator();
+      osc2.type = "triangle";
+      osc2.frequency.value = freq * 1.5;
+      const gain2 = ctx.createGain();
+      gain2.gain.value = 0.08;
+
+      filter.type = "lowpass";
+      filter.frequency.value = 800;
+      filter.Q.value = 0.5;
+
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.setTargetAtTime(0.12, ctx.currentTime, 0.15);
+
+      osc.connect(filter); osc2.connect(gain2); gain2.connect(filter);
+      filter.connect(gain); gain.connect(ctx.destination);
+
+      osc.start(); osc2.start();
+      nodesRef.current = { osc, gain };
+      // Auto-stop after 2.2 s
+      gain.gain.setTargetAtTime(0, ctx.currentTime + 1.8, 0.2);
+      setTimeout(() => {
+        try { osc.stop(); osc2.stop(); } catch { /* noop */ }
+        nodesRef.current = null;
+      }, 2400);
+    } catch { /* AudioContext blocked — silently skip */ }
+  }, []);
+
+  const stop = useCallback(() => {
+    if (!ctxRef.current || !nodesRef.current) return;
+    const { gain, osc } = nodesRef.current;
+    gain.gain.setTargetAtTime(0, ctxRef.current.currentTime, 0.08);
+    setTimeout(() => { try { osc.stop(); } catch { /* noop */ } }, 200);
+    nodesRef.current = null;
+  }, []);
+
+  return { play, stop };
+}
+
+function SoundscapeCard({
+  lang,
+  onHover,
+  onLeave,
+}: {
+  lang: typeof SOUNDSCAPE_LANGS[number];
+  onHover: (freq: number, accent: string) => void;
+  onLeave: () => void;
+}) {
+  const [active, setActive] = useState(false);
+  const colors = REGION_COLORS[lang.regionKey];
+
+  return (
+    <div
+      className="group relative rounded-xl p-4 cursor-pointer overflow-hidden transition-all duration-300"
+      style={{
+        background: active ? colors.bg : "rgba(255,255,255,0.02)",
+        border: `1px solid ${active ? colors.border : "rgba(255,255,255,0.06)"}`,
+        transform: active ? "translateY(-2px)" : "none",
+        boxShadow: active ? `0 8px 32px -8px ${colors.accent}30` : "none",
+      }}
+      onMouseEnter={() => { setActive(true); onHover(colors.tone, colors.accent); }}
+      onMouseLeave={() => { setActive(false); onLeave(); }}
+    >
+      {/* Top accent line */}
+      <div
+        className="absolute top-0 left-0 right-0 h-[2px] rounded-t-xl transition-opacity duration-300"
+        style={{ background: colors.accent, opacity: active ? 0.7 : 0.2 }}
+      />
+
+      <div className="flex items-start justify-between mb-2">
+        <span className="text-sm font-semibold text-white">{lang.name}</span>
+        <span className="text-base leading-none">{lang.flag}</span>
+      </div>
+
+      {/* Waveform — visible on hover */}
+      <div
+        className="flex items-end gap-[2px] h-3 mb-2 transition-opacity duration-200"
+        style={{ opacity: active ? 1 : 0 }}
+      >
+        {[2, 4, 6, 4, 7, 3, 5, 4, 6, 3].map((h, i) => (
+          <div
+            key={i}
+            className="w-[2px] rounded-full transition-all"
+            style={{
+              height: `${h * 2}px`,
+              background: colors.accent,
+              animation: active ? `wave-bar ${0.4 + i * 0.07}s ease-in-out infinite alternate` : "none",
+            }}
+          />
+        ))}
+      </div>
+
+      <div
+        className="text-[10px] uppercase tracking-[0.16em] transition-colors duration-200"
+        style={{ color: active ? colors.accent : "rgba(115,115,115,1)" }}
+      >
+        {active ? lang.ambient : lang.region}
+      </div>
+    </div>
+  );
+}
+
+function AmbientSoundscapeGrid() {
+  const { play, stop } = useAmbientTone();
+  const grouped = REGION_ORDER.map((key) => ({
+    key,
+    label: REGION_LABELS[key],
+    color: REGION_COLORS[key],
+    langs: SOUNDSCAPE_LANGS.filter((l) => l.regionKey === key),
+  }));
+
+  return (
+    <div className="space-y-10">
+      {grouped.map(({ key, label, color, langs }) => (
+        <div key={key}>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-2 h-2 rounded-full" style={{ background: color.accent }} />
+            <span
+              className="text-[10px] uppercase tracking-[0.28em] font-semibold"
+              style={{ color: color.accent + "99" }}
+            >
+              {label}
+            </span>
+            <div className="flex-1 h-px" style={{ background: color.border }} />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
+            {langs.map((lang) => (
+              <SoundscapeCard
+                key={lang.name}
+                lang={lang}
+                onHover={(freq, accent) => play(freq, accent)}
+                onLeave={stop}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -376,20 +626,6 @@ const FEATURES = [
   },
 ];
 
-const LANGUAGES = [
-  { name: "Yoruba", region: "West Africa" },
-  { name: "Igbo", region: "West Africa" },
-  { name: "Swahili", region: "East Africa" },
-  { name: "Hausa", region: "West Africa" },
-  { name: "Amharic", region: "East Africa" },
-  { name: "Izon", region: "Niger Delta" },
-  { name: "Twi", region: "West Africa" },
-  { name: "Wolof", region: "West Africa" },
-  { name: "Somali", region: "East Africa" },
-  { name: "Zulu", region: "Southern Africa" },
-  { name: "Fula", region: "West Africa" },
-  { name: "Shona", region: "Southern Africa" },
-];
 
 const TICKER_LANGS = [
   "Yoruba", "Igbo", "Swahili", "Hausa", "Amharic", "Izon", "Twi",
@@ -456,6 +692,7 @@ export function LandingPage() {
 
       {/* ── Hero ── */}
       <section className="relative min-h-[92vh] flex flex-col justify-center px-6 py-32 overflow-hidden">
+        <FractalBackground />
         {/* Circular orbit — positioned left of headline, like Wispr */}
         <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 hidden lg:block opacity-60">
           <CircularOrbit text="Hear it · Speak it · Live it · Hear it · Speak it · Live it · " radius={120} />
@@ -478,10 +715,10 @@ export function LandingPage() {
 
             <p className="mt-8 text-lg sm:text-xl text-neutral-400 max-w-lg leading-relaxed">
               70+ African languages. Audio-first. Built with native speakers.
-              Free forever.
+              <em className="font-display italic text-neutral-300 not-italic"> Free forever.</em>
             </p>
-            <p className="mt-2 text-sm text-neutral-600">
-              From the Niger Delta to the Horn of Africa — and everywhere the diaspora calls home.
+            <p className="mt-3 font-display italic text-neutral-600 text-base sm:text-lg" style={{ fontStyle: "italic" }}>
+              From the Niger Delta to the Horn — and everywhere the diaspora calls home.
             </p>
 
             <div className="mt-12 flex flex-col sm:flex-row items-start gap-4">
@@ -638,35 +875,37 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── Language placard grid ── */}
+      {/* ── Pull-quote ── */}
+      <PullQuote attribution="Ngugi wa Thiong'o, Decolonising the Mind">
+        &ldquo;Language is not just a means of communication.
+        It is a carrier of culture, of identity,
+        of the very sense of self.&rdquo;
+      </PullQuote>
+
+      {/* ── Ambient Soundscape Grid ── */}
       <section className="relative py-24 px-6 bg-white/[0.01]">
         <div className="max-w-7xl mx-auto">
           <Reveal>
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-12">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-14">
               <div>
                 <SectionLabel>Permanent Collection</SectionLabel>
                 <h2 className="font-display font-bold text-4xl sm:text-5xl text-white leading-tight">
                   Your language
-                  <br />is here.
+                  <br />
+                  <span className="font-display italic font-normal text-amber-400">lives here.</span>
                 </h2>
               </div>
               <p className="text-sm text-neutral-600 max-w-xs sm:text-right leading-relaxed">
-                From the Niger Delta to the Horn of Africa — and everywhere the diaspora calls home.
+                Hover any language to hear its soundscape.
+                <br />
+                <span className="text-neutral-700">From Niger Delta to the Horn of Africa.</span>
               </p>
             </div>
           </Reveal>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {LANGUAGES.map((l, i) => (
-              <Reveal key={l.name} delay={i * 45}>
-                <div className="group relative bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 hover:bg-white/[0.05] hover:border-amber-500/20 transition-all duration-200 overflow-hidden cursor-default">
-                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-amber-500/25 group-hover:bg-amber-500/55 transition-colors duration-200" />
-                  <div className="text-sm font-semibold text-white mt-1">{l.name}</div>
-                  <div className="text-[10px] text-neutral-600 mt-1 uppercase tracking-wide">{l.region}</div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
+          <Reveal delay={80}>
+            <AmbientSoundscapeGrid />
+          </Reveal>
         </div>
       </section>
 
