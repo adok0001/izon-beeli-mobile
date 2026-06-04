@@ -254,6 +254,46 @@ export default function ProfileScreen() {
           ) : null}
 
           <SectionLabel label="Community" />
+          {!isAdmin && !currentUser?.isReviewer && (
+            <Pressable
+              onPress={() => router.push("/reviewer-application")}
+              style={{
+                marginBottom: 8,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: "rgba(74, 222, 128, 0.2)",
+                borderLeftWidth: 4,
+                borderLeftColor: "#22c55e",
+                backgroundColor: "rgba(74, 222, 128, 0.06)",
+                padding: 14,
+                flexDirection: "row",
+                alignItems: "center",
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={t("learn.contributorBannerTitle")}
+              accessibilityHint="Tap to apply as a contributor"
+              className="active:opacity-70"
+            >
+              <View
+                style={{
+                  width: 36, height: 36, borderRadius: 10,
+                  alignItems: "center", justifyContent: "center",
+                  backgroundColor: "rgba(74, 222, 128, 0.12)", marginRight: 12,
+                }}
+              >
+                <IconSymbol name="person.badge.plus" size={17} color="#4ade80" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 13, fontWeight: "700", color: "#4ade80" }}>
+                  {t("learn.contributorBannerTitle")}
+                </Text>
+                <Text style={{ fontSize: 11, color: "rgba(74, 222, 128, 0.6)", marginTop: 1 }}>
+                  {t("learn.contributorBannerCta")}
+                </Text>
+              </View>
+              <IconSymbol name="chevron.right" size={14} color="#4ade80" />
+            </Pressable>
+          )}
           {(isAdmin || currentUser?.isReviewer) && (
             <MenuRow icon="checkmark.shield.fill" label={t("profile.reviewContributions")} onPress={() => router.push("/review")} />
           )}

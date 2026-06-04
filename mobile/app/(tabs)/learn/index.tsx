@@ -6,7 +6,6 @@ import { StreakFreezeModal } from "@/components/streak-freeze-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { UpNextCard } from "@/components/up-next-card";
 import { getCourseTypeColors, getLevelColors } from "@/constants/course-colors";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useBounties } from "@/lib/hooks/use-bounties";
 import { useCourseLessons, useCourses, useLesson } from "@/lib/hooks/use-courses";
 import { useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
@@ -16,13 +15,13 @@ import { useToast } from "@/lib/hooks/use-toast";
 import { useWordsDueForReview } from "@/lib/hooks/use-wordbank";
 import { localizeField } from "@/lib/localize";
 import { BUNDLED_AUDIO, formatDuration } from "@/lib/mock-data";
-import { useUser } from "@clerk/clerk-expo";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useAudioStore } from "@/store/audio-store";
 import { useLanguageStore } from "@/store/language-store";
 import { useTourStore } from "@/store/tour-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
-import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { Course, Lesson } from "@/types";
+import { useUser } from "@clerk/clerk-expo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -588,107 +587,6 @@ function BountyTeaser({ languageId }: { languageId: string }) {
   );
 }
 
-// ─── ContributorBanner ─────────────────────────────────────────────────────
-function ContributorBanner() {
-  const M = useMuseumTheme();
-  const { t } = useTranslation();
-  const router = useRouter();
-
-  return (
-    <Pressable
-      onPress={() => router.push("/reviewer-application")}
-      style={{
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: "rgba(74, 222, 128, 0.2)",
-        borderLeftWidth: 4,
-        borderLeftColor: "#22c55e",
-        backgroundColor: "rgba(74, 222, 128, 0.06)",
-        padding: 14,
-        flexDirection: "row",
-        alignItems: "center",
-      }}
-      className="active:opacity-70"
-      accessibilityRole="button"
-      accessibilityLabel={t("learn.contributorBannerTitle")}
-      accessibilityHint="Tap to apply as a contributor"
-    >
-      <View
-        style={{
-          width: 38,
-          height: 38,
-          borderRadius: 10,
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "rgba(74, 222, 128, 0.12)",
-          marginRight: 12,
-        }}
-      >
-        <IconSymbol name="person.badge.plus" size={17} color="#4ade80" />
-      </View>
-      <View className="flex-1">
-        <Text style={{ fontSize: 13, fontWeight: "700", color: "#4ade80" }}>
-          {t("learn.contributorBannerTitle")}
-        </Text>
-        <Text style={{ fontSize: 11, color: "rgba(74, 222, 128, 0.6)", marginTop: 1 }}>
-          {t("learn.contributorBannerCta")}
-        </Text>
-      </View>
-      <IconSymbol name="chevron.right" size={14} color="#4ade80" />
-    </Pressable>
-  );
-}
-
-// ─── ReviewBanner ──────────────────────────────────────────────────────────
-function ReviewBanner({ languageId }: Readonly<{ languageId?: string | null }>) {
-  const M = useMuseumTheme();
-  const { t } = useTranslation();
-  const router = useRouter();
-  const { data: dueWords = [] } = useWordsDueForReview(languageId);
-
-  if (dueWords.length === 0) return null;
-
-  return (
-    <Pressable
-      onPress={() => router.push("/word-review")}
-      style={{
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: "rgba(139, 92, 246, 0.25)",
-        borderLeftWidth: 4,
-        borderLeftColor: "#8b5cf6",
-        backgroundColor: "rgba(139, 92, 246, 0.07)",
-        padding: 14,
-        flexDirection: "row",
-        alignItems: "center",
-      }}
-      className="active:opacity-70"
-      accessibilityRole="button"
-      accessibilityLabel={t("learn.reviewBanner", { count: dueWords.length })}
-      accessibilityHint="Tap to review words due for practice"
-    >
-      <View
-        style={{
-          width: 38, height: 38, borderRadius: 10,
-          alignItems: "center", justifyContent: "center",
-          backgroundColor: "rgba(139, 92, 246, 0.12)", marginRight: 12,
-        }}
-      >
-        <IconSymbol name="brain.head.profile" size={17} color="#8b5cf6" />
-      </View>
-      <View className="flex-1">
-        <Text style={{ fontSize: 13, fontWeight: "700", color: "#8b5cf6" }}>
-          {t("learn.reviewBanner", { count: dueWords.length })}
-        </Text>
-        <Text style={{ fontSize: 11, color: "rgba(139, 92, 246, 0.6)", marginTop: 1 }}>
-          {t("learn.reviewBannerCta")}
-        </Text>
-      </View>
-      <IconSymbol name="chevron.right" size={14} color="#8b5cf6" />
-    </Pressable>
-  );
-}
-
 // ─── LearnScreen ───────────────────────────────────────────────────────────
 export default function LearnScreen() {
   const M = useMuseumTheme();
@@ -982,7 +880,6 @@ export default function LearnScreen() {
             )}
             ListHeaderComponent={
               <View style={{ gap: 10, marginBottom: 16 }}>
-                <ReviewBanner languageId={selectedLanguageId} />
                 {resumeState && resumeState.positionSeconds > 5 && (
                   <ContinueCard
                     lessonId={resumeState.lessonId}
@@ -991,7 +888,6 @@ export default function LearnScreen() {
                 )}
                 <UpNextCard languageId={selectedLanguageId} />
                 <BountyTeaser languageId={selectedLanguageId ?? ""} />
-                <ContributorBanner />
               </View>
             }
             showsVerticalScrollIndicator={false}
