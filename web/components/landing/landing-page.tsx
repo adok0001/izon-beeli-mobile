@@ -574,7 +574,7 @@ const HOW_IT_WORKS = [
     step: "03",
     icon: Mic,
     title: "Speak with confidence",
-    desc: "Practice pronunciation, build vocabulary, and track your progress — free, forever.",
+    desc: "Practice pronunciation, build vocabulary, and track your progress - free, forever.",
   },
 ];
 
@@ -718,7 +718,7 @@ export function LandingPage() {
               <em className="font-display italic text-neutral-300 not-italic"> Free forever.</em>
             </p>
             <p className="mt-3 font-display italic text-neutral-600 text-base sm:text-lg" style={{ fontStyle: "italic" }}>
-              From the Niger Delta to the Horn — and everywhere the diaspora calls home.
+              From the Niger Delta to the Horn - and everywhere the diaspora calls home.
             </p>
 
             <div className="mt-12 flex flex-col sm:flex-row items-start gap-4">
