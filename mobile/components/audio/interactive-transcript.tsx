@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useCallback, useMemo } from "react";
-import { View, Text, Pressable, ScrollView, Modal } from "react-native";
+import { View, Text, Pressable, ScrollView, Modal, type GestureResponderEvent } from "react-native";
 import { useAudioStore } from "@/store/audio-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
@@ -141,7 +141,7 @@ function WordLookupSheet({
 }
 
 export function InteractiveTranscript({ segments, onSegmentPress }: Props) {
-  const { progress, seekTo, currentTrackId } = useAudioStore();
+  const { progress, seekTo, currentTrackId, shadowSegment, setShadowLoop } = useAudioStore();
   const { uiLanguage } = useUiLanguageStore();
   const { selectedLanguageId } = useLanguageStore();
   const { data: dictEntries = [] } = useDictionary(selectedLanguageId);
@@ -218,6 +218,20 @@ export function InteractiveTranscript({ segments, onSegmentPress }: Props) {
     [currentTrackId, seekTo, onSegmentPress]
   );
 
+  const handleShadowLoop = useCallback(
+    (segment: TranscriptSegment, e: GestureResponderEvent) => {
+      e.stopPropagation();
+      const isLooping = shadowSegment?.startTime === segment.startTime;
+      if (isLooping) {
+        setShadowLoop(null);
+      } else {
+        setShadowLoop({ startTime: segment.startTime, endTime: segment.endTime });
+        if (currentTrackId) seekTo(segment.startTime);
+      }
+    },
+    [shadowSegment, setShadowLoop, currentTrackId, seekTo]
+  );
+
   if (segments.length === 0) {
     return (
       <View className="items-center py-8">
@@ -235,19 +249,25 @@ export function InteractiveTranscript({ segments, onSegmentPress }: Props) {
           const isActive = index === activeIndex;
           const words = segment.text.split(/(\s+)/);
 
+          const isLoopingThisSegment = shadowSegment?.startTime === segment.startTime;
+
           return (
             <Pressable
               key={segment.id}
               onPress={() => handleSegmentPress(segment)}
-              className={`border-l-2 px-4 py-3 ${
-                isActive
+              className={`relative border-l-2 px-4 py-3 ${
+                isLoopingThisSegment
+                  ? "border-l-amber-400 bg-amber-50 dark:bg-amber-950"
+                  : isActive
                   ? "border-l-blue-500 bg-blue-50 dark:bg-blue-950"
                   : "border-l-transparent"
               }`}
             >
               <Text
                 className={`text-base leading-6 ${
-                  isActive
+                  isLoopingThisSegment
+                    ? "font-semibold text-amber-700 dark:text-amber-300"
+                    : isActive
                     ? "font-semibold text-blue-700 dark:text-blue-300"
                     : "text-neutral-800 dark:text-neutral-200"
                 }`}
@@ -272,7 +292,9 @@ export function InteractiveTranscript({ segments, onSegmentPress }: Props) {
               {(segment.translation || segment.translationFr) && (
                 <Text
                   className={`mt-1 text-sm ${
-                    isActive
+                    isLoopingThisSegment
+                      ? "text-amber-500 dark:text-amber-400"
+                      : isActive
                       ? "text-blue-500 dark:text-blue-400"
                       : "text-neutral-500 dark:text-neutral-400"
                   }`}
@@ -296,6 +318,20 @@ export function InteractiveTranscript({ segments, onSegmentPress }: Props) {
                     style={{ backgroundColor: segment.colorHex, opacity: 0.3 }}
                   />
                 </View>
+              )}
+              {currentTrackId && (
+                <Pressable
+                  onPress={(e) => handleShadowLoop(segment, e)}
+                  hitSlop={8}
+                  className="absolute right-3 top-3"
+                  accessibilityLabel={isLoopingThisSegment ? "Stop looping phrase" : "Loop this phrase"}
+                >
+                  <IconSymbol
+                    name="repeat.1"
+                    size={16}
+                    color={isLoopingThisSegment ? "#f59e0b" : "#9ca3af"}
+                  />
+                </Pressable>
               )}
             </Pressable>
           );

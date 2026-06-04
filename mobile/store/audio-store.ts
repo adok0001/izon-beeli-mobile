@@ -28,6 +28,9 @@ interface AudioState {
   // Internal
   _sound: Audio.Sound | null;
 
+  // Shadow loop state
+  shadowSegment: { startTime: number; endTime: number } | null;
+
   // Actions
   loadAndPlay: (trackId: string, source: AudioSource, title?: string) => Promise<void>;
   play: () => Promise<void>;
@@ -37,6 +40,7 @@ interface AudioState {
   skipForward: (seconds?: number) => Promise<void>;
   skipBackward: (seconds?: number) => Promise<void>;
   setSpeed: (speed: PlaybackSpeed) => void;
+  setShadowLoop: (segment: { startTime: number; endTime: number } | null) => void;
   reset: () => Promise<void>;
   loadResumeState: () => Promise<void>;
   saveResumeState: (lessonId: string, positionSeconds: number) => void;
@@ -51,6 +55,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
   duration: 0,
   playbackSpeed: 1,
   resumeState: null,
+  shadowSegment: null,
   _sound: null,
 
   loadAndPlay: async (trackId, source, title) => {
@@ -68,7 +73,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
       await currentSound.unloadAsync();
     }
 
-    set({ isLoading: true, currentTrackId: trackId, currentTrackTitle: title ?? null });
+    set({ isLoading: true, currentTrackId: trackId, currentTrackTitle: title ?? null, shadowSegment: null });
 
     try {
       await Audio.setAudioModeAsync({
@@ -99,6 +104,10 @@ export const useAudioStore = create<AudioState>((set, get) => ({
               duration: (status.durationMillis ?? 0) / 1000,
               isPlaying: status.isPlaying,
             });
+          }
+          const { shadowSegment } = get();
+          if (shadowSegment && status.isPlaying && positionSeconds >= shadowSegment.endTime) {
+            sound.setPositionAsync(shadowSegment.startTime * 1000).catch(() => {});
           }
           if (status.isPlaying && Math.abs(positionSeconds - lastSavedPosition) >= 2) {
             lastSavedPosition = positionSeconds;
@@ -166,6 +175,8 @@ export const useAudioStore = create<AudioState>((set, get) => ({
     await get().seekTo(newPos);
   },
 
+  setShadowLoop: (segment) => set({ shadowSegment: segment }),
+
   setSpeed: (speed) => {
     const { _sound } = get();
     if (_sound) {
@@ -186,6 +197,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
       currentTrackTitle: null,
       progress: 0,
       duration: 0,
+      shadowSegment: null,
       _sound: null,
     });
   },
