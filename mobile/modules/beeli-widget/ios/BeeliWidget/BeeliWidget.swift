@@ -62,30 +62,28 @@ private struct WotdWidgetView: View {
   let entry: WotdEntry
 
   var body: some View {
-    ZStack {
-      WidgetColors.bg
-      VStack(alignment: .leading, spacing: 4) {
-        Label("Word of the Day", systemImage: "star.fill")
-          .font(.system(size: 10, weight: .semibold))
-          .foregroundColor(WidgetColors.gold)
-        Spacer()
-        Text(entry.word)
-          .font(.system(size: 26, weight: .bold))
-          .foregroundColor(WidgetColors.text)
-        if let pron = entry.pronunciation {
-          Text("/\(pron)/")
-            .font(.system(size: 11))
-            .italic()
-            .foregroundColor(WidgetColors.muted)
-        }
-        Text(entry.english)
-          .font(.system(size: 13))
-          .foregroundColor(WidgetColors.text.opacity(0.85))
-          .lineLimit(2)
+    VStack(alignment: .leading, spacing: 4) {
+      Label("Word of the Day", systemImage: "star.fill")
+        .font(.system(size: 10, weight: .semibold))
+        .foregroundColor(WidgetColors.gold)
+      Spacer()
+      Text(entry.word)
+        .font(.system(size: 26, weight: .bold))
+        .foregroundColor(WidgetColors.text)
+      if let pron = entry.pronunciation {
+        Text("/\(pron)/")
+          .font(.system(size: 11))
+          .italic()
+          .foregroundColor(WidgetColors.muted)
       }
-      .padding(14)
-      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+      Text(entry.english)
+        .font(.system(size: 13))
+        .foregroundColor(WidgetColors.text.opacity(0.85))
+        .lineLimit(2)
     }
+    .padding(14)
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    .containerBackground(WidgetColors.bg, for: .widget)
   }
 }
 
@@ -145,25 +143,23 @@ private struct PotmWidgetView: View {
   let entry: PotmEntry
 
   var body: some View {
-    ZStack {
-      WidgetColors.bg
-      VStack(alignment: .leading, spacing: 4) {
-        Label("Proverb of the Month", systemImage: "quote.opening")
-          .font(.system(size: 10, weight: .semibold))
-          .foregroundColor(WidgetColors.gold)
-        Spacer()
-        Text(entry.text)
-          .font(.system(size: 13, weight: .semibold))
-          .foregroundColor(WidgetColors.text)
-          .lineLimit(3)
-        Text(entry.translation)
-          .font(.system(size: 11))
-          .foregroundColor(WidgetColors.muted)
-          .lineLimit(2)
-      }
-      .padding(14)
-      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    VStack(alignment: .leading, spacing: 4) {
+      Label("Proverb of the Month", systemImage: "quote.opening")
+        .font(.system(size: 10, weight: .semibold))
+        .foregroundColor(WidgetColors.gold)
+      Spacer()
+      Text(entry.text)
+        .font(.system(size: 13, weight: .semibold))
+        .foregroundColor(WidgetColors.text)
+        .lineLimit(3)
+      Text(entry.translation)
+        .font(.system(size: 11))
+        .foregroundColor(WidgetColors.muted)
+        .lineLimit(2)
     }
+    .padding(14)
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    .containerBackground(WidgetColors.bg, for: .widget)
   }
 }
 

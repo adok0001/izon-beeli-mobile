@@ -23,30 +23,35 @@ interface BeeliWidgetModuleType {
   reloadWidgetTimelines(): void;
 }
 
-const BeeliWidgetModule: BeeliWidgetModuleType =
-  requireNativeModule("BeeliWidget") ??
-  (NativeModulesProxy.BeeliWidget as BeeliWidgetModuleType);
+let BeeliWidgetModule: BeeliWidgetModuleType | null = null;
+try {
+  BeeliWidgetModule =
+    requireNativeModule("BeeliWidget") ??
+    (NativeModulesProxy.BeeliWidget as BeeliWidgetModuleType);
+} catch {
+  // Native module unavailable (Expo Go, web, or pre-build)
+}
 
 export function writeWotd(content: WotdContent): void {
   try {
-    BeeliWidgetModule.writeWidgetContent("wotd_content", JSON.stringify(content));
+    BeeliWidgetModule?.writeWidgetContent("wotd_content", JSON.stringify(content));
   } catch {}
 }
 
 export function writePotm(content: PotmContent): void {
   try {
-    BeeliWidgetModule.writeWidgetContent("potm_content", JSON.stringify(content));
+    BeeliWidgetModule?.writeWidgetContent("potm_content", JSON.stringify(content));
   } catch {}
 }
 
 export function writeSotw(content: SotwContent): void {
   try {
-    BeeliWidgetModule.writeWidgetContent("sotw_content", JSON.stringify(content));
+    BeeliWidgetModule?.writeWidgetContent("sotw_content", JSON.stringify(content));
   } catch {}
 }
 
 export function reloadWidgetTimelines(): void {
   try {
-    BeeliWidgetModule.reloadWidgetTimelines();
+    BeeliWidgetModule?.reloadWidgetTimelines();
   } catch {}
 }
