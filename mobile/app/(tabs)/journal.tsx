@@ -6,16 +6,24 @@ import {
   useJournal,
   useUpdateJournalEntry,
 } from "@/lib/hooks/use-journal";
+import { useVoiceRecording } from "@/lib/hooks/use-voice-recording";
+import {
+  deleteRecording,
+  getRecording,
+  migrateRecording,
+  setRecording,
+} from "@/lib/journal-recordings";
 import i18n from "@/lib/i18n";
 import { useTourStore } from "@/store/tour-store";
 import type { JournalEntry } from "@/types";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { TextInput as TextInputType } from "react-native";
 import { useTranslation } from "react-i18next";
 import { LoadingScreen } from "@/components/loading-screen";
 import {
   Alert,
+  Animated,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -79,7 +87,15 @@ function groupEntriesBySections(entries: JournalEntry[]): { title: string; data:
   return sections;
 }
 
-function EntryCard({ entry, onPress }: { entry: JournalEntry; onPress: () => void }) {
+function EntryCard({
+  entry,
+  hasRecording,
+  onPress,
+}: {
+  entry: JournalEntry;
+  hasRecording: boolean;
+  onPress: () => void;
+}) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const count = wordCount(entry.content);
@@ -103,9 +119,25 @@ function EntryCard({ entry, onPress }: { entry: JournalEntry; onPress: () => voi
       }}
       className="active:opacity-70"
     >
-      <Text style={{ fontSize: 16, fontWeight: "700", color: M.text }} numberOfLines={1}>
-        {entry.title}
-      </Text>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <Text style={{ flex: 1, fontSize: 16, fontWeight: "700", color: M.text }} numberOfLines={1}>
+          {entry.title}
+        </Text>
+        {hasRecording && (
+          <View
+            style={{
+              flexDirection: "row", alignItems: "center", gap: 3,
+              backgroundColor: `${M.accent}18`,
+              borderRadius: 6, paddingHorizontal: 6, paddingVertical: 3,
+            }}
+          >
+            <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: M.accent }} />
+            <Text style={{ fontSize: 9, fontWeight: "700", color: M.accent, letterSpacing: 0.5 }}>
+              REC
+            </Text>
+          </View>
+        )}
+      </View>
       <Text
         style={{ marginTop: 6, fontSize: 13, lineHeight: 20, color: M.sub }}
         numberOfLines={3}
@@ -150,6 +182,34 @@ function SectionHeader({ title }: { title: string }) {
   );
 }
 
+const TEMP_RECORDING_ID = "__new__";
+
+function formatSeconds(s: number) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${m}:${sec.toString().padStart(2, "0")}`;
+}
+
+function WaveformBars({ color, active }: { color: string; active: boolean }) {
+  const heights = [6, 10, 14, 10, 6, 12, 8, 14, 10, 6];
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 2, height: 18 }}>
+      {heights.map((h, i) => (
+        <View
+          key={i}
+          style={{
+            width: 2,
+            height: active ? h : h * 0.5,
+            borderRadius: 1,
+            backgroundColor: color,
+            opacity: active ? 1 : 0.4,
+          }}
+        />
+      ))}
+    </View>
+  );
+}
+
 export default function JournalScreen() {
   const M = useMuseumTheme();
   const { data: entries, isLoading, refetch } = useJournal();
@@ -174,6 +234,40 @@ export default function JournalScreen() {
   const contentInputRef = useRef<TextInputType>(null);
   const { bottom: bottomInset } = useSafeAreaInsets();
 
+  // Recording state keyed by entry id → hasRecording flag for list rendering
+  const [recordingMap, setRecordingMap] = useState<Record<string, boolean>>({});
+
+  const voice = useVoiceRecording();
+  // Pulse animation for the recording indicator
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (voice.state === "recording") {
+      const loop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, { toValue: 1.6, duration: 600, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+        ])
+      );
+      loop.start();
+      return () => loop.stop();
+    } else {
+      pulseAnim.setValue(1);
+    }
+  }, [voice.state, pulseAnim]);
+
+  // Load recording map from storage when entries arrive
+  useEffect(() => {
+    if (!entries) return;
+    Promise.all(entries.map((e) => getRecording(e.id).then((uri) => ({ id: e.id, has: !!uri })))).then(
+      (results) => {
+        const map: Record<string, boolean> = {};
+        for (const r of results) map[r.id] = r.has;
+        setRecordingMap(map);
+      }
+    );
+  }, [entries]);
+
   const isEditing = editingId !== null;
   const canSave = title.trim().length > 0 && content.trim().length > 0;
   const isDirty =
@@ -188,36 +282,72 @@ export default function JournalScreen() {
     setContent("");
     originalTitle.current = "";
     originalContent.current = "";
+    voice.discardRecording();
     setShowModal(true);
   };
 
-  const openEdit = (entry: JournalEntry) => {
+  const openEdit = useCallback(async (entry: JournalEntry) => {
     setEditingId(entry.id);
     setTitle(entry.title);
     setContent(entry.content);
     originalTitle.current = entry.title.trim();
     originalContent.current = entry.content.trim();
+    voice.discardRecording();
+    const uri = await getRecording(entry.id);
+    if (uri) voice.loadUri(uri);
     setShowModal(true);
+  }, [voice]);
+
+  const resetModal = () => {
+    setTitle("");
+    setContent("");
+    setEditingId(null);
+    voice.discardRecording();
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!canSave) return;
+
+    if (voice.state === "recording") {
+      await voice.stopRecording();
+    }
+
     if (isEditing) {
       updateEntry.mutate({ id: editingId, title: title.trim(), content: content.trim() });
+      if (voice.uri) {
+        await setRecording(editingId, voice.uri);
+        setRecordingMap((m) => ({ ...m, [editingId]: true }));
+      }
     } else {
-      createEntry.mutate({ title: title.trim(), content: content.trim() });
+      // For new entries, persist recording under temp key then migrate after server returns id
+      if (voice.uri) {
+        await setRecording(TEMP_RECORDING_ID, voice.uri);
+      }
+      createEntry.mutate(
+        { title: title.trim(), content: content.trim() },
+        {
+          onSuccess: async (entry) => {
+            if (voice.uri) {
+              await migrateRecording(TEMP_RECORDING_ID, entry.id);
+              setRecordingMap((m) => ({ ...m, [entry.id]: true }));
+            }
+          },
+        }
+      );
       if (!hasSeen("feed")) {
         setTimeout(() => showTour("feed"), 1000);
       }
     }
-    setTitle("");
-    setContent("");
-    setEditingId(null);
+
+    resetModal();
     setShowModal(false);
   };
 
   const handleClose = () => {
-    if (isDirty && (title.trim() || content.trim())) {
+    const dirty = isDirty && (title.trim() || content.trim());
+    const hasUnsavedRecording = voice.state !== "idle" && !isEditing;
+
+    if (dirty || hasUnsavedRecording) {
       Alert.alert(
         t("journal.discardTitle", { defaultValue: "Discard changes?" }),
         t("journal.discardBody", { defaultValue: "Your unsaved changes will be lost." }),
@@ -228,18 +358,14 @@ export default function JournalScreen() {
             style: "destructive",
             onPress: () => {
               setShowModal(false);
-              setEditingId(null);
-              setTitle("");
-              setContent("");
+              resetModal();
             },
           },
         ]
       );
     } else {
       setShowModal(false);
-      setEditingId(null);
-      setTitle("");
-      setContent("");
+      resetModal();
     }
   };
 
@@ -249,15 +375,23 @@ export default function JournalScreen() {
       {
         text: t("common.delete"),
         style: "destructive",
-        onPress: () => {
+        onPress: async () => {
           deleteEntry.mutate(id);
+          await deleteRecording(id);
+          setRecordingMap((m) => { const n = { ...m }; delete n[id]; return n; });
           setShowModal(false);
-          setEditingId(null);
-          setTitle("");
-          setContent("");
+          resetModal();
         },
       },
     ]);
+  };
+
+  const handleDiscardRecording = async () => {
+    if (isEditing && editingId) {
+      await deleteRecording(editingId);
+      setRecordingMap((m) => ({ ...m, [editingId]: false }));
+    }
+    voice.discardRecording();
   };
 
   const entryCount = entries?.length ?? 0;
@@ -326,7 +460,13 @@ export default function JournalScreen() {
           <SectionList
             sections={sections}
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <EntryCard entry={item} onPress={() => openEdit(item)} />}
+            renderItem={({ item }) => (
+              <EntryCard
+                entry={item}
+                hasRecording={!!recordingMap[item.id]}
+                onPress={() => openEdit(item)}
+              />
+            )}
             renderSectionHeader={({ section }) => <SectionHeader title={section.title} />}
             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
             showsVerticalScrollIndicator={false}
@@ -429,6 +569,57 @@ export default function JournalScreen() {
               />
             </View>
 
+            {/* Voice note player — shown when there's a recording */}
+            {voice.state === "stopped" && voice.uri && (
+              <View
+                style={{
+                  marginHorizontal: 20, marginBottom: 8,
+                  borderRadius: 12,
+                  backgroundColor: `${M.accent}10`,
+                  borderWidth: 1, borderColor: `${M.accent}30`,
+                  paddingHorizontal: 14, paddingVertical: 10,
+                  flexDirection: "row", alignItems: "center", gap: 10,
+                }}
+              >
+                <Pressable
+                  onPress={voice.togglePlayback}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={voice.isPlaying ? "Pause" : "Play recording"}
+                  style={{
+                    width: 32, height: 32, borderRadius: 16,
+                    backgroundColor: M.accent,
+                    alignItems: "center", justifyContent: "center",
+                  }}
+                  className="active:opacity-70"
+                >
+                  <IconSymbol
+                    name={voice.isPlaying ? "pause.fill" : "play.fill"}
+                    size={14}
+                    color={M.ink}
+                  />
+                </Pressable>
+                <WaveformBars color={M.accent} active={voice.isPlaying} />
+                <Text style={{ fontSize: 11, color: M.accent, fontWeight: "700", minWidth: 36 }}>
+                  {formatSeconds(
+                    voice.isPlaying
+                      ? voice.playbackDuration - voice.playbackPosition
+                      : voice.playbackDuration
+                  )}
+                </Text>
+                <View style={{ flex: 1 }} />
+                <Pressable
+                  onPress={handleDiscardRecording}
+                  hitSlop={12}
+                  accessibilityRole="button"
+                  accessibilityLabel="Discard recording"
+                  className="active:opacity-70"
+                >
+                  <IconSymbol name="xmark" size={12} color={M.muted} />
+                </Pressable>
+              </View>
+            )}
+
             {/* Footer */}
             <View
               style={{
@@ -437,6 +628,7 @@ export default function JournalScreen() {
                 paddingHorizontal: 20, paddingVertical: 12,
               }}
             >
+              {/* Word count */}
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                 <Text style={{ fontSize: 11, color: editorWordCount > 150 ? M.accent : M.muted }}>
                   {t("journal.words", { count: editorWordCount, defaultValue: `${editorWordCount} words` })}
@@ -447,21 +639,75 @@ export default function JournalScreen() {
                   </Text>
                 )}
               </View>
-              {isEditing && (
-                <Pressable
-                  onPress={() => handleDelete(editingId!, title)}
-                  hitSlop={16}
-                  accessibilityRole="button"
-                  accessibilityLabel={t("common.delete")}
-                  style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
-                  className="active:opacity-70"
-                >
-                  <IconSymbol name="trash" size={13} color="#f87171" />
-                  <Text style={{ fontSize: 12, fontWeight: "600", color: "#f87171" }}>
-                    {t("common.delete")}
-                  </Text>
-                </Pressable>
-              )}
+
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
+                {/* Mic / recording control */}
+                {voice.state === "idle" && (
+                  <Pressable
+                    onPress={voice.startRecording}
+                    hitSlop={12}
+                    accessibilityRole="button"
+                    accessibilityLabel="Record voice note"
+                    style={{
+                      flexDirection: "row", alignItems: "center", gap: 5,
+                      borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5,
+                      backgroundColor: `${M.border}80`,
+                    }}
+                    className="active:opacity-70"
+                  >
+                    <IconSymbol name="mic" size={13} color={M.muted} />
+                    <Text style={{ fontSize: 11, color: M.muted, fontWeight: "600" }}>REC</Text>
+                  </Pressable>
+                )}
+
+                {voice.state === "recording" && (
+                  <Pressable
+                    onPress={voice.stopRecording}
+                    hitSlop={12}
+                    accessibilityRole="button"
+                    accessibilityLabel="Stop recording"
+                    style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+                    className="active:opacity-70"
+                  >
+                    <Animated.View
+                      style={{
+                        width: 8, height: 8, borderRadius: 4,
+                        backgroundColor: "#f87171",
+                        transform: [{ scale: pulseAnim }],
+                      }}
+                    />
+                    <Text style={{ fontSize: 11, fontWeight: "700", color: "#f87171" }}>
+                      {formatSeconds(voice.elapsed)}
+                    </Text>
+                    <View
+                      style={{
+                        width: 20, height: 20, borderRadius: 5,
+                        backgroundColor: "#f87171",
+                        alignItems: "center", justifyContent: "center",
+                      }}
+                    >
+                      <View style={{ width: 8, height: 8, borderRadius: 1, backgroundColor: M.ink }} />
+                    </View>
+                  </Pressable>
+                )}
+
+                {/* Delete entry */}
+                {isEditing && (
+                  <Pressable
+                    onPress={() => handleDelete(editingId!, title)}
+                    hitSlop={16}
+                    accessibilityRole="button"
+                    accessibilityLabel={t("common.delete")}
+                    style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+                    className="active:opacity-70"
+                  >
+                    <IconSymbol name="trash" size={13} color="#f87171" />
+                    <Text style={{ fontSize: 12, fontWeight: "600", color: "#f87171" }}>
+                      {t("common.delete")}
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
             </View>
           </SafeAreaView>
         </KeyboardAvoidingView>
