@@ -1,6 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getProverbsForLanguage } from "@/lib/data/proverbs";
 import { hapticError, hapticSuccess } from "@/lib/haptics";
+import { shuffle } from "@/lib/shuffle";
 import { apiFetch } from "@/lib/api";
 import { playCorrectSound, playFinishSound, playIncorrectSound } from "@/lib/sounds";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -23,22 +24,38 @@ interface ProverbPuzzle {
   correctIndex: number;
 }
 
-function pickBlankWord(text: string): { word: string; index: number } | null {
-  const words = text.split(" ").filter((w) => w.trim().length > 2);
-  if (words.length === 0) return null;
-  const word = words[Math.floor(Math.random() * words.length)];
-  const idx = text.indexOf(word);
-  return { word, index: idx };
+// Strip leading/trailing punctuation so the answer tile matches the bare word.
+function stripPunctuation(token: string): string {
+  return token.replace(/^[^\p{L}\p{M}]+|[^\p{L}\p{M}]+$/gu, "");
+}
+
+// Pick a word to blank, identified by its token position (not by string search,
+// which would mis-match substrings or repeated words).
+function pickBlankWord(text: string): { word: string; tokenIndex: number } | null {
+  const tokens = text.split(/\s+/);
+  const candidates = tokens
+    .map((raw, i) => ({ raw, i }))
+    .filter(({ raw }) => stripPunctuation(raw).length > 2);
+  if (candidates.length === 0) return null;
+  const pick = candidates[Math.floor(Math.random() * candidates.length)]!;
+  return { word: stripPunctuation(pick.raw), tokenIndex: pick.i };
+}
+
+// Replace the token at the given position with a blank, leaving the rest intact.
+function blankToken(text: string, tokenIndex: number): string {
+  const tokens = text.split(/\s+/);
+  tokens[tokenIndex] = "______";
+  return tokens.join(" ");
 }
 
 function buildPuzzles(proverbs: Proverb[]): ProverbPuzzle[] {
-  const shuffled = [...proverbs].sort(() => Math.random() - 0.5).slice(0, SESSION_SIZE);
+  const shuffled = shuffle(proverbs).slice(0, SESSION_SIZE);
   const puzzles: ProverbPuzzle[] = [];
 
   for (const proverb of shuffled) {
     const blank = pickBlankWord(proverb.text);
     if (!blank) continue;
-    const displayText = proverb.text.replace(blank.word, "______");
+    const displayText = blankToken(proverb.text, blank.tokenIndex);
     const distractors = shuffled
       .filter((p) => p.id !== proverb.id)
       .map((p) => {
@@ -48,7 +65,7 @@ function buildPuzzles(proverbs: Proverb[]): ProverbPuzzle[] {
       .filter((w): w is string => !!w && w !== blank.word)
       .slice(0, 3);
     if (distractors.length < 3) continue;
-    const allOptions = [blank.word, ...distractors].sort(() => Math.random() - 0.5);
+    const allOptions = shuffle([blank.word, ...distractors]);
     puzzles.push({
       proverb,
       blankWord: blank.word,

@@ -27,10 +27,17 @@ wordChallengeRouter.post("/", async (c) => {
     return c.json({ error: "wordId, sentence, and languageId are required" }, 400);
   }
 
+  // One submission per user per word (DB-enforced) — a repeat is a no-op so
+  // the same word can't be resubmitted to farm XP/streaks.
   const [row] = await db
     .insert(wordChallengeSubmissions)
     .values({ userId, wordId, sentence, languageId })
+    .onConflictDoNothing()
     .returning({ id: wordChallengeSubmissions.id });
+
+  if (!row) {
+    return c.json({ alreadySubmitted: true, xpEarned: 0 }, 200);
+  }
 
   const [xpResult] = await Promise.all([
     awardXP(userId, 5, "quiz"),

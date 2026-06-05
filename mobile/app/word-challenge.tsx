@@ -179,12 +179,12 @@ export default function WordChallengeScreen() {
                   <Text style={{ fontSize: 14, color: M.sub, marginTop: 4 }}>{word.french}</Text>
                 )}
               </View>
-              {word.exampleSentence && (
+              {word.example && (
                 <View style={{ borderRadius: 14, backgroundColor: M.bg, borderWidth: 1, borderColor: M.border, borderLeftWidth: 4, borderLeftColor: M.accent, padding: 16 }}>
                   <Text style={{ fontSize: 11, fontWeight: "800", letterSpacing: 1.5, color: M.accent, marginBottom: 6 }}>EXAMPLE</Text>
-                  <Text style={{ fontSize: 15, fontStyle: "italic", color: M.text, lineHeight: 22 }}>{word.exampleSentence}</Text>
-                  {word.exampleSentenceTranslation && (
-                    <Text style={{ fontSize: 13, color: M.sub, marginTop: 6, lineHeight: 18 }}>{word.exampleSentenceTranslation}</Text>
+                  <Text style={{ fontSize: 15, fontStyle: "italic", color: M.text, lineHeight: 22 }}>{word.example}</Text>
+                  {word.exampleTranslation && (
+                    <Text style={{ fontSize: 13, color: M.sub, marginTop: 6, lineHeight: 18 }}>{word.exampleTranslation}</Text>
                   )}
                 </View>
               )}

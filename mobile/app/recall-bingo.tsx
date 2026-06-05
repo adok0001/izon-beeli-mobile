@@ -127,9 +127,15 @@ export default function RecallBingoScreen() {
   const callIndexRef = useRef(0);
 
   const startGame = useCallback(() => {
-    const pool: DictionaryEntry[] = dueWords.length >= TOTAL_TILES - 1
-      ? dueWords
-      : [...dueWords, ...allWords.filter((e) => !dueWords.find((d) => d.id === e.id))];
+    // dueWords are word-bank references; resolve each to its dictionary entry
+    // so the tiles have an actual word/english to display and call.
+    const dueEntries: DictionaryEntry[] = dueWords
+      .map((d) => allWords.find((e) => e.id === d.dictionaryEntryId))
+      .filter((e): e is DictionaryEntry => !!e);
+
+    const pool: DictionaryEntry[] = dueEntries.length >= TOTAL_TILES - 1
+      ? dueEntries
+      : [...dueEntries, ...allWords.filter((e) => !dueEntries.find((d) => d.id === e.id))];
 
     if (pool.length < TOTAL_TILES - 1) return;
 
@@ -196,7 +202,7 @@ export default function RecallBingoScreen() {
     }
   }, [currentCallWord]);
 
-  const canStart = dueWords.length + allWords.length >= TOTAL_TILES - 1;
+  const canStart = allWords.length >= TOTAL_TILES - 1;
 
   if (phase === "idle") {
     return (
