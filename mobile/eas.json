@@ -31,7 +31,9 @@
       "extends": "base",
       "environment": "production",
       "ios": {
-        "image": "macos-sequoia-15.6-xcode-26.2"
+        "image": "macos-sequoia-15.6-xcode-26.2",
+        "scheme": "Beeli",
+        "buildConfiguration": "Release"
       }
     },
     "development-simulator": {

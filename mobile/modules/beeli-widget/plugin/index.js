@@ -228,9 +228,8 @@ const withIosWidgetExtension = (config) => (0, config_plugins_1.withXcodeProject
     // Build configurations
     const sharedSettings = {
         CODE_SIGN_ENTITLEMENTS: '"BeeliWidget/BeeliWidget.entitlements"',
-        CODE_SIGN_STYLE: "Manual",
+        CODE_SIGN_STYLE: "Automatic",
         DEVELOPMENT_TEAM: "FWL2W5X58S",
-        PROVISIONING_PROFILE: "134ad8e4-1bc7-4370-a2c6-67d4eaca761e",
         CURRENT_PROJECT_VERSION: "1",
         GENERATE_INFOPLIST_FILE: "NO",
         INFOPLIST_FILE: '"BeeliWidget/Info.plist"',
