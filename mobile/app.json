@@ -71,7 +71,8 @@
       ],
       "@react-native-community/datetimepicker",
       "expo-web-browser",
-      "./modules/beeli-widget/plugin"
+      "./modules/beeli-widget/plugin",
+      "./plugins/withResourceBundleSigning"
     ],
     "experiments": {
       "typedRoutes": true,
