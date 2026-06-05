@@ -65,6 +65,10 @@ const MAPPING = {
   'bell': 'notifications-none',
   'trophy.fill': 'emoji-events',
   'megaphone': 'campaign',
+  'globe.fill': 'language',
+  'play.circle.fill': 'play-circle',
+  'doc.text.fill': 'article',
+  'film.stack': 'video-library',
 } as IconMapping;
 
 /**
