@@ -914,3 +914,23 @@ export const gameSessionPlayersRelations = relations(
     }),
   })
 );
+
+// ---------- Word Challenge Submissions ----------
+
+export const wordChallengeSubmissions = pgTable(
+  "word_challenge_submissions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    wordId: varchar("word_id", { length: 64 }).notNull(),
+    sentence: text("sentence").notNull(),
+    languageId: varchar("language_id", { length: 32 }).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("wc_submissions_user_idx").on(table.userId),
+    index("wc_submissions_word_idx").on(table.wordId),
+  ]
+);
