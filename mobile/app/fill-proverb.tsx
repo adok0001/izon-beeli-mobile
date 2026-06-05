@@ -116,6 +116,7 @@ export default function FillTheProverbScreen() {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [locked, setLocked] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
+  const correctRef = useRef(0);
   const [startTime] = useState(Date.now());
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
@@ -131,7 +132,7 @@ export default function FillTheProverbScreen() {
         apiFetch("/quiz-results", {
           method: "POST",
           token,
-          body: JSON.stringify({ languageId: selectedLanguageId, score: correctCount, accuracy: puzzles.length > 0 ? Math.round((correctCount / puzzles.length) * 100) : 0, durationMs: duration * 1000, questionCount: puzzles.length }),
+          body: JSON.stringify({ languageId: selectedLanguageId, score: correctRef.current, accuracy: puzzles.length > 0 ? Math.round((correctRef.current / puzzles.length) * 100) : 0, durationMs: duration * 1000, questionCount: puzzles.length }),
         }).catch(() => {});
       });
       return;
@@ -142,7 +143,7 @@ export default function FillTheProverbScreen() {
       setLocked(false);
       Animated.timing(fadeAnim, { toValue: 1, duration: 220, useNativeDriver: true }).start();
     });
-  }, [index, puzzles.length, correctCount, fadeAnim, startTime, getToken]);
+  }, [index, puzzles.length, fadeAnim, startTime, getToken, selectedLanguageId]);
 
   const handleOption = useCallback((optionIndex: number) => {
     if (locked || !current) return;
@@ -152,6 +153,7 @@ export default function FillTheProverbScreen() {
     if (isCorrect) {
       hapticSuccess();
       playCorrectSound();
+      correctRef.current += 1;
       setCorrectCount((c) => c + 1);
     } else {
       hapticError();
@@ -192,7 +194,7 @@ export default function FillTheProverbScreen() {
           </Text>
           <View style={{ width: "100%", gap: 10, marginTop: 32 }}>
             <Pressable
-              onPress={() => { setIndex(0); setCorrectCount(0); setSelectedOption(null); setLocked(false); setPhase("active"); }}
+              onPress={() => { setIndex(0); setCorrectCount(0); correctRef.current = 0; setSelectedOption(null); setLocked(false); setPhase("active"); }}
               style={{ borderRadius: 14, paddingVertical: 16, backgroundColor: M.accent, alignItems: "center" }}
             >
               <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>Play Again</Text>

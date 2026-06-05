@@ -2,6 +2,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { apiFetch } from "@/lib/api";
 import { getSentencesForLanguage } from "@/lib/data/sentences";
 import { hapticError, hapticSuccess, hapticTap } from "@/lib/haptics";
+import { shuffle } from "@/lib/shuffle";
 import { playCorrectSound, playFinishSound, playIncorrectSound } from "@/lib/sounds";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
@@ -12,10 +13,6 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { Animated, Pressable, ScrollView, Text, View } from "react-native";
 
 const SESSION_SIZE = 8;
-
-function shuffle<T>(arr: T[]): T[] {
-  return [...arr].sort(() => Math.random() - 0.5);
-}
 
 interface WordTile {
   id: string;

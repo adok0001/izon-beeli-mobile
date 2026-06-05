@@ -1,6 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { apiFetch } from "@/lib/api";
 import { hapticError, hapticHeavy, hapticSuccess, hapticTap } from "@/lib/haptics";
+import { shuffle } from "@/lib/shuffle";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { useWordsDueForReview } from "@/lib/hooks/use-wordbank";
 import { playCorrectSound, playFinishSound, playIncorrectSound } from "@/lib/sounds";
@@ -17,10 +18,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const GRID_SIZE = 5;
 const TOTAL_TILES = GRID_SIZE * GRID_SIZE;
 const FREE_CELL = Math.floor(TOTAL_TILES / 2); // index 12 = center
-
-function shuffle<T>(arr: T[]): T[] {
-  return [...arr].sort(() => Math.random() - 0.5);
-}
 
 interface BingoTile {
   word: string;

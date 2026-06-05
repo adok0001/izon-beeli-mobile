@@ -10,7 +10,7 @@ import { useAuth } from "@clerk/clerk-expo";
 import { Stack, useRouter } from "expo-router";
 import * as Speech from "expo-speech";
 import { Audio } from "expo-av";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -92,6 +92,15 @@ export default function WordChallengeScreen() {
     setIsRecording(false);
     setRecordingDone(true);
     hapticSuccess();
+  }, []);
+
+  // Stop and release any in-flight recording if the screen unmounts mid-record.
+  useEffect(() => () => {
+    if (recordingRef.current) {
+      recordingRef.current.stopAndUnloadAsync().catch(() => {});
+      recordingRef.current = null;
+      Audio.setAudioModeAsync({ allowsRecordingIOS: false }).catch(() => {});
+    }
   }, []);
 
   const submitSentence = useCallback(async () => {

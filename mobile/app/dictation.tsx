@@ -1,6 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getSentencesForLanguage } from "@/lib/data/sentences";
 import { hapticError, hapticSuccess, hapticTap } from "@/lib/haptics";
+import { shuffle } from "@/lib/shuffle";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import { useAudioStore } from "@/store/audio-store";
@@ -21,10 +22,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const SESSION_SIZE = 6;
 const BUNDLED_PHRASE_AUDIO: Record<string, string> = {};
-
-function shuffle<T>(arr: T[]): T[] {
-  return [...arr].sort(() => Math.random() - 0.5);
-}
 
 function normalise(s: string): string {
   return s.toLowerCase().replace(/[^a-zÀ-ɏḀ-ỿ]/gi, "").trim();

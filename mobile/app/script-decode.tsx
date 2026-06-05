@@ -4,9 +4,11 @@ import type { GeezCharacter } from "@/lib/data/geez/fidel-chart";
 import { NSIBIDI_CHARACTERS } from "@/lib/data/nsibidi";
 import type { NsibidiCharacter } from "@/lib/data/nsibidi";
 import { hapticError, hapticSuccess } from "@/lib/haptics";
+import { shuffle } from "@/lib/shuffle";
 import { apiFetch } from "@/lib/api";
 import { playCorrectSound, playFinishSound, playIncorrectSound } from "@/lib/sounds";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useLanguageStore } from "@/store/language-store";
 import { useAuth } from "@clerk/clerk-expo";
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -25,10 +27,6 @@ interface DecodeQuestion {
 
 const SESSION_SIZE = 10;
 const FEEDBACK_DELAY = 1000;
-
-function shuffle<T>(arr: T[]): T[] {
-  return [...arr].sort(() => Math.random() - 0.5);
-}
 
 function buildGeezQuestions(): DecodeQuestion[] {
   const pool = shuffle(FIDEL_CHART).slice(0, SESSION_SIZE + 12);
@@ -160,6 +158,7 @@ export default function ScriptDecodeScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
   const { getToken } = useAuth();
+  const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
 
   const [mode, setMode] = useState<ScriptMode | null>(null);
   const [phase, setPhase] = useState<"config" | "active" | "results">("config");
@@ -168,6 +167,7 @@ export default function ScriptDecodeScreen() {
   const [selected, setSelected] = useState<number | null>(null);
   const [locked, setLocked] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
+  const correctRef = useRef(0);
   const [startTime, setStartTime] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
@@ -179,6 +179,7 @@ export default function ScriptDecodeScreen() {
     setQuestions(qs);
     setIndex(0);
     setCorrectCount(0);
+    correctRef.current = 0;
     setSelected(null);
     setLocked(false);
     setStartTime(Date.now());
@@ -195,7 +196,7 @@ export default function ScriptDecodeScreen() {
         apiFetch("/quiz-results", {
           method: "POST",
           token,
-          body: JSON.stringify({ languageId: selectedLanguageId, score: correctCount, accuracy: questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0, durationMs: duration * 1000, questionCount: questions.length }),
+          body: JSON.stringify({ languageId: selectedLanguageId, score: correctRef.current, accuracy: questions.length > 0 ? Math.round((correctRef.current / questions.length) * 100) : 0, durationMs: duration * 1000, questionCount: questions.length }),
         }).catch(() => {});
       });
       return;
@@ -206,7 +207,7 @@ export default function ScriptDecodeScreen() {
       setLocked(false);
       Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }).start();
     });
-  }, [index, questions.length, correctCount, fadeAnim, startTime, getToken]);
+  }, [index, questions.length, fadeAnim, startTime, getToken, selectedLanguageId]);
 
   const handleOption = useCallback((optIdx: number) => {
     if (locked) return;
@@ -215,7 +216,7 @@ export default function ScriptDecodeScreen() {
     setLocked(true);
     setSelected(optIdx);
     const isCorrect = optIdx === current.correctIndex;
-    if (isCorrect) { hapticSuccess(); playCorrectSound(); setCorrectCount((c) => c + 1); }
+    if (isCorrect) { hapticSuccess(); playCorrectSound(); correctRef.current += 1; setCorrectCount((c) => c + 1); }
     else { hapticError(); playIncorrectSound(); }
     setTimeout(advance, FEEDBACK_DELAY);
   }, [locked, questions, index, advance]);

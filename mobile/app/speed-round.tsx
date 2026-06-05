@@ -2,6 +2,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { apiFetch } from "@/lib/api";
 import { Circle, Svg } from "react-native-svg";
 import { hapticError, hapticHeavy, hapticSuccess } from "@/lib/haptics";
+import { shuffle } from "@/lib/shuffle";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { playCorrectSound, playFinishSound, playIncorrectSound } from "@/lib/sounds";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -21,10 +22,6 @@ interface SpeedQuestion {
   correct: string;
   options: string[];
   correctIndex: number;
-}
-
-function shuffle<T>(arr: T[]): T[] {
-  return [...arr].sort(() => Math.random() - 0.5);
 }
 
 function buildQuestions(entries: DictionaryEntry[]): SpeedQuestion[] {
