@@ -5,7 +5,6 @@
   "build": {
     "base": {
       "node": "20.19.4",
-      "image": "macos-sequoia-15.2-xcode-16.2",
       "env": {
         "NODE_ENV": "development"
       }
@@ -14,25 +13,36 @@
       "extends": "base",
       "developmentClient": true,
       "distribution": "internal",
-      "environment": "development"
+      "environment": "development",
+      "ios": {
+        "image": "macos-sequoia-15.2-xcode-16.2",
+        "simulator": false
+      }
     },
     "preview": {
       "extends": "base",
       "distribution": "internal",
-      "environment": "preview"
+      "environment": "preview",
+      "ios": {
+        "image": "macos-sequoia-15.2-xcode-16.2"
+      }
     },
     "production": {
       "extends": "base",
-      "environment": "production"
+      "environment": "production",
+      "ios": {
+        "image": "macos-sequoia-15.2-xcode-16.2"
+      }
     },
     "development-simulator": {
       "extends": "base",
       "developmentClient": true,
       "distribution": "internal",
+      "environment": "development",
       "ios": {
+        "image": "macos-sequoia-15.2-xcode-16.2",
         "simulator": true
-      },
-      "environment": "development"
+      }
     }
   },
   "submit": {
