@@ -3,19 +3,29 @@
     "version": ">= 15.0.0"
   },
   "build": {
+    "base": {
+      "node": "20.18.0",
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
     "development": {
+      "extends": "base",
       "developmentClient": true,
       "distribution": "internal",
       "environment": "development"
     },
     "preview": {
+      "extends": "base",
       "distribution": "internal",
       "environment": "preview"
     },
     "production": {
+      "extends": "base",
       "environment": "production"
     },
     "development-simulator": {
+      "extends": "base",
       "developmentClient": true,
       "distribution": "internal",
       "ios": {
