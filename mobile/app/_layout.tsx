@@ -217,6 +217,16 @@ export default function RootLayout() {
                   <Stack.Screen name="bounty-edit" options={{ presentation: "modal", headerShown: false }} />
                   <Stack.Screen name="word/[id]" options={{ headerBackTitle: "Back" }} />
                   <Stack.Screen name="discover-story/[id]" options={{ headerShown: false, animation: "fade" }} />
+                  <Stack.Screen name="speed-round" options={{ presentation: "modal", headerShown: false }} />
+                  <Stack.Screen name="recall-bingo" options={{ headerBackTitle: "Back" }} />
+                  <Stack.Screen name="dictation" options={{ headerBackTitle: "Back" }} />
+                  <Stack.Screen name="say-it-back" options={{ headerBackTitle: "Back" }} />
+                  <Stack.Screen name="fill-proverb" options={{ headerBackTitle: "Back" }} />
+                  <Stack.Screen name="sentence-builder" options={{ headerBackTitle: "Back" }} />
+                  <Stack.Screen name="script-decode" options={{ presentation: "modal", headerShown: false }} />
+                  <Stack.Screen name="trace-symbol" options={{ headerBackTitle: "Back" }} />
+                  <Stack.Screen name="etymology-trail" options={{ headerBackTitle: "Back" }} />
+                  <Stack.Screen name="word-challenge" options={{ headerBackTitle: "Back" }} />
                 </Stack>
               </GestureHandlerRootView>
               <StatusBar style="light" />

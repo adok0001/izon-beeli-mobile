@@ -1,4 +1,6 @@
+import { ContributionSpotlightCard } from "@/components/contribution-spotlight-card";
 import { EnrolledLanguageBar } from "@/components/language-picker";
+import { WordChallengeCard } from "@/components/word-challenge-card";
 import { LoadingScreen } from "@/components/loading-screen";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { NotificationBell } from "@/components/notifications/notification-center";
@@ -888,6 +890,8 @@ export default function LearnScreen() {
                 )}
                 <UpNextCard languageId={selectedLanguageId} />
                 <BountyTeaser languageId={selectedLanguageId ?? ""} />
+                <WordChallengeCard languageId={selectedLanguageId ?? ""} />
+                <ContributionSpotlightCard />
               </View>
             }
             showsVerticalScrollIndicator={false}

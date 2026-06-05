@@ -3,28 +3,59 @@
     "version": ">= 15.0.0"
   },
   "build": {
+    "base": {
+      "node": "20.19.4",
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
     "development": {
+      "extends": "base",
       "developmentClient": true,
       "distribution": "internal",
-      "environment": "development"
+      "environment": "development",
+      "ios": {
+        "image": "macos-sequoia-15.6-xcode-26.2",
+        "simulator": false
+      }
     },
     "preview": {
+      "extends": "base",
       "distribution": "internal",
-      "environment": "preview"
+      "environment": "preview",
+      "ios": {
+        "image": "macos-sequoia-15.6-xcode-26.2"
+      }
     },
     "production": {
-      "environment": "production"
+      "extends": "base",
+      "environment": "production",
+      "ios": {
+        "image": "macos-sequoia-15.6-xcode-26.2",
+        "bundleIdentifier": "com.izonbeeli.app",
+        "targets": {
+          "BeeliWidget": {
+            "bundleIdentifier": "com.izonbeeli.app.BeeliWidget"
+          }
+        }
+      }
     },
     "development-simulator": {
+      "extends": "base",
       "developmentClient": true,
       "distribution": "internal",
+      "environment": "development",
       "ios": {
+        "image": "macos-sequoia-15.6-xcode-26.2",
         "simulator": true
-      },
-      "environment": "development"
+      }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "ascAppId": "6759113274"
+      }
+    }
   }
 }

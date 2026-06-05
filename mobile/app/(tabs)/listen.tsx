@@ -1,3 +1,4 @@
+import { ActivityGrid } from "@/components/activity-grid";
 import { SymbolOfTheDay } from "@/components/adinkra/symbol-of-the-day";
 import { CulturalSection } from "@/components/cultural/cultural-section";
 import { DailyChallengeCards } from "@/components/daily-challenge-card";
@@ -328,6 +329,10 @@ export default function DiscoverScreen() {
           <SongOfTheWeekCard languageId={selectedLanguageId} />
           <DailyChallengeCards />
         </View>
+
+        {/* ── The Playground ── */}
+        <ExhibitHeader label="THE PLAYGROUND" />
+        <ActivityGrid />
 
         {/* ── The Workshop ── */}
         <ExhibitHeader label={t("practice.sectionActivities")} />
