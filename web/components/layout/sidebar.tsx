@@ -10,6 +10,7 @@ import {
     BookOpen,
     BookText,
     Brain,
+    Clapperboard,
     ClipboardList,
     FileText,
     FlipHorizontal2,
@@ -64,8 +65,9 @@ const SECONDARY_GROUPS = [
   {
     labelKey: "common.exploreSection",
     items: [
-      { href: "/dictionary", labelKey: "dictionaryPage.title", icon: BookText, tourId: undefined },
-      { href: "/bounties",   labelKey: "bounties.title",       icon: Star,     tourId: undefined },
+      { href: "/culture",    labelKey: "tabs.culture",         icon: Clapperboard, tourId: undefined },
+      { href: "/dictionary", labelKey: "dictionaryPage.title", icon: BookText,     tourId: undefined },
+      { href: "/bounties",   labelKey: "bounties.title",       icon: Star,         tourId: undefined },
     ],
   },
   {

@@ -3,10 +3,10 @@
 import { cn } from "@/lib/utils";
 import {
     BookOpen,
+    Compass,
     Globe2,
     NotebookPen,
     Sparkles,
-    UserRound,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -17,7 +17,7 @@ const NAV_ITEMS = [
   { href: "/listen", labelKey: "tabs.practice", icon: Sparkles, tourId: "nav-listen" },
   { href: "/journal", labelKey: "tabs.journal", icon: NotebookPen, tourId: "nav-journal" },
   { href: "/feed", labelKey: "tabs.feed", icon: Globe2, tourId: "nav-feed" },
-  { href: "/profile", labelKey: "tabs.profile", icon: UserRound, tourId: "nav-profile" },
+  { href: "/explore", labelKey: "common.exploreSection", icon: Compass, tourId: "nav-explore" },
 ] as const;
 
 export function MobileNav() {

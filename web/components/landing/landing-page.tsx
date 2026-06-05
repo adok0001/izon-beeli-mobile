@@ -1137,6 +1137,7 @@ export function LandingPage() {
             <Link href="/privacy" className="hover:text-neutral-400 transition-colors">Privacy</Link>
             <Link href="/support" className="hover:text-neutral-400 transition-colors">Support</Link>
             <Link href="/for-educators" className="hover:text-neutral-400 transition-colors">For Educators</Link>
+            <Link href="/culture" className="hover:text-neutral-400 transition-colors">Blog</Link>
             <Link href="/learn" className="text-amber-500 hover:text-amber-400 font-semibold transition-colors">
               Get Started
             </Link>
