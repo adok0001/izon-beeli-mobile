@@ -9,8 +9,7 @@ const PATCH = `
           config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
         end
       end
-    end
-`;
+    end`;
 
 module.exports = function withResourceBundleSigning(config) {
   return withDangerousMod(config, [
@@ -19,14 +18,28 @@ module.exports = function withResourceBundleSigning(config) {
       const podfilePath = path.join(config.modRequest.platformProjectRoot, "Podfile");
       let podfile = fs.readFileSync(podfilePath, "utf8");
 
-      if (!podfile.includes("CODE_SIGNING_ALLOWED")) {
-        podfile = podfile.replace(
-          /(\s*react_native_post_install\([\s\S]*?\))\s*\n(\s*end\s*\nend)/,
-          `$1\n${PATCH}\n  $2`
-        );
-        fs.writeFileSync(podfilePath, podfile);
+      if (podfile.includes("CODE_SIGNING_ALLOWED")) {
+        return config;
       }
 
+      // Insert patch just before the closing `end` of the post_install block
+      podfile = podfile.replace(
+        "react_native_post_install(\n      installer,",
+        `react_native_post_install(\n      installer,`
+      );
+
+      // Find post_install block and append before its closing end
+      const postInstallEnd = "  end\nend";
+      const lastIndex = podfile.lastIndexOf(postInstallEnd);
+      if (lastIndex !== -1) {
+        podfile =
+          podfile.slice(0, lastIndex) +
+          PATCH +
+          "\n" +
+          podfile.slice(lastIndex);
+      }
+
+      fs.writeFileSync(podfilePath, podfile);
       return config;
     },
   ]);
