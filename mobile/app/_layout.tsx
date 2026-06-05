@@ -216,6 +216,7 @@ export default function RootLayout() {
                   <Stack.Screen name="bounty-create" options={{ presentation: "modal", headerShown: false }} />
                   <Stack.Screen name="bounty-edit" options={{ presentation: "modal", headerShown: false }} />
                   <Stack.Screen name="word/[id]" options={{ headerBackTitle: "Back" }} />
+                  <Stack.Screen name="discover-story/[id]" options={{ headerShown: false, animation: "fade" }} />
                   <Stack.Screen name="speed-round" options={{ presentation: "modal", headerShown: false }} />
                   <Stack.Screen name="recall-bingo" options={{ headerBackTitle: "Back" }} />
                   <Stack.Screen name="dictation" options={{ headerBackTitle: "Back" }} />

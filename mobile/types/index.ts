@@ -444,3 +444,57 @@ export interface DashboardStats {
 export interface StreakCalendar {
   activeDays: string[]; // YYYY-MM-DD
 }
+
+// --- Discover (Blog / Podcast / Film) ---
+
+export type DiscoverContentType = "blog" | "podcast" | "film";
+
+export interface DiscoverItem {
+  id: string;
+  type: DiscoverContentType;
+  title: string;
+  description: string;
+  author: string;
+  publishedAt: string; // ISO-8601
+  /** Seconds for podcast/film; reading seconds for blog */
+  duration: number;
+  coverGradient: [string, string];
+  coverEmoji: string;
+  featured?: boolean;
+  audioUrl?: string;
+  videoUrl?: string;
+  storyId?: string;
+  contentUrl?: string;
+}
+
+export type StorySceneType = "narrative" | "choice" | "conclusion";
+
+export interface StoryChoice {
+  id: string;
+  text: string;
+  nextSceneId: string;
+}
+
+export interface StoryScene {
+  id: string;
+  type: StorySceneType;
+  gradient: [string, string];
+  backgroundEmoji: string;
+  title?: string;
+  text: string;
+  choices?: StoryChoice[];
+  nextSceneId?: string;
+}
+
+export interface InteractiveStory {
+  id: string;
+  title: string;
+  description: string;
+  coverGradient: [string, string];
+  coverEmoji: string;
+  estimatedMinutes: number;
+  author: string;
+  language?: string;
+  initialSceneId: string;
+  scenes: Record<string, StoryScene>;
+}

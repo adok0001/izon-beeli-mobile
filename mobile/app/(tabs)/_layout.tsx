@@ -75,6 +75,10 @@ function LeaderboardTabIcon({ color }: Readonly<{ color: string }>) {
   return <IconSymbol size={28} name="trophy.fill" color={color} />;
 }
 
+function CultureTabIcon({ color }: Readonly<{ color: string }>) {
+  return <IconSymbol size={28} name="film.stack" color={color} />;
+}
+
 function ProfileTabIcon({ color }: Readonly<{ color: string }>) {
   return <IconSymbol size={28} name="person.fill" color={color} />;
 }
@@ -178,6 +182,13 @@ export default function TabLayout() {
           options={{
             title: t("tabs.leaderboard"),
             tabBarIcon: LeaderboardTabIcon,
+          }}
+        />
+        <Tabs.Screen
+          name="culture"
+          options={{
+            title: t("tabs.culture"),
+            tabBarIcon: CultureTabIcon,
           }}
         />
         <Tabs.Screen
