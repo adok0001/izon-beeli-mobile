@@ -15,7 +15,7 @@
       "distribution": "internal",
       "environment": "development",
       "ios": {
-        "image": "macos-sequoia-15.3-xcode-16.2",
+        "image": "macos-sequoia-15.6-xcode-26.2",
         "simulator": false
       }
     },
@@ -24,14 +24,14 @@
       "distribution": "internal",
       "environment": "preview",
       "ios": {
-        "image": "macos-sequoia-15.3-xcode-16.2"
+        "image": "macos-sequoia-15.6-xcode-26.2"
       }
     },
     "production": {
       "extends": "base",
       "environment": "production",
       "ios": {
-        "image": "macos-sequoia-15.3-xcode-16.2"
+        "image": "macos-sequoia-15.6-xcode-26.2"
       }
     },
     "development-simulator": {
@@ -40,7 +40,7 @@
       "distribution": "internal",
       "environment": "development",
       "ios": {
-        "image": "macos-sequoia-15.3-xcode-16.2",
+        "image": "macos-sequoia-15.6-xcode-26.2",
         "simulator": true
       }
     }
