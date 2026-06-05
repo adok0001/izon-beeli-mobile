@@ -31,13 +31,7 @@
       "extends": "base",
       "environment": "production",
       "ios": {
-        "image": "macos-sequoia-15.6-xcode-26.2",
-        "bundleIdentifier": "com.izonbeeli.app",
-        "targets": {
-          "BeeliWidget": {
-            "bundleIdentifier": "com.izonbeeli.app.BeeliWidget"
-          }
-        }
+        "image": "macos-sequoia-15.6-xcode-26.2"
       }
     },
     "development-simulator": {

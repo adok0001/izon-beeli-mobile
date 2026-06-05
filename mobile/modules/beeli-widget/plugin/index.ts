@@ -228,8 +228,9 @@ const withIosWidgetExtension: ConfigPlugin = (config) =>
     // Build configurations
     const sharedSettings: Record<string, any> = {
       CODE_SIGN_ENTITLEMENTS: '"BeeliWidget/BeeliWidget.entitlements"',
-      CODE_SIGN_STYLE: "Automatic",
+      CODE_SIGN_STYLE: "Manual",
       DEVELOPMENT_TEAM: "FWL2W5X58S",
+      PROVISIONING_PROFILE: "6fa74258-249d-4bb2-98ea-09c5d2b47a56",
       CURRENT_PROJECT_VERSION: "1",
       GENERATE_INFOPLIST_FILE: "NO",
       INFOPLIST_FILE: '"BeeliWidget/Info.plist"',
