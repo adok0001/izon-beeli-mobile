@@ -72,7 +72,14 @@
       "@react-native-community/datetimepicker",
       "expo-web-browser",
       "./modules/beeli-widget/plugin",
-      "./plugins/withResourceBundleSigning"
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "extraPodfileContent": "\n    installer.pods_project.targets.each do |target|\n      if target.respond_to?(:product_type) && target.product_type == \"com.apple.product-type.bundle\"\n        target.build_configurations.each do |config|\n          config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'\n        end\n      end\n    end"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
