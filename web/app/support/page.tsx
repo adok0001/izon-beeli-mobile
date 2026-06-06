@@ -5,7 +5,7 @@ import Script from "next/script";
 const APP_NAME = "Beeli (Aurufie)";
 
 export const metadata: Metadata = {
-  title: `Support | ${APP_NAME}`,
+  title: "Support",
   description:
     "Get help with Beeli (Aurufie) — the African language learning app.",
   alternates: {

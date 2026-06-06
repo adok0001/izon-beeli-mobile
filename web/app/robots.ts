@@ -18,6 +18,8 @@ export default function robots(): MetadataRoute.Robots {
           "/word-review",
           "/feed",
           "/classroom",
+          "/explore",
+          "/mini-apps",
           // Auth flows
           "/sign-in",
           "/sign-up",

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Script from "next/script";
+import { breadcrumbJsonLd } from "@/lib/structured-data";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api";
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://izon-beeli.com";
@@ -121,10 +122,19 @@ export default async function LearnLanguagePage({
     })),
   };
 
+  const breadcrumbLd = breadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "Learn", path: "/learn" },
+    { name: lang.name, path: `/learn/${languageId}` },
+  ]);
+
   return (
     <>
       <Script id="ld-courses" type="application/ld+json" strategy="beforeInteractive">
         {JSON.stringify(jsonLd)}
+      </Script>
+      <Script id="ld-breadcrumb" type="application/ld+json" strategy="beforeInteractive">
+        {JSON.stringify(breadcrumbLd)}
       </Script>
 
       <main className="min-h-screen bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100">

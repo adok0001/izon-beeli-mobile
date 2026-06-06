@@ -4,7 +4,7 @@ import Link from "next/link";
 const APP_NAME = "Beeli (Aurufie)";
 
 export const metadata: Metadata = {
-  title: `Privacy Policy | ${APP_NAME}`,
+  title: "Privacy Policy",
   description:
     "Learn how Beeli collects, uses, and protects your personal data.",
   alternates: {

@@ -124,6 +124,8 @@ export default async function RootLayout({
     alternateName: APP_SECOND_NAME,
     url: BASE_URL,
     logo: `${BASE_URL}/favicon.svg`,
+    // TODO: add official social profile URLs (X, Instagram, TikTok, YouTube)
+    // so Google can associate them with the brand entity.
     sameAs: [],
   };
   const websiteJsonLd = {

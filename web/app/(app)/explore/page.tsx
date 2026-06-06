@@ -1,15 +1,12 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import {
-  BookOpen,
   BookText,
   Brain,
   Clapperboard,
   FileText,
   FlipHorizontal2,
   LayoutDashboard,
-  NotebookPen,
   Plus,
   Settings,
   Star,
