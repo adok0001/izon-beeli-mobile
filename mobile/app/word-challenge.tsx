@@ -1,6 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { apiFetch } from "@/lib/api";
-import { hapticSuccess, hapticTap } from "@/lib/haptics";
+import { hapticError, hapticSuccess, hapticTap } from "@/lib/haptics";
 import { useWordOfTheDay } from "@/lib/hooks/use-word-of-the-day";
 import { useSaveWord, useWordBank } from "@/lib/hooks/use-wordbank";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -52,7 +52,7 @@ export default function WordChallengeScreen() {
 
   const [tab, setTab] = useState<Tab>("learn");
   const [sentenceInput, setSentenceInput] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDone, setRecordingDone] = useState(false);
   const recordingRef = useRef<Audio.Recording | null>(null);
@@ -108,16 +108,22 @@ export default function WordChallengeScreen() {
 
   const submitSentence = useCallback(async () => {
     if (!sentenceInput.trim() || !word) return;
-    hapticSuccess();
-    const token = await getToken();
-    if (token) {
-      apiFetch("/word-challenge", {
+    hapticTap();
+    setSubmitStatus("submitting");
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("You need to be signed in to submit.");
+      await apiFetch("/word-challenge", {
         method: "POST",
         token,
         body: JSON.stringify({ wordId: word.id, sentence: sentenceInput.trim(), languageId: selectedLanguageId }),
-      }).catch(() => {});
+      });
+      hapticSuccess();
+      setSubmitStatus("success");
+    } catch {
+      hapticError();
+      setSubmitStatus("error");
     }
-    setSubmitted(true);
   }, [sentenceInput, word, getToken, selectedLanguageId]);
 
   if (!word) {
@@ -244,23 +250,34 @@ export default function WordChallengeScreen() {
               <Text style={{ fontSize: 14, color: M.sub, lineHeight: 20 }}>
                 Write a sentence using <Text style={{ fontWeight: "700", color: M.text }}>{word.word}</Text>
               </Text>
-              {!submitted ? (
+              {submitStatus !== "success" ? (
                 <>
                   <TextInput
                     value={sentenceInput}
                     onChangeText={setSentenceInput}
+                    editable={submitStatus !== "submitting"}
                     placeholder={`Use "${word.word}" in a sentence…`}
                     placeholderTextColor={M.muted}
                     multiline
                     style={{ borderRadius: 14, borderWidth: 2, borderColor: M.inputBorder, backgroundColor: M.inputBg, color: M.text, fontSize: 16, padding: 16, minHeight: 100, lineHeight: 24 }}
                   />
+                  {submitStatus === "error" && (
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 12, padding: 12, backgroundColor: "#ef444410", borderWidth: 1, borderColor: "#ef444430" }}>
+                      <IconSymbol name="xmark.circle.fill" size={18} color="#ef4444" />
+                      <Text style={{ flex: 1, fontSize: 13, color: "#ef4444", lineHeight: 18 }}>
+                        Couldn&apos;t submit your sentence. Check your connection and try again.
+                      </Text>
+                    </View>
+                  )}
                   <Pressable
                     onPress={submitSentence}
-                    disabled={!sentenceInput.trim()}
-                    style={{ borderRadius: 14, paddingVertical: 15, backgroundColor: sentenceInput.trim() ? M.accent : M.border, alignItems: "center" }}
+                    disabled={!sentenceInput.trim() || submitStatus === "submitting"}
+                    style={{ borderRadius: 14, paddingVertical: 15, backgroundColor: sentenceInput.trim() && submitStatus !== "submitting" ? M.accent : M.border, alignItems: "center" }}
                     className="active:opacity-80"
                   >
-                    <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>Submit</Text>
+                    <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>
+                      {submitStatus === "submitting" ? "Submitting…" : submitStatus === "error" ? "Try again" : "Submit"}
+                    </Text>
                   </Pressable>
                 </>
               ) : (
