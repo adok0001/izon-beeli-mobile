@@ -1,6 +1,7 @@
 import { FeedbackModal } from "@/components/feedback-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { XpLevelBadge } from "@/components/xp-level-badge";
+import { getAccent } from "@/constants/accent-colors";
 import { canAccessEducatorPanel, type DailyGoal, useCurrentUser, useUpdateDailyGoal } from "@/lib/hooks/use-current-user";
 import { analytics } from "@/lib/analytics";
 import { useAppConfig } from "@/lib/hooks/use-app-config";
@@ -104,6 +105,11 @@ function SectionLabel({ label }: { label: string }) {
 
 export default function ProfileScreen() {
   const M = useMuseumTheme();
+  const teal = getAccent("teal");
+  const indigo = getAccent("indigo");
+  const blue = getAccent("blue");
+  const orange = getAccent("orange");
+  const green = getAccent("green");
   const router = useRouter();
   const { signOut } = useAuth();
   const { user } = useUser();
@@ -169,18 +175,18 @@ export default function ProfileScreen() {
               </View>
             )}
             {reviewerRole === "elder" && (
-              <View style={{ borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: "rgba(45, 212, 191, 0.15)", borderWidth: 1, borderColor: "rgba(45, 212, 191, 0.3)" }}>
-                <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: "#2dd4bf" }}>{t("reviewerApplication.roleElder").toUpperCase()}</Text>
+              <View style={{ borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: teal.bg, borderWidth: 1, borderColor: teal.border }}>
+                <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: teal.solid }}>{t("reviewerApplication.roleElder").toUpperCase()}</Text>
               </View>
             )}
             {reviewerRole === "professor" && (
-              <View style={{ borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: "rgba(99, 102, 241, 0.15)", borderWidth: 1, borderColor: "rgba(99, 102, 241, 0.3)" }}>
-                <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: "#818cf8" }}>{t("reviewerApplication.roleProfessor").toUpperCase()}</Text>
+              <View style={{ borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: indigo.bg, borderWidth: 1, borderColor: indigo.border }}>
+                <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: indigo.solid }}>{t("reviewerApplication.roleProfessor").toUpperCase()}</Text>
               </View>
             )}
             {reviewerRole === "teacher" && (
-              <View style={{ borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: "rgba(96, 165, 250, 0.15)", borderWidth: 1, borderColor: "rgba(96, 165, 250, 0.3)" }}>
-                <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: "#60a5fa" }}>{t("reviewerApplication.roleTeacher").toUpperCase()}</Text>
+              <View style={{ borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: blue.bg, borderWidth: 1, borderColor: blue.border }}>
+                <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: blue.solid }}>{t("reviewerApplication.roleTeacher").toUpperCase()}</Text>
               </View>
             )}
           </View>
@@ -192,9 +198,9 @@ export default function ProfileScreen() {
             <XpLevelBadge points={summary?.points ?? 0} variant="full" />
           </View>
           <View style={{ flexDirection: "row", gap: 10 }}>
-            <StatCard icon="flame.fill" label={t("profile.streak")} value={String(summary?.streak ?? 0)} color="#fb923c" />
-            <StatCard icon="snowflake" label={t("profile.freezes")} value={String(summary?.freezeCount ?? 0)} color="#60a5fa" />
-            <StatCard icon="checkmark.circle.fill" label={t("profile.lessons")} value={String(summary?.completedCount ?? 0)} color="#4ade80" />
+            <StatCard icon="flame.fill" label={t("profile.streak")} value={String(summary?.streak ?? 0)} color={orange.solid} />
+            <StatCard icon="snowflake" label={t("profile.freezes")} value={String(summary?.freezeCount ?? 0)} color={blue.solid} />
+            <StatCard icon="checkmark.circle.fill" label={t("profile.lessons")} value={String(summary?.completedCount ?? 0)} color={green.solid} />
           </View>
         </View>
 
@@ -206,22 +212,22 @@ export default function ProfileScreen() {
               style={{
                 flexDirection: "row", alignItems: "center", gap: 14,
                 borderRadius: 16, padding: 16,
-                backgroundColor: "rgba(99, 102, 241, 0.08)",
-                borderWidth: 1, borderColor: "rgba(99, 102, 241, 0.25)",
-                borderLeftWidth: 4, borderLeftColor: "#6366f1",
+                backgroundColor: indigo.bg,
+                borderWidth: 1, borderColor: indigo.border,
+                borderLeftWidth: 4, borderLeftColor: indigo.solid,
               }}
               className="active:opacity-80"
             >
-              <View style={{ width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(99, 102, 241, 0.15)" }}>
-                <IconSymbol name="heart.fill" size={18} color="#818cf8" />
+              <View style={{ width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: indigo.bg }}>
+                <IconSymbol name="heart.fill" size={18} color={indigo.solid} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 13, fontWeight: "700", color: "#818cf8" }}>Support Beeli</Text>
-                <Text style={{ marginTop: 2, fontSize: 11, color: "rgba(129, 140, 248, 0.7)", lineHeight: 15 }}>
+                <Text style={{ fontSize: 13, fontWeight: "700", color: indigo.solid }}>Support Beeli</Text>
+                <Text style={{ marginTop: 2, fontSize: 11, color: M.sub, lineHeight: 15 }}>
                   You've reached {levelInfo.title}. Unlock Plus and keep us growing.
                 </Text>
               </View>
-              <IconSymbol name="chevron.right" size={14} color="#6366f1" />
+              <IconSymbol name="chevron.right" size={14} color={indigo.solid} />
             </Pressable>
           </View>
         ) : null}
@@ -261,10 +267,10 @@ export default function ProfileScreen() {
                 marginBottom: 8,
                 borderRadius: 14,
                 borderWidth: 1,
-                borderColor: "rgba(74, 222, 128, 0.2)",
+                borderColor: green.border,
                 borderLeftWidth: 4,
-                borderLeftColor: "#22c55e",
-                backgroundColor: "rgba(74, 222, 128, 0.06)",
+                borderLeftColor: green.solid,
+                backgroundColor: green.bg,
                 padding: 14,
                 flexDirection: "row",
                 alignItems: "center",
@@ -278,20 +284,20 @@ export default function ProfileScreen() {
                 style={{
                   width: 36, height: 36, borderRadius: 10,
                   alignItems: "center", justifyContent: "center",
-                  backgroundColor: "rgba(74, 222, 128, 0.12)", marginRight: 12,
+                  backgroundColor: green.bg, marginRight: 12,
                 }}
               >
-                <IconSymbol name="person.badge.plus" size={17} color="#4ade80" />
+                <IconSymbol name="person.badge.plus" size={17} color={green.solid} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 13, fontWeight: "700", color: "#4ade80" }}>
+                <Text style={{ fontSize: 13, fontWeight: "700", color: green.solid }}>
                   {t("learn.contributorBannerTitle")}
                 </Text>
-                <Text style={{ fontSize: 11, color: "rgba(74, 222, 128, 0.6)", marginTop: 1 }}>
+                <Text style={{ fontSize: 11, color: M.sub, marginTop: 1 }}>
                   {t("learn.contributorBannerCta")}
                 </Text>
               </View>
-              <IconSymbol name="chevron.right" size={14} color="#4ade80" />
+              <IconSymbol name="chevron.right" size={14} color={green.solid} />
             </Pressable>
           )}
           {(isAdmin || currentUser?.isReviewer) && (
