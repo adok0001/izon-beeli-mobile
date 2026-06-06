@@ -37,6 +37,9 @@ function TabButton({ label, active, onPress }: { label: string; active: boolean;
   );
 }
 
+// Per-route error boundary — shows a recoverable message if this screen throws.
+export { ErrorBoundary } from "@/components/screen-error-boundary";
+
 export default function WordChallengeScreen() {
   const M = useMuseumTheme();
   const router = useRouter();

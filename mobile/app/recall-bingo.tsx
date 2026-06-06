@@ -109,6 +109,9 @@ function TileView({ tile, index, onPress, shake }: { tile: BingoTile; index: num
   );
 }
 
+// Per-route error boundary — shows a recoverable message if this screen throws.
+export { ErrorBoundary } from "@/components/screen-error-boundary";
+
 export default function RecallBingoScreen() {
   const M = useMuseumTheme();
   const router = useRouter();

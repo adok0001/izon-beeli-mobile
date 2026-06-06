@@ -46,6 +46,9 @@ function WaveformDots({ active }: { active: boolean }) {
   );
 }
 
+// Per-route error boundary — shows a recoverable message if this screen throws.
+export { ErrorBoundary } from "@/components/screen-error-boundary";
+
 export default function SayItBackScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
