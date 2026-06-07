@@ -4,6 +4,7 @@ import { db } from "../db/index.js";
 import { pushTokens, reviewerApplications, users } from "../db/schema.js";
 import { elderMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
 import { sendPush } from "../lib/send-push.js";
+import { logger } from "../lib/logger.js";
 import {
   sendEmail,
   reviewerApplicationStatusEmailHtml,
@@ -144,7 +145,7 @@ reviewerApplicationsRouter.post("/", async (c) => {
           )
         );
       }),
-    ]).catch((err) => console.error("[reviewer-applications] notification error:", err));
+    ]).catch((err) => logger.error("[reviewer-applications] notification error:", err));
   }
 
   return c.json({ success: true }, 201);

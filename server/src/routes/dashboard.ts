@@ -221,7 +221,7 @@ dashboardRouter.get("/streak-calendar", async (c) => {
 
   // Remove any null values (rows with null timestamps produce null date strings)
   allDates.delete("null");
-  allDates.delete(null as any);
+  allDates.delete(null as unknown as string);
 
   return c.json({ activeDays: Array.from(allDates).filter(Boolean).sort() });
 });

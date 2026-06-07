@@ -1,3 +1,5 @@
+import { logger } from "./logger.js";
+
 const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
 
 export interface PushMessage {
@@ -33,7 +35,7 @@ export async function sendPushBatch(messages: PushMessage[]): Promise<PushTicket
   });
 
   if (!response.ok) {
-    console.error("[push] Expo API error:", response.status, await response.text());
+    logger.error("[push] Expo API error:", response.status, await response.text());
     return [];
   }
 

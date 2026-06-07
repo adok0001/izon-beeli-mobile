@@ -46,6 +46,7 @@ import { wordbankRouter } from "./routes/wordbank.js";
 import { activitiesRouter, activitiesAdminRouter } from "./routes/activities.js";
 import { uploadAdminRouter } from "./routes/upload.js";
 import { authMiddleware, adminMiddleware } from "./middleware/auth.js";
+import { logger as log } from "./lib/logger.js";
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -72,7 +73,7 @@ app.use(
 );
 
 app.onError((err, c) => {
-  console.error(`[ERROR] ${c.req.method} ${c.req.path}:`, err.message);
+  log.error(`[ERROR] ${c.req.method} ${c.req.path}:`, err.message);
   return c.json(
     { error: "Internal server error", ...(isDev ? { detail: err.message } : {}) },
     500

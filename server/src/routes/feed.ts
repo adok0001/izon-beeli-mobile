@@ -26,7 +26,7 @@ feedPublicRouter.get("/", async (c) => {
     }
     conditions.push(lt(feedItems.createdAt, cursorDate));
   }
-  if (typeFilter && VALID_FEED_TYPES.includes(typeFilter as any)) {
+  if (typeFilter && (VALID_FEED_TYPES as readonly string[]).includes(typeFilter)) {
     conditions.push(eq(feedItems.type, typeFilter as (typeof VALID_FEED_TYPES)[number]));
   }
 
@@ -154,7 +154,7 @@ feedRouter.post("/", async (c) => {
   }
 
   const feedType = body.type ?? "community";
-  if (!VALID_FEED_TYPES.includes(feedType as any)) {
+  if (!(VALID_FEED_TYPES as readonly string[]).includes(feedType)) {
     return c.json({ error: `Invalid type. Must be one of: ${VALID_FEED_TYPES.join(", ")}` }, 400);
   }
 
