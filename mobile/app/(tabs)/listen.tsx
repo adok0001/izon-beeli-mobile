@@ -15,7 +15,7 @@ import { localizeField } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -102,7 +102,7 @@ function ProverbOfTheMonthCard({ languageId }: { languageId: string }) {
           </View>
         ) : null}
         <Pressable
-          onPress={() => router.push(`/proverbs/${languageId}` as any)}
+          onPress={() => router.push(`/proverbs/${languageId}` as Href)}
           style={{ marginTop: 14, flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "flex-start" }}
           className="active:opacity-60"
         >
@@ -136,7 +136,7 @@ function SongOfTheWeekCard({ languageId }: { languageId: string }) {
         }}
       >
         <Pressable
-          onPress={() => router.push(`/songs/${languageId}` as any)}
+          onPress={() => router.push(`/songs/${languageId}` as Href)}
           className="active:opacity-70"
         >
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 14, paddingVertical: 12 }}>
@@ -146,7 +146,7 @@ function SongOfTheWeekCard({ languageId }: { languageId: string }) {
         </Pressable>
         <View style={{ height: 1, backgroundColor: M.border }} />
         <Pressable
-          onPress={() => router.push(`/songs/${languageId}` as any)}
+          onPress={() => router.push(`/songs/${languageId}` as Href)}
           style={{ paddingHorizontal: 14, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "flex-start" }}
           className="active:opacity-60"
         >
@@ -167,7 +167,7 @@ function SongOfTheWeekCard({ languageId }: { languageId: string }) {
       }}
     >
       <Pressable
-        onPress={() => router.push(`/lesson/${song.id}` as any)}
+        onPress={() => router.push(`/lesson/${song.id}` as Href)}
         className="active:opacity-70"
       >
         <View
@@ -209,7 +209,7 @@ function SongOfTheWeekCard({ languageId }: { languageId: string }) {
       </Pressable>
       <View style={{ height: 1, backgroundColor: M.border }} />
       <Pressable
-        onPress={() => router.push(`/songs/${languageId}` as any)}
+        onPress={() => router.push(`/songs/${languageId}` as Href)}
         style={{ paddingHorizontal: 14, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "flex-start" }}
         className="active:opacity-60"
       >
@@ -235,7 +235,7 @@ function SongsCard({ languageId }: { languageId: string }) {
 
   return (
     <Pressable
-      onPress={() => router.push(`/songs/${languageId}` as any)}
+      onPress={() => router.push(`/songs/${languageId}` as Href)}
       style={{
         flexDirection: "row", alignItems: "center",
         borderRadius: 14, padding: 14,
@@ -265,7 +265,7 @@ function ProverbsCollectionCard({ languageId }: { languageId: string }) {
 
   return (
     <Pressable
-      onPress={() => router.push(`/proverbs/${languageId}` as any)}
+      onPress={() => router.push(`/proverbs/${languageId}` as Href)}
       style={{
         flexDirection: "row", alignItems: "center",
         borderRadius: 14, padding: 14,
@@ -437,7 +437,7 @@ export default function DiscoverScreen() {
           {/* <ProverbsCollectionCard languageId={selectedLanguageId} /> */}
           <CulturalSection
             languageId={selectedLanguageId}
-            onViewAll={() => router.push(`/cultural/${selectedLanguageId}` as any)}
+            onViewAll={() => router.push(`/cultural/${selectedLanguageId}` as Href)}
           />
 
           {hasAkan && <SymbolOfTheDay />}

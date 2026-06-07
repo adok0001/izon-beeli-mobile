@@ -251,7 +251,7 @@ lessonContributionsRouter.patch("/:id/review", adminMiddleware, async (c) => {
   const body = await c.req.json<{ action: string; note?: string }>();
   const action = body.action;
 
-  if (!VALID_REVIEW_ACTIONS.includes(action as any)) {
+  if (!(VALID_REVIEW_ACTIONS as readonly string[]).includes(action)) {
     return c.json({ error: "action must be 'approve' or 'reject'" }, 400);
   }
 

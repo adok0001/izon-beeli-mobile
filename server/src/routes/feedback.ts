@@ -22,7 +22,7 @@ feedbackRouter.post("/", async (c) => {
 
   const { category, message, platform, osVersion, appVersion } = body;
 
-  if (!category || !VALID_CATEGORIES.includes(category as any)) {
+  if (!category || !(VALID_CATEGORIES as readonly string[]).includes(category)) {
     return c.json(
       { error: `category must be one of: ${VALID_CATEGORIES.join(", ")}` },
       400
