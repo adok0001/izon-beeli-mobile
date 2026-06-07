@@ -15,7 +15,8 @@
     "db:sync-proverbs": "tsx src/seed/sync-content.ts proverbs",
     "db:sync-cultural": "tsx src/seed/sync-content.ts cultural",
     "db:sync-sentences": "tsx src/seed/sync-content.ts sentences",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "test": "jest"
   },
   "dependencies": {
     "@clerk/backend": "^1.27.0",
@@ -29,8 +30,11 @@
     "zod": "^3.25.17"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.14",
     "@vercel/node": "^5.6.3",
     "drizzle-kit": "^0.31.1",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.9",
     "tsx": "^4.19.4",
     "typescript": "~5.9.2"
   }

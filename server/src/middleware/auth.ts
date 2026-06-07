@@ -39,24 +39,33 @@ export const authMiddleware = createMiddleware<AuthEnv>(async (c, next) => {
       return c.json({ error: "Invalid token" }, 401);
     }
 
-    // Fetch Clerk user for up-to-date username
-    const clerkUser = await clerkClient.users.getUser(clerkId);
-    const username = clerkUser.username ?? clerkUser.id;
+    // Fast path: the user row already exists → one indexed SELECT by clerkId,
+    // no Clerk API round-trip. The mobile client keeps name/email/avatar fresh
+    // via POST /users/sync (see routes/users.ts), so we don't sync here.
+    let [user] = await db
+      .select({ id: users.id, deletedAt: users.deletedAt })
+      .from(users)
+      .where(eq(users.clerkId, clerkId))
+      .limit(1);
 
-    // Upsert internal user, keeping name in sync with Clerk username
-    const [user] = await db
-      .insert(users)
-      .values({
-        clerkId,
-        name: username,
-        email: clerkUser.primaryEmailAddress?.emailAddress ?? "",
-        selectedLanguageId: "izon",
-      })
-      .onConflictDoUpdate({
-        target: users.clerkId,
-        set: { name: username },
-      })
-      .returning({ id: users.id, deletedAt: users.deletedAt });
+    // First-seen only: fetch a good name/email from Clerk and create the row.
+    if (!user) {
+      const clerkUser = await clerkClient.users.getUser(clerkId);
+      [user] = await db
+        .insert(users)
+        .values({
+          clerkId,
+          name: clerkUser.username ?? clerkUser.id,
+          email: clerkUser.primaryEmailAddress?.emailAddress ?? "",
+          selectedLanguageId: "izon",
+        })
+        // No-op update so a concurrent first request still returns the row.
+        .onConflictDoUpdate({
+          target: users.clerkId,
+          set: { clerkId },
+        })
+        .returning({ id: users.id, deletedAt: users.deletedAt });
+    }
 
     // Block access if the account is soft-deleted but within the 30-day window.
     // The /restore endpoint bypasses this check via its own inline auth.
