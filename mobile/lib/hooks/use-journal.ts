@@ -11,6 +11,7 @@ interface JournalEntryResponse {
   title: string;
   content: string;
   lessonId: string | null;
+  isPublic: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -21,6 +22,7 @@ function toJournalEntry(r: JournalEntryResponse): JournalEntry {
     title: r.title,
     content: r.content,
     lessonId: r.lessonId ?? undefined,
+    isPublic: r.isPublic,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
   };
@@ -45,7 +47,7 @@ export function useCreateJournalEntry() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: { title: string; content: string; lessonId?: string }) => {
+    mutationFn: async (input: { title: string; content: string; lessonId?: string; isPublic?: boolean }) => {
       const token = await getToken();
       const data = await apiFetch<JournalEntryResponse>("/journal", {
         method: "POST",
@@ -62,6 +64,7 @@ export function useCreateJournalEntry() {
         title: input.title,
         content: input.content,
         lessonId: input.lessonId,
+        isPublic: input.isPublic ?? false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -87,12 +90,12 @@ export function useUpdateJournalEntry() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: { id: string; title: string; content: string }) => {
+    mutationFn: async (input: { id: string; title: string; content: string; isPublic?: boolean }) => {
       const token = await getToken();
       const data = await apiFetch<JournalEntryResponse>(`/journal/${input.id}`, {
         method: "PATCH",
         token: token!,
-        body: JSON.stringify({ title: input.title, content: input.content }),
+        body: JSON.stringify({ title: input.title, content: input.content, isPublic: input.isPublic }),
       });
       return toJournalEntry(data);
     },
@@ -102,7 +105,13 @@ export function useUpdateJournalEntry() {
       queryClient.setQueryData<JournalEntry[]>(["journal"], (old) =>
         old?.map((e) =>
           e.id === input.id
-            ? { ...e, title: input.title, content: input.content, updatedAt: new Date().toISOString() }
+            ? {
+                ...e,
+                title: input.title,
+                content: input.content,
+                ...(input.isPublic !== undefined ? { isPublic: input.isPublic } : {}),
+                updatedAt: new Date().toISOString(),
+              }
             : e
         )
       );

@@ -1,3 +1,4 @@
+import { FeedbackModal } from "@/components/feedback-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { hapticSuccess } from "@/lib/haptics";
 import {
@@ -393,6 +394,7 @@ function FeedCard({ item, onOpenComments }: Readonly<{ item: FeedItem; onOpenCom
                 params: {
                   focusWord,
                   focusEnglish,
+                  ...(item.languageId ? { focusLanguageId: item.languageId } : {}),
                   ...(typeof item.audioUrl === "string" && item.audioUrl
                     ? { focusAudio: item.audioUrl }
                     : {}),
@@ -454,6 +456,49 @@ function FeedCard({ item, onOpenComments }: Readonly<{ item: FeedItem; onOpenCom
   );
 }
 
+function FeedbackBanner({ onPress }: Readonly<{ onPress: () => void }>) {
+  const M = useMuseumTheme();
+  const { t } = useTranslation();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        marginBottom: 12, borderRadius: 14,
+        backgroundColor: M.card,
+        borderWidth: 1, borderColor: M.border,
+        flexDirection: "row", alignItems: "center",
+        paddingHorizontal: 14, paddingVertical: 12, gap: 12,
+      }}
+      hitSlop={4}
+      accessibilityRole="button"
+      accessibilityLabel={t("feedback.title")}
+    >
+      <View
+        style={{
+          width: 38, height: 38, borderRadius: 10,
+          alignItems: "center", justifyContent: "center",
+          backgroundColor: `${M.accent}18`,
+          borderWidth: 1, borderColor: `${M.accent}30`,
+        }}
+      >
+        <IconSymbol name="megaphone.fill" size={17} color={M.accent} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 13, fontWeight: "700", color: M.text }}>
+          {t("feedback.title")}
+        </Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 }}>
+          <IconSymbol name="lock.fill" size={9} color={M.muted} />
+          <Text style={{ fontSize: 11, color: M.muted }}>
+            {t("feedback.adminOnlyNotice")}
+          </Text>
+        </View>
+      </View>
+      <IconSymbol name="chevron.right" size={12} color={M.muted} />
+    </Pressable>
+  );
+}
+
 const FILTER_OPTIONS: { id: FeedTypeFilter; label: string }[] = [
   { id: "all", label: "feed.filterAll" },
   { id: "achievement", label: "feed.filterAchievements" },
@@ -468,6 +513,7 @@ export default function FeedScreen() {
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } = useFeed(activeFilter);
   const [commentsItemId, setCommentsItemId] = useState<string | null>(null);
   const [showNewPost, setShowNewPost] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const { t } = useTranslation();
   const items = data?.pages.flatMap((p) => p.items) ?? [];
@@ -559,6 +605,7 @@ export default function FeedScreen() {
             data={items}
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32, paddingTop: 12 }}
+            ListHeaderComponent={<FeedbackBanner onPress={() => setShowFeedback(true)} />}
             renderItem={({ item }) => <FeedCard item={item} onOpenComments={setCommentsItemId} />}
             showsVerticalScrollIndicator={false}
             refreshControl={
@@ -588,6 +635,7 @@ export default function FeedScreen() {
         onClose={() => setCommentsItemId(null)}
       />
       <NewPostModal visible={showNewPost} onClose={() => setShowNewPost(false)} />
+      <FeedbackModal visible={showFeedback} onClose={() => setShowFeedback(false)} />
     </SafeAreaView>
   );
 }

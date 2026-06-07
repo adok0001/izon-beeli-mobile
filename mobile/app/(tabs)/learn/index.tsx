@@ -10,6 +10,7 @@ import { UpNextCard } from "@/components/up-next-card";
 import { getCourseTypeColors, getLevelColors } from "@/constants/course-colors";
 import { useBounties } from "@/lib/hooks/use-bounties";
 import { useCourseLessons, useCourses, useLesson } from "@/lib/hooks/use-courses";
+import { type DailyGoal, useCurrentUser, useUpdateDailyGoal } from "@/lib/hooks/use-current-user";
 import { useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
 import { useCompletedLessons, useProgressSummary } from "@/lib/hooks/use-progress";
 import { useStoryArcs } from "@/lib/hooks/use-story-arc";
@@ -32,6 +33,7 @@ import {
   ActivityIndicator,
   Animated,
   FlatList,
+  Modal,
   Pressable,
   RefreshControl,
   Text,
@@ -71,6 +73,12 @@ function animStyle(anim: Animated.Value, offsetY = 18) {
     ],
   };
 }
+
+const GOAL_OPTIONS: { id: DailyGoal; icon: string; labelKey: string; detailKey: string }[] = [
+  { id: "casual",    icon: "leaf.fill",  labelKey: "onboarding.goalCasual",    detailKey: "onboarding.goalCasualDetail" },
+  { id: "steady",    icon: "flame.fill", labelKey: "onboarding.goalSteady",    detailKey: "onboarding.goalSteadyDetail" },
+  { id: "intensive", icon: "bolt.fill",  labelKey: "onboarding.goalIntensive", detailKey: "onboarding.goalIntensiveDetail" },
+];
 
 // ─── DailyGoalRing ─────────────────────────────────────────────────────────
 function DailyGoalRing({ completedToday }: { completedToday: number }) {
@@ -627,6 +635,9 @@ export default function LearnScreen() {
 
   const [refreshing, setRefreshing] = useState(false);
   const [freezeModalVisible, setFreezeModalVisible] = useState(false);
+  const [goalPickerVisible, setGoalPickerVisible] = useState(false);
+  const { currentUser } = useCurrentUser();
+  const updateDailyGoal = useUpdateDailyGoal();
   const freezeChecked = useRef(false);
   const goalCelebrationChecked = useRef(false);
   const { toast, success: toastSuccess, dismiss: dismissToast } = useToast();
@@ -823,7 +834,11 @@ export default function LearnScreen() {
           <View style={{ width: 1, backgroundColor: "rgba(255,255,255,0.06)" }} />
 
           {/* Daily goal */}
-          <View
+          <Pressable
+            onPress={() => setGoalPickerVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Daily goal"
+            className="active:opacity-70"
             style={{
               flex: 1,
               flexDirection: "row",
@@ -847,7 +862,7 @@ export default function LearnScreen() {
                 <Text style={{ fontSize: 12, fontWeight: "500", color: M.textDimDark }}>/3</Text>
               </Text>
             </View>
-          </View>
+          </Pressable>
         </Animated.View>
       </View>
 
@@ -882,7 +897,9 @@ export default function LearnScreen() {
             )}
             ListHeaderComponent={
               <View style={{ gap: 10, marginBottom: 16 }}>
-                {resumeState && resumeState.positionSeconds > 5 && (
+                {resumeState &&
+                  resumeState.positionSeconds > 5 &&
+                  resumeState.languageId === selectedLanguageId && (
                   <ContinueCard
                     lessonId={resumeState.lessonId}
                     positionSeconds={resumeState.positionSeconds}
@@ -921,6 +938,58 @@ export default function LearnScreen() {
         type={toast.type}
         onDismiss={dismissToast}
       />
+
+      {/* Goal picker */}
+      <Modal visible={goalPickerVisible} transparent animationType="slide" onRequestClose={() => setGoalPickerVisible(false)}>
+        <Pressable style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.6)" }} onPress={() => setGoalPickerVisible(false)} />
+        <View
+          style={{
+            borderTopLeftRadius: 24, borderTopRightRadius: 24,
+            backgroundColor: M.ink,
+            borderTopWidth: 1, borderTopColor: M.border,
+            paddingHorizontal: 20, paddingBottom: 40, paddingTop: 16,
+          }}
+        >
+          <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: M.border, alignSelf: "center", marginBottom: 16 }} />
+          <Text style={{ marginBottom: 20, textAlign: "center", fontSize: 17, fontWeight: "800", color: M.parchment }}>
+            {t("profile.dailyGoal")}
+          </Text>
+          {GOAL_OPTIONS.map((opt) => {
+            const selected = currentUser?.dailyGoal === opt.id;
+            return (
+              <Pressable
+                key={opt.id}
+                onPress={() => { updateDailyGoal.mutate(opt.id); setGoalPickerVisible(false); }}
+                style={{
+                  marginBottom: 10, flexDirection: "row", alignItems: "center",
+                  borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14,
+                  borderWidth: selected ? 2 : 1,
+                  borderColor: selected ? M.accent : M.border,
+                  backgroundColor: selected ? `${M.accent}10` : M.card,
+                }}
+                className="active:opacity-70"
+              >
+                <View
+                  style={{
+                    marginRight: 14, width: 42, height: 42, borderRadius: 21,
+                    alignItems: "center", justifyContent: "center",
+                    backgroundColor: selected ? M.accent : M.border,
+                  }}
+                >
+                  <IconSymbol name={opt.icon as any} size={18} color={selected ? M.ink : M.sub} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 14, fontWeight: "700", color: selected ? M.accent : M.text }}>
+                    {t(opt.labelKey as any)}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: M.sub, marginTop: 2 }}>{t(opt.detailKey as any)}</Text>
+                </View>
+                {selected && <IconSymbol name="checkmark.circle.fill" size={20} color={M.accent} />}
+              </Pressable>
+            );
+          })}
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

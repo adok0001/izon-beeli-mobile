@@ -1,19 +1,35 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { FIDEL_CHART } from "@/lib/data/geez/fidel-chart";
-import type { GeezCharacter } from "@/lib/data/geez/fidel-chart";
 import { NSIBIDI_CHARACTERS } from "@/lib/data/nsibidi";
-import type { NsibidiCharacter } from "@/lib/data/nsibidi";
 import { hapticError, hapticSuccess } from "@/lib/haptics";
 import { apiFetch } from "@/lib/api";
 import { playCorrectSound, playFinishSound, playIncorrectSound } from "@/lib/sounds";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useAuth } from "@clerk/clerk-expo";
+import { useQuery } from "@tanstack/react-query";
 import { Stack, useRouter } from "expo-router";
-import { useCallback, useMemo, useRef, useState } from "react";
-import { Animated, Pressable, Text, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, Animated, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type ScriptMode = "geez" | "nsibidi";
+type ScriptEntry = {
+  id: string;
+  languageId: string;
+  name: string;
+  description: string | null;
+  iconCharacter: string | null;
+  accentColor: string | null;
+};
+
+type ScriptCharacter = {
+  id: string;
+  scriptId: string;
+  character: string;
+  answer: string;
+  hint: string | null;
+  category: string | null;
+  displayOrder: number;
+};
 
 interface DecodeQuestion {
   character: string;
@@ -26,40 +42,46 @@ interface DecodeQuestion {
 const SESSION_SIZE = 10;
 const FEEDBACK_DELAY = 1000;
 
+const FALLBACK_SCRIPTS: ScriptEntry[] = [
+  { id: "geez-amharic",  languageId: "amharic", name: "Ge'ez / Fidel", description: "Ethiopic alphabet · Amharic & Tigrinya", iconCharacter: "ሀ", accentColor: "#4ade80" },
+  { id: "nsibidi-igbo",  languageId: "igbo",    name: "Nsọbịdị",      description: "Indigenous Igbo script",                  iconCharacter: "",  accentColor: "#f59e0b" },
+];
+
+function buildLocalFallbackChars(scriptId: string): ScriptCharacter[] {
+  if (scriptId.startsWith("geez")) {
+    return FIDEL_CHART.map((c, i) => ({
+      id: `geez-${c.id}`, scriptId, character: c.character, answer: c.romanization,
+      hint: `Order ${c.order}`, category: c.baseConsonant, displayOrder: i,
+    }));
+  }
+  if (scriptId.startsWith("nsibidi")) {
+    return NSIBIDI_CHARACTERS.map((c, i) => ({
+      id: `nsibidi-${c.id}`, scriptId, character: c.character, answer: c.meaning,
+      hint: c.name, category: c.category, displayOrder: i,
+    }));
+  }
+  return [];
+}
+
 function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
-function buildGeezQuestions(): DecodeQuestion[] {
-  const pool = shuffle(FIDEL_CHART).slice(0, SESSION_SIZE + 12);
-  return pool.slice(0, SESSION_SIZE).map((char) => {
-    const distractors = shuffle(pool.filter((c) => c.id !== char.id))
+function buildQuestionsFromChars(chars: ScriptCharacter[]): DecodeQuestion[] {
+  const pool = shuffle(chars);
+  const session = pool.slice(0, SESSION_SIZE);
+  const answerPool = pool.slice(0, SESSION_SIZE + 12);
+  return session.map((char) => {
+    const distractors = shuffle(answerPool.filter((c) => c.id !== char.id))
       .slice(0, 3)
-      .map((c) => c.romanization);
-    const options = shuffle([char.romanization, ...distractors]);
+      .map((c) => c.answer);
+    const options = shuffle([char.answer, ...distractors]);
     return {
       character: char.character,
-      correctAnswer: char.romanization,
+      correctAnswer: char.answer,
       options,
-      correctIndex: options.indexOf(char.romanization),
-      hint: `Order ${char.order} (${["e","u","i","a","ē","ə","o"][char.order - 1] ?? ""})`,
-    };
-  });
-}
-
-function buildNsibidiQuestions(): DecodeQuestion[] {
-  const pool = shuffle(NSIBIDI_CHARACTERS).slice(0, SESSION_SIZE + 12);
-  return pool.slice(0, SESSION_SIZE).map((char) => {
-    const distractors = shuffle(pool.filter((c) => c.id !== char.id))
-      .slice(0, 3)
-      .map((c) => c.meaning);
-    const options = shuffle([char.meaning, ...distractors]);
-    return {
-      character: char.character,
-      correctAnswer: char.meaning,
-      options,
-      correctIndex: options.indexOf(char.meaning),
-      hint: char.name,
+      correctIndex: options.indexOf(char.answer),
+      hint: char.hint ?? undefined,
     };
   });
 }
@@ -104,7 +126,15 @@ function OptionTile({
   );
 }
 
-function ConfigScreen({ onStart }: { onStart: (mode: ScriptMode) => void }) {
+function ConfigScreen({
+  scripts,
+  loading,
+  onStart,
+}: {
+  scripts: ScriptEntry[];
+  loading: boolean;
+  onStart: (script: ScriptEntry) => void;
+}) {
   const M = useMuseumTheme();
   const router = useRouter();
   return (
@@ -120,37 +150,37 @@ function ConfigScreen({ onStart }: { onStart: (mode: ScriptMode) => void }) {
             Read a symbol and identify its meaning or romanization
           </Text>
         </View>
-        <Text style={{ fontSize: 11, fontWeight: "800", letterSpacing: 2, color: M.muted, marginBottom: 14, textAlign: "center" }}>
-          CHOOSE A SCRIPT
-        </Text>
-        <Pressable
-          onPress={() => onStart("geez")}
-          style={{ borderRadius: 16, backgroundColor: M.card, borderWidth: 1, borderColor: M.border, borderLeftWidth: 4, borderLeftColor: "#4ade80", padding: 16, flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 10 }}
-          className="active:opacity-70"
-        >
-          <View style={{ width: 48, height: 48, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(74,222,128,0.1)" }}>
-            <Text style={{ fontSize: 26, color: "#4ade80" }}>ሀ</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 15, fontWeight: "700", color: M.text }}>Ge&apos;ez / Fidel</Text>
-            <Text style={{ fontSize: 12, color: M.sub, marginTop: 2 }}>Ethiopic alphabet · Amharic & Tigrinya</Text>
-          </View>
-          <IconSymbol name="chevron.right" size={14} color="#4ade80" />
-        </Pressable>
-        <Pressable
-          onPress={() => onStart("nsibidi")}
-          style={{ borderRadius: 16, backgroundColor: M.card, borderWidth: 1, borderColor: M.border, borderLeftWidth: 4, borderLeftColor: "#f59e0b", padding: 16, flexDirection: "row", alignItems: "center", gap: 14 }}
-          className="active:opacity-70"
-        >
-          <View style={{ width: 48, height: 48, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(245,158,11,0.1)" }}>
-            <Text style={{ fontSize: 26, color: "#f59e0b" }}>𐘕</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 15, fontWeight: "700", color: M.text }}>Nsịbịdị</Text>
-            <Text style={{ fontSize: 12, color: M.sub, marginTop: 2 }}>Indigenous Igbo script</Text>
-          </View>
-          <IconSymbol name="chevron.right" size={14} color="#f59e0b" />
-        </Pressable>
+        {loading ? (
+          <ActivityIndicator color={M.accent} style={{ marginTop: 20 }} />
+        ) : (
+          <>
+            <Text style={{ fontSize: 11, fontWeight: "800", letterSpacing: 2, color: M.muted, marginBottom: 14, textAlign: "center" }}>
+              CHOOSE A SCRIPT
+            </Text>
+            {scripts.map((script) => {
+              const color = script.accentColor ?? M.accent;
+              return (
+                <Pressable
+                  key={script.id}
+                  onPress={() => onStart(script)}
+                  style={{ borderRadius: 16, backgroundColor: M.card, borderWidth: 1, borderColor: M.border, borderLeftWidth: 4, borderLeftColor: color, padding: 16, flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 10 }}
+                  className="active:opacity-70"
+                >
+                  <View style={{ width: 48, height: 48, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: `${color}1A` }}>
+                    <Text style={{ fontSize: 26, color }}>{script.iconCharacter ?? "?"}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 15, fontWeight: "700", color: M.text }}>{script.name}</Text>
+                    {script.description ? (
+                      <Text style={{ fontSize: 12, color: M.sub, marginTop: 2 }}>{script.description}</Text>
+                    ) : null}
+                  </View>
+                  <IconSymbol name="chevron.right" size={14} color={color} />
+                </Pressable>
+              );
+            })}
+          </>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -161,8 +191,8 @@ export default function ScriptDecodeScreen() {
   const router = useRouter();
   const { getToken } = useAuth();
 
-  const [mode, setMode] = useState<ScriptMode | null>(null);
-  const [phase, setPhase] = useState<"config" | "active" | "results">("config");
+  const [selectedScript, setSelectedScript] = useState<ScriptEntry | null>(null);
+  const [phase, setPhase] = useState<"config" | "loading" | "active" | "results">("config");
   const [questions, setQuestions] = useState<DecodeQuestion[]>([]);
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
@@ -171,11 +201,29 @@ export default function ScriptDecodeScreen() {
   const [startTime, setStartTime] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  const accentColor = mode === "geez" ? "#4ade80" : "#f59e0b";
+  const { data: fetchedScripts, isLoading: scriptsLoading } = useQuery({
+    queryKey: ["scripts"],
+    queryFn: () => apiFetch<ScriptEntry[]>("/scripts"),
+    staleTime: 1000 * 60 * 10,
+  });
 
-  const handleStart = useCallback((selectedMode: ScriptMode) => {
-    const qs = selectedMode === "geez" ? buildGeezQuestions() : buildNsibidiQuestions();
-    setMode(selectedMode);
+  const { data: fetchedChars, error: charsError } = useQuery({
+    queryKey: ["script-characters", selectedScript?.id],
+    queryFn: () => apiFetch<ScriptCharacter[]>(`/scripts/${selectedScript!.id}/characters`),
+    enabled: !!selectedScript,
+    staleTime: 1000 * 60 * 10,
+  });
+
+  useEffect(() => {
+    if (phase !== "loading" || !selectedScript) return;
+    if (fetchedChars === undefined && !charsError) return;
+
+    const chars =
+      fetchedChars && fetchedChars.length > 0
+        ? fetchedChars
+        : buildLocalFallbackChars(selectedScript.id);
+
+    const qs = buildQuestionsFromChars(chars);
     setQuestions(qs);
     setIndex(0);
     setCorrectCount(0);
@@ -183,6 +231,18 @@ export default function ScriptDecodeScreen() {
     setLocked(false);
     setStartTime(Date.now());
     setPhase("active");
+  }, [phase, selectedScript, fetchedChars, charsError]);
+
+  const accentColor = selectedScript?.accentColor ?? M.accent;
+
+  const displayScripts = useMemo(
+    () => (fetchedScripts && fetchedScripts.length > 0 ? fetchedScripts : FALLBACK_SCRIPTS),
+    [fetchedScripts]
+  );
+
+  const handleStart = useCallback((script: ScriptEntry) => {
+    setSelectedScript(script);
+    setPhase("loading");
   }, []);
 
   const advance = useCallback(() => {
@@ -195,7 +255,13 @@ export default function ScriptDecodeScreen() {
         apiFetch("/quiz-results", {
           method: "POST",
           token,
-          body: JSON.stringify({ languageId: selectedLanguageId, score: correctCount, accuracy: questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0, durationMs: duration * 1000, questionCount: questions.length }),
+          body: JSON.stringify({
+            languageId: selectedScript?.languageId,
+            score: correctCount,
+            accuracy: questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0,
+            durationMs: duration * 1000,
+            questionCount: questions.length,
+          }),
         }).catch(() => {});
       });
       return;
@@ -206,7 +272,7 @@ export default function ScriptDecodeScreen() {
       setLocked(false);
       Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }).start();
     });
-  }, [index, questions.length, correctCount, fadeAnim, startTime, getToken]);
+  }, [index, questions.length, correctCount, fadeAnim, startTime, getToken, selectedScript]);
 
   const handleOption = useCallback((optIdx: number) => {
     if (locked) return;
@@ -220,7 +286,15 @@ export default function ScriptDecodeScreen() {
     setTimeout(advance, FEEDBACK_DELAY);
   }, [locked, questions, index, advance]);
 
-  if (phase === "config") return <ConfigScreen onStart={handleStart} />;
+  if (phase === "config" || phase === "loading") {
+    return (
+      <ConfigScreen
+        scripts={displayScripts}
+        loading={scriptsLoading || phase === "loading"}
+        onStart={handleStart}
+      />
+    );
+  }
 
   if (phase === "results") {
     const accuracy = Math.round((correctCount / questions.length) * 100);
@@ -237,7 +311,7 @@ export default function ScriptDecodeScreen() {
           </Text>
           <View style={{ width: "100%", gap: 10, marginTop: 32 }}>
             <Pressable
-              onPress={() => mode && handleStart(mode)}
+              onPress={() => selectedScript && handleStart(selectedScript)}
               style={{ borderRadius: 14, paddingVertical: 16, backgroundColor: accentColor, alignItems: "center" }}
             >
               <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>Play Again</Text>
@@ -274,18 +348,17 @@ export default function ScriptDecodeScreen() {
         </Text>
 
         <Animated.View style={{ opacity: fadeAnim, flex: 1 }}>
-          {/* Big character display */}
           <View style={{ alignItems: "center", justifyContent: "center", marginBottom: 32, flex: 1, maxHeight: 180 }}>
             <View style={{ width: 140, height: 140, borderRadius: 28, alignItems: "center", justifyContent: "center", backgroundColor: `${accentColor}12`, borderWidth: 2, borderColor: `${accentColor}30` }}>
               <Text style={{ fontSize: 72, color: accentColor, lineHeight: 84 }}>{current.character}</Text>
             </View>
-            {current.hint && (
+            {current.hint ? (
               <Text style={{ marginTop: 10, fontSize: 11, color: M.muted, letterSpacing: 0.5 }}>{current.hint}</Text>
-            )}
+            ) : null}
           </View>
 
           <Text style={{ fontSize: 12, fontWeight: "700", color: M.muted, marginBottom: 12, letterSpacing: 0.5 }}>
-            What does this {mode === "geez" ? "character" : "symbol"} represent?
+            What does this character represent?
           </Text>
 
           {current.options.map((opt, i) => {

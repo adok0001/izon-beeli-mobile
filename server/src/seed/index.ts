@@ -12,6 +12,8 @@ import {
   languages,
   lessons,
   proverbs,
+  scriptCharacters,
+  scripts,
   sentenceTemplates,
   transcriptSegments,
   users,
@@ -23,6 +25,8 @@ import {
 import { COURSES } from "../../../mobile/lib/data/courses.js";
 import { SEED_COMMENTS, SEED_FEED } from "../../../mobile/lib/data/feed.js";
 import { LANGUAGES } from "../../../mobile/lib/data/languages.js";
+import { FIDEL_CHART } from "../../../mobile/lib/data/geez/fidel-chart.js";
+import { NSIBIDI_CHARACTERS } from "../../../mobile/lib/data/nsibidi/index.js";
 import { ALL_LESSONS } from "../../../mobile/lib/data/lessons/index.js";
 
 // ---------------------------------------------------------------------------
@@ -378,7 +382,47 @@ async function seed() {
   }));
   await batchInsert(sentenceTemplates, sentenceRows);
 
-  // 9. UGC: placeholder user + feed + comments
+  // 9. Scripts & script characters
+  console.log("  Inserting scripts...");
+  const SCRIPT_DEFS = [
+    { id: "geez-amharic",  languageId: "amharic",  name: "Ge’ez / Fidel", description: "Ethiopic alphabet used in Amharic", iconCharacter: "ሀ", accentColor: "#4ade80" },
+    { id: "geez-tigrinya", languageId: "tigrinya", name: "Ge’ez / Fidel", description: "Ethiopic alphabet used in Tigrinya",  iconCharacter: "ሀ", accentColor: "#4ade80" },
+    { id: "nsibidi-igbo",  languageId: "igbo",     name: "Nsọbịdị", description: "Indigenous Igbo pictographic script",  iconCharacter: "", accentColor: "#f59e0b" },
+  ];
+  await batchInsert(scripts, SCRIPT_DEFS);
+
+  console.log("  Inserting script characters...");
+  const geezChars = FIDEL_CHART.map((c, i) => ({
+    id: `geez-${c.id}`,
+    scriptId: "geez-amharic",
+    character: c.character,
+    answer: c.romanization,
+    hint: `Order ${c.order}`,
+    category: c.baseConsonant,
+    displayOrder: i,
+  }));
+  // Tigrinya reuses the same Ge'ez character set
+  const geezTigrinyaChars = FIDEL_CHART.map((c, i) => ({
+    id: `geez-tigrinya-${c.id}`,
+    scriptId: "geez-tigrinya",
+    character: c.character,
+    answer: c.romanization,
+    hint: `Order ${c.order}`,
+    category: c.baseConsonant,
+    displayOrder: i,
+  }));
+  const nsibidiChars = NSIBIDI_CHARACTERS.map((c, i) => ({
+    id: `nsibidi-${c.id}`,
+    scriptId: "nsibidi-igbo",
+    character: c.character,
+    answer: c.meaning,
+    hint: c.name,
+    category: c.category,
+    displayOrder: i,
+  }));
+  await batchInsert(scriptCharacters, [...geezChars, ...geezTigrinyaChars, ...nsibidiChars]);
+
+  // 10. UGC: placeholder user + feed + comments
   console.log("  Seeding UGC (feed & comments)...");
 
   const seedFeedRows = await db

@@ -2,7 +2,7 @@ import { and, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { verifyToken } from "@clerk/backend";
 import { db } from "../db/index.js";
-import { comments, feedItems, likes, users } from "../db/schema.js";
+import { comments, contributions, feedItems, likes, users } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
 
 const VALID_FEED_TYPES = ["lesson_completed", "achievement", "contribution", "community"] as const;
@@ -31,8 +31,23 @@ feedPublicRouter.get("/", async (c) => {
   }
 
   const rows = await db
-    .select()
+    .select({
+      id: feedItems.id,
+      type: feedItems.type,
+      title: feedItems.title,
+      titleFr: feedItems.titleFr,
+      description: feedItems.description,
+      descriptionFr: feedItems.descriptionFr,
+      userName: feedItems.userName,
+      userAvatarUrl: feedItems.userAvatarUrl,
+      audioUrl: feedItems.audioUrl,
+      likesCount: feedItems.likesCount,
+      commentsCount: feedItems.commentsCount,
+      createdAt: feedItems.createdAt,
+      contributionLanguageId: contributions.languageId,
+    })
     .from(feedItems)
+    .leftJoin(contributions, eq(feedItems.contributionId, contributions.id))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(feedItems.createdAt))
     .limit(limit + 1);
@@ -88,6 +103,7 @@ feedPublicRouter.get("/", async (c) => {
     comments: item.commentsCount,
     isLiked: likedSet.has(item.id),
     createdAt: item.createdAt.toISOString(),
+    languageId: item.contributionLanguageId ?? null,
   }));
 
   return c.json({

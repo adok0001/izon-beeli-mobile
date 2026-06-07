@@ -19,6 +19,7 @@ import { feedPublicRouter, feedRouter } from "./routes/feed.js";
 import { feedbackAdminRouter, feedbackRouter } from "./routes/feedback.js";
 import { journalRouter } from "./routes/journal.js";
 import { languagesRouter } from "./routes/languages.js";
+import { scriptsRouter } from "./routes/scripts.js";
 import { lessonContributionsRouter } from "./routes/lesson-contributions.js";
 import { lessonsRouter } from "./routes/lessons.js";
 import { multiplayerInternalRouter, multiplayerRouter } from "./routes/multiplayer.js";
@@ -30,6 +31,7 @@ import { matchingResultsRouter } from "./routes/matching-results.js";
 import { quizResultsRouter } from "./routes/quiz-results.js";
 import { wordChallengeRouter, wordChallengeAdminRouter } from "./routes/word-challenge.js";
 import { quizRouter } from "./routes/quiz.js";
+import { quizAdminRouter } from "./routes/quiz-admin.js";
 import { reviewerApplicationsAdminRouter, reviewerApplicationsRouter } from "./routes/reviewer-applications.js";
 import { sentencesRouter } from "./routes/sentences.js";
 import { storyArcsRouter } from "./routes/story-arcs.js";
@@ -87,11 +89,13 @@ app.get("/config/public", async (c) => {
 });
 
 // Public routes (no auth required)
+app.route("/quiz/admin", quizAdminRouter); // more specific path must precede /quiz
 app.route("/quiz", quizRouter);
 app.route("/feed", feedPublicRouter);
 app.route("/contributions", contributionsPublicRouter);
 app.route("/contributors", contributorsRouter);
 app.route("/languages", languagesRouter);
+app.route("/scripts", scriptsRouter);
 app.route("/courses", coursesRouter);
 app.route("/lessons", lessonsRouter);
 app.route("/dictionary", dictionaryRouter);

@@ -290,7 +290,7 @@ export default function DiscoverScreen() {
   const router = useRouter();
   const { selectedLanguageId } = useLanguageStore();
   const { t } = useTranslation();
-  const { data: dueWords = [] } = useWordsDueForReview();
+  const { data: dueWords = [] } = useWordsDueForReview(selectedLanguageId);
 
   const hasScriptPractice = ["amharic", "tigrinya", "oromo"].includes(selectedLanguageId);
   const hasAdinkra = ["ga", "ewe", "dagbani"].includes(selectedLanguageId);

@@ -29,6 +29,7 @@ journalRouter.post("/", async (c) => {
     title: string;
     content: string;
     lessonId?: string;
+    isPublic?: boolean;
   }>();
 
   if (!body.title?.trim() || !body.content?.trim()) {
@@ -42,6 +43,7 @@ journalRouter.post("/", async (c) => {
       title: body.title.trim(),
       content: body.content.trim(),
       lessonId: body.lessonId || null,
+      isPublic: body.isPublic ?? false,
     })
     .returning();
 
@@ -54,7 +56,7 @@ journalRouter.post("/", async (c) => {
 journalRouter.patch("/:id", async (c) => {
   const userId = c.get("userId");
   const id = c.req.param("id");
-  const body = await c.req.json<{ title?: string; content?: string }>();
+  const body = await c.req.json<{ title?: string; content?: string; isPublic?: boolean }>();
 
   const [existing] = await db
     .select()
@@ -69,6 +71,7 @@ journalRouter.patch("/:id", async (c) => {
     .set({
       ...(body.title ? { title: body.title.trim() } : {}),
       ...(body.content ? { content: body.content.trim() } : {}),
+      ...(body.isPublic !== undefined ? { isPublic: body.isPublic } : {}),
       updatedAt: new Date(),
     })
     .where(eq(journalEntries.id, id))

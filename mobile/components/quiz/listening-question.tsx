@@ -6,17 +6,20 @@ import type { AudioSource } from "@/types";
 
 interface Props {
   audioSource: AudioSource;
+  /** Seek to this position (seconds) before playing — for lesson segment clips */
+  startTime?: number;
+  /** Stop playback at this position (seconds) — for lesson segment clips */
+  endTime?: number;
   /** Fallback text shown when no audio is available */
   fallbackText?: string;
 }
 
-export function ListeningQuestion({ audioSource, fallbackText }: Props) {
+export function ListeningQuestion({ audioSource, startTime, endTime, fallbackText }: Props) {
   const [isPlaying, setIsPlaying] = useState(false);
   const soundRef = useRef<Audio.Sound | null>(null);
 
   const playAudio = useCallback(async () => {
     try {
-      // Stop any existing sound
       if (soundRef.current) {
         await soundRef.current.unloadAsync();
         soundRef.current = null;
@@ -28,17 +31,27 @@ export function ListeningQuestion({ audioSource, fallbackText }: Props) {
       soundRef.current = sound;
 
       sound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isLoaded && status.didJustFinish) {
+        if (!status.isLoaded) return;
+        if (endTime !== undefined && status.positionMillis >= endTime * 1000) {
+          sound.stopAsync();
+          setIsPlaying(false);
+          return;
+        }
+        if (status.didJustFinish) {
           setIsPlaying(false);
         }
       });
+
+      if (startTime !== undefined) {
+        await sound.setPositionAsync(startTime * 1000);
+      }
 
       setIsPlaying(true);
       await sound.playAsync();
     } catch {
       setIsPlaying(false);
     }
-  }, [audioSource]);
+  }, [audioSource, startTime, endTime]);
 
   useEffect(() => {
     return () => {

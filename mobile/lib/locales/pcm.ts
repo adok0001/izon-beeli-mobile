@@ -698,6 +698,7 @@ export const pcm = {
     failedMessage: "We no fit send your feedback right now.",
     emailFallback: "Send via email instead",
     submit: "Submit",
+    adminOnlyNotice: "Only Beeli team go see am · e no go dey for feed",
   },
   share: {
     learningWith: "I dey learn {{language}} with Beeli",
@@ -1208,6 +1209,7 @@ export const pcm = {
       notifications: "Notifications",
       dailyContent: "Daily Content",
       activities: "Activities",
+      quiz: "Quiz",
     },
     dailyContent: {
       title: "Daily Content",
@@ -1219,6 +1221,11 @@ export const pcm = {
       clearOverride: "Remove pin",
       errorSet: "E no set. Try again.",
       errorClear: "E no clear. Try again.",
+      confirmSetTitle: "Pin dis content?",
+      confirmSetMessage: "E go replace di current pin for all users.",
+      confirmSetButton: "Pin am",
+      confirmClearTitle: "Remove pin?",
+      confirmClearMessage: "E go go back to automatic selection.",
       actionRowDetail: "Word of the Day · Proverb of the Month · Song of the Week",
       wotd: {
         tab: "Word / Day",
