@@ -1199,6 +1199,11 @@ export const en = {
       clearOverride: "Clear override",
       errorSet: "Failed to set. Please try again.",
       errorClear: "Failed to clear override.",
+      confirmSetTitle: "Pin this content?",
+      confirmSetMessage: "This will replace the current pinned selection for all users.",
+      confirmSetButton: "Pin",
+      confirmClearTitle: "Remove pin?",
+      confirmClearMessage: "Content will revert to the automatic selection.",
       actionRowDetail: "Word of the Day · Proverb of the Month · Song of the Week",
       wotd: {
         tab: "Word / Day",

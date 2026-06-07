@@ -210,7 +210,16 @@ export default function DailyContentAdminScreen() {
                   <Text className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">{wotdAdmin.entry.english}</Text>
                   {wotdAdmin.isOverride && (
                     <Pressable
-                      onPress={() => clearWotd.mutate()}
+                      onPress={() =>
+                        Alert.alert(
+                          t("admin.dailyContent.confirmClearTitle"),
+                          t("admin.dailyContent.confirmClearMessage"),
+                          [
+                            { text: t("common.cancel"), style: "cancel" },
+                            { text: t("admin.dailyContent.clearOverride"), style: "destructive", onPress: () => clearWotd.mutate() },
+                          ]
+                        )
+                      }
                       disabled={clearWotd.isPending}
                       className="mt-3 rounded-xl bg-red-50 dark:bg-red-900/20 py-2 items-center active:opacity-70"
                     >
@@ -233,7 +242,16 @@ export default function DailyContentAdminScreen() {
                 return (
                   <Pressable
                     key={entry.id}
-                    onPress={() => setWotd.mutate(entry.id)}
+                    onPress={() =>
+                      Alert.alert(
+                        t("admin.dailyContent.confirmSetTitle"),
+                        t("admin.dailyContent.confirmSetMessage"),
+                        [
+                          { text: t("common.cancel"), style: "cancel" },
+                          { text: t("admin.dailyContent.confirmSetButton"), onPress: () => setWotd.mutate(entry.id) },
+                        ]
+                      )
+                    }
                     disabled={setWotd.isPending}
                     className={`flex-row items-center justify-between rounded-2xl px-4 py-3 mb-2 ${isSelected ? "bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800" : "bg-neutral-50 dark:bg-neutral-800"}`}
                   >
@@ -263,7 +281,16 @@ export default function DailyContentAdminScreen() {
                   <Text className="text-sm text-neutral-500 dark:text-neutral-400 mt-1 italic">{potmAdmin.proverb.translation}</Text>
                   {potmAdmin.isOverride && (
                     <Pressable
-                      onPress={() => clearPotm.mutate()}
+                      onPress={() =>
+                        Alert.alert(
+                          t("admin.dailyContent.confirmClearTitle"),
+                          t("admin.dailyContent.confirmClearMessage"),
+                          [
+                            { text: t("common.cancel"), style: "cancel" },
+                            { text: t("admin.dailyContent.clearOverride"), style: "destructive", onPress: () => clearPotm.mutate() },
+                          ]
+                        )
+                      }
                       disabled={clearPotm.isPending}
                       className="mt-3 rounded-xl bg-red-50 dark:bg-red-900/20 py-2 items-center active:opacity-70"
                     >
@@ -286,7 +313,16 @@ export default function DailyContentAdminScreen() {
                 return (
                   <Pressable
                     key={proverb.id}
-                    onPress={() => setPotm.mutate(proverb.id)}
+                    onPress={() =>
+                      Alert.alert(
+                        t("admin.dailyContent.confirmSetTitle"),
+                        t("admin.dailyContent.confirmSetMessage"),
+                        [
+                          { text: t("common.cancel"), style: "cancel" },
+                          { text: t("admin.dailyContent.confirmSetButton"), onPress: () => setPotm.mutate(proverb.id) },
+                        ]
+                      )
+                    }
                     disabled={setPotm.isPending}
                     className={`flex-row items-center justify-between rounded-2xl px-4 py-3 mb-2 ${isSelected ? "bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800" : "bg-neutral-50 dark:bg-neutral-800"}`}
                   >
@@ -318,7 +354,16 @@ export default function DailyContentAdminScreen() {
                   )}
                   {sotwAdmin.isOverride && (
                     <Pressable
-                      onPress={() => clearSotw.mutate()}
+                      onPress={() =>
+                        Alert.alert(
+                          t("admin.dailyContent.confirmClearTitle"),
+                          t("admin.dailyContent.confirmClearMessage"),
+                          [
+                            { text: t("common.cancel"), style: "cancel" },
+                            { text: t("admin.dailyContent.clearOverride"), style: "destructive", onPress: () => clearSotw.mutate() },
+                          ]
+                        )
+                      }
                       disabled={clearSotw.isPending}
                       className="mt-3 rounded-xl bg-red-50 dark:bg-red-900/20 py-2 items-center active:opacity-70"
                     >
@@ -341,7 +386,16 @@ export default function DailyContentAdminScreen() {
                 return (
                   <Pressable
                     key={song.id}
-                    onPress={() => setSotw.mutate(song.id)}
+                    onPress={() =>
+                      Alert.alert(
+                        t("admin.dailyContent.confirmSetTitle"),
+                        t("admin.dailyContent.confirmSetMessage"),
+                        [
+                          { text: t("common.cancel"), style: "cancel" },
+                          { text: t("admin.dailyContent.confirmSetButton"), onPress: () => setSotw.mutate(song.id) },
+                        ]
+                      )
+                    }
                     disabled={setSotw.isPending}
                     className={`flex-row items-center justify-between rounded-2xl px-4 py-3 mb-2 ${isSelected ? "bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800" : "bg-neutral-50 dark:bg-neutral-800"}`}
                   >

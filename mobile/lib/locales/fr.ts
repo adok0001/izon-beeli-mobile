@@ -1201,6 +1201,11 @@ export const fr = {
       clearOverride: "Retirer l'épingle",
       errorSet: "Échec de la mise à jour. Veuillez réessayer.",
       errorClear: "Échec du retrait. Veuillez réessayer.",
+      confirmSetTitle: "Épingler ce contenu ?",
+      confirmSetMessage: "Cela remplacera la sélection épinglée actuelle pour tous les utilisateurs.",
+      confirmSetButton: "Épingler",
+      confirmClearTitle: "Retirer l'épingle ?",
+      confirmClearMessage: "Le contenu reviendra à la sélection automatique.",
       actionRowDetail: "Mot du jour · Proverbe du mois · Chanson de la semaine",
       wotd: {
         tab: "Mot / Jour",
