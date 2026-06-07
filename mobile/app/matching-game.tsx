@@ -108,7 +108,7 @@ export default function MatchingGameScreen() {
     () => ({
       title: `${languageName} ${t("matching.titleSuffix")}`,
       headerShown: true,
-      presentation: "modal" as const,
+      presentation: "fullScreenModal" as const,
       headerLeft,
     }),
     [languageName, t, headerLeft]
@@ -117,7 +117,7 @@ export default function MatchingGameScreen() {
   return (
     <>
       <Stack.Screen options={screenOptions} />
-      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={[]}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["top", "bottom"]}>
         {isEmpty ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
             <IconSymbol name="rectangle.grid.2x2" size={56} color={M.border} />
