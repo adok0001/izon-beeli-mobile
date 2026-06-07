@@ -3,7 +3,7 @@ import { captureRef } from "react-native-view-shot";
 import type { RefObject } from "react";
 import type { View } from "react-native";
 
-export type CardTemplate = "word" | "proverb" | "achievement";
+export type CardTemplate = "word" | "proverb" | "achievement" | "symbol" | "cultural";
 
 export async function captureAndShare(
   viewRef: RefObject<View | null>,

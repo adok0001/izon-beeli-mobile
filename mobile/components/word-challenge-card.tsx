@@ -1,8 +1,10 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { ShareModal } from "@/components/share/share-modal";
 import { useWordOfTheDay } from "@/lib/hooks/use-word-of-the-day";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useRouter } from "expo-router";
-import { Pressable, Text, View } from "react-native";
+import { useState } from "react";
+import { Pressable, Text, TouchableOpacity, View } from "react-native";
 
 interface Props {
   languageId: string;
@@ -12,10 +14,12 @@ export function WordChallengeCard({ languageId }: Props) {
   const M = useMuseumTheme();
   const router = useRouter();
   const word = useWordOfTheDay(languageId);
+  const [shareVisible, setShareVisible] = useState(false);
 
   if (!word) return null;
 
   return (
+    <>
     <Pressable
       onPress={() => router.push("/word-challenge" as any)}
       style={{
@@ -50,8 +54,17 @@ export function WordChallengeCard({ languageId }: Props) {
             WORD CHALLENGE
           </Text>
         </View>
-        <View style={{ borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, backgroundColor: "rgba(244, 63, 94, 0.15)" }}>
-          <Text style={{ fontSize: 8, fontWeight: "700", letterSpacing: 1, color: "#f43f5e" }}>DAILY</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <View style={{ borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, backgroundColor: "rgba(244, 63, 94, 0.15)" }}>
+            <Text style={{ fontSize: 8, fontWeight: "700", letterSpacing: 1, color: "#f43f5e" }}>DAILY</Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => setShareVisible(true)}
+            hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+            accessibilityLabel="Share word"
+          >
+            <IconSymbol name="square.and.arrow.up" size={14} color="#f43f5e" />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -99,5 +112,18 @@ export function WordChallengeCard({ languageId }: Props) {
         </View>
       </View>
     </Pressable>
+
+    <ShareModal
+      visible={shareVisible}
+      onClose={() => setShareVisible(false)}
+      data={{
+        template: "word",
+        word: word.word,
+        translation: word.english,
+        language: languageId,
+        pronunciation: word.pronunciation ?? undefined,
+      }}
+    />
+    </>
   );
 }
