@@ -145,12 +145,36 @@ If any build fails:
 2. Re-run the failing build command until it passes
 3. Stage the fixes and continue commit flow
 
+## Required .env.example Sync (Before Every Commit)
+
+Keep each package's env example in lockstep with the variables the code reads.
+
+- Target files:
+	- `mobile/.env.example` — `EXPO_PUBLIC_*` vars
+	- `web/.env.example` — `NEXT_PUBLIC_*` and server vars
+	- `data/.env.local.example` — `NEXT_PUBLIC_*` and server vars
+- For each package touched by the commit, scan source for the relevant env prefixes and reconcile against the example file:
+
+```bash
+# Mobile: list every EXPO_PUBLIC_* the source actually reads
+grep -rhoE "EXPO_PUBLIC_[A-Z_]+" mobile --include="*.ts" --include="*.tsx" \
+	| grep -v "/dist/" | sort -u
+# Compare against the keys documented in mobile/.env.example
+grep -oE "EXPO_PUBLIC_[A-Z_]+" mobile/.env.example | sort -u
+```
+
+- Add any variable used in source but missing from the example; remove any that no longer appear in source.
+- Exclude Expo/framework-injected vars that only appear in built output (`dist/`) such as `EXPO_PUBLIC_PROJECT_ROOT`, `EXPO_PUBLIC_FOLDER`, `EXPO_PUBLIC_UPDATES_SERVER_PORT`.
+- Use placeholders or safe defaults as values — never commit real secrets.
+- Stage any updated example file with the rest of the commit.
+
 ## Process
 
 1. Run `git status` to see what changed
 2. Run `git diff` to review changes
 3. Bump versions across `mobile/app.json`, `web/package.json`, `server/package.json`, and `partykit/package.json`
-4. Run required build command(s) for changed package(s)
-5. Stage relevant files individually: `git add mobile/...` / `git add web/...` / `git add server/...` / `git add partykit/...` / `git add data/...`
-6. Verify staged changes: `git diff --staged`
-7. Confirm success with `git status`
+4. Sync `.env.example` files for any touched package (see above)
+5. Run required build command(s) for changed package(s)
+6. Stage relevant files individually: `git add mobile/...` / `git add web/...` / `git add server/...` / `git add partykit/...` / `git add data/...`
+7. Verify staged changes: `git diff --staged`
+8. Confirm success with `git status`
