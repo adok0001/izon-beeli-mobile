@@ -678,6 +678,7 @@ export const fr = {
     failedMessage: "Impossible d'envoyer vos retours pour l'instant.",
     emailFallback: "Envoyer par e-mail à la place",
     submit: "Soumettre",
+    adminOnlyNotice: "Visible uniquement par l'équipe Beeli · non publié",
   },
   share: {
     learningWith: "J'apprends le {{language}} avec Beeli",
@@ -1188,6 +1189,7 @@ export const fr = {
       notifications: "Notifications",
       dailyContent: "Contenu quotidien",
       activities: "Activités",
+      quiz: "Quiz",
     },
     dailyContent: {
       title: "Contenu quotidien",

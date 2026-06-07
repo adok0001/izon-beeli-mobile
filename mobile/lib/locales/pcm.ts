@@ -698,6 +698,7 @@ export const pcm = {
     failedMessage: "We no fit send your feedback right now.",
     emailFallback: "Send via email instead",
     submit: "Submit",
+    adminOnlyNotice: "Only Beeli team go see am · e no go dey for feed",
   },
   share: {
     learningWith: "I dey learn {{language}} with Beeli",
@@ -1208,6 +1209,7 @@ export const pcm = {
       notifications: "Notifications",
       dailyContent: "Daily Content",
       activities: "Activities",
+      quiz: "Quiz",
     },
     dailyContent: {
       title: "Daily Content",

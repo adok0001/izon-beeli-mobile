@@ -676,6 +676,7 @@ export const en = {
     failedMessage: "We couldn't send your feedback right now.",
     emailFallback: "Send via email instead",
     submit: "Submit",
+    adminOnlyNotice: "Only visible to the Beeli team · not posted publicly",
   },
   share: {
     learningWith: "Learning {{language}} with Beeli",
@@ -1186,6 +1187,7 @@ export const en = {
       notifications: "Notifications",
       dailyContent: "Daily Content",
       activities: "Activities",
+      quiz: "Quiz",
     },
     dailyContent: {
       title: "Daily Content",
