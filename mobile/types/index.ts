@@ -62,6 +62,7 @@ export interface JournalEntry {
   title: string;
   content: string;
   lessonId?: string;
+  isPublic: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -88,6 +89,7 @@ export interface FeedItem {
   comments: number;
   isLiked: boolean;
   audioUrl?: AudioSource; // for contribution cards with audio
+  languageId?: string | null;
 }
 
 export interface UserProfile {

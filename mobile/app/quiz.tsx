@@ -452,10 +452,13 @@ export default function QuizScreen() {
     focusWord?: string;
     focusEnglish?: string;
     focusAudio?: string;
+    focusLanguageId?: string;
     lessonId?: string;
   }>();
   const { selectedLanguageId } = useLanguageStore();
   const { data: dictionaryEntries = [], isLoading: isDictLoading } = useDictionary(selectedLanguageId);
+  const focusLanguageId = params.focusLanguageId ?? selectedLanguageId;
+  const { data: focusEntries = [], isLoading: isFocusLoading } = useDictionary(focusLanguageId);
   const { data: lessonData, isLoading: isLessonLoading } = useLesson(params.lessonId ?? "");
 
   // When lessonId is provided, filter dictionary to words that appear in the lesson transcript.
@@ -497,7 +500,7 @@ export default function QuizScreen() {
   // Once dictionary (and lesson, if applicable) data loads: auto-start focused quizzes, show config for regular quizzes
   useEffect(() => {
     if (initialized.current) return;
-    if (isDictLoading) return;
+    if (isDictLoading || isFocusLoading) return;
     if (params.lessonId && isLessonLoading) return;
     initialized.current = true;
 
@@ -508,7 +511,7 @@ export default function QuizScreen() {
         params.focusWord!,
         params.focusEnglish!,
         params.focusAudio || undefined,
-        dictionaryEntries,
+        focusEntries,
         tq
       );
       if (questions.length === 0) {
@@ -531,7 +534,7 @@ export default function QuizScreen() {
         setConfigReady(true);
       }
     }
-  }, [isDictLoading, isLessonLoading]);
+  }, [isDictLoading, isFocusLoading, isLessonLoading]);
 
   const handleStart = useCallback(
     (count: number) => {
