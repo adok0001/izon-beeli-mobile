@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { Audio, AVPlaybackStatus, AVPlaybackSource } from "expo-av";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { AudioSource } from "@/types";
+import { useLanguageStore } from "./language-store";
 
 type PlaybackSpeed = 0.5 | 0.75 | 1 | 1.25 | 1.5 | 2;
 
@@ -10,6 +11,7 @@ const RESUME_KEY = "audio-store-resume";
 interface ResumeState {
   lessonId: string;
   positionSeconds: number;
+  languageId: string;
 }
 
 interface AudioState {
@@ -214,7 +216,8 @@ export const useAudioStore = create<AudioState>((set, get) => ({
   },
 
   saveResumeState: (lessonId, positionSeconds) => {
-    const state: ResumeState = { lessonId, positionSeconds };
+    const languageId = useLanguageStore.getState().selectedLanguageId;
+    const state: ResumeState = { lessonId, positionSeconds, languageId };
     set({ resumeState: state });
     AsyncStorage.setItem(RESUME_KEY, JSON.stringify(state)).catch(() => {});
   },
