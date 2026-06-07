@@ -1,9 +1,20 @@
 import { eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index.js";
-import { dictionaryEntries, lessons, transcriptSegments } from "../db/schema.js";
+import { appConfig, dictionaryEntries, lessons, transcriptSegments } from "../db/schema.js";
 
 export const quizRouter = new Hono();
+
+// 60-second in-memory cache for appConfig values
+const _configCache = new Map<string, { value: string; ts: number }>();
+async function getConfigValue(key: string, fallback: string): Promise<string> {
+  const cached = _configCache.get(key);
+  if (cached && Date.now() - cached.ts < 60_000) return cached.value;
+  const [row] = await db.select({ value: appConfig.value }).from(appConfig).where(eq(appConfig.key, key)).limit(1);
+  const value = row?.value ?? fallback;
+  _configCache.set(key, { value, ts: Date.now() });
+  return value;
+}
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -35,7 +46,14 @@ quizRouter.get("/questions", async (c) => {
   const courseId = c.req.query("courseId");
   const lessonId = c.req.query("lessonId");
   const rawCount = parseInt(c.req.query("count") ?? "10", 10);
-  const count = Math.min(Math.max(Number.isNaN(rawCount) ? 10 : rawCount, 1), 20);
+  const [maxCountStr, minVocabStr] = await Promise.all([
+    getConfigValue("quiz.max_question_count", "20"),
+    getConfigValue("quiz.min_vocabulary_count", "4"),
+  ]);
+  const maxCount = Math.max(1, parseInt(maxCountStr, 10) || 20);
+  // Distractor generation requires at least 4 entries (1 correct + 3 distractors); enforce floor.
+  const minVocab = Math.max(4, parseInt(minVocabStr, 10) || 4);
+  const count = Math.min(Math.max(Number.isNaN(rawCount) ? 10 : rawCount, 1), maxCount);
 
   if (!languageId) {
     return c.json({ error: "languageId is required" }, 400);
@@ -100,7 +118,7 @@ quizRouter.get("/questions", async (c) => {
     }
   }
 
-  if (entries.length < 4) {
+  if (entries.length < minVocab) {
     return c.json({ error: "Not enough vocabulary for this quiz scope" }, 400);
   }
 
