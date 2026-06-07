@@ -56,27 +56,35 @@ Group checks under the changed feature. For each feature, produce:
 2. **Edge cases** — at least one; more for complex features (empty state, long input, offline, permissions denied)
 3. **Regression watchpoints** — adjacent screens or flows that share code with the change
 
-Format as a plain markdown checklist (`- [ ]`). Use screen names as headers. Be specific — "tap the loop button on the third segment" beats "test the transcript".
+Be specific — "tap the loop button on the third segment" beats "test the transcript".
 
 ### Step 4 — Add a Platform & Device matrix
 
 At the bottom, list which platforms/devices the tester should cover based on what changed:
 
-- **iOS only** — if changes touch `*.ios.tsx`, widgets, SF Symbols, or `expo-av`
-- **Android only** — if changes touch `*.android.tsx` or Material Icons
-- **Both iOS + Android** — if changes are in shared components
-- **Web** — if changes touch `app/(web)/` or web-specific files
+- iOS only — if changes touch `*.ios.tsx`, widgets, SF Symbols, or `expo-av`
+- Android only — if changes touch `*.android.tsx` or Material Icons
+- Both iOS + Android — if changes are in shared components
+- Web — if changes touch `app/(web)/` or web-specific files
 
-Flag any check that is iOS 17+ only with `[iOS 17+]`.
+Flag any check that is iOS 17+ only with (iOS 17+).
 
 ### Step 5 — Present the checklist
 
-Output a single markdown document with:
-- A one-line build summary at the top (version range, date, number of user-facing changes)
-- One section per changed feature
-- The platform/device matrix at the bottom
+Output plain text only — no markdown, no bullet symbols, no checkboxes, no bold or italic. The output goes directly into the TestFlight "What to Test" text box which renders everything literally.
 
-After the checklist, list any items that need the user to confirm availability before sending to testers, marked `[CONFIRM BEFORE SENDING]`.
+Format:
+- One-line build summary at the top (version range, date, number of user-facing areas)
+- A blank line, then each feature section
+- Section title in ALL CAPS on its own line
+- Each check as a plain sentence on its own line, indented with nothing (no dashes, no hyphens, no asterisks)
+- A blank line between sections
+- Platform/device coverage at the bottom under "DEVICES TO COVER"
+- Confirm-before-sending items at the very bottom under "CONFIRM BEFORE SENDING"
+
+The TestFlight "What to Test" field has a hard 4000 character limit. Keep the total output under 4000 characters. If there are many features, group related ones into a single paragraph rather than listing every check individually. Prioritise the highest-risk and most user-visible changes.
+
+After the checklist, list any items that need the user to confirm availability before sending to testers under "CONFIRM BEFORE SENDING".
 
 ## Key conventions
 
@@ -85,3 +93,4 @@ After the checklist, list any items that need the user to confirm availability b
 - Never mention internal library names (expo-av, Clerk, Supabase, AsyncStorage).
 - Regression watchpoints should be brief — one line each, enough to jog memory.
 - If a fix addresses a specific crash or broken flow, describe the repro steps as the first check so testers can confirm it's resolved.
+- No markdown whatsoever. Plain text only.
