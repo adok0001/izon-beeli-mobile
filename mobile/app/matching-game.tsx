@@ -9,6 +9,7 @@ import { useMatchingStore } from "@/store/matching-store";
 import { generateMatchingPairs } from "@/lib/quiz-engine";
 import { useLanguageStore } from "@/store/language-store";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
+import { useLesson } from "@/lib/hooks/use-courses";
 import { getLanguageName } from "@/lib/mock-data";
 import { hapticHeavy } from "@/lib/haptics";
 import { playFinishSound } from "@/lib/sounds";
@@ -20,9 +21,10 @@ import { useQueryClient } from "@tanstack/react-query";
 export default function MatchingGameScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
-  const params = useLocalSearchParams<{ courseId?: string }>();
+  const params = useLocalSearchParams<{ courseId?: string; lessonId?: string }>();
   const { selectedLanguageId } = useLanguageStore();
   const { data: dictionaryEntries = [], isLoading: isDictLoading } = useDictionary(selectedLanguageId);
+  const { data: lessonData, isLoading: isLessonLoading } = useLesson(params.lessonId ?? "");
   const { phase, startGame, getResult, reset } = useMatchingStore();
   const [isEmpty, setIsEmpty] = useState(false);
   const initialized = useRef(false);
@@ -35,15 +37,19 @@ export default function MatchingGameScreen() {
   useEffect(() => {
     if (initialized.current) return;
     if (isDictLoading) return;
+    if (params.lessonId && isLessonLoading) return;
     initialized.current = true;
 
+    const segments = lessonData?.transcript ?? [];
     const pairs = generateMatchingPairs(
       {
         languageId: selectedLanguageId,
         courseId: params.courseId,
+        lessonId: params.lessonId,
         pairCount: 8,
       },
-      dictionaryEntries
+      dictionaryEntries,
+      segments
     );
 
     if (pairs.length === 0) {
@@ -51,7 +57,7 @@ export default function MatchingGameScreen() {
     } else {
       startGame(pairs);
     }
-  }, [isDictLoading]);
+  }, [isDictLoading, isLessonLoading]);
 
   useEffect(() => {
     if (phase !== "results") return;
@@ -80,18 +86,21 @@ export default function MatchingGameScreen() {
   }, [phase]);
 
   const handlePlayAgain = useCallback(() => {
+    const segments = lessonData?.transcript ?? [];
     const pairs = generateMatchingPairs(
       {
         languageId: selectedLanguageId,
         courseId: params.courseId,
+        lessonId: params.lessonId,
         pairCount: 8,
       },
-      dictionaryEntries
+      dictionaryEntries,
+      segments
     );
     if (pairs.length > 0) {
       startGame(pairs);
     }
-  }, [selectedLanguageId, params.courseId, dictionaryEntries, startGame]);
+  }, [selectedLanguageId, params.courseId, params.lessonId, lessonData, dictionaryEntries, startGame]);
 
   const result = phase === "results" ? getResult() : null;
 

@@ -221,6 +221,7 @@ export interface MatchingPair {
 export interface MatchingGameConfig {
   languageId: string;
   courseId?: string;
+  lessonId?: string;
   pairCount: number; // default 8
 }
 
@@ -311,7 +312,9 @@ export type QuestionType =
   | "word-to-english"
   | "english-to-word"
   | "fill-in-the-blank"
-  | "listening";
+  | "listening"
+  | "segment-listening"
+  | "context-translate";
 
 export interface QuizQuestion {
   id: string;
@@ -320,6 +323,8 @@ export interface QuizQuestion {
   correctAnswer: string;
   options: string[]; // 4 options, shuffled
   audioSource?: AudioSource; // for listening questions
+  startTime?: number; // seconds — for segment-listening, seek to this position
+  endTime?: number; // seconds — for segment-listening, stop at this position
   explanation?: string; // optional explanation shown after incorrect answer
   exampleSentence?: string;
   exampleSentenceTranslation?: string;
@@ -328,6 +333,7 @@ export interface QuizQuestion {
 export interface QuizConfig {
   languageId: string;
   courseId?: string;
+  lessonId?: string;
   category?: string;
   questionCount: number; // default 10
 }
