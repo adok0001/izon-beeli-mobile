@@ -8,6 +8,7 @@ import { useRouter } from "expo-router";
 import { memo, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Animated, Pressable, Text, View } from "react-native";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { animStyle } from "./anim";
 
 /** "Continue listening" resume card for the last partially-played lesson. */
@@ -18,6 +19,7 @@ export const ContinueCard = memo(function ContinueCard({
   lessonId: string;
   positionSeconds: number;
 }) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
   const { uiLanguage } = useUiLanguageStore();
@@ -56,10 +58,10 @@ export const ContinueCard = memo(function ContinueCard({
           borderRadius: 16,
           overflow: "hidden",
           borderLeftWidth: 4,
-          borderLeftColor: "#4ade80",
-          backgroundColor: "rgba(74, 222, 128, 0.06)",
+          borderLeftColor: M.success,
+          backgroundColor: M.successBg,
           borderWidth: 1,
-          borderColor: "rgba(74, 222, 128, 0.15)",
+          borderColor: M.successBorder,
         }}
         className="mb-3 p-4 active:opacity-70"
         accessibilityRole="button"
@@ -68,13 +70,13 @@ export const ContinueCard = memo(function ContinueCard({
       >
         <View className="flex-row items-center">
           <View
-            style={{ backgroundColor: "#22c55e", borderRadius: 12 }}
+            style={{ backgroundColor: M.success, borderRadius: 12 }}
             className="mr-3 h-12 w-12 items-center justify-center"
           >
             <IconSymbol name="play.fill" size={20} color="#fff" />
           </View>
           <View className="flex-1">
-            <Text style={{ color: "#4ade80", fontSize: 10, fontWeight: "700", letterSpacing: 1.5 }}>
+            <Text style={{ color: M.success, fontSize: 10, fontWeight: "700", letterSpacing: 1.5 }}>
               {t("learn.continueListening").toUpperCase()}
             </Text>
             <Text className="mt-0.5 text-base font-bold text-neutral-900 dark:text-white" numberOfLines={1}>
@@ -84,7 +86,7 @@ export const ContinueCard = memo(function ContinueCard({
               {t("learn.pausedAt", { time: posLabel })}
             </Text>
           </View>
-          <IconSymbol name="chevron.right" size={16} color="#22c55e" />
+          <IconSymbol name="chevron.right" size={16} color={M.success} />
         </View>
       </Pressable>
     </Animated.View>

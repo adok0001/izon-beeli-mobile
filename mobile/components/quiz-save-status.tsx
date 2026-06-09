@@ -18,7 +18,7 @@ export function QuizSaveStatus({
   if (status !== "error") return null;
   return (
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 12 }}>
-      <Text style={{ fontSize: 12, color: "#ef4444", textAlign: "center" }}>Couldn&apos;t save your score.</Text>
+      <Text style={{ fontSize: 12, color: M.error, textAlign: "center" }}>Couldn&apos;t save your score.</Text>
       <Pressable onPress={onRetry} hitSlop={8} className="active:opacity-60">
         <Text style={{ fontSize: 12, fontWeight: "800", color: M.accent }}>Retry</Text>
       </Pressable>

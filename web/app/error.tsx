@@ -14,7 +14,7 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#06060e] px-6 overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-[#07070f] px-6 overflow-hidden">
 
       {/* Film grain */}
       <div aria-hidden className="grain-overlay" />
@@ -74,7 +74,7 @@ export default function GlobalError({
 
         <button
           onClick={reset}
-          className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#06060e] font-bold text-sm transition-all duration-200 shadow-[0_0_40px_-8px_rgb(245_158_11_/0.6)] hover:shadow-[0_0_60px_-8px_rgb(245_158_11_/0.8)]"
+          className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-sm transition-all duration-200 shadow-[0_0_40px_-8px_rgb(245_158_11_/0.6)] hover:shadow-[0_0_60px_-8px_rgb(245_158_11_/0.8)]"
         >
           Try again
         </button>

@@ -262,9 +262,9 @@ export default function WordChallengeScreen() {
                     style={{ borderRadius: 14, borderWidth: 2, borderColor: M.inputBorder, backgroundColor: M.inputBg, color: M.text, fontSize: 16, padding: 16, minHeight: 100, lineHeight: 24 }}
                   />
                   {submitStatus === "error" && (
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 12, padding: 12, backgroundColor: "#ef444410", borderWidth: 1, borderColor: "#ef444430" }}>
-                      <IconSymbol name="xmark.circle.fill" size={18} color="#ef4444" />
-                      <Text style={{ flex: 1, fontSize: 13, color: "#ef4444", lineHeight: 18 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 12, padding: 12, backgroundColor: M.errorBg, borderWidth: 1, borderColor: M.errorBorder }}>
+                      <IconSymbol name="xmark.circle.fill" size={18} color={M.error} />
+                      <Text style={{ flex: 1, fontSize: 13, color: M.error, lineHeight: 18 }}>
                         Couldn&apos;t submit your sentence. Check your connection and try again.
                       </Text>
                     </View>

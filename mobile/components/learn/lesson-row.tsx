@@ -36,11 +36,11 @@ export function LessonRow({
           justifyContent: "center",
           backgroundColor: completed ? "rgba(74, 222, 128, 0.15)" : "transparent",
           borderWidth: 1.5,
-          borderColor: completed ? "#4ade80" : M.border,
+          borderColor: completed ? M.success : M.border,
         }}
       >
         {completed && (
-          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#4ade80" }} />
+          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: M.success }} />
         )}
       </View>
       <View className="ml-3 flex-1">

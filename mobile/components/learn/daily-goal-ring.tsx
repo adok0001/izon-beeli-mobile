@@ -12,7 +12,7 @@ export function DailyGoalRing({ completedToday }: { completedToday: number }) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference * (1 - pct);
-  const color = pct >= 1 ? "#4ade80" : M.accent;
+  const color = pct >= 1 ? M.success : M.accent;
 
   return (
     <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>

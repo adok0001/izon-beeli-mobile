@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import { useRouter, useLocalSearchParams, Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Button } from "@/components/ui/button";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { MatchingBoard } from "@/components/quiz/matching-board";
@@ -136,13 +137,12 @@ export default function MatchingGameScreen() {
             <Text style={{ marginTop: 8, textAlign: "center", fontSize: 13, color: M.muted }}>
               {t("matching.notEnoughVocabDesc")}
             </Text>
-            <Pressable
+            <Button
+              label={t("matching.goBack")}
               onPress={() => { reset(); router.back(); }}
-              style={{ marginTop: 24, borderRadius: 12, backgroundColor: M.accent, paddingHorizontal: 32, paddingVertical: 12 }}
-              className="active:opacity-80"
-            >
-              <Text style={{ fontWeight: "600", color: M.ink }}>{t("matching.goBack")}</Text>
-            </Pressable>
+              fullWidth={false}
+              style={{ marginTop: 24 }}
+            />
           </View>
         ) : phase === "results" && result ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
@@ -159,20 +159,8 @@ export default function MatchingGameScreen() {
             </Text>
 
             <View style={{ width: "100%", gap: 12 }}>
-              <Pressable
-                onPress={handlePlayAgain}
-                style={{ alignItems: "center", borderRadius: 12, backgroundColor: M.accent, paddingVertical: 16 }}
-                className="active:opacity-80"
-              >
-                <Text style={{ fontSize: 15, fontWeight: "600", color: M.ink }}>{t("matching.playAgain")}</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => { reset(); router.back(); }}
-                style={{ alignItems: "center", borderRadius: 12, borderWidth: 2, borderColor: M.border, paddingVertical: 16 }}
-                className="active:opacity-80"
-              >
-                <Text style={{ fontSize: 15, fontWeight: "600", color: M.sub }}>{t("matching.backToLearn")}</Text>
-              </Pressable>
+              <Button label={t("matching.playAgain")} onPress={handlePlayAgain} />
+              <Button label={t("matching.backToLearn")} onPress={() => { reset(); router.back(); }} variant="secondary" />
             </View>
           </View>
         ) : (

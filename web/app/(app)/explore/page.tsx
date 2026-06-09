@@ -38,13 +38,13 @@ export default function ExplorePage() {
       items: [
         { href: "/culture",    label: t("tabs.culture"),           icon: Clapperboard,   color: "#fb923c" },
         { href: "/dictionary", label: t("dictionaryPage.title"),   icon: BookText,       color: "#38bdf8" },
-        { href: "/bounties",   label: t("bounties.title"),         icon: Star,           color: "#C4862A" },
+        { href: "/bounties",   label: t("bounties.title"),         icon: Star,           color: "#f59e0b" },
       ],
     },
     {
       label: t("common.practiceSection"),
       items: [
-        { href: "/quiz",        label: t("quiz.title"),        icon: Brain,           color: "#a78bfa" },
+        { href: "/quiz",        label: t("quiz.title"),        icon: Brain,           color: "#a855f7" },
         { href: "/word-review", label: t("wordReview.title"),  icon: FlipHorizontal2, color: "#34d399" },
         { href: "/leaderboard", label: t("leaderboard.title"), icon: Trophy,          color: "#fbbf24" },
       ],
@@ -53,34 +53,31 @@ export default function ExplorePage() {
       label: t("common.contributeSection"),
       items: [
         { href: "/contribute",       label: t("contribute.title"),      icon: Plus,     color: "#38bdf8" },
-        { href: "/my-contributions", label: t("profile.myContributions"), icon: FileText, color: "#9A9480" },
+        { href: "/my-contributions", label: t("profile.myContributions"), icon: FileText, color: "#a3a3a3" },
       ],
     },
     {
       label: t("common.accountSection"),
       items: [
-        { href: "/dashboard", label: t("profile.progressDashboard"), icon: LayoutDashboard, color: "#C4862A" },
+        { href: "/dashboard", label: t("profile.progressDashboard"), icon: LayoutDashboard, color: "#f59e0b" },
         { href: "/classroom", label: t("profile.classroom"),         icon: Users,           color: "#38bdf8" },
-        { href: "/settings",  label: t("settings.title"),            icon: Settings,        color: "#9A9480" },
-        { href: "/profile",   label: t("tabs.profile"),              icon: UserRound,       color: "#a78bfa" },
+        { href: "/settings",  label: t("settings.title"),            icon: Settings,        color: "#a3a3a3" },
+        { href: "/profile",   label: t("tabs.profile"),              icon: UserRound,       color: "#a855f7" },
       ],
     },
   ];
 
   return (
-    <div className="min-h-screen pb-24" style={{ backgroundColor: "#0D0F1A" }}>
+    <div className="min-h-screen pb-24 bg-[#07070f]">
       {/* Header */}
-      <div
-        className="sticky top-0 z-20 px-5 pt-6 pb-4 border-b"
-        style={{ backgroundColor: "#0D0F1A", borderColor: "#2E3245" }}
-      >
-        <h1 className="text-3xl font-black text-[#F7F2E8] tracking-tight leading-none">
+      <div className="sticky top-0 z-20 px-5 pt-6 pb-4 border-b bg-[#07070f] border-white/[0.07]">
+        <h1 className="text-3xl font-black text-neutral-50 tracking-tight leading-none">
           EXPLORE
         </h1>
         <p className="text-[9px] font-bold tracking-[0.3em] text-amber-600 mt-1 uppercase">
           Everything in one place
         </p>
-        <div className="h-px mt-3 opacity-30" style={{ backgroundColor: "#C4862A" }} />
+        <div className="h-px mt-3 opacity-30 bg-gold-500" />
       </div>
 
       <div className="px-5 pt-6 space-y-8">
@@ -91,7 +88,7 @@ export default function ExplorePage() {
               <div className="flex-1 h-px bg-white/[0.08]" />
               <div className="flex items-center gap-1.5">
                 <div className="w-1 h-1 rounded-full bg-amber-600" />
-                <span className="text-[9px] font-black tracking-[0.2em] text-[#9A9480] uppercase">
+                <span className="text-[9px] font-black tracking-[0.2em] text-neutral-400 uppercase">
                   {group.label}
                 </span>
                 <div className="w-1 h-1 rounded-full bg-amber-600" />
@@ -113,7 +110,7 @@ export default function ExplorePage() {
                   >
                     <Icon className="h-5 w-5" style={{ color }} />
                   </div>
-                  <span className="text-[11px] font-bold text-[#F7F2E8] leading-tight">{label}</span>
+                  <span className="text-[11px] font-bold text-neutral-50 leading-tight">{label}</span>
                 </Link>
               ))}
             </div>

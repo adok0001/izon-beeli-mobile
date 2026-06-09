@@ -13,6 +13,9 @@ import {
     playFinishSound,
     playIncorrectSound,
 } from "@/lib/sounds";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import { useQuizStore } from "@/store/quiz-store";
@@ -21,7 +24,7 @@ import { useInvalidateDailyChallenges } from "@/lib/hooks/use-daily-challenge";
 import { useAuth } from "@clerk/clerk-expo";
 import { useQueryClient } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -42,7 +45,6 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
 }
 
 function QuestionTypeLabel({ type }: { type: QuizQuestion["type"] }) {
-  const M = useMuseumTheme();
   const { t } = useTranslation();
   const labels: Record<string, string> = {
     "word-to-english": t("quiz.wordToEnglish"),
@@ -52,13 +54,7 @@ function QuestionTypeLabel({ type }: { type: QuizQuestion["type"] }) {
     "segment-listening": t("quiz.listening"),
     "context-translate": t("quiz.wordToEnglish"),
   };
-  return (
-    <View style={{ marginBottom: 8, alignSelf: "flex-start", borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 12, paddingVertical: 4, borderWidth: 1, borderColor: M.accentBorder }}>
-      <Text style={{ fontSize: 12, fontWeight: "600", color: M.accent }}>
-        {labels[type] ?? type}
-      </Text>
-    </View>
-  );
+  return <Badge label={labels[type] ?? type} tone="accent" style={{ marginBottom: 8 }} />;
 }
 
 function ConfigView({ onStart }: { onStart: (count: number) => void }) {
@@ -100,13 +96,7 @@ function ConfigView({ onStart }: { onStart: (count: number) => void }) {
         ))}
       </View>
 
-      <Pressable
-        onPress={() => onStart(count)}
-        style={{ width: "100%", alignItems: "center", borderRadius: 12, backgroundColor: M.accent, paddingVertical: 16 }}
-        className="active:opacity-80"
-      >
-        <Text style={{ fontSize: 16, fontWeight: "600", color: M.ink }}>{t("quiz.startQuiz")}</Text>
-      </Pressable>
+      <Button label={t("quiz.startQuiz")} onPress={() => onStart(count)} />
     </View>
   );
 }
@@ -180,11 +170,10 @@ function ActiveView() {
             {t("quiz.questionOf", { current: currentIndex + 1, total: questions.length })}
           </Text>
           {lastAnswerCorrect !== null && locked && (
-            <View style={{ borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: lastAnswerCorrect ? M.successBg : M.errorBg }}>
-              <Text style={{ fontSize: 12, fontWeight: "600", color: lastAnswerCorrect ? M.success : M.error }}>
-                {lastAnswerCorrect ? t("quiz.correct") : t("quiz.incorrect")}
-              </Text>
-            </View>
+            <Badge
+              label={lastAnswerCorrect ? t("quiz.correct") : t("quiz.incorrect")}
+              tone={lastAnswerCorrect ? "success" : "error"}
+            />
           )}
         </View>
 
@@ -242,15 +231,13 @@ function ActiveView() {
                 )}
               </View>
             )}
-            <Pressable
+            <Button
+              label={t("common.continue")}
               onPress={handleContinue}
-              style={{ marginTop: 12, alignItems: "center", borderRadius: 12, backgroundColor: M.error, paddingVertical: 12 }}
-              className="active:opacity-70"
-            >
-              <Text style={{ fontSize: 13, fontWeight: "600", color: "#fff" }}>
-                {t("common.continue")}
-              </Text>
-            </Pressable>
+              variant="danger"
+              size="sm"
+              style={{ marginTop: 12 }}
+            />
           </View>
         )}
       </View>
@@ -269,6 +256,7 @@ function ResultsView({ languageId }: { languageId: string }) {
   const result = getResult();
   const startTime = useQuizStore((s) => s.startTime);
   const [xpResult, setXpResult] = useState<{ xpEarned: number; leveledUp: boolean } | null>(null);
+  const purple = getAccent("purple");
 
   useEffect(() => {
     hapticHeavy();
@@ -334,17 +322,9 @@ function ResultsView({ languageId }: { languageId: string }) {
         </Text>
         {xpResult && (
           <View style={{ marginBottom: 12, flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <View style={{ borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 16, paddingVertical: 6, borderWidth: 1, borderColor: M.accentBorder }}>
-              <Text style={{ fontSize: 13, fontWeight: "700", color: M.accent }}>
-                {t("quiz.xpEarned", { xp: xpResult.xpEarned })}
-              </Text>
-            </View>
+            <Badge label={t("quiz.xpEarned", { xp: xpResult.xpEarned })} tone="accent" />
             {xpResult.leveledUp && (
-              <View style={{ borderRadius: 999, backgroundColor: "#a78bfa20", paddingHorizontal: 16, paddingVertical: 6, borderWidth: 1, borderColor: "#a78bfa40" }}>
-                <Text style={{ fontSize: 13, fontWeight: "700", color: "#a78bfa" }}>
-                  {t("quiz.leveledUp")}
-                </Text>
-              </View>
+              <Badge label={t("quiz.leveledUp")} color={purple.solid} bg={purple.bg} border={purple.border} />
             )}
           </View>
         )}
@@ -353,12 +333,8 @@ function ResultsView({ languageId }: { languageId: string }) {
         </Text>
 
         <View style={{ width: "100%", gap: 12 }}>
-          <Pressable onPress={handleTryAgain} style={{ alignItems: "center", borderRadius: 12, backgroundColor: M.accent, paddingVertical: 16 }} className="active:opacity-80">
-            <Text style={{ fontSize: 16, fontWeight: "600", color: M.ink }}>{t("quiz.tryAgain")}</Text>
-          </Pressable>
-          <Pressable onPress={() => { reset(); router.back(); }} style={{ alignItems: "center", borderRadius: 12, borderWidth: 2, borderColor: M.border, paddingVertical: 16 }} className="active:opacity-80">
-            <Text style={{ fontSize: 16, fontWeight: "600", color: M.sub }}>{t("quiz.backToLearn")}</Text>
-          </Pressable>
+          <Button label={t("quiz.tryAgain")} onPress={handleTryAgain} />
+          <Button label={t("quiz.backToLearn")} onPress={() => { reset(); router.back(); }} variant="secondary" />
         </View>
       </View>
 
@@ -412,13 +388,12 @@ function EmptyView() {
       <Text style={{ marginTop: 8, textAlign: "center", fontSize: 14, color: M.sub }}>
         {t("quiz.notEnoughVocabDesc")}
       </Text>
-      <Pressable
+      <Button
+        label={t("common.goBack")}
         onPress={() => { reset(); router.back(); }}
-        style={{ marginTop: 24, borderRadius: 12, backgroundColor: M.accent, paddingHorizontal: 32, paddingVertical: 12 }}
-        className="active:opacity-80"
-      >
-        <Text style={{ fontWeight: "600", color: M.ink }}>{t("common.goBack")}</Text>
-      </Pressable>
+        fullWidth={false}
+        style={{ marginTop: 24 }}
+      />
     </View>
   );
 }
