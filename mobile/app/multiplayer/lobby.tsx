@@ -1,4 +1,4 @@
-import { getAccent } from "@/constants/accent-colors";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import {
@@ -24,6 +24,7 @@ const PARTYKIT_HOST =
   process.env.EXPO_PUBLIC_PARTYKIT_HOST ?? "localhost:1999";
 
 export default function LobbyScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const { user } = useUser();
   const { getToken, userId } = useAuth();
@@ -160,7 +161,7 @@ export default function LobbyScreen() {
           title: "Lobby",
           headerLeft: () => (
             <Pressable onPress={handleCancel} hitSlop={8}>
-              <IconSymbol name="xmark" size={22} color="#9ca3af" />
+              <IconSymbol name="xmark" size={22} color={M.muted} />
             </Pressable>
           ),
         }}
@@ -190,7 +191,7 @@ export default function LobbyScreen() {
                 {params.inviteCode}
               </Text>
               <View className="mt-2 flex-row items-center">
-                <IconSymbol name="square.on.square" size={14} color={getAccent("blue").solid} />
+                <IconSymbol name="square.on.square" size={14} color="#3b82f6" />
                 <Text className="ml-1 text-sm text-blue-500">
                   Tap to share
                 </Text>
@@ -226,7 +227,7 @@ export default function LobbyScreen() {
                     <IconSymbol
                       name="person.fill"
                       size={28}
-                      color="#9ca3af"
+                      color={M.muted}
                     />
                   </View>
                   <Text className="text-sm text-neutral-500">You</Text>
@@ -236,7 +237,7 @@ export default function LobbyScreen() {
               {players.length < 2 && (
                 <View className="items-center">
                   <View className="mb-2 h-16 w-16 items-center justify-center rounded-full border-2 border-dashed border-neutral-300 dark:border-neutral-600">
-                    <ActivityIndicator size="small" color="#9ca3af" />
+                    <ActivityIndicator size="small" color={M.muted} />
                   </View>
                   <Text className="text-sm text-neutral-400 dark:text-neutral-500">
                     Waiting...
@@ -249,7 +250,7 @@ export default function LobbyScreen() {
           {/* Status */}
           {isMatchmaking && !params.sessionId && (
             <View className="mb-6 items-center">
-              <ActivityIndicator size="large" color={getAccent("blue").solid} />
+              <ActivityIndicator size="large" color="#3b82f6" />
               <Text className="mt-3 text-base text-neutral-500 dark:text-neutral-400">
                 Looking for an opponent...
               </Text>
@@ -258,7 +259,7 @@ export default function LobbyScreen() {
 
           {connectionStatus === "connecting" && (
             <View className="mb-6 items-center">
-              <ActivityIndicator size="small" color={getAccent("blue").solid} />
+              <ActivityIndicator size="small" color="#3b82f6" />
               <Text className="mt-2 text-sm text-neutral-500">
                 Connecting...
               </Text>

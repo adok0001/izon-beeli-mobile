@@ -1,5 +1,5 @@
 import { LoadingScreen } from "@/components/loading-screen";
-import { getAccent } from "@/constants/accent-colors";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import {
   View,
   Text,
@@ -30,6 +30,7 @@ import { useTranslation } from "react-i18next";
 import type { GroupMember, AssignedLesson } from "@/types";
 
 export default function GroupDetailScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
@@ -145,7 +146,7 @@ export default function GroupDetailScreen() {
                 }
                 hitSlop={8}
               >
-                <IconSymbol name="plus.circle.fill" size={22} color={getAccent("blue").solid} />
+                <IconSymbol name="plus.circle.fill" size={22} color="#3b82f6" />
               </Pressable>
             ) : null,
         }}
@@ -174,11 +175,11 @@ export default function GroupDetailScreen() {
                 onLongPress={handleShareCode}
                 className="flex-row items-center rounded-lg bg-neutral-100 px-2 py-1 active:opacity-60 dark:bg-neutral-700"
               >
-                <IconSymbol name="key.fill" size={12} color="#9ca3af" />
+                <IconSymbol name="key.fill" size={12} color={M.muted} />
                 <Text className="ml-1 text-xs font-mono text-neutral-500 dark:text-neutral-400">
                   {group.inviteCode}
                 </Text>
-                <IconSymbol name="doc.on.doc" size={11} color="#9ca3af" className="ml-1" />
+                <IconSymbol name="doc.on.doc" size={11} color={M.muted} className="ml-1" />
               </Pressable>
             </View>
             {/* Share invite code row */}
@@ -186,7 +187,7 @@ export default function GroupDetailScreen() {
               onPress={handleShareCode}
               className="mt-3 flex-row items-center justify-center gap-1.5 rounded-lg bg-blue-50 py-2 active:opacity-70 dark:bg-blue-900/20"
             >
-              <IconSymbol name="square.and.arrow.up" size={14} color={getAccent("blue").solid} />
+              <IconSymbol name="square.and.arrow.up" size={14} color="#3b82f6" />
               <Text className="text-sm font-medium text-blue-600 dark:text-blue-400">
                 {t("classroom.shareCode")}
               </Text>
@@ -220,7 +221,7 @@ export default function GroupDetailScreen() {
             {t("classroom.assignments", { count: assignments.length })}
           </Text>
           {loadingAssignments ? (
-            <ActivityIndicator size="small" color={getAccent("blue").solid} className="py-4" />
+            <ActivityIndicator size="small" color="#3b82f6" className="py-4" />
           ) : assignments.length === 0 ? (
             <Text className="py-4 text-center text-sm text-neutral-400 dark:text-neutral-500">
               {t("classroom.noAssignments")}
