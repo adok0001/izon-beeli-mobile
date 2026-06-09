@@ -5,8 +5,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useMultiplayerStore } from "@/store/multiplayer-store";
 import { hapticHeavy } from "@/lib/haptics";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 
 export default function QuizResultsScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const {
     gameResults,
@@ -103,7 +105,7 @@ export default function QuizResultsScreen() {
             <IconSymbol
               name={iWon ? "trophy.fill" : isTie ? "equal" : ("xmark" as any)}
               size={40}
-              color={iWon ? "#22c55e" : isTie ? "#f59e0b" : "#ef4444"}
+              color={iWon ? M.success : isTie ? M.warning : M.error}
             />
           </View>
 
@@ -166,14 +168,14 @@ export default function QuizResultsScreen() {
             >
               {rematchRequested ? (
                 <>
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator size="small" color={M.parchment} />
                   <Text className="ml-2 text-base font-semibold text-white">
                     {partnerWantsRematch ? "Starting rematch..." : "Waiting for opponent..."}
                   </Text>
                 </>
               ) : (
                 <>
-                  <IconSymbol name="arrow.clockwise" size={16} color="#fff" />
+                  <IconSymbol name="arrow.clockwise" size={16} color={M.parchment} />
                   <Text className="ml-2 text-base font-semibold text-white">
                     Rematch{partnerWantsRematch ? " (Opponent ready!)" : ""}
                   </Text>

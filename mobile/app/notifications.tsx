@@ -3,20 +3,21 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { getAccent } from "@/constants/accent-colors";
 import { useNotificationStore } from "@/store/notification-store";
 import type { InAppNotification, NotificationType } from "@/types";
 import { useTranslation } from "react-i18next";
 import i18n from "@/lib/i18n";
 
 const TYPE_CONFIG: Record<NotificationType, { icon: string; color: string }> = {
-  word_of_day: { icon: "star.fill", color: "#3b82f6" },
+  word_of_day: { icon: "star.fill", color: getAccent("blue").solid },
   proverb_of_month: { icon: "quote.opening", color: "#C4862A" },
-  song_of_week: { icon: "music.note", color: "#22c55e" },
-  streak_reminder: { icon: "flame.fill", color: "#f59e0b" },
-  assignment_due: { icon: "calendar", color: "#8b5cf6" },
-  achievement: { icon: "trophy.fill", color: "#22c55e" },
+  song_of_week: { icon: "music.note", color: getAccent("green").solid },
+  streak_reminder: { icon: "flame.fill", color: getAccent("amber").solid },
+  assignment_due: { icon: "calendar", color: getAccent("purple").solid },
+  achievement: { icon: "trophy.fill", color: getAccent("green").solid },
   broadcast: { icon: "megaphone", color: "#6b7280" },
-  reengagement: { icon: "flame.fill", color: "#f59e0b" },
+  reengagement: { icon: "flame.fill", color: getAccent("amber").solid },
 };
 
 function timeAgo(dateStr: string): string {

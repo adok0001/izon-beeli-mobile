@@ -1,6 +1,8 @@
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
 import { friendlyError } from "@/lib/api";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
 import {
   EducatorCourse,
@@ -35,6 +37,7 @@ function ArcCard({
   onEdit: () => void;
   onDelete: () => void;
 }>) {
+  const M = useMuseumTheme();
   return (
     <Pressable
       onPress={onEdit}
@@ -68,9 +71,9 @@ function ArcCard({
             }}
             hitSlop={8}
           >
-            <IconSymbol name="trash" size={18} color="#ef4444" />
+            <IconSymbol name="trash" size={18} color={M.error} />
           </Pressable>
-          <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
+          <IconSymbol name="chevron.right" size={16} color={M.muted} />
         </View>
       </View>
     </Pressable>
@@ -78,6 +81,7 @@ function ArcCard({
 }
 
 export default function EducatorStoriesScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
@@ -123,7 +127,7 @@ export default function EducatorStoriesScreen() {
               onPress={() => router.push("/educator/story-new" as never)}
               className="mr-2"
             >
-              <IconSymbol name="plus.circle.fill" size={22} color="#f59e0b" />
+              <IconSymbol name="plus.circle.fill" size={22} color={getAccent("amber").solid} />
             </Pressable>
           ),
         }}
@@ -144,7 +148,7 @@ export default function EducatorStoriesScreen() {
             <Text className="mt-8 text-center text-sm text-neutral-400">{t("educator.story.loading")}</Text>
           ) : arcs.length === 0 ? (
             <View className="mt-20 items-center">
-              <IconSymbol name="book.closed.fill" size={48} color="#d1d5db" />
+              <IconSymbol name="book.closed.fill" size={48} color={M.border} />
               <Text className="mt-4 text-center text-base font-semibold text-neutral-500 dark:text-neutral-400">
                 {t("educator.story.noArcsTitle")}
               </Text>

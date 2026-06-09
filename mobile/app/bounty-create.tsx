@@ -4,6 +4,8 @@ import { ALL_CATEGORIES, CATEGORY_LABELS, type DictionaryCategory } from "@/lib/
 import { useCreateBounty, type CreateBountyInput } from "@/lib/hooks/use-bounties";
 import { canManageBounties, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useToast } from "@/lib/hooks/use-toast";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { getAccent } from "@/constants/accent-colors";
 import { ACTIVE_LANGUAGES } from "@/lib/mock-data";
 import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
@@ -50,6 +52,7 @@ function input(extra?: string) {
 }
 
 export default function BountyCreateScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const { data: currentUser } = useCurrentUser();
   const createBounty = useCreateBounty();
@@ -75,7 +78,7 @@ export default function BountyCreateScreen() {
           className="flex-1 items-center justify-center bg-white dark:bg-neutral-900"
           edges={[]}
         >
-          <IconSymbol name="lock.fill" size={40} color="#ef4444" />
+          <IconSymbol name="lock.fill" size={40} color={M.error} />
           <Text className="mt-4 text-base font-semibold text-neutral-500">
             Admin access required
           </Text>
@@ -141,7 +144,7 @@ export default function BountyCreateScreen() {
                 value={title}
                 onChangeText={setTitle}
                 placeholder="e.g. Izon Food & Cooking Vocabulary"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={M.muted}
                 maxLength={300}
               />
             </Field>
@@ -153,7 +156,7 @@ export default function BountyCreateScreen() {
                 value={description}
                 onChangeText={setDescription}
                 placeholder="Describe what contributors should submit…"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={M.muted}
                 multiline
                 numberOfLines={3}
                 textAlignVertical="top"
@@ -278,7 +281,7 @@ export default function BountyCreateScreen() {
                     onChangeText={setTargetCount}
                     keyboardType="number-pad"
                     placeholder="20"
-                    placeholderTextColor="#9ca3af"
+                    placeholderTextColor={M.muted}
                   />
                 </Field>
               </View>
@@ -290,7 +293,7 @@ export default function BountyCreateScreen() {
                     onChangeText={setXpReward}
                     keyboardType="number-pad"
                     placeholder="25"
-                    placeholderTextColor="#9ca3af"
+                    placeholderTextColor={M.muted}
                   />
                 </Field>
               </View>
@@ -303,7 +306,7 @@ export default function BountyCreateScreen() {
                 value={expiresAt}
                 onChangeText={setExpiresAt}
                 placeholder="YYYY-MM-DD"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={M.muted}
                 maxLength={10}
               />
             </Field>

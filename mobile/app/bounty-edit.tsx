@@ -4,6 +4,7 @@ import { ALL_CATEGORIES, CATEGORY_LABELS, type DictionaryCategory } from "@/lib/
 import { useBounty, useUpdateBounty } from "@/lib/hooks/use-bounties";
 import { canManageBounties, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useToast } from "@/lib/hooks/use-toast";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -49,6 +50,7 @@ function inputCls(extra?: string) {
 }
 
 export default function BountyEditScreen() {
+  const M = useMuseumTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: currentUser } = useCurrentUser();
@@ -81,7 +83,7 @@ export default function BountyEditScreen() {
       <>
         <Stack.Screen options={{ title: "Edit Bounty" }} />
         <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-neutral-900" edges={[]}>
-          <IconSymbol name="lock.fill" size={40} color="#ef4444" />
+          <IconSymbol name="lock.fill" size={40} color={M.error} />
           <Text className="mt-4 text-base font-semibold text-neutral-500">Admin access required</Text>
         </SafeAreaView>
       </>
@@ -174,7 +176,7 @@ export default function BountyEditScreen() {
                 className={inputCls()}
                 value={title}
                 onChangeText={setTitle}
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={M.muted}
                 maxLength={300}
               />
             </Field>
@@ -188,7 +190,7 @@ export default function BountyEditScreen() {
                 multiline
                 numberOfLines={3}
                 textAlignVertical="top"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={M.muted}
                 maxLength={1000}
               />
             </Field>
@@ -213,7 +215,7 @@ export default function BountyEditScreen() {
                     value={targetCount}
                     onChangeText={setTargetCount}
                     keyboardType="number-pad"
-                    placeholderTextColor="#9ca3af"
+                    placeholderTextColor={M.muted}
                   />
                 </Field>
               </View>
@@ -224,7 +226,7 @@ export default function BountyEditScreen() {
                     value={xpReward}
                     onChangeText={setXpReward}
                     keyboardType="number-pad"
-                    placeholderTextColor="#9ca3af"
+                    placeholderTextColor={M.muted}
                   />
                 </Field>
               </View>
@@ -237,7 +239,7 @@ export default function BountyEditScreen() {
                 value={expiresAt}
                 onChangeText={setExpiresAt}
                 placeholder="YYYY-MM-DD"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={M.muted}
                 maxLength={10}
               />
             </Field>

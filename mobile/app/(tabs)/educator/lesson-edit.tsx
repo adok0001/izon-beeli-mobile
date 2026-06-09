@@ -1,6 +1,8 @@
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
 import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useAudioStore } from "@/store/audio-store";
 import {
     EducatorLessonSegment,
@@ -57,6 +59,7 @@ function SegmentItem({
   onChange: (index: number, key: keyof SegmentEditor, value: string) => void;
   onRemove: (index: number) => void;
 }>) {
+  const M = useMuseumTheme();
   const stamp = (key: "startTime" | "endTime") =>
     onChange(index, key, playbackPositionSeconds.toFixed(1));
 
@@ -66,14 +69,14 @@ function SegmentItem({
         value={segment.text}
         onChangeText={(v) => onChange(index, "text", v)}
         placeholder="Segment text"
-        placeholderTextColor="#9ca3af"
+        placeholderTextColor={M.muted}
         className="rounded-lg bg-neutral-50 px-3 py-2 text-sm text-neutral-900 dark:bg-neutral-800 dark:text-white"
       />
       <TextInput
         value={segment.translation}
         onChangeText={(v) => onChange(index, "translation", v)}
         placeholder="Translation (optional)"
-        placeholderTextColor="#9ca3af"
+        placeholderTextColor={M.muted}
         className="mt-2 rounded-lg bg-neutral-50 px-3 py-2 text-sm text-neutral-900 dark:bg-neutral-800 dark:text-white"
       />
       <View className="mt-2 flex-row gap-2">
@@ -88,7 +91,7 @@ function SegmentItem({
                 onChangeText={(v) => onChange(index, key, v)}
                 keyboardType="decimal-pad"
                 placeholder="0.0"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={M.muted}
                 className="flex-1 rounded-lg bg-neutral-50 px-2.5 py-2 text-sm text-neutral-900 dark:bg-neutral-800 dark:text-white"
               />
               <Pressable
@@ -96,7 +99,7 @@ function SegmentItem({
                 hitSlop={4}
                 className="items-center justify-center rounded-lg bg-blue-50 px-2.5 py-2 active:opacity-70 dark:bg-blue-950/30"
               >
-                <IconSymbol name="record.circle" size={16} color="#3b82f6" />
+                <IconSymbol name="record.circle" size={16} color={getAccent("blue").solid} />
               </Pressable>
             </View>
           </View>
@@ -112,6 +115,7 @@ function SegmentItem({
 }
 
 function PlaybackButton({ source, onPositionChange }: Readonly<{ source?: string | null; onPositionChange?: (posSeconds: number) => void }>) {
+  const M = useMuseumTheme();
   const { currentTrackId, isPlaying, isLoading, progress, duration, togglePlayback, loadAndPlay } = useAudioStore();
 
   const isThisTrack = !!source && currentTrackId === source;
@@ -147,12 +151,12 @@ function PlaybackButton({ source, onPositionChange }: Readonly<{ source?: string
         className="flex-row items-center gap-2 px-3 py-2.5 active:opacity-70"
       >
         {thisIsLoading ? (
-          <ActivityIndicator size="small" color="#10b981" />
+          <ActivityIndicator size="small" color={getAccent("teal").solid} />
         ) : (
           <IconSymbol
             name={thisIsPlaying ? "pause.circle.fill" : "play.circle.fill"}
             size={20}
-            color="#10b981"
+            color={getAccent("teal").solid}
           />
         )}
         <Text className="flex-1 text-sm font-semibold text-emerald-700 dark:text-emerald-300">
@@ -180,6 +184,7 @@ function RecordButton({
   isDisabled,
   onRecorded,
 }: Readonly<{ isDisabled: boolean; onRecorded: (uri: string) => void }>) {
+  const M = useMuseumTheme();
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [elapsedMs, setElapsedMs] = useState(0);
@@ -245,7 +250,7 @@ function RecordButton({
       <IconSymbol
         name={isRecording ? "stop.circle.fill" : "mic.fill"}
         size={16}
-        color={isRecording ? "#ffffff" : "#ef4444"}
+        color={isRecording ? M.parchment : M.error}
       />
       <Text className={`ml-2 text-sm font-semibold ${isRecording ? "text-white" : "text-red-500"}`}>
         {isRecording ? `Stop  ${formatTime(elapsedMs)}` : "Record audio"}
@@ -316,7 +321,7 @@ function AudioSection({
         disabled={isPending}
         className="flex-row items-center justify-center rounded-xl border border-dashed border-neutral-300 py-3 active:opacity-70 disabled:opacity-40 dark:border-neutral-600"
       >
-        <IconSymbol name="square.and.arrow.up" size={16} color="#3b82f6" />
+        <IconSymbol name="square.and.arrow.up" size={16} color={getAccent("blue").solid} />
         <Text className="ml-2 text-sm font-semibold text-blue-600 dark:text-blue-400">
           {isPending ? loadingLabel : uploadLabel}
         </Text>
@@ -338,6 +343,7 @@ function toSegmentsPayload(source: SegmentEditor[]): EducatorLessonSegment[] {
 }
 
 export default function EducatorLessonEditScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
   const { lessonId, courseId } = useLocalSearchParams<{ lessonId?: string; courseId: string }>();
@@ -547,7 +553,7 @@ export default function EducatorLessonEditScreen() {
           {/* Course breadcrumb */}
           {course ? (
             <View className="flex-row items-center gap-1 px-5 pt-4">
-              <IconSymbol name="book.fill" size={12} color="#9ca3af" />
+              <IconSymbol name="book.fill" size={12} color={M.muted} />
               <Text className="text-xs text-neutral-400 dark:text-neutral-500">{course.title}</Text>
             </View>
           ) : null}
@@ -562,14 +568,14 @@ export default function EducatorLessonEditScreen() {
                 value={title}
                 onChangeText={setTitle}
                 placeholder="Lesson title *"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={M.muted}
                 className="rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
               />
               <TextInput
                 value={description}
                 onChangeText={setDescription}
                 placeholder="Lesson description *"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={M.muted}
                 multiline
                 className="mt-2 min-h-[64px] rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
               />
@@ -577,7 +583,7 @@ export default function EducatorLessonEditScreen() {
                 value={type}
                 onChangeText={setType}
                 placeholder="Type (e.g. podcast, song, story)"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={M.muted}
                 className="mt-2 rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
               />
               <View className="mt-2 flex-row gap-2">
@@ -585,14 +591,14 @@ export default function EducatorLessonEditScreen() {
                   value={artist}
                   onChangeText={setArtist}
                   placeholder="Artist"
-                  placeholderTextColor="#9ca3af"
+                  placeholderTextColor={M.muted}
                   className="flex-1 rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
                 />
                 <TextInput
                   value={genre}
                   onChangeText={setGenre}
                   placeholder="Genre"
-                  placeholderTextColor="#9ca3af"
+                  placeholderTextColor={M.muted}
                   className="flex-1 rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
                 />
               </View>
@@ -654,7 +660,7 @@ export default function EducatorLessonEditScreen() {
               className="flex-row items-center justify-between rounded-2xl bg-neutral-50 px-4 py-3 active:opacity-70 dark:bg-neutral-800"
             >
               <View className="flex-row items-center gap-2">
-                <IconSymbol name="eye.fill" size={16} color="#3b82f6" />
+                <IconSymbol name="eye.fill" size={16} color={getAccent("blue").solid} />
                 <Text className="text-sm font-semibold text-blue-600 dark:text-blue-400">
                   {t("educator.lessonEdit.previewTitle")}
                 </Text>
@@ -662,7 +668,7 @@ export default function EducatorLessonEditScreen() {
               <IconSymbol
                 name={previewVisible ? "chevron.up" : "chevron.down"}
                 size={14}
-                color="#9ca3af"
+                color={M.muted}
               />
             </Pressable>
             {previewVisible && (

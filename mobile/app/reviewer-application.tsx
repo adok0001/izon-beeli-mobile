@@ -1,6 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { apiFetch, friendlyError } from "@/lib/api";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { type CurrentUser, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES } from "@/lib/mock-data";
@@ -54,6 +55,7 @@ function ReviewerProfileCard({
   onWithdraw,
   withdrawing,
 }: Readonly<{ existing: ReviewerApp; currentUser: CurrentUser | null; onWithdraw: () => void; withdrawing: boolean }>) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const roleKey = currentUser?.reviewerRole ?? existing.role;
 
@@ -69,7 +71,7 @@ function ReviewerProfileCard({
     <View className="rounded-2xl border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950/30">
       <View className="mb-3 flex-row items-center gap-3">
         <View className="h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-          <IconSymbol name="checkmark.seal.fill" size={22} color="#22c55e" />
+          <IconSymbol name="checkmark.seal.fill" size={22} color={M.success} />
         </View>
         <View className="flex-1">
           <Text className="text-sm font-bold text-green-700 dark:text-green-300">
@@ -161,11 +163,12 @@ function PendingCard({
 }
 
 function RejectedBanner({ note }: Readonly<{ note: string | null }>) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   return (
     <View className="mb-5 rounded-2xl border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950/40">
       <View className="mb-1 flex-row items-center gap-2">
-        <IconSymbol name="xmark.circle.fill" size={18} color="#ef4444" />
+        <IconSymbol name="xmark.circle.fill" size={18} color={M.error} />
         <Text className="font-semibold text-red-700 dark:text-red-300">{t("reviewerApplication.rejectedTitle")}</Text>
       </View>
       {!!note && (

@@ -350,8 +350,8 @@ export default function OnboardingScreen() {
                   {t("quiz.questionOf", { current: currentIndex + 1, total: questions.length })}
                 </Text>
                 {lastAnswerCorrect !== null && locked && (
-                  <View style={{ borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: lastAnswerCorrect ? "#22c55e20" : "#ef444420" }}>
-                    <Text style={{ fontSize: 11, fontWeight: "600", color: lastAnswerCorrect ? "#22c55e" : "#ef4444" }}>
+                  <View style={{ borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: lastAnswerCorrect ? M.successBg : M.errorBg }}>
+                    <Text style={{ fontSize: 11, fontWeight: "600", color: lastAnswerCorrect ? M.success : M.error }}>
                       {lastAnswerCorrect ? t("quiz.correct") : t("quiz.incorrect")}
                     </Text>
                   </View>
@@ -366,9 +366,9 @@ export default function OnboardingScreen() {
 
               {question.options.map((option, idx) => {
                 const state = getOptionState(option);
-                const bg = { default: M.card, correct: "#22c55e20", incorrect: "#ef444420", dimmed: M.card }[state];
-                const border = { default: M.border, correct: "#22c55e", incorrect: "#ef4444", dimmed: M.border }[state];
-                const textColor = { default: M.text, correct: "#22c55e", incorrect: "#ef4444", dimmed: M.muted }[state];
+                const bg = { default: M.card, correct: M.successBg, incorrect: M.errorBg, dimmed: M.card }[state];
+                const border = { default: M.border, correct: M.success, incorrect: M.error, dimmed: M.border }[state];
+                const textColor = { default: M.text, correct: M.success, incorrect: M.error, dimmed: M.muted }[state];
                 return (
                   <Pressable
                     key={`${question.id}-${idx}`}
@@ -383,7 +383,7 @@ export default function OnboardingScreen() {
               })}
 
               {locked && lastAnswerCorrect === false && (
-                <View style={{ marginTop: 12, borderRadius: 16, backgroundColor: "#ef444415", paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: "#ef444430" }}>
+                <View style={{ marginTop: 12, borderRadius: 16, backgroundColor: M.errorBg, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: M.errorBorder }}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                     <IconSymbol name="lightbulb.fill" size={14} color="#f97316" />
                     <Text style={{ fontSize: 11, fontWeight: "600", color: "#f97316" }}>
@@ -397,7 +397,7 @@ export default function OnboardingScreen() {
                     <Text style={{ marginTop: 4, fontSize: 12, color: M.sub }}>{question.explanation}</Text>
                   )}
                   {question.exampleSentence && (
-                    <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: "#ef444430", paddingTop: 8 }}>
+                    <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: M.errorBorder, paddingTop: 8 }}>
                       <Text style={{ fontSize: 10, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: M.muted }}>
                         {t("wordDetail.example")}
                       </Text>
@@ -413,10 +413,10 @@ export default function OnboardingScreen() {
                   )}
                   <Pressable
                     onPress={handleContinueAfterWrong}
-                    style={{ marginTop: 12, alignItems: "center", borderRadius: 12, backgroundColor: "#ef4444", paddingVertical: 12 }}
+                    style={{ marginTop: 12, alignItems: "center", borderRadius: 12, backgroundColor: M.error, paddingVertical: 12 }}
                     className="active:opacity-70"
                   >
-                    <Text style={{ fontSize: 13, fontWeight: "600", color: "#fff" }}>{t("common.continue")}</Text>
+                    <Text style={{ fontSize: 13, fontWeight: "600", color: M.parchment }}>{t("common.continue")}</Text>
                   </Pressable>
                 </View>
               )}
@@ -431,9 +431,9 @@ export default function OnboardingScreen() {
               <View style={{ alignItems: "center", gap: 16, marginBottom: 24 }}>
                 <View style={{
                   height: 112, width: 112, alignItems: "center", justifyContent: "center", borderRadius: 56,
-                  backgroundColor: result.accuracy >= 80 ? "#22c55e20" : result.accuracy >= 50 ? `${M.accent}20` : "#ef444420",
+                  backgroundColor: result.accuracy >= 80 ? M.successBg : result.accuracy >= 50 ? `${M.accent}20` : M.errorBg,
                 }}>
-                  <Text style={{ fontSize: 28, fontWeight: "700", color: result.accuracy >= 80 ? "#22c55e" : result.accuracy >= 50 ? M.accent : "#ef4444" }}>
+                  <Text style={{ fontSize: 28, fontWeight: "700", color: result.accuracy >= 80 ? M.success : result.accuracy >= 50 ? M.accent : M.error }}>
                     {result.correctCount}/{result.totalQuestions}
                   </Text>
                 </View>
@@ -547,8 +547,8 @@ export default function OnboardingScreen() {
       {step === "ready" && (
         <>
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 }}>
-            <View style={{ marginBottom: 24, height: 96, width: 96, alignItems: "center", justifyContent: "center", borderRadius: 48, backgroundColor: "#22c55e20", borderWidth: 1, borderColor: "#22c55e40" }}>
-              <IconSymbol name="checkmark.seal.fill" size={48} color="#22c55e" />
+            <View style={{ marginBottom: 24, height: 96, width: 96, alignItems: "center", justifyContent: "center", borderRadius: 48, backgroundColor: M.successBg, borderWidth: 1, borderColor: M.successBorder }}>
+              <IconSymbol name="checkmark.seal.fill" size={48} color={M.success} />
             </View>
             <Text style={{ fontSize: 30, fontWeight: "900", color: M.text, textAlign: "center", letterSpacing: -0.5 }}>
               {t("onboarding.readyTitle")}
@@ -562,13 +562,13 @@ export default function OnboardingScreen() {
             <Pressable
               onPress={handleFinish}
               disabled={saving}
-              style={{ alignItems: "center", borderRadius: 16, backgroundColor: "#22c55e", paddingVertical: 16 }}
+              style={{ alignItems: "center", borderRadius: 16, backgroundColor: M.success, paddingVertical: 16 }}
               className="active:opacity-80"
             >
               {saving ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color={M.ink} />
               ) : (
-                <Text style={{ fontSize: 15, fontWeight: "700", color: "#fff" }}>{t("onboarding.letsGo")}</Text>
+                <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>{t("onboarding.letsGo")}</Text>
               )}
             </Pressable>
             <Pressable onPress={goBack} style={{ alignItems: "center", paddingVertical: 8 }}>
