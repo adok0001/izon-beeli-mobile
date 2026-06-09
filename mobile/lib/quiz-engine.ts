@@ -1,5 +1,5 @@
 import type { DictionaryEntry } from "@/lib/dictionary";
-import type { AudioSource, MatchingGameConfig, MatchingPair, QuestionType, QuizConfig, QuizQuestion, SentenceTemplate } from "@/types";
+import type { AudioSource, MatchingGameConfig, MatchingPair, QuestionType, QuizConfig, QuizQuestion, SentenceTemplate, TranscriptSegment } from "@/types";
 
 /** Optional translate function passed from a React component via useTranslation(). */
 export type QuizTranslateFn = (key: string, opts?: Record<string, unknown>) => string;
@@ -304,9 +304,24 @@ export function generateFocusedQuiz(
 
 export function generateMatchingPairs(
   config: MatchingGameConfig,
-  entries: DictionaryEntry[] = []
+  entries: DictionaryEntry[] = [],
+  segments: TranscriptSegment[] = []
 ): MatchingPair[] {
   const { pairCount } = config;
+
+  const validSegments = segments.filter(
+    (s) => s.text?.trim() && s.translation?.trim()
+  );
+
+  if (validSegments.length >= 4) {
+    const selected = shuffle(validSegments).slice(0, pairCount);
+    return selected.map((seg, i) => ({
+      id: `mp-${i}`,
+      word: seg.text,
+      english: seg.translation!,
+    }));
+  }
+
   const pool = gatherDictionaryPool(entries);
   if (pool.length < pairCount) return [];
 
@@ -316,4 +331,87 @@ export function generateMatchingPairs(
     word: item.word,
     english: item.english,
   }));
+}
+
+function makeSegmentListening(
+  segment: TranscriptSegment,
+  allTranslations: string[],
+  lessonAudioUrl: AudioSource,
+  translate?: QuizTranslateFn
+): QuizQuestion | null {
+  const correct = segment.translation!;
+  const distractors = pickDistractors(correct, allTranslations, 3);
+  if (distractors.length < 3) return null;
+  return {
+    id: `q-${Math.random().toString(36).slice(2, 9)}`,
+    type: "segment-listening",
+    prompt: translate
+      ? translate("quiz.promptListening")
+      : "Listen and select the correct English translation",
+    correctAnswer: correct,
+    options: shuffle([correct, ...distractors]),
+    audioSource: lessonAudioUrl,
+    startTime: segment.startTime,
+    endTime: segment.endTime,
+  };
+}
+
+function makeContextTranslate(
+  segment: TranscriptSegment,
+  allTranslations: string[],
+  translate?: QuizTranslateFn
+): QuizQuestion | null {
+  const correct = segment.translation!;
+  const distractors = pickDistractors(correct, allTranslations, 3);
+  if (distractors.length < 3) return null;
+  return {
+    id: `q-${Math.random().toString(36).slice(2, 9)}`,
+    type: "context-translate",
+    prompt: segment.text,
+    correctAnswer: correct,
+    options: shuffle([correct, ...distractors]),
+  };
+}
+
+export function generateLessonQuiz(
+  config: QuizConfig,
+  segments: TranscriptSegment[],
+  lessonAudioUrl: AudioSource | undefined,
+  entries: DictionaryEntry[] = [],
+  translate?: QuizTranslateFn
+): QuizQuestion[] {
+  const { questionCount } = config;
+
+  const seen = new Set<string>();
+  const validSegments = segments.filter((s) => {
+    if (!s.text?.trim() || !s.translation?.trim()) return false;
+    const key = s.text.toLowerCase().trim();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  if (validSegments.length < 4) {
+    return generateQuiz(config, entries, undefined, translate);
+  }
+
+  const segTranslations = validSegments.map((s) => s.translation!);
+  const dictEnglish = entries.map((e) => e.english);
+  const allTranslations = [...new Set([...segTranslations, ...dictEnglish])];
+
+  const shuffledSegments = shuffle(validSegments);
+
+  const listeningQuestions: QuizQuestion[] = [];
+  const contextQuestions: QuizQuestion[] = [];
+
+  for (const seg of shuffledSegments) {
+    if (lessonAudioUrl && seg.startTime !== undefined && seg.endTime !== undefined) {
+      const q = makeSegmentListening(seg, allTranslations, lessonAudioUrl, translate);
+      if (q) listeningQuestions.push(q);
+    }
+    const q = makeContextTranslate(seg, allTranslations, translate);
+    if (q) contextQuestions.push(q);
+  }
+
+  return [...listeningQuestions, ...contextQuestions].slice(0, questionCount);
 }

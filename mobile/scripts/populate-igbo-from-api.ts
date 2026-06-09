@@ -1,0 +1,219 @@
+/**
+ * Queries the Igbo API for each English wordbank entry and writes Igbo matches
+ * to mobile/lib/data/igbo-api-entries.ts for review before merging into igbo.ts.
+ *
+ * Run from the server/ directory (tsx is available there):
+ *   IGBO_API_TOKEN=xxx npx tsx ../mobile/scripts/populate-igbo-from-api.ts
+ *
+ * Optional flags:
+ *   --limit 50        process only the first 50 wordbank entries (for testing)
+ *   --delay 500       ms between API calls (default 350)
+ */
+
+import { writeFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { ENGLISH_WORDBANK } from "../lib/data/english";
+import { IGBO_DICTIONARY } from "../lib/data/igbo";
+
+// ── Inline types (avoids importing the react-native chain) ─────────────────
+
+interface IgboApiDefinition {
+  wordClass: string;
+  definitions: string[];
+  nsibidi: string;
+}
+
+interface IgboApiExample {
+  igbo: string;
+  english: string;
+}
+
+interface IgboApiWord {
+  id: string;
+  word: string;
+  definitions: IgboApiDefinition[];
+  examples?: IgboApiExample[];
+  pronunciation?: string;
+}
+
+// Mirrors WORD_CLASS_TO_CATEGORY in mobile/lib/hooks/use-igbo-search.ts
+const WORD_CLASS_TO_CATEGORY: Record<string, string> = {
+  NNC: "nouns",
+  NNO: "nouns",
+  NNO2: "nouns",
+  PRN: "pronouns",
+  VB: "verbs",
+  VBD: "verbs",
+  VBG: "verbs",
+  AV: "adjectives",
+  AVM: "adjectives",
+  MV: "verbs",
+  "NNC Mgbe": "time",
+  PREP: "phrases",
+  CONJ: "phrases",
+  INTJ: "greetings",
+  NUM: "numbers",
+};
+
+// ── Igbo API client ────────────────────────────────────────────────────────
+
+const IGBO_API_BASE = "https://igboapi.com/api/v1";
+
+async function igboFetch<T>(path: string): Promise<T> {
+  const token = process.env.IGBO_API_TOKEN;
+  if (!token) throw new Error("IGBO_API_TOKEN env var is not set");
+  const res = await fetch(`${IGBO_API_BASE}${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (res.status === 429) {
+    const err = new Error("Rate limited (429)");
+    (err as any).status = 429;
+    throw err;
+  }
+  if (!res.ok) throw new Error(`Igbo API ${res.status} for ${path}`);
+  return res.json() as Promise<T>;
+}
+
+function sleep(ms: number) {
+  return new Promise<void>((r) => setTimeout(r, ms));
+}
+
+async function searchIgboWords(keyword: string, delay: number): Promise<IgboApiWord[]> {
+  try {
+    return await igboFetch<IgboApiWord[]>(
+      `/words?keyword=${encodeURIComponent(keyword)}&limit=5`
+    );
+  } catch (err: any) {
+    if (err?.status === 429) {
+      console.warn(`  Rate limited on "${keyword}", backing off ${delay * 2}ms…`);
+      await sleep(delay * 2);
+      return igboFetch<IgboApiWord[]>(
+        `/words?keyword=${encodeURIComponent(keyword)}&limit=5`
+      );
+    }
+    throw err;
+  }
+}
+
+// ── CLI arg parsing ────────────────────────────────────────────────────────
+
+function parseArgs() {
+  const args = process.argv.slice(2);
+  let limit = Infinity;
+  let delay = 350;
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === "--limit" && args[i + 1]) limit = parseInt(args[++i], 10);
+    if (args[i] === "--delay" && args[i + 1]) delay = parseInt(args[++i], 10);
+  }
+  return { limit, delay };
+}
+
+// ── Entry formatting ───────────────────────────────────────────────────────
+
+function formatEntry(fields: Record<string, string>): string {
+  const parts = Object.entries(fields)
+    .map(([k, v]) => `${k}: ${JSON.stringify(v)}`)
+    .join(", ");
+  return `{ ${parts} }`;
+}
+
+// ── Main ───────────────────────────────────────────────────────────────────
+
+async function main() {
+  const { limit, delay } = parseArgs();
+
+  const existingEnglish = new Set(
+    IGBO_DICTIONARY.map((e) => e.english.toLowerCase().trim())
+  );
+
+  const wordbank = ENGLISH_WORDBANK.slice(0, limit === Infinity ? undefined : limit);
+  console.log(
+    `Processing ${wordbank.length} wordbank entries (delay: ${delay}ms per call)…\n`
+  );
+
+  const lines: string[] = [];
+  let nextId = 96; // IGBO_DICTIONARY ends at d-ig-95
+  let matched = 0;
+  let skipped = 0;
+  let errors = 0;
+
+  for (let i = 0; i < wordbank.length; i++) {
+    const wbEntry = wordbank[i];
+    const keyword = wbEntry.word.trim();
+
+    if (existingEnglish.has(keyword.toLowerCase())) {
+      skipped++;
+      continue;
+    }
+
+    try {
+      const results = await searchIgboWords(keyword, delay);
+      const best = results[0];
+      const def = best?.definitions?.[0];
+      const englishDef = def?.definitions?.[0];
+
+      if (best && def && englishDef) {
+        const category = WORD_CLASS_TO_CATEGORY[def.wordClass] ?? wbEntry.category;
+        const example = best.examples?.[0];
+
+        const fields: Record<string, string> = {
+          id: `d-ig-${nextId}`,
+          word: best.word,
+          english: englishDef,
+          category,
+          languageId: "igbo",
+          englishWordId: wbEntry.id,
+        };
+        if (best.pronunciation) fields.pronunciation = best.pronunciation;
+        if (example?.igbo) fields.example = example.igbo;
+        if (example?.english) fields.exampleTranslation = example.english;
+        if (def.nsibidi) fields.nsibidi = def.nsibidi;
+
+        lines.push(`  ${formatEntry(fields)},`);
+        nextId++;
+        matched++;
+      }
+    } catch (err) {
+      console.error(`  ERROR "${keyword}": ${(err as Error).message}`);
+      errors++;
+    }
+
+    if ((i + 1) % 100 === 0 || i === wordbank.length - 1) {
+      console.log(
+        `[${i + 1}/${wordbank.length}] processed — ${matched} matched, ${skipped} skipped, ${errors} errors`
+      );
+    }
+
+    await sleep(delay);
+  }
+
+  console.log(`\nSummary: ${matched} matched | ${skipped} skipped | ${errors} errors`);
+
+  if (matched === 0) {
+    console.log("No entries to write.");
+    return;
+  }
+
+  const outPath = resolve(__dirname, "../lib/data/igbo-api-entries.ts");
+  const content = [
+    `// AUTO-GENERATED by populate-igbo-from-api.ts on ${new Date().toISOString()}`,
+    `// ${matched} entries fetched from igboapi.com — review before merging into igbo.ts`,
+    `//`,
+    `// To merge: copy the array entries into IGBO_DICTIONARY in igbo.ts,`,
+    `// then run: cd server && npm run db:sync-dict`,
+    `import type { DictionaryEntry } from "@/lib/dictionary";`,
+    ``,
+    `export const IGBO_API_ENTRIES: DictionaryEntry[] = [`,
+    ...lines,
+    `];`,
+    ``,
+  ].join("\n");
+
+  writeFileSync(outPath, content, "utf-8");
+  console.log(`\nWrote ${matched} entries to:\n  ${outPath}`);
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

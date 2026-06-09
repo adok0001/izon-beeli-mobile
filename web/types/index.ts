@@ -382,7 +382,9 @@ export interface GameSessionPlayer {
 
 export interface MultiplayerMessage {
   type: string;
-  [key: string]: any;
+  // Payload varies by `type`; consumers narrow on it. `unknown` (not `any`)
+  // forces that narrowing instead of silently trusting the shape.
+  [key: string]: unknown;
 }
 
 export type MultiplayerPhase =

@@ -1,9 +1,12 @@
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { ShareModal } from "@/components/share/share-modal";
 import { localizeField } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { CulturalContent } from "@/types";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, TouchableOpacity, View } from "react-native";
 
 interface Props {
   item: CulturalContent;
@@ -14,34 +17,59 @@ export function CulturalCard({ item, onPress }: Props) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const { uiLanguage } = useUiLanguageStore();
+  const [shareVisible, setShareVisible] = useState(false);
   const categoryLabel = t(`cultural.categories.${item.category}` as any, { defaultValue: item.category });
 
   return (
-    <Pressable
-      onPress={onPress}
-      style={{ marginRight: 12, width: 224, borderRadius: 16, backgroundColor: M.card, padding: 16, borderWidth: 1, borderColor: M.border }}
-      className="active:opacity-70"
-    >
-      <Text style={{ fontSize: 36 }}>{item.imageEmoji}</Text>
+    <>
+      <Pressable
+        onPress={onPress}
+        style={{ marginRight: 12, width: 224, borderRadius: 16, backgroundColor: M.card, padding: 16, borderWidth: 1, borderColor: M.border }}
+        className="active:opacity-70"
+      >
+        <Text style={{ fontSize: 36 }}>{item.imageEmoji}</Text>
 
-      <View style={{ marginTop: 8, alignSelf: "flex-start", borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 10, paddingVertical: 2, borderWidth: 1, borderColor: M.accentBorder }}>
-        <Text style={{ fontSize: 11, fontWeight: "500", color: M.accent }}>
-          {categoryLabel}
+        <View style={{ marginTop: 8, alignSelf: "flex-start", borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 10, paddingVertical: 2, borderWidth: 1, borderColor: M.accentBorder }}>
+          <Text style={{ fontSize: 11, fontWeight: "500", color: M.accent }}>
+            {categoryLabel}
+          </Text>
+        </View>
+
+        <Text
+          style={{ marginTop: 8, fontSize: 16, fontWeight: "700", color: M.text }}
+          numberOfLines={1}
+        >
+          {localizeField(item.title, item.titleFr, uiLanguage)}
         </Text>
-      </View>
+        <Text
+          style={{ marginTop: 4, fontSize: 13, lineHeight: 18, color: M.sub }}
+          numberOfLines={2}
+        >
+          {localizeField(item.description, item.descriptionFr, uiLanguage)}
+        </Text>
 
-      <Text
-        style={{ marginTop: 8, fontSize: 16, fontWeight: "700", color: M.text }}
-        numberOfLines={1}
-      >
-        {localizeField(item.title, item.titleFr, uiLanguage)}
-      </Text>
-      <Text
-        style={{ marginTop: 4, fontSize: 13, lineHeight: 18, color: M.sub }}
-        numberOfLines={2}
-      >
-        {localizeField(item.description, item.descriptionFr, uiLanguage)}
-      </Text>
-    </Pressable>
+        <TouchableOpacity
+          onPress={() => setShareVisible(true)}
+          style={{ position: "absolute", top: 10, right: 12 }}
+          hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+          accessibilityLabel="Share content"
+        >
+          <IconSymbol name="square.and.arrow.up" size={15} color={M.muted} />
+        </TouchableOpacity>
+      </Pressable>
+
+      <ShareModal
+        visible={shareVisible}
+        onClose={() => setShareVisible(false)}
+        data={{
+          template: "cultural",
+          title: localizeField(item.title, item.titleFr, uiLanguage),
+          description: localizeField(item.description, item.descriptionFr, uiLanguage),
+          category: categoryLabel,
+          emoji: item.imageEmoji,
+          language: item.languageId,
+        }}
+      />
+    </>
   );
 }

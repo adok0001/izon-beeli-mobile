@@ -917,6 +917,37 @@ export const gameSessionPlayersRelations = relations(
 
 // ---------- Word Challenge Submissions ----------
 
+// ---------- Script System Tables ----------
+
+export const scripts = pgTable(
+  "scripts",
+  {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    languageId: varchar("language_id", { length: 64 }).notNull(),
+    name: varchar("name", { length: 200 }).notNull(),
+    description: text("description"),
+    iconCharacter: varchar("icon_character", { length: 16 }),
+    accentColor: varchar("accent_color", { length: 32 }),
+    isActive: boolean("is_active").default(true).notNull(),
+  },
+  (table) => [index("scripts_language_id_idx").on(table.languageId)]
+);
+
+export const scriptCharacters = pgTable(
+  "script_characters",
+  {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    scriptId: varchar("script_id", { length: 64 }).notNull(),
+    character: text("character").notNull(),
+    answer: varchar("answer", { length: 200 }).notNull(),
+    hint: varchar("hint", { length: 200 }),
+    category: varchar("category", { length: 64 }),
+    displayOrder: integer("display_order").default(0).notNull(),
+    isActive: boolean("is_active").default(true).notNull(),
+  },
+  (table) => [index("script_characters_script_id_idx").on(table.scriptId)]
+);
+
 export const wordChallengeSubmissions = pgTable(
   "word_challenge_submissions",
   {
@@ -930,7 +961,9 @@ export const wordChallengeSubmissions = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
-    index("wc_submissions_user_idx").on(table.userId),
+    // One submission per user per word — also serves user-scoped lookups and
+    // blocks XP farming via repeated submissions of the same word.
+    uniqueIndex("wc_submissions_user_word_idx").on(table.userId, table.wordId),
     index("wc_submissions_word_idx").on(table.wordId),
   ]
 );

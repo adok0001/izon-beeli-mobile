@@ -26,6 +26,20 @@ interface Props {
         template: "achievement";
         title: string;
         detail: string;
+      }
+    | {
+        template: "symbol";
+        name: string;
+        meaning: string;
+        language: string;
+      }
+    | {
+        template: "cultural";
+        title: string;
+        description: string;
+        category: string;
+        emoji: string;
+        language?: string;
       };
 }
 
@@ -41,8 +55,12 @@ export function ShareModal({ visible, onClose, data }: Props) {
       msg = `${data.word} — ${data.translation}\n\n${t("share.learningWith", { language: data.language })}`;
     } else if (data.template === "proverb") {
       msg = `"${data.text}"\n${data.translation}\n\n${t("share.learningWith", { language: data.language })}`;
-    } else {
+    } else if (data.template === "achievement") {
       msg = `${data.title}: ${data.detail}\n\n${t("share.learningGeneric")}`;
+    } else if (data.template === "symbol") {
+      msg = `${data.name} — ${data.meaning}\n\n${t("share.learningWith", { language: data.language })}`;
+    } else {
+      msg = `${data.emoji} ${data.title}\n${data.description}${data.language ? `\n\n${t("share.learningWith", { language: data.language })}` : `\n\n${t("share.learningGeneric")}`}`;
     }
     await captureAndShare(cardRef, msg);
     setSharing(false);

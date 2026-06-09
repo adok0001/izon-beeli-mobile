@@ -1,3 +1,4 @@
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { apiFetch } from "@/lib/api";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { FeedbackCategory } from "@/types";
@@ -106,6 +107,21 @@ export function FeedbackModal({ visible, onClose }: FeedbackModalProps) {
           <Pressable onPress={handleClose} style={{ padding: 4 }} className="active:opacity-60">
             <Text style={{ fontSize: 16, color: M.accent }}>{t("common.cancel")}</Text>
           </Pressable>
+        </View>
+
+        <View
+          style={{
+            flexDirection: "row", alignItems: "center", gap: 8,
+            borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10,
+            marginBottom: 20,
+            backgroundColor: `${M.accent}12`,
+            borderWidth: 1, borderColor: `${M.accent}28`,
+          }}
+        >
+          <IconSymbol name="lock.fill" size={12} color={M.accent} />
+          <Text style={{ flex: 1, fontSize: 12, color: M.textDim, lineHeight: 17 }}>
+            {t("feedback.adminOnlyNotice")}
+          </Text>
         </View>
 
         <Text style={{ marginBottom: 8, fontSize: 13, fontWeight: "600", color: M.textDim }}>{t("feedback.categoryLabel")}</Text>

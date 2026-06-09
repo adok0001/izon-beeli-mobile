@@ -39,7 +39,7 @@ const ACTIVITIES: { section: string; items: ActivityDef[] }[] = [
   {
     section: "SCRIPTS",
     items: [
-      { id: "script-decode", title: "Script Decode", description: "Read a Ge'ez or Nsịbịdị symbol and identify it", icon: "character.book.closed", color: "#4ade80", route: "/script-decode" },
+      { id: "script-decode", title: "Script Decode", description: "Read a script symbol and identify its meaning", icon: "character.book.closed", color: "#4ade80", route: "/script-decode" },
       { id: "trace-symbol", title: "Trace the Symbol", description: "Trace Ge'ez, Nsịbịdị, or Adinkra by hand", icon: "pencil.tip", color: "#f59e0b", route: "/trace-symbol" },
     ],
   },

@@ -138,6 +138,9 @@ function ModeTab({ label, active, color, onPress }: { label: string; active: boo
   );
 }
 
+// Per-route error boundary — shows a recoverable message if this screen throws.
+export { ErrorBoundary } from "@/components/screen-error-boundary";
+
 export default function TraceSymbolScreen() {
   const M = useMuseumTheme();
   const { learnedIds, markLearned, hydrate, _hydrated } = useGeezStore();

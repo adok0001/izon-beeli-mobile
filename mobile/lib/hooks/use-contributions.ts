@@ -4,6 +4,16 @@ import type { DictionaryCategory, DictionaryEntry } from "@/lib/dictionary";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+/**
+ * React Native's FormData accepts file-descriptor objects ({ uri, type, name }),
+ * but the DOM lib's FormData typings only model string | Blob. Centralize that
+ * one necessary cast here instead of scattering `as any` at every call site.
+ */
+type FormDataFile = { uri: string; type: string; name: string };
+function appendFile(form: FormData, field: string, file: FormDataFile) {
+  form.append(field, file as unknown as Blob);
+}
+
 export interface ContributionInput {
   type: "word" | "phrase";
   languageId: string;
@@ -37,18 +47,18 @@ export function useSubmitContribution() {
         if (input.exampleTranslation) formData.append("exampleTranslation", input.exampleTranslation);
 
         if (input.audioUri) {
-          formData.append("audio", {
+          appendFile(formData, "audio", {
             uri: input.audioUri,
             type: "audio/m4a",
             name: "pronunciation.m4a",
-          } as any);
+          });
         }
 
         if (input.imageUri) {
           const filename = input.imageUri.split("/").pop() ?? "image.jpg";
           const ext = filename.split(".").pop()?.toLowerCase() ?? "jpg";
           const mimeType = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
-          formData.append("image", { uri: input.imageUri, type: mimeType, name: filename } as any);
+          appendFile(formData, "image", { uri: input.imageUri, type: mimeType, name: filename });
         }
 
         const res = await fetch(`${API_BASE_URL}/contributions`, {
@@ -115,11 +125,11 @@ export function useSubmitEntryContribution() {
         formData.append("english", input.english ?? input.word);
         formData.append("category", input.category);
 
-        formData.append("audio", {
+        appendFile(formData, "audio", {
           uri: input.audioUri,
           type: "audio/m4a",
           name: "pronunciation.m4a",
-        } as any);
+        });
 
         const res = await fetch(`${API_BASE_URL}/contributions`, {
           method: "POST",
@@ -145,11 +155,11 @@ export function useSubmitEntryContribution() {
         const ext = filename.split(".").pop()?.toLowerCase() ?? "jpg";
         const mimeType = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
 
-        formData.append("image", {
+        appendFile(formData, "image", {
           uri: input.imageUri,
           type: mimeType,
           name: filename,
-        } as any);
+        });
 
         const res = await fetch(`${API_BASE_URL}/contributions`, {
           method: "POST",
@@ -356,11 +366,11 @@ export function useSubmitLessonContribution() {
       const ext = filename.split(".").pop()?.toLowerCase() ?? "m4a";
       const mimeType = ext === "mp3" ? "audio/mpeg" : ext === "wav" ? "audio/wav" : "audio/m4a";
 
-      formData.append("audio", {
+      appendFile(formData, "audio", {
         uri: input.audioUri,
         type: mimeType,
         name: filename,
-      } as any);
+      });
 
       const res = await fetch(`${API_BASE_URL}/lesson-contributions`, {
         method: "POST",
@@ -484,13 +494,13 @@ export function useUpdateContribution() {
           if (v !== undefined) formData.append(k, v ?? "");
         });
         if (audioUri) {
-          formData.append("audio", { uri: audioUri, type: "audio/m4a", name: "pronunciation.m4a" } as any);
+          appendFile(formData, "audio", { uri: audioUri, type: "audio/m4a", name: "pronunciation.m4a" });
         }
         if (imageUri) {
           const filename = imageUri.split("/").pop() ?? "image.jpg";
           const ext = filename.split(".").pop()?.toLowerCase() ?? "jpg";
           const mimeType = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
-          formData.append("image", { uri: imageUri, type: mimeType, name: filename } as any);
+          appendFile(formData, "image", { uri: imageUri, type: mimeType, name: filename });
         }
         const res = await fetch(`${API_BASE_URL}/contributions/${id}`, {
           method: "PATCH",

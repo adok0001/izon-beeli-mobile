@@ -676,6 +676,7 @@ export const en = {
     failedMessage: "We couldn't send your feedback right now.",
     emailFallback: "Send via email instead",
     submit: "Submit",
+    adminOnlyNotice: "Only visible to the Beeli team · not posted publicly",
   },
   share: {
     learningWith: "Learning {{language}} with Beeli",
@@ -1186,6 +1187,7 @@ export const en = {
       notifications: "Notifications",
       dailyContent: "Daily Content",
       activities: "Activities",
+      quiz: "Quiz",
     },
     dailyContent: {
       title: "Daily Content",
@@ -1197,6 +1199,11 @@ export const en = {
       clearOverride: "Clear override",
       errorSet: "Failed to set. Please try again.",
       errorClear: "Failed to clear override.",
+      confirmSetTitle: "Pin this content?",
+      confirmSetMessage: "This will replace the current pinned selection for all users.",
+      confirmSetButton: "Pin",
+      confirmClearTitle: "Remove pin?",
+      confirmClearMessage: "Content will revert to the automatic selection.",
       actionRowDetail: "Word of the Day · Proverb of the Month · Song of the Week",
       wotd: {
         tab: "Word / Day",
