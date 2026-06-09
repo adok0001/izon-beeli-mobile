@@ -280,8 +280,8 @@ export default function SettingsScreen() {
             style={{ flexDirection: "row", alignItems: "center", paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: M.border }}
             className="active:opacity-70"
           >
-            <IconSymbol name="xmark" size={17} color="#f87171" />
-            <Text style={{ marginLeft: 14, fontSize: 14, fontWeight: "700", color: "#f87171" }}>
+            <IconSymbol name="xmark" size={17} color={M.error} />
+            <Text style={{ marginLeft: 14, fontSize: 14, fontWeight: "700", color: M.error }}>
               {t("settings.resetProgress")}
             </Text>
           </Pressable>
@@ -294,8 +294,8 @@ export default function SettingsScreen() {
             style={{ flexDirection: "row", alignItems: "center", paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: M.border }}
             className="active:opacity-70"
           >
-            <IconSymbol name="trash" size={17} color="#f87171" />
-            <Text style={{ marginLeft: 14, fontSize: 14, fontWeight: "700", color: "#f87171" }}>
+            <IconSymbol name="trash" size={17} color={M.error} />
+            <Text style={{ marginLeft: 14, fontSize: 14, fontWeight: "700", color: M.error }}>
               {t("settings.deleteAccount")}
             </Text>
           </Pressable>

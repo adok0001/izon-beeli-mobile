@@ -1,4 +1,5 @@
 import { useInteractiveStory } from "@/lib/hooks/use-discover";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { StoryScene, StoryChoice } from "@/types";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -14,6 +15,7 @@ function FilmstripProgress({
   total: number;
   current: number;
 }) {
+  const M = useMuseumTheme();
   return (
     <View
       style={{
@@ -39,9 +41,9 @@ function FilmstripProgress({
             borderRadius: 2,
             backgroundColor:
               i < current
-                ? "#C4862A"
+                ? M.accent
                 : i === current
-                ? "rgba(196, 134, 42, 0.7)"
+                ? `${M.accent}B3`
                 : "rgba(255, 255, 255, 0.2)",
             transition: "background-color 0.3s ease" as never,
           }}
@@ -52,6 +54,7 @@ function FilmstripProgress({
 }
 
 function SceneText({ text, sceneKey }: { text: string; sceneKey: string }) {
+  const M = useMuseumTheme();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
 
@@ -69,7 +72,7 @@ function SceneText({ text, sceneKey }: { text: string; sceneKey: string }) {
       style={{
         fontSize: 20,
         fontWeight: "700",
-        color: "#F7F2E8",
+        color: M.parchment,
         lineHeight: 30,
         textAlign: "center" as const,
         maxWidth: 640,
@@ -147,6 +150,7 @@ function ChoiceButton({
   index: number;
   onSelect: (nextId: string) => void;
 }) {
+  const M = useMuseumTheme();
   const [hovered, setHovered] = useState(false);
   const key = String(index + 1);
 
@@ -182,11 +186,11 @@ function ChoiceButton({
           borderColor: hovered ? "rgba(196, 134, 42, 0.6)" : "rgba(255, 255, 255, 0.15)",
         }}
       >
-        <Text style={{ fontSize: 12, fontWeight: "800", color: hovered ? "#C4862A" : "#9A9480" }}>
+        <Text style={{ fontSize: 12, fontWeight: "800", color: hovered ? M.accent : M.textDim }}>
           {key}
         </Text>
       </View>
-      <Text style={{ flex: 1, fontSize: 14, fontWeight: "600", color: "#F7F2E8", lineHeight: 20 }}>
+      <Text style={{ flex: 1, fontSize: 14, fontWeight: "600", color: M.parchment, lineHeight: 20 }}>
         {choice.text}
       </Text>
     </Pressable>
@@ -197,6 +201,7 @@ function ChoiceButton({
 export { ErrorBoundary } from "@/components/screen-error-boundary";
 
 export default function InteractiveStoryWeb() {
+  const M = useMuseumTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: story } = useInteractiveStory(id);
@@ -291,8 +296,8 @@ export default function InteractiveStoryWeb() {
 
   if (!story || !currentSceneId) {
     return (
-      <View style={{ flex: 1, backgroundColor: "#07080F", alignItems: "center", justifyContent: "center" }}>
-        <Text style={{ color: "#F7F2E8", fontSize: 14 }}>Loading story…</Text>
+      <View style={{ flex: 1, backgroundColor: M.inkDeep, alignItems: "center", justifyContent: "center" }}>
+        <Text style={{ color: M.parchment, fontSize: 14 }}>Loading story…</Text>
       </View>
     );
   }
@@ -304,7 +309,7 @@ export default function InteractiveStoryWeb() {
   const estimatedTotal = Object.keys(story.scenes).length;
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#07080F" }}>
+    <View style={{ flex: 1, backgroundColor: M.inkDeep }}>
       {/* Filmstrip progress */}
       <FilmstripProgress total={estimatedTotal} current={sceneIndex} />
 
@@ -499,7 +504,7 @@ export default function InteractiveStoryWeb() {
             accessibilityRole="button"
             accessibilityLabel="Return to Culture"
           >
-            <Text style={{ fontSize: 13, fontWeight: "700", color: "#C4862A" }}>
+            <Text style={{ fontSize: 13, fontWeight: "700", color: M.accent }}>
               Return to Culture
             </Text>
           </Pressable>

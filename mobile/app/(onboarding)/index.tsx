@@ -386,8 +386,8 @@ export default function OnboardingScreen() {
               {locked && lastAnswerCorrect === false && (
                 <View style={{ marginTop: 12, borderRadius: 16, backgroundColor: M.errorBg, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: M.errorBorder }}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                    <IconSymbol name="lightbulb.fill" size={14} color="#f97316" />
-                    <Text style={{ fontSize: 11, fontWeight: "600", color: "#f97316" }}>
+                    <IconSymbol name="lightbulb.fill" size={14} color={getAccent("orange").solid} />
+                    <Text style={{ fontSize: 11, fontWeight: "600", color: getAccent("orange").solid }}>
                       {t("quiz.correctAnswerLabel")}
                     </Text>
                   </View>

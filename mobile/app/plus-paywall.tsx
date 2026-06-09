@@ -1,6 +1,9 @@
+import { getAccent } from "@/constants/accent-colors";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useAppConfig } from "@/lib/hooks/use-app-config";
 import { useCurrentUser } from "@/lib/hooks/use-current-user";
+
+const INDIGO = getAccent("indigo").solid;
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -90,7 +93,7 @@ export default function PlusPaywallScreen() {
         {/* Header */}
         <View className="items-center pt-8 pb-6">
           <View className="mb-4 h-16 w-16 items-center justify-center rounded-2xl bg-indigo-100 dark:bg-indigo-900/30">
-            <IconSymbol name="star.fill" size={32} color="#6366f1" />
+            <IconSymbol name="star.fill" size={32} color=INDIGO />
           </View>
           <Text className="text-2xl font-extrabold text-neutral-900 dark:text-white text-center">
             Beeli Plus
@@ -108,7 +111,7 @@ export default function PlusPaywallScreen() {
               className="flex-row items-start gap-4 bg-neutral-50 dark:bg-neutral-900 rounded-2xl p-4"
             >
               <View className="mt-0.5 h-9 w-9 items-center justify-center rounded-xl bg-indigo-100 dark:bg-indigo-900/40">
-                <IconSymbol name={f.icon as any} size={18} color="#6366f1" />
+                <IconSymbol name={f.icon as any} size={18} color=INDIGO />
               </View>
               <View className="flex-1">
                 <Text className="font-semibold text-neutral-900 dark:text-white text-sm">

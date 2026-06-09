@@ -263,7 +263,7 @@ export default function ContributeScreen() {
                   { onPress: () => router.push("/contribute-bulk"), bg: M.successBg, iconBg: M.success, icon: "list.bullet.clipboard", iconColor: M.ink, title: t("contribute.bulkWords"), desc: t("contribute.bulkWordsDesc"), chevronColor: M.success },
                   { onPress: () => router.push("/contribute-lesson"), bg: getAccent("purple").bg, iconBg: getAccent("purple").solid, icon: "waveform", iconColor: M.parchment, title: t("contribute.fullLesson"), desc: t("contribute.fullLessonDesc"), chevronColor: getAccent("purple").solid },
                   { onPress: () => router.push("/bounties"), bg: `${M.accent}10`, iconBg: M.accent, icon: "star.fill", iconColor: M.ink, title: t("contribute.activeBounties"), desc: t("contribute.activeBountiesDesc"), chevronColor: M.accent },
-                  { onPress: () => router.push("/reviewer-application"), bg: "#6366f110", iconBg: "#6366f1", icon: "shield.fill", iconColor: "#fff", title: "Become a Reviewer", desc: "Apply to review contributions and help maintain content quality.", chevronColor: "#6366f1" },
+                  { onPress: () => router.push("/reviewer-application"), bg: getAccent("indigo").bg, iconBg: getAccent("indigo").solid, icon: "shield.fill", iconColor: M.parchment, title: "Become a Reviewer", desc: "Apply to review contributions and help maintain content quality.", chevronColor: getAccent("indigo").solid },
                 ] as const).map((card, i) => (
                   <Pressable
                     key={i}

@@ -173,12 +173,12 @@ export default function SignUpScreen() {
                   borderRadius: 12,
                   paddingHorizontal: 16,
                   paddingVertical: 12,
-                  backgroundColor: "rgba(239, 68, 68, 0.1)",
+                  backgroundColor: M.errorBg,
                   borderWidth: 1,
-                  borderColor: "rgba(239, 68, 68, 0.25)",
+                  borderColor: M.errorBorder,
                 }}
               >
-                <Text style={{ textAlign: "center", fontSize: 13, color: "#f87171" }}>{error}</Text>
+                <Text style={{ textAlign: "center", fontSize: 13, color: M.error }}>{error}</Text>
               </View>
             ) : null}
 
@@ -216,7 +216,7 @@ export default function SignUpScreen() {
               editable={!loading}
             />
             {passwordTooShort ? (
-              <Text style={{ fontSize: 11, color: "#fbbf24", marginBottom: 10, marginLeft: 4 }}>
+              <Text style={{ fontSize: 11, color: M.warning, marginBottom: 10, marginLeft: 4 }}>
                 {t("auth.passwordTooShort")}
               </Text>
             ) : (
@@ -235,7 +235,7 @@ export default function SignUpScreen() {
               returnKeyType="go"
             />
             {passwordsMismatch ? (
-              <Text style={{ fontSize: 11, color: "#f87171", marginBottom: 16, marginLeft: 4 }}>
+              <Text style={{ fontSize: 11, color: M.error, marginBottom: 16, marginLeft: 4 }}>
                 {t("auth.passwordsMismatch")}
               </Text>
             ) : (

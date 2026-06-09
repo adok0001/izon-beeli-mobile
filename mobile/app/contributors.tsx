@@ -13,10 +13,11 @@ import { FlatList, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function BadgePill({ badge }: { badge: ContributorBadgeType }) {
+  const M = useMuseumTheme();
   const info = BADGE_LABELS[badge];
   return (
     <View className="mr-1.5 flex-row items-center rounded-full bg-amber-50 px-2 py-0.5 dark:bg-amber-900/30">
-      <IconSymbol name={info.icon as any} size={10} color="#d97706" />
+      <IconSymbol name={info.icon as any} size={10} color={M.warning} />
       <Text className="ml-1 text-xs text-amber-700 dark:text-amber-400">
         {info.label}
       </Text>
@@ -41,7 +42,7 @@ function ContributorRow({
       <View className="flex-row items-center">
         <View
           className="mr-3 h-10 w-10 items-center justify-center rounded-full"
-          style={{ backgroundColor: medalColor ? `${medalColor}20` : "#e5e7eb" }}
+          style={{ backgroundColor: medalColor ? `${medalColor}20` : M.border }}
         >
           {medalColor ? (
             <IconSymbol name="medal.fill" size={20} color={medalColor} />

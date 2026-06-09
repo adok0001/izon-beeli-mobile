@@ -22,7 +22,7 @@ function ChallengeItem({ challenge }: { challenge: DailyChallenge }) {
     review_words: { icon: "brain.fill", color: getAccent("purple").solid, route: "/word-review" },
     listen_lesson: { icon: "headphones", color: getAccent("blue").solid, route: "/(tabs)/learn" },
     complete_lesson: { icon: "checkmark.circle.fill", color: M.success, route: "/(tabs)/learn" },
-    save_words: { icon: "bookmark.fill", color: "#ec4899", route: "/dictionary" },
+    save_words: { icon: "bookmark.fill", color: getAccent("pink").solid, route: "/dictionary" },
   };
 
   const config = CHALLENGE_CONFIG[challenge.challengeType] ?? {

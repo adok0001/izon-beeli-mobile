@@ -1,4 +1,5 @@
 import { useInteractiveStory } from "@/lib/hooks/use-discover";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { StoryChoice } from "@/types";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -15,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 function FilmstripProgress({ total, current }: { total: number; current: number }) {
+  const M = useMuseumTheme();
   return (
     <View
       style={{
@@ -38,7 +40,7 @@ function FilmstripProgress({ total, current }: { total: number; current: number 
             height: 3,
             borderRadius: 2,
             backgroundColor:
-              i < current ? "#C4862A" : i === current ? "rgba(196,134,42,0.55)" : "rgba(255,255,255,0.18)",
+              i < current ? M.accent : i === current ? `${M.accent}8C` : "rgba(255,255,255,0.18)",
           }}
         />
       ))}
@@ -53,6 +55,7 @@ function ChoiceOverlay({
   choices: StoryChoice[];
   onSelect: (nextId: string) => void;
 }) {
+  const M = useMuseumTheme();
   const slideAnim = useRef(new Animated.Value(100)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -105,7 +108,7 @@ function ChoiceOverlay({
           })}
           accessibilityRole="button"
         >
-          <Text style={{ fontSize: 14, fontWeight: "600", color: "#F7F2E8", lineHeight: 20 }}>
+          <Text style={{ fontSize: 14, fontWeight: "600", color: M.parchment, lineHeight: 20 }}>
             {choice.text}
           </Text>
         </Pressable>
@@ -118,6 +121,7 @@ function ChoiceOverlay({
 export { ErrorBoundary } from "@/components/screen-error-boundary";
 
 export default function InteractiveStoryNative() {
+  const M = useMuseumTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: story } = useInteractiveStory(id);
@@ -173,8 +177,8 @@ export default function InteractiveStoryNative() {
 
   if (!story || currentPath.length === 0) {
     return (
-      <View style={{ flex: 1, backgroundColor: "#07080F", alignItems: "center", justifyContent: "center" }}>
-        <Text style={{ color: "#F7F2E8", fontSize: 14 }}>Loading story…</Text>
+      <View style={{ flex: 1, backgroundColor: M.inkDeep, alignItems: "center", justifyContent: "center" }}>
+        <Text style={{ color: M.parchment, fontSize: 14 }}>Loading story…</Text>
       </View>
     );
   }
@@ -185,7 +189,7 @@ export default function InteractiveStoryNative() {
   const currentScene = story.scenes[currentSceneId];
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#07080F" }}>
+    <View style={{ flex: 1, backgroundColor: M.inkDeep }}>
       <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
         {/* Filmstrip */}
         <FilmstripProgress total={totalScenes} current={currentIndex} />
@@ -274,7 +278,7 @@ export default function InteractiveStoryNative() {
                       fontSize: 10,
                       fontWeight: "800",
                       letterSpacing: 2.5,
-                      color: "rgba(196,134,42,0.75)",
+                      color: `${M.accent}BF`,
                       textAlign: "center",
                       marginBottom: 18,
                       textTransform: "uppercase",
@@ -289,7 +293,7 @@ export default function InteractiveStoryNative() {
                   style={{
                     fontSize: 18,
                     fontWeight: "700",
-                    color: "#F7F2E8",
+                    color: M.parchment,
                     textAlign: "center",
                     lineHeight: 28,
                     maxWidth: 320,
@@ -335,7 +339,7 @@ export default function InteractiveStoryNative() {
                     }}
                     accessibilityRole="button"
                   >
-                    <Text style={{ fontSize: 13, fontWeight: "700", color: "#C4862A" }}>
+                    <Text style={{ fontSize: 13, fontWeight: "700", color: M.accent }}>
                       Return to Culture
                     </Text>
                   </Pressable>

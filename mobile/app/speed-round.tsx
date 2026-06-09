@@ -6,6 +6,7 @@ import { hapticError, hapticHeavy, hapticSuccess } from "@/lib/haptics";
 import { shuffle } from "@/lib/shuffle";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { playCorrectSound, playFinishSound, playIncorrectSound } from "@/lib/sounds";
+import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import type { DictionaryEntry } from "@/lib/dictionary";
@@ -205,7 +206,7 @@ export default function SpeedRoundScreen() {
             Answer as many word-to-English questions as you can in 60 seconds
           </Text>
           <View style={{ marginTop: 32, flexDirection: "row", gap: 24, marginBottom: 40 }}>
-            {[{ icon: "bolt.fill" as const, label: "60 sec", color: M.accent }, { icon: "trophy.fill" as const, label: "+XP", color: "#a78bfa" }].map((item) => (
+            {[{ icon: "bolt.fill" as const, label: "60 sec", color: M.accent }, { icon: "trophy.fill" as const, label: "+XP", color: getAccent("purple").solid }].map((item) => (
               <View key={item.label} style={{ alignItems: "center" }}>
                 <IconSymbol name={item.icon} size={22} color={item.color} />
                 <Text style={{ fontSize: 12, fontWeight: "700", color: item.color, marginTop: 4 }}>{item.label}</Text>
