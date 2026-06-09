@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 type SessionPhase = "listen" | "record" | "compare";
 
 function WaveformDots({ active }: { active: boolean }) {
+  const M = useMuseumTheme();
   const anims = useRef([0, 1, 2, 3, 4].map(() => new Animated.Value(4))).current;
 
   useEffect(() => {
@@ -39,7 +40,7 @@ function WaveformDots({ active }: { active: boolean }) {
       {anims.map((a, i) => (
         <Animated.View
           key={i}
-          style={{ width: 5, borderRadius: 3, backgroundColor: "#ef4444", height: a }}
+          style={{ width: 5, borderRadius: 3, backgroundColor: M.error, height: a }}
         />
       ))}
     </View>
@@ -222,13 +223,13 @@ export default function SayItBackScreen() {
               <Pressable
                 onPress={startRecording}
                 disabled={!permissionGranted}
-                style={{ width: "100%", borderRadius: 14, paddingVertical: 15, backgroundColor: "#ef4444", alignItems: "center" }}
+                style={{ width: "100%", borderRadius: 14, paddingVertical: 15, backgroundColor: M.error, alignItems: "center" }}
                 className="active:opacity-80"
               >
-                <Text style={{ fontSize: 15, fontWeight: "700", color: "#fff" }}>Record My Pronunciation</Text>
+                <Text style={{ fontSize: 15, fontWeight: "700", color: M.parchment }}>Record My Pronunciation</Text>
               </Pressable>
               {permissionGranted === false && (
-                <Text style={{ fontSize: 12, color: "#ef4444", textAlign: "center" }}>Microphone permission required</Text>
+                <Text style={{ fontSize: 12, color: M.error, textAlign: "center" }}>Microphone permission required</Text>
               )}
             </View>
           )}
@@ -240,10 +241,10 @@ export default function SayItBackScreen() {
               <Text style={{ fontSize: 14, color: M.sub }}>Recording… say the word!</Text>
               <Pressable
                 onPress={stopRecording}
-                style={{ width: 80, height: 80, borderRadius: 40, alignItems: "center", justifyContent: "center", backgroundColor: "#ef4444" }}
+                style={{ width: 80, height: 80, borderRadius: 40, alignItems: "center", justifyContent: "center", backgroundColor: M.error }}
                 className="active:opacity-80"
               >
-                <View style={{ width: 24, height: 24, borderRadius: 4, backgroundColor: "#fff" }} />
+                <View style={{ width: 24, height: 24, borderRadius: 4, backgroundColor: M.parchment }} />
               </Pressable>
               <Text style={{ fontSize: 12, color: M.muted }}>Tap to stop</Text>
             </View>
@@ -264,11 +265,11 @@ export default function SayItBackScreen() {
                 </Pressable>
                 <Pressable
                   onPress={playUserRecording}
-                  style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 12, paddingVertical: 13, backgroundColor: "#ef444415", borderWidth: 1.5, borderColor: "#ef444450" }}
+                  style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 12, paddingVertical: 13, backgroundColor: M.errorBg, borderWidth: 1.5, borderColor: M.errorBorder }}
                   className="active:opacity-70"
                 >
-                  <IconSymbol name="waveform" size={16} color="#ef4444" />
-                  <Text style={{ fontSize: 13, fontWeight: "700", color: "#ef4444" }}>Mine</Text>
+                  <IconSymbol name="waveform" size={16} color={M.error} />
+                  <Text style={{ fontSize: 13, fontWeight: "700", color: M.error }}>Mine</Text>
                 </Pressable>
               </View>
               <Text style={{ fontSize: 13, color: M.muted, textAlign: "center", marginTop: 8 }}>How did you do?</Text>
@@ -282,10 +283,10 @@ export default function SayItBackScreen() {
                 </Pressable>
                 <Pressable
                   onPress={() => handleResult("got-it")}
-                  style={{ flex: 1, borderRadius: 12, paddingVertical: 14, backgroundColor: "#22c55e", alignItems: "center" }}
+                  style={{ flex: 1, borderRadius: 12, paddingVertical: 14, backgroundColor: M.success, alignItems: "center" }}
                   className="active:opacity-80"
                 >
-                  <Text style={{ fontSize: 14, fontWeight: "700", color: "#fff" }}>Got it!</Text>
+                  <Text style={{ fontSize: 14, fontWeight: "700", color: M.ink }}>Got it!</Text>
                 </Pressable>
               </View>
             </View>

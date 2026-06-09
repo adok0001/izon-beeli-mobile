@@ -1,3 +1,4 @@
+import { getAccent } from "@/constants/accent-colors";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
@@ -220,7 +221,7 @@ export default function PairedLessonScreen() {
               <IconSymbol
                 name="person.2.fill"
                 size={20}
-                color="#a855f7"
+                color={getAccent("purple").solid}
               />
               <Text className="ml-2 text-base font-bold text-neutral-900 dark:text-white">
                 {me?.name ?? "You"} & {partner?.name ?? "Partner"}
@@ -300,7 +301,7 @@ export default function PairedLessonScreen() {
               value={chatInput}
               onChangeText={setChatInput}
               placeholder="Send a message..."
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={M.muted}
               maxLength={200}
               onSubmitEditing={handleSendChat}
               returnKeyType="send"

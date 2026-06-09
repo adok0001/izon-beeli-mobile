@@ -1,7 +1,9 @@
 import { LanguagePickerModal } from "@/components/language-picker";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
 import { friendlyError } from "@/lib/api";
 import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import {
   useCreateStoryArc,
   useEducatorCourses,
@@ -23,6 +25,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function StoryNewScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
   const { data: currentUser } = useCurrentUser();
@@ -129,7 +132,7 @@ export default function StoryNewScreen() {
                 className="flex-row items-center justify-between rounded-xl border border-neutral-300 bg-neutral-50 px-3 py-2.5 dark:border-neutral-600 dark:bg-neutral-800"
               >
                 <View className="flex-row items-center">
-                  <IconSymbol name="globe" size={16} color="#f59e0b" />
+                  <IconSymbol name="globe" size={16} color={getAccent("amber").solid} />
                   <Text className="ml-2 text-sm font-semibold text-neutral-800 dark:text-neutral-100">
                     {getLanguageName(languageId)}
                   </Text>
@@ -138,7 +141,7 @@ export default function StoryNewScreen() {
                   <Text className="text-xs text-neutral-400 dark:text-neutral-500">
                     {t("educator.story.coursesAvailable", { count: languageCourses.length })}
                   </Text>
-                  <IconSymbol name="chevron.right" size={14} color="#9ca3af" />
+                  <IconSymbol name="chevron.right" size={14} color={M.muted} />
                 </View>
               </Pressable>
             </View>
@@ -172,7 +175,7 @@ export default function StoryNewScreen() {
                         <IconSymbol
                           name={courseId === c.id ? "checkmark.circle.fill" : "circle"}
                           size={18}
-                          color={courseId === c.id ? "#f59e0b" : "#d1d5db"}
+                          color={courseId === c.id ? getAccent("amber").solid : M.border}
                         />
                         <View className="ml-2.5 flex-1">
                           <Text
@@ -208,7 +211,7 @@ export default function StoryNewScreen() {
                 placeholder={t("educator.story.titlePlaceholder")}
                 returnKeyType="next"
                 className="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={M.muted}
               />
             </View>
 
@@ -224,7 +227,7 @@ export default function StoryNewScreen() {
                 multiline
                 numberOfLines={4}
                 className="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={M.muted}
                 textAlignVertical="top"
               />
             </View>

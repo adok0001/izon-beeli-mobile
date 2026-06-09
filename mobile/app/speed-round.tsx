@@ -6,6 +6,7 @@ import { hapticError, hapticHeavy, hapticSuccess } from "@/lib/haptics";
 import { shuffle } from "@/lib/shuffle";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { playCorrectSound, playFinishSound, playIncorrectSound } from "@/lib/sounds";
+import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import type { DictionaryEntry } from "@/lib/dictionary";
@@ -44,7 +45,7 @@ function buildQuestions(entries: DictionaryEntry[]): SpeedQuestion[] {
 function TimerArc({ timeLeft }: { timeLeft: number }) {
   const M = useMuseumTheme();
   const pct = timeLeft / TOTAL_SECONDS;
-  const color = pct > 0.5 ? M.accent : pct > 0.25 ? "#f59e0b" : "#ef4444";
+  const color = pct > 0.5 ? M.accent : pct > 0.25 ? M.warning : M.error;
   const size = 72;
   const strokeWidth = 5;
   const radius = (size - strokeWidth) / 2;
@@ -79,9 +80,9 @@ function OptionTile({
   onPress: () => void;
 }) {
   const M = useMuseumTheme();
-  const bg = { default: M.card, correct: "#22c55e20", incorrect: "#ef444420", dimmed: M.card }[state];
-  const border = { default: M.border, correct: "#22c55e", incorrect: "#ef4444", dimmed: M.border }[state];
-  const color = { default: M.text, correct: "#22c55e", incorrect: "#ef4444", dimmed: M.muted }[state];
+  const bg = { default: M.card, correct: M.successBg, incorrect: M.errorBg, dimmed: M.card }[state];
+  const border = { default: M.border, correct: M.success, incorrect: M.error, dimmed: M.border }[state];
+  const color = { default: M.text, correct: M.success, incorrect: M.error, dimmed: M.muted }[state];
   return (
     <Pressable
       onPress={onPress}
@@ -205,7 +206,7 @@ export default function SpeedRoundScreen() {
             Answer as many word-to-English questions as you can in 60 seconds
           </Text>
           <View style={{ marginTop: 32, flexDirection: "row", gap: 24, marginBottom: 40 }}>
-            {[{ icon: "bolt.fill" as const, label: "60 sec", color: M.accent }, { icon: "trophy.fill" as const, label: "+XP", color: "#a78bfa" }].map((item) => (
+            {[{ icon: "bolt.fill" as const, label: "60 sec", color: M.accent }, { icon: "trophy.fill" as const, label: "+XP", color: getAccent("purple").solid }].map((item) => (
               <View key={item.label} style={{ alignItems: "center" }}>
                 <IconSymbol name={item.icon} size={22} color={item.color} />
                 <Text style={{ fontSize: 12, fontWeight: "700", color: item.color, marginTop: 4 }}>{item.label}</Text>

@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
 import {
   canAccessEducatorPanel,
   canManageBounties,
@@ -178,9 +179,9 @@ export default function EducatorPanelScreen() {
           <View
             style={{
               marginBottom: 16, borderRadius: 16, overflow: "hidden",
-              backgroundColor: "rgba(59,130,246,0.07)",
-              borderWidth: 1, borderColor: "rgba(59,130,246,0.2)",
-              borderLeftWidth: 4, borderLeftColor: "#60a5fa",
+              backgroundColor: getAccent("blue").bg,
+              borderWidth: 1, borderColor: getAccent("blue").border,
+              borderLeftWidth: 4, borderLeftColor: getAccent("sky").solid,
             }}
           >
             <View style={{ flexDirection: "row", gap: 6, paddingHorizontal: 16, paddingTop: 16 }}>
@@ -189,12 +190,12 @@ export default function EducatorPanelScreen() {
                   key={s}
                   style={{
                     height: 3, flex: 1, borderRadius: 2,
-                    backgroundColor: s <= onboardingStep ? "#60a5fa" : M.border,
+                    backgroundColor: s <= onboardingStep ? getAccent("sky").solid : M.border,
                   }}
                 />
               ))}
             </View>
-            <Text style={{ paddingHorizontal: 16, paddingTop: 6, fontSize: 9, fontWeight: "800", letterSpacing: 2, color: "#60a5fa" }}>
+            <Text style={{ paddingHorizontal: 16, paddingTop: 6, fontSize: 9, fontWeight: "800", letterSpacing: 2, color: getAccent("sky").solid }}>
               {t("educator.onboarding.stepOf", { step: onboardingStep, total: 3 }).toUpperCase()}
             </Text>
 
@@ -227,14 +228,14 @@ export default function EducatorPanelScreen() {
               };
               return (
                 <View key={step} style={{ padding: 16 }}>
-                  <View style={{ width: 40, height: 40, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: "#60a5fa20", marginBottom: 10 }}>
-                    <IconSymbol name={icons[step - 1] as never} size={18} color="#60a5fa" />
+                  <View style={{ width: 40, height: 40, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: getAccent("sky").bg, marginBottom: 10 }}>
+                    <IconSymbol name={icons[step - 1] as never} size={18} color={getAccent("sky").solid} />
                   </View>
                   <Text style={{ fontSize: 15, fontWeight: "700", color: M.text }}>{titles[step - 1]}</Text>
                   <Text style={{ marginTop: 4, fontSize: 13, color: M.sub }}>{descs[step - 1]}</Text>
                   <Pressable
                     onPress={onCtaPress}
-                    style={{ marginTop: 14, alignItems: "center", borderRadius: 12, paddingVertical: 11, backgroundColor: "#60a5fa" }}
+                    style={{ marginTop: 14, alignItems: "center", borderRadius: 12, paddingVertical: 11, backgroundColor: getAccent("sky").solid }}
                     className="active:opacity-80"
                   >
                     <Text style={{ fontWeight: "800", color: M.ink, fontSize: 14 }}>{ctas[step - 1]} →</Text>
@@ -270,17 +271,17 @@ export default function EducatorPanelScreen() {
               backgroundColor: "rgba(255,255,255,0.2)",
             }}
           >
-            <IconSymbol name="book.fill" size={22} color="#fff" />
+            <IconSymbol name="book.fill" size={22} color={M.parchment} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 15, fontWeight: "800", color: "#fff" }}>
+            <Text style={{ fontSize: 15, fontWeight: "800", color: M.parchment }}>
               {t("educator.guide.title")}
             </Text>
-            <Text style={{ marginTop: 2, fontSize: 12, color: "rgba(255,255,255,0.75)" }}>
+            <Text style={{ marginTop: 2, fontSize: 12, color: `${M.parchment}BF` }}>
               {t("educator.guide.subtitle")}
             </Text>
           </View>
-          <IconSymbol name="chevron.right" size={16} color="rgba(255,255,255,0.7)" />
+          <IconSymbol name="chevron.right" size={16} color={`${M.parchment}B3`} />
         </Pressable>
 
         {/* Stats */}
@@ -295,13 +296,13 @@ export default function EducatorPanelScreen() {
         {/* Actions */}
         <SectionLabel label={t("admin.overview.quickActions")} />
         <View style={{ gap: 10 }}>
-          <ActionRow icon="checkmark.circle.fill" label={t("educator.nav.review")} detail={t("educator.review.subtitle")} onPress={() => router.push("/review")} accent="#4ade80" />
+          <ActionRow icon="checkmark.circle.fill" label={t("educator.nav.review")} detail={t("educator.review.subtitle")} onPress={() => router.push("/review")} accent={getAccent("green").solid} />
           <ActionRow icon="character.book.closed" label={t("educator.nav.dictionary")} detail={t("profile.dictionary")} onPress={() => router.push("/educator/dictionary")} />
           <ActionRow icon="book.fill" label={t("educator.nav.lessons")} detail={t("learn.webSubtitle")} onPress={() => router.push("/educator/courses")} />
-          <ActionRow icon="globe" label={t("educator.nav.culture")} detail={t("welcomeChecklist.exploreCultureMusicDetail")} onPress={() => router.push("/educator/culture" as never)} accent="#a78bfa" />
-          <ActionRow icon="book.closed.fill" label={t("educator.story.screenTitle")} detail={t("educator.story.screenSubtitle")} onPress={() => router.push("/educator/stories" as never)} accent="#fb923c" />
+          <ActionRow icon="globe" label={t("educator.nav.culture")} detail={t("welcomeChecklist.exploreCultureMusicDetail")} onPress={() => router.push("/educator/culture" as never)} accent={getAccent("purple").solid} />
+          <ActionRow icon="book.closed.fill" label={t("educator.story.screenTitle")} detail={t("educator.story.screenSubtitle")} onPress={() => router.push("/educator/stories" as never)} accent={getAccent("orange").solid} />
           {currentUser && canManageBounties(currentUser) ? (
-            <ActionRow icon="star.fill" label={t("profile.bounties")} detail={t("admin.overview.manageCourses")} onPress={() => router.push("/bounties")} accent="#f59e0b" />
+            <ActionRow icon="star.fill" label={t("profile.bounties")} detail={t("admin.overview.manageCourses")} onPress={() => router.push("/bounties")} accent={getAccent("amber").solid} />
           ) : null}
         </View>
       </ScrollView>

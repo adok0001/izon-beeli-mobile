@@ -227,18 +227,18 @@ export default function WordChallengeScreen() {
                 </Pressable>
                 <Pressable
                   onPress={isRecording ? stopRecord : startRecord}
-                  style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 12, paddingVertical: 14, backgroundColor: isRecording ? "#ef4444" : "#ef444415", borderWidth: 1.5, borderColor: "#ef444450" }}
+                  style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 12, paddingVertical: 14, backgroundColor: isRecording ? M.error : M.errorBg, borderWidth: 1.5, borderColor: M.errorBorder }}
                   className="active:opacity-70"
                 >
-                  <IconSymbol name={isRecording ? "stop.fill" : "mic.fill"} size={16} color={isRecording ? "#fff" : "#ef4444"} />
-                  <Text style={{ fontSize: 13, fontWeight: "700", color: isRecording ? "#fff" : "#ef4444" }}>
+                  <IconSymbol name={isRecording ? "stop.fill" : "mic.fill"} size={16} color={isRecording ? M.parchment : M.error} />
+                  <Text style={{ fontSize: 13, fontWeight: "700", color: isRecording ? M.parchment : M.error }}>
                     {isRecording ? "Stop" : "Record"}
                   </Text>
                 </Pressable>
               </View>
               {recordingDone && (
-                <View style={{ width: "100%", borderRadius: 12, padding: 14, backgroundColor: "#22c55e10", borderWidth: 1, borderColor: "#22c55e30" }}>
-                  <Text style={{ fontSize: 14, fontWeight: "700", color: "#22c55e", textAlign: "center" }}>Recording saved! Compare with Listen above.</Text>
+                <View style={{ width: "100%", borderRadius: 12, padding: 14, backgroundColor: M.successBg, borderWidth: 1, borderColor: M.successBorder }}>
+                  <Text style={{ fontSize: 14, fontWeight: "700", color: M.success, textAlign: "center" }}>Recording saved! Compare with Listen above.</Text>
                 </View>
               )}
             </View>
@@ -262,9 +262,9 @@ export default function WordChallengeScreen() {
                     style={{ borderRadius: 14, borderWidth: 2, borderColor: M.inputBorder, backgroundColor: M.inputBg, color: M.text, fontSize: 16, padding: 16, minHeight: 100, lineHeight: 24 }}
                   />
                   {submitStatus === "error" && (
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 12, padding: 12, backgroundColor: "#ef444410", borderWidth: 1, borderColor: "#ef444430" }}>
-                      <IconSymbol name="xmark.circle.fill" size={18} color="#ef4444" />
-                      <Text style={{ flex: 1, fontSize: 13, color: "#ef4444", lineHeight: 18 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 12, padding: 12, backgroundColor: M.errorBg, borderWidth: 1, borderColor: M.errorBorder }}>
+                      <IconSymbol name="xmark.circle.fill" size={18} color={M.error} />
+                      <Text style={{ flex: 1, fontSize: 13, color: M.error, lineHeight: 18 }}>
                         Couldn&apos;t submit your sentence. Check your connection and try again.
                       </Text>
                     </View>
@@ -281,9 +281,9 @@ export default function WordChallengeScreen() {
                   </Pressable>
                 </>
               ) : (
-                <View style={{ borderRadius: 14, padding: 20, backgroundColor: "#22c55e10", borderWidth: 1, borderColor: "#22c55e30", alignItems: "center", gap: 8 }}>
-                  <IconSymbol name="checkmark.circle.fill" size={32} color="#22c55e" />
-                  <Text style={{ fontSize: 16, fontWeight: "700", color: "#22c55e" }}>Sentence submitted!</Text>
+                <View style={{ borderRadius: 14, padding: 20, backgroundColor: M.successBg, borderWidth: 1, borderColor: M.successBorder, alignItems: "center", gap: 8 }}>
+                  <IconSymbol name="checkmark.circle.fill" size={32} color={M.success} />
+                  <Text style={{ fontSize: 16, fontWeight: "700", color: M.success }}>Sentence submitted!</Text>
                   <Text style={{ fontSize: 13, color: M.sub, textAlign: "center" }}>Your sentence has been shared with the community.</Text>
                 </View>
               )}

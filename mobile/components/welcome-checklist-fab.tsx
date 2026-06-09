@@ -305,7 +305,7 @@ export function WelcomeChecklistFab() {
                             <IconSymbol
                               name={done ? "checkmark.circle.fill" : "circle"}
                               size={16}
-                              color={done ? "#22c55e" : M.muted}
+                              color={done ? M.success : M.muted}
                             />
                           </Pressable>
 

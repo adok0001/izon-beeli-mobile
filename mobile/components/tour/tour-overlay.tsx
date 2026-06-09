@@ -1,3 +1,5 @@
+import { getAccent } from "@/constants/accent-colors";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { MOBILE_TOUR_REGISTRY } from "@/lib/tours/mobile-tour-registry";
 import { useTourStore } from "@/store/tour-store";
 import React from "react";
@@ -6,6 +8,7 @@ import { Modal, Pressable, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export function TourOverlay() {
+  const M = useMuseumTheme();
   const { activeTour, dismissTour } = useTourStore();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -49,7 +52,7 @@ export function TourOverlay() {
             {title}
           </Text>
           <Text
-            style={{ fontSize: 14, color: "#6b7280", lineHeight: 22, marginBottom: 20 }}
+            style={{ fontSize: 14, color: M.sub, lineHeight: 22, marginBottom: 20 }}
           >
             {subtitle}
           </Text>
@@ -59,13 +62,13 @@ export function TourOverlay() {
             accessibilityLabel="Got it, close tour"
             accessibilityHint="Closes the welcome tour overlay"
             style={{
-              backgroundColor: "#3b82f6",
+              backgroundColor: getAccent("blue").solid,
               paddingVertical: 12,
               borderRadius: 14,
               alignItems: "center",
             }}
           >
-            <Text style={{ color: "white", fontWeight: "700", fontSize: 15 }}>
+            <Text style={{ color: M.parchment, fontWeight: "700", fontSize: 15 }}>
               {t("onboarding.gotIt")} →
             </Text>
           </Pressable>

@@ -325,11 +325,11 @@ export default function DictionaryScreen() {
           {viewMode === "saved" && savedCount > 0 && (
             <Pressable
               onPress={() => router.push("/word-review")}
-              style={{ marginTop: 12, flexDirection: "row", alignItems: "center", justifyContent: "center", borderRadius: 12, backgroundColor: "#22c55e", paddingVertical: 10 }}
+              style={{ marginTop: 12, flexDirection: "row", alignItems: "center", justifyContent: "center", borderRadius: 12, backgroundColor: M.success, paddingVertical: 10 }}
               className="active:opacity-80"
             >
-              <IconSymbol name="brain.head.profile" size={16} color="#fff" />
-              <Text style={{ marginLeft: 8, fontSize: 13, fontWeight: "600", color: "#fff" }}>
+              <IconSymbol name="brain.head.profile" size={16} color={M.ink} />
+              <Text style={{ marginLeft: 8, fontSize: 13, fontWeight: "600", color: M.ink }}>
                 {t("dictionaryPage.reviewSavedWords")}
               </Text>
             </Pressable>

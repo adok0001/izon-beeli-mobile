@@ -1,6 +1,8 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LanguagePickerModal } from "@/components/language-picker";
+import { getAccent } from "@/constants/accent-colors";
 import { apiFetch } from "@/lib/api";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { useProverbs } from "@/lib/hooks/use-proverbs";
 import { useCurrentUser } from "@/lib/hooks/use-current-user";
@@ -43,6 +45,7 @@ function Badge({ pinned }: { pinned: boolean }) {
 
 export default function DailyContentAdminScreen() {
   const { t } = useTranslation();
+  const M = useMuseumTheme();
   const { getToken } = useAuth();
   const qc = useQueryClient();
   const { data: currentUser } = useCurrentUser();
@@ -176,7 +179,7 @@ export default function DailyContentAdminScreen() {
               className="flex-row items-center justify-between rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-4 py-3 active:opacity-70"
             >
               <Text className="text-sm font-semibold text-neutral-900 dark:text-white">{langName}</Text>
-              <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
+              <IconSymbol name="chevron.right" size={16} color={M.muted} />
             </Pressable>
           </View>
 
@@ -233,7 +236,7 @@ export default function DailyContentAdminScreen() {
                 value={search}
                 onChangeText={setSearch}
                 placeholder={t("admin.dailyContent.wotd.searchPlaceholder")}
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={M.muted}
                 className="rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-4 py-3 text-sm text-neutral-900 dark:text-white mb-3"
               />
 
@@ -259,7 +262,7 @@ export default function DailyContentAdminScreen() {
                       <Text className="text-sm font-semibold text-neutral-900 dark:text-white">{entry.word}</Text>
                       <Text className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{entry.english}</Text>
                     </View>
-                    {isSelected && <IconSymbol name="checkmark.circle.fill" size={20} color="#3b82f6" />}
+                    {isSelected && <IconSymbol name="checkmark.circle.fill" size={20} color={getAccent("blue").solid} />}
                   </Pressable>
                 );
               })}
@@ -304,7 +307,7 @@ export default function DailyContentAdminScreen() {
                 value={search}
                 onChangeText={setSearch}
                 placeholder={t("admin.dailyContent.potm.searchPlaceholder")}
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={M.muted}
                 className="rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-4 py-3 text-sm text-neutral-900 dark:text-white mb-3"
               />
 
@@ -330,7 +333,7 @@ export default function DailyContentAdminScreen() {
                       <Text className="text-sm font-semibold text-neutral-900 dark:text-white">{proverb.text}</Text>
                       <Text className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 italic">{proverb.translation}</Text>
                     </View>
-                    {isSelected && <IconSymbol name="checkmark.circle.fill" size={20} color="#3b82f6" />}
+                    {isSelected && <IconSymbol name="checkmark.circle.fill" size={20} color={getAccent("blue").solid} />}
                   </Pressable>
                 );
               })}
@@ -377,7 +380,7 @@ export default function DailyContentAdminScreen() {
                 value={search}
                 onChangeText={setSearch}
                 placeholder={t("admin.dailyContent.sotw.searchPlaceholder")}
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={M.muted}
                 className="rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-4 py-3 text-sm text-neutral-900 dark:text-white mb-3"
               />
 
@@ -405,7 +408,7 @@ export default function DailyContentAdminScreen() {
                         <Text className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{song.artist}</Text>
                       )}
                     </View>
-                    {isSelected && <IconSymbol name="checkmark.circle.fill" size={20} color="#3b82f6" />}
+                    {isSelected && <IconSymbol name="checkmark.circle.fill" size={20} color={getAccent("blue").solid} />}
                   </Pressable>
                 );
               })}

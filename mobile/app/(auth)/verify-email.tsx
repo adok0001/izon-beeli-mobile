@@ -1,6 +1,7 @@
 import { useSignUp } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -15,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function VerifyEmailScreen() {
   const { signUp, setActive } = useSignUp();
   const router = useRouter();
+  const M = useMuseumTheme();
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -72,7 +74,7 @@ export default function VerifyEmailScreen() {
         <TextInput
           className="mb-6 rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3.5 text-center text-2xl font-bold text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
           placeholder="000000"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={M.muted}
           value={code}
           onChangeText={setCode}
           keyboardType="number-pad"

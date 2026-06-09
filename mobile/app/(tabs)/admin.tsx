@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
 import { canManageBounties, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useAdminStats } from "@/lib/hooks/use-educator-panel";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -155,21 +156,21 @@ export default function AdminPanelScreen() {
               label={t("educator.panelTitle")}
               detail={t("educator.nav.overview")}
               onPress={() => router.push("/(tabs)/educator")}
-              accent="#4ade80"
+              accent={getAccent("green").solid}
             />
             <ActionRow
               icon="sun.max.fill"
               label={t("admin.dailyContent.title")}
               detail={t("admin.dailyContent.actionRowDetail")}
               onPress={() => router.push("/admin/daily-content")}
-              accent="#fb923c"
+              accent={getAccent("orange").solid}
             />
             <ActionRow
               icon="bell.fill"
               label={t("admin.notifications.title", "Push Notifications")}
               detail={t("admin.notifications.subtitle", "Broadcast a message to all users")}
               onPress={() => router.push("/admin/broadcast")}
-              accent="#60a5fa"
+              accent={getAccent("sky").solid}
             />
             {currentUser && canManageBounties(currentUser) ? (
               <ActionRow
@@ -177,7 +178,7 @@ export default function AdminPanelScreen() {
                 label={t("profile.bounties")}
                 detail={t("admin.overview.manageCourses")}
                 onPress={() => router.push("/bounties")}
-                accent="#f59e0b"
+                accent={getAccent("amber").solid}
               />
             ) : null}
           </View>

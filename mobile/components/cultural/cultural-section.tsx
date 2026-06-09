@@ -1,3 +1,4 @@
+import { getAccent } from "@/constants/accent-colors";
 import { useCultural } from "@/lib/hooks/use-cultural";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -19,7 +20,7 @@ export function CulturalSection({ languageId, onViewAll }: Props) {
     <View>
       <View className="mb-2 flex-row items-center justify-between">
         <View className="flex-row items-center">
-          <IconSymbol name="star.fill" size={16} color="#f59e0b" />
+          <IconSymbol name="star.fill" size={16} color={getAccent("amber").solid} />
           <Text className="ml-1.5 text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
             {t("cultural.heritage")}
           </Text>

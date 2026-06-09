@@ -3,6 +3,7 @@ userio-*
 .vscode/
 .claude/settings.local.json
 .claude/**/.DS_Store
+.claude/worktrees/
 scripts/.cache/
 
 # dependencies

@@ -1,6 +1,8 @@
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
 import { friendlyError } from "@/lib/api";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
 import {
   EducatorStoryChapter,
@@ -42,6 +44,7 @@ function ChapterEditor({
   onDelete: () => void;
   t: (key: string, opts?: Record<string, unknown>) => string;
 }>) {
+  const M = useMuseumTheme();
   return (
     <View className="mb-4 rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-900">
       <View className="mb-3 flex-row items-center justify-between">
@@ -49,7 +52,7 @@ function ChapterEditor({
           {t("educator.story.chapterLabel", { number: index + 1 })}
         </Text>
         <Pressable onPress={onDelete} hitSlop={8}>
-          <IconSymbol name="trash" size={16} color="#ef4444" />
+          <IconSymbol name="trash" size={16} color={M.error} />
         </Pressable>
       </View>
 
@@ -61,7 +64,7 @@ function ChapterEditor({
         onChangeText={(v) => onChange({ ...chapter, title: v })}
         placeholder={t("educator.story.chapterTitlePlaceholder")}
         className="mb-3 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-        placeholderTextColor="#9ca3af"
+        placeholderTextColor={M.muted}
       />
 
       <Text className="mb-1 text-xs font-semibold text-neutral-500 dark:text-neutral-400">
@@ -108,7 +111,7 @@ function ChapterEditor({
         multiline
         numberOfLines={3}
         className="mb-3 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-        placeholderTextColor="#9ca3af"
+        placeholderTextColor={M.muted}
         textAlignVertical="top"
       />
 
@@ -122,7 +125,7 @@ function ChapterEditor({
         multiline
         numberOfLines={3}
         className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-        placeholderTextColor="#9ca3af"
+        placeholderTextColor={M.muted}
         textAlignVertical="top"
       />
     </View>
@@ -130,6 +133,7 @@ function ChapterEditor({
 }
 
 export default function StoryEditScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
@@ -269,7 +273,7 @@ export default function StoryEditScreen() {
           </View>
         ) : !arc ? (
           <View className="flex-1 items-center justify-center px-8">
-            <IconSymbol name="exclamationmark.triangle" size={40} color="#d1d5db" />
+            <IconSymbol name="exclamationmark.triangle" size={40} color={M.border} />
             <Text className="mt-4 text-center text-base text-neutral-500">
               {t("educator.story.noArcsTitle")}
             </Text>
@@ -289,7 +293,7 @@ export default function StoryEditScreen() {
                 value={title}
                 onChangeText={setTitle}
                 className="mb-3 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={M.muted}
                 placeholder={t("educator.story.arcTitlePlaceholder")}
               />
               <Text className="mb-1 text-xs font-semibold uppercase tracking-wider text-neutral-400">
@@ -301,7 +305,7 @@ export default function StoryEditScreen() {
                 multiline
                 numberOfLines={3}
                 className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={M.muted}
                 placeholder={t("educator.story.arcDescriptionPlaceholder")}
                 textAlignVertical="top"
               />
@@ -316,7 +320,7 @@ export default function StoryEditScreen() {
                 onPress={addChapter}
                 className="flex-row items-center gap-1"
               >
-                <IconSymbol name="plus.circle.fill" size={18} color="#f59e0b" />
+                <IconSymbol name="plus.circle.fill" size={18} color={getAccent("amber").solid} />
                 <Text className="text-sm font-semibold text-amber-500">
                   {t("educator.story.addChapter")}
                 </Text>
@@ -325,7 +329,7 @@ export default function StoryEditScreen() {
 
             {chapters.length === 0 ? (
               <View className="mb-4 items-center rounded-2xl border border-dashed border-neutral-300 py-10 dark:border-neutral-700">
-                <IconSymbol name="book.pages" size={32} color="#d1d5db" />
+                <IconSymbol name="book.pages" size={32} color={M.border} />
                 <Text className="mt-2 text-sm text-neutral-400">
                   {t("educator.story.noChapters")}
                 </Text>

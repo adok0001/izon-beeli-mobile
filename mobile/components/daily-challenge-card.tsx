@@ -4,29 +4,30 @@ import { useState } from "react";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useRegenerateDailyChallenges, useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
 import { ApiError } from "@/lib/api";
+import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useTranslation } from "react-i18next";
 import type { ChallengeType, DailyChallenge } from "@/types";
-
-const CHALLENGE_CONFIG: Record<
-  ChallengeType,
-  { icon: string; color: string; route: string }
-> = {
-  complete_quiz: { icon: "trophy.fill", color: "#f59e0b", route: "/quiz" },
-  review_words: { icon: "brain.fill", color: "#8b5cf6", route: "/word-review" },
-  listen_lesson: { icon: "headphones", color: "#3b82f6", route: "/(tabs)/learn" },
-  complete_lesson: { icon: "checkmark.circle.fill", color: "#22c55e", route: "/(tabs)/learn" },
-  save_words: { icon: "bookmark.fill", color: "#ec4899", route: "/dictionary" },
-};
 
 function ChallengeItem({ challenge }: { challenge: DailyChallenge }) {
   const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
 
+  const CHALLENGE_CONFIG: Record<
+    ChallengeType,
+    { icon: string; color: string; route: string }
+  > = {
+    complete_quiz: { icon: "trophy.fill", color: M.warning, route: "/quiz" },
+    review_words: { icon: "brain.fill", color: getAccent("purple").solid, route: "/word-review" },
+    listen_lesson: { icon: "headphones", color: getAccent("blue").solid, route: "/(tabs)/learn" },
+    complete_lesson: { icon: "checkmark.circle.fill", color: M.success, route: "/(tabs)/learn" },
+    save_words: { icon: "bookmark.fill", color: getAccent("pink").solid, route: "/dictionary" },
+  };
+
   const config = CHALLENGE_CONFIG[challenge.challengeType] ?? {
     icon: "star.fill",
-    color: "#3b82f6",
+    color: getAccent("blue").solid,
     route: "/(tabs)/learn",
   };
 
@@ -58,19 +59,19 @@ function ChallengeItem({ challenge }: { challenge: DailyChallenge }) {
               style={{
                 height: "100%", borderRadius: 999,
                 width: `${Math.round(progress * 100)}%`,
-                backgroundColor: challenge.completed ? "#22c55e" : config.color,
+                backgroundColor: challenge.completed ? M.success : config.color,
               }}
             />
           </View>
           <Text style={{ marginTop: 2, fontSize: 10, color: M.muted }}>
             {challenge.progress} / {challenge.target}
             {challenge.completed && (
-              <Text style={{ fontWeight: "600", color: "#22c55e" }}> · {t("learn.complete")}</Text>
+              <Text style={{ fontWeight: "600", color: M.success }}> · {t("learn.complete")}</Text>
             )}
           </Text>
         </View>
         {challenge.completed ? (
-          <IconSymbol name="checkmark.circle.fill" size={18} color="#22c55e" style={{ marginLeft: 8 }} />
+          <IconSymbol name="checkmark.circle.fill" size={18} color={M.success} style={{ marginLeft: 8 }} />
         ) : (
           <IconSymbol name="chevron.right" size={14} color={M.muted} style={{ marginLeft: 8 }} />
         )}
@@ -115,11 +116,11 @@ export function DailyChallengeCards() {
           className="active:opacity-60"
         >
           {isRefreshing ? (
-            <ActivityIndicator size="small" color="#9ca3af" />
+            <ActivityIndicator size="small" color={M.muted} />
           ) : (
             <>
-              <IconSymbol name="arrow.clockwise" size={13} color="#9ca3af" />
-              <Text style={{ fontSize: 12, color: "#9ca3af" }}>
+              <IconSymbol name="arrow.clockwise" size={13} color={M.muted} />
+              <Text style={{ fontSize: 12, color: M.muted }}>
                 {t("dailyChallenge.refresh")}
               </Text>
             </>

@@ -1,3 +1,4 @@
+import { getAccent } from "@/constants/accent-colors";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import { Audio } from "expo-av";
@@ -62,7 +63,7 @@ export function ListeningQuestion({ audioSource, startTime, endTime, fallbackTex
   if (!audioSource && fallbackText) {
     return (
       <View className="mb-4 items-center rounded-xl bg-blue-50 px-6 py-6 dark:bg-blue-900/30">
-        <IconSymbol name="speaker.wave.2.fill" size={28} color="#3b82f6" />
+        <IconSymbol name="speaker.wave.2.fill" size={28} color={getAccent("blue").solid} />
         <Text className="mt-3 text-center text-lg font-semibold text-neutral-900 dark:text-white">
           Listen: {fallbackText}
         </Text>

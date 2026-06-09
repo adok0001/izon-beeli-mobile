@@ -135,12 +135,12 @@ export default function SignInScreen() {
                 borderRadius: 12,
                 paddingHorizontal: 16,
                 paddingVertical: 12,
-                backgroundColor: "rgba(239, 68, 68, 0.1)",
+                backgroundColor: M.errorBg,
                 borderWidth: 1,
-                borderColor: "rgba(239, 68, 68, 0.25)",
+                borderColor: M.errorBorder,
               }}
             >
-              <Text style={{ textAlign: "center", fontSize: 13, color: "#f87171" }}>
+              <Text style={{ textAlign: "center", fontSize: 13, color: M.error }}>
                 {error}
               </Text>
             </View>

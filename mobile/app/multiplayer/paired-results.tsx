@@ -5,8 +5,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useMultiplayerStore } from "@/store/multiplayer-store";
 import { hapticHeavy } from "@/lib/haptics";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 
 export default function PairedResultsScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const {
     gameResults,
@@ -98,7 +100,7 @@ export default function PairedResultsScreen() {
             <IconSymbol
               name="person.2.fill"
               size={40}
-              color={combinedAccuracy >= 80 ? "#22c55e" : combinedAccuracy >= 50 ? "#f59e0b" : "#ef4444"}
+              color={combinedAccuracy >= 80 ? M.success : combinedAccuracy >= 50 ? M.warning : M.error}
             />
           </View>
 
@@ -161,14 +163,14 @@ export default function PairedResultsScreen() {
             >
               {rematchRequested ? (
                 <>
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator size="small" color={M.parchment} />
                   <Text className="ml-2 text-base font-semibold text-white">
                     {partnerWantsRematch ? "Starting rematch..." : "Waiting for partner..."}
                   </Text>
                 </>
               ) : (
                 <>
-                  <IconSymbol name="arrow.clockwise" size={16} color="#fff" />
+                  <IconSymbol name="arrow.clockwise" size={16} color={M.parchment} />
                   <Text className="ml-2 text-base font-semibold text-white">
                     Rematch{partnerWantsRematch ? " (Partner ready!)" : ""}
                   </Text>

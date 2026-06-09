@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
 import { getCourseTypeColors, getLevelColors } from "@/constants/course-colors";
 import { useCourseLessons } from "@/lib/hooks/use-courses";
 import { localizeField } from "@/lib/localize";
@@ -58,6 +59,8 @@ export const CourseCard = memo(function CourseCard({
   }, [collapsed, progressPercent]);
 
   const accentColor = typeColors.tickActive ?? M.accent;
+  const purple = getAccent("purple");
+  const amber = getAccent("amber");
 
   return (
     <Animated.View style={[{ marginBottom: 16 }, animStyle(anim, 24)]}>
@@ -169,7 +172,7 @@ export const CourseCard = memo(function CourseCard({
                 />
               </View>
               {progressPercent >= 100 && (
-                <Text style={{ marginTop: 4, fontSize: 10, fontWeight: "700", color: "#4ade80", textAlign: "right" }}>
+                <Text style={{ marginTop: 4, fontSize: 10, fontWeight: "700", color: M.success, textAlign: "right" }}>
                   {t("learn.complete")}
                 </Text>
               )}
@@ -229,16 +232,16 @@ export const CourseCard = memo(function CourseCard({
                   borderRadius: 10,
                   paddingVertical: 10,
                   borderWidth: 1,
-                  borderColor: "rgba(139, 92, 246, 0.35)",
-                  backgroundColor: "rgba(139, 92, 246, 0.08)",
+                  borderColor: purple.border,
+                  backgroundColor: purple.bg,
                   gap: 6,
                 }}
                 className="active:opacity-70"
                 accessibilityRole="button"
                 accessibilityLabel={t("learn.matchingGame")}
               >
-                <IconSymbol name="rectangle.grid.2x2" size={14} color="#8b5cf6" />
-                <Text style={{ fontSize: 12, fontWeight: "700", color: "#8b5cf6" }}>
+                <IconSymbol name="rectangle.grid.2x2" size={14} color={purple.solid} />
+                <Text style={{ fontSize: 12, fontWeight: "700", color: purple.solid }}>
                   {t("learn.matchingGame")}
                 </Text>
               </Pressable>
@@ -255,16 +258,16 @@ export const CourseCard = memo(function CourseCard({
                   borderRadius: 10,
                   paddingVertical: 10,
                   borderWidth: 1,
-                  borderColor: "rgba(245, 158, 11, 0.35)",
-                  backgroundColor: "rgba(245, 158, 11, 0.08)",
+                  borderColor: amber.border,
+                  backgroundColor: amber.bg,
                   gap: 6,
                 }}
                 className="active:opacity-70"
                 accessibilityRole="button"
                 accessibilityLabel={t("learn.storyMode")}
               >
-                <IconSymbol name="book.fill" size={14} color="#f59e0b" />
-                <Text style={{ fontSize: 12, fontWeight: "700", color: "#f59e0b" }}>
+                <IconSymbol name="book.fill" size={14} color={amber.solid} />
+                <Text style={{ fontSize: 12, fontWeight: "700", color: amber.solid }}>
                   {t("learn.storyMode")}
                 </Text>
               </Pressable>

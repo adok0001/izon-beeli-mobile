@@ -11,7 +11,7 @@ export default function AuthLayout({
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#06060e] p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-[#07070f] p-4 relative overflow-hidden">
       <div className="pointer-events-none absolute inset-0 grid-bg opacity-50" />
 
       {/* Warm ambient blobs */}

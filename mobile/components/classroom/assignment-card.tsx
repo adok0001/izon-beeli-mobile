@@ -1,5 +1,6 @@
 import { View, Text, Pressable, Alert } from "react-native";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLesson } from "@/lib/hooks/use-courses";
 import { useTranslation } from "react-i18next";
 import type { AssignedLesson } from "@/types";
@@ -11,6 +12,7 @@ interface AssignmentCardProps {
 }
 
 export function AssignmentCard({ assignment, onPress, onDelete }: AssignmentCardProps) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const { data: lesson } = useLesson(assignment.lessonId);
   const isOverdue =
@@ -52,10 +54,10 @@ export function AssignmentCard({ assignment, onPress, onDelete }: AssignmentCard
         <View className="flex-row items-center gap-2">
           {onDelete && (
             <Pressable onPress={handleDeletePress} hitSlop={8}>
-              <IconSymbol name="trash" size={16} color="#ef4444" />
+              <IconSymbol name="trash" size={16} color={M.error} />
             </Pressable>
           )}
-          <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
+          <IconSymbol name="chevron.right" size={16} color={M.muted} />
         </View>
       </View>
       <View className="mt-1 flex-row items-center gap-3">
@@ -67,7 +69,7 @@ export function AssignmentCard({ assignment, onPress, onDelete }: AssignmentCard
             <IconSymbol
               name="calendar"
               size={12}
-              color={isOverdue ? "#ef4444" : "#9ca3af"}
+              color={isOverdue ? M.error : M.muted}
             />
             <Text
               className={`ml-1 text-xs ${

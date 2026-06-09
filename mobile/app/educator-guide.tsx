@@ -1,3 +1,4 @@
+import { getAccent } from "@/constants/accent-colors";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Stack, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
@@ -20,7 +21,7 @@ function GuideSection({ icon, title, body }: Readonly<{ icon: string; title: str
   return (
     <View className="mb-4 rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
       <View className="mb-3 h-10 w-10 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/40">
-        <IconSymbol name={icon as never} size={20} color="#3b82f6" />
+        <IconSymbol name={icon as never} size={20} color={getAccent("blue").solid} />
       </View>
       <Text className="text-base font-bold text-neutral-900 dark:text-white">{title}</Text>
       <Text className="mt-1 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">{body}</Text>

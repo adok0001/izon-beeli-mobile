@@ -246,7 +246,7 @@ function AddLanguageModal({
             )}
             ListEmptyComponent={
               <View style={{ alignItems: "center", paddingVertical: 48 }}>
-                <IconSymbol name="checkmark.circle.fill" size={32} color="#22c55e" />
+                <IconSymbol name="checkmark.circle.fill" size={32} color={M.success} />
                 <Text style={{ marginTop: 12, textAlign: "center", fontSize: 13, color: M.muted }}>
                   {search ? t("languagePicker.noResults", { query: search }) : t("languagePicker.allEnrolled")}
                 </Text>

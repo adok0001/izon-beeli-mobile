@@ -171,7 +171,7 @@ export default function AccountScreen() {
 
             <FieldLabel label={t("auth.newPassword")} />
             <TextInput
-              style={{ marginBottom: 4, borderRadius: 12, borderWidth: 1, borderColor: newPasswordTooShort ? "#f59e0b" : M.border, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: M.text }}
+              style={{ marginBottom: 4, borderRadius: 12, borderWidth: 1, borderColor: newPasswordTooShort ? M.warning : M.border, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: M.text }}
               placeholder="••••••••"
               placeholderTextColor={M.muted}
               value={newPassword}
@@ -181,7 +181,7 @@ export default function AccountScreen() {
               editable={!passwordLoading}
             />
             {newPasswordTooShort ? (
-              <Text style={{ marginBottom: 12, marginLeft: 4, fontSize: 12, color: "#f59e0b" }}>
+              <Text style={{ marginBottom: 12, marginLeft: 4, fontSize: 12, color: M.warning }}>
                 {t("auth.passwordTooShort")}
               </Text>
             ) : (
@@ -190,7 +190,7 @@ export default function AccountScreen() {
 
             <FieldLabel label={t("auth.confirmPassword")} />
             <TextInput
-              style={{ marginBottom: 4, borderRadius: 12, borderWidth: 1, borderColor: passwordsMismatch ? "#ef4444" : M.border, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: M.text }}
+              style={{ marginBottom: 4, borderRadius: 12, borderWidth: 1, borderColor: passwordsMismatch ? M.error : M.border, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: M.text }}
               placeholder="••••••••"
               placeholderTextColor={M.muted}
               value={confirmPassword}
@@ -201,7 +201,7 @@ export default function AccountScreen() {
               onSubmitEditing={onSavePassword}
             />
             {passwordsMismatch ? (
-              <Text style={{ marginBottom: 20, marginLeft: 4, fontSize: 12, color: "#ef4444" }}>
+              <Text style={{ marginBottom: 20, marginLeft: 4, fontSize: 12, color: M.error }}>
                 {t("auth.passwordsMismatch")}
               </Text>
             ) : (

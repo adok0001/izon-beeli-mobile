@@ -2,22 +2,12 @@ import { View, Text, FlatList, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useNotificationStore } from "@/store/notification-store";
 import type { InAppNotification, NotificationType } from "@/types";
 import { useTranslation } from "react-i18next";
 import i18n from "@/lib/i18n";
-
-const TYPE_CONFIG: Record<NotificationType, { icon: string; color: string }> = {
-  word_of_day: { icon: "star.fill", color: "#3b82f6" },
-  proverb_of_month: { icon: "quote.opening", color: "#C4862A" },
-  song_of_week: { icon: "music.note", color: "#22c55e" },
-  streak_reminder: { icon: "flame.fill", color: "#f59e0b" },
-  assignment_due: { icon: "calendar", color: "#8b5cf6" },
-  achievement: { icon: "trophy.fill", color: "#22c55e" },
-  broadcast: { icon: "megaphone", color: "#6b7280" },
-  reengagement: { icon: "flame.fill", color: "#f59e0b" },
-};
 
 function timeAgo(dateStr: string): string {
   const diffMs = Date.now() - new Date(dateStr).getTime();
@@ -33,7 +23,19 @@ function timeAgo(dateStr: string): string {
 function NotificationRow({ item }: { item: InAppNotification }) {
   const M = useMuseumTheme();
   const markRead = useNotificationStore((s) => s.markRead);
-  const config = TYPE_CONFIG[item.type] ?? { icon: "bell.fill", color: "#6b7280" };
+
+  const TYPE_CONFIG: Record<NotificationType, { icon: string; color: string }> = {
+    word_of_day: { icon: "star.fill", color: getAccent("blue").solid },
+    proverb_of_month: { icon: "quote.opening", color: "#C4862A" },
+    song_of_week: { icon: "music.note", color: M.success },
+    streak_reminder: { icon: "flame.fill", color: M.warning },
+    assignment_due: { icon: "calendar", color: getAccent("purple").solid },
+    achievement: { icon: "trophy.fill", color: M.success },
+    broadcast: { icon: "megaphone", color: M.muted },
+    reengagement: { icon: "flame.fill", color: M.warning },
+  };
+
+  const config = TYPE_CONFIG[item.type] ?? { icon: "bell.fill", color: M.muted };
   const iconName = (item.icon ?? config.icon) as any;
 
   return (

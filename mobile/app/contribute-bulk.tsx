@@ -1,3 +1,4 @@
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { friendlyError } from "@/lib/api";
 import { useRef, useState } from "react";
 import {
@@ -31,6 +32,7 @@ interface EntryRow {
 const EMPTY_ROW = (): EntryRow => ({ word: "", english: "", pronunciation: "" });
 
 export default function ContributeBulkScreen() {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
   const submitBulk = useBulkSubmitContribution();
@@ -182,7 +184,7 @@ export default function ContributeBulkScreen() {
                         {lang.nativeName} · {lang.region}
                       </Text>
                     </View>
-                    <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
+                    <IconSymbol name="chevron.right" size={16} color={M.muted} />
                   </Pressable>
                 ))}
               </View>
@@ -214,7 +216,7 @@ export default function ContributeBulkScreen() {
                       {CATEGORY_LABELS[cat]}
                     </Text>
                     {selectedCategory === cat && (
-                      <IconSymbol name="checkmark.circle.fill" size={20} color="#22c55e" />
+                      <IconSymbol name="checkmark.circle.fill" size={20} color={M.success} />
                     )}
                   </Pressable>
                 ))}
@@ -261,7 +263,7 @@ export default function ContributeBulkScreen() {
                       value={row.word}
                       onChangeText={(v) => updateRow(i, "word", v)}
                       placeholder={t("contribute.wordPlaceholder")}
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={M.muted}
                       returnKeyType="next"
                       onSubmitEditing={() => focusNext(i, 0)}
                       blurOnSubmit={false}
@@ -272,7 +274,7 @@ export default function ContributeBulkScreen() {
                       value={row.english}
                       onChangeText={(v) => updateRow(i, "english", v)}
                       placeholder={t("contribute.translationPlaceholder")}
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={M.muted}
                       returnKeyType="next"
                       onSubmitEditing={() => focusNext(i, 1)}
                       blurOnSubmit={false}
@@ -283,7 +285,7 @@ export default function ContributeBulkScreen() {
                       value={row.pronunciation}
                       onChangeText={(v) => updateRow(i, "pronunciation", v)}
                       placeholder="e.g. /tɪm/"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={M.muted}
                       returnKeyType="next"
                       onSubmitEditing={() => focusNext(i, 2)}
                       blurOnSubmit={false}
@@ -296,7 +298,7 @@ export default function ContributeBulkScreen() {
                       <IconSymbol
                         name={rows.length > 1 ? "xmark" : "minus"}
                         size={12}
-                        color={rows.length > 1 ? "#9ca3af" : "#d1d5db"}
+                        color={rows.length > 1 ? M.muted : M.border}
                       />
                     </Pressable>
                   </View>
@@ -306,7 +308,7 @@ export default function ContributeBulkScreen() {
                   onPress={addRow}
                   className="mb-8 mt-1 flex-row items-center justify-center rounded-2xl border-2 border-dashed border-neutral-200 py-3.5 active:opacity-70 dark:border-neutral-700"
                 >
-                  <IconSymbol name="plus.circle.fill" size={16} color="#22c55e" />
+                  <IconSymbol name="plus.circle.fill" size={16} color={M.success} />
                   <Text className="ml-2 text-sm font-semibold text-green-600 dark:text-green-400">
                     {t("contribute.addRow")}
                   </Text>
@@ -323,7 +325,7 @@ export default function ContributeBulkScreen() {
                   onPress={() => setStep("category")}
                   className="flex-row items-center justify-center rounded-2xl bg-neutral-100 px-5 py-3.5 active:opacity-80 dark:bg-neutral-800"
                 >
-                  <IconSymbol name="chevron.left" size={14} color="#6b7280" />
+                  <IconSymbol name="chevron.left" size={14} color={M.sub} />
                   <Text className="ml-1 font-semibold text-neutral-700 dark:text-neutral-300">
                     {t("common.back")}
                   </Text>

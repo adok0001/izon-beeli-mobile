@@ -3,6 +3,7 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -20,6 +21,7 @@ export default function ForgotPasswordScreen() {
   const { signIn, isLoaded } = useSignIn();
   const router = useRouter();
   const { t } = useTranslation();
+  const M = useMuseumTheme();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -78,7 +80,7 @@ export default function ForgotPasswordScreen() {
         <TextInput
           className="mb-6 rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
           placeholder={t("auth.email")}
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={M.muted}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"

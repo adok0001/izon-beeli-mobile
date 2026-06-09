@@ -50,12 +50,14 @@ function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString(i18n.language, { month: "short", day: "numeric" });
 }
 
-const TYPE_CONFIG: Record<FeedItem["type"], { icon: string; color: string; label: string }> = {
-  lesson_completed: { icon: "checkmark.circle.fill", color: "#4ade80", label: "feed.typeLesson" },
-  achievement: { icon: "trophy.fill", color: "#C4862A", label: "feed.typeAchievement" },
-  contribution: { icon: "mic.fill", color: "#60a5fa", label: "feed.typeContribution" },
-  community: { icon: "text.bubble", color: "#a78bfa", label: "feed.typeCommunity" },
-};
+function useTypeConfig(M: ReturnType<typeof useMuseumTheme>): Record<FeedItem["type"], { icon: string; color: string; label: string }> {
+  return {
+    lesson_completed: { icon: "checkmark.circle.fill", color: M.success, label: "feed.typeLesson" },
+    achievement: { icon: "trophy.fill", color: "#C4862A", label: "feed.typeAchievement" },
+    contribution: { icon: "mic.fill", color: "#60a5fa", label: "feed.typeContribution" },
+    community: { icon: "text.bubble", color: "#a78bfa", label: "feed.typeCommunity" },
+  };
+}
 
 function AudioPreview({ audioUrl }: Readonly<{ audioUrl: AudioSource }>) {
   const M = useMuseumTheme();
@@ -309,7 +311,8 @@ function FeedCard({ item, onOpenComments }: Readonly<{ item: FeedItem; onOpenCom
   const toggleLike = useToggleLike();
   const { uiLanguage } = useUiLanguageStore();
   const likeOverrides = useFeedLikesStore((s) => s.overrides);
-  const config = TYPE_CONFIG[item.type];
+  const typeConfig = useTypeConfig(M);
+  const config = typeConfig[item.type];
   const liked = item.id in likeOverrides ? likeOverrides[item.id] : item.isLiked;
 
   const localTitle = localizeField(item.title, item.titleFr, uiLanguage);
@@ -405,15 +408,15 @@ function FeedCard({ item, onOpenComments }: Readonly<{ item: FeedItem; onOpenCom
               marginTop: 8,
               flexDirection: "row", alignItems: "center", justifyContent: "center",
               borderRadius: 10, paddingVertical: 8,
-              backgroundColor: "rgba(74, 222, 128, 0.06)",
-              borderWidth: 1, borderColor: "rgba(74, 222, 128, 0.2)",
+              backgroundColor: M.successBg,
+              borderWidth: 1, borderColor: M.successBorder,
               gap: 6,
             }}
             accessibilityRole="button"
             accessibilityLabel={t("feed.practice", { word: focusWord })}
           >
-            <IconSymbol name="brain.head.profile" size={13} color="#4ade80" />
-            <Text style={{ fontSize: 12, fontWeight: "700", color: "#4ade80" }}>
+            <IconSymbol name="brain.head.profile" size={13} color={M.success} />
+            <Text style={{ fontSize: 12, fontWeight: "700", color: M.success }}>
               {t("feed.practice", { word: focusWord })}
             </Text>
           </Pressable>
@@ -435,7 +438,7 @@ function FeedCard({ item, onOpenComments }: Readonly<{ item: FeedItem; onOpenCom
           accessibilityRole="button"
           accessibilityLabel={liked ? `Unlike, ${item.likes}` : `Like, ${item.likes}`}
         >
-          <IconSymbol name={liked ? "heart.fill" : "heart"} size={16} color={liked ? "#ef4444" : M.muted} />
+          <IconSymbol name={liked ? "heart.fill" : "heart"} size={16} color={liked ? M.error : M.muted} />
           <Text style={{ fontSize: 12, color: M.muted }}>{item.likes}</Text>
         </Pressable>
         <Pressable
