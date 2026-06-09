@@ -12,12 +12,6 @@ import { useTranslation } from "react-i18next";
 import { Alert, FlatList, Image, KeyboardAvoidingView, Platform, Pressable, RefreshControl, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const STATUS_CONFIG = {
-  submitted: { label: "myContributions.statusPending", color: "#f59e0b", bg: "bg-amber-100 dark:bg-amber-900" },
-  approved: { label: "myContributions.statusApproved", color: "#22c55e", bg: "bg-green-100 dark:bg-green-900" },
-  rejected: { label: "myContributions.statusRejected", color: "#ef4444", bg: "bg-red-100 dark:bg-red-900" },
-} as const;
-
 function StatusTimeline({ status }: { status: string }) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
@@ -67,6 +61,11 @@ const EDITABLE_TYPES = ["word", "phrase", "entry_meaning", "audio", "entry_audio
 function ContributionRow({ item }: { item: MyContribution }) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
+  const STATUS_CONFIG = {
+    submitted: { label: "myContributions.statusPending", color: M.warning, bg: "bg-amber-100 dark:bg-amber-900" },
+    approved: { label: "myContributions.statusApproved", color: M.success, bg: "bg-green-100 dark:bg-green-900" },
+    rejected: { label: "myContributions.statusRejected", color: M.error, bg: "bg-red-100 dark:bg-red-900" },
+  } as const;
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({
@@ -230,13 +229,13 @@ function ContributionRow({ item }: { item: MyContribution }) {
                         onPress={isPlaying ? stopPlayback : playRecording}
                         className={`h-12 w-12 items-center justify-center rounded-full ${isPlaying ? "bg-blue-500" : "bg-emerald-100 dark:bg-emerald-900"}`}
                       >
-                        <IconSymbol name={isPlaying ? "stop.fill" : "play.fill"} size={20} color={isPlaying ? "#fff" : "#10b981"} />
+                        <IconSymbol name={isPlaying ? "stop.fill" : "play.fill"} size={20} color={isPlaying ? M.parchment : getAccent("teal").solid} />
                       </Pressable>
                       <Pressable
                         onPress={discardRecording}
                         className="h-12 w-12 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-700"
                       >
-                        <IconSymbol name="trash" size={18} color="#ef4444" />
+                        <IconSymbol name="trash" size={18} color={M.error} />
                       </Pressable>
                     </View>
                     <Text className="mt-1.5 text-xs text-green-600 dark:text-green-400">New recording ready</Text>
@@ -255,7 +254,7 @@ function ContributionRow({ item }: { item: MyContribution }) {
                       {isRecording ? (
                         <View className="h-5 w-5 rounded-sm bg-white" />
                       ) : (
-                        <IconSymbol name="mic.fill" size={20} color="#ef4444" />
+                        <IconSymbol name="mic.fill" size={20} color={M.error} />
                       )}
                     </Pressable>
                     {isRecording && <Text className="mt-1.5 text-xs text-red-500">Tap to stop</Text>}
@@ -436,7 +435,7 @@ function ContributionRow({ item }: { item: MyContribution }) {
                 </Pressable>
               )}
               <Pressable onPress={handleDelete} disabled={deleteContribution.isPending} hitSlop={8}>
-                <IconSymbol name="trash" size={15} color="#ef4444" />
+                <IconSymbol name="trash" size={15} color={M.error} />
               </Pressable>
             </View>
           )}
@@ -472,6 +471,7 @@ function ContributionRow({ item }: { item: MyContribution }) {
 }
 
 export default function MyContributionsScreen() {
+  const M = useMuseumTheme();
   const { data, isLoading, refetch } = useMyContributions();
   const [refreshing, setRefreshing] = useState(false);
   const { t } = useTranslation();

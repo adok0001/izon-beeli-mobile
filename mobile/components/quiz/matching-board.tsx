@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { View, Text, Pressable, useWindowDimensions } from "react-native";
+import { useCallback, useEffect } from "react";
+import { View, Text, Pressable, Dimensions } from "react-native";
 import { useTranslation } from "react-i18next";
 import Animated, {
   useSharedValue,
@@ -15,10 +15,8 @@ import { useMuseumTheme } from "@/lib/use-museum-theme";
 const FLASH_DURATION = 600;
 const COLUMNS = 4;
 const GAP = 8;
-const HEADER_H = 44;   // matched/attempts row + margin
-const LEGEND_H = 48;   // legend row + margin
-const CONTENT_MAX_W = 560; // caps tile size on iPad/large screens
-const MAX_TILE_H = 160;    // prevents tiles from becoming absurdly tall on iPad
+const screenWidth = Dimensions.get("window").width;
+const tileSize = (screenWidth - 40 - GAP * (COLUMNS - 1)) / COLUMNS;
 
 function getTileColors(tile: Tile, M: ReturnType<typeof useMuseumTheme>): { bg: string; border: string; text: string } {
   if (tile.matched) return { bg: M.successBg, border: M.successBorder, text: M.success };
@@ -29,17 +27,7 @@ function getTileColors(tile: Tile, M: ReturnType<typeof useMuseumTheme>): { bg: 
   return { bg: getAccent("amber").bg, border: getAccent("amber").border, text: getAccent("amber").solid };
 }
 
-function MatchingTile({
-  tile,
-  onPress,
-  tileWidth,
-  tileHeight,
-}: {
-  tile: Tile;
-  onPress: () => void;
-  tileWidth: number;
-  tileHeight: number;
-}) {
+function MatchingTile({ tile, onPress }: { tile: Tile; onPress: () => void }) {
   const M = useMuseumTheme();
   const scale = useSharedValue(1);
   const colors = getTileColors(tile, M);
@@ -62,26 +50,11 @@ function MatchingTile({
       <Pressable
         onPress={onPress}
         disabled={tile.matched}
-        style={{
-          width: tileWidth,
-          height: tileHeight,
-          alignItems: "center",
-          justifyContent: "center",
-          borderRadius: 12,
-          borderWidth: 2,
-          padding: 6,
-          backgroundColor: colors.bg,
-          borderColor: colors.border,
-        }}
+        style={{ width: tileSize, height: tileSize, alignItems: "center", justifyContent: "center", borderRadius: 12, borderWidth: 2, padding: 6, backgroundColor: colors.bg, borderColor: colors.border }}
         className="active:opacity-70"
       >
         <Text
-          style={{
-            textAlign: "center",
-            fontSize: 13,
-            fontWeight: "600",
-            color: tile.matched || tile.flash !== "none" ? colors.text : M.text,
-          }}
+          style={{ textAlign: "center", fontSize: 12, fontWeight: "600", color: tile.matched || tile.flash !== "none" ? colors.text : M.text }}
           numberOfLines={3}
           adjustsFontSizeToFit
         >
@@ -97,23 +70,6 @@ export function MatchingBoard() {
   const { t } = useTranslation();
   const { tiles, selectTile, clearFlash, matchedCount, totalPairs, attempts } =
     useMatchingStore();
-  const { width } = useWindowDimensions();
-  const [boardHeight, setBoardHeight] = useState(0);
-
-  const ROWS = Math.ceil(tiles.length / COLUMNS);
-
-  // Cap content width on iPad/large screens; parent supplies 20px padding each side
-  const usableWidth = Math.min(width, CONTENT_MAX_W);
-  const tileWidth = (usableWidth - 40 - GAP * (COLUMNS - 1)) / COLUMNS;
-  const innerWidth = usableWidth - 40;
-
-  const tileHeight =
-    boardHeight > 0
-      ? Math.min(
-          MAX_TILE_H,
-          Math.max(tileWidth, (boardHeight - HEADER_H - LEGEND_H - GAP * (ROWS - 1)) / ROWS)
-        )
-      : tileWidth;
 
   const handlePress = useCallback(
     (tileId: string) => {
@@ -132,58 +88,34 @@ export function MatchingBoard() {
   );
 
   return (
-    // Outer view fills parent height; centers inner content horizontally on iPad
-    <View
-      style={{ flex: 1, alignItems: "center" }}
-      onLayout={(e) => setBoardHeight(e.nativeEvent.layout.height)}
-    >
-      <View style={{ width: innerWidth }}>
-        <View
-          style={{
-            marginBottom: 12,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            paddingHorizontal: 4,
-          }}
-        >
-          <Text style={{ fontSize: 13, color: M.sub }}>
-            {t("matching.matched", { matched: matchedCount, total: totalPairs })}
-          </Text>
-          <Text style={{ fontSize: 13, color: M.sub }}>
-            {t("matching.attempts", { count: attempts })}
-          </Text>
-        </View>
+    <View>
+      <View style={{ marginBottom: 12, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 4 }}>
+        <Text style={{ fontSize: 13, color: M.sub }}>
+          {t("matching.matched", { matched: matchedCount, total: totalPairs })}
+        </Text>
+        <Text style={{ fontSize: 13, color: M.sub }}>
+          {t("matching.attempts", { count: attempts })}
+        </Text>
+      </View>
 
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: GAP }}>
-          {tiles.map((tile) => (
-            <MatchingTile
-              key={tile.id}
-              tile={tile}
-              tileWidth={tileWidth}
-              tileHeight={tileHeight}
-              onPress={() => handlePress(tile.id)}
-            />
-          ))}
-        </View>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: GAP }}>
+        {tiles.map((tile) => (
+          <MatchingTile
+            key={tile.id}
+            tile={tile}
+            onPress={() => handlePress(tile.id)}
+          />
+        ))}
+      </View>
 
-        <View
-          style={{
-            marginTop: 12,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 16,
-          }}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <View style={{ marginRight: 6, height: 12, width: 12, borderRadius: 4, backgroundColor: "#a78bfa50" }} />
-            <Text style={{ fontSize: 11, color: M.sub }}>{t("matching.wordLabel")}</Text>
-          </View>
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <View style={{ marginRight: 6, height: 12, width: 12, borderRadius: 4, backgroundColor: "#f59e0b40" }} />
-            <Text style={{ fontSize: 11, color: M.sub }}>{t("matching.englishLabel")}</Text>
-          </View>
+      <View style={{ marginTop: 12, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 16 }}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View style={{ marginRight: 6, height: 12, width: 12, borderRadius: 4, backgroundColor: "#a78bfa50" }} />
+          <Text style={{ fontSize: 11, color: M.sub }}>{t("matching.wordLabel")}</Text>
+        </View>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View style={{ marginRight: 6, height: 12, width: 12, borderRadius: 4, backgroundColor: `${getAccent("amber").solid}40` }} />
+          <Text style={{ fontSize: 11, color: M.sub }}>{t("matching.englishLabel")}</Text>
         </View>
       </View>
     </View>

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Pressable } from "react-native";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useWordAudio } from "@/lib/hooks/use-word-audio";
 import type { AudioSource } from "@/types";
 
@@ -13,6 +15,7 @@ interface Props {
 }
 
 export function WordAudioButton({ audioSource, word, size = 20 }: Props) {
+  const M = useMuseumTheme();
   const { play } = useWordAudio();
   const [playing, setPlaying] = useState(false);
 
@@ -27,7 +30,7 @@ export function WordAudioButton({ audioSource, word, size = 20 }: Props) {
       <IconSymbol
         name={playing ? "speaker.wave.3.fill" : "speaker.wave.2.fill"}
         size={size}
-        color={playing ? "#3b82f6" : audioSource ? "#6b7280" : "#d1d5db"}
+        color={playing ? getAccent("blue").solid : audioSource ? M.sub : M.border}
       />
     </Pressable>
   );

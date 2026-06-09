@@ -117,7 +117,6 @@ function ProverbOfTheMonthCard({ languageId }: { languageId: string }) {
 
 function SongOfTheWeekCard({ languageId }: { languageId: string }) {
   const M = useMuseumTheme();
-  const rose = getAccent("rose");
   const { t } = useTranslation();
   const router = useRouter();
   const song = useSongOfTheWeek(languageId);
@@ -133,7 +132,7 @@ function SongOfTheWeekCard({ languageId }: { languageId: string }) {
         style={{
           borderRadius: 16, backgroundColor: M.card,
           borderWidth: 1, borderColor: M.border,
-          borderLeftWidth: 4, borderLeftColor: rose.solid,
+          borderLeftWidth: 4, borderLeftColor: "#f43f5e",
           overflow: "hidden",
         }}
       >
@@ -143,7 +142,7 @@ function SongOfTheWeekCard({ languageId }: { languageId: string }) {
         >
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 14, paddingVertical: 12 }}>
             <Text style={{ fontSize: 13, color: M.sub }}>{t("practice.noSongThisWeek")}</Text>
-            <IconSymbol name="chevron.right" size={14} color={rose.solid} />
+            <IconSymbol name="chevron.right" size={14} color="#f43f5e" />
           </View>
         </Pressable>
         <View style={{ height: 1, backgroundColor: M.border }} />
@@ -164,7 +163,7 @@ function SongOfTheWeekCard({ languageId }: { languageId: string }) {
       style={{
         borderRadius: 16, backgroundColor: M.card,
         borderWidth: 1, borderColor: M.border,
-        borderLeftWidth: 4, borderLeftColor: rose.solid,
+        borderLeftWidth: 4, borderLeftColor: "#f43f5e",
         overflow: "hidden",
       }}
     >
@@ -175,26 +174,26 @@ function SongOfTheWeekCard({ languageId }: { languageId: string }) {
         <View
           style={{
             flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-            backgroundColor: rose.bg,
+            backgroundColor: "rgba(244, 63, 94, 0.08)",
             paddingHorizontal: 14, paddingVertical: 8,
-            borderBottomWidth: 1, borderBottomColor: rose.bg,
+            borderBottomWidth: 1, borderBottomColor: "rgba(244, 63, 94, 0.15)",
           }}
         >
           <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
-            <IconSymbol name="music.note" size={12} color={rose.solid} />
-            <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 2, color: rose.solid }}>
+            <IconSymbol name="music.note" size={12} color="#f43f5e" />
+            <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 2, color: "#f43f5e" }}>
               {t("practice.songOfTheWeek").toUpperCase()}
             </Text>
           </View>
-          <View style={{ borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, backgroundColor: rose.bg }}>
-            <Text style={{ fontSize: 8, fontWeight: "700", letterSpacing: 1, color: rose.solid }}>
+          <View style={{ borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, backgroundColor: "rgba(244, 63, 94, 0.15)" }}>
+            <Text style={{ fontSize: 8, fontWeight: "700", letterSpacing: 1, color: "#f43f5e" }}>
               {t("practice.thisWeeksSelection").toUpperCase()}
             </Text>
           </View>
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 14, padding: 14 }}>
-          <View style={{ width: 48, height: 48, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: rose.bg }}>
-            <IconSymbol name="music.note.list" size={22} color={rose.solid} />
+          <View style={{ width: 48, height: 48, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(244, 63, 94, 0.12)" }}>
+            <IconSymbol name="music.note.list" size={22} color="#f43f5e" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 14, fontWeight: "700", color: M.text }} numberOfLines={1}>
@@ -206,7 +205,7 @@ function SongOfTheWeekCard({ languageId }: { languageId: string }) {
               </Text>
             ) : null}
           </View>
-          <IconSymbol name="play.circle.fill" size={32} color={rose.solid} />
+          <IconSymbol name="play.circle.fill" size={32} color="#f43f5e" />
         </View>
       </Pressable>
       <View style={{ height: 1, backgroundColor: M.border }} />
@@ -215,8 +214,8 @@ function SongOfTheWeekCard({ languageId }: { languageId: string }) {
         style={{ paddingHorizontal: 14, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "flex-start" }}
         className="active:opacity-60"
       >
-        <Text style={{ fontSize: 11, fontWeight: "700", color: rose.solid }}>Browse all songs</Text>
-        <IconSymbol name="chevron.right" size={11} color={rose.solid} />
+        <Text style={{ fontSize: 11, fontWeight: "700", color: "#f43f5e" }}>Browse all songs</Text>
+        <IconSymbol name="chevron.right" size={11} color="#f43f5e" />
       </Pressable>
     </View>
   );
@@ -224,7 +223,6 @@ function SongOfTheWeekCard({ languageId }: { languageId: string }) {
 
 function SongsCard({ languageId }: { languageId: string }) {
   const M = useMuseumTheme();
-  const rose = getAccent("rose");
   const router = useRouter();
   const { t } = useTranslation();
   const { data: courses = [] } = useCourses(languageId);
@@ -246,14 +244,14 @@ function SongsCard({ languageId }: { languageId: string }) {
       }}
       className="active:opacity-70"
     >
-      <View style={{ width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: rose.bg, marginRight: 12 }}>
-        <IconSymbol name="music.note" size={18} color={rose.solid} />
+      <View style={{ width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(244, 63, 94, 0.12)", marginRight: 12 }}>
+        <IconSymbol name="music.note" size={18} color="#f43f5e" />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={{ fontSize: 13, fontWeight: "700", color: M.text }}>{t("songs.title")}</Text>
         <Text style={{ fontSize: 11, color: M.muted, marginTop: 1 }}>{songs.length} songs available</Text>
       </View>
-      <IconSymbol name="chevron.right" size={13} color={rose.solid} />
+      <IconSymbol name="chevron.right" size={13} color="#f43f5e" />
     </Pressable>
   );
 }
@@ -290,9 +288,6 @@ function ProverbsCollectionCard({ languageId }: { languageId: string }) {
 
 export default function DiscoverScreen() {
   const M = useMuseumTheme();
-  const green = getAccent("green");
-  const purple = getAccent("purple");
-  const amber = getAccent("amber");
   const router = useRouter();
   const { selectedLanguageId } = useLanguageStore();
   const { t } = useTranslation();
@@ -355,21 +350,21 @@ export default function DiscoverScreen() {
               className="active:opacity-70"
             >
               <View>
-                <IconSymbol name="brain.head.profile" size={22} color={green.solid} />
+                <IconSymbol name="brain.head.profile" size={22} color="#4ade80" />
                 {dueWords.length > 0 && (
                   <View
                     style={{
                       position: "absolute", top: -4, right: -8,
                       minWidth: 16, borderRadius: 999,
                       alignItems: "center", justifyContent: "center",
-                      backgroundColor: M.error, paddingHorizontal: 4, paddingVertical: 1,
+                      backgroundColor: "#ef4444", paddingHorizontal: 4, paddingVertical: 1,
                     }}
                   >
                     <Text style={{ fontSize: 9, fontWeight: "800", color: "#fff" }}>{dueWords.length}</Text>
                   </View>
                 )}
               </View>
-              <Text style={{ marginTop: 6, fontSize: 10, fontWeight: "700", letterSpacing: 0.5, color: green.solid }}>
+              <Text style={{ marginTop: 6, fontSize: 10, fontWeight: "700", letterSpacing: 0.5, color: "#4ade80" }}>
                 {t("practice.wordReview")}
               </Text>
             </Pressable>
@@ -398,8 +393,8 @@ export default function DiscoverScreen() {
               }}
               className="active:opacity-70"
             >
-              <IconSymbol name="rectangle.grid.2x2" size={22} color={purple.solid} />
-              <Text style={{ marginTop: 6, fontSize: 10, fontWeight: "700", letterSpacing: 0.5, color: purple.solid }}>
+              <IconSymbol name="rectangle.grid.2x2" size={22} color="#a78bfa" />
+              <Text style={{ marginTop: 6, fontSize: 10, fontWeight: "700", letterSpacing: 0.5, color: "#a78bfa" }}>
                 {t("practice.match")}
               </Text>
             </Pressable>
@@ -412,7 +407,7 @@ export default function DiscoverScreen() {
               borderRadius: 16, overflow: "hidden",
               backgroundColor: "#0F1B4A",
               borderWidth: 1, borderColor: "rgba(59, 130, 246, 0.3)",
-              borderLeftWidth: 4, borderLeftColor: "#3b82f6",
+              borderLeftWidth: 4, borderLeftColor: getAccent("blue").solid,
             }}
             className="active:opacity-70"
           >
@@ -455,15 +450,15 @@ export default function DiscoverScreen() {
                 flexDirection: "row", alignItems: "center",
                 borderRadius: 14, padding: 14,
                 backgroundColor: M.card, borderWidth: 1, borderColor: M.border,
-                borderLeftWidth: 4, borderLeftColor: green.solid,
+                borderLeftWidth: 4, borderLeftColor: "#4ade80",
               }}
               className="active:opacity-70"
             >
-              <View style={{ width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: green.bg, marginRight: 12 }}>
-                <Text style={{ fontSize: 22, fontWeight: "800", color: green.solid }}>ሀ</Text>
+              <View style={{ width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(74, 222, 128, 0.1)", marginRight: 12 }}>
+                <Text style={{ fontSize: 22, fontWeight: "800", color: "#4ade80" }}>ሀ</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: green.solid }}>
+                <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: "#4ade80" }}>
                   {t("practice.scriptPractice").toUpperCase()}
                 </Text>
                 <Text style={{ fontSize: 13, fontWeight: "700", color: M.text, marginTop: 2 }}>
@@ -471,7 +466,7 @@ export default function DiscoverScreen() {
                 </Text>
                 <Text style={{ fontSize: 11, color: M.sub, marginTop: 1 }}>{t("practice.geezSubtitle")}</Text>
               </View>
-              <IconSymbol name="chevron.right" size={14} color={green.solid} />
+              <IconSymbol name="chevron.right" size={14} color="#4ade80" />
             </Pressable>
           )}
 
@@ -482,15 +477,15 @@ export default function DiscoverScreen() {
                 flexDirection: "row", alignItems: "center",
                 borderRadius: 14, padding: 14,
                 backgroundColor: M.card, borderWidth: 1, borderColor: M.border,
-                borderLeftWidth: 4, borderLeftColor: purple.solid,
+                borderLeftWidth: 4, borderLeftColor: "#a78bfa",
               }}
               className="active:opacity-70"
             >
-              <View style={{ width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: purple.bg, marginRight: 12 }}>
-                <IconSymbol name="sparkles" size={20} color={purple.solid} />
+              <View style={{ width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(167, 139, 250, 0.1)", marginRight: 12 }}>
+                <IconSymbol name="sparkles" size={20} color="#a78bfa" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: purple.solid }}>
+                <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: "#a78bfa" }}>
                   {t("practice.culturalSymbols").toUpperCase()}
                 </Text>
                 <Text style={{ fontSize: 13, fontWeight: "700", color: M.text, marginTop: 2 }}>
@@ -498,7 +493,7 @@ export default function DiscoverScreen() {
                 </Text>
                 <Text style={{ fontSize: 11, color: M.sub, marginTop: 1 }}>{t("practice.adinkraSubtitle")}</Text>
               </View>
-              <IconSymbol name="chevron.right" size={14} color={purple.solid} />
+              <IconSymbol name="chevron.right" size={14} color="#a78bfa" />
             </Pressable>
           )}
 
@@ -509,15 +504,15 @@ export default function DiscoverScreen() {
                 flexDirection: "row", alignItems: "center",
                 borderRadius: 14, padding: 14,
                 backgroundColor: M.card, borderWidth: 1, borderColor: M.border,
-                borderLeftWidth: 4, borderLeftColor: amber.solid,
+                borderLeftWidth: 4, borderLeftColor: "#f59e0b",
               }}
               className="active:opacity-70"
             >
-              <View style={{ width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: amber.bg, marginRight: 12 }}>
-                <Text style={{ fontSize: 22, fontWeight: "800", color: amber.solid }}>𐘕</Text>
+              <View style={{ width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(245, 158, 11, 0.1)", marginRight: 12 }}>
+                <Text style={{ fontSize: 22, fontWeight: "800", color: "#f59e0b" }}>𐘕</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: amber.solid }}>
+                <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: "#f59e0b" }}>
                   {t("practice.scriptPractice").toUpperCase()}
                 </Text>
                 <Text style={{ fontSize: 13, fontWeight: "700", color: M.text, marginTop: 2 }}>
@@ -525,7 +520,7 @@ export default function DiscoverScreen() {
                 </Text>
                 <Text style={{ fontSize: 11, color: M.sub, marginTop: 1 }}>{t("practice.nsibidiSubtitle")}</Text>
               </View>
-              <IconSymbol name="chevron.right" size={14} color={amber.solid} />
+              <IconSymbol name="chevron.right" size={14} color="#f59e0b" />
             </Pressable>
           )}
         </View>
