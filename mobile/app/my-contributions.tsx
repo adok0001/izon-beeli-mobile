@@ -1,5 +1,6 @@
 import { WordAudioButton } from "@/components/dictionary/word-audio-button";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useDeleteContribution, useMyContributions, useUpdateContribution, type MyContribution } from "@/lib/hooks/use-contributions";
 import { getLanguageName } from "@/lib/mock-data";
@@ -11,14 +12,11 @@ import { useTranslation } from "react-i18next";
 import { Alert, FlatList, Image, KeyboardAvoidingView, Platform, Pressable, RefreshControl, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-function useStatusConfig() {
-  const M = useMuseumTheme();
-  return {
-    submitted: { label: "myContributions.statusPending", color: M.warning, bg: "bg-amber-100 dark:bg-amber-900" },
-    approved: { label: "myContributions.statusApproved", color: M.success, bg: "bg-green-100 dark:bg-green-900" },
-    rejected: { label: "myContributions.statusRejected", color: M.error, bg: "bg-red-100 dark:bg-red-900" },
-  } as const;
-}
+const STATUS_CONFIG = {
+  submitted: { label: "myContributions.statusPending", color: "#f59e0b", bg: "bg-amber-100 dark:bg-amber-900" },
+  approved: { label: "myContributions.statusApproved", color: "#22c55e", bg: "bg-green-100 dark:bg-green-900" },
+  rejected: { label: "myContributions.statusRejected", color: "#ef4444", bg: "bg-red-100 dark:bg-red-900" },
+} as const;
 
 function StatusTimeline({ status }: { status: string }) {
   const M = useMuseumTheme();
@@ -36,7 +34,7 @@ function StatusTimeline({ status }: { status: string }) {
       {steps.map((step, i) => {
         const done = i <= activeIndex;
         const isLast = i === steps.length - 1;
-        const dotColor = done ? (isLast && isRejected ? M.error : "#3b82f6") : "#d1d5db";
+        const dotColor = done ? (isLast && isRejected ? M.error : getAccent("blue").solid) : M.border;
         return (
           <View key={step.key} className="flex-1 flex-row items-center">
             <View className="items-center" style={{ minWidth: 40 }}>
@@ -54,7 +52,7 @@ function StatusTimeline({ status }: { status: string }) {
             {!isLast && (
               <View
                 className="mb-4 h-0.5 flex-1"
-                style={{ backgroundColor: i < activeIndex ? dotColor : "#d1d5db" }}
+                style={{ backgroundColor: i < activeIndex ? dotColor : M.border }}
               />
             )}
           </View>
@@ -118,7 +116,6 @@ function ContributionRow({ item }: { item: MyContribution }) {
     }
   };
 
-  const STATUS_CONFIG = useStatusConfig();
   const config = STATUS_CONFIG[item.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.submitted;
   const categoryLabel = item.category
     ? t(`dictionaryPage.categoryLabels.${item.category}` as any, { defaultValue: item.category })
@@ -233,13 +230,13 @@ function ContributionRow({ item }: { item: MyContribution }) {
                         onPress={isPlaying ? stopPlayback : playRecording}
                         className={`h-12 w-12 items-center justify-center rounded-full ${isPlaying ? "bg-blue-500" : "bg-emerald-100 dark:bg-emerald-900"}`}
                       >
-                        <IconSymbol name={isPlaying ? "stop.fill" : "play.fill"} size={20} color={isPlaying ? M.parchment : M.success} />
+                        <IconSymbol name={isPlaying ? "stop.fill" : "play.fill"} size={20} color={isPlaying ? "#fff" : "#10b981"} />
                       </Pressable>
                       <Pressable
                         onPress={discardRecording}
                         className="h-12 w-12 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-700"
                       >
-                        <IconSymbol name="trash" size={18} color={M.error} />
+                        <IconSymbol name="trash" size={18} color="#ef4444" />
                       </Pressable>
                     </View>
                     <Text className="mt-1.5 text-xs text-green-600 dark:text-green-400">New recording ready</Text>
@@ -258,7 +255,7 @@ function ContributionRow({ item }: { item: MyContribution }) {
                       {isRecording ? (
                         <View className="h-5 w-5 rounded-sm bg-white" />
                       ) : (
-                        <IconSymbol name="mic.fill" size={20} color={M.error} />
+                        <IconSymbol name="mic.fill" size={20} color="#ef4444" />
                       )}
                     </Pressable>
                     {isRecording && <Text className="mt-1.5 text-xs text-red-500">Tap to stop</Text>}
@@ -274,11 +271,11 @@ function ContributionRow({ item }: { item: MyContribution }) {
                   <Image source={{ uri: newImageUri }} className="h-32 w-full" resizeMode="cover" />
                   <View className="flex-row justify-center gap-4 py-2">
                     <Pressable onPress={handleTakePhoto} className="flex-row items-center gap-1">
-                      <IconSymbol name="camera.fill" size={13} color="#3b82f6" />
+                      <IconSymbol name="camera.fill" size={13} color={getAccent("blue").solid} />
                       <Text className="text-xs font-medium text-blue-500">Retake</Text>
                     </Pressable>
                     <Pressable onPress={handlePickImage} className="flex-row items-center gap-1">
-                      <IconSymbol name="photo" size={13} color="#3b82f6" />
+                      <IconSymbol name="photo" size={13} color={getAccent("blue").solid} />
                       <Text className="text-xs font-medium text-blue-500">Gallery</Text>
                     </Pressable>
                   </View>
@@ -295,14 +292,14 @@ function ContributionRow({ item }: { item: MyContribution }) {
                       onPress={handleTakePhoto}
                       className="items-center gap-1"
                     >
-                      <IconSymbol name="camera.fill" size={24} color="#9ca3af" />
+                      <IconSymbol name="camera.fill" size={24} color={M.muted} />
                       <Text className="text-xs text-neutral-400 dark:text-neutral-500">Camera</Text>
                     </Pressable>
                     <Pressable
                       onPress={handlePickImage}
                       className="items-center gap-1"
                     >
-                      <IconSymbol name="photo.badge.plus" size={24} color="#9ca3af" />
+                      <IconSymbol name="photo.badge.plus" size={24} color={M.muted} />
                       <Text className="text-xs text-neutral-400 dark:text-neutral-500">Gallery</Text>
                     </Pressable>
                   </View>
@@ -439,7 +436,7 @@ function ContributionRow({ item }: { item: MyContribution }) {
                 </Pressable>
               )}
               <Pressable onPress={handleDelete} disabled={deleteContribution.isPending} hitSlop={8}>
-                <IconSymbol name="trash" size={15} color={M.error} />
+                <IconSymbol name="trash" size={15} color="#ef4444" />
               </Pressable>
             </View>
           )}
@@ -475,7 +472,6 @@ function ContributionRow({ item }: { item: MyContribution }) {
 }
 
 export default function MyContributionsScreen() {
-  const M = useMuseumTheme();
   const { data, isLoading, refetch } = useMyContributions();
   const [refreshing, setRefreshing] = useState(false);
   const { t } = useTranslation();
@@ -503,7 +499,7 @@ export default function MyContributionsScreen() {
         {submissions.length > 0 && (
           <View className="flex-row border-b border-neutral-100 px-5 py-3 dark:border-neutral-800">
             <View className="flex-1 items-center">
-              <Text className="text-xl font-bold" style={{ color: M.success }}>{approvedCount}</Text>
+              <Text className="text-xl font-bold text-green-500">{approvedCount}</Text>
               <Text className="text-xs text-neutral-400 dark:text-neutral-500">{t("myContributions.approvedLabel")}</Text>
             </View>
             <View className="w-[1px] bg-neutral-100 dark:bg-neutral-800" />
@@ -540,7 +536,7 @@ export default function MyContributionsScreen() {
           ListEmptyComponent={
             <View className="items-center px-8 py-20">
               <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
-                <IconSymbol name="doc.text" size={28} color="#9ca3af" />
+                <IconSymbol name="doc.text" size={28} color={M.muted} />
               </View>
               <Text className="text-center text-base font-semibold text-neutral-500 dark:text-neutral-400">
                 {isLoading ? t("common.loading") : t("myContributions.noContributions")}

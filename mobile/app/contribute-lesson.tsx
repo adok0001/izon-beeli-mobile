@@ -1,6 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { apiFetch, friendlyError } from "@/lib/api";
+import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import {
     useSubmitLessonContribution,
@@ -262,7 +263,7 @@ export default function ContributeLessonScreen() {
                         <IconSymbol
                           name={meta.icon as any}
                           size={14}
-                          color={isActive ? "white" : "#9ca3af"}
+                          color={isActive ? M.parchment : M.muted}
                         />
                       )}
                     </View>
@@ -302,12 +303,12 @@ export default function ContributeLessonScreen() {
 
                 {/* Search */}
                 <View className="mb-4 flex-row items-center rounded-xl border border-neutral-200 bg-neutral-50 px-3 dark:border-neutral-700 dark:bg-neutral-800">
-                  <IconSymbol name="magnifyingglass" size={16} color="#9ca3af" />
+                  <IconSymbol name="magnifyingglass" size={16} color={M.muted} />
                   <TextInput
                     value={langSearch}
                     onChangeText={setLangSearch}
                     placeholder={t("contribute.searchLanguage")}
-                    placeholderTextColor="#9ca3af"
+                    placeholderTextColor={M.muted}
                     autoCorrect={false}
                     autoCapitalize="none"
                     returnKeyType="search"
@@ -315,7 +316,7 @@ export default function ContributeLessonScreen() {
                   />
                   {langSearch.length > 0 && (
                     <Pressable onPress={() => setLangSearch("")} hitSlop={8}>
-                      <IconSymbol name="xmark.circle.fill" size={16} color="#9ca3af" />
+                      <IconSymbol name="xmark.circle.fill" size={16} color={M.muted} />
                     </Pressable>
                   )}
                 </View>
@@ -360,7 +361,7 @@ export default function ContributeLessonScreen() {
                       </Text>
                     </View>
                     {selectedLanguage === lang.id && (
-                      <IconSymbol name="checkmark.circle.fill" size={22} color="#3b82f6" />
+                      <IconSymbol name="checkmark.circle.fill" size={22} color={getAccent("blue").solid} />
                     )}
                   </Pressable>
                 ))}
@@ -410,7 +411,7 @@ export default function ContributeLessonScreen() {
 
                 {loadingCourses ? (
                   <View className="items-center py-12">
-                    <ActivityIndicator size="large" color="#3b82f6" />
+                    <ActivityIndicator size="large" color={getAccent("blue").solid} />
                     <Text className="mt-3 text-sm text-neutral-400">{t("contribute.loadingCourses")}</Text>
                   </View>
                 ) : (
@@ -426,7 +427,7 @@ export default function ContributeLessonScreen() {
                       <View className={`mr-3 h-10 w-10 items-center justify-center rounded-full ${
                         selectedCourse === null ? "bg-blue-500" : "bg-neutral-200 dark:bg-neutral-700"
                       }`}>
-                        <IconSymbol name="tray.fill" size={16} color={selectedCourse === null ? "white" : "#9ca3af"} />
+                        <IconSymbol name="tray.fill" size={16} color={selectedCourse === null ? M.parchment : M.muted} />
                       </View>
                       <View className="flex-1">
                         <Text className="text-base font-semibold text-neutral-900 dark:text-white">
@@ -437,7 +438,7 @@ export default function ContributeLessonScreen() {
                         </Text>
                       </View>
                       {selectedCourse === null && (
-                        <IconSymbol name="checkmark.circle.fill" size={22} color="#3b82f6" />
+                        <IconSymbol name="checkmark.circle.fill" size={22} color={getAccent("blue").solid} />
                       )}
                     </Pressable>
 
@@ -454,7 +455,7 @@ export default function ContributeLessonScreen() {
                         <View className={`mr-3 h-10 w-10 items-center justify-center rounded-full ${
                           selectedCourse === course.id ? "bg-blue-500" : "bg-neutral-200 dark:bg-neutral-700"
                         }`}>
-                          <IconSymbol name="book.fill" size={16} color={selectedCourse === course.id ? "white" : "#9ca3af"} />
+                          <IconSymbol name="book.fill" size={16} color={selectedCourse === course.id ? M.parchment : M.muted} />
                         </View>
                         <View className="flex-1">
                           <Text className="text-base font-semibold text-neutral-900 dark:text-white">
@@ -465,7 +466,7 @@ export default function ContributeLessonScreen() {
                           </Text>
                         </View>
                         {selectedCourse === course.id && (
-                          <IconSymbol name="checkmark.circle.fill" size={22} color="#3b82f6" />
+                          <IconSymbol name="checkmark.circle.fill" size={22} color={getAccent("blue").solid} />
                         )}
                       </Pressable>
                     ))}
@@ -492,7 +493,7 @@ export default function ContributeLessonScreen() {
                     value={title}
                     onChangeText={setTitle}
                     placeholder={t("contribute.lessonTitlePlaceholder")}
-                    placeholderTextColor="#9ca3af"
+                    placeholderTextColor={M.muted}
                     className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                     autoFocus
                   />
@@ -506,7 +507,7 @@ export default function ContributeLessonScreen() {
                     value={description}
                     onChangeText={setDescription}
                     placeholder={t("contribute.lessonDescPlaceholder")}
-                    placeholderTextColor="#9ca3af"
+                    placeholderTextColor={M.muted}
                     multiline
                     numberOfLines={4}
                     className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
@@ -527,30 +528,29 @@ export default function ContributeLessonScreen() {
                 </Text>
 
                 {store.audioUri ? (
-                  <View className="items-center rounded-2xl p-8" style={{ backgroundColor: M.successBg }}>
-                    <View className="mb-4 h-16 w-16 items-center justify-center rounded-full" style={{ backgroundColor: M.successBg, borderWidth: 1, borderColor: M.successBorder }}>
-                      <IconSymbol name="checkmark" size={28} color={M.success} />
+                  <View className="items-center rounded-2xl bg-green-50 p-8 dark:bg-green-950">
+                    <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
+                      <IconSymbol name="checkmark" size={28} color="#22c55e" />
                     </View>
-                    <Text className="text-lg font-bold" style={{ color: M.success }}>
+                    <Text className="text-lg font-bold text-green-700 dark:text-green-400">
                       {t("contribute.audioReady")}
                     </Text>
                     {store.audioDuration > 0 && (
-                      <Text className="mt-1 text-sm" style={{ color: M.success }}>
+                      <Text className="mt-1 text-sm text-green-600 dark:text-green-500">
                         {formatTime(store.audioDuration)}
                       </Text>
                     )}
                     {/* Inline preview */}
                     <Pressable
                       onPress={store.isPlaying ? store.pause : store.play}
-                      className="mt-4 flex-row items-center rounded-full px-5 py-2.5"
-                      style={{ backgroundColor: M.success }}
+                      className="mt-4 flex-row items-center rounded-full bg-green-600 px-5 py-2.5"
                     >
                       <IconSymbol
                         name={store.isPlaying ? "pause.fill" : "play.fill"}
                         size={14}
-                        color={M.parchment}
+                        color="white"
                       />
-                      <Text className="ml-2 text-sm font-semibold" style={{ color: M.parchment }}>
+                      <Text className="ml-2 text-sm font-semibold text-white">
                         {store.isPlaying ? t("lesson.pause") : t("contribute.preview")}
                       </Text>
                     </Pressable>
@@ -583,7 +583,7 @@ export default function ContributeLessonScreen() {
                           {t("contribute.chooseFileFormats")}
                         </Text>
                       </View>
-                      <IconSymbol name="chevron.right" size={16} color="#3b82f6" />
+                      <IconSymbol name="chevron.right" size={16} color={getAccent("blue").solid} />
                     </Pressable>
 
                     <Pressable
@@ -600,7 +600,7 @@ export default function ContributeLessonScreen() {
                         {store.isRecording ? (
                           <View className="h-5 w-5 rounded-sm bg-white" />
                         ) : (
-                          <IconSymbol name="mic.fill" size={22} color={M.error} />
+                          <IconSymbol name="mic.fill" size={22} color="#ef4444" />
                         )}
                       </View>
                       <View className="flex-1">
@@ -707,7 +707,7 @@ export default function ContributeLessonScreen() {
                             onPress={() => removeSegment(index)}
                             className="rounded-full bg-neutral-200 p-1.5 dark:bg-neutral-700"
                           >
-                            <IconSymbol name="xmark" size={10} color="#9ca3af" />
+                            <IconSymbol name="xmark" size={10} color={M.muted} />
                           </Pressable>
                         )}
                       </View>
@@ -719,7 +719,7 @@ export default function ContributeLessonScreen() {
                         value={seg.text}
                         onChangeText={(v) => updateSegment(index, "text", v)}
                         placeholder="Spoken text in the language..."
-                        placeholderTextColor="#9ca3af"
+                        placeholderTextColor={M.muted}
                         multiline
                         className="mb-2 min-h-[40px] rounded-xl bg-neutral-50 px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-800 dark:text-white"
                       />
@@ -727,7 +727,7 @@ export default function ContributeLessonScreen() {
                         value={seg.translation}
                         onChangeText={(v) => updateSegment(index, "translation", v)}
                         placeholder="English translation (optional)"
-                        placeholderTextColor="#9ca3af"
+                        placeholderTextColor={M.muted}
                         multiline
                         className="mb-2 min-h-[36px] rounded-xl bg-neutral-50 px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-800 dark:text-white"
                       />
@@ -740,7 +740,7 @@ export default function ContributeLessonScreen() {
                             value={seg.startTime}
                             onChangeText={(v) => updateSegment(index, "startTime", v)}
                             placeholder="0.0"
-                            placeholderTextColor="#9ca3af"
+                            placeholderTextColor={M.muted}
                             keyboardType="decimal-pad"
                             className="flex-1 py-2 text-sm text-neutral-900 dark:text-white"
                           />
@@ -751,7 +751,7 @@ export default function ContributeLessonScreen() {
                             value={seg.endTime}
                             onChangeText={(v) => updateSegment(index, "endTime", v)}
                             placeholder="0.0"
-                            placeholderTextColor="#9ca3af"
+                            placeholderTextColor={M.muted}
                             keyboardType="decimal-pad"
                             className="flex-1 py-2 text-sm text-neutral-900 dark:text-white"
                           />
@@ -765,7 +765,7 @@ export default function ContributeLessonScreen() {
                   onPress={addSegment}
                   className="mb-8 flex-row items-center justify-center rounded-2xl border-2 border-dashed border-neutral-200 py-4 active:opacity-70 dark:border-neutral-700"
                 >
-                  <IconSymbol name="plus.circle.fill" size={18} color="#3b82f6" />
+                  <IconSymbol name="plus.circle.fill" size={18} color={getAccent("blue").solid} />
                   <Text className="ml-2 text-sm font-semibold text-blue-600 dark:text-blue-400">
                     {t("contribute.addSegment")}
                   </Text>

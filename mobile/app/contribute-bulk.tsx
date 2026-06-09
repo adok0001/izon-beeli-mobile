@@ -141,8 +141,9 @@ export default function ContributeBulkScreen() {
             {steps.map((s, i) => (
               <View
                 key={s}
-                className="h-1 flex-1 rounded-full bg-neutral-200 dark:bg-neutral-700"
-                style={stepIndex >= i ? { backgroundColor: M.success } : undefined}
+                className={`h-1 flex-1 rounded-full ${
+                  stepIndex >= i ? "bg-green-500" : "bg-neutral-200 dark:bg-neutral-700"
+                }`}
               />
             ))}
           </View>
@@ -183,7 +184,7 @@ export default function ContributeBulkScreen() {
                         {lang.nativeName} · {lang.region}
                       </Text>
                     </View>
-                    <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
+                    <IconSymbol name="chevron.right" size={16} color={M.muted} />
                   </Pressable>
                 ))}
               </View>
@@ -205,14 +206,17 @@ export default function ContributeBulkScreen() {
                       setSelectedCategory(cat);
                       setStep("entries");
                     }}
-                    className="mb-2 flex-row items-center rounded-2xl p-4 active:opacity-70 bg-neutral-50 dark:bg-neutral-800"
-                    style={selectedCategory === cat ? { backgroundColor: M.successBg } : undefined}
+                    className={`mb-2 flex-row items-center rounded-2xl p-4 active:opacity-70 ${
+                      selectedCategory === cat
+                        ? "bg-green-50 dark:bg-green-950"
+                        : "bg-neutral-50 dark:bg-neutral-800"
+                    }`}
                   >
                     <Text className="flex-1 text-base text-neutral-900 dark:text-white">
                       {CATEGORY_LABELS[cat]}
                     </Text>
                     {selectedCategory === cat && (
-                      <IconSymbol name="checkmark.circle.fill" size={20} color={M.success} />
+                      <IconSymbol name="checkmark.circle.fill" size={20} color="#22c55e" />
                     )}
                   </Pressable>
                 ))}
@@ -231,8 +235,8 @@ export default function ContributeBulkScreen() {
                       {languageName} · {selectedCategory ? CATEGORY_LABELS[selectedCategory] : ""}
                     </Text>
                   </View>
-                  <View className="rounded-full px-3 py-1" style={{ backgroundColor: M.successBg }}>
-                    <Text className="text-sm font-semibold" style={{ color: M.success }}>
+                  <View className="rounded-full bg-green-100 px-3 py-1 dark:bg-green-900">
+                    <Text className="text-sm font-semibold text-green-700 dark:text-green-400">
                       {t("contribute.readyCount", { count: filledRows.length })}
                     </Text>
                   </View>
@@ -259,7 +263,7 @@ export default function ContributeBulkScreen() {
                       value={row.word}
                       onChangeText={(v) => updateRow(i, "word", v)}
                       placeholder={t("contribute.wordPlaceholder")}
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={M.muted}
                       returnKeyType="next"
                       onSubmitEditing={() => focusNext(i, 0)}
                       blurOnSubmit={false}
@@ -270,7 +274,7 @@ export default function ContributeBulkScreen() {
                       value={row.english}
                       onChangeText={(v) => updateRow(i, "english", v)}
                       placeholder={t("contribute.translationPlaceholder")}
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={M.muted}
                       returnKeyType="next"
                       onSubmitEditing={() => focusNext(i, 1)}
                       blurOnSubmit={false}
@@ -281,7 +285,7 @@ export default function ContributeBulkScreen() {
                       value={row.pronunciation}
                       onChangeText={(v) => updateRow(i, "pronunciation", v)}
                       placeholder="e.g. /tɪm/"
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor={M.muted}
                       returnKeyType="next"
                       onSubmitEditing={() => focusNext(i, 2)}
                       blurOnSubmit={false}
@@ -294,7 +298,7 @@ export default function ContributeBulkScreen() {
                       <IconSymbol
                         name={rows.length > 1 ? "xmark" : "minus"}
                         size={12}
-                        color={rows.length > 1 ? "#9ca3af" : "#d1d5db"}
+                        color={rows.length > 1 ? M.muted : M.border}
                       />
                     </Pressable>
                   </View>
@@ -304,8 +308,8 @@ export default function ContributeBulkScreen() {
                   onPress={addRow}
                   className="mb-8 mt-1 flex-row items-center justify-center rounded-2xl border-2 border-dashed border-neutral-200 py-3.5 active:opacity-70 dark:border-neutral-700"
                 >
-                  <IconSymbol name="plus.circle.fill" size={16} color={M.success} />
-                  <Text className="ml-2 text-sm font-semibold" style={{ color: M.success }}>
+                  <IconSymbol name="plus.circle.fill" size={16} color="#22c55e" />
+                  <Text className="ml-2 text-sm font-semibold text-green-600 dark:text-green-400">
                     {t("contribute.addRow")}
                   </Text>
                 </Pressable>
@@ -329,19 +333,18 @@ export default function ContributeBulkScreen() {
                 <Pressable
                   onPress={handleSubmit}
                   disabled={submitBulk.isPending || filledRows.length === 0}
-                  className="flex-1 flex-row items-center justify-center rounded-2xl py-3.5 active:opacity-80"
-                  style={{
-                    backgroundColor: !submitBulk.isPending && filledRows.length > 0
-                      ? M.success
-                      : M.successBg,
-                  }}
+                  className={`flex-1 flex-row items-center justify-center rounded-2xl py-3.5 active:opacity-80 ${
+                    !submitBulk.isPending && filledRows.length > 0
+                      ? "bg-green-500"
+                      : "bg-green-200 dark:bg-green-900"
+                  }`}
                 >
                   {submitBulk.isPending ? (
-                    <ActivityIndicator size="small" color={M.parchment} />
+                    <ActivityIndicator size="small" color="white" />
                   ) : (
                     <>
-                      <IconSymbol name="paperplane.fill" size={14} color={M.parchment} />
-                      <Text className="ml-2 font-semibold" style={{ color: M.parchment }}>
+                      <IconSymbol name="paperplane.fill" size={14} color="white" />
+                      <Text className="ml-2 font-semibold text-white">
                         {t("common.submit")}{filledRows.length > 0 ? ` ${filledRows.length} ` : " "}
                         {filledRows.length === 1 ? t("contribute.submitEntry") : t("contribute.submitEntries")}
                       </Text>

@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { CATEGORY_LABELS, type DictionaryCategory } from "@/lib/dictionary";
 import {
@@ -100,7 +101,6 @@ function ContributionCard({
   onReject: () => void;
   isPending: boolean;
 }) {
-  const M = useMuseumTheme();
   const { t } = useTranslation();
   const soundRef = useRef<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -245,7 +245,7 @@ function ContributionCard({
             disabled={isPending}
             className="flex-1 flex-row items-center justify-center py-3 active:opacity-70"
           >
-            <IconSymbol name="xmark.circle.fill" size={16} color={M.error} />
+            <IconSymbol name="xmark.circle.fill" size={16} color="#ef4444" />
             <Text className="ml-1.5 text-sm font-semibold text-red-500">{t("common.reject")}</Text>
           </Pressable>
           <View className="w-[1px] bg-neutral-200 dark:bg-neutral-700" />
@@ -254,7 +254,7 @@ function ContributionCard({
             disabled={isPending}
             className="flex-1 flex-row items-center justify-center py-3 active:opacity-70"
           >
-            <IconSymbol name="checkmark.circle.fill" size={16} color={M.success} />
+            <IconSymbol name="checkmark.circle.fill" size={16} color="#22c55e" />
             <Text className="ml-1.5 text-sm font-semibold text-green-600 dark:text-green-400">
               {t("common.approve")}
             </Text>
@@ -278,7 +278,6 @@ function LessonContributionCard({
   onReject: () => void;
   isPending: boolean;
 }) {
-  const M = useMuseumTheme();
   const { t } = useTranslation();
   const soundRef = useRef<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -342,7 +341,7 @@ function LessonContributionCard({
               <IconSymbol
                 name={isPlaying ? "pause.fill" : "play.fill"}
                 size={18}
-                color={isPlaying ? "white" : "#3b82f6"}
+                color={isPlaying ? "white" : getAccent("blue").solid}
               />
             </Pressable>
 
@@ -401,7 +400,7 @@ function LessonContributionCard({
                 <IconSymbol
                   name={transcriptExpanded ? "chevron.up" : "chevron.down"}
                   size={12}
-                  color="#9ca3af"
+                  color={M.muted}
                 />
               </View>
 
@@ -447,7 +446,7 @@ function LessonContributionCard({
             disabled={isPending}
             className="flex-1 flex-row items-center justify-center py-3 active:opacity-70"
           >
-            <IconSymbol name="xmark.circle.fill" size={16} color={M.error} />
+            <IconSymbol name="xmark.circle.fill" size={16} color="#ef4444" />
             <Text className="ml-1.5 text-sm font-semibold text-red-500">{t("common.reject")}</Text>
           </Pressable>
           <View className="w-[1px] bg-neutral-200 dark:bg-neutral-700" />
@@ -456,7 +455,7 @@ function LessonContributionCard({
             disabled={isPending}
             className="flex-1 flex-row items-center justify-center py-3 active:opacity-70"
           >
-            <IconSymbol name="checkmark.circle.fill" size={16} color={M.success} />
+            <IconSymbol name="checkmark.circle.fill" size={16} color="#22c55e" />
             <Text className="ml-1.5 text-sm font-semibold text-green-600 dark:text-green-400">
               {t("common.approve")}
             </Text>
@@ -470,6 +469,7 @@ function LessonContributionCard({
 // ---------- Main Screen ----------
 
 export default function ReviewScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
   const { data: currentUser } = useCurrentUser();
@@ -522,7 +522,7 @@ export default function ReviewScreen() {
         <Stack.Screen options={{ title: t("review.title") }} />
         <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-neutral-900" edges={[]}>
           <View className="h-16 w-16 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
-            <IconSymbol name="lock.fill" size={28} color="#9ca3af" />
+            <IconSymbol name="lock.fill" size={28} color={M.muted} />
           </View>
           <Text className="mt-4 text-base font-semibold text-neutral-500 dark:text-neutral-400">
             {t("review.adminRequired")}
@@ -681,7 +681,7 @@ export default function ReviewScreen() {
             ListEmptyComponent={
               <View className="items-center px-8 py-20">
                 <View className="mb-4 h-14 w-14 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
-                  <IconSymbol name={emptyIcon as any} size={24} color="#9ca3af" />
+                  <IconSymbol name={emptyIcon as any} size={24} color={M.muted} />
                 </View>
                 <Text className="text-center text-sm text-neutral-400 dark:text-neutral-500">
                   {emptyLabel}
@@ -712,7 +712,7 @@ export default function ReviewScreen() {
             ListEmptyComponent={
               <View className="items-center px-8 py-20">
                 <View className="mb-4 h-14 w-14 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
-                  <IconSymbol name={emptyIcon as any} size={24} color="#9ca3af" />
+                  <IconSymbol name={emptyIcon as any} size={24} color={M.muted} />
                 </View>
                 <Text className="text-center text-sm text-neutral-400 dark:text-neutral-500">
                   {emptyLabel}
