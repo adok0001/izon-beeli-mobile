@@ -4,6 +4,7 @@ import { ArrowRight, BookOpen, Globe, GraduationCap, Headphones, Languages, Mic,
 import Link from "next/link";
 import { ScrollytellingSection } from "@/components/landing/scrollytelling-section";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 // ── Scroll reveal ─────────────────────────────────────────────────────────────
 
@@ -436,6 +437,7 @@ const DEMO_PHRASES = [
 ];
 
 function AudioDemoStrip() {
+  const { t } = useTranslation();
   const [phraseIdx, setPhraseIdx] = useState(0);
   const [wordIdx, setWordIdx] = useState(0);
   const [showBadge, setShowBadge] = useState(false);
@@ -492,7 +494,7 @@ function AudioDemoStrip() {
             style={{ animation: "scale-in 0.22s ease-out both" }}
           >
             <Volume2 className="h-2.5 w-2.5" />
-            {phrase.badge} · Native speaker audio
+            {phrase.badge} · {t("web.landing.demoNativeAudio")}
           </span>
         )}
       </div>
@@ -503,6 +505,7 @@ function AudioDemoStrip() {
 // ── Interactive persona pill selector (Wispr-style) ──────────────────────────
 
 function PersonaPillSelector() {
+  const { t } = useTranslation();
   const [active, setActive] = useState(0);
   const current = PERSONAS[active];
   return (
@@ -511,7 +514,7 @@ function PersonaPillSelector() {
       <div className="flex flex-wrap gap-3">
         {PERSONAS.map((p, i) => (
           <button
-            key={p.label}
+            key={p.labelKey}
             onClick={() => setActive(i)}
             className={[
               "inline-flex items-center gap-2 px-5 py-2.5 rounded-full border text-sm font-medium transition-all duration-200",
@@ -521,7 +524,7 @@ function PersonaPillSelector() {
             ].join(" ")}
           >
             <p.icon className="h-3.5 w-3.5" />
-            {p.label}
+            {t(p.labelKey)}
           </button>
         ))}
       </div>
@@ -534,17 +537,17 @@ function PersonaPillSelector() {
       >
         <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-amber-500/40 to-transparent" />
         <span className="text-[10px] uppercase tracking-[0.28em] text-amber-600/70 font-semibold">
-          {current.label}
+          {t(current.labelKey)}
         </span>
         <h3 className="font-display font-bold text-2xl text-white mt-3 mb-3 leading-snug">
-          {current.headline}
+          {t(current.headlineKey)}
         </h3>
-        <p className="text-sm text-neutral-500 leading-relaxed">{current.desc}</p>
+        <p className="text-sm text-neutral-500 leading-relaxed">{t(current.descKey)}</p>
         <Link
           href="/learn"
           className="inline-flex items-center gap-1.5 mt-6 text-sm text-amber-400 hover:text-amber-300 font-medium transition-colors"
         >
-          Start free <ArrowRight className="h-3.5 w-3.5" />
+          {t("web.landing.personasStartFree")} <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
     </div>
@@ -554,78 +557,28 @@ function PersonaPillSelector() {
 // ── Data ──────────────────────────────────────────────────────────────────────
 
 const STATS = [
-  { value: "70+",   label: "African Languages", ref: "Cat. No. 001" },
-  { value: "7",     label: "Regions Covered",   ref: "Cat. No. 002" },
-  { value: "500M+", label: "Diaspora Speakers", ref: "Cat. No. 003" },
+  { value: "70+",   labelKey: "web.landing.statsLanguages", ref: "Cat. No. 001" },
+  { value: "7",     labelKey: "web.landing.statsRegions",   ref: "Cat. No. 002" },
+  { value: "500M+", labelKey: "web.landing.statsSpeakers",  ref: "Cat. No. 003" },
 ];
 
 const HOW_IT_WORKS = [
-  {
-    step: "01",
-    icon: Search,
-    title: "Find your language",
-    desc: "Browse 70+ African languages by name, region, or dialect. Chances are yours is already here.",
-  },
-  {
-    step: "02",
-    icon: Headphones,
-    title: "Hear it first",
-    desc: "Every word is recorded by native speakers. You train your ear before your eye. Sound before script.",
-  },
-  {
-    step: "03",
-    icon: Mic,
-    title: "Speak with confidence",
-    desc: "Practice pronunciation, build vocabulary, and track your progress - free, forever.",
-  },
+  { step: "01", icon: Search,     titleKey: "web.landing.howStep1Title", descKey: "web.landing.howStep1Desc" },
+  { step: "02", icon: Headphones, titleKey: "web.landing.howStep2Title", descKey: "web.landing.howStep2Desc" },
+  { step: "03", icon: Mic,        titleKey: "web.landing.howStep3Title", descKey: "web.landing.howStep3Desc" },
 ];
 
 const PERSONAS = [
-  {
-    icon: Globe,
-    label: "Diaspora",
-    headline: "Reconnect with home",
-    desc: "Millions of Africans abroad grew up without access to their mother tongue. Beeli closes that gap.",
-  },
-  {
-    icon: Users,
-    label: "Heritage Learners",
-    headline: "It's your language",
-    desc: "You hear it at family gatherings but never formally learned it. Start now — no textbook required.",
-  },
-  {
-    icon: GraduationCap,
-    label: "Educators",
-    headline: "Teach it properly",
-    desc: "Build structured lessons backed by native-speaker audio. Import to your class in minutes.",
-  },
-  {
-    icon: BookOpen,
-    label: "Researchers",
-    headline: "Document, preserve",
-    desc: "African languages are disappearing at speed. Contribute audio, vocabulary, and context to keep them alive.",
-  },
+  { icon: Globe,         labelKey: "web.landing.persona1Label", headlineKey: "web.landing.persona1Headline", descKey: "web.landing.persona1Desc" },
+  { icon: Users,         labelKey: "web.landing.persona2Label", headlineKey: "web.landing.persona2Headline", descKey: "web.landing.persona2Desc" },
+  { icon: GraduationCap, labelKey: "web.landing.persona3Label", headlineKey: "web.landing.persona3Headline", descKey: "web.landing.persona3Desc" },
+  { icon: BookOpen,      labelKey: "web.landing.persona4Label", headlineKey: "web.landing.persona4Headline", descKey: "web.landing.persona4Desc" },
 ];
 
 const FEATURES = [
-  {
-    roman: "I",
-    icon: Volume2,
-    title: "Audio-First Learning",
-    desc: "Every word recorded by native speakers. Segment-synced transcripts. Train your ear before your eye.",
-  },
-  {
-    roman: "II",
-    icon: Globe,
-    title: "Cultural Depth",
-    desc: "Language is culture. Learn Adinkra symbols, Ge'ez script, oral proverbs, and the stories behind the words.",
-  },
-  {
-    roman: "III",
-    icon: Users,
-    title: "Community-Powered",
-    desc: "Native speakers earn XP for contributing vocabulary and audio. The community builds the platform.",
-  },
+  { roman: "I",   icon: Volume2, titleKey: "web.landing.feature1Title", descKey: "web.landing.feature1Desc" },
+  { roman: "II",  icon: Globe,   titleKey: "web.landing.feature2Title", descKey: "web.landing.feature2Desc" },
+  { roman: "III", icon: Users,   titleKey: "web.landing.feature3Title", descKey: "web.landing.feature3Desc" },
 ];
 
 
@@ -659,6 +612,7 @@ const LESSON_PREVIEW = {
 };
 
 function DraggableWindow() {
+  const { t } = useTranslation();
   const posRef = useRef({ x: 0, y: 0 });
   const dragStart = useRef<{ mx: number; my: number; ox: number; oy: number } | null>(null);
   const elRef = useRef<HTMLDivElement>(null);
@@ -730,7 +684,7 @@ function DraggableWindow() {
               {LESSON_PREVIEW.script}
             </div>
             <div className="font-display italic text-neutral-500 text-sm mt-1">
-              {LESSON_PREVIEW.translation}
+              {t("web.landing.previewTranslation")}
             </div>
           </div>
           <span className="text-2xl select-none">🇳🇬</span>
@@ -765,7 +719,7 @@ function DraggableWindow() {
           onClick={() => { setWordIdx(0); setPlaying(true); }}
           className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-mono hover:bg-amber-500/20 transition-colors duration-200"
         >
-          {playing ? "▐▐  Playing…" : "▶  Play lesson"}
+          {playing ? t("web.landing.previewPlaying") : t("web.landing.previewPlay")}
         </button>
       </div>
     </div>
@@ -788,6 +742,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 // ── Landing page ──────────────────────────────────────────────────────────────
 
 export function LandingPage() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-[#06060e] text-neutral-50 overflow-x-hidden">
 
@@ -816,7 +771,7 @@ export function LandingPage() {
               href="/for-educators"
               className="hidden sm:block font-mono text-[9px] uppercase tracking-[0.2em] text-neutral-500 hover:text-neutral-300 transition-colors"
             >
-              For Educators
+              {t("web.landing.navForEducators")}
             </Link>
           </div>
           <div className="flex items-center gap-2">
@@ -824,7 +779,7 @@ export function LandingPage() {
               href="/learn"
               className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#06060e] font-bold text-sm transition-all duration-200 shadow-[0_0_24px_-6px_rgb(245_158_11_/0.5)] hover:shadow-[0_0_36px_-6px_rgb(245_158_11_/0.7)]"
             >
-              Start Learning
+              {t("web.landing.navStartLearning")}
             </Link>
           </div>
         </div>
@@ -840,7 +795,7 @@ export function LandingPage() {
 
         <div className="max-w-7xl mx-auto w-full">
           <div className="max-w-3xl animate-fade-in">
-            <SectionLabel>Collection No. 001 — African Languages</SectionLabel>
+            <SectionLabel>{t("web.landing.heroCollectionLabel")}</SectionLabel>
 
             {/* ── #3 Language cycling headline ── */}
             <h1 className="font-display font-bold leading-[0.92] tracking-tight">
@@ -849,16 +804,16 @@ export function LandingPage() {
                 className="block text-amber-400"
                 style={{ fontSize: "clamp(3.5rem,9vw,7.5rem)" }}
               >
-                lives here.
+                {t("web.landing.heroLivesHere")}
               </span>
             </h1>
 
             <p className="mt-8 text-lg sm:text-xl text-neutral-400 max-w-lg leading-relaxed">
-              70+ African languages. Audio-first. Built with native speakers.
-              <em className="font-display italic text-neutral-300 not-italic"> Free forever.</em>
+              {t("web.landing.heroSubhead")}
+              <em className="font-display italic text-neutral-300 not-italic">{t("web.landing.heroSubheadFree")}</em>
             </p>
             <p className="mt-3 font-display italic text-neutral-600 text-base sm:text-lg" style={{ fontStyle: "italic" }}>
-              From the Niger Delta to the Horn - and everywhere the diaspora calls home.
+              {t("web.landing.heroSubheadItalic")}
             </p>
 
             <div className="mt-12 flex flex-col sm:flex-row items-start gap-4">
@@ -866,14 +821,14 @@ export function LandingPage() {
                 href="/learn"
                 className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#06060e] font-bold text-sm transition-all duration-200 shadow-[0_0_60px_-12px_rgb(245_158_11_/0.65)] hover:shadow-[0_0_80px_-12px_rgb(245_158_11_/0.85)]"
               >
-                Start Learning Free
+                {t("web.landing.heroCtaPrimary")}
                 <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
               </Link>
               <Link
                 href="/learn"
                 className="inline-flex items-center gap-2 px-8 py-4 rounded-xl border border-white/[0.1] text-neutral-400 hover:text-white hover:border-white/20 font-medium text-sm transition-all duration-200"
               >
-                Explore languages
+                {t("web.landing.heroCtaSecondary")}
               </Link>
             </div>
 
@@ -882,7 +837,7 @@ export function LandingPage() {
 
             {/* Platform availability badges */}
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <span className="font-mono text-[9px] uppercase tracking-[0.24em] text-neutral-700">Available on</span>
+              <span className="font-mono text-[9px] uppercase tracking-[0.24em] text-neutral-700">{t("web.landing.heroAvailableOn")}</span>
               {[
                 { icon: Smartphone, label: "iOS" },
                 { icon: Smartphone, label: "Android" },
@@ -911,7 +866,7 @@ export function LandingPage() {
               key={s.value}
               className={`flex flex-col py-10 sm:px-12 ${i > 0 ? "sm:border-l border-white/[0.06]" : ""}`}
             >
-              <AnimatedStat value={s.value} label={s.label} refLabel={s.ref} />
+              <AnimatedStat value={s.value} label={t(s.labelKey)} refLabel={s.ref} />
             </div>
           ))}
         </div>
@@ -938,12 +893,12 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <Reveal>
             <div className="mb-16">
-              <SectionLabel>How It Works</SectionLabel>
+              <SectionLabel>{t("web.landing.howLabel")}</SectionLabel>
               <h2 className="font-display font-bold text-4xl sm:text-5xl text-white leading-tight">
-                Three steps. One language.
+                {t("web.landing.howTitle")}
               </h2>
               <p className="mt-4 text-neutral-500 max-w-sm text-sm leading-relaxed">
-                No app store required to try it. Free forever. No card.
+                {t("web.landing.howSubtitle")}
               </p>
             </div>
           </Reveal>
@@ -958,8 +913,8 @@ export function LandingPage() {
                   <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-6">
                     <item.icon className="h-4 w-4 text-amber-400" />
                   </div>
-                  <h3 className="font-display font-semibold text-lg text-white mb-3">{item.title}</h3>
-                  <p className="text-sm text-neutral-500 leading-relaxed">{item.desc}</p>
+                  <h3 className="font-display font-semibold text-lg text-white mb-3">{t(item.titleKey)}</h3>
+                  <p className="text-sm text-neutral-500 leading-relaxed">{t(item.descKey)}</p>
                 </div>
               </Reveal>
             ))}
@@ -972,30 +927,30 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <Reveal>
             <div className="mb-16">
-              <SectionLabel>Exhibition Halls</SectionLabel>
+              <SectionLabel>{t("web.landing.featuresLabel")}</SectionLabel>
               <h2 className="font-display font-bold text-4xl sm:text-5xl text-white leading-tight">
-                Built differently.
+                {t("web.landing.featuresTitle")}
               </h2>
               <p className="mt-4 text-neutral-500 max-w-sm text-sm leading-relaxed">
-                Most apps are built for European languages. Beeli was built for Africa.
+                {t("web.landing.featuresSubtitle")}
               </p>
             </div>
           </Reveal>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {FEATURES.map((f, i) => (
-              <Reveal key={f.title} delay={i * 110}>
+              <Reveal key={f.roman} delay={i * 110}>
                 <div className="group relative h-full bg-white/[0.025] border border-white/[0.06] rounded-2xl hover:border-amber-500/25 hover:bg-white/[0.04] transition-all duration-400 overflow-hidden">
                   {/* Poolsuite-style window title bar */}
-                  <WindowTitleBar title={`hall.${f.roman.toLowerCase()} — ${f.title}`} />
+                  <WindowTitleBar title={`hall.${f.roman.toLowerCase()} — ${t(f.titleKey)}`} />
                   <div className="p-8">
                     <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-6 group-hover:bg-amber-500/15 transition-colors duration-300">
                       <f.icon className="h-5 w-5 text-amber-400" />
                     </div>
                     <h3 className="font-display font-semibold text-xl text-white mb-3 leading-snug">
-                      {f.title}
+                      {t(f.titleKey)}
                     </h3>
-                    <p className="text-sm text-neutral-500 leading-relaxed">{f.desc}</p>
+                    <p className="text-sm text-neutral-500 leading-relaxed">{t(f.descKey)}</p>
                   </div>
                 </div>
               </Reveal>
@@ -1005,10 +960,8 @@ export function LandingPage() {
       </section>
 
       {/* ── Pull-quote ── */}
-      <PullQuote attribution="Ngugi wa Thiong'o, Decolonising the Mind">
-        &ldquo;Language is not just a means of communication.
-        It is a carrier of culture, of identity,
-        of the very sense of self.&rdquo;
+      <PullQuote attribution={t("web.landing.quoteAttribution")}>
+        {t("web.landing.quoteText")}
       </PullQuote>
 
       {/* ── Interactive Documentary ── */}
@@ -1020,17 +973,17 @@ export function LandingPage() {
           <Reveal>
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-14">
               <div>
-                <SectionLabel>Permanent Collection</SectionLabel>
+                <SectionLabel>{t("web.landing.soundscapeLabel")}</SectionLabel>
                 <h2 className="font-display font-bold text-4xl sm:text-5xl text-white leading-tight">
-                  Your language
+                  {t("web.landing.soundscapeTitleLine1")}
                   <br />
-                  <span className="font-display italic font-normal text-amber-400">lives here.</span>
+                  <span className="font-display italic font-normal text-amber-400">{t("web.landing.soundscapeTitleLine2")}</span>
                 </h2>
               </div>
               <p className="text-sm text-neutral-600 max-w-xs sm:text-right leading-relaxed">
-                Hover any language to hear its soundscape.
+                {t("web.landing.soundscapeHint")}
                 <br />
-                <span className="text-neutral-700">From Niger Delta to the Horn of Africa.</span>
+                <span className="text-neutral-700">{t("web.landing.soundscapeHintSub")}</span>
               </p>
             </div>
           </Reveal>
@@ -1046,11 +999,11 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <Reveal>
             <div className="mb-16">
-              <SectionLabel>Who It&apos;s For</SectionLabel>
+              <SectionLabel>{t("web.landing.personasLabel")}</SectionLabel>
               <h2 className="font-display font-bold text-4xl sm:text-5xl text-white leading-tight">
-                Built for the diaspora.
+                {t("web.landing.personasTitle")}
                 <br />
-                <span className="text-amber-400">Open to everyone.</span>
+                <span className="text-amber-400">{t("web.landing.personasTitleAccent")}</span>
               </h2>
             </div>
           </Reveal>
@@ -1070,27 +1023,27 @@ export function LandingPage() {
               <div className="absolute top-0 left-[12%] right-[12%] h-px bg-gradient-to-r from-transparent via-amber-500/40 to-transparent" />
 
               <div className="relative text-center">
-                <SectionLabel>The Beeli Difference</SectionLabel>
+                <SectionLabel>{t("web.landing.comparisonLabel")}</SectionLabel>
 
                 <div className="flex items-center justify-center gap-16 sm:gap-32 my-12">
                   <div className="text-center">
                     <div className="font-display font-bold text-6xl sm:text-8xl text-neutral-700 leading-none">4</div>
-                    <div className="text-[11px] text-neutral-700 mt-3 uppercase tracking-widest">Other apps</div>
+                    <div className="text-[11px] text-neutral-700 mt-3 uppercase tracking-widest">{t("web.landing.comparisonOtherApps")}</div>
                   </div>
-                  <div className="text-neutral-700 text-sm uppercase tracking-widest">vs</div>
+                  <div className="text-neutral-700 text-sm uppercase tracking-widest">{t("web.landing.comparisonVs")}</div>
                   <div className="text-center">
                     <div className="font-display font-bold text-6xl sm:text-8xl text-amber-400 leading-none">70+</div>
-                    <div className="text-[11px] text-amber-600 mt-3 uppercase tracking-widest font-semibold">Beeli</div>
+                    <div className="text-[11px] text-amber-600 mt-3 uppercase tracking-widest font-semibold">{t("web.landing.comparisonBeeli")}</div>
                   </div>
                 </div>
 
                 <h3 className="font-display font-bold text-3xl sm:text-4xl text-white leading-snug">
-                  Duolingo covers 4 African languages.
+                  {t("web.landing.comparisonHeadline")}
                   <br />
-                  <span className="text-amber-400">We cover 70+.</span>
+                  <span className="text-amber-400">{t("web.landing.comparisonHeadlineAccent")}</span>
                 </h3>
                 <p className="mt-5 text-neutral-500 text-sm max-w-sm mx-auto leading-relaxed">
-                  African languages aren&apos;t an afterthought. They&apos;re the whole point.
+                  {t("web.landing.comparisonSubtext")}
                 </p>
               </div>
             </div>
@@ -1106,23 +1059,23 @@ export function LandingPage() {
           <div className="max-w-3xl mx-auto relative">
             <div className="flex items-center justify-center gap-6 mb-10">
               <div className="h-px flex-1 bg-gradient-to-r from-transparent to-white/[0.05]" />
-              <SectionLabel>Begin Your Journey</SectionLabel>
+              <SectionLabel>{t("web.landing.ctaLabel")}</SectionLabel>
               <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white/[0.05]" />
             </div>
 
             <h2 className="font-display font-bold text-5xl sm:text-6xl text-white leading-tight mb-4">
-              Start learning your
+              {t("web.landing.ctaTitle")}
               <br />
-              <span className="text-amber-400">mother tongue.</span>
+              <span className="text-amber-400">{t("web.landing.ctaTitleAccent")}</span>
             </h2>
             <p className="text-neutral-500 mb-10 text-base">
-              Free forever. No credit card. Start in 60 seconds.
+              {t("web.landing.ctaSubtitle")}
             </p>
             <Link
               href="/learn"
               className="group inline-flex items-center gap-2 px-10 py-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#06060e] font-bold text-base transition-all duration-200 shadow-[0_0_72px_-12px_rgb(245_158_11_/0.65)] hover:shadow-[0_0_100px_-12px_rgb(245_158_11_/0.85)]"
             >
-              Start Learning Free
+              {t("web.landing.ctaButton")}
               <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </div>
@@ -1132,14 +1085,14 @@ export function LandingPage() {
       {/* ── Footer ── */}
       <footer className="relative border-t border-white/[0.06] py-10 px-6">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-neutral-700">
-          <span className="font-display">© {new Date().getFullYear()} Beeli. All rights reserved.</span>
+          <span className="font-display">© {new Date().getFullYear()} Beeli. {t("web.landing.footerRights")}</span>
           <div className="flex gap-6">
-            <Link href="/privacy" className="hover:text-neutral-400 transition-colors">Privacy</Link>
-            <Link href="/support" className="hover:text-neutral-400 transition-colors">Support</Link>
-            <Link href="/for-educators" className="hover:text-neutral-400 transition-colors">For Educators</Link>
-            <Link href="/culture" className="hover:text-neutral-400 transition-colors">Blog</Link>
+            <Link href="/privacy" className="hover:text-neutral-400 transition-colors">{t("web.landing.footerPrivacy")}</Link>
+            <Link href="/support" className="hover:text-neutral-400 transition-colors">{t("web.landing.footerSupport")}</Link>
+            <Link href="/for-educators" className="hover:text-neutral-400 transition-colors">{t("web.landing.footerForEducators")}</Link>
+            <Link href="/culture" className="hover:text-neutral-400 transition-colors">{t("web.landing.footerBlog")}</Link>
             <Link href="/learn" className="text-amber-500 hover:text-amber-400 font-semibold transition-colors">
-              Get Started
+              {t("web.landing.footerGetStarted")}
             </Link>
           </div>
         </div>
