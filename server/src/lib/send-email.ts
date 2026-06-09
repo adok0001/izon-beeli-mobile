@@ -1,3 +1,5 @@
+import { logger } from "./logger.js";
+
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
 const FROM_EMAIL = process.env.EMAIL_FROM ?? "noreply@beeli.app";
@@ -18,7 +20,7 @@ export interface EmailMessage {
 export async function sendEmail(message: EmailMessage): Promise<boolean> {
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) {
-    console.warn("[email] BREVO_API_KEY not set — skipping email");
+    logger.warn("[email] BREVO_API_KEY not set — skipping email");
     return false;
   }
 
@@ -41,12 +43,12 @@ export async function sendEmail(message: EmailMessage): Promise<boolean> {
 
     if (!response.ok) {
       const text = await response.text();
-      console.error("[email] Brevo API error:", response.status, text);
+      logger.error("[email] Brevo API error:", response.status, text);
       return false;
     }
     return true;
   } catch (err) {
-    console.error("[email] Failed to send email:", err);
+    logger.error("[email] Failed to send email:", err);
     return false;
   }
 }

@@ -19,6 +19,7 @@ import { feedPublicRouter, feedRouter } from "./routes/feed.js";
 import { feedbackAdminRouter, feedbackRouter } from "./routes/feedback.js";
 import { journalRouter } from "./routes/journal.js";
 import { languagesRouter } from "./routes/languages.js";
+import { scriptsRouter } from "./routes/scripts.js";
 import { lessonContributionsRouter } from "./routes/lesson-contributions.js";
 import { lessonsRouter } from "./routes/lessons.js";
 import { multiplayerInternalRouter, multiplayerRouter } from "./routes/multiplayer.js";
@@ -30,6 +31,7 @@ import { matchingResultsRouter } from "./routes/matching-results.js";
 import { quizResultsRouter } from "./routes/quiz-results.js";
 import { wordChallengeRouter, wordChallengeAdminRouter } from "./routes/word-challenge.js";
 import { quizRouter } from "./routes/quiz.js";
+import { quizAdminRouter } from "./routes/quiz-admin.js";
 import { reviewerApplicationsAdminRouter, reviewerApplicationsRouter } from "./routes/reviewer-applications.js";
 import { sentencesRouter } from "./routes/sentences.js";
 import { storyArcsRouter } from "./routes/story-arcs.js";
@@ -44,6 +46,7 @@ import { wordbankRouter } from "./routes/wordbank.js";
 import { activitiesRouter, activitiesAdminRouter } from "./routes/activities.js";
 import { uploadAdminRouter } from "./routes/upload.js";
 import { authMiddleware, adminMiddleware } from "./middleware/auth.js";
+import { logger as log } from "./lib/logger.js";
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -70,7 +73,7 @@ app.use(
 );
 
 app.onError((err, c) => {
-  console.error(`[ERROR] ${c.req.method} ${c.req.path}:`, err.message);
+  log.error(`[ERROR] ${c.req.method} ${c.req.path}:`, err.message);
   return c.json(
     { error: "Internal server error", ...(isDev ? { detail: err.message } : {}) },
     500
@@ -87,11 +90,13 @@ app.get("/config/public", async (c) => {
 });
 
 // Public routes (no auth required)
+app.route("/quiz/admin", quizAdminRouter); // more specific path must precede /quiz
 app.route("/quiz", quizRouter);
 app.route("/feed", feedPublicRouter);
 app.route("/contributions", contributionsPublicRouter);
 app.route("/contributors", contributorsRouter);
 app.route("/languages", languagesRouter);
+app.route("/scripts", scriptsRouter);
 app.route("/courses", coursesRouter);
 app.route("/lessons", lessonsRouter);
 app.route("/dictionary", dictionaryRouter);

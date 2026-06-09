@@ -6,7 +6,7 @@ import { hapticError, hapticHeavy, hapticSuccess } from "@/lib/haptics";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { useLesson } from "@/lib/hooks/use-courses";
 import { getLanguageName } from "@/lib/mock-data";
-import { generateFocusedQuiz, generateQuiz } from "@/lib/quiz-engine";
+import { generateFocusedQuiz, generateLessonQuiz, generateQuiz } from "@/lib/quiz-engine";
 import {
     playCorrectSound,
     playFinishSound,
@@ -48,6 +48,8 @@ function QuestionTypeLabel({ type }: { type: QuizQuestion["type"] }) {
     "english-to-word": t("quiz.englishToWord"),
     "fill-in-the-blank": t("quiz.fillInBlank"),
     listening: t("quiz.listening"),
+    "segment-listening": t("quiz.listening"),
+    "context-translate": t("quiz.wordToEnglish"),
   };
   return (
     <View style={{ marginBottom: 8, alignSelf: "flex-start", borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 12, paddingVertical: 4, borderWidth: 1, borderColor: M.accentBorder }}>
@@ -213,8 +215,12 @@ function ActiveView() {
 
         <QuestionTypeLabel type={question.type} />
 
-        {question.type === "listening" && question.audioSource ? (
-          <ListeningQuestion audioSource={question.audioSource} />
+        {(question.type === "listening" || question.type === "segment-listening") && question.audioSource ? (
+          <ListeningQuestion
+            audioSource={question.audioSource}
+            startTime={question.startTime}
+            endTime={question.endTime}
+          />
         ) : (
           <Text style={{ marginBottom: 32, fontSize: 20, fontWeight: "700", color: M.text }}>
             {question.prompt}
@@ -452,26 +458,19 @@ export default function QuizScreen() {
     focusWord?: string;
     focusEnglish?: string;
     focusAudio?: string;
+    focusLanguageId?: string;
     lessonId?: string;
   }>();
   const { selectedLanguageId } = useLanguageStore();
   const { data: dictionaryEntries = [], isLoading: isDictLoading } = useDictionary(selectedLanguageId);
+  const focusLanguageId = params.focusLanguageId ?? selectedLanguageId;
+  const { data: focusEntries = [], isLoading: isFocusLoading } = useDictionary(focusLanguageId);
   const { data: lessonData, isLoading: isLessonLoading } = useLesson(params.lessonId ?? "");
 
-  // When lessonId is provided, filter dictionary to words that appear in the lesson transcript.
-  // Falls back to full dictionary if fewer than 4 matches (not enough for distractors).
-  const activeEntries = useMemo(() => {
-    if (!params.lessonId || !lessonData?.transcript?.length) return dictionaryEntries;
-    const transcriptWords = new Set(
-      lessonData.transcript.flatMap((seg) =>
-        seg.text.split(/\s+/).map((w) => w.toLowerCase().replace(/[.,!?;:'"()\[\]]/g, "").trim())
-      ).filter(Boolean)
-    );
-    const matches = dictionaryEntries.filter((e) =>
-      transcriptWords.has(e.word.toLowerCase().trim())
-    );
-    return matches.length >= 4 ? matches : dictionaryEntries;
-  }, [params.lessonId, lessonData, dictionaryEntries]);
+  const activeEntries = dictionaryEntries;
+  const hasLessonSegments =
+    !!params.lessonId &&
+    (lessonData?.transcript ?? []).filter((s) => s.text?.trim() && s.translation?.trim()).length >= 4;
   const { phase, startQuiz, reset } = useQuizStore();
   const [isEmpty, setIsEmpty] = useState(false);
   const [configReady, setConfigReady] = useState(false);
@@ -497,7 +496,7 @@ export default function QuizScreen() {
   // Once dictionary (and lesson, if applicable) data loads: auto-start focused quizzes, show config for regular quizzes
   useEffect(() => {
     if (initialized.current) return;
-    if (isDictLoading) return;
+    if (isDictLoading || isFocusLoading) return;
     if (params.lessonId && isLessonLoading) return;
     initialized.current = true;
 
@@ -508,7 +507,7 @@ export default function QuizScreen() {
         params.focusWord!,
         params.focusEnglish!,
         params.focusAudio || undefined,
-        dictionaryEntries,
+        focusEntries,
         tq
       );
       if (questions.length === 0) {
@@ -518,35 +517,50 @@ export default function QuizScreen() {
         analytics.quizStarted(selectedLanguageId, questions.length);
       }
     } else {
-      // Check there's enough vocabulary before showing the config screen
-      const test = generateQuiz(
-        { languageId: selectedLanguageId, courseId: params.courseId, category: params.category, questionCount: 5 },
-        activeEntries,
-        undefined,
-        tq
-      );
+      const test = hasLessonSegments
+        ? generateLessonQuiz(
+            { languageId: selectedLanguageId, lessonId: params.lessonId, questionCount: 5 },
+            lessonData!.transcript!,
+            lessonData!.audioUrl,
+            activeEntries,
+            tq
+          )
+        : generateQuiz(
+            { languageId: selectedLanguageId, courseId: params.courseId, category: params.category, questionCount: 5 },
+            activeEntries,
+            undefined,
+            tq
+          );
       if (test.length === 0) {
         setIsEmpty(true);
       } else {
         setConfigReady(true);
       }
     }
-  }, [isDictLoading, isLessonLoading]);
+  }, [isDictLoading, isFocusLoading, isLessonLoading]);
 
   const handleStart = useCallback(
     (count: number) => {
       const tq = makeTq();
-      const questions = generateQuiz(
-        {
-          languageId: selectedLanguageId,
-          courseId: params.courseId,
-          category: params.category,
-          questionCount: count,
-        },
-        activeEntries,
-        undefined,
-        tq
-      );
+      const questions = hasLessonSegments
+        ? generateLessonQuiz(
+            { languageId: selectedLanguageId, lessonId: params.lessonId, questionCount: count },
+            lessonData!.transcript!,
+            lessonData!.audioUrl,
+            activeEntries,
+            tq
+          )
+        : generateQuiz(
+            {
+              languageId: selectedLanguageId,
+              courseId: params.courseId,
+              category: params.category,
+              questionCount: count,
+            },
+            activeEntries,
+            undefined,
+            tq
+          );
       if (questions.length === 0) {
         setIsEmpty(true);
       } else {
@@ -554,7 +568,7 @@ export default function QuizScreen() {
         analytics.quizStarted(selectedLanguageId, questions.length);
       }
     },
-    [selectedLanguageId, params.courseId, params.category, activeEntries, makeTq, startQuiz]
+    [selectedLanguageId, params.courseId, params.category, params.lessonId, hasLessonSegments, lessonData, activeEntries, makeTq, startQuiz]
   );
 
   return (

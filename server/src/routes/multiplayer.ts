@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { eq, ne, and, sql, inArray } from "drizzle-orm";
 import { db } from "../db/index.js";
 import {
@@ -34,7 +34,7 @@ function pickDistractors(correct: string, pool: string[], count: number): string
 }
 
 // Internal API key auth for PartyKit server-to-server calls
-function verifyApiKey(c: any): boolean {
+function verifyApiKey(c: Context): boolean {
   const apiKey = c.req.header("x-api-key");
   const expected = process.env.PARTYKIT_API_KEY;
   return !!expected && apiKey === expected;

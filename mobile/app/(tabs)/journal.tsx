@@ -123,6 +123,20 @@ function EntryCard({
         <Text style={{ flex: 1, fontSize: 16, fontWeight: "700", color: M.text }} numberOfLines={1}>
           {entry.title}
         </Text>
+        {entry.isPublic && (
+          <View
+            style={{
+              flexDirection: "row", alignItems: "center", gap: 3,
+              backgroundColor: `${M.accent}18`,
+              borderRadius: 6, paddingHorizontal: 6, paddingVertical: 3,
+            }}
+          >
+            <IconSymbol name="globe" size={9} color={M.accent} />
+            <Text style={{ fontSize: 9, fontWeight: "700", color: M.accent, letterSpacing: 0.5 }}>
+              PUBLIC
+            </Text>
+          </View>
+        )}
         {hasRecording && (
           <View
             style={{
@@ -229,8 +243,10 @@ export default function JournalScreen() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [isPublic, setIsPublic] = useState(false);
   const originalTitle = useRef("");
   const originalContent = useRef("");
+  const originalIsPublic = useRef(false);
   const contentInputRef = useRef<TextInputType>(null);
   const { bottom: bottomInset } = useSafeAreaInsets();
 
@@ -271,7 +287,9 @@ export default function JournalScreen() {
   const isEditing = editingId !== null;
   const canSave = title.trim().length > 0 && content.trim().length > 0;
   const isDirty =
-    title.trim() !== originalTitle.current || content.trim() !== originalContent.current;
+    title.trim() !== originalTitle.current ||
+    content.trim() !== originalContent.current ||
+    isPublic !== originalIsPublic.current;
   const { t } = useTranslation();
   const showTour = useTourStore((s) => s.showTour);
   const hasSeen = useTourStore((s) => s.hasSeen);
@@ -280,8 +298,10 @@ export default function JournalScreen() {
     setEditingId(null);
     setTitle("");
     setContent("");
+    setIsPublic(false);
     originalTitle.current = "";
     originalContent.current = "";
+    originalIsPublic.current = false;
     voice.discardRecording();
     setShowModal(true);
   };
@@ -290,8 +310,10 @@ export default function JournalScreen() {
     setEditingId(entry.id);
     setTitle(entry.title);
     setContent(entry.content);
+    setIsPublic(entry.isPublic);
     originalTitle.current = entry.title.trim();
     originalContent.current = entry.content.trim();
+    originalIsPublic.current = entry.isPublic;
     voice.discardRecording();
     const uri = await getRecording(entry.id);
     if (uri) voice.loadUri(uri);
@@ -301,6 +323,7 @@ export default function JournalScreen() {
   const resetModal = () => {
     setTitle("");
     setContent("");
+    setIsPublic(false);
     setEditingId(null);
     voice.discardRecording();
   };
@@ -313,7 +336,7 @@ export default function JournalScreen() {
     }
 
     if (isEditing) {
-      updateEntry.mutate({ id: editingId, title: title.trim(), content: content.trim() });
+      updateEntry.mutate({ id: editingId, title: title.trim(), content: content.trim(), isPublic });
       if (voice.uri) {
         await setRecording(editingId, voice.uri);
         setRecordingMap((m) => ({ ...m, [editingId]: true }));
@@ -324,7 +347,7 @@ export default function JournalScreen() {
         await setRecording(TEMP_RECORDING_ID, voice.uri);
       }
       createEntry.mutate(
-        { title: title.trim(), content: content.trim() },
+        { title: title.trim(), content: content.trim(), isPublic },
         {
           onSuccess: async (entry) => {
             if (voice.uri) {
@@ -639,6 +662,29 @@ export default function JournalScreen() {
                   </Text>
                 )}
               </View>
+
+              {/* Visibility toggle */}
+              <Pressable
+                onPress={() => setIsPublic((v) => !v)}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={isPublic ? "Make private" : "Make public"}
+                style={{
+                  flexDirection: "row", alignItems: "center", gap: 5,
+                  borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5,
+                  backgroundColor: isPublic ? `${M.accent}20` : `${M.border}80`,
+                }}
+                className="active:opacity-70"
+              >
+                <IconSymbol
+                  name={isPublic ? "globe" : "lock"}
+                  size={12}
+                  color={isPublic ? M.accent : M.muted}
+                />
+                <Text style={{ fontSize: 11, fontWeight: "700", color: isPublic ? M.accent : M.muted }}>
+                  {isPublic ? "PUBLIC" : "PRIVATE"}
+                </Text>
+              </Pressable>
 
               <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
                 {/* Mic / recording control */}

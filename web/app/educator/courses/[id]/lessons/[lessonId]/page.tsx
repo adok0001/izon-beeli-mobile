@@ -30,6 +30,14 @@ interface Segment {
   order: number;
 }
 
+interface DictEntry {
+  word: string;
+}
+
+function normalizeWord(w: string): string {
+  return w.toLowerCase().replace(/[.,!?;:'"()[\]{}""''…«»]/g, "").trim();
+}
+
 interface LessonDetail {
   id: string;
   courseId: string;
@@ -236,6 +244,24 @@ export default function LessonDetailPage() {
       return apiFetch<LessonDetail>(`/educator/lessons/${lessonId}`, { token: token! });
     },
   });
+
+  const { data: dictEntries = [] } = useQuery<DictEntry[]>({
+    queryKey: ["educator-dict-words", lesson?.languageId],
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch<DictEntry[]>(`/educator/dictionary?languageId=${lesson!.languageId}`, { token: token! });
+    },
+    enabled: !!lesson?.languageId,
+  });
+
+  const dictSet = new Set(dictEntries.map((e) => normalizeWord(e.word)));
+  const missingWords = Array.from(
+    new Set(
+      segments.flatMap((s) =>
+        s.text.split(/\s+/).map(normalizeWord).filter((w) => w && !dictSet.has(w))
+      )
+    )
+  ).sort();
 
   useEffect(() => {
     if (lesson) {
@@ -613,6 +639,15 @@ export default function LessonDetailPage() {
         {saveSegments.isError && (
           <div className="mb-4 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-3">
             <p className="text-xs text-red-600 dark:text-red-400">{(saveSegments.error as Error).message}</p>
+          </div>
+        )}
+
+        {segments.length > 0 && missingWords.length > 0 && (
+          <div className="mb-4 rounded-xl border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-950/30 p-3">
+            <p className="text-xs text-yellow-700 dark:text-yellow-400">
+              <strong>{missingWords.length} word{missingWords.length !== 1 ? "s" : ""} not in dictionary:</strong>{" "}
+              {missingWords.join(", ")}
+            </p>
           </div>
         )}
 

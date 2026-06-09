@@ -678,6 +678,7 @@ export const fr = {
     failedMessage: "Impossible d'envoyer vos retours pour l'instant.",
     emailFallback: "Envoyer par e-mail à la place",
     submit: "Soumettre",
+    adminOnlyNotice: "Visible uniquement par l'équipe Beeli · non publié",
   },
   share: {
     learningWith: "J'apprends le {{language}} avec Beeli",
@@ -1188,6 +1189,7 @@ export const fr = {
       notifications: "Notifications",
       dailyContent: "Contenu quotidien",
       activities: "Activités",
+      quiz: "Quiz",
     },
     dailyContent: {
       title: "Contenu quotidien",
@@ -1199,6 +1201,11 @@ export const fr = {
       clearOverride: "Retirer l'épingle",
       errorSet: "Échec de la mise à jour. Veuillez réessayer.",
       errorClear: "Échec du retrait. Veuillez réessayer.",
+      confirmSetTitle: "Épingler ce contenu ?",
+      confirmSetMessage: "Cela remplacera la sélection épinglée actuelle pour tous les utilisateurs.",
+      confirmSetButton: "Épingler",
+      confirmClearTitle: "Retirer l'épingle ?",
+      confirmClearMessage: "Le contenu reviendra à la sélection automatique.",
       actionRowDetail: "Mot du jour · Proverbe du mois · Chanson de la semaine",
       wotd: {
         tab: "Mot / Jour",

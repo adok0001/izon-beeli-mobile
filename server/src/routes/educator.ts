@@ -6,6 +6,7 @@
  */
 import { put } from "@vercel/blob";
 import { and, count, eq, inArray, isNull, notInArray } from "drizzle-orm";
+import type { PgColumn } from "drizzle-orm/pg-core";
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
 import { db } from "../db/index.js";
@@ -34,8 +35,7 @@ educatorRouter.use("*", reviewerMiddleware);
 
 /** Return a Drizzle language-filter condition, or undefined (no filter) for admins. */
 function langFilter(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  table: { languageId: any },
+  table: { languageId: PgColumn },
   langs: string[],
 ) {
   return langs.length > 0 ? inArray(table.languageId, langs) : undefined;
@@ -72,8 +72,7 @@ educatorRouter.get("/stats", async (c) => {
   const isAdmin = c.get("isAdmin");
   const reviewerLanguages = c.get("reviewerLanguages");
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const where = (table: { languageId: any }) =>
+  const where = (table: { languageId: PgColumn }) =>
     langFilter(table, isAdmin ? [] : reviewerLanguages);
 
   const [

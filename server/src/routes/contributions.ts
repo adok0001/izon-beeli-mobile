@@ -6,6 +6,8 @@ import { bounties, contributions, dictionaryEntries, feedItems, users } from "..
 import { awardXP, CONTRIBUTION_BASE_XP } from "../lib/award-xp.js";
 import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
 import { updateStreak } from "../lib/update-streak.js";
+import { errMessage } from "../lib/errors.js";
+import { logger } from "../lib/logger.js";
 import {
   sendEmail,
   contributionStatusEmailHtml,
@@ -96,9 +98,9 @@ contributionsRouter.post("/", async (c) => {
           { access: "public", token: process.env.BLOB_READ_WRITE_TOKEN! }
         );
         audioUrl = blob.url;
-      } catch (err: any) {
-        console.error("Blob upload error:", err?.message ?? err);
-        return c.json({ error: `Failed to upload audio file: ${err?.message ?? "unknown"}` }, 500);
+      } catch (err: unknown) {
+        logger.error("Blob upload error:", errMessage(err));
+        return c.json({ error: `Failed to upload audio file: ${errMessage(err)}` }, 500);
       }
     }
 
@@ -111,9 +113,9 @@ contributionsRouter.post("/", async (c) => {
           { access: "public", token: process.env.BLOB_READ_WRITE_TOKEN! }
         );
         imageUrl = blob.url;
-      } catch (err: any) {
-        console.error("Blob upload error:", err?.message ?? err);
-        return c.json({ error: `Failed to upload image file: ${err?.message ?? "unknown"}` }, 500);
+      } catch (err: unknown) {
+        logger.error("Blob upload error:", errMessage(err));
+        return c.json({ error: `Failed to upload image file: ${errMessage(err)}` }, 500);
       }
     }
   } else {
@@ -176,7 +178,7 @@ contributionsRouter.post("/", async (c) => {
     }
   }
 
-  if (!VALID_TYPES.includes(type as any)) {
+  if (!(VALID_TYPES as readonly string[]).includes(type)) {
     return c.json({ error: `type must be one of: ${VALID_TYPES.join(", ")}` }, 400);
   }
 
@@ -282,9 +284,9 @@ contributionsRouter.post("/", async (c) => {
     updateStreak(userId).catch(() => {});
 
     return c.json(contribution, 201);
-  } catch (err: any) {
-    console.error("POST /contributions error:", err);
-    return c.json({ error: err.message ?? "Internal server error" }, 500);
+  } catch (err: unknown) {
+    logger.error("POST /contributions error:", err);
+    return c.json({ error: errMessage(err) || "Internal server error" }, 500);
   }
 });
 
@@ -408,7 +410,7 @@ contributionsRouter.patch("/:id/review", adminMiddleware, async (c) => {
   const body = await c.req.json<{ action: string; note?: string }>();
   const action = body.action;
 
-  if (!VALID_REVIEW_ACTIONS.includes(action as any)) {
+  if (!(VALID_REVIEW_ACTIONS as readonly string[]).includes(action)) {
     return c.json({ error: "action must be 'approve' or 'reject'" }, 400);
   }
 
@@ -598,8 +600,8 @@ contributionsRouter.patch("/:id", async (c) => {
           { access: "public", token: process.env.BLOB_READ_WRITE_TOKEN! }
         );
         audioUrl = blob.url;
-      } catch (err: any) {
-        return c.json({ error: `Failed to upload audio: ${err?.message ?? "unknown"}` }, 500);
+      } catch (err: unknown) {
+        return c.json({ error: `Failed to upload audio: ${errMessage(err)}` }, 500);
       }
     }
 
@@ -612,8 +614,8 @@ contributionsRouter.patch("/:id", async (c) => {
           { access: "public", token: process.env.BLOB_READ_WRITE_TOKEN! }
         );
         imageUrl = blob.url;
-      } catch (err: any) {
-        return c.json({ error: `Failed to upload image: ${err?.message ?? "unknown"}` }, 500);
+      } catch (err: unknown) {
+        return c.json({ error: `Failed to upload image: ${errMessage(err)}` }, 500);
       }
     }
   } else {
