@@ -1,5 +1,6 @@
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
 import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
 import {
     EducatorLesson,
@@ -8,6 +9,7 @@ import {
     useUpdateEducatorLesson,
 } from "@/lib/hooks/use-educator-panel";
 import { useToast } from "@/lib/hooks/use-toast";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -24,6 +26,7 @@ function LessonRow({
   onToggleActive: () => void;
   toggling: boolean;
 }>) {
+  const M = useMuseumTheme();
   const isActive = lesson.isActive !== false;
   return (
     <Pressable
@@ -32,7 +35,7 @@ function LessonRow({
     >
       <View className="flex-row items-center">
         <View className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/30">
-          <IconSymbol name="waveform" size={18} color="#3b82f6" />
+          <IconSymbol name="waveform" size={18} color={getAccent("blue").solid} />
         </View>
         <View className="flex-1">
           <Text className="text-base font-semibold text-neutral-900 dark:text-white">{lesson.title}</Text>
@@ -54,7 +57,7 @@ function LessonRow({
             ) : null}
           </View>
         </View>
-        <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
+        <IconSymbol name="chevron.right" size={16} color={M.muted} />
       </View>
       <View className="mt-3 flex-row items-center justify-between border-t border-neutral-100 pt-3 dark:border-neutral-700/60">
         <Pressable
@@ -68,7 +71,7 @@ function LessonRow({
           <IconSymbol
             name={isActive ? "eye" : "eye.slash"}
             size={12}
-            color={isActive ? "#10b981" : "#9ca3af"}
+            color={isActive ? getAccent("teal").solid : M.muted}
           />
           <Text
             className={`text-xs font-semibold ${
@@ -84,6 +87,7 @@ function LessonRow({
 }
 
 export default function EducatorLessonsScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
@@ -155,7 +159,7 @@ export default function EducatorLessonsScreen() {
               }
               className="flex-row items-center justify-center rounded-2xl bg-blue-500 py-3.5 active:opacity-80"
             >
-              <IconSymbol name="plus" size={16} color="#ffffff" />
+              <IconSymbol name="plus" size={16} color={M.parchment} />
               <Text className="ml-2 text-sm font-semibold text-white">New Lesson</Text>
             </Pressable>
           </View>

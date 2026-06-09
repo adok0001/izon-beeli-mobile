@@ -1,8 +1,10 @@
 import { useRef, useState } from "react";
 import { View, Text, Pressable, PanResponder } from "react-native";
 import Svg, { Path, Text as SvgText } from "react-native-svg";
+import { getAccent } from "@/constants/accent-colors";
 import type { GeezCharacter } from "@/lib/data/geez";
 import { hapticTap } from "@/lib/haptics";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 
 const CANVAS_SIZE = 300;
 
@@ -11,6 +13,7 @@ interface TracingCanvasProps {
 }
 
 export function TracingCanvas({ character }: TracingCanvasProps) {
+  const M = useMuseumTheme();
   const [paths, setPaths] = useState<string[]>([]);
   const currentPath = useRef<string>("");
 
@@ -61,7 +64,7 @@ export function TracingCanvas({ character }: TracingCanvasProps) {
             y={CANVAS_SIZE / 2 + 60}
             fontSize={200}
             textAnchor="middle"
-            fill="#d1d5db"
+            fill={M.border}
             opacity={0.3}
           >
             {character.character}
@@ -72,7 +75,7 @@ export function TracingCanvas({ character }: TracingCanvasProps) {
             <Path
               key={i}
               d={d}
-              stroke="#3b82f6"
+              stroke={getAccent("blue").solid}
               strokeWidth={4}
               strokeLinecap="round"
               strokeLinejoin="round"

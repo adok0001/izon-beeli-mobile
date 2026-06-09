@@ -1,6 +1,7 @@
 import { LanguagePickerModal } from "@/components/language-picker";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
 import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
 import {
     EducatorCourse,
@@ -11,6 +12,7 @@ import {
 } from "@/lib/hooks/use-educator-panel";
 import { friendlyError } from "@/lib/api";
 import { useToast } from "@/lib/hooks/use-toast";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { getLanguageName } from "@/lib/mock-data";
 import { Stack, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
@@ -46,6 +48,7 @@ function CourseCard({
   onToggleActive: () => void;
   toggling: boolean;
 }>) {
+  const M = useMuseumTheme();
   return (
     <Pressable
       onPress={onPress}
@@ -67,7 +70,7 @@ function CourseCard({
         </View>
         <View className="ml-3 flex-row items-center gap-1">
           <Text className="text-xs font-semibold text-blue-500">Open</Text>
-          <IconSymbol name="chevron.right" size={14} color="#3b82f6" />
+          <IconSymbol name="chevron.right" size={14} color={getAccent("blue").solid} />
         </View>
       </View>
       <View className="mt-3 flex-row items-center justify-between border-t border-neutral-100 pt-3 dark:border-neutral-700/60">
@@ -84,7 +87,7 @@ function CourseCard({
           <IconSymbol
             name={course.isActive !== false ? "eye" : "eye.slash"}
             size={12}
-            color={course.isActive !== false ? "#10b981" : "#9ca3af"}
+            color={course.isActive !== false ? getAccent("teal").solid : M.muted}
           />
           <Text
             className={`text-xs font-semibold ${
@@ -100,6 +103,7 @@ function CourseCard({
 }
 
 export default function EducatorCoursesScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
   const { data: currentUser } = useCurrentUser();
@@ -220,7 +224,7 @@ export default function EducatorCoursesScreen() {
               className="flex-row items-center justify-between rounded-xl border border-neutral-300 bg-neutral-50 px-3 py-2.5 dark:border-neutral-600 dark:bg-neutral-800"
             >
               <View className="flex-row items-center">
-                <IconSymbol name="book.fill" size={16} color="#3b82f6" />
+                <IconSymbol name="book.fill" size={16} color={getAccent("blue").solid} />
                 <Text className="ml-2 text-sm font-semibold text-neutral-800 dark:text-neutral-100">
                   {getLanguageName(activeLanguageId)}
                 </Text>
@@ -229,7 +233,7 @@ export default function EducatorCoursesScreen() {
                 <Text className="text-xs text-neutral-400 dark:text-neutral-500">
                   {languageCourses.length} course{languageCourses.length === 1 ? "" : "s"}
                 </Text>
-                <IconSymbol name="chevron.right" size={14} color="#9ca3af" />
+                <IconSymbol name="chevron.right" size={14} color={M.muted} />
               </View>
             </Pressable>
           </View>

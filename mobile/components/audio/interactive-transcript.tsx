@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import { View, Text, Pressable, ScrollView, Modal, type GestureResponderEvent } from "react-native";
+import { getAccent } from "@/constants/accent-colors";
 import { useAudioStore } from "@/store/audio-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
@@ -7,6 +8,7 @@ import { useLanguageStore } from "@/store/language-store";
 import { useSaveWord, useWordBank } from "@/lib/hooks/use-wordbank";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { WordAudioButton } from "@/components/dictionary/word-audio-button";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import type { TranscriptSegment } from "@/types";
@@ -30,6 +32,7 @@ function WordLookupSheet({
   onSave: () => void;
   saved: boolean;
 }) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
 
@@ -46,7 +49,7 @@ function WordLookupSheet({
               <View className="flex-row items-center gap-2">
                 <WordAudioButton audioSource={entry.audioUrl} word={entry.word} />
                 <Pressable onPress={onClose} hitSlop={8}>
-                  <IconSymbol name="xmark" size={20} color="#9ca3af" />
+                  <IconSymbol name="xmark" size={20} color={M.muted} />
                 </Pressable>
               </View>
             </View>
@@ -82,7 +85,7 @@ function WordLookupSheet({
                 <IconSymbol
                   name={saved ? "star.fill" : "star"}
                   size={16}
-                  color={saved ? "#f59e0b" : "#9ca3af"}
+                  color={saved ? getAccent("amber").solid : M.muted}
                 />
                 <Text className={`ml-1.5 text-sm font-semibold ${
                   saved
@@ -115,7 +118,7 @@ function WordLookupSheet({
                 &ldquo;{word.replace(/[.,!?;:'"]/g, "")}&rdquo;
               </Text>
               <Pressable onPress={onClose} hitSlop={8}>
-                <IconSymbol name="xmark" size={20} color="#9ca3af" />
+                <IconSymbol name="xmark" size={20} color={M.muted} />
               </Pressable>
             </View>
             <Text className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
@@ -128,7 +131,7 @@ function WordLookupSheet({
               }}
               className="flex-row items-center justify-center rounded-xl bg-blue-500 py-3"
             >
-              <IconSymbol name="character.book.closed" size={16} color="#fff" />
+              <IconSymbol name="character.book.closed" size={16} color={M.parchment} />
               <Text className="ml-2 text-sm font-semibold text-white">
                 {t("dictionaryPage.title")}
               </Text>
@@ -141,6 +144,7 @@ function WordLookupSheet({
 }
 
 export function InteractiveTranscript({ segments, onSegmentPress }: Props) {
+  const M = useMuseumTheme();
   const { progress, seekTo, currentTrackId, shadowSegment, setShadowLoop } = useAudioStore();
   const { uiLanguage } = useUiLanguageStore();
   const { selectedLanguageId } = useLanguageStore();
@@ -329,7 +333,7 @@ export function InteractiveTranscript({ segments, onSegmentPress }: Props) {
                   <IconSymbol
                     name="repeat.1"
                     size={16}
-                    color={isLoopingThisSegment ? "#f59e0b" : "#9ca3af"}
+                    color={isLoopingThisSegment ? getAccent("amber").solid : M.muted}
                   />
                 </Pressable>
               )}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { View, Text, Pressable, Modal } from "react-native";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useTranslation } from "react-i18next";
 
 const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -18,6 +19,7 @@ function CalendarPicker({
   onChange: (date: Date) => void;
   onClose: () => void;
 }) {
+  const M = useMuseumTheme();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -71,7 +73,7 @@ function CalendarPicker({
           <IconSymbol
             name="chevron.left"
             size={18}
-            color={canGoPrev ? "#374151" : "#d1d5db"}
+            color={canGoPrev ? M.text : M.border}
           />
         </Pressable>
         <Text className="text-base font-semibold text-neutral-900 dark:text-white">
@@ -83,7 +85,7 @@ function CalendarPicker({
           accessibilityLabel="Next month"
           className="p-2"
         >
-          <IconSymbol name="chevron.right" size={18} color="#374151" />
+          <IconSymbol name="chevron.right" size={18} color={M.text} />
         </Pressable>
       </View>
 
@@ -157,6 +159,7 @@ export function DueDatePicker({
   value: Date | null;
   onChange: (date: Date | null) => void;
 }) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const [showPicker, setShowPicker] = useState(false);
 
@@ -174,7 +177,7 @@ export function DueDatePicker({
         }
         className="flex-row items-center rounded-xl bg-neutral-100 px-4 py-3 dark:bg-neutral-800"
       >
-        <IconSymbol name="calendar.badge.plus" size={18} color="#9ca3af" />
+        <IconSymbol name="calendar.badge.plus" size={18} color={M.muted} />
         {dateStr ? (
           <Text className="ml-2 flex-1 text-base text-neutral-900 dark:text-white">
             {dateStr}
@@ -191,7 +194,7 @@ export function DueDatePicker({
             accessibilityLabel="Clear due date"
             accessibilityRole="button"
           >
-            <IconSymbol name="xmark.circle.fill" size={20} color="#9ca3af" />
+            <IconSymbol name="xmark.circle.fill" size={20} color={M.muted} />
           </Pressable>
         )}
       </Pressable>

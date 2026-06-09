@@ -1,10 +1,12 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
 import {
   BADGE_LABELS,
   useContributors,
   type ContributorBadgeType,
   type ContributorProfile,
 } from "@/lib/hooks/use-contributors";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { Stack } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { FlatList, Text, View } from "react-native";
@@ -29,9 +31,10 @@ function ContributorRow({
   contributor: ContributorProfile;
   rank: number;
 }) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const medalColor =
-    rank === 1 ? "#f59e0b" : rank === 2 ? "#9ca3af" : rank === 3 ? "#cd7f32" : undefined;
+    rank === 1 ? getAccent("amber").solid : rank === 2 ? M.muted : rank === 3 ? "#cd7f32" : undefined;
 
   return (
     <View className="mb-2 rounded-xl bg-neutral-50 p-4 dark:bg-neutral-800">
