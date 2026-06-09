@@ -1,96 +1,90 @@
 ## Project Overview
 
-Beeli is an audio-first African-language learning platform (Izon and 70+ others, built for the diaspora). This repository is a **monorepo** of five workspaces — not a single Expo app. Each workspace has its own `package.json`, dependencies, and `.env`.
-
-| Workspace    | Stack                                      | Role                                                        |
-|--------------|--------------------------------------------|-------------------------------------------------------------|
-| `mobile/`    | Expo SDK 54 · RN 0.81 · React 19 · Router 6 | The learner app (iOS, Android, web). ~68k LOC.              |
-| `server/`    | Hono · Drizzle ORM · Neon Postgres · ESM    | Backend API (`/api/*`) — content, progress, billing, etc.  |
-| `web/`       | Next.js (App Router)                        | Educator portal + marketing/landing site (port 3001).      |
-| `partykit/`  | PartyKit · partysocket                      | Real-time multiplayer (quiz battles, paired lessons).      |
-| `data/`      | Next.js                                     | Internal language-data labeling/contribution tool (3002).  |
-
-`mobile` and `web` both authenticate with Clerk and call the `server` API. Multiplayer screens in `mobile` connect to `partykit`.
+Beeli is a React Native/Expo (SDK 54) mobile learning platform with tabs for learning, listening to audio lessons, journaling, community feed, and user profile. It targets iOS, Android, and web.
 
 ## Development Commands
 
-Always `cd` into the target workspace first — there is no root `package.json`.
-
 ```bash
-# mobile/
-npx expo start --no-dev --minify --clear   # Expo dev server
-npm run ios | android | web                # Run on a target
-npm run lint                               # expo lint
-npm test                                   # Jest (ts-jest)
-
-# server/
-npm run dev                                # tsx watch (port 3000)
-npm run build                              # tsc → dist/
-npm test                                   # Jest (ts-jest, CommonJS mode)
-npm run db:push                            # drizzle-kit push (schema → DB)
-npm run db:sync                            # seed/sync content into the DB
-
-# web/ and data/
-npm run dev                                # next dev (3001 / 3002)
-npm run lint                               # next lint --max-warnings 0
+npx expo start --no-dev --minify --clear            # Start Expo dev server
+npm run ios                                         # Run on iOS simulator
+npm run android                                     # Run on Android emulator
+npm run web                                         # Run in browser
+npm run lint                                        # ESLint check
 ```
 
 ## Architecture
 
-### Mobile routing (Expo Router v6 — file-based, under `mobile/app/`)
+### Routing (Expo Router v6 — file-based)
 
-- `mobile/app/index.tsx` — Auth guard: redirects to `/(tabs)/learn` if signed in, else `/(auth)/sign-in`
-- `mobile/app/(auth)/` — Clerk sign-in/up, email verification, password reset
-- `mobile/app/(tabs)/` — Bottom tabs: learn, listen, journal, feed, profile, leaderboard, plus an `educator/` group
-- `mobile/app/lesson/[id].tsx` and many feature routes (multiplayer, classroom, bounties, games, scripts)
+- `app/index.tsx` — Auth guard: redirects to `/(tabs)/learn` if signed in, `/(auth)/sign-in` if not
+- `app/(auth)/` — Sign-in and sign-up screens using Clerk
+- `app/(tabs)/` — Bottom tab navigation: learn, listen, journal, feed, profile
+- `app/lesson/[id].tsx` — Dynamic lesson detail route
 
-### Authentication (Clerk) — both client and server
+### Authentication (Clerk)
 
-- **Mobile:** `ClerkProvider` wraps the app in `mobile/app/_layout.tsx` with token caching via `expo-secure-store`. Helpers in `mobile/lib/auth.ts` (platform-aware; skips secure store on web). Requires `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`.
-- **Server:** `server/src/middleware/auth.ts` — `authMiddleware` verifies the Clerk JWT (`verifyToken`), then maps `clerkId → users.id`. Role gates layer on top: `adminMiddleware`, `reviewerMiddleware`, `professorMiddleware`, `elderMiddleware`. Admin routers mounted near public routes self-apply these gates.
-- **User sync:** the JWT carries only `sub` (no username/email). The mobile client keeps `users.name`/`email`/`avatarUrl` fresh by calling `POST /api/users/sync` once per session (`mobile/lib/hooks/use-sync-user.ts`). The auth middleware therefore does **not** call Clerk per request — it only fetches from Clerk on a user's first-ever request to create the row. **Do not reintroduce a per-request `clerkClient.users.getUser` call** in the hot path.
+- `ClerkProvider` wraps the app in `app/_layout.tsx` with token caching via `expo-secure-store`
+- Auth helpers in `lib/auth.ts` — platform-aware (skips secure store on web)
+- Requires `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` env var
 
-### Data fetching (React Query, mobile)
+### Data Fetching (React Query)
 
-- Query client in `mobile/lib/api.ts` (5min stale time, 2 retries). Typed `apiFetch<T>()` injects the Clerk token and throws `ApiError`; `friendlyError()` maps statuses to i18n strings.
-- API base URL from `EXPO_PUBLIC_API_URL` via `mobile/lib/constants.ts`.
+- Query client configured in `lib/api.ts` (5min stale time, 2 retries)
+- Generic `apiFetch<T>()` helper injects Clerk auth tokens
+- API base URL from `EXPO_PUBLIC_API_URL` env var via `lib/constants.ts`
 
-### Server (`server/src/`)
+### State Management (Zustand)
 
-- `app.ts` wires CORS (allowlist via `ALLOWED_ORIGINS` in prod, `*` in dev), the logger, the global error handler, and mounts every router under `/api`. `index.ts` is the Node entry.
-- Routers in `routes/`, shared logic in `lib/`, Drizzle schema in `db/schema.ts` (41 tables), client in `db/index.ts`.
-- Stripe webhooks (`routes/billing.ts`) are mounted before auth and verify the signature. Cron endpoints are gated by `CRON_SECRET`.
+- `store/audio-store.ts` — Audio playback state (play, pause, progress, duration)
+- Access via `useAudioStore()` hook
 
-### State management (Zustand, mobile)
+### Styling — the "Museum" design system (NativeWind + Tailwind CSS v3)
 
-- `mobile/store/audio-store.ts` — audio playback state; access via `useAudioStore()`.
+The mobile app uses a dark-first **"Museum"** system. Navigation chrome (headers,
+tab bar) is always dark (the "foyer"); content areas are mode-aware.
 
-### Styling (NativeWind + Tailwind v3, mobile)
+- **Tokens:** consume via `useMuseumTheme()` (`lib/use-museum-theme.ts`). Surfaces
+  `M.bg / M.card / M.border`, text `M.text / M.sub / M.muted`, foyer `M.parchment /
+  M.textDim`, accent `M.accent` (bronze gold `#C4862A`), and semantic state tokens
+  `M.success / M.error / M.warning / M.info` (+ `*Bg` / `*Border`).
+- **Never hardcode hex** for surfaces/text/state — use tokens so dark mode stays safe.
+  Categorical accents come from `getAccent(hue)` (`constants/accent-colors.ts`); course
+  and level palettes live in `constants/course-colors.ts`.
+- **Typography:** apply the loaded display font via `constants/typography.ts`
+  (`fonts.heading` = PlusJakartaSans, `type` scale). `Akagu` is for indigenous scripts.
+- **Primitives:** reuse `components/ui/{button,badge,section-header,screen-container}`.
+- Dark mode preference handled by `store/theme-store.ts` + `hooks/use-color-scheme.ts`;
+  the React Navigation `ThemeProvider` uses the always-dark Museum chrome theme.
+- Tailwind config in `tailwind.config.ts` (exposes `font-heading`), directives in
+  `global.css`. `constants/theme.ts` holds the React Navigation color shims.
 
-- `className` Tailwind props on RN components. Dark mode via React Navigation's `ThemeProvider`. Theme colors in `mobile/constants/theme.ts`; Tailwind config in `mobile/tailwind.config.ts`; directives in `mobile/global.css`.
+> Note: the `web/` app is a SEPARATE Next.js app with its own purple "gradient/glow"
+> system (`web/tailwind.config.ts`, `web/app/globals.css`) — do not mix the two.
 
-### Platform-specific code (mobile)
+### Platform-Specific Code
 
-- `.ios.tsx` / `.web.tsx` extensions for overrides. `components/ui/icon-symbol.tsx` (Material Icons, Android/web) vs `icon-symbol.ios.tsx` (SF Symbols). Haptics on iOS via `components/haptic-tab.tsx`.
+- Use `.ios.tsx` and `.web.tsx` file extensions for platform overrides
+- `components/ui/icon-symbol.tsx` (Material Icons for Android/Web) vs `icon-symbol.ios.tsx` (SF Symbols)
+- Haptic feedback on iOS via `components/haptic-tab.tsx`
 
 ## Key Configuration
 
-- **TypeScript strict mode** in all workspaces; in `mobile/` the path alias `@/*` maps to the **mobile** root.
-- **React Compiler** and **New Architecture** enabled in `mobile/app.json`; typed routes on for Expo Router.
-- `mobile` Babel: `babel-preset-expo` + `nativewind/babel`; Metro wrapped with `withNativeWind` using `global.css`.
-- `server` is native ESM (`"type": "module"`) with `.js`-suffixed relative imports; tests run via ts-jest in CommonJS mode.
+- **TypeScript strict mode** enabled; path alias `@/*` maps to project root
+- **React Compiler** and **New Architecture** both enabled in `app.json`
+- **Typed routes** enabled for Expo Router
+- Babel: `babel-preset-expo` + `nativewind/babel` plugin
+- Metro: wrapped with `withNativeWind` using `global.css`
 
 ## Type Definitions
 
-Mobile shared types in `mobile/types/index.ts` (`Lesson`, `JournalEntry`, `FeedItem`, `UserProfile`, …). Server types are colocated with the Drizzle schema in `server/src/db/schema.ts`.
+Shared types in `types/index.ts`: `Lesson`, `JournalEntry`, `FeedItem`, `UserProfile`.
 
 ## Environment Variables
 
-Per workspace (mobile/web/data ship a `.env.example`; server does not — set these directly):
+Required:
 
-- **mobile:** `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`, `EXPO_PUBLIC_API_URL` (see `mobile/.env.example`)
-- **server:** `DATABASE_URL`, `CLERK_SECRET_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `ALLOWED_ORIGINS`, `CRON_SECRET`
-- **web/data:** Clerk + API URL keys (see `web/.env.example`, `data/.env.local.example`)
+- `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` — Clerk authentication
+- `EXPO_PUBLIC_API_URL` — Backend API base URL
 
 ## French Tutoring & Study Partner Role
 
