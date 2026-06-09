@@ -1,7 +1,6 @@
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
-import { useMuseumTheme } from "@/lib/use-museum-theme";
 import {
     EducatorDictionaryCategory,
     EducatorDictionaryEntry,
@@ -57,7 +56,6 @@ const EMPTY_EDITOR: EditorState = {
 };
 
 export default function EducatorDictionaryScreen() {
-  const M = useMuseumTheme();
   const { t } = useTranslation();
   const { data: currentUser } = useCurrentUser();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
@@ -170,10 +168,10 @@ export default function EducatorDictionaryScreen() {
           </View>
           <View className="flex-row gap-2">
             <Pressable onPress={() => startEdit(item)} className="rounded-full bg-neutral-100 p-2 dark:bg-neutral-800">
-              <IconSymbol name="gearshape.fill" size={14} color="#6b7280" />
+              <IconSymbol name="gearshape.fill" size={14} color={M.muted} />
             </Pressable>
             <Pressable onPress={() => confirmDelete(item.id)} className="rounded-full bg-red-100 p-2 dark:bg-red-900/40">
-              <IconSymbol name="xmark.circle.fill" size={14} color={M.error} />
+              <IconSymbol name="xmark.circle.fill" size={14} color="#ef4444" />
             </Pressable>
           </View>
         </View>
@@ -230,28 +228,28 @@ export default function EducatorDictionaryScreen() {
             value={editor.word}
             onChangeText={(word) => setEditor((prev) => ({ ...prev, word }))}
             placeholder="Word"
-            placeholderTextColor={M.muted}
+            placeholderTextColor="#9ca3af"
             className="mt-3 rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
           />
           <TextInput
             value={editor.english}
             onChangeText={(english) => setEditor((prev) => ({ ...prev, english }))}
             placeholder="English translation"
-            placeholderTextColor={M.muted}
+            placeholderTextColor="#9ca3af"
             className="mt-2 rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
           />
           <TextInput
             value={editor.pronunciation}
             onChangeText={(pronunciation) => setEditor((prev) => ({ ...prev, pronunciation }))}
             placeholder="Pronunciation (optional)"
-            placeholderTextColor={M.muted}
+            placeholderTextColor="#9ca3af"
             className="mt-2 rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
           />
           <TextInput
             value={editor.example}
             onChangeText={(example) => setEditor((prev) => ({ ...prev, example }))}
             placeholder="Example sentence (optional)"
-            placeholderTextColor={M.muted}
+            placeholderTextColor="#9ca3af"
             multiline
             className="mt-2 min-h-[44px] rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
           />
@@ -259,7 +257,7 @@ export default function EducatorDictionaryScreen() {
             value={editor.exampleTranslation}
             onChangeText={(exampleTranslation) => setEditor((prev) => ({ ...prev, exampleTranslation }))}
             placeholder="Example translation (optional)"
-            placeholderTextColor={M.muted}
+            placeholderTextColor="#9ca3af"
             multiline
             className="mt-2 min-h-[44px] rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
           />
@@ -303,12 +301,12 @@ export default function EducatorDictionaryScreen() {
 
       <View className="mt-5 px-5">
         <View className="flex-row items-center rounded-xl bg-neutral-100 px-3 dark:bg-neutral-800">
-          <IconSymbol name="magnifyingglass" size={16} color={M.muted} />
+          <IconSymbol name="magnifyingglass" size={16} color="#9ca3af" />
           <TextInput
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Search entries…"
-            placeholderTextColor={M.muted}
+            placeholderTextColor="#9ca3af"
             autoCapitalize="none"
             autoCorrect={false}
             returnKeyType="search"
@@ -316,7 +314,7 @@ export default function EducatorDictionaryScreen() {
           />
           {searchQuery.length > 0 ? (
             <Pressable onPress={() => setSearchQuery("")} hitSlop={8}>
-              <IconSymbol name="xmark" size={14} color={M.muted} />
+              <IconSymbol name="xmark" size={14} color="#9ca3af" />
             </Pressable>
           ) : null}
         </View>
@@ -363,7 +361,7 @@ export default function EducatorDictionaryScreen() {
         <Text className="text-sm text-neutral-500 dark:text-neutral-400">{t("common.loading")}</Text>
       ) : isFiltered ? (
         <View className="items-center py-12">
-          <IconSymbol name="magnifyingglass" size={32} color={M.border} />
+          <IconSymbol name="magnifyingglass" size={32} color="#d1d5db" />
           <Text className="mt-3 text-center text-sm text-neutral-400 dark:text-neutral-500">No entries match your search.</Text>
           <Pressable
             onPress={() => { setSearchQuery(""); setFilterCategory(undefined); }}

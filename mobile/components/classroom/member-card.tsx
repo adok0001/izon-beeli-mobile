@@ -1,6 +1,6 @@
 import { View, Text, Pressable, Alert } from "react-native";
-import { getAccent } from "@/constants/accent-colors";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useTranslation } from "react-i18next";
 import type { GroupMember } from "@/types";
 
@@ -16,6 +16,7 @@ interface MemberCardProps {
 }
 
 export function MemberCard({ member, onRemove }: MemberCardProps) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const roleStyle = ROLE_COLORS[member.role] ?? ROLE_COLORS.student;
   const initial = member.name[0]?.toUpperCase() ?? "?";
@@ -53,19 +54,19 @@ export function MemberCard({ member, onRemove }: MemberCardProps) {
         </View>
         <View className="mt-1 flex-row items-center gap-3">
           <View className="flex-row items-center">
-            <IconSymbol name="checkmark.circle.fill" size={12} color="#22c55e" />
+            <IconSymbol name="checkmark.circle.fill" size={12} color={M.success} />
             <Text className="ml-0.5 text-xs text-neutral-500 dark:text-neutral-400">
               {member.lessonsCompleted}
             </Text>
           </View>
           <View className="flex-row items-center">
-            <IconSymbol name="flame.fill" size={12} color={getAccent("amber").solid} />
+            <IconSymbol name="flame.fill" size={12} color="#f59e0b" />
             <Text className="ml-0.5 text-xs text-neutral-500 dark:text-neutral-400">
               {member.streak}
             </Text>
           </View>
           <View className="flex-row items-center">
-            <IconSymbol name="star.fill" size={12} color={getAccent("blue").solid} />
+            <IconSymbol name="star.fill" size={12} color="#3b82f6" />
             <Text className="ml-0.5 text-xs text-neutral-500 dark:text-neutral-400">
               {member.points}
             </Text>
@@ -74,7 +75,7 @@ export function MemberCard({ member, onRemove }: MemberCardProps) {
       </View>
       {onRemove && (
         <Pressable onPress={handleRemovePress} hitSlop={8} className="ml-2 p-1">
-          <IconSymbol name="xmark.circle.fill" size={20} color="#ef4444" />
+          <IconSymbol name="xmark.circle.fill" size={20} color={M.error} />
         </Pressable>
       )}
     </View>
