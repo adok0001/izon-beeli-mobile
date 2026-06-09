@@ -530,7 +530,7 @@ export default function ContributeLessonScreen() {
                 {store.audioUri ? (
                   <View className="items-center rounded-2xl bg-green-50 p-8 dark:bg-green-950">
                     <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-                      <IconSymbol name="checkmark" size={28} color=M.success />
+                      <IconSymbol name="checkmark" size={28} color={M.success} />
                     </View>
                     <Text className="text-lg font-bold text-green-700 dark:text-green-400">
                       {t("contribute.audioReady")}
@@ -600,7 +600,7 @@ export default function ContributeLessonScreen() {
                         {store.isRecording ? (
                           <View className="h-5 w-5 rounded-sm bg-white" />
                         ) : (
-                          <IconSymbol name="mic.fill" size={22} color=M.error />
+                          <IconSymbol name="mic.fill" size={22} color={M.error} />
                         )}
                       </View>
                       <View className="flex-1">

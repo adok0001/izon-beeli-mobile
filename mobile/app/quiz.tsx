@@ -112,6 +112,7 @@ function ConfigView({ onStart }: { onStart: (count: number) => void }) {
 }
 
 function ActiveView() {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const {
     questions,
@@ -168,8 +169,6 @@ function ActiveView() {
       return "incorrect" as const;
     return "dimmed" as const;
   };
-
-  const M = useMuseumTheme();
 
   return (
     <View style={{ flex: 1 }}>

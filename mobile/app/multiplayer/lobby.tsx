@@ -192,7 +192,7 @@ export default function LobbyScreen() {
                 {params.inviteCode}
               </Text>
               <View className="mt-2 flex-row items-center">
-                <IconSymbol name="square.on.square" size={14} color=getAccent("blue").solid />
+                <IconSymbol name="square.on.square" size={14} color={getAccent("blue").solid} />
                 <Text className="ml-1 text-sm text-blue-500">
                   Tap to share
                 </Text>
@@ -251,7 +251,7 @@ export default function LobbyScreen() {
           {/* Status */}
           {isMatchmaking && !params.sessionId && (
             <View className="mb-6 items-center">
-              <ActivityIndicator size="large" color=getAccent("blue").solid />
+              <ActivityIndicator size="large" color={getAccent("blue").solid} />
               <Text className="mt-3 text-base text-neutral-500 dark:text-neutral-400">
                 Looking for an opponent...
               </Text>
@@ -260,7 +260,7 @@ export default function LobbyScreen() {
 
           {connectionStatus === "connecting" && (
             <View className="mb-6 items-center">
-              <ActivityIndicator size="small" color=getAccent("blue").solid />
+              <ActivityIndicator size="small" color={getAccent("blue").solid} />
               <Text className="mt-2 text-sm text-neutral-500">
                 Connecting...
               </Text>

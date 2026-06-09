@@ -301,7 +301,7 @@ export default function PairedLessonScreen() {
               value={chatInput}
               onChangeText={setChatInput}
               placeholder="Send a message..."
-              placeholderTextColor=M.muted
+              placeholderTextColor={M.muted}
               maxLength={200}
               onSubmitEditing={handleSendChat}
               returnKeyType="send"

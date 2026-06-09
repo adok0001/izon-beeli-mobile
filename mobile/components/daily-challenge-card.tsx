@@ -116,10 +116,10 @@ export function DailyChallengeCards() {
           className="active:opacity-60"
         >
           {isRefreshing ? (
-            <ActivityIndicator size="small" color=M.muted />
+            <ActivityIndicator size="small" color={M.muted} />
           ) : (
             <>
-              <IconSymbol name="arrow.clockwise" size={13} color=M.muted />
+              <IconSymbol name="arrow.clockwise" size={13} color={M.muted} />
               <Text style={{ fontSize: 12, color: M.muted }}>
                 {t("dailyChallenge.refresh")}
               </Text>

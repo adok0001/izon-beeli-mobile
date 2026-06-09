@@ -235,7 +235,7 @@ function ContributionRow({ item }: { item: MyContribution }) {
                         onPress={discardRecording}
                         className="h-12 w-12 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-700"
                       >
-                        <IconSymbol name="trash" size={18} color=M.error />
+                        <IconSymbol name="trash" size={18} color={M.error} />
                       </Pressable>
                     </View>
                     <Text className="mt-1.5 text-xs text-green-600 dark:text-green-400">New recording ready</Text>
@@ -254,7 +254,7 @@ function ContributionRow({ item }: { item: MyContribution }) {
                       {isRecording ? (
                         <View className="h-5 w-5 rounded-sm bg-white" />
                       ) : (
-                        <IconSymbol name="mic.fill" size={20} color=M.error />
+                        <IconSymbol name="mic.fill" size={20} color={M.error} />
                       )}
                     </Pressable>
                     {isRecording && <Text className="mt-1.5 text-xs text-red-500">Tap to stop</Text>}
@@ -270,11 +270,11 @@ function ContributionRow({ item }: { item: MyContribution }) {
                   <Image source={{ uri: newImageUri }} className="h-32 w-full" resizeMode="cover" />
                   <View className="flex-row justify-center gap-4 py-2">
                     <Pressable onPress={handleTakePhoto} className="flex-row items-center gap-1">
-                      <IconSymbol name="camera.fill" size={13} color=getAccent("blue").solid />
+                      <IconSymbol name="camera.fill" size={13} color={getAccent("blue").solid} />
                       <Text className="text-xs font-medium text-blue-500">Retake</Text>
                     </Pressable>
                     <Pressable onPress={handlePickImage} className="flex-row items-center gap-1">
-                      <IconSymbol name="photo" size={13} color=getAccent("blue").solid />
+                      <IconSymbol name="photo" size={13} color={getAccent("blue").solid} />
                       <Text className="text-xs font-medium text-blue-500">Gallery</Text>
                     </Pressable>
                   </View>
@@ -291,14 +291,14 @@ function ContributionRow({ item }: { item: MyContribution }) {
                       onPress={handleTakePhoto}
                       className="items-center gap-1"
                     >
-                      <IconSymbol name="camera.fill" size={24} color=M.muted />
+                      <IconSymbol name="camera.fill" size={24} color={M.muted} />
                       <Text className="text-xs text-neutral-400 dark:text-neutral-500">Camera</Text>
                     </Pressable>
                     <Pressable
                       onPress={handlePickImage}
                       className="items-center gap-1"
                     >
-                      <IconSymbol name="photo.badge.plus" size={24} color=M.muted />
+                      <IconSymbol name="photo.badge.plus" size={24} color={M.muted} />
                       <Text className="text-xs text-neutral-400 dark:text-neutral-500">Gallery</Text>
                     </Pressable>
                   </View>
@@ -435,7 +435,7 @@ function ContributionRow({ item }: { item: MyContribution }) {
                 </Pressable>
               )}
               <Pressable onPress={handleDelete} disabled={deleteContribution.isPending} hitSlop={8}>
-                <IconSymbol name="trash" size={15} color=M.error />
+                <IconSymbol name="trash" size={15} color={M.error} />
               </Pressable>
             </View>
           )}
@@ -535,7 +535,7 @@ export default function MyContributionsScreen() {
           ListEmptyComponent={
             <View className="items-center px-8 py-20">
               <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
-                <IconSymbol name="doc.text" size={28} color=M.muted />
+                <IconSymbol name="doc.text" size={28} color={M.muted} />
               </View>
               <Text className="text-center text-base font-semibold text-neutral-500 dark:text-neutral-400">
                 {isLoading ? t("common.loading") : t("myContributions.noContributions")}

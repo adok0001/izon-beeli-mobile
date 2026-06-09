@@ -216,7 +216,7 @@ export default function ContributeBulkScreen() {
                       {CATEGORY_LABELS[cat]}
                     </Text>
                     {selectedCategory === cat && (
-                      <IconSymbol name="checkmark.circle.fill" size={20} color=M.success />
+                      <IconSymbol name="checkmark.circle.fill" size={20} color={M.success} />
                     )}
                   </Pressable>
                 ))}
@@ -308,7 +308,7 @@ export default function ContributeBulkScreen() {
                   onPress={addRow}
                   className="mb-8 mt-1 flex-row items-center justify-center rounded-2xl border-2 border-dashed border-neutral-200 py-3.5 active:opacity-70 dark:border-neutral-700"
                 >
-                  <IconSymbol name="plus.circle.fill" size={16} color=M.success />
+                  <IconSymbol name="plus.circle.fill" size={16} color={M.success} />
                   <Text className="ml-2 text-sm font-semibold text-green-600 dark:text-green-400">
                     {t("contribute.addRow")}
                   </Text>

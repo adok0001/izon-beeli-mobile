@@ -147,7 +147,7 @@ export default function GroupDetailScreen() {
                 }
                 hitSlop={8}
               >
-                <IconSymbol name="plus.circle.fill" size={22} color=getAccent("blue").solid />
+                <IconSymbol name="plus.circle.fill" size={22} color={getAccent("blue").solid} />
               </Pressable>
             ) : null,
         }}
@@ -188,7 +188,7 @@ export default function GroupDetailScreen() {
               onPress={handleShareCode}
               className="mt-3 flex-row items-center justify-center gap-1.5 rounded-lg bg-blue-50 py-2 active:opacity-70 dark:bg-blue-900/20"
             >
-              <IconSymbol name="square.and.arrow.up" size={14} color=getAccent("blue").solid />
+              <IconSymbol name="square.and.arrow.up" size={14} color={getAccent("blue").solid} />
               <Text className="text-sm font-medium text-blue-600 dark:text-blue-400">
                 {t("classroom.shareCode")}
               </Text>
@@ -222,7 +222,7 @@ export default function GroupDetailScreen() {
             {t("classroom.assignments", { count: assignments.length })}
           </Text>
           {loadingAssignments ? (
-            <ActivityIndicator size="small" color=getAccent("blue").solid className="py-4" />
+            <ActivityIndicator size="small" color={getAccent("blue").solid} className="py-4" />
           ) : assignments.length === 0 ? (
             <Text className="py-4 text-center text-sm text-neutral-400 dark:text-neutral-500">
               {t("classroom.noAssignments")}
