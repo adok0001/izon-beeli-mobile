@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useAuth } from "@clerk/clerk-expo";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -31,6 +32,7 @@ interface ReviewerApplicationModalProps {
 export function ReviewerApplicationModal({ visible, onClose }: ReviewerApplicationModalProps) {
   const { getToken } = useAuth();
   const { t } = useTranslation();
+  const M = useMuseumTheme();
   const [role, setRole] = useState<ReviewerRole>("teacher");
   const [background, setBackground] = useState("");
   const [reason, setReason] = useState("");
@@ -148,7 +150,7 @@ export function ReviewerApplicationModal({ visible, onClose }: ReviewerApplicati
         <TextInput
           className="mb-1 min-h-[100px] rounded-xl border border-neutral-200 bg-neutral-50 p-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
           placeholder={t("reviewerApplication.backgroundPlaceholder")}
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={M.muted}
           multiline
           textAlignVertical="top"
           maxLength={1000}
@@ -166,7 +168,7 @@ export function ReviewerApplicationModal({ visible, onClose }: ReviewerApplicati
         <TextInput
           className="mb-1 min-h-[100px] rounded-xl border border-neutral-200 bg-neutral-50 p-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
           placeholder={t("reviewerApplication.reasonPlaceholder")}
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={M.muted}
           multiline
           textAlignVertical="top"
           maxLength={1000}
@@ -184,7 +186,7 @@ export function ReviewerApplicationModal({ visible, onClose }: ReviewerApplicati
         <TextInput
           className="mb-6 rounded-xl border border-neutral-200 bg-neutral-50 p-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
           placeholder={t("reviewerApplication.languagesPlaceholder")}
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={M.muted}
           autoCapitalize="none"
           value={languagesInput}
           onChangeText={setLanguagesInput}

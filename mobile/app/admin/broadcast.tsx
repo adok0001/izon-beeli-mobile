@@ -2,6 +2,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LanguagePickerModal } from "@/components/language-picker";
 import { apiFetch } from "@/lib/api";
 import { useLanguages } from "@/lib/hooks/use-languages";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { getAccent } from "@/constants/accent-colors";
 import { useAuth } from "@clerk/clerk-expo";
 import { Stack } from "expo-router";
 import { useState } from "react";
@@ -30,6 +32,7 @@ const BROADCAST_ICONS: { name: string; label: string }[] = [
 
 export default function BroadcastScreen() {
   const { t } = useTranslation();
+  const M = useMuseumTheme();
   const { getToken } = useAuth();
   const { data: languages = [] } = useLanguages();
 
@@ -99,7 +102,7 @@ export default function BroadcastScreen() {
               <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
                 {selectedLanguageName}
               </Text>
-              <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
+              <IconSymbol name="chevron.right" size={16} color={M.muted} />
             </Pressable>
             {languageId && (
               <Pressable
@@ -107,7 +110,7 @@ export default function BroadcastScreen() {
                 hitSlop={8}
                 className="h-10 w-10 items-center justify-center rounded-2xl bg-neutral-100 dark:bg-neutral-800 active:opacity-70"
               >
-                <IconSymbol name="xmark" size={16} color="#9ca3af" />
+                <IconSymbol name="xmark" size={16} color={M.muted} />
               </Pressable>
             )}
           </View>
@@ -125,7 +128,7 @@ export default function BroadcastScreen() {
             value={title}
             onChangeText={setTitle}
             placeholder={t("admin.notifications.titlePlaceholder")}
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor={M.muted}
             maxLength={100}
             className="rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-4 py-3 text-sm text-neutral-900 dark:text-white mb-5"
           />
@@ -138,7 +141,7 @@ export default function BroadcastScreen() {
             value={body}
             onChangeText={setBody}
             placeholder={t("admin.notifications.messagePlaceholder")}
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor={M.muted}
             maxLength={250}
             multiline
             numberOfLines={3}
@@ -167,7 +170,7 @@ export default function BroadcastScreen() {
                   <IconSymbol
                     name={name as any}
                     size={20}
-                    color={active ? "#2563eb" : "#9ca3af"}
+                    color={active ? getAccent("blue").solid : M.muted}
                   />
                   <Text className={`text-[10px] font-medium ${active ? "text-blue-600 dark:text-blue-400" : "text-neutral-400 dark:text-neutral-500"}`}>
                     {label}
@@ -181,7 +184,7 @@ export default function BroadcastScreen() {
           {(title.trim() || body.trim()) ? (
             <View className="rounded-2xl bg-neutral-100 dark:bg-neutral-800 px-4 py-4 mb-6">
               <View className="flex-row items-center gap-2 mb-2">
-                <IconSymbol name={selectedIcon as any} size={14} color="#9ca3af" />
+                <IconSymbol name={selectedIcon as any} size={14} color={M.muted} />
                 <Text className="text-xs font-semibold text-neutral-400 uppercase tracking-widest">
                   {t("admin.notifications.preview")}
                 </Text>
@@ -200,7 +203,7 @@ export default function BroadcastScreen() {
             {sending ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <IconSymbol name="paperplane.fill" size={16} color={canSend ? "#fff" : "#9ca3af"} />
+              <IconSymbol name="paperplane.fill" size={16} color={canSend ? M.parchment : M.muted} />
             )}
             <Text className={`text-base font-bold ${canSend ? "text-white" : "text-neutral-400"}`}>
               {sending ? t("admin.notifications.sending") : t("admin.notifications.send")}

@@ -2,6 +2,7 @@ import { useSignIn } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -17,6 +18,7 @@ export default function ResetPasswordScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
   const router = useRouter();
   const { t } = useTranslation();
+  const M = useMuseumTheme();
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -82,7 +84,7 @@ export default function ResetPasswordScreen() {
         <TextInput
           className="mb-4 rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3.5 text-center text-2xl font-bold text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
           placeholder="000000"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={M.muted}
           value={code}
           onChangeText={setCode}
           keyboardType="number-pad"
@@ -98,7 +100,7 @@ export default function ResetPasswordScreen() {
               : "border-neutral-300 dark:border-neutral-700"
           }`}
           placeholder={t("auth.newPassword")}
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={M.muted}
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -120,7 +122,7 @@ export default function ResetPasswordScreen() {
               : "border-neutral-300 dark:border-neutral-700"
           }`}
           placeholder={t("auth.confirmPassword")}
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={M.muted}
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           secureTextEntry
