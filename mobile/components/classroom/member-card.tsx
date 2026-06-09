@@ -1,3 +1,4 @@
+import { getAccent } from "@/constants/accent-colors";
 import { View, Text, Pressable, Alert } from "react-native";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -60,13 +61,13 @@ export function MemberCard({ member, onRemove }: MemberCardProps) {
             </Text>
           </View>
           <View className="flex-row items-center">
-            <IconSymbol name="flame.fill" size={12} color="#f59e0b" />
+            <IconSymbol name="flame.fill" size={12} color=getAccent("amber").solid />
             <Text className="ml-0.5 text-xs text-neutral-500 dark:text-neutral-400">
               {member.streak}
             </Text>
           </View>
           <View className="flex-row items-center">
-            <IconSymbol name="star.fill" size={12} color="#3b82f6" />
+            <IconSymbol name="star.fill" size={12} color=getAccent("blue").solid />
             <Text className="ml-0.5 text-xs text-neutral-500 dark:text-neutral-400">
               {member.points}
             </Text>

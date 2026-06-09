@@ -407,7 +407,7 @@ export default function DiscoverScreen() {
               borderRadius: 16, overflow: "hidden",
               backgroundColor: "#0F1B4A",
               borderWidth: 1, borderColor: "rgba(59, 130, 246, 0.3)",
-              borderLeftWidth: 4, borderLeftColor: "#3b82f6",
+              borderLeftWidth: 4, borderLeftColor: getAccent("blue").solid,
             }}
             className="active:opacity-70"
           >

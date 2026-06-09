@@ -260,7 +260,7 @@ export default function ContributeScreen() {
 
                 {([
                   { onPress: () => setStep("language"), bg: M.accentGlow, iconBg: M.accent, icon: "character.book.closed", iconColor: M.ink, title: t("contribute.wordOrPhrase"), desc: t("contribute.wordOrPhraseDesc"), chevronColor: M.accent },
-                  { onPress: () => router.push("/contribute-bulk"), bg: "#22c55e10", iconBg: "#22c55e", icon: "list.bullet.clipboard", iconColor: "#fff", title: t("contribute.bulkWords"), desc: t("contribute.bulkWordsDesc"), chevronColor: "#22c55e" },
+                  { onPress: () => router.push("/contribute-bulk"), bg: M.successBg, iconBg: M.success, icon: "list.bullet.clipboard", iconColor: M.ink, title: t("contribute.bulkWords"), desc: t("contribute.bulkWordsDesc"), chevronColor: M.success },
                   { onPress: () => router.push("/contribute-lesson"), bg: getAccent("purple").bg, iconBg: getAccent("purple").solid, icon: "waveform", iconColor: M.parchment, title: t("contribute.fullLesson"), desc: t("contribute.fullLessonDesc"), chevronColor: getAccent("purple").solid },
                   { onPress: () => router.push("/bounties"), bg: `${M.accent}10`, iconBg: M.accent, icon: "star.fill", iconColor: M.ink, title: t("contribute.activeBounties"), desc: t("contribute.activeBountiesDesc"), chevronColor: M.accent },
                   { onPress: () => router.push("/reviewer-application"), bg: "#6366f110", iconBg: "#6366f1", icon: "shield.fill", iconColor: "#fff", title: "Become a Reviewer", desc: "Apply to review contributions and help maintain content quality.", chevronColor: "#6366f1" },
@@ -547,16 +547,16 @@ export default function ContributeScreen() {
                     <View style={{ alignItems: "center" }}>
                       <Pressable
                         onPress={isPlaying ? stopPlayback : playRecording}
-                        style={{ height: 64, width: 64, alignItems: "center", justifyContent: "center", borderRadius: 32, backgroundColor: isPlaying ? M.accent : "#10b98120" }}
+                        style={{ height: 64, width: 64, alignItems: "center", justifyContent: "center", borderRadius: 32, backgroundColor: isPlaying ? M.accent : getAccent("teal").bg }}
                         className="active:opacity-70"
                       >
                         <IconSymbol
                           name={isPlaying ? "stop.fill" : "play.fill"}
                           size={24}
-                          color={isPlaying ? M.ink : "#10b981"}
+                          color={isPlaying ? M.ink : getAccent("teal").solid}
                         />
                       </Pressable>
-                      <Text style={{ marginTop: 8, fontSize: 13, color: "#10b981" }}>
+                      <Text style={{ marginTop: 8, fontSize: 13, color: getAccent("teal").solid }}>
                         {t("contribute.recordingSaved")}
                       </Text>
                       <Pressable
@@ -572,18 +572,18 @@ export default function ContributeScreen() {
                   ) : (
                     <Pressable
                       onPress={isRecording ? stopRecording : startRecording}
-                      style={{ height: 64, width: 64, alignItems: "center", justifyContent: "center", borderRadius: 32, backgroundColor: isRecording ? "#ef4444" : "#ef444420" }}
+                      style={{ height: 64, width: 64, alignItems: "center", justifyContent: "center", borderRadius: 32, backgroundColor: isRecording ? M.error : M.errorBg }}
                       className="active:opacity-70"
                     >
                       {isRecording ? (
-                        <View style={{ height: 24, width: 24, borderRadius: 4, backgroundColor: "#fff" }} />
+                        <View style={{ height: 24, width: 24, borderRadius: 4, backgroundColor: M.parchment }} />
                       ) : (
-                        <IconSymbol name="mic.fill" size={24} color="#ef4444" />
+                        <IconSymbol name="mic.fill" size={24} color={M.error} />
                       )}
                     </Pressable>
                   )}
                   {isRecording && (
-                    <Text style={{ marginTop: 8, fontSize: 13, color: "#ef4444" }}>
+                    <Text style={{ marginTop: 8, fontSize: 13, color: M.error }}>
                       {t("contribute.recordingTapToStop")}
                     </Text>
                   )}

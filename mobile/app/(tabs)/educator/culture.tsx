@@ -1,3 +1,5 @@
+import { getAccent } from "@/constants/accent-colors";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { friendlyError } from "@/lib/api";
@@ -100,6 +102,7 @@ const inputCls =
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function EducatorCultureScreen() {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const { data: currentUser } = useCurrentUser();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
@@ -384,7 +387,7 @@ export default function EducatorCultureScreen() {
             value={proverbForm.text}
             onChangeText={(text) => setProverbForm((p) => ({ ...p, text }))}
             placeholder={t("educator.culture.proverbText")}
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor=M.muted
             multiline
             className={`${inputCls} min-h-[44px]`}
           />
@@ -392,21 +395,21 @@ export default function EducatorCultureScreen() {
             value={proverbForm.translation}
             onChangeText={(translation) => setProverbForm((p) => ({ ...p, translation }))}
             placeholder={t("educator.culture.englishTranslation")}
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor=M.muted
             className={`mt-2 ${inputCls}`}
           />
           <TextInput
             value={proverbForm.translationFr}
             onChangeText={(translationFr) => setProverbForm((p) => ({ ...p, translationFr }))}
             placeholder={t("educator.culture.frenchTranslation")}
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor=M.muted
             className={`mt-2 ${inputCls}`}
           />
           <TextInput
             value={proverbForm.meaning}
             onChangeText={(meaning) => setProverbForm((p) => ({ ...p, meaning }))}
             placeholder={t("educator.culture.meaningLabel")}
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor=M.muted
             multiline
             className={`mt-2 ${inputCls} min-h-[44px]`}
           />
@@ -414,7 +417,7 @@ export default function EducatorCultureScreen() {
             value={proverbForm.meaningFr}
             onChangeText={(meaningFr) => setProverbForm((p) => ({ ...p, meaningFr }))}
             placeholder={t("educator.culture.meaningFr")}
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor=M.muted
             multiline
             className={`mt-2 ${inputCls} min-h-[44px]`}
           />
@@ -422,21 +425,21 @@ export default function EducatorCultureScreen() {
             value={proverbForm.literal}
             onChangeText={(literal) => setProverbForm((p) => ({ ...p, literal }))}
             placeholder={t("educator.culture.literalLabel")}
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor=M.muted
             className={`mt-2 ${inputCls}`}
           />
           <TextInput
             value={proverbForm.context}
             onChangeText={(context) => setProverbForm((p) => ({ ...p, context }))}
             placeholder={t("educator.culture.contextLabel")}
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor=M.muted
             className={`mt-2 ${inputCls}`}
           />
           <TextInput
             value={proverbForm.tags}
             onChangeText={(tags) => setProverbForm((p) => ({ ...p, tags }))}
             placeholder={t("educator.culture.tagsLabel")}
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor=M.muted
             className={`mt-2 ${inputCls}`}
           />
           <View className="mt-4 flex-row gap-2">
@@ -481,7 +484,7 @@ export default function EducatorCultureScreen() {
               value={culturalForm.imageEmoji}
               onChangeText={(imageEmoji) => setCulturalForm((c) => ({ ...c, imageEmoji }))}
               placeholder="🌍"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor=M.muted
               maxLength={8}
               className={`${inputCls} w-16 text-center text-xl`}
             />
@@ -489,7 +492,7 @@ export default function EducatorCultureScreen() {
               value={culturalForm.title}
               onChangeText={(title) => setCulturalForm((c) => ({ ...c, title }))}
               placeholder={t("educator.culture.titleLabel")}
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor=M.muted
               className={`${inputCls} flex-1`}
             />
           </View>
@@ -497,7 +500,7 @@ export default function EducatorCultureScreen() {
             value={culturalForm.titleFr}
             onChangeText={(titleFr) => setCulturalForm((c) => ({ ...c, titleFr }))}
             placeholder="Titre en français"
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor=M.muted
             className={`mt-2 ${inputCls}`}
           />
 
@@ -527,7 +530,7 @@ export default function EducatorCultureScreen() {
             value={culturalForm.description}
             onChangeText={(description) => setCulturalForm((c) => ({ ...c, description }))}
             placeholder={t("educator.culture.descriptionLabel")}
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor=M.muted
             multiline
             className={`mt-3 ${inputCls} min-h-[60px]`}
           />
@@ -535,7 +538,7 @@ export default function EducatorCultureScreen() {
             value={culturalForm.descriptionFr}
             onChangeText={(descriptionFr) => setCulturalForm((c) => ({ ...c, descriptionFr }))}
             placeholder={t("educator.culture.descriptionFrLabel")}
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor=M.muted
             multiline
             className={`mt-2 ${inputCls} min-h-[60px]`}
           />
@@ -553,7 +556,7 @@ export default function EducatorCultureScreen() {
               }
               className="flex-row items-center gap-1"
             >
-              <IconSymbol name="plus.circle.fill" size={16} color="#a855f7" />
+              <IconSymbol name="plus.circle.fill" size={16} color=getAccent("purple").solid />
               <Text className="text-xs font-semibold text-purple-500">
                 {t("educator.culture.addTerm")}
               </Text>
@@ -571,7 +574,7 @@ export default function EducatorCultureScreen() {
                   })
                 }
                 placeholder={t("educator.culture.nativeWord")}
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor=M.muted
                 className={`${inputCls} flex-1`}
               />
               <TextInput
@@ -584,7 +587,7 @@ export default function EducatorCultureScreen() {
                   })
                 }
                 placeholder={t("educator.culture.englishWord")}
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor=M.muted
                 className={`${inputCls} flex-1`}
               />
               <Pressable
@@ -596,7 +599,7 @@ export default function EducatorCultureScreen() {
                 }
                 className="w-8 items-center justify-center"
               >
-                <IconSymbol name="xmark.circle.fill" size={18} color="#ef4444" />
+                <IconSymbol name="xmark.circle.fill" size={18} color=M.error />
               </Pressable>
             </View>
           ))}
@@ -632,7 +635,7 @@ export default function EducatorCultureScreen() {
       {/* Search */}
       <View className="mt-5 px-5">
         <View className="flex-row items-center rounded-xl bg-neutral-100 px-3 dark:bg-neutral-800">
-          <IconSymbol name="magnifyingglass" size={16} color="#9ca3af" />
+          <IconSymbol name="magnifyingglass" size={16} color=M.muted />
           <TextInput
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -641,14 +644,14 @@ export default function EducatorCultureScreen() {
                 ? t("educator.culture.searchProverbs")
                 : t("educator.culture.searchCultural")
             }
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor=M.muted
             autoCapitalize="none"
             autoCorrect={false}
             className="ml-2 flex-1 py-2.5 text-sm text-neutral-900 dark:text-white"
           />
           {searchQuery.length > 0 && (
             <Pressable onPress={() => setSearchQuery("")} hitSlop={8}>
-              <IconSymbol name="xmark" size={14} color="#9ca3af" />
+              <IconSymbol name="xmark" size={14} color=M.muted />
             </Pressable>
           )}
         </View>
@@ -713,7 +716,7 @@ export default function EducatorCultureScreen() {
                 onPress={() => confirmDeleteProverb(p.id)}
                 className="rounded-full bg-red-100 p-2 dark:bg-red-900/40"
               >
-                <IconSymbol name="xmark.circle.fill" size={14} color="#ef4444" />
+                <IconSymbol name="xmark.circle.fill" size={14} color=M.error />
               </Pressable>
             </View>
           </View>
@@ -764,7 +767,7 @@ export default function EducatorCultureScreen() {
               onPress={() => confirmDeleteCultural(c.id)}
               className="rounded-full bg-red-100 p-2 dark:bg-red-900/40"
             >
-              <IconSymbol name="xmark.circle.fill" size={14} color="#ef4444" />
+              <IconSymbol name="xmark.circle.fill" size={14} color=M.error />
             </Pressable>
           </View>
         </View>
@@ -795,7 +798,7 @@ export default function EducatorCultureScreen() {
           <IconSymbol
             name={tab === "proverbs" ? "quote.bubble.fill" : "globe"}
             size={32}
-            color="#d1d5db"
+            color=M.border
           />
           <Text className="mt-3 text-center text-sm text-neutral-400 dark:text-neutral-500">
             {q

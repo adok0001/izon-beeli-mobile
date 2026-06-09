@@ -1,3 +1,4 @@
+import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
@@ -191,7 +192,7 @@ export default function LobbyScreen() {
                 {params.inviteCode}
               </Text>
               <View className="mt-2 flex-row items-center">
-                <IconSymbol name="square.on.square" size={14} color="#3b82f6" />
+                <IconSymbol name="square.on.square" size={14} color=getAccent("blue").solid />
                 <Text className="ml-1 text-sm text-blue-500">
                   Tap to share
                 </Text>
@@ -250,7 +251,7 @@ export default function LobbyScreen() {
           {/* Status */}
           {isMatchmaking && !params.sessionId && (
             <View className="mb-6 items-center">
-              <ActivityIndicator size="large" color="#3b82f6" />
+              <ActivityIndicator size="large" color=getAccent("blue").solid />
               <Text className="mt-3 text-base text-neutral-500 dark:text-neutral-400">
                 Looking for an opponent...
               </Text>
@@ -259,7 +260,7 @@ export default function LobbyScreen() {
 
           {connectionStatus === "connecting" && (
             <View className="mb-6 items-center">
-              <ActivityIndicator size="small" color="#3b82f6" />
+              <ActivityIndicator size="small" color=getAccent("blue").solid />
               <Text className="mt-2 text-sm text-neutral-500">
                 Connecting...
               </Text>

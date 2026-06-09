@@ -80,7 +80,7 @@ function StoryArcTab({
   if (arcsLoading) {
     return (
       <View className="flex-1 items-center justify-center">
-        <ActivityIndicator size="large" color="#f59e0b" />
+        <ActivityIndicator size="large" color=getAccent("amber").solid />
       </View>
     );
   }
@@ -136,7 +136,7 @@ function StoryArcTab({
               {isSelected && (
                 <View className="mt-3">
                   {arcDetailLoading ? (
-                    <ActivityIndicator size="small" color="#f59e0b" />
+                    <ActivityIndicator size="small" color=getAccent("amber").solid />
                   ) : selectedArcDetail ? (
                     <>
                       <Text className="mb-2 text-sm text-neutral-500 dark:text-neutral-400">
@@ -307,7 +307,7 @@ export default function AssignLessonScreen() {
         {tab === "lessons" ? (
           isLoading ? (
             <View className="flex-1 items-center justify-center">
-              <ActivityIndicator size="large" color="#3b82f6" />
+              <ActivityIndicator size="large" color=getAccent("blue").solid />
             </View>
           ) : (
             <FlatList

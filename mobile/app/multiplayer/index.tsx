@@ -1,3 +1,4 @@
+import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useState } from "react";
 import {
@@ -283,7 +284,7 @@ export default function MultiplayerHubScreen() {
                     }
                     size={20}
                     color={
-                      session.type === "quiz_battle" ? "#3b82f6" : "#a855f7"
+                      session.type === "quiz_battle" ? getAccent("blue").solid : getAccent("purple").solid
                     }
                   />
                   <View className="ml-3 flex-1">

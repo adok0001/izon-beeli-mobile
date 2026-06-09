@@ -1,3 +1,4 @@
+import { getAccent } from "@/constants/accent-colors";
 import { LoadingScreen } from "@/components/loading-screen";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import {
@@ -77,7 +78,7 @@ function GroupCard({ group }: { group: Group }) {
           <IconSymbol name="doc.on.doc" size={11} color={M.muted} className="ml-1.5" />
         </Pressable>
         <Pressable onPress={handleShareCode} hitSlop={8}>
-          <IconSymbol name="square.and.arrow.up" size={16} color="#3b82f6" />
+          <IconSymbol name="square.and.arrow.up" size={16} color=getAccent("blue").solid />
         </Pressable>
       </View>
     </Pressable>
@@ -107,7 +108,7 @@ export default function ClassroomScreen() {
               onPress={() => router.push("/classroom/create")}
               hitSlop={8}
             >
-              <IconSymbol name="plus" size={22} color="#3b82f6" />
+              <IconSymbol name="plus" size={22} color=getAccent("blue").solid />
             </Pressable>
           ),
         }}

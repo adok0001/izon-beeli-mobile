@@ -4,6 +4,7 @@ import { useState } from "react";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useRegenerateDailyChallenges, useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
 import { ApiError } from "@/lib/api";
+import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useTranslation } from "react-i18next";
 import type { ChallengeType, DailyChallenge } from "@/types";
@@ -17,16 +18,16 @@ function ChallengeItem({ challenge }: { challenge: DailyChallenge }) {
     ChallengeType,
     { icon: string; color: string; route: string }
   > = {
-    complete_quiz: { icon: "trophy.fill", color: "#f59e0b", route: "/quiz" },
-    review_words: { icon: "brain.fill", color: "#8b5cf6", route: "/word-review" },
-    listen_lesson: { icon: "headphones", color: "#3b82f6", route: "/(tabs)/learn" },
+    complete_quiz: { icon: "trophy.fill", color: M.warning, route: "/quiz" },
+    review_words: { icon: "brain.fill", color: getAccent("purple").solid, route: "/word-review" },
+    listen_lesson: { icon: "headphones", color: getAccent("blue").solid, route: "/(tabs)/learn" },
     complete_lesson: { icon: "checkmark.circle.fill", color: M.success, route: "/(tabs)/learn" },
     save_words: { icon: "bookmark.fill", color: "#ec4899", route: "/dictionary" },
   };
 
   const config = CHALLENGE_CONFIG[challenge.challengeType] ?? {
     icon: "star.fill",
-    color: "#3b82f6",
+    color: getAccent("blue").solid,
     route: "/(tabs)/learn",
   };
 
@@ -115,11 +116,11 @@ export function DailyChallengeCards() {
           className="active:opacity-60"
         >
           {isRefreshing ? (
-            <ActivityIndicator size="small" color="#9ca3af" />
+            <ActivityIndicator size="small" color=M.muted />
           ) : (
             <>
-              <IconSymbol name="arrow.clockwise" size={13} color="#9ca3af" />
-              <Text style={{ fontSize: 12, color: "#9ca3af" }}>
+              <IconSymbol name="arrow.clockwise" size={13} color=M.muted />
+              <Text style={{ fontSize: 12, color: M.muted }}>
                 {t("dailyChallenge.refresh")}
               </Text>
             </>
