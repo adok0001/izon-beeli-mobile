@@ -127,11 +127,12 @@ function ReviewerProfileCard({
 function PendingCard({
   createdAt, role, onCancel, cancelling,
 }: Readonly<{ createdAt: string; role: string; onCancel: () => void; cancelling: boolean }>) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   return (
     <View className="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
       <View className="mb-2 flex-row items-center gap-2">
-        <IconSymbol name="clock.fill" size={18} color="#f59e0b" />
+        <IconSymbol name="clock.fill" size={18} color={M.warning} />
         <Text className="font-semibold text-amber-700 dark:text-amber-300">
           {t("reviewerApplication.pendingTitle")}
         </Text>
@@ -148,7 +149,7 @@ function PendingCard({
         className="mt-4 flex-row items-center justify-center gap-1.5 rounded-xl border border-amber-300 py-2.5 active:opacity-70 dark:border-amber-700"
       >
         {cancelling ? (
-          <ActivityIndicator size="small" color="#f59e0b" />
+          <ActivityIndicator size="small" color={M.warning} />
         ) : (
           <>
             <IconSymbol name="xmark.circle" size={15} color="#d97706" />
@@ -422,6 +423,7 @@ function ApplicationForm({
   canSubmit: boolean; pending: boolean; onSubmit: () => void;
   isUpdate: boolean;
 }>) {
+  const M = useMuseumTheme();
   const isDark = useColorScheme() === "dark";
   const chipIconColor = isDark ? "#c7d2fe" : "#4338ca";
   const [langSearch, setLangSearch] = useState("");
@@ -482,12 +484,12 @@ function ApplicationForm({
       </Text>
 
       <View className="mb-2 flex-row items-center rounded-xl border border-neutral-200 bg-neutral-50 px-3 dark:border-neutral-700 dark:bg-neutral-800">
-        <IconSymbol name="magnifyingglass" size={16} color="#9ca3af" />
+        <IconSymbol name="magnifyingglass" size={16} color={M.muted} />
         <TextInput
           value={langSearch}
           onChangeText={setLangSearch}
           placeholder={t("reviewerApplication.langSearchPlaceholder")}
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={M.muted}
           autoCorrect={false}
           autoCapitalize="none"
           returnKeyType="search"
@@ -495,7 +497,7 @@ function ApplicationForm({
         />
         {langSearch.length > 0 && (
           <Pressable onPress={() => setLangSearch("")} hitSlop={8}>
-            <IconSymbol name="xmark.circle.fill" size={16} color="#9ca3af" />
+            <IconSymbol name="xmark.circle.fill" size={16} color={M.muted} />
           </Pressable>
         )}
       </View>
@@ -579,7 +581,7 @@ function ApplicationForm({
         value={background}
         onChangeText={setBackground}
         placeholder={isUpdate ? t("reviewerApplication.backgroundOptionalHint") : t("reviewerApplication.backgroundPlaceholder")}
-        placeholderTextColor="#9ca3af"
+        placeholderTextColor={M.muted}
         multiline
         numberOfLines={4}
         textAlignVertical="top"
@@ -597,7 +599,7 @@ function ApplicationForm({
         value={reason}
         onChangeText={setReason}
         placeholder={isUpdate ? t("reviewerApplication.reasonOptionalHint") : t("reviewerApplication.reasonPlaceholder")}
-        placeholderTextColor="#9ca3af"
+        placeholderTextColor={M.muted}
         multiline
         numberOfLines={4}
         textAlignVertical="top"

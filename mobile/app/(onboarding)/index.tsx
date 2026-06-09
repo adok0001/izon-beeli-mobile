@@ -2,6 +2,7 @@
 import { ProgressBar } from "@/components/quiz/progress-bar";
 import { QuestionTypeLabel } from "@/components/quiz/question-type-label";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
 import { apiFetch } from "@/lib/api";
 import type { DictionaryEntry } from "@/lib/dictionary";
 import { hapticError, hapticSuccess } from "@/lib/haptics";
@@ -320,11 +321,11 @@ export default function OnboardingScreen() {
             </Pressable>
             <Pressable
               onPress={() => router.push("/reviewer-application")}
-              style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 16, borderWidth: 2, borderColor: "#10b981", paddingVertical: 16 }}
+              style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 16, borderWidth: 2, borderColor: getAccent("teal").solid, paddingVertical: 16 }}
               className="active:opacity-80"
             >
-              <IconSymbol name="person.badge.plus" size={18} color="#10b981" />
-              <Text style={{ fontSize: 15, fontWeight: "700", color: "#10b981" }}>
+              <IconSymbol name="person.badge.plus" size={18} color={getAccent("teal").solid} />
+              <Text style={{ fontSize: 15, fontWeight: "700", color: getAccent("teal").solid }}>
                 {t("onboarding.applyContributor")}
               </Text>
             </Pressable>
