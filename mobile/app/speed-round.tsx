@@ -1,13 +1,14 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { apiFetch } from "@/lib/api";
+import { QuizSaveStatus } from "@/components/quiz-save-status";
+import { useSubmitQuizResult } from "@/lib/hooks/use-quiz-result";
 import { Circle, Svg } from "react-native-svg";
 import { hapticError, hapticHeavy, hapticSuccess } from "@/lib/haptics";
+import { shuffle } from "@/lib/shuffle";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { playCorrectSound, playFinishSound, playIncorrectSound } from "@/lib/sounds";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import type { DictionaryEntry } from "@/lib/dictionary";
-import { useAuth } from "@clerk/clerk-expo";
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Pressable, Text, View } from "react-native";
@@ -21,10 +22,6 @@ interface SpeedQuestion {
   correct: string;
   options: string[];
   correctIndex: number;
-}
-
-function shuffle<T>(arr: T[]): T[] {
-  return [...arr].sort(() => Math.random() - 0.5);
 }
 
 function buildQuestions(entries: DictionaryEntry[]): SpeedQuestion[] {
@@ -97,10 +94,13 @@ function OptionTile({
   );
 }
 
+// Per-route error boundary — shows a recoverable message if this screen throws.
+export { ErrorBoundary } from "@/components/screen-error-boundary";
+
 export default function SpeedRoundScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
-  const { getToken } = useAuth();
+  const { submit: submitResult, retry: retryResult, status: saveStatus } = useSubmitQuizResult();
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
   const { data: entries = [] } = useDictionary(selectedLanguageId);
 
@@ -124,15 +124,8 @@ export default function SpeedRoundScreen() {
     hapticHeavy();
     setScore(finalScore);
     setPhase("results");
-    getToken().then((token) => {
-      if (!token) return;
-      apiFetch("/quiz-results", {
-        method: "POST",
-        token,
-        body: JSON.stringify({ languageId: selectedLanguageId, score: finalScore, accuracy: total > 0 ? Math.round((finalScore / total) * 100) : 0, durationMs: TOTAL_SECONDS * 1000, questionCount: total }),
-      }).catch(() => {});
-    });
-  }, [getToken]);
+    void submitResult({ languageId: selectedLanguageId, score: finalScore, accuracy: total > 0 ? Math.round((finalScore / total) * 100) : 0, durationMs: TOTAL_SECONDS * 1000, questionCount: total });
+  }, [submitResult, selectedLanguageId]);
 
   const startGame = useCallback(() => {
     const qs = buildQuestions(entries);
@@ -250,6 +243,7 @@ export default function SpeedRoundScreen() {
           <Text style={{ fontSize: 15, color: M.sub, textAlign: "center" }}>
             You answered {score} {score === 1 ? "word" : "words"} correctly
           </Text>
+          <QuizSaveStatus status={saveStatus} onRetry={retryResult} />
           <View style={{ width: "100%", gap: 10, marginTop: 32 }}>
             <Pressable onPress={startGame} style={{ borderRadius: 14, paddingVertical: 16, backgroundColor: M.accent, alignItems: "center" }}>
               <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>Play Again</Text>

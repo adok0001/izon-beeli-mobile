@@ -961,7 +961,9 @@ export const wordChallengeSubmissions = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
-    index("wc_submissions_user_idx").on(table.userId),
+    // One submission per user per word — also serves user-scoped lookups and
+    // blocks XP farming via repeated submissions of the same word.
+    uniqueIndex("wc_submissions_user_word_idx").on(table.userId, table.wordId),
     index("wc_submissions_word_idx").on(table.wordId),
   ]
 );

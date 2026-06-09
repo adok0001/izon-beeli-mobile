@@ -1,13 +1,14 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { apiFetch } from "@/lib/api";
+import { QuizSaveStatus } from "@/components/quiz-save-status";
+import { useSubmitQuizResult } from "@/lib/hooks/use-quiz-result";
 import { hapticError, hapticHeavy, hapticSuccess, hapticTap } from "@/lib/haptics";
+import { shuffle } from "@/lib/shuffle";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { useWordsDueForReview } from "@/lib/hooks/use-wordbank";
 import { playCorrectSound, playFinishSound, playIncorrectSound } from "@/lib/sounds";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import type { DictionaryEntry } from "@/lib/dictionary";
-import { useAuth } from "@clerk/clerk-expo";
 import { Stack, useRouter } from "expo-router";
 import * as Speech from "expo-speech";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -17,10 +18,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const GRID_SIZE = 5;
 const TOTAL_TILES = GRID_SIZE * GRID_SIZE;
 const FREE_CELL = Math.floor(TOTAL_TILES / 2); // index 12 = center
-
-function shuffle<T>(arr: T[]): T[] {
-  return [...arr].sort(() => Math.random() - 0.5);
-}
 
 interface BingoTile {
   word: string;
@@ -112,10 +109,13 @@ function TileView({ tile, index, onPress, shake }: { tile: BingoTile; index: num
   );
 }
 
+// Per-route error boundary — shows a recoverable message if this screen throws.
+export { ErrorBoundary } from "@/components/screen-error-boundary";
+
 export default function RecallBingoScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
-  const { getToken } = useAuth();
+  const { submit: submitResult, retry: retryResult, status: saveStatus } = useSubmitQuizResult();
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
   const { data: dueWords = [] } = useWordsDueForReview(selectedLanguageId);
   const { data: allWords = [] } = useDictionary(selectedLanguageId);
@@ -127,12 +127,19 @@ export default function RecallBingoScreen() {
   const [shakeTile, setShakeTile] = useState<number | null>(null);
   const [startTime, setStartTime] = useState(0);
   const [correctHits, setCorrectHits] = useState(0);
+  const correctHitsRef = useRef(0);
   const callIndexRef = useRef(0);
 
   const startGame = useCallback(() => {
-    const pool: DictionaryEntry[] = dueWords.length >= TOTAL_TILES - 1
-      ? dueWords
-      : [...dueWords, ...allWords.filter((e) => !dueWords.find((d) => d.id === e.id))];
+    // dueWords are word-bank references; resolve each to its dictionary entry
+    // so the tiles have an actual word/english to display and call.
+    const dueEntries: DictionaryEntry[] = dueWords
+      .map((d) => allWords.find((e) => e.id === d.dictionaryEntryId))
+      .filter((e): e is DictionaryEntry => !!e);
+
+    const pool: DictionaryEntry[] = dueEntries.length >= TOTAL_TILES - 1
+      ? dueEntries
+      : [...dueEntries, ...allWords.filter((e) => !dueEntries.find((d) => d.id === e.id))];
 
     if (pool.length < TOTAL_TILES - 1) return;
 
@@ -142,6 +149,7 @@ export default function RecallBingoScreen() {
     setCallQueue(callOrder);
     setCurrentCallWord(callOrder[0] ?? null);
     callIndexRef.current = 0;
+    correctHitsRef.current = 0;
     setStartTime(Date.now());
     setCorrectHits(0);
     setPhase("active");
@@ -166,6 +174,7 @@ export default function RecallBingoScreen() {
         i === tileIndex ? { ...t, marked: true } : t
       );
       setTiles(updated);
+      correctHitsRef.current += 1;
       setCorrectHits((h) => h + 1);
 
       if (checkBingo(updated)) {
@@ -173,14 +182,7 @@ export default function RecallBingoScreen() {
         playFinishSound();
         setPhase("won");
         const duration = Math.round((Date.now() - startTime) / 1000);
-        getToken().then((token) => {
-          if (!token) return;
-          apiFetch("/quiz-results", {
-            method: "POST",
-            token,
-            body: JSON.stringify({ languageId: selectedLanguageId, score: correctHits + 1, accuracy: 100, durationMs: duration * 1000, questionCount: 25 }),
-          }).catch(() => {});
-        });
+        void submitResult({ languageId: selectedLanguageId, score: correctHitsRef.current, accuracy: 100, durationMs: duration * 1000, questionCount: 25 });
       } else {
         nextCall(callQueue);
       }
@@ -190,7 +192,7 @@ export default function RecallBingoScreen() {
       setShakeTile(tileIndex);
       setTimeout(() => setShakeTile(null), 400);
     }
-  }, [phase, currentCallWord, tiles, callQueue, startTime, correctHits, nextCall, getToken]);
+  }, [phase, currentCallWord, tiles, callQueue, startTime, nextCall, submitResult, selectedLanguageId]);
 
   const readWord = useCallback(() => {
     if (currentCallWord) {
@@ -199,7 +201,7 @@ export default function RecallBingoScreen() {
     }
   }, [currentCallWord]);
 
-  const canStart = dueWords.length + allWords.length >= TOTAL_TILES - 1;
+  const canStart = allWords.length >= TOTAL_TILES - 1;
 
   if (phase === "idle") {
     return (
@@ -245,6 +247,7 @@ export default function RecallBingoScreen() {
           <Text style={{ fontSize: 15, color: M.sub, textAlign: "center" }}>
             {correctHits} tiles marked · {timeStr}
           </Text>
+          <QuizSaveStatus status={saveStatus} onRetry={retryResult} />
           <View style={{ width: "100%", gap: 10, marginTop: 32 }}>
             <Pressable onPress={startGame} style={{ borderRadius: 14, paddingVertical: 16, backgroundColor: M.accent, alignItems: "center" }}>
               <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>New Card</Text>

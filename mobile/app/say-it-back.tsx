@@ -1,6 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { hapticHeavy, hapticSuccess, hapticTap } from "@/lib/haptics";
+import { shuffle } from "@/lib/shuffle";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import type { DictionaryEntry } from "@/lib/dictionary";
@@ -12,10 +13,6 @@ import { Animated, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type SessionPhase = "listen" | "record" | "compare";
-
-function shuffle<T>(arr: T[]): T[] {
-  return [...arr].sort(() => Math.random() - 0.5);
-}
 
 function WaveformDots({ active }: { active: boolean }) {
   const anims = useRef([0, 1, 2, 3, 4].map(() => new Animated.Value(4))).current;
@@ -48,6 +45,9 @@ function WaveformDots({ active }: { active: boolean }) {
     </View>
   );
 }
+
+// Per-route error boundary — shows a recoverable message if this screen throws.
+export { ErrorBoundary } from "@/components/screen-error-boundary";
 
 export default function SayItBackScreen() {
   const M = useMuseumTheme();

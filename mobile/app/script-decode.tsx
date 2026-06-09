@@ -2,9 +2,12 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { FIDEL_CHART } from "@/lib/data/geez/fidel-chart";
 import { NSIBIDI_CHARACTERS } from "@/lib/data/nsibidi";
 import { hapticError, hapticSuccess } from "@/lib/haptics";
-import { apiFetch } from "@/lib/api";
+import { shuffle } from "@/lib/shuffle";
+import { QuizSaveStatus } from "@/components/quiz-save-status";
+import { useSubmitQuizResult } from "@/lib/hooks/use-quiz-result";
 import { playCorrectSound, playFinishSound, playIncorrectSound } from "@/lib/sounds";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useLanguageStore } from "@/store/language-store";
 import { useAuth } from "@clerk/clerk-expo";
 import { useQuery } from "@tanstack/react-query";
 import { Stack, useRouter } from "expo-router";
@@ -42,6 +45,21 @@ interface DecodeQuestion {
 const SESSION_SIZE = 10;
 const FEEDBACK_DELAY = 1000;
 
+function buildGeezQuestions(): DecodeQuestion[] {
+  const pool = shuffle(FIDEL_CHART).slice(0, SESSION_SIZE + 12);
+  return pool.slice(0, SESSION_SIZE).map((char) => {
+    const distractors = shuffle(pool.filter((c) => c.id !== char.id))
+      .slice(0, 3)
+      .map((c) => c.romanization);
+    const options = shuffle([char.romanization, ...distractors]);
+    return {
+      character: char.character,
+      correctAnswer: char.romanization,
+      options,
+      correctIndex: options.indexOf(char.romanization),
+      hint: `Order ${char.order} (${["e","u","i","a","ē","ə","o"][char.order - 1] ?? ""})`,
+    };
+  });
 const FALLBACK_SCRIPTS: ScriptEntry[] = [
   { id: "geez-amharic",  languageId: "amharic", name: "Ge'ez / Fidel", description: "Ethiopic alphabet · Amharic & Tigrinya", iconCharacter: "ሀ", accentColor: "#4ade80" },
   { id: "nsibidi-igbo",  languageId: "igbo",    name: "Nsọbịdị",      description: "Indigenous Igbo script",                  iconCharacter: "",  accentColor: "#f59e0b" },
@@ -186,10 +204,14 @@ function ConfigScreen({
   );
 }
 
+// Per-route error boundary — shows a recoverable message if this screen throws.
+export { ErrorBoundary } from "@/components/screen-error-boundary";
+
 export default function ScriptDecodeScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
-  const { getToken } = useAuth();
+  const { submit: submitResult, retry: retryResult, status: saveStatus } = useSubmitQuizResult();
+  const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
 
   const [selectedScript, setSelectedScript] = useState<ScriptEntry | null>(null);
   const [phase, setPhase] = useState<"config" | "loading" | "active" | "results">("config");
@@ -198,6 +220,7 @@ export default function ScriptDecodeScreen() {
   const [selected, setSelected] = useState<number | null>(null);
   const [locked, setLocked] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
+  const correctRef = useRef(0);
   const [startTime, setStartTime] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
@@ -227,6 +250,7 @@ export default function ScriptDecodeScreen() {
     setQuestions(qs);
     setIndex(0);
     setCorrectCount(0);
+    correctRef.current = 0;
     setSelected(null);
     setLocked(false);
     setStartTime(Date.now());
@@ -250,6 +274,7 @@ export default function ScriptDecodeScreen() {
       playFinishSound();
       setPhase("results");
       const duration = Math.round((Date.now() - startTime) / 1000);
+      void submitResult({ languageId: selectedLanguageId, score: correctRef.current, accuracy: questions.length > 0 ? Math.round((correctRef.current / questions.length) * 100) : 0, durationMs: duration * 1000, questionCount: questions.length });
       getToken().then((token) => {
         if (!token) return;
         apiFetch("/quiz-results", {
@@ -272,7 +297,7 @@ export default function ScriptDecodeScreen() {
       setLocked(false);
       Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }).start();
     });
-  }, [index, questions.length, correctCount, fadeAnim, startTime, getToken, selectedScript]);
+  }, [index, questions.length, correctCount, fadeAnim, startTime, getToken, selectedScript, submitResult, selectedLanguageId]);
 
   const handleOption = useCallback((optIdx: number) => {
     if (locked) return;
@@ -281,7 +306,7 @@ export default function ScriptDecodeScreen() {
     setLocked(true);
     setSelected(optIdx);
     const isCorrect = optIdx === current.correctIndex;
-    if (isCorrect) { hapticSuccess(); playCorrectSound(); setCorrectCount((c) => c + 1); }
+    if (isCorrect) { hapticSuccess(); playCorrectSound(); correctRef.current += 1; setCorrectCount((c) => c + 1); }
     else { hapticError(); playIncorrectSound(); }
     setTimeout(advance, FEEDBACK_DELAY);
   }, [locked, questions, index, advance]);
@@ -309,6 +334,7 @@ export default function ScriptDecodeScreen() {
           <Text style={{ fontSize: 15, color: M.sub, textAlign: "center" }}>
             {correctCount} of {questions.length} characters decoded correctly
           </Text>
+          <QuizSaveStatus status={saveStatus} onRetry={retryResult} />
           <View style={{ width: "100%", gap: 10, marginTop: 32 }}>
             <Pressable
               onPress={() => selectedScript && handleStart(selectedScript)}
