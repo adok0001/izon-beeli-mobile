@@ -54,10 +54,10 @@ export function AssignmentCard({ assignment, onPress, onDelete }: AssignmentCard
         <View className="flex-row items-center gap-2">
           {onDelete && (
             <Pressable onPress={handleDeletePress} hitSlop={8}>
-              <IconSymbol name="trash" size={16} color={M.error} />
+              <IconSymbol name="trash" size={16} color=M.error />
             </Pressable>
           )}
-          <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
+          <IconSymbol name="chevron.right" size={16} color={M.muted} />
         </View>
       </View>
       <View className="mt-1 flex-row items-center gap-3">

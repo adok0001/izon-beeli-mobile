@@ -1,11 +1,12 @@
 import { ScrollView, View, Text, Pressable } from "react-native";
 import { NSIBIDI_CHARACTERS, NSIBIDI_CATEGORY_LABELS, type NsibidiCharacter, type NsibidiCategory } from "@/lib/data/nsibidi";
 import { NsibidiText } from "./nsibidi-text";
+import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 
 const CATEGORIES = Object.keys(NSIBIDI_CATEGORY_LABELS) as NsibidiCategory[];
 
-const ACCENT = "#f59e0b"; // amber — distinct from Ge'ez green and Adinkra purple
+const ACCENT = getAccent("amber").solid;
 
 interface NsibidiGridProps {
   learnedIds: Set<string>;

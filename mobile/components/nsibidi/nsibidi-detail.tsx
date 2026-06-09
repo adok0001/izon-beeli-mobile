@@ -2,9 +2,10 @@ import { Modal, Pressable, View, Text } from "react-native";
 import type { NsibidiCharacter } from "@/lib/data/nsibidi";
 import { NsibidiText } from "./nsibidi-text";
 import { NSIBIDI_CATEGORY_LABELS } from "@/lib/data/nsibidi";
+import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 
-const ACCENT = "#f59e0b";
+const ACCENT = getAccent("amber").solid;
 
 interface NsibidiDetailProps {
   character: NsibidiCharacter | null;

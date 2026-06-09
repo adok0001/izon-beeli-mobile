@@ -1,5 +1,5 @@
 import { LoadingScreen } from "@/components/loading-screen";
-import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { getAccent } from "@/constants/accent-colors";
 import {
   View,
   Text,
@@ -17,10 +17,8 @@ import { useClassroomGroups } from "@/lib/hooks/use-classroom";
 import { getLanguageName } from "@/lib/mock-data";
 import type { Group } from "@/types";
 import { useTranslation } from "react-i18next";
-import { useMuseumTheme } from "@/lib/use-museum-theme";
 
 function GroupCard({ group }: { group: Group }) {
-  const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
   const memberCount = group.members.length;
@@ -49,7 +47,7 @@ function GroupCard({ group }: { group: Group }) {
         <Text className="flex-1 text-lg font-bold text-neutral-900 dark:text-white">
           {group.name}
         </Text>
-        <IconSymbol name="chevron.right" size={16} color={M.muted} />
+        <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
       </View>
       <View className="mt-2 flex-row items-center gap-4">
         <View className="flex-row items-center">
@@ -71,14 +69,14 @@ function GroupCard({ group }: { group: Group }) {
           onLongPress={handleShareCode}
           className="flex-row items-center rounded-lg bg-neutral-100 px-3 py-1.5 active:opacity-60 dark:bg-neutral-700"
         >
-          <IconSymbol name="key.fill" size={12} color={M.muted} />
+          <IconSymbol name="key.fill" size={12} color="#9ca3af" />
           <Text className="ml-1.5 text-xs font-mono text-neutral-500 dark:text-neutral-400">
             {group.inviteCode}
           </Text>
-          <IconSymbol name="doc.on.doc" size={11} color={M.muted} className="ml-1.5" />
+          <IconSymbol name="doc.on.doc" size={11} color="#9ca3af" className="ml-1.5" />
         </Pressable>
         <Pressable onPress={handleShareCode} hitSlop={8}>
-          <IconSymbol name="square.and.arrow.up" size={16} color="#3b82f6" />
+          <IconSymbol name="square.and.arrow.up" size={16} color={getAccent("blue").solid} />
         </Pressable>
       </View>
     </Pressable>
@@ -86,7 +84,6 @@ function GroupCard({ group }: { group: Group }) {
 }
 
 export default function ClassroomScreen() {
-  const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
   const { data: groups = [], isLoading, refetch } = useClassroomGroups();
@@ -108,7 +105,7 @@ export default function ClassroomScreen() {
               onPress={() => router.push("/classroom/create")}
               hitSlop={8}
             >
-              <IconSymbol name="plus" size={22} color="#3b82f6" />
+              <IconSymbol name="plus" size={22} color={getAccent("blue").solid} />
             </Pressable>
           ),
         }}
@@ -126,7 +123,7 @@ export default function ClassroomScreen() {
             renderItem={({ item }) => <GroupCard group={item} />}
             ListEmptyComponent={
               <View className="items-center px-8 py-16">
-                <IconSymbol name="person.3.fill" size={48} color={M.border} />
+                <IconSymbol name="person.3.fill" size={48} color="#d1d5db" />
                 <Text className="mt-4 text-center text-base text-neutral-400 dark:text-neutral-500">
                   {t("classroom.noGroups")}
                 </Text>

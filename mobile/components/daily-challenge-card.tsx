@@ -14,10 +14,10 @@ const CHALLENGE_CONFIG: Record<
   { icon: string; color: string; route: string }
 > = {
   complete_quiz: { icon: "trophy.fill", color: getAccent("amber").solid, route: "/quiz" },
-  review_words: { icon: "brain.fill", color: getAccent("purple").solid, route: "/word-review" },
+  review_words: { icon: "brain.fill", color: "#8b5cf6", route: "/word-review" },
   listen_lesson: { icon: "headphones", color: getAccent("blue").solid, route: "/(tabs)/learn" },
-  complete_lesson: { icon: "checkmark.circle.fill", color: getAccent("green").solid, route: "/(tabs)/learn" },
-  save_words: { icon: "bookmark.fill", color: getAccent("pink").solid, route: "/dictionary" },
+  complete_lesson: { icon: "checkmark.circle.fill", color: "#22c55e", route: "/(tabs)/learn" },
+  save_words: { icon: "bookmark.fill", color: "#ec4899", route: "/dictionary" },
 };
 
 function ChallengeItem({ challenge }: { challenge: DailyChallenge }) {
@@ -27,7 +27,7 @@ function ChallengeItem({ challenge }: { challenge: DailyChallenge }) {
 
   const config = CHALLENGE_CONFIG[challenge.challengeType] ?? {
     icon: "star.fill",
-    color: "#3b82f6",
+    color: getAccent("blue").solid,
     route: "/(tabs)/learn",
   };
 
@@ -59,19 +59,19 @@ function ChallengeItem({ challenge }: { challenge: DailyChallenge }) {
               style={{
                 height: "100%", borderRadius: 999,
                 width: `${Math.round(progress * 100)}%`,
-                backgroundColor: challenge.completed ? M.success : config.color,
+                backgroundColor: challenge.completed ? "#22c55e" : config.color,
               }}
             />
           </View>
           <Text style={{ marginTop: 2, fontSize: 10, color: M.muted }}>
             {challenge.progress} / {challenge.target}
             {challenge.completed && (
-              <Text style={{ fontWeight: "600", color: M.success }}> · {t("learn.complete")}</Text>
+              <Text style={{ fontWeight: "600", color: "#22c55e" }}> · {t("learn.complete")}</Text>
             )}
           </Text>
         </View>
         {challenge.completed ? (
-          <IconSymbol name="checkmark.circle.fill" size={18} color={M.success} style={{ marginLeft: 8 }} />
+          <IconSymbol name="checkmark.circle.fill" size={18} color="#22c55e" style={{ marginLeft: 8 }} />
         ) : (
           <IconSymbol name="chevron.right" size={14} color={M.muted} style={{ marginLeft: 8 }} />
         )}

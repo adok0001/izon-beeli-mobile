@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { LoadingScreen } from "@/components/loading-screen";
+import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import {
   View,
@@ -44,7 +45,7 @@ export default function StoryScreen() {
     return (
       <>
         <Stack.Screen options={{ title: t("educator.story.screenTitle") }} />
-        <LoadingScreen color="#f59e0b" />
+        <LoadingScreen color={getAccent("amber").solid} />
       </>
     );
   }
@@ -116,8 +117,8 @@ export default function StoryScreen() {
               const completed = completedIds.includes(chapter.id);
               const isCurrent = currentChapter?.id === chapter.id;
 
-              const borderColor = isCurrent ? M.accentBorder : completed ? M.successBorder : unlocked ? M.border : M.border;
-              const bgColor = isCurrent ? M.accentGlow : completed ? M.successBg : M.card;
+              const borderColor = isCurrent ? M.accentBorder : completed ? "#22c55e40" : unlocked ? M.border : M.border;
+              const bgColor = isCurrent ? M.accentGlow : completed ? "#22c55e10" : M.card;
 
               return (
                 <Pressable
@@ -130,7 +131,7 @@ export default function StoryScreen() {
                   <View style={{ flexDirection: "row", alignItems: "center" }}>
                     <View style={{ marginRight: 12 }}>
                       {completed ? (
-                        <IconSymbol name="checkmark.circle.fill" size={24} color={M.success} />
+                        <IconSymbol name="checkmark.circle.fill" size={24} color="#22c55e" />
                       ) : unlocked ? (
                         <IconSymbol name="play.fill" size={24} color={isCurrent ? M.accent : M.muted} />
                       ) : (
@@ -181,13 +182,13 @@ export default function StoryScreen() {
           >
             <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.5)" }}>
               <View style={{ borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: M.card, paddingHorizontal: 24, paddingBottom: 40, paddingTop: 24, borderWidth: 1, borderColor: M.border }}>
-                <Text style={{ marginBottom: 4, fontSize: 13, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: M.success }}>
+                <Text style={{ marginBottom: 4, fontSize: 13, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: "#22c55e" }}>
                   {t("educator.story.chapterComplete", { number: outroChapter.order })}
                 </Text>
                 <Text style={{ marginBottom: 16, fontSize: 24, fontWeight: "700", color: M.text }}>
                   {outroChapter.title}
                 </Text>
-                <View style={{ marginBottom: 24, borderRadius: 16, backgroundColor: M.successBg, padding: 16, borderWidth: 1, borderColor: M.successBorder }}>
+                <View style={{ marginBottom: 24, borderRadius: 16, backgroundColor: "#22c55e10", padding: 16, borderWidth: 1, borderColor: "#22c55e30" }}>
                   <Text style={{ fontSize: 16, lineHeight: 24, color: M.sub }}>
                     {outroChapter.narrativeOutro}
                   </Text>

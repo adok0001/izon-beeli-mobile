@@ -1,6 +1,5 @@
 import { friendlyError } from "@/lib/api";
 import { getAccent } from "@/constants/accent-colors";
-import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useState, useMemo } from "react";
 import {
   View,
@@ -21,8 +20,6 @@ import { useToast } from "@/lib/hooks/use-toast";
 import { formatDuration } from "@/lib/mock-data";
 import { useTranslation } from "react-i18next";
 import type { Lesson } from "@/types";
-import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { getAccent } from "@/constants/accent-colors";
 
 type Tab = "lessons" | "story";
 
@@ -40,8 +37,6 @@ function StoryArcTab({
   onSuccess: () => void;
   onError: (msg: string) => void;
 }) {
-  const M = useMuseumTheme();
-  const M = useMuseumTheme();
   const { data: courses = [] } = useCourses(languageId);
   const { data: allArcs = [], isLoading: arcsLoading } = useStoryArcs();
   const assignStoryArc = useAssignStoryArc();
@@ -83,7 +78,7 @@ function StoryArcTab({
   if (arcsLoading) {
     return (
       <View className="flex-1 items-center justify-center">
-        <ActivityIndicator size="large" color="#f59e0b" />
+        <ActivityIndicator size="large" color={getAccent("amber").solid} />
       </View>
     );
   }
@@ -91,7 +86,7 @@ function StoryArcTab({
   if (languageArcs.length === 0) {
     return (
       <View className="flex-1 items-center justify-center px-8">
-        <IconSymbol name="book.closed.fill" size={48} color={M.border} />
+        <IconSymbol name="book.closed.fill" size={48} color="#d1d5db" />
         <Text className="mt-4 text-center text-base font-semibold text-neutral-500 dark:text-neutral-400">
           No story arcs available
         </Text>
@@ -126,7 +121,7 @@ function StoryArcTab({
                 <IconSymbol
                   name={isSelected ? "checkmark.circle.fill" : "book.closed.fill"}
                   size={22}
-                  color={isSelected ? getAccent("amber").solid : M.border}
+                  color={isSelected ? getAccent("amber").solid : "#d1d5db"}
                 />
                 <View className="ml-3 flex-1">
                   <Text className="text-base font-semibold text-neutral-900 dark:text-white">
@@ -139,7 +134,7 @@ function StoryArcTab({
               {isSelected && (
                 <View className="mt-3">
                   {arcDetailLoading ? (
-                    <ActivityIndicator size="small" color="#f59e0b" />
+                    <ActivityIndicator size="small" color={getAccent("amber").solid} />
                   ) : selectedArcDetail ? (
                     <>
                       <Text className="mb-2 text-sm text-neutral-500 dark:text-neutral-400">
@@ -194,7 +189,6 @@ function StoryArcTab({
 }
 
 export default function AssignLessonScreen() {
-  const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
@@ -330,7 +324,7 @@ export default function AssignLessonScreen() {
                   <IconSymbol
                     name={selected === item.id ? "checkmark.circle.fill" : "circle"}
                     size={20}
-                    color={selected === item.id ? getAccent("blue").solid : M.border}
+                    color={selected === item.id ? getAccent("blue").solid : "#d1d5db"}
                   />
                   <View className="ml-3 flex-1">
                     <Text className="text-base font-medium text-neutral-900 dark:text-white">
