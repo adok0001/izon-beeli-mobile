@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
 import { getAllEtymology, getEtymologyForLanguage } from "@/lib/data/etymology";
 import type { EtymologyEntry } from "@/lib/data/etymology";
 import { hapticTap } from "@/lib/haptics";
@@ -89,7 +90,7 @@ function EntryView({ entry }: { entry: EtymologyEntry }) {
   const [expandedNodes, setExpandedNodes] = useState<Set<number>>(new Set([0]));
   const [saved, setSaved] = useState(false);
 
-  const colors = ["#60a5fa", "#a78bfa", M.accent, "#4ade80"];
+  const colors = [getAccent("sky").solid, getAccent("purple").solid, M.accent, getAccent("teal").solid];
 
   const toggleNode = useCallback((i: number) => {
     hapticTap();

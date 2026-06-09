@@ -1,4 +1,5 @@
 import { friendlyError } from "@/lib/api";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useRef, useState } from "react";
 import {
   View,
@@ -31,6 +32,7 @@ interface EntryRow {
 const EMPTY_ROW = (): EntryRow => ({ word: "", english: "", pronunciation: "" });
 
 export default function ContributeBulkScreen() {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
   const submitBulk = useBulkSubmitContribution();
@@ -139,9 +141,8 @@ export default function ContributeBulkScreen() {
             {steps.map((s, i) => (
               <View
                 key={s}
-                className={`h-1 flex-1 rounded-full ${
-                  stepIndex >= i ? "bg-green-500" : "bg-neutral-200 dark:bg-neutral-700"
-                }`}
+                className="h-1 flex-1 rounded-full bg-neutral-200 dark:bg-neutral-700"
+                style={stepIndex >= i ? { backgroundColor: M.success } : undefined}
               />
             ))}
           </View>
@@ -204,17 +205,14 @@ export default function ContributeBulkScreen() {
                       setSelectedCategory(cat);
                       setStep("entries");
                     }}
-                    className={`mb-2 flex-row items-center rounded-2xl p-4 active:opacity-70 ${
-                      selectedCategory === cat
-                        ? "bg-green-50 dark:bg-green-950"
-                        : "bg-neutral-50 dark:bg-neutral-800"
-                    }`}
+                    className="mb-2 flex-row items-center rounded-2xl p-4 active:opacity-70 bg-neutral-50 dark:bg-neutral-800"
+                    style={selectedCategory === cat ? { backgroundColor: M.successBg } : undefined}
                   >
                     <Text className="flex-1 text-base text-neutral-900 dark:text-white">
                       {CATEGORY_LABELS[cat]}
                     </Text>
                     {selectedCategory === cat && (
-                      <IconSymbol name="checkmark.circle.fill" size={20} color="#22c55e" />
+                      <IconSymbol name="checkmark.circle.fill" size={20} color={M.success} />
                     )}
                   </Pressable>
                 ))}
@@ -233,8 +231,8 @@ export default function ContributeBulkScreen() {
                       {languageName} · {selectedCategory ? CATEGORY_LABELS[selectedCategory] : ""}
                     </Text>
                   </View>
-                  <View className="rounded-full bg-green-100 px-3 py-1 dark:bg-green-900">
-                    <Text className="text-sm font-semibold text-green-700 dark:text-green-400">
+                  <View className="rounded-full px-3 py-1" style={{ backgroundColor: M.successBg }}>
+                    <Text className="text-sm font-semibold" style={{ color: M.success }}>
                       {t("contribute.readyCount", { count: filledRows.length })}
                     </Text>
                   </View>
@@ -306,8 +304,8 @@ export default function ContributeBulkScreen() {
                   onPress={addRow}
                   className="mb-8 mt-1 flex-row items-center justify-center rounded-2xl border-2 border-dashed border-neutral-200 py-3.5 active:opacity-70 dark:border-neutral-700"
                 >
-                  <IconSymbol name="plus.circle.fill" size={16} color="#22c55e" />
-                  <Text className="ml-2 text-sm font-semibold text-green-600 dark:text-green-400">
+                  <IconSymbol name="plus.circle.fill" size={16} color={M.success} />
+                  <Text className="ml-2 text-sm font-semibold" style={{ color: M.success }}>
                     {t("contribute.addRow")}
                   </Text>
                 </Pressable>
@@ -331,18 +329,19 @@ export default function ContributeBulkScreen() {
                 <Pressable
                   onPress={handleSubmit}
                   disabled={submitBulk.isPending || filledRows.length === 0}
-                  className={`flex-1 flex-row items-center justify-center rounded-2xl py-3.5 active:opacity-80 ${
-                    !submitBulk.isPending && filledRows.length > 0
-                      ? "bg-green-500"
-                      : "bg-green-200 dark:bg-green-900"
-                  }`}
+                  className="flex-1 flex-row items-center justify-center rounded-2xl py-3.5 active:opacity-80"
+                  style={{
+                    backgroundColor: !submitBulk.isPending && filledRows.length > 0
+                      ? M.success
+                      : M.successBg,
+                  }}
                 >
                   {submitBulk.isPending ? (
-                    <ActivityIndicator size="small" color="white" />
+                    <ActivityIndicator size="small" color={M.parchment} />
                   ) : (
                     <>
-                      <IconSymbol name="paperplane.fill" size={14} color="white" />
-                      <Text className="ml-2 font-semibold text-white">
+                      <IconSymbol name="paperplane.fill" size={14} color={M.parchment} />
+                      <Text className="ml-2 font-semibold" style={{ color: M.parchment }}>
                         {t("common.submit")}{filledRows.length > 0 ? ` ${filledRows.length} ` : " "}
                         {filledRows.length === 1 ? t("contribute.submitEntry") : t("contribute.submitEntries")}
                       </Text>

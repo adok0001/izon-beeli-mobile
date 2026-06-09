@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { CATEGORY_LABELS, type DictionaryCategory } from "@/lib/dictionary";
 import {
   usePendingContributions,
@@ -99,6 +100,7 @@ function ContributionCard({
   onReject: () => void;
   isPending: boolean;
 }) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const soundRef = useRef<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -243,7 +245,7 @@ function ContributionCard({
             disabled={isPending}
             className="flex-1 flex-row items-center justify-center py-3 active:opacity-70"
           >
-            <IconSymbol name="xmark.circle.fill" size={16} color="#ef4444" />
+            <IconSymbol name="xmark.circle.fill" size={16} color={M.error} />
             <Text className="ml-1.5 text-sm font-semibold text-red-500">{t("common.reject")}</Text>
           </Pressable>
           <View className="w-[1px] bg-neutral-200 dark:bg-neutral-700" />
@@ -252,7 +254,7 @@ function ContributionCard({
             disabled={isPending}
             className="flex-1 flex-row items-center justify-center py-3 active:opacity-70"
           >
-            <IconSymbol name="checkmark.circle.fill" size={16} color="#22c55e" />
+            <IconSymbol name="checkmark.circle.fill" size={16} color={M.success} />
             <Text className="ml-1.5 text-sm font-semibold text-green-600 dark:text-green-400">
               {t("common.approve")}
             </Text>
@@ -276,6 +278,7 @@ function LessonContributionCard({
   onReject: () => void;
   isPending: boolean;
 }) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const soundRef = useRef<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -444,7 +447,7 @@ function LessonContributionCard({
             disabled={isPending}
             className="flex-1 flex-row items-center justify-center py-3 active:opacity-70"
           >
-            <IconSymbol name="xmark.circle.fill" size={16} color="#ef4444" />
+            <IconSymbol name="xmark.circle.fill" size={16} color={M.error} />
             <Text className="ml-1.5 text-sm font-semibold text-red-500">{t("common.reject")}</Text>
           </Pressable>
           <View className="w-[1px] bg-neutral-200 dark:bg-neutral-700" />
@@ -453,7 +456,7 @@ function LessonContributionCard({
             disabled={isPending}
             className="flex-1 flex-row items-center justify-center py-3 active:opacity-70"
           >
-            <IconSymbol name="checkmark.circle.fill" size={16} color="#22c55e" />
+            <IconSymbol name="checkmark.circle.fill" size={16} color={M.success} />
             <Text className="ml-1.5 text-sm font-semibold text-green-600 dark:text-green-400">
               {t("common.approve")}
             </Text>

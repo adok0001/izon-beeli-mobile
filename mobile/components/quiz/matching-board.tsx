@@ -7,6 +7,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
+import { getAccent } from "@/constants/accent-colors";
 import { useMatchingStore, type Tile } from "@/store/matching-store";
 import { hapticSuccess, hapticError, hapticTap } from "@/lib/haptics";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -19,13 +20,13 @@ const LEGEND_H = 48;   // legend row + margin
 const CONTENT_MAX_W = 560; // caps tile size on iPad/large screens
 const MAX_TILE_H = 160;    // prevents tiles from becoming absurdly tall on iPad
 
-function getTileColors(tile: Tile): { bg: string; border: string; text: string } {
-  if (tile.matched) return { bg: "#22c55e20", border: "#22c55e60", text: "#22c55e" };
-  if (tile.flash === "correct") return { bg: "#22c55e30", border: "#22c55e", text: "#22c55e" };
-  if (tile.flash === "incorrect") return { bg: "#ef444430", border: "#ef4444", text: "#ef4444" };
-  if (tile.selected) return { bg: "#C4862A20", border: "#C4862A", text: "#C4862A" };
-  if (tile.kind === "word") return { bg: "#a78bfa15", border: "#a78bfa50", text: "#a78bfa" };
-  return { bg: "#f59e0b10", border: "#f59e0b40", text: "#f59e0b" };
+function getTileColors(tile: Tile, M: ReturnType<typeof useMuseumTheme>): { bg: string; border: string; text: string } {
+  if (tile.matched) return { bg: M.successBg, border: M.successBorder, text: M.success };
+  if (tile.flash === "correct") return { bg: M.successBg, border: M.success, text: M.success };
+  if (tile.flash === "incorrect") return { bg: M.errorBg, border: M.error, text: M.error };
+  if (tile.selected) return { bg: `${M.accent}20`, border: M.accent, text: M.accent };
+  if (tile.kind === "word") return { bg: getAccent("purple").bg, border: getAccent("purple").border, text: getAccent("purple").solid };
+  return { bg: getAccent("amber").bg, border: getAccent("amber").border, text: getAccent("amber").solid };
 }
 
 function MatchingTile({
@@ -41,7 +42,7 @@ function MatchingTile({
 }) {
   const M = useMuseumTheme();
   const scale = useSharedValue(1);
-  const colors = getTileColors(tile);
+  const colors = getTileColors(tile, M);
 
   useEffect(() => {
     if (tile.flash !== "none") {

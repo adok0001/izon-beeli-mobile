@@ -1,5 +1,6 @@
 import { TracingCanvas } from "@/components/geez/tracing-canvas";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
 import { FIDEL_CHART } from "@/lib/data/geez/fidel-chart";
 import { NSIBIDI_CHARACTERS } from "@/lib/data/nsibidi";
 import { ADINKRA_SYMBOLS } from "@/lib/data/adinkra";
@@ -55,10 +56,10 @@ function AdinkraCanvas({ symbol }: { symbol: { name: string; svgPath: string; sv
         <Svg width={CANVAS_SIZE} height={CANVAS_SIZE}>
           {/* Guide: faded Adinkra SVG path */}
           <Svg width={CANVAS_SIZE} height={CANVAS_SIZE} viewBox={symbol.svgViewBox} opacity={0.15}>
-            <Path d={symbol.svgPath} fill="#a78bfa" />
+            <Path d={symbol.svgPath} fill={getAccent("purple").solid} />
           </Svg>
           {paths.map((d, i) => (
-            <Path key={i} d={d} stroke="#a78bfa" strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            <Path key={i} d={d} stroke={getAccent("purple").solid} strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" fill="none" />
           ))}
         </Svg>
       </View>
@@ -100,20 +101,20 @@ function NsibidiCanvas({ char }: { char: NsibidiCharacter }) {
   return (
     <View style={{ alignItems: "center" }}>
       <View
-        style={{ width: CANVAS_SIZE, height: CANVAS_SIZE, borderRadius: 20, overflow: "hidden", borderWidth: 2, borderColor: "rgba(245,158,11,0.4)", backgroundColor: M.card }}
+        style={{ width: CANVAS_SIZE, height: CANVAS_SIZE, borderRadius: 20, overflow: "hidden", borderWidth: 2, borderColor: getAccent("amber").border, backgroundColor: M.card }}
         {...panResponder.panHandlers}
       >
         <Svg width={CANVAS_SIZE} height={CANVAS_SIZE}>
           <SvgText
             x={CANVAS_SIZE / 2} y={CANVAS_SIZE / 2 + 60}
             fontSize={200} textAnchor="middle"
-            fill="#f59e0b" opacity={0.15}
+            fill={getAccent("amber").solid} opacity={0.15}
             fontFamily="Akagu"
           >
             {char.character}
           </SvgText>
           {paths.map((d, i) => (
-            <Path key={i} d={d} stroke="#f59e0b" strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            <Path key={i} d={d} stroke={getAccent("amber").solid} strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" fill="none" />
           ))}
         </Svg>
       </View>
@@ -157,7 +158,7 @@ export default function TraceSymbolScreen() {
   const currentNsibidi = NSIBIDI_CHARACTERS[nsibidiIndex % NSIBIDI_CHARACTERS.length]!;
   const currentAdinkra = ADINKRA_SYMBOLS[adinkraIndex % ADINKRA_SYMBOLS.length]!;
 
-  const modeColor = { geez: "#4ade80", nsibidi: "#f59e0b", adinkra: "#a78bfa" }[mode];
+  const modeColor = { geez: getAccent("teal").solid, nsibidi: getAccent("amber").solid, adinkra: getAccent("purple").solid }[mode];
 
   const handleMarkLearned = useCallback(() => {
     hapticSuccess();
@@ -184,9 +185,9 @@ export default function TraceSymbolScreen() {
 
       {/* Mode tabs */}
       <View style={{ flexDirection: "row", backgroundColor: M.card, borderBottomWidth: 1, borderBottomColor: M.border }}>
-        <ModeTab label="Ge'ez" active={mode === "geez"} color="#4ade80" onPress={() => setMode("geez")} />
-        <ModeTab label="Nsịbịdị" active={mode === "nsibidi"} color="#f59e0b" onPress={() => setMode("nsibidi")} />
-        <ModeTab label="Adinkra" active={mode === "adinkra"} color="#a78bfa" onPress={() => setMode("adinkra")} />
+        <ModeTab label="Ge'ez" active={mode === "geez"} color={getAccent("teal").solid} onPress={() => setMode("geez")} />
+        <ModeTab label="Nsịbịdị" active={mode === "nsibidi"} color={getAccent("amber").solid} onPress={() => setMode("nsibidi")} />
+        <ModeTab label="Adinkra" active={mode === "adinkra"} color={getAccent("purple").solid} onPress={() => setMode("adinkra")} />
       </View>
 
       <ScrollView contentContainerStyle={{ flexGrow: 1, alignItems: "center", padding: 24 }} showsVerticalScrollIndicator={false}>
@@ -194,7 +195,7 @@ export default function TraceSymbolScreen() {
         <View style={{ alignSelf: "stretch", marginBottom: 20 }}>
           {mode === "geez" && (
             <View>
-              <Text style={{ fontSize: 11, fontWeight: "800", letterSpacing: 2, color: "#4ade80", marginBottom: 2 }}>GE&apos;EZ · FIDEL</Text>
+              <Text style={{ fontSize: 11, fontWeight: "800", letterSpacing: 2, color: getAccent("teal").solid, marginBottom: 2 }}>GE&apos;EZ · FIDEL</Text>
               <Text style={{ fontSize: 13, color: M.sub }}>
                 Order {currentGeez.order} · {currentGeez.baseConsonant} · romanized: {currentGeez.romanization}
               </Text>
@@ -205,14 +206,14 @@ export default function TraceSymbolScreen() {
           )}
           {mode === "nsibidi" && (
             <View>
-              <Text style={{ fontSize: 11, fontWeight: "800", letterSpacing: 2, color: "#f59e0b", marginBottom: 2 }}>NSỊBỊDỊ</Text>
+              <Text style={{ fontSize: 11, fontWeight: "800", letterSpacing: 2, color: getAccent("amber").solid, marginBottom: 2 }}>NSỊBỊDỊ</Text>
               <Text style={{ fontSize: 13, color: M.sub }}>{currentNsibidi.meaning}</Text>
               <Text style={{ fontSize: 11, color: M.muted, marginTop: 2 }}>{currentNsibidi.category}</Text>
             </View>
           )}
           {mode === "adinkra" && (
             <View>
-              <Text style={{ fontSize: 11, fontWeight: "800", letterSpacing: 2, color: "#a78bfa", marginBottom: 2 }}>ADINKRA</Text>
+              <Text style={{ fontSize: 11, fontWeight: "800", letterSpacing: 2, color: getAccent("purple").solid, marginBottom: 2 }}>ADINKRA</Text>
               <Text style={{ fontSize: 15, fontWeight: "700", color: M.text }}>{currentAdinkra.name}</Text>
               <Text style={{ fontSize: 12, color: M.sub, marginTop: 2 }}>{currentAdinkra.meaning}</Text>
             </View>

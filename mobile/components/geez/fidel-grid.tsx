@@ -63,10 +63,10 @@ export function FidelGrid({ learnedIds, onSelect }: FidelGridProps) {
                   <Pressable
                     key={char.id}
                     onPress={() => onSelect(char)}
-                    style={{ marginHorizontal: 2, flex: 1, alignItems: "center", borderRadius: 8, paddingVertical: 6, backgroundColor: learned ? "#22c55e20" : M.card }}
+                    style={{ marginHorizontal: 2, flex: 1, alignItems: "center", borderRadius: 8, paddingVertical: 6, backgroundColor: learned ? M.successBg : M.card }}
                     className="active:opacity-70"
                   >
-                    <Text style={{ fontSize: 20, color: learned ? "#22c55e" : M.text }}>
+                    <Text style={{ fontSize: 20, color: learned ? M.success : M.text }}>
                       {char.character}
                     </Text>
                   </Pressable>

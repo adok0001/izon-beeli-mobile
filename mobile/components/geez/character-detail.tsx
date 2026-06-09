@@ -78,8 +78,8 @@ export function CharacterDetail({
             </Pressable>
 
             {isLearned ? (
-              <View style={{ alignItems: "center", borderRadius: 12, backgroundColor: "#22c55e20", paddingVertical: 12 }}>
-                <Text style={{ fontSize: 13, fontWeight: "600", color: "#22c55e" }}>✓ Learned</Text>
+              <View style={{ alignItems: "center", borderRadius: 12, backgroundColor: M.successBg, paddingVertical: 12 }}>
+                <Text style={{ fontSize: 13, fontWeight: "600", color: M.success }}>✓ Learned</Text>
               </View>
             ) : (
               <Pressable

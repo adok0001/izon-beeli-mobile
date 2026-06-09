@@ -23,12 +23,10 @@ interface Props {
   type?: ToastType;
 }
 
-const TYPE_BAR_COLORS: Record<ToastType, string> = {
-  success: "#22c55e",
-  error:   "#ef4444",
-  warning: "#f59e0b",
-  info:    "#C4862A",
-};
+function useTypeBarColors(): Record<ToastType, string> {
+  const M = useMuseumTheme();
+  return { success: M.success, error: M.error, warning: M.warning, info: M.accent };
+}
 
 export function NotificationBanner({
   title,
@@ -39,7 +37,8 @@ export function NotificationBanner({
   type = "info",
 }: Props) {
   const M = useMuseumTheme();
-  const barColor = TYPE_BAR_COLORS[type];
+  const typeBarColors = useTypeBarColors();
+  const barColor = typeBarColors[type];
   const translateY = useSharedValue(-150);
   const headerHeight = useHeaderHeight();
   const { top: topInset } = useSafeAreaInsets();

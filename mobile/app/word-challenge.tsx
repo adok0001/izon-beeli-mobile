@@ -227,11 +227,11 @@ export default function WordChallengeScreen() {
                 </Pressable>
                 <Pressable
                   onPress={isRecording ? stopRecord : startRecord}
-                  style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 12, paddingVertical: 14, backgroundColor: isRecording ? "#ef4444" : "#ef444415", borderWidth: 1.5, borderColor: "#ef444450" }}
+                  style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 12, paddingVertical: 14, backgroundColor: isRecording ? M.error : M.errorBg, borderWidth: 1.5, borderColor: M.errorBorder }}
                   className="active:opacity-70"
                 >
-                  <IconSymbol name={isRecording ? "stop.fill" : "mic.fill"} size={16} color={isRecording ? "#fff" : "#ef4444"} />
-                  <Text style={{ fontSize: 13, fontWeight: "700", color: isRecording ? "#fff" : "#ef4444" }}>
+                  <IconSymbol name={isRecording ? "stop.fill" : "mic.fill"} size={16} color={isRecording ? M.parchment : M.error} />
+                  <Text style={{ fontSize: 13, fontWeight: "700", color: isRecording ? M.parchment : M.error }}>
                     {isRecording ? "Stop" : "Record"}
                   </Text>
                 </Pressable>

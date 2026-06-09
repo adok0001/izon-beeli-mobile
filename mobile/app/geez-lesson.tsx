@@ -116,7 +116,7 @@ export default function GeezLessonScreen() {
             </Text>
           </View>
           <View style={{ marginTop: 8, height: 6, borderRadius: 999, backgroundColor: M.border }}>
-            <View style={{ height: 6, borderRadius: 999, backgroundColor: "#22c55e", width: `${TOTAL_CHARS > 0 ? (learnedCount / TOTAL_CHARS) * 100 : 0}%` }} />
+            <View style={{ height: 6, borderRadius: 999, backgroundColor: M.success, width: `${TOTAL_CHARS > 0 ? (learnedCount / TOTAL_CHARS) * 100 : 0}%` }} />
           </View>
         </View>
 
@@ -180,10 +180,10 @@ export default function GeezLessonScreen() {
                 <View style={{ gap: 8, paddingBottom: 24, paddingTop: 8 }}>
                   <Pressable
                     onPress={handleMarkPracticeLearned}
-                    style={{ alignItems: "center", borderRadius: 16, backgroundColor: "#22c55e", paddingVertical: 16 }}
+                    style={{ alignItems: "center", borderRadius: 16, backgroundColor: M.success, paddingVertical: 16 }}
                     className="active:opacity-80"
                   >
-                    <Text style={{ fontSize: 15, fontWeight: "700", color: "#fff" }}>{t("geez.gotItMarkLearned")}</Text>
+                    <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>{t("geez.gotItMarkLearned")}</Text>
                   </Pressable>
                   <Pressable
                     onPress={handleNext}

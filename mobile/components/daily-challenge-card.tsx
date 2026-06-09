@@ -2,6 +2,7 @@ import { View, Text, Pressable, ActivityIndicator, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
 import { useRegenerateDailyChallenges, useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
 import { ApiError } from "@/lib/api";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -12,11 +13,11 @@ const CHALLENGE_CONFIG: Record<
   ChallengeType,
   { icon: string; color: string; route: string }
 > = {
-  complete_quiz: { icon: "trophy.fill", color: "#f59e0b", route: "/quiz" },
-  review_words: { icon: "brain.fill", color: "#8b5cf6", route: "/word-review" },
-  listen_lesson: { icon: "headphones", color: "#3b82f6", route: "/(tabs)/learn" },
-  complete_lesson: { icon: "checkmark.circle.fill", color: "#22c55e", route: "/(tabs)/learn" },
-  save_words: { icon: "bookmark.fill", color: "#ec4899", route: "/dictionary" },
+  complete_quiz: { icon: "trophy.fill", color: getAccent("amber").solid, route: "/quiz" },
+  review_words: { icon: "brain.fill", color: getAccent("purple").solid, route: "/word-review" },
+  listen_lesson: { icon: "headphones", color: getAccent("blue").solid, route: "/(tabs)/learn" },
+  complete_lesson: { icon: "checkmark.circle.fill", color: getAccent("green").solid, route: "/(tabs)/learn" },
+  save_words: { icon: "bookmark.fill", color: getAccent("pink").solid, route: "/dictionary" },
 };
 
 function ChallengeItem({ challenge }: { challenge: DailyChallenge }) {

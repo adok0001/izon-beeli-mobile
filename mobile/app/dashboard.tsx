@@ -165,14 +165,14 @@ export default function DashboardScreen() {
                     <IconSymbol
                       name={c.completed ? "checkmark.circle.fill" : "circle"}
                       size={20}
-                      color={c.completed ? "#22c55e" : M.muted}
+                      color={c.completed ? M.success : M.muted}
                     />
                     <View style={{ marginLeft: 12, flex: 1 }}>
                       <Text style={{ fontSize: 13, fontWeight: "600", color: M.text }}>{c.title}</Text>
                       <Text style={{ fontSize: 11, color: M.muted }}>{c.date}</Text>
                     </View>
                     {c.completed && (
-                      <Text style={{ fontSize: 11, fontWeight: "600", color: "#22c55e" }}>+{c.xpReward} XP</Text>
+                      <Text style={{ fontSize: 11, fontWeight: "600", color: M.success }}>+{c.xpReward} XP</Text>
                     )}
                   </View>
                 ))}

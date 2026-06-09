@@ -409,11 +409,11 @@ export default function WordDetailScreen() {
           <View style={{ marginHorizontal: 20, marginTop: 32, gap: 12 }}>
             <Pressable
               onPress={handlePractice}
-              style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", borderRadius: 16, backgroundColor: "#22c55e", paddingVertical: 16 }}
+              style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", borderRadius: 16, backgroundColor: M.success, paddingVertical: 16 }}
               className="active:opacity-80"
             >
-              <IconSymbol name="brain.head.profile" size={18} color="#fff" />
-              <Text style={{ marginLeft: 8, fontSize: 16, fontWeight: "600", color: "#fff" }}>
+              <IconSymbol name="brain.head.profile" size={18} color={M.ink} />
+              <Text style={{ marginLeft: 8, fontSize: 16, fontWeight: "600", color: M.ink }}>
                 {t("wordDetail.practiceWord")}
               </Text>
             </Pressable>
@@ -499,11 +499,11 @@ export default function WordDetailScreen() {
                           <View style={{ alignItems: "center", gap: 8 }}>
                             <Pressable
                               onPress={isPlaying ? stopPlayback : playRecording}
-                              style={{ height: 56, width: 56, alignItems: "center", justifyContent: "center", borderRadius: 28, backgroundColor: isPlaying ? M.accent : "#22c55e20" }}
+                              style={{ height: 56, width: 56, alignItems: "center", justifyContent: "center", borderRadius: 28, backgroundColor: isPlaying ? M.accent : M.successBg }}
                             >
-                              <IconSymbol name={isPlaying ? "stop.fill" : "play.fill"} size={22} color={isPlaying ? M.ink : "#22c55e"} />
+                              <IconSymbol name={isPlaying ? "stop.fill" : "play.fill"} size={22} color={isPlaying ? M.ink : M.success} />
                             </Pressable>
-                            <Text style={{ fontSize: 13, color: "#22c55e" }}>{t("contribute.recordingSaved")}</Text>
+                            <Text style={{ fontSize: 13, color: M.success }}>{t("contribute.recordingSaved")}</Text>
                             <View style={{ flexDirection: "row", gap: 8 }}>
                               <Pressable onPress={() => discardRecording()} style={{ borderRadius: 8, backgroundColor: M.border, paddingHorizontal: 16, paddingVertical: 8 }}>
                                 <Text style={{ fontSize: 13, fontWeight: "500", color: M.sub }}>{t("contribute.reRecord")}</Text>
@@ -517,12 +517,12 @@ export default function WordDetailScreen() {
                           <>
                             <Pressable
                               onPress={isRecording ? stopRecording : startRecording}
-                              style={{ height: 56, width: 56, alignItems: "center", justifyContent: "center", borderRadius: 28, backgroundColor: isRecording ? "#ef4444" : "#ef444420" }}
+                              style={{ height: 56, width: 56, alignItems: "center", justifyContent: "center", borderRadius: 28, backgroundColor: isRecording ? M.error : M.errorBg }}
                             >
                               {isRecording ? (
-                                <View style={{ height: 20, width: 20, borderRadius: 4, backgroundColor: "#fff" }} />
+                                <View style={{ height: 20, width: 20, borderRadius: 4, backgroundColor: M.ink }} />
                               ) : (
-                                <IconSymbol name="mic.fill" size={22} color="#ef4444" />
+                                <IconSymbol name="mic.fill" size={22} color={M.error} />
                               )}
                             </Pressable>
                             <Text style={{ marginTop: 8, fontSize: 12, color: M.muted }}>

@@ -67,13 +67,13 @@ export function StoryProgressBar({
                 {isCurrent ? (
                   <PulsingDot />
                 ) : isCompleted ? (
-                  <View style={{ height: 20, width: 20, borderRadius: 10, backgroundColor: "#22c55e" }} />
+                  <View style={{ height: 20, width: 20, borderRadius: 10, backgroundColor: M.success }} />
                 ) : (
                   <View style={{ height: 20, width: 20, borderRadius: 10, backgroundColor: M.border }} />
                 )}
               </View>
               <Text
-                style={{ marginTop: 6, textAlign: "center", fontSize: 10, lineHeight: 14, color: isCurrent ? M.accent : isCompleted ? "#22c55e" : M.muted, fontWeight: isCurrent || isCompleted ? "600" : "400" }}
+                style={{ marginTop: 6, textAlign: "center", fontSize: 10, lineHeight: 14, color: isCurrent ? M.accent : isCompleted ? M.success : M.muted, fontWeight: isCurrent || isCompleted ? "600" : "400" }}
                 numberOfLines={2}
               >
                 {chapter.title}

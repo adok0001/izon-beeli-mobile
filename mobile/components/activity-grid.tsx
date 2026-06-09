@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
 import { hapticTap } from "@/lib/haptics";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useRouter } from "expo-router";
@@ -18,36 +19,36 @@ const ACTIVITIES: { section: string; items: ActivityDef[] }[] = [
   {
     section: "QUICK PLAY",
     items: [
-      { id: "speed-round", title: "Speed Round", description: "Answer as many words as you can in 60 seconds", icon: "bolt.fill", color: "#f59e0b", route: "/speed-round" },
-      { id: "recall-bingo", title: "Recall Bingo", description: "Mark the called word on your 5×5 card", icon: "square.grid.3x3.fill", color: "#22c55e", route: "/recall-bingo" },
+      { id: "speed-round", title: "Speed Round", description: "Answer as many words as you can in 60 seconds", icon: "bolt.fill", color: getAccent("amber").solid, route: "/speed-round" },
+      { id: "recall-bingo", title: "Recall Bingo", description: "Mark the called word on your 5×5 card", icon: "square.grid.3x3.fill", color: getAccent("green").solid, route: "/recall-bingo" },
     ],
   },
   {
     section: "LISTENING",
     items: [
-      { id: "dictation", title: "Dictation Drop", description: "Hear a phrase, type what you heard", icon: "waveform", color: "#60a5fa", route: "/dictation" },
-      { id: "say-it-back", title: "Say It Back", description: "Listen, record, and compare your pronunciation", icon: "mic.fill", color: "#ef4444", route: "/say-it-back" },
+      { id: "dictation", title: "Dictation Drop", description: "Hear a phrase, type what you heard", icon: "waveform", color: getAccent("sky").solid, route: "/dictation" },
+      { id: "say-it-back", title: "Say It Back", description: "Listen, record, and compare your pronunciation", icon: "mic.fill", color: getAccent("rose").solid, route: "/say-it-back" },
     ],
   },
   {
     section: "READING & WRITING",
     items: [
-      { id: "fill-proverb", title: "Fill the Proverb", description: "Complete a proverb by choosing the missing word", icon: "text.quote", color: "#a78bfa", route: "/fill-proverb" },
-      { id: "sentence-builder", title: "Build a Sentence", description: "Arrange scrambled word tiles into a correct sentence", icon: "text.alignleft", color: "#f97316", route: "/sentence-builder" },
+      { id: "fill-proverb", title: "Fill the Proverb", description: "Complete a proverb by choosing the missing word", icon: "text.quote", color: getAccent("purple").solid, route: "/fill-proverb" },
+      { id: "sentence-builder", title: "Build a Sentence", description: "Arrange scrambled word tiles into a correct sentence", icon: "text.alignleft", color: getAccent("orange").solid, route: "/sentence-builder" },
     ],
   },
   {
     section: "SCRIPTS",
     items: [
-      { id: "script-decode", title: "Script Decode", description: "Read a script symbol and identify its meaning", icon: "character.book.closed", color: "#4ade80", route: "/script-decode" },
-      { id: "trace-symbol", title: "Trace the Symbol", description: "Trace Ge'ez, Nsịbịdị, or Adinkra by hand", icon: "pencil.tip", color: "#f59e0b", route: "/trace-symbol" },
+      { id: "script-decode", title: "Script Decode", description: "Read a Ge'ez or Nsịbịdị symbol and identify it", icon: "character.book.closed", color: getAccent("teal").solid, route: "/script-decode" },
+      { id: "trace-symbol", title: "Trace the Symbol", description: "Trace Ge'ez, Nsịbịdị, or Adinkra by hand", icon: "pencil.tip", color: getAccent("amber").solid, route: "/trace-symbol" },
     ],
   },
   {
     section: "EXPLORE",
     items: [
-      { id: "etymology-trail", title: "Etymology Trail", description: "Trace how words evolved across centuries", icon: "clock.arrow.circlepath", color: "#60a5fa", route: "/etymology-trail" },
-      { id: "word-challenge", title: "Word Challenge", description: "Learn, record, and write with today's word", icon: "pencil.and.scribble", color: "#f43f5e", route: "/word-challenge", tag: "DAILY" },
+      { id: "etymology-trail", title: "Etymology Trail", description: "Trace how words evolved across centuries", icon: "clock.arrow.circlepath", color: getAccent("sky").solid, route: "/etymology-trail" },
+      { id: "word-challenge", title: "Word Challenge", description: "Learn, record, and write with today's word", icon: "pencil.and.scribble", color: getAccent("rose").solid, route: "/word-challenge", tag: "DAILY" },
     ],
   },
 ];

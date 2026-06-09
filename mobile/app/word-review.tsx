@@ -1,5 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { apiFetch } from "@/lib/api";
+import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { DictionaryEntry } from "@/lib/dictionary";
 import { hapticError, hapticSuccess, hapticTap } from "@/lib/haptics";
@@ -132,10 +133,10 @@ function ReviewCard({
       {face === "answer" && (
         <View style={{ marginTop: 16, flexDirection: "row", gap: 12, paddingBottom: 16 }}>
           {[
-            { key: "again" as const, icon: "arrow.counterclockwise", color: "#ef4444" },
+            { key: "again" as const, icon: "arrow.counterclockwise", color: M.error },
             { key: "hard" as const, icon: "minus.circle", color: M.accent },
-            { key: "good" as const, icon: "checkmark.circle", color: "#22c55e" },
-            { key: "easy" as const, icon: "checkmark.seal.fill", color: "#a78bfa" },
+            { key: "good" as const, icon: "checkmark.circle", color: M.success },
+            { key: "easy" as const, icon: "checkmark.seal.fill", color: getAccent("purple").solid },
           ].map(({ key, icon, color }) => (
             <Pressable
               key={key}
@@ -305,20 +306,20 @@ export default function WordReviewScreen() {
           <LoadingScreen />
         ) : queue.length === 0 ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
-            <IconSymbol name="checkmark.circle.fill" size={56} color="#22c55e" />
+            <IconSymbol name="checkmark.circle.fill" size={56} color={M.success} />
             <Text style={{ marginTop: 16, textAlign: "center", fontSize: 20, fontWeight: "700", color: M.text }}>
               {t("wordReview.allCaughtUp")}
             </Text>
             <Text style={{ marginTop: 8, textAlign: "center", fontSize: 13, color: M.sub }}>
               {lessonId ? t("wordReview.noLessonWords") : t("wordReview.noWordsDue")}
             </Text>
-            <Pressable onPress={() => router.back()} style={{ marginTop: 24, borderRadius: 12, backgroundColor: "#a78bfa", paddingHorizontal: 32, paddingVertical: 12 }} className="active:opacity-80">
-              <Text style={{ fontWeight: "600", color: "#fff" }}>{t("wordReview.done")}</Text>
+            <Pressable onPress={() => router.back()} style={{ marginTop: 24, borderRadius: 12, backgroundColor: getAccent("purple").solid, paddingHorizontal: 32, paddingVertical: 12 }} className="active:opacity-80">
+              <Text style={{ fontWeight: "600", color: M.ink }}>{t("wordReview.done")}</Text>
             </Pressable>
           </View>
         ) : isFinished ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
-            <IconSymbol name="checkmark.seal.fill" size={56} color="#a78bfa" />
+            <IconSymbol name="checkmark.seal.fill" size={56} color={getAccent("purple").solid} />
             <Text style={{ marginTop: 16, textAlign: "center", fontSize: 20, fontWeight: "700", color: M.text }}>
               {t("wordReview.sessionComplete")}
             </Text>
@@ -334,19 +335,19 @@ export default function WordReviewScreen() {
               const avg = counts.reduce((s, n) => s + n, 0) / counts.length;
               const retention = avg >= 5 ? 95 : avg >= 4 ? 85 : avg >= 3 ? 70 : avg >= 2 ? 50 : 30;
               return (
-                <View style={{ marginTop: 20, width: "100%", borderRadius: 16, backgroundColor: "#a78bfa15", padding: 16, borderWidth: 1, borderColor: "#a78bfa30" }}>
-                  <Text style={{ marginBottom: 4, textAlign: "center", fontSize: 13, color: "#a78bfa" }}>
+                <View style={{ marginTop: 20, width: "100%", borderRadius: 16, backgroundColor: `${getAccent("purple").solid}15`, padding: 16, borderWidth: 1, borderColor: `${getAccent("purple").solid}30` }}>
+                  <Text style={{ marginBottom: 4, textAlign: "center", fontSize: 13, color: getAccent("purple").solid }}>
                     {t("wordReview.retentionDesc", { avg: avg.toFixed(1), pct: retention })}
                   </Text>
-                  <View style={{ marginTop: 8, height: 8, overflow: "hidden", borderRadius: 999, backgroundColor: "#a78bfa30" }}>
-                    <View style={{ height: 8, borderRadius: 999, backgroundColor: "#a78bfa", width: `${retention}%` }} />
+                  <View style={{ marginTop: 8, height: 8, overflow: "hidden", borderRadius: 999, backgroundColor: `${getAccent("purple").solid}30` }}>
+                    <View style={{ height: 8, borderRadius: 999, backgroundColor: getAccent("purple").solid, width: `${retention}%` }} />
                   </View>
                 </View>
               );
             })()}
 
-            <Pressable onPress={() => router.back()} style={{ marginTop: 24, borderRadius: 12, backgroundColor: "#a78bfa", paddingHorizontal: 32, paddingVertical: 12 }} className="active:opacity-80">
-              <Text style={{ fontWeight: "600", color: "#fff" }}>{t("wordReview.done")}</Text>
+            <Pressable onPress={() => router.back()} style={{ marginTop: 24, borderRadius: 12, backgroundColor: getAccent("purple").solid, paddingHorizontal: 32, paddingVertical: 12 }} className="active:opacity-80">
+              <Text style={{ fontWeight: "600", color: M.ink }}>{t("wordReview.done")}</Text>
             </Pressable>
           </View>
         ) : (
@@ -357,7 +358,7 @@ export default function WordReviewScreen() {
                 <Text style={{ fontSize: 11, color: M.sub }}>{t("wordReview.reviewed", { count: uniqueReviewed })}</Text>
               </View>
               <View style={{ height: 6, borderRadius: 999, backgroundColor: M.border }}>
-                <View style={{ height: 6, borderRadius: 999, backgroundColor: "#a78bfa", width: `${(currentIndex / queue.length) * 100}%` }} />
+                <View style={{ height: 6, borderRadius: 999, backgroundColor: getAccent("purple").solid, width: `${(currentIndex / queue.length) * 100}%` }} />
               </View>
             </View>
 

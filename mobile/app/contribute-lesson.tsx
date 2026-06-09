@@ -1,6 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { apiFetch, friendlyError } from "@/lib/api";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import {
     useSubmitLessonContribution,
     type LessonContributionSegmentInput,
@@ -59,6 +60,7 @@ function formatTime(seconds: number): string {
 }
 
 export default function ContributeLessonScreen() {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const STEP_META = useStepMeta(t);
   const router = useRouter();
@@ -525,29 +527,30 @@ export default function ContributeLessonScreen() {
                 </Text>
 
                 {store.audioUri ? (
-                  <View className="items-center rounded-2xl bg-green-50 p-8 dark:bg-green-950">
-                    <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-                      <IconSymbol name="checkmark" size={28} color="#22c55e" />
+                  <View className="items-center rounded-2xl p-8" style={{ backgroundColor: M.successBg }}>
+                    <View className="mb-4 h-16 w-16 items-center justify-center rounded-full" style={{ backgroundColor: M.successBg, borderWidth: 1, borderColor: M.successBorder }}>
+                      <IconSymbol name="checkmark" size={28} color={M.success} />
                     </View>
-                    <Text className="text-lg font-bold text-green-700 dark:text-green-400">
+                    <Text className="text-lg font-bold" style={{ color: M.success }}>
                       {t("contribute.audioReady")}
                     </Text>
                     {store.audioDuration > 0 && (
-                      <Text className="mt-1 text-sm text-green-600 dark:text-green-500">
+                      <Text className="mt-1 text-sm" style={{ color: M.success }}>
                         {formatTime(store.audioDuration)}
                       </Text>
                     )}
                     {/* Inline preview */}
                     <Pressable
                       onPress={store.isPlaying ? store.pause : store.play}
-                      className="mt-4 flex-row items-center rounded-full bg-green-600 px-5 py-2.5"
+                      className="mt-4 flex-row items-center rounded-full px-5 py-2.5"
+                      style={{ backgroundColor: M.success }}
                     >
                       <IconSymbol
                         name={store.isPlaying ? "pause.fill" : "play.fill"}
                         size={14}
-                        color="white"
+                        color={M.parchment}
                       />
-                      <Text className="ml-2 text-sm font-semibold text-white">
+                      <Text className="ml-2 text-sm font-semibold" style={{ color: M.parchment }}>
                         {store.isPlaying ? t("lesson.pause") : t("contribute.preview")}
                       </Text>
                     </Pressable>
@@ -597,7 +600,7 @@ export default function ContributeLessonScreen() {
                         {store.isRecording ? (
                           <View className="h-5 w-5 rounded-sm bg-white" />
                         ) : (
-                          <IconSymbol name="mic.fill" size={22} color="#ef4444" />
+                          <IconSymbol name="mic.fill" size={22} color={M.error} />
                         )}
                       </View>
                       <View className="flex-1">
