@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Script from "next/script";
 import { breadcrumbJsonLd } from "@/lib/structured-data";
+import { getRequestLocale, localeAlternates } from "@/lib/locale-meta";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api";
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://izon-beeli.com";
@@ -40,10 +41,11 @@ export async function generateMetadata({
   const title = `${lang.name} Dictionary — Words, Translations & Audio`;
   const description = `Browse the ${lang.name} (${lang.nativeName}) dictionary. English translations, pronunciation guides, example sentences, and audio recordings for ${lang.region} vocabulary.`;
 
+  const locale = await getRequestLocale();
   return {
     title,
     description,
-    alternates: { canonical: `/dictionary/${languageId}` },
+    alternates: localeAlternates(locale, `/dictionary/${languageId}`),
     keywords: [
       `${lang.name} dictionary`,
       `${lang.name} words`,

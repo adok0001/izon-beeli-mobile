@@ -1,23 +1,25 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Script from "next/script";
+import { getRequestLocale, localeAlternates } from "@/lib/locale-meta";
 
 const APP_NAME = "Beeli (Aurufie)";
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://izon-beeli.com";
 
-export const metadata: Metadata = {
-  title: "Support",
-  description:
-    "Get help with Beeli (Aurufie) — the African language learning app.",
-  alternates: {
-    canonical: "/support",
-  },
-  openGraph: {
-    title: `Support | ${APP_NAME}`,
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
+  return {
+    title: "Support",
     description: "Get help with Beeli (Aurufie) — the African language learning app.",
-    url: "/support",
-    type: "article",
-  },
-};
+    alternates: localeAlternates(locale, "/support"),
+    openGraph: {
+      title: `Support | ${APP_NAME}`,
+      description: "Get help with Beeli (Aurufie) — the African language learning app.",
+      url: `${BASE_URL}/support`,
+      type: "article",
+    },
+  };
+}
 
 type FaqItem = {
   q: string;

@@ -1,22 +1,24 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getRequestLocale, localeAlternates } from "@/lib/locale-meta";
 
 const APP_NAME = "Beeli (Aurufie)";
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://izon-beeli.com";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy",
-  description:
-    "Learn how Beeli collects, uses, and protects your personal data.",
-  alternates: {
-    canonical: "/privacy",
-  },
-  openGraph: {
-    title: `Privacy Policy | ${APP_NAME}`,
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
+  return {
+    title: "Privacy Policy",
     description: "Learn how Beeli collects, uses, and protects your personal data.",
-    url: "/privacy",
-    type: "article",
-  },
-};
+    alternates: localeAlternates(locale, "/privacy"),
+    openGraph: {
+      title: `Privacy Policy | ${APP_NAME}`,
+      description: "Learn how Beeli collects, uses, and protects your personal data.",
+      url: `${BASE_URL}/privacy`,
+      type: "article",
+    },
+  };
+}
 
 const LAST_UPDATED = "27 March 2026";
 

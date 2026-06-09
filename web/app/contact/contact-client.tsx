@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, BookOpen, Building2, GraduationCap, Mic } from "
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -11,66 +12,63 @@ type ContactType = "institution" | "access" | "partner" | "general";
 
 interface TypeConfig {
   icon: React.ReactNode;
-  label: string;
-  title: string;
-  subtitle: string;
+  labelKey: string;
+  titleKey: string;
+  subtitleKey: string;
+  subjectKey: string;
   showOrg: boolean;
   accent: string;
   accentBg: string;
-  subject: string;
 }
 
 const TYPE_CONFIGS: Record<ContactType, TypeConfig> = {
   institution: {
     icon: <Building2 className="w-5 h-5" />,
-    label: "Partnership",
-    title: "Partner with Aurufie.",
-    subtitle:
-      "Schools, universities, and NGOs — tell us about your organisation and how we can work together.",
+    labelKey: "web.contact.tabPartnershipLabel",
+    titleKey: "web.contact.tabPartnershipTitle",
+    subtitleKey: "web.contact.tabPartnershipSubtitle",
+    subjectKey: "web.contact.tabPartnershipSubject",
     showOrg: true,
     accent: "#a855f7",
     accentBg: "rgba(168,85,247,0.10)",
-    subject: "Institution Partnership Inquiry",
   },
   access: {
     icon: <Building2 className="w-5 h-5" />,
-    label: "Institutional Access",
-    title: "Request institutional access.",
-    subtitle:
-      "Get classroom tools, progress tracking, and structured curriculum for your programme.",
+    labelKey: "web.contact.tabAccessLabel",
+    titleKey: "web.contact.tabAccessTitle",
+    subtitleKey: "web.contact.tabAccessSubtitle",
+    subjectKey: "web.contact.tabAccessSubject",
     showOrg: true,
     accent: "#6366f1",
     accentBg: "rgba(99,102,241,0.10)",
-    subject: "Institutional Access Request",
   },
   partner: {
     icon: <Mic className="w-5 h-5" />,
-    label: "Language Partner",
-    title: "Become a language partner.",
-    subtitle:
-      "Bring your community, language expertise, or cultural knowledge into the Aurufie platform.",
+    labelKey: "web.contact.tabLanguagePartnerLabel",
+    titleKey: "web.contact.tabLanguagePartnerTitle",
+    subtitleKey: "web.contact.tabLanguagePartnerSubtitle",
+    subjectKey: "web.contact.tabLanguagePartnerSubject",
     showOrg: false,
     accent: "#f59e0b",
     accentBg: "rgba(245,158,11,0.10)",
-    subject: "Language Partner Inquiry",
   },
   general: {
     icon: <BookOpen className="w-5 h-5" />,
-    label: "General",
-    title: "Get in touch.",
-    subtitle: "Questions, ideas, or feedback — we read every message.",
+    labelKey: "web.contact.tabGeneralLabel",
+    titleKey: "web.contact.tabGeneralTitle",
+    subtitleKey: "web.contact.tabGeneralSubtitle",
+    subjectKey: "web.contact.tabGeneralSubject",
     showOrg: false,
     accent: "#10b981",
     accentBg: "rgba(16,185,129,0.10)",
-    subject: "Aurufie Inquiry",
   },
 };
 
-const TYPE_TABS: { id: ContactType; icon: React.ReactNode; label: string }[] = [
-  { id: "institution", icon: <Building2 className="w-4 h-4" />, label: "Partnership" },
-  { id: "access", icon: <GraduationCap className="w-4 h-4" />, label: "Institutional Access" },
-  { id: "partner", icon: <Mic className="w-4 h-4" />, label: "Language Partner" },
-  { id: "general", icon: <BookOpen className="w-4 h-4" />, label: "General" },
+const TYPE_TABS: { id: ContactType; icon: React.ReactNode; labelKey: string }[] = [
+  { id: "institution", icon: <Building2 className="w-4 h-4" />, labelKey: "web.contact.tabPartnershipLabel" },
+  { id: "access", icon: <GraduationCap className="w-4 h-4" />, labelKey: "web.contact.tabAccessLabel" },
+  { id: "partner", icon: <Mic className="w-4 h-4" />, labelKey: "web.contact.tabLanguagePartnerLabel" },
+  { id: "general", icon: <BookOpen className="w-4 h-4" />, labelKey: "web.contact.tabGeneralLabel" },
 ];
 
 function isContactType(v: string | null): v is ContactType {
@@ -80,6 +78,7 @@ function isContactType(v: string | null): v is ContactType {
 // ── Form ──────────────────────────────────────────────────────────────────────
 
 function ContactForm({ config }: { config: TypeConfig }) {
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [org, setOrg] = useState("");
@@ -88,11 +87,12 @@ function ContactForm({ config }: { config: TypeConfig }) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const subject = t(config.subjectKey);
     const body = [
       config.showOrg && org ? `Organisation: ${org}\n` : "",
       message,
     ].join("");
-    const mailtoUrl = `mailto:hello@beeli.app?subject=${encodeURIComponent(config.subject)}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${body}`)}`;
+    const mailtoUrl = `mailto:hello@beeli.app?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${body}`)}`;
     window.location.href = mailtoUrl;
     setSent(true);
   }
@@ -109,16 +109,16 @@ function ContactForm({ config }: { config: TypeConfig }) {
         >
           ✓
         </div>
-        <h3 className="font-display text-2xl text-white">Your message is on its way.</h3>
+        <h3 className="font-display text-2xl text-white">{t("web.contact.sentTitle")}</h3>
         <p className="text-neutral-500 text-sm max-w-xs">
-          We&apos;ll reply to {email || "your email"} as soon as we can.
+          {t("web.contact.sentMessage", { email: email || t("web.contact.formEmailPlaceholder") })}
         </p>
         <button
           onClick={() => setSent(false)}
           className="mt-4 text-sm font-semibold transition-colors duration-200"
           style={{ color: config.accent }}
         >
-          Send another message
+          {t("web.contact.sentAnother")}
         </button>
       </div>
     );
@@ -129,14 +129,14 @@ function ContactForm({ config }: { config: TypeConfig }) {
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
           <label className="block font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-500 mb-2">
-            Name
+            {t("web.contact.formName")}
           </label>
           <input
             required
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Your name"
+            placeholder={t("web.contact.formNamePlaceholder")}
             className={inputBase}
             style={{ "--focus-color": config.accent } as React.CSSProperties}
             onFocus={(e) => (e.currentTarget.style.borderColor = config.accent + "60")}
@@ -145,14 +145,14 @@ function ContactForm({ config }: { config: TypeConfig }) {
         </div>
         <div>
           <label className="block font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-500 mb-2">
-            Email
+            {t("web.contact.formEmail")}
           </label>
           <input
             required
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
+            placeholder={t("web.contact.formEmailPlaceholder")}
             className={inputBase}
             onFocus={(e) => (e.currentTarget.style.borderColor = config.accent + "60")}
             onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
@@ -163,13 +163,13 @@ function ContactForm({ config }: { config: TypeConfig }) {
       {config.showOrg && (
         <div>
           <label className="block font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-500 mb-2">
-            Organisation
+            {t("web.contact.formOrg")}
           </label>
           <input
             type="text"
             value={org}
             onChange={(e) => setOrg(e.target.value)}
-            placeholder="University, school, or NGO name"
+            placeholder={t("web.contact.formOrgPlaceholder")}
             className={inputBase}
             onFocus={(e) => (e.currentTarget.style.borderColor = config.accent + "60")}
             onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
@@ -179,14 +179,14 @@ function ContactForm({ config }: { config: TypeConfig }) {
 
       <div>
         <label className="block font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-500 mb-2">
-          Message
+          {t("web.contact.formMessage")}
         </label>
         <textarea
           required
           rows={5}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Tell us about your needs, goals, or questions…"
+          placeholder={t("web.contact.formMessagePlaceholder")}
           className={`${inputBase} resize-none`}
           onFocus={(e) => (e.currentTarget.style.borderColor = config.accent + "60")}
           onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
@@ -203,7 +203,7 @@ function ContactForm({ config }: { config: TypeConfig }) {
         onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
         onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
       >
-        Send message
+        {t("web.contact.formSubmit")}
         <ArrowRight className="w-4 h-4" />
       </button>
     </form>
@@ -213,6 +213,7 @@ function ContactForm({ config }: { config: TypeConfig }) {
 // ── Inner page (needs Suspense for useSearchParams) ───────────────────────────
 
 function ContactPageInner() {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const rawType = searchParams.get("type");
   const [activeType, setActiveType] = useState<ContactType>(
@@ -241,7 +242,7 @@ function ContactPageInner() {
           className="inline-flex items-center gap-2 text-sm text-neutral-500 hover:text-white transition-colors duration-200 mb-12"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Aurufie
+          {t("web.contact.backToAurufie")}
         </Link>
 
         {/* Header */}
@@ -251,12 +252,12 @@ function ContactPageInner() {
             style={{ background: config.accentBg, borderColor: config.accent + "30", color: config.accent }}
           >
             {config.icon}
-            <span className="font-mono text-[10px] uppercase tracking-[0.22em]">{config.label}</span>
+            <span className="font-mono text-[10px] uppercase tracking-[0.22em]">{t(config.labelKey)}</span>
           </div>
           <h1 className="font-display text-5xl sm:text-6xl text-white tracking-[-0.02em] leading-[1.05] mb-4">
-            {config.title}
+            {t(config.titleKey)}
           </h1>
-          <p className="text-neutral-400 text-lg leading-relaxed max-w-lg">{config.subtitle}</p>
+          <p className="text-neutral-400 text-lg leading-relaxed max-w-lg">{t(config.subtitleKey)}</p>
         </div>
 
         {/* Type tabs */}
@@ -277,7 +278,7 @@ function ContactPageInner() {
               }
             >
               {tab.icon}
-              {tab.label}
+              {t(tab.labelKey)}
             </button>
           ))}
         </div>
@@ -295,10 +296,10 @@ function ContactPageInner() {
 
         {/* Footer */}
         <div className="mt-12 pt-8 border-t border-white/[0.05] flex items-center justify-between text-xs text-neutral-600 font-mono">
-          <span>© {new Date().getFullYear()} Aurufie · Beeli</span>
+          <span>{t("web.contact.footerRights", { year: new Date().getFullYear() })}</span>
           <div className="flex gap-4">
-            <Link href="/privacy" className="hover:text-white transition-colors duration-150">Privacy</Link>
-            <Link href="/support" className="hover:text-white transition-colors duration-150">Support</Link>
+            <Link href="/privacy" className="hover:text-white transition-colors duration-150">{t("web.contact.footerPrivacy")}</Link>
+            <Link href="/support" className="hover:text-white transition-colors duration-150">{t("web.contact.footerSupport")}</Link>
           </div>
         </div>
       </div>

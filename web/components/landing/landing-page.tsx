@@ -5,6 +5,8 @@ import Link from "next/link";
 import { ScrollytellingSection } from "@/components/landing/scrollytelling-section";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useUiLanguageStore } from "@/store/ui-language-store";
+import { localeHref } from "@/lib/locale-href";
 
 // ── Scroll reveal ─────────────────────────────────────────────────────────────
 
@@ -506,6 +508,7 @@ function AudioDemoStrip() {
 
 function PersonaPillSelector() {
   const { t } = useTranslation();
+  const locale = useUiLanguageStore((s) => s.uiLanguage);
   const [active, setActive] = useState(0);
   const current = PERSONAS[active];
   return (
@@ -544,7 +547,7 @@ function PersonaPillSelector() {
         </h3>
         <p className="text-sm text-neutral-500 leading-relaxed">{t(current.descKey)}</p>
         <Link
-          href="/learn"
+          href={localeHref(locale, "/learn")}
           className="inline-flex items-center gap-1.5 mt-6 text-sm text-amber-400 hover:text-amber-300 font-medium transition-colors"
         >
           {t("web.landing.personasStartFree")} <ArrowRight className="h-3.5 w-3.5" />
@@ -743,6 +746,8 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 export function LandingPage() {
   const { t } = useTranslation();
+  const locale = useUiLanguageStore((s) => s.uiLanguage);
+  const lh = (path: string) => localeHref(locale, path);
   return (
     <div className="min-h-screen bg-[#06060e] text-neutral-50 overflow-x-hidden">
 
@@ -768,7 +773,7 @@ export function LandingPage() {
               <span className="font-display font-bold text-white text-xl tracking-tight">Beeli</span>
             </div>
             <Link
-              href="/for-educators"
+              href={lh("/for-educators")}
               className="hidden sm:block font-mono text-[9px] uppercase tracking-[0.2em] text-neutral-500 hover:text-neutral-300 transition-colors"
             >
               {t("web.landing.navForEducators")}
@@ -776,7 +781,7 @@ export function LandingPage() {
           </div>
           <div className="flex items-center gap-2">
             <Link
-              href="/learn"
+              href={lh("/learn")}
               className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#06060e] font-bold text-sm transition-all duration-200 shadow-[0_0_24px_-6px_rgb(245_158_11_/0.5)] hover:shadow-[0_0_36px_-6px_rgb(245_158_11_/0.7)]"
             >
               {t("web.landing.navStartLearning")}
@@ -818,14 +823,14 @@ export function LandingPage() {
 
             <div className="mt-12 flex flex-col sm:flex-row items-start gap-4">
               <Link
-                href="/learn"
+                href={lh("/learn")}
                 className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#06060e] font-bold text-sm transition-all duration-200 shadow-[0_0_60px_-12px_rgb(245_158_11_/0.65)] hover:shadow-[0_0_80px_-12px_rgb(245_158_11_/0.85)]"
               >
                 {t("web.landing.heroCtaPrimary")}
                 <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
               </Link>
               <Link
-                href="/learn"
+                href={lh("/learn")}
                 className="inline-flex items-center gap-2 px-8 py-4 rounded-xl border border-white/[0.1] text-neutral-400 hover:text-white hover:border-white/20 font-medium text-sm transition-all duration-200"
               >
                 {t("web.landing.heroCtaSecondary")}
@@ -1072,7 +1077,7 @@ export function LandingPage() {
               {t("web.landing.ctaSubtitle")}
             </p>
             <Link
-              href="/learn"
+              href={lh("/learn")}
               className="group inline-flex items-center gap-2 px-10 py-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#06060e] font-bold text-base transition-all duration-200 shadow-[0_0_72px_-12px_rgb(245_158_11_/0.65)] hover:shadow-[0_0_100px_-12px_rgb(245_158_11_/0.85)]"
             >
               {t("web.landing.ctaButton")}
@@ -1087,11 +1092,11 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-neutral-700">
           <span className="font-display">© {new Date().getFullYear()} Beeli. {t("web.landing.footerRights")}</span>
           <div className="flex gap-6">
-            <Link href="/privacy" className="hover:text-neutral-400 transition-colors">{t("web.landing.footerPrivacy")}</Link>
-            <Link href="/support" className="hover:text-neutral-400 transition-colors">{t("web.landing.footerSupport")}</Link>
-            <Link href="/for-educators" className="hover:text-neutral-400 transition-colors">{t("web.landing.footerForEducators")}</Link>
-            <Link href="/culture" className="hover:text-neutral-400 transition-colors">{t("web.landing.footerBlog")}</Link>
-            <Link href="/learn" className="text-amber-500 hover:text-amber-400 font-semibold transition-colors">
+            <Link href={lh("/privacy")} className="hover:text-neutral-400 transition-colors">{t("web.landing.footerPrivacy")}</Link>
+            <Link href={lh("/support")} className="hover:text-neutral-400 transition-colors">{t("web.landing.footerSupport")}</Link>
+            <Link href={lh("/for-educators")} className="hover:text-neutral-400 transition-colors">{t("web.landing.footerForEducators")}</Link>
+            <Link href={lh("/culture")} className="hover:text-neutral-400 transition-colors">{t("web.landing.footerBlog")}</Link>
+            <Link href={lh("/learn")} className="text-amber-500 hover:text-amber-400 font-semibold transition-colors">
               {t("web.landing.footerGetStarted")}
             </Link>
           </div>

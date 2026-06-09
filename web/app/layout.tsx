@@ -1,5 +1,6 @@
 import { Providers } from "@/components/providers";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
+import { getRequestLocale, localeAlternates } from "@/lib/locale-meta";
 import {
   normalizeUiLanguage,
   UI_LANGUAGE_COOKIE,
@@ -47,6 +48,7 @@ async function getUiLanguage(): Promise<UiLanguage> {
 
 export async function generateMetadata(): Promise<Metadata> {
   const lang = await getUiLanguage();
+  const locale = await getRequestLocale();
   const copy = TRANSLATIONS[lang].web;
   const metadataBase = new URL(BASE_URL);
 
@@ -58,9 +60,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: copy.metadataDescription,
     applicationName: APP_NAME,
-    alternates: {
-      canonical: "/",
-    },
+    alternates: localeAlternates(locale, "/"),
     category: "education",
     keywords: [
       "Beeli",

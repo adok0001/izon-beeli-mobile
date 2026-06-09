@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useUiLanguageStore } from "@/store/ui-language-store";
+import { localeHref } from "@/lib/locale-href";
 import {
   Languages,
   GraduationCap,
@@ -68,39 +71,19 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ── Data ──────────────────────────────────────────────────────────────────────
+// ── Static data (non-translatable) ────────────────────────────────────────────
 
 const HOW_IT_WORKS = [
-  { roman: "I",   title: "Create a classroom",  desc: "Takes 2 minutes. No setup fees, no credit card." },
-  { roman: "II",  title: "Invite students",      desc: "Share a code. Students join instantly on any device." },
-  { roman: "III", title: "Assign & track",       desc: "Assign lessons, monitor progress, and watch retention improve." },
+  { roman: "I",   titleKey: "web.educators.howStep1Title", descKey: "web.educators.howStep1Desc" },
+  { roman: "II",  titleKey: "web.educators.howStep2Title", descKey: "web.educators.howStep2Desc" },
+  { roman: "III", titleKey: "web.educators.howStep3Title", descKey: "web.educators.howStep3Desc" },
 ];
 
 const FEATURES = [
-  {
-    roman: "I",
-    icon: GraduationCap,
-    title: "Classroom Management",
-    desc: "Create groups, bulk-enroll students with an invite code, manage multiple classes from one dashboard.",
-  },
-  {
-    roman: "II",
-    icon: BookOpen,
-    title: "Lesson Assignment",
-    desc: "Assign any lesson to any group — drawing from 70+ African languages across every skill level.",
-  },
-  {
-    roman: "III",
-    icon: BarChart3,
-    title: "Progress Tracking",
-    desc: "See completion rates, quiz scores, and streak data per student. Know who needs support before they fall behind.",
-  },
-  {
-    roman: "IV",
-    icon: Award,
-    title: "Student Motivation",
-    desc: "XP, streaks, and leaderboards keep students competing — with each other and themselves.",
-  },
+  { roman: "I",   icon: GraduationCap, titleKey: "web.educators.feature1Title", descKey: "web.educators.feature1Desc" },
+  { roman: "II",  icon: BookOpen,      titleKey: "web.educators.feature2Title", descKey: "web.educators.feature2Desc" },
+  { roman: "III", icon: BarChart3,     titleKey: "web.educators.feature3Title", descKey: "web.educators.feature3Desc" },
+  { roman: "IV",  icon: Award,         titleKey: "web.educators.feature4Title", descKey: "web.educators.feature4Desc" },
 ];
 
 const LANGUAGES = [
@@ -118,40 +101,57 @@ const LANGUAGES = [
 
 const PLANS = [
   {
-    ref: "Cat. No. 001",
-    name: "Community",
-    price: "Free",
-    students: "Up to 10 students",
-    features: ["1 classroom", "Lesson assignment", "Basic progress view"],
-    cta: "Get Started",
-    href: "/sign-up",
+    ref: "web.educators.plan1Ref",
+    name: "web.educators.plan1Name",
+    price: "web.educators.plan1Price",
+    students: "web.educators.plan1Students",
+    features: ["web.educators.plan1Feature1", "web.educators.plan1Feature2", "web.educators.plan1Feature3"],
+    cta: "web.educators.plan1Cta",
+    hrefKey: "/sign-up" as const,
     highlight: false,
   },
   {
-    ref: "Cat. No. 002",
-    name: "Classroom Starter",
-    price: "$99/mo",
-    students: "Up to 30 students",
-    features: ["Unlimited classrooms", "Full progress reports", "Priority support"],
-    cta: "Start Free Trial",
-    href: "/sign-up",
+    ref: "web.educators.plan2Ref",
+    name: "web.educators.plan2Name",
+    price: "web.educators.plan2Price",
+    students: "web.educators.plan2Students",
+    features: ["web.educators.plan2Feature1", "web.educators.plan2Feature2", "web.educators.plan2Feature3"],
+    cta: "web.educators.plan2Cta",
+    hrefKey: "/sign-up" as const,
     highlight: true,
   },
   {
-    ref: "Cat. No. 003",
-    name: "Institution",
-    price: "Custom",
-    students: "Unlimited students",
-    features: ["Custom onboarding", "Dedicated account manager", "SLA & invoicing"],
-    cta: "Contact Us",
-    href: "/support",
+    ref: "web.educators.plan3Ref",
+    name: "web.educators.plan3Name",
+    price: "web.educators.plan3Price",
+    students: "web.educators.plan3Students",
+    features: ["web.educators.plan3Feature1", "web.educators.plan3Feature2", "web.educators.plan3Feature3"],
+    cta: "web.educators.plan3Cta",
+    hrefKey: "/support" as const,
     highlight: false,
+  },
+];
+
+const INSTITUTIONS = [
+  {
+    titleKey: "web.educators.institution1Title",
+    bodyKey: "web.educators.institution1Body",
+    quoteKey: "web.educators.institution1Quote",
+  },
+  {
+    titleKey: "web.educators.institution2Title",
+    bodyKey: "web.educators.institution2Body",
+    quoteKey: "web.educators.institution2Quote",
   },
 ];
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export function EducatorLandingPage() {
+  const { t } = useTranslation();
+  const locale = useUiLanguageStore((s) => s.uiLanguage);
+  const lh = (path: string) => localeHref(locale, path);
+
   return (
     <div className="min-h-screen bg-[#06060e] text-neutral-50 overflow-x-hidden">
 
@@ -174,16 +174,16 @@ export function EducatorLandingPage() {
               <span className="font-display font-bold text-white text-xl tracking-tight">Beeli</span>
             </Link>
             <span className="hidden sm:block text-[11px] uppercase tracking-widest text-amber-500/70 font-semibold">
-              For Educators
+              {t("web.educators.navForEducators")}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/sign-in" className="btn-ghost text-sm">Sign In</Link>
+            <Link href={lh("/sign-in")} className="btn-ghost text-sm">{t("web.educators.navSignIn")}</Link>
             <Link
-              href="/sign-up"
+              href={lh("/sign-up")}
               className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#06060e] font-bold text-sm transition-all duration-200 shadow-[0_0_24px_-6px_rgb(245_158_11_/0.5)] hover:shadow-[0_0_36px_-6px_rgb(245_158_11_/0.7)]"
             >
-              Create a Classroom
+              {t("web.educators.navCreateClassroom")}
             </Link>
           </div>
         </div>
@@ -193,37 +193,37 @@ export function EducatorLandingPage() {
       <section className="relative min-h-[88vh] flex flex-col justify-center px-6 py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto w-full">
           <div className="max-w-3xl animate-fade-in">
-            <SectionLabel>Collection No. 002 — Educator Suite</SectionLabel>
+            <SectionLabel>{t("web.educators.heroCollectionLabel")}</SectionLabel>
 
             <h1 className="font-display font-bold leading-[0.92] tracking-tight">
               <span className="block text-[clamp(3rem,8vw,6.5rem)] text-white">
-                Your students will
+                {t("web.educators.heroHeadline1")}
               </span>
               <span className="block text-[clamp(3rem,8vw,6.5rem)] text-amber-400">
-                actually show up.
+                {t("web.educators.heroHeadlineAccent")}
               </span>
             </h1>
 
             <p className="mt-8 text-lg sm:text-xl text-neutral-400 max-w-lg leading-relaxed">
-              Classroom tools for heritage language schools and university departments. Free to start.
+              {t("web.educators.heroSubhead")}
             </p>
             <p className="mt-2 text-sm text-neutral-600">
-              Assign lessons, track progress, and teach 70+ African languages — all from one dashboard.
+              {t("web.educators.heroSubheadSub")}
             </p>
 
             <div className="mt-12 flex flex-col sm:flex-row items-start gap-4">
               <Link
-                href="/sign-up"
+                href={lh("/sign-up")}
                 className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#06060e] font-bold text-sm transition-all duration-200 shadow-[0_0_60px_-12px_rgb(245_158_11_/0.65)] hover:shadow-[0_0_80px_-12px_rgb(245_158_11_/0.85)]"
               >
-                Create a Classroom — Free
+                {t("web.educators.heroPrimary")}
                 <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
               </Link>
               <Link
-                href="/learn"
+                href={lh("/learn")}
                 className="inline-flex items-center gap-2 px-8 py-4 rounded-xl border border-white/[0.1] text-neutral-400 hover:text-white hover:border-white/20 font-medium text-sm transition-all duration-200"
               >
-                See the Platform
+                {t("web.educators.heroSecondary")}
               </Link>
             </div>
           </div>
@@ -255,8 +255,8 @@ export function EducatorLandingPage() {
                 <span className="font-display font-bold text-3xl text-amber-400/30 mb-4 leading-none">
                   {step.roman}
                 </span>
-                <h3 className="font-display font-semibold text-lg text-white mb-2">{step.title}</h3>
-                <p className="text-sm text-neutral-500 leading-relaxed">{step.desc}</p>
+                <h3 className="font-display font-semibold text-lg text-white mb-2">{t(step.titleKey)}</h3>
+                <p className="text-sm text-neutral-500 leading-relaxed">{t(step.descKey)}</p>
               </div>
             ))}
           </div>
@@ -268,19 +268,19 @@ export function EducatorLandingPage() {
         <div className="max-w-7xl mx-auto">
           <Reveal>
             <div className="mb-16">
-              <SectionLabel>Exhibition Halls</SectionLabel>
+              <SectionLabel>{t("web.educators.featuresLabel")}</SectionLabel>
               <h2 className="font-display font-bold text-4xl sm:text-5xl text-white leading-tight">
-                Everything your<br />classroom needs.
+                {t("web.educators.featuresTitle")}
               </h2>
               <p className="mt-4 text-neutral-500 max-w-sm text-sm leading-relaxed">
-                Built into the platform. No third-party tools. No extra cost.
+                {t("web.educators.featuresSub")}
               </p>
             </div>
           </Reveal>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {FEATURES.map((f, i) => (
-              <Reveal key={f.title} delay={i * 90}>
+              <Reveal key={f.roman} delay={i * 90}>
                 <div className="group relative h-full bg-white/[0.025] border border-white/[0.06] rounded-2xl p-8 hover:border-amber-500/25 hover:bg-white/[0.04] transition-all duration-300 overflow-hidden">
                   <span className="absolute top-6 right-7 text-[10px] uppercase tracking-[0.28em] text-neutral-700 font-medium">
                     {f.roman}
@@ -289,8 +289,8 @@ export function EducatorLandingPage() {
                   <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-6 group-hover:bg-amber-500/15 transition-colors duration-300">
                     <f.icon className="h-5 w-5 text-amber-400" />
                   </div>
-                  <h3 className="font-display font-semibold text-xl text-white mb-3">{f.title}</h3>
-                  <p className="text-sm text-neutral-500 leading-relaxed">{f.desc}</p>
+                  <h3 className="font-display font-semibold text-xl text-white mb-3">{t(f.titleKey)}</h3>
+                  <p className="text-sm text-neutral-500 leading-relaxed">{t(f.descKey)}</p>
                 </div>
               </Reveal>
             ))}
@@ -304,13 +304,13 @@ export function EducatorLandingPage() {
           <Reveal>
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-12">
               <div>
-                <SectionLabel>Permanent Collection</SectionLabel>
+                <SectionLabel>{t("web.educators.languagesLabel")}</SectionLabel>
                 <h2 className="font-display font-bold text-4xl sm:text-5xl text-white leading-tight">
-                  We cover the languages<br />your students need.
+                  {t("web.educators.languagesTitle")}
                 </h2>
               </div>
               <p className="text-sm text-neutral-600 max-w-xs sm:text-right leading-relaxed">
-                Yoruba, Igbo, Swahili, Hausa, Amharic, Twi, Izon, Somali — and 60+ more.
+                {t("web.educators.languagesSub")}
               </p>
             </div>
           </Reveal>
@@ -334,31 +334,20 @@ export function EducatorLandingPage() {
         <section className="relative py-24 px-6">
           <div className="max-w-5xl mx-auto">
             <div className="mb-12">
-              <SectionLabel>Built For</SectionLabel>
+              <SectionLabel>{t("web.educators.institutionsLabel")}</SectionLabel>
               <h2 className="font-display font-bold text-4xl sm:text-5xl text-white">
-                Communities like yours.
+                {t("web.educators.institutionsTitle")}
               </h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {[
-                {
-                  title: "Heritage Language Schools",
-                  body: "Weekend and supplementary schools teaching Yoruba, Igbo, Twi, Somali, Amharic to diaspora children in the UK, US, Canada, and beyond.",
-                  quote: "The app teaching diaspora kids the language behind their favorite songs.",
-                },
-                {
-                  title: "University Departments",
-                  body: "African language programs at SOAS London, Howard University, UCLA, University of Lagos, University of Nairobi, and peer institutions.",
-                  quote: "Give your students a living language — one built by the community, for the community.",
-                },
-              ].map((card, i) => (
-                <Reveal key={card.title} delay={i * 100}>
+              {INSTITUTIONS.map((card, i) => (
+                <Reveal key={card.titleKey} delay={i * 100}>
                   <div className="relative bg-white/[0.025] border border-white/[0.06] rounded-2xl p-8 overflow-hidden h-full">
                     <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-amber-500/25 to-transparent" />
-                    <h3 className="font-display font-semibold text-xl text-white mb-3">{card.title}</h3>
-                    <p className="text-sm text-neutral-500 leading-relaxed mb-5">{card.body}</p>
+                    <h3 className="font-display font-semibold text-xl text-white mb-3">{t(card.titleKey)}</h3>
+                    <p className="text-sm text-neutral-500 leading-relaxed mb-5">{t(card.bodyKey)}</p>
                     <p className="text-xs text-neutral-600 italic border-l-2 border-amber-500/30 pl-3">
-                      &ldquo;{card.quote}&rdquo;
+                      &ldquo;{t(card.quoteKey)}&rdquo;
                     </p>
                   </div>
                 </Reveal>
@@ -373,12 +362,12 @@ export function EducatorLandingPage() {
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <div className="mb-14 text-center">
-              <SectionLabel>Pricing</SectionLabel>
+              <SectionLabel>{t("web.educators.pricingLabel")}</SectionLabel>
               <h2 className="font-display font-bold text-4xl sm:text-5xl text-white">
-                Free to start. Always.
+                {t("web.educators.pricingTitle")}
               </h2>
               <p className="mt-4 text-neutral-500 max-w-sm mx-auto text-sm">
-                No paywalls on language learning. Scale up only when your program grows.
+                {t("web.educators.pricingSub")}
               </p>
             </div>
           </Reveal>
@@ -397,32 +386,32 @@ export function EducatorLandingPage() {
                   <div className={`absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent ${plan.highlight ? "via-amber-500/60" : "via-white/[0.1]"} to-transparent`} />
 
                   <div className="mb-6">
-                    <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-neutral-600 mb-3">{plan.ref}</div>
-                    <div className="text-xs font-bold uppercase tracking-widest text-neutral-500 mb-2">{plan.name}</div>
+                    <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-neutral-600 mb-3">{t(plan.ref)}</div>
+                    <div className="text-xs font-bold uppercase tracking-widest text-neutral-500 mb-2">{t(plan.name)}</div>
                     <div className={`font-display font-bold text-4xl leading-none mb-1 ${plan.highlight ? "text-amber-400" : "text-white"}`}>
-                      {plan.price}
+                      {t(plan.price)}
                     </div>
-                    <div className="text-xs text-neutral-600 mt-2">{plan.students}</div>
+                    <div className="text-xs text-neutral-600 mt-2">{t(plan.students)}</div>
                   </div>
 
                   <ul className="space-y-2.5 flex-1 mb-8">
-                    {plan.features.map((f) => (
-                      <li key={f} className="flex items-center gap-2 text-sm text-neutral-400">
+                    {plan.features.map((fKey) => (
+                      <li key={fKey} className="flex items-center gap-2 text-sm text-neutral-400">
                         <Check className={`h-3.5 w-3.5 shrink-0 ${plan.highlight ? "text-amber-400" : "text-neutral-600"}`} />
-                        {f}
+                        {t(fKey)}
                       </li>
                     ))}
                   </ul>
 
                   <Link
-                    href={plan.href}
+                    href={lh(plan.hrefKey)}
                     className={
                       plan.highlight
                         ? "inline-flex items-center justify-center gap-2 w-full px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#06060e] font-bold text-sm transition-all duration-200"
                         : "inline-flex items-center justify-center gap-2 w-full px-5 py-3 rounded-xl border border-white/[0.1] text-neutral-400 hover:text-white hover:border-white/20 font-medium text-sm transition-all duration-200"
                     }
                   >
-                    {plan.cta}
+                    {t(plan.cta)}
                   </Link>
                 </div>
               </Reveal>
@@ -438,22 +427,22 @@ export function EducatorLandingPage() {
           <div className="max-w-3xl mx-auto relative">
             <div className="flex items-center justify-center gap-6 mb-10">
               <div className="h-px flex-1 bg-gradient-to-r from-transparent to-white/[0.05]" />
-              <SectionLabel>Open Doors</SectionLabel>
+              <SectionLabel>{t("web.educators.ctaLabel")}</SectionLabel>
               <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white/[0.05]" />
             </div>
             <h2 className="font-display font-bold text-5xl sm:text-6xl text-white leading-tight mb-4">
-              Give your students a
+              {t("web.educators.ctaTitle")}
               <br />
-              <span className="text-amber-400">living language.</span>
+              <span className="text-amber-400">{t("web.educators.ctaAccent")}</span>
             </h2>
             <p className="text-neutral-500 mb-10 text-base">
-              Built by the community. For the community.
+              {t("web.educators.ctaSub")}
             </p>
             <Link
               href="/sign-up"
               className="group inline-flex items-center gap-2 px-10 py-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#06060e] font-bold text-base transition-all duration-200 shadow-[0_0_72px_-12px_rgb(245_158_11_/0.65)] hover:shadow-[0_0_100px_-12px_rgb(245_158_11_/0.85)]"
             >
-              Create a Classroom Free
+              {t("web.educators.ctaButton")}
               <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </div>
@@ -463,13 +452,13 @@ export function EducatorLandingPage() {
       {/* ── Footer ── */}
       <footer className="relative border-t border-white/[0.06] py-10 px-6">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-neutral-700">
-          <span className="font-display">© {new Date().getFullYear()} Beeli. All rights reserved.</span>
+          <span className="font-display">© {new Date().getFullYear()} Beeli. {t("web.educators.footerRights")}</span>
           <div className="flex gap-6">
-            <Link href="/" className="hover:text-neutral-400 transition-colors">For Learners</Link>
-            <Link href="/privacy" className="hover:text-neutral-400 transition-colors">Privacy</Link>
-            <Link href="/support" className="hover:text-neutral-400 transition-colors">Support</Link>
-            <Link href="/sign-up" className="text-amber-500 hover:text-amber-400 font-semibold transition-colors">
-              Get Started
+            <Link href={lh("/home")} className="hover:text-neutral-400 transition-colors">{t("web.educators.footerForLearners")}</Link>
+            <Link href={lh("/privacy")} className="hover:text-neutral-400 transition-colors">{t("web.educators.footerPrivacy")}</Link>
+            <Link href={lh("/support")} className="hover:text-neutral-400 transition-colors">{t("web.educators.footerSupport")}</Link>
+            <Link href={lh("/sign-up")} className="text-amber-500 hover:text-amber-400 font-semibold transition-colors">
+              {t("web.educators.footerGetStarted")}
             </Link>
           </div>
         </div>
