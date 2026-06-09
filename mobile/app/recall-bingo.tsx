@@ -1,5 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { apiFetch } from "@/lib/api";
+import { QuizSaveStatus } from "@/components/quiz-save-status";
+import { useSubmitQuizResult } from "@/lib/hooks/use-quiz-result";
 import { hapticError, hapticHeavy, hapticSuccess, hapticTap } from "@/lib/haptics";
 import { shuffle } from "@/lib/shuffle";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
@@ -8,7 +9,6 @@ import { playCorrectSound, playFinishSound, playIncorrectSound } from "@/lib/sou
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import type { DictionaryEntry } from "@/lib/dictionary";
-import { useAuth } from "@clerk/clerk-expo";
 import { Stack, useRouter } from "expo-router";
 import * as Speech from "expo-speech";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -115,7 +115,7 @@ export { ErrorBoundary } from "@/components/screen-error-boundary";
 export default function RecallBingoScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
-  const { getToken } = useAuth();
+  const { submit: submitResult, retry: retryResult, status: saveStatus } = useSubmitQuizResult();
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
   const { data: dueWords = [] } = useWordsDueForReview(selectedLanguageId);
   const { data: allWords = [] } = useDictionary(selectedLanguageId);
@@ -127,6 +127,7 @@ export default function RecallBingoScreen() {
   const [shakeTile, setShakeTile] = useState<number | null>(null);
   const [startTime, setStartTime] = useState(0);
   const [correctHits, setCorrectHits] = useState(0);
+  const correctHitsRef = useRef(0);
   const callIndexRef = useRef(0);
 
   const startGame = useCallback(() => {
@@ -148,6 +149,7 @@ export default function RecallBingoScreen() {
     setCallQueue(callOrder);
     setCurrentCallWord(callOrder[0] ?? null);
     callIndexRef.current = 0;
+    correctHitsRef.current = 0;
     setStartTime(Date.now());
     setCorrectHits(0);
     setPhase("active");
@@ -172,6 +174,7 @@ export default function RecallBingoScreen() {
         i === tileIndex ? { ...t, marked: true } : t
       );
       setTiles(updated);
+      correctHitsRef.current += 1;
       setCorrectHits((h) => h + 1);
 
       if (checkBingo(updated)) {
@@ -179,14 +182,7 @@ export default function RecallBingoScreen() {
         playFinishSound();
         setPhase("won");
         const duration = Math.round((Date.now() - startTime) / 1000);
-        getToken().then((token) => {
-          if (!token) return;
-          apiFetch("/quiz-results", {
-            method: "POST",
-            token,
-            body: JSON.stringify({ languageId: selectedLanguageId, score: correctHits + 1, accuracy: 100, durationMs: duration * 1000, questionCount: 25 }),
-          }).catch(() => {});
-        });
+        void submitResult({ languageId: selectedLanguageId, score: correctHitsRef.current, accuracy: 100, durationMs: duration * 1000, questionCount: 25 });
       } else {
         nextCall(callQueue);
       }
@@ -196,7 +192,7 @@ export default function RecallBingoScreen() {
       setShakeTile(tileIndex);
       setTimeout(() => setShakeTile(null), 400);
     }
-  }, [phase, currentCallWord, tiles, callQueue, startTime, correctHits, nextCall, getToken]);
+  }, [phase, currentCallWord, tiles, callQueue, startTime, nextCall, submitResult, selectedLanguageId]);
 
   const readWord = useCallback(() => {
     if (currentCallWord) {
@@ -251,6 +247,7 @@ export default function RecallBingoScreen() {
           <Text style={{ fontSize: 15, color: M.sub, textAlign: "center" }}>
             {correctHits} tiles marked · {timeStr}
           </Text>
+          <QuizSaveStatus status={saveStatus} onRetry={retryResult} />
           <View style={{ width: "100%", gap: 10, marginTop: 32 }}>
             <Pressable onPress={startGame} style={{ borderRadius: 14, paddingVertical: 16, backgroundColor: M.accent, alignItems: "center" }}>
               <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>New Card</Text>

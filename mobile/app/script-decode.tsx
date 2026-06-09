@@ -5,11 +5,11 @@ import { NSIBIDI_CHARACTERS } from "@/lib/data/nsibidi";
 import type { NsibidiCharacter } from "@/lib/data/nsibidi";
 import { hapticError, hapticSuccess } from "@/lib/haptics";
 import { shuffle } from "@/lib/shuffle";
-import { apiFetch } from "@/lib/api";
+import { QuizSaveStatus } from "@/components/quiz-save-status";
+import { useSubmitQuizResult } from "@/lib/hooks/use-quiz-result";
 import { playCorrectSound, playFinishSound, playIncorrectSound } from "@/lib/sounds";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
-import { useAuth } from "@clerk/clerk-expo";
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Animated, Pressable, Text, View } from "react-native";
@@ -160,7 +160,7 @@ export { ErrorBoundary } from "@/components/screen-error-boundary";
 export default function ScriptDecodeScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
-  const { getToken } = useAuth();
+  const { submit: submitResult, retry: retryResult, status: saveStatus } = useSubmitQuizResult();
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
 
   const [mode, setMode] = useState<ScriptMode | null>(null);
@@ -194,14 +194,7 @@ export default function ScriptDecodeScreen() {
       playFinishSound();
       setPhase("results");
       const duration = Math.round((Date.now() - startTime) / 1000);
-      getToken().then((token) => {
-        if (!token) return;
-        apiFetch("/quiz-results", {
-          method: "POST",
-          token,
-          body: JSON.stringify({ languageId: selectedLanguageId, score: correctRef.current, accuracy: questions.length > 0 ? Math.round((correctRef.current / questions.length) * 100) : 0, durationMs: duration * 1000, questionCount: questions.length }),
-        }).catch(() => {});
-      });
+      void submitResult({ languageId: selectedLanguageId, score: correctRef.current, accuracy: questions.length > 0 ? Math.round((correctRef.current / questions.length) * 100) : 0, durationMs: duration * 1000, questionCount: questions.length });
       return;
     }
     Animated.timing(fadeAnim, { toValue: 0, duration: 160, useNativeDriver: true }).start(() => {
@@ -210,7 +203,7 @@ export default function ScriptDecodeScreen() {
       setLocked(false);
       Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }).start();
     });
-  }, [index, questions.length, fadeAnim, startTime, getToken, selectedLanguageId]);
+  }, [index, questions.length, fadeAnim, startTime, submitResult, selectedLanguageId]);
 
   const handleOption = useCallback((optIdx: number) => {
     if (locked) return;
@@ -239,6 +232,7 @@ export default function ScriptDecodeScreen() {
           <Text style={{ fontSize: 15, color: M.sub, textAlign: "center" }}>
             {correctCount} of {questions.length} characters decoded correctly
           </Text>
+          <QuizSaveStatus status={saveStatus} onRetry={retryResult} />
           <View style={{ width: "100%", gap: 10, marginTop: 32 }}>
             <Pressable
               onPress={() => mode && handleStart(mode)}

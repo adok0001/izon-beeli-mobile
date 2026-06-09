@@ -1,5 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { apiFetch } from "@/lib/api";
+import { QuizSaveStatus } from "@/components/quiz-save-status";
+import { useSubmitQuizResult } from "@/lib/hooks/use-quiz-result";
 import { getSentencesForLanguage } from "@/lib/data/sentences";
 import { hapticError, hapticSuccess, hapticTap } from "@/lib/haptics";
 import { shuffle } from "@/lib/shuffle";
@@ -7,7 +8,6 @@ import { playCorrectSound, playFinishSound, playIncorrectSound } from "@/lib/sou
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import type { SentenceTemplate } from "@/types";
-import { useAuth } from "@clerk/clerk-expo";
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Animated, Pressable, ScrollView, Text, View } from "react-native";
@@ -44,7 +44,7 @@ export { ErrorBoundary } from "@/components/screen-error-boundary";
 export default function SentenceBuilderScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
-  const { getToken } = useAuth();
+  const { submit: submitResult, retry: retryResult, status: saveStatus } = useSubmitQuizResult();
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
 
   const sentences = useMemo(() => {
@@ -60,6 +60,7 @@ export default function SentenceBuilderScreen() {
   const [correct, setCorrect] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
+  const correctRef = useRef(0);
   const [startTime] = useState(Date.now());
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -76,6 +77,7 @@ export default function SentenceBuilderScreen() {
     if (isCorrect) {
       hapticSuccess();
       playCorrectSound();
+      correctRef.current += 1;
       setCorrectCount((c) => c + 1);
     } else {
       hapticError();
@@ -94,14 +96,7 @@ export default function SentenceBuilderScreen() {
       playFinishSound();
       setPhase("results");
       const duration = Math.round((Date.now() - startTime) / 1000);
-      getToken().then((token) => {
-        if (!token) return;
-        apiFetch("/quiz-results", {
-          method: "POST",
-          token,
-          body: JSON.stringify({ languageId: selectedLanguageId, score: correctCount, accuracy: sentences.length > 0 ? Math.round((correctCount / sentences.length) * 100) : 0, durationMs: duration * 1000, questionCount: sentences.length }),
-        }).catch(() => {});
-      });
+      void submitResult({ languageId: selectedLanguageId, score: correctRef.current, accuracy: sentences.length > 0 ? Math.round((correctRef.current / sentences.length) * 100) : 0, durationMs: duration * 1000, questionCount: sentences.length });
       return;
     }
     Animated.timing(fadeAnim, { toValue: 0, duration: 180, useNativeDriver: true }).start(() => {
@@ -114,7 +109,7 @@ export default function SentenceBuilderScreen() {
       setAttempts(0);
       Animated.timing(fadeAnim, { toValue: 1, duration: 220, useNativeDriver: true }).start();
     });
-  }, [index, sentences, correctCount, fadeAnim, startTime, getToken]);
+  }, [index, sentences, fadeAnim, startTime, submitResult, selectedLanguageId]);
 
   const tapBank = useCallback((tile: WordTile) => {
     hapticTap();
@@ -162,9 +157,10 @@ export default function SentenceBuilderScreen() {
         <Text style={{ fontSize: 15, color: M.sub, textAlign: "center" }}>
           {correctCount} of {sentences.length} sentences built correctly
         </Text>
+        <QuizSaveStatus status={saveStatus} onRetry={retryResult} />
         <View style={{ width: "100%", gap: 10, marginTop: 32 }}>
           <Pressable
-            onPress={() => { setIndex(0); setCorrectCount(0); setBank(buildTiles(sentences[0]!)); setPlaced([]); setChecked(false); setCorrect(false); setPhase("active"); }}
+            onPress={() => { setIndex(0); setCorrectCount(0); correctRef.current = 0; setBank(buildTiles(sentences[0]!)); setPlaced([]); setChecked(false); setCorrect(false); setPhase("active"); }}
             style={{ borderRadius: 14, paddingVertical: 16, backgroundColor: M.accent, alignItems: "center" }}
           >
             <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>Play Again</Text>
