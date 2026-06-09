@@ -1,3 +1,4 @@
+import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { MOBILE_TOUR_REGISTRY } from "@/lib/tours/mobile-tour-registry";
 import { useTourStore } from "@/store/tour-store";
@@ -61,13 +62,13 @@ export function TourOverlay() {
             accessibilityLabel="Got it, close tour"
             accessibilityHint="Closes the welcome tour overlay"
             style={{
-              backgroundColor: "#3b82f6",
+              backgroundColor: getAccent("blue").solid,
               paddingVertical: 12,
               borderRadius: 14,
               alignItems: "center",
             }}
           >
-            <Text style={{ color: "white", fontWeight: "700", fontSize: 15 }}>
+            <Text style={{ color: M.parchment, fontWeight: "700", fontSize: 15 }}>
               {t("onboarding.gotIt")} →
             </Text>
           </Pressable>

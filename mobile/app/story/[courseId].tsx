@@ -117,8 +117,8 @@ export default function StoryScreen() {
               const completed = completedIds.includes(chapter.id);
               const isCurrent = currentChapter?.id === chapter.id;
 
-              const borderColor = isCurrent ? M.accentBorder : completed ? "#22c55e40" : unlocked ? M.border : M.border;
-              const bgColor = isCurrent ? M.accentGlow : completed ? "#22c55e10" : M.card;
+              const borderColor = isCurrent ? M.accentBorder : completed ? M.successBorder : unlocked ? M.border : M.border;
+              const bgColor = isCurrent ? M.accentGlow : completed ? M.successBg : M.card;
 
               return (
                 <Pressable
@@ -131,7 +131,7 @@ export default function StoryScreen() {
                   <View style={{ flexDirection: "row", alignItems: "center" }}>
                     <View style={{ marginRight: 12 }}>
                       {completed ? (
-                        <IconSymbol name="checkmark.circle.fill" size={24} color="#22c55e" />
+                        <IconSymbol name="checkmark.circle.fill" size={24} color={M.success} />
                       ) : unlocked ? (
                         <IconSymbol name="play.fill" size={24} color={isCurrent ? M.accent : M.muted} />
                       ) : (
@@ -182,13 +182,13 @@ export default function StoryScreen() {
           >
             <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.5)" }}>
               <View style={{ borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: M.card, paddingHorizontal: 24, paddingBottom: 40, paddingTop: 24, borderWidth: 1, borderColor: M.border }}>
-                <Text style={{ marginBottom: 4, fontSize: 13, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: "#22c55e" }}>
+                <Text style={{ marginBottom: 4, fontSize: 13, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: M.success }}>
                   {t("educator.story.chapterComplete", { number: outroChapter.order })}
                 </Text>
                 <Text style={{ marginBottom: 16, fontSize: 24, fontWeight: "700", color: M.text }}>
                   {outroChapter.title}
                 </Text>
-                <View style={{ marginBottom: 24, borderRadius: 16, backgroundColor: "#22c55e10", padding: 16, borderWidth: 1, borderColor: "#22c55e30" }}>
+                <View style={{ marginBottom: 24, borderRadius: 16, backgroundColor: M.successBg, padding: 16, borderWidth: 1, borderColor: M.successBorder }}>
                   <Text style={{ fontSize: 16, lineHeight: 24, color: M.sub }}>
                     {outroChapter.narrativeOutro}
                   </Text>

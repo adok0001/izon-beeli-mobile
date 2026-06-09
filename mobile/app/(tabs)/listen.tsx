@@ -350,21 +350,21 @@ export default function DiscoverScreen() {
               className="active:opacity-70"
             >
               <View>
-                <IconSymbol name="brain.head.profile" size={22} color="#4ade80" />
+                <IconSymbol name="brain.head.profile" size={22} color={M.success} />
                 {dueWords.length > 0 && (
                   <View
                     style={{
                       position: "absolute", top: -4, right: -8,
                       minWidth: 16, borderRadius: 999,
                       alignItems: "center", justifyContent: "center",
-                      backgroundColor: "#ef4444", paddingHorizontal: 4, paddingVertical: 1,
+                      backgroundColor: M.error, paddingHorizontal: 4, paddingVertical: 1,
                     }}
                   >
                     <Text style={{ fontSize: 9, fontWeight: "800", color: "#fff" }}>{dueWords.length}</Text>
                   </View>
                 )}
               </View>
-              <Text style={{ marginTop: 6, fontSize: 10, fontWeight: "700", letterSpacing: 0.5, color: "#4ade80" }}>
+              <Text style={{ marginTop: 6, fontSize: 10, fontWeight: "700", letterSpacing: 0.5, color: M.success }}>
                 {t("practice.wordReview")}
               </Text>
             </Pressable>
@@ -407,7 +407,7 @@ export default function DiscoverScreen() {
               borderRadius: 16, overflow: "hidden",
               backgroundColor: "#0F1B4A",
               borderWidth: 1, borderColor: "rgba(59, 130, 246, 0.3)",
-              borderLeftWidth: 4, borderLeftColor: getAccent("blue").solid,
+              borderLeftWidth: 4, borderLeftColor: "#3b82f6",
             }}
             className="active:opacity-70"
           >
@@ -450,15 +450,15 @@ export default function DiscoverScreen() {
                 flexDirection: "row", alignItems: "center",
                 borderRadius: 14, padding: 14,
                 backgroundColor: M.card, borderWidth: 1, borderColor: M.border,
-                borderLeftWidth: 4, borderLeftColor: "#4ade80",
+                borderLeftWidth: 4, borderLeftColor: M.success,
               }}
               className="active:opacity-70"
             >
               <View style={{ width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(74, 222, 128, 0.1)", marginRight: 12 }}>
-                <Text style={{ fontSize: 22, fontWeight: "800", color: "#4ade80" }}>ሀ</Text>
+                <Text style={{ fontSize: 22, fontWeight: "800", color: M.success }}>ሀ</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: "#4ade80" }}>
+                <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: M.success }}>
                   {t("practice.scriptPractice").toUpperCase()}
                 </Text>
                 <Text style={{ fontSize: 13, fontWeight: "700", color: M.text, marginTop: 2 }}>
@@ -466,7 +466,7 @@ export default function DiscoverScreen() {
                 </Text>
                 <Text style={{ fontSize: 11, color: M.sub, marginTop: 1 }}>{t("practice.geezSubtitle")}</Text>
               </View>
-              <IconSymbol name="chevron.right" size={14} color="#4ade80" />
+              <IconSymbol name="chevron.right" size={14} color={M.success} />
             </Pressable>
           )}
 
@@ -504,15 +504,15 @@ export default function DiscoverScreen() {
                 flexDirection: "row", alignItems: "center",
                 borderRadius: 14, padding: 14,
                 backgroundColor: M.card, borderWidth: 1, borderColor: M.border,
-                borderLeftWidth: 4, borderLeftColor: "#f59e0b",
+                borderLeftWidth: 4, borderLeftColor: getAccent("amber").solid,
               }}
               className="active:opacity-70"
             >
               <View style={{ width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(245, 158, 11, 0.1)", marginRight: 12 }}>
-                <Text style={{ fontSize: 22, fontWeight: "800", color: "#f59e0b" }}>𐘕</Text>
+                <Text style={{ fontSize: 22, fontWeight: "800", color: getAccent("amber").solid }}>𐘕</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: "#f59e0b" }}>
+                <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: getAccent("amber").solid }}>
                   {t("practice.scriptPractice").toUpperCase()}
                 </Text>
                 <Text style={{ fontSize: 13, fontWeight: "700", color: M.text, marginTop: 2 }}>
@@ -520,7 +520,7 @@ export default function DiscoverScreen() {
                 </Text>
                 <Text style={{ fontSize: 11, color: M.sub, marginTop: 1 }}>{t("practice.nsibidiSubtitle")}</Text>
               </View>
-              <IconSymbol name="chevron.right" size={14} color="#f59e0b" />
+              <IconSymbol name="chevron.right" size={14} color={getAccent("amber").solid} />
             </Pressable>
           )}
         </View>

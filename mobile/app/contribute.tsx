@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { ApiError, friendlyError } from "@/lib/api";
@@ -259,8 +260,8 @@ export default function ContributeScreen() {
 
                 {([
                   { onPress: () => setStep("language"), bg: M.accentGlow, iconBg: M.accent, icon: "character.book.closed", iconColor: M.ink, title: t("contribute.wordOrPhrase"), desc: t("contribute.wordOrPhraseDesc"), chevronColor: M.accent },
-                  { onPress: () => router.push("/contribute-bulk"), bg: M.successBg, iconBg: M.success, icon: "list.bullet.clipboard", iconColor: M.parchment, title: t("contribute.bulkWords"), desc: t("contribute.bulkWordsDesc"), chevronColor: M.success },
-                  { onPress: () => router.push("/contribute-lesson"), bg: "#a855f710", iconBg: "#a855f7", icon: "waveform", iconColor: "#fff", title: t("contribute.fullLesson"), desc: t("contribute.fullLessonDesc"), chevronColor: "#a855f7" },
+                  { onPress: () => router.push("/contribute-bulk"), bg: "#22c55e10", iconBg: "#22c55e", icon: "list.bullet.clipboard", iconColor: "#fff", title: t("contribute.bulkWords"), desc: t("contribute.bulkWordsDesc"), chevronColor: "#22c55e" },
+                  { onPress: () => router.push("/contribute-lesson"), bg: getAccent("purple").bg, iconBg: getAccent("purple").solid, icon: "waveform", iconColor: M.parchment, title: t("contribute.fullLesson"), desc: t("contribute.fullLessonDesc"), chevronColor: getAccent("purple").solid },
                   { onPress: () => router.push("/bounties"), bg: `${M.accent}10`, iconBg: M.accent, icon: "star.fill", iconColor: M.ink, title: t("contribute.activeBounties"), desc: t("contribute.activeBountiesDesc"), chevronColor: M.accent },
                   { onPress: () => router.push("/reviewer-application"), bg: "#6366f110", iconBg: "#6366f1", icon: "shield.fill", iconColor: "#fff", title: "Become a Reviewer", desc: "Apply to review contributions and help maintain content quality.", chevronColor: "#6366f1" },
                 ] as const).map((card, i) => (
@@ -546,16 +547,16 @@ export default function ContributeScreen() {
                     <View style={{ alignItems: "center" }}>
                       <Pressable
                         onPress={isPlaying ? stopPlayback : playRecording}
-                        style={{ height: 64, width: 64, alignItems: "center", justifyContent: "center", borderRadius: 32, backgroundColor: isPlaying ? M.accent : M.successBg }}
+                        style={{ height: 64, width: 64, alignItems: "center", justifyContent: "center", borderRadius: 32, backgroundColor: isPlaying ? M.accent : "#10b98120" }}
                         className="active:opacity-70"
                       >
                         <IconSymbol
                           name={isPlaying ? "stop.fill" : "play.fill"}
                           size={24}
-                          color={isPlaying ? M.ink : M.success}
+                          color={isPlaying ? M.ink : "#10b981"}
                         />
                       </Pressable>
-                      <Text style={{ marginTop: 8, fontSize: 13, color: M.success }}>
+                      <Text style={{ marginTop: 8, fontSize: 13, color: "#10b981" }}>
                         {t("contribute.recordingSaved")}
                       </Text>
                       <Pressable
@@ -571,18 +572,18 @@ export default function ContributeScreen() {
                   ) : (
                     <Pressable
                       onPress={isRecording ? stopRecording : startRecording}
-                      style={{ height: 64, width: 64, alignItems: "center", justifyContent: "center", borderRadius: 32, backgroundColor: isRecording ? M.error : M.errorBg }}
+                      style={{ height: 64, width: 64, alignItems: "center", justifyContent: "center", borderRadius: 32, backgroundColor: isRecording ? "#ef4444" : "#ef444420" }}
                       className="active:opacity-70"
                     >
                       {isRecording ? (
-                        <View style={{ height: 24, width: 24, borderRadius: 4, backgroundColor: M.parchment }} />
+                        <View style={{ height: 24, width: 24, borderRadius: 4, backgroundColor: "#fff" }} />
                       ) : (
-                        <IconSymbol name="mic.fill" size={24} color={M.error} />
+                        <IconSymbol name="mic.fill" size={24} color="#ef4444" />
                       )}
                     </Pressable>
                   )}
                   {isRecording && (
-                    <Text style={{ marginTop: 8, fontSize: 13, color: M.error }}>
+                    <Text style={{ marginTop: 8, fontSize: 13, color: "#ef4444" }}>
                       {t("contribute.recordingTapToStop")}
                     </Text>
                   )}
