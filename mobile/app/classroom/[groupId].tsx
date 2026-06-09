@@ -1,4 +1,5 @@
 import { LoadingScreen } from "@/components/loading-screen";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import {
   View,
   Text,
@@ -29,6 +30,7 @@ import { useTranslation } from "react-i18next";
 import type { GroupMember, AssignedLesson } from "@/types";
 
 export default function GroupDetailScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
@@ -173,11 +175,11 @@ export default function GroupDetailScreen() {
                 onLongPress={handleShareCode}
                 className="flex-row items-center rounded-lg bg-neutral-100 px-2 py-1 active:opacity-60 dark:bg-neutral-700"
               >
-                <IconSymbol name="key.fill" size={12} color="#9ca3af" />
+                <IconSymbol name="key.fill" size={12} color={M.muted} />
                 <Text className="ml-1 text-xs font-mono text-neutral-500 dark:text-neutral-400">
                   {group.inviteCode}
                 </Text>
-                <IconSymbol name="doc.on.doc" size={11} color="#9ca3af" className="ml-1" />
+                <IconSymbol name="doc.on.doc" size={11} color={M.muted} className="ml-1" />
               </Pressable>
             </View>
             {/* Share invite code row */}

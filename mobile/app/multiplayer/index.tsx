@@ -1,3 +1,4 @@
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useState } from "react";
 import {
   View,
@@ -95,6 +96,7 @@ function ModeCard({
 }
 
 export default function MultiplayerHubScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
   const { selectedLanguageId } = useLanguageStore();
@@ -234,7 +236,7 @@ export default function MultiplayerHubScreen() {
                 value={joinCode}
                 onChangeText={(v) => setJoinCode(v.toUpperCase())}
                 placeholder={t("multiplayer.enterCode")}
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={M.muted}
                 maxLength={6}
                 autoCapitalize="characters"
                 className="flex-1 rounded-xl border-2 border-neutral-200 px-4 py-3 text-center text-lg font-bold tracking-widest text-neutral-900 dark:border-neutral-700 dark:text-white"
@@ -295,7 +297,7 @@ export default function MultiplayerHubScreen() {
                       {new Date(session.createdAt).toLocaleDateString()}
                     </Text>
                   </View>
-                  <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
+                  <IconSymbol name="chevron.right" size={16} color={M.muted} />
                 </Pressable>
               ))}
             </View>

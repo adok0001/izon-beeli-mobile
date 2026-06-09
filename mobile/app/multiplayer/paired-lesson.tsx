@@ -1,3 +1,4 @@
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
@@ -72,6 +73,7 @@ function ChatBubble({
 }
 
 export default function PairedLessonScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
   const [chatInput, setChatInput] = useState("");
@@ -300,7 +302,7 @@ export default function PairedLessonScreen() {
               value={chatInput}
               onChangeText={setChatInput}
               placeholder="Send a message..."
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={M.muted}
               maxLength={200}
               onSubmitEditing={handleSendChat}
               returnKeyType="send"

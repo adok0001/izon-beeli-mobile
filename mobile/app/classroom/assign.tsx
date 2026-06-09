@@ -1,4 +1,6 @@
 import { friendlyError } from "@/lib/api";
+import { getAccent } from "@/constants/accent-colors";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useState, useMemo } from "react";
 import {
   View,
@@ -19,6 +21,8 @@ import { useToast } from "@/lib/hooks/use-toast";
 import { formatDuration } from "@/lib/mock-data";
 import { useTranslation } from "react-i18next";
 import type { Lesson } from "@/types";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { getAccent } from "@/constants/accent-colors";
 
 type Tab = "lessons" | "story";
 
@@ -36,6 +40,8 @@ function StoryArcTab({
   onSuccess: () => void;
   onError: (msg: string) => void;
 }) {
+  const M = useMuseumTheme();
+  const M = useMuseumTheme();
   const { data: courses = [] } = useCourses(languageId);
   const { data: allArcs = [], isLoading: arcsLoading } = useStoryArcs();
   const assignStoryArc = useAssignStoryArc();
@@ -85,7 +91,7 @@ function StoryArcTab({
   if (languageArcs.length === 0) {
     return (
       <View className="flex-1 items-center justify-center px-8">
-        <IconSymbol name="book.closed.fill" size={48} color="#d1d5db" />
+        <IconSymbol name="book.closed.fill" size={48} color={M.border} />
         <Text className="mt-4 text-center text-base font-semibold text-neutral-500 dark:text-neutral-400">
           No story arcs available
         </Text>
@@ -120,7 +126,7 @@ function StoryArcTab({
                 <IconSymbol
                   name={isSelected ? "checkmark.circle.fill" : "book.closed.fill"}
                   size={22}
-                  color={isSelected ? "#f59e0b" : "#d1d5db"}
+                  color={isSelected ? getAccent("amber").solid : M.border}
                 />
                 <View className="ml-3 flex-1">
                   <Text className="text-base font-semibold text-neutral-900 dark:text-white">
@@ -188,6 +194,7 @@ function StoryArcTab({
 }
 
 export default function AssignLessonScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
@@ -303,7 +310,7 @@ export default function AssignLessonScreen() {
         {tab === "lessons" ? (
           isLoading ? (
             <View className="flex-1 items-center justify-center">
-              <ActivityIndicator size="large" color="#3b82f6" />
+              <ActivityIndicator size="large" color={getAccent("blue").solid} />
             </View>
           ) : (
             <FlatList
@@ -323,7 +330,7 @@ export default function AssignLessonScreen() {
                   <IconSymbol
                     name={selected === item.id ? "checkmark.circle.fill" : "circle"}
                     size={20}
-                    color={selected === item.id ? "#3b82f6" : "#d1d5db"}
+                    color={selected === item.id ? getAccent("blue").solid : M.border}
                   />
                   <View className="ml-3 flex-1">
                     <Text className="text-base font-medium text-neutral-900 dark:text-white">

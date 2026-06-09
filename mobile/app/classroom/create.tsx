@@ -9,8 +9,10 @@ import { useToast } from "@/lib/hooks/use-toast";
 import { useLanguageStore } from "@/store/language-store";
 import { getLanguageName } from "@/lib/mock-data";
 import { useTranslation } from "react-i18next";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 
 export default function CreateGroupScreen() {
+  const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
   const { selectedLanguageId } = useLanguageStore();
@@ -102,7 +104,7 @@ export default function CreateGroupScreen() {
                 value={name}
                 onChangeText={setName}
                 placeholder={t("classroom.groupNamePlaceholder")}
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={M.muted}
                 className="mb-4 rounded-xl bg-neutral-100 px-4 py-3 text-base text-neutral-900 dark:bg-neutral-800 dark:text-white"
                 autoFocus
               />
@@ -132,7 +134,7 @@ export default function CreateGroupScreen() {
                 value={inviteCode}
                 onChangeText={(v) => { setInviteCode(v.toUpperCase()); setError(""); }}
                 placeholder={t("classroom.inviteCodePlaceholder")}
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={M.muted}
                 className="mb-2 rounded-xl bg-neutral-100 px-4 py-3 text-center text-xl font-mono tracking-widest text-neutral-900 dark:bg-neutral-800 dark:text-white"
                 autoCapitalize="characters"
                 maxLength={6}
