@@ -49,8 +49,9 @@ const NAV_ITEMS = [
   { href: "/learn",   labelKey: "tabs.learn",   icon: BookOpen,    tourId: "nav-learn" },
   { href: "/listen",  labelKey: "tabs.practice", icon: Sparkles,   tourId: "nav-listen" },
   { href: "/journal", labelKey: "tabs.journal", icon: NotebookPen, tourId: "nav-journal" },
-  { href: "/feed",    labelKey: "tabs.feed",    icon: Globe2,      tourId: "nav-feed" },
-  { href: "/profile", labelKey: "tabs.profile", icon: UserRound,   tourId: "nav-profile" },
+  { href: "/feed",    labelKey: "tabs.feed",    icon: Globe2,         tourId: "nav-feed" },
+  { href: "/culture", labelKey: "tabs.culture", icon: Clapperboard,  tourId: "nav-culture" },
+  { href: "/profile", labelKey: "tabs.profile", icon: UserRound,     tourId: "nav-profile" },
 ] as const;
 
 const SECONDARY_GROUPS = [
