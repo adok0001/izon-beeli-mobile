@@ -408,11 +408,13 @@ export interface DiscoverItem {
   duration: number;
   coverGradient: [string, string];
   coverEmoji: string;
-  featured?: boolean;
+  featured: boolean;
   audioUrl?: string;
   videoUrl?: string;
   storyId?: string;
   contentUrl?: string;
+  body?: string;
+  showNotes?: string;
 }
 
 export type StorySceneType = "narrative" | "choice" | "conclusion";
