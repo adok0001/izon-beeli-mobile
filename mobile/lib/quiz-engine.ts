@@ -192,20 +192,26 @@ function makeFillInTheBlank(
   };
 
   if (template) {
+    // Explicit kind takes precedence; substring guard acts as safety net when kind is absent/blank
+    const isEquivalent =
+      template.kind === "equivalent" ||
+      (!template.kind || template.kind === "blank") &&
+        !template.sentence.toLowerCase().includes(template.answer.toLowerCase());
+
+    if (isEquivalent) {
+      const gloss = template.literalTranslation
+        ? ` (lit. "${template.literalTranslation}")`
+        : "";
+      const prompt = translate
+        ? translate("quiz.promptEquivalence", { sentence: template.sentence, translation: template.englishSentence })
+        : `Which word means the same as "${template.sentence}"${gloss}?\n(${template.englishSentence})`;
+      return { ...base, type: "equivalence" as const, prompt };
+    }
+
     const maskedSentence = template.sentence.replace(
       new RegExp(escapeRegex(template.answer), "i"),
       "______"
     );
-
-    // If the answer wasn't found in the sentence, the blank won't appear —
-    // route to equivalence instead (Phase 1.3 guard).
-    if (!maskedSentence.includes("______")) {
-      const prompt = translate
-        ? translate("quiz.promptEquivalence", { sentence: template.sentence, translation: template.englishSentence })
-        : `Which word means the same as "${template.sentence}"?\n(${template.englishSentence})`;
-      return { ...base, type: "equivalence" as const, prompt };
-    }
-
     const prompt = translate
       ? translate("quiz.promptFillInBlankSentence", { sentence: maskedSentence, translation: template.englishSentence })
       : `Fill in the blank: "${maskedSentence}"\n(${template.englishSentence})`;

@@ -800,3 +800,157 @@ export function useGenerateEducatorStubs() {
     },
   });
 }
+
+// ── Sentence Templates ────────────────────────────────────────────────────────
+
+export interface EducatorSentenceTemplate {
+  id: string;
+  languageId: string;
+  sentence: string;
+  answer: string;
+  englishSentence: string;
+  kind: "blank" | "equivalent";
+  literalTranslation: string | null;
+}
+
+export interface UpsertSentenceInput {
+  id?: string;
+  languageId: string;
+  sentence: string;
+  answer: string;
+  englishSentence: string;
+  kind: "blank" | "equivalent";
+  literalTranslation?: string;
+}
+
+export function useEducatorSentences(languageId: string) {
+  const { getToken } = useAuth();
+  return useQuery<EducatorSentenceTemplate[]>({
+    queryKey: ["educator", "sentences", languageId],
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch(`/educator/sentences?languageId=${encodeURIComponent(languageId)}`, { token: token! });
+    },
+    enabled: !!languageId,
+  });
+}
+
+export function useUpsertSentence() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: UpsertSentenceInput) => {
+      const token = await getToken();
+      return apiFetch<EducatorSentenceTemplate>("/educator/sentences", {
+        method: "POST",
+        token: token!,
+        body: JSON.stringify(input),
+      });
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["educator", "sentences", vars.languageId] });
+      queryClient.invalidateQueries({ queryKey: ["sentences", vars.languageId] });
+    },
+  });
+}
+
+export function useDeleteSentence() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, languageId }: { id: string; languageId: string }) => {
+      const token = await getToken();
+      return apiFetch(`/educator/sentences/${id}`, { method: "DELETE", token: token! });
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["educator", "sentences", vars.languageId] });
+      queryClient.invalidateQueries({ queryKey: ["sentences", vars.languageId] });
+    },
+  });
+}
+
+// ── Scenarios ─────────────────────────────────────────────────────────────────
+
+export interface ScenarioTurn {
+  text: string;
+  translation: string;
+  audioUrl?: string;
+}
+
+export interface EducatorScenario {
+  id: string;
+  languageId: string;
+  situation: string;
+  turns: ScenarioTurn[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpsertScenarioInput {
+  id?: string;
+  languageId: string;
+  situation: string;
+  turns: ScenarioTurn[];
+}
+
+export function useEducatorScenarios(languageId: string) {
+  const { getToken } = useAuth();
+  return useQuery<EducatorScenario[]>({
+    queryKey: ["educator", "scenarios", languageId],
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch(`/educator/scenarios?languageId=${encodeURIComponent(languageId)}`, { token: token! });
+    },
+    enabled: !!languageId,
+  });
+}
+
+export function useCreateScenario() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: UpsertScenarioInput) => {
+      const token = await getToken();
+      return apiFetch<EducatorScenario>("/educator/scenarios", {
+        method: "POST",
+        token: token!,
+        body: JSON.stringify(input),
+      });
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["educator", "scenarios", vars.languageId] });
+    },
+  });
+}
+
+export function useUpdateScenario() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, languageId, ...patch }: { id: string; languageId: string; situation?: string; turns?: ScenarioTurn[] }) => {
+      const token = await getToken();
+      return apiFetch<EducatorScenario>(`/educator/scenarios/${id}`, {
+        method: "PATCH",
+        token: token!,
+        body: JSON.stringify(patch),
+      });
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["educator", "scenarios", vars.languageId] });
+    },
+  });
+}
+
+export function useDeleteScenario() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, languageId }: { id: string; languageId: string }) => {
+      const token = await getToken();
+      return apiFetch(`/educator/scenarios/${id}`, { method: "DELETE", token: token! });
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["educator", "scenarios", vars.languageId] });
+    },
+  });
+}

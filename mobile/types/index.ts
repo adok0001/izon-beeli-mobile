@@ -165,6 +165,25 @@ export interface SentenceTemplate {
   answer: string;
   /** English translation of the full sentence */
   englishSentence: string;
+  /** Explicit question kind: "blank" or "equivalent". Defaults to "blank". */
+  kind?: "blank" | "equivalent";
+  /** Literal word-for-word gloss (for idioms/equivalents) */
+  literalTranslation?: string | null;
+}
+
+export interface ScenarioTurn {
+  text: string;
+  translation: string;
+  audioUrl?: string;
+}
+
+export interface Scenario {
+  id: string;
+  languageId: string;
+  situation: string;
+  turns: ScenarioTurn[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // --- Story Mode ---

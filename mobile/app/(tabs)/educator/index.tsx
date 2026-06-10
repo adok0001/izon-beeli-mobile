@@ -301,6 +301,7 @@ export default function EducatorPanelScreen() {
           <ActionRow icon="book.fill" label={t("educator.nav.lessons")} detail={t("learn.webSubtitle")} onPress={() => router.push("/educator/courses")} />
           <ActionRow icon="globe" label={t("educator.nav.culture")} detail={t("welcomeChecklist.exploreCultureMusicDetail")} onPress={() => router.push("/educator/culture" as never)} accent={getAccent("purple").solid} />
           <ActionRow icon="book.closed.fill" label={t("educator.story.screenTitle")} detail={t("educator.story.screenSubtitle")} onPress={() => router.push("/educator/stories" as never)} accent={getAccent("orange").solid} />
+          <ActionRow icon="text.bubble.fill" label="Sentences & Scenarios" detail="Manage fill-in-blank templates and conversation scenarios" onPress={() => router.push("/educator/sentences" as never)} accent={getAccent("teal").solid} />
           {currentUser && canManageBounties(currentUser) ? (
             <ActionRow icon="star.fill" label={t("profile.bounties")} detail={t("admin.overview.manageCourses")} onPress={() => router.push("/bounties")} accent={getAccent("amber").solid} />
           ) : null}

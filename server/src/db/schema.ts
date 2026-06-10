@@ -462,6 +462,8 @@ export const culturalKeyTerms = pgTable(
   ]
 );
 
+export const sentenceKindEnum = pgEnum("sentence_kind", ["blank", "equivalent"]);
+
 export const sentenceTemplates = pgTable(
   "sentence_templates",
   {
@@ -470,8 +472,27 @@ export const sentenceTemplates = pgTable(
     sentence: text("sentence").notNull(),
     answer: varchar("answer", { length: 300 }).notNull(),
     englishSentence: text("english_sentence").notNull(),
+    /** Explicit question kind. "blank" = fill-in-the-blank; "equivalent" = which-word-means. */
+    kind: sentenceKindEnum("kind").default("blank").notNull(),
+    /** Literal gloss of the sentence (e.g. "wake up well" for an idiom). Null for regular templates. */
+    literalTranslation: text("literal_translation"),
   },
   (table) => [index("sentence_templates_language_id_idx").on(table.languageId)]
+);
+
+// ---------- Scenarios ----------
+
+export const scenarios = pgTable(
+  "scenarios",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    languageId: varchar("language_id", { length: 32 }).notNull(),
+    situation: varchar("situation", { length: 200 }).notNull(),
+    turns: text("turns").notNull(), // JSON: {text, translation, audioUrl?}[]
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [index("scenarios_language_id_idx").on(table.languageId)]
 );
 
 // ---------- Lesson Contributions ----------
