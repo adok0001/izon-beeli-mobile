@@ -172,6 +172,13 @@ export default function AdminPanelScreen() {
               onPress={() => router.push("/admin/broadcast")}
               accent={getAccent("sky").solid}
             />
+            <ActionRow
+              icon="film"
+              label="Culture Content"
+              detail="Manage blogs, podcasts, and films"
+              onPress={() => router.push("/admin/culture-content")}
+              accent={getAccent("purple").solid}
+            />
             {currentUser && canManageBounties(currentUser) ? (
               <ActionRow
                 icon="star.fill"

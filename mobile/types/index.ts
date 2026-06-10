@@ -473,6 +473,8 @@ export interface DiscoverItem {
   videoUrl?: string;
   storyId?: string;
   contentUrl?: string;
+  body?: string;
+  showNotes?: string;
 }
 
 export type StorySceneType = "narrative" | "choice" | "conclusion";

@@ -5,7 +5,7 @@ import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
-import { BarChart2, Bell, BrainCircuit, Gamepad2, GraduationCap, MessageSquare, Sun, UserCheck, Users } from "lucide-react";
+import { BarChart2, Bell, BrainCircuit, Clapperboard, Gamepad2, GraduationCap, MessageSquare, Sun, UserCheck, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -21,6 +21,7 @@ const ADMIN_NAV = [
   { href: "/admin/daily-content", labelKey: "admin.nav.dailyContent",  icon: Sun,      tourId: "admin-nav-daily-content" },
   { href: "/admin/activities",    labelKey: "admin.nav.activities",    icon: Gamepad2,      tourId: "admin-nav-activities" },
   { href: "/admin/quiz",          labelKey: "admin.nav.quiz",          icon: BrainCircuit,  tourId: "admin-nav-quiz" },
+  { href: "/admin/culture",       labelKey: "admin.nav.culture",       icon: Clapperboard,  tourId: "admin-nav-culture" },
 ] as const;
 
 interface Me { isAdmin: boolean }

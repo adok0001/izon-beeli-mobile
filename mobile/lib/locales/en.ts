@@ -1391,6 +1391,7 @@ export const en = {
       dailyContent: "Daily Content",
       activities: "Activities",
       quiz: "Quiz",
+      culture: "Culture",
     },
     dailyContent: {
       title: "Daily Content",

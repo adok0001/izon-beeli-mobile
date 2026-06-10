@@ -1,7 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { ITEMS, type DiscoverItem, type DiscoverFilter } from "./culture-data";
+import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api";
+
+export type DiscoverItem = {
+  id: string;
+  type: "film" | "podcast" | "blog";
+  title: string;
+  description: string;
+  author: string;
+  publishedAt: string;
+  duration: number;
+  coverGradient: [string, string];
+  coverEmoji: string;
+  featured: boolean;
+  storyId?: string;
+  audioUrl?: string;
+  contentUrl?: string;
+  body?: string;
+  showNotes?: string;
+};
+
+export type DiscoverFilter = "all" | "blog" | "podcast" | "film";
 
 const TYPE_CONFIG = {
   blog:    { color: "#38bdf8", label: "BLOG",    cta: "Read Article" },
@@ -16,13 +38,13 @@ function formatDuration(seconds: number) {
 
 function HeroCard({ item }: { item: DiscoverItem }) {
   const cfg = TYPE_CONFIG[item.type];
-  const href = item.contentUrl ?? "#";
+  const href = item.storyId
+    ? `/culture/story/${item.storyId}`
+    : `/culture/content/${item.id}`;
 
   return (
-    <a
+    <Link
       href={href}
-      target="_blank"
-      rel="noopener noreferrer"
       className="block rounded-2xl overflow-hidden mb-6 group"
       style={{ textDecoration: "none" }}
     >
@@ -30,23 +52,19 @@ function HeroCard({ item }: { item: DiscoverItem }) {
         className="relative h-60 flex items-end"
         style={{ background: `linear-gradient(135deg, ${item.coverGradient[0]}, ${item.coverGradient[1]})` }}
       >
-        {/* Vignette */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{ background: `linear-gradient(to bottom, transparent 30%, ${item.coverGradient[1]}dd)` }}
         />
-        {/* Background emoji */}
         <span className="absolute inset-0 flex items-center justify-center text-8xl opacity-[0.07] select-none pointer-events-none">
           {item.coverEmoji}
         </span>
-        {/* Type badge */}
         <div
           className="absolute top-4 left-5 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[9px] font-black tracking-widest"
           style={{ backgroundColor: "rgba(7,7,15,0.7)", color: cfg.color, border: `1px solid ${cfg.color}40` }}
         >
           {cfg.label}
         </div>
-        {/* Content */}
         <div className="relative z-10 p-5 w-full">
           <h2 className="text-xl font-black text-neutral-50 tracking-tight leading-snug mb-1.5 group-hover:text-amber-200 transition-colors line-clamp-2">
             {item.title}
@@ -63,20 +81,20 @@ function HeroCard({ item }: { item: DiscoverItem }) {
           </div>
         </div>
       </div>
-    </a>
+    </Link>
   );
 }
 
 function ContentCard({ item }: { item: DiscoverItem }) {
   const cfg = TYPE_CONFIG[item.type];
-  const href = item.contentUrl ?? "#";
+  const href = item.storyId
+    ? `/culture/story/${item.storyId}`
+    : `/culture/content/${item.id}`;
   const date = new Date(item.publishedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
   return (
-    <a
+    <Link
       href={href}
-      target="_blank"
-      rel="noopener noreferrer"
       className="flex gap-3 p-3.5 rounded-xl border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.03] transition-all group"
       style={{ textDecoration: "none", borderLeftWidth: 3, borderLeftColor: cfg.color }}
     >
@@ -97,7 +115,7 @@ function ContentCard({ item }: { item: DiscoverItem }) {
         <p className="text-[11px] text-neutral-400 line-clamp-2">{item.description}</p>
         <div className="mt-1.5 text-[10px] text-neutral-400/70">{item.author} · {date}</div>
       </div>
-    </a>
+    </Link>
   );
 }
 
@@ -125,18 +143,21 @@ const FILTERS: { id: DiscoverFilter; label: string }[] = [
 export function CulturePage() {
   const [filter, setFilter] = useState<DiscoverFilter>("all");
 
-  const filtered = filter === "all" ? ITEMS : ITEMS.filter((i) => i.type === filter);
-  const featured = filtered.filter((i) => i.featured);
-  const rest = filtered.filter((i) => !i.featured);
+  const { data: items = [], isLoading } = useQuery<DiscoverItem[]>({
+    queryKey: ["culture-items", filter],
+    queryFn: () => apiFetch<DiscoverItem[]>(filter === "all" ? "/culture-items" : `/culture-items?type=${filter}`),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const featured = items.filter((i) => i.featured);
+  const rest = items.filter((i) => !i.featured);
   const hero = featured[0];
   const featuredStrip = featured.slice(1);
 
   return (
     <div className="min-h-screen bg-[#07070f]">
       {/* Header */}
-      <div
-        className="sticky top-0 z-20 px-5 md:px-10 pt-6 pb-4 border-b bg-[#07070f] border-white/[0.07]"
-      >
+      <div className="sticky top-0 z-20 px-5 md:px-10 pt-6 pb-4 border-b bg-[#07070f] border-white/[0.07]">
         <div className="max-w-3xl mx-auto">
           <p className="text-[9px] font-bold tracking-[0.3em] text-amber-600 uppercase mb-1">
             Beeli Media
@@ -148,7 +169,6 @@ export function CulturePage() {
             Essays, conversations, and films from inside the world of African languages.
           </p>
           <div className="h-px mt-3 mb-4 opacity-30 bg-gold-500" />
-          {/* Filter pills */}
           <div className="flex gap-2 flex-wrap">
             {FILTERS.map((opt) => {
               const active = filter === opt.id;
@@ -174,9 +194,15 @@ export function CulturePage() {
 
       {/* Content */}
       <div className="max-w-3xl mx-auto px-5 md:px-10 pt-6 pb-20">
-        {hero && <HeroCard item={hero} />}
+        {isLoading && (
+          <div className="flex items-center justify-center py-24">
+            <div className="w-6 h-6 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
+          </div>
+        )}
 
-        {featuredStrip.length > 0 && (
+        {!isLoading && hero && <HeroCard item={hero} />}
+
+        {!isLoading && featuredStrip.length > 0 && (
           <div className="mb-6">
             <SectionRule label="Featured" />
             <div className="grid md:grid-cols-2 gap-3">
@@ -187,7 +213,7 @@ export function CulturePage() {
           </div>
         )}
 
-        {rest.length > 0 && (
+        {!isLoading && rest.length > 0 && (
           <div>
             <SectionRule label="All Content" />
             <div className="grid md:grid-cols-2 gap-3">
@@ -198,7 +224,7 @@ export function CulturePage() {
           </div>
         )}
 
-        {filtered.length === 0 && (
+        {!isLoading && items.length === 0 && (
           <div className="flex flex-col items-center py-24 text-center">
             <span className="text-5xl mb-4">🎬</span>
             <p className="text-base font-bold text-neutral-50 mb-1">Nothing here yet</p>

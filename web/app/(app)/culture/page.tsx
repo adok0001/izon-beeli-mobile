@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { CulturePage } from "./culture-client";
-import { ITEMS } from "./culture-data";
+import type { DiscoverItem } from "./culture-client";
 import {
   blogPostingJsonLd,
   breadcrumbJsonLd,
   SITE_BASE_URL,
 } from "@/lib/structured-data";
+import { API_BASE_URL } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Culture — Essays, Podcasts & Films",
@@ -30,13 +31,21 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Page() {
+async function getCultureItems(): Promise<DiscoverItem[]> {
+  const res = await fetch(`${API_BASE_URL}/culture-items`, { next: { revalidate: 3600 } });
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export default async function Page() {
+  const items = await getCultureItems();
+
   const breadcrumbLd = breadcrumbJsonLd([
     { name: "Home", path: "/" },
     { name: "Culture", path: "/culture" },
   ]);
 
-  const blogPostsLd = ITEMS.filter((i) => i.type === "blog").map((i) =>
+  const blogPostsLd = items.filter((i) => i.type === "blog").map((i) =>
     blogPostingJsonLd({
       title: i.title,
       description: i.description,

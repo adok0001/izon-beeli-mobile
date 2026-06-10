@@ -1393,6 +1393,7 @@ export const fr = {
       dailyContent: "Contenu quotidien",
       activities: "Activités",
       quiz: "Quiz",
+      culture: "Culture",
     },
     dailyContent: {
       title: "Contenu quotidien",

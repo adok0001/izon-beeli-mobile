@@ -2,7 +2,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useAudioStore } from "@/store/audio-store";
 import type { DiscoverItem } from "@/types";
-import { Linking, Platform, Pressable, Text, View } from "react-native";
+import { useRouter } from "expo-router";
+import { Platform, Pressable, Text, View } from "react-native";
 
 export const DISCOVER_TYPE_CONFIG = {
   blog: {
@@ -53,14 +54,6 @@ function formatDate(iso: string): string {
   }
 }
 
-function openExternal(url: string) {
-  if (Platform.OS === "web") {
-    (window as Window).open(url, "_blank");
-  } else {
-    Linking.openURL(url).catch(() => {});
-  }
-}
-
 interface DiscoverCardProps {
   item: DiscoverItem;
   onStoryPress?: (storyId: string) => void;
@@ -70,6 +63,7 @@ interface DiscoverCardProps {
 export function DiscoverCard({ item, onStoryPress, compact = false }: DiscoverCardProps) {
   const M = useMuseumTheme();
   const cfg = DISCOVER_TYPE_CONFIG[item.type];
+  const router = useRouter();
   const { currentTrackId, isPlaying, loadAndPlay, togglePlayback } = useAudioStore();
   const isCurrentPodcast = item.type === "podcast" && currentTrackId === item.id;
 
@@ -82,8 +76,8 @@ export function DiscoverCard({ item, onStoryPress, compact = false }: DiscoverCa
       } else {
         loadAndPlay(item.id, item.audioUrl, item.title);
       }
-    } else if (item.contentUrl) {
-      openExternal(item.contentUrl);
+    } else {
+      router.push(`/discover-content/${item.id}` as never);
     }
   }
 

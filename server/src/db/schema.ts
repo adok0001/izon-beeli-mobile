@@ -948,6 +948,33 @@ export const scriptCharacters = pgTable(
   (table) => [index("script_characters_script_id_idx").on(table.scriptId)]
 );
 
+export const cultureItemTypeEnum = pgEnum("culture_item_type", ["film", "podcast", "blog"]);
+
+export const cultureItems = pgTable(
+  "culture_items",
+  {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    type: cultureItemTypeEnum("type").notNull(),
+    title: varchar("title", { length: 300 }).notNull(),
+    description: text("description").notNull(),
+    author: varchar("author", { length: 200 }).notNull(),
+    publishedAt: timestamp("published_at").notNull(),
+    duration: integer("duration").notNull(),
+    coverGradientFrom: varchar("cover_gradient_from", { length: 16 }).notNull(),
+    coverGradientTo: varchar("cover_gradient_to", { length: 16 }).notNull(),
+    coverEmoji: varchar("cover_emoji", { length: 16 }).notNull(),
+    featured: boolean("featured").default(false).notNull(),
+    storyId: varchar("story_id", { length: 128 }),
+    audioUrl: text("audio_url"),
+    contentUrl: text("content_url"),
+    body: text("body"),
+    showNotes: text("show_notes"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [index("culture_items_type_idx").on(table.type)]
+);
+
 export const wordChallengeSubmissions = pgTable(
   "word_challenge_submissions",
   {

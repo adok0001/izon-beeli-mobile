@@ -64,11 +64,13 @@ function HeroCard({
   const cfg = DISCOVER_TYPE_CONFIG[item.type];
   const [hovered, setHovered] = useState(false);
 
+  const router = useRouter();
+
   function handlePress() {
     if (item.type === "film" && item.storyId) {
       onStoryPress(item.storyId);
-    } else if (item.contentUrl) {
-      window.open(item.contentUrl, "_blank");
+    } else {
+      router.push(`/discover-content/${item.id}` as never);
     }
   }
 
