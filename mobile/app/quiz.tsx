@@ -5,6 +5,7 @@ import { analytics } from "@/lib/analytics";
 import { apiFetch } from "@/lib/api";
 import { hapticError, hapticHeavy, hapticSuccess } from "@/lib/haptics";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
+import { useSentences } from "@/lib/hooks/use-sentences";
 import { useLesson } from "@/lib/hooks/use-courses";
 import { getLanguageName } from "@/lib/mock-data";
 import { generateFocusedQuiz, generateLessonQuiz, generateQuiz } from "@/lib/quiz-engine";
@@ -36,7 +37,7 @@ const FEEDBACK_DELAY = 1200;
 
 function ProgressBar({ current, total }: { current: number; total: number }) {
   const M = useMuseumTheme();
-  const pct = total > 0 ? (current / total) * 100 : 0;
+  const pct = total > 0 ? Math.min((current / total) * 100, 100) : 0;
   return (
     <View style={{ marginHorizontal: 20, marginTop: 8, height: 8, borderRadius: 999, backgroundColor: M.border }}>
       <View style={{ height: 8, borderRadius: 999, backgroundColor: M.accent, width: `${pct}%` }} />
@@ -50,6 +51,8 @@ function QuestionTypeLabel({ type }: { type: QuizQuestion["type"] }) {
     "word-to-english": t("quiz.wordToEnglish"),
     "english-to-word": t("quiz.englishToWord"),
     "fill-in-the-blank": t("quiz.fillInBlank"),
+    equivalence: t("quiz.fillInBlank"),
+    "sentence-translate": t("quiz.wordToEnglish"),
     listening: t("quiz.listening"),
     "segment-listening": t("quiz.listening"),
     "context-translate": t("quiz.wordToEnglish"),
@@ -107,6 +110,7 @@ function ActiveView() {
   const {
     questions,
     currentIndex,
+    originalQuestionCount,
     lastAnswerCorrect,
     answerQuestion,
     nextQuestion,
@@ -162,7 +166,7 @@ function ActiveView() {
 
   return (
     <View style={{ flex: 1 }}>
-      <ProgressBar current={currentIndex + (locked ? 1 : 0)} total={questions.length} />
+      <ProgressBar current={currentIndex + (locked ? 1 : 0)} total={originalQuestionCount} />
 
       <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 24 }}>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
@@ -202,11 +206,16 @@ function ActiveView() {
 
         {locked && lastAnswerCorrect === false && (
           <View style={{ marginTop: 12, borderRadius: 16, backgroundColor: M.errorBg, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: M.errorBorder }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-              <IconSymbol name="lightbulb.fill" size={14} color={M.warning} />
-              <Text style={{ fontSize: 11, fontWeight: "600", color: M.warning }}>
-                {t("quiz.correctAnswerLabel")}
-              </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <IconSymbol name="lightbulb.fill" size={14} color={M.warning} />
+                <Text style={{ fontSize: 11, fontWeight: "600", color: M.warning }}>
+                  {t("quiz.correctAnswerLabel")}
+                </Text>
+              </View>
+              {question.audioSource && (
+                <ListeningQuestion audioSource={question.audioSource} />
+              )}
             </View>
             <Text style={{ marginTop: 4, fontSize: 14, fontWeight: "700", color: M.text }}>
               {question.correctAnswer}
@@ -413,6 +422,10 @@ export default function QuizScreen() {
   }>();
   const { selectedLanguageId } = useLanguageStore();
   const { data: dictionaryEntries = [], isLoading: isDictLoading } = useDictionary(selectedLanguageId);
+  const isFocused = !!params.focusWord && !!params.focusEnglish;
+  const { data: sentenceTemplates = [], isLoading: isSentencesLoading } = useSentences(
+    isFocused ? "" : selectedLanguageId
+  );
   const focusLanguageId = params.focusLanguageId ?? selectedLanguageId;
   const { data: focusEntries = [], isLoading: isFocusLoading } = useDictionary(focusLanguageId);
   const { data: lessonData, isLoading: isLessonLoading } = useLesson(params.lessonId ?? "");
@@ -431,7 +444,6 @@ export default function QuizScreen() {
     return () => { reset(); };
   }, [reset]);
 
-  const isFocused = !!params.focusWord && !!params.focusEnglish;
   const languageName = getLanguageName(selectedLanguageId);
   const quizTitle = isFocused
     ? t("quiz.practiceTitle", { word: params.focusWord })
@@ -446,7 +458,7 @@ export default function QuizScreen() {
   // Once dictionary (and lesson, if applicable) data loads: auto-start focused quizzes, show config for regular quizzes
   useEffect(() => {
     if (initialized.current) return;
-    if (isDictLoading || isFocusLoading) return;
+    if (isDictLoading || isFocusLoading || isSentencesLoading) return;
     if (params.lessonId && isLessonLoading) return;
     initialized.current = true;
 
@@ -478,7 +490,7 @@ export default function QuizScreen() {
         : generateQuiz(
             { languageId: selectedLanguageId, courseId: params.courseId, category: params.category, questionCount: 5 },
             activeEntries,
-            undefined,
+            sentenceTemplates,
             tq
           );
       if (test.length === 0) {
@@ -487,7 +499,7 @@ export default function QuizScreen() {
         setConfigReady(true);
       }
     }
-  }, [isDictLoading, isFocusLoading, isLessonLoading]);
+  }, [isDictLoading, isFocusLoading, isSentencesLoading, isLessonLoading]);
 
   const handleStart = useCallback(
     (count: number) => {
@@ -508,7 +520,7 @@ export default function QuizScreen() {
               questionCount: count,
             },
             activeEntries,
-            undefined,
+            sentenceTemplates,
             tq
           );
       if (questions.length === 0) {

@@ -4469,4 +4469,17 @@ export const IZON_DICTIONARY: DictionaryEntry[] = [
   e(4282, "ofoni", "fowl; bird", "animals", undefined, "Mị ofoni.", "This is a fowl."),
   e(4283, "ewiri", "tortoise", "animals", undefined, "Mị ewiri.", "This is a tortoise."),
   e(4284, "erefawei", "tortoise (alternative form)", "animals", undefined, "Mị erefawei.", "This is a tortoise."),
+
+  // --- Lesson 10-06-2026: Possessive pronouns & yam counting ---
+  e(4285, "owo", "our (first person plural possessive)", "phrases", undefined, "Mị owo buru.", "This is our yam."),
+  e(4286, "mị tị otu", "whose? (which people's?)", "phrases", undefined, "Mị tị otu buru?", "Whose yam is this?"),
+  // Yam-counting forms (used when counting yams; variant forms of the base numbers)
+  e(4287, "ma", "2 (yam counting form; short form of mamu)", "numbers", undefined, "Ma buru", "Two yams"),
+  e(4288, "taára", "3 (yam counting form; variant of taru)", "numbers", undefined, "Taára buru", "Three yams"),
+  e(4289, "neia", "4 (yam counting form; variant of nein)", "numbers", undefined, "Neia buru", "Four yams"),
+  e(4290, "sọọnran", "5 (yam counting form; variant of sọrọn)", "numbers", undefined, "Sọọnran buru", "Five yams"),
+  e(4291, "sóndía", "6 (yam counting form; variant of sendie)", "numbers", undefined, "Sóndía buru", "Six yams"),
+  e(4292, "iséna", "9 (yam counting form; variant of ise)", "numbers", undefined, "Iséna buru", "Nine yams"),
+  e(4293, "oyiaburu", "10 yams (traditional yam counting; oyi + buru fused form)", "numbers", undefined, "Oyiaburu fẹị.", "Buy ten yams."),
+  e(4294, "síaburu", "20 yams (traditional yam counting; sí + buru fused form)", "numbers", undefined, "Síaburu fẹị.", "Buy twenty yams."),
 ];

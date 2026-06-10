@@ -8,6 +8,8 @@ interface QuizState {
   questions: QuizQuestion[];
   currentIndex: number;
   answeredQuestions: AnsweredQuestion[];
+  /** Original question count before any re-queuing. Used for progress display and scoring. */
+  originalQuestionCount: number;
   startTime: number;
   lastAnswerCorrect: boolean | null;
 
@@ -23,6 +25,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
   questions: [],
   currentIndex: 0,
   answeredQuestions: [],
+  originalQuestionCount: 0,
   startTime: 0,
   lastAnswerCorrect: null,
 
@@ -32,6 +35,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
       questions,
       currentIndex: 0,
       answeredQuestions: [],
+      originalQuestionCount: questions.length,
       startTime: Date.now(),
       lastAnswerCorrect: null,
     });
@@ -43,19 +47,22 @@ export const useQuizStore = create<QuizState>((set, get) => ({
     if (!question) return false;
 
     const correct = selectedAnswer === question.correctAnswer;
+    // Derive first-attempt status from existing answered list (avoids parallel Set)
+    const isFirstAttempt = !answeredQuestions.some((a) => a.questionId === question.id);
 
-    set({
-      answeredQuestions: [
-        ...answeredQuestions,
-        {
-          questionId: question.id,
-          selectedAnswer,
-          correct,
-        },
-      ],
-      lastAnswerCorrect: correct,
-    });
+    const newAnswered = isFirstAttempt
+      ? [...answeredQuestions, { questionId: question.id, selectedAnswer, correct }]
+      : answeredQuestions;
 
+    // On incorrect answer, re-insert the question 2 positions later (until correct)
+    let newQuestions = questions;
+    if (!correct) {
+      const insertAt = Math.min(currentIndex + 2, questions.length);
+      newQuestions = [...questions];
+      newQuestions.splice(insertAt, 0, question);
+    }
+
+    set({ questions: newQuestions, answeredQuestions: newAnswered, lastAnswerCorrect: correct });
     return correct;
   },
 
@@ -71,9 +78,9 @@ export const useQuizStore = create<QuizState>((set, get) => ({
   },
 
   getResult: () => {
-    const { questions, answeredQuestions, startTime } = get();
+    const { originalQuestionCount, answeredQuestions, startTime } = get();
     const correctCount = answeredQuestions.filter((a) => a.correct).length;
-    const totalQuestions = questions.length;
+    const totalQuestions = originalQuestionCount || answeredQuestions.length;
 
     return {
       totalQuestions,
@@ -93,6 +100,7 @@ export const useQuizStore = create<QuizState>((set, get) => ({
       questions: [],
       currentIndex: 0,
       answeredQuestions: [],
+      originalQuestionCount: 0,
       startTime: 0,
       lastAnswerCorrect: null,
     });

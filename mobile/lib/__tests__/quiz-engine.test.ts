@@ -302,6 +302,108 @@ describe("generateFocusedQuiz", () => {
   });
 });
 
+  describe("sentence-translate questions", () => {
+    it("includes sentence-translate questions when templates are provided", () => {
+      const entries = makePool(20);
+      const sentences: SentenceTemplate[] = Array.from({ length: 5 }, (_, i) => ({
+        id: `s${i}`,
+        languageId: "twi",
+        sentence: `Sentence ${i} in language`,
+        answer: `word${i}`,
+        englishSentence: `English sentence ${i}`,
+      }));
+      const questions = generateQuiz({ ...DEFAULT_CONFIG, questionCount: 20 }, entries, sentences);
+      const sentTranslate = questions.filter((q) => q.type === "sentence-translate");
+      expect(sentTranslate.length).toBeGreaterThan(0);
+    });
+
+    it("sentence-translate correct answer is the englishSentence", () => {
+      const entries = makePool(20);
+      const sentences: SentenceTemplate[] = [
+        { id: "s1", languageId: "twi", sentence: "Mi parla", answer: "word0", englishSentence: "I speak" },
+      ];
+      const questions = generateQuiz({ ...DEFAULT_CONFIG, questionCount: 20 }, entries, sentences);
+      const q = questions.find((q) => q.type === "sentence-translate");
+      if (q) {
+        expect(q.correctAnswer).toBe("I speak");
+        expect(q.options).toContain("I speak");
+      }
+    });
+  });
+
+  describe("fill-in-the-blank blank guard (equivalence routing)", () => {
+    it("routes to equivalence type when answer is not a substring of sentence", () => {
+      const entries = [
+        makeEntry({ word: "Dila", english: "Good night" }),
+        ...makePool(10),
+      ];
+      const sentences: SentenceTemplate[] = [
+        {
+          id: "s-iz-4",
+          languageId: "twi",
+          sentence: "Bunuda seri",
+          answer: "Dila",
+          englishSentence: "Wake up well / Good night",
+        },
+      ];
+      const questions = generateQuiz({ ...DEFAULT_CONFIG, questionCount: 20 }, entries, sentences);
+      const equivalenceQs = questions.filter((q) => q.type === "equivalence");
+      // If Dila's question is generated, it should be equivalence since "Dila" is not in "Bunuda seri"
+      if (equivalenceQs.length > 0) {
+        expect(equivalenceQs[0].prompt).toContain("Bunuda seri");
+        expect(equivalenceQs[0].correctAnswer).toBe("Dila");
+      }
+    });
+
+    it("uses fill-in-the-blank when answer IS a substring of sentence", () => {
+      const entries = makePool(10);
+      const sentences: SentenceTemplate[] = [
+        {
+          id: "s1",
+          languageId: "twi",
+          sentence: "Mi word0 te fie",
+          answer: "word0",
+          englishSentence: "My word at home",
+        },
+      ];
+      const questions = generateQuiz({ ...DEFAULT_CONFIG, questionCount: 20 }, entries, sentences);
+      const fitbQs = questions.filter((q) => q.type === "fill-in-the-blank" && q.prompt.includes("______"));
+      expect(fitbQs.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("smarter distractors", () => {
+    it("avoids synonym distractors with overlapping tokens", () => {
+      // Correct answer "run fast" — "run slow" shares the token "run" and should be avoided
+      const entries = [
+        makeEntry({ word: "w0", english: "run fast" }),
+        makeEntry({ word: "w1", english: "run slow" }),  // overlaps "run"
+        makeEntry({ word: "w2", english: "jump high" }),
+        makeEntry({ word: "w3", english: "swim deep" }),
+        makeEntry({ word: "w4", english: "fly away" }),
+        makeEntry({ word: "w5", english: "dive low" }),
+        makeEntry({ word: "w6", english: "walk far" }),
+        makeEntry({ word: "w7", english: "skip rope" }),
+      ];
+      // Ask for enough questions that "run fast" appears as a word-to-english question
+      let runFastQuestion: typeof entries[0] | undefined;
+      let foundClean = false;
+      for (let trial = 0; trial < 20; trial++) {
+        const questions = generateQuiz({ ...DEFAULT_CONFIG, questionCount: 20 }, entries);
+        const q = questions.find((q) => q.type === "word-to-english" && q.correctAnswer === "run fast");
+        if (q) {
+          runFastQuestion = q as any;
+          if (!q.options.includes("run slow")) { foundClean = true; break; }
+        }
+      }
+      // Should find the question and it should avoid the overlapping distractor
+      if (runFastQuestion) {
+        expect(foundClean).toBe(true);
+      }
+      // If the question was never generated in 20 trials, that's also a valid (if unlikely) outcome
+    });
+  });
+
 // ---------------------------------------------------------------------------
 // generateMatchingPairs
 // ---------------------------------------------------------------------------

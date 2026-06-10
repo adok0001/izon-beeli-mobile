@@ -34,6 +34,30 @@ function normalizeForMatch(value: string): string {
     .trim();
 }
 
+function pickDistractors(correct: string, pool: string[], n: number): string[] {
+  const correctNorm = correct.toLowerCase().trim();
+  const correctTokens = new Set(correctNorm.split(/\s+/).filter((t) => t.length > 2));
+  function hasOverlap(s: string) {
+    if (correctTokens.size === 0) return false;
+    return s.toLowerCase().trim().split(/\s+/).some((t) => t.length > 2 && correctTokens.has(t));
+  }
+  const seen = new Set<string>([correctNorm]);
+  const result: string[] = [];
+  for (const s of shuffle(pool)) {
+    if (result.length >= n) break;
+    const norm = s.toLowerCase().trim();
+    if (!seen.has(norm) && !hasOverlap(s)) { seen.add(norm); result.push(s); }
+  }
+  if (result.length < n) {
+    for (const s of shuffle(pool)) {
+      if (result.length >= n) break;
+      const norm = s.toLowerCase().trim();
+      if (!seen.has(norm)) { seen.add(norm); result.push(s); }
+    }
+  }
+  return result;
+}
+
 /** Build a single padded string from transcript segments for whole-word substring matching. */
 function buildTranscriptIndex(texts: string[]): string {
   const joined = texts.map((t) => normalizeForMatch(t)).join(" ");
@@ -126,7 +150,7 @@ quizRouter.get("/questions", async (c) => {
   const allEnglish = entries.map((e) => e.english);
 
   const questions = selected.map((entry) => {
-    const distractors = shuffle(allEnglish.filter((e) => e !== entry.english)).slice(0, 3);
+    const distractors = pickDistractors(entry.english, allEnglish, 3);
     const options = shuffle([entry.english, ...distractors]);
     return {
       id: entry.id,

@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { db } from "../db/index.js";
 import { cultureItems } from "../db/schema.js";
 

@@ -312,6 +312,8 @@ export type QuestionType =
   | "word-to-english"
   | "english-to-word"
   | "fill-in-the-blank"
+  | "equivalence"
+  | "sentence-translate"
   | "listening"
   | "segment-listening"
   | "context-translate";

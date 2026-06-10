@@ -24,20 +24,54 @@ function shuffle<T>(arr: T[]): T[] {
 
 /**
  * Picks `count` distractors from `pool`, excluding the correct answer.
+ * Prefers `preferred` (e.g. same-category items) before falling back to the full pool.
+ * Rejects candidates whose normalised tokens overlap with the correct answer to avoid
+ * synonym ambiguity — falls back to overlapping candidates if needed to fill slots.
  * Deduplicates case-insensitively so "Run" and "run" don't both appear.
  */
-function pickDistractors(correct: string, pool: string[], count: number): string[] {
+function pickDistractors(
+  correct: string,
+  pool: string[],
+  count: number,
+  preferred?: string[]
+): string[] {
   const correctNorm = correct.toLowerCase().trim();
+  const correctTokens = new Set(
+    correctNorm.split(/\s+/).filter((t) => t.length > 2)
+  );
+
+  function hasTokenOverlap(s: string): boolean {
+    if (correctTokens.size === 0) return false;
+    return s.toLowerCase().trim().split(/\s+/).some((t) => t.length > 2 && correctTokens.has(t));
+  }
+
   const seen = new Set<string>([correctNorm]);
-  const candidates: string[] = [];
-  for (const s of pool) {
-    const norm = s.toLowerCase().trim();
-    if (!seen.has(norm)) {
-      seen.add(norm);
-      candidates.push(s);
+  const result: string[] = [];
+
+  for (const source of [preferred ?? [], pool]) {
+    for (const s of shuffle(source)) {
+      if (result.length >= count) break;
+      const norm = s.toLowerCase().trim();
+      if (!seen.has(norm) && !hasTokenOverlap(s)) {
+        seen.add(norm);
+        result.push(s);
+      }
     }
   }
-  return shuffle(candidates).slice(0, count);
+
+  // Relax overlap filter using only the full pool to fill remaining slots
+  if (result.length < count) {
+    for (const s of shuffle(pool)) {
+      if (result.length >= count) break;
+      const norm = s.toLowerCase().trim();
+      if (!seen.has(norm)) {
+        seen.add(norm);
+        result.push(s);
+      }
+    }
+  }
+
+  return result;
 }
 
 function gatherDictionaryPool(
@@ -61,9 +95,10 @@ function gatherDictionaryPool(
 function makeWordToEnglish(
   item: QuizPool,
   allEnglish: string[],
-  translate?: QuizTranslateFn
+  translate?: QuizTranslateFn,
+  preferredEnglish?: string[]
 ): QuizQuestion | null {
-  const distractors = pickDistractors(item.english, allEnglish, 3);
+  const distractors = pickDistractors(item.english, allEnglish, 3, preferredEnglish);
   if (distractors.length < 3) return null;
   return {
     id: `q-${Math.random().toString(36).slice(2, 9)}`,
@@ -81,9 +116,10 @@ function makeWordToEnglish(
 function makeEnglishToWord(
   item: QuizPool,
   allWords: string[],
-  translate?: QuizTranslateFn
+  translate?: QuizTranslateFn,
+  preferredWords?: string[]
 ): QuizQuestion | null {
-  const distractors = pickDistractors(item.word, allWords, 3);
+  const distractors = pickDistractors(item.word, allWords, 3, preferredWords);
   if (distractors.length < 3) return null;
   return {
     id: `q-${Math.random().toString(36).slice(2, 9)}`,
@@ -102,40 +138,49 @@ function makeFillInTheBlank(
   item: QuizPool,
   allWords: string[],
   sentences?: SentenceTemplate[],
-  translate?: QuizTranslateFn
+  translate?: QuizTranslateFn,
+  preferredWords?: string[]
 ): QuizQuestion | null {
-  const distractors = pickDistractors(item.word, allWords, 3);
+  const distractors = pickDistractors(item.word, allWords, 3, preferredWords);
   if (distractors.length < 3) return null;
 
-  // Try to find a sentence template that uses this word
   const template = sentences?.find(
     (s) => s.answer.toLowerCase() === item.word.toLowerCase()
   );
 
-  const maskedSentence = template
-    ? template.sentence.replace(
-        new RegExp(escapeRegex(template.answer), "i"),
-        "______"
-      )
-    : null;
-
-  const prompt = template && maskedSentence
-    ? translate
-      ? translate("quiz.promptFillInBlankSentence", { sentence: maskedSentence, translation: template.englishSentence })
-      : `Fill in the blank: "${maskedSentence}"\n(${template.englishSentence})`
-    : translate
-      ? translate("quiz.promptFillInBlankSimple", { english: item.english })
-      : `Fill in the blank: ______ means "${item.english}"`;
-
-  return {
+  const base = {
     id: `q-${Math.random().toString(36).slice(2, 9)}`,
-    type: "fill-in-the-blank",
-    prompt,
     correctAnswer: item.word,
     options: shuffle([item.word, ...distractors]),
     exampleSentence: item.example,
     exampleSentenceTranslation: item.exampleTranslation,
   };
+
+  if (template) {
+    const maskedSentence = template.sentence.replace(
+      new RegExp(escapeRegex(template.answer), "i"),
+      "______"
+    );
+
+    // If the answer wasn't found in the sentence, the blank won't appear —
+    // route to equivalence instead (Phase 1.3 guard).
+    if (!maskedSentence.includes("______")) {
+      const prompt = translate
+        ? translate("quiz.promptEquivalence", { sentence: template.sentence, translation: template.englishSentence })
+        : `Which word means the same as "${template.sentence}"?\n(${template.englishSentence})`;
+      return { ...base, type: "equivalence" as const, prompt };
+    }
+
+    const prompt = translate
+      ? translate("quiz.promptFillInBlankSentence", { sentence: maskedSentence, translation: template.englishSentence })
+      : `Fill in the blank: "${maskedSentence}"\n(${template.englishSentence})`;
+    return { ...base, type: "fill-in-the-blank" as const, prompt };
+  }
+
+  const prompt = translate
+    ? translate("quiz.promptFillInBlankSimple", { english: item.english })
+    : `Fill in the blank: ______ means "${item.english}"`;
+  return { ...base, type: "fill-in-the-blank" as const, prompt };
 }
 
 function escapeRegex(s: string): string {
@@ -145,10 +190,11 @@ function escapeRegex(s: string): string {
 function makeListening(
   item: QuizPool,
   allEnglish: string[],
-  translate?: QuizTranslateFn
+  translate?: QuizTranslateFn,
+  preferredEnglish?: string[]
 ): QuizQuestion | null {
   if (!item.audioSource) return null; // listening requires audio
-  const distractors = pickDistractors(item.english, allEnglish, 3);
+  const distractors = pickDistractors(item.english, allEnglish, 3, preferredEnglish);
   if (distractors.length < 3) return null;
   return {
     id: `q-${Math.random().toString(36).slice(2, 9)}`,
@@ -161,6 +207,25 @@ function makeListening(
     audioSource: item.audioSource,
     exampleSentence: item.example,
     exampleSentenceTranslation: item.exampleTranslation,
+  };
+}
+
+function makeSentenceTranslate(
+  template: SentenceTemplate,
+  allEnglish: string[],
+  translate?: QuizTranslateFn
+): QuizQuestion | null {
+  const distractors = pickDistractors(template.englishSentence, allEnglish, 3);
+  if (distractors.length < 3) return null;
+  const prompt = translate
+    ? translate("quiz.promptSentenceTranslate", { sentence: template.sentence })
+    : `Translate: "${template.sentence}"`;
+  return {
+    id: `q-${Math.random().toString(36).slice(2, 9)}`,
+    type: "sentence-translate",
+    prompt,
+    correctAnswer: template.englishSentence,
+    options: shuffle([template.englishSentence, ...distractors]),
   };
 }
 
@@ -236,27 +301,54 @@ export function generateQuiz(
   // Build interleaved (item, type) candidates with type balance and audio awareness
   const candidates = buildCandidates(pool);
 
-  // Generate question objects from the first questionCount valid candidates
+  // Reserve up to 25% of slots for sentence-translate questions (only when templates exist)
+  const sentenceSlots = sentences.length > 0 ? Math.max(0, Math.floor(questionCount / 4)) : 0;
+  const wordSlots = questionCount - sentenceSlots;
+
+  // Pre-build category → { words, english } map for O(1) preferred-distractor lookup
+  const catMap = new Map<string, { words: string[]; english: string[] }>();
+  for (const p of pool) {
+    if (!p.category) continue;
+    let bucket = catMap.get(p.category);
+    if (!bucket) { bucket = { words: [], english: [] }; catMap.set(p.category, bucket); }
+    bucket.words.push(p.word);
+    bucket.english.push(p.english);
+  }
+
   const questions: QuizQuestion[] = [];
   for (const { item, type } of candidates) {
-    if (questions.length >= questionCount) break;
+    if (questions.length >= wordSlots) break;
+
+    const catBucket = item.category ? catMap.get(item.category) : undefined;
+    const preferredWords = catBucket?.words.filter((w) => w !== item.word) ?? [];
+    const preferredEnglish = catBucket?.english.filter((e) => e !== item.english) ?? [];
 
     let q: QuizQuestion | null = null;
     switch (type) {
       case "word-to-english":
-        q = makeWordToEnglish(item, allEnglish, translate);
+        q = makeWordToEnglish(item, allEnglish, translate, preferredEnglish);
         break;
       case "english-to-word":
-        q = makeEnglishToWord(item, allWords, translate);
+        q = makeEnglishToWord(item, allWords, translate, preferredWords);
         break;
       case "fill-in-the-blank":
-        q = makeFillInTheBlank(item, allWords, sentences, translate);
+        q = makeFillInTheBlank(item, allWords, sentences, translate, preferredWords);
         break;
       case "listening":
-        q = makeListening(item, allEnglish, translate);
+        q = makeListening(item, allEnglish, translate, preferredEnglish);
         break;
     }
     if (q) questions.push(q);
+  }
+
+  // Mix in sentence-translate questions from templates
+  if (sentences.length > 0 && sentenceSlots > 0) {
+    const allEnglishSentences = sentences.map((s) => s.englishSentence);
+    for (const template of shuffle(sentences)) {
+      if (questions.length >= questionCount) break;
+      const q = makeSentenceTranslate(template, allEnglishSentences, translate);
+      if (q) questions.push(q);
+    }
   }
 
   return shuffle(questions);
