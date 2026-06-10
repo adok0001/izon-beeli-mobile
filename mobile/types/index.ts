@@ -335,7 +335,10 @@ export type QuestionType =
   | "sentence-translate"
   | "listening"
   | "segment-listening"
-  | "context-translate";
+  | "context-translate"
+  | "picture-to-word"
+  | "word-to-picture"
+  | "type-the-word";
 
 export interface QuizQuestion {
   id: string;
@@ -350,6 +353,10 @@ export interface QuizQuestion {
   explanation?: string; // optional explanation shown after incorrect answer
   exampleSentence?: string;
   exampleSentenceTranslation?: string;
+  exampleAudioUrl?: string; // for sentence-listening questions
+  imageUrl?: string; // for picture question types
+  /** For word-to-picture: map option label → imageUrl */
+  optionImages?: Record<string, string>;
 }
 
 export interface QuizConfig {

@@ -405,6 +405,7 @@ export const dictionaryEntries = pgTable(
     exampleTranslationFr: text("example_translation_fr"),
     audioUrl: text("audio_url"),
     imageUrl: text("image_url"),
+    exampleAudioUrl: text("example_audio_url"),
     contributorName: varchar("contributor_name", { length: 200 }),
     contributorId: varchar("contributor_id", { length: 64 }),
     englishWordId: varchar("english_word_id", { length: 64 }).references(() => englishWordbank.id),

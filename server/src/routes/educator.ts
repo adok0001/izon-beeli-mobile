@@ -543,6 +543,7 @@ educatorRouter.post("/dictionary", async (c) => {
 
   let audioUrl = fields.audioUrl?.trim() || null;
   let imageUrl = fields.imageUrl?.trim() || null;
+  let exampleAudioUrl = fields.exampleAudioUrl?.trim() || null;
 
   if (audioFile?.size) {
     const blob = await put(`educator/audio/${languageId}/${Date.now()}-${audioFile.name}`, audioFile, {
@@ -555,6 +556,13 @@ educatorRouter.post("/dictionary", async (c) => {
       access: "public", token: process.env.BLOB_READ_WRITE_TOKEN!,
     });
     imageUrl = blob.url;
+  }
+  const exampleAudioFile = isMultipart ? (await c.req.formData()).get("exampleAudio") as File | null : null;
+  if (exampleAudioFile?.size) {
+    const blob = await put(`educator/audio/${languageId}/example-${Date.now()}-${exampleAudioFile.name}`, exampleAudioFile, {
+      access: "public", token: process.env.BLOB_READ_WRITE_TOKEN!,
+    });
+    exampleAudioUrl = blob.url;
   }
 
   const id = `edu-${randomUUID()}`;
@@ -573,6 +581,7 @@ educatorRouter.post("/dictionary", async (c) => {
       exampleTranslationFr: fields.exampleTranslationFr?.trim() || null,
       audioUrl,
       imageUrl,
+      exampleAudioUrl,
     })
     .returning();
 
@@ -627,6 +636,7 @@ educatorRouter.patch("/dictionary/:id", async (c) => {
   }
   if ("audioUrl" in fields) updates.audioUrl = fields.audioUrl?.trim() || null;
   if ("imageUrl" in fields) updates.imageUrl = fields.imageUrl?.trim() || null;
+  if ("exampleAudioUrl" in fields) updates.exampleAudioUrl = fields.exampleAudioUrl?.trim() || null;
 
   if (audioFile?.size) {
     const blob = await put(`educator/audio/${existing.languageId}/${Date.now()}-${audioFile.name}`, audioFile, {
@@ -639,6 +649,13 @@ educatorRouter.patch("/dictionary/:id", async (c) => {
       access: "public", token: process.env.BLOB_READ_WRITE_TOKEN!,
     });
     updates.imageUrl = blob.url;
+  }
+  const patchExampleAudioFile = isMultipart ? (await c.req.formData()).get("exampleAudio") as File | null : null;
+  if (patchExampleAudioFile?.size) {
+    const blob = await put(`educator/audio/${existing.languageId}/example-${Date.now()}-${patchExampleAudioFile.name}`, patchExampleAudioFile, {
+      access: "public", token: process.env.BLOB_READ_WRITE_TOKEN!,
+    });
+    updates.exampleAudioUrl = blob.url;
   }
 
   const [updated] = await db

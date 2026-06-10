@@ -1,7 +1,7 @@
-import { and, avg, count, desc, eq, gte, inArray, sql } from "drizzle-orm";
+import { and, avg, count, desc, eq, gte, inArray, isNotNull, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index.js";
-import { appConfig, quizResults, users } from "../db/schema.js";
+import { appConfig, dictionaryEntries, quizResults, users } from "../db/schema.js";
 import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
 
 export const quizAdminRouter = new Hono<AuthEnv>();
@@ -110,6 +110,30 @@ quizAdminRouter.delete("/results/:id", async (c) => {
   const id = c.req.param("id");
   await db.delete(quizResults).where(eq(quizResults.id, id));
   return c.json({ ok: true });
+});
+
+// GET /api/quiz/admin/media-coverage — per-language audio/image fill rates
+quizAdminRouter.get("/media-coverage", async (c) => {
+  const rows = await db
+    .select({
+      languageId: dictionaryEntries.languageId,
+      total: count(),
+      withAudio: count(dictionaryEntries.audioUrl),
+      withImage: count(dictionaryEntries.imageUrl),
+      withExampleAudio: count(dictionaryEntries.exampleAudioUrl),
+    })
+    .from(dictionaryEntries)
+    .groupBy(dictionaryEntries.languageId);
+
+  return c.json(
+    rows.map((r) => ({
+      languageId: r.languageId,
+      total: r.total,
+      audio: { count: r.withAudio, pct: r.total > 0 ? Math.round((r.withAudio / r.total) * 100) : 0 },
+      image: { count: r.withImage, pct: r.total > 0 ? Math.round((r.withImage / r.total) * 100) : 0 },
+      exampleAudio: { count: r.withExampleAudio, pct: r.total > 0 ? Math.round((r.withExampleAudio / r.total) * 100) : 0 },
+    }))
+  );
 });
 
 // GET /api/quiz/admin/config

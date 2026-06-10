@@ -12,6 +12,8 @@ interface QuizPool {
   audioSource?: AudioSource;
   example?: string;
   exampleTranslation?: string;
+  exampleAudioUrl?: string;
+  imageUrl?: string;
   /** Leitner box (1–5). Used for weighted sampling; 1 = new/struggling. */
   box?: number;
 }
@@ -94,6 +96,8 @@ function gatherDictionaryPool(
     audioSource: (e as any).audioUrl,
     example: e.example,
     exampleTranslation: e.exampleTranslation,
+    exampleAudioUrl: e.exampleAudioUrl ?? undefined,
+    imageUrl: e.imageUrl ?? undefined,
     box: wordProgress?.get(e.id) ?? 1,
   }));
 }
@@ -268,6 +272,77 @@ function makeSentenceTranslate(
     prompt,
     correctAnswer: template.englishSentence,
     options: shuffle([template.englishSentence, ...distractors]),
+    exampleAudioUrl: (template as any).exampleAudioUrl ?? undefined,
+  };
+}
+
+function makePictureToWord(
+  item: QuizPool,
+  allWords: string[],
+  translate?: QuizTranslateFn,
+  preferredWords?: string[]
+): QuizQuestion | null {
+  if (!item.imageUrl) return null;
+  const distractors = pickDistractors(item.word, allWords, 3, preferredWords);
+  if (distractors.length < 3) return null;
+  return {
+    id: `q-${Math.random().toString(36).slice(2, 9)}`,
+    type: "picture-to-word",
+    wordId: item.id,
+    imageUrl: item.imageUrl,
+    prompt: translate
+      ? translate("quiz.promptPictureToWord")
+      : "What word does this picture show?",
+    correctAnswer: item.word,
+    options: shuffle([item.word, ...distractors]),
+    exampleSentence: item.example,
+    exampleSentenceTranslation: item.exampleTranslation,
+  };
+}
+
+function makeWordToPicture(
+  item: QuizPool,
+  pool: QuizPool[],
+  translate?: QuizTranslateFn
+): QuizQuestion | null {
+  if (!item.imageUrl) return null;
+  // Need 3 other items that also have images for the 2×2 grid
+  const otherImgItems = shuffle(pool.filter((p) => p.id !== item.id && !!p.imageUrl)).slice(0, 3);
+  if (otherImgItems.length < 3) return null;
+  const allOptions = shuffle([item, ...otherImgItems]);
+  const optionImages: Record<string, string> = {};
+  for (const opt of allOptions) {
+    optionImages[opt.word] = opt.imageUrl!;
+  }
+  return {
+    id: `q-${Math.random().toString(36).slice(2, 9)}`,
+    type: "word-to-picture",
+    wordId: item.id,
+    prompt: translate
+      ? translate("quiz.promptWordToPicture", { word: item.word })
+      : `Which picture shows "${item.word}"?`,
+    correctAnswer: item.word,
+    options: allOptions.map((o) => o.word),
+    optionImages,
+  };
+}
+
+function makeTypeTheWord(
+  item: QuizPool,
+  translate?: QuizTranslateFn
+): QuizQuestion | null {
+  return {
+    id: `q-${Math.random().toString(36).slice(2, 9)}`,
+    type: "type-the-word",
+    wordId: item.id,
+    prompt: translate
+      ? translate("quiz.promptTypeTheWord", { english: item.english })
+      : `Type the word for "${item.english}"`,
+    correctAnswer: item.word,
+    options: [],
+    audioSource: item.audioSource,
+    exampleSentence: item.example,
+    exampleSentenceTranslation: item.exampleTranslation,
   };
 }
 
@@ -279,9 +354,10 @@ type Candidate = { item: QuizPool; type: QuestionType };
  *   - Cycles through question types evenly before repeating any type
  *   - Allows questionCount to exceed pool size by reusing items with different types
  */
-function buildCandidates(pool: QuizPool[]): Candidate[] {
+function buildCandidates(pool: QuizPool[], wordProgressMap?: Map<string, number>): Candidate[] {
   const baseTypes: QuestionType[] = ["word-to-english", "english-to-word", "fill-in-the-blank"];
   const hasAudioItems = pool.filter((p) => p.audioSource);
+  const hasImageItems = pool.filter((p) => p.imageUrl);
 
   // Group candidates by type, shuffled independently
   const byType = new Map<QuestionType, Candidate[]>();
@@ -290,6 +366,17 @@ function buildCandidates(pool: QuizPool[]): Candidate[] {
   }
   if (hasAudioItems.length > 0) {
     byType.set("listening", shuffle(hasAudioItems).map((item) => ({ item, type: "listening" })));
+  }
+  if (hasImageItems.length >= 4) {
+    byType.set("picture-to-word", shuffle(hasImageItems).map((item) => ({ item, type: "picture-to-word" })));
+    byType.set("word-to-picture", shuffle(hasImageItems).map((item) => ({ item, type: "word-to-picture" })));
+  }
+  // type-the-word: only for box ≥ 4 items (higher Leitner mastery)
+  if (wordProgressMap) {
+    const advancedItems = pool.filter((p) => (wordProgressMap.get(p.id) ?? 1) >= 4);
+    if (advancedItems.length > 0) {
+      byType.set("type-the-word", shuffle(advancedItems).map((item) => ({ item, type: "type-the-word" })));
+    }
   }
 
   // Interleave: take one from each type bucket per round, cycling through
@@ -344,8 +431,8 @@ export function generateQuiz(
   // When word progress is available, bias the pool toward overdue/low-box words
   const sampledPool = wordProgressMap ? weightedSample(pool, Math.min(pool.length, questionCount * 3)) : pool;
 
-  // Build interleaved (item, type) candidates with type balance and audio awareness
-  const candidates = buildCandidates(sampledPool);
+  // Build interleaved (item, type) candidates with type balance and audio/image awareness
+  const candidates = buildCandidates(sampledPool, wordProgressMap);
 
   // Reserve up to 25% of slots for sentence-translate questions (only when templates exist)
   const sentenceSlots = sentences.length > 0 ? Math.max(0, Math.floor(questionCount / 4)) : 0;
@@ -382,6 +469,15 @@ export function generateQuiz(
         break;
       case "listening":
         q = makeListening(item, allEnglish, translate, preferredEnglish);
+        break;
+      case "picture-to-word":
+        q = makePictureToWord(item, allWords, translate, preferredWords);
+        break;
+      case "word-to-picture":
+        q = makeWordToPicture(item, sampledPool, translate);
+        break;
+      case "type-the-word":
+        q = makeTypeTheWord(item, translate);
         break;
     }
     if (q) questions.push(q);

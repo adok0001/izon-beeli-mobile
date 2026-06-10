@@ -1,5 +1,7 @@
 import { ListeningQuestion } from "@/components/quiz/listening-question";
 import { OptionCard } from "@/components/quiz/option-card";
+import { PictureOptionGrid } from "@/components/quiz/picture-option-grid";
+import { TypeTheWordInput } from "@/components/quiz/type-the-word-input";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { analytics } from "@/lib/analytics";
 import { apiFetch } from "@/lib/api";
@@ -28,7 +30,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const QUESTION_COUNTS = [5, 10, 15, 20] as const;
@@ -57,6 +59,9 @@ function QuestionTypeLabel({ type }: { type: QuizQuestion["type"] }) {
     listening: t("quiz.listening"),
     "segment-listening": t("quiz.listening"),
     "context-translate": t("quiz.wordToEnglish"),
+    "picture-to-word": "Picture",
+    "word-to-picture": "Picture",
+    "type-the-word": "Spell it",
   };
   return <Badge label={labels[type] ?? type} tone="accent" style={{ marginBottom: 8 }} />;
 }
@@ -191,19 +196,42 @@ function ActiveView() {
             endTime={question.endTime}
           />
         ) : (
-          <Text style={{ marginBottom: 32, fontSize: 20, fontWeight: "700", color: M.text }}>
+          <Text style={{ marginBottom: question.type === "picture-to-word" ? 12 : 32, fontSize: 20, fontWeight: "700", color: M.text }}>
             {question.prompt}
           </Text>
         )}
 
-        {question.options.map((option, idx) => (
-          <OptionCard
-            key={`${question.id}-${idx}`}
-            label={option}
-            state={getOptionState(option)}
-            onPress={() => handleSelect(option)}
+        {question.type === "picture-to-word" && question.imageUrl && (
+          <Image
+            source={{ uri: question.imageUrl }}
+            style={{ width: "100%", aspectRatio: 4 / 3, borderRadius: 14, marginBottom: 20 }}
+            resizeMode="cover"
           />
-        ))}
+        )}
+
+        {question.type === "word-to-picture" && question.optionImages ? (
+          <PictureOptionGrid
+            options={question.options}
+            optionImages={question.optionImages}
+            state={Object.fromEntries(question.options.map((o) => [o, getOptionState(o)]))}
+            onPress={handleSelect}
+          />
+        ) : question.type === "type-the-word" ? (
+          <TypeTheWordInput
+            correctAnswer={question.correctAnswer}
+            onSubmit={handleSelect}
+            locked={locked}
+          />
+        ) : (
+          question.options.map((option, idx) => (
+            <OptionCard
+              key={`${question.id}-${idx}`}
+              label={option}
+              state={getOptionState(option)}
+              onPress={() => handleSelect(option)}
+            />
+          ))
+        )}
 
         {locked && lastAnswerCorrect === false && (
           <View style={{ marginTop: 12, borderRadius: 16, backgroundColor: M.errorBg, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: M.errorBorder }}>
@@ -239,6 +267,14 @@ function ActiveView() {
                     {question.exampleSentenceTranslation}
                   </Text>
                 )}
+              </View>
+            )}
+            {question.type === "sentence-translate" && question.exampleAudioUrl && (
+              <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: M.errorBorder, paddingTop: 8 }}>
+                <Text style={{ fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted, marginBottom: 6 }}>
+                  Listen again
+                </Text>
+                <ListeningQuestion audioSource={question.exampleAudioUrl} />
               </View>
             )}
             <Button
@@ -544,6 +580,11 @@ export default function QuizScreen() {
       } else {
         startQuiz(questions);
         analytics.quizStarted(selectedLanguageId, questions.length);
+        const imageUrls = questions.flatMap((q) => [
+          q.imageUrl,
+          ...Object.values(q.optionImages ?? {}),
+        ]).filter((u): u is string => Boolean(u));
+        imageUrls.forEach((url) => Image.prefetch(url));
       }
     },
     [selectedLanguageId, params.courseId, params.category, params.lessonId, hasLessonSegments, lessonData, activeEntries, makeTq, startQuiz]
