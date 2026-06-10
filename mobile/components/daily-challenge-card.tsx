@@ -81,6 +81,7 @@ function ChallengeItem({ challenge }: { challenge: DailyChallenge }) {
 }
 
 export function DailyChallengeCards() {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const { data: challenges, isLoading } = useTodayChallenges();
   const regenerate = useRegenerateDailyChallenges();
