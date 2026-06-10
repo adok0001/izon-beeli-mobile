@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { LANGUAGES } from "@mobile/lib/data/languages";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookText, CheckCircle2, Edit2, ImageIcon, Mic, Plus, Search, Trash2, Upload, Volume2, X, XCircle } from "lucide-react";
+import { AlertTriangle, BookText, CheckCircle2, ChevronDown, Edit2, ImageIcon, Mic, Plus, Search, Trash2, Upload, Volume2, X, XCircle } from "lucide-react";
 import Image from "next/image";
 import React, { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -37,6 +37,14 @@ interface ScopedLanguage {
 interface EducatorMe {
   languages: ScopedLanguage[];
   isAdmin: boolean;
+}
+
+interface CoverageReport {
+  languageId: string;
+  lessonCount: number;
+  distinctWords: number;
+  coveredWords: number;
+  missing: { word: string; count: number; lessons: { id: string; title: string }[] }[];
 }
 
 const CATEGORIES = [
@@ -112,15 +120,15 @@ function FileUploadField({
 }
 
 function EntryModal({
-  initial, defaultLanguageId, languages, onSave, onClose, saving,
+  initial, defaultLanguageId, prefillWord, languages, onSave, onClose, saving,
 }: Readonly<{
-  initial?: DictEntry; defaultLanguageId: string; languages: ScopedLanguage[];
+  initial?: DictEntry; defaultLanguageId: string; prefillWord?: string; languages: ScopedLanguage[];
   onSave: (data: EntryForm, audioFile: File | null, imageFile: File | null) => void;
   onClose: () => void; saving: boolean;
 }>) {
   const { t } = useTranslation();
   const [form, setForm] = useState<EntryForm>(
-    initial ? { ...initial } : { ...EMPTY_FORM, languageId: defaultLanguageId }
+    initial ? { ...initial } : { ...EMPTY_FORM, languageId: defaultLanguageId, word: prefillWord ?? "" }
   );
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -294,6 +302,76 @@ function ContribEditModal({
   );
 }
 
+function CoveragePanel({ coverage, onAddWord }: Readonly<{
+  coverage: CoverageReport | undefined;
+  onAddWord: (word: string) => void;
+}>) {
+  const [open, setOpen] = useState(false);
+  if (!coverage || coverage.distinctWords === 0) return null;
+
+  const pct = Math.round((coverage.coveredWords / coverage.distinctWords) * 100);
+  const complete = coverage.missing.length === 0;
+
+  return (
+    <div className={cn(
+      "mb-5 rounded-xl border overflow-hidden",
+      complete
+        ? "border-green-200 dark:border-green-900 bg-green-50/50 dark:bg-green-900/10"
+        : "border-amber-200 dark:border-amber-900 bg-amber-50/50 dark:bg-amber-900/10"
+    )}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
+        disabled={complete}
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          {complete
+            ? <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600 dark:text-green-400" />
+            : <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />}
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-neutral-900 dark:text-white">
+              {complete
+                ? "All lesson transcript words have dictionary entries"
+                : `${coverage.missing.length} lesson transcript words missing from the dictionary`}
+            </p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              {coverage.coveredWords}/{coverage.distinctWords} transcript words covered ({pct}%) across {coverage.lessonCount} lessons
+            </p>
+          </div>
+        </div>
+        {!complete && (
+          <ChevronDown className={cn("h-4 w-4 shrink-0 text-neutral-400 transition-transform", open && "rotate-180")} />
+        )}
+      </button>
+      {open && !complete && (
+        <div className="px-4 pb-4 max-h-72 overflow-y-auto">
+          <table className="w-full text-sm">
+            <tbody>
+              {coverage.missing.map((m) => (
+                <tr key={m.word} className="border-t border-amber-100 dark:border-amber-900/40">
+                  <td className="py-1.5 pr-3 font-semibold text-neutral-900 dark:text-white whitespace-nowrap">{m.word}</td>
+                  <td className="py-1.5 pr-3 text-xs text-neutral-400 whitespace-nowrap">×{m.count}</td>
+                  <td className="py-1.5 pr-3 text-xs text-neutral-500 dark:text-neutral-400">
+                    {m.lessons.map((l) => l.title).join(", ")}
+                  </td>
+                  <td className="py-1.5 text-right">
+                    <button
+                      onClick={() => onAddWord(m.word)}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-white dark:bg-neutral-800 border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+                    >
+                      <Plus className="h-3 w-3" /> Add entry
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 type SortKey = "word" | "english" | "category" | "audio" | "image";
 
 function SortIcon({ col, sortKey, sortDir }: Readonly<{ col: SortKey; sortKey: SortKey; sortDir: "asc" | "desc" }>) {
@@ -309,7 +387,7 @@ export default function EducatorDictionaryPage() {
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [search, setSearch] = useState("");
-  const [modal, setModal] = useState<{ mode: "create" } | { mode: "edit"; entry: DictEntry } | null>(null);
+  const [modal, setModal] = useState<{ mode: "create"; prefillWord?: string } | { mode: "edit"; entry: DictEntry } | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("word");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [expandedAudio, setExpandedAudio] = useState<string | null>(null);
@@ -347,6 +425,16 @@ export default function EducatorDictionaryPage() {
     staleTime: 30_000,
   });
 
+  const { data: coverage } = useQuery<CoverageReport>({
+    queryKey: ["educator", "coverage", effectiveLanguage],
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch<CoverageReport>(`/educator/dictionary-coverage?languageId=${effectiveLanguage}`, { token: token ?? undefined });
+    },
+    enabled: !!effectiveLanguage,
+    staleTime: 60_000,
+  });
+
   const buildBody = (data: EntryForm, audioFile: File | null, imageFile: File | null, isMultipart: boolean) => {
     if (isMultipart) {
       const fd = new FormData();
@@ -367,6 +455,7 @@ export default function EducatorDictionaryPage() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
       void queryClient.invalidateQueries({ queryKey: ["educator", "stats"] });
+      void queryClient.invalidateQueries({ queryKey: ["educator", "coverage"] });
       toast.success("Entry created");
       setModal(null);
     },
@@ -395,6 +484,7 @@ export default function EducatorDictionaryPage() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
       void queryClient.invalidateQueries({ queryKey: ["educator", "stats"] });
+      void queryClient.invalidateQueries({ queryKey: ["educator", "coverage"] });
       toast.success("Entry deleted");
     },
     onError: (e: Error) => toast.error("Failed to delete entry", { description: e.message }),
@@ -420,6 +510,7 @@ export default function EducatorDictionaryPage() {
     onSuccess: (_, variables) => {
       void queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
       void queryClient.invalidateQueries({ queryKey: ["educator", "stats"] });
+      void queryClient.invalidateQueries({ queryKey: ["educator", "coverage"] });
       toast.success(variables.action === "approve" ? "Contribution approved" : "Contribution rejected");
     },
     onError: (e: Error) => toast.error("Failed to review contribution", { description: e.message }),
@@ -504,6 +595,8 @@ export default function EducatorDictionaryPage() {
           ))}
         </div>
       )}
+
+      <CoveragePanel coverage={coverage} onAddWord={(word) => setModal({ mode: "create", prefillWord: word })} />
 
       <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
         <table className="w-full text-sm">
@@ -681,6 +774,7 @@ export default function EducatorDictionaryPage() {
       {modal && (
         <EntryModal
           initial={modal.mode === "edit" ? modal.entry : undefined}
+          prefillWord={modal.mode === "create" ? modal.prefillWord : undefined}
           defaultLanguageId={effectiveLanguage}
           languages={languages}
           onSave={(data, audioFile, imageFile) => {

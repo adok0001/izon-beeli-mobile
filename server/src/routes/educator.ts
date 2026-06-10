@@ -14,6 +14,7 @@ import {
   contributions,
   courses,
   dictionaryEntries,
+  englishWordbank,
   feedItems,
   languages,
   lessonContributions,
@@ -25,6 +26,7 @@ import {
   users,
 } from "../db/schema.js";
 import { AuthEnv, authMiddleware, reviewerMiddleware } from "../middleware/auth.js";
+import { computeCoverage } from "../lib/dictionary-coverage.js";
 import { stubForCourse, stubForLanguage } from "../lib/lesson-stubs.js";
 
 export const educatorRouter = new Hono<AuthEnv>();
@@ -665,6 +667,58 @@ educatorRouter.delete("/dictionary/:id", async (c) => {
 
   await db.delete(dictionaryEntries).where(eq(dictionaryEntries.id, id));
   return c.json({ deleted: true });
+});
+
+// GET /educator/dictionary-coverage?languageId=xx
+// Transcript words in the language's lessons that have no dictionary entry.
+educatorRouter.get("/dictionary-coverage", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const languageId = c.req.query("languageId") ?? (isAdmin ? "" : reviewerLanguages[0]);
+
+  if (!languageId) return c.json({ error: "languageId is required" }, 400);
+  if (!isAdmin && !reviewerLanguages.includes(languageId)) {
+    return c.json({ error: "Forbidden: not assigned to this language" }, 403);
+  }
+
+  const lessonRows = await db
+    .select({ id: lessons.id, title: lessons.title })
+    .from(lessons)
+    .innerJoin(courses, eq(lessons.courseId, courses.id))
+    .where(eq(courses.languageId, languageId));
+  const lessonsById = new Map(lessonRows.map((l) => [l.id, l]));
+
+  const segments = lessonRows.length
+    ? await db
+        .select({ lessonId: transcriptSegments.lessonId, text: transcriptSegments.text })
+        .from(transcriptSegments)
+        .where(inArray(transcriptSegments.lessonId, lessonRows.map((l) => l.id)))
+    : [];
+
+  const dictRows = await db
+    .select({ word: dictionaryEntries.word })
+    .from(dictionaryEntries)
+    .where(eq(dictionaryEntries.languageId, languageId));
+  const approvedContribs = await db
+    .select({ word: contributions.word })
+    .from(contributions)
+    .where(
+      and(
+        eq(contributions.status, "approved"),
+        eq(contributions.languageId, languageId),
+        notInArray(contributions.type, ["entry_audio", "entry_image", "entry_meaning"]),
+      )
+    );
+
+  const englishRows = await db.select({ word: englishWordbank.word }).from(englishWordbank);
+
+  const report = computeCoverage(
+    segments,
+    [...dictRows, ...approvedContribs].map((r) => r.word),
+    lessonsById,
+    englishRows.map((r) => r.word),
+  );
+  return c.json({ languageId, lessonCount: lessonRows.length, ...report });
 });
 
 // ─── LESSONS CRUD ─────────────────────────────────────────────────────────────

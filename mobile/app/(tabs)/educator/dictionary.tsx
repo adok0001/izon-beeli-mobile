@@ -10,6 +10,7 @@ import {
     useUpsertEducatorDictionary,
 } from "@/lib/hooks/use-educator-panel";
 import { friendlyError } from "@/lib/api";
+import { useDictionaryCoverage } from "@/lib/hooks/use-contributions";
 import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { Stack } from "expo-router";
@@ -83,6 +84,8 @@ export default function EducatorDictionaryScreen() {
   }, [activeLanguageId]);
 
   const { data: entries = [], isLoading } = useEducatorDictionary(activeLanguageId, undefined, canAccess);
+  const { data: coverage } = useDictionaryCoverage(canAccess ? activeLanguageId : null);
+  const [coverageOpen, setCoverageOpen] = useState(false);
   const upsertEntry = useUpsertEducatorDictionary();
   const deleteEntry = useDeleteEducatorDictionaryEntry();
   let saveButtonLabel = "Create";
@@ -219,6 +222,74 @@ export default function EducatorDictionaryScreen() {
           })}
         </ScrollView>
       </View>
+
+      {coverage && coverage.distinctWords > 0 ? (
+        <View className="mt-4 px-5">
+          <View
+            className={`rounded-2xl border p-4 ${
+              coverage.missing.length === 0
+                ? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-900/20"
+                : "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-900/20"
+            }`}
+          >
+            <Pressable
+              onPress={() => setCoverageOpen((o) => !o)}
+              disabled={coverage.missing.length === 0}
+              className="flex-row items-center"
+            >
+              <IconSymbol
+                name={coverage.missing.length === 0 ? "checkmark.seal.fill" : "exclamationmark.triangle.fill"}
+                size={16}
+                color={coverage.missing.length === 0 ? M.success : M.warning}
+              />
+              <View className="ml-2 flex-1">
+                <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
+                  {coverage.missing.length === 0
+                    ? t("review.coverageComplete")
+                    : t("review.coverageSummary", {
+                        covered: coverage.coveredWords,
+                        total: coverage.distinctWords,
+                        percent: Math.round((coverage.coveredWords / coverage.distinctWords) * 100),
+                      })}
+                </Text>
+                {coverage.missing.length > 0 ? (
+                  <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                    {t("review.coverageTapHint")}
+                  </Text>
+                ) : null}
+              </View>
+              {coverage.missing.length > 0 ? (
+                <IconSymbol name={coverageOpen ? "chevron.up" : "chevron.down"} size={14} color={M.muted} />
+              ) : null}
+            </Pressable>
+            {coverageOpen && coverage.missing.length > 0 ? (
+              <View className="mt-3 flex-row flex-wrap gap-2">
+                {coverage.missing.slice(0, 40).map((m) => (
+                  <Pressable
+                    key={m.word}
+                    onPress={() => {
+                      setEditor({ ...EMPTY_EDITOR, word: m.word });
+                      setIsEditing(false);
+                      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+                    }}
+                    className="flex-row items-center rounded-full bg-white px-3 py-1.5 dark:bg-neutral-900"
+                  >
+                    <Text className="text-xs font-semibold text-neutral-900 dark:text-white">{m.word}</Text>
+                    <Text className="ml-1 text-[10px] text-neutral-400 dark:text-neutral-500">×{m.count}</Text>
+                  </Pressable>
+                ))}
+                {coverage.missing.length > 40 ? (
+                  <View className="justify-center px-1">
+                    <Text className="text-xs text-neutral-500 dark:text-neutral-400">
+                      +{coverage.missing.length - 40}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            ) : null}
+          </View>
+        </View>
+      ) : null}
 
       <View className="mt-5 px-5">
         <View className="rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">

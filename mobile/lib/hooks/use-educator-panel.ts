@@ -245,6 +245,7 @@ export function useUpsertEducatorDictionary() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
       queryClient.invalidateQueries({ queryKey: ["dictionary"] });
+      queryClient.invalidateQueries({ queryKey: ["dictionary-coverage"] });
     },
   });
 }
@@ -263,6 +264,7 @@ export function useDeleteEducatorDictionaryEntry() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
+      queryClient.invalidateQueries({ queryKey: ["dictionary-coverage"] });
     },
   });
 }

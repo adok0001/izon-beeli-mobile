@@ -562,3 +562,35 @@ export function useDeleteLessonContribution() {
     },
   });
 }
+
+// ---------- Dictionary coverage (educator/reviewer) ----------
+
+export interface DictionaryCoverage {
+  languageId: string;
+  lessonCount: number;
+  distinctWords: number;
+  coveredWords: number;
+  missing: {
+    word: string;
+    count: number;
+    lessons: { id: string; title: string }[];
+  }[];
+}
+
+/** Transcript words in a language's lessons that have no dictionary entry. */
+export function useDictionaryCoverage(languageId: string | null) {
+  const { getToken } = useAuth();
+
+  return useQuery({
+    queryKey: ["dictionary-coverage", languageId],
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch<DictionaryCoverage>(
+        `/educator/dictionary-coverage?languageId=${languageId}`,
+        { token: token! }
+      );
+    },
+    enabled: !!languageId,
+    staleTime: 60_000,
+  });
+}

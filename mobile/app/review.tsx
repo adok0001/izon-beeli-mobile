@@ -1,6 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { CATEGORY_LABELS, type DictionaryCategory } from "@/lib/dictionary";
 import {
+  useDictionaryCoverage,
   usePendingContributions,
   usePendingLessonContributions,
   useReviewContribution,
@@ -9,7 +10,9 @@ import {
   type PendingLessonContribution,
 } from "@/lib/hooks/use-contributions";
 import { useCurrentUser } from "@/lib/hooks/use-current-user";
+import { ACTIVE_LANGUAGES } from "@/lib/data/languages";
 import { getLanguageName } from "@/lib/mock-data";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { Audio } from "expo-av";
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -471,11 +474,12 @@ function LessonContributionCard({
 export default function ReviewScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const M = useMuseumTheme();
   const { data: currentUser } = useCurrentUser();
   const isAdmin = currentUser?.isAdmin ?? false;
   const canReview = isAdmin || (currentUser?.isReviewer ?? false);
 
-  const [activeTab, setActiveTab] = useState<"words" | "lessons">("words");
+  const [activeTab, setActiveTab] = useState<"words" | "lessons" | "coverage">("words");
   const [selectedLang, setSelectedLang] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -502,12 +506,20 @@ export default function ReviewScreen() {
   const visibleWords = selectedLang ? scopedWords.filter((c) => c.languageId === selectedLang) : scopedWords;
   const visibleLessons = selectedLang ? scopedLessons.filter((c) => c.languageId === selectedLang) : scopedLessons;
 
+  const coverageLanguages = useMemo(
+    () => (isAdmin ? ACTIVE_LANGUAGES.map((l) => l.id) : currentUser?.reviewerLanguages ?? []),
+    [isAdmin, currentUser?.reviewerLanguages],
+  );
+  const coverageLang = activeTab === "coverage" ? (selectedLang ?? coverageLanguages[0] ?? null) : null;
+  const { data: coverage, isLoading: loadingCoverage } = useDictionaryCoverage(coverageLang);
+
   const languageIds = useMemo(() => {
+    if (activeTab === "coverage") return coverageLanguages;
     const ids = activeTab === "words"
       ? [...new Set(scopedWords.map((c) => c.languageId))]
       : [...new Set(scopedLessons.map((c) => c.languageId))];
     return ids;
-  }, [activeTab, scopedWords, scopedLessons]);
+  }, [activeTab, scopedWords, scopedLessons, coverageLanguages]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -616,11 +628,19 @@ export default function ReviewScreen() {
             active={activeTab === "lessons"}
             onPress={() => { setActiveTab("lessons"); setSelectedLang(null); }}
           />
+          <TabPill
+            label={t("review.tabCoverage")}
+            count={activeTab === "coverage" ? coverage?.missing.length ?? 0 : 0}
+            active={activeTab === "coverage"}
+            onPress={() => { setActiveTab("coverage"); setSelectedLang(null); }}
+          />
         </View>
 
         {/* Language filter chips */}
-        {languageIds.length > 0 && (
-          <View className="flex-row flex-wrap gap-2 px-5 pb-3">
+        {languageIds.length > 0 && (() => {
+          const chips = (
+          <>
+            {activeTab !== "coverage" && (
             <Pressable
               onPress={() => setSelectedLang(null)}
               className={`rounded-full px-3 py-1.5 ${
@@ -637,27 +657,44 @@ export default function ReviewScreen() {
                 {t("review.filterAll")}
               </Text>
             </Pressable>
-            {languageIds.map((lid) => (
+            )}
+            {languageIds.map((lid) => {
+              const isSelected = activeTab === "coverage" ? coverageLang === lid : selectedLang === lid;
+              return (
               <Pressable
                 key={lid}
                 onPress={() => setSelectedLang(lid)}
                 className={`rounded-full px-3 py-1.5 ${
-                  selectedLang === lid
+                  isSelected
                     ? "bg-neutral-700 dark:bg-neutral-200"
                     : "bg-neutral-100 dark:bg-neutral-800"
                 }`}
               >
                 <Text className={`text-xs font-semibold ${
-                  selectedLang === lid
+                  isSelected
                     ? "text-white dark:text-neutral-900"
                     : "text-neutral-600 dark:text-neutral-400"
                 }`}>
                   {getLanguageName(lid)}
                 </Text>
               </Pressable>
-            ))}
-          </View>
-        )}
+              );
+            })}
+          </>
+          );
+          return activeTab === "coverage" ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="flex-grow-0"
+              contentContainerClassName="flex-row gap-2 px-5 pb-3"
+            >
+              {chips}
+            </ScrollView>
+          ) : (
+            <View className="flex-row flex-wrap gap-2 px-5 pb-3">{chips}</View>
+          );
+        })()}
 
         {/* Words tab */}
         {activeTab === "words" && (
@@ -715,6 +752,72 @@ export default function ReviewScreen() {
                 </View>
                 <Text className="text-center text-sm text-neutral-400 dark:text-neutral-500">
                   {emptyLabel}
+                </Text>
+              </View>
+            }
+          />
+        )}
+
+        {/* Coverage tab */}
+        {activeTab === "coverage" && (
+          <FlatList
+            data={coverage?.missing ?? []}
+            keyExtractor={(item) => item.word}
+            contentContainerStyle={{ paddingTop: 4, paddingBottom: 24 }}
+            showsVerticalScrollIndicator={false}
+            ListHeaderComponent={
+              coverage && coverage.distinctWords > 0 ? (
+                <View className="mx-5 mb-3 rounded-2xl bg-neutral-100 px-4 py-3 dark:bg-neutral-800">
+                  <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
+                    {t("review.coverageSummary", {
+                      covered: coverage.coveredWords,
+                      total: coverage.distinctWords,
+                      percent: Math.round((coverage.coveredWords / coverage.distinctWords) * 100),
+                    })}
+                  </Text>
+                  {coverage.missing.length > 0 && (
+                    <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                      {t("review.coverageTapHint")}
+                    </Text>
+                  )}
+                </View>
+              ) : null
+            }
+            renderItem={({ item }) => (
+              <Pressable
+                onPress={() =>
+                  router.push({
+                    pathname: "/contribute",
+                    params: { languageId: coverageLang ?? "", word: item.word },
+                  })
+                }
+                className="mx-5 mb-2 flex-row items-center rounded-2xl border border-neutral-200 bg-white px-4 py-3 active:opacity-70 dark:border-neutral-700 dark:bg-neutral-800"
+              >
+                <View className="flex-1 pr-3">
+                  <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+                    {item.word}
+                    <Text className="text-xs font-normal text-neutral-400 dark:text-neutral-500">
+                      {"  "}×{item.count}
+                    </Text>
+                  </Text>
+                  <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
+                    {item.lessons.map((l) => l.title).join(", ")}
+                  </Text>
+                </View>
+                <IconSymbol name="plus.circle" size={22} color={M.accent} />
+              </Pressable>
+            )}
+            ListEmptyComponent={
+              <View className="items-center px-8 py-20">
+                <View className="mb-4 h-14 w-14 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
+                  <IconSymbol
+                    name={loadingCoverage ? "clock" : "checkmark.seal.fill"}
+                    size={24}
+                    color={loadingCoverage ? M.muted : M.success}
+                  />
+                </View>
+                <Text className="text-center text-sm text-neutral-400 dark:text-neutral-500">
+                  {loadingCoverage ? t("common.loading") : t("review.coverageComplete")}
                 </Text>
               </View>
             }
