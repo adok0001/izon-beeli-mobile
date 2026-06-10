@@ -5,12 +5,15 @@ import type { AudioSource, MatchingGameConfig, MatchingPair, QuestionType, QuizC
 export type QuizTranslateFn = (key: string, opts?: Record<string, unknown>) => string;
 
 interface QuizPool {
+  id: string;
   word: string;
   english: string;
   category?: string;
   audioSource?: AudioSource;
   example?: string;
   exampleTranslation?: string;
+  /** Leitner box (1–5). Used for weighted sampling; 1 = new/struggling. */
+  box?: number;
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -76,20 +79,49 @@ function pickDistractors(
 
 function gatherDictionaryPool(
   entries: DictionaryEntry[],
-  category?: string
+  category?: string,
+  wordProgress?: Map<string, number>
 ): QuizPool[] {
   const filtered = category
     ? entries.filter((e) => e.category === category)
     : entries;
 
   return filtered.map((e) => ({
+    id: e.id,
     word: e.word,
     english: e.english,
     category: e.category,
     audioSource: (e as any).audioUrl,
     example: e.example,
     exampleTranslation: e.exampleTranslation,
+    box: wordProgress?.get(e.id) ?? 1,
   }));
+}
+
+/**
+ * Weighted sampling: lower Leitner boxes and unseen words get higher weight.
+ * Box weights: 1→5, 2→4, 3→3, 4→2, 5→1
+ */
+function weightedSample(pool: QuizPool[], count: number): QuizPool[] {
+  if (pool.length <= count) return [...pool];
+  const boxWeight = (box: number) => Math.max(6 - box, 1);
+  const weights = pool.map((p) => boxWeight(p.box ?? 1));
+  const totalWeight = weights.reduce((a, b) => a + b, 0);
+  const result: QuizPool[] = [];
+  const used = new Set<number>();
+  while (result.length < count && used.size < pool.length) {
+    let r = Math.random() * totalWeight;
+    for (let i = 0; i < pool.length; i++) {
+      if (used.has(i)) continue;
+      r -= weights[i];
+      if (r <= 0) {
+        result.push(pool[i]);
+        used.add(i);
+        break;
+      }
+    }
+  }
+  return result;
 }
 
 function makeWordToEnglish(
@@ -103,6 +135,7 @@ function makeWordToEnglish(
   return {
     id: `q-${Math.random().toString(36).slice(2, 9)}`,
     type: "word-to-english",
+    wordId: item.id,
     prompt: translate
       ? translate("quiz.promptWordToEnglish", { word: item.word })
       : `What does "${item.word}" mean in English?`,
@@ -124,6 +157,7 @@ function makeEnglishToWord(
   return {
     id: `q-${Math.random().toString(36).slice(2, 9)}`,
     type: "english-to-word",
+    wordId: item.id,
     prompt: translate
       ? translate("quiz.promptEnglishToWord", { english: item.english })
       : `How do you say "${item.english}"?`,
@@ -150,6 +184,7 @@ function makeFillInTheBlank(
 
   const base = {
     id: `q-${Math.random().toString(36).slice(2, 9)}`,
+    wordId: item.id,
     correctAnswer: item.word,
     options: shuffle([item.word, ...distractors]),
     exampleSentence: item.example,
@@ -199,6 +234,7 @@ function makeListening(
   return {
     id: `q-${Math.random().toString(36).slice(2, 9)}`,
     type: "listening",
+    wordId: item.id,
     prompt: translate
       ? translate("quiz.promptListening")
       : "Listen and select the correct English translation",
@@ -277,11 +313,12 @@ export function generateQuiz(
   config: QuizConfig,
   entries: DictionaryEntry[] = [],
   sentences: SentenceTemplate[] = [],
-  translate?: QuizTranslateFn
+  translate?: QuizTranslateFn,
+  wordProgressMap?: Map<string, number>
 ): QuizQuestion[] {
   const { category, questionCount } = config;
 
-  let pool = gatherDictionaryPool(entries, category);
+  let pool = gatherDictionaryPool(entries, category, wordProgressMap);
 
   // Deduplicate by word (case-insensitive)
   const seen = new Set<string>();
@@ -298,8 +335,11 @@ export function generateQuiz(
   const allWords = pool.map((p) => p.word);
   const allEnglish = pool.map((p) => p.english);
 
+  // When word progress is available, bias the pool toward overdue/low-box words
+  const sampledPool = wordProgressMap ? weightedSample(pool, Math.min(pool.length, questionCount * 3)) : pool;
+
   // Build interleaved (item, type) candidates with type balance and audio awareness
-  const candidates = buildCandidates(pool);
+  const candidates = buildCandidates(sampledPool);
 
   // Reserve up to 25% of slots for sentence-translate questions (only when templates exist)
   const sentenceSlots = sentences.length > 0 ? Math.max(0, Math.floor(questionCount / 4)) : 0;
@@ -373,7 +413,7 @@ export function generateFocusedQuiz(
   // Need at least 3 distractors for each question
   if (distWords.length < 3 || distEnglish.length < 3) return [];
 
-  const focus: QuizPool = { word, english, audioSource };
+  const focus: QuizPool = { id: "", word, english, audioSource };
   const questions: QuizQuestion[] = [];
 
   const q1 = makeWordToEnglish(focus, distEnglish, translate);

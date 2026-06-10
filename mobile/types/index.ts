@@ -324,6 +324,7 @@ export interface QuizQuestion {
   prompt: string;
   correctAnswer: string;
   options: string[]; // 4 options, shuffled
+  wordId?: string; // dictionary entry id — present for word-level questions
   audioSource?: AudioSource; // for listening questions
   startTime?: number; // seconds — for segment-listening, seek to this position
   endTime?: number; // seconds — for segment-listening, stop at this position

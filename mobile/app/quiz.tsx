@@ -5,6 +5,7 @@ import { analytics } from "@/lib/analytics";
 import { apiFetch } from "@/lib/api";
 import { hapticError, hapticHeavy, hapticSuccess } from "@/lib/haptics";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
+import { useWordProgressMap } from "@/lib/hooks/use-word-progress";
 import { useSentences } from "@/lib/hooks/use-sentences";
 import { useLesson } from "@/lib/hooks/use-courses";
 import { getLanguageName } from "@/lib/mock-data";
@@ -282,6 +283,13 @@ function ResultsView({ languageId }: { languageId: string }) {
             accuracy: result.accuracy,
             durationMs,
             questionCount: result.totalQuestions,
+            questions: result.answeredQuestions
+              .map((a) => {
+                const q = questions.find((qq) => qq.id === a.questionId);
+                if (!q?.wordId) return null;
+                return { wordId: q.wordId, questionType: q.type, correct: a.correct };
+              })
+              .filter(Boolean),
           }),
         });
         setXpResult({ xpEarned: res.xpEarned, leveledUp: res.leveledUp });
@@ -343,6 +351,11 @@ function ResultsView({ languageId }: { languageId: string }) {
 
         <View style={{ width: "100%", gap: 12 }}>
           <Button label={t("quiz.tryAgain")} onPress={handleTryAgain} />
+          <Button
+            label="Review Weak Words"
+            onPress={() => { reset(); router.push("/practice-review"); }}
+            variant="secondary"
+          />
           <Button label={t("quiz.backToLearn")} onPress={() => { reset(); router.back(); }} variant="secondary" />
         </View>
       </View>
@@ -430,6 +443,7 @@ export default function QuizScreen() {
   const { data: focusEntries = [], isLoading: isFocusLoading } = useDictionary(focusLanguageId);
   const { data: lessonData, isLoading: isLessonLoading } = useLesson(params.lessonId ?? "");
 
+  const wordProgressMap = useWordProgressMap(selectedLanguageId);
   const activeEntries = dictionaryEntries;
   const hasLessonSegments =
     !!params.lessonId &&
@@ -491,7 +505,8 @@ export default function QuizScreen() {
             { languageId: selectedLanguageId, courseId: params.courseId, category: params.category, questionCount: 5 },
             activeEntries,
             sentenceTemplates,
-            tq
+            tq,
+            wordProgressMap
           );
       if (test.length === 0) {
         setIsEmpty(true);
@@ -521,7 +536,8 @@ export default function QuizScreen() {
             },
             activeEntries,
             sentenceTemplates,
-            tq
+            tq,
+            wordProgressMap
           );
       if (questions.length === 0) {
         setIsEmpty(true);

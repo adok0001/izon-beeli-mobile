@@ -975,6 +975,28 @@ export const cultureItems = pgTable(
   (table) => [index("culture_items_type_idx").on(table.type)]
 );
 
+// ---------- Word Progress (Leitner spaced-repetition) ----------
+
+export const wordProgress = pgTable(
+  "word_progress",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    wordId: varchar("word_id", { length: 64 }).notNull(),
+    languageId: varchar("language_id", { length: 32 }).notNull(),
+    box: smallint("box").default(1).notNull(), // Leitner box 1-5
+    correctStreak: smallint("correct_streak").default(0).notNull(),
+    attempts: integer("attempts").default(0).notNull(),
+    lastSeenAt: timestamp("last_seen_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("word_progress_user_word_idx").on(table.userId, table.wordId),
+    index("word_progress_user_lang_idx").on(table.userId, table.languageId),
+  ]
+);
+
 export const wordChallengeSubmissions = pgTable(
   "word_challenge_submissions",
   {

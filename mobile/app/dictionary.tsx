@@ -16,6 +16,7 @@ import { useRecentlyViewed } from "@/lib/hooks/use-recently-viewed";
 import { useRemoveWord, useSaveWord, useWordBank } from "@/lib/hooks/use-wordbank";
 import { useDictionaryNavStore } from "@/store/dictionary-nav-store";
 import { useLanguageStore } from "@/store/language-store";
+import { useWordProgress } from "@/lib/hooks/use-word-progress";
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -187,6 +188,7 @@ export default function DictionaryScreen() {
   const removeWord = useRemoveWord();
   const { selectedLanguageId } = useLanguageStore();
   const { data: localEntries = [], isLoading: localLoading, refetch } = useDictionary(selectedLanguageId);
+  const { data: wordProgressData } = useWordProgress(selectedLanguageId);
   const isIgbo = selectedLanguageId === "igbo";
   const { data: igboApiResults = [], isFetching: igboFetching } = useIgboSearch(isIgbo ? query : "");
   const [refreshing, setRefreshing] = useState(false);
@@ -333,6 +335,15 @@ export default function DictionaryScreen() {
                 {t("dictionaryPage.reviewSavedWords")}
               </Text>
             </Pressable>
+          )}
+
+          {wordProgressData && wordProgressData.masteredCount > 0 && (
+            <View style={{ marginTop: 12, flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 12, backgroundColor: M.successBg, paddingHorizontal: 16, paddingVertical: 10, borderWidth: 1, borderColor: M.successBorder }}>
+              <IconSymbol name="checkmark.seal.fill" size={16} color={M.success} />
+              <Text style={{ fontSize: 13, fontWeight: "500", color: M.success }}>
+                {wordProgressData.masteredCount} of {allEntries.length} words mastered
+              </Text>
+            </View>
           )}
 
           {isEducator && viewMode === "needs_audio" && needsAudioCount > 0 && (
