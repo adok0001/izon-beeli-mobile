@@ -1,5 +1,6 @@
 import { Audio } from "expo-av";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Alert } from "react-native";
 
 export type RecordingState = "idle" | "recording" | "stopped";
 
@@ -59,7 +60,10 @@ export function useVoiceRecording(): VoiceRecordingControls {
     setElapsed(0);
 
     const { granted } = await Audio.requestPermissionsAsync();
-    if (!granted) return;
+    if (!granted) {
+      Alert.alert("Microphone access required", "Enable microphone access in Settings to record audio notes.");
+      return;
+    }
 
     await Audio.setAudioModeAsync({
       allowsRecordingIOS: true,
