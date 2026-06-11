@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
-Removes CODE_SIGN_STYLE=Manual and PROVISIONING_PROFILE_SPECIFIER from the
-BeeliWidget XCBuildConfiguration after EAS's CONFIGURE_XCODE_PROJECT sets them.
+Switches BeeliWidget to Automatic signing after EAS's CONFIGURE_XCODE_PROJECT sets Manual.
 
-Why: IsXcodeManaged rejection fires when EITHER is present (PROVISIONING_PROFILE_
-SPECIFIER implies manual mode). Removing both leaves only CODE_SIGN_IDENTITY and
-DEVELOPMENT_TEAM, so xcodebuild searches for a profile by bundle ID + team + identity
-and accepts the installed Xcode-managed distribution profile without error.
+Why: Automatic mode does not check IsXcodeManaged, so the installed Xcode-managed
+distribution profile is accepted. Manual mode + Xcode-managed profile = build error.
+Also removes PROVISIONING_PROFILE_SPECIFIER and CODE_SIGN_IDENTITY which conflict
+with Automatic signing. DEVELOPMENT_TEAM = FWL2W5X58S is left intact.
 
 Run at Gymfile load time (after CONFIGURE_XCODE_PROJECT, before xcodebuild).
 """
@@ -75,19 +74,19 @@ for start, end in reversed(blocks):
         s = line.strip()
         if any(k in s for k in ('CODE_SIGN_STYLE', 'CODE_SIGN_IDENTITY', 'DEVELOPMENT_TEAM', 'PROVISIONING_PROFILE')):
             print(f"[fix-signing] BEFORE: {s}")
-    # Remove CODE_SIGN_STYLE = Manual without replacing it.
-    # Legacy signing (no explicit CODE_SIGN_STYLE) reads CODE_SIGN_IDENTITY and
-    # PROVISIONING_PROFILE_SPECIFIER directly and skips the IsXcodeManaged check
-    # that is tied to the explicit Manual setting introduced in Xcode 8.
-    # Remove CODE_SIGN_STYLE = Manual and PROVISIONING_PROFILE_SPECIFIER.
-    # IsXcodeManaged rejection fires when EITHER is present (specifier implies
-    # manual mode). Without both, xcodebuild searches by bundle ID + team +
-    # CODE_SIGN_IDENTITY and accepts the installed Xcode-managed profile.
-    new_block = re.sub(r"\n\t+CODE_SIGN_STYLE = Manual;", "", block)
+    # Switch BeeliWidget to Automatic signing by replacing EAS-injected Manual settings:
+    #   - Replace CODE_SIGN_STYLE = Manual → Automatic (Automatic doesn't check
+    #     IsXcodeManaged, so the installed Xcode-managed distribution profile is accepted)
+    #   - Remove PROVISIONING_PROFILE_SPECIFIER (specifier + Automatic = conflict error)
+    #   - Remove CODE_SIGN_IDENTITY (identity + Automatic = "conflicting settings" error)
+    # DEVELOPMENT_TEAM = FWL2W5X58S is left intact; Automatic mode uses it to find
+    # the right profile and the EAS distribution cert from the keychain.
+    new_block = re.sub(r"(CODE_SIGN_STYLE = )Manual(;)", r"\1Automatic\2", block)
     new_block = re.sub(r"\n\t+PROVISIONING_PROFILE_SPECIFIER = [^;]+;", "", new_block)
+    new_block = re.sub(r"\n\t+CODE_SIGN_IDENTITY = [^;]+;", "", new_block)
     if new_block != block:
         content = content[:start] + new_block + content[end:]
         fixed += 1
 
 open(pbxproj, "w").write(content)
-print(f"[fix-signing] Removed CODE_SIGN_STYLE=Manual from {fixed} BeeliWidget build configuration(s)")
+print(f"[fix-signing] Switched {fixed} BeeliWidget build configuration(s) to Automatic signing")
