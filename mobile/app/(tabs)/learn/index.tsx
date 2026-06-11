@@ -1,13 +1,13 @@
 import { EnrolledLanguageBar } from "@/components/language-picker";
-import { WordChallengeCard } from "@/components/word-challenge-card";
 import { LoadingScreen } from "@/components/loading-screen";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { NotificationBell } from "@/components/notifications/notification-center";
 import { StreakFreezeModal } from "@/components/streak-freeze-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { UpNextCard } from "@/components/up-next-card";
-import { getCourseTypeColors, getLevelColors } from "@/constants/course-colors";
+import { WordChallengeCard } from "@/components/word-challenge-card";
 import { getAccent } from "@/constants/accent-colors";
+import { getCourseTypeColors, getLevelColors } from "@/constants/course-colors";
 import { useBounties } from "@/lib/hooks/use-bounties";
 import { useCourseLessons, useCourses, useLesson } from "@/lib/hooks/use-courses";
 import { useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
