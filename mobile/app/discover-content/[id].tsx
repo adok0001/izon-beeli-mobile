@@ -109,7 +109,7 @@ export default function DiscoverContentScreen() {
     if (isCurrentPodcast) {
       togglePlayback();
     } else {
-      loadAndPlay(item.id, item.audioUrl, item.title);
+      loadAndPlay(item.id, item.audioUrl, item.title, `/discover-content/${item.id}`);
     }
   }
 

@@ -6,7 +6,7 @@ import { View } from "react-native";
 
 function EducatorAudioBar() {
   const M = useMuseumTheme();
-  const { currentTrackId } = useAudioStore();
+  const { currentTrackId, currentTrackRoute } = useAudioStore();
   const router = useRouter();
 
   if (!currentTrackId) return null;
@@ -16,7 +16,7 @@ function EducatorAudioBar() {
       <AudioPlayer
         compact
         position="top"
-        onPress={() => router.push(`/lesson/${currentTrackId}`)}
+        onPress={currentTrackRoute ? () => router.push(currentTrackRoute as Parameters<typeof router.push>[0]) : undefined}
       />
     </View>
   );

@@ -144,7 +144,7 @@ export default function LessonScreen() {
     if (isCurrentTrack) {
       togglePlayback();
     } else if (audioSource) {
-      loadAndPlay(lesson.id, audioSource, lessonTitle);
+      loadAndPlay(lesson.id, audioSource, lessonTitle, `/lesson/${lesson.id}`);
       trackListen.mutate(lesson.id);
       analytics.lessonStarted(lesson.id, selectedLanguageId);
     }

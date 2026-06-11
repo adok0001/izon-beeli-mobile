@@ -33,6 +33,7 @@ interface AudioState {
   isLoading: boolean;
   currentTrackId: string | null;
   currentTrackTitle: string | null;
+  currentTrackRoute: string | null;
   progress: number; // seconds
   duration: number; // seconds
   playbackSpeed: PlaybackSpeed;
@@ -48,7 +49,7 @@ interface AudioState {
   shadowSegment: { startTime: number; endTime: number } | null;
 
   // Actions
-  loadAndPlay: (trackId: string, source: AudioSource, title?: string) => Promise<void>;
+  loadAndPlay: (trackId: string, source: AudioSource, title?: string, route?: string) => Promise<void>;
   play: () => Promise<void>;
   pause: () => Promise<void>;
   togglePlayback: () => Promise<void>;
@@ -67,6 +68,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
   isLoading: false,
   currentTrackId: null,
   currentTrackTitle: null,
+  currentTrackRoute: null,
   progress: 0,
   duration: 0,
   playbackSpeed: 1,
@@ -75,7 +77,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
   shadowSegment: null,
   _sound: null,
 
-  loadAndPlay: async (trackId, source, title) => {
+  loadAndPlay: async (trackId, source, title, route) => {
     const { _sound: currentSound, currentTrackId } = get();
 
     // If same track, just resume
@@ -94,6 +96,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
       isLoading: true,
       currentTrackId: trackId,
       currentTrackTitle: title ?? null,
+      currentTrackRoute: route ?? null,
       shadowSegment: null,
       error: null,
       _sound: null,
@@ -229,6 +232,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
       isLoading: false,
       currentTrackId: null,
       currentTrackTitle: null,
+      currentTrackRoute: null,
       progress: 0,
       duration: 0,
       shadowSegment: null,

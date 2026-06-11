@@ -24,7 +24,7 @@ import { View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 function MiniPlayerTabBar(props: BottomTabBarProps) {
-  const { currentTrackId } = useAudioStore();
+  const { currentTrackId, currentTrackRoute } = useAudioStore();
   const router = useRouter();
   const activeTabName = props.state.routes[props.state.index]?.name;
   const isEducatorTab = activeTabName === "educator" || activeTabName === "admin";
@@ -34,7 +34,7 @@ function MiniPlayerTabBar(props: BottomTabBarProps) {
       {currentTrackId && !isEducatorTab ? (
         <AudioPlayer
           compact
-          onPress={() => router.push(`/lesson/${currentTrackId}`)}
+          onPress={currentTrackRoute ? () => router.push(currentTrackRoute as Parameters<typeof router.push>[0]) : undefined}
         />
       ) : null}
       <BottomTabBar {...props} />

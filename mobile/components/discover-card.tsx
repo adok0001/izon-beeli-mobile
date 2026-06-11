@@ -74,7 +74,7 @@ export function DiscoverCard({ item, onStoryPress, compact = false }: DiscoverCa
       if (isCurrentPodcast) {
         togglePlayback();
       } else {
-        loadAndPlay(item.id, item.audioUrl, item.title);
+        loadAndPlay(item.id, item.audioUrl, item.title, `/discover-content/${item.id}`);
       }
     } else {
       router.push(`/discover-content/${item.id}` as never);

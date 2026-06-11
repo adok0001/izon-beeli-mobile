@@ -87,7 +87,7 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
               disabled={!onPress}
               accessibilityRole="button"
               accessibilityLabel={currentTrackTitle ?? "Now Playing"}
-              accessibilityHint={onPress ? "Open lesson" : undefined}
+              accessibilityHint={onPress ? "Open now playing" : undefined}
             >
               <Text style={{ fontSize: 14, fontWeight: "500", color: M.text }} numberOfLines={1}>
                 {currentTrackTitle ?? "Now Playing"}

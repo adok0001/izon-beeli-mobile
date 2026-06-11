@@ -140,7 +140,7 @@ const ContinueCard = memo(function ContinueCard({
   const handleResume = async () => {
     if (audioSource) {
       if (currentTrackId !== lessonId) {
-        await loadAndPlay(lessonId, audioSource, lesson.title);
+        await loadAndPlay(lessonId, audioSource, lesson.title, `/lesson/${lessonId}`);
         await seekTo(positionSeconds);
       } else {
         await seekTo(positionSeconds);
