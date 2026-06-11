@@ -10,12 +10,9 @@ export interface NextLessonResponse {
     description: string;
     descriptionFr?: string | null;
     duration: number | null;
-    courseId: string;
-  };
-  course?: {
-    id: string;
-    title: string;
-    titleFr?: string | null;
+    courseId?: string | null;
+    level?: string | null;
+    theme?: string | null;
   };
   overallProgress: {
     completed: number;

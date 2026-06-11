@@ -1065,25 +1065,32 @@ educatorRouter.delete("/lessons/:id", async (c) => {
   const { id } = c.req.param();
 
   const [existing] = await db
-    .select({ languageId: courses.languageId, courseId: lessons.courseId })
+    .select({
+      languageId: lessons.languageId,
+      courseLanguageId: courses.languageId,
+      courseId: lessons.courseId,
+    })
     .from(lessons)
-    .innerJoin(courses, eq(lessons.courseId, courses.id))
+    .leftJoin(courses, eq(lessons.courseId, courses.id))
     .where(eq(lessons.id, id))
     .limit(1);
 
   if (!existing) return c.json({ error: "Not found" }, 404);
-  if (!isAdmin && !reviewerLanguages.includes(existing.languageId)) {
+  const lessonLanguageId = existing.languageId ?? existing.courseLanguageId;
+  if (!isAdmin && (!lessonLanguageId || !reviewerLanguages.includes(lessonLanguageId))) {
     return c.json({ error: "Forbidden" }, 403);
   }
 
   await db.delete(transcriptSegments).where(eq(transcriptSegments.lessonId, id));
   await db.delete(lessons).where(eq(lessons.id, id));
 
-  const [course] = await db.select({ lessonsCount: courses.lessonsCount })
-    .from(courses).where(eq(courses.id, existing.courseId)).limit(1);
-  if (course && course.lessonsCount > 0) {
-    await db.update(courses).set({ lessonsCount: course.lessonsCount - 1 })
-      .where(eq(courses.id, existing.courseId));
+  if (existing.courseId) {
+    const [course] = await db.select({ lessonsCount: courses.lessonsCount })
+      .from(courses).where(eq(courses.id, existing.courseId)).limit(1);
+    if (course && course.lessonsCount > 0) {
+      await db.update(courses).set({ lessonsCount: course.lessonsCount - 1 })
+        .where(eq(courses.id, existing.courseId));
+    }
   }
 
   return c.json({ deleted: true });

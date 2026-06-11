@@ -29,7 +29,10 @@ export type LessonType = "lesson" | "song";
 
 export interface Lesson {
   id: string;
-  courseId: string;
+  courseId?: string | null;
+  languageId?: string | null;
+  level?: "beginner" | "intermediate" | "advanced" | null;
+  theme?: string | null;
   /** @default "lesson" */
   type?: LessonType | null;
   title: string;

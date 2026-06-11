@@ -345,7 +345,10 @@ export const lessons = pgTable(
   "lessons",
   {
     id: varchar("id", { length: 64 }).primaryKey(),
-    courseId: varchar("course_id", { length: 64 }).notNull(),
+    courseId: varchar("course_id", { length: 64 }),
+    languageId: varchar("language_id", { length: 64 }),
+    level: varchar("level", { length: 32 }),
+    theme: varchar("theme", { length: 100 }),
     type: varchar("type", { length: 16 }).default("lesson").notNull(),
     title: varchar("title", { length: 300 }).notNull(),
     titleFr: varchar("title_fr", { length: 300 }),
@@ -358,7 +361,11 @@ export const lessons = pgTable(
     genre: varchar("genre", { length: 100 }),
     isActive: boolean("is_active").default(true).notNull(),
   },
-  (table) => [index("lessons_course_id_idx").on(table.courseId)]
+  (table) => [
+    index("lessons_course_id_idx").on(table.courseId),
+    index("lessons_language_id_idx").on(table.languageId),
+    index("lessons_language_level_order_idx").on(table.languageId, table.level, table.order),
+  ]
 );
 
 export const transcriptSegments = pgTable(

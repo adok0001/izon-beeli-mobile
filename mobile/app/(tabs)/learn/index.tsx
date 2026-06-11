@@ -9,12 +9,10 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { UpNextCard } from "@/components/up-next-card";
 import { WordChallengeCard } from "@/components/word-challenge-card";
 import { getAccent } from "@/constants/accent-colors";
-import { getCourseTypeColors, getLevelColors } from "@/constants/course-colors";
 import { useBounties } from "@/lib/hooks/use-bounties";
-import { useCourseLessons, useCourses, useLesson } from "@/lib/hooks/use-courses";
+import { useLanguageLessons, useLesson } from "@/lib/hooks/use-courses";
 import { useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
 import { useCompletedLessons, useProgressSummary } from "@/lib/hooks/use-progress";
-import { useStoryArcs } from "@/lib/hooks/use-story-arc";
 import { useToast } from "@/lib/hooks/use-toast";
 import { useWordsDueForReview } from "@/lib/hooks/use-wordbank";
 import { localizeField } from "@/lib/localize";
@@ -24,13 +22,12 @@ import { useAudioStore } from "@/store/audio-store";
 import { useLanguageStore } from "@/store/language-store";
 import { useTourStore } from "@/store/tour-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
-import type { Course, Lesson } from "@/types";
+import type { Lesson } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  ActivityIndicator,
   Animated,
   FlatList,
   Modal,
@@ -190,55 +187,44 @@ function LessonRow({
   );
 }
 
-// ─── CourseCard ────────────────────────────────────────────────────────────
-const CourseCard = memo(function CourseCard({
-  course,
+// ─── LevelSection ──────────────────────────────────────────────────────────
+const LEVEL_ACCENT: Record<string, string> = {
+  beginner: "#10b981",
+  intermediate: "#f59e0b",
+  advanced: "#8b5cf6",
+};
+
+const LevelSection = memo(function LevelSection({
+  level,
+  theme,
+  lessons,
   completedIds,
-  hasStoryArc,
   index,
 }: {
-  course: Course;
+  level: string;
+  theme: string | null;
+  lessons: Lesson[];
   completedIds: Set<string>;
-  hasStoryArc: boolean;
   index: number;
 }) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
-  const { uiLanguage } = useUiLanguageStore();
-  const { data: lessons = [], isLoading: lessonsLoading } = useCourseLessons(course.id);
-  const completedCount = lessons.filter((l) => completedIds.has(l.id)).length;
-  const progressPercent = lessons.length > 0 ? (completedCount / lessons.length) * 100 : 0;
-  const [collapsed, setCollapsed] = useState(false);
-  const typeColors = getCourseTypeColors(course.courseType);
-  const levelColors = getLevelColors(course.level);
   const anim = useRef(new Animated.Value(0)).current;
-  const progressAnim = useRef(new Animated.Value(0)).current;
+  const accentColor = LEVEL_ACCENT[level] ?? M.accent;
+  const completedCount = lessons.filter((l) => completedIds.has(l.id)).length;
 
   useEffect(() => {
     Animated.timing(anim, {
       toValue: 1,
       duration: 480,
-      delay: index * 90,
+      delay: index * 70,
       useNativeDriver: true,
     }).start();
   }, []);
 
-  useEffect(() => {
-    if (!collapsed) {
-      Animated.timing(progressAnim, {
-        toValue: progressPercent,
-        duration: 700,
-        delay: index * 90 + 200,
-        useNativeDriver: false,
-      }).start();
-    }
-  }, [collapsed, progressPercent]);
-
-  const accentColor = typeColors.tickActive ?? M.accent;
-
   return (
-    <Animated.View style={[{ marginBottom: 16 }, animStyle(anim, 24)]}>
+    <Animated.View style={[{ marginBottom: 16 }, animStyle(anim, 20)]}>
       <View
         style={{
           borderRadius: 18,
@@ -250,17 +236,9 @@ const CourseCard = memo(function CourseCard({
           borderLeftColor: accentColor,
         }}
       >
-        {/* Header */}
-        <Pressable
-          onPress={() => setCollapsed((c) => !c)}
-          className="p-4 active:opacity-70"
-          accessibilityRole="button"
-          accessibilityLabel={`${localizeField(course.title, course.titleFr, uiLanguage)}, ${completedCount} of ${lessons.length} lessons completed`}
-          accessibilityHint={collapsed ? "Tap to expand course" : "Tap to collapse course"}
-          accessibilityState={{ expanded: !collapsed }}
-        >
-          {/* Top row: level badge + count */}
-          <View className="mb-2.5 flex-row items-center justify-between">
+        {/* Section header */}
+        <View className="p-4 pb-2">
+          <View className="mb-2 flex-row items-center justify-between">
             <View
               style={{
                 paddingHorizontal: 10,
@@ -271,192 +249,32 @@ const CourseCard = memo(function CourseCard({
                 borderColor: `${accentColor}40`,
               }}
             >
-              <Text
-                style={{
-                  fontSize: 9,
-                  fontWeight: "800",
-                  letterSpacing: 1.8,
-                  textTransform: "uppercase",
-                  color: accentColor,
-                }}
-              >
-                {t(`levels.${course.level}`, { defaultValue: course.level })}
+              <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.8, textTransform: "uppercase", color: accentColor }}>
+                {t(`levels.${level}`, { defaultValue: level })}
               </Text>
             </View>
-            <View className="flex-row items-center gap-2">
-              <Text style={{ fontSize: 11, color: M.textDimDark }}>
-                {completedCount}/{lessons.length}
-              </Text>
-              <IconSymbol
-                name={collapsed ? "chevron.right" : "chevron.down"}
-                size={12}
-                color={M.textDimDark}
-              />
-            </View>
+            <Text style={{ fontSize: 11, color: M.textDimDark }}>
+              {completedCount}/{lessons.length}
+            </Text>
           </View>
-
-          {/* Title */}
-          <Text
-            style={{ fontSize: 18, fontWeight: "800", color: M.text, letterSpacing: -0.3, marginBottom: 4 }}
-          >
-            {localizeField(course.title, course.titleFr, uiLanguage)}
-          </Text>
-          <Text style={{ fontSize: 13, color: M.textDim, lineHeight: 18 }} numberOfLines={2}>
-            {localizeField(course.description, course.descriptionFr, uiLanguage)}
-          </Text>
-
-          {/* Course type badge */}
-          {course.courseType && typeColors.label ? (
-            <View
-              style={{
-                marginTop: 10,
-                alignSelf: "flex-start",
-                paddingHorizontal: 8,
-                paddingVertical: 2,
-                borderRadius: 999,
-                backgroundColor: `${accentColor}18`,
-              }}
-            >
-              <Text style={{ fontSize: 10, fontWeight: "700", color: accentColor }}>
-                {typeColors.label}
-              </Text>
-            </View>
+          {theme ? (
+            <Text style={{ fontSize: 13, fontWeight: "700", color: M.text, letterSpacing: -0.2, marginBottom: 2 }}>
+              {theme}
+            </Text>
           ) : null}
+        </View>
 
-          {/* Progress bar */}
-          {progressPercent > 0 && (
-            <View style={{ marginTop: 14 }}>
-              <View
-                style={{
-                  height: 3,
-                  borderRadius: 2,
-                  backgroundColor: "rgba(255,255,255,0.08)",
-                  overflow: "hidden",
-                }}
-              >
-                <Animated.View
-                  style={{
-                    height: 3,
-                    borderRadius: 2,
-                    backgroundColor: accentColor,
-                    width: progressAnim.interpolate({
-                      inputRange: [0, 100],
-                      outputRange: ["0%", "100%"],
-                    }),
-                  }}
-                />
-              </View>
-              {progressPercent >= 100 && (
-                <Text style={{ marginTop: 4, fontSize: 10, fontWeight: "700", color: M.success, textAlign: "right" }}>
-                  {t("learn.complete")}
-                </Text>
-              )}
-            </View>
-          )}
-        </Pressable>
-
-        {/* Lessons + Actions */}
-        {!collapsed && (
-          <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
-            {lessonsLoading ? (
-              <ActivityIndicator size="small" color={accentColor} style={{ paddingVertical: 12 }} />
-            ) : (
-              lessons.map((lesson) => (
-                <LessonRow
-                  key={lesson.id}
-                  lesson={lesson}
-                  completed={completedIds.has(lesson.id)}
-                  onPress={() => router.push(`/lesson/${lesson.id}`)}
-                />
-              ))
-            )}
-
-            {/* Action buttons */}
-            <View className="mt-3 flex-row gap-2">
-              <Pressable
-                onPress={() => router.push({ pathname: "/quiz", params: { courseId: course.id } })}
-                style={{
-                  flex: 1,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: 10,
-                  paddingVertical: 10,
-                  borderWidth: 1,
-                  borderColor: `${accentColor}40`,
-                  backgroundColor: `${accentColor}10`,
-                  gap: 6,
-                }}
-                className="active:opacity-70"
-                accessibilityRole="button"
-                accessibilityLabel={t("learn.practiceQuiz")}
-              >
-                <IconSymbol name="graduationcap.fill" size={14} color={accentColor} />
-                <Text style={{ fontSize: 12, fontWeight: "700", color: accentColor }}>
-                  {t("learn.practiceQuiz")}
-                </Text>
-              </Pressable>
-
-              {(() => {
-                const matchAccent = getAccent("purple");
-                return (
-                  <Pressable
-                    onPress={() => router.push({ pathname: "/matching-game", params: { courseId: course.id } })}
-                    style={{
-                      flex: 1,
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      borderRadius: 10,
-                      paddingVertical: 10,
-                      borderWidth: 1,
-                      borderColor: matchAccent.border,
-                      backgroundColor: matchAccent.bg,
-                      gap: 6,
-                    }}
-                    className="active:opacity-70"
-                    accessibilityRole="button"
-                    accessibilityLabel={t("learn.matchingGame")}
-                  >
-                    <IconSymbol name="rectangle.grid.2x2" size={14} color={matchAccent.solid} />
-                    <Text style={{ fontSize: 12, fontWeight: "700", color: matchAccent.solid }}>
-                      {t("learn.matchingGame")}
-                    </Text>
-                  </Pressable>
-                );
-              })()}
-            </View>
-
-            {hasStoryArc && (() => {
-              const storyAccent = getAccent("amber");
-              return (
-                <Pressable
-                  onPress={() => router.push(`/story/${course.id}` as any)}
-                  style={{
-                    marginTop: 8,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: 10,
-                    paddingVertical: 10,
-                    borderWidth: 1,
-                    borderColor: storyAccent.border,
-                    backgroundColor: storyAccent.bg,
-                    gap: 6,
-                  }}
-                  className="active:opacity-70"
-                  accessibilityRole="button"
-                  accessibilityLabel={t("learn.storyMode")}
-                >
-                  <IconSymbol name="book.fill" size={14} color={storyAccent.solid} />
-                  <Text style={{ fontSize: 12, fontWeight: "700", color: storyAccent.solid }}>
-                    {t("learn.storyMode")}
-                  </Text>
-                </Pressable>
-              );
-            })()}
-          </View>
-        )}
+        {/* Lessons */}
+        <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
+          {lessons.map((lesson) => (
+            <LessonRow
+              key={lesson.id}
+              lesson={lesson}
+              completed={completedIds.has(lesson.id)}
+              onPress={() => router.push(`/lesson/${lesson.id}`)}
+            />
+          ))}
+        </View>
       </View>
     </Animated.View>
   );
@@ -583,17 +401,31 @@ function BountyTeaser({ languageId }: { languageId: string }) {
   );
 }
 
+// Group lessons by level then theme for the learn tab
+type LevelGroup = { level: string; theme: string | null; lessons: Lesson[] };
+
+function groupLessonsByLevelTheme(lessons: Lesson[]): LevelGroup[] {
+  const map = new Map<string, LevelGroup>();
+  for (const lesson of lessons) {
+    const level = lesson.level ?? "beginner";
+    const theme = lesson.theme ?? null;
+    const key = `${level}::${theme ?? ""}`;
+    if (!map.has(key)) map.set(key, { level, theme, lessons: [] });
+    map.get(key)!.lessons.push(lesson);
+  }
+  return Array.from(map.values());
+}
+
 // ─── LearnScreen ───────────────────────────────────────────────────────────
 export default function LearnScreen() {
   const M = useMuseumTheme();
   const { t } = useTranslation();
-  const router = useRouter();
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
   const {
-    data: courses = [],
-    isLoading: coursesLoading,
-    refetch: refetchCourses,
-  } = useCourses(selectedLanguageId);
+    data: allLessons = [],
+    isLoading: lessonsLoading,
+    refetch: refetchLessons,
+  } = useLanguageLessons(selectedLanguageId ?? "");
   const {
     data: completedLessonIds,
     isLoading: progressLoading,
@@ -602,12 +434,7 @@ export default function LearnScreen() {
   const { data: summary, refetch: refetchSummary } = useProgressSummary();
   const { refetch: refetchDue } = useWordsDueForReview(selectedLanguageId);
   const { data: todayChallenges = [] } = useTodayChallenges();
-  const { data: storyArcSummaries = [] } = useStoryArcs();
 
-  const storyArcCourseIds = useMemo(
-    () => new Set(storyArcSummaries.map((a) => a.courseId)),
-    [storyArcSummaries]
-  );
   const completedIds = useMemo(
     () => new Set(completedLessonIds ?? []),
     [completedLessonIds]
@@ -616,6 +443,7 @@ export default function LearnScreen() {
     () => todayChallenges.filter((c) => c.completed).length,
     [todayChallenges]
   );
+  const levelGroups = useMemo(() => groupLessonsByLevelTheme(allLessons), [allLessons]);
 
   const [refreshing, setRefreshing] = useState(false);
   const [freezeModalVisible, setFreezeModalVisible] = useState(false);
@@ -661,13 +489,13 @@ export default function LearnScreen() {
     }).catch(() => {});
   }, [completedToday]);
 
-  const isLoading = coursesLoading || progressLoading;
+  const isLoading = lessonsLoading || progressLoading;
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([refetch(), refetchSummary(), refetchCourses(), refetchDue()]);
+    await Promise.all([refetch(), refetchSummary(), refetchLessons(), refetchDue()]);
     setRefreshing(false);
-  }, [refetch, refetchSummary, refetchCourses, refetchDue]);
+  }, [refetch, refetchSummary, refetchLessons, refetchDue]);
 
   const onStreakPress = useCallback(() => {
     if (summary?.streakBroken && summary.streak > 0) setFreezeModalVisible(true);
@@ -694,7 +522,7 @@ export default function LearnScreen() {
       <View style={{ flex: 1, backgroundColor: M.card }}>
         {isLoading ? (
           <LoadingScreen />
-        ) : courses.length === 0 ? (
+        ) : levelGroups.length === 0 ? (
           <View className="flex-1 items-center justify-center px-8">
             <IconSymbol name="book.fill" size={44} color="rgba(255,255,255,0.1)" />
             <Text style={{ marginTop: 16, textAlign: "center", fontSize: 14, color: M.textDimDark }}>
@@ -703,14 +531,15 @@ export default function LearnScreen() {
           </View>
         ) : (
           <FlatList
-            data={courses}
-            keyExtractor={(item) => item.id}
+            data={levelGroups}
+            keyExtractor={(item) => `${item.level}::${item.theme ?? ""}`}
             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32, paddingTop: 16 }}
             renderItem={({ item, index }) => (
-              <CourseCard
-                course={item}
+              <LevelSection
+                level={item.level}
+                theme={item.theme}
+                lessons={item.lessons}
                 completedIds={completedIds}
-                hasStoryArc={storyArcCourseIds.has(item.id)}
                 index={index}
               />
             )}

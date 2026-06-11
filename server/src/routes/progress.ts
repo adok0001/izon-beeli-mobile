@@ -1,7 +1,7 @@
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index.js";
-import { courses, lessons, pushTokens, quizResults, userProgress, users } from "../db/schema.js";
+import { lessons, pushTokens, quizResults, userProgress, users } from "../db/schema.js";
 import { awardXP } from "../lib/award-xp.js";
 import { incrementDailyChallenge } from "../lib/daily-challenge.js";
 import { sendPushBatch, chunk } from "../lib/send-push.js";
@@ -239,50 +239,40 @@ progressRouter.get("/next-lesson", async (c) => {
   const languageId = queryLangId ?? user?.selectedLanguageId;
   if (!languageId) return c.json(null);
 
-  // Courses + completed progress in parallel (both only need languageId/userId)
-  const [langCourses, completedRows] = await Promise.all([
+  const LEVEL_RANK: Record<string, number> = { beginner: 0, intermediate: 1, advanced: 2 };
+
+  const [allLessons, completedRows] = await Promise.all([
     db
-      .select({ id: courses.id, title: courses.title, titleFr: courses.titleFr, order: courses.order })
-      .from(courses)
-      .where(eq(courses.languageId, languageId))
-      .orderBy(asc(courses.order)),
+      .select({
+        id: lessons.id,
+        title: lessons.title,
+        titleFr: lessons.titleFr,
+        description: lessons.description,
+        descriptionFr: lessons.descriptionFr,
+        duration: lessons.duration,
+        courseId: lessons.courseId,
+        level: lessons.level,
+        theme: lessons.theme,
+        order: lessons.order,
+      })
+      .from(lessons)
+      .where(and(eq(lessons.languageId, languageId), eq(lessons.isActive, true)))
+      .orderBy(asc(lessons.level), asc(lessons.order)),
     db
       .select({ lessonId: userProgress.lessonId })
       .from(userProgress)
       .where(and(eq(userProgress.userId, userId), eq(userProgress.completed, true))),
   ]);
 
-  if (langCourses.length === 0) return c.json(null);
+  if (allLessons.length === 0) return c.json(null);
 
-  const courseIds = langCourses.map((c) => c.id);
-
-  // All lessons ordered by courseId (preserve course order via JS sort) then lesson.order
-  const allLessons = await db
-    .select({
-      id: lessons.id,
-      title: lessons.title,
-      titleFr: lessons.titleFr,
-      description: lessons.description,
-      descriptionFr: lessons.descriptionFr,
-      duration: lessons.duration,
-      courseId: lessons.courseId,
-      order: lessons.order,
-    })
-    .from(lessons)
-    .where(inArray(lessons.courseId, courseIds))
-    .orderBy(asc(lessons.courseId), asc(lessons.order));
-
-  // Sort by course order, then lesson order
-  const courseOrderMap = new Map(langCourses.map((c, i) => [c.id, i]));
   allLessons.sort(
     (a, b) =>
-      (courseOrderMap.get(a.courseId) ?? 0) - (courseOrderMap.get(b.courseId) ?? 0) ||
-      a.order - b.order
+      (LEVEL_RANK[a.level ?? ""] ?? 99) - (LEVEL_RANK[b.level ?? ""] ?? 99) || a.order - b.order
   );
 
   const completedSet = new Set(completedRows.map((r) => r.lessonId));
 
-  // Single pass: count completed + find first uncompleted
   const total = allLessons.length;
   let completed = 0;
   let next: (typeof allLessons)[0] | undefined;
@@ -296,8 +286,6 @@ progressRouter.get("/next-lesson", async (c) => {
 
   if (!next) return c.json({ overallProgress: { completed, total } });
 
-  const course = langCourses.find((c) => c.id === next.courseId);
-
   return c.json({
     lesson: {
       id: next.id,
@@ -306,12 +294,9 @@ progressRouter.get("/next-lesson", async (c) => {
       description: next.description,
       descriptionFr: next.descriptionFr ?? null,
       duration: next.duration,
-      courseId: next.courseId,
-    },
-    course: {
-      id: course?.id ?? next.courseId,
-      title: course?.title ?? "",
-      titleFr: course?.titleFr ?? null,
+      courseId: next.courseId ?? null,
+      level: next.level ?? null,
+      theme: next.theme ?? null,
     },
     overallProgress: { completed, total },
   });
