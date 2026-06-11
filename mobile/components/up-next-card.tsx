@@ -39,7 +39,7 @@ export function UpNextCard({ languageId }: { languageId?: string }) {
     }).start();
   }, [data]);
 
-  if (isLoading || !data?.lesson || !data?.course) return null;
+  if (isLoading || !data?.lesson || !data?.course || data.overallProgress.completed === 0) return null;
 
   const { lesson, course, overallProgress } = data;
   const progressPct =
