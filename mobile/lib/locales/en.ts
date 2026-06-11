@@ -168,6 +168,8 @@ export const en = {
     songOfTheWeek: "Song of the Week",
     thisWeeksSelection: "This Week's Selection",
     noSongThisWeek: "No song selected this week",
+    browseAllProverbs: "Browse all proverbs",
+    browseAllSongs: "Browse all songs",
   },
   journal: {
     title: "Journal",

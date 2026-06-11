@@ -1,11 +1,15 @@
 import { DiscoverCard, DISCOVER_TYPE_CONFIG } from "@/components/discover-card";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { ExhibitDivider } from "@/components/ui/section-header";
 import { useDiscover, type DiscoverFilter } from "@/lib/hooks/use-discover";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { DiscoverItem } from "@/types";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
+
+const DIVIDER_STYLE = { marginTop: 4, marginBottom: 14 } as const;
 
 // SVG noise grain for the cinematic hero atmosphere
 const GRAIN_URI =
@@ -21,31 +25,6 @@ function useWindowWidth() {
   return w;
 }
 
-function SectionLabel({ label }: { label: string }) {
-  const M = useMuseumTheme();
-  return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 14, marginTop: 4 }}>
-      <View style={{ flex: 1, height: 1, backgroundColor: M.border }} />
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-        <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: "#C4862A" }} />
-        <Text
-          style={{
-            fontSize: 9,
-            fontWeight: "800",
-            letterSpacing: 2,
-            color: M.muted,
-            textTransform: "uppercase" as const,
-          }}
-        >
-          {label}
-        </Text>
-        <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: "#C4862A" }} />
-      </View>
-      <View style={{ flex: 1, height: 1, backgroundColor: M.border }} />
-    </View>
-  );
-}
-
 function HeroCard({
   item,
   onStoryPress,
@@ -53,6 +32,7 @@ function HeroCard({
   item: DiscoverItem;
   onStoryPress: (id: string) => void;
 }) {
+  const M = useMuseumTheme();
   const cfg = DISCOVER_TYPE_CONFIG[item.type];
   const [hovered, setHovered] = useState(false);
 
@@ -159,7 +139,7 @@ function HeroCard({
             style={{
               fontSize: 22,
               fontWeight: "900",
-              color: "#F7F2E8",
+              color: M.parchment,
               letterSpacing: -0.3,
               lineHeight: 28,
               marginBottom: 6,
@@ -208,11 +188,13 @@ function FeaturedStrip({
   onStoryPress: (id: string) => void;
   wide: boolean;
 }) {
+  const { t } = useTranslation();
+
   if (items.length === 0) return null;
 
   return (
     <View style={{ marginBottom: 24 }}>
-      <SectionLabel label="FEATURED" />
+      <ExhibitDivider label={t("culture.sectionFeatured")} style={DIVIDER_STYLE} />
       {wide ? (
         <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}>
           {items.map((item) => (
@@ -239,6 +221,7 @@ function FeaturedStrip({
 export function CultureFeed({ filter }: { filter: DiscoverFilter }) {
   const M = useMuseumTheme();
   const router = useRouter();
+  const { t } = useTranslation();
   const { featured, rest } = useDiscover(filter);
   const windowWidth = useWindowWidth();
   const isWide = windowWidth >= 768;
@@ -280,7 +263,7 @@ export function CultureFeed({ filter }: { filter: DiscoverFilter }) {
       {/* All content list/grid */}
       {rest.length > 0 && (
         <>
-          <SectionLabel label="ALL CONTENT" />
+          <ExhibitDivider label={t("culture.sectionAll")} style={DIVIDER_STYLE} />
           <View style={contentCols}>
             {rest.map((item) => (
               <View
@@ -302,10 +285,10 @@ export function CultureFeed({ filter }: { filter: DiscoverFilter }) {
         <View style={{ alignItems: "center", paddingVertical: 80 }}>
           <Text style={{ fontSize: 36, marginBottom: 16 }}>🎬</Text>
           <Text style={{ fontSize: 16, fontWeight: "700", color: M.text, marginBottom: 6 }}>
-            Nothing here yet
+            {t("culture.emptyTitle")}
           </Text>
           <Text style={{ fontSize: 13, color: M.muted, textAlign: "center" as const, maxWidth: 280 }}>
-            Check back soon for new stories and films.
+            {t("culture.emptyBody")}
           </Text>
         </View>
       )}

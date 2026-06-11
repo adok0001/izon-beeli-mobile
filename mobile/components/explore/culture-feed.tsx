@@ -1,29 +1,19 @@
 import { DiscoverCard } from "@/components/discover-card";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { ExhibitDivider } from "@/components/ui/section-header";
 import { useDiscover, type DiscoverFilter } from "@/lib/hooks/use-discover";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { FlatList, ScrollView, Text, View } from "react-native";
 
-function SectionLabel({ label }: { label: string }) {
-  const M = useMuseumTheme();
-  return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12, marginTop: 4 }}>
-      <View style={{ flex: 1, height: 1, backgroundColor: M.border }} />
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-        <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#C4862A" }} />
-        <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 2, color: M.muted }}>{label}</Text>
-        <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#C4862A" }} />
-      </View>
-      <View style={{ flex: 1, height: 1, backgroundColor: M.border }} />
-    </View>
-  );
-}
+const DIVIDER_STYLE = { marginTop: 4, marginBottom: 12 } as const;
 
 export function CultureFeed({ filter }: { filter: DiscoverFilter }) {
   const M = useMuseumTheme();
   const router = useRouter();
+  const { t } = useTranslation();
   const { featured, rest } = useDiscover(filter);
 
   const handleStoryPress = useCallback(
@@ -38,7 +28,7 @@ export function CultureFeed({ filter }: { filter: DiscoverFilter }) {
       <>
         {featured.length > 0 && (
           <View style={{ marginBottom: 16 }}>
-            <SectionLabel label="FEATURED" />
+            <ExhibitDivider label={t("culture.sectionFeatured")} style={DIVIDER_STYLE} />
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -50,10 +40,10 @@ export function CultureFeed({ filter }: { filter: DiscoverFilter }) {
             </ScrollView>
           </View>
         )}
-        {rest.length > 0 && <SectionLabel label="ALL CONTENT" />}
+        {rest.length > 0 && <ExhibitDivider label={t("culture.sectionAll")} style={DIVIDER_STYLE} />}
       </>
     ),
-    [featured, rest.length, handleStoryPress]
+    [featured, rest.length, handleStoryPress, t]
   );
 
   return (
@@ -74,10 +64,10 @@ export function CultureFeed({ filter }: { filter: DiscoverFilter }) {
           <View style={{ alignItems: "center", paddingVertical: 60 }}>
             <IconSymbol name="globe.fill" size={36} color={M.muted} />
             <Text style={{ marginTop: 12, fontSize: 15, fontWeight: "700", color: M.text }}>
-              Nothing here yet
+              {t("culture.emptyTitle")}
             </Text>
             <Text style={{ marginTop: 4, fontSize: 13, color: M.muted, textAlign: "center" }}>
-              Check back soon for new stories and films.
+              {t("culture.emptyBody")}
             </Text>
           </View>
         ) : null

@@ -1,11 +1,12 @@
 import { CultureFeed } from "@/components/explore/culture-feed";
 import { DailyExhibits } from "@/components/explore/daily-exhibits";
 import { LanguagePickerButton } from "@/components/language-picker";
+import { getAccent } from "@/constants/accent-colors";
 import { type DiscoverFilter } from "@/lib/hooks/use-discover";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Animated, Pressable, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type ExploreFilter = "daily" | DiscoverFilter;
@@ -18,12 +19,11 @@ const FILTER_OPTIONS: { id: ExploreFilter; labelKey: string }[] = [
   { id: "film", labelKey: "culture.filterFilm" },
 ];
 
-const TYPE_COLORS: Record<ExploreFilter, string> = {
-  daily: "#C4862A",
-  all: "#C4862A",
-  blog: "#38bdf8",
-  podcast: "#a78bfa",
-  film: "#fb923c",
+const TYPE_COLORS: Record<DiscoverFilter, string | null> = {
+  all: null, // null → Museum accent (theme-dependent)
+  blog: getAccent("sky").solid,
+  podcast: getAccent("purple").solid,
+  film: getAccent("orange").solid,
 };
 
 // Per-route error boundary — shows a recoverable message if this screen throws.
@@ -35,46 +35,18 @@ export default function ExploreScreen() {
   const tr = (key: string) => t(key as never) as string;
   const [activeFilter, setActiveFilter] = useState<ExploreFilter>("daily");
 
-  const titleAnim = useRef(new Animated.Value(0)).current;
-  const subtitleAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.stagger(80, [
-      Animated.spring(titleAnim, { toValue: 1, useNativeDriver: true, tension: 120, friction: 14 }),
-      Animated.spring(subtitleAnim, { toValue: 1, useNativeDriver: true, tension: 120, friction: 14 }),
-    ]).start();
-  }, [titleAnim, subtitleAnim]);
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
       {/* Dark foyer header */}
       <View style={{ backgroundColor: M.ink, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 14 }}>
         <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
           <View style={{ flex: 1, marginRight: 12 }}>
-            <Animated.Text
-              style={{
-                fontSize: 32,
-                fontWeight: "900",
-                color: M.parchment,
-                letterSpacing: -0.5,
-                opacity: titleAnim,
-                transform: [{ translateY: titleAnim.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }],
-              }}
-            >
+            <Text style={{ fontSize: 32, fontWeight: "900", color: M.parchment, letterSpacing: -0.5 }}>
               {t("explore.title").toUpperCase()}
-            </Animated.Text>
-            <Animated.Text
-              style={{
-                fontSize: 9,
-                fontWeight: "700",
-                letterSpacing: 2.5,
-                color: "#C4862A",
-                marginTop: 3,
-                opacity: subtitleAnim,
-              }}
-            >
+            </Text>
+            <Text style={{ fontSize: 9, fontWeight: "700", letterSpacing: 2.5, color: M.accent, marginTop: 3 }}>
               {t("explore.subtitle").toUpperCase()}
-            </Animated.Text>
+            </Text>
           </View>
           {activeFilter === "daily" && (
             <View style={{ marginTop: 4 }}>
@@ -84,13 +56,13 @@ export default function ExploreScreen() {
         </View>
 
         {/* Gold rule */}
-        <View style={{ height: 1, backgroundColor: "#C4862A", opacity: 0.25, marginTop: 12, marginBottom: 12 }} />
+        <View style={{ height: 1, backgroundColor: M.accent, opacity: 0.25, marginTop: 12, marginBottom: 12 }} />
 
         {/* Filter pills */}
         <View style={{ flexDirection: "row", gap: 8 }}>
           {FILTER_OPTIONS.map((opt) => {
             const isActive = activeFilter === opt.id;
-            const col = TYPE_COLORS[opt.id];
+            const col = (opt.id === "daily" ? null : TYPE_COLORS[opt.id]) ?? M.accent;
             return (
               <Pressable
                 key={opt.id}

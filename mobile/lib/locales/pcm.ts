@@ -168,6 +168,8 @@ export const pcm = {
     songOfTheWeek: "Song of the Week",
     thisWeeksSelection: "This Week Selection",
     noSongThisWeek: "No song this week",
+    browseAllProverbs: "See all proverbs",
+    browseAllSongs: "See all songs",
   },
   journal: {
     title: "Journal",

@@ -48,3 +48,37 @@ export function SectionHeader({ title, eyebrow, subtitle, action, style }: Secti
     </View>
   );
 }
+
+export interface ExhibitDividerProps {
+  label: string;
+  style?: StyleProp<ViewStyle>;
+}
+
+/**
+ * Centered museum divider — hairline · dot · uppercase label · dot · hairline.
+ * Unifies the duplicated ExhibitHeader / SectionLabel variants in explore.
+ */
+export function ExhibitDivider({ label, style }: ExhibitDividerProps) {
+  const M = useMuseumTheme();
+
+  return (
+    <View
+      style={[{ marginTop: 28, marginBottom: 14, flexDirection: "row", alignItems: "center", gap: 12 }, style]}
+    >
+      <View style={{ flex: 1, height: 1, backgroundColor: M.border }} />
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+        <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: M.accent }} />
+        <Text
+          style={{
+            fontSize: 9, fontWeight: "800", letterSpacing: 2.5,
+            textTransform: "uppercase", color: M.muted,
+          }}
+        >
+          {label}
+        </Text>
+        <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: M.accent }} />
+      </View>
+      <View style={{ flex: 1, height: 1, backgroundColor: M.border }} />
+    </View>
+  );
+}
