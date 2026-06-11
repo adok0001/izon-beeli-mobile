@@ -424,7 +424,7 @@ export default function LessonScreen() {
                     onPress={() =>
                       router.push({
                         pathname: "/quiz",
-                        params: { courseId: lesson.courseId, lessonId: lesson.id },
+                        params: { ...(lesson.courseId ? { courseId: lesson.courseId } : {}), lessonId: lesson.id },
                       })
                     }
                     style={{
