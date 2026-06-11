@@ -1,13 +1,13 @@
-import { View, Text, Pressable, ActivityIndicator, Alert } from "react-native";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
+import { ApiError } from "@/lib/api";
+import { useRegenerateDailyChallenges, useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
+import type { ChallengeType, DailyChallenge } from "@/types";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useRegenerateDailyChallenges, useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
-import { ApiError } from "@/lib/api";
-import { getAccent } from "@/constants/accent-colors";
-import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useTranslation } from "react-i18next";
-import type { ChallengeType, DailyChallenge } from "@/types";
+import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 
 function ChallengeItem({ challenge }: { challenge: DailyChallenge }) {
   const M = useMuseumTheme();
@@ -18,7 +18,7 @@ function ChallengeItem({ challenge }: { challenge: DailyChallenge }) {
     ChallengeType,
     { icon: string; color: string; route: string }
   > = {
-    complete_quiz: { icon: "lightbulb.fill", color: M.warning, route: "/quiz" },
+    complete_quiz: { icon: "graduationcap.fill", color: M.warning, route: "/quiz" },
     review_words: { icon: "brain.fill", color: getAccent("purple").solid, route: "/word-review" },
     listen_lesson: { icon: "headphones", color: getAccent("blue").solid, route: "/(tabs)/learn" },
     complete_lesson: { icon: "checkmark.circle.fill", color: M.success, route: "/(tabs)/learn" },

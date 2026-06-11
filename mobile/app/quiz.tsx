@@ -2,14 +2,18 @@ import { ListeningQuestion } from "@/components/quiz/listening-question";
 import { OptionCard } from "@/components/quiz/option-card";
 import { PictureOptionGrid } from "@/components/quiz/picture-option-grid";
 import { TypeTheWordInput } from "@/components/quiz/type-the-word-input";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
 import { analytics } from "@/lib/analytics";
 import { apiFetch } from "@/lib/api";
 import { hapticError, hapticHeavy, hapticSuccess } from "@/lib/haptics";
-import { useDictionary } from "@/lib/hooks/use-dictionary";
-import { useWordProgressMap } from "@/lib/hooks/use-word-progress";
-import { useSentences } from "@/lib/hooks/use-sentences";
 import { useLesson } from "@/lib/hooks/use-courses";
+import { useInvalidateDailyChallenges } from "@/lib/hooks/use-daily-challenge";
+import { useDictionary } from "@/lib/hooks/use-dictionary";
+import { useSentences } from "@/lib/hooks/use-sentences";
+import { useWordProgressMap } from "@/lib/hooks/use-word-progress";
 import { getLanguageName } from "@/lib/mock-data";
 import { generateFocusedQuiz, generateLessonQuiz, generateQuiz } from "@/lib/quiz-engine";
 import {
@@ -17,14 +21,10 @@ import {
     playFinishSound,
     playIncorrectSound,
 } from "@/lib/sounds";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import { useQuizStore } from "@/store/quiz-store";
 import type { QuizQuestion } from "@/types";
-import { useInvalidateDailyChallenges } from "@/lib/hooks/use-daily-challenge";
 import { useAuth } from "@clerk/clerk-expo";
 import { useQueryClient } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -74,7 +74,7 @@ function ConfigView({ onStart }: { onStart: (count: number) => void }) {
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
       <View style={{ width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", backgroundColor: M.accentGlow, borderWidth: 1, borderColor: M.accentBorder }}>
-        <IconSymbol name="lightbulb.fill" size={36} color={M.accent} />
+        <IconSymbol name="graduationcap.fill" size={36} color={M.accent} />
       </View>
       <Text style={{ marginTop: 16, fontSize: 20, fontWeight: "700", color: M.text }}>
         {t("quiz.title")}
@@ -237,7 +237,7 @@ function ActiveView() {
           <View style={{ marginTop: 12, borderRadius: 16, backgroundColor: M.errorBg, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: M.errorBorder }}>
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                <IconSymbol name="lightbulb.fill" size={14} color={M.warning} />
+                <IconSymbol name="graduationcap.fill" size={14} color={M.warning} />
                 <Text style={{ fontSize: 11, fontWeight: "600", color: M.warning }}>
                   {t("quiz.correctAnswerLabel")}
                 </Text>

@@ -4,17 +4,17 @@ import { QuestionTypeLabel } from "@/components/quiz/question-type-label";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
 import { apiFetch } from "@/lib/api";
+import { ONBOARDING_KEY } from "@/lib/constants";
 import type { DictionaryEntry } from "@/lib/dictionary";
 import { hapticError, hapticSuccess } from "@/lib/haptics";
-import { ONBOARDING_KEY } from "@/lib/constants";
 import { ACTIVE_LANGUAGES } from "@/lib/mock-data";
 import { generateQuiz } from "@/lib/quiz-engine";
-import { useMuseumTheme } from "@/lib/use-museum-theme";
 import {
     playCorrectSound,
     playFinishSound,
     playIncorrectSound,
 } from "@/lib/sounds";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import { useQuizStore } from "@/store/quiz-store";
 import { useTourStore } from "@/store/tour-store";
@@ -386,7 +386,7 @@ export default function OnboardingScreen() {
               {locked && lastAnswerCorrect === false && (
                 <View style={{ marginTop: 12, borderRadius: 16, backgroundColor: M.errorBg, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: M.errorBorder }}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                    <IconSymbol name="lightbulb.fill" size={14} color={getAccent("orange").solid} />
+                    <IconSymbol name="graduationcap.fill" size={14} color={getAccent("orange").solid} />
                     <Text style={{ fontSize: 11, fontWeight: "600", color: getAccent("orange").solid }}>
                       {t("quiz.correctAnswerLabel")}
                     </Text>

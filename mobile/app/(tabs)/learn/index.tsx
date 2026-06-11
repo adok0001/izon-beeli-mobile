@@ -36,6 +36,7 @@ import {
   Modal,
   Pressable,
   RefreshControl,
+  ScrollView,
   Text,
   View,
 } from "react-native";
@@ -390,7 +391,7 @@ const CourseCard = memo(function CourseCard({
                 accessibilityRole="button"
                 accessibilityLabel={t("learn.practiceQuiz")}
               >
-                <IconSymbol name="lightbulb.fill" size={14} color={accentColor} />
+                <IconSymbol name="graduationcap.fill" size={14} color={accentColor} />
                 <Text style={{ fontSize: 12, fontWeight: "700", color: accentColor }}>
                   {t("learn.practiceQuiz")}
                 </Text>

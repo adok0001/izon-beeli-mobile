@@ -20,7 +20,7 @@ export const GAME_CATEGORIES: GameCategory[] = ["quick", "listening", "reading",
 export const GAMES: PlaygroundGame[] = [
   { id: "speed-round", i18nKey: "speedRound", icon: "bolt.fill", color: getAccent("amber").solid, route: "/speed-round", category: "quick" },
   { id: "recall-bingo", i18nKey: "recallBingo", icon: "square.grid.3x3.fill", color: getAccent("green").solid, route: "/recall-bingo", category: "quick" },
-  { id: "quiz", i18nKey: "quiz", icon: "lightbulb.fill", color: getAccent("amber").solid, route: "/quiz", category: "quick" },
+  { id: "quiz", i18nKey: "quiz", icon: "graduationcap.fill", color: getAccent("amber").solid, route: "/quiz", category: "quick" },
   { id: "matching-game", i18nKey: "match", icon: "rectangle.grid.2x2", color: getAccent("purple").solid, route: "/matching-game", category: "quick" },
   { id: "word-review", i18nKey: "wordReview", icon: "brain.head.profile", color: getAccent("green").solid, route: "/word-review", category: "quick" },
   { id: "dictation", i18nKey: "dictation", icon: "waveform", color: getAccent("sky").solid, route: "/dictation", category: "listening" },

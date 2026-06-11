@@ -53,7 +53,7 @@ const MAPPING = {
   'arrow.up.circle.fill': 'send',
   'text.bubble': 'forum',
   'character.book.closed': 'auto-stories',
-  'trophy.fill': 'quiz',
+  'graduationcap.fill': 'school',
   'shield.fill': 'verified-user',
   'clock.fill': 'access-time',
   'checkmark.seal.fill': 'verified',

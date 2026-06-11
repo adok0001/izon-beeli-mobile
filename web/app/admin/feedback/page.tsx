@@ -4,7 +4,7 @@ import { apiFetch } from "@/lib/api";
 import { formatRelativeTime } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bug, Lightbulb, MessageSquare, Monitor, MoreHorizontal, Search, Smartphone, Trash2 } from "lucide-react";
+import { Bug, MessageSquare, Monitor, MoreHorizontal, School, Search, Smartphone, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -28,7 +28,7 @@ const CATEGORY_CONFIG = {
     label: "Bug",
   },
   suggestion: {
-    icon: Lightbulb,
+    icon: School,
     color: "text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400",
     border: "border-amber-100 dark:border-amber-900/30",
     label: "Suggestion",
