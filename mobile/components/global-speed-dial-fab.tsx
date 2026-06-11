@@ -2,9 +2,9 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
 import { hapticTap } from "@/lib/haptics";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useSpeedDialStore } from "@/store/speed-dial-store";
 import { useTourStore } from "@/store/tour-store";
 import { useRouter } from "expo-router";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
@@ -75,7 +75,8 @@ export function GlobalSpeedDialFab() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const activeTour = useTourStore((s) => s.activeTour);
-  const [open, setOpen] = useState(false);
+  const open = useSpeedDialStore((s) => s.open);
+  const setOpen = useSpeedDialStore((s) => s.setOpen);
   const progress = useSharedValue(0);
 
   const plusStyle = useAnimatedStyle(() => ({

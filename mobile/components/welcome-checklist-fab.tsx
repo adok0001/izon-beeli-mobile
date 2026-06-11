@@ -10,6 +10,7 @@ import {
     type MobileChecklistAudience,
     type MobileChecklistId,
 } from "@/lib/tours/mobile-checklist-registry";
+import { useSpeedDialStore } from "@/store/speed-dial-store";
 import { useWelcomeChecklistStore } from "@/store/welcome-checklist-store";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -256,6 +257,8 @@ export function WelcomeChecklistFab() {
     }
   }, [pendingCount, isHydrated, bonusAwarded, markBonusAwarded, awardBonus]);
 
+  const speedDialOpen = useSpeedDialStore((s) => s.open);
+
   if (!isHydrated) return null;
 
   return (
@@ -265,7 +268,7 @@ export function WelcomeChecklistFab() {
         onDismiss={() => setCelebrationVisible(false)}
       />
 
-      {pendingCount > 0 && (
+      {pendingCount > 0 && !speedDialOpen && (
       // bottom offset clears the global speed-dial FAB, which owns the bottom-right slot
       <View pointerEvents="box-none" style={{ position: "absolute", right: 16, bottom: 136 + insets.bottom, zIndex: 60 }}>
 
