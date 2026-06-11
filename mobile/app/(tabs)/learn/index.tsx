@@ -545,7 +545,7 @@ export default function LearnScreen() {
             )}
             ListHeaderComponent={
               <View style={{ gap: 10, marginBottom: 16 }}>
-                {resumeState && resumeState.positionSeconds > 5 && (
+                {resumeState && resumeState.positionSeconds > 5 && resumeState.languageId === selectedLanguageId && (
                   <ContinueCard
                     lessonId={resumeState.lessonId}
                     positionSeconds={resumeState.positionSeconds}
