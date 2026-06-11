@@ -10,7 +10,8 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test": "jest",
-    "dev:server": "cd server && npm run dev"
+    "dev:server": "cd server && npm run dev",
+    "eas-build-post-install": "bash scripts/eas-build-pre-build.sh"
   },
   "jest": {
     "preset": "ts-jest",

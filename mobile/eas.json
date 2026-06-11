@@ -6,7 +6,9 @@
     "base": {
       "node": "20.19.4",
       "env": {
-        "NODE_ENV": "development"
+        "NODE_ENV": "development",
+        "FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT": "120",
+        "FASTLANE_XCODEBUILD_SETTINGS_RETRIES": "6"
       }
     },
     "development": {
