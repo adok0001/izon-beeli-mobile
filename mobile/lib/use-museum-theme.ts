@@ -1,6 +1,28 @@
 import { useColorScheme } from "@/hooks/use-color-scheme";
 
 /**
+ * Static, mode-invariant Museum palette. For contexts that cannot use the
+ * `useMuseumTheme()` hook or must not vary with color scheme (e.g. the share
+ * card captured to PNG). The hook below derives from these same values.
+ */
+export const MUSEUM = {
+  ink: "#0D0F1A",
+  inkDeep: "#07080F",
+  inkRaised: "#1A1D2C",
+  parchment: "#F7F2E8",
+  textDim: "#9A9480",
+  textDimDark: "#5A5D70",
+  accent: "#C4862A",
+  accentLight: "#D89A3A",
+  accentDark: "#A66E1C",
+} as const;
+
+/** Bronze accent at the given alpha — glows, borders, tinted fills. */
+export const bronze = (alpha: number) => `rgba(196,134,42,${alpha})`;
+/** Parchment at the given alpha — the "liquid glass" fills and hairlines. */
+export const glass = (alpha: number) => `rgba(247,242,232,${alpha})`;
+
+/**
  * Museum design system tokens.
  *
  * Rule:
@@ -15,11 +37,11 @@ export function useMuseumTheme() {
 
   return {
     // ── Always-dark foyer ────────────────────────────────────────
-    ink: "#0D0F1A",
-    inkDeep: "#07080F",
-    parchment: "#F7F2E8",          // primary text on dark bg
-    textDim: "#9A9480",            // secondary text on dark bg
-    textDimDark: "#5A5D70",        // muted text on dark bg
+    ink: MUSEUM.ink,
+    inkDeep: MUSEUM.inkDeep,
+    parchment: MUSEUM.parchment,   // primary text on dark bg
+    textDim: MUSEUM.textDim,       // secondary text on dark bg
+    textDimDark: MUSEUM.textDimDark, // muted text on dark bg
     accentDim: "#8B5E1A",
 
     // ── Mode-aware content area ──────────────────────────────────
@@ -33,7 +55,7 @@ export function useMuseumTheme() {
     muted: dark ? "#5A5D70" : "#A89880",   // muted / timestamps
 
     // ── Accent (identical in both modes) ────────────────────────
-    accent:       "#C4862A",
+    accent:       MUSEUM.accent,
     accentBorder: dark ? "rgba(196,134,42,0.4)"  : "rgba(196,134,42,0.35)",
     accentGlow:   dark ? "rgba(196,134,42,0.15)" : "rgba(196,134,42,0.10)",
     accentLight:  "#F5E8CC",
