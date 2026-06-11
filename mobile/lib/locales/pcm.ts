@@ -126,6 +126,7 @@ export const pcm = {
     contributorBannerTitle: "Join the reviewer team",
     contributorBannerCta: "Apply to be Reviewer",
     dailyGoal: "Daily Goal",
+    dailyGoalTitle: "Today Challenges",
     goalProgress: "{{done}}/{{target}}",
     streak: "Streak",
     level: "Level",

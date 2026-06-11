@@ -8,6 +8,7 @@ import { UpNextCard } from "@/components/up-next-card";
 import { WordChallengeCard } from "@/components/word-challenge-card";
 import { getAccent } from "@/constants/accent-colors";
 import { getCourseTypeColors, getLevelColors } from "@/constants/course-colors";
+import { DailyChallengeCards } from "@/components/daily-challenge-card";
 import { useBounties } from "@/lib/hooks/use-bounties";
 import { useCourseLessons, useCourses, useLesson } from "@/lib/hooks/use-courses";
 import { useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
@@ -32,6 +33,7 @@ import {
   ActivityIndicator,
   Animated,
   FlatList,
+  Modal,
   Pressable,
   RefreshControl,
   Text,
@@ -636,6 +638,7 @@ export default function LearnScreen() {
 
   const [refreshing, setRefreshing] = useState(false);
   const [freezeModalVisible, setFreezeModalVisible] = useState(false);
+  const [goalModalVisible, setGoalModalVisible] = useState(false);
   const freezeChecked = useRef(false);
   const goalCelebrationChecked = useRef(false);
   const { toast, success: toastSuccess, dismiss: dismissToast } = useToast();
@@ -832,7 +835,8 @@ export default function LearnScreen() {
           <View style={{ width: 1, backgroundColor: "rgba(255,255,255,0.06)" }} />
 
           {/* Daily goal */}
-          <View
+          <Pressable
+            onPress={() => setGoalModalVisible(true)}
             style={{
               flex: 1,
               flexDirection: "row",
@@ -845,6 +849,9 @@ export default function LearnScreen() {
               borderWidth: 1,
               borderColor: "rgba(255,255,255,0.08)",
             }}
+            accessibilityRole="button"
+            accessibilityLabel={`Daily goal: ${completedToday} of 3 challenges completed`}
+            className="active:opacity-70"
           >
             <DailyGoalRing completedToday={completedToday} />
             <View>
@@ -856,7 +863,7 @@ export default function LearnScreen() {
                 <Text style={{ fontSize: 12, fontWeight: "500", color: M.textDimDark }}>/3</Text>
               </Text>
             </View>
-          </View>
+          </Pressable>
         </Animated.View>
       </View>
 
@@ -929,6 +936,46 @@ export default function LearnScreen() {
         type={toast.type}
         onDismiss={dismissToast}
       />
+
+      <Modal
+        visible={goalModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setGoalModalVisible(false)}
+      >
+        <Pressable
+          style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.6)" }}
+          onPress={() => setGoalModalVisible(false)}
+        />
+        <View
+          style={{
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            backgroundColor: M.ink,
+            borderTopWidth: 1,
+            borderTopColor: M.border,
+            paddingHorizontal: 20,
+            paddingBottom: 40,
+            paddingTop: 16,
+          }}
+        >
+          <View
+            style={{
+              width: 40, height: 4, borderRadius: 2,
+              backgroundColor: M.border, alignSelf: "center", marginBottom: 16,
+            }}
+          />
+          <Text
+            style={{
+              marginBottom: 20, textAlign: "center",
+              fontSize: 17, fontWeight: "800", color: M.parchment,
+            }}
+          >
+            {t("learn.dailyGoalTitle")}
+          </Text>
+          <DailyChallengeCards />
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

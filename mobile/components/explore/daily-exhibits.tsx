@@ -1,6 +1,5 @@
 import { SymbolOfTheDay } from "@/components/adinkra/symbol-of-the-day";
 import { CulturalSection } from "@/components/cultural/cultural-section";
-import { DailyChallengeCards } from "@/components/daily-challenge-card";
 import { FeaturedGameCard } from "@/components/playground/featured-game-card";
 import { GameShelf } from "@/components/playground/game-shelf";
 import { PlaygroundDoorCard } from "@/components/playground/playground-door-card";
@@ -291,7 +290,6 @@ export function DailyExhibits() {
         <WordOfTheDay languageId={selectedLanguageId} />
         <ProverbOfTheMonthCard languageId={selectedLanguageId} />
         <SongOfTheWeekCard languageId={selectedLanguageId} />
-        <DailyChallengeCards />
       </View>
 
       {/* ── The Playground: one featured game, a shelf, and the door to the rest ── */}

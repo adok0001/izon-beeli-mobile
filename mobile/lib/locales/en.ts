@@ -126,6 +126,7 @@ export const en = {
     contributorBannerTitle: "Join the reviewer team",
     contributorBannerCta: "Apply to be a Reviewer",
     dailyGoal: "Daily Goal",
+    dailyGoalTitle: "Today's Challenges",
     goalProgress: "{{done}}/{{target}}",
     streak: "Streak",
     level: "Level",

@@ -126,6 +126,7 @@ export const fr = {
     contributorBannerTitle: "Rejoignez l'équipe de relecteurs",
     contributorBannerCta: "Devenir relecteur",
     dailyGoal: "Objectif du jour",
+    dailyGoalTitle: "Défis du jour",
     goalProgress: "{{done}}/{{target}}",
     streak: "Série",
     level: "Niveau",
