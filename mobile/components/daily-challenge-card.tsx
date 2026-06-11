@@ -18,7 +18,7 @@ function ChallengeItem({ challenge }: { challenge: DailyChallenge }) {
     ChallengeType,
     { icon: string; color: string; route: string }
   > = {
-    complete_quiz: { icon: "trophy.fill", color: M.warning, route: "/quiz" },
+    complete_quiz: { icon: "lightbulb.fill", color: M.warning, route: "/quiz" },
     review_words: { icon: "brain.fill", color: getAccent("purple").solid, route: "/word-review" },
     listen_lesson: { icon: "headphones", color: getAccent("blue").solid, route: "/(tabs)/learn" },
     complete_lesson: { icon: "checkmark.circle.fill", color: M.success, route: "/(tabs)/learn" },

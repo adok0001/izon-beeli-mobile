@@ -74,7 +74,7 @@ function ConfigView({ onStart }: { onStart: (count: number) => void }) {
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
       <View style={{ width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", backgroundColor: M.accentGlow, borderWidth: 1, borderColor: M.accentBorder }}>
-        <IconSymbol name="trophy.fill" size={36} color={M.accent} />
+        <IconSymbol name="lightbulb.fill" size={36} color={M.accent} />
       </View>
       <Text style={{ marginTop: 16, fontSize: 20, fontWeight: "700", color: M.text }}>
         {t("quiz.title")}
