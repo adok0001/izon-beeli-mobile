@@ -103,11 +103,11 @@ export function EnrolledLanguageBar() {
   };
 
   return (
-    <View style={{ borderBottomWidth: 1, borderBottomColor: M.border }}>
+    <View style={{ overflow: "hidden" }}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 8, flexGrow: 1, justifyContent: "flex-end" }}
       >
         {enrolledLanguageIds.map((id) => {
           const isActive = id === selectedLanguageId;
