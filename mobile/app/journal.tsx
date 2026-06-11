@@ -30,6 +30,7 @@ import {
   Platform,
   Pressable,
   RefreshControl,
+  ScrollView,
   SectionList,
   Text,
   TextInput,
@@ -552,29 +553,114 @@ export default function JournalScreen() {
           style={{ flex: 1, backgroundColor: M.ink }}
         >
           <SafeAreaView style={{ flex: 1 }}>
-            {/* Modal nav */}
+            {/* Nav bar — all controls live here, keyboard-safe */}
             <View
               style={{
-                flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+                flexDirection: "row", alignItems: "center",
                 borderBottomWidth: 1, borderBottomColor: M.border,
-                paddingHorizontal: 20, paddingVertical: 14,
+                paddingHorizontal: 16, paddingVertical: 12,
+                gap: 8,
               }}
             >
-              <Pressable onPress={handleClose} hitSlop={8}>
-                <Text style={{ fontSize: 14, color: M.textDim }}>{t("common.cancel")}</Text>
-              </Pressable>
-              <Text style={{ fontSize: 15, fontWeight: "800", color: M.parchment }}>
-                {isEditing ? t("journal.editEntry") : t("journal.newEntry")}
-              </Text>
-              <Pressable onPress={handleSave} disabled={!canSave} hitSlop={8}>
-                <Text style={{ fontSize: 14, fontWeight: "800", color: canSave ? M.accent : M.muted }}>
-                  {t("common.save")}
-                </Text>
-              </Pressable>
+              {/* Left: Cancel + Delete (when editing) */}
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 14, minWidth: 72 }}>
+                <Pressable onPress={handleClose} hitSlop={10} accessibilityRole="button">
+                  <Text style={{ fontSize: 14, color: M.textDim }}>{t("common.cancel")}</Text>
+                </Pressable>
+                {isEditing && (
+                  <Pressable
+                    onPress={() => handleDelete(editingId!, title)}
+                    hitSlop={12}
+                    accessibilityRole="button"
+                    accessibilityLabel={t("common.delete")}
+                    className="active:opacity-60"
+                  >
+                    <IconSymbol name="trash" size={15} color="#f87171" />
+                  </Pressable>
+                )}
+              </View>
+
+              {/* Centre: title label or live recording indicator */}
+              <View style={{ flex: 1, alignItems: "center" }}>
+                {voice.state === "recording" ? (
+                  <Pressable
+                    onPress={voice.stopRecording}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel="Stop recording"
+                    style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+                    className="active:opacity-70"
+                  >
+                    <Animated.View
+                      style={{
+                        width: 7, height: 7, borderRadius: 4,
+                        backgroundColor: "#f87171",
+                        transform: [{ scale: pulseAnim }],
+                      }}
+                    />
+                    <Text style={{ fontSize: 13, fontWeight: "700", color: "#f87171" }}>
+                      {formatSeconds(voice.elapsed)}
+                    </Text>
+                    <View
+                      style={{
+                        width: 18, height: 18, borderRadius: 4,
+                        backgroundColor: "#f87171",
+                        alignItems: "center", justifyContent: "center",
+                      }}
+                    >
+                      <View style={{ width: 7, height: 7, borderRadius: 1, backgroundColor: M.ink }} />
+                    </View>
+                  </Pressable>
+                ) : (
+                  <Text style={{ fontSize: 14, fontWeight: "800", color: M.parchment }}>
+                    {isEditing ? t("journal.editEntry") : t("journal.newEntry")}
+                  </Text>
+                )}
+              </View>
+
+              {/* Right: visibility · mic · save */}
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 14, minWidth: 72, justifyContent: "flex-end" }}>
+                <Pressable
+                  onPress={() => setIsPublic((v) => !v)}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel={isPublic ? "Make private" : "Make public"}
+                  className="active:opacity-60"
+                >
+                  <IconSymbol
+                    name={isPublic ? "globe" : "lock"}
+                    size={15}
+                    color={isPublic ? M.accent : M.muted}
+                  />
+                </Pressable>
+
+                {voice.state === "idle" && (
+                  <Pressable
+                    onPress={voice.startRecording}
+                    hitSlop={10}
+                    accessibilityRole="button"
+                    accessibilityLabel="Record voice note"
+                    className="active:opacity-60"
+                  >
+                    <IconSymbol name="mic.fill" size={15} color={M.muted} />
+                  </Pressable>
+                )}
+
+                <Pressable onPress={handleSave} disabled={!canSave} hitSlop={10} accessibilityRole="button">
+                  <Text style={{ fontSize: 14, fontWeight: "800", color: canSave ? M.accent : M.muted }}>
+                    {t("common.save")}
+                  </Text>
+                </Pressable>
+              </View>
             </View>
 
             {/* Editor */}
-            <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 16 }}>
+            <ScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 }}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
               <TextInput
                 value={title}
                 onChangeText={setTitle}
@@ -585,12 +671,18 @@ export default function JournalScreen() {
                 onSubmitEditing={() => contentInputRef.current?.focus()}
                 blurOnSubmit={false}
                 style={{
-                  marginBottom: 16, paddingBottom: 14,
+                  paddingBottom: 12,
                   borderBottomWidth: 2,
                   borderBottomColor: title.length > 0 ? M.accent : M.border,
                   fontSize: 24, fontWeight: "800", color: M.parchment,
                 }}
               />
+              {/* Word count — quiet inline annotation */}
+              <Text style={{ fontSize: 10, color: editorWordCount > 150 ? M.accent : M.muted, marginTop: 6, marginBottom: 14, letterSpacing: 0.4 }}>
+                {editorWordCount > 0
+                  ? `${editorWordCount} ${editorWordCount === 1 ? "word" : "words"} · ~${editorReadingMins} min`
+                  : t("journal.words", { count: 0, defaultValue: "0 words" })}
+              </Text>
               <TextInput
                 ref={contentInputRef}
                 value={content}
@@ -599,15 +691,15 @@ export default function JournalScreen() {
                 placeholderTextColor={M.textDimDark}
                 multiline
                 textAlignVertical="top"
-                style={{ flex: 1, fontSize: 15, lineHeight: 24, color: M.textDim }}
+                style={{ minHeight: 200, fontSize: 15, lineHeight: 24, color: M.textDim }}
               />
-            </View>
+            </ScrollView>
 
-            {/* Voice note player — shown when there's a recording */}
+            {/* Voice note player — inline strip above safe area */}
             {voice.state === "stopped" && voice.uri && (
               <View
                 style={{
-                  marginHorizontal: 20, marginBottom: 8,
+                  marginHorizontal: 20, marginBottom: 12,
                   borderRadius: 12,
                   backgroundColor: `${M.accent}10`,
                   borderWidth: 1, borderColor: `${M.accent}30`,
@@ -653,119 +745,6 @@ export default function JournalScreen() {
                 </Pressable>
               </View>
             )}
-
-            {/* Footer */}
-            <View
-              style={{
-                flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-                borderTopWidth: 1, borderTopColor: M.border,
-                paddingHorizontal: 20, paddingVertical: 12,
-              }}
-            >
-              {/* Word count */}
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                <Text style={{ fontSize: 11, color: editorWordCount > 150 ? M.accent : M.muted }}>
-                  {t("journal.words", { count: editorWordCount, defaultValue: `${editorWordCount} words` })}
-                </Text>
-                {editorWordCount > 0 && (
-                  <Text style={{ fontSize: 11, color: M.muted }}>
-                    · ~{editorReadingMins} min read
-                  </Text>
-                )}
-              </View>
-
-              {/* Visibility toggle */}
-              <Pressable
-                onPress={() => setIsPublic((v) => !v)}
-                hitSlop={8}
-                accessibilityRole="button"
-                accessibilityLabel={isPublic ? "Make private" : "Make public"}
-                style={{
-                  flexDirection: "row", alignItems: "center", gap: 5,
-                  borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5,
-                  backgroundColor: isPublic ? `${M.accent}20` : `${M.border}80`,
-                }}
-                className="active:opacity-70"
-              >
-                <IconSymbol
-                  name={isPublic ? "globe" : "lock"}
-                  size={12}
-                  color={isPublic ? M.accent : M.muted}
-                />
-                <Text style={{ fontSize: 11, fontWeight: "700", color: isPublic ? M.accent : M.muted }}>
-                  {isPublic ? "PUBLIC" : "PRIVATE"}
-                </Text>
-              </Pressable>
-
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
-                {/* Mic / recording control */}
-                {voice.state === "idle" && (
-                  <Pressable
-                    onPress={voice.startRecording}
-                    hitSlop={12}
-                    accessibilityRole="button"
-                    accessibilityLabel="Record voice note"
-                    style={{
-                      flexDirection: "row", alignItems: "center", gap: 5,
-                      borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5,
-                      backgroundColor: `${M.border}80`,
-                    }}
-                    className="active:opacity-70"
-                  >
-                    <IconSymbol name="mic" size={13} color={M.muted} />
-                    <Text style={{ fontSize: 11, color: M.muted, fontWeight: "600" }}>REC</Text>
-                  </Pressable>
-                )}
-
-                {voice.state === "recording" && (
-                  <Pressable
-                    onPress={voice.stopRecording}
-                    hitSlop={12}
-                    accessibilityRole="button"
-                    accessibilityLabel="Stop recording"
-                    style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
-                    className="active:opacity-70"
-                  >
-                    <Animated.View
-                      style={{
-                        width: 8, height: 8, borderRadius: 4,
-                        backgroundColor: "#f87171",
-                        transform: [{ scale: pulseAnim }],
-                      }}
-                    />
-                    <Text style={{ fontSize: 11, fontWeight: "700", color: "#f87171" }}>
-                      {formatSeconds(voice.elapsed)}
-                    </Text>
-                    <View
-                      style={{
-                        width: 20, height: 20, borderRadius: 5,
-                        backgroundColor: "#f87171",
-                        alignItems: "center", justifyContent: "center",
-                      }}
-                    >
-                      <View style={{ width: 8, height: 8, borderRadius: 1, backgroundColor: M.ink }} />
-                    </View>
-                  </Pressable>
-                )}
-
-                {/* Delete entry */}
-                {isEditing && (
-                  <Pressable
-                    onPress={() => handleDelete(editingId!, title)}
-                    hitSlop={16}
-                    accessibilityRole="button"
-                    accessibilityLabel={t("common.delete")}
-                    style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
-                    className="active:opacity-70"
-                  >
-                    <IconSymbol name="trash" size={13} color="#f87171" />
-                    <Text style={{ fontSize: 12, fontWeight: "600", color: "#f87171" }}>
-                      {t("common.delete")}
-                    </Text>
-                  </Pressable>
-                )}
-              </View>
-            </View>
           </SafeAreaView>
         </KeyboardAvoidingView>
       </Modal>
