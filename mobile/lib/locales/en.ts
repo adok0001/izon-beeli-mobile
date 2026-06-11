@@ -925,6 +925,7 @@ export const en = {
     learningGeneric: "Learning with Beeli",
     cardTitle: "Share Card",
     shareButton: "Share",
+    listen: "Hear it",
     tapToSend: "Tap Share to send this card",
     tagline: "Learn African languages · izonbeeli.app",
   },

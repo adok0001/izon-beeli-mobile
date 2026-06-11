@@ -174,8 +174,8 @@ export default function AdminPanelScreen() {
             />
             <ActionRow
               icon="film"
-              label="Culture Content"
-              detail="Manage blogs, podcasts, and films"
+              label={t("admin.cultureContent.title")}
+              detail={t("admin.cultureContent.subtitle")}
               onPress={() => router.push("/admin/culture-content")}
               accent={getAccent("purple").solid}
             />

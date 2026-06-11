@@ -947,6 +947,7 @@ export const pcm = {
     learningGeneric: "I dey learn with Beeli",
     cardTitle: "Share Card",
     shareButton: "Share",
+    listen: "Hear am",
     tapToSend: "Press Share to send this card",
     tagline: "Learn African languages · izonbeeli.app",
   },

@@ -927,6 +927,7 @@ export const fr = {
     learningGeneric: "J'apprends avec Beeli",
     cardTitle: "Partager la carte",
     shareButton: "Partager",
+    listen: "Écouter",
     tapToSend: "Appuyez sur Partager pour envoyer cette carte",
     tagline: "Apprenez les langues africaines · izonbeeli.app",
   },
