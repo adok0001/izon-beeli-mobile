@@ -204,7 +204,7 @@ npm run ios
 If you want to work directly in Xcode:
 
 1. Run prebuild if native files need regeneration.
-2. Open [ios/BeeliMobile.xcworkspace](ios/BeeliMobile.xcworkspace).
+2. Open [ios/Beeli.xcworkspace](ios/Beeli.xcworkspace).
 3. Select a simulator or connected device.
 4. Build and run from Xcode.
 
@@ -239,6 +239,8 @@ Use Android Studio when you need:
 - signing and release troubleshooting
 
 ## Deployment and release workflows
+
+See [docs/troubleshooting.md](docs/troubleshooting.md) for known build and provisioning issues.
 
 ### Vercel deployment for the API
 

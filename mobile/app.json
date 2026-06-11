@@ -2,7 +2,7 @@
   "expo": {
     "name": "Beeli",
     "slug": "izon-beeli-mobile",
-    "version": "1.52.1",
+    "version": "1.52.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "izonbeelimobile",
@@ -89,7 +89,24 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "f58ed9fc-5836-4660-9c9d-2e73f96b0c8d"
+        "projectId": "f58ed9fc-5836-4660-9c9d-2e73f96b0c8d",
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "targetName": "BeeliWidget",
+                  "bundleIdentifier": "com.izonbeeli.app.BeeliWidget",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.izonbeeli.shared"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
       }
     },
     "owner": "tammyado",
