@@ -24,6 +24,8 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
     progress,
     duration,
     playbackSpeed,
+    error,
+    reset,
     togglePlayback,
     skipForward,
     skipBackward,
@@ -62,20 +64,20 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
       <View style={[{ backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 8 }, borderPos]}>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Pressable
-            onPress={togglePlayback}
+            onPress={error ? reset : togglePlayback}
             style={{ marginRight: 12 }}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel={isPlaying ? "Pause audio" : "Play audio"}
+            accessibilityLabel={error ? "Dismiss audio error" : isPlaying ? "Pause audio" : "Play audio"}
             accessibilityState={{ busy: isLoading }}
           >
             {isLoading ? (
               <ActivityIndicator size="small" color={M.accent} />
             ) : (
               <IconSymbol
-                name={isPlaying ? "pause.fill" : "play.fill"}
+                name={error ? "xmark" : isPlaying ? "pause.fill" : "play.fill"}
                 size={24}
-                color={M.accent}
+                color={error ? M.error : M.accent}
               />
             )}
           </Pressable>
@@ -91,6 +93,11 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
                 {currentTrackTitle ?? "Now Playing"}
               </Text>
             </Pressable>
+            {error ? (
+              <Text style={{ marginTop: 4, fontSize: 12, color: M.error }} numberOfLines={1}>
+                {error}
+              </Text>
+            ) : (
             <Pressable
               onPress={handleSeek}
               onLayout={onBarLayout}
@@ -103,6 +110,7 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
                 <View style={{ height: 4, borderRadius: 999, backgroundColor: M.accent, width: `${progressPercent}%` }} />
               </View>
             </Pressable>
+            )}
           </View>
           <Text style={{ marginLeft: 8, fontSize: 12, color: M.sub }}>
             {formatDuration(progress)}
@@ -117,6 +125,28 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
       <Text style={{ marginBottom: 12, textAlign: "center", fontSize: 16, fontWeight: "600", color: M.text }} numberOfLines={1}>
         {currentTrackTitle ?? "Now Playing"}
       </Text>
+
+      {error && (
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 6,
+            marginBottom: 12,
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            borderRadius: 8,
+            backgroundColor: M.errorBg,
+            borderWidth: 1,
+            borderColor: M.errorBorder,
+          }}
+          accessibilityRole="alert"
+        >
+          <IconSymbol name="exclamationmark.triangle.fill" size={16} color={M.error} />
+          <Text style={{ fontSize: 13, color: M.error, flexShrink: 1 }}>{error}</Text>
+        </View>
+      )}
 
       <Pressable
         onPress={handleSeek}
@@ -158,17 +188,17 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
         </Pressable>
 
         <Pressable
-          onPress={togglePlayback}
-          style={{ height: 56, width: 56, alignItems: "center", justifyContent: "center", borderRadius: 28, backgroundColor: M.accent }}
+          onPress={error ? reset : togglePlayback}
+          style={{ height: 56, width: 56, alignItems: "center", justifyContent: "center", borderRadius: 28, backgroundColor: error ? M.error : M.accent }}
           hitSlop={4}
           accessibilityRole="button"
-          accessibilityLabel={isPlaying ? "Pause audio" : "Play audio"}
+          accessibilityLabel={error ? "Dismiss audio error" : isPlaying ? "Pause audio" : "Play audio"}
           accessibilityState={{ busy: isLoading }}
         >
           {isLoading ? (
             <ActivityIndicator size="small" color={M.ink} />
           ) : (
-            <IconSymbol name={isPlaying ? "pause.fill" : "play.fill"} size={28} color={M.ink} />
+            <IconSymbol name={error ? "xmark" : isPlaying ? "pause.fill" : "play.fill"} size={28} color={M.ink} />
           )}
         </Pressable>
 
