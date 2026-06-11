@@ -2,77 +2,150 @@
 # EAS post-install hook (iOS)
 #
 # Problem: BeeliWidget's provisioning profile in EAS has IsXcodeManaged=True.
-#   Manual signing (what EAS sets) rejects Xcode-managed profiles.
-#   Automatic signing bypasses the check, but Xcode's signing service picks
-#   the HH5MWDW65M development cert (the account registered in Xcode.app),
-#   causing a cert mismatch with Beeli (which uses FWL2W5X58S distribution cert).
+#   xcodebuild rejects this during both archive (Manual signing) and export
+#   (-exportArchive validates the embedded profile).
 #
 # Solution:
-#   1. Python fix script (called from Gymfile) switches BeeliWidget to Automatic
-#      to bypass the IsXcodeManaged check.
-#   2. CODESIGN wrapper (beeli-widget-codesign.sh, created below) intercepts the
-#      codesign call for BeeliWidget.appex and substitutes the distribution cert.
-#   3. Gymfile passes the wrapper via CODESIGN xcarg for the archive phase, and
-#      discovers the App Store profile for the export phase.
+#   Archive:
+#     - Python fix script: switches BeeliWidget to Automatic (bypasses IsXcodeManaged
+#       during archive). Automatic picks HH5MWDW65M dev cert + embeds dev profile.
+#     - beeli-widget-codesign.sh (CODESIGN wrapper): intercepts the BeeliWidget codesign
+#       call, replaces the dev profile with the EAS App Store profile, and substitutes
+#       the distribution cert. ValidateEmbeddedBinary passes.
+#     - xcarchive now has BeeliWidget correctly signed: dist cert + App Store profile.
 #
-# Permanent fix: run `eas credentials -p ios`, select BeeliWidget, and regenerate
-# the provisioning profile. A portal-generated profile has IsXcodeManaged=False,
-# which works with Manual signing and makes this entire hook unnecessary.
+#   Export:
+#     - ios/bin/xcodebuild is prepended to PATH in the Gymfile so that
+#       xcbuild-safe.sh's PATH-based `xcodebuild "$@"` call hits our wrapper.
+#     - The wrapper intercepts -exportArchive, copies Beeli.app from the
+#       already-correctly-signed xcarchive directly into Payload/ and zips it
+#       as Beeli.ipa — no xcodebuild re-signing, no IsXcodeManaged validation.
+#     - Gym finds the IPA and copies it to output_directory. Build passes.
+#
+# Permanent fix: run `eas credentials -p ios`, select BeeliWidget, generate a new
+# provisioning profile. Portal-generated profiles have IsXcodeManaged=False and work
+# with Manual signing, eliminating this entire hook.
 
 set -eo pipefail
 
-# Create the codesign wrapper for BeeliWidget. xcodebuild's CODESIGN build setting
-# overrides the codesign binary path. The wrapper identifies BeeliWidget.appex
-# signing by path, swaps the dev cert for the distribution cert, and adds the
-# EAS keychain so codesign can find it. All other targets pass through unchanged.
-cat > ios/beeli-widget-codesign.sh << 'WRAPPER_EOF'
+# --- beeli-widget-codesign.sh (CODESIGN wrapper, archive phase) -------------------
+cat > ios/beeli-widget-codesign.sh << 'CODESIGN_EOF'
 #!/bin/bash
+# Intercepts BeeliWidget.appex signing during archive:
+#   1. Embeds the App Store profile (replacing the dev profile Automatic signing placed).
+#   2. Substitutes the distribution cert for the dev cert xcodebuild chose.
 REAL_CODESIGN=/usr/bin/codesign
 DIST_CERT_SHA1="080A7C7351F86814EE8B0F7B91BC591D268EC8A7"
 
-# Only intercept when signing BeeliWidget.appex
-if [[ "$*" == *"BeeliWidget.appex"* ]]; then
-  EAS_KEYCHAIN=$(security list-keychains -d user 2>/dev/null \
-    | grep -o '[^"]*eas-build[^"]*\.keychain[^"]*' | head -1)
-
-  # Rebuild args: replace whatever --sign value xcodebuild chose with dist cert
-  ARGS=()
-  SKIP_NEXT=false
-  for arg in "$@"; do
-    if $SKIP_NEXT; then
-      ARGS+=("$DIST_CERT_SHA1")
-      SKIP_NEXT=false
-    elif [ "$arg" = "--sign" ] || [ "$arg" = "-s" ]; then
-      ARGS+=("$arg")
-      SKIP_NEXT=true
-    else
-      ARGS+=("$arg")
-    fi
-  done
-  if [ -n "$EAS_KEYCHAIN" ]; then
-    ARGS+=("--keychain" "$EAS_KEYCHAIN")
-  fi
-  echo "[beeli-widget-codesign] signing BeeliWidget.appex with dist cert $DIST_CERT_SHA1"
-  exec "$REAL_CODESIGN" "${ARGS[@]}"
+if [[ "$*" != *"BeeliWidget.appex"* ]]; then
+  exec "$REAL_CODESIGN" "$@"
 fi
 
-exec "$REAL_CODESIGN" "$@"
-WRAPPER_EOF
-chmod +x ios/beeli-widget-codesign.sh
-echo "eas-build-pre-build: created codesign wrapper"
+# Find the .appex bundle path in the argument list
+APPEX_DIR=""
+for arg in "$@"; do
+  if [[ "$arg" == *"BeeliWidget.appex" ]] && [ -d "$arg" ]; then
+    APPEX_DIR="$arg"
+    break
+  fi
+done
 
-# Create ios/Gymfile before EAS does. EAS's ensureGymfileExists skips creation
-# when a Gymfile already exists, so our version is used.
-#
-# Single-quoted heredoc so Ruby's #{} interpolation and backticks are preserved
-# as-is (not interpreted by bash). Ruby handles them at Gymfile load time.
-#
-# The Gymfile runs after CONFIGURE_XCODE_PROJECT, so the Python script runs
-# before xcodebuild reads the pbxproj.
+# Embed the EAS App Store distribution profile
+if [ -n "$APPEX_DIR" ]; then
+  for profile in ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision; do
+    [ -f "$profile" ] || continue
+    decoded=$(security cms -D -i "$profile" 2>/dev/null) || continue
+    if echo "$decoded" | grep -q "com.izonbeeli.app.BeeliWidget" && \
+       echo "$decoded" | grep -q "FWL2W5X58S" && \
+       (echo "$decoded" | grep -q "iOS Team Store\|app-store\|AppStore"); then
+      cp "$profile" "$APPEX_DIR/embedded.mobileprovision"
+      echo "[beeli-widget-codesign] embedded App Store profile into BeeliWidget.appex"
+      break
+    fi
+  done
+fi
+
+# Substitute distribution cert and add EAS keychain
+EAS_KEYCHAIN=$(security list-keychains -d user 2>/dev/null \
+  | grep -o '[^"]*eas-build[^"]*\.keychain[^"]*' | head -1)
+ARGS=()
+SKIP_NEXT=false
+for arg in "$@"; do
+  if $SKIP_NEXT; then
+    ARGS+=("$DIST_CERT_SHA1")
+    SKIP_NEXT=false
+  elif [ "$arg" = "--sign" ] || [ "$arg" = "-s" ]; then
+    ARGS+=("$arg")
+    SKIP_NEXT=true
+  else
+    ARGS+=("$arg")
+  fi
+done
+[ -n "$EAS_KEYCHAIN" ] && ARGS+=("--keychain" "$EAS_KEYCHAIN")
+echo "[beeli-widget-codesign] signing with dist cert $DIST_CERT_SHA1"
+exec "$REAL_CODESIGN" "${ARGS[@]}"
+CODESIGN_EOF
+chmod +x ios/beeli-widget-codesign.sh
+echo "eas-build-pre-build: created beeli-widget-codesign.sh"
+
+# --- ios/bin/xcodebuild (PATH-based interceptor for export phase) ----------------
+# xcbuild-safe.sh calls `xcodebuild "$@"` via PATH lookup. Prepending ios/bin
+# to PATH in the Gymfile makes gym's export call hit this wrapper instead.
+mkdir -p ios/bin
+cat > ios/bin/xcodebuild << 'XCODE_INTERCEPT_EOF'
+#!/bin/bash
+# xcodebuild wrapper: intercepts -exportArchive to create the IPA directly
+# from the xcarchive, bypassing xcodebuild's IsXcodeManaged validation.
+# All other xcodebuild actions pass through to the real binary.
+REAL_XCODEBUILD=/usr/bin/xcodebuild
+
+if [[ "$*" != *"-exportArchive"* ]]; then
+  exec "$REAL_XCODEBUILD" "$@"
+fi
+
+echo "[xcodebuild-intercept] intercepted -exportArchive — creating IPA from xcarchive"
+
+# Parse -archivePath and -exportPath from args
+ARCHIVE_PATH=""
+EXPORT_PATH=""
+PREV=""
+for arg in "$@"; do
+  case "$PREV" in
+    -archivePath)        ARCHIVE_PATH="$arg" ;;
+    -exportPath)         EXPORT_PATH="$arg" ;;
+  esac
+  PREV="$arg"
+done
+
+echo "[xcodebuild-intercept] archive  = $ARCHIVE_PATH"
+echo "[xcodebuild-intercept] export   = $EXPORT_PATH"
+
+APP_SRC="$ARCHIVE_PATH/Products/Applications/Beeli.app"
+if [ ! -d "$APP_SRC" ]; then
+  echo "[xcodebuild-intercept] ERROR: Beeli.app not found in xcarchive at $APP_SRC"
+  exit 1
+fi
+
+# Create Payload/ and zip as IPA.
+# The app is already correctly signed in the xcarchive (dist cert on both targets,
+# App Store profile embedded in BeeliWidget.appex by beeli-widget-codesign.sh).
+WORK_DIR=$(mktemp -d)
+mkdir "$WORK_DIR/Payload"
+cp -r "$APP_SRC" "$WORK_DIR/Payload/"
+
+mkdir -p "$EXPORT_PATH"
+(cd "$WORK_DIR" && zip -qr "$EXPORT_PATH/Beeli.ipa" Payload/)
+rm -rf "$WORK_DIR"
+echo "[xcodebuild-intercept] created $EXPORT_PATH/Beeli.ipa"
+exit 0
+XCODE_INTERCEPT_EOF
+chmod +x ios/bin/xcodebuild
+echo "eas-build-pre-build: created ios/bin/xcodebuild interceptor"
+
+# --- Gymfile ---------------------------------------------------------------------
+# Single-quoted heredoc: Ruby #{} and backticks are preserved for Ruby evaluation.
 cat > ios/Gymfile << 'GYMFILE_EOF'
-# Fix BeeliWidget signing. See scripts/eas-build-pre-build.sh for context.
-# 1. Switch BeeliWidget to Automatic to bypass the IsXcodeManaged check.
-# 2. CODESIGN xcarg redirects codesign for BeeliWidget to our wrapper.
+# Fix BeeliWidget signing. See scripts/eas-build-pre-build.sh for full context.
 system("python3 '../scripts/fix-beeli-widget-signing.py'") or true
 
 suppress_xcode_output(true)
@@ -81,34 +154,26 @@ scheme("Beeli")
 configuration("Release")
 export_method("app-store")
 
-# Point xcodebuild at our codesign wrapper for the archive phase.
-# Computed at Gymfile load time; CWD is ios/ where the wrapper lives.
-_wrapper = File.expand_path("beeli-widget-codesign.sh")
-xcargs "CODESIGN=\"#{_wrapper}\""
+# Prepend ios/bin to PATH so xcbuild-safe.sh's PATH-based `xcodebuild` call
+# hits our interceptor, which creates the IPA without triggering xcodebuild's
+# IsXcodeManaged validation.
+_bin_dir = File.expand_path("bin")
+ENV["PATH"] = "#{_bin_dir}:#{ENV['PATH']}"
 
-# EAS keychain for the export phase.
+# CODESIGN wrapper: embeds the App Store profile + dist cert for BeeliWidget.
+_codesign = File.expand_path("beeli-widget-codesign.sh")
+xcargs "CODESIGN=\"#{_codesign}\""
+
+# EAS keychain for the export re-sign via export_xcargs (also passes CODESIGN
+# so xcodebuild uses our wrapper if it ever calls codesign during export).
 _kc = `security list-keychains -d user 2>/dev/null`.split.map { |l| l.tr('"', '') }.find { |l| l.include?("eas-build") } || "login.keychain"
 export_xcargs "OTHER_CODE_SIGN_FLAGS=\"--keychain #{_kc}\""
 
-# Discover the BeeliWidget App Store profile from installed profiles
-# so the export step re-signs with the correct profile.
-_widget_profile = nil
-Dir.glob(File.expand_path("~/Library/MobileDevice/Provisioning Profiles/*.mobileprovision")).each do |f|
-  decoded = `security cms -D -i "#{f}" 2>/dev/null`
-  if decoded.include?("com.izonbeeli.app.BeeliWidget") && decoded.include?("FWL2W5X58S")
-    m = decoded.match(/<key>Name<\/key>\s*<string>([^<]+)<\/string>/)
-    _widget_profile = m[1] if m
-    break
-  end
-end
-puts "[gymfile] BeeliWidget export profile: #{_widget_profile || '(not found — xcodebuild will auto-select)'}"
-
-_profiles = { "com.izonbeeli.app" => "45bb5856-b58a-434d-999f-f7ab26ba93fd" }
-_profiles["com.izonbeeli.app.BeeliWidget"] = _widget_profile if _widget_profile
-
 export_options({
   method: "app-store",
-  provisioningProfiles: _profiles
+  provisioningProfiles: {
+    "com.izonbeeli.app" => "45bb5856-b58a-434d-999f-f7ab26ba93fd"
+  }
 })
 
 derived_data_path("./build")
