@@ -63,6 +63,7 @@ export function CulturalCard({ item, onPress }: Props) {
         onClose={() => setShareVisible(false)}
         data={{
           template: "cultural",
+          languageId: item.languageId,
           title: localizeField(item.title, item.titleFr, uiLanguage),
           description: localizeField(item.description, item.descriptionFr, uiLanguage),
           category: categoryLabel,

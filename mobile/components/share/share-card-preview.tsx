@@ -4,6 +4,7 @@ import { Text, View } from "react-native";
 
 interface WordCardProps {
   template: "word";
+  id?: string;
   word: string;
   translation: string;
   language: string;
@@ -12,6 +13,7 @@ interface WordCardProps {
 
 interface ProverbCardProps {
   template: "proverb";
+  languageId?: string;
   text: string;
   translation: string;
   language: string;
@@ -32,6 +34,7 @@ interface SymbolCardProps {
 
 interface CulturalCardProps {
   template: "cultural";
+  languageId?: string;
   title: string;
   description: string;
   category: string;
@@ -131,6 +134,19 @@ export const ShareCardPreview = forwardRef<View, Props>((props, ref) => {
       {/* Footer */}
       <Text className="mt-6 text-center text-[10px] text-neutral-300">
         {t("share.tagline")}
+      </Text>
+      <Text className="mt-1 text-center text-[9px] text-blue-400">
+        {props.template === "word" && props.id
+          ? `izonbeelimobile://word/${props.id}?languageId=${encodeURIComponent(props.language)}`
+          : props.template === "proverb" && props.languageId
+            ? `izonbeelimobile://proverbs/${props.languageId}`
+            : props.template === "achievement"
+              ? "izonbeelimobile://(tabs)/profile"
+              : props.template === "symbol"
+                ? "izonbeelimobile://adinkra"
+                : props.template === "cultural" && props.languageId
+                  ? `izonbeelimobile://cultural/${props.languageId}`
+                  : ""}
       </Text>
     </View>
   );

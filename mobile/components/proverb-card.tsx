@@ -60,6 +60,7 @@ export function ProverbCard({ proverb, compact = false }: Props) {
         onClose={() => setShareVisible(false)}
         data={{
           template: "proverb",
+          languageId: proverb.languageId,
           text: proverb.text,
           translation: proverb.translation,
           language: proverb.languageId,

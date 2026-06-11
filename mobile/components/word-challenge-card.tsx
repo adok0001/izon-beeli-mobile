@@ -118,6 +118,7 @@ export function WordChallengeCard({ languageId }: Props) {
       onClose={() => setShareVisible(false)}
       data={{
         template: "word",
+        id: word.id,
         word: word.word,
         translation: word.english,
         language: languageId,

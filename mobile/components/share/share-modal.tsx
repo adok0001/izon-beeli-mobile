@@ -11,6 +11,7 @@ interface Props {
   data:
     | {
         template: "word";
+        id?: string;
         word: string;
         translation: string;
         language: string;
@@ -18,6 +19,7 @@ interface Props {
       }
     | {
         template: "proverb";
+        languageId?: string;
         text: string;
         translation: string;
         language: string;
@@ -35,6 +37,7 @@ interface Props {
       }
     | {
         template: "cultural";
+        languageId?: string;
         title: string;
         description: string;
         category: string;
@@ -51,17 +54,24 @@ export function ShareModal({ visible, onClose, data }: Props) {
   const handleShare = async () => {
     setSharing(true);
     let msg = "";
+    let deepLink = "";
     if (data.template === "word") {
       msg = `${data.word} — ${data.translation}\n\n${t("share.learningWith", { language: data.language })}`;
+      if (data.id) deepLink = `izonbeelimobile://word/${data.id}?languageId=${encodeURIComponent(data.language)}`;
     } else if (data.template === "proverb") {
       msg = `"${data.text}"\n${data.translation}\n\n${t("share.learningWith", { language: data.language })}`;
+      if (data.languageId) deepLink = `izonbeelimobile://proverbs/${data.languageId}`;
     } else if (data.template === "achievement") {
       msg = `${data.title}: ${data.detail}\n\n${t("share.learningGeneric")}`;
+      deepLink = "izonbeelimobile://(tabs)/profile";
     } else if (data.template === "symbol") {
       msg = `${data.name} — ${data.meaning}\n\n${t("share.learningWith", { language: data.language })}`;
+      deepLink = "izonbeelimobile://adinkra";
     } else {
       msg = `${data.emoji} ${data.title}\n${data.description}${data.language ? `\n\n${t("share.learningWith", { language: data.language })}` : `\n\n${t("share.learningGeneric")}`}`;
+      if (data.languageId) deepLink = `izonbeelimobile://cultural/${data.languageId}`;
     }
+    if (deepLink) msg += `\n\n${deepLink}`;
     await captureAndShare(cardRef, msg);
     setSharing(false);
   };
