@@ -468,67 +468,118 @@ function BountyTeaser({ languageId }: { languageId: string }) {
   const { t } = useTranslation();
   const router = useRouter();
   const { data: bounties } = useBounties(languageId);
-  const topBounty = bounties?.[0];
   const bountyAccent = getAccent("amber");
 
-  if (!topBounty) return null;
+  const visible = bounties?.filter((b) => b.status === "active") ?? [];
+  if (visible.length === 0) return null;
+
+  const preview = visible.slice(0, 4);
 
   return (
-    <Pressable
-      onPress={() => router.push("/bounties")}
-      style={{
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: bountyAccent.border,
-        borderLeftWidth: 4,
-        borderLeftColor: bountyAccent.solid,
-        backgroundColor: bountyAccent.bg,
-        padding: 14,
-      }}
-      className="active:opacity-70"
-      accessibilityRole="button"
-      accessibilityLabel={`Bounty: ${topBounty.title}, earn ${topBounty.xpReward} XP`}
-      accessibilityHint="Tap to view all bounties"
-    >
-      <View className="flex-row items-center">
-        <View
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: 10,
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: bountyAccent.bg,
-            marginRight: 12,
-          }}
-        >
-          <IconSymbol name="star.fill" size={17} color={bountyAccent.solid} />
-        </View>
-        <View className="flex-1">
-          <View className="flex-row items-center gap-2">
-            <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: bountyAccent.solid }}>
-              {t("learn.bountyLabel").toUpperCase()}
-            </Text>
-            <View
-              style={{
-                borderRadius: 999,
-                paddingHorizontal: 7,
-                paddingVertical: 1.5,
-                backgroundColor: bountyAccent.border,
-              }}
-            >
-              <Text style={{ fontSize: 10, fontWeight: "800", color: bountyAccent.solid }}>
-                +{topBounty.xpReward} XP
-              </Text>
-            </View>
-          </View>
-          <Text style={{ fontSize: 13, fontWeight: "600", color: M.text, marginTop: 2 }} numberOfLines={1}>
-            {topBounty.title}
+    <View>
+      {/* Header row */}
+      <Pressable
+        onPress={() => router.push("/bounties")}
+        className="active:opacity-70"
+        style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}
+        accessibilityRole="button"
+        accessibilityLabel={`View all ${visible.length} bounties`}
+      >
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <IconSymbol name="star.fill" size={13} color={bountyAccent.solid} />
+          <Text style={{ fontSize: 10, fontWeight: "800", letterSpacing: 1.6, color: bountyAccent.solid }}>
+            {t("learn.bountyLabel").toUpperCase()}
           </Text>
+          <View
+            style={{
+              borderRadius: 999,
+              paddingHorizontal: 7,
+              paddingVertical: 2,
+              backgroundColor: bountyAccent.border,
+            }}
+          >
+            <Text style={{ fontSize: 10, fontWeight: "800", color: bountyAccent.solid }}>
+              {visible.length}
+            </Text>
+          </View>
         </View>
-        <IconSymbol name="chevron.right" size={14} color={bountyAccent.solid} />
-      </View>
-    </Pressable>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+          <Text style={{ fontSize: 11, fontWeight: "600", color: bountyAccent.solid }}>
+            {t("learn.seeAll", { defaultValue: "See all" })}
+          </Text>
+          <IconSymbol name="chevron.right" size={11} color={bountyAccent.solid} />
+        </View>
+      </Pressable>
+
+      {/* Horizontal scroll of bounty cards */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ gap: 10, paddingRight: 4 }}
+      >
+        {preview.map((bounty) => {
+          const progress = Math.min(bounty.progressPercent / 100, 1);
+          return (
+            <Pressable
+              key={bounty.id}
+              onPress={() => router.push("/bounties")}
+              style={{
+                width: 168,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: bountyAccent.border,
+                borderTopWidth: 3,
+                borderTopColor: bountyAccent.solid,
+                backgroundColor: bountyAccent.bg,
+                padding: 12,
+              }}
+              className="active:opacity-70"
+              accessibilityRole="button"
+              accessibilityLabel={`${bounty.title}, earn ${bounty.xpReward} XP, ${bounty.currentCount} of ${bounty.targetCount} complete`}
+            >
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                <Text
+                  style={{ fontSize: 12, fontWeight: "700", color: M.text, flex: 1, marginRight: 6, lineHeight: 16 }}
+                  numberOfLines={2}
+                >
+                  {bounty.title}
+                </Text>
+                <View
+                  style={{
+                    borderRadius: 999,
+                    paddingHorizontal: 6,
+                    paddingVertical: 2,
+                    backgroundColor: bountyAccent.border,
+                    flexShrink: 0,
+                  }}
+                >
+                  <Text style={{ fontSize: 10, fontWeight: "800", color: bountyAccent.solid }}>
+                    +{bounty.xpReward}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Progress bar */}
+              <View style={{ height: 3, borderRadius: 2, backgroundColor: `${bountyAccent.solid}25`, overflow: "hidden" }}>
+                <View
+                  style={{
+                    height: "100%",
+                    borderRadius: 2,
+                    backgroundColor: progress >= 1 ? M.success : bountyAccent.solid,
+                    width: `${Math.round(progress * 100)}%`,
+                  }}
+                />
+              </View>
+
+              <Text style={{ marginTop: 5, fontSize: 10, color: bountyAccent.solid, fontWeight: "600" }}>
+                {bounty.currentCount}/{bounty.targetCount}
+                {bounty.category ? ` · ${bounty.category}` : ""}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+    </View>
   );
 }
 
