@@ -104,6 +104,9 @@ export const pcm = {
   learn: {
     title: "Learn",
     subtitle: "Pick language",
+    greeting: "Welcome back, {{name}}",
+    greetingAnonymous: "Welcome back",
+    galleryLabel: "Gallery",
     continueListening: "Continue listen",
     pausedAt: "E pause for {{time}}",
     lessonsCount: "{{done}}/{{total}} lessons",

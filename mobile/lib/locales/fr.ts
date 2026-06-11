@@ -104,6 +104,9 @@ export const fr = {
   learn: {
     title: "Apprendre",
     subtitle: "Choisissez une langue",
+    greeting: "Bon retour, {{name}}",
+    greetingAnonymous: "Bon retour",
+    galleryLabel: "Galerie",
     continueListening: "Continuer l'écoute",
     pausedAt: "En pause à {{time}}",
     lessonsCount: "{{done}}/{{total}} leçons",

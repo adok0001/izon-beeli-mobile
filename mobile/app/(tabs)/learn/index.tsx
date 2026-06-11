@@ -1,14 +1,15 @@
+import { DailyChallengeCards } from "@/components/daily-challenge-card";
 import { EnrolledLanguageBar } from "@/components/language-picker";
+import { animStyle } from "@/components/learn/anim";
+import { LearnHeader } from "@/components/learn/learn-header";
 import { LoadingScreen } from "@/components/loading-screen";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
-import { NotificationBell } from "@/components/notifications/notification-center";
 import { StreakFreezeModal } from "@/components/streak-freeze-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { UpNextCard } from "@/components/up-next-card";
 import { WordChallengeCard } from "@/components/word-challenge-card";
 import { getAccent } from "@/constants/accent-colors";
 import { getCourseTypeColors, getLevelColors } from "@/constants/course-colors";
-import { DailyChallengeCards } from "@/components/daily-challenge-card";
 import { useBounties } from "@/lib/hooks/use-bounties";
 import { useCourseLessons, useCourses, useLesson } from "@/lib/hooks/use-courses";
 import { useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
@@ -24,7 +25,6 @@ import { useLanguageStore } from "@/store/language-store";
 import { useTourStore } from "@/store/tour-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course, Lesson } from "@/types";
-import { useUser } from "@clerk/clerk-expo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -40,75 +40,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Svg, { Circle } from "react-native-svg";
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function useMountAnimation(count = 1, stagger = 80) {
-  const anims = useRef(
-    Array.from({ length: count }, () => new Animated.Value(0))
-  ).current;
-
-  useEffect(() => {
-    Animated.stagger(
-      stagger,
-      anims.map((a) =>
-        Animated.timing(a, { toValue: 1, duration: 500, useNativeDriver: true })
-      )
-    ).start();
-  }, []);
-
-  return anims;
-}
-
-function animStyle(anim: Animated.Value, offsetY = 18) {
-  return {
-    opacity: anim,
-    transform: [
-      {
-        translateY: anim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [offsetY, 0],
-        }),
-      },
-    ],
-  };
-}
-
-// ─── DailyGoalRing ─────────────────────────────────────────────────────────
-function DailyGoalRing({ completedToday }: { completedToday: number }) {
-  const M = useMuseumTheme();
-  const target = 3;
-  const pct = Math.min(completedToday / target, 1);
-  const size = 32;
-  const strokeWidth = 3;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference * (1 - pct);
-  const color = pct >= 1 ? M.success : M.accent;
-
-  return (
-    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
-      <Svg width={size} height={size} style={{ position: "absolute" }}>
-        <Circle
-          cx={size / 2} cy={size / 2} r={radius}
-          stroke="rgba(255,255,255,0.1)" strokeWidth={strokeWidth} fill="none"
-        />
-        <Circle
-          cx={size / 2} cy={size / 2} r={radius}
-          stroke={color} strokeWidth={strokeWidth} fill="none"
-          strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
-          strokeLinecap="round"
-          rotation={-90}
-          origin={`${size / 2}, ${size / 2}`}
-        />
-      </Svg>
-      <Text style={{ fontSize: 8, fontWeight: "800", color }}>
-        {completedToday}/{target}
-      </Text>
-    </View>
-  );
-}
 
 // ─── ContinueCard ──────────────────────────────────────────────────────────
 const ContinueCard = memo(function ContinueCard({
@@ -605,8 +536,6 @@ export default function LearnScreen() {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
-  const { user } = useUser();
-  const avatarInitial = (user?.username ?? "L")[0]?.toUpperCase() ?? "L";
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
   const {
     data: courses = [],
@@ -645,9 +574,6 @@ export default function LearnScreen() {
   const resumeState = useAudioStore((s) => s.resumeState);
   const loadResumeState = useAudioStore((s) => s.loadResumeState);
   const activeTour = useTourStore((s) => s.activeTour);
-
-  // Entrance animations
-  const [titleAnim, subtitleAnim, statsAnim] = useMountAnimation(3, 70);
 
   useEffect(() => {
     loadResumeState();
@@ -691,181 +617,21 @@ export default function LearnScreen() {
     setRefreshing(false);
   }, [refetch, refetchSummary, refetchCourses, refetchDue]);
 
-  const streakActive = !summary?.streakBroken && summary?.refreshedToday !== false;
+  const onStreakPress = useCallback(() => {
+    if (summary?.streakBroken && summary.streak > 0) setFreezeModalVisible(true);
+  }, [summary?.streakBroken, summary?.streak]);
+  const onGoalPress = useCallback(() => setGoalModalVisible(true), []);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
-      {/* ── Museum Foyer Header ── */}
-      <View style={{ backgroundColor: M.ink, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20 }}>
-        {/* Top row: title + actions */}
-        <View className="flex-row items-start justify-between">
-          <View className="flex-1 mr-3">
-            <Animated.Text
-              style={[
-                {
-                  fontSize: 32,
-                  fontWeight: "900",
-                  color: M.parchment,
-                  letterSpacing: -0.5,
-                  lineHeight: 36,
-                },
-                animStyle(titleAnim, 12),
-              ]}
-            >
-              {t("learn.title")}
-            </Animated.Text>
-            <Animated.Text
-              style={[
-                { fontSize: 13, color: M.textDim, marginTop: 4 },
-                animStyle(subtitleAnim, 10),
-              ]}
-              numberOfLines={1}
-            >
-              {t("learn.subtitle")}
-            </Animated.Text>
-          </View>
-
-          <View className="flex-row items-center gap-1.5 mt-1">
-            <NotificationBell />
-            <Pressable
-              onPress={() => router.push("/quiz")}
-              style={{
-                width: 36, height: 36, borderRadius: 18,
-                alignItems: "center", justifyContent: "center",
-                backgroundColor: "rgba(196, 134, 42, 0.15)",
-                borderWidth: 1, borderColor: "rgba(196, 134, 42, 0.3)",
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Practice quiz"
-            >
-              <IconSymbol name="lightbulb.fill" size={16} color={M.accent} />
-            </Pressable>
-            <Pressable
-              onPress={() => router.push("/dictionary")}
-              style={{
-                width: 36, height: 36, borderRadius: 18,
-                alignItems: "center", justifyContent: "center",
-                backgroundColor: "rgba(255,255,255,0.07)",
-                borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Dictionary"
-            >
-              <IconSymbol name="character.book.closed" size={16} color={M.textDim} />
-            </Pressable>
-            <Pressable
-              onPress={() => router.push("/(tabs)/profile")}
-              style={{
-                width: 36, height: 36, borderRadius: 18,
-                alignItems: "center", justifyContent: "center",
-                backgroundColor: M.accent,
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Profile"
-            >
-              <Text style={{ fontSize: 14, fontWeight: "800", color: M.ink }}>{avatarInitial}</Text>
-            </Pressable>
-          </View>
-        </View>
-
-        {/* Stats row — specimen labels */}
-        <Animated.View style={[{ marginTop: 20, flexDirection: "row", gap: 8 }, animStyle(statsAnim, 8)]}>
-          {/* Streak */}
-          <Pressable
-            onPress={() =>
-              summary?.streakBroken && summary.streak > 0 && setFreezeModalVisible(true)
-            }
-            style={{
-              flex: 1,
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 8,
-              paddingHorizontal: 12,
-              paddingVertical: 10,
-              borderRadius: 12,
-              backgroundColor: "rgba(255,255,255,0.05)",
-              borderWidth: 1,
-              borderColor: "rgba(255,255,255,0.08)",
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={`${summary?.streakBroken ? "Broken streak" : "Streak"}: ${summary?.streak ?? 0} days`}
-          >
-            <IconSymbol
-              name="flame.fill"
-              size={15}
-              color={streakActive ? "#FB923C" : "rgba(255,255,255,0.2)"}
-            />
-            <View>
-              <Text style={{ fontSize: 9, fontWeight: "700", letterSpacing: 1.2, color: M.textDimDark }}>
-                STREAK
-              </Text>
-              <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: "800",
-                  color: streakActive ? M.parchment : "rgba(255,255,255,0.25)",
-                  textDecorationLine: summary?.streakBroken ? "line-through" : "none",
-                }}
-              >
-                {summary?.streak ?? 0}d
-              </Text>
-            </View>
-            {(summary?.freezeCount ?? 0) > 0 && (
-              <View
-                style={{
-                  marginLeft: "auto",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  borderRadius: 999,
-                  paddingHorizontal: 6,
-                  paddingVertical: 2,
-                  backgroundColor: "rgba(59, 130, 246, 0.2)",
-                  gap: 3,
-                }}
-              >
-                <IconSymbol name="snowflake" size={9} color="#60a5fa" />
-                <Text style={{ fontSize: 10, fontWeight: "800", color: "#60a5fa" }}>
-                  {summary!.freezeCount}
-                </Text>
-              </View>
-            )}
-          </Pressable>
-
-          {/* Divider */}
-          <View style={{ width: 1, backgroundColor: "rgba(255,255,255,0.06)" }} />
-
-          {/* Daily goal */}
-          <Pressable
-            onPress={() => setGoalModalVisible(true)}
-            style={{
-              flex: 1,
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 8,
-              paddingHorizontal: 12,
-              paddingVertical: 10,
-              borderRadius: 12,
-              backgroundColor: "rgba(255,255,255,0.05)",
-              borderWidth: 1,
-              borderColor: "rgba(255,255,255,0.08)",
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={`Daily goal: ${completedToday} of 3 challenges completed`}
-            className="active:opacity-70"
-          >
-            <DailyGoalRing completedToday={completedToday} />
-            <View>
-              <Text style={{ fontSize: 9, fontWeight: "700", letterSpacing: 1.2, color: M.textDimDark }}>
-                DAILY GOAL
-              </Text>
-              <Text style={{ fontSize: 16, fontWeight: "800", color: M.parchment }}>
-                {completedToday}
-                <Text style={{ fontSize: 12, fontWeight: "500", color: M.textDimDark }}>/3</Text>
-              </Text>
-            </View>
-          </Pressable>
-        </Animated.View>
-      </View>
+      {/* ── Museum Foyer Header — exhibition placard ── */}
+      <LearnHeader
+        summary={summary}
+        completedToday={completedToday}
+        selectedLanguageId={selectedLanguageId}
+        onStreakPress={onStreakPress}
+        onGoalPress={onGoalPress}
+      />
 
       {/* Language selector — sits at the boundary */}
       <View style={{ backgroundColor: M.card, borderBottomWidth: 1, borderBottomColor: M.border }}>
