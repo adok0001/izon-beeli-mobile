@@ -20,6 +20,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface Segment {
   id?: string;
@@ -149,6 +150,7 @@ function SegmentRow({
   onCaptureStart: () => void;
   onCaptureEnd: () => void;
 }>) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-start gap-2 group rounded-xl border border-neutral-100 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] p-3 hover:border-neutral-200 dark:hover:border-white/[0.1] transition-colors">
       <div className="flex items-center gap-1 pt-1.5 text-neutral-300 dark:text-neutral-400 select-none shrink-0">
@@ -158,32 +160,32 @@ function SegmentRow({
       <div className="flex-1 grid grid-cols-2 gap-2">
         <div>
           <label className="block text-[10px] font-semibold text-neutral-400 dark:text-neutral-300 mb-1">
-            Native text <span className="text-red-400">*</span>
+            {t("educator.lessonDetail.segNativeLabel")} <span className="text-red-400">*</span>
           </label>
           <textarea
             value={seg.text}
             onChange={(e) => onChange({ ...seg, text: e.target.value })}
             rows={2}
             className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-neutral-50 dark:bg-white/[0.03] px-2.5 py-1.5 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-brand-500 resize-none"
-            placeholder="Text in target language…"
+            placeholder={t("educator.lessonDetail.segNativePlaceholder")}
           />
         </div>
         <div>
           <label className="block text-[10px] font-semibold text-neutral-400 dark:text-neutral-300 mb-1">
-            Translation
+            {t("educator.lessonDetail.segTranslationLabel")}
           </label>
           <textarea
             value={seg.translation}
             onChange={(e) => onChange({ ...seg, translation: e.target.value })}
             rows={2}
             className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-neutral-50 dark:bg-white/[0.03] px-2.5 py-1.5 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-brand-500 resize-none"
-            placeholder="English translation…"
+            placeholder={t("educator.lessonDetail.segTranslationPlaceholder")}
           />
         </div>
       </div>
       <div className="flex flex-col gap-1.5 shrink-0 pt-0.5">
         <div>
-          <label className="block text-[10px] font-semibold text-neutral-400 dark:text-neutral-300 mb-1">Start</label>
+          <label className="block text-[10px] font-semibold text-neutral-400 dark:text-neutral-300 mb-1">{t("educator.lessonDetail.segStartLabel")}</label>
           <TimeInput
             value={seg.startTime}
             onChange={(v) => onChange({ ...seg, startTime: v })}
@@ -192,7 +194,7 @@ function SegmentRow({
           />
         </div>
         <div>
-          <label className="block text-[10px] font-semibold text-neutral-400 dark:text-neutral-300 mb-1">End</label>
+          <label className="block text-[10px] font-semibold text-neutral-400 dark:text-neutral-300 mb-1">{t("educator.lessonDetail.segEndLabel")}</label>
           <TimeInput
             value={seg.endTime}
             onChange={(v) => onChange({ ...seg, endTime: v })}
@@ -212,6 +214,7 @@ function SegmentRow({
 }
 
 export default function LessonDetailPage() {
+  const { t } = useTranslation();
   const { id: courseId, lessonId } = useParams<{ id: string; lessonId: string }>();
   const { getToken } = useAuth();
   const qc = useQueryClient();
@@ -301,9 +304,9 @@ export default function LessonDetailPage() {
       setSegmentsDirty(false);
       setSaveOk(true);
       setTimeout(() => setSaveOk(false), 2500);
-      toast.success("Segments saved");
+      toast.success(t("educator.lessonDetail.segmentsSaved"));
     },
-    onError: (e: Error) => toast.error("Failed to save segments", { description: e.message }),
+    onError: (e: Error) => toast.error(t("educator.lessonDetail.segmentsSaveFailed"), { description: e.message }),
   });
 
   const uploadAudio = useMutation({
@@ -330,11 +333,11 @@ export default function LessonDetailPage() {
       void qc.invalidateQueries({ queryKey: ["educator-lessons"] });
       setAudioError("");
       setRecordingError("");
-      toast.success("Audio uploaded");
+      toast.success(t("educator.lessonDetail.audioUploaded"));
     },
     onError: (e: Error) => {
       setAudioError(e.message);
-      toast.error("Audio upload failed", { description: e.message });
+      toast.error(t("educator.lessonDetail.audioUploadFailed"), { description: e.message });
     },
   });
 
@@ -366,9 +369,9 @@ export default function LessonDetailPage() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["educator-lesson", lessonId] });
       void qc.invalidateQueries({ queryKey: ["educator-lessons"] });
-      toast.success(lesson?.isActive ? "Lesson hidden" : "Lesson published");
+      toast.success(lesson?.isActive ? t("educator.lessonDetail.lessonHidden") : t("educator.lessonDetail.lessonPublished"));
     },
-    onError: (e: Error) => toast.error("Failed to update lesson", { description: e.message }),
+    onError: (e: Error) => toast.error(t("educator.lessonDetail.lessonUpdateFailed"), { description: e.message }),
   });
 
   function updateSegment(i: number, updated: Segment) {
@@ -512,7 +515,7 @@ export default function LessonDetailPage() {
             <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-neutral-100 dark:bg-white/[0.06] text-neutral-600 dark:text-neutral-300 capitalize">
               {lesson.type}
             </span>
-            <span className="text-xs text-neutral-500 dark:text-neutral-300">Lesson {lesson.order}</span>
+            <span className="text-xs text-neutral-500 dark:text-neutral-300">{t("educator.lessonDetail.lessonOrder", { order: lesson.order })}</span>
           </div>
           <h1 className="text-xl font-bold text-neutral-900 dark:text-white">{lesson.title}</h1>
           <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-300">{lesson.description}</p>
@@ -531,14 +534,14 @@ export default function LessonDetailPage() {
               : "border-neutral-200 dark:border-white/[0.08] text-neutral-500 dark:text-neutral-300 bg-white dark:bg-white/[0.04] hover:bg-neutral-50 dark:hover:bg-white/[0.06]"
           }`}
         >
-          {lesson.isActive ? <><Eye className="h-3.5 w-3.5" /> Active</> : <><EyeOff className="h-3.5 w-3.5" /> Inactive</>}
+          {lesson.isActive ? <><Eye className="h-3.5 w-3.5" /> {t("educator.lessonDetail.statusActive")}</> : <><EyeOff className="h-3.5 w-3.5" /> {t("educator.lessonDetail.statusInactive")}</>}
         </button>
       </div>
 
       {/* Audio */}
       <div className="mb-8 rounded-2xl border border-neutral-200 dark:border-white/[0.07] bg-neutral-50 dark:bg-white/[0.02] p-5">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-bold text-neutral-700 dark:text-neutral-200">Audio</h2>
+          <h2 className="text-sm font-bold text-neutral-700 dark:text-neutral-200">{t("educator.lessonDetail.audioTitle")}</h2>
           <div className="flex items-center gap-2">
             {canRecordAudio && (
               <button
@@ -551,7 +554,7 @@ export default function LessonDetailPage() {
                 }`}
               >
                 {isRecording ? <Square className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
-                {isRecording ? "Stop recording" : "Record audio"}
+                {isRecording ? t("educator.lessonDetail.stopRecording") : t("educator.lessonDetail.recordAudio")}
               </button>
             )}
             <button
@@ -560,7 +563,7 @@ export default function LessonDetailPage() {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-neutral-200 dark:border-white/[0.08] text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] disabled:opacity-50 transition-colors"
             >
               <Upload className="h-3.5 w-3.5" />
-              {pendingAudioFile ? "Change draft audio" : lesson.audioUrl ? "Choose replacement" : "Choose audio"}
+              {pendingAudioFile ? t("educator.lessonDetail.chooseDraftAudio") : lesson.audioUrl ? t("educator.lessonDetail.chooseReplacement") : t("educator.lessonDetail.chooseAudio")}
             </button>
             <button
               onClick={savePendingAudio}
@@ -568,7 +571,7 @@ export default function LessonDetailPage() {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-brand-300 text-brand-700 bg-brand-50 hover:bg-brand-100 dark:border-brand-700 dark:text-brand-300 dark:bg-brand-950/30 dark:hover:bg-brand-900/30 disabled:opacity-50 transition-colors"
             >
               <Save className="h-3.5 w-3.5" />
-              {uploadAudio.isPending ? "Saving…" : lesson.audioUrl ? "Update audio" : "Save audio"}
+              {uploadAudio.isPending ? t("educator.lessonDetail.savingAudio") : lesson.audioUrl ? t("educator.lessonDetail.updateAudio") : t("educator.lessonDetail.saveAudio")}
             </button>
             {pendingAudioFile && (
               <button
@@ -576,7 +579,7 @@ export default function LessonDetailPage() {
                 disabled={uploadAudio.isPending || isRecording}
                 className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-neutral-200 dark:border-white/[0.08] text-neutral-500 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] disabled:opacity-50 transition-colors"
               >
-                Discard draft
+                {t("educator.lessonDetail.discardDraft")}
               </button>
             )}
           </div>
@@ -594,14 +597,14 @@ export default function LessonDetailPage() {
         </div>
         {pendingAudioFile && (
           <p className="mb-2 text-xs text-amber-600 dark:text-amber-400">
-            Draft audio selected: {pendingAudioFile.name}. Click Save audio to update this lesson.
+            {t("educator.lessonDetail.draftSelected", { name: pendingAudioFile.name })}
           </p>
         )}
         {pendingAudioPreviewUrl || lesson.audioUrl ? (
           <audio ref={audioRef} src={pendingAudioPreviewUrl ?? lesson.audioUrl ?? undefined} controls className="w-full h-10" />
         ) : (
           <div className="flex items-center justify-center h-10 rounded-xl border-2 border-dashed border-neutral-200 dark:border-white/[0.08]">
-            <p className="text-xs text-neutral-500 dark:text-neutral-300">No audio yet — choose audio or record above</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-300">{t("educator.lessonDetail.noAudio")}</p>
           </div>
         )}
         {audioError && <p className="mt-2 text-xs text-red-500">{audioError}</p>}
@@ -613,12 +616,12 @@ export default function LessonDetailPage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-sm font-bold text-neutral-700 dark:text-neutral-200">
-              Transcript segments
+              {t("educator.lessonDetail.segmentsTitle")}
               <span className="ml-2 text-xs font-normal text-neutral-500 dark:text-neutral-300">({segments.length})</span>
             </h2>
             <p className="text-xs text-neutral-500 dark:text-neutral-300 mt-0.5">
-              One segment per utterance — native text, English translation, and timestamps for audio sync.
-              Click the <Mic className="inline h-3 w-3" /> icon while audio is playing to capture the current position.
+              {t("educator.lessonDetail.segmentsSubtext")}
+              {" "}Click the <Mic className="inline h-3 w-3" /> icon while audio is playing to capture the current position.
             </p>
           </div>
           <button
@@ -632,7 +635,7 @@ export default function LessonDetailPage() {
                 : "bg-neutral-100 dark:bg-white/[0.04] text-neutral-400 dark:text-neutral-300 cursor-not-allowed"
             }`}
           >
-            {saveOk ? <><CheckCircle2 className="h-4 w-4" /> Saved</> : saveSegments.isPending ? "Saving…" : <><Save className="h-4 w-4" /> Save segments</>}
+            {saveOk ? <><CheckCircle2 className="h-4 w-4" /> {t("educator.lessonDetail.saved")}</> : saveSegments.isPending ? t("educator.lessonDetail.saving") : <><Save className="h-4 w-4" /> {t("educator.lessonDetail.saveSegments")}</>}
           </button>
         </div>
 
@@ -645,7 +648,7 @@ export default function LessonDetailPage() {
         {segments.length > 0 && missingWords.length > 0 && (
           <div className="mb-4 rounded-xl border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-950/30 p-3">
             <p className="text-xs text-yellow-700 dark:text-yellow-400">
-              <strong>{missingWords.length} word{missingWords.length !== 1 ? "s" : ""} not in dictionary:</strong>{" "}
+              <strong>{t("educator.lessonDetail.missingWords", { count: missingWords.length })}</strong>{" "}
               {missingWords.join(", ")}
             </p>
           </div>
@@ -654,9 +657,9 @@ export default function LessonDetailPage() {
         <div className="space-y-2">
           {segments.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 rounded-2xl border-2 border-dashed border-neutral-200 dark:border-white/[0.07]">
-              <p className="text-sm font-semibold text-neutral-500 dark:text-neutral-300">No segments yet</p>
+              <p className="text-sm font-semibold text-neutral-500 dark:text-neutral-300">{t("educator.lessonDetail.noSegments")}</p>
               <p className="text-xs text-neutral-500 dark:text-neutral-300 mt-1 text-center max-w-xs">
-                Add transcript segments to enable audio-synced reading and comprehension exercises.
+                {t("educator.lessonDetail.noSegmentsHint")}
               </p>
             </div>
           ) : (
@@ -679,7 +682,7 @@ export default function LessonDetailPage() {
           className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-200 dark:border-white/[0.07] py-3 text-sm font-medium text-neutral-500 dark:text-neutral-300 hover:border-brand-300 hover:text-brand-500 dark:hover:border-brand-700 dark:hover:text-brand-400 transition-colors"
         >
           <Plus className="h-4 w-4" />
-          Add segment
+          {t("educator.lessonDetail.addSegment")}
         </button>
 
         {segments.length > 0 && (
@@ -695,7 +698,7 @@ export default function LessonDetailPage() {
                   : "bg-neutral-100 dark:bg-white/[0.04] text-neutral-400 dark:text-neutral-300 cursor-not-allowed"
               }`}
             >
-              {saveOk ? <><CheckCircle2 className="h-4 w-4" /> Saved</> : saveSegments.isPending ? "Saving…" : <><Save className="h-4 w-4" /> Save {segments.length} segments</>}
+              {saveOk ? <><CheckCircle2 className="h-4 w-4" /> {t("educator.lessonDetail.saved")}</> : saveSegments.isPending ? t("educator.lessonDetail.saving") : <><Save className="h-4 w-4" /> {t("educator.lessonDetail.saveCount", { count: segments.length })}</>}
             </button>
           </div>
         )}
