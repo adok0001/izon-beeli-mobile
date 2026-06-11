@@ -9,6 +9,7 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
+import { ShareModal } from "@/components/share/share-modal";
 import { WordAudioButton } from "@/components/dictionary/word-audio-button";
 import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/lib/dictionary";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
@@ -90,6 +91,7 @@ export default function WordDetailScreen() {
   const [newMeaning, setNewMeaning] = useState("");
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [showContribute, setShowContribute] = useState(false);
+  const [shareVisible, setShareVisible] = useState(false);
 
   const entryId = entry?.id;
   const entryLanguageId = entry?.languageId;
@@ -243,7 +245,20 @@ export default function WordDetailScreen() {
   return (
     <>
       <Stack.Screen
-        options={{ title: entry.word, headerBackTitle: "Back" }}
+        options={{
+          title: entry.word,
+          headerBackTitle: "Back",
+          headerRight: () => (
+            <Pressable
+              onPress={() => setShareVisible(true)}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={t("share.shareButton")}
+            >
+              <IconSymbol name="square.and.arrow.up" size={20} color={M.accent} />
+            </Pressable>
+          ),
+        }}
       />
       <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={[]}>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
@@ -593,6 +608,20 @@ export default function WordDetailScreen() {
         </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+
+      <ShareModal
+        visible={shareVisible}
+        onClose={() => setShareVisible(false)}
+        data={{
+          template: "word",
+          id: entry.id,
+          word: entry.word,
+          translation: entry.english,
+          language: entry.languageId,
+          pronunciation: entry.pronunciation ?? undefined,
+          audioUrl: entry.audioUrl,
+        }}
+      />
     </>
   );
 }

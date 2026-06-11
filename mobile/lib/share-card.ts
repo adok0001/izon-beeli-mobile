@@ -1,9 +1,11 @@
+import type { AudioSource } from "@/types";
+import type { TFunction } from "i18next";
 import { Share, Platform } from "react-native";
 import { captureRef } from "react-native-view-shot";
 import type { RefObject } from "react";
 import type { View } from "react-native";
 
-export type CardTemplate = "word" | "proverb" | "achievement" | "symbol" | "cultural";
+export type CardTemplate = "word" | "proverb" | "achievement" | "symbol" | "cultural" | "lesson";
 
 export type ShareCardData =
   | {
@@ -13,6 +15,7 @@ export type ShareCardData =
       translation: string;
       language: string;
       pronunciation?: string;
+      audioUrl?: AudioSource;
     }
   | {
       template: "proverb";
@@ -20,6 +23,7 @@ export type ShareCardData =
       text: string;
       translation: string;
       language: string;
+      audioUrl?: string;
     }
   | {
       template: "achievement";
@@ -40,13 +44,18 @@ export type ShareCardData =
       category: string;
       emoji: string;
       language?: string;
+    }
+  | {
+      template: "lesson";
+      id: string;
+      title: string;
+      description?: string;
+      language?: string;
     };
 
 const SCHEME = "izonbeelimobile://";
 
-type Translate = (key: string, opts?: object) => string;
-
-export function buildShareMessage(data: ShareCardData, t: Translate): string {
+export function buildShareMessage(data: ShareCardData, t: TFunction): string {
   let msg: string;
   let deepLink = "";
   switch (data.template) {
@@ -69,6 +78,10 @@ export function buildShareMessage(data: ShareCardData, t: Translate): string {
     case "cultural":
       msg = `${data.emoji} ${data.title}\n${data.description}${data.language ? `\n\n${t("share.learningWith", { language: data.language })}` : `\n\n${t("share.learningGeneric")}`}`;
       if (data.languageId) deepLink = `${SCHEME}cultural/${data.languageId}`;
+      break;
+    case "lesson":
+      msg = `${data.title}${data.description ? `\n${data.description}` : ""}\n\n${data.language ? t("share.learningWith", { language: data.language }) : t("share.learningGeneric")}`;
+      deepLink = `${SCHEME}lesson/${data.id}`;
       break;
   }
   return deepLink ? `${msg}\n\n${deepLink}` : msg;

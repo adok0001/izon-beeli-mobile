@@ -104,6 +104,20 @@ export const ShareCardPreview = forwardRef<View, ShareCardData>((props, ref) => 
           </>
         )}
 
+        {props.template === "lesson" && (
+          <>
+            <View style={styles.trophyRing}>
+              <Text style={{ fontSize: 26 }}>📖</Text>
+            </View>
+            <Text style={{ ...type.h2, color: MUSEUM.parchment }}>{props.title}</Text>
+            {props.description ? (
+              <Text style={{ ...type.body, color: MUSEUM.textDim, marginTop: 8 }} numberOfLines={3}>
+                {props.description}
+              </Text>
+            ) : null}
+          </>
+        )}
+
         {/* Footer */}
         <View className="mt-7 flex-row items-center justify-center" style={{ gap: 6 }}>
           <View style={styles.footerRule} />

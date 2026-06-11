@@ -1,6 +1,7 @@
 import { AudioPlayer } from "@/components/audio/audio-player";
 import { InteractiveTranscript } from "@/components/audio/interactive-transcript";
 import { LevelUpModal } from "@/components/level-up-modal";
+import { ShareModal } from "@/components/share/share-modal";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useCompletedLessons, useCompleteLesson, useTrackListen } from "@/lib/hooks/use-progress";
@@ -10,7 +11,7 @@ import { getCourseTypeColors } from "@/constants/course-colors";
 import { useNextLesson } from "@/lib/hooks/use-next-lesson";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Course } from "@/types";
-import { formatDuration, BUNDLED_AUDIO } from "@/lib/mock-data";
+import { formatDuration, getLanguageName, BUNDLED_AUDIO } from "@/lib/mock-data";
 import { playFinishSound } from "@/lib/sounds";
 import { hapticHeavy } from "@/lib/haptics";
 import { cancelDailyStreakReminder } from "@/lib/hooks/use-daily-reminder";
@@ -58,6 +59,7 @@ export default function LessonScreen() {
   const typeColors = getCourseTypeColors(lessonCourse?.courseType);
   const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
   const [showSummary, setShowSummary] = useState(false);
+  const [shareVisible, setShareVisible] = useState(false);
   const [pendingSummary, setPendingSummary] = useState(false);
 
   // Entrance animations
@@ -178,6 +180,16 @@ export default function LessonScreen() {
           headerStyle: { backgroundColor: M.ink },
           headerTintColor: M.parchment,
           headerShadowVisible: false,
+          headerRight: () => (
+            <Pressable
+              onPress={() => setShareVisible(true)}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={t("share.shareButton")}
+            >
+              <IconSymbol name="square.and.arrow.up" size={20} color={M.parchment} />
+            </Pressable>
+          ),
         }}
       />
       <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={[]}>
@@ -529,6 +541,18 @@ export default function LessonScreen() {
         body={toast.body}
         type={toast.type}
         onDismiss={dismissToast}
+      />
+
+      <ShareModal
+        visible={shareVisible}
+        onClose={() => setShareVisible(false)}
+        data={{
+          template: "lesson",
+          id: lesson.id,
+          title: lessonTitle,
+          description: lessonDescription || undefined,
+          language: getLanguageName(selectedLanguageId),
+        }}
       />
     </>
   );

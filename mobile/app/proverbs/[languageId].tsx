@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { ShareModal } from "@/components/share/share-modal";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useProverbs } from "@/lib/hooks/use-proverbs";
 import { getLanguageName } from "@/lib/mock-data";
@@ -8,7 +9,7 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LoadingScreen } from "@/components/loading-screen";
-import { FlatList, Pressable, Share, Text, View } from "react-native";
+import { FlatList, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function ProverbCard({
@@ -22,6 +23,7 @@ function ProverbCard({
   const { t } = useTranslation();
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
+  const [shareVisible, setShareVisible] = useState(false);
   const [playing, setPlaying] = useState(false);
   const soundRef = useRef<Audio.Sound | null>(null);
 
@@ -55,15 +57,6 @@ function ProverbCard({
       setPlaying(false);
     }
   }, [proverb.audioUrl, playing]);
-
-  const handleShare = useCallback(async () => {
-    const languageName = getLanguageName(languageId);
-    const title = t("proverbs.shareTitle", { language: languageName });
-    await Share.share({
-      message: `${title}\n\n"${proverb.text}"\n\n${proverb.translation}\n\n${proverb.meaning}`,
-      title,
-    });
-  }, [proverb, languageId, t]);
 
   return (
     <View
@@ -142,11 +135,29 @@ function ProverbCard({
               />
             </Pressable>
           )}
-          <Pressable onPress={handleShare} hitSlop={8}>
+          <Pressable
+            onPress={() => setShareVisible(true)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t("share.shareButton")}
+          >
             <IconSymbol name="square.and.arrow.up" size={18} color={M.sub} />
           </Pressable>
         </View>
       </View>
+
+      <ShareModal
+        visible={shareVisible}
+        onClose={() => setShareVisible(false)}
+        data={{
+          template: "proverb",
+          languageId,
+          text: proverb.text,
+          translation: proverb.translation,
+          language: languageId,
+          audioUrl: proverb.audioUrl,
+        }}
+      />
     </View>
   );
 }

@@ -1,8 +1,9 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { ShareModal } from "@/components/share/share-modal";
 import { hapticHeavy } from "@/lib/haptics";
 import { playFinishSound } from "@/lib/sounds";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Animated, Modal, Pressable, Text, View } from "react-native";
 
@@ -18,9 +19,10 @@ export function LevelUpModal({ visible, level, title, onDismiss }: LevelUpModalP
   const { t } = useTranslation();
   const scale = useRef(new Animated.Value(0.5)).current;
   const opacity = useRef(new Animated.Value(0)).current;
+  const [shareVisible, setShareVisible] = useState(false);
 
   useEffect(() => {
-    if (visible) {
+    if (visible && !shareVisible) {
       playFinishSound().catch(() => {});
       hapticHeavy();
       Animated.parallel([
@@ -39,15 +41,16 @@ export function LevelUpModal({ visible, level, title, onDismiss }: LevelUpModalP
 
       const timer = setTimeout(onDismiss, 3000);
       return () => clearTimeout(timer);
-    } else {
+    } else if (!visible) {
       scale.setValue(0.5);
       opacity.setValue(0);
     }
-  }, [visible]);
+  }, [visible, shareVisible]);
 
   return (
+    <>
     <Modal
-      visible={visible}
+      visible={visible && !shareVisible}
       transparent
       animationType="none"
       onRequestClose={onDismiss}
@@ -77,8 +80,34 @@ export function LevelUpModal({ visible, level, title, onDismiss }: LevelUpModalP
           <Text style={{ marginTop: 12, textAlign: "center", fontSize: 14, color: M.sub }}>
             {t("xp.levelUpEncouragement")}
           </Text>
+
+          <Pressable
+            onPress={() => setShareVisible(true)}
+            style={{ marginTop: 20, flexDirection: "row", alignItems: "center", gap: 7, borderRadius: 999, paddingHorizontal: 18, paddingVertical: 10, backgroundColor: `${M.accent}18`, borderWidth: 1, borderColor: `${M.accent}40` }}
+            accessibilityRole="button"
+            accessibilityLabel={t("share.shareButton")}
+          >
+            <IconSymbol name="square.and.arrow.up" size={15} color={M.accent} />
+            <Text style={{ fontSize: 13, fontWeight: "700", color: M.accent }}>
+              {t("share.shareButton")}
+            </Text>
+          </Pressable>
         </Animated.View>
       </Pressable>
     </Modal>
+
+    <ShareModal
+      visible={shareVisible}
+      onClose={() => {
+        setShareVisible(false);
+        onDismiss();
+      }}
+      data={{
+        template: "achievement",
+        title: t("xp.levelLabel", { level: String(level) }),
+        detail: title,
+      }}
+    />
+    </>
   );
 }
