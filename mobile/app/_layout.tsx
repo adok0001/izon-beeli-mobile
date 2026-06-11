@@ -228,6 +228,9 @@ export default function RootLayout() {
                   <Stack.Screen name="trace-symbol" options={{ headerBackTitle: "Back" }} />
                   <Stack.Screen name="etymology-trail" options={{ headerBackTitle: "Back" }} />
                   <Stack.Screen name="word-challenge" options={{ headerBackTitle: "Back" }} />
+                  <Stack.Screen name="journal" options={{ headerShown: false }} />
+                  <Stack.Screen name="leaderboard" options={{ headerShown: false }} />
+                  <Stack.Screen name="playground" options={{ headerShown: false }} />
                 </Stack>
               </GestureHandlerRootView>
               <StatusBar style="light" />

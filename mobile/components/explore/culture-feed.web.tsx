@@ -4,19 +4,12 @@ import { useDiscover, type DiscoverFilter } from "@/lib/hooks/use-discover";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { DiscoverItem } from "@/types";
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Animated, Pressable, ScrollView, Text, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
-// SVG noise grain for the cinematic header atmosphere
+// SVG noise grain for the cinematic hero atmosphere
 const GRAIN_URI =
   "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E\")";
-
-const FILTER_OPTIONS: { id: DiscoverFilter; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "blog", label: "Blog" },
-  { id: "podcast", label: "Podcast" },
-  { id: "film", label: "Film" },
-];
 
 function useWindowWidth() {
   const [w, setW] = useState(typeof window !== "undefined" ? window.innerWidth : 800);
@@ -60,7 +53,6 @@ function HeroCard({
   item: DiscoverItem;
   onStoryPress: (id: string) => void;
 }) {
-  const M = useMuseumTheme();
   const cfg = DISCOVER_TYPE_CONFIG[item.type];
   const [hovered, setHovered] = useState(false);
 
@@ -85,7 +77,7 @@ function HeroCard({
         marginBottom: 24,
         cursor: "pointer" as never,
         transform: [{ scale: hovered ? 1.005 : 1 }],
-        transition: "transform 0.2s ease" as never,
+        ...({ transition: "transform 0.2s ease" } as object),
       }}
       accessibilityRole="button"
       accessibilityLabel={item.title}
@@ -121,7 +113,7 @@ function HeroCard({
             left: 0,
             right: 0,
             height: "70%",
-            background: `linear-gradient(to bottom, transparent, ${item.coverGradient[0]}CC, #0D0F1A)` as never,
+            ...({ background: `linear-gradient(to bottom, transparent, ${item.coverGradient[0]}CC, #0D0F1A)` } as object),
           }}
         />
 
@@ -171,7 +163,7 @@ function HeroCard({
               letterSpacing: -0.3,
               lineHeight: 28,
               marginBottom: 6,
-              textShadow: "0 1px 8px rgba(0,0,0,0.6)" as never,
+              ...({ textShadow: "0 1px 8px rgba(0,0,0,0.6)" } as object),
             }}
             numberOfLines={2}
           >
@@ -244,27 +236,12 @@ function FeaturedStrip({
   );
 }
 
-// Per-route error boundary — shows a recoverable message if this screen throws.
-export { ErrorBoundary } from "@/components/screen-error-boundary";
-
-export default function CultureScreen() {
+export function CultureFeed({ filter }: { filter: DiscoverFilter }) {
   const M = useMuseumTheme();
   const router = useRouter();
-  const [activeFilter, setActiveFilter] = useState<DiscoverFilter>("all");
-  const { featured, rest } = useDiscover(activeFilter);
+  const { featured, rest } = useDiscover(filter);
   const windowWidth = useWindowWidth();
   const isWide = windowWidth >= 768;
-  const scrollRef = useRef<ScrollView>(null);
-
-  const titleAnim = useRef(new Animated.Value(0)).current;
-  const subtitleAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.stagger(80, [
-      Animated.spring(titleAnim, { toValue: 1, useNativeDriver: true, tension: 120, friction: 14 }),
-      Animated.spring(subtitleAnim, { toValue: 1, useNativeDriver: true, tension: 120, friction: 14 }),
-    ]).start();
-  }, [titleAnim, subtitleAnim]);
 
   const handleStoryPress = useCallback(
     (storyId: string) => {
@@ -281,184 +258,57 @@ export default function CultureScreen() {
     : {};
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#0D0F1A" }}>
-      {/* ── Fixed dark foyer header ── */}
-      <View
-        style={{
-          backgroundColor: "#0D0F1A",
-          paddingHorizontal: isWide ? 40 : 20,
-          paddingTop: 24,
-          paddingBottom: 16,
-          borderBottomWidth: 1,
-          borderBottomColor: "#2E3245",
-          position: "relative",
-          zIndex: 10,
-        }}
-      >
-        {/* Film grain on header */}
-        <View
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundImage: GRAIN_URI as never,
-            opacity: 0.04,
-            pointerEvents: "none" as never,
-          }}
-        />
+    <ScrollView
+      style={{ flex: 1, backgroundColor: M.bg }}
+      contentContainerStyle={{
+        paddingHorizontal: isWide ? 40 : 16,
+        paddingTop: 24,
+        paddingBottom: 60,
+        maxWidth: 940,
+        marginLeft: "auto" as never,
+        marginRight: "auto" as never,
+        width: "100%",
+      }}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Hero: first featured item */}
+      {heroItem && <HeroCard item={heroItem} onStoryPress={handleStoryPress} />}
 
-        <View
-          style={{
-            maxWidth: 900,
-            marginLeft: "auto" as never,
-            marginRight: "auto" as never,
-            width: "100%",
-          }}
-        >
-          <Animated.Text
-            style={{
-              fontSize: isWide ? 40 : 32,
-              fontWeight: "900",
-              color: "#F7F2E8",
-              letterSpacing: -1,
-              lineHeight: isWide ? 44 : 36,
-              opacity: titleAnim,
-              transform: [{ translateY: titleAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
-            }}
-          >
-            CULTURE
-          </Animated.Text>
+      {/* Featured strip */}
+      <FeaturedStrip items={featuredStrip} onStoryPress={handleStoryPress} wide={isWide} />
 
-          <Animated.Text
-            style={{
-              fontSize: 9,
-              fontWeight: "700",
-              letterSpacing: 3,
-              color: "#C4862A",
-              marginTop: 4,
-              textTransform: "uppercase" as const,
-              opacity: subtitleAnim,
-              transform: [{ translateY: subtitleAnim.interpolate({ inputRange: [0, 1], outputRange: [6, 0] }) }],
-            }}
-          >
-            STORIES · PODCASTS · FILM
-          </Animated.Text>
-
-          {/* Gold rule */}
-          <View
-            style={{
-              height: 1,
-              backgroundColor: "#C4862A",
-              opacity: 0.3,
-              marginTop: 12,
-              marginBottom: 14,
-            }}
-          />
-
-          {/* Filter pills */}
-          <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
-            {FILTER_OPTIONS.map((opt) => {
-              const isActive = activeFilter === opt.id;
-              const typeColor =
-                opt.id === "blog"
-                  ? "#38bdf8"
-                  : opt.id === "podcast"
-                  ? "#a78bfa"
-                  : opt.id === "film"
-                  ? "#fb923c"
-                  : "#C4862A";
-              return (
-                <Pressable
-                  key={opt.id}
-                  onPress={() => setActiveFilter(opt.id)}
-                  style={{
-                    borderRadius: 999,
-                    paddingHorizontal: 14,
-                    paddingVertical: 7,
-                    backgroundColor: isActive ? `${typeColor}18` : "rgba(46, 50, 69, 0.6)",
-                    borderWidth: 1,
-                    borderColor: isActive ? `${typeColor}60` : "#2E3245",
-                    cursor: "pointer" as never,
-                    transition: "all 0.15s ease" as never,
-                  }}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: isActive }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 11,
-                      fontWeight: "700",
-                      letterSpacing: 0.3,
-                      color: isActive ? typeColor : "#9A9480",
-                    }}
-                  >
-                    {opt.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
+      {/* All content list/grid */}
+      {rest.length > 0 && (
+        <>
+          <SectionLabel label="ALL CONTENT" />
+          <View style={contentCols}>
+            {rest.map((item) => (
+              <View
+                key={item.id}
+                style={
+                  isWide
+                    ? { width: "calc(50% - 6px)" as never, marginBottom: 12 }
+                    : { marginBottom: 10 }
+                }
+              >
+                <DiscoverCard item={item} onStoryPress={handleStoryPress} />
+              </View>
+            ))}
           </View>
+        </>
+      )}
+
+      {featured.length === 0 && rest.length === 0 && (
+        <View style={{ alignItems: "center", paddingVertical: 80 }}>
+          <Text style={{ fontSize: 36, marginBottom: 16 }}>🎬</Text>
+          <Text style={{ fontSize: 16, fontWeight: "700", color: M.text, marginBottom: 6 }}>
+            Nothing here yet
+          </Text>
+          <Text style={{ fontSize: 13, color: M.muted, textAlign: "center" as const, maxWidth: 280 }}>
+            Check back soon for new stories and films.
+          </Text>
         </View>
-      </View>
-
-      {/* ── Scrollable content ── */}
-      <ScrollView
-        ref={scrollRef}
-        style={{ flex: 1, backgroundColor: M.bg }}
-        contentContainerStyle={{
-          paddingHorizontal: isWide ? 40 : 16,
-          paddingTop: 24,
-          paddingBottom: 60,
-          maxWidth: 940,
-          marginLeft: "auto" as never,
-          marginRight: "auto" as never,
-          width: "100%",
-        }}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Hero: first featured item */}
-        {heroItem && (
-          <HeroCard item={heroItem} onStoryPress={handleStoryPress} />
-        )}
-
-        {/* Featured strip */}
-        <FeaturedStrip items={featuredStrip} onStoryPress={handleStoryPress} wide={isWide} />
-
-        {/* All content list/grid */}
-        {rest.length > 0 && (
-          <>
-            <SectionLabel label="ALL CONTENT" />
-            <View style={contentCols}>
-              {rest.map((item) => (
-                <View
-                  key={item.id}
-                  style={
-                    isWide
-                      ? { width: "calc(50% - 6px)" as never, marginBottom: 12 }
-                      : { marginBottom: 10 }
-                  }
-                >
-                  <DiscoverCard item={item} onStoryPress={handleStoryPress} />
-                </View>
-              ))}
-            </View>
-          </>
-        )}
-
-        {featured.length === 0 && rest.length === 0 && (
-          <View style={{ alignItems: "center", paddingVertical: 80 }}>
-            <Text style={{ fontSize: 36, marginBottom: 16 }}>🎬</Text>
-            <Text style={{ fontSize: 16, fontWeight: "700", color: M.text, marginBottom: 6 }}>
-              Nothing here yet
-            </Text>
-            <Text style={{ fontSize: 13, color: M.muted, textAlign: "center" as const, maxWidth: 280 }}>
-              Check back soon for new stories and films.
-            </Text>
-          </View>
-        )}
-      </ScrollView>
-    </View>
+      )}
+    </ScrollView>
   );
 }

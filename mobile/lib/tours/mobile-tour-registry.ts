@@ -127,7 +127,7 @@ export const MOBILE_TOUR_REGISTRY = {
     ],
   },
   practice: {
-    route: "/(tabs)/listen",
+    route: "/(tabs)/explore",
     audience: "all",
     heroIcon: "sparkles",
     heroColor: "#8b5cf6",
@@ -166,7 +166,7 @@ export const MOBILE_TOUR_REGISTRY = {
     ],
   },
   journal: {
-    route: "/(tabs)/journal",
+    route: "/journal",
     audience: "all",
     heroIcon: "pencil.and.list.clipboard",
     heroColor: "#3b82f6",

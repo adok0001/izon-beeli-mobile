@@ -24,7 +24,7 @@ export const MOBILE_CHECKLIST_REGISTRY = {
     icon: "trophy.fill",
   },
   writeJournalEntry: {
-    route: "/(tabs)/journal",
+    route: "/journal",
     audience: "all",
     titleKey: "welcomeChecklist.writeJournalEntryTitle",
     descriptionKey: "welcomeChecklist.writeJournalEntryDetail",
@@ -38,7 +38,7 @@ export const MOBILE_CHECKLIST_REGISTRY = {
     icon: "mic.fill",
   },
   listenToAudio: {
-    route: "/(tabs)/listen",
+    route: "/(tabs)/explore",
     audience: "all",
     titleKey: "welcomeChecklist.listenToAudioTitle",
     descriptionKey: "welcomeChecklist.listenToAudioDetail",
@@ -59,7 +59,7 @@ export const MOBILE_CHECKLIST_REGISTRY = {
     icon: "character.book.closed",
   },
   exploreCultureMusic: {
-    route: "/(tabs)/listen",
+    route: "/(tabs)/explore",
     audience: "all",
     titleKey: "welcomeChecklist.exploreCultureMusicTitle",
     descriptionKey: "welcomeChecklist.exploreCultureMusicDetail",

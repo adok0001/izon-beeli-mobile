@@ -46,7 +46,7 @@ export function BountyTeaser({ languageId }: { languageId: string }) {
             marginRight: 12,
           }}
         >
-          <IconSymbol name="star.fill" size={17} color=amber.solid />
+          <IconSymbol name="star.fill" size={17} color={amber.solid} />
         </View>
         <View className="flex-1">
           <View className="flex-row items-center gap-2">
@@ -70,7 +70,7 @@ export function BountyTeaser({ languageId }: { languageId: string }) {
             {topBounty.title}
           </Text>
         </View>
-        <IconSymbol name="chevron.right" size={14} color=amber.solid />
+        <IconSymbol name="chevron.right" size={14} color={amber.solid} />
       </View>
     </Pressable>
   );

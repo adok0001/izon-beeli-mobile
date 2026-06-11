@@ -458,7 +458,7 @@ export default function LessonScreen() {
                 </View>
 
                 <Pressable
-                  onPress={() => router.push("/(tabs)/journal" as any)}
+                  onPress={() => router.push("/journal" as any)}
                   style={{
                     flexDirection: "row", alignItems: "center", gap: 10,
                     paddingHorizontal: 16, paddingVertical: 14, borderRadius: 16,

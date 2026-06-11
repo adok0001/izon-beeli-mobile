@@ -1,8 +1,9 @@
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useLeaderboard, type LeaderboardEntry } from "@/lib/hooks/use-leaderboard";
+import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, FlatList, Image, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 
@@ -133,6 +134,7 @@ function EntryRow({ entry }: Readonly<{ entry: LeaderboardEntry }>) {
 
 export default function LeaderboardScreen() {
   const M = useMuseumTheme();
+  const router = useRouter();
   const { t } = useTranslation();
   const { data, isLoading, refetch, isRefetching } = useLeaderboard();
 
@@ -144,7 +146,16 @@ export default function LeaderboardScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
       {/* Header */}
-      <View style={{ backgroundColor: M.ink, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20 }}>
+      <View style={{ backgroundColor: M.ink, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20 }}>
+        <Pressable
+          onPress={() => router.back()}
+          style={{ flexDirection: "row", alignItems: "center", gap: 4, marginBottom: 10, alignSelf: "flex-start" }}
+          className="active:opacity-60"
+          accessibilityRole="button"
+        >
+          <IconSymbol name="chevron.left" size={14} color={M.parchment} />
+          <Text style={{ fontSize: 12, fontWeight: "700", color: M.parchment }}>{t("common.back")}</Text>
+        </Pressable>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
           <View
             style={{

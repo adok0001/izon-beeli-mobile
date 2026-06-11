@@ -542,6 +542,19 @@ export default function FeedScreen() {
           </View>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 }}>
             <Pressable
+              onPress={() => router.push("/leaderboard" as never)}
+              style={{
+                width: 36, height: 36, borderRadius: 18,
+                alignItems: "center", justifyContent: "center",
+                backgroundColor: `${M.accent}15`,
+                borderWidth: 1, borderColor: `${M.accent}30`,
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={t("leaderboard.title")}
+            >
+              <IconSymbol name="trophy.fill" size={16} color={M.accent} />
+            </Pressable>
+            <Pressable
               onPress={() => router.push("/contribute")}
               style={{
                 width: 36, height: 36, borderRadius: 18,

@@ -2,7 +2,7 @@
   "expo": {
     "name": "Beeli",
     "slug": "izon-beeli-mobile",
-    "version": "1.51.2",
+    "version": "1.52.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "izonbeelimobile",
@@ -11,6 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.izonbeeli.app",
+      "appleTeamId": "FWL2W5X58S",
       "entitlements": {
         "com.apple.security.application-groups": [
           "group.com.izonbeeli.shared"

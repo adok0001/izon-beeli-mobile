@@ -1,6 +1,7 @@
 import { ONBOARDING_KEY } from "@/lib/constants";
 import { AudioPlayer } from "@/components/audio/audio-player";
 import { FeatureTourModal } from "@/components/feature-tour-modal";
+import { GlobalSpeedDialFab } from "@/components/global-speed-dial-fab";
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { WelcomeChecklistFab } from "@/components/welcome-checklist-fab";
@@ -45,18 +46,8 @@ function LearnTabIcon({ color }: Readonly<{ color: string }>) {
   return <IconSymbol size={28} name="book.fill" color={color} />;
 }
 
-function ListenTabIcon({ color }: Readonly<{ color: string }>) {
+function ExploreTabIcon({ color }: Readonly<{ color: string }>) {
   return <IconSymbol size={28} name="sparkles" color={color} />;
-}
-
-function JournalTabIcon({ color }: Readonly<{ color: string }>) {
-  return (
-    <IconSymbol
-      size={28}
-      name="pencil.and.list.clipboard"
-      color={color}
-    />
-  );
 }
 
 function FeedTabIcon({ color }: Readonly<{ color: string }>) {
@@ -69,14 +60,6 @@ function EducatorTabIcon({ color }: Readonly<{ color: string }>) {
 
 function AdminTabIcon({ color }: Readonly<{ color: string }>) {
   return <IconSymbol size={28} name="gearshape.fill" color={color} />;
-}
-
-function LeaderboardTabIcon({ color }: Readonly<{ color: string }>) {
-  return <IconSymbol size={28} name="trophy.fill" color={color} />;
-}
-
-function CultureTabIcon({ color }: Readonly<{ color: string }>) {
-  return <IconSymbol size={28} name="film.stack" color={color} />;
 }
 
 function ProfileTabIcon({ color }: Readonly<{ color: string }>) {
@@ -157,17 +140,10 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
-          name="listen"
+          name="explore"
           options={{
-            title: t("tabs.practice"),
-            tabBarIcon: ListenTabIcon,
-          }}
-        />
-        <Tabs.Screen
-          name="journal"
-          options={{
-            title: t("tabs.journal"),
-            tabBarIcon: JournalTabIcon,
+            title: t("tabs.explore"),
+            tabBarIcon: ExploreTabIcon,
           }}
         />
         <Tabs.Screen
@@ -175,20 +151,6 @@ export default function TabLayout() {
           options={{
             title: t("tabs.feed"),
             tabBarIcon: FeedTabIcon,
-          }}
-        />
-        <Tabs.Screen
-          name="leaderboard"
-          options={{
-            title: t("tabs.leaderboard"),
-            tabBarIcon: LeaderboardTabIcon,
-          }}
-        />
-        <Tabs.Screen
-          name="culture"
-          options={{
-            title: t("tabs.culture"),
-            tabBarIcon: CultureTabIcon,
           }}
         />
         <Tabs.Screen
@@ -216,13 +178,13 @@ export default function TabLayout() {
           name="profile"
           options={{
             title: t("tabs.profile"),
-            href: null,
             tabBarIcon: ProfileTabIcon,
           }}
         />
       </Tabs>
       <FeatureTourModal />
       <WelcomeChecklistFab />
+      <GlobalSpeedDialFab />
     </>
   );
 }

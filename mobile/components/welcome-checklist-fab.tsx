@@ -266,7 +266,8 @@ export function WelcomeChecklistFab() {
       />
 
       {pendingCount > 0 && (
-      <View pointerEvents="box-none" style={{ position: "absolute", right: 16, bottom: 72 + insets.bottom, zIndex: 60 }}>
+      // bottom offset clears the global speed-dial FAB, which owns the bottom-right slot
+      <View pointerEvents="box-none" style={{ position: "absolute", right: 16, bottom: 136 + insets.bottom, zIndex: 60 }}>
 
       {open ? (
         <View style={{ marginBottom: 12, width: 320, overflow: "hidden", borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.card }}>

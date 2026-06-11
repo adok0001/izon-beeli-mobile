@@ -16,6 +16,7 @@ import {
 import i18n from "@/lib/i18n";
 import { useTourStore } from "@/store/tour-store";
 import type { JournalEntry } from "@/types";
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { TextInput as TextInputType } from "react-native";
@@ -226,6 +227,7 @@ function WaveformBars({ color, active }: { color: string; active: boolean }) {
 
 export default function JournalScreen() {
   const M = useMuseumTheme();
+  const router = useRouter();
   const { data: entries, isLoading, refetch } = useJournal();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -425,7 +427,16 @@ export default function JournalScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
       {/* Header */}
-      <View style={{ backgroundColor: M.ink, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20 }}>
+      <View style={{ backgroundColor: M.ink, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20 }}>
+        <Pressable
+          onPress={() => router.back()}
+          style={{ flexDirection: "row", alignItems: "center", gap: 4, marginBottom: 10, alignSelf: "flex-start" }}
+          className="active:opacity-60"
+          accessibilityRole="button"
+        >
+          <IconSymbol name="chevron.left" size={14} color={M.parchment} />
+          <Text style={{ fontSize: 12, fontWeight: "700", color: M.parchment }}>{t("common.back")}</Text>
+        </Pressable>
         <Text style={{ fontSize: 32, fontWeight: "900", color: M.parchment, letterSpacing: -0.5 }}>
           {t("journal.title")}
         </Text>
