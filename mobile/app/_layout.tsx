@@ -196,7 +196,7 @@ export default function RootLayout() {
                   <Stack.Screen name="word-review" options={{ headerBackTitle: "Back" }} />
                   <Stack.Screen name="my-contributions" options={{ headerBackTitle: "Back" }} />
                   <Stack.Screen name="review" options={{ headerBackTitle: "Back" }} />
-                  <Stack.Screen name="quiz" options={{ presentation: "modal", headerShown: false }} />
+                  <Stack.Screen name="quiz" options={{ presentation: "modal", headerShown: true }} />
                   <Stack.Screen name="matching-game" options={{ presentation: "modal", headerShown: false }} />
                   <Stack.Screen name="adinkra" options={{ headerBackTitle: "Back" }} />
                   <Stack.Screen name="geez-lesson" options={{ headerBackTitle: "Back" }} />

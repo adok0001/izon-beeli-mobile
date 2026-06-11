@@ -595,8 +595,6 @@ export default function QuizScreen() {
       <Stack.Screen
         options={{
           title: quizTitle,
-          headerShown: true,
-          presentation: "modal",
           headerLeft: () => (
             <Pressable
               onPress={() => {
