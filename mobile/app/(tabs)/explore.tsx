@@ -50,7 +50,7 @@ export default function ExploreScreen() {
       {/* Dark foyer header */}
       <View style={{ backgroundColor: M.ink, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 14 }}>
         <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
-          <View>
+          <View style={{ flex: 1, marginRight: 12 }}>
             <Animated.Text
               style={{
                 fontSize: 32,

@@ -62,7 +62,10 @@ export function LanguagePickerButton() {
         className="active:opacity-70"
       >
         <IconSymbol name="book.fill" size={16} color={M.accent} />
-        <Text style={{ marginLeft: 6, fontSize: 13, fontWeight: "600", color: M.accent }}>
+        <Text
+          style={{ marginLeft: 6, fontSize: 13, fontWeight: "600", color: M.accent, flexShrink: 1 }}
+          numberOfLines={1}
+        >
           {selectedName}
         </Text>
         <IconSymbol name="chevron.right" size={14} color={M.accent} style={{ marginLeft: 2 }} />
