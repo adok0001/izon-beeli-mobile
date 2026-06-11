@@ -465,7 +465,7 @@ const CourseCard = memo(function CourseCard({
               </Pressable>
 
               {(() => {
-                const matchAccent = getAccent("violet");
+                const matchAccent = getAccent("purple");
                 return (
                   <Pressable
                     onPress={() => router.push({ pathname: "/matching-game", params: { courseId: course.id } })}
@@ -477,16 +477,16 @@ const CourseCard = memo(function CourseCard({
                       borderRadius: 10,
                       paddingVertical: 10,
                       borderWidth: 1,
-                      borderColor: `${matchAccent}58`,
-                      backgroundColor: `${matchAccent}14`,
+                      borderColor: matchAccent.border,
+                      backgroundColor: matchAccent.bg,
                       gap: 6,
                     }}
                     className="active:opacity-70"
                     accessibilityRole="button"
                     accessibilityLabel={t("learn.matchingGame")}
                   >
-                    <IconSymbol name="rectangle.grid.2x2" size={14} color={matchAccent} />
-                    <Text style={{ fontSize: 12, fontWeight: "700", color: matchAccent }}>
+                    <IconSymbol name="rectangle.grid.2x2" size={14} color={matchAccent.solid} />
+                    <Text style={{ fontSize: 12, fontWeight: "700", color: matchAccent.solid }}>
                       {t("learn.matchingGame")}
                     </Text>
                   </Pressable>
@@ -507,16 +507,16 @@ const CourseCard = memo(function CourseCard({
                     borderRadius: 10,
                     paddingVertical: 10,
                     borderWidth: 1,
-                    borderColor: `${storyAccent}58`,
-                    backgroundColor: `${storyAccent}14`,
+                    borderColor: storyAccent.border,
+                    backgroundColor: storyAccent.bg,
                     gap: 6,
                   }}
                   className="active:opacity-70"
                   accessibilityRole="button"
                   accessibilityLabel={t("learn.storyMode")}
                 >
-                  <IconSymbol name="book.fill" size={14} color={storyAccent} />
-                  <Text style={{ fontSize: 12, fontWeight: "700", color: storyAccent }}>
+                  <IconSymbol name="book.fill" size={14} color={storyAccent.solid} />
+                  <Text style={{ fontSize: 12, fontWeight: "700", color: storyAccent.solid }}>
                     {t("learn.storyMode")}
                   </Text>
                 </Pressable>
@@ -546,10 +546,10 @@ function BountyTeaser({ languageId }: { languageId: string }) {
       style={{
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: `${bountyAccent}40`,
+        borderColor: bountyAccent.border,
         borderLeftWidth: 4,
-        borderLeftColor: bountyAccent,
-        backgroundColor: `${bountyAccent}12`,
+        borderLeftColor: bountyAccent.solid,
+        backgroundColor: bountyAccent.bg,
         padding: 14,
       }}
       className="active:opacity-70"
@@ -565,15 +565,15 @@ function BountyTeaser({ languageId }: { languageId: string }) {
             borderRadius: 10,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: `${bountyAccent}25`,
+            backgroundColor: bountyAccent.bg,
             marginRight: 12,
           }}
         >
-          <IconSymbol name="star.fill" size={17} color={bountyAccent} />
+          <IconSymbol name="star.fill" size={17} color={bountyAccent.solid} />
         </View>
         <View className="flex-1">
           <View className="flex-row items-center gap-2">
-            <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: bountyAccent }}>
+            <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: bountyAccent.solid }}>
               {t("learn.bountyLabel").toUpperCase()}
             </Text>
             <View
@@ -581,10 +581,10 @@ function BountyTeaser({ languageId }: { languageId: string }) {
                 borderRadius: 999,
                 paddingHorizontal: 7,
                 paddingVertical: 1.5,
-                backgroundColor: `${bountyAccent}30`,
+                backgroundColor: bountyAccent.border,
               }}
             >
-              <Text style={{ fontSize: 10, fontWeight: "800", color: bountyAccent }}>
+              <Text style={{ fontSize: 10, fontWeight: "800", color: bountyAccent.solid }}>
                 +{topBounty.xpReward} XP
               </Text>
             </View>
@@ -593,7 +593,7 @@ function BountyTeaser({ languageId }: { languageId: string }) {
             {topBounty.title}
           </Text>
         </View>
-        <IconSymbol name="chevron.right" size={14} color={bountyAccent} />
+        <IconSymbol name="chevron.right" size={14} color={bountyAccent.solid} />
       </View>
     </Pressable>
   );
