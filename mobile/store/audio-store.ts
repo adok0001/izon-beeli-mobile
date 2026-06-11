@@ -194,9 +194,12 @@ export const useAudioStore = create<AudioState>((set, get) => ({
 
   seekTo: async (seconds) => {
     const { _sound } = get();
-    if (_sound) {
+    if (!_sound) return;
+    try {
       await _sound.setPositionAsync(seconds * 1000);
       set({ progress: seconds });
+    } catch {
+      // Seeking interrupted is benign — AVPlayer cancelled a seek in flight
     }
   },
 

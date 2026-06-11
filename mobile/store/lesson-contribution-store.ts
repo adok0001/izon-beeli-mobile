@@ -104,8 +104,12 @@ export const useLessonContributionStore = create<LessonContributionState>((set, 
   seekTo: async (positionSeconds: number) => {
     const { _sound } = get();
     if (!_sound) return;
-    await _sound.setPositionAsync(positionSeconds * 1000);
-    set({ playbackPosition: positionSeconds });
+    try {
+      await _sound.setPositionAsync(positionSeconds * 1000);
+      set({ playbackPosition: positionSeconds });
+    } catch {
+      // Seeking interrupted is benign — AVPlayer cancelled a seek in flight
+    }
   },
 
   getCurrentPosition: () => get().playbackPosition,
