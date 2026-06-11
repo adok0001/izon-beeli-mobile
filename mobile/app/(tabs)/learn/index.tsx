@@ -457,7 +457,7 @@ const CourseCard = memo(function CourseCard({
                 accessibilityRole="button"
                 accessibilityLabel={t("learn.practiceQuiz")}
               >
-                <IconSymbol name="trophy.fill" size={14} color={accentColor} />
+                <IconSymbol name="lightbulb.circle.fill" size={14} color={accentColor} />
                 <Text style={{ fontSize: 12, fontWeight: "700", color: accentColor }}>
                   {t("learn.practiceQuiz")}
                 </Text>
@@ -735,7 +735,7 @@ export default function LearnScreen() {
               accessibilityRole="button"
               accessibilityLabel="Practice quiz"
             >
-              <IconSymbol name="trophy.fill" size={16} color={M.accent} />
+              <IconSymbol name="lightbulb.circle.fill" size={16} color={M.accent} />
             </Pressable>
             <Pressable
               onPress={() => router.push("/dictionary")}
