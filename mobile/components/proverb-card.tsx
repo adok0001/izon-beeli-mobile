@@ -64,6 +64,7 @@ export function ProverbCard({ proverb, compact = false }: Props) {
           text: proverb.text,
           translation: proverb.translation,
           language: proverb.languageId,
+          audioUrl: proverb.audioUrl,
         }}
       />
     </>

@@ -123,6 +123,7 @@ export function WordChallengeCard({ languageId }: Props) {
         translation: word.english,
         language: languageId,
         pronunciation: word.pronunciation ?? undefined,
+        audioUrl: word.audioUrl,
       }}
     />
     </>

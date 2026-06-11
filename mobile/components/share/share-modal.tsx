@@ -1,5 +1,6 @@
 import { fonts, type } from "@/constants/typography";
 import { hapticTap } from "@/lib/haptics";
+import { useWordAudio } from "@/lib/hooks/use-word-audio";
 import { buildShareMessage, captureAndShare, type ShareCardData } from "@/lib/share-card";
 import { bronze, glass, MUSEUM } from "@/lib/use-museum-theme";
 import { Ionicons } from "@expo/vector-icons";
@@ -25,9 +26,29 @@ export function ShareModal({ visible, onClose, data }: Props) {
   const { t } = useTranslation();
   const cardRef = useRef<View>(null);
   const [sharing, setSharing] = useState(false);
+  const { play, stop } = useWordAudio();
+
+  // Words always speak (recorded clip or TTS fallback); proverbs only when recorded.
+  const canListen =
+    data.template === "word" || (data.template === "proverb" && !!data.audioUrl);
+
+  const handleListen = () => {
+    hapticTap();
+    if (data.template === "word") {
+      play(data.audioUrl, data.word);
+    } else if (data.template === "proverb") {
+      play(data.audioUrl);
+    }
+  };
+
+  const handleClose = () => {
+    stop();
+    onClose();
+  };
 
   const handleShare = async () => {
     hapticTap();
+    stop();
     setSharing(true);
     await captureAndShare(cardRef, buildShareMessage(data, t));
     setSharing(false);
@@ -38,7 +59,7 @@ export function ShareModal({ visible, onClose, data }: Props) {
       visible={visible}
       animationType="slide"
       presentationStyle="pageSheet"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
       <LinearGradient colors={BACKDROP_COLORS} style={{ flex: 1 }}>
         {/* Ambient bronze glow behind the card */}
@@ -47,7 +68,7 @@ export function ShareModal({ visible, onClose, data }: Props) {
         <SafeAreaView className="flex-1" edges={["top", "bottom"]}>
           {/* Liquid-glass header */}
           <BlurView intensity={30} tint="dark" style={styles.header}>
-            <Pressable onPress={onClose} hitSlop={8} style={styles.closeButton}>
+            <Pressable onPress={handleClose} hitSlop={8} style={styles.closeButton}>
               <Ionicons name="close" size={18} color={MUSEUM.parchment} />
             </Pressable>
             <Text style={{ ...type.title, color: MUSEUM.parchment }}>{t("share.cardTitle")}</Text>
@@ -59,6 +80,21 @@ export function ShareModal({ visible, onClose, data }: Props) {
             <Animated.View entering={FadeInDown.springify().damping(16)} style={styles.cardShadow}>
               <ShareCardPreview ref={cardRef} {...data} />
             </Animated.View>
+
+            {canListen && (
+              <Animated.View entering={FadeInUp.delay(120)}>
+                <Pressable
+                  onPress={handleListen}
+                  hitSlop={8}
+                  style={({ pressed }) => [styles.listenPill, pressed && { opacity: 0.7 }]}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("share.listen")}
+                >
+                  <Ionicons name="volume-high" size={15} color={MUSEUM.accent} />
+                  <Text style={styles.listenLabel}>{t("share.listen")}</Text>
+                </Pressable>
+              </Animated.View>
+            )}
 
             <Animated.Text entering={FadeInUp.delay(150)} style={styles.hint}>
               {t("share.tapToSend")}
@@ -132,7 +168,20 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 12 },
     elevation: 16,
   },
-  hint: { ...type.caption, color: MUSEUM.textDimDark, marginTop: 24, textAlign: "center" },
+  listenPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    marginTop: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 999,
+    backgroundColor: glass(0.08),
+    borderWidth: 1,
+    borderColor: bronze(0.35),
+  },
+  listenLabel: { fontFamily: fonts.headingMedium, fontSize: 13, color: MUSEUM.accent },
+  hint: { ...type.caption, color: MUSEUM.textDimDark, marginTop: 16, textAlign: "center" },
   cta: {
     flexDirection: "row",
     alignItems: "center",
