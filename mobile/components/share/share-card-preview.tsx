@@ -1,155 +1,155 @@
+import { fonts, type } from "@/constants/typography";
+import type { ShareCardData } from "@/lib/share-card";
+import { bronze, glass, MUSEUM } from "@/lib/use-museum-theme";
+import { Badge } from "@/components/ui/badge";
+import { LinearGradient } from "expo-linear-gradient";
 import { forwardRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
-interface WordCardProps {
-  template: "word";
-  id?: string;
-  word: string;
-  translation: string;
-  language: string;
-  pronunciation?: string;
+const DIVIDER_COLORS = [bronze(0.7), bronze(0.08)] as const;
+const CARD_COLORS = [MUSEUM.inkRaised, MUSEUM.ink, MUSEUM.inkDeep] as const;
+
+function AccentDivider() {
+  return (
+    <LinearGradient
+      colors={DIVIDER_COLORS}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={styles.divider}
+    />
+  );
 }
 
-interface ProverbCardProps {
-  template: "proverb";
-  languageId?: string;
-  text: string;
-  translation: string;
-  language: string;
-}
-
-interface AchievementCardProps {
-  template: "achievement";
-  title: string;
-  detail: string;
-}
-
-interface SymbolCardProps {
-  template: "symbol";
-  name: string;
-  meaning: string;
-  language: string;
-}
-
-interface CulturalCardProps {
-  template: "cultural";
-  languageId?: string;
-  title: string;
-  description: string;
-  category: string;
-  emoji: string;
-  language?: string;
-}
-
-type Props = WordCardProps | ProverbCardProps | AchievementCardProps | SymbolCardProps | CulturalCardProps;
-
-export const ShareCardPreview = forwardRef<View, Props>((props, ref) => {
+export const ShareCardPreview = forwardRef<View, ShareCardData>((props, ref) => {
   const { t } = useTranslation();
+  const language = "language" in props ? props.language : undefined;
 
   return (
-    <View
-      ref={ref}
-      className="overflow-hidden rounded-2xl bg-white"
-      style={{ width: 320, padding: 24 }}
-    >
-      {/* Brand header */}
-      <View className="mb-4 flex-row items-center justify-between">
-        <Text className="text-xs font-bold tracking-wider text-blue-500">
-          Beeli
-        </Text>
-        {"language" in props && props.language ? (
-          <Text className="text-xs text-neutral-400">{props.language}</Text>
-        ) : null}
-      </View>
+    <View ref={ref} collapsable={false} style={styles.frame}>
+      <LinearGradient
+        colors={CARD_COLORS}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.6, y: 1 }}
+        style={styles.body}
+      >
+        <View pointerEvents="none" style={styles.glow} />
 
-      {props.template === "word" && (
-        <>
-          <Text className="text-3xl font-bold text-neutral-900">
-            {props.word}
-          </Text>
-          {props.pronunciation && (
-            <Text className="mt-1 text-sm italic text-neutral-400">
-              /{props.pronunciation}/
+        {/* Brand header */}
+        <View className="mb-5 flex-row items-center justify-between">
+          <View className="flex-row items-center" style={{ gap: 7 }}>
+            <View style={styles.brandDot} />
+            <Text style={{ ...type.overline, color: MUSEUM.accent }}>BEELI</Text>
+          </View>
+          {language ? (
+            <Badge label={language} color={MUSEUM.textDim} bg={glass(0.08)} border={glass(0.14)} />
+          ) : null}
+        </View>
+
+        {props.template === "word" && (
+          <>
+            <Text style={{ ...type.display, color: MUSEUM.parchment }}>{props.word}</Text>
+            {props.pronunciation && (
+              <Text style={styles.pronunciation}>/{props.pronunciation}/</Text>
+            )}
+            <AccentDivider />
+            <Text style={{ ...type.h3, color: MUSEUM.textDim }}>{props.translation}</Text>
+          </>
+        )}
+
+        {props.template === "proverb" && (
+          <>
+            <Text style={styles.quoteMark}>&ldquo;</Text>
+            <Text style={{ ...type.h3, fontStyle: "italic", color: MUSEUM.parchment, marginTop: -14 }}>
+              {props.text}
             </Text>
-          )}
-          <View className="mt-3 h-px bg-neutral-200" />
-          <Text className="mt-3 text-lg text-neutral-600">
-            {props.translation}
-          </Text>
-        </>
-      )}
+            <AccentDivider />
+            <Text style={{ ...type.body, color: MUSEUM.textDim }}>{props.translation}</Text>
+          </>
+        )}
 
-      {props.template === "proverb" && (
-        <>
-          <Text className="text-lg font-semibold italic text-neutral-800">
-            &ldquo;{props.text}&rdquo;
-          </Text>
-          <View className="mt-3 h-px bg-neutral-200" />
-          <Text className="mt-3 text-base text-neutral-600">
-            {props.translation}
-          </Text>
-        </>
-      )}
-
-      {props.template === "achievement" && (
-        <>
-          <View className="mb-3 h-12 w-12 items-center justify-center rounded-full bg-amber-100">
-            <Text className="text-2xl">🏆</Text>
-          </View>
-          <Text className="text-xl font-bold text-neutral-900">
-            {props.title}
-          </Text>
-          <Text className="mt-1 text-base text-neutral-500">
-            {props.detail}
-          </Text>
-        </>
-      )}
-
-      {props.template === "symbol" && (
-        <>
-          <Text className="text-3xl font-bold text-neutral-900">{props.name}</Text>
-          <View className="mt-3 h-px bg-neutral-200" />
-          <Text className="mt-3 text-base text-neutral-600">{props.meaning}</Text>
-        </>
-      )}
-
-      {props.template === "cultural" && (
-        <>
-          <View className="flex-row items-center gap-2">
-            <Text className="text-3xl">{props.emoji}</Text>
-            <View className="rounded-full bg-neutral-100 px-3 py-1">
-              <Text className="text-xs font-medium capitalize text-neutral-500">
-                {props.category}
-              </Text>
+        {props.template === "achievement" && (
+          <>
+            <View style={styles.trophyRing}>
+              <Text style={{ fontSize: 26 }}>🏆</Text>
             </View>
-          </View>
-          <Text className="mt-3 text-xl font-bold text-neutral-900">{props.title}</Text>
-          <Text className="mt-2 text-sm leading-5 text-neutral-600" numberOfLines={2}>
-            {props.description}
-          </Text>
-        </>
-      )}
+            <Text style={{ ...type.h2, color: MUSEUM.parchment }}>{props.title}</Text>
+            <Text style={{ ...type.body, color: MUSEUM.textDim, marginTop: 6 }}>{props.detail}</Text>
+          </>
+        )}
 
-      {/* Footer */}
-      <Text className="mt-6 text-center text-[10px] text-neutral-300">
-        {t("share.tagline")}
-      </Text>
-      <Text className="mt-1 text-center text-[9px] text-blue-400">
-        {props.template === "word" && props.id
-          ? `izonbeelimobile://word/${props.id}?languageId=${encodeURIComponent(props.language)}`
-          : props.template === "proverb" && props.languageId
-            ? `izonbeelimobile://proverbs/${props.languageId}`
-            : props.template === "achievement"
-              ? "izonbeelimobile://(tabs)/profile"
-              : props.template === "symbol"
-                ? "izonbeelimobile://adinkra"
-                : props.template === "cultural" && props.languageId
-                  ? `izonbeelimobile://cultural/${props.languageId}`
-                  : ""}
-      </Text>
+        {props.template === "symbol" && (
+          <>
+            <Text style={{ ...type.h1, color: MUSEUM.parchment }}>{props.name}</Text>
+            <AccentDivider />
+            <Text style={{ ...type.body, color: MUSEUM.textDim }}>{props.meaning}</Text>
+          </>
+        )}
+
+        {props.template === "cultural" && (
+          <>
+            <View className="flex-row items-center" style={{ gap: 10 }}>
+              <Text style={{ fontSize: 30 }}>{props.emoji}</Text>
+              <Badge
+                label={props.category.charAt(0).toUpperCase() + props.category.slice(1)}
+                color={MUSEUM.accent}
+                bg={bronze(0.14)}
+                border={bronze(0.3)}
+              />
+            </View>
+            <Text style={{ ...type.h2, color: MUSEUM.parchment, marginTop: 12 }}>{props.title}</Text>
+            <Text style={{ ...type.body, color: MUSEUM.textDim, marginTop: 8 }} numberOfLines={3}>
+              {props.description}
+            </Text>
+          </>
+        )}
+
+        {/* Footer */}
+        <View className="mt-7 flex-row items-center justify-center" style={{ gap: 6 }}>
+          <View style={styles.footerRule} />
+          <Text style={styles.footerText}>{t("share.tagline")}</Text>
+          <View style={styles.footerRule} />
+        </View>
+      </LinearGradient>
     </View>
   );
 });
 
 ShareCardPreview.displayName = "ShareCardPreview";
+
+const styles = StyleSheet.create({
+  frame: {
+    width: 320,
+    borderRadius: 28,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: bronze(0.35),
+  },
+  body: { padding: 28 },
+  glow: {
+    position: "absolute",
+    top: -70,
+    right: -70,
+    width: 190,
+    height: 190,
+    borderRadius: 95,
+    backgroundColor: bronze(0.14),
+  },
+  brandDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: MUSEUM.accent },
+  divider: { height: 1.5, borderRadius: 1, marginVertical: 16 },
+  pronunciation: { marginTop: 6, fontSize: 14, fontStyle: "italic", color: MUSEUM.textDim },
+  quoteMark: { fontFamily: fonts.heading, fontSize: 44, lineHeight: 44, color: bronze(0.55) },
+  trophyRing: {
+    marginBottom: 14,
+    height: 56,
+    width: 56,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 28,
+    backgroundColor: bronze(0.16),
+    borderWidth: 1,
+    borderColor: bronze(0.4),
+  },
+  footerRule: { height: 1, width: 18, backgroundColor: glass(0.18) },
+  footerText: { fontSize: 10, letterSpacing: 0.6, color: glass(0.45) },
+});
