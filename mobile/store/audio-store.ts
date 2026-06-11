@@ -8,6 +8,19 @@ type PlaybackSpeed = 0.5 | 0.75 | 1 | 1.25 | 1.5 | 2;
 
 const RESUME_KEY = "audio-store-resume";
 
+function getAudioErrorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  // Network-level failures (DNS, offline, timeout) surface as NSURLErrorDomain
+  if (/NSURLErrorDomain|-1001|-1003|-1009/.test(message)) {
+    return "Can't reach this audio source. Check your connection or the link.";
+  }
+  // AVFoundation rejects non-audio responses (e.g. an HTML page) or unsupported formats
+  if (/AVFoundationErrorDomain|-11850|-11828|-11800/.test(message)) {
+    return "This link isn't a playable audio file.";
+  }
+  return "Couldn't play this audio. Please try again.";
+}
+
 interface ResumeState {
   lessonId: string;
   positionSeconds: number;
@@ -23,6 +36,7 @@ interface AudioState {
   progress: number; // seconds
   duration: number; // seconds
   playbackSpeed: PlaybackSpeed;
+  error: string | null;
 
   // Resume state (persisted)
   resumeState: ResumeState | null;
@@ -56,6 +70,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
   progress: 0,
   duration: 0,
   playbackSpeed: 1,
+  error: null,
   resumeState: null,
   shadowSegment: null,
   _sound: null,
@@ -72,10 +87,19 @@ export const useAudioStore = create<AudioState>((set, get) => ({
 
     // Unload previous sound
     if (currentSound) {
-      await currentSound.unloadAsync();
+      await currentSound.unloadAsync().catch(() => {});
     }
 
-    set({ isLoading: true, currentTrackId: trackId, currentTrackTitle: title ?? null, shadowSegment: null });
+    set({
+      isLoading: true,
+      currentTrackId: trackId,
+      currentTrackTitle: title ?? null,
+      shadowSegment: null,
+      error: null,
+      _sound: null,
+      progress: 0,
+      duration: 0,
+    });
 
     try {
       await Audio.setAudioModeAsync({
@@ -125,7 +149,15 @@ export const useAudioStore = create<AudioState>((set, get) => ({
       set({ _sound: sound, isLoading: false, isPlaying: true });
     } catch (error) {
       console.error("Error loading audio:", error);
-      set({ isLoading: false, currentTrackId: null, currentTrackTitle: null });
+      // Keep the track id/title so the player stays visible with the error message
+      set({
+        isLoading: false,
+        isPlaying: false,
+        progress: 0,
+        duration: 0,
+        _sound: null,
+        error: getAudioErrorMessage(error),
+      });
     }
   },
 
@@ -200,6 +232,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
       progress: 0,
       duration: 0,
       shadowSegment: null,
+      error: null,
       _sound: null,
     });
   },
