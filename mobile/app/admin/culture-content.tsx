@@ -7,6 +7,7 @@ import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
@@ -59,6 +60,7 @@ interface ItemFormProps {
 }
 
 function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
+  const { t } = useTranslation();
   const M = useMuseumTheme();
   const base = initial ?? ({ id: "", ...EMPTY_FORM } as DiscoverItem);
   const [type, setType] = useState<DiscoverContentType>(base.type);
@@ -115,15 +117,15 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
       contentContainerStyle={{ padding: 20, paddingBottom: 48 }}
     >
       {/* Type picker */}
-      <Field label="Type">
+      <Field label={t("admin.cultureContent.formType")}>
         <View className="flex-row gap-2">
-          {(["blog", "podcast", "film"] as DiscoverContentType[]).map((t) => {
-            const active = type === t;
-            const color = TYPE_CONFIG[t].color;
+          {(["blog", "podcast", "film"] as DiscoverContentType[]).map((ct) => {
+            const active = type === ct;
+            const color = TYPE_CONFIG[ct].color;
             return (
               <Pressable
-                key={t}
-                onPress={() => setType(t)}
+                key={ct}
+                onPress={() => setType(ct)}
                 style={{
                   flex: 1, alignItems: "center", paddingVertical: 8, borderRadius: 12,
                   backgroundColor: active ? `${color}18` : undefined,
@@ -131,7 +133,7 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
                 }}
               >
                 <Text style={{ fontSize: 12, fontWeight: "700", color: active ? color : M.muted }}>
-                  {TYPE_CONFIG[t].label}
+                  {t(`admin.cultureContent.typeLabel.${ct}` as const)}
                 </Text>
               </Pressable>
             );
@@ -139,22 +141,22 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
         </View>
       </Field>
 
-      <Field label="Title">
+      <Field label={t("admin.cultureContent.formTitle")}>
         <TextInput
           value={title}
           onChangeText={setTitle}
-          placeholder="Article or episode title"
+          placeholder={t("admin.cultureContent.titlePlaceholder")}
           placeholderTextColor={M.muted}
           maxLength={120}
           className={inputClass}
         />
       </Field>
 
-      <Field label="Description">
+      <Field label={t("admin.cultureContent.formDescription")}>
         <TextInput
           value={description}
           onChangeText={setDescription}
-          placeholder="Short summary shown on the card"
+          placeholder={t("admin.cultureContent.descPlaceholder")}
           placeholderTextColor={M.muted}
           maxLength={300}
           multiline
@@ -164,11 +166,11 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
         />
       </Field>
 
-      <Field label="Author">
+      <Field label={t("admin.cultureContent.formAuthor")}>
         <TextInput
           value={author}
           onChangeText={setAuthor}
-          placeholder="Author or publication name"
+          placeholder={t("admin.cultureContent.authorPlaceholder")}
           placeholderTextColor={M.muted}
           maxLength={80}
           className={inputClass}
@@ -178,7 +180,7 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
       <View className="flex-row gap-3 mb-4">
         <View className="flex-1">
           <Text className="text-xs font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-2">
-            Cover Emoji
+            {t("admin.cultureContent.formCoverEmoji")}
           </Text>
           <TextInput
             value={coverEmoji}
@@ -191,7 +193,7 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
         </View>
         <View className="flex-1">
           <Text className="text-xs font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-2">
-            Duration (sec)
+            {t("admin.cultureContent.formDuration")}
           </Text>
           <TextInput
             value={duration}
@@ -205,7 +207,7 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
         </View>
       </View>
 
-      <Field label="Audio URL (podcast)">
+      <Field label={t("admin.cultureContent.formAudioUrl")}>
         <TextInput
           value={audioUrl}
           onChangeText={setAudioUrl}
@@ -217,7 +219,7 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
         />
       </Field>
 
-      <Field label="Web URL">
+      <Field label={t("admin.cultureContent.formWebUrl")}>
         <TextInput
           value={contentUrl}
           onChangeText={setContentUrl}
@@ -230,11 +232,11 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
       </Field>
 
       {type === "blog" && (
-        <Field label="Article Body">
+        <Field label={t("admin.cultureContent.formArticleBody")}>
           <TextInput
             value={body}
             onChangeText={setBody}
-            placeholder={"Full article text. Use blank lines to separate paragraphs."}
+            placeholder={t("admin.cultureContent.bodyPlaceholder")}
             placeholderTextColor={M.muted}
             multiline
             numberOfLines={8}
@@ -245,11 +247,11 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
       )}
 
       {(type === "podcast" || type === "film") && (
-        <Field label="Show Notes / Synopsis">
+        <Field label={t("admin.cultureContent.formShowNotes")}>
           <TextInput
             value={showNotes}
             onChangeText={setShowNotes}
-            placeholder={"Episode summary, guest bio, or film synopsis."}
+            placeholder={t("admin.cultureContent.showNotesPlaceholder")}
             placeholderTextColor={M.muted}
             multiline
             numberOfLines={8}
@@ -262,9 +264,9 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
       {/* Featured toggle */}
       <View className="flex-row items-center justify-between rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-4 py-3 mb-6">
         <View>
-          <Text className="text-sm font-semibold text-neutral-900 dark:text-white">Featured</Text>
+          <Text className="text-sm font-semibold text-neutral-900 dark:text-white">{t("admin.cultureContent.featuredLabel")}</Text>
           <Text className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-            Shown in the hero / featured strip
+            {t("admin.cultureContent.featuredHint")}
           </Text>
         </View>
         <Switch
@@ -281,7 +283,7 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
           onPress={onCancel}
           className="flex-1 items-center rounded-2xl py-3.5 bg-neutral-100 dark:bg-neutral-800 active:opacity-70"
         >
-          <Text className="text-sm font-bold text-neutral-600 dark:text-neutral-400">Cancel</Text>
+          <Text className="text-sm font-bold text-neutral-600 dark:text-neutral-400">{t("admin.cultureContent.cancel")}</Text>
         </Pressable>
         <Pressable
           onPress={handleSave}
@@ -292,7 +294,7 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
             <ActivityIndicator size="small" color="#fff" />
           ) : (
             <Text className={`text-sm font-bold ${canSave ? "text-white" : "text-neutral-400"}`}>
-              {initial ? "Save Changes" : "Publish"}
+              {initial ? t("admin.cultureContent.saveChanges") : t("admin.cultureContent.publish")}
             </Text>
           )}
         </Pressable>
@@ -302,6 +304,7 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
 }
 
 export default function CultureContentAdminScreen() {
+  const { t } = useTranslation();
   const M = useMuseumTheme();
   const { getToken } = useAuth();
   const qc = useQueryClient();
@@ -336,7 +339,7 @@ export default function CultureContentAdminScreen() {
       qc.invalidateQueries({ queryKey: ["culture-items"] });
       setModalMode(null);
     },
-    onError: () => Alert.alert("Error", "Failed to create item."),
+    onError: () => Alert.alert("Error", t("admin.cultureContent.errorCreate")),
   });
 
   const updateItem = useMutation({
@@ -353,7 +356,7 @@ export default function CultureContentAdminScreen() {
       setModalMode(null);
       setEditTarget(null);
     },
-    onError: () => Alert.alert("Error", "Failed to update item."),
+    onError: () => Alert.alert("Error", t("admin.cultureContent.errorUpdate")),
   });
 
   const deleteItem = useMutation({
@@ -362,7 +365,7 @@ export default function CultureContentAdminScreen() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["culture-items"] });
     },
-    onError: () => Alert.alert("Error", "Failed to delete item."),
+    onError: () => Alert.alert("Error", t("admin.cultureContent.errorDelete")),
   });
 
   const toggleFeatured = useMutation({
@@ -371,7 +374,7 @@ export default function CultureContentAdminScreen() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["culture-items"] });
     },
-    onError: () => Alert.alert("Error", "Failed to update featured status."),
+    onError: () => Alert.alert("Error", t("admin.cultureContent.errorFeatured")),
   });
 
   const q = search.toLowerCase();
@@ -389,32 +392,32 @@ export default function CultureContentAdminScreen() {
 
   function confirmDelete(item: DiscoverItem) {
     Alert.alert(
-      "Delete item",
-      `Remove "${item.title}" from the Culture tab?`,
+      t("admin.cultureContent.deleteTitle"),
+      t("admin.cultureContent.deleteMessage", { title: item.title }),
       [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: () => deleteItem.mutate(item.id) },
+        { text: t("admin.cultureContent.deleteCancel"), style: "cancel" },
+        { text: t("admin.cultureContent.deleteConfirm"), style: "destructive", onPress: () => deleteItem.mutate(item.id) },
       ]
     );
   }
 
   return (
     <>
-      <Stack.Screen options={{ title: "Culture Content" }} />
+      <Stack.Screen options={{ title: t("admin.cultureContent.title") }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
         <View className="px-5 pt-5 pb-3">
           <View className="flex-row items-center justify-between mb-1">
-            <Text className="text-2xl font-bold text-neutral-900 dark:text-white">Culture Content</Text>
+            <Text className="text-2xl font-bold text-neutral-900 dark:text-white">{t("admin.cultureContent.title")}</Text>
             <Pressable
               onPress={() => { setEditTarget(null); setModalMode("create"); }}
               className="flex-row items-center gap-1.5 rounded-2xl bg-brand-600 px-4 py-2 active:opacity-80"
             >
               <IconSymbol name="plus" size={13} color="#fff" />
-              <Text className="text-sm font-bold text-white">New</Text>
+              <Text className="text-sm font-bold text-white">{t("admin.cultureContent.newButton")}</Text>
             </Pressable>
           </View>
           <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-            Manage blogs, podcasts, and films on the Culture tab.
+            {t("admin.cultureContent.subtitle")}
           </Text>
         </View>
 
@@ -426,6 +429,9 @@ export default function CultureContentAdminScreen() {
               opt.id === "blog" ? "#38bdf8" :
               opt.id === "podcast" ? "#a78bfa" :
               opt.id === "film" ? "#fb923c" : "#C4862A";
+            const filterLabel = opt.id === "all"
+              ? t("admin.cultureContent.filterAll")
+              : t(`admin.cultureContent.typeLabel.${opt.id}` as const);
             return (
               <Pressable
                 key={opt.id}
@@ -437,7 +443,7 @@ export default function CultureContentAdminScreen() {
                   className="text-xs font-bold"
                   style={{ color: active ? color : undefined }}
                 >
-                  {opt.label}
+                  {filterLabel}
                 </Text>
               </Pressable>
             );
@@ -449,7 +455,7 @@ export default function CultureContentAdminScreen() {
           <TextInput
             value={search}
             onChangeText={setSearch}
-            placeholder="Search by title or author…"
+            placeholder={t("admin.cultureContent.searchPlaceholder")}
             placeholderTextColor={M.muted}
             className="rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-4 py-2.5 text-sm text-neutral-900 dark:text-white"
           />
@@ -466,7 +472,7 @@ export default function CultureContentAdminScreen() {
             <View className="items-center py-16">
               <Text className="text-3xl mb-3">🎬</Text>
               <Text className="text-sm font-semibold text-neutral-500 dark:text-neutral-400">
-                {items.length === 0 ? "No content yet — tap New to add the first item." : "No results."}
+                {items.length === 0 ? t("admin.cultureContent.emptyFirst") : t("admin.cultureContent.emptyNoResults")}
               </Text>
             </View>
           ) : (
@@ -504,7 +510,7 @@ export default function CultureContentAdminScreen() {
                           {item.featured && (
                             <View className="rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5">
                               <Text className="text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                                Featured
+                                {t("admin.cultureContent.featuredBadge")}
                               </Text>
                             </View>
                           )}
@@ -543,7 +549,7 @@ export default function CultureContentAdminScreen() {
                           color={item.featured ? getAccent("amber").solid : M.muted}
                         />
                         <Text style={{ fontSize: 11, fontWeight: "700", color: item.featured ? getAccent("amber").solid : M.muted }}>
-                          {item.featured ? "Unfeature" : "Feature"}
+                          {item.featured ? t("admin.cultureContent.unfeatureButton") : t("admin.cultureContent.featureButton")}
                         </Text>
                       </Pressable>
 
@@ -559,7 +565,7 @@ export default function CultureContentAdminScreen() {
                         }}
                       >
                         <IconSymbol name="pencil" size={11} color={getAccent("sky").solid} />
-                        <Text style={{ fontSize: 11, fontWeight: "700", color: getAccent("sky").solid }}>Edit</Text>
+                        <Text style={{ fontSize: 11, fontWeight: "700", color: getAccent("sky").solid }}>{t("admin.cultureContent.editButton")}</Text>
                       </Pressable>
 
                       <Pressable
@@ -572,7 +578,7 @@ export default function CultureContentAdminScreen() {
                         }}
                       >
                         <IconSymbol name="trash" size={11} color="#ef4444" />
-                        <Text style={{ fontSize: 11, fontWeight: "700", color: "#ef4444" }}>Delete</Text>
+                        <Text style={{ fontSize: 11, fontWeight: "700", color: "#ef4444" }}>{t("admin.cultureContent.deleteButton")}</Text>
                       </Pressable>
                     </View>
                   </View>
@@ -595,7 +601,7 @@ export default function CultureContentAdminScreen() {
             className="flex-row items-center justify-between px-5 py-4 border-b border-neutral-200 dark:border-neutral-800"
           >
             <Text className="text-lg font-bold text-neutral-900 dark:text-white">
-              {modalMode === "edit" ? "Edit Item" : "New Culture Item"}
+              {modalMode === "edit" ? t("admin.cultureContent.modalEditTitle") : t("admin.cultureContent.modalNewTitle")}
             </Text>
             <Pressable
               onPress={() => { setModalMode(null); setEditTarget(null); }}

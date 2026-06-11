@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -77,18 +78,21 @@ const labelCls = "text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-
 
 type Tab = "analytics" | "results" | "configuration" | "preview";
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: "analytics", label: "Analytics" },
-  { id: "results", label: "Results" },
-  { id: "configuration", label: "Configuration" },
-  { id: "preview", label: "Preview" },
-];
+const TAB_IDS: Tab[] = ["analytics", "results", "configuration", "preview"];
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function AdminQuizPage() {
+  const { t } = useTranslation();
   const { getToken } = useAuth();
   const [tab, setTab] = useState<Tab>("analytics");
+
+  const TAB_LABELS: Record<Tab, string> = {
+    analytics: t("admin.quiz.tabAnalytics"),
+    results: t("admin.quiz.tabResults"),
+    configuration: t("admin.quiz.tabConfiguration"),
+    preview: t("admin.quiz.tabPreview"),
+  };
 
   async function tok() {
     return (await getToken()) ?? undefined;
@@ -99,14 +103,14 @@ export default function AdminQuizPage() {
       <div>
         <div className="flex items-center gap-2 mb-1">
           <BrainCircuit className="h-5 w-5" />
-          <h1 className="font-display font-bold text-2xl">Quiz Controls</h1>
+          <h1 className="font-display font-bold text-2xl">{t("admin.quiz.title")}</h1>
         </div>
-        <p className="text-sm text-neutral-500">Analytics, results management, configuration, and question preview.</p>
+        <p className="text-sm text-neutral-500">{t("admin.quiz.subtitle")}</p>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-0.5 border-b border-neutral-200 dark:border-neutral-800">
-        {TABS.map(({ id, label }) => (
+        {TAB_IDS.map((id) => (
           <button
             key={id}
             onClick={() => setTab(id)}
@@ -117,7 +121,7 @@ export default function AdminQuizPage() {
                 : "border-transparent text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300"
             )}
           >
-            {label}
+            {TAB_LABELS[id]}
           </button>
         ))}
       </div>
@@ -133,6 +137,7 @@ export default function AdminQuizPage() {
 // ── Analytics tab ─────────────────────────────────────────────────────────────
 
 function AnalyticsTab({ tok }: { tok: () => Promise<string | undefined> }) {
+  const { t } = useTranslation();
   const [languageId, setLanguageId] = useState("");
 
   const { data, isLoading } = useQuery<AnalyticsResponse>({
@@ -154,7 +159,7 @@ function AnalyticsTab({ tok }: { tok: () => Promise<string | undefined> }) {
             onClick={() => setLanguageId("")}
             className="text-xs text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300 transition-colors"
           >
-            Clear filter
+            {t("admin.quiz.clearFilter")}
           </button>
         )}
       </div>
@@ -167,17 +172,17 @@ function AnalyticsTab({ tok }: { tok: () => Promise<string | undefined> }) {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <StatCard label="Total quizzes" value={stats?.total ?? 0} />
+          <StatCard label={t("admin.quiz.statTotalQuizzes")} value={stats?.total ?? 0} />
           <StatCard
-            label="Avg accuracy"
+            label={t("admin.quiz.statAvgAccuracy")}
             value={stats?.avgAccuracy ? `${Math.round(parseFloat(stats.avgAccuracy))}%` : "—"}
           />
           <StatCard
-            label="Avg duration"
+            label={t("admin.quiz.statAvgDuration")}
             value={stats?.avgDurationMs ? fmtDuration(parseFloat(stats.avgDurationMs)) : "—"}
           />
           <StatCard
-            label="Avg questions"
+            label={t("admin.quiz.statAvgQuestions")}
             value={stats?.avgQuestions ? Math.round(parseFloat(stats.avgQuestions)) : "—"}
           />
         </div>
@@ -185,14 +190,14 @@ function AnalyticsTab({ tok }: { tok: () => Promise<string | undefined> }) {
 
       {!languageId && (data?.byLanguage?.length ?? 0) > 0 && (
         <div className="space-y-2">
-          <h2 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">By language</h2>
+          <h2 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">{t("admin.quiz.byLanguage")}</h2>
           <div className="rounded-xl border border-neutral-200 dark:border-neutral-700 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-neutral-50 dark:bg-neutral-800/60 border-b border-neutral-200 dark:border-neutral-700">
-                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500">Language</th>
-                  <th className="text-right px-4 py-2.5 text-xs font-semibold text-neutral-500">Quizzes</th>
-                  <th className="text-right px-4 py-2.5 text-xs font-semibold text-neutral-500">Avg accuracy</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500">{t("admin.quiz.colLanguage")}</th>
+                  <th className="text-right px-4 py-2.5 text-xs font-semibold text-neutral-500">{t("admin.quiz.colQuizzes")}</th>
+                  <th className="text-right px-4 py-2.5 text-xs font-semibold text-neutral-500">{t("admin.quiz.colAvgAccuracy")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -213,13 +218,13 @@ function AnalyticsTab({ tok }: { tok: () => Promise<string | undefined> }) {
 
       {(data?.daily?.length ?? 0) > 0 && (
         <div className="space-y-2">
-          <h2 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Daily attempts (last 30 days)</h2>
+          <h2 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">{t("admin.quiz.dailyTitle")}</h2>
           <div className="rounded-xl border border-neutral-200 dark:border-neutral-700 overflow-hidden max-h-72 overflow-y-auto">
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-neutral-50 dark:bg-neutral-800/60">
                 <tr className="border-b border-neutral-200 dark:border-neutral-700">
-                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500">Date</th>
-                  <th className="text-right px-4 py-2.5 text-xs font-semibold text-neutral-500">Attempts</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500">{t("admin.quiz.colDate")}</th>
+                  <th className="text-right px-4 py-2.5 text-xs font-semibold text-neutral-500">{t("admin.quiz.colAttempts")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -236,7 +241,7 @@ function AnalyticsTab({ tok }: { tok: () => Promise<string | undefined> }) {
       )}
 
       {!isLoading && (data?.daily?.length ?? 0) === 0 && (
-        <p className="text-center py-12 text-sm text-neutral-400">No quiz data yet.</p>
+        <p className="text-center py-12 text-sm text-neutral-400">{t("admin.quiz.noData")}</p>
       )}
     </div>
   );
@@ -245,6 +250,7 @@ function AnalyticsTab({ tok }: { tok: () => Promise<string | undefined> }) {
 // ── Results tab ───────────────────────────────────────────────────────────────
 
 function ResultsTab({ tok }: { tok: () => Promise<string | undefined> }) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [languageId, setLanguageId] = useState("");
   const [page, setPage] = useState(1);
@@ -264,9 +270,9 @@ function ResultsTab({ tok }: { tok: () => Promise<string | undefined> }) {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["admin-quiz-results"] });
       void qc.invalidateQueries({ queryKey: ["admin-quiz-analytics"] });
-      toast.success("Result deleted");
+      toast.success(t("admin.quiz.deleteResultSuccess"));
     },
-    onError: () => toast.error("Failed to delete result"),
+    onError: () => toast.error(t("admin.quiz.deleteResultError")),
   });
 
   return (
@@ -278,11 +284,11 @@ function ResultsTab({ tok }: { tok: () => Promise<string | undefined> }) {
             onClick={() => { setLanguageId(""); setPage(1); }}
             className="text-xs text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300 transition-colors"
           >
-            Clear filter
+            {t("admin.quiz.clearFilter")}
           </button>
         )}
         {data && (
-          <span className="text-xs text-neutral-400 ml-auto">{data.total} result{data.total !== 1 ? "s" : ""}</span>
+          <span className="text-xs text-neutral-400 ml-auto">{t("admin.quiz.resultCount", { count: data.total })}</span>
         )}
       </div>
 
@@ -293,18 +299,18 @@ function ResultsTab({ tok }: { tok: () => Promise<string | undefined> }) {
           ))}
         </div>
       ) : (data?.results.length ?? 0) === 0 ? (
-        <p className="text-center py-12 text-sm text-neutral-400">No results found.</p>
+        <p className="text-center py-12 text-sm text-neutral-400">{t("admin.quiz.noResults")}</p>
       ) : (
         <div className="rounded-xl border border-neutral-200 dark:border-neutral-700 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-neutral-50 dark:bg-neutral-800/60 border-b border-neutral-200 dark:border-neutral-700">
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500">User</th>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500">Lang</th>
-                <th className="text-right px-4 py-2.5 text-xs font-semibold text-neutral-500">Accuracy</th>
-                <th className="text-right px-4 py-2.5 text-xs font-semibold text-neutral-500">Qs</th>
-                <th className="text-right px-4 py-2.5 text-xs font-semibold text-neutral-500">Duration</th>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500">Date</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500">{t("admin.quiz.colUser")}</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500">{t("admin.quiz.colLang")}</th>
+                <th className="text-right px-4 py-2.5 text-xs font-semibold text-neutral-500">{t("admin.quiz.colAccuracy")}</th>
+                <th className="text-right px-4 py-2.5 text-xs font-semibold text-neutral-500">{t("admin.quiz.colQs")}</th>
+                <th className="text-right px-4 py-2.5 text-xs font-semibold text-neutral-500">{t("admin.quiz.colDuration")}</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500">{t("admin.quiz.colDate")}</th>
                 <th className="px-4 py-2.5" />
               </tr>
             </thead>
@@ -329,7 +335,7 @@ function ResultsTab({ tok }: { tok: () => Promise<string | undefined> }) {
                       onClick={() => remove.mutate(r.id)}
                       disabled={remove.isPending}
                       className="text-neutral-400 hover:text-red-500 transition-colors disabled:opacity-40"
-                      title="Delete result"
+                      title={t("admin.quiz.deleteResult")}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -369,6 +375,7 @@ function ResultsTab({ tok }: { tok: () => Promise<string | undefined> }) {
 // ── Configuration tab ─────────────────────────────────────────────────────────
 
 function ConfigurationTab({ tok }: { tok: () => Promise<string | undefined> }) {
+  const { t } = useTranslation();
   const { data: config, isLoading } = useQuery<QuizConfig>({
     queryKey: ["admin-quiz-config"],
     queryFn: async () => apiFetch<QuizConfig>("/quiz/admin/config", { token: await tok() }),
@@ -405,9 +412,9 @@ function ConfigurationTab({ tok }: { tok: () => Promise<string | undefined> }) {
           })
         )
       );
-      toast.success("Configuration saved");
+      toast.success(t("admin.quiz.configSaved"));
     } catch {
-      toast.error("Failed to save configuration");
+      toast.error(t("admin.quiz.configError"));
     } finally {
       setSaving(false);
     }
@@ -420,11 +427,11 @@ function ConfigurationTab({ tok }: { tok: () => Promise<string | undefined> }) {
   return (
     <div className="max-w-sm space-y-5">
       <p className="text-sm text-neutral-500">
-        Changes take effect within 60 seconds (server-side cache TTL).
+        {t("admin.quiz.configCacheTtl")}
       </p>
       <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-200 dark:border-neutral-700 p-4 space-y-4">
         <div>
-          <label className={labelCls}>XP multiplier</label>
+          <label className={labelCls}>{t("admin.quiz.xpMultiplier")}</label>
           <input
             type="number"
             step="0.05"
@@ -434,10 +441,10 @@ function ConfigurationTab({ tok }: { tok: () => Promise<string | undefined> }) {
             onChange={(e) => setXpMultiplier(e.target.value)}
             className={fieldCls}
           />
-          <p className="text-xs text-neutral-400 mt-1">XP = max(1, round(accuracy% × questions × multiplier))</p>
+          <p className="text-xs text-neutral-400 mt-1">{t("admin.quiz.xpMultiplierHint")}</p>
         </div>
         <div>
-          <label className={labelCls}>Max question count</label>
+          <label className={labelCls}>{t("admin.quiz.maxQuestions")}</label>
           <input
             type="number"
             step="1"
@@ -449,7 +456,7 @@ function ConfigurationTab({ tok }: { tok: () => Promise<string | undefined> }) {
           />
         </div>
         <div>
-          <label className={labelCls}>Min vocabulary threshold</label>
+          <label className={labelCls}>{t("admin.quiz.minVocab")}</label>
           <input
             type="number"
             step="1"
@@ -458,7 +465,7 @@ function ConfigurationTab({ tok }: { tok: () => Promise<string | undefined> }) {
             onChange={(e) => setMinVocab(e.target.value)}
             className={fieldCls}
           />
-          <p className="text-xs text-neutral-400 mt-1">Minimum entries needed to generate a quiz for a scope.</p>
+          <p className="text-xs text-neutral-400 mt-1">{t("admin.quiz.minVocabHint")}</p>
         </div>
       </div>
       <div className="flex justify-end">
@@ -467,7 +474,7 @@ function ConfigurationTab({ tok }: { tok: () => Promise<string | undefined> }) {
           disabled={saving}
           className="px-4 py-2 rounded-lg text-sm bg-brand-600 text-white font-semibold hover:bg-brand-500 disabled:opacity-40 transition-colors"
         >
-          {saving ? "Saving…" : "Save"}
+          {saving ? t("admin.quiz.saving") : t("admin.quiz.save")}
         </button>
       </div>
     </div>
@@ -477,6 +484,7 @@ function ConfigurationTab({ tok }: { tok: () => Promise<string | undefined> }) {
 // ── Preview tab ───────────────────────────────────────────────────────────────
 
 function PreviewTab() {
+  const { t } = useTranslation();
   const [languageId, setLanguageId] = useState("izon");
   const [courseId, setCourseId] = useState("");
   const [lessonId, setLessonId] = useState("");
@@ -506,17 +514,17 @@ function PreviewTab() {
   return (
     <div className="space-y-5">
       <p className="text-sm text-neutral-500">
-        Preview which questions would be generated for a given scope without recording a quiz attempt.
+        {t("admin.quiz.previewSubtitle")}
       </p>
 
       <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-200 dark:border-neutral-700 p-4 space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className={labelCls}>Language</label>
+            <label className={labelCls}>{t("admin.quiz.labelLanguage")}</label>
             <LanguageSelector value={languageId} onChange={setLanguageId} />
           </div>
           <div>
-            <label className={labelCls}>Question count</label>
+            <label className={labelCls}>{t("admin.quiz.labelQuestionCount")}</label>
             <input
               type="number"
               min="1"
@@ -527,22 +535,22 @@ function PreviewTab() {
             />
           </div>
           <div>
-            <label className={labelCls}>Course ID (optional)</label>
+            <label className={labelCls}>{t("admin.quiz.labelCourseId")}</label>
             <input
               type="text"
               value={courseId}
               onChange={(e) => setCourseId(e.target.value)}
-              placeholder="Leave blank for all vocabulary"
+              placeholder={t("admin.quiz.courseIdPlaceholder")}
               className={fieldCls}
             />
           </div>
           <div>
-            <label className={labelCls}>Lesson ID (optional)</label>
+            <label className={labelCls}>{t("admin.quiz.labelLessonId")}</label>
             <input
               type="text"
               value={lessonId}
               onChange={(e) => setLessonId(e.target.value)}
-              placeholder="Leave blank for course scope"
+              placeholder={t("admin.quiz.lessonIdPlaceholder")}
               className={fieldCls}
             />
           </div>
@@ -554,7 +562,7 @@ function PreviewTab() {
             className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm bg-brand-600 text-white font-semibold hover:bg-brand-500 disabled:opacity-40 transition-colors"
           >
             <Eye className="h-3.5 w-3.5" />
-            {loading ? "Generating…" : "Generate preview"}
+            {loading ? t("admin.quiz.generating") : t("admin.quiz.generatePreview")}
           </button>
         </div>
       </div>
@@ -567,7 +575,7 @@ function PreviewTab() {
 
       {questions && (
         <div className="space-y-3">
-          <p className="text-sm text-neutral-500">{questions.length} question{questions.length !== 1 ? "s" : ""} generated</p>
+          <p className="text-sm text-neutral-500">{t("admin.quiz.questionsGenerated", { count: questions.length })}</p>
           {questions.map((q, i) => (
             <div
               key={q.id}

@@ -5,6 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { AlertTriangle, CheckCircle2, Clock, Users } from "lucide-react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 
 interface BillingStatus {
   active: boolean;
@@ -23,6 +24,7 @@ const PLAN_LABELS: Record<string, string> = {
 };
 
 export default function EducatorBillingPage() {
+  const { t } = useTranslation();
   const { getToken } = useAuth();
 
   const { data: billing, isLoading } = useQuery<BillingStatus>({
@@ -61,16 +63,16 @@ export default function EducatorBillingPage() {
         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-8">
           <AlertTriangle className="h-10 w-10 text-amber-500 mx-auto mb-4" />
           <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 mb-2">
-            No active subscription
+            {t("educator.billing.noSubscriptionTitle")}
           </h2>
           <p className="text-neutral-500 dark:text-neutral-400 text-sm mb-6">
-            Subscribe to an Educator plan to unlock classroom management.
+            {t("educator.billing.noSubscriptionDesc")}
           </p>
           <Link
             href="/educator/pricing"
             className="inline-block px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-xl transition-colors"
           >
-            View plans
+            {t("educator.billing.viewPlans")}
           </Link>
         </div>
       </div>
@@ -100,19 +102,19 @@ export default function EducatorBillingPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
       <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-8">
-        Billing
+        {t("educator.billing.title")}
       </h1>
 
       <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 space-y-6">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs text-neutral-500 uppercase tracking-wide mb-1">Organization</p>
+            <p className="text-xs text-neutral-500 uppercase tracking-wide mb-1">{t("educator.billing.labelOrganization")}</p>
             <p className="font-semibold text-neutral-900 dark:text-neutral-100">
               {billing.organizationName ?? "—"}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-neutral-500 uppercase tracking-wide mb-1">Plan</p>
+            <p className="text-xs text-neutral-500 uppercase tracking-wide mb-1">{t("educator.billing.labelPlan")}</p>
             <p className="font-semibold text-neutral-900 dark:text-neutral-100">
               {billing.plan ? PLAN_LABELS[billing.plan] : "—"}
             </p>
@@ -126,7 +128,7 @@ export default function EducatorBillingPage() {
           </span>
           {billing.status === "past_due" && (
             <span className="text-xs text-amber-600 dark:text-amber-400">
-              — payment required
+              {t("educator.billing.pastDue")}
             </span>
           )}
         </div>
@@ -134,7 +136,7 @@ export default function EducatorBillingPage() {
         {renewDate && (
           <div className="flex items-center gap-2 text-sm text-neutral-500">
             <Clock className="h-4 w-4" />
-            Next renewal: {renewDate}
+            {t("educator.billing.renewalLabel", { date: renewDate })}
           </div>
         )}
 
@@ -143,7 +145,7 @@ export default function EducatorBillingPage() {
             <div className="flex items-center justify-between text-sm mb-1.5">
               <span className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
                 <Users className="h-4 w-4" />
-                Students
+                {t("educator.billing.labelStudents")}
               </span>
               <span className="font-medium text-neutral-900 dark:text-neutral-100">
                 {billing.studentCount} / {billing.studentLimit}
@@ -163,7 +165,7 @@ export default function EducatorBillingPage() {
         {billing.studentLimit === null && (
           <div className="flex items-center gap-2 text-sm text-neutral-500">
             <Users className="h-4 w-4" />
-            Unlimited students
+            {t("educator.billing.unlimitedStudents")}
           </div>
         )}
 
@@ -173,7 +175,7 @@ export default function EducatorBillingPage() {
             disabled={portalMutation.isPending}
             className="w-full py-2.5 border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-xl text-sm font-medium transition-colors disabled:opacity-60"
           >
-            {portalMutation.isPending ? "Opening portal…" : "Manage billing"}
+            {portalMutation.isPending ? t("educator.billing.openingPortal") : t("educator.billing.managePortal")}
           </button>
         )}
       </div>

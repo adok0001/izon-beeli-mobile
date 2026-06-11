@@ -21,6 +21,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -86,6 +87,7 @@ function ChapterModal({
   onSave: (ch: StoryChapterDraft) => void;
   onClose: () => void;
 }>) {
+  const { t } = useTranslation();
   const isNew = !chapter;
   const [lessonId, setLessonId] = useState(chapter?.lessonId ?? lessons[0]?.id ?? "");
   const [title, setTitle] = useState(chapter?.title ?? "");
@@ -111,7 +113,7 @@ function ChapterModal({
       <div className="w-full max-w-xl rounded-2xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#0f0f1a] shadow-2xl overflow-y-auto max-h-[90vh]">
         <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100 dark:border-white/[0.06]">
           <h2 className="text-base font-bold text-neutral-900 dark:text-white">
-            {isNew ? "Add Chapter" : "Edit Chapter"}
+            {isNew ? t("educator.courseDetail.chapterModalAdd") : t("educator.courseDetail.chapterModalEdit")}
           </h2>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors">
             <X className="h-4 w-4 text-neutral-500 dark:text-neutral-300" />
@@ -121,7 +123,7 @@ function ChapterModal({
         <div className="px-6 py-5 space-y-4">
           <div>
             <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">
-              Lesson <span className="text-red-400">*</span>
+              {t("educator.courseDetail.chapterLessonLabel")} <span className="text-red-400">*</span>
             </label>
             <select
               value={lessonId}
@@ -136,24 +138,24 @@ function ChapterModal({
 
           <div>
             <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">
-              Chapter title <span className="text-red-400">*</span>
+              {t("educator.courseDetail.chapterTitleLabel")} <span className="text-red-400">*</span>
             </label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Arriving at the Waterside"
+              placeholder={t("educator.courseDetail.chapterTitlePlaceholder")}
               className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
             />
           </div>
 
           <div>
             <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">
-              Narrative intro <span className="text-red-400">*</span>
+              {t("educator.courseDetail.chapterIntroLabel")} <span className="text-red-400">*</span>
             </label>
             <textarea
               value={narrativeIntro}
               onChange={(e) => setNarrativeIntro(e.target.value)}
-              placeholder="Scene-setting text shown before the lesson starts…"
+              placeholder={t("educator.courseDetail.chapterIntroPlaceholder")}
               rows={4}
               className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
             />
@@ -161,19 +163,19 @@ function ChapterModal({
 
           <div>
             <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">
-              Narrative outro <span className="text-red-400">*</span>
+              {t("educator.courseDetail.chapterOutroLabel")} <span className="text-red-400">*</span>
             </label>
             <textarea
               value={narrativeOutro}
               onChange={(e) => setNarrativeOutro(e.target.value)}
-              placeholder="Closing text shown after the lesson completes…"
+              placeholder={t("educator.courseDetail.chapterOutroPlaceholder")}
               rows={4}
               className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">Order</label>
+            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">{t("educator.courseDetail.chapterOrderLabel")}</label>
             <input
               type="number"
               value={order}
@@ -185,14 +187,14 @@ function ChapterModal({
 
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-neutral-100 dark:border-white/[0.06]">
           <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors">
-            Cancel
+            {t("educator.courseDetail.chapterCancel")}
           </button>
           <button
             onClick={handleSave}
             disabled={!canSave}
             className="px-5 py-2 rounded-lg text-sm font-semibold bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            {isNew ? "Add Chapter" : "Save Chapter"}
+            {isNew ? t("educator.courseDetail.chapterAdd") : t("educator.courseDetail.chapterSave")}
           </button>
         </div>
       </div>
@@ -206,6 +208,7 @@ function StoryArcSection({
   courseId,
   lessons,
 }: Readonly<{ courseId: string; lessons: Lesson[] }>) {
+  const { t } = useTranslation();
   const { getToken } = useAuth();
   const qc = useQueryClient();
 
@@ -253,11 +256,11 @@ function StoryArcSection({
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["educator-story-arc", courseId] });
-      toast.success("Story arc created");
+      toast.success(t("educator.courseDetail.storyArcCreated"));
       setCreateTitle("");
       setCreateDesc("");
     },
-    onError: (e: Error) => toast.error("Failed to create story arc", { description: e.message }),
+    onError: (e: Error) => toast.error(t("educator.courseDetail.storyCreateFailed"), { description: e.message }),
   });
 
   const saveArcMeta = useMutation({
@@ -271,10 +274,10 @@ function StoryArcSection({
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["educator-story-arc", courseId] });
-      toast.success("Story arc updated");
+      toast.success(t("educator.courseDetail.storyArcUpdated"));
       setArcDirty(false);
     },
-    onError: (e: Error) => toast.error("Failed to update story arc", { description: e.message }),
+    onError: (e: Error) => toast.error(t("educator.courseDetail.storyUpdateFailed"), { description: e.message }),
   });
 
   const saveChapters = useMutation({
@@ -288,10 +291,10 @@ function StoryArcSection({
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["educator-story-arc", courseId] });
-      toast.success("Chapters saved");
+      toast.success(t("educator.courseDetail.storyChaptersSaved"));
       setChaptersDirty(false);
     },
-    onError: (e: Error) => toast.error("Failed to save chapters", { description: e.message }),
+    onError: (e: Error) => toast.error(t("educator.courseDetail.storyChaptersSaveFailed"), { description: e.message }),
   });
 
   const deleteArc = useMutation({
@@ -301,9 +304,9 @@ function StoryArcSection({
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["educator-story-arc", courseId] });
-      toast.success("Story arc deleted");
+      toast.success(t("educator.courseDetail.storyArcDeleted"));
     },
-    onError: (e: Error) => toast.error("Failed to delete story arc", { description: e.message }),
+    onError: (e: Error) => toast.error(t("educator.courseDetail.storyDeleteFailed"), { description: e.message }),
   });
 
   const handleChapterSave = (ch: StoryChapterDraft) => {
@@ -330,7 +333,7 @@ function StoryArcSection({
     return (
       <div className="mt-10 flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-300">
         <div className="h-4 w-4 rounded-full border-2 border-amber-400 border-t-transparent animate-spin" />
-        Loading story arc…
+        {t("educator.courseDetail.storyLoading")}
       </div>
     );
   }
@@ -338,7 +341,7 @@ function StoryArcSection({
   if (error) {
     return (
       <div className="mt-10 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-5">
-        <p className="text-sm font-semibold text-red-700 dark:text-red-400">Failed to load story arc</p>
+        <p className="text-sm font-semibold text-red-700 dark:text-red-400">{t("educator.courseDetail.storyLoadFailed")}</p>
         <p className="text-xs text-red-600 dark:text-red-300 mt-1">{(error as Error).message}</p>
       </div>
     );
@@ -349,23 +352,23 @@ function StoryArcSection({
       <div className="mt-10">
         <div className="flex items-center gap-2 mb-4">
           <BookOpen className="h-5 w-5 text-amber-500" />
-          <h2 className="text-base font-bold text-neutral-900 dark:text-white">Story Arc</h2>
+          <h2 className="text-base font-bold text-neutral-900 dark:text-white">{t("educator.courseDetail.storyArcTitle")}</h2>
         </div>
         <div className="rounded-xl border border-dashed border-neutral-200 dark:border-white/[0.08] p-6 space-y-4">
           <p className="text-sm text-neutral-500 dark:text-neutral-300">
-            No story arc yet. Create one to give learners a narrative-driven path through this course.
+            {t("educator.courseDetail.storyEmpty")}
           </p>
           <div className="space-y-3 max-w-lg">
             <input
               value={createTitle}
               onChange={(e) => setCreateTitle(e.target.value)}
-              placeholder="Story title (e.g. Tari's Journey Home)"
+              placeholder={t("educator.courseDetail.storyTitlePlaceholder")}
               className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
             />
             <textarea
               value={createDesc}
               onChange={(e) => setCreateDesc(e.target.value)}
-              placeholder="Brief story description shown to learners…"
+              placeholder={t("educator.courseDetail.storyDescPlaceholder")}
               rows={3}
               className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
             />
@@ -375,7 +378,7 @@ function StoryArcSection({
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               <Plus className="h-4 w-4" />
-              {createArc.isPending ? "Creating…" : "Create Story Arc"}
+              {createArc.isPending ? t("educator.courseDetail.storyCreating") : t("educator.courseDetail.storyCreate")}
             </button>
           </div>
         </div>
@@ -390,21 +393,21 @@ function StoryArcSection({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <BookOpen className="h-5 w-5 text-amber-500" />
-          <h2 className="text-base font-bold text-neutral-900 dark:text-white">Story Arc</h2>
+          <h2 className="text-base font-bold text-neutral-900 dark:text-white">{t("educator.courseDetail.storyArcTitle")}</h2>
         </div>
         <button
           onClick={() => deleteArc.mutate()}
           disabled={deleteArc.isPending}
           className="text-xs text-red-500 hover:text-red-600 dark:text-red-400 transition-colors"
         >
-          {deleteArc.isPending ? "Deleting…" : "Delete arc"}
+          {deleteArc.isPending ? t("educator.courseDetail.storyDeleting") : t("educator.courseDetail.storyDeleteArc")}
         </button>
       </div>
 
       {/* Arc metadata */}
       <div className="rounded-xl border border-neutral-200 dark:border-white/[0.07] p-5 space-y-3 mb-6">
         <div>
-          <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1">Title</label>
+          <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1">{t("educator.courseDetail.storyLabelTitle")}</label>
           <input
             value={arcTitle}
             onChange={(e) => { setArcTitle(e.target.value); setArcDirty(true); }}
@@ -412,7 +415,7 @@ function StoryArcSection({
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1">Description</label>
+          <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1">{t("educator.courseDetail.storyLabelDesc")}</label>
           <textarea
             value={arcDesc}
             onChange={(e) => { setArcDesc(e.target.value); setArcDirty(true); }}
@@ -426,7 +429,7 @@ function StoryArcSection({
             disabled={!arcTitle.trim() || !arcDesc.trim() || saveArcMeta.isPending}
             className="px-4 py-2 rounded-lg text-sm font-semibold bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-40 transition-colors"
           >
-            {saveArcMeta.isPending ? "Saving…" : "Save changes"}
+            {saveArcMeta.isPending ? t("educator.courseDetail.storySaving") : t("educator.courseDetail.storySaveChanges")}
           </button>
         )}
       </div>
@@ -434,7 +437,7 @@ function StoryArcSection({
       {/* Chapters */}
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">
-          Chapters ({sortedChapters.length})
+          {t("educator.courseDetail.storyChaptersCount", { count: sortedChapters.length })}
         </h3>
         <div className="flex items-center gap-3">
           {chaptersDirty && (
@@ -443,7 +446,7 @@ function StoryArcSection({
               disabled={saveChapters.isPending}
               className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-40 transition-colors"
             >
-              {saveChapters.isPending ? "Saving…" : "Save chapters"}
+              {saveChapters.isPending ? t("educator.courseDetail.storySaving") : t("educator.courseDetail.storySaveChapters")}
             </button>
           )}
           <button
@@ -451,14 +454,14 @@ function StoryArcSection({
             className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
           >
             <Plus className="h-3.5 w-3.5" />
-            Add Chapter
+            {t("educator.courseDetail.storyAddChapter")}
           </button>
         </div>
       </div>
 
       {sortedChapters.length === 0 ? (
         <div className="rounded-xl border border-dashed border-neutral-200 dark:border-white/[0.08] p-6 text-center">
-          <p className="text-sm text-neutral-500 dark:text-neutral-300">No chapters yet. Add the first one.</p>
+          <p className="text-sm text-neutral-500 dark:text-neutral-300">{t("educator.courseDetail.storyNoChapters")}</p>
         </div>
       ) : (
         <div className="rounded-xl border border-neutral-200 dark:border-white/[0.07] overflow-hidden">
@@ -484,14 +487,14 @@ function StoryArcSection({
                   <button
                     onClick={() => setChapterModal(ch)}
                     className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors"
-                    title="Edit chapter"
+                    title={t("educator.courseDetail.chapterEditTitle")}
                   >
                     <Pencil className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-300" />
                   </button>
                   <button
                     onClick={() => setDeleteChapterId(ch.id)}
                     className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/[0.1] transition-colors"
-                    title="Delete chapter"
+                    title={t("educator.courseDetail.chapterDeleteTitle")}
                   >
                     <Trash2 className="h-3.5 w-3.5 text-red-500 dark:text-red-400" />
                   </button>
@@ -517,19 +520,19 @@ function StoryArcSection({
       {deleteChapterId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-2xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#0f0f1a] shadow-2xl p-6">
-            <h3 className="text-base font-bold text-neutral-900 dark:text-white mb-2">Remove chapter?</h3>
+            <h3 className="text-base font-bold text-neutral-900 dark:text-white mb-2">{t("educator.courseDetail.storyRemoveTitle")}</h3>
             <p className="text-sm text-neutral-500 dark:text-neutral-300 mb-6">
-              The chapter will be removed from the list. Click &ldquo;Save chapters&rdquo; to persist.
+              {t("educator.courseDetail.storyRemoveDesc")}
             </p>
             <div className="flex gap-3 justify-end">
               <button onClick={() => setDeleteChapterId(null)} className="px-4 py-2 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors">
-                Cancel
+                {t("educator.courseDetail.storyRemoveCancel")}
               </button>
               <button
                 onClick={() => handleChapterDelete(deleteChapterId)}
                 className="px-4 py-2 rounded-lg text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors"
               >
-                Remove
+                {t("educator.courseDetail.storyRemoveConfirm")}
               </button>
             </div>
           </div>
@@ -559,6 +562,7 @@ function LessonModal({
   lesson: Lesson | null;
   onClose: () => void;
 }>) {
+  const { t } = useTranslation();
   const { getToken } = useAuth();
   const qc = useQueryClient();
   const audioRef = useRef<HTMLInputElement>(null);
@@ -604,7 +608,7 @@ function LessonModal({
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["educator-lessons"] });
-      toast.success(isEdit ? "Lesson updated" : "Lesson created");
+      toast.success(isEdit ? t("educator.courseDetail.lessonUpdated") : t("educator.courseDetail.lessonCreated"));
       onClose();
     },
     onError: (e: Error) => setError(e.message),
@@ -617,7 +621,7 @@ function LessonModal({
       <div className="w-full max-w-xl rounded-2xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#0f0f1a] shadow-2xl overflow-y-auto max-h-[90vh]">
         <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100 dark:border-white/[0.06]">
           <h2 className="text-base font-bold text-neutral-900 dark:text-white">
-            {isEdit ? "Edit Lesson" : "New Lesson"}
+            {isEdit ? t("educator.courseDetail.modalEditTitle") : t("educator.courseDetail.modalNewTitle")}
           </h2>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors">
             <X className="h-4 w-4 text-neutral-500 dark:text-neutral-300" />
@@ -626,7 +630,7 @@ function LessonModal({
 
         <div className="px-6 py-5 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">Type</label>
+            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">{t("educator.courseDetail.modalType")}</label>
             <div className="flex gap-2 flex-wrap">
               {LESSON_TYPES.map((t) => (
                 <button
@@ -646,21 +650,21 @@ function LessonModal({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">Title <span className="text-red-400">*</span></label>
+            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">{t("educator.courseDetail.modalTitleRequired")}</label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Lesson title"
+              placeholder={t("educator.courseDetail.modalTitlePlaceholder")}
               className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">Description <span className="text-red-400">*</span></label>
+            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">{t("educator.courseDetail.modalDescRequired")}</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Brief description of this lesson"
+              placeholder={t("educator.courseDetail.modalDescPlaceholder")}
               rows={3}
               className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
             />
@@ -668,7 +672,7 @@ function LessonModal({
 
           {!isEdit && (
             <div>
-              <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">Audio file</label>
+              <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">{t("educator.courseDetail.modalAudioFile")}</label>
               <input
                 ref={audioRef}
                 type="file"
@@ -688,17 +692,17 @@ function LessonModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">Artist</label>
-              <input value={artist} onChange={(e) => setArtist(e.target.value)} placeholder="Optional" className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500" />
+              <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">{t("educator.courseDetail.modalArtist")}</label>
+              <input value={artist} onChange={(e) => setArtist(e.target.value)} placeholder={t("educator.courseDetail.modalOptional")} className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">Genre</label>
-              <input value={genre} onChange={(e) => setGenre(e.target.value)} placeholder="Optional" className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500" />
+              <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">{t("educator.courseDetail.modalGenre")}</label>
+              <input value={genre} onChange={(e) => setGenre(e.target.value)} placeholder={t("educator.courseDetail.modalOptional")} className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500" />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">Order</label>
+            <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">{t("educator.courseDetail.modalOrder")}</label>
             <input type="number" value={order} onChange={(e) => setOrder(e.target.value)} className="w-24 rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500" />
           </div>
 
@@ -707,14 +711,14 @@ function LessonModal({
 
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-neutral-100 dark:border-white/[0.06]">
           <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors">
-            Cancel
+            {t("educator.courseDetail.modalCancel")}
           </button>
           <button
             onClick={() => save.mutate()}
             disabled={!canSave}
             className="px-5 py-2 rounded-lg text-sm font-semibold bg-brand-500 text-white hover:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            {save.isPending ? "Saving…" : isEdit ? "Save Changes" : "Create Lesson"}
+            {save.isPending ? t("educator.courseDetail.modalSaving") : isEdit ? t("educator.courseDetail.modalSaveChanges") : t("educator.courseDetail.modalCreate")}
           </button>
         </div>
       </div>
@@ -725,6 +729,7 @@ function LessonModal({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CourseDetailPage() {
+  const { t } = useTranslation();
   const { id: courseId } = useParams<{ id: string }>();
   const { getToken } = useAuth();
   const qc = useQueryClient();
@@ -763,9 +768,9 @@ export default function CourseDetailPage() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["educator-lessons"] });
       setDeleteId(null);
-      toast.success("Lesson deleted");
+      toast.success(t("educator.courseDetail.lessonDeleted"));
     },
-    onError: (e: Error) => toast.error("Failed to delete lesson", { description: e.message }),
+    onError: (e: Error) => toast.error(t("educator.courseDetail.failedDelete"), { description: e.message }),
   });
 
   const toggleActiveMutation = useMutation({
@@ -779,9 +784,9 @@ export default function CourseDetailPage() {
     },
     onSuccess: (_, variables) => {
       void qc.invalidateQueries({ queryKey: ["educator-lessons"] });
-      toast.success(variables.isActive ? "Lesson published" : "Lesson hidden");
+      toast.success(variables.isActive ? t("educator.courseDetail.lessonPublished") : t("educator.courseDetail.lessonHidden"));
     },
-    onError: (e: Error) => toast.error("Failed to update lesson", { description: e.message }),
+    onError: (e: Error) => toast.error(t("educator.courseDetail.failedUpdate"), { description: e.message }),
   });
 
   const generateStubsMutation = useMutation({
@@ -796,9 +801,9 @@ export default function CourseDetailPage() {
     onSuccess: (result) => {
       void qc.invalidateQueries({ queryKey: ["educator-lessons"] });
       void qc.invalidateQueries({ queryKey: ["educator-courses"] });
-      toast.success("Stubs generated", { description: `${result.courses} course · ${result.lessons} lessons created.` });
+      toast.success(t("educator.courseDetail.stubsGenerated"), { description: `${result.courses} course · ${result.lessons} lessons created.` });
     },
-    onError: (e: Error) => toast.error("Stub generation failed", { description: e.message }),
+    onError: (e: Error) => toast.error(t("educator.courseDetail.stubsFailed"), { description: e.message }),
   });
 
   const courseTitle = course?.title ?? lessons[0]?.courseTitle ?? "Course";
@@ -811,7 +816,7 @@ export default function CourseDetailPage() {
         className="inline-flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-300 hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors mb-6"
       >
         <ArrowLeft className="h-4 w-4" />
-        All courses
+        {t("educator.courseDetail.backToCourses")}
       </Link>
 
       {/* Course header */}
@@ -839,7 +844,7 @@ export default function CourseDetailPage() {
           className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-500 text-white text-sm font-semibold hover:bg-brand-600 transition-colors"
         >
           <Plus className="h-4 w-4" />
-          New Lesson
+          {t("educator.courseDetail.newLesson")}
         </button>
       </div>
 
@@ -850,8 +855,8 @@ export default function CourseDetailPage() {
         </div>
       ) : lessons.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <p className="text-sm font-semibold text-neutral-600 dark:text-neutral-200">No lessons yet</p>
-          <p className="text-xs text-neutral-500 dark:text-neutral-300 mt-1 mb-5">Create a lesson manually, or seed the stub template.</p>
+          <p className="text-sm font-semibold text-neutral-600 dark:text-neutral-200">{t("educator.courseDetail.noLessons")}</p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-300 mt-1 mb-5">{t("educator.courseDetail.noLessonsHint")}</p>
           {course?.courseType && (
             <button
               onClick={() => generateStubsMutation.mutate()}
@@ -859,7 +864,7 @@ export default function CourseDetailPage() {
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-500 text-white text-sm font-semibold hover:bg-brand-600 disabled:opacity-40 transition-colors"
             >
               <Sparkles className="h-4 w-4" />
-              {generateStubsMutation.isPending ? "Seeding…" : "Seed stub lessons"}
+              {generateStubsMutation.isPending ? t("educator.courseDetail.seeding") : t("educator.courseDetail.seedStubs")}
             </button>
           )}
           {generateStubsMutation.isError && (
@@ -867,7 +872,7 @@ export default function CourseDetailPage() {
           )}
           {generateStubsMutation.isSuccess && (
             <p className="mt-3 text-xs text-green-600 dark:text-green-400">
-              Seeded {generateStubsMutation.data.lessons} lessons — all inactive until reviewed.
+              {t("educator.courseDetail.seededCount", { count: generateStubsMutation.data.lessons })}
             </p>
           )}
         </div>
@@ -876,11 +881,11 @@ export default function CourseDetailPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-100 dark:border-white/[0.06] bg-neutral-50 dark:bg-white/[0.02]">
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-300 w-8">#</th>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-300">Title</th>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-300">Type</th>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-300">Status</th>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-300">Duration</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-300 w-8">{t("educator.courseDetail.colOrder")}</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-300">{t("educator.courseDetail.colTitle")}</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-300">{t("educator.courseDetail.colType")}</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-300">{t("educator.courseDetail.colStatus")}</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-300">{t("educator.courseDetail.colDuration")}</th>
                 <th className="px-4 py-2.5" />
               </tr>
             </thead>
@@ -910,7 +915,7 @@ export default function CourseDetailPage() {
                     <button
                       onClick={() => toggleActiveMutation.mutate({ id: lesson.id, isActive: !lesson.isActive })}
                       disabled={toggleActiveMutation.isPending}
-                      title={lesson.isActive ? "Deactivate lesson" : "Activate lesson"}
+                      title={lesson.isActive ? t("educator.courseDetail.deactivateLesson") : t("educator.courseDetail.activateLesson")}
                       className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold transition-colors disabled:opacity-50 ${
                         lesson.isActive
                           ? "bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-500/30"
@@ -918,8 +923,8 @@ export default function CourseDetailPage() {
                       }`}
                     >
                       {lesson.isActive
-                        ? <><Eye className="h-3 w-3" /> Active</>
-                        : <><EyeOff className="h-3 w-3" /> Inactive</>}
+                        ? <><Eye className="h-3 w-3" /> {t("educator.courseDetail.statusActive")}</>
+                        : <><EyeOff className="h-3 w-3" /> {t("educator.courseDetail.statusInactive")}</>}
                     </button>
                   </td>
                   <td className="px-4 py-3 text-neutral-500 dark:text-neutral-300 text-xs tabular-nums">
@@ -931,7 +936,7 @@ export default function CourseDetailPage() {
                         <button
                           onClick={() => setPlayUrl(playUrl === lesson.audioUrl ? null : lesson.audioUrl)}
                           className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors"
-                          title="Play audio"
+                          title={t("educator.courseDetail.playAudio")}
                         >
                           <Play className={`h-3.5 w-3.5 ${playUrl === lesson.audioUrl ? "text-brand-500" : "text-neutral-400 dark:text-neutral-300"}`} />
                         </button>
@@ -939,14 +944,14 @@ export default function CourseDetailPage() {
                       <button
                         onClick={() => setModal(lesson)}
                         className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors"
-                        title="Edit"
+                        title={t("educator.courseDetail.editLesson")}
                       >
                         <Pencil className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-300" />
                       </button>
                       <button
                         onClick={() => setDeleteId(lesson.id)}
                         className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/[0.1] transition-colors"
-                        title="Delete"
+                        title={t("educator.courseDetail.deleteLesson")}
                       >
                         <Trash2 className="h-3.5 w-3.5 text-red-500 dark:text-red-400" />
                       </button>
@@ -986,20 +991,20 @@ export default function CourseDetailPage() {
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-2xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#0f0f1a] shadow-2xl p-6">
-            <h3 className="text-base font-bold text-neutral-900 dark:text-white mb-2">Delete lesson?</h3>
+            <h3 className="text-base font-bold text-neutral-900 dark:text-white mb-2">{t("educator.courseDetail.deleteTitle")}</h3>
             <p className="text-sm text-neutral-500 dark:text-neutral-300 mb-6">
-              This will permanently remove the lesson and all its transcript segments.
+              {t("educator.courseDetail.deleteDesc")}
             </p>
             <div className="flex gap-3 justify-end">
               <button onClick={() => setDeleteId(null)} className="px-4 py-2 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors">
-                Cancel
+                {t("educator.courseDetail.deleteCancel")}
               </button>
               <button
                 onClick={() => deleteMutation.mutate(deleteId)}
                 disabled={deleteMutation.isPending}
                 className="px-4 py-2 rounded-lg text-sm font-semibold bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
               >
-                {deleteMutation.isPending ? "Deleting…" : "Delete"}
+                {deleteMutation.isPending ? t("educator.courseDetail.deleting") : t("educator.courseDetail.deleteButton")}
               </button>
             </div>
           </div>

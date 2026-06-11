@@ -25,6 +25,7 @@ import {
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -77,6 +78,7 @@ function GenerateDropdown({
   existingCourseTypes: Set<string>;
   hasAnyCourses: boolean;
 }>) {
+  const { t } = useTranslation();
   const { getToken } = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -121,23 +123,23 @@ function GenerateDropdown({
   if (hasAnyCourses === false) {
     updateContent = (
       <p className="px-3 py-3 text-xs text-neutral-500 dark:text-neutral-300">
-        No courses exist yet. Use New first.
+        {t("educator.coursesPage.genNoCourses")}
       </p>
     );
   } else if (hasMissingTypes) {
-    updateContent = missingTypes.map((t) => (
+    updateContent = missingTypes.map((ct) => (
       <button
-        key={t.type}
-        onClick={() => generate(t.type)}
+        key={ct.type}
+        onClick={() => generate(ct.type)}
         className="w-full text-left px-3 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/[0.05] transition-colors"
       >
-        {t.label}
+        {ct.label}
       </button>
     ));
   } else {
     updateContent = (
       <p className="px-3 py-3 text-xs text-neutral-500 dark:text-neutral-300">
-        All stub course types are already generated.
+        {t("educator.coursesPage.genAllGenerated")}
       </p>
     );
   }
@@ -150,7 +152,7 @@ function GenerateDropdown({
         className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/[0.08] text-sm font-semibold text-neutral-700 dark:text-neutral-300 bg-white dark:bg-white/[0.04] hover:bg-neutral-50 dark:hover:bg-white/[0.06] disabled:opacity-50 transition-colors"
       >
         <Sparkles className="h-4 w-4" />
-        {generating ? "Generating…" : "Generate / Update"}
+        {generating ? t("educator.coursesPage.generating") : t("educator.coursesPage.generateLabel")}
         <ChevronDown className="h-3.5 w-3.5 ml-0.5" />
       </button>
 
@@ -166,7 +168,7 @@ function GenerateDropdown({
                     : "text-neutral-500 dark:text-neutral-300 hover:text-neutral-700 dark:hover:text-white"
                 }`}
               >
-                New
+                {t("educator.coursesPage.genTabNew")}
               </button>
               <button
                 onClick={() => setMode("update")}
@@ -176,7 +178,7 @@ function GenerateDropdown({
                     : "text-neutral-500 dark:text-neutral-300 hover:text-neutral-700 dark:hover:text-white"
                 }`}
               >
-                Update
+                {t("educator.coursesPage.genTabUpdate")}
               </button>
             </div>
           </div>
@@ -184,25 +186,25 @@ function GenerateDropdown({
           {mode === "new" ? (
             <div className="px-3 py-3">
               <p className="text-xs text-neutral-500 dark:text-neutral-300 mb-3">
-                Create the full starter course set for this language.
+                {t("educator.coursesPage.genNewDesc")}
               </p>
               <button
                 onClick={() => generate()}
                 disabled={hasAnyCourses}
                 className="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-brand-100 dark:hover:bg-brand-900/50 transition-colors"
               >
-                Create starter set
+                {t("educator.coursesPage.genCreateStarter")}
               </button>
               {hasAnyCourses && (
                 <p className="mt-2 text-[11px] text-neutral-500 dark:text-neutral-300">
-                  This language already has courses. Use Update to add missing types.
+                  {t("educator.coursesPage.genAlreadyExists")}
                 </p>
               )}
             </div>
           ) : (
             <div>
               <p className="px-3 py-2 text-[10px] font-semibold text-neutral-500 dark:text-neutral-300 uppercase tracking-wide border-b border-neutral-100 dark:border-white/[0.06]">
-                Missing stub course types
+                {t("educator.coursesPage.genMissingTypes")}
               </p>
               {updateContent}
             </div>
@@ -265,6 +267,7 @@ function MapNodesTab({
   languageId,
   courses,
 }: Readonly<{ languageId: string; courses: Course[] }>) {
+  const { t } = useTranslation();
   const { getToken } = useAuth();
   const qc = useQueryClient();
   const [editingId, setEditingId] = useState<string | "new" | null>(null);
@@ -299,9 +302,9 @@ function MapNodesTab({
       void qc.invalidateQueries({ queryKey: ["map-nodes", languageId] });
       setEditingId(null);
       setDraft(EMPTY_DRAFT);
-      toast.success("Map node saved");
+      toast.success(t("educator.coursesPage.mapSaved"));
     },
-    onError: (e: Error) => toast.error("Failed to save node", { description: e.message }),
+    onError: (e: Error) => toast.error(t("educator.coursesPage.mapSaveFailed"), { description: e.message }),
   });
 
   const deleteMutation = useMutation({
@@ -312,9 +315,9 @@ function MapNodesTab({
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["map-nodes", languageId] });
       setDeletingId(null);
-      toast.success("Node removed");
+      toast.success(t("educator.coursesPage.mapRemoved"));
     },
-    onError: (e: Error) => toast.error("Failed to delete node", { description: e.message }),
+    onError: (e: Error) => toast.error(t("educator.coursesPage.mapDeleteFailed"), { description: e.message }),
   });
 
   const existingZones = Array.from(new Set(nodes.map((n) => n.zoneName)));
@@ -338,7 +341,7 @@ function MapNodesTab({
 
   function handleSave() {
     if (!draft.communityName || !draft.zoneName || !draft.courseId) {
-      toast.error("Community name, zone, and course are required.");
+      toast.error(t("educator.coursesPage.mapRequiredFields"));
       return;
     }
     saveMutation.mutate(editingId === "new" ? draft : { ...draft, id: editingId! });
@@ -358,8 +361,9 @@ function MapNodesTab({
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            {nodes.length} node{nodes.length !== 1 ? "s" : ""} configured
-            {nodes.length === 0 && " — Ịzọn defaults will be used as a fallback"}
+            {nodes.length === 0
+              ? t("educator.coursesPage.mapNodesCountFallback", { count: nodes.length })
+              : t("educator.coursesPage.mapNodesCount", { count: nodes.length })}
           </p>
         </div>
         {editingId === null && (
@@ -368,7 +372,7 @@ function MapNodesTab({
             onClick={openNew}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold transition-colors"
           >
-            <Plus className="h-4 w-4" /> Add node
+            <Plus className="h-4 w-4" /> {t("educator.coursesPage.mapAddNode")}
           </button>
         )}
       </div>
@@ -379,7 +383,13 @@ function MapNodesTab({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-100 dark:border-white/[0.06] bg-neutral-50 dark:bg-white/[0.02]">
-                {["Community", "Zone", "Course", "Position", ""].map((h) => (
+                {[
+                  t("educator.coursesPage.mapColCommunity"),
+                  t("educator.coursesPage.mapColZone"),
+                  t("educator.coursesPage.mapColCourse"),
+                  t("educator.coursesPage.mapColPosition"),
+                  "",
+                ].map((h) => (
                   <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">
                     {h}
                   </th>
@@ -399,7 +409,7 @@ function MapNodesTab({
                     </td>
                     <td className="px-4 py-3 text-neutral-500 dark:text-neutral-400 text-xs">{node.zoneName}</td>
                     <td className="px-4 py-3 text-neutral-500 dark:text-neutral-400 text-xs truncate max-w-[160px]">
-                      {linkedCourse?.title ?? <span className="text-red-400">Unlinked</span>}
+                      {linkedCourse?.title ?? <span className="text-red-400">{t("educator.coursesPage.mapUnlinked")}</span>}
                     </td>
                     <td className="px-4 py-3 text-neutral-400 dark:text-neutral-600 text-xs font-mono">
                       {node.x}, {node.y}
@@ -422,14 +432,14 @@ function MapNodesTab({
                               disabled={deleteMutation.isPending}
                               className="text-[11px] font-semibold text-red-500 hover:text-red-600 disabled:opacity-50"
                             >
-                              Confirm
+                              {t("educator.coursesPage.mapConfirm")}
                             </button>
                             <button
                               type="button"
                               onClick={() => setDeletingId(null)}
                               className="text-[11px] text-neutral-400 hover:text-neutral-600 ml-1"
                             >
-                              Cancel
+                              {t("educator.coursesPage.mapDeleteCancel")}
                             </button>
                           </div>
                         ) : (
@@ -455,9 +465,9 @@ function MapNodesTab({
       {nodes.length === 0 && editingId === null && (
         <div className="flex flex-col items-center justify-center py-12 text-center rounded-xl border border-dashed border-neutral-200 dark:border-white/[0.07]">
           <MapPin className="h-8 w-8 text-neutral-300 dark:text-neutral-600 mb-3" />
-          <p className="text-sm font-semibold text-neutral-500 dark:text-neutral-400">No map nodes yet</p>
+          <p className="text-sm font-semibold text-neutral-500 dark:text-neutral-400">{t("educator.coursesPage.mapEmpty")}</p>
           <p className="text-xs text-neutral-400 dark:text-neutral-600 mt-1 max-w-xs">
-            Add nodes to place courses on the sound map. Learners will hear a soundscape before unlocking each location.
+            {t("educator.coursesPage.mapEmptyDesc")}
           </p>
         </div>
       )}
@@ -466,7 +476,7 @@ function MapNodesTab({
       {editingId !== null && (
         <div className="rounded-2xl border border-neutral-200 dark:border-white/[0.08] p-5 bg-neutral-50 dark:bg-white/[0.02]">
           <h3 className="text-sm font-bold text-neutral-900 dark:text-white mb-5">
-            {editingId === "new" ? "Add map node" : "Edit map node"}
+            {editingId === "new" ? t("educator.coursesPage.mapAddTitle") : t("educator.coursesPage.mapEditTitle")}
           </h3>
           <MapNodeEditor
             draft={draft}
@@ -481,14 +491,14 @@ function MapNodesTab({
               disabled={saveMutation.isPending}
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-sm font-semibold transition-colors"
             >
-              {saveMutation.isPending ? "Saving…" : "Save node"}
+              {saveMutation.isPending ? t("educator.coursesPage.mapSaving") : t("educator.coursesPage.mapSaveNode")}
             </button>
             <button
               type="button"
               onClick={() => { setEditingId(null); setDraft(EMPTY_DRAFT); }}
               className="px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/[0.08] text-sm font-semibold text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/[0.05] transition-colors"
             >
-              Cancel
+              {t("educator.coursesPage.mapCancel")}
             </button>
           </div>
         </div>
@@ -500,6 +510,7 @@ function MapNodesTab({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function EducatorCoursesPage() {
+  const { t } = useTranslation();
   const { getToken } = useAuth();
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const [activeTab, setActiveTab] = useState<"courses" | "map">("courses");
@@ -521,9 +532,9 @@ export default function EducatorCoursesPage() {
     },
     onSuccess: (_, variables) => {
       void qc.invalidateQueries({ queryKey: ["educator-courses"] });
-      toast.success(variables.isActive ? "Course published" : "Course hidden");
+      toast.success(variables.isActive ? t("educator.coursesPage.coursePublished") : t("educator.coursesPage.courseHidden"));
     },
-    onError: (e: Error) => toast.error("Failed to update course", { description: e.message }),
+    onError: (e: Error) => toast.error(t("educator.coursesPage.failedUpdate"), { description: e.message }),
   });
 
   const { data: me } = useQuery<EducatorMe>({
@@ -599,9 +610,9 @@ export default function EducatorCoursesPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h2 className="text-lg font-bold text-neutral-900 dark:text-white">Courses</h2>
+          <h2 className="text-lg font-bold text-neutral-900 dark:text-white">{t("educator.coursesPage.title")}</h2>
           <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
-            Select a course to view and manage its lessons.
+            {t("educator.coursesPage.subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -616,7 +627,7 @@ export default function EducatorCoursesPage() {
                   : "text-neutral-400 dark:text-neutral-600 hover:text-neutral-600 dark:hover:text-neutral-400"
               }`}
             >
-              <BookOpen className="h-3.5 w-3.5" /> Courses
+              <BookOpen className="h-3.5 w-3.5" /> {t("educator.coursesPage.tabCourses")}
             </button>
             <button
               type="button"
@@ -627,7 +638,7 @@ export default function EducatorCoursesPage() {
                   : "text-neutral-400 dark:text-neutral-600 hover:text-neutral-600 dark:hover:text-neutral-400"
               }`}
             >
-              <MapPin className="h-3.5 w-3.5" /> Sound Map
+              <MapPin className="h-3.5 w-3.5" /> {t("educator.coursesPage.tabSoundMap")}
             </button>
           </div>
 
@@ -670,7 +681,7 @@ export default function EducatorCoursesPage() {
                   : "text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-white/[0.05]"
               }`}
             >
-              {lvl === "all" ? "All levels" : lvl}
+              {lvl === "all" ? t("educator.coursesPage.allLevels") : lvl}
             </button>
           ))}
         </div>
@@ -685,7 +696,7 @@ export default function EducatorCoursesPage() {
           }`}
         >
           <Filter className="h-3 w-3" />
-          Empty only
+          {t("educator.coursesPage.emptyOnly")}
         </button>
       </div>
 
@@ -698,16 +709,16 @@ export default function EducatorCoursesPage() {
           <div className="h-14 w-14 rounded-2xl bg-neutral-100 dark:bg-white/[0.04] flex items-center justify-center mb-4">
             <BookOpen className="h-6 w-6 text-neutral-400" />
           </div>
-          <p className="text-sm font-semibold text-neutral-500 dark:text-neutral-400">No courses yet</p>
+          <p className="text-sm font-semibold text-neutral-500 dark:text-neutral-400">{t("educator.coursesPage.noCourses")}</p>
           <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">
-            Use the Generate course button to create a starter set.
+            {t("educator.coursesPage.noCoursesHint")}
           </p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">No courses match the current filters.</p>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">{t("educator.coursesPage.noMatch")}</p>
           <button onClick={() => { setLevelFilter("all"); setEmptyOnly(false); }} className="mt-2 text-xs text-brand-500 hover:underline">
-            Clear filters
+            {t("educator.coursesPage.clearFilters")}
           </button>
         </div>
       ) : (
@@ -715,11 +726,11 @@ export default function EducatorCoursesPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-100 dark:border-white/[0.06] bg-neutral-50 dark:bg-white/[0.02]">
-                <SortTh label="Course" sortKey="title" current={sortKey} dir={sortDir} onClick={toggleSort} />
-                <SortTh label="Level" sortKey="level" current={sortKey} dir={sortDir} onClick={toggleSort} />
-                <SortTh label="Lessons" sortKey="total" current={sortKey} dir={sortDir} onClick={toggleSort} />
-                <SortTh label="Active" sortKey="active" current={sortKey} dir={sortDir} onClick={toggleSort} />
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">Status</th>
+                <SortTh label={t("educator.coursesPage.colCourse")} sortKey="title" current={sortKey} dir={sortDir} onClick={toggleSort} />
+                <SortTh label={t("educator.coursesPage.colLevel")} sortKey="level" current={sortKey} dir={sortDir} onClick={toggleSort} />
+                <SortTh label={t("educator.coursesPage.colLessons")} sortKey="total" current={sortKey} dir={sortDir} onClick={toggleSort} />
+                <SortTh label={t("educator.coursesPage.colActive")} sortKey="active" current={sortKey} dir={sortDir} onClick={toggleSort} />
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">{t("educator.coursesPage.colStatus")}</th>
                 <th className="px-4 py-2.5" />
               </tr>
             </thead>
@@ -771,7 +782,7 @@ export default function EducatorCoursesPage() {
                       <button
                         onClick={() => toggleCourseMutation.mutate({ id: course.id, isActive: course.isActive === false })}
                         disabled={toggleCourseMutation.isPending}
-                        title={course.isActive !== false ? "Deactivate course" : "Activate course"}
+                        title={course.isActive !== false ? t("educator.coursesPage.deactivateCourse") : t("educator.coursesPage.activateCourse")}
                         className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold transition-colors disabled:opacity-50 ${
                           course.isActive !== false
                             ? "bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-500/30"
@@ -779,8 +790,8 @@ export default function EducatorCoursesPage() {
                         }`}
                       >
                         {course.isActive !== false
-                          ? <><Eye className="h-3 w-3" /> Active</>
-                          : <><EyeOff className="h-3 w-3" /> Inactive</>}
+                          ? <><Eye className="h-3 w-3" /> {t("educator.coursesPage.statusActive")}</>
+                          : <><EyeOff className="h-3 w-3" /> {t("educator.coursesPage.statusInactive")}</>}
                       </button>
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -788,7 +799,7 @@ export default function EducatorCoursesPage() {
                         href={`/educator/courses/${course.id}`}
                         className="inline-flex items-center gap-1 text-xs text-brand-500 hover:text-brand-600 dark:hover:text-brand-400 font-semibold transition-colors"
                       >
-                        Open <ChevronRight className="h-3.5 w-3.5" />
+                        {t("educator.coursesPage.open")} <ChevronRight className="h-3.5 w-3.5" />
                       </Link>
                     </td>
                   </tr>

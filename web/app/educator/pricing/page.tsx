@@ -4,6 +4,7 @@ import { apiFetch } from "@/lib/api";
 import { useAuth } from "@clerk/nextjs";
 import { Check } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const STRIPE_PRICE_STARTER = process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER ?? "";
 const STRIPE_PRICE_PRO = process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO ?? "";
@@ -62,6 +63,7 @@ const PLANS = [
 ] as const;
 
 export default function EducatorPricingPage() {
+  const { t } = useTranslation();
   const { getToken } = useAuth();
   const [loading, setLoading] = useState<string | null>(null);
   const [orgName, setOrgName] = useState("");
@@ -90,22 +92,22 @@ export default function EducatorPricingPage() {
     <div className="max-w-5xl mx-auto px-4 py-12">
       <div className="text-center mb-12">
         <h1 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100 mb-3">
-          Educator Plans
+          {t("educator.pricing.title")}
         </h1>
         <p className="text-neutral-500 dark:text-neutral-400 text-lg max-w-xl mx-auto">
-          Bring Beeli into your classroom. Manage students, assign lessons, and track progress — all in one place.
+          {t("educator.pricing.subtitle")}
         </p>
       </div>
 
       {showOrgPrompt && (
         <div className="mb-8 p-4 bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 rounded-xl">
           <p className="text-sm font-medium text-brand-800 dark:text-brand-200 mb-2">
-            What&apos;s the name of your school or organization?
+            {t("educator.pricing.orgPromptLabel")}
           </p>
           <div className="flex gap-2">
             <input
               className="flex-1 px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-              placeholder="e.g. Lagos Heritage Language School"
+              placeholder={t("educator.pricing.orgPlaceholder")}
               value={orgName}
               onChange={(e) => setOrgName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && startCheckout(showOrgPrompt)}
@@ -114,7 +116,7 @@ export default function EducatorPricingPage() {
               onClick={() => startCheckout(showOrgPrompt)}
               className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors"
             >
-              Continue
+              {t("educator.pricing.continueButton")}
             </button>
           </div>
         </div>
@@ -133,7 +135,7 @@ export default function EducatorPricingPage() {
             {plan.highlight && (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                 <span className="bg-brand-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                  Most Popular
+                  {t("educator.pricing.mostPopular")}
                 </span>
               </div>
             )}
@@ -174,14 +176,14 @@ export default function EducatorPricingPage() {
                     : "bg-neutral-900 hover:bg-neutral-700 dark:bg-neutral-100 dark:hover:bg-neutral-200 text-white dark:text-neutral-900"
                 } disabled:opacity-60`}
               >
-                {loading === plan.priceId ? "Redirecting…" : "Subscribe"}
+                {loading === plan.priceId ? t("educator.pricing.redirecting") : t("educator.pricing.subscribeButton")}
               </button>
             ) : (
               <a
                 href="mailto:hello@beeli.app?subject=Institution Plan"
                 className="w-full py-2.5 rounded-xl text-sm font-semibold text-center border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors block"
               >
-                Contact us
+                {t("educator.pricing.contactUs")}
               </a>
             )}
           </div>
@@ -189,7 +191,7 @@ export default function EducatorPricingPage() {
       </div>
 
       <p className="text-center text-xs text-neutral-400 mt-8">
-        Prices in USD. Billed monthly. Cancel anytime from your billing portal.
+        {t("educator.pricing.disclaimer")}
       </p>
     </div>
   );

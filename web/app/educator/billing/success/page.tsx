@@ -5,8 +5,10 @@ import { useAuth } from "@clerk/nextjs";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function BillingSuccessPage() {
+  const { t } = useTranslation();
   const { getToken } = useAuth();
   const router = useRouter();
   const [status, setStatus] = useState<"polling" | "active" | "timeout">("polling");
@@ -47,9 +49,9 @@ export default function BillingSuccessPage() {
         <>
           <Loader2 className="h-10 w-10 text-brand-500 animate-spin mb-4" />
           <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">
-            Activating your subscription…
+            {t("educator.billingSuccess.activatingTitle")}
           </h1>
-          <p className="text-neutral-500 text-sm mt-2">This usually takes a few seconds.</p>
+          <p className="text-neutral-500 text-sm mt-2">{t("educator.billingSuccess.activatingSubtext")}</p>
         </>
       )}
 
@@ -57,25 +59,25 @@ export default function BillingSuccessPage() {
         <>
           <CheckCircle2 className="h-12 w-12 text-emerald-500 mb-4" />
           <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">
-            You&apos;re all set!
+            {t("educator.billingSuccess.readyTitle")}
           </h1>
-          <p className="text-neutral-500 text-sm mt-2">Redirecting to your classroom…</p>
+          <p className="text-neutral-500 text-sm mt-2">{t("educator.billingSuccess.readySubtext")}</p>
         </>
       )}
 
       {status === "timeout" && (
         <>
           <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-100 mb-2">
-            Almost there
+            {t("educator.billingSuccess.almostTitle")}
           </h1>
           <p className="text-neutral-500 text-sm mb-6">
-            Your payment was received. It may take a moment to activate. Check back in a minute.
+            {t("educator.billingSuccess.almostDesc")}
           </p>
           <a
             href="/educator/billing"
             className="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-xl transition-colors"
           >
-            Go to billing
+            {t("educator.billingSuccess.goToBilling")}
           </a>
         </>
       )}

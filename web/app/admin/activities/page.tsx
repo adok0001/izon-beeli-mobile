@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 // ── Activity types ────────────────────────────────────────────────────────────
 
@@ -83,10 +84,11 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 // ── Image drop zone ───────────────────────────────────────────────────────────
 
 function ImageDropZone({ previewUrl, onFile }: { previewUrl: string | null; onFile: (f: File) => void }) {
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
 
   function handle(file: File) {
-    if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
+    if (!file.type.startsWith("image/")) { toast.error(t("admin.activities.imageTypeError")); return; }
     onFile(file);
   }
 
@@ -109,14 +111,14 @@ function ImageDropZone({ previewUrl, onFile }: { previewUrl: string | null; onFi
             onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}
             className="absolute top-2 right-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-black/60 text-white text-xs font-semibold hover:bg-black/80 transition-colors"
           >
-            <Upload className="h-3 w-3" /> Replace
+            <Upload className="h-3 w-3" /> {t("admin.activities.imageReplace")}
           </button>
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-10 text-neutral-400">
           <Upload className="h-8 w-8 mb-2 opacity-40" />
-          <p className="text-sm font-medium">Drop an image or click to upload</p>
-          <p className="text-xs mt-0.5 opacity-60">16:9 recommended</p>
+          <p className="text-sm font-medium">{t("admin.activities.imageDropHint")}</p>
+          <p className="text-xs mt-0.5 opacity-60">{t("admin.activities.imageRatio")}</p>
         </div>
       )}
       <input ref={inputRef} type="file" accept="image/*" className="sr-only"
@@ -135,6 +137,7 @@ function ZoneCanvas({
   imageUrl: string; zones: ZoneDraft[]; selectedId: string | null;
   onAddZone: (z: ZoneDraft) => void; onSelectZone: (id: string | null) => void; onDeleteZone: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const [draw, setDraw] = useState<DrawState>({ active: false, startX: 0, startY: 0, currentX: 0, currentY: 0 });
 
@@ -228,7 +231,7 @@ function ZoneCanvas({
       {zones.length === 0 && !draw.active && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <p className="text-white/70 text-sm font-medium bg-black/50 px-3 py-1.5 rounded-lg">
-            Click and drag to draw drop zones
+            {t("admin.activities.zonesCanvasHint")}
           </p>
         </div>
       )}
@@ -246,10 +249,11 @@ function ZoneEditorList({
   onChange: (id: string, field: "label" | "labelTranslation", value: string) => void;
   onDelete: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   if (zones.length === 0) return null;
   return (
     <div className="space-y-2">
-      <p className={labelCls}>Drop zones — click a zone on the image or a row here to edit</p>
+      <p className={labelCls}>{t("admin.activities.zonesEditorLabel")}</p>
       {zones.map((zone, i) => (
         <div
           key={zone.id}
@@ -300,12 +304,13 @@ function TokenList({
   onDelete: (id: string) => void;
   onAdd: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <p className={labelCls}>Word tokens (include distractors)</p>
+        <p className={labelCls}>{t("admin.activities.tokensLabel")}</p>
         <button type="button" onClick={onAdd} className="flex items-center gap-1 text-xs text-brand-600 dark:text-brand-400 hover:text-brand-500 font-semibold">
-          <Plus className="h-3 w-3" /> Add token
+          <Plus className="h-3 w-3" /> {t("admin.activities.addToken")}
         </button>
       </div>
       <div className="space-y-2">
@@ -333,6 +338,7 @@ function VisualPlacementForm({
   onSave: (data: Omit<PlacementActivity, "id" | "type">) => void;
   onCancel: () => void; saving: boolean;
 }) {
+  const { t } = useTranslation();
   const { getToken } = useAuth();
   const blobRef = useRef<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -369,10 +375,10 @@ function VisualPlacementForm({
   function deleteToken(id: string) { setTokens((p) => p.filter((t) => t.id !== id)); }
 
   async function handleSave() {
-    if (!imagePreviewUrl) { toast.error("Upload an image first"); return; }
-    if (zones.length === 0) { toast.error("Draw at least one drop zone"); return; }
-    if (zones.some((z) => !z.label)) { toast.error("Every zone needs a native word label"); return; }
-    if (tokens.length === 0) { toast.error("Add at least one word token"); return; }
+    if (!imagePreviewUrl) { toast.error(t("admin.activities.validationUploadImage")); return; }
+    if (zones.length === 0) { toast.error(t("admin.activities.validationDrawZone")); return; }
+    if (zones.some((z) => !z.label)) { toast.error(t("admin.activities.validationZoneLabel")); return; }
+    if (tokens.length === 0) { toast.error(t("admin.activities.validationAddToken")); return; }
 
     let imageUrl = imagePreviewUrl;
     if (imageFile) {
@@ -385,7 +391,7 @@ function VisualPlacementForm({
         });
         imageUrl = res.url;
       } catch {
-        toast.error("Image upload failed"); setUploading(false); return;
+        toast.error(t("admin.activities.imageUploadFailed")); setUploading(false); return;
       }
       setUploading(false);
     }
@@ -399,17 +405,17 @@ function VisualPlacementForm({
 
   return (
     <div className="space-y-4 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-200 dark:border-neutral-700 p-4">
-      <p className="text-xs font-bold uppercase tracking-widest text-neutral-400">Word Placement Activity</p>
+      <p className="text-xs font-bold uppercase tracking-widest text-neutral-400">{t("admin.activities.placementFormTitle")}</p>
 
       <ImageDropZone previewUrl={imagePreviewUrl} onFile={handleImageFile} />
 
       {imagePreviewUrl && (
         <>
-          <Field label="Scene description *">
+          <Field label={t("admin.activities.sceneDescription")}>
             <input className={fieldCls} value={imageAlt} onChange={(e) => setImageAlt(e.target.value)} placeholder="A busy West African marketplace" />
           </Field>
           <div>
-            <p className={cn(labelCls, "mb-2")}>Draw drop zones on the image</p>
+            <p className={cn(labelCls, "mb-2")}>{t("admin.activities.drawZonesLabel")}</p>
             <ZoneCanvas imageUrl={imagePreviewUrl} zones={zones} selectedId={selectedZoneId}
               onAddZone={addZone} onSelectZone={setSelectedZoneId} onDeleteZone={deleteZone} />
           </div>
@@ -421,11 +427,11 @@ function VisualPlacementForm({
 
       <div className="flex gap-2 justify-end pt-1">
         <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg text-sm border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors">
-          Cancel
+          {t("admin.activities.cancel")}
         </button>
         <button type="button" onClick={handleSave} disabled={saving || uploading || !imagePreviewUrl}
           className="px-4 py-2 rounded-lg text-sm bg-brand-600 text-white font-semibold hover:bg-brand-500 disabled:opacity-40 transition-colors">
-          {uploading ? "Uploading…" : saving ? "Saving…" : "Save"}
+          {uploading ? t("admin.activities.uploading") : saving ? t("admin.activities.saving") : t("admin.activities.save")}
         </button>
       </div>
     </div>
@@ -441,16 +447,17 @@ function AudioUploadPanel({
   isRecording: boolean; recordingError: string; audioError: string;
   onFile: (f: File) => void; onStartRecord: () => void; onStopRecord: () => void;
 }) {
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const canRecord = typeof window !== "undefined" && typeof MediaRecorder !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
 
   return (
     <div className="space-y-2">
-      <p className={labelCls}>Sentence audio (optional — for playback while setting levels)</p>
+      <p className={labelCls}>{t("admin.activities.audioLabel")}</p>
       <div className="flex items-center gap-2 flex-wrap">
         <button type="button" onClick={() => inputRef.current?.click()}
           className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 text-sm font-semibold text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors">
-          <Upload className="h-4 w-4" /> Upload audio
+          <Upload className="h-4 w-4" /> {t("admin.activities.uploadAudio")}
         </button>
         {canRecord && (
           <button type="button" onClick={isRecording ? onStopRecord : onStartRecord}
@@ -460,10 +467,10 @@ function AudioUploadPanel({
                 ? "bg-red-500 text-white hover:bg-red-600"
                 : "border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700"
             )}>
-            {isRecording ? <><Square className="h-4 w-4" /> Stop</> : <><Mic className="h-4 w-4" /> Record</>}
+            {isRecording ? <><Square className="h-4 w-4" /> {t("admin.activities.stop")}</> : <><Mic className="h-4 w-4" /> {t("admin.activities.record")}</>}
           </button>
         )}
-        {isRecording && <span className="flex items-center gap-1.5 text-xs text-red-500 animate-pulse"><span className="w-2 h-2 rounded-full bg-red-500 inline-block" /> Recording…</span>}
+        {isRecording && <span className="flex items-center gap-1.5 text-xs text-red-500 animate-pulse"><span className="w-2 h-2 rounded-full bg-red-500 inline-block" /> {t("admin.activities.recording")}</span>}
       </div>
       <input ref={inputRef} type="file" accept={AUDIO_FILE_ACCEPT} className="sr-only"
         onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }} />
@@ -531,16 +538,17 @@ function ChannelBuilder({
   onChange: (id: string, updated: ChannelDraft) => void;
   onAdd: () => void; onDelete: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const voiceCount = channels.filter((c) => c.isVoice).length;
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <div>
-          <p className={labelCls}>Channels</p>
-          <p className="text-[11px] text-neutral-400 -mt-0.5">Select Voice. Target = where learner must move fader. Start = initial position.</p>
+          <p className={labelCls}>{t("admin.activities.channelsLabel")}</p>
+          <p className="text-[11px] text-neutral-400 -mt-0.5">{t("admin.activities.channelsHint")}</p>
         </div>
         <button type="button" onClick={onAdd} className="flex items-center gap-1 text-xs text-brand-600 dark:text-brand-400 hover:text-brand-500 font-semibold shrink-0">
-          <Plus className="h-3 w-3" /> Add
+          <Plus className="h-3 w-3" /> {t("admin.activities.addChannel")}
         </button>
       </div>
       {channels.map((ch) => (
@@ -571,6 +579,7 @@ function LessonSeedPicker({
   languageId: string;
   onSeed: (sentence: string, audioUrl: string | null) => void;
 }) {
+  const { t } = useTranslation();
   const { getToken } = useAuth();
   const [open, setOpen] = useState(false);
   const [selectedId, setSelectedId] = useState("");
@@ -595,7 +604,7 @@ function LessonSeedPicker({
       const firstSegment = detail.transcript.sort((a, b) => a.order - b.order)[0];
       onSeed(firstSegment?.text ?? "", detail.audioUrl);
     } catch {
-      toast.error("Failed to load lesson");
+      toast.error(t("admin.activities.lessonLoadFailed"));
     }
     setSeeding(false);
     setOpen(false);
@@ -609,7 +618,7 @@ function LessonSeedPicker({
         className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 transition-colors"
       >
         <BookOpen className="h-3.5 w-3.5" />
-        Seed from lesson
+        {t("admin.activities.seedFromLesson")}
         <ChevronDown className={cn("h-3 w-3 ml-auto transition-transform", open && "rotate-180")} />
       </button>
       {open && (
@@ -625,7 +634,7 @@ function LessonSeedPicker({
             ))}
           </select>
           <p className="text-[11px] text-neutral-500">
-            Pre-fills the sentence from the first transcript segment and the audio URL. You can edit both after.
+            {t("admin.activities.seedHint")}
           </p>
           <button
             type="button"
@@ -633,7 +642,7 @@ function LessonSeedPicker({
             disabled={!selectedId || seeding}
             className="px-3 py-1.5 rounded-lg text-xs bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 font-semibold disabled:opacity-40 transition-colors hover:opacity-80"
           >
-            {seeding ? "Loading…" : "Apply"}
+            {seeding ? t("admin.activities.loading") : t("admin.activities.apply")}
           </button>
         </div>
       )}
@@ -650,6 +659,7 @@ function VisualSoundboardForm({
   onSave: (data: Omit<SoundboardActivity, "id" | "type">) => void;
   onCancel: () => void; saving: boolean;
 }) {
+  const { t } = useTranslation();
   const { getToken } = useAuth();
   const audioRef = useRef<HTMLAudioElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -738,9 +748,9 @@ function VisualSoundboardForm({
   }
 
   async function handleSave() {
-    if (!sentence) { toast.error("Enter the sentence"); return; }
-    if (!targetWord || !targetWordNative) { toast.error("Enter the target word in both languages"); return; }
-    if (channels.length === 0) { toast.error("Add at least one channel"); return; }
+    if (!sentence) { toast.error(t("admin.activities.validationSentence")); return; }
+    if (!targetWord || !targetWordNative) { toast.error(t("admin.activities.validationTargetWord")); return; }
+    if (channels.length === 0) { toast.error(t("admin.activities.validationChannel")); return; }
 
     let audioUrl: string | undefined = initial?.audioUrl;
     if (audioFile) {
@@ -753,7 +763,7 @@ function VisualSoundboardForm({
         });
         audioUrl = res.url;
       } catch {
-        toast.error("Audio upload failed"); setUploading(false); return;
+        toast.error(t("admin.activities.audioUploadFailed")); setUploading(false); return;
       }
       setUploading(false);
     }
@@ -765,7 +775,7 @@ function VisualSoundboardForm({
 
   return (
     <div className="space-y-5 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-200 dark:border-neutral-700 p-4">
-      <p className="text-xs font-bold uppercase tracking-widest text-neutral-400">Soundboard Activity</p>
+      <p className="text-xs font-bold uppercase tracking-widest text-neutral-400">{t("admin.activities.soundboardFormTitle")}</p>
 
       <LessonSeedPicker
         languageId={languageId}
@@ -781,14 +791,14 @@ function VisualSoundboardForm({
         onFile={setPendingAudio} onStartRecord={startRecording} onStopRecord={stopRecording}
       />
 
-      <Field label="Sentence *">
+      <Field label={t("admin.activities.labelSentence")}>
         <input className={fieldCls} value={sentence} onChange={(e) => setSentence(e.target.value)} placeholder="Sentence played to the learner" />
       </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Target word (English) *">
+        <Field label={t("admin.activities.labelTargetWordEn")}>
           <input className={fieldCls} value={targetWord} onChange={(e) => setTargetWord(e.target.value)} placeholder="marketplace" />
         </Field>
-        <Field label="Target word (native) *">
+        <Field label={t("admin.activities.labelTargetWordNative")}>
           <input className={fieldCls} value={targetWordNative} onChange={(e) => setTargetWordNative(e.target.value)} placeholder="ọjà" />
         </Field>
       </div>
@@ -802,18 +812,18 @@ function VisualSoundboardForm({
 
       {sentence && channels.length > 0 && (
         <div>
-          <p className={cn(labelCls, "mb-2")}>Live preview — adjust faders to validate the puzzle</p>
+          <p className={cn(labelCls, "mb-2")}>{t("admin.activities.livePreview")}</p>
           <SoundboardMixQuiz sentence={sentence} targetWord={targetWord || "…"} targetWordNative={targetWordNative || "…"} channels={previewChannels} />
         </div>
       )}
 
       <div className="flex gap-2 justify-end pt-1">
         <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg text-sm border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors">
-          Cancel
+          {t("admin.activities.cancel")}
         </button>
         <button type="button" onClick={handleSave} disabled={saving || uploading}
           className="px-4 py-2 rounded-lg text-sm bg-brand-600 text-white font-semibold hover:bg-brand-500 disabled:opacity-40 transition-colors">
-          {uploading ? "Uploading…" : saving ? "Saving…" : "Save"}
+          {uploading ? t("admin.activities.uploading") : saving ? t("admin.activities.saving") : t("admin.activities.save")}
         </button>
       </div>
     </div>
@@ -881,6 +891,7 @@ type Creating = { open: false } | { open: true; activityType: ActivityType };
 type Editing  = { open: false } | { open: true; activity: Activity };
 
 export default function ActivitiesAdminPage() {
+  const { t } = useTranslation();
   const { getToken } = useAuth();
   const qc = useQueryClient();
   const [languageId, setLanguageId] = useState("izon");
@@ -897,20 +908,20 @@ export default function ActivitiesAdminPage() {
   const create = useMutation({
     mutationFn: async (body: Omit<Activity, "id">) =>
       apiFetch("/activities/admin", { method: "POST", body: JSON.stringify(body), token: await tok() }),
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ["admin-activities"] }); setCreating({ open: false }); toast.success("Activity created"); },
-    onError: () => toast.error("Failed to create activity"),
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ["admin-activities"] }); setCreating({ open: false }); toast.success(t("admin.activities.createSuccess")); },
+    onError: () => toast.error(t("admin.activities.createError")),
   });
 
   const update = useMutation({
     mutationFn: async ({ id, body }: { id: string; body: Omit<Activity, "id"> }) =>
       apiFetch(`/activities/admin/${id}`, { method: "PUT", body: JSON.stringify(body), token: await tok() }),
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ["admin-activities"] }); setEditing({ open: false }); toast.success("Activity updated"); },
-    onError: () => toast.error("Failed to update activity"),
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ["admin-activities"] }); setEditing({ open: false }); toast.success(t("admin.activities.updateSuccess")); },
+    onError: () => toast.error(t("admin.activities.updateError")),
   });
 
   const remove = useMutation({
     mutationFn: async (id: string) => apiFetch(`/activities/admin/${id}`, { method: "DELETE", token: await tok() }),
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ["admin-activities"] }); toast.success("Deleted"); },
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ["admin-activities"] }); toast.success(t("admin.activities.deleteSuccess")); },
   });
 
   const soundboard = activities.filter((a) => a.type === "soundboard");
@@ -921,9 +932,9 @@ export default function ActivitiesAdminPage() {
       <div>
         <div className="flex items-center gap-2 mb-1">
           <Gamepad2 className="h-5 w-5 text-amber-500" />
-          <h1 className="font-display font-bold text-2xl text-neutral-900 dark:text-white">Activities</h1>
+          <h1 className="font-display font-bold text-2xl text-neutral-900 dark:text-white">{t("admin.activities.title")}</h1>
         </div>
-        <p className="text-sm text-neutral-500">Manage interactive mini-apps shown on the Discover page.</p>
+        <p className="text-sm text-neutral-500">{t("admin.activities.subtitle")}</p>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -932,12 +943,12 @@ export default function ActivitiesAdminPage() {
           <button type="button"
             onClick={() => { setEditing({ open: false }); setCreating({ open: true, activityType: "soundboard" }); }}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm border border-blue-200 dark:border-blue-900/40 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 font-semibold transition-colors">
-            <Plus className="h-4 w-4" /> Soundboard
+            <Plus className="h-4 w-4" /> {t("admin.activities.addSoundboard")}
           </button>
           <button type="button"
             onClick={() => { setEditing({ open: false }); setCreating({ open: true, activityType: "placement" }); }}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm border border-violet-200 dark:border-violet-900/40 text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 font-semibold transition-colors">
-            <Plus className="h-4 w-4" /> Placement
+            <Plus className="h-4 w-4" /> {t("admin.activities.addPlacement")}
           </button>
         </div>
       </div>
@@ -966,7 +977,7 @@ export default function ActivitiesAdminPage() {
       {isLoading ? (
         <div className="space-y-3">{[1, 2, 3].map((k) => <div key={k} className="h-16 skeleton rounded-xl" />)}</div>
       ) : activities.length === 0 ? (
-        <div className="text-center py-12 text-neutral-400 text-sm">No activities for this language yet.</div>
+        <div className="text-center py-12 text-neutral-400 text-sm">{t("admin.activities.noActivities")}</div>
       ) : (
         <div className="space-y-8">
           {soundboard.length > 0 && (
@@ -975,7 +986,7 @@ export default function ActivitiesAdminPage() {
               {soundboard.map((a) => (
                 <ActivityRow key={a.id} activity={a}
                   onEdit={() => { setCreating({ open: false }); setEditing({ open: true, activity: a }); }}
-                  onDelete={() => { if (confirm("Delete this activity?")) remove.mutate(a.id); }} />
+                  onDelete={() => { if (confirm(t("admin.activities.deleteConfirm"))) remove.mutate(a.id); }} />
               ))}
             </div>
           )}
@@ -985,7 +996,7 @@ export default function ActivitiesAdminPage() {
               {placement.map((a) => (
                 <ActivityRow key={a.id} activity={a}
                   onEdit={() => { setCreating({ open: false }); setEditing({ open: true, activity: a }); }}
-                  onDelete={() => { if (confirm("Delete this activity?")) remove.mutate(a.id); }} />
+                  onDelete={() => { if (confirm(t("admin.activities.deleteConfirm"))) remove.mutate(a.id); }} />
               ))}
             </div>
           )}

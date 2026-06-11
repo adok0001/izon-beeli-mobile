@@ -5,6 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface OrgRow {
   id: string;
@@ -29,6 +30,7 @@ const STATUS_ICONS = {
 };
 
 export default function AdminOrganizationsPage() {
+  const { t } = useTranslation();
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
   const [provisionUserId, setProvisionUserId] = useState("");
@@ -61,24 +63,24 @@ export default function AdminOrganizationsPage() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-8">
-        Organizations
+        {t("admin.organizations.title")}
       </h1>
 
       {/* Provision institution form */}
       <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 mb-8">
         <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-3">
-          Provision Institution Tier
+          {t("admin.organizations.provisionTitle")}
         </h2>
         <div className="flex gap-3 flex-wrap">
           <input
             className="flex-1 min-w-40 px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-            placeholder="User ID"
+            placeholder={t("admin.organizations.userIdPlaceholder")}
             value={provisionUserId}
             onChange={(e) => setProvisionUserId(e.target.value)}
           />
           <input
             className="flex-1 min-w-40 px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-            placeholder="Organization name"
+            placeholder={t("admin.organizations.orgNamePlaceholder")}
             value={provisionOrgName}
             onChange={(e) => setProvisionOrgName(e.target.value)}
           />
@@ -87,7 +89,7 @@ export default function AdminOrganizationsPage() {
             disabled={!provisionUserId.trim() || !provisionOrgName.trim() || provisionMutation.isPending}
             className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
           >
-            Provision
+            {t("admin.organizations.provision")}
           </button>
         </div>
       </div>
@@ -102,18 +104,18 @@ export default function AdminOrganizationsPage() {
       ) : orgs.length === 0 ? (
         <div className="text-center py-16 text-neutral-400">
           <Building2 className="h-10 w-10 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">No organizations yet</p>
+          <p className="text-sm">{t("admin.organizations.noOrganizations")}</p>
         </div>
       ) : (
         <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-200 dark:border-neutral-800 text-left">
-                <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wide">Organization</th>
-                <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wide">Plan</th>
-                <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wide">Status</th>
-                <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wide">Students</th>
-                <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wide">Renews</th>
+                <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wide">{t("admin.organizations.colOrganization")}</th>
+                <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wide">{t("admin.organizations.colPlan")}</th>
+                <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wide">{t("admin.organizations.colStatus")}</th>
+                <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wide">{t("admin.organizations.colStudents")}</th>
+                <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wide">{t("admin.organizations.colRenews")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
@@ -132,7 +134,7 @@ export default function AdminOrganizationsPage() {
                     </div>
                   </td>
                   <td className="px-5 py-3 text-neutral-600 dark:text-neutral-400">
-                    {org.studentLimit === null ? "Unlimited" : org.studentLimit ?? "—"}
+                    {org.studentLimit === null ? t("admin.organizations.unlimited") : org.studentLimit ?? "—"}
                   </td>
                   <td className="px-5 py-3 text-neutral-500 text-xs">
                     {org.currentPeriodEnd

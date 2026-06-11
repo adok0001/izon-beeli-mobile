@@ -6,6 +6,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, ClipboardList, UserCheck, XCircle } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 type AppStatus = "pending" | "approved" | "rejected";
 
@@ -49,6 +50,7 @@ function ActionModal({
   onClose: () => void;
   busy: boolean;
 }>) {
+  const { t } = useTranslation();
   const [note, setNote] = useState("");
   const [langsInput, setLangsInput] = useState(app.languages.join(", "));
   const isApprove = action === "approve";
@@ -57,7 +59,7 @@ function ActionModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 shadow-xl">
         <h3 className="text-lg font-bold text-neutral-900 dark:text-white mb-1">
-          {isApprove ? "Approve Application" : "Reject Application"}
+          {isApprove ? t("admin.applications.approveTitle") : t("admin.applications.rejectTitle")}
         </h3>
         <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
           {app.userName ?? app.userEmail} — <span className="capitalize">{app.role}</span>
@@ -66,7 +68,7 @@ function ActionModal({
         {isApprove && (
           <div className="mb-4">
             <label className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1 block">
-              Grant languages (comma-separated)
+              {t("admin.applications.grantLanguages")}
             </label>
             <input
               className="w-full rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 px-3 py-2 text-sm text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -79,13 +81,13 @@ function ActionModal({
 
         <div className="mb-5">
           <label className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1 block">
-            Note to applicant (optional)
+            {t("admin.applications.noteLabel")}
           </label>
           <textarea
             className="w-full rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 px-3 py-2 text-sm text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none min-h-[80px]"
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder={isApprove ? "Welcome to the reviewer team!" : "Tell them why..."}
+            placeholder={isApprove ? t("admin.applications.approvePlaceholder") : t("admin.applications.rejectPlaceholder")}
           />
         </div>
 
@@ -94,7 +96,7 @@ function ActionModal({
             onClick={onClose}
             className="px-4 py-2 text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
           >
-            Cancel
+            {t("admin.applications.cancel")}
           </button>
           <button
             onClick={() => {
@@ -112,7 +114,7 @@ function ActionModal({
                 : "bg-red-600 hover:bg-red-700"
             )}
           >
-            {busy ? "Saving…" : isApprove ? "Approve" : "Reject"}
+            {busy ? t("admin.applications.saving") : isApprove ? t("admin.applications.approve") : t("admin.applications.reject")}
           </button>
         </div>
       </div>
@@ -129,6 +131,7 @@ function ApplicationCard({
   onAction: (id: string, action: "approve" | "reject", note: string, grantLanguages: string[]) => void;
   busy: boolean;
 }>) {
+  const { t } = useTranslation();
   const [modal, setModal] = useState<"approve" | "reject" | null>(null);
   const [expanded, setExpanded] = useState(false);
 
@@ -169,22 +172,22 @@ function ApplicationCard({
           onClick={() => setExpanded((x) => !x)}
           className="text-xs text-blue-500 hover:underline mb-3"
         >
-          {expanded ? "Hide details" : "Show details"}
+          {expanded ? t("admin.applications.hideDetails") : t("admin.applications.showDetails")}
         </button>
 
         {expanded && (
           <div className="space-y-3 mb-4 text-sm">
             <div>
-              <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1">Background</p>
+              <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1">{t("admin.applications.labelBackground")}</p>
               <p className="text-neutral-800 dark:text-neutral-200 whitespace-pre-wrap">{app.background}</p>
             </div>
             <div>
-              <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1">Reason</p>
+              <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1">{t("admin.applications.labelReason")}</p>
               <p className="text-neutral-800 dark:text-neutral-200 whitespace-pre-wrap">{app.reason}</p>
             </div>
             {app.reviewerNote && (
               <div>
-                <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1">Reviewer note</p>
+                <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1">{t("admin.applications.labelReviewerNote")}</p>
                 <p className="text-neutral-600 dark:text-neutral-400 italic">{app.reviewerNote}</p>
               </div>
             )}
@@ -199,7 +202,7 @@ function ApplicationCard({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 disabled:opacity-50"
             >
               <CheckCircle2 className="h-3.5 w-3.5" />
-              Approve
+              {t("admin.applications.approve")}
             </button>
             <button
               onClick={() => setModal("reject")}
@@ -207,7 +210,7 @@ function ApplicationCard({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 disabled:opacity-50"
             >
               <XCircle className="h-3.5 w-3.5" />
-              Reject
+              {t("admin.applications.reject")}
             </button>
           </div>
         )}
@@ -230,6 +233,7 @@ function ApplicationCard({
 }
 
 export default function AdminApplicationsPage() {
+  const { t } = useTranslation();
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<"all" | AppStatus>("pending");
@@ -282,10 +286,10 @@ export default function AdminApplicationsPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-neutral-900 dark:text-white flex items-center gap-2">
           <UserCheck className="h-6 w-6 text-teal-500" />
-          Reviewer Applications
+          {t("admin.applications.title")}
         </h1>
         <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-          Review and action applications from users who want to become language reviewers.
+          {t("admin.applications.subtitle")}
         </p>
       </div>
 
@@ -317,7 +321,11 @@ export default function AdminApplicationsPage() {
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <ClipboardList className="h-10 w-10 text-neutral-300 dark:text-neutral-600 mb-3" />
-          <p className="text-neutral-400">No {statusFilter === "all" ? "" : statusFilter} applications</p>
+          <p className="text-neutral-400">
+          {statusFilter === "all"
+            ? t("admin.applications.emptyAll")
+            : t("admin.applications.emptyFiltered", { status: statusFilter })}
+        </p>
         </div>
       ) : (
         <div className="space-y-4">
