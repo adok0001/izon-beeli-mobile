@@ -16,12 +16,7 @@ import { ENGLISH_WORDBANK } from "../lib/data/english";
 import { IGBO_DICTIONARY } from "../lib/data/igbo";
 
 // ── Inline types (avoids importing the react-native chain) ─────────────────
-
-interface IgboApiDefinition {
-  wordClass: string;
-  definitions: string[];
-  nsibidi: string;
-}
+// Matches the actual igboapi.com v1 response shape
 
 interface IgboApiExample {
   igbo: string;
@@ -31,7 +26,9 @@ interface IgboApiExample {
 interface IgboApiWord {
   id: string;
   word: string;
-  definitions: IgboApiDefinition[];
+  wordClass: string;
+  definitions: string[];      // flat string array
+  nsibidi?: string;
   examples?: IgboApiExample[];
   pronunciation?: string;
 }
@@ -63,7 +60,8 @@ async function igboFetch<T>(path: string): Promise<T> {
   const token = process.env.IGBO_API_TOKEN;
   if (!token) throw new Error("IGBO_API_TOKEN env var is not set");
   const res = await fetch(`${IGBO_API_BASE}${path}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { "X-API-Key": token },
+    signal: AbortSignal.timeout(8000),
   });
   if (res.status === 429) {
     const err = new Error("Rate limited (429)");
@@ -132,7 +130,7 @@ async function main() {
   );
 
   const lines: string[] = [];
-  let nextId = 96; // IGBO_DICTIONARY ends at d-ig-95
+  let nextId = 1000; // API-sourced entries live in the 1000+ namespace; hand-curated entries stay in 1–999
   let matched = 0;
   let skipped = 0;
   let errors = 0;
@@ -149,11 +147,10 @@ async function main() {
     try {
       const results = await searchIgboWords(keyword, delay);
       const best = results[0];
-      const def = best?.definitions?.[0];
-      const englishDef = def?.definitions?.[0];
+      const englishDef = best?.definitions?.[0];
 
-      if (best && def && englishDef) {
-        const category = WORD_CLASS_TO_CATEGORY[def.wordClass] ?? wbEntry.category;
+      if (best && englishDef) {
+        const category = WORD_CLASS_TO_CATEGORY[best.wordClass] ?? wbEntry.category;
         const example = best.examples?.[0];
 
         const fields: Record<string, string> = {
@@ -167,7 +164,7 @@ async function main() {
         if (best.pronunciation) fields.pronunciation = best.pronunciation;
         if (example?.igbo) fields.example = example.igbo;
         if (example?.english) fields.exampleTranslation = example.english;
-        if (def.nsibidi) fields.nsibidi = def.nsibidi;
+        if (best.nsibidi) fields.nsibidi = best.nsibidi;
 
         lines.push(`  ${formatEntry(fields)},`);
         nextId++;

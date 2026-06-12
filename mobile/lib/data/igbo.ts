@@ -117,4 +117,60 @@ export const IGBO_DICTIONARY: DictionaryEntry[] = [
   e(93, "Ụzọ", "Road / Path / Way", "nouns", "u-zo", "Ụzọ a dị ogologo", "This road is long"),
   e(94, "Ọcha", "White / Clean", "nouns", "o-cha", "Uwe m dị ọcha", "My clothes are white/clean"),
   e(95, "Oji oji", "Black / Dark", "nouns", "o-ji o-ji", "Oji oji ka isi m dị", "My hair is black"),
+
+  // --- Igbo_lessons.txt: Family (extended terms) ---
+  e(96, "Nwoke", "Man / Male", "family", "nwo-ke", "Nwoke ahụ bụ nna m", "That man is my father"),
+  e(97, "Nwanyị", "Woman / Female", "family", "nwa-nyi", "Nwanyị ahụ bụ nne m", "That woman is my mother"),
+  e(98, "Nwanne nwoke", "Brother (lit. male sibling)", "family", "nwan-ne nwo-ke", "Ọ bụ nwanne m nwoke", "He is my brother"),
+  e(99, "Nwanne nwanyị", "Sister (lit. female sibling)", "family", "nwan-ne nwa-nyi", "Ọ bụ nwanne m nwanyị", "She is my sister"),
+  e(100, "Ụmụaka", "Children", "family", "u-mu-a-ka", "Ụmụaka na-agụ akwụkwọ", "The children are reading"),
+  e(101, "Ezinaụlọ", "Household / Family unit", "family", "e-zi-na-u-lo", "Ezinaụlọ m bụ nnọọ", "My household is big"),
+
+  // --- Igbo_lessons.txt: Occupations ---
+  e(102, "Onye ahịa", "Trader (person of the market)", "occupations", "o-nye a-hia", "Onye ahịa na-ere ihe n'ahịa", "The trader is selling things at the market"),
+  e(103, "Onye nkuzi", "Teacher", "occupations", "o-nye n-ku-zi", "Onye nkuzi m dị mma", "My teacher is good"),
+  e(104, "Dibịa bekee", "Doctor (Western medicine)", "occupations", "di-bia be-kee", "Dibịa bekee dị n'ụlọ ọgwụ", "The doctor is at the hospital"),
+  e(105, "Onye nta akụkọ", "Journalist / Reporter", "occupations", "o-nye n-ta a-ku-ko", "Onye nta akụkọ na-ede akụkọ", "The journalist is writing a report"),
+  e(106, "Onye ọrụ ugbo", "Farmer", "occupations", "o-nye o-ru ug-bo", "Nna m bụ onye ọrụ ugbo", "My father is a farmer"),
+  e(107, "Ọrụ", "Work / Occupation", "nouns", "o-ru", "Gịnị bụ ọrụ gị?", "What is your occupation?"),
+  e(108, "Ugbo", "Farm / Boat", "nouns", "ug-bo", "M na-aga ugbo", "I am going to the farm"),
+
+  // --- Igbo_lessons.txt: Hobbies & Activities (verbal nouns) ---
+  e(109, "Ịgụ akwụkwọ", "Reading (as an activity)", "verbs", "i-gu a-kwu-kwo", "Ọ hụrụ ịgụ akwụkwọ n'anya", "He loves reading"),
+  e(110, "Ịgba egwu", "Dancing", "verbs", "i-gba e-gwu", "A na m agba egwu mgbe nile", "I always dance"),
+  e(111, "Ịgụ egwú", "Singing", "verbs", "i-gu e-gwu", "Ịgụ egwú na-atọ m ụtọ", "Singing makes me happy"),
+  e(112, "Ịgba ekere ụkwụ", "Playing football", "verbs", "i-gba e-ke-re u-kwu", "Anyị na-agba ekere ụkwụ n'ụlọ akwụkwọ", "We play football at school"),
+  e(113, "Ịrụ ọrụ aka", "Crafting / Handwork", "verbs", "i-ru o-ru a-ka", "Ọ hụrụ ịrụ ọrụ aka n'anya", "She loves crafting"),
+  e(114, "Ịmụ asụsụ", "Learning a language", "verbs", "i-mu a-su-su", "A hụrụ m ịmụ asụsụ ọhụrụ n'anya", "I love learning new languages"),
+  e(115, "Ịjegharị", "Walking / Travelling", "verbs", "i-je-gha-ri", "Ịjegharị na-atọ m ụtọ", "Walking pleases me"),
+
+  // --- Igbo_lessons.txt: Verb infinitives ---
+  e(116, "Ịbịa", "To come (infinitive)", "verbs", "i-bia", "Ịbịa n'ụlọ anyị dị mma", "Coming to our home is good"),
+  e(117, "Ịkụ", "To plant / strike / play (instrument)", "verbs", "i-ku", "Ụmụaka na-akụ egwu", "The children are playing music"),
+  e(118, "Ịkpọ", "To call / to name", "verbs", "i-kpo", "Kpọọ aha m", "Call my name"),
+  e(119, "Ịse", "To paint / draw", "verbs", "i-se", "Ọ na-ese ihe mara mma", "She is drawing something beautiful"),
+  e(120, "Bi", "To live / reside (at a place)", "verbs", "bi", "Nne gị bi na Enugu", "Your mother lives in Enugu"),
+
+  // --- Igbo_lessons.txt: Adjectives ---
+  e(121, "Ọhụrụ", "New", "adjectives", "o-hu-ru", "Ụgbọ ọhụrụ dị ebe a", "A new vehicle is here"),
+  e(122, "Oyi", "Cold", "adjectives", "o-yi", "Mmiri oyi dị mma n'oge ọkụ", "Cold water is good in the heat"),
+  e(123, "Ogologo", "Long / Tall", "adjectives", "o-go-lo-go", "Osisi ogologo dị n'ọhịa", "A tall tree is in the forest"),
+  e(124, "Ọma", "Good / Fine / Well", "adjectives", "o-ma", "Ụbọchị ọma bụ ụbọchị dị ụtọ", "A good day is a sweet day"),
+  e(125, "Ọjụọ", "Bad / Ugly", "adjectives", "o-juo", "Ọ bụ ihe ọjụọ ime ya", "It is a bad thing to do"),
+  e(126, "Nnukwu", "Big / Large", "adjectives", "n-nu-kwu", "Nnukwu ụlọ dị ebe ahụ", "A big house is there"),
+  e(127, "Mara mma", "Beautiful (lit. knows beauty)", "adjectives", "ma-ra m-ma", "Nwanyị ahụ mara mma", "That woman is beautiful"),
+  e(128, "Nso", "Near / Close", "adjectives", "n-so", "Ụlọ m dị nso", "My house is nearby"),
+  e(129, "Ọkụ", "Hot / Fire", "adjectives", "o-ku", "Nri a dị ọkụ", "This food is hot"),
+  e(130, "Agadị", "Old (of a person)", "adjectives", "a-ga-di", "Nna ochie m agadị", "My grandfather is old"),
+  e(131, "Ọsịsọ", "Quick / Fast", "adjectives", "o-si-so", "Ya na-asụọ ọsọ ọsịsọ", "He runs fast"),
+  e(132, "Nwayọ", "Slow / Gentle / Quietly", "adjectives", "nwa-yo", "Bịa nwayọ nwayọ", "Come slowly and gently"),
+  e(133, "Mkpụmkpụ", "Short (in height or length)", "adjectives", "m-kpu-m-kpu", "Osisi mkpụmkpụ dị ebe a", "A short tree is here"),
+  e(134, "Ihere", "Shyness / Shame", "adjectives", "i-he-re", "Ihere na-atọ ya", "He feels shy / ashamed"),
+  e(135, "Iwe", "Anger", "adjectives", "i-we", "Iwe na-atọ ya", "He is angry"),
+  e(136, "Mfe", "Easy / Simple", "adjectives", "m-fe", "Ọrụ a dị mfe", "This work is easy"),
+  e(137, "Siri ike", "Difficult / Hard", "adjectives", "si-ri i-ke", "Ọrụ a siri ike", "This work is hard"),
+  e(138, "Elu / Enu", "High / Above / Up", "adjectives", "e-lu", "Elu igwe dị ọcha", "The sky above is clear"),
+  e(139, "Aṅụrị", "Joy / Happiness", "adjectives", "a-ngu-ri", "Aṅụrị dị n'obi m", "Joy is in my heart"),
+  e(140, "Onye", "Person / Who", "pronouns", "o-nye", "Kedu onye bụ gị?", "Who are you?"),
+  e(141, "Asụsụ", "Language", "nouns", "a-su-su", "Asụsụ Igbo dị mma", "The Igbo language is good"),
 ];
