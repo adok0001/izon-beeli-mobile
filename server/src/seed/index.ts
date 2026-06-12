@@ -24,6 +24,7 @@ import {
 // Shared data (single source of truth lives in lib/data/)
 // ---------------------------------------------------------------------------
 import { COURSES } from "../../../mobile/lib/data/courses.js";
+import { ETYMOLOGY_DATA } from "../../../mobile/lib/data/etymology.js";
 import { SEED_COMMENTS, SEED_FEED } from "../../../mobile/lib/data/feed.js";
 import { LANGUAGES } from "../../../mobile/lib/data/languages.js";
 import { FIDEL_CHART } from "../../../mobile/lib/data/geez/fidel-chart.js";
@@ -309,7 +310,6 @@ async function seed() {
 
   // 7. Etymology entries
   console.log("  Inserting etymology entries...");
-  const { ETYMOLOGY_DATA } = await import("../../../mobile/lib/data/etymology.js");
   await batchInsert(
     etymologyEntries,
     ETYMOLOGY_DATA.map((e) => ({
