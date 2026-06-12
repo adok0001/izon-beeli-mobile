@@ -29,10 +29,7 @@ export type LessonType = "lesson" | "song";
 
 export interface Lesson {
   id: string;
-  courseId?: string | null;
-  languageId?: string | null;
-  level?: "beginner" | "intermediate" | "advanced" | null;
-  theme?: string | null;
+  courseId: string;
   /** @default "lesson" */
   type?: LessonType | null;
   title: string;
@@ -155,6 +152,23 @@ export interface Proverb {
   tags?: string[];
   audioUrl?: string;
   relatedLessonId?: string;
+}
+
+// --- Etymology Trail ---
+
+export interface EtymologyNode {
+  era: string;
+  form: string;
+  language: string;
+  note: string;
+}
+
+export interface EtymologyEntry {
+  id: string;
+  languageId: string;
+  word: string;
+  english: string;
+  trail: EtymologyNode[];
 }
 
 // --- Sentence Templates (for fill-in-the-blank) ---

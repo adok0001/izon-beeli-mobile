@@ -13,7 +13,7 @@ export interface EtymologyEntry {
   trail: EtymologyNode[];
 }
 
-const ETYMOLOGY_DATA: EtymologyEntry[] = [
+export const ETYMOLOGY_DATA: EtymologyEntry[] = [
   {
     id: "ety-yo-1",
     word: "Ìmọ̀",

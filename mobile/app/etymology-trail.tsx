@@ -1,11 +1,11 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
-import { getAllEtymology, getEtymologyForLanguage } from "@/lib/data/etymology";
-import type { EtymologyEntry } from "@/lib/data/etymology";
+import { useEtymology } from "@/lib/hooks/use-etymology";
 import { hapticTap } from "@/lib/haptics";
 import { useSaveWord } from "@/lib/hooks/use-wordbank";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
+import type { EtymologyEntry } from "@/types";
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { Animated, Pressable, ScrollView, Text, View } from "react-native";
@@ -146,13 +146,12 @@ export { ErrorBoundary } from "@/components/screen-error-boundary";
 export default function EtymologyTrailScreen() {
   const M = useMuseumTheme();
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
+  const [filter, setFilter] = useState(selectedLanguageId ?? "all");
 
-  const allLanguages = ["all", ...new Set(getAllEtymology().map((e) => e.languageId))];
-  const [filter, setFilter] = useState(selectedLanguageId);
+  const { data: allEntries = [], isLoading } = useEtymology();
 
-  const entries = filter === "all"
-    ? getAllEtymology()
-    : getEtymologyForLanguage(filter);
+  const allLanguages = ["all", ...new Set(allEntries.map((e) => e.languageId))];
+  const entries = filter === "all" ? allEntries : allEntries.filter((e) => e.languageId === filter);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["top"]}>
@@ -187,7 +186,11 @@ export default function EtymologyTrailScreen() {
         contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
-        {entries.length === 0 ? (
+        {isLoading ? (
+          <View style={{ alignItems: "center", paddingTop: 60 }}>
+            <Text style={{ fontSize: 15, color: M.sub }}>Loading…</Text>
+          </View>
+        ) : entries.length === 0 ? (
           <View style={{ alignItems: "center", paddingTop: 60 }}>
             <IconSymbol name="clock.arrow.circlepath" size={44} color={M.muted} />
             <Text style={{ marginTop: 16, fontSize: 15, color: M.sub, textAlign: "center" }}>
