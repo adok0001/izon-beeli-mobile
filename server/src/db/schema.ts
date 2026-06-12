@@ -345,10 +345,7 @@ export const lessons = pgTable(
   "lessons",
   {
     id: varchar("id", { length: 64 }).primaryKey(),
-    courseId: varchar("course_id", { length: 64 }),
-    languageId: varchar("language_id", { length: 64 }),
-    level: varchar("level", { length: 32 }),
-    theme: varchar("theme", { length: 100 }),
+    courseId: varchar("course_id", { length: 64 }).notNull(),
     type: varchar("type", { length: 16 }).default("lesson").notNull(),
     title: varchar("title", { length: 300 }).notNull(),
     titleFr: varchar("title_fr", { length: 300 }),
@@ -361,11 +358,7 @@ export const lessons = pgTable(
     genre: varchar("genre", { length: 100 }),
     isActive: boolean("is_active").default(true).notNull(),
   },
-  (table) => [
-    index("lessons_course_id_idx").on(table.courseId),
-    index("lessons_language_id_idx").on(table.languageId),
-    index("lessons_language_level_order_idx").on(table.languageId, table.level, table.order),
-  ]
+  (table) => [index("lessons_course_id_idx").on(table.courseId)]
 );
 
 export const transcriptSegments = pgTable(
@@ -439,6 +432,18 @@ export const proverbs = pgTable(
     tags: text("tags").array(),
   },
   (table) => [index("proverbs_language_id_idx").on(table.languageId)]
+);
+
+export const etymologyEntries = pgTable(
+  "etymology_entries",
+  {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    languageId: varchar("language_id", { length: 64 }).notNull(),
+    word: varchar("word", { length: 200 }).notNull(),
+    english: varchar("english", { length: 300 }).notNull(),
+    trail: text("trail").notNull(), // JSON array of { era, form, language, note }
+  },
+  (table) => [index("etymology_entries_language_id_idx").on(table.languageId)]
 );
 
 export const culturalContent = pgTable(

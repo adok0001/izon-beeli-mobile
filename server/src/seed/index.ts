@@ -8,6 +8,7 @@ import {
   culturalKeyTerms,
   dictionaryEntries,
   englishWordbank,
+  etymologyEntries,
   feedItems,
   languages,
   lessons,
@@ -306,7 +307,21 @@ async function seed() {
   }));
   await batchInsert(proverbs, proverbRows);
 
-  // 7. Cultural content + key terms
+  // 7. Etymology entries
+  console.log("  Inserting etymology entries...");
+  const { ETYMOLOGY_DATA } = await import("../../../mobile/lib/data/etymology.js");
+  await batchInsert(
+    etymologyEntries,
+    ETYMOLOGY_DATA.map((e) => ({
+      id: e.id,
+      languageId: e.languageId,
+      word: e.word,
+      english: e.english,
+      trail: JSON.stringify(e.trail),
+    }))
+  );
+
+  // 8. Cultural content + key terms
   // Delete before re-inserting: culturalKeyTerms has no stable ID so
   // onConflictDoNothing can't deduplicate it — every reseed appended new rows.
   console.log("  Inserting cultural content...");
@@ -356,7 +371,7 @@ async function seed() {
   );
   await batchInsert(culturalKeyTerms, keyTermRows);
 
-  // 8. Sentence templates
+  // 9. Sentence templates
   console.log("  Inserting sentence templates...");
   const allSentences = [
     ...IZON_SENTENCES,
@@ -382,7 +397,7 @@ async function seed() {
   }));
   await batchInsert(sentenceTemplates, sentenceRows);
 
-  // 9. Scripts & script characters
+  // 10. Scripts & script characters
   console.log("  Inserting scripts...");
   const SCRIPT_DEFS = [
     { id: "geez-amharic",  languageId: "amharic",  name: "Ge’ez / Fidel", description: "Ethiopic alphabet used in Amharic", iconCharacter: "ሀ", accentColor: "#4ade80" },
@@ -422,7 +437,7 @@ async function seed() {
   }));
   await batchInsert(scriptCharacters, [...geezChars, ...geezTigrinyaChars, ...nsibidiChars]);
 
-  // 10. UGC: placeholder user + feed + comments
+  // 11. UGC: placeholder user + feed + comments
   console.log("  Seeding UGC (feed & comments)...");
 
   const seedFeedRows = await db

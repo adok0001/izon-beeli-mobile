@@ -1,7 +1,7 @@
 import { Hono } from "hono";
-import { eq, asc, and } from "drizzle-orm";
+import { eq, asc, and, inArray } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { lessons, transcriptSegments } from "../db/schema.js";
+import { lessons, transcriptSegments, courses } from "../db/schema.js";
 
 export const lessonsRouter = new Hono();
 
@@ -27,16 +27,25 @@ lessonsRouter.get("/", async (c) => {
       return c.json({ error: "Invalid languageId" }, 400);
     }
     const type = c.req.query("type");
-    const level = c.req.query("level");
-    const conditions = [eq(lessons.languageId, languageId), eq(lessons.isActive, true)];
+    // Fetch all courses for the language, then all lessons for those courses
+    const langCourses = await db
+      .select({ id: courses.id })
+      .from(courses)
+      .where(eq(courses.languageId, languageId));
+
+    if (langCourses.length === 0) {
+      return c.json([]);
+    }
+
+    const courseIds = langCourses.map((c) => c.id);
+    const conditions = [inArray(lessons.courseId, courseIds), eq(lessons.isActive, true)];
     if (type && type.length <= 16) conditions.push(eq(lessons.type, type));
-    if (level && level.length <= 32) conditions.push(eq(lessons.level, level));
 
     const result = await db
       .select()
       .from(lessons)
       .where(and(...conditions))
-      .orderBy(asc(lessons.level), asc(lessons.order));
+      .orderBy(asc(lessons.courseId), asc(lessons.order));
 
     return c.json(result);
   }

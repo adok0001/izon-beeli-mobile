@@ -1066,7 +1066,6 @@ educatorRouter.delete("/lessons/:id", async (c) => {
 
   const [existing] = await db
     .select({
-      languageId: lessons.languageId,
       courseLanguageId: courses.languageId,
       courseId: lessons.courseId,
     })
@@ -1076,7 +1075,7 @@ educatorRouter.delete("/lessons/:id", async (c) => {
     .limit(1);
 
   if (!existing) return c.json({ error: "Not found" }, 404);
-  const lessonLanguageId = existing.languageId ?? existing.courseLanguageId;
+  const lessonLanguageId = existing.courseLanguageId;
   if (!isAdmin && (!lessonLanguageId || !reviewerLanguages.includes(lessonLanguageId))) {
     return c.json({ error: "Forbidden" }, 403);
   }
