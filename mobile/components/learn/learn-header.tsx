@@ -21,7 +21,7 @@ function useDailyAdinkra() {
     const dayOfYear = Math.floor(
       (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86_400_000
     );
-    return ADINKRA_SYMBOLS[(dayOfYear % ADINKRA_SYMBOLS.length) - 1];
+    return ADINKRA_SYMBOLS[(dayOfYear % ADINKRA_SYMBOLS.length)];
   }, []);
 }
 

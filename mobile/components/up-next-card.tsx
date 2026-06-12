@@ -39,9 +39,9 @@ export function UpNextCard({ languageId }: { languageId?: string }) {
     }).start();
   }, [data]);
 
-  if (isLoading || !data?.lesson || data.overallProgress.completed === 0) return null;
+  if (isLoading || !data?.lesson || !data?.course || data.overallProgress.completed === 0) return null;
 
-  const { lesson, overallProgress } = data;
+  const { lesson, course, overallProgress } = data;
   const progressPct =
     overallProgress.total > 0
       ? Math.round((overallProgress.completed / overallProgress.total) * 100)
@@ -95,11 +95,9 @@ export function UpNextCard({ languageId }: { languageId?: string }) {
               <Text style={{ fontSize: 8, fontWeight: "800", letterSpacing: 1.8, color: M.accent, textTransform: "uppercase" }}>
                 {t("learn.upNext")}
               </Text>
-              {lesson.level ? (
-                <Text style={{ fontSize: 8, fontWeight: "600", letterSpacing: 1, color: M.muted, textTransform: "uppercase" }}>
-                  · {lesson.theme ?? lesson.level}
-                </Text>
-              ) : null}
+              <Text style={{ fontSize: 8, fontWeight: "600", letterSpacing: 1, color: M.muted, textTransform: "uppercase" }}>
+                · {localizeField(course.title, course.titleFr, uiLanguage)}
+              </Text>
             </View>
             <Text
               style={{ fontSize: 15, fontWeight: "800", color: M.text, letterSpacing: -0.3, lineHeight: 20 }}

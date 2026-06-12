@@ -1442,6 +1442,7 @@ export const en = {
       activities: "Activities",
       quiz: "Quiz",
       culture: "Culture",
+      etymology: "Etymology Trail",
     },
     dailyContent: {
       title: "Daily Content",

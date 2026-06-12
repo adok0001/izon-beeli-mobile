@@ -9,6 +9,8 @@ import { useToast } from "@/lib/hooks/use-toast";
 import { useLesson } from "@/lib/hooks/use-courses";
 import { getCourseTypeColors } from "@/constants/course-colors";
 import { useNextLesson } from "@/lib/hooks/use-next-lesson";
+import { useQueryClient } from "@tanstack/react-query";
+import type { Course } from "@/types";
 import { formatDuration, getLanguageName, BUNDLED_AUDIO } from "@/lib/mock-data";
 import { playFinishSound } from "@/lib/sounds";
 import { hapticHeavy } from "@/lib/haptics";
@@ -51,7 +53,10 @@ export default function LessonScreen() {
   const { data: completedLessonIds } = useCompletedLessons();
   const { selectedLanguageId } = useLanguageStore();
   const { uiLanguage } = useUiLanguageStore();
-  const typeColors = getCourseTypeColors();
+  const queryClient = useQueryClient();
+  const courses = queryClient.getQueryData<Course[]>(["courses", selectedLanguageId]);
+  const lessonCourse = courses?.find((c) => c.id === lesson?.courseId);
+  const typeColors = getCourseTypeColors(lessonCourse?.courseType);
   const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [shareVisible, setShareVisible] = useState(false);
@@ -192,13 +197,15 @@ export default function LessonScreen() {
         {/* ── Museum Foyer Header ── */}
         <View style={{ backgroundColor: M.ink, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20 }}>
 
-          {/* Level / theme label */}
-          {lesson.level ? (
+          {/* Course type label */}
+          {lessonCourse?.courseType && typeColors.label ? (
             <Animated.View style={[{ alignSelf: "flex-start", marginBottom: 10 }, animStyle(metaAnim, 8)]}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <View style={{
+                flexDirection: "row", alignItems: "center", gap: 6,
+              }}>
                 <View style={{ width: 20, height: 1, backgroundColor: `${accentColor}80` }} />
                 <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.8, textTransform: "uppercase", color: `${accentColor}B0` }}>
-                  {lesson.theme ?? lesson.level}
+                  {typeColors.label}
                 </Text>
               </View>
             </Animated.View>
@@ -298,10 +305,7 @@ export default function LessonScreen() {
               onPress={() =>
                 router.push({
                   pathname: "/quiz",
-                  params: {
-                    ...(lesson.courseId ? { courseId: lesson.courseId } : {}),
-                    lessonId: lesson.id,
-                  },
+                  params: { courseId: lesson.courseId, lessonId: lesson.id },
                 })
               }
               style={{
@@ -424,7 +428,7 @@ export default function LessonScreen() {
                     onPress={() =>
                       router.push({
                         pathname: "/quiz",
-                        params: { ...(lesson.courseId ? { courseId: lesson.courseId } : {}), lessonId: lesson.id },
+                        params: { courseId: lesson.courseId, lessonId: lesson.id },
                       })
                     }
                     style={{

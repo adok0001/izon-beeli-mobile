@@ -1444,6 +1444,7 @@ export const fr = {
       activities: "Activités",
       quiz: "Quiz",
       culture: "Culture",
+      etymology: "Piste étymologique",
     },
     dailyContent: {
       title: "Contenu quotidien",
