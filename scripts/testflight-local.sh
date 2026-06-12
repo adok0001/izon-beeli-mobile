@@ -26,6 +26,23 @@ if [[ "$SKIP_PREBUILD" == false ]]; then
   echo "==> Running expo prebuild..."
   cd "$MOBILE_DIR"
   npx expo prebuild --platform ios --clean
+  # Restore ExportOptions.plist wiped by --clean
+  cat > "$EXPORT_OPTIONS" <<'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>method</key>
+	<string>app-store-connect</string>
+	<key>destination</key>
+	<string>upload</string>
+	<key>signingStyle</key>
+	<string>automatic</string>
+	<key>teamID</key>
+	<string>FWL2W5X58S</string>
+</dict>
+</plist>
+PLIST
   cd "$MOBILE_DIR/ios"
   pod install
 else
