@@ -4482,4 +4482,14 @@ export const IZON_DICTIONARY: DictionaryEntry[] = [
   e(4292, "iséna", "9 (yam counting form; variant of ise)", "numbers", undefined, "Iséna buru", "Nine yams"),
   e(4293, "oyiaburu", "10 yams (traditional yam counting; oyi + buru fused form)", "numbers", undefined, "Oyiaburu fẹị.", "Buy ten yams."),
   e(4294, "síaburu", "20 yams (traditional yam counting; sí + buru fused form)", "numbers", undefined, "Síaburu fẹị.", "Buy twenty yams."),
+
+  // --- English wordbank links (from Williamson & Blench, Dictionary of Kolokuma Ịzọn) ---
+  e(4295, "níni", "nose", "body", undefined, undefined, undefined, "ew-58"),
+  e(4296, "súu", "weakness", "nouns", undefined, undefined, undefined, "ew-99"),
+  e(4297, "fotó", "picture", "nouns", undefined, undefined, undefined, "ew-350"),
+  e(4298, "ugé", "festival", "nouns", undefined, undefined, undefined, "ew-841"),
+  e(4299, "puí", "separate", "verbs", undefined, undefined, undefined, "ew-1553"),
+  e(4300, "lií", "disappear", "verbs", undefined, undefined, undefined, "ew-1585"),
+  e(4301, "pigeí", "fixed", "verbs", undefined, undefined, undefined, "ew-2104"),
+  e(4302, "igbóro-igboro", "striped", "adjectives", undefined, undefined, undefined, "ew-2421"),
 ];
