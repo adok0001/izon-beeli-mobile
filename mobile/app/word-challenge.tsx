@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { apiFetch } from "@/lib/api";
 import { hapticError, hapticSuccess, hapticTap } from "@/lib/haptics";
@@ -63,8 +64,9 @@ export default function WordChallengeScreen() {
     if (word && !isSaved) {
       hapticTap();
       saveWord.mutate(word.id);
+      analytics.wordSaved(word.id, selectedLanguageId);
     }
-  }, [word, isSaved, saveWord]);
+  }, [word, isSaved, saveWord, selectedLanguageId]);
 
   const playWord = useCallback(async () => {
     if (!word) return;

@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useSignUp } from "@clerk/clerk-expo";
 import { Image } from "expo-image";
@@ -66,6 +67,8 @@ export default function SignUpScreen() {
       });
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
+        analytics.signUp();
+        analytics.identify(email.trim(), { email: email.trim(), username: username.trim() });
         router.replace("/(tabs)/learn");
       } else if (result.status === "missing_requirements") {
         await signUp.prepareEmailAddressVerification({ strategy: "email_code" });

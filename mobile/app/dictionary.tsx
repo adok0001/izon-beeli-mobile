@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { WordAudioButton } from "@/components/dictionary/word-audio-button";
 import { NsibidiText } from "@/components/nsibidi/nsibidi-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -220,6 +221,7 @@ export default function DictionaryScreen() {
       removeWord.mutate(entryId);
     } else {
       saveWord.mutate(entryId);
+      analytics.wordSaved(entryId, selectedLanguageId);
     }
   };
 

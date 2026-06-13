@@ -1,4 +1,5 @@
 
+import { analytics } from "@/lib/analytics";
 import { ProgressBar } from "@/components/quiz/progress-bar";
 import { QuestionTypeLabel } from "@/components/quiz/question-type-label";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -188,10 +189,12 @@ export default function OnboardingScreen() {
         }).catch(() => {});
       }
       await AsyncStorage.setItem(ONBOARDING_KEY, "1");
+      analytics.onboardingCompleted(selectedLangId, selectedGoal);
       showTour("welcome");
       router.replace("/(tabs)/learn");
     } catch {
       await AsyncStorage.setItem(ONBOARDING_KEY, "1");
+      analytics.onboardingCompleted(selectedLangId, selectedGoal);
       showTour("welcome");
       router.replace("/(tabs)/learn");
     } finally {

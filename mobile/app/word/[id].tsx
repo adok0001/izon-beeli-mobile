@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { friendlyError } from "@/lib/api";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -191,6 +192,7 @@ export default function WordDetailScreen() {
       removeWord.mutate(entry.id);
     } else {
       saveWord.mutate(entry.id);
+      analytics.wordSaved(entry.id, entry.languageId);
     }
   };
 

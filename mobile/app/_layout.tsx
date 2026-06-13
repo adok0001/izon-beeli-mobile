@@ -1,6 +1,6 @@
 import { ErrorBoundary } from "@/components/error-boundary";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { analytics } from "@/lib/analytics";
+import { analytics, posthogClient } from "@/lib/analytics";
 import { queryClient } from "@/lib/api";
 import { tokenCache } from "@/lib/auth";
 import { useSyncUser } from "@/lib/hooks/use-sync-user";
@@ -25,7 +25,8 @@ import {
 } from "@expo-google-fonts/plus-jakarta-sans";
 import { DarkTheme, ThemeProvider, type Theme } from "@react-navigation/native";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Stack, useRouter, useSegments } from "expo-router";
+import { PostHogProvider } from "posthog-react-native";
+import { Stack, useGlobalSearchParams, usePathname, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef } from "react";
@@ -134,11 +135,25 @@ export default function RootLayout() {
   const hydrateLanguage = useLanguageStore((s) => s.hydrate);
   const hydrateUiLanguage = useUiLanguageStore((s) => s.hydrate);
   const hydrateTours = useTourStore((s) => s.hydrate);
-  const [fontsLoaded, fontError] = useFonts({ 
-    PlusJakartaSans_700Bold, 
+  const [fontsLoaded, fontError] = useFonts({
+    PlusJakartaSans_700Bold,
     PlusJakartaSans_600SemiBold,
     Akagu: require("../assets/fonts/Akagu.ttf"),
    });
+
+  const pathname = usePathname();
+  const params = useGlobalSearchParams();
+  const previousPathname = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (previousPathname.current !== pathname) {
+      posthogClient.screen(pathname, {
+        previous_screen: previousPathname.current ?? null,
+        ...params,
+      });
+      previousPathname.current = pathname;
+    }
+  }, [pathname, params]);
 
   useEffect(() => {
     configurePushNotifications();
@@ -172,6 +187,14 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <ThemeProvider value={MuseumNavigationTheme}>
             <AuthGate>
+              <PostHogProvider
+                client={posthogClient}
+                autocapture={{
+                  captureScreens: false,
+                  captureTouches: true,
+                  propsToCapture: ["testID"],
+                }}
+              >
               <GestureHandlerRootView style={{ flex: 1 }}>
                 <Stack
                   screenOptions={{
@@ -233,6 +256,7 @@ export default function RootLayout() {
                   <Stack.Screen name="playground" options={{ headerShown: false }} />
                 </Stack>
               </GestureHandlerRootView>
+              </PostHogProvider>
               <StatusBar style="light" />
             </AuthGate>
           </ThemeProvider>

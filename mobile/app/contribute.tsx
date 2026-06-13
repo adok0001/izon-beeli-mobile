@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -156,7 +157,13 @@ export default function ContributeScreen() {
           english,
           category: selectedEntry.category,
         },
-        { onSuccess, onError }
+        {
+          onSuccess: () => {
+            analytics.contributionSubmitted(selectedLanguage!, "entry_meaning");
+            onSuccess();
+          },
+          onError,
+        }
       );
       return;
     }
@@ -181,9 +188,10 @@ export default function ContributeScreen() {
 
     const data = validation.data;
 
+    const contributionType = isPhrase ? "phrase" : "word";
     submitContribution.mutate(
       {
-        type: isPhrase ? "phrase" : "word",
+        type: contributionType,
         languageId: data.languageId,
         word: data.word,
         english: data.english,
@@ -194,7 +202,13 @@ export default function ContributeScreen() {
         audioUri: data.audioUri,
         imageUri: data.imageUri,
       },
-      { onSuccess, onError }
+      {
+        onSuccess: () => {
+          analytics.contributionSubmitted(data.languageId, contributionType);
+          onSuccess();
+        },
+        onError,
+      }
     );
   };
 

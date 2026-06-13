@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useSignIn } from "@clerk/clerk-expo";
 import { Image } from "expo-image";
@@ -49,6 +50,8 @@ export default function SignInScreen() {
       const result = await signIn.create({ identifier: email.trim(), password });
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
+        analytics.signIn();
+        analytics.identify(email.trim(), { email: email.trim() });
         router.replace("/(tabs)/learn");
       }
     } catch (err: unknown) {

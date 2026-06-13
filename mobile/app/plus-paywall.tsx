@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
 import { useAppConfig } from "@/lib/hooks/use-app-config";
@@ -59,12 +60,17 @@ export default function PlusPaywallScreen() {
     }
   }, [shouldGoBack, router]);
 
+  useEffect(() => {
+    if (!shouldGoBack) analytics.plusPaywallViewed();
+  }, [shouldGoBack]);
+
   // If Plus is globally disabled or user already has Plus, render nothing while navigating back.
   if (shouldGoBack) {
     return null;
   }
 
   async function handleSubscribe() {
+    analytics.plusSubscribeTapped();
     if (Platform.OS === "web") {
       Alert.alert("Subscribe on mobile", "Open the Beeli app on iOS or Android to subscribe.");
       return;

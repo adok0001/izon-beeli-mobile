@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useState } from "react";
@@ -136,6 +137,7 @@ export default function MultiplayerHubScreen() {
         type,
         languageId: selectedLanguageId,
       });
+      analytics.multiplayerJoined(result.session?.id ?? "matchmaking", type);
       if (result.matched && result.session) {
         router.push({
           pathname: "/multiplayer/lobby",
@@ -168,6 +170,7 @@ export default function MultiplayerHubScreen() {
     setJoining(true);
     try {
       const session = await joinSession.mutateAsync(joinCode);
+      analytics.multiplayerJoined(session.id, session.type);
       router.push({
         pathname: "/multiplayer/lobby",
         params: {

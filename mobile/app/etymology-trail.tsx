@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
 import { useEtymology } from "@/lib/hooks/use-etymology";
@@ -104,6 +105,8 @@ function EntryView({ entry }: { entry: EtymologyEntry }) {
 
   const handleSave = useCallback(() => {
     hapticTap();
+    saveWord(entry.id);
+    analytics.wordSaved(entry.id, entry.languageId);
     setSaved(true);
   }, [saveWord, entry]);
 

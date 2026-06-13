@@ -3,13 +3,17 @@ import PostHog from "posthog-react-native";
 // eslint-disable-next-line no-undef
 const isDev = typeof __DEV__ !== "undefined" ? __DEV__ : process.env.NODE_ENV !== "production";
 
-const client = new PostHog(process.env.EXPO_PUBLIC_POSTHOG_API_KEY ?? "", {
+export const posthogClient = new PostHog(process.env.EXPO_PUBLIC_POSTHOG_API_KEY ?? "", {
   host: process.env.EXPO_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com",
   disabled: !process.env.EXPO_PUBLIC_POSTHOG_API_KEY,
+  captureAppLifecycleEvents: true,
+  debug: isDev,
 });
 
 type EventName =
   | "app_open"
+  | "sign_in"
+  | "sign_up"
   | "lesson_started"
   | "lesson_completed"
   | "quiz_started"
@@ -19,7 +23,10 @@ type EventName =
   | "multiplayer_joined"
   | "daily_challenge_completed"
   | "level_up"
-  | "plus_cta_tapped";
+  | "plus_cta_tapped"
+  | "plus_paywall_viewed"
+  | "plus_subscribe_tapped"
+  | "onboarding_completed";
 
 type EventProperties = Record<string, string | number | boolean | null>;
 
@@ -27,11 +34,13 @@ function __sendEvent(name: EventName, properties?: EventProperties): void {
   if (isDev) {
     console.log("[Analytics]", name, properties ?? {});
   }
-  client.capture(name, properties);
+  posthogClient.capture(name, properties);
 }
 
 export const analytics = {
   appOpen: () => __sendEvent("app_open"),
+  signIn: () => __sendEvent("sign_in"),
+  signUp: () => __sendEvent("sign_up"),
   lessonStarted: (lessonId: string, languageId: string) =>
     __sendEvent("lesson_started", { lessonId, languageId }),
   lessonCompleted: (lessonId: string, languageId: string) =>
@@ -52,7 +61,11 @@ export const analytics = {
     __sendEvent("level_up", { level, title }),
   plusCtaTapped: (source: string) =>
     __sendEvent("plus_cta_tapped", { source }),
+  plusPaywallViewed: () => __sendEvent("plus_paywall_viewed"),
+  plusSubscribeTapped: () => __sendEvent("plus_subscribe_tapped"),
+  onboardingCompleted: (languageId: string, goal: string) =>
+    __sendEvent("onboarding_completed", { languageId, goal }),
   identify: (userId: string, traits?: Record<string, string>) =>
-    client.identify(userId, traits),
-  reset: () => client.reset(),
+    posthogClient.identify(userId, traits),
+  reset: () => posthogClient.reset(),
 };

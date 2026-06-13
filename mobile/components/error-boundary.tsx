@@ -1,3 +1,4 @@
+import { posthogClient } from "@/lib/analytics";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
@@ -18,6 +19,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error("[ErrorBoundary]", error, info.componentStack);
+    posthogClient.captureException(error, { componentStack: info.componentStack });
   }
 
   reset = () => this.setState({ error: null });
