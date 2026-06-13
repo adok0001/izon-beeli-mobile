@@ -15,6 +15,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 1,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-1-1", startTime: 0,    endTime: 3.5, text: "Baidẹ! Yebị ẹndẹị buru bei?",             translation: "Good morning! How much is this yam?",                     translationFr: "Bonjour ! Combien coûte cette igname ?" },
       { id: "izon-cm-1-2", startTime: 3.5,  endTime: 7,   text: "Akpa mọ ekise mọ. Buru bei pere ye.",      translation: "Three hundred naira. This yam is big.",                    translationFr: "Trois cents nairas. Cette igname est grosse." },
@@ -36,6 +37,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 2,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-2-1",  startTime: 0,  endTime: 4,  text: "E baịdẹ, Kịmịowei Owei?",                                               translation: "Good afternoon, Mr Owei?",                                         translationFr: "Bonjour (de l'après-midi), M. Owei ?" },
       { id: "izon-cm-2-2",  startTime: 4,  endTime: 8,  text: "E baịdẹ, Kịmịowei Timi?",                                               translation: "Good afternoon, Mr Timi?",                                         translationFr: "Bonjour (de l'après-midi), M. Timi ?" },
@@ -61,6 +63,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 3,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-3-1",  startTime: 0,  endTime: 4,  text: "Tị eyọ kị emu duo boma?",                                                   translation: "Where are you from?",                                              translationFr: "D'où venez-vous ?" },
       { id: "izon-cm-3-2",  startTime: 4,  endTime: 9,  text: "Yenagoa kị emu duo bomị. Yenagoa Bayelsa Siteti ka emi.",                    translation: "I'm from Yenagoa, in Bayelsa State.",                              translationFr: "Je viens de Yenagoa, dans l'État de Bayelsa." },
@@ -84,6 +87,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 4,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-4-1",  startTime: 0,  endTime: 4,  text: "E buburudẹ, Erearau Tobi?",                                                        translation: "Good morning, Mrs Tobi.",                                          translationFr: "Bonjour, Mme Tobi." },
       { id: "izon-cm-4-2",  startTime: 4,  endTime: 8,  text: "E buburudẹ, Kịmịowei Pẹrezi?",                                                        translation: "Good morning, Dr Pẹrezi.",                                         translationFr: "Bonjour, Dr Pẹrezi." },
@@ -109,6 +113,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 5,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-5-1",  startTime: 0,  endTime: 4,  text: "Mị bọ ereịn enị bịna-arau mịnị zii erein teimị.",              translation: "My sister celebrated her birthday yesterday.",                      translationFr: "Ma sœur a célébré son anniversaire hier." },
       { id: "izon-cm-5-2",  startTime: 4,  endTime: 8,  text: "Ọrọsị mọ ofoni mọ omu fịmị.",                                   translation: "I ate rice and chicken.",                                          translationFr: "J'ai mangé du riz et du poulet." },
@@ -134,6 +139,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 6,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-6-1",  startTime: 0,  endTime: 4,  text: "arẹ",                               translation: "talk / speak",                                                     translationFr: "parler" },
       { id: "izon-cm-6-2",  startTime: 4,  endTime: 8,  text: "arị",                               translation: "see",                                                              translationFr: "voir" },
@@ -166,6 +172,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 7,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-7-1",  startTime: 0,  endTime: 5,  text: "mene",                              translation: "Present / habitual marker — follows the verb to show something happens regularly or is happening now",   translationFr: "Marqueur présent/habituel — suit le verbe pour indiquer que quelque chose se produit régulièrement ou en ce moment" },
       { id: "izon-cm-7-2",  startTime: 5,  endTime: 10, text: "Emịnị warị kị mu mene.",            translation: "I go home regularly. / I am going home. (mene = habitual/present)",                                   translationFr: "Je rentre régulièrement à la maison. / Je rentre à la maison. (mene = habituel/présent)" },
@@ -193,6 +200,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 8,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-8-1",  startTime: 0,  endTime: 7,  text: "Kẹnị Inglani-owei Saịna ereinbiri eyi fịdọụtimi wẹnị eyi fịyọ duo sụọmị.",
                                                    translation: "An Englishman in China wanted his lunch and went into a restaurant.",
@@ -230,6 +238,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 9,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-9-1",  startTime: 0,  endTime: 7,  text: "Owo warịmị, Akenfa, Yenagoa kẹnị pụlọtụ ka kẹrị wẹremi.",
                                                    translation: "Our house is built on one plot of land at Akenfa, Yenagoa.",
@@ -273,6 +282,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 10,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-10-1",  startTime: 0,  endTime: 7,  text: "Enị bịna-arau okpomị eniye mọ kị naị emi.",
                                                    translation: "My sister's room is next to mine.",
@@ -320,6 +330,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 11,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-11-1",  startTime: 0,   endTime: 4,   text: "teye",                translation: "what",                                                          translationFr: "quoi" },
       { id: "izon-cm-11-2",  startTime: 4,   endTime: 8,   text: "tịbọ",                translation: "who / whose",                                                   translationFr: "qui / à qui" },
@@ -362,6 +373,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 12,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-12-1",  startTime: 0,   endTime: 4,   text: "bin",                  translation: "plenty",                               translationFr: "beaucoup" },
       { id: "izon-cm-12-2",  startTime: 4,   endTime: 8,   text: "ezan",                 translation: "plentiful",                            translationFr: "abondant" },
@@ -403,6 +415,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 13,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-13-1",  startTime: 0,   endTime: 5,   text: "saramọ",              translation: "quickly (sara 'quick' + mọ)",          translationFr: "rapidement (sara 'rapide' + mọ)" },
       { id: "izon-cm-13-2",  startTime: 5,   endTime: 10,  text: "ezoumọ",              translation: "hurriedly (ezou 'hurry' + mọ)",         translationFr: "précipitamment (ezou 'hâte' + mọ)" },
@@ -436,6 +449,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 14,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-14-1",  startTime: 0,   endTime: 6,   text: "angbengbee",         translation: "very big, large, massive (adjective)",                          translationFr: "très grand, massif (adjectif)" },
       { id: "izon-cm-14-2",  startTime: 6,   endTime: 12,  text: "fain(fain)",          translation: "twisted; bent; askew (adjective)",                              translationFr: "tordu ; courbé ; de travers (adjectif)" },
@@ -472,6 +486,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 15,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-15-1",  startTime: 0,   endTime: 5,   text: "fụdọkpọfụdọkpọ",    translation: "sound of walking in wet grass",                                  translationFr: "son de pas dans l'herbe mouillée" },
       { id: "izon-cm-15-2",  startTime: 5,   endTime: 10,  text: "gịsịịgịsịị",         translation: "so many; a lot",                                                 translationFr: "tellement nombreux ; beaucoup" },
@@ -518,6 +533,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 16,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-16-1",  startTime: 0,   endTime: 5,   text: "zangalazangala",       translation: "very slim or thin and delicate in body build",           translationFr: "très mince et délicat dans sa silhouette" },
       { id: "izon-cm-16-2",  startTime: 5,   endTime: 10,  text: "ziizii",               translation: "many things not placed in an orderly manner",            translationFr: "beaucoup de choses placées de façon désordonnée" },
@@ -557,6 +573,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 17,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-17-1",  startTime: 0,   endTime: 5,   text: "fun + warị → funwarị",          translation: "book + house → school",                          translationFr: "livre + maison → école" },
       { id: "izon-cm-17-2",  startTime: 5,   endTime: 10,  text: "tịbị + owei → tịbịowei",        translation: "head + man → headman; foreman; leader",          translationFr: "tête + homme → chef ; contremaître ; chef de file" },
@@ -586,6 +603,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 18,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-18-1",  startTime: 0,   endTime: 5,   text: "fịrịmọ + tụbọụ → fịrịmọtụbọụ",      translation: "send + child → messenger",                           translationFr: "envoyer + enfant → messager" },
       { id: "izon-cm-18-2",  startTime: 5,   endTime: 10,  text: "fị + eye → fị(e)ye",                  translation: "eat + thing → food",                                 translationFr: "manger + chose → nourriture" },
@@ -619,6 +637,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 19,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-19-1",  startTime: 0,   endTime: 4,   text: "mí",                       translation: "this",                                            translationFr: "ce ; cet ; cette" },
       { id: "izon-cm-19-2",  startTime: 4,   endTime: 8,   text: "aní",                      translation: "that",                                            translationFr: "ce … -là ; cet … -là" },
@@ -653,6 +672,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 20,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-20-1",  startTime: 0,   endTime: 5,   text: "abo! / apo!",              translation: "expression of surprise; indignation",            translationFr: "expression de surprise ; indignation" },
       { id: "izon-cm-20-2",  startTime: 5,   endTime: 10,  text: "ewouwo!",                  translation: "expression of joy",                               translationFr: "expression de joie" },
@@ -684,6 +704,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 21,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-21-1",  startTime: 0,   endTime: 4,   text: "Bo!",                      translation: "Come!",                                           translationFr: "Viens !" },
       { id: "izon-cm-21-2",  startTime: 4,   endTime: 8,   text: "Mu!",                      translation: "Go!",                                             translationFr: "Va !" },
@@ -712,6 +733,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 22,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-22-1",  startTime: 0,   endTime: 4,   text: "asịaị ↔ okosu",           translation: "youth ↔ elder",                                   translationFr: "jeunesse ↔ aîné" },
       { id: "izon-cm-22-2",  startTime: 4,   endTime: 8,   text: "finii ↔ gbabụ",           translation: "wide ↔ narrow",                                   translationFr: "large ↔ étroit" },
@@ -747,6 +769,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 23,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-23-1",  startTime: 0,   endTime: 4,   text: "gban ↔ fini",              translation: "shut; close ↔ open",                              translationFr: "fermer ↔ ouvrir" },
       { id: "izon-cm-23-2",  startTime: 4,   endTime: 8,   text: "bụlọụ ↔ tu",              translation: "first; front ↔ last",                             translationFr: "premier ; devant ↔ dernier" },
@@ -792,6 +815,7 @@ export const IZON_COMMUNICATIVE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 24,
+    skills: ["speaking", "listening", "grammar"],
     transcript: [
       { id: "izon-cm-24-1",  startTime: 0,   endTime: 4,   text: "agba",                    translation: "calabash",                                        translationFr: "calebasse" },
       { id: "izon-cm-24-2",  startTime: 4,   endTime: 8,   text: "akpa",                    translation: "bag",                                             translationFr: "sac" },

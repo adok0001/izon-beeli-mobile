@@ -18,6 +18,7 @@ export const IZON_FIRST_WORDS_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 1,
+    skills: ["vocabulary", "listening"],
     transcript: [
 
       { id: "izon-fw-1-1", startTime: 0,  endTime: 3,  text: "Baidẹ!",                  translation: "Good morning!",              translationFr: "Bonjour !" },
@@ -42,6 +43,7 @@ export const IZON_FIRST_WORDS_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 2,
+    skills: ["vocabulary", "listening"],
     transcript: [
       { id: "izon-fw-2-1", startTime: 0,  endTime: 4,  text: "Baidẹ! Teki ina ẹrẹ?",               translation: "Good morning! What is your name?",      translationFr: "Bonjour ! Comment t'appelles-tu ?" },
       { id: "izon-fw-2-2", startTime: 4,  endTime: 8,  text: "Ina ẹrẹmẹ Timi Ọwei.",               translation: "My name is Timi Ọwei.",                  translationFr: "Je m'appelle Timi Ọwei." },
@@ -65,6 +67,7 @@ export const IZON_FIRST_WORDS_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 3,
+    skills: ["vocabulary", "listening"],
     transcript: [
       { id: "izon-fw-3-1", startTime: 0,  endTime: 3,  text: "Inyo.",          translation: "Yes.",                              translationFr: "Oui." },
       { id: "izon-fw-3-2", startTime: 3,  endTime: 6,  text: "Bogha.",         translation: "No.",                               translationFr: "Non." },
@@ -90,6 +93,7 @@ export const IZON_FIRST_WORDS_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 4,
+    skills: ["vocabulary", "listening"],
     transcript: [
       { id: "izon-fw-4-1", startTime: 0,  endTime: 5,  text: "Dada bọ mọ ine bọ warị ka emị a?",                            translation: "Are your father and mother at home?",                                         translationFr: "Ton père et ta mère sont-ils à la maison ?" },
       { id: "izon-fw-4-2", startTime: 5,  endTime: 10, text: "Inyo. Dada bọ warị ka emị. Ine bọ sibi ka emị — o ọrọ tụọmịnị.", translation: "Yes. My father is at home. My mother is in the kitchen — she is cooking.",    translationFr: "Oui. Mon père est à la maison. Ma mère est dans la cuisine — elle fait la cuisine." },
@@ -113,6 +117,7 @@ export const IZON_FIRST_WORDS_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 5,
+    skills: ["vocabulary", "listening"],
     transcript: [
       { id: "izon-fw-5-1", startTime: 0,  endTime: 5,  text: "Pikei, Baidẹ, Dada! Tụbara?",               translation: "Early morning: Good morning, Father! How are you?",    translationFr: "Tôt le matin : Bonjour, Papa ! Comment vas-tu ?" },
       { id: "izon-fw-5-2", startTime: 5,  endTime: 10, text: "Baidẹ, tubou! Emi! Kuro nimi.",              translation: "Good morning, child! I am fine! I am well.",           translationFr: "Bonjour, mon enfant ! Je vais bien ! Je suis en bonne santé." },
@@ -136,6 +141,7 @@ export const IZON_FIRST_WORDS_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 6,
+    skills: ["vocabulary", "listening", "grammar"],
     transcript: [
       { id: "izon-fw-6-1",  startTime: 0,  endTime: 4,  text: "ènì",          translation: "My (e.g. ènì warị = my house)",                           translationFr: "Mon/Ma (ex. ènì warị = ma maison)" },
       { id: "izon-fw-6-2",  startTime: 4,  endTime: 8,  text: "ènìyè",        translation: "Mine (standalone possessive)",                            translationFr: "Le mien / La mienne (possessif autonome)" },
@@ -165,6 +171,7 @@ export const IZON_FIRST_WORDS_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 7,
+    skills: ["vocabulary", "listening", "grammar"],
     transcript: [
       { id: "izon-fw-7-1",  startTime: 0,  endTime: 4,  text: "Tị eye",                   translation: "What (asking about a thing)",              translationFr: "Quoi / Qu'est-ce que (demander une chose)" },
       { id: "izon-fw-7-2",  startTime: 4,  endTime: 8,  text: "Tị bọkọ",                  translation: "Who (asking about a person)",              translationFr: "Qui (demander une personne)" },
@@ -199,6 +206,7 @@ export const IZON_FIRST_WORDS_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 8,
+    skills: ["vocabulary", "listening"],
     transcript: [
       { id: "izon-fw-8-1",  startTime: 0,  endTime: 3,  text: "ango",                   translation: "Body",                                                        translationFr: "Corps" },
       { id: "izon-fw-8-2",  startTime: 3,  endTime: 6,  text: "tịbị",                   translation: "Head",                                                        translationFr: "Tête" },
@@ -234,6 +242,7 @@ export const IZON_FIRST_WORDS_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 9,
+    skills: ["vocabulary", "listening"],
     transcript: [
       { id: "izon-fw-9-1",  startTime: 0,  endTime: 4,  text: "endi",                   translation: "Fish — the staple of Izon life",                              translationFr: "Poisson — l'aliment de base de la vie izon" },
       { id: "izon-fw-9-2",  startTime: 4,  endTime: 8,  text: "egere",                  translation: "Crocodile",                                                   translationFr: "Crocodile" },
@@ -263,6 +272,7 @@ export const IZON_FIRST_WORDS_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 10,
+    skills: ["vocabulary", "listening"],
     transcript: [
       // Cooking verbs
       { id: "izon-fw-10-1",  startTime: 0,  endTime: 3,  text: "tuọ",                    translation: "Cook",                                                        translationFr: "Cuisiner" },
@@ -297,6 +307,7 @@ export const IZON_FIRST_WORDS_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 11,
+    skills: ["vocabulary", "listening"],
     transcript: [
       // Persons
       { id: "izon-fw-11-1",  startTime: 0,  endTime: 4,  text: "kịmị",                   translation: "Human being / Person",                                        translationFr: "Être humain / Personne" },

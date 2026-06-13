@@ -18,6 +18,7 @@ export const IZON_SONGS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 1,
+    skills: ["listening", "speaking"],
     transcript: [
       { id: "izon-sg-1-1",  startTime: 0,  endTime: 6,  text: "Tubou bọnọ, tubou bọnọ,",
                                                    translation: "Sleep, child, sleep, child,",
@@ -52,6 +53,7 @@ export const IZON_SONGS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 2,
+    skills: ["listening", "speaking"],
     transcript: [
       { id: "izon-sg-2-1",  startTime: 0,  endTime: 6,  text: "Ịzọn didi! Ịzọn didi!",
                                                    translation: "Izon is proud! Izon is proud!",
@@ -89,6 +91,7 @@ export const IZON_SONGS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 3,
+    skills: ["listening", "speaking"],
     transcript: [
       { id: "izon-sg-3-1",  startTime: 0,  endTime: 5,  text: "Yọụ! Yọụ! Toru kị oki mene!",
                                                    translation: "Paddle! Paddle! Swimming the river!",

@@ -15,6 +15,7 @@ export const IZON_SOUND_SCRIPT_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 1,
+    skills: ["listening", "reading"],
     transcript: [
       { id: "izon-ss-1-1",  startTime: 0,  endTime: 5,  text: "i · e · o · u",         translation: "The four clear (ATR+) vowels — the bright vowels of Izon",                                            translationFr: "Les quatre voyelles claires (ATR+) — les voyelles lumineuses de l'Izon" },
       { id: "izon-ss-1-2",  startTime: 5,  endTime: 10, text: "ị · ẹ · ọ · ụ",         translation: "The four retracted (ATR−) vowels — written with a dot below",                                         translationFr: "Les quatre voyelles rétractées (ATR−) — écrites avec un point en dessous" },
@@ -39,6 +40,7 @@ export const IZON_SOUND_SCRIPT_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 2,
+    skills: ["listening", "reading"],
     transcript: [
       { id: "izon-ss-2-1",  startTime: 0,  endTime: 5,  text: "gb · kp",                translation: "Izon's two labiovelar stops — made with lips and the back of the mouth at once",                   translationFr: "Les deux occlusives labiovélaires de l'Izon — formées avec les lèvres et le fond de la bouche simultanément" },
       { id: "izon-ss-2-2",  startTime: 5,  endTime: 10, text: "ọgbọ",                   translation: "river — the gb sound in the middle; feel both lips and throat move together",                         translationFr: "rivière / poisson — le son gb au milieu ; sentez les lèvres et la gorge bouger ensemble" },
@@ -64,6 +66,7 @@ export const IZON_SOUND_SCRIPT_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 3,
+    skills: ["listening", "reading"],
     transcript: [
       { id: "izon-ss-3-1",  startTime: 0,  endTime: 5,  text: "bụmọụ",                  translation: "sandbank — long nasalized vowels: ụ and ọụ run together in the mouth",                              translationFr: "banc de sable — voyelles longues nasalisées : ụ et ọụ se fondent dans la bouche" },
       { id: "izon-ss-3-2",  startTime: 5,  endTime: 10, text: "dụnọụ",                  translation: "lake — same pattern: retracted, long, and slightly nasal",                                           translationFr: "lac — même structure : rétractée, longue et légèrement nasale" },
@@ -89,6 +92,7 @@ export const IZON_SOUND_SCRIPT_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 4,
+    skills: ["listening", "reading"],
     transcript: [
       { id: "izon-ss-4-1",  startTime: 0,  endTime: 5,  text: "owei",                   translation: "man / male — the sequence -ei flows: o + w-glide + ei",                                              translationFr: "homme / masculin — la séquence -ei coule : o + semi-voyelle w + ei" },
       { id: "izon-ss-4-2",  startTime: 5,  endTime: 10, text: "Nụa",                    translation: "welcome — the sequence ụa: ụ glides into a; said with warmth",                                       translationFr: "bienvenu — la séquence ụa : ụ glisse vers a ; dit avec chaleur" },
@@ -114,6 +118,7 @@ export const IZON_SOUND_SCRIPT_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 5,
+    skills: ["listening", "reading"],
     transcript: [
       { id: "izon-ss-5-1",  startTime: 0,  endTime: 4,  text: "ofoni → ofoniama",      translation: "Fowl / bird → fowls / birds",                                                                         translationFr: "Oiseau → oiseaux" },
       { id: "izon-ss-5-2",  startTime: 4,  endTime: 8,  text: "oke → okeama",           translation: "Rat → rats",                                                                                          translationFr: "Rat → rats" },
@@ -143,6 +148,7 @@ export const IZON_SOUND_SCRIPT_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 6,
+    skills: ["listening", "reading"],
     transcript: [
       { id: "izon-ss-6-1",  startTime: 0,  endTime: 4,  text: "tun → tun-owei",                        translation: "Sing → singer (male)",                                                                    translationFr: "Chanter → chanteur (masculin)" },
       { id: "izon-ss-6-2",  startTime: 4,  endTime: 8,  text: "fungẹ → fungẹowei",                     translation: "Write → writer (male)",                                                                   translationFr: "Écrire → écrivain (masculin)" },

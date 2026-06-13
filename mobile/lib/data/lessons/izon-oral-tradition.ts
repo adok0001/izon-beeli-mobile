@@ -15,6 +15,7 @@ export const IZON_ORAL_TRADITION_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 1,
+    skills: ["reading", "listening", "speaking"],
     transcript: [
       { id: "izon-ot-1-1", startTime: 0,  endTime: 4,  text: "Akasa lies deep in Izon land, wrapped in mist and silence.",                                  translation: "Akasa is remembered as a sacred forest between the human and spirit worlds.",               translationFr: "Akasa est conçue comme une forêt sacrée entre le monde des hommes et celui des esprits." },
       { id: "izon-ot-1-2", startTime: 4,  endTime: 8,  text: "Travelers say only people with pure hearts can find the hidden path.",                         translation: "Purity and respect are the first tests of Akasa.",                                         translationFr: "La pureté et le respect sont les premières épreuves d'Akasa." },
@@ -35,6 +36,7 @@ export const IZON_ORAL_TRADITION_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 2,
+    skills: ["reading", "listening", "speaking"],
     transcript: [
       { id: "izon-ot-2-1", startTime: 0,  endTime: 4,  text: "Long ago, the Owuamapu lived close to human communities.",                                    translation: "The water spirits were remembered as teachers, not strangers.",                             translationFr: "Les esprits de l'eau étaient mémorisés comme des maîtres, non comme des étrangers." },
       { id: "izon-ot-2-2", startTime: 4,  endTime: 8,  text: "They taught people how to fish, paddle, and travel the rivers safely.",                        translation: "Life on the water depended on harmony between humans and spirits.",                         translationFr: "La vie sur l'eau reposait sur l'harmonie entre les humains et les esprits." },
@@ -55,6 +57,7 @@ export const IZON_ORAL_TRADITION_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 3,
+    skills: ["reading", "listening", "speaking"],
     transcript: [
       { id: "izon-ot-3-1", startTime: 0,  endTime: 4,  text: "A cruel and greedy man angered the gods with his selfishness.",                              translation: "His punishment began when he was transformed into a giant crocodile.",                      translationFr: "Sa punition commença lorsqu'il fut transformé en un gigantesque crocodile." },
       { id: "izon-ot-3-2", startTime: 4,  endTime: 8,  text: "Banished to the river beside his village, he demanded daily sacrifices.",                   translation: "Fear spread because the people believed he would attack if refused.",                       translationFr: "La peur se répandit, car les gens croyaient qu'il attaquerait s'il était refusé." },
@@ -75,6 +78,7 @@ export const IZON_ORAL_TRADITION_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 4,
+    skills: ["reading", "listening", "speaking"],
     transcript: [
       { id: "izon-ot-4-1", startTime: 0,  endTime: 4,  text: "In a time of war, the village of Amabiri faced destruction from invaders.",                  translation: "Fear spread because many believed defeat was certain.",                                    translationFr: "La peur se répandit, car beaucoup croyaient la défaite inévitable." },
       { id: "izon-ot-4-2", startTime: 4,  endTime: 8,  text: "A young woman named Izonere stepped forward when others hesitated.",                         translation: "She was remembered for both strength and clear thinking.",                                 translationFr: "Elle est restée dans les mémoires pour sa force et sa clarté de pensée." },
@@ -95,6 +99,7 @@ export const IZON_ORAL_TRADITION_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 5,
+    skills: ["reading", "listening", "speaking"],
     transcript: [
       { id: "izon-ot-5-1", startTime: 0,  endTime: 4,  text: "Ekpeti was a poor but hardworking fisherman who lived by the river.",                        translation: "His life changed when he caught a shimmering fish that could speak.",                      translationFr: "Sa vie changea lorsqu'il attrapa un poisson scintillant qui pouvait parler." },
       { id: "izon-ot-5-2", startTime: 4,  endTime: 8,  text: "The fish begged for mercy and promised to reveal hidden riches.",                            translation: "Ekpeti spared it and followed where it led.",                                              translationFr: "Ekpeti l'épargna et suivit le chemin qu'il lui indiqua." },
@@ -115,6 +120,7 @@ export const IZON_ORAL_TRADITION_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 6,
+    skills: ["reading", "listening", "speaking"],
     transcript: [
       { id: "izon-ot-6-1",  startTime: 0,  endTime: 5,  text: "In the beginning there was a great field with a single enormous Iroko tree.",
                                                    translation: "Pairs of men and women appeared at its edges — each woman holding a broom, each man a bag.",
@@ -161,6 +167,7 @@ export const IZON_ORAL_TRADITION_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 7,
+    skills: ["reading", "listening", "speaking"],
     transcript: [
       { id: "izon-ot-7-1",  startTime: 0,  endTime: 5,  text: "Egbesu is the deity of war, justice, and protection among the Izon people.",
                                                    translation: "He is considered the masculine aspect of the Supreme Being — the guardian of truth.",
@@ -195,6 +202,7 @@ export const IZON_ORAL_TRADITION_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 8,
+    skills: ["reading", "listening", "speaking"],
     transcript: [
       { id: "izon-ot-8-1",  startTime: 0,  endTime: 4,  text: "Beni-otu — the water people.",
                                                    translation: "The Izon name for themselves: beni (water) + otu (people). The river is home, livelihood, and spirit.",

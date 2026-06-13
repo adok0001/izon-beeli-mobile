@@ -178,6 +178,7 @@ async function seed() {
       descriptionFr: lessonData.descriptionFr ?? null,
       artist: lessonData.artist ?? null,
       genre: lessonData.genre ?? null,
+      skills: lessonData.skills ?? [],
       isActive: lessonData.isActive ?? true,
     }).onConflictDoUpdate({
       target: lessons.id,
@@ -192,6 +193,7 @@ async function seed() {
         order: lessonData.order,
         artist: lessonData.artist ?? null,
         genre: lessonData.genre ?? null,
+        skills: lessonData.skills ?? [],
         isActive: lessonData.isActive ?? true,
       },
     });

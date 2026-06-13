@@ -9,6 +9,14 @@ export type CourseType =
   | "songs"
   | "colors";
 
+export type Skill =
+  | "listening"
+  | "speaking"
+  | "reading"
+  | "writing"
+  | "vocabulary"
+  | "grammar";
+
 export interface Course {
   id: string;
   title: string;
@@ -44,6 +52,7 @@ export interface Lesson {
   artist?: string | null;
   /** e.g. "lullaby", "praise", "work_song", "festival", "contemporary" */
   genre?: string | null;
+  skills?: Skill[];
   transcript?: TranscriptSegment[];
 }
 

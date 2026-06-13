@@ -9,7 +9,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { UpNextCard } from "@/components/up-next-card";
 import { WordChallengeCard } from "@/components/word-challenge-card";
 import { getAccent } from "@/constants/accent-colors";
-import { getCourseTypeColors, getLevelColors } from "@/constants/course-colors";
+import { getCourseTypeColors, getLevelColors, getSkillMeta } from "@/constants/course-colors";
 import { useBounties } from "@/lib/hooks/use-bounties";
 import { useCourseLessons, useCourses, useLesson } from "@/lib/hooks/use-courses";
 import { useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
@@ -322,6 +322,36 @@ const CourseCard = memo(function CourseCard({
               </Text>
             </View>
           ) : null}
+
+          {/* Skill badges */}
+          {(() => {
+            const skillSet = Array.from(
+              new Set(lessons.flatMap((l) => (l.skills ?? []) as string[]))
+            );
+            if (skillSet.length === 0) return null;
+            return (
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 8 }}>
+                {skillSet.map((skill) => {
+                  const meta = getSkillMeta(skill);
+                  return (
+                    <View
+                      key={skill}
+                      style={{
+                        paddingHorizontal: 6,
+                        paddingVertical: 2,
+                        borderRadius: 999,
+                        backgroundColor: "rgba(255,255,255,0.08)",
+                      }}
+                    >
+                      <Text style={{ fontSize: 9, color: M.textDim }}>
+                        {meta.icon} {meta.label}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            );
+          })()}
 
           {/* Progress bar */}
           {progressPercent > 0 && (

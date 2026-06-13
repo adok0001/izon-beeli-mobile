@@ -1880,6 +1880,8 @@ export const pcm = {
       reviewBody: "As reviewer, you go check community submissions for accuracy, cultural fit, and completeness before e go live for the platform.",
       classroomTitle: "Manage classroom",
       classroomBody: "Create learner groups, assign lessons with deadline, and track each person progress, streaks, and quiz score.",
+      skillsTitle: "Skills & competencies",
+      skillsBody: "Every lesson must declare which skill e dey develop: Listening, Speaking, Reading, Writing, Vocabulary, or Grammar. These skill tags go show as badges on course cards so learners go know wetin each lesson dey teach. Beginner lessons normally focus on Vocabulary and Listening; intermediate ones add Speaking and Grammar; advanced ones bring in Writing and hard Reading. When you dey create or edit lesson, pick only the skills wey truly match the activity — no over-tag.",
       qualityLabel: "Quality standard",
       qualityNote: "Every content for Beeli represent living language. Put accuracy and cultural truth first. If you no sure, ask native speaker.",
       cta: "Go to Educator Panel",

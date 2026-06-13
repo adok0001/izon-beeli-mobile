@@ -34,5 +34,7 @@ export interface LessonData {
   genre?: string;
   /** @default true — false for stub/template lessons pending educator content */
   isActive?: boolean;
+  /** Competency tags — e.g. ["listening", "vocabulary"] */
+  skills?: string[];
   transcript: TranscriptSegment[];
 }

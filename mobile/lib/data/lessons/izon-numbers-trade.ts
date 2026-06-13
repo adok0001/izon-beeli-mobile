@@ -29,6 +29,7 @@ export const IZON_NUMBERS_TRADE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 1,
+    skills: ["vocabulary", "speaking"],
     transcript: [
       { id: "izon-nt-1-1",  startTime: 0,  endTime: 3,  text: "Éyéfá",                   translation: "Zero (0) — also yéfaá",                                                    translationFr: "Zéro (0) — aussi yéfaá" },
       { id: "izon-nt-1-2",  startTime: 3,  endTime: 6,  text: "Kẹnị",                    translation: "One (1) — also kẹnị́",                                                     translationFr: "Un (1) — aussi kẹnị́" },
@@ -63,6 +64,7 @@ export const IZON_NUMBERS_TRADE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 2,
+    skills: ["vocabulary", "speaking"],
     transcript: [
       // 20–39: sí + feni pattern (no mọ connectors)
       { id: "izon-nt-2-1",  startTime: 0,  endTime: 4,  text: "Sí",                                      translation: "Twenty (20) — the first major bundle in the vigesimal system",               translationFr: "Vingt (20) — le premier paquet majeur du système vigésimal" },
@@ -97,6 +99,7 @@ export const IZON_NUMBERS_TRADE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 3,
+    skills: ["vocabulary", "speaking"],
     transcript: [
       { id: "izon-nt-3-1",  startTime: 0,  endTime: 4,  text: "Ọgbọ kẹnị bei, Timi!",                     translation: "Count one fish, Timi! (How much is a fish?)",                translationFr: "Compte un poisson, Timi ! (Combien coûte un poisson ?)" },
       { id: "izon-nt-3-2",  startTime: 4,  endTime: 8,  text: "Ọgbọ bei? Sịlị tará akpa bei.",            translation: "Fish price? Three bags — ₦600.",                             translationFr: "Le prix du poisson ? Trois sacs — 600 ₦." },
@@ -122,6 +125,7 @@ export const IZON_NUMBERS_TRADE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 4,
+    skills: ["vocabulary", "speaking"],
     transcript: [
       { id: "izon-nt-4-1",  startTime: 0,  endTime: 4,  text: "Bụlọụ",               translation: "First (1st) — the only irregular ordinal",                                    translationFr: "Premier (1er) — le seul ordinal irrégulier" },
       { id: "izon-nt-4-2",  startTime: 4,  endTime: 8,  text: "Mamụ karamọ",         translation: "Second (2nd)",                                                                 translationFr: "Deuxième (2e)" },
@@ -150,6 +154,7 @@ export const IZON_NUMBERS_TRADE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 5,
+    skills: ["vocabulary", "speaking"],
     transcript: [
       { id: "izon-nt-5-1",  startTime: 0,  endTime: 4,  text: "Sịlị akpa ekise — ₦100",                  translation: "Half a bag of money — ₦100 (ekise = half)",                                            translationFr: "Un demi-sac d'argent — 100 ₦ (ekise = moitié)" },
       { id: "izon-nt-5-2",  startTime: 4,  endTime: 8,  text: "Sịlị akpa — ₦200",                        translation: "One bag of money — ₦200 (1 akpa = 200)",                                               translationFr: "Un sac d'argent — 200 ₦ (1 akpa = 200)" },
@@ -181,6 +186,7 @@ export const IZON_NUMBERS_TRADE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 6,
+    skills: ["vocabulary", "speaking"],
     transcript: [
       { id: "izon-nt-6-1",  startTime: 0,  endTime: 4,  text: "Tará sí",                                  translation: "Sixty (3 × 20 = 60)",                                                                   translationFr: "Soixante (3 × 20 = 60)" },
       { id: "izon-nt-6-2",  startTime: 4,  endTime: 8,  text: "Tará sí mọ kẹnị mọ",                     translation: "Sixty-one (60 + 1)",                                                                    translationFr: "Soixante et un (60 + 1)" },
@@ -210,6 +216,7 @@ export const IZON_NUMBERS_TRADE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 7,
+    skills: ["vocabulary", "speaking"],
     transcript: [
       { id: "izon-nt-7-1",  startTime: 0,  endTime: 4,  text: "Níá sí mọ kẹnị mọ",                     translation: "Eighty-one (80 + 1)",                                                                   translationFr: "Quatre-vingt-un (80 + 1)" },
       { id: "izon-nt-7-2",  startTime: 4,  endTime: 8,  text: "Níá sí mọ mamụ mọ",                     translation: "Eighty-two (80 + 2)",                                                                   translationFr: "Quatre-vingt-deux (80 + 2)" },
@@ -239,6 +246,7 @@ export const IZON_NUMBERS_TRADE_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 8,
+    skills: ["vocabulary", "speaking"],
     transcript: [
       { id: "izon-nt-8-1",  startTime: 0,  endTime: 4,  text: "Sọọnran sí",                              translation: "100 (5 × 20) — five twenties",                                                          translationFr: "100 (5 × 20) — cinq vingtaines" },
       { id: "izon-nt-8-2",  startTime: 4,  endTime: 8,  text: "Sondia sí",                               translation: "120 (6 × 20) — sondie changes to sondia before sí",                                    translationFr: "120 (6 × 20) — sondie change en sondia devant sí" },

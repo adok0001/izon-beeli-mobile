@@ -15,6 +15,7 @@ const SECTIONS: Section[] = [
   { icon: "square.and.pencil", titleKey: "educator.guide.contentTitle", bodyKey: "educator.guide.contentBody" },
   { icon: "checkmark.seal.fill", titleKey: "educator.guide.reviewTitle", bodyKey: "educator.guide.reviewBody" },
   { icon: "person.2.fill", titleKey: "educator.guide.classroomTitle", bodyKey: "educator.guide.classroomBody" },
+  { icon: "star.circle.fill", titleKey: "educator.guide.skillsTitle", bodyKey: "educator.guide.skillsBody" },
 ];
 
 function GuideSection({ icon, title, body }: Readonly<{ icon: string; title: string; body: string }>) {

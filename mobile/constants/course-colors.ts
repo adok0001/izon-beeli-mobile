@@ -1,4 +1,4 @@
-import type { CourseType } from "@/types";
+import type { CourseType, Skill } from "@/types";
 
 export interface CourseTypeColors {
   headerBg: string;
@@ -138,4 +138,62 @@ const FALLBACK_LEVEL_COLORS: LevelColors = {
 export function getLevelColors(level?: string | null): LevelColors {
   if (!level) return FALLBACK_LEVEL_COLORS;
   return LEVEL_COLORS[level] ?? FALLBACK_LEVEL_COLORS;
+}
+
+export interface SkillMeta {
+  label: string;
+  icon: string;
+  badgeBg: string;
+  badgeText: string;
+}
+
+export const SKILL_META: Record<Skill, SkillMeta> = {
+  listening: {
+    label: "Listening",
+    icon: "🎧",
+    badgeBg: "bg-cyan-100 dark:bg-cyan-900",
+    badgeText: "text-cyan-700 dark:text-cyan-300",
+  },
+  speaking: {
+    label: "Speaking",
+    icon: "🗣️",
+    badgeBg: "bg-red-100 dark:bg-red-900",
+    badgeText: "text-red-700 dark:text-red-300",
+  },
+  reading: {
+    label: "Reading",
+    icon: "📖",
+    badgeBg: "bg-green-100 dark:bg-green-900",
+    badgeText: "text-green-700 dark:text-green-300",
+  },
+  writing: {
+    label: "Writing",
+    icon: "✍️",
+    badgeBg: "bg-purple-100 dark:bg-purple-900",
+    badgeText: "text-purple-700 dark:text-purple-300",
+  },
+  vocabulary: {
+    label: "Vocabulary",
+    icon: "🔤",
+    badgeBg: "bg-yellow-100 dark:bg-yellow-900",
+    badgeText: "text-yellow-700 dark:text-yellow-300",
+  },
+  grammar: {
+    label: "Grammar",
+    icon: "🧩",
+    badgeBg: "bg-slate-100 dark:bg-slate-800",
+    badgeText: "text-slate-700 dark:text-slate-300",
+  },
+};
+
+const FALLBACK_SKILL_META: SkillMeta = {
+  label: "",
+  icon: "",
+  badgeBg: "bg-neutral-100 dark:bg-neutral-700",
+  badgeText: "text-neutral-600 dark:text-neutral-300",
+};
+
+export function getSkillMeta(skill?: string | null): SkillMeta {
+  if (!skill) return FALLBACK_SKILL_META;
+  return SKILL_META[skill as Skill] ?? FALLBACK_SKILL_META;
 }

@@ -18,6 +18,7 @@ export const IZON_COLOURS_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 1,
+    skills: ["vocabulary"],
     transcript: [
       { id: "izon-cl-1-1",  startTime: 0,  endTime: 5,  text: "kwa-kwa",               translation: "Red — the first of the three major Izon colours",                              translationFr: "Rouge — la première des trois grandes couleurs izon",  colorHex: "#ef4444" },
       { id: "izon-cl-1-2",  startTime: 5,  endTime: 10, text: "pena-pena",             translation: "White — the second major colour",                                               translationFr: "Blanc — la deuxième grande couleur",                   colorHex: "#f5f5f4" },
@@ -55,6 +56,7 @@ export const IZON_COLOURS_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 2,
+    skills: ["vocabulary"],
     transcript: [
       { id: "izon-cl-2-1",  startTime: 0,  endTime: 7,  text: "kwa-kwa — kẹ, kwa-kwa, kwa-kwa efịnị, kwa-kwa kẹ.",
                                                    translation: "Red group (kwa-kwa): orange, red, red-violet, red-orange.",
@@ -95,6 +97,7 @@ export const IZON_COLOURS_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 3,
+    skills: ["vocabulary"],
     transcript: [
       { id: "izon-cl-3-1",  startTime: 0,  endTime: 4,  text: "kuekue; wowo; yereyere",         translation: "Red (three variants — kuekue is most common)",                          translationFr: "Rouge (trois variantes — kuekue est la plus courante)", colorHex: "#ef4444" },
       { id: "izon-cl-3-2",  startTime: 4,  endTime: 8,  text: "iselebeni",                      translation: "Orange",                                                                  translationFr: "Orange",                                                colorHex: "#f97316" },
@@ -129,6 +132,7 @@ export const IZON_COLOURS_LESSONS: LessonData[] = [
     audioUrl: null,
     duration: null,
     order: 11,
+    skills: ["vocabulary"],
     transcript: [
       { id: "izon-cm-11-1",  startTime: 0,  endTime: 6,  text: "kẹnị fun",                                 translation: "One book (kẹnị does not change — the only exception)",                    translationFr: "Un livre (kẹnị ne change pas — la seule exception)" },
       { id: "izon-cm-11-2",  startTime: 6,  endTime: 12, text: "maamù → maa fun",                          translation: "Two → two books (numeral loses final syllable, adds context)",            translationFr: "Deux → deux livres (le nombre perd la syllabe finale)" },

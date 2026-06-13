@@ -1860,6 +1860,8 @@ export const fr = {
       reviewBody: "En tant que réviseur, vous évaluez les soumissions de la communauté pour leur exactitude, leur adéquation culturelle et leur complétude avant mise en ligne.",
       classroomTitle: "Gérer les classes",
       classroomBody: "Créez des groupes d'apprenants, assignez des leçons avec des dates limites, et suivez les progrès individuels, les séries et la précision aux quiz.",
+      skillsTitle: "Compétences et savoir-faire",
+      skillsBody: "Chaque leçon doit indiquer laquelle des six compétences elle développe : Écoute, Expression orale, Lecture, Écriture, Vocabulaire ou Grammaire. Ces balises apparaissent sous forme de badges sur les cartes de cours et aident les apprenants à comprendre ce que chaque leçon fait pratiquer. Les leçons débutant se concentrent généralement sur le Vocabulaire et l'Écoute ; les leçons intermédiaires ajoutent l'Expression orale et la Grammaire ; les leçons avancées introduisent l'Écriture et une Lecture complexe. Lors de la création ou de la modification d'une leçon, choisissez les compétences qui reflètent véritablement l'activité proposée — évitez de multiplier les balises.",
       qualityLabel: "Exigence de qualité",
       qualityNote: "Chaque contenu sur Beeli représente une langue vivante. Privilégiez l'exactitude et l'authenticité culturelle avant tout. En cas de doute, consultez un locuteur natif.",
       cta: "Accéder au panneau éducateur",
