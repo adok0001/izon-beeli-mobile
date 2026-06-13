@@ -102,9 +102,9 @@ All language learning, gamification, community, and cultural content stay
 
 ## 8. The 90-day launch plan
 
-- **Days 1–14 (Foundation):** verify PostHog; build the public web landing page
-  (root currently redirects to `/learn`); ship updated App Store / Play listings;
-  create @beeliapp socials; write 14 days of content ahead.
+- **Days 1–14 (Foundation):** verify PostHog fires in prod; landing page is live
+  (✅ shipped); ship updated App Store / Play listings; create @beeliapp socials
+  and wire them into `layout.tsx` `sameAs`; write 14 days of content ahead.
 - **Days 15–30 (Soft launch seeding):** 10 diaspora orgs + 5 educators contacted;
   first Language of the Week (Yoruba); Product Hunt; first press pitch with the
   "70 vs 4" headline.
@@ -116,12 +116,21 @@ All language learning, gamification, community, and cultural content stay
 
 ## 9. Open questions and tensions
 
-- **No public marketing presence yet** — socials, landing page, and store
-  listings are all to-do; nothing acquires until Days 1–14 ship.
-- **The web root still redirects to `/learn`** — SEO and paid/organic acquisition
-  have nowhere to land until a public landing page exists.
-- **PostHog event flow needs verification** — every retention/monetization gate
-  depends on trustworthy D1/D7/D30 numbers; confirm events before spending.
+- **Public marketing presence partially shipped** — the public web landing page
+  is now live (`web/app/page.tsx` renders `<LandingPage />`, with SEO metadata,
+  OG image, `sitemap.ts`, `robots.ts`, plus dedicated `for-educators`/`home`/
+  `educator` routes). Still to-do: @beeliapp social handles and updated store
+  listings. Nothing acquires at scale until socials + listings ship.
+- **Social profiles not wired to the brand entity** — `web/app/layout.tsx`
+  has `sameAs: []` and a TODO for official X/Instagram/TikTok/YouTube URLs; the
+  Twitter card carries no `site`/`creator` handle. Create the accounts, then
+  populate `sameAs` so Google associates them with the brand.
+- **PostHog event flow needs runtime verification** — the instrumentation is
+  built (`mobile/lib/analytics.ts` typed `EventName` union; web
+  `posthog-provider.tsx`), but the client is gated on
+  `EXPO_PUBLIC_POSTHOG_API_KEY` (`disabled: !key`) and fires nothing silently if
+  unset. Confirm the key is present in the prod build and validate events
+  end-to-end before trusting D1/D7/D30 or spending.
 - **Beeli Plus timing** — the D60>15% gate must hold; resist pressure to monetize
   before habit formation.
 - **Per-language content depth is uneven** — the priority matrix (marketing

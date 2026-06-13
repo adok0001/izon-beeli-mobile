@@ -28,6 +28,13 @@
 
 set -eo pipefail
 
+# This hook is iOS-only (BeeliWidget signing workaround). Skip on other platforms;
+# Android builds have no ios/ directory, so the writes below would fail the build.
+if [ "${EAS_BUILD_PLATFORM:-ios}" != "ios" ]; then
+  echo "eas-build-pre-build: skipping iOS signing hook (platform=${EAS_BUILD_PLATFORM})"
+  exit 0
+fi
+
 # --- beeli-widget-codesign.sh (CODESIGN wrapper, archive phase) -------------------
 cat > ios/beeli-widget-codesign.sh << 'CODESIGN_EOF'
 #!/bin/bash
