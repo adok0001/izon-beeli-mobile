@@ -2,7 +2,7 @@ import { LANGUAGES } from "@mobile/lib/data/languages";
 import { MetadataRoute } from "next";
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://izon-beeli.com";
-const LOCALES = ["en", "fr", "pcm"] as const;
+const LOCALES = ["en", "fr", "pcm", "ar", "pt"] as const;
 
 function localeUrl(locale: string, path: string): string {
   const p = path.startsWith("/") ? path : `/${path}`;

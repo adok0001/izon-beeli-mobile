@@ -104,9 +104,11 @@ export default function SettingsPage() {
   ];
 
   const UI_LANGS = [
-    { id: "en"  as const, label: "English",  flag: "🇬🇧" },
-    { id: "fr"  as const, label: "Français", flag: "🇫🇷" },
-    { id: "pcm" as const, label: "Naija",    flag: "🇳🇬" },
+    { id: "en"  as const, label: "English",    flag: "🇬🇧" },
+    { id: "fr"  as const, label: "Français",   flag: "🇫🇷" },
+    { id: "pcm" as const, label: "Naija",      flag: "🇳🇬" },
+    { id: "ar"  as const, label: "العربية",    flag: "🇸🇦" },
+    { id: "pt"  as const, label: "Português",  flag: "🇵🇹" },
   ];
 
   return (
