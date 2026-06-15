@@ -2,7 +2,7 @@
 
 *Distilled from `docs/marketing-strategy.md` (v1.0, May 2026), the `docs/` strategy assets in this folder, and the codebase.
 Beeli is an audio-first African language learning platform on iOS, Android, and
-Web. App v1.42.0. Owner: Tamara Adokeme.*
+Web. App v2.3.0. Owner: Tamara Adokeme.*
 
 ## 1. Strategic situation
 
@@ -136,8 +136,9 @@ All language learning, gamification, community, and cultural content stay
 - **Per-language content depth is uneven** — the priority matrix (marketing
   strategy Appendix C) must drive which languages get promoted; don't market depth
   you don't have.
-- **The marketing doc cites v1.16.1; actual app is v1.42.0** — keep version
-  references synced to `mobile/app.json`.
+- **Keep version references synced to `mobile/app.json`** — the marketing doc has
+  been corrected to v2.3.0 (it previously cited a stale v1.16.1). Note `mobile/app.json`
+  (2.3.0) and `mobile/package.json` (1.1.6) disagree; reconcile that mismatch in code.
 
 ---
 
