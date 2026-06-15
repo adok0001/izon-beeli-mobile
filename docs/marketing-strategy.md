@@ -1,9 +1,14 @@
 # Beeli Marketing Strategy
 
-**Version:** 1.0
-**Date:** 2026-05-31
+**Version:** 1.1
+**Date:** 2026-06-15
 **Status:** Draft
 **Audience:** Founders, Advisors, Potential Partners
+
+> **v1.1 revision (2026-06-15):** facts reconciled to the live codebase — app
+> version v2.3.0, 9 regions, app name "Beeli", and the public web landing page
+> now shipped. Superseded v1.0 claims (v1.16.1, "7 regions", "Beeli Mobile",
+> landing page not yet built) are corrected inline.
 
 > Beeli is the first audio-first platform built exclusively for the breadth and depth of African language learning — not a Duolingo clone with African skins, but a purpose-built cultural learning engine.
 
@@ -44,7 +49,7 @@ Most language learning platforms treat African languages as an afterthought — 
 
 Beeli is a free, audio-first mobile and web app supporting 70+ African languages across West, East, North, and Southern Africa. It is the only platform that pairs guided audio lessons with cultural depth: Adinkra symbols, Ge'ez script, oral proverbs, naming ceremonies, and community-contributed vocabulary — all within a gamified experience (XP, streaks, leaderboards, multiplayer quiz battles) that drives daily engagement.
 
-**Status:** Live on iOS, Android, and Web (v1.16.1). Free, no in-app purchases. No public marketing presence as of this document.
+**Status:** Live on iOS, Android, and Web (v2.3.0). Free, no in-app purchases. The public web landing page is shipped; brand social presence (@beeliapp) and updated store listings are still pending.
 
 ### The Core Insight
 
@@ -70,7 +75,7 @@ Diaspora users are not language hobbyists. They are reconnecting with culture, f
 
 **Pillar 1: Breadth Without Sacrifice of Depth**
 
-No competitor covers Nigerian Delta languages (Izon, Isoko, Urhobo, Itsekiri, Nembe), endangered languages (Tamazight, Ogoni/Khana), and East African scripts (Ge'ez/Fidel) alongside major languages like Yoruba, Igbo, Hausa, and Swahili. Beeli covers 70+ languages across 7 regions: Niger Delta, Southwest Nigeria, Southeast Nigeria, North Central Nigeria, North Nigeria, West Africa, East Africa, North Africa, and Southern Africa.
+No competitor covers Nigerian Delta languages (Izon, Isoko, Urhobo, Itsekiri, Nembe), endangered languages (Tamazight, Ogoni/Khana), and East African scripts (Ge'ez/Fidel) alongside major languages like Yoruba, Igbo, Hausa, and Swahili. Beeli covers 70+ languages across 9 regions: Niger Delta, Southwest Nigeria, Southeast Nigeria, North Central Nigeria, North Nigeria, West Africa, East Africa, North Africa, and Southern Africa.
 
 **Pillar 2: Audio-First Architecture**
 
@@ -258,7 +263,7 @@ Content types, automation approach, and the full posting calendar are in Section
 - "learn Izon language"
 - "African language learning app"
 
-**The SEO surface is the web app** (`izonbeeli.app` or equivalent domain). Currently, the root URL redirects to `/learn`. A public landing page with language-specific content is required before SEO investment yields results.
+**The SEO surface is the web app** (`izonbeeli.app` or equivalent domain). The public landing page is now shipped at the root URL (with SEO metadata, sitemap, robots, and OG image); building out language-specific content on it remains the lever that turns SEO investment into results.
 
 **Content plan:** One blog post per high-priority language per quarter. Format: "Beginner's guide to [Language]: phrases, pronunciation, and cultural context." Each post includes 10–15 vocabulary items pulled from the dictionary API. These pages rank for long-tail searches diaspora communities make when feeling nostalgic or triggered by a life event. Blog post topics and the full Cultural Deep Dive pillar are in Section 9.
 
@@ -278,7 +283,7 @@ Organic App Store and Google Play search is a significant passive acquisition ch
 
 ### Channel 5: Educator / Institutional Outreach (Priority: Medium | Cost: Medium)
 
-Heritage language schools and university African language departments (SOAS, Howard, UCLA, University of Lagos, University of Nairobi). The educator portal, classroom management, and assignment tools already exist in the codebase — this channel requires a positioning document and a landing page, not new product work. Activation detail and outreach templates are in Section 10 and Appendix D.
+Heritage language schools and university African language departments (SOAS, Howard, UCLA, University of Lagos, University of Nairobi). The educator portal, classroom management, and assignment tools already exist in the codebase — and the landing surface (including dedicated educator routes) now ships — so this channel requires positioning and go-to-market, not new product work. Activation detail and outreach templates are in Section 10 and Appendix D.
 
 ---
 
@@ -510,7 +515,7 @@ Contributors who feel seen become the app's most authentic advocates — and the
 
 ### App Name
 
-**Current:** "Beeli Mobile"
+**Current:** "Beeli"
 **Recommended:** "Beeli — African Language Learning"
 
 The subtitle should do categorical SEO work, not describe the platform type. App Store and Google Play both index the app name in search.
@@ -628,10 +633,10 @@ The `analytics.ts` wrapper in `mobile/lib/analytics.ts` has been integrated with
 
 ### Days 1–14: Foundation
 
-**✅ Analytics integration shipped:** PostHog is now live. Verify events are flowing and configure dashboards before activating acquisition channels.
+**✅ Analytics integration shipped:** PostHog is integrated. The client is gated on `EXPO_PUBLIC_POSTHOG_API_KEY` and silently no-ops if the key is unset, so verify events are flowing in the prod build and configure dashboards before trusting any retention number or activating acquisition channels.
 
-- [x] **[Engineering]** Integrate PostHog using existing `analytics.ts` wrapper — instrument lesson completions, challenge completions, streak events, level-ups. *Verify events flow correctly in PostHog dashboard and set up key metric dashboards.*
-- [ ] **[Engineering]** Create a public landing page at the root URL (currently redirects to `/learn`) — tagline, 4-screenshot carousel, "Download on iOS/Android" CTAs, "70+ African languages" stat, email capture
+- [x] **[Engineering]** Integrate PostHog using existing `analytics.ts` wrapper — instrument lesson completions, challenge completions, streak events, level-ups. *Verify events flow correctly in the prod build (key must be set) and set up key metric dashboards.*
+- [x] **[Engineering]** Public landing page at the root URL — **shipped** (renders `<LandingPage />` with SEO metadata, sitemap, robots, OG image, and dedicated educator routes; "70+ African languages" stat and download CTAs). *Remaining: build out language-specific content for SEO.*
 - [ ] **[Founding team]** Update App Store listing: new app name, subtitle, keywords, long description, screenshots (per Section 11)
 - [ ] **[Founding team]** Update Google Play listing with same content
 - [ ] **[Marketing]** Create social accounts: TikTok, Instagram, Twitter/X (@beeliapp on all)
