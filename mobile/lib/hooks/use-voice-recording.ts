@@ -1,4 +1,5 @@
 import { Audio } from "expo-av";
+import { File } from "expo-file-system";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert } from "react-native";
 
@@ -116,12 +117,16 @@ export function useVoiceRecording(): VoiceRecordingControls {
 
   const togglePlayback = useCallback(async () => {
     if (!soundRef.current) return;
-    if (isPlaying) {
-      await soundRef.current.pauseAsync();
+    try {
+      if (isPlaying) {
+        await soundRef.current.pauseAsync();
+        setIsPlaying(false);
+      } else {
+        await soundRef.current.playAsync();
+        setIsPlaying(true);
+      }
+    } catch {
       setIsPlaying(false);
-    } else {
-      await soundRef.current.playAsync();
-      setIsPlaying(true);
     }
   }, [isPlaying]);
 
@@ -140,21 +145,41 @@ export function useVoiceRecording(): VoiceRecordingControls {
   const loadUri = useCallback(
     (fileUri: string) => {
       unloadSound().then(async () => {
-        setUri(fileUri);
-        setState("stopped");
-        const { sound, status } = await Audio.Sound.createAsync({ uri: fileUri });
-        soundRef.current = sound;
-        if (status.isLoaded) {
-          setPlaybackDuration(Math.floor((status.durationMillis ?? 0) / 1000));
-        }
-        sound.setOnPlaybackStatusUpdate((s) => {
-          if (!s.isLoaded) return;
-          setPlaybackPosition(Math.floor(s.positionMillis / 1000));
-          if (s.didJustFinish) {
-            setIsPlaying(false);
-            setPlaybackPosition(0);
+        // Guard against missing files (purged cache / stale path) so we never
+        // hit an uncaught AVPlayerItem -11800 rejection.
+        try {
+          if (!new File(fileUri).exists) {
+            setState("idle");
+            setUri(null);
+            return;
           }
-        });
+        } catch {
+          setState("idle");
+          setUri(null);
+          return;
+        }
+
+        try {
+          setUri(fileUri);
+          setState("stopped");
+          const { sound, status } = await Audio.Sound.createAsync({ uri: fileUri });
+          soundRef.current = sound;
+          if (status.isLoaded) {
+            setPlaybackDuration(Math.floor((status.durationMillis ?? 0) / 1000));
+          }
+          sound.setOnPlaybackStatusUpdate((s) => {
+            if (!s.isLoaded) return;
+            setPlaybackPosition(Math.floor(s.positionMillis / 1000));
+            if (s.didJustFinish) {
+              setIsPlaying(false);
+              setPlaybackPosition(0);
+            }
+          });
+        } catch {
+          soundRef.current = null;
+          setState("idle");
+          setUri(null);
+        }
       });
     },
     [unloadSound]

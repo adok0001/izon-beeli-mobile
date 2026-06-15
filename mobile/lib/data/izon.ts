@@ -4492,4 +4492,21 @@ export const IZON_DICTIONARY: DictionaryEntry[] = [
   e(4300, "lií", "disappear", "verbs", undefined, undefined, undefined, "ew-1585"),
   e(4301, "pigeí", "fixed", "verbs", undefined, undefined, undefined, "ew-2104"),
   e(4302, "igbóro-igboro", "striped", "adjectives", undefined, undefined, undefined, "ew-2421"),
+
+  // --- Lesson 15-06-2026: More short sentences and phrases (call & response: vocatives, come/go/bring, availability) ---
+  e(4303, "Ama", "young woman (term of address)", "phrases", undefined, "Ama, bo!", "Young woman, come!"),
+  e(4304, "Abei", "young man (term of address)", "phrases", undefined, "Abei, bo!", "Young man, come!"),
+  e(4305, "kọn bo", "bring (it); fetch and come", "phrases", undefined, "Fun kọn bo!", "Bring the book!"),
+  e(4306, "bo dii", "come here (lit. come and look)", "phrases", undefined, "Ama, bo dii.", "Young woman, come here."),
+  e(4307, "dii", "look", "verbs", undefined, "Bo dii.", "Come and look."),
+  e(4308, "bodẹ kị", "please come (lit. come first)", "phrases", undefined, "Abei, bodẹ kị.", "Young man, please come."),
+  e(4309, "emii", "is there?; is it present?", "phrases", undefined, "Pulou emii?", "Is there oil?"),
+  e(4310, "emi yoo", "there is!; it is present!", "phrases", undefined, "Endi emii? Emi yoo!", "Is there fish? There is!"),
+  e(4311, "faa", "there is none; it is finished/absent", "phrases", undefined, "Gari faa.", "There is no gari."),
+  e(4312, "yoo", "yes; affirmation particle", "phrases", undefined, "Kụrọemi yoo!", "We are well!"),
+  e(4313, "ịgịna", "pepper", "food", undefined, "Ama, ịgịna kọn bo!", "Young woman, bring the pepper!"),
+  e(4314, "fụụ", "liquid traditional spice", "food", undefined, "Ama, fụụ kọn bo!", "Young woman, bring the liquid spice!"),
+  e(4315, "gari", "gari (cassava flakes)", "food", undefined, "Gari faa.", "There is no gari."),
+  e(4316, "kụrọemi", "is well; we are well", "phrases", undefined, "Awọụbo kụrọemi?", "Is everyone well?"),
+  e(4317, "awọụbo", "everyone; everybody", "phrases", undefined, "Awọụbo kụrọemi?", "Is everyone well?"),
 ];

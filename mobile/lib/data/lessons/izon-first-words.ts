@@ -330,4 +330,45 @@ export const IZON_FIRST_WORDS_LESSONS: LessonData[] = [
       { id: "izon-fw-11-17", startTime: 64, endTime: 68, text: "asima-owei",             translation: "Blacksmith",                                                  translationFr: "Forgeron" },
     ],
   },
+  {
+    id: "izon-fw-12",
+    courseId: "course-izon-fw",
+    title: "Short Commands & Requests — Bo, Mu mọ Kọn Bo",
+    titleFr: "Ordres et Demandes Courts — Bo, Mu mọ Kọn Bo",
+    description: "A call-and-response drill: greet the class, then address a young woman (Ama) or young man (Abei) and ask them to come, go, bring an item, or check whether something is available.",
+    descriptionFr: "Un exercice d'appel et réponse : saluez la classe, puis adressez-vous à une jeune femme (Ama) ou un jeune homme (Abei) pour leur demander de venir, d'aller, d'apporter un objet ou de vérifier si quelque chose est disponible.",
+    audioUrl: null,
+    duration: null,
+    order: 12,
+    skills: ["listening", "speaking", "vocabulary"],
+    transcript: [
+      // Opening call & response
+      { id: "izon-fw-12-1",  startTime: 0,   endTime: 4,  text: "A do ee!",                       translation: "Hello, everyone!",                               translationFr: "Bonjour à tous !" },
+      { id: "izon-fw-12-2",  startTime: 4,   endTime: 8,  text: "Eee! Ị kpọ do ee!",              translation: "Yes! Hello to you too!",                         translationFr: "Oui ! Bonjour à vous aussi !" },
+      { id: "izon-fw-12-3",  startTime: 8,   endTime: 12, text: "Awọụbo kụrọemi?",                translation: "Is everyone well?",                              translationFr: "Tout le monde va bien ?" },
+      { id: "izon-fw-12-4",  startTime: 12,  endTime: 16, text: "Kụrọemi yoo!",                   translation: "We are well!",                                   translationFr: "Nous allons bien !" },
+      // Vocatives — addressing by gender
+      { id: "izon-fw-12-5",  startTime: 16,  endTime: 20, text: "Ama! Ebieree!",                  translation: "Young woman! Ebiere!",                           translationFr: "Jeune femme ! Ebiere !" },
+      { id: "izon-fw-12-6",  startTime: 20,  endTime: 24, text: "Abei! Ebioweii!",                translation: "Young man! Ebiowei!",                            translationFr: "Jeune homme ! Ebiowei !" },
+      // Come (bo)
+      { id: "izon-fw-12-7",  startTime: 24,  endTime: 28, text: "Ama, bo! Abei, bo!",             translation: "Young woman, come! Young man, come!",            translationFr: "Jeune femme, viens ! Jeune homme, viens !" },
+      { id: "izon-fw-12-8",  startTime: 28,  endTime: 32, text: "Ama, bo dii.",                   translation: "Young woman, come here.",                        translationFr: "Jeune femme, viens ici." },
+      { id: "izon-fw-12-9",  startTime: 32,  endTime: 36, text: "Ama, bodẹ kị.",                  translation: "Young woman, please come.",                      translationFr: "Jeune femme, viens s'il te plaît." },
+      // Go (mu)
+      { id: "izon-fw-12-10", startTime: 36,  endTime: 40, text: "Ama, mu! Ama, mu wee!",          translation: "Young woman, go! Young woman, go now!",          translationFr: "Jeune femme, va ! Jeune femme, vas-y !" },
+      { id: "izon-fw-12-11", startTime: 40,  endTime: 44, text: "Abei, mu! Abei, mu wee!",        translation: "Young man, go! Young man, go now!",              translationFr: "Jeune homme, va ! Jeune homme, vas-y !" },
+      // Bring (kọn bo)
+      { id: "izon-fw-12-12", startTime: 44,  endTime: 48, text: "Ama, fun kọn bo!",               translation: "Young woman, bring the book!",                   translationFr: "Jeune femme, apporte le livre !" },
+      { id: "izon-fw-12-13", startTime: 48,  endTime: 52, text: "Abei, ekpedi kọn bo!",           translation: "Young man, bring the box!",                      translationFr: "Jeune homme, apporte la boîte !" },
+      { id: "izon-fw-12-14", startTime: 52,  endTime: 56, text: "Ama, ịgịna kọn bo!",             translation: "Young woman, bring the pepper!",                 translationFr: "Jeune femme, apporte le piment !" },
+      { id: "izon-fw-12-15", startTime: 56,  endTime: 60, text: "Abei, aka kọn bo!",              translation: "Young man, bring the corn!",                     translationFr: "Jeune homme, apporte le maïs !" },
+      { id: "izon-fw-12-16", startTime: 60,  endTime: 64, text: "Ama, fụụ kọn bo!",               translation: "Young woman, bring the liquid spice!",           translationFr: "Jeune femme, apporte l'épice liquide !" },
+      { id: "izon-fw-12-17", startTime: 64,  endTime: 68, text: "Ama, endi kọn bo!",              translation: "Young woman, bring the fish!",                   translationFr: "Jeune femme, apporte le poisson !" },
+      // Availability (emii / faa)
+      { id: "izon-fw-12-18", startTime: 68,  endTime: 72, text: "Ama, pulou emii? Emi yoo!",      translation: "Young woman, is there oil? There is!",           translationFr: "Jeune femme, y a-t-il de l'huile ? Il y en a !" },
+      { id: "izon-fw-12-19", startTime: 72,  endTime: 76, text: "Abei, endi emii? Emi yoo!",      translation: "Young man, is there fish? There is!",            translationFr: "Jeune homme, y a-t-il du poisson ? Il y en a !" },
+      { id: "izon-fw-12-20", startTime: 76,  endTime: 80, text: "Ama, beribe emii? Beribe faa.",  translation: "Young woman, is there plantain? There is none.", translationFr: "Jeune femme, y a-t-il du plantain ? Il n'y en a pas." },
+      { id: "izon-fw-12-21", startTime: 80,  endTime: 84, text: "Abei, gari emii? Gari faa.",     translation: "Young man, is there gari? There is none.",       translationFr: "Jeune homme, y a-t-il du gari ? Il n'y en a pas." },
+    ],
+  },
 ];
