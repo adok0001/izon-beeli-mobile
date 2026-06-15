@@ -107,8 +107,14 @@ function ToggleRow({
 }
 
 const THEME_OPTIONS = ["system", "light", "dark"] as const;
-const LANG_OPTIONS: UiLanguage[] = ["en", "fr", "pcm"];
-const LANG_LABELS: Record<UiLanguage, string> = { en: "English", fr: "Français", pcm: "Naija" };
+const LANG_OPTIONS: UiLanguage[] = ["en", "fr", "pcm", "ar", "pt"];
+const LANG_LABELS: Record<UiLanguage, string> = {
+  en: "English",
+  fr: "Français",
+  pcm: "Naija",
+  ar: "العربية",
+  pt: "Português",
+};
 
 export default function SettingsScreen() {
   const M = useMuseumTheme();

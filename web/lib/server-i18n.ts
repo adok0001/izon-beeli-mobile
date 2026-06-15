@@ -1,10 +1,12 @@
+import { ar } from "@mobile/lib/locales/ar";
 import { en } from "@mobile/lib/locales/en";
 import { fr } from "@mobile/lib/locales/fr";
 import { pcm } from "@mobile/lib/locales/pcm";
+import { pt } from "@mobile/lib/locales/pt";
 import { cookies } from "next/headers";
 import { normalizeUiLanguage, UI_LANGUAGE_COOKIE, type UiLanguage } from "./ui-language";
 
-const DICTS = { en, fr, pcm } as const;
+const DICTS = { en, fr, pcm, ar, pt } as const;
 
 type Dict = Record<string, unknown>;
 

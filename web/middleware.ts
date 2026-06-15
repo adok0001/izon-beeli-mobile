@@ -2,7 +2,7 @@ import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const LOCALE_PREFIXES = ["fr", "pcm"] as const;
+const LOCALE_PREFIXES = ["fr", "pcm", "ar", "pt"] as const;
 const LOCALE_COOKIE = "ui-language-store-lang";
 
 export default clerkMiddleware(async (_auth, req: NextRequest) => {

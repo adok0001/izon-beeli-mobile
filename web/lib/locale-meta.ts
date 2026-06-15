@@ -6,7 +6,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://izon-beeli.com";
 export async function getRequestLocale(): Promise<UiLanguage> {
   const h = await headers();
   const loc = h.get("x-locale");
-  if (loc === "fr" || loc === "pcm") return loc;
+  if (loc === "fr" || loc === "pcm" || loc === "ar" || loc === "pt") return loc;
   return "en";
 }
 
@@ -19,6 +19,8 @@ export function localeAlternates(locale: UiLanguage, path: string) {
       en: `${BASE_URL}${p}`,
       fr: `${BASE_URL}/fr${p}`,
       pcm: `${BASE_URL}/pcm${p}`,
+      ar: `${BASE_URL}/ar${p}`,
+      pt: `${BASE_URL}/pt${p}`,
       "x-default": `${BASE_URL}${p}`,
     } as Record<string, string>,
   };
