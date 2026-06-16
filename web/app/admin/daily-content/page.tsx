@@ -4,9 +4,17 @@ import { apiFetch } from "@/lib/api";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Music, BookOpen, Star, X } from "lucide-react";
+import { CheckCircle2, Music, BookOpen, Star, X, Plus } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+
+const VALID_CATEGORIES = [
+  "greetings", "numbers", "family", "pronouns", "time", "verbs", "body",
+  "market", "occupations", "nouns", "phrases", "food", "possessives",
+  "ordinals", "commands", "animals", "phonetics", "money", "proverbs",
+] as const;
+
+type DictCategory = typeof VALID_CATEGORIES[number];
 
 interface DictEntry { id: string; word: string; english: string; pronunciation: string | null }
 interface Proverb { id: string; text: string; translation: string }
@@ -57,6 +65,8 @@ export default function DailyContentAdminPage() {
   const [languageId, setLanguageId] = useState("izon");
   const [activeTab, setActiveTab] = useState<Tab>("wotd");
   const [search, setSearch] = useState("");
+  const [showAddWord, setShowAddWord] = useState(false);
+  const [newWord, setNewWord] = useState({ word: "", english: "", french: "", category: "nouns" as DictCategory, pronunciation: "", example: "", exampleTranslation: "", exampleTranslationFr: "" });
   async function token() { return (await getToken()) ?? undefined; }
 
   // ---- Admin status ----
@@ -111,6 +121,35 @@ export default function DailyContentAdminPage() {
   const clearWotd = useMutation({
     mutationFn: async () => apiFetch(`/daily-content/admin/wotd?languageId=${encodeURIComponent(languageId)}`, { token: await token(), method: "DELETE" }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-wotd", languageId] }); qc.invalidateQueries({ queryKey: ["wotd", languageId] }); },
+  });
+
+  const createAndPinWotd = useMutation({
+    mutationFn: async () => {
+      const t = await token();
+      const created = await apiFetch<DictEntry>("/dictionary/admin", {
+        token: t,
+        method: "POST",
+        body: JSON.stringify({
+          languageId,
+          word: newWord.word.trim(),
+          english: newWord.english.trim(),
+          french: newWord.french.trim() || undefined,
+          category: newWord.category,
+          pronunciation: newWord.pronunciation.trim() || undefined,
+          example: newWord.example.trim() || undefined,
+          exampleTranslation: newWord.exampleTranslation.trim() || undefined,
+          exampleTranslationFr: newWord.exampleTranslationFr.trim() || undefined,
+        }),
+      });
+      await apiFetch("/daily-content/admin/wotd", { token: t, method: "PUT", body: JSON.stringify({ languageId, entryId: created.id }) });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-wotd", languageId] });
+      qc.invalidateQueries({ queryKey: ["wotd", languageId] });
+      qc.invalidateQueries({ queryKey: ["dictionary", languageId] });
+      setNewWord({ word: "", english: "", french: "", category: "nouns", pronunciation: "", example: "", exampleTranslation: "", exampleTranslationFr: "" });
+      setShowAddWord(false);
+    },
   });
 
   const setPotm = useMutation({
@@ -174,6 +213,77 @@ export default function DailyContentAdminPage() {
                 <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">{wotdAdmin.entry.english}</p>
               </CurrentCard>
             )}
+
+            {/* Add new word form */}
+            {!showAddWord ? (
+              <button
+                onClick={() => setShowAddWord(true)}
+                className="flex items-center gap-1.5 text-sm font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 mb-4"
+              >
+                <Plus className="h-4 w-4" />
+                {t("admin.dailyContent.wotd.addNewCta")}
+              </button>
+            ) : (
+              <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4 mb-5 space-y-3">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-neutral-400">{t("admin.dailyContent.wotd.addNew")}</p>
+                  <button onClick={() => setShowAddWord(false)} className="text-neutral-400 hover:text-neutral-600"><X className="h-4 w-4" /></button>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldWord")}</label>
+                    <input className={fieldCls} value={newWord.word} onChange={(e) => setNewWord((p) => ({ ...p, word: e.target.value }))} placeholder="e.g. Àkpọ" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldEnglish")}</label>
+                    <input className={fieldCls} value={newWord.english} onChange={(e) => setNewWord((p) => ({ ...p, english: e.target.value }))} placeholder="e.g. World" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldCategory")}</label>
+                    <select className={fieldCls} value={newWord.category} onChange={(e) => setNewWord((p) => ({ ...p, category: e.target.value as DictCategory }))}>
+                      {VALID_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldPronunciation")}</label>
+                    <input className={fieldCls} value={newWord.pronunciation} onChange={(e) => setNewWord((p) => ({ ...p, pronunciation: e.target.value }))} placeholder="e.g. ah-KPO" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldFrench")}</label>
+                  <input className={fieldCls} value={newWord.french} onChange={(e) => setNewWord((p) => ({ ...p, french: e.target.value }))} placeholder="e.g. Monde" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldExample")}</label>
+                  <input className={fieldCls} value={newWord.example} onChange={(e) => setNewWord((p) => ({ ...p, example: e.target.value }))} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldExampleTranslation")}</label>
+                    <input className={fieldCls} value={newWord.exampleTranslation} onChange={(e) => setNewWord((p) => ({ ...p, exampleTranslation: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldExampleTranslationFr")}</label>
+                    <input className={fieldCls} value={newWord.exampleTranslationFr} onChange={(e) => setNewWord((p) => ({ ...p, exampleTranslationFr: e.target.value }))} />
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={() => createAndPinWotd.mutate()}
+                    disabled={!newWord.word.trim() || !newWord.english.trim() || createAndPinWotd.isPending}
+                    className="flex-1 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 hover:bg-brand-700 transition-colors"
+                  >
+                    {createAndPinWotd.isPending ? t("admin.dailyContent.wotd.saving") : t("admin.dailyContent.wotd.saveAndPin")}
+                  </button>
+                  <button onClick={() => setShowAddWord(false)} className="rounded-lg border border-neutral-200 dark:border-neutral-700 px-4 py-2 text-sm font-semibold text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">
+                    {t("admin.dailyContent.wotd.cancel")}
+                  </button>
+                </div>
+              </div>
+            )}
+
             <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("admin.dailyContent.wotd.searchPlaceholder")} className={`${fieldCls} mb-3`} />
             <div className="space-y-1.5 max-h-[480px] overflow-y-auto pr-1">
               {filteredWords.slice(0, 100).map((entry) => {

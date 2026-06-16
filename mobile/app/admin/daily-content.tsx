@@ -12,6 +12,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+
+const VALID_CATEGORIES = [
+  "greetings", "numbers", "family", "pronouns", "time", "verbs", "body",
+  "market", "occupations", "nouns", "phrases", "food", "possessives",
+  "ordinals", "commands", "animals", "phonetics", "money", "proverbs",
+] as const;
+
+type DictCategory = typeof VALID_CATEGORIES[number];
 import {
   ActivityIndicator,
   Alert,
@@ -56,6 +64,8 @@ export default function DailyContentAdminScreen() {
   const [pickerVisible, setPickerVisible] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("wotd");
   const [search, setSearch] = useState("");
+  const [showAddWord, setShowAddWord] = useState(false);
+  const [newWord, setNewWord] = useState({ word: "", english: "", french: "", category: "nouns" as DictCategory, pronunciation: "", example: "", exampleTranslation: "", exampleTranslationFr: "" });
 
   const langName = languages.find((l) => l.id === languageId)?.name ?? languageId;
 
@@ -128,6 +138,35 @@ export default function DailyContentAdminScreen() {
     mutationFn: () => authedFetch(`/daily-content/admin/wotd?languageId=${encodeURIComponent(languageId)}`, { method: "DELETE" }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-wotd", languageId] }); qc.invalidateQueries({ queryKey: ["wotd", languageId] }); },
     onError: () => Alert.alert(t("common.error"), t("admin.dailyContent.errorClear")),
+  });
+
+  const createAndPinWotd = useMutation({
+    mutationFn: async () => {
+      const created = await authedFetch("/dictionary/admin", {
+        method: "POST",
+        body: JSON.stringify({
+          languageId,
+          word: newWord.word.trim(),
+          english: newWord.english.trim(),
+          french: newWord.french.trim() || undefined,
+          category: newWord.category,
+          pronunciation: newWord.pronunciation.trim() || undefined,
+          example: newWord.example.trim() || undefined,
+          exampleTranslation: newWord.exampleTranslation.trim() || undefined,
+          exampleTranslationFr: newWord.exampleTranslationFr.trim() || undefined,
+        }),
+      }) as { id: string };
+      await authedFetch("/daily-content/admin/wotd", { method: "PUT", body: JSON.stringify({ languageId, entryId: created.id }) });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-wotd", languageId] });
+      qc.invalidateQueries({ queryKey: ["wotd", languageId] });
+      qc.invalidateQueries({ queryKey: ["dictionary", languageId] });
+      setNewWord({ word: "", english: "", french: "", category: "nouns", pronunciation: "", example: "", exampleTranslation: "", exampleTranslationFr: "" });
+      setShowAddWord(false);
+      Alert.alert(t("admin.dailyContent.wotd.created"));
+    },
+    onError: () => Alert.alert(t("common.error"), t("admin.dailyContent.errorSet")),
   });
 
   const setPotm = useMutation({
@@ -231,6 +270,76 @@ export default function DailyContentAdminScreen() {
                   )}
                 </View>
               ) : null}
+
+              {/* Add new word */}
+              {!showAddWord ? (
+                <Pressable
+                  onPress={() => setShowAddWord(true)}
+                  className="flex-row items-center gap-1.5 mb-4 active:opacity-70"
+                >
+                  <Text className="text-sm font-semibold text-brand-600 dark:text-brand-400">{t("admin.dailyContent.wotd.addNewCta")}</Text>
+                </Pressable>
+              ) : (
+                <View className="rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 p-4 mb-5">
+                  <View className="flex-row items-center justify-between mb-3">
+                    <Text className="text-xs font-semibold uppercase tracking-widest text-neutral-400">{t("admin.dailyContent.wotd.addNew")}</Text>
+                    <Pressable onPress={() => setShowAddWord(false)} className="active:opacity-70">
+                      <IconSymbol name="xmark" size={16} color={M.muted} />
+                    </Pressable>
+                  </View>
+
+                  <Text className="text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldWord")}</Text>
+                  <TextInput value={newWord.word} onChangeText={(v) => setNewWord((p) => ({ ...p, word: v }))} placeholderTextColor={M.muted} placeholder="e.g. Àkpọ" className="rounded-xl bg-white dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 px-3 py-2.5 text-sm text-neutral-900 dark:text-white mb-3" />
+
+                  <Text className="text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldEnglish")}</Text>
+                  <TextInput value={newWord.english} onChangeText={(v) => setNewWord((p) => ({ ...p, english: v }))} placeholderTextColor={M.muted} placeholder="e.g. World" className="rounded-xl bg-white dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 px-3 py-2.5 text-sm text-neutral-900 dark:text-white mb-3" />
+
+                  <Text className="text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldCategory")}</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-3">
+                    <View className="flex-row gap-2">
+                      {VALID_CATEGORIES.map((cat) => (
+                        <Pressable
+                          key={cat}
+                          onPress={() => setNewWord((p) => ({ ...p, category: cat }))}
+                          className={`rounded-full px-3 py-1.5 active:opacity-70 ${newWord.category === cat ? "bg-brand-600" : "bg-neutral-200 dark:bg-neutral-600"}`}
+                        >
+                          <Text className={`text-xs font-semibold ${newWord.category === cat ? "text-white" : "text-neutral-600 dark:text-neutral-300"}`}>{cat}</Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  </ScrollView>
+
+                  <Text className="text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldFrench")}</Text>
+                  <TextInput value={newWord.french} onChangeText={(v) => setNewWord((p) => ({ ...p, french: v }))} placeholderTextColor={M.muted} placeholder="e.g. Monde" className="rounded-xl bg-white dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 px-3 py-2.5 text-sm text-neutral-900 dark:text-white mb-3" />
+
+                  <Text className="text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldPronunciation")}</Text>
+                  <TextInput value={newWord.pronunciation} onChangeText={(v) => setNewWord((p) => ({ ...p, pronunciation: v }))} placeholderTextColor={M.muted} placeholder="e.g. ah-KPO" className="rounded-xl bg-white dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 px-3 py-2.5 text-sm text-neutral-900 dark:text-white mb-3" />
+
+                  <Text className="text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldExample")}</Text>
+                  <TextInput value={newWord.example} onChangeText={(v) => setNewWord((p) => ({ ...p, example: v }))} placeholderTextColor={M.muted} multiline numberOfLines={2} className="rounded-xl bg-white dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 px-3 py-2.5 text-sm text-neutral-900 dark:text-white mb-3" />
+
+                  <Text className="text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldExampleTranslation")}</Text>
+                  <TextInput value={newWord.exampleTranslation} onChangeText={(v) => setNewWord((p) => ({ ...p, exampleTranslation: v }))} placeholderTextColor={M.muted} className="rounded-xl bg-white dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 px-3 py-2.5 text-sm text-neutral-900 dark:text-white mb-3" />
+
+                  <Text className="text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldExampleTranslationFr")}</Text>
+                  <TextInput value={newWord.exampleTranslationFr} onChangeText={(v) => setNewWord((p) => ({ ...p, exampleTranslationFr: v }))} placeholderTextColor={M.muted} className="rounded-xl bg-white dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 px-3 py-2.5 text-sm text-neutral-900 dark:text-white mb-4" />
+
+                  <View className="flex-row gap-3">
+                    <Pressable
+                      onPress={() => createAndPinWotd.mutate()}
+                      disabled={!newWord.word.trim() || !newWord.english.trim() || createAndPinWotd.isPending}
+                      className="flex-1 rounded-xl bg-brand-600 py-3 items-center active:opacity-70 disabled:opacity-50"
+                    >
+                      <Text className="text-sm font-bold text-white">
+                        {createAndPinWotd.isPending ? t("admin.dailyContent.wotd.saving") : t("admin.dailyContent.wotd.saveAndPin")}
+                      </Text>
+                    </Pressable>
+                    <Pressable onPress={() => setShowAddWord(false)} className="rounded-xl border border-neutral-300 dark:border-neutral-600 px-4 py-3 items-center active:opacity-70">
+                      <Text className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">{t("admin.dailyContent.wotd.cancel")}</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              )}
 
               <TextInput
                 value={search}
