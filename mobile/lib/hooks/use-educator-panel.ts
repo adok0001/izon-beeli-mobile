@@ -74,12 +74,24 @@ export interface UpsertEducatorDictionaryInput {
 export interface EducatorCourse {
   id: string;
   title: string;
+  titleFr?: string | null;
   description: string;
+  descriptionFr?: string | null;
   languageId: string;
   level: string;
   order: number;
   courseType?: string | null;
   isActive?: boolean;
+}
+
+export interface UpdateEducatorCourseInput {
+  id: string;
+  title?: string;
+  titleFr?: string | null;
+  description?: string;
+  descriptionFr?: string | null;
+  level?: string;
+  order?: number;
 }
 
 export interface EducatorLesson {
@@ -486,6 +498,25 @@ export function useToggleCourseActive() {
         method: "PATCH",
         token,
         body: JSON.stringify({ isActive }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["educator", "courses"] });
+    },
+  });
+}
+
+export function useUpdateEducatorCourse() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...fields }: UpdateEducatorCourseInput) => {
+      const token = await getToken();
+      return apiFetch<{ ok: true }>(`/educator/courses/${id}`, {
+        method: "PATCH",
+        token,
+        body: JSON.stringify(fields),
       });
     },
     onSuccess: () => {

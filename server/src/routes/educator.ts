@@ -748,7 +748,7 @@ educatorRouter.get("/courses", async (c) => {
   const reviewerLanguages = c.get("reviewerLanguages");
 
   const rows = await db
-    .select({ id: courses.id, title: courses.title, description: courses.description, languageId: courses.languageId, level: courses.level, order: courses.order, isActive: courses.isActive })
+    .select({ id: courses.id, title: courses.title, titleFr: courses.titleFr, description: courses.description, descriptionFr: courses.descriptionFr, languageId: courses.languageId, level: courses.level, order: courses.order, courseType: courses.courseType, isActive: courses.isActive })
     .from(courses)
     .where(!isAdmin && reviewerLanguages.length > 0 ? inArray(courses.languageId, reviewerLanguages) : undefined)
     .orderBy(courses.languageId, courses.order);
@@ -761,13 +761,32 @@ educatorRouter.patch("/courses/:id", async (c) => {
   const isAdmin = c.get("isAdmin");
   const reviewerLanguages = c.get("reviewerLanguages");
   const courseId = c.req.param("id");
-  const { isActive } = await c.req.json<{ isActive: boolean }>();
+  const body = await c.req.json<{
+    isActive?: boolean;
+    title?: string;
+    titleFr?: string | null;
+    description?: string;
+    descriptionFr?: string | null;
+    level?: string;
+    order?: number;
+  }>();
 
   const [course] = await db.select({ languageId: courses.languageId }).from(courses).where(eq(courses.id, courseId)).limit(1);
   if (!course) return c.json({ error: "Course not found" }, 404);
   if (!isAdmin && !reviewerLanguages.includes(course.languageId)) return c.json({ error: "Forbidden" }, 403);
 
-  await db.update(courses).set({ isActive }).where(eq(courses.id, courseId));
+  const patch: Record<string, unknown> = {};
+  if (body.isActive !== undefined) patch.isActive = body.isActive;
+  if (body.title !== undefined) patch.title = body.title;
+  if (body.titleFr !== undefined) patch.titleFr = body.titleFr;
+  if (body.description !== undefined) patch.description = body.description;
+  if (body.descriptionFr !== undefined) patch.descriptionFr = body.descriptionFr;
+  if (body.level !== undefined) patch.level = body.level;
+  if (body.order !== undefined) patch.order = body.order;
+
+  if (Object.keys(patch).length === 0) return c.json({ error: "No fields to update" }, 400);
+
+  await db.update(courses).set(patch).where(eq(courses.id, courseId));
   return c.json({ ok: true });
 });
 

@@ -9,6 +9,7 @@ import {
     useEducatorCourses,
     useGenerateEducatorStubs,
     useToggleCourseActive,
+    useUpdateEducatorCourse,
 } from "@/lib/hooks/use-educator-panel";
 import { friendlyError } from "@/lib/api";
 import { useToast } from "@/lib/hooks/use-toast";
@@ -17,7 +18,7 @@ import { getLanguageName } from "@/lib/mock-data";
 import { Stack, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type CourseActionMode = "new" | "generate";
@@ -37,15 +38,128 @@ const STUB_TYPES: { value: EducatorStubCourseType; label: string }[] = [
   { value: "special-topic", label: "Special Topic" },
 ];
 
+const LEVELS = ["beginner", "intermediate", "advanced"] as const;
+
+function CourseEditModal({
+  course,
+  visible,
+  onClose,
+  onSave,
+  saving,
+}: {
+  course: EducatorCourse;
+  visible: boolean;
+  onClose: () => void;
+  onSave: (fields: { title: string; titleFr: string; description: string; descriptionFr: string; level: string; order: number }) => void;
+  saving: boolean;
+}) {
+  const M = useMuseumTheme();
+  const [title, setTitle] = useState(course.title);
+  const [titleFr, setTitleFr] = useState(course.titleFr ?? "");
+  const [description, setDescription] = useState(course.description);
+  const [descriptionFr, setDescriptionFr] = useState(course.descriptionFr ?? "");
+  const [level, setLevel] = useState(course.level);
+  const [order, setOrder] = useState(String(course.order));
+
+  const canSave = title.trim() && description.trim();
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top", "bottom"]}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+          <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderColor: M.border }}>
+            <Pressable onPress={onClose} style={{ marginRight: 12 }}>
+              <IconSymbol name="xmark" size={18} color={M.muted} />
+            </Pressable>
+            <Text style={{ flex: 1, fontSize: 16, fontWeight: "800", color: M.parchment }} numberOfLines={1}>
+              Edit: {course.title}
+            </Text>
+            <Pressable
+              onPress={() => canSave && onSave({ title, titleFr, description, descriptionFr, level, order: Number(order) })}
+              disabled={!canSave || saving}
+              style={{ paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: canSave ? M.accent : M.border }}
+            >
+              <Text style={{ fontSize: 13, fontWeight: "700", color: canSave ? "#fff" : M.muted }}>
+                {saving ? "Saving…" : "Save"}
+              </Text>
+            </Pressable>
+          </View>
+          <ScrollView contentContainerStyle={{ padding: 16 }} keyboardShouldPersistTaps="handled">
+            <View style={{ marginBottom: 10 }}>
+              <Text style={{ fontSize: 11, fontWeight: "600", color: M.muted, marginBottom: 4 }}>ID</Text>
+              <Text style={{ fontSize: 13, color: M.muted, paddingHorizontal: 12, paddingVertical: 9 }}>{course.id}</Text>
+            </View>
+            {([
+              { label: "Title (EN) *", value: title, onChange: setTitle, placeholder: "Course title" },
+              { label: "Title (FR)", value: titleFr, onChange: setTitleFr, placeholder: "Titre du cours" },
+            ] as const).map((f) => (
+              <View key={f.label} style={{ marginBottom: 10 }}>
+                <Text style={{ fontSize: 11, fontWeight: "600", color: M.muted, marginBottom: 4 }}>{f.label}</Text>
+                <TextInput
+                  value={f.value}
+                  onChangeText={f.onChange}
+                  placeholder={f.placeholder}
+                  placeholderTextColor={M.muted}
+                  style={{ borderWidth: 1, borderColor: M.border, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, color: M.text, backgroundColor: M.card, fontSize: 14 }}
+                />
+              </View>
+            ))}
+            {([
+              { label: "Description (EN) *", value: description, onChange: setDescription, placeholder: "Course description" },
+              { label: "Description (FR)", value: descriptionFr, onChange: setDescriptionFr, placeholder: "Description en français" },
+            ] as const).map((f) => (
+              <View key={f.label} style={{ marginBottom: 10 }}>
+                <Text style={{ fontSize: 11, fontWeight: "600", color: M.muted, marginBottom: 4 }}>{f.label}</Text>
+                <TextInput
+                  value={f.value}
+                  onChangeText={f.onChange}
+                  placeholder={f.placeholder}
+                  placeholderTextColor={M.muted}
+                  multiline
+                  numberOfLines={3}
+                  style={{ borderWidth: 1, borderColor: M.border, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, color: M.text, backgroundColor: M.card, fontSize: 14, textAlignVertical: "top", minHeight: 72 }}
+                />
+              </View>
+            ))}
+            <Text style={{ fontSize: 11, fontWeight: "600", color: M.muted, marginBottom: 4 }}>Level *</Text>
+            <View style={{ flexDirection: "row", gap: 6, marginBottom: 10 }}>
+              {LEVELS.map((l) => (
+                <Pressable
+                  key={l}
+                  onPress={() => setLevel(l)}
+                  style={{ flex: 1, paddingVertical: 7, borderRadius: 8, alignItems: "center", borderWidth: 1, borderColor: level === l ? M.accent : M.border, backgroundColor: level === l ? `${M.accent}20` : M.card }}
+                >
+                  <Text style={{ fontSize: 11, fontWeight: "700", color: level === l ? M.accent : M.muted, textTransform: "capitalize" }}>{l}</Text>
+                </Pressable>
+              ))}
+            </View>
+            <View style={{ marginBottom: 10 }}>
+              <Text style={{ fontSize: 11, fontWeight: "600", color: M.muted, marginBottom: 4 }}>Order</Text>
+              <TextInput
+                value={order}
+                onChangeText={setOrder}
+                keyboardType="numeric"
+                style={{ borderWidth: 1, borderColor: M.border, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, color: M.text, backgroundColor: M.card, fontSize: 14 }}
+              />
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </Modal>
+  );
+}
+
 function CourseCard({
   course,
   onPress,
   onToggleActive,
+  onEdit,
   toggling,
 }: Readonly<{
   course: EducatorCourse;
   onPress: () => void;
   onToggleActive: () => void;
+  onEdit: () => void;
   toggling: boolean;
 }>) {
   const M = useMuseumTheme();
@@ -97,6 +211,14 @@ function CourseCard({
             {toggling ? "…" : course.isActive !== false ? "Active" : "Inactive"}
           </Text>
         </Pressable>
+        <Pressable
+          onPress={(e) => { e.stopPropagation?.(); onEdit(); }}
+          className="flex-row items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1 dark:bg-neutral-800"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <IconSymbol name="pencil" size={12} color={M.accent} />
+          <Text className="text-xs font-semibold text-neutral-600 dark:text-neutral-300">Edit</Text>
+        </Pressable>
       </View>
     </Pressable>
   );
@@ -114,10 +236,13 @@ export default function EducatorCoursesScreen() {
   const [courseActionMode, setCourseActionMode] = useState<CourseActionMode>("generate");
   const [selectedStubType, setSelectedStubType] = useState<EducatorStubCourseType>("first-words");
 
+  const [editingCourse, setEditingCourse] = useState<EducatorCourse | null>(null);
+
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
   const { data: courses = [] } = useEducatorCourses(canAccess);
   const generateStubs = useGenerateEducatorStubs();
   const toggleCourse = useToggleCourseActive();
+  const updateCourse = useUpdateEducatorCourse();
 
   const allowedLanguages = useMemo(() => {
     if (!currentUser) return [] as string[];
@@ -269,6 +394,7 @@ export default function EducatorCoursesScreen() {
                       )
                     }
                     toggling={toggleCourse.isPending && toggleCourse.variables?.id === course.id}
+                    onEdit={() => setEditingCourse(course)}
                   />
                 ))}
               </View>
@@ -389,6 +515,27 @@ export default function EducatorCoursesScreen() {
           }}
           onClose={() => setLanguagePickerVisible(false)}
         />
+
+        {editingCourse && (
+          <CourseEditModal
+            course={editingCourse}
+            visible
+            saving={updateCourse.isPending}
+            onClose={() => setEditingCourse(null)}
+            onSave={(fields) =>
+              updateCourse.mutate(
+                { id: editingCourse.id, ...fields },
+                {
+                  onSuccess: () => {
+                    toastSuccess("Course updated", editingCourse.title);
+                    setEditingCourse(null);
+                  },
+                  onError: (err: Error) => toastError("Update failed", friendlyError(err)),
+                },
+              )
+            }
+          />
+        )}
       </SafeAreaView>
     </>
   );
