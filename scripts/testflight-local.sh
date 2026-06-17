@@ -63,7 +63,8 @@ asc xcode archive \
   --workspace "$WORKSPACE" \
   --scheme "$SCHEME" \
   --configuration Release \
-  --archive-path "$ARCHIVE_PATH"
+  --archive-path "$ARCHIVE_PATH" \
+  --overwrite
 
 # 5. Export IPA and upload directly to TestFlight
 echo "==> Exporting and uploading to TestFlight..."

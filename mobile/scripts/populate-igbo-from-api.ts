@@ -122,7 +122,7 @@ async function main() {
   const { limit, delay } = parseArgs();
 
   const existingEnglish = new Set(
-    IGBO_DICTIONARY.map((e) => e.english.toLowerCase().trim())
+    IGBO_DICTIONARY.map((e) => (typeof e.english === "string" ? e.english : (e.english.en ?? "")).toLowerCase().trim())
   );
 
   const wordbank = ENGLISH_WORDBANK.slice(0, limit === Infinity ? undefined : limit);

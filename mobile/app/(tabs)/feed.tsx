@@ -10,7 +10,7 @@ import {
   type FeedTypeFilter,
 } from "@/lib/hooks/use-feed";
 import i18n from "@/lib/i18n";
-import { localizeField } from "@/lib/localize";
+import { localize } from "@/lib/localize";
 import { useAudioStore } from "@/store/audio-store";
 import { useFeedLikesStore } from "@/store/feed-likes-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
@@ -315,11 +315,11 @@ function FeedCard({ item, onOpenComments }: Readonly<{ item: FeedItem; onOpenCom
   const config = typeConfig[item.type];
   const liked = item.id in likeOverrides ? likeOverrides[item.id] : item.isLiked;
 
-  const localTitle = localizeField(item.title, item.titleFr, uiLanguage);
-  const localDescription = localizeField(item.description, item.descriptionFr, uiLanguage);
+  const localTitle = localize(item.title, uiLanguage);
+  const localDescription = localize(item.description, uiLanguage);
 
   const wordParts =
-    item.type === "contribution" && item.title.includes(" → ") ? item.title.split(" → ") : null;
+    item.type === "contribution" && localTitle.includes(" → ") ? localTitle.split(" → ") : null;
   const focusWord = wordParts?.[0]?.trim();
   const focusEnglish = wordParts?.[1]?.trim();
 

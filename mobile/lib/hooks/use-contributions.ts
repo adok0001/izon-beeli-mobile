@@ -1,6 +1,8 @@
 import { apiFetch } from "@/lib/api";
 import { API_BASE_URL } from "@/lib/constants";
 import type { DictionaryCategory, DictionaryEntry } from "@/lib/dictionary";
+import { localize } from "@/lib/localize";
+import type { LocalizedText } from "@/types";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -18,11 +20,11 @@ export interface ContributionInput {
   type: "word" | "phrase";
   languageId: string;
   word: string;
-  english: string;
+  english: LocalizedText;
   category: DictionaryCategory;
   pronunciation?: string;
   example?: string;
-  exampleTranslation?: string;
+  exampleTranslation?: LocalizedText;
   audioUri?: string;
   imageUri?: string;
 }
@@ -40,11 +42,11 @@ export function useSubmitContribution() {
         formData.append("type", input.type);
         formData.append("languageId", input.languageId);
         formData.append("word", input.word);
-        formData.append("english", input.english);
+        formData.append("english", JSON.stringify(input.english));
         formData.append("category", input.category);
         if (input.pronunciation) formData.append("pronunciation", input.pronunciation);
         if (input.example) formData.append("example", input.example);
-        if (input.exampleTranslation) formData.append("exampleTranslation", input.exampleTranslation);
+        if (input.exampleTranslation) formData.append("exampleTranslation", JSON.stringify(input.exampleTranslation));
 
         if (input.audioUri) {
           appendFile(formData, "audio", {
@@ -102,10 +104,10 @@ export interface EntryContributionInput {
   languageId: string;
   dictionaryEntryId: string;
   word: string;
-  english?: string; // new meaning (for entry_meaning)
+  english?: LocalizedText;
   category: string;
-  audioUri?: string; // local file URI (for entry_audio)
-  imageUri?: string; // local file URI (for entry_image)
+  audioUri?: string;
+  imageUri?: string;
 }
 
 export function useSubmitEntryContribution() {
@@ -122,7 +124,7 @@ export function useSubmitEntryContribution() {
         formData.append("languageId", input.languageId);
         formData.append("dictionaryEntryId", input.dictionaryEntryId);
         formData.append("word", input.word);
-        formData.append("english", input.english ?? input.word);
+        formData.append("english", input.english ? JSON.stringify(input.english) : input.word);
         formData.append("category", input.category);
 
         appendFile(formData, "audio", {
@@ -148,7 +150,7 @@ export function useSubmitEntryContribution() {
         formData.append("languageId", input.languageId);
         formData.append("dictionaryEntryId", input.dictionaryEntryId);
         formData.append("word", input.word);
-        formData.append("english", input.english ?? input.word);
+        formData.append("english", input.english ? JSON.stringify(input.english) : input.word);
         formData.append("category", input.category);
 
         const filename = input.imageUri.split("/").pop() ?? "image.jpg";
@@ -181,7 +183,7 @@ export function useSubmitEntryContribution() {
             languageId: input.languageId,
             dictionaryEntryId: input.dictionaryEntryId,
             word: input.word,
-            english: input.english ?? "",
+            english: input.english ?? {},
             category: input.category,
           }),
         });

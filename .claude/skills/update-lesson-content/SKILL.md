@@ -151,6 +151,47 @@ npm run db:sync
 - `lessons.audioUrl` — educator-uploaded lesson audio is never overwritten by a source-file placeholder
 - All user data (word_bank, user_progress, contributions) is untouched
 
+## Scene taxonomy (Izon contextual courses)
+
+Izon lessons are classified as **Foundation** (structural/linguistic) or **Context** (place/situation).
+
+**Foundation courses** — lessons render flat, no scene tags:
+- `course-izon-ss` — Sounds & Script
+- `course-izon-nt` — Counting & Trade
+- `course-izon-ot` — Old Stories
+- `course-izon-sg` — Songs
+- `course-izon-cl` — Colours
+- `course-izon-cm` — Grammar & Structure (adjectives, adverbs, ideophones, question words, etc.)
+
+**Context courses** — lessons must include `scene` + `sceneTitle` + `sceneOrder`:
+
+| Course id | Place | Scenes (sceneTitle examples) |
+|---|---|---|
+| `course-izon-fw` | Warị — The House | Bedroom, Kitchen, Parlor, Bathroom |
+| `course-izon-el` | Community & Town | Greetings & People, Market, Money & Trade, School, Worship |
+| `course-izon-wk` | Work & Getting Around | Work & Occupations, Transport, Clinic & Health, Making Plans |
+| `course-izon-co` | Modern Life | News & Media, Technology, Opinion & Debate, Civic Voice |
+
+**How to tag a new contextual lesson:**
+
+```typescript
+{
+  id: "izon-fw-15",          // Never rename — lesson IDs must be stable (orphan-proofs progress)
+  courseId: "course-izon-fw",
+  scene: "house.kitchen",    // slug: place.scene
+  sceneTitle: "Kitchen",     // display label for the section header
+  sceneOrder: 2,             // order of the scene within the course (lower = first)
+  order: 5,                  // order of this lesson within its scene
+  // ... rest of lesson fields
+}
+```
+
+**When course metadata changes** (new course, renamed title, changed order/type), run:
+```bash
+cd server && npm run db:sync-courses
+```
+This upserts course rows without touching user progress or lesson data.
+
 ## Step 9 — Report to user
 
 Summarise:

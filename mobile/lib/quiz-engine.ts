@@ -1,4 +1,5 @@
 import type { DictionaryEntry } from "@/lib/dictionary";
+import { localize } from "@/lib/localize";
 import type { AudioSource, MatchingGameConfig, MatchingPair, QuestionType, QuizConfig, QuizQuestion, SentenceTemplate, TranscriptSegment } from "@/types";
 
 /** Optional translate function passed from a React component via useTranslation(). */
@@ -91,11 +92,11 @@ function gatherDictionaryPool(
   return filtered.map((e) => ({
     id: e.id,
     word: e.word,
-    english: e.english,
+    english: localize(e.english, "en"),
     category: e.category,
     audioSource: (e as any).audioUrl,
     example: e.example,
-    exampleTranslation: e.exampleTranslation,
+    exampleTranslation: localize(e.exampleTranslation, "en") || undefined,
     exampleAudioUrl: e.exampleAudioUrl ?? undefined,
     imageUrl: e.imageUrl ?? undefined,
     box: wordProgress?.get(e.id) ?? 1,
@@ -261,7 +262,8 @@ function makeSentenceTranslate(
   allEnglish: string[],
   translate?: QuizTranslateFn
 ): QuizQuestion | null {
-  const distractors = pickDistractors(template.englishSentence, allEnglish, 3);
+  const englishSentence = localize(template.englishSentence, "en");
+  const distractors = pickDistractors(englishSentence, allEnglish, 3);
   if (distractors.length < 3) return null;
   const prompt = translate
     ? translate("quiz.promptSentenceTranslate", { sentence: template.sentence })
@@ -270,8 +272,8 @@ function makeSentenceTranslate(
     id: `q-${Math.random().toString(36).slice(2, 9)}`,
     type: "sentence-translate",
     prompt,
-    correctAnswer: template.englishSentence,
-    options: shuffle([template.englishSentence, ...distractors]),
+    correctAnswer: englishSentence,
+    options: shuffle([englishSentence, ...distractors]),
     exampleAudioUrl: (template as any).exampleAudioUrl ?? undefined,
   };
 }
@@ -485,7 +487,7 @@ export function generateQuiz(
 
   // Mix in sentence-translate questions from templates
   if (sentences.length > 0 && sentenceSlots > 0) {
-    const allEnglishSentences = sentences.map((s) => s.englishSentence);
+    const allEnglishSentences = sentences.map((s) => localize(s.englishSentence, "en"));
     for (const template of shuffle(sentences)) {
       if (questions.length >= questionCount) break;
       const q = makeSentenceTranslate(template, allEnglishSentences, translate);
@@ -544,7 +546,7 @@ export function generateMatchingPairs(
   const { pairCount } = config;
 
   const validSegments = segments.filter(
-    (s) => s.text?.trim() && s.translation?.trim()
+    (s) => s.text?.trim() && localize(s.translation, "en").trim()
   );
 
   if (validSegments.length >= 4) {
@@ -552,7 +554,7 @@ export function generateMatchingPairs(
     return selected.map((seg, i) => ({
       id: `mp-${i}`,
       word: seg.text,
-      english: seg.translation!,
+      english: localize(seg.translation, "en"),
     }));
   }
 
@@ -573,7 +575,7 @@ function makeSegmentListening(
   lessonAudioUrl: AudioSource,
   translate?: QuizTranslateFn
 ): QuizQuestion | null {
-  const correct = segment.translation!;
+  const correct = localize(segment.translation, "en");
   const distractors = pickDistractors(correct, allTranslations, 3);
   if (distractors.length < 3) return null;
   return {
@@ -595,7 +597,7 @@ function makeContextTranslate(
   allTranslations: string[],
   translate?: QuizTranslateFn
 ): QuizQuestion | null {
-  const correct = segment.translation!;
+  const correct = localize(segment.translation, "en");
   const distractors = pickDistractors(correct, allTranslations, 3);
   if (distractors.length < 3) return null;
   return {
@@ -618,7 +620,7 @@ export function generateLessonQuiz(
 
   const seen = new Set<string>();
   const validSegments = segments.filter((s) => {
-    if (!s.text?.trim() || !s.translation?.trim()) return false;
+    if (!s.text?.trim() || !localize(s.translation, "en").trim()) return false;
     const key = s.text.toLowerCase().trim();
     if (seen.has(key)) return false;
     seen.add(key);
@@ -629,8 +631,8 @@ export function generateLessonQuiz(
     return generateQuiz(config, entries, undefined, translate);
   }
 
-  const segTranslations = validSegments.map((s) => s.translation!);
-  const dictEnglish = entries.map((e) => e.english);
+  const segTranslations = validSegments.map((s) => localize(s.translation, "en"));
+  const dictEnglish = entries.map((e) => localize(e.english, "en"));
   const allTranslations = [...new Set([...segTranslations, ...dictEnglish])];
 
   const shuffledSegments = shuffle(validSegments);

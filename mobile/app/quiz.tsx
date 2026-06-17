@@ -483,7 +483,7 @@ export default function QuizScreen() {
   const activeEntries = dictionaryEntries;
   const hasLessonSegments =
     !!params.lessonId &&
-    (lessonData?.transcript ?? []).filter((s) => s.text?.trim() && s.translation?.trim()).length >= 4;
+    (lessonData?.transcript ?? []).filter((s) => s.text?.trim() && (typeof s.translation === "string" ? s.translation?.trim() : s.translation)).length >= 4;
   const { phase, startQuiz, reset } = useQuizStore();
   const [isEmpty, setIsEmpty] = useState(false);
   const [configReady, setConfigReady] = useState(false);

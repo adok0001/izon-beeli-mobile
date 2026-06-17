@@ -4,7 +4,9 @@ import { getAccent } from "@/constants/accent-colors";
 import { useEtymology } from "@/lib/hooks/use-etymology";
 import { hapticTap } from "@/lib/haptics";
 import { useSaveWord } from "@/lib/hooks/use-wordbank";
+import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useLanguageStore } from "@/store/language-store";
 import type { EtymologyEntry } from "@/types";
 import { Stack, useRouter } from "expo-router";
@@ -87,6 +89,7 @@ function TrailNode({
 
 function EntryView({ entry }: { entry: EtymologyEntry }) {
   const M = useMuseumTheme();
+  const { uiLanguage } = useUiLanguageStore();
   const { mutate: saveWord } = useSaveWord();
   const [expandedNodes, setExpandedNodes] = useState<Set<number>>(new Set([0]));
   const [saved, setSaved] = useState(false);
@@ -116,7 +119,7 @@ function EntryView({ entry }: { entry: EtymologyEntry }) {
       <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
         <View>
           <Text style={{ fontSize: 32, fontWeight: "900", color: M.text }}>{entry.word}</Text>
-          <Text style={{ fontSize: 14, color: M.sub, marginTop: 2 }}>{entry.english}</Text>
+          <Text style={{ fontSize: 14, color: M.sub, marginTop: 2 }}>{localize(entry.english, uiLanguage)}</Text>
         </View>
         <Pressable
           onPress={handleSave}

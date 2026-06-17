@@ -1,8 +1,11 @@
 import { LanguagePickerModal } from "@/components/language-picker";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LocalizedTextInput, toLocalizedText } from "@/components/ui/localized-text-input";
 import { getAccent } from "@/constants/accent-colors";
 import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
+import { localize } from "@/lib/localize";
+import type { LocalizedText } from "@/types";
 import {
     EducatorCourse,
     EducatorStubCourseType,
@@ -54,14 +57,12 @@ function CourseEditModal({
   saving: boolean;
 }) {
   const M = useMuseumTheme();
-  const [title, setTitle] = useState(course.title);
-  const [titleFr, setTitleFr] = useState(course.titleFr ?? "");
-  const [description, setDescription] = useState(course.description);
-  const [descriptionFr, setDescriptionFr] = useState(course.descriptionFr ?? "");
+  const [title, setTitle] = useState<LocalizedText>(() => toLocalizedText(course.title, course.titleFr));
+  const [description, setDescription] = useState<LocalizedText>(() => toLocalizedText(course.description, course.descriptionFr));
   const [level, setLevel] = useState(course.level);
   const [order, setOrder] = useState(String(course.order));
 
-  const canSave = title.trim() && description.trim();
+  const canSave = !!(title.en?.trim()) && !!(description.en?.trim());
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
@@ -72,10 +73,10 @@ function CourseEditModal({
               <IconSymbol name="xmark" size={18} color={M.muted} />
             </Pressable>
             <Text style={{ flex: 1, fontSize: 16, fontWeight: "800", color: M.parchment }} numberOfLines={1}>
-              Edit: {course.title}
+              Edit: {localize(course.title, "en")}
             </Text>
             <Pressable
-              onPress={() => canSave && onSave({ title, titleFr, description, descriptionFr, level, order: Number(order) })}
+              onPress={() => canSave && onSave({ title: title.en ?? "", titleFr: title.fr ?? "", description: description.en ?? "", descriptionFr: description.fr ?? "", level, order: Number(order) })}
               disabled={!canSave || saving}
               style={{ paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: canSave ? M.accent : M.border }}
             >
@@ -89,38 +90,8 @@ function CourseEditModal({
               <Text style={{ fontSize: 11, fontWeight: "600", color: M.muted, marginBottom: 4 }}>ID</Text>
               <Text style={{ fontSize: 13, color: M.muted, paddingHorizontal: 12, paddingVertical: 9 }}>{course.id}</Text>
             </View>
-            {([
-              { label: "Title (EN) *", value: title, onChange: setTitle, placeholder: "Course title" },
-              { label: "Title (FR)", value: titleFr, onChange: setTitleFr, placeholder: "Titre du cours" },
-            ] as const).map((f) => (
-              <View key={f.label} style={{ marginBottom: 10 }}>
-                <Text style={{ fontSize: 11, fontWeight: "600", color: M.muted, marginBottom: 4 }}>{f.label}</Text>
-                <TextInput
-                  value={f.value}
-                  onChangeText={f.onChange}
-                  placeholder={f.placeholder}
-                  placeholderTextColor={M.muted}
-                  style={{ borderWidth: 1, borderColor: M.border, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, color: M.text, backgroundColor: M.card, fontSize: 14 }}
-                />
-              </View>
-            ))}
-            {([
-              { label: "Description (EN) *", value: description, onChange: setDescription, placeholder: "Course description" },
-              { label: "Description (FR)", value: descriptionFr, onChange: setDescriptionFr, placeholder: "Description en français" },
-            ] as const).map((f) => (
-              <View key={f.label} style={{ marginBottom: 10 }}>
-                <Text style={{ fontSize: 11, fontWeight: "600", color: M.muted, marginBottom: 4 }}>{f.label}</Text>
-                <TextInput
-                  value={f.value}
-                  onChangeText={f.onChange}
-                  placeholder={f.placeholder}
-                  placeholderTextColor={M.muted}
-                  multiline
-                  numberOfLines={3}
-                  style={{ borderWidth: 1, borderColor: M.border, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, color: M.text, backgroundColor: M.card, fontSize: 14, textAlignVertical: "top", minHeight: 72 }}
-                />
-              </View>
-            ))}
+            <LocalizedTextInput label="Title" value={title} onChange={setTitle} required />
+            <LocalizedTextInput label="Description" value={description} onChange={setDescription} multiline required />
             <Text style={{ fontSize: 11, fontWeight: "600", color: M.muted, marginBottom: 4 }}>Level *</Text>
             <View style={{ flexDirection: "row", gap: 6, marginBottom: 10 }}>
               {LEVELS.map((l) => (
@@ -170,10 +141,10 @@ function CourseCard({
     >
       <View className="flex-row items-center">
         <View className="flex-1">
-          <Text className="text-base font-semibold text-neutral-900 dark:text-white">{course.title}</Text>
+          <Text className="text-base font-semibold text-neutral-900 dark:text-white">{localize(course.title, "en")}</Text>
           {course.description ? (
             <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400" numberOfLines={2}>
-              {course.description}
+              {localize(course.description, "en")}
             </Text>
           ) : null}
           {course.courseType ? (
@@ -387,7 +358,7 @@ export default function EducatorCoursesScreen() {
                           onSuccess: () =>
                             toastSuccess(
                               course.isActive !== false ? "Course hidden" : "Course published",
-                              course.title,
+                              localize(course.title, "en"),
                             ),
                           onError: (err: Error) => toastError("Failed", err.message),
                         },
@@ -527,7 +498,7 @@ export default function EducatorCoursesScreen() {
                 { id: editingCourse.id, ...fields },
                 {
                   onSuccess: () => {
-                    toastSuccess("Course updated", editingCourse.title);
+                    toastSuccess("Course updated", localize(editingCourse.title, "en"));
                     setEditingCourse(null);
                   },
                   onError: (err: Error) => toastError("Update failed", friendlyError(err)),

@@ -1,6 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useLesson } from "@/lib/hooks/use-courses";
-import { localizeField } from "@/lib/localize";
+import { localize } from "@/lib/localize";
 import { BUNDLED_AUDIO } from "@/lib/mock-data";
 import { useAudioStore } from "@/store/audio-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
@@ -41,7 +41,7 @@ export const ContinueCard = memo(function ContinueCard({
   const handleResume = async () => {
     if (audioSource) {
       if (currentTrackId !== lessonId) {
-        await loadAndPlay(lessonId, audioSource, lesson.title, `/lesson/${lessonId}`);
+        await loadAndPlay(lessonId, audioSource, localize(lesson.title, uiLanguage), `/lesson/${lessonId}`);
         await seekTo(positionSeconds);
       } else {
         await seekTo(positionSeconds);
@@ -65,7 +65,7 @@ export const ContinueCard = memo(function ContinueCard({
         }}
         className="mb-3 p-4 active:opacity-70"
         accessibilityRole="button"
-        accessibilityLabel={`Continue listening: ${localizeField(lesson.title, lesson.titleFr, uiLanguage)}, paused at ${posLabel}`}
+        accessibilityLabel={`Continue listening: ${localize(lesson.title, uiLanguage)}, paused at ${posLabel}`}
         accessibilityHint="Tap to resume playback"
       >
         <View className="flex-row items-center">
@@ -80,7 +80,7 @@ export const ContinueCard = memo(function ContinueCard({
               {t("learn.continueListening").toUpperCase()}
             </Text>
             <Text className="mt-0.5 text-base font-bold text-neutral-900 dark:text-white" numberOfLines={1}>
-              {localizeField(lesson.title, lesson.titleFr, uiLanguage)}
+              {localize(lesson.title, uiLanguage)}
             </Text>
             <Text className="text-sm text-neutral-500 dark:text-neutral-400">
               {t("learn.pausedAt", { time: posLabel })}

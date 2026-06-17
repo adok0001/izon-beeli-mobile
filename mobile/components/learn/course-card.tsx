@@ -2,7 +2,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
 import { getCourseTypeColors, getLevelColors } from "@/constants/course-colors";
 import { useCourseLessons } from "@/lib/hooks/use-courses";
-import { localizeField } from "@/lib/localize";
+import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course } from "@/types";
@@ -80,7 +80,7 @@ export const CourseCard = memo(function CourseCard({
           onPress={() => setCollapsed((c) => !c)}
           className="p-4 active:opacity-70"
           accessibilityRole="button"
-          accessibilityLabel={`${localizeField(course.title, course.titleFr, uiLanguage)}, ${completedCount} of ${lessons.length} lessons completed`}
+          accessibilityLabel={`${localize(course.title, uiLanguage)}, ${completedCount} of ${lessons.length} lessons completed`}
           accessibilityHint={collapsed ? "Tap to expand course" : "Tap to collapse course"}
           accessibilityState={{ expanded: !collapsed }}
         >
@@ -124,10 +124,10 @@ export const CourseCard = memo(function CourseCard({
           <Text
             style={{ fontSize: 18, fontWeight: "800", color: M.text, letterSpacing: -0.3, marginBottom: 4 }}
           >
-            {localizeField(course.title, course.titleFr, uiLanguage)}
+            {localize(course.title, uiLanguage)}
           </Text>
           <Text style={{ fontSize: 13, color: M.textDim, lineHeight: 18 }} numberOfLines={2}>
-            {localizeField(course.description, course.descriptionFr, uiLanguage)}
+            {localize(course.description, uiLanguage)}
           </Text>
 
           {/* Course type badge */}

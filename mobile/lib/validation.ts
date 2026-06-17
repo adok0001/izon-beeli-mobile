@@ -3,16 +3,26 @@ import { DICTIONARY_CATEGORY_VALUES } from "@/lib/dictionary";
 
 // ── Word / Phrase contribution ──────────────────────────────────────────────
 
+function isLocalizedText(val: unknown): val is Record<string, string> {
+  return typeof val === "object" && val !== null && !Array.isArray(val) &&
+    Object.values(val as Record<string, unknown>).every((v) => typeof v === "string");
+}
+
+const localizedTextSchema = z
+  .custom<Record<string, string>>(isLocalizedText, "Invalid translation map.")
+  .refine(
+    (obj) => Object.values(obj).some((v) => v.trim()),
+    "At least one translation is required.",
+  );
+
 export const wordContributionSchema = z.object({
   languageId: z.string().min(1, "Please select a language."),
   word: z.string().trim().min(1, "Word or phrase is required."),
-  english: z.string().trim().min(1, "English translation is required."),
-  category: z.enum(DICTIONARY_CATEGORY_VALUES, {
-    errorMap: () => ({ message: "Please select a category." }),
-  }),
+  english: localizedTextSchema,
+  category: z.enum(DICTIONARY_CATEGORY_VALUES).refine(Boolean, { message: "Please select a category." }),
   pronunciation: z.string().trim().optional(),
   example: z.string().trim().optional(),
-  exampleTranslation: z.string().trim().optional(),
+  exampleTranslation: z.custom<Record<string, string>>(isLocalizedText).optional(),
   audioUri: z.string().optional(),
   imageUri: z.string().optional(),
 });

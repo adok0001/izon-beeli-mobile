@@ -1,5 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { localizeField } from "@/lib/localize";
+import { localize } from "@/lib/localize";
 import { formatDuration } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUiLanguageStore } from "@/store/ui-language-store";
@@ -24,7 +24,7 @@ export function LessonRow({
       style={{ borderTopWidth: 1, borderTopColor: M.border }}
       className="flex-row items-center py-3 active:opacity-60"
       accessibilityRole="button"
-      accessibilityLabel={`${localizeField(lesson.title, lesson.titleFr, uiLanguage)}${completed ? ", completed" : ""}`}
+      accessibilityLabel={`${localize(lesson.title, uiLanguage)}${completed ? ", completed" : ""}`}
       accessibilityHint="Tap to open lesson"
     >
       <View
@@ -53,11 +53,11 @@ export function LessonRow({
           }}
           numberOfLines={1}
         >
-          {localizeField(lesson.title, lesson.titleFr, uiLanguage)}
+          {localize(lesson.title, uiLanguage)}
         </Text>
         {lesson.description ? (
           <Text style={{ fontSize: 11, color: M.textDimDark, marginTop: 1 }} numberOfLines={1}>
-            {localizeField(lesson.description, lesson.descriptionFr, uiLanguage)}
+            {localize(lesson.description, uiLanguage)}
           </Text>
         ) : null}
       </View>

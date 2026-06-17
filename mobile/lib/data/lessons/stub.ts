@@ -31,6 +31,7 @@ import { LANGUAGES } from "../languages";
 import type { LessonData } from "./types";
 
 // ─── Already-launched languages (excluded from stub generation) ───────────
+// Keep in sync with CONTENT_IDS in lib/data/languages.ts.
 export const LAUNCHED_IDS = new Set([
   "izon", "yoruba", "igbo", "hausa", "swahili", "amharic",
   "akan", "wolof", "arabic-egyptian", "somali", "bambara",
@@ -41,11 +42,11 @@ export const LAUNCHED_IDS = new Set([
 
 type Phrase = { text: string; en: string; fr: string };
 
+type LocalizedText = { en: string; fr: string };
+
 type LessonDef = {
-  title: string;
-  titleFr: string;
-  description: string;
-  descriptionFr: string;
+  title: LocalizedText;
+  description: LocalizedText;
   duration: number;
   isOralOrSong?: true;
   phrases: Phrase[];
@@ -72,10 +73,8 @@ type CourseDef = {
 
 const FIRST_WORDS: LessonDef[] = [
   {
-    title: "Greetings & Salutations",
-    titleFr: "Salutations",
-    description: "The first words every speaker knows — greetings across morning, afternoon, and evening, and how to respond with warmth.",
-    descriptionFr: "Les premiers mots que tout locuteur connaît — les salutations du matin, de l'après-midi et du soir, et comment y répondre avec chaleur.",
+    title: { en: "Greetings & Salutations", fr: "Salutations" },
+    description: { en: "The first words every speaker knows — greetings across morning, afternoon, and evening, and how to respond with warmth.", fr: "Les premiers mots que tout locuteur connaît — les salutations du matin, de l'après-midi et du soir, et comment y répondre avec chaleur." },
     duration: 4,
     phrases: [
       { text: "[Good morning!]",                      en: "Good morning!",                        fr: "Bonjour !" },
@@ -91,10 +90,8 @@ const FIRST_WORDS: LessonDef[] = [
     ],
   },
   {
-    title: "Names & Identity",
-    titleFr: "Noms et Identité",
-    description: "Introduce yourself, say where you're from, and declare your ethnic identity — the words that make you part of the community.",
-    descriptionFr: "Présentez-vous, dites d'où vous venez et affirmez votre identité ethnique — les mots qui font de vous un membre de la communauté.",
+    title: { en: "Names & Identity", fr: "Noms et Identité" },
+    description: { en: "Introduce yourself, say where you're from, and declare your ethnic identity — the words that make you part of the community.", fr: "Présentez-vous, dites d'où vous venez et affirmez votre identité ethnique — les mots qui font de vous un membre de la communauté." },
     duration: 5,
     phrases: [
       { text: "[Good morning! What is your name?]",          en: "Good morning! What is your name?",          fr: "Bonjour ! Comment t'appelles-tu ?" },
@@ -110,10 +107,8 @@ const FIRST_WORDS: LessonDef[] = [
     ],
   },
   {
-    title: "Yes, No & the Words Between",
-    titleFr: "Oui, Non et les Mots Entre les Deux",
-    description: "Essential response words for agreement, refusal, gratitude, apology, and respect — the social glue of any conversation.",
-    descriptionFr: "Les mots de réponse essentiels pour approuver, refuser, remercier, s'excuser et montrer du respect — le ciment social de toute conversation.",
+    title: { en: "Yes, No & the Words Between", fr: "Oui, Non et les Mots Entre les Deux" },
+    description: { en: "Essential response words for agreement, refusal, gratitude, apology, and respect — the social glue of any conversation.", fr: "Les mots de réponse essentiels pour approuver, refuser, remercier, s'excuser et montrer du respect — le ciment social de toute conversation." },
     duration: 5,
     phrases: [
       { text: "[Yes.]",                                   en: "Yes.",                                        fr: "Oui." },
@@ -129,10 +124,8 @@ const FIRST_WORDS: LessonDef[] = [
     ],
   },
   {
-    title: "Family Members",
-    titleFr: "Les Membres de la Famille",
-    description: "Learn words for family members and relationships — father, mother, siblings, children, grandparents — through a natural conversation.",
-    descriptionFr: "Apprenez les mots pour les membres de la famille — père, mère, frères et sœurs, enfants, grands-parents — à travers une conversation naturelle.",
+    title: { en: "Family Members", fr: "Les Membres de la Famille" },
+    description: { en: "Learn words for family members and relationships — father, mother, siblings, children, grandparents — through a natural conversation.", fr: "Apprenez les mots pour les membres de la famille — père, mère, frères et sœurs, enfants, grands-parents — à travers une conversation naturelle." },
     duration: 5,
     phrases: [
       { text: "[Are your father and mother at home?]",                            en: "Are your father and mother at home?",                             fr: "Ton père et ta mère sont-ils à la maison ?" },
@@ -148,10 +141,8 @@ const FIRST_WORDS: LessonDef[] = [
     ],
   },
   {
-    title: "A Day in the Life",
-    titleFr: "Un Jour dans la Vie",
-    description: "Follow a typical day — waking, greeting, eating, working, and resting — the rhythms that shape everyday speech.",
-    descriptionFr: "Suivez une journée typique — se lever, saluer, manger, travailler et se reposer — les rythmes qui façonnent le discours quotidien.",
+    title: { en: "A Day in the Life", fr: "Un Jour dans la Vie" },
+    description: { en: "Follow a typical day — waking, greeting, eating, working, and resting — the rhythms that shape everyday speech.", fr: "Suivez une journée typique — se lever, saluer, manger, travailler et se reposer — les rythmes qui façonnent le discours quotidien." },
     duration: 5,
     phrases: [
       { text: "[I wake up early in the morning.]",     en: "I wake up early in the morning.",     fr: "Je me réveille tôt le matin." },
@@ -170,10 +161,8 @@ const FIRST_WORDS: LessonDef[] = [
 
 const SOUND_SCRIPT: LessonDef[] = [
   {
-    title: "The Vowel Sounds",
-    titleFr: "Les Sons Vocaliques",
-    description: "Master the vowel sounds — how to shape each one clearly and recognise them in words.",
-    descriptionFr: "Maîtrisez les sons vocaliques — comment former chacun clairement et les reconnaître dans les mots.",
+    title: { en: "The Vowel Sounds", fr: "Les Sons Vocaliques" },
+    description: { en: "Master the vowel sounds — how to shape each one clearly and recognise them in words.", fr: "Maîtrisez les sons vocaliques — comment former chacun clairement et les reconnaître dans les mots." },
     duration: 5,
     phrases: [
       { text: "[[Vowel A] — as in [example word]]",                         en: "[Vowel A] — as in [example word]",                         fr: "[Voyelle A] — comme dans [exemple]" },
@@ -187,10 +176,8 @@ const SOUND_SCRIPT: LessonDef[] = [
     ],
   },
   {
-    title: "Consonants & Special Sounds",
-    titleFr: "Consonnes et Sons Spéciaux",
-    description: "Learn the consonant inventory — including sounds unique to this language — and how they combine in syllables.",
-    descriptionFr: "Apprenez l'inventaire consonantique — y compris les sons propres à cette langue — et comment ils se combinent en syllabes.",
+    title: { en: "Consonants & Special Sounds", fr: "Consonnes et Sons Spéciaux" },
+    description: { en: "Learn the consonant inventory — including sounds unique to this language — and how they combine in syllables.", fr: "Apprenez l'inventaire consonantique — y compris les sons propres à cette langue — et comment ils se combinent en syllabes." },
     duration: 5,
     phrases: [
       { text: "[[Consonant set 1] — practice]",                                     en: "[Consonant set 1] — practice",                                     fr: "[Ensemble de consonnes 1] — pratiquer" },
@@ -204,10 +191,8 @@ const SOUND_SCRIPT: LessonDef[] = [
     ],
   },
   {
-    title: "Tones & Stress",
-    titleFr: "Tons et Accent",
-    description: "Understand how tone and stress carry meaning — the musical layer that distinguishes words and signals emotion.",
-    descriptionFr: "Comprenez comment le ton et l'accent portent le sens — la couche musicale qui distingue les mots et exprime les émotions.",
+    title: { en: "Tones & Stress", fr: "Tons et Accent" },
+    description: { en: "Understand how tone and stress carry meaning — the musical layer that distinguishes words and signals emotion.", fr: "Comprenez comment le ton et l'accent portent le sens — la couche musicale qui distingue les mots et exprime les émotions." },
     duration: 5,
     phrases: [
       { text: "[High tone — [example word]]",                     en: "High tone — [example word]",                     fr: "Ton haut — [exemple]" },
@@ -224,10 +209,8 @@ const SOUND_SCRIPT: LessonDef[] = [
 
 const NUMBERS_TRADE: LessonDef[] = [
   {
-    title: "Numbers 1 to 10",
-    titleFr: "Les Chiffres 1 à 10",
-    description: "Count from one to ten — the foundation of every number system and the first step to trading.",
-    descriptionFr: "Comptez de un à dix — la base de tout système numérique et le premier pas vers le commerce.",
+    title: { en: "Numbers 1 to 10", fr: "Les Chiffres 1 à 10" },
+    description: { en: "Count from one to ten — the foundation of every number system and the first step to trading.", fr: "Comptez de un à dix — la base de tout système numérique et le premier pas vers le commerce." },
     duration: 4,
     phrases: [
       { text: "[One]",   en: "One",   fr: "Un" },
@@ -243,10 +226,8 @@ const NUMBERS_TRADE: LessonDef[] = [
     ],
   },
   {
-    title: "The Counting System",
-    titleFr: "Le Système de Numération",
-    description: "Explore the language's own counting logic — whether it groups by fives, tens, twenties, or follows another pattern.",
-    descriptionFr: "Explorez la logique de numération propre à la langue — qu'elle regroupe par cinq, dix, vingt ou suive un autre modèle.",
+    title: { en: "The Counting System", fr: "Le Système de Numération" },
+    description: { en: "Explore the language's own counting logic — whether it groups by fives, tens, twenties, or follows another pattern.", fr: "Explorez la logique de numération propre à la langue — qu'elle regroupe par cinq, dix, vingt ou suive un autre modèle." },
     duration: 5,
     phrases: [
       { text: "[[Number base / grouping principle of this language]]", en: "[Number base / grouping principle of this language]", fr: "[Base numérique / principe de regroupement de cette langue]" },
@@ -260,10 +241,8 @@ const NUMBERS_TRADE: LessonDef[] = [
     ],
   },
   {
-    title: "Money & the Market",
-    titleFr: "L'Argent et le Marché",
-    description: "The language of buying and selling — essential phrases for any market, whether traditional or modern.",
-    descriptionFr: "Le langage de l'achat et de la vente — les formules essentielles pour tout marché, qu'il soit traditionnel ou moderne.",
+    title: { en: "Money & the Market", fr: "L'Argent et le Marché" },
+    description: { en: "The language of buying and selling — essential phrases for any market, whether traditional or modern.", fr: "Le langage de l'achat et de la vente — les formules essentielles pour tout marché, qu'il soit traditionnel ou moderne." },
     duration: 5,
     phrases: [
       { text: "[How much does it cost?]",              en: "How much does it cost?",              fr: "Combien ça coûte ?" },
@@ -277,10 +256,8 @@ const NUMBERS_TRADE: LessonDef[] = [
     ],
   },
   {
-    title: "At the Market",
-    titleFr: "Au Marché",
-    description: "Navigate the bustling market — asking for goods, checking stock, and negotiating with vendors.",
-    descriptionFr: "Naviguez au marché animé — demandez des marchandises, vérifiez le stock et négociez avec les vendeurs.",
+    title: { en: "At the Market", fr: "Au Marché" },
+    description: { en: "Navigate the bustling market — asking for goods, checking stock, and negotiating with vendors.", fr: "Naviguez au marché animé — demandez des marchandises, vérifiez le stock et négociez avec les vendeurs." },
     duration: 5,
     phrases: [
       { text: "[I want to buy [item].]",               en: "I want to buy [item].",               fr: "Je veux acheter [article]." },
@@ -297,10 +274,8 @@ const NUMBERS_TRADE: LessonDef[] = [
 
 const COMMUNICATIVE: LessonDef[] = [
   {
-    title: "Welcoming a Guest",
-    titleFr: "Accueillir un Invité",
-    description: "The language of hospitality — welcoming, offering food and water, and the rituals that turn a visitor into a friend.",
-    descriptionFr: "Le langage de l'hospitalité — accueillir, offrir nourriture et eau, et les rituels qui transforment un visiteur en ami.",
+    title: { en: "Welcoming a Guest", fr: "Accueillir un Invité" },
+    description: { en: "The language of hospitality — welcoming, offering food and water, and the rituals that turn a visitor into a friend.", fr: "Le langage de l'hospitalité — accueillir, offrir nourriture et eau, et les rituels qui transforment un visiteur en ami." },
     duration: 5,
     phrases: [
       { text: "[Welcome! Come in, please.]",                           en: "Welcome! Come in, please.",                           fr: "Bienvenue ! Entrez, s'il vous plaît." },
@@ -314,10 +289,8 @@ const COMMUNICATIVE: LessonDef[] = [
     ],
   },
   {
-    title: "Asking for Help & Directions",
-    titleFr: "Demander de l'Aide et un Chemin",
-    description: "Find your way and ask for help — the navigational and social phrases that get you where you need to go.",
-    descriptionFr: "Trouvez votre chemin et demandez de l'aide — les formules de navigation qui vous mènent où vous devez aller.",
+    title: { en: "Asking for Help & Directions", fr: "Demander de l'Aide et un Chemin" },
+    description: { en: "Find your way and ask for help — the navigational and social phrases that get you where you need to go.", fr: "Trouvez votre chemin et demandez de l'aide — les formules de navigation qui vous mènent où vous devez aller." },
     duration: 5,
     phrases: [
       { text: "[Excuse me — can you help me?]",      en: "Excuse me — can you help me?",      fr: "Excusez-moi — pouvez-vous m'aider ?" },
@@ -331,10 +304,8 @@ const COMMUNICATIVE: LessonDef[] = [
     ],
   },
   {
-    title: "Talking About Yourself",
-    titleFr: "Parler de Soi",
-    description: "Share who you are, what you do, and what you love — the conversations that build genuine friendships.",
-    descriptionFr: "Partagez qui vous êtes, ce que vous faites et ce que vous aimez — les conversations qui créent de vraies amitiés.",
+    title: { en: "Talking About Yourself", fr: "Parler de Soi" },
+    description: { en: "Share who you are, what you do, and what you love — the conversations that build genuine friendships.", fr: "Partagez qui vous êtes, ce que vous faites et ce que vous aimez — les conversations qui créent de vraies amitiés." },
     duration: 5,
     phrases: [
       { text: "[What is your job / occupation?]",                  en: "What is your job / occupation?",                  fr: "Quel est votre travail / votre métier ?" },
@@ -351,10 +322,8 @@ const COMMUNICATIVE: LessonDef[] = [
 
 const ORAL_TRADITION: LessonDef[] = [
   {
-    title: "A Sacred Place",
-    titleFr: "Un Endroit Sacré",
-    description: "A narrative about a sacred grove, hill, or river — the place that holds the community's memory and spiritual life.",
-    descriptionFr: "Un récit sur un bosquet, une colline ou une rivière sacrés — l'endroit qui porte la mémoire et la vie spirituelle de la communauté.",
+    title: { en: "A Sacred Place", fr: "Un Endroit Sacré" },
+    description: { en: "A narrative about a sacred grove, hill, or river — the place that holds the community's memory and spiritual life.", fr: "Un récit sur un bosquet, une colline ou une rivière sacrés — l'endroit qui porte la mémoire et la vie spirituelle de la communauté." },
     duration: 5,
     isOralOrSong: true,
     phrases: [
@@ -368,10 +337,8 @@ const ORAL_TRADITION: LessonDef[] = [
     ],
   },
   {
-    title: "A Cautionary Tale",
-    titleFr: "Un Conte Édifiant",
-    description: "A traditional story that teaches through consequence — greed, pride, or disobedience meeting their natural correction.",
-    descriptionFr: "Un conte traditionnel qui enseigne par la conséquence — la cupidité, l'orgueil ou la désobéissance rencontrant leur correction naturelle.",
+    title: { en: "A Cautionary Tale", fr: "Un Conte Édifiant" },
+    description: { en: "A traditional story that teaches through consequence — greed, pride, or disobedience meeting their natural correction.", fr: "Un conte traditionnel qui enseigne par la conséquence — la cupidité, l'orgueil ou la désobéissance rencontrant leur correction naturelle." },
     duration: 5,
     isOralOrSong: true,
     phrases: [
@@ -385,10 +352,8 @@ const ORAL_TRADITION: LessonDef[] = [
     ],
   },
   {
-    title: "Proverbs & Wisdom",
-    titleFr: "Proverbes et Sagesse",
-    description: "The proverbs that encode the community's values, ethics, and vision of the good life — short sentences that carry generations of thought.",
-    descriptionFr: "Les proverbes qui encodent les valeurs, l'éthique et la vision de la vie bonne de la communauté — de courtes phrases qui portent des générations de pensée.",
+    title: { en: "Proverbs & Wisdom", fr: "Proverbes et Sagesse" },
+    description: { en: "The proverbs that encode the community's values, ethics, and vision of the good life — short sentences that carry generations of thought.", fr: "Les proverbes qui encodent les valeurs, l'éthique et la vision de la vie bonne de la communauté — de courtes phrases qui portent des générations de pensée." },
     duration: 6,
     isOralOrSong: true,
     phrases: [
@@ -405,10 +370,8 @@ const ORAL_TRADITION: LessonDef[] = [
 
 const SONGS_DEF: LessonDef[] = [
   {
-    title: "[Lullaby title in target language]",
-    titleFr: "[French title or transliteration]",
-    description: "[A lullaby sung to infants at night — tender imagery of protection, the natural world at rest, and the child's safe place in the community.]",
-    descriptionFr: "[Une berceuse chantée aux nourrissons la nuit — images tendres de protection, du monde naturel au repos, et de la place sûre de l'enfant dans la communauté.]",
+    title: { en: "[Lullaby title in target language]", fr: "[French title or transliteration]" },
+    description: { en: "[A lullaby sung to infants at night — tender imagery of protection, the natural world at rest, and the child's safe place in the community.]", fr: "[Une berceuse chantée aux nourrissons la nuit — images tendres de protection, du monde naturel au repos, et de la place sûre de l'enfant dans la communauté.]" },
     duration: 3,
     isOralOrSong: true,
     phrases: [
@@ -421,10 +384,8 @@ const SONGS_DEF: LessonDef[] = [
     ],
   },
   {
-    title: "[Praise song / work song title]",
-    titleFr: "[French title]",
-    description: "[A praise song or work song — call-and-response, performed at ceremonies or during communal labour, celebrating an ancestor, leader, or collective effort.]",
-    descriptionFr: "[Un chant de louange ou de travail — appel-réponse, exécuté lors de cérémonies ou du travail communal, célébrant un ancêtre, un chef ou un effort collectif.]",
+    title: { en: "[Praise song / work song title]", fr: "[French title]" },
+    description: { en: "[A praise song or work song — call-and-response, performed at ceremonies or during communal labour, celebrating an ancestor, leader, or collective effort.]", fr: "[Un chant de louange ou de travail — appel-réponse, exécuté lors de cérémonies ou du travail communal, célébrant un ancêtre, un chef ou un effort collectif.]" },
     duration: 4,
     isOralOrSong: true,
     phrases: [
@@ -440,10 +401,8 @@ const SONGS_DEF: LessonDef[] = [
 
 const EVERYDAY_LIFE: LessonDef[] = [
   {
-    title: "At the Clinic",
-    titleFr: "À la Clinique",
-    description: "Describe symptoms, ask about treatments, and navigate a medical appointment — vocabulary every speaker needs when health matters.",
-    descriptionFr: "Décrivez des symptômes, renseignez-vous sur les traitements et gérez une consultation médicale — le vocabulaire indispensable en cas de problème de santé.",
+    title: { en: "At the Clinic", fr: "À la Clinique" },
+    description: { en: "Describe symptoms, ask about treatments, and navigate a medical appointment — vocabulary every speaker needs when health matters.", fr: "Décrivez des symptômes, renseignez-vous sur les traitements et gérez une consultation médicale — le vocabulaire indispensable en cas de problème de santé." },
     duration: 6,
     phrases: [
       { text: "[I am not feeling well. I have been sick since [yesterday / two days ago].]",          en: "I am not feeling well. I have been sick since yesterday.",                         fr: "Je ne me sens pas bien. Je suis malade depuis hier." },
@@ -459,10 +418,8 @@ const EVERYDAY_LIFE: LessonDef[] = [
     ],
   },
   {
-    title: "Getting Around",
-    titleFr: "Se Déplacer",
-    description: "Ask for and give directions, use public transport, and describe where things are — the language of navigating the city and the road.",
-    descriptionFr: "Demandez et donnez des directions, utilisez les transports en commun et décrivez l'emplacement des choses — le langage pour se repérer en ville et sur la route.",
+    title: { en: "Getting Around", fr: "Se Déplacer" },
+    description: { en: "Ask for and give directions, use public transport, and describe where things are — the language of navigating the city and the road.", fr: "Demandez et donnez des directions, utilisez les transports en commun et décrivez l'emplacement des choses — le langage pour se repérer en ville et sur la route." },
     duration: 6,
     phrases: [
       { text: "[Excuse me, I am looking for [the bus station / the hospital / the market]. Can you help me?]", en: "Excuse me, I am looking for the bus station. Can you help me?",                                fr: "Excusez-moi, je cherche la gare routière. Pouvez-vous m'aider ?" },
@@ -478,10 +435,8 @@ const EVERYDAY_LIFE: LessonDef[] = [
     ],
   },
   {
-    title: "Food & Cooking",
-    titleFr: "Nourriture et Cuisine",
-    description: "Talk about ingredients, cooking methods, and the meals that define community — from the kitchen to the table.",
-    descriptionFr: "Parlez des ingrédients, des méthodes de cuisson et des repas qui définissent la communauté — de la cuisine à la table.",
+    title: { en: "Food & Cooking", fr: "Nourriture et Cuisine" },
+    description: { en: "Talk about ingredients, cooking methods, and the meals that define community — from the kitchen to the table.", fr: "Parlez des ingrédients, des méthodes de cuisson et des repas qui définissent la communauté — de la cuisine à la table." },
     duration: 6,
     phrases: [
       { text: "[What are you cooking? It smells wonderful!]",                                                    en: "What are you cooking? It smells wonderful!",                                              fr: "Qu'est-ce que vous cuisinez ? Ça sent merveilleusement bon !" },
@@ -497,10 +452,8 @@ const EVERYDAY_LIFE: LessonDef[] = [
     ],
   },
   {
-    title: "Weather & the Seasons",
-    titleFr: "Le Temps et les Saisons",
-    description: "Describe the weather, talk about the rainy and dry seasons, and discuss how climate shapes daily life and the farming calendar.",
-    descriptionFr: "Décrivez le temps, parlez des saisons des pluies et sèches, et discutez de la façon dont le climat façonne la vie quotidienne et le calendrier agricole.",
+    title: { en: "Weather & the Seasons", fr: "Le Temps et les Saisons" },
+    description: { en: "Describe the weather, talk about the rainy and dry seasons, and discuss how climate shapes daily life and the farming calendar.", fr: "Décrivez le temps, parlez des saisons des pluies et sèches, et discutez de la façon dont le climat façonne la vie quotidienne et le calendrier agricole." },
     duration: 5,
     phrases: [
       { text: "[How is the weather today? It looks like it might rain.]",                                    en: "How is the weather today? It looks like it might rain this afternoon.",                   fr: "Quel temps fait-il aujourd'hui ? On dirait qu'il pourrait pleuvoir cet après-midi." },
@@ -515,10 +468,8 @@ const EVERYDAY_LIFE: LessonDef[] = [
     ],
   },
   {
-    title: "Making Plans",
-    titleFr: "Faire des Projets",
-    description: "Suggest activities, agree on times and places, make and change plans — the social language of coordinating with others.",
-    descriptionFr: "Proposez des activités, convenez d'heures et de lieux, faites et modifiez des plans — le langage social pour se coordonner avec les autres.",
+    title: { en: "Making Plans", fr: "Faire des Projets" },
+    description: { en: "Suggest activities, agree on times and places, make and change plans — the social language of coordinating with others.", fr: "Proposez des activités, convenez d'heures et de lieux, faites et modifiez des plans — le langage social pour se coordonner avec les autres." },
     duration: 5,
     phrases: [
       { text: "[Are you free [this weekend / tomorrow evening / next Friday]? I would like to invite you to [event].]", en: "Are you free this Saturday? I would like to invite you to a gathering at my place.",       fr: "Êtes-vous libre ce samedi ? J'aimerais vous inviter à une réunion chez moi." },
@@ -536,10 +487,8 @@ const EVERYDAY_LIFE: LessonDef[] = [
 
 const CONTEMPORARY: LessonDef[] = [
   {
-    title: "Technology & Connection",
-    titleFr: "Technologie et Connexion",
-    description: "Talk about phones, the internet, and social media — how technology is changing the way we communicate, learn, and stay connected.",
-    descriptionFr: "Parlez des téléphones, d'internet et des réseaux sociaux — comment la technologie change la façon dont nous communiquons, apprenons et restons connectés.",
+    title: { en: "Technology & Connection", fr: "Technologie et Connexion" },
+    description: { en: "Talk about phones, the internet, and social media — how technology is changing the way we communicate, learn, and stay connected.", fr: "Parlez des téléphones, d'internet et des réseaux sociaux — comment la technologie change la façon dont nous communiquons, apprenons et restons connectés." },
     duration: 6,
     phrases: [
       { text: "[Do you use a smartphone? Which apps do you use most often and for what?]",                                         en: "Do you use a smartphone? Which apps do you use most often and why?",                                              fr: "Utilisez-vous un smartphone ? Quelles applications utilisez-vous le plus souvent et pourquoi ?" },
@@ -554,10 +503,8 @@ const CONTEMPORARY: LessonDef[] = [
     ],
   },
   {
-    title: "Environment & Our Responsibility",
-    titleFr: "L'Environnement et Notre Responsabilité",
-    description: "Discuss environmental change, how it affects communities, and what traditional knowledge offers as a response — a B2-level conversation about the world we share.",
-    descriptionFr: "Discutez du changement environnemental, de son impact sur les communautés et de ce que le savoir traditionnel peut apporter en réponse — une conversation de niveau B2 sur le monde que nous partageons.",
+    title: { en: "Environment & Our Responsibility", fr: "L'Environnement et Notre Responsabilité" },
+    description: { en: "Discuss environmental change, how it affects communities, and what traditional knowledge offers as a response — a B2-level conversation about the world we share.", fr: "Discutez du changement environnemental, de son impact sur les communautés et de ce que le savoir traditionnel peut apporter en réponse — une conversation de niveau B2 sur le monde que nous partageons." },
     duration: 6,
     phrases: [
       { text: "[Have you noticed changes in the environment around you over the past [ten / twenty] years?]",                      en: "Have you noticed changes in the environment around your community over the past twenty years?",                     fr: "Avez-vous remarqué des changements dans l'environnement autour de votre communauté au cours des vingt dernières années ?" },
@@ -572,10 +519,8 @@ const CONTEMPORARY: LessonDef[] = [
     ],
   },
   {
-    title: "Identity & Belonging",
-    titleFr: "Identité et Appartenance",
-    description: "Explore questions of who you are, where you belong, and how language and culture shape identity — a rich B2-level conversation.",
-    descriptionFr: "Explorez les questions de qui vous êtes, où vous appartenez et comment la langue et la culture façonnent l'identité — une riche conversation de niveau B2.",
+    title: { en: "Identity & Belonging", fr: "Identité et Appartenance" },
+    description: { en: "Explore questions of who you are, where you belong, and how language and culture shape identity — a rich B2-level conversation.", fr: "Explorez les questions de qui vous êtes, où vous appartenez et comment la langue et la culture façonnent l'identité — une riche conversation de niveau B2." },
     duration: 6,
     phrases: [
       { text: "[How would you describe your identity? What are the different parts that make up who you are?]",                    en: "How would you describe your own identity? What are the different parts that make up who you are?",               fr: "Comment décririez-vous votre propre identité ? Quelles sont les différentes parties qui constituent ce que vous êtes ?" },
@@ -590,10 +535,8 @@ const CONTEMPORARY: LessonDef[] = [
     ],
   },
   {
-    title: "Work, Ambition & the Future",
-    titleFr: "Travail, Ambition et Avenir",
-    description: "Discuss careers, dreams, and the balance between personal ambition and community responsibility — a B2-level exploration of purpose and the future.",
-    descriptionFr: "Discutez de carrières, de rêves et de l'équilibre entre ambition personnelle et responsabilité communautaire — une exploration de niveau B2 du but et de l'avenir.",
+    title: { en: "Work, Ambition & the Future", fr: "Travail, Ambition et Avenir" },
+    description: { en: "Discuss careers, dreams, and the balance between personal ambition and community responsibility — a B2-level exploration of purpose and the future.", fr: "Discutez de carrières, de rêves et de l'équilibre entre ambition personnelle et responsabilité communautaire — une exploration de niveau B2 du but et de l'avenir." },
     duration: 6,
     phrases: [
       { text: "[What do you do for work? How did you come to choose that path?]",                                                  en: "What do you do for work? And how did you come to choose that particular path in life?",                          fr: "Que faites-vous comme travail ? Et comment en êtes-vous venu à choisir ce chemin particulier dans la vie ?" },
@@ -608,10 +551,8 @@ const CONTEMPORARY: LessonDef[] = [
     ],
   },
   {
-    title: "Ceremony, Celebration & Ritual",
-    titleFr: "Cérémonie, Célébration et Rituel",
-    description: "Describe rites of passage, celebrations, and ceremonies — the formal language of community milestones and cultural continuity.",
-    descriptionFr: "Décrivez les rites de passage, les célébrations et les cérémonies — le langage formel des étapes communautaires et de la continuité culturelle.",
+    title: { en: "Ceremony, Celebration & Ritual", fr: "Cérémonie, Célébration et Rituel" },
+    description: { en: "Describe rites of passage, celebrations, and ceremonies — the formal language of community milestones and cultural continuity.", fr: "Décrivez les rites de passage, les célébrations et les cérémonies — le langage formel des étapes communautaires et de la continuité culturelle." },
     duration: 7,
     isOralOrSong: true,
     phrases: [
@@ -634,56 +575,48 @@ const COURSE_DEFS: CourseDef[] = [
     type: "first_words", abbrev: "fw", order: 1, level: "beginner",
     titleEn: "First Words", titleFr: "Premiers Mots",
     descriptionEn: "Begin with greetings, names, and introductions — the words that open doors and build belonging.",
-    descriptionFr: "Commencez par les salutations, les noms et les présentations — les mots qui ouvrent les portes et créent un sentiment d'appartenance.",
     lessons: FIRST_WORDS,
   },
   {
     type: "sound_script", abbrev: "ss", order: 2, level: "beginner",
     titleEn: "Sounds & Script", titleFr: "Sons et Écriture",
     descriptionEn: "Master the sound system and writing conventions — vowels, consonants, tones, and the orthography of the language.",
-    descriptionFr: "Maîtrisez le système phonétique et les conventions d'écriture — voyelles, consonnes, tons et l'orthographe de la langue.",
     lessons: SOUND_SCRIPT,
   },
   {
     type: "numbers_trade", abbrev: "nt", order: 3, level: "beginner",
     titleEn: "Counting & Trade", titleFr: "Chiffres et Commerce",
     descriptionEn: "Learn to count, handle money, and navigate the market — the practical vocabulary of everyday life.",
-    descriptionFr: "Apprenez à compter, à gérer l'argent et à naviguer au marché — le vocabulaire pratique de la vie quotidienne.",
     lessons: NUMBERS_TRADE,
   },
   {
     type: "communicative", abbrev: "cm", order: 4, level: "beginner",
     titleEn: "Speaking Well", titleFr: "Bien Parler",
     descriptionEn: "Practise extended conversations — hospitality, asking for help, and sharing who you are.",
-    descriptionFr: "Pratiquez des conversations étendues — hospitalité, demande d'aide et partage de qui vous êtes.",
     lessons: COMMUNICATIVE,
   },
   {
     type: "oral_tradition", abbrev: "ot", order: 5, level: "intermediate",
     titleEn: "Oral Tradition", titleFr: "Tradition Orale",
     descriptionEn: "Listen to traditional stories, proverbs, and communal wisdom rooted in centuries of shared memory.",
-    descriptionFr: "Écoutez des contes traditionnels, des proverbes et de la sagesse communautaire enracinés dans des siècles de mémoire partagée.",
     lessons: ORAL_TRADITION,
   },
   {
     type: "songs", abbrev: "sg", order: 6, level: "beginner",
     titleEn: "Songs & Sing-Along", titleFr: "Chansons et Karaoké",
     descriptionEn: "Learn through traditional and community songs — lullabies and praise songs with sing-along lyrics.",
-    descriptionFr: "Apprenez à travers des chansons traditionnelles et communautaires — berceuses et chants de louange avec paroles à chanter.",
     lessons: SONGS_DEF,
   },
   {
     type: "everyday_life", abbrev: "el", order: 7, level: "beginner",
     titleEn: "Everyday Life", titleFr: "La Vie Quotidienne",
     descriptionEn: "Navigate real-life situations — health, travel, food, weather, and plans — with the confidence of an A2 speaker.",
-    descriptionFr: "Naviguez dans des situations de la vie réelle — santé, voyages, nourriture, météo et projets — avec la confiance d'un locuteur A2.",
     lessons: EVERYDAY_LIFE,
   },
   {
     type: "contemporary", abbrev: "ct", order: 8, level: "intermediate",
     titleEn: "Contemporary World", titleFr: "Le Monde Contemporain",
     descriptionEn: "Engage with complex modern topics — technology, environment, identity, work, and ceremony — at B2 level.",
-    descriptionFr: "Abordez des sujets modernes complexes — technologie, environnement, identité, travail et cérémonie — au niveau B2.",
     lessons: CONTEMPORARY,
   },
 ];
@@ -694,10 +627,8 @@ function buildCourses(languageId: string, nativeName: string) {
   return COURSE_DEFS.map((def) => ({
     id: `course-${languageId}-${def.abbrev}`,
     languageId,
-    title: `${nativeName} — ${def.titleEn}`,
-    titleFr: `${nativeName} — ${def.titleFr}`,
-    description: def.descriptionEn,
-    descriptionFr: def.descriptionFr,
+    title: { en: `${nativeName} — ${def.titleEn}`, fr: `${nativeName} — ${def.titleFr}` },
+    description: { en: def.descriptionEn, fr: def.descriptionFr },
     level: def.level,
     lessonsCount: def.lessons.length,
     order: def.order,
@@ -716,9 +647,7 @@ function buildLessons(languageId: string, def: CourseDef): LessonData[] {
       courseId,
       type: isSong ? ("song" as const) : ("lesson" as const),
       title: lesson.title,
-      titleFr: lesson.titleFr,
       description: lesson.description,
-      descriptionFr: lesson.descriptionFr,
       audioUrl: null,
       duration: null,
       order: n,
@@ -729,8 +658,7 @@ function buildLessons(languageId: string, def: CourseDef): LessonData[] {
         startTime: lesson.isOralOrSong ? 0 : pi * 4,
         endTime: lesson.isOralOrSong ? 0 : (pi + 1) * 4,
         text: p.text,
-        translation: p.en,
-        translationFr: p.fr,
+        translation: { en: p.en, fr: p.fr },
       })),
     };
   });

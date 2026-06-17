@@ -1,5 +1,8 @@
 import { getAccent } from "@/constants/accent-colors";
+import { LocalizedTextInput, toLocalizedText } from "@/components/ui/localized-text-input";
+import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import type { LocalizedText } from "@/types";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { friendlyError } from "@/lib/api";
@@ -53,10 +56,8 @@ type CulturalCategory = (typeof CULTURAL_CATEGORIES)[number];
 type ProverbForm = {
   id?: string;
   text: string;
-  translation: string;
-  translationFr: string;
-  meaning: string;
-  meaningFr: string;
+  translation: LocalizedText;
+  meaning: LocalizedText;
   literal: string;
   context: string;
   tags: string;
@@ -64,10 +65,8 @@ type ProverbForm = {
 
 const EMPTY_PROVERB: ProverbForm = {
   text: "",
-  translation: "",
-  translationFr: "",
-  meaning: "",
-  meaningFr: "",
+  translation: {},
+  meaning: {},
   literal: "",
   context: "",
   tags: "",
@@ -76,21 +75,17 @@ const EMPTY_PROVERB: ProverbForm = {
 type CulturalForm = {
   id?: string;
   imageEmoji: string;
-  title: string;
-  titleFr: string;
+  title: LocalizedText;
   category: CulturalCategory;
-  description: string;
-  descriptionFr: string;
+  description: LocalizedText;
   keyTerms: CulturalKeyTerm[];
 };
 
 const EMPTY_CULTURAL: CulturalForm = {
   imageEmoji: "🌍",
-  title: "",
-  titleFr: "",
+  title: {},
   category: "festivals",
-  description: "",
-  descriptionFr: "",
+  description: {},
   keyTerms: [],
 };
 
@@ -142,12 +137,12 @@ export default function EducatorCultureScreen() {
   const q = searchQuery.toLowerCase().trim();
   const filteredProverbs = q
     ? proverbs.filter(
-        (p) => p.text.toLowerCase().includes(q) || p.translation.toLowerCase().includes(q),
+        (p) => p.text.toLowerCase().includes(q) || localize(p.translation, "en").toLowerCase().includes(q),
       )
     : proverbs;
   const filteredCultural = q
     ? culturalItems.filter(
-        (c) => c.title.toLowerCase().includes(q) || c.category.toLowerCase().includes(q),
+        (c) => localize(c.title, "en").toLowerCase().includes(q) || c.category.toLowerCase().includes(q),
       )
     : culturalItems;
 
@@ -166,10 +161,8 @@ export default function EducatorCultureScreen() {
     setProverbForm({
       id: item.id,
       text: item.text,
-      translation: item.translation,
-      translationFr: item.translationFr ?? "",
-      meaning: item.meaning,
-      meaningFr: item.meaningFr ?? "",
+      translation: toLocalizedText(item.translation, item.translationFr),
+      meaning: toLocalizedText(item.meaning, item.meaningFr),
       literal: item.literal ?? "",
       context: item.context ?? "",
       tags: (item.tags ?? []).join(", "),
@@ -179,7 +172,7 @@ export default function EducatorCultureScreen() {
   };
 
   const submitProverb = () => {
-    if (!proverbForm.text.trim() || !proverbForm.translation.trim() || !proverbForm.meaning.trim()) {
+    if (!proverbForm.text.trim() || !proverbForm.translation.en?.trim() || !proverbForm.meaning.en?.trim()) {
       toastError(t("educator.culture.missingFields"), t("educator.culture.proverbRequired"));
       return;
     }
@@ -192,10 +185,10 @@ export default function EducatorCultureScreen() {
         id: proverbForm.id,
         languageId: activeLanguageId,
         text: proverbForm.text.trim(),
-        translation: proverbForm.translation.trim(),
-        translationFr: proverbForm.translationFr.trim() || undefined,
-        meaning: proverbForm.meaning.trim(),
-        meaningFr: proverbForm.meaningFr.trim() || undefined,
+        translation: proverbForm.translation.en?.trim() ?? "",
+        translationFr: proverbForm.translation.fr?.trim() || undefined,
+        meaning: proverbForm.meaning.en?.trim() ?? "",
+        meaningFr: proverbForm.meaning.fr?.trim() || undefined,
         literal: proverbForm.literal.trim() || undefined,
         context: proverbForm.context.trim() || undefined,
         tags: tags.length > 0 ? tags : undefined,
@@ -242,11 +235,9 @@ export default function EducatorCultureScreen() {
     setCulturalForm({
       id: item.id,
       imageEmoji: item.imageEmoji,
-      title: item.title,
-      titleFr: item.titleFr ?? "",
+      title: toLocalizedText(item.title, item.titleFr),
       category: (item.category as CulturalCategory) ?? "festivals",
-      description: item.description,
-      descriptionFr: item.descriptionFr ?? "",
+      description: toLocalizedText(item.description, item.descriptionFr),
       keyTerms: item.keyTerms ?? [],
     });
     setEditingCultural(true);
@@ -256,8 +247,8 @@ export default function EducatorCultureScreen() {
   const submitCultural = () => {
     if (
       !culturalForm.imageEmoji.trim() ||
-      !culturalForm.title.trim() ||
-      !culturalForm.description.trim()
+      !culturalForm.title.en?.trim() ||
+      !culturalForm.description.en?.trim()
     ) {
       toastError(t("educator.culture.missingFields"), t("educator.culture.culturalRequired"));
       return;
@@ -267,11 +258,11 @@ export default function EducatorCultureScreen() {
         id: culturalForm.id,
         languageId: activeLanguageId,
         imageEmoji: culturalForm.imageEmoji.trim(),
-        title: culturalForm.title.trim(),
-        titleFr: culturalForm.titleFr.trim() || undefined,
+        title: culturalForm.title.en?.trim() ?? "",
+        titleFr: culturalForm.title.fr?.trim() || undefined,
         category: culturalForm.category,
-        description: culturalForm.description.trim(),
-        descriptionFr: culturalForm.descriptionFr.trim() || undefined,
+        description: culturalForm.description.en?.trim() ?? "",
+        descriptionFr: culturalForm.description.fr?.trim() || undefined,
         keyTerms: culturalForm.keyTerms.filter((kt) => kt.word.trim() && kt.english.trim()),
       },
       {
@@ -391,35 +382,20 @@ export default function EducatorCultureScreen() {
             multiline
             className={`${inputCls} min-h-[44px]`}
           />
-          <TextInput
-            value={proverbForm.translation}
-            onChangeText={(translation) => setProverbForm((p) => ({ ...p, translation }))}
-            placeholder={t("educator.culture.englishTranslation")}
-            placeholderTextColor={M.muted}
-            className={`mt-2 ${inputCls}`}
-          />
-          <TextInput
-            value={proverbForm.translationFr}
-            onChangeText={(translationFr) => setProverbForm((p) => ({ ...p, translationFr }))}
-            placeholder={t("educator.culture.frenchTranslation")}
-            placeholderTextColor={M.muted}
-            className={`mt-2 ${inputCls}`}
-          />
-          <TextInput
+          <View style={{ marginTop: 8 }}>
+            <LocalizedTextInput
+              label={t("educator.culture.englishTranslation")}
+              value={proverbForm.translation}
+              onChange={(translation) => setProverbForm((p) => ({ ...p, translation }))}
+              required
+            />
+          </View>
+          <LocalizedTextInput
+            label={t("educator.culture.meaningLabel")}
             value={proverbForm.meaning}
-            onChangeText={(meaning) => setProverbForm((p) => ({ ...p, meaning }))}
-            placeholder={t("educator.culture.meaningLabel")}
-            placeholderTextColor={M.muted}
+            onChange={(meaning) => setProverbForm((p) => ({ ...p, meaning }))}
             multiline
-            className={`mt-2 ${inputCls} min-h-[44px]`}
-          />
-          <TextInput
-            value={proverbForm.meaningFr}
-            onChangeText={(meaningFr) => setProverbForm((p) => ({ ...p, meaningFr }))}
-            placeholder={t("educator.culture.meaningFr")}
-            placeholderTextColor={M.muted}
-            multiline
-            className={`mt-2 ${inputCls} min-h-[44px]`}
+            required
           />
           <TextInput
             value={proverbForm.literal}
@@ -479,7 +455,7 @@ export default function EducatorCultureScreen() {
               : t("educator.culture.newCultural")}
           </Text>
 
-          <View className="flex-row gap-2">
+          <View className="flex-row gap-2 items-center" style={{ marginBottom: 8 }}>
             <TextInput
               value={culturalForm.imageEmoji}
               onChangeText={(imageEmoji) => setCulturalForm((c) => ({ ...c, imageEmoji }))}
@@ -488,20 +464,12 @@ export default function EducatorCultureScreen() {
               maxLength={8}
               className={`${inputCls} w-16 text-center text-xl`}
             />
-            <TextInput
-              value={culturalForm.title}
-              onChangeText={(title) => setCulturalForm((c) => ({ ...c, title }))}
-              placeholder={t("educator.culture.titleLabel")}
-              placeholderTextColor={M.muted}
-              className={`${inputCls} flex-1`}
-            />
           </View>
-          <TextInput
-            value={culturalForm.titleFr}
-            onChangeText={(titleFr) => setCulturalForm((c) => ({ ...c, titleFr }))}
-            placeholder="Titre en français"
-            placeholderTextColor={M.muted}
-            className={`mt-2 ${inputCls}`}
+          <LocalizedTextInput
+            label={t("educator.culture.titleLabel")}
+            value={culturalForm.title}
+            onChange={(title) => setCulturalForm((c) => ({ ...c, title }))}
+            required
           />
 
           <Text className="mb-2 mt-3 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
@@ -526,21 +494,12 @@ export default function EducatorCultureScreen() {
             })}
           </ScrollView>
 
-          <TextInput
+          <LocalizedTextInput
+            label={t("educator.culture.descriptionLabel")}
             value={culturalForm.description}
-            onChangeText={(description) => setCulturalForm((c) => ({ ...c, description }))}
-            placeholder={t("educator.culture.descriptionLabel")}
-            placeholderTextColor={M.muted}
+            onChange={(description) => setCulturalForm((c) => ({ ...c, description }))}
             multiline
-            className={`mt-3 ${inputCls} min-h-[60px]`}
-          />
-          <TextInput
-            value={culturalForm.descriptionFr}
-            onChangeText={(descriptionFr) => setCulturalForm((c) => ({ ...c, descriptionFr }))}
-            placeholder={t("educator.culture.descriptionFrLabel")}
-            placeholderTextColor={M.muted}
-            multiline
-            className={`mt-2 ${inputCls} min-h-[60px]`}
+            required
           />
 
           <View className="mt-3 flex-row items-center justify-between">

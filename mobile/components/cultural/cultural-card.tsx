@@ -1,6 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ShareModal } from "@/components/share/share-modal";
-import { localizeField } from "@/lib/localize";
+import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { CulturalContent } from "@/types";
@@ -39,13 +39,13 @@ export function CulturalCard({ item, onPress }: Props) {
           style={{ marginTop: 8, fontSize: 16, fontWeight: "700", color: M.text }}
           numberOfLines={1}
         >
-          {localizeField(item.title, item.titleFr, uiLanguage)}
+          {localize(item.title, uiLanguage)}
         </Text>
         <Text
           style={{ marginTop: 4, fontSize: 13, lineHeight: 18, color: M.sub }}
           numberOfLines={2}
         >
-          {localizeField(item.description, item.descriptionFr, uiLanguage)}
+          {localize(item.description, uiLanguage)}
         </Text>
 
         <TouchableOpacity
@@ -64,8 +64,8 @@ export function CulturalCard({ item, onPress }: Props) {
         data={{
           template: "cultural",
           languageId: item.languageId,
-          title: localizeField(item.title, item.titleFr, uiLanguage),
-          description: localizeField(item.description, item.descriptionFr, uiLanguage),
+          title: localize(item.title, uiLanguage),
+          description: localize(item.description, uiLanguage),
           category: categoryLabel,
           emoji: item.imageEmoji,
           language: item.languageId,

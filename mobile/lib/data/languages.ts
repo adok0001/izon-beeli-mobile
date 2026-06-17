@@ -96,9 +96,15 @@ export const LANGUAGES: LanguageEntry[] = [
   { id: "malagasy", name: "Malagasy", nativeName: "Malagasy", region: "Southern Africa" },
 ];
 
-/** All languages now have at least template content via lib/data/lessons/stub.ts. */
-/** Filtered to only languages that have courses — used in learning UI. */
-export const ACTIVE_LANGUAGES = LANGUAGES;
+/** Languages with real hand-crafted content (mirrors LAUNCHED_IDS in lessons/stub.ts). */
+const CONTENT_IDS = new Set([
+  "izon", "yoruba", "igbo", "hausa", "swahili", "amharic",
+  "akan", "wolof", "arabic-egyptian", "somali", "bambara",
+  "tamazight", "kinyarwanda", "ewe",
+]);
+
+/** Filtered to only languages that have real content — used in learning UI. */
+export const ACTIVE_LANGUAGES = LANGUAGES.filter((l) => CONTENT_IDS.has(l.id));
 
 /** Look up a language's display name by its id. Returns the id if not found. */
 export function getLanguageName(id: string): string {

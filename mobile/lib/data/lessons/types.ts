@@ -3,12 +3,16 @@
  * Keep this file dependency-free so it can be imported from anywhere.
  */
 
+/** BCP-47 UI language code → localized string. Mirrors LocalizedText in @/types. */
+export type LocalizedText = Partial<Record<"en" | "fr" | "pcm" | "ar" | "pt", string>>;
+
 export interface TranscriptSegment {
   id: string;
   startTime: number;
   endTime: number;
   text: string;
-  translation?: string;
+  translation?: string | LocalizedText;
+  /** @deprecated Use `translation` as LocalizedText */
   translationFr?: string;
 }
 
@@ -19,9 +23,11 @@ export interface LessonData {
   courseId: string;
   /** @default "lesson" */
   type?: LessonType;
-  title: string;
+  title: string | LocalizedText;
+  /** @deprecated Use `title` as LocalizedText */
   titleFr?: string;
-  description: string;
+  description: string | LocalizedText;
+  /** @deprecated Use `description` as LocalizedText */
   descriptionFr?: string;
   /** null = bundled/local audio (app uses BUNDLED_AUDIO map) */
   audioUrl: string | null;
@@ -36,5 +42,11 @@ export interface LessonData {
   isActive?: boolean;
   /** Competency tags — e.g. ["listening", "vocabulary"] */
   skills?: string[];
+  /** Scene slug within a contextual place course, e.g. "house.kitchen" */
+  scene?: string;
+  /** Display title for the scene section header, e.g. "Kitchen" */
+  sceneTitle?: string;
+  /** Sort order of this scene within its course (lower = first) */
+  sceneOrder?: number;
   transcript: TranscriptSegment[];
 }

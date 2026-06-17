@@ -1,4 +1,5 @@
 import { analytics } from "@/lib/analytics";
+import { localize } from "@/lib/localize";
 import { WordAudioButton } from "@/components/dictionary/word-audio-button";
 import { NsibidiText } from "@/components/nsibidi/nsibidi-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -126,9 +127,10 @@ function WordRow({
               )}
             </View>
             <Text style={{ marginTop: 2, fontSize: 13, color: M.sub }}>
-              {entry.english.includes(";")
-                ? entry.english.split(";").map((m) => m.trim()).filter(Boolean).join(" · ")
-                : entry.english}
+              {((): string => {
+                const eng = localize(entry.english, "en");
+                return eng.includes(";") ? eng.split(";").map((m) => m.trim()).filter(Boolean).join(" · ") : eng;
+              })()}
             </Text>
             {!!entry.nsibidi && (
               <NsibidiText size={18} color={M.accent} style={{ marginTop: 2 }}>
@@ -169,7 +171,7 @@ function RecentlyViewedStrip({ entries, onPress }: { entries: DictionaryEntry[];
             className="active:opacity-70"
           >
             <Text style={{ fontSize: 13, fontWeight: "600", color: M.text }}>{entry.word}</Text>
-            <Text style={{ fontSize: 11, color: M.sub }}>{entry.english.split(";")[0].trim()}</Text>
+            <Text style={{ fontSize: 11, color: M.sub }}>{localize(entry.english, "en").split(";")[0].trim()}</Text>
           </Pressable>
         ))}
       </ScrollView>

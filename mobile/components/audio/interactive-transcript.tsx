@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import { View, Text, Pressable, ScrollView, Modal, type GestureResponderEvent } from "react-native";
 import { getAccent } from "@/constants/accent-colors";
+import { localize } from "@/lib/localize";
 import { useAudioStore } from "@/store/audio-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
@@ -293,7 +294,7 @@ export function InteractiveTranscript({ segments, onSegmentPress }: Props) {
                   );
                 })}
               </Text>
-              {(segment.translation || segment.translationFr) && (
+              {localize(segment.translation, uiLanguage) ? (
                 <Text
                   className={`mt-1 text-sm ${
                     isLoopingThisSegment
@@ -303,11 +304,9 @@ export function InteractiveTranscript({ segments, onSegmentPress }: Props) {
                       : "text-neutral-500 dark:text-neutral-400"
                   }`}
                 >
-                  {uiLanguage === "fr"
-                    ? (segment.translationFr ?? segment.translation)
-                    : segment.translation}
+                  {localize(segment.translation, uiLanguage)}
                 </Text>
-              )}
+              ) : null}
               {segment.colorHex && (
                 <View
                   className="mt-1.5 flex-row items-center gap-1.5"

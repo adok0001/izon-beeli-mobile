@@ -1,7 +1,10 @@
 import { analytics } from "@/lib/analytics";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LocalizedTextInput } from "@/components/ui/localized-text-input";
 import { getAccent } from "@/constants/accent-colors";
+import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import type { LocalizedText } from "@/types";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { ApiError, friendlyError } from "@/lib/api";
 import {
@@ -71,13 +74,15 @@ export default function ContributeScreen() {
   const [selectedEntry, setSelectedEntry] = useState<DictionaryEntry | null>(null);
   const [langSearch, setLangSearch] = useState("");
   const [word, setWord] = useState(params.word ?? "");
-  const [english, setEnglish] = useState(params.english ?? "");
+  const [english, setEnglish] = useState<LocalizedText>(params.english ? { en: params.english } : {});
   const [category, setCategory] = useState<DictionaryCategory | null>(
     params.category ? (params.category as DictionaryCategory) : null
   );
   const [pronunciation, setPronunciation] = useState(params.pronunciation ?? "");
   const [example, setExample] = useState(params.example ?? "");
-  const [exampleTranslation, setExampleTranslation] = useState(params.exampleTranslation ?? "");
+  const [exampleTranslation, setExampleTranslation] = useState<LocalizedText>(
+    params.exampleTranslation ? { en: params.exampleTranslation } : {}
+  );
   const [imageUri, setImageUri] = useState<string | null>(null);
 
   const isPhrase = word.trim().includes(" ");
@@ -97,14 +102,14 @@ export default function ContributeScreen() {
   const handleSelectEntry = (entry: DictionaryEntry) => {
     setSelectedEntry(entry);
     setWord(entry.word);
-    setEnglish("");
+    setEnglish({});
     setCategory(entry.category);
   };
 
   const handleClearEntry = () => {
     setSelectedEntry(null);
     setWord("");
-    setEnglish("");
+    setEnglish({});
     setCategory(null);
   };
 
@@ -212,10 +217,11 @@ export default function ContributeScreen() {
     );
   };
 
+  const hasEnglish = Object.values(english).some((v) => v?.trim());
   const canSubmit =
     selectedLanguage &&
     word.trim() &&
-    english.trim() &&
+    hasEnglish &&
     category &&
     !submitContribution.isPending &&
     !submitEntryContribution.isPending;
@@ -479,7 +485,7 @@ export default function ContributeScreen() {
                       >
                         <View style={{ flex: 1 }}>
                           <Text style={{ fontSize: 13, fontWeight: "600", color: M.text }}>{entry.word}</Text>
-                          <Text style={{ fontSize: 11, color: M.sub }} numberOfLines={1}>{entry.english}</Text>
+                          <Text style={{ fontSize: 11, color: M.sub }} numberOfLines={1}>{localize(entry.english, "en")}</Text>
                         </View>
                         <Text style={{ marginLeft: 8, fontSize: 11, color: M.accent }}>
                           {CATEGORY_LABELS[entry.category]}
@@ -489,15 +495,11 @@ export default function ContributeScreen() {
                   </View>
                 )}
 
-                <Text style={{ marginBottom: 6, fontSize: 13, fontWeight: "500", color: M.sub }}>
-                  {selectedEntry ? t("contribute.suggestedMeaning") : t("dictionaryPage.fieldEnglish")}
-                </Text>
-                <TextInput
+                <LocalizedTextInput
+                  label={selectedEntry ? t("contribute.suggestedMeaning") : t("dictionaryPage.fieldEnglish")}
                   value={english}
-                  onChangeText={setEnglish}
-                  placeholder={selectedEntry ? t("contribute.suggestedMeaningPlaceholder") : "e.g. Good morning"}
-                  placeholderTextColor={M.muted}
-                  style={{ marginBottom: 16, borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 12, fontSize: 15, color: M.text }}
+                  onChange={setEnglish}
+                  required
                 />
 
                 <Text style={{ marginBottom: 6, fontSize: 13, fontWeight: "500", color: M.sub }}>
@@ -532,26 +534,35 @@ export default function ContributeScreen() {
 
                 <View style={{ marginBottom: 16, borderRadius: 16, backgroundColor: M.accentGlow, padding: 16, borderWidth: 1, borderColor: M.accentBorder, borderLeftWidth: 4, borderLeftColor: M.accent }}>
                   <Text style={{ fontSize: 17, fontWeight: "700", color: M.text }}>{word}</Text>
-                  <Text style={{ marginTop: 2, fontSize: 13, color: M.sub }}>{english}</Text>
+                  <Text style={{ marginTop: 2, fontSize: 13, color: M.sub }}>{localize(english, "en")}</Text>
                   <Text style={{ marginTop: 4, fontSize: 11, color: M.accent }}>{category ? CATEGORY_LABELS[category] : ""}</Text>
                 </View>
 
-                {([
-                  { label: t("dictionaryPage.fieldPronunciation"), value: pronunciation, setter: setPronunciation, placeholder: "e.g. bah-ee-DEH" },
-                  { label: t("dictionaryPage.fieldExample"), value: example, setter: setExample, placeholder: "An example sentence using this word..." },
-                  { label: t("dictionaryPage.fieldExampleTranslation"), value: exampleTranslation, setter: setExampleTranslation, placeholder: "English translation of the example..." },
-                ] as const).map((field) => (
-                  <View key={field.label}>
-                    <Text style={{ marginBottom: 6, fontSize: 13, fontWeight: "500", color: M.sub }}>{field.label}</Text>
-                    <TextInput
-                      value={field.value}
-                      onChangeText={field.setter as (t: string) => void}
-                      placeholder={field.placeholder}
-                      placeholderTextColor={M.muted}
-                      style={{ marginBottom: 16, borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 12, fontSize: 15, color: M.text }}
-                    />
-                  </View>
-                ))}
+                <View>
+                  <Text style={{ marginBottom: 6, fontSize: 13, fontWeight: "500", color: M.sub }}>{t("dictionaryPage.fieldPronunciation")}</Text>
+                  <TextInput
+                    value={pronunciation}
+                    onChangeText={setPronunciation}
+                    placeholder="e.g. bah-ee-DEH"
+                    placeholderTextColor={M.muted}
+                    style={{ marginBottom: 16, borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 12, fontSize: 15, color: M.text }}
+                  />
+                </View>
+                <View>
+                  <Text style={{ marginBottom: 6, fontSize: 13, fontWeight: "500", color: M.sub }}>{t("dictionaryPage.fieldExample")}</Text>
+                  <TextInput
+                    value={example}
+                    onChangeText={setExample}
+                    placeholder="An example sentence using this word..."
+                    placeholderTextColor={M.muted}
+                    style={{ marginBottom: 16, borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 12, fontSize: 15, color: M.text }}
+                  />
+                </View>
+                <LocalizedTextInput
+                  label={t("dictionaryPage.fieldExampleTranslation")}
+                  value={exampleTranslation}
+                  onChange={setExampleTranslation}
+                />
 
                 <Text style={{ marginBottom: 6, fontSize: 13, fontWeight: "500", color: M.sub }}>
                   {t("contribute.audioPronunciation")}
@@ -672,11 +683,11 @@ export default function ContributeScreen() {
                         toastError(t("common.error"), message);
                       }
                     }}
-                    disabled={!word.trim() || !english.trim() || !category}
-                    style={{ flex: 1, alignItems: "center", borderRadius: 12, paddingVertical: 14, backgroundColor: word.trim() && english.trim() && category ? M.accent : M.border }}
+                    disabled={!word.trim() || !hasEnglish || !category}
+                    style={{ flex: 1, alignItems: "center", borderRadius: 12, paddingVertical: 14, backgroundColor: word.trim() && hasEnglish && category ? M.accent : M.border }}
                     className="active:opacity-80"
                   >
-                    <Text style={{ fontWeight: "600", color: word.trim() && english.trim() && category ? M.ink : M.muted }}>
+                    <Text style={{ fontWeight: "600", color: word.trim() && hasEnglish && category ? M.ink : M.muted }}>
                       {selectedEntry ? t("contribute.submitUpdate") : t("common.next")}
                     </Text>
                   </Pressable>

@@ -15,7 +15,7 @@ import { useRouter } from "expo-router";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Modal, Pressable, ScrollView, Text, View } from "react-native";
+import { Linking, Modal, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getLanguageName } from "@/lib/mock-data";
 
@@ -312,6 +312,11 @@ export default function ProfileScreen() {
           <MenuRow icon="exclamationmark.bubble" label={t("profile.sendFeedback")} onPress={() => setFeedbackVisible(true)} />
           <MenuRow icon="map.fill" label={t("profile.restartWelcomeTour")} onPress={async () => { await resetChecklist(); await resetTours(); showTour("welcome"); }} />
           <MenuRow icon="gearshape.fill" label={t("profile.settings")} onPress={() => router.push("/settings")} />
+
+          <SectionLabel label="Follow Us" />
+          <MenuRow icon="camera.fill" label="Instagram" detail="@beeliapp" onPress={() => Linking.openURL("https://instagram.com/beeliapp")} />
+          <MenuRow icon="play.rectangle.fill" label="TikTok" detail="@beeliapp" onPress={() => Linking.openURL("https://tiktok.com/@beeliapp")} />
+          <MenuRow icon="at" label="X (Twitter)" detail="@beeliapp" onPress={() => Linking.openURL("https://x.com/beeliapp")} />
 
           <View style={{ marginTop: 20 }}>
             <MenuRow icon="xmark" label={t("profile.signOut")} onPress={() => { analytics.reset(); signOut(); }} danger />

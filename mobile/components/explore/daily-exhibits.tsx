@@ -11,7 +11,7 @@ import { useProverbOfTheMonth } from "@/lib/hooks/use-proverb-of-the-month";
 import { useSongOfTheWeek } from "@/lib/hooks/use-song-of-the-week";
 import { useCourses } from "@/lib/hooks/use-courses";
 import { useWordsDueForReview } from "@/lib/hooks/use-wordbank";
-import { localizeField } from "@/lib/localize";
+import { localize } from "@/lib/localize";
 import { pickFeaturedGame, rankShelfGames, usePlaygroundStore } from "@/lib/playground";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
@@ -75,12 +75,12 @@ function ProverbOfTheMonthCard({ languageId }: { languageId: string }) {
         </Text>
         <View style={{ height: 1, backgroundColor: M.border, marginVertical: 12 }} />
         <Text style={{ fontSize: 13, lineHeight: 18, color: M.sub }}>
-          {localizeField(proverb.translation, proverb.translationFr, uiLanguage)}
+          {localize(proverb.translation, uiLanguage)}
         </Text>
         {proverb.meaning ? (
           <View style={{ marginTop: 10, borderRadius: 10, padding: 12, backgroundColor: `${M.accent}08` }}>
             <Text style={{ fontSize: 12, lineHeight: 17, color: M.sub }}>
-              {localizeField(proverb.meaning, proverb.meaningFr, uiLanguage)}
+              {localize(proverb.meaning, uiLanguage)}
             </Text>
           </View>
         ) : null}
@@ -139,11 +139,11 @@ function SongOfTheWeekCard({ languageId }: { languageId: string }) {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 14, fontWeight: "700", color: M.text }} numberOfLines={1}>
-                {localizeField(song.title, song.titleFr, uiLanguage)}
+                {localize(song.title, uiLanguage)}
               </Text>
               {song.description ? (
                 <Text style={{ marginTop: 2, fontSize: 12, color: M.sub }} numberOfLines={1}>
-                  {localizeField(song.description, song.descriptionFr, uiLanguage)}
+                  {localize(song.description, uiLanguage)}
                 </Text>
               ) : null}
             </View>

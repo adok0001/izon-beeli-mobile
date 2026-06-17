@@ -358,6 +358,9 @@ export const lessons = pgTable(
     genre: varchar("genre", { length: 100 }),
     skills: text("skills").array().default([]).notNull(),
     isActive: boolean("is_active").default(true).notNull(),
+    scene: varchar("scene", { length: 64 }),
+    sceneTitle: varchar("scene_title", { length: 128 }),
+    sceneOrder: integer("scene_order"),
   },
   (table) => [index("lessons_course_id_idx").on(table.courseId)]
 );

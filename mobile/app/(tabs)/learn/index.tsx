@@ -9,6 +9,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { UpNextCard } from "@/components/up-next-card";
 import { WordChallengeCard } from "@/components/word-challenge-card";
 import { getAccent } from "@/constants/accent-colors";
+import { type } from "@/constants/typography";
 import { getCourseTypeColors, getLevelColors, getSkillMeta } from "@/constants/course-colors";
 import { useBounties } from "@/lib/hooks/use-bounties";
 import { useCourseLessons, useCourses, useLesson } from "@/lib/hooks/use-courses";
@@ -17,7 +18,7 @@ import { useCompletedLessons, useProgressSummary } from "@/lib/hooks/use-progres
 import { useStoryArcs } from "@/lib/hooks/use-story-arc";
 import { useToast } from "@/lib/hooks/use-toast";
 import { useWordsDueForReview } from "@/lib/hooks/use-wordbank";
-import { localizeField } from "@/lib/localize";
+import { localize } from "@/lib/localize";
 import { BUNDLED_AUDIO, formatDuration } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useAudioStore } from "@/store/audio-store";
@@ -72,7 +73,7 @@ const ContinueCard = memo(function ContinueCard({
   const handleResume = async () => {
     if (audioSource) {
       if (currentTrackId !== lessonId) {
-        await loadAndPlay(lessonId, audioSource, lesson.title, `/lesson/${lessonId}`);
+        await loadAndPlay(lessonId, audioSource, localize(lesson.title, uiLanguage), `/lesson/${lessonId}`);
         await seekTo(positionSeconds);
       } else {
         await seekTo(positionSeconds);
@@ -96,7 +97,7 @@ const ContinueCard = memo(function ContinueCard({
         }}
         className="mb-3 p-4 active:opacity-70"
         accessibilityRole="button"
-        accessibilityLabel={`Continue listening: ${localizeField(lesson.title, lesson.titleFr, uiLanguage)}, paused at ${posLabel}`}
+        accessibilityLabel={`Continue listening: ${localize(lesson.title, uiLanguage)}, paused at ${posLabel}`}
         accessibilityHint="Tap to resume playback"
       >
         <View className="flex-row items-center">
@@ -111,7 +112,7 @@ const ContinueCard = memo(function ContinueCard({
               {t("learn.continueListening").toUpperCase()}
             </Text>
             <Text className="mt-0.5 text-base font-bold text-neutral-900 dark:text-white" numberOfLines={1}>
-              {localizeField(lesson.title, lesson.titleFr, uiLanguage)}
+              {localize(lesson.title, uiLanguage)}
             </Text>
             <Text className="text-sm text-neutral-500 dark:text-neutral-400">
               {t("learn.pausedAt", { time: posLabel })}
@@ -143,7 +144,7 @@ function LessonRow({
       style={{ borderTopWidth: 1, borderTopColor: M.border }}
       className="flex-row items-center py-3 active:opacity-60"
       accessibilityRole="button"
-      accessibilityLabel={`${localizeField(lesson.title, lesson.titleFr, uiLanguage)}${completed ? ", completed" : ""}`}
+      accessibilityLabel={`${localize(lesson.title, uiLanguage)}${completed ? ", completed" : ""}`}
       accessibilityHint="Tap to open lesson"
     >
       <View
@@ -172,11 +173,11 @@ function LessonRow({
           }}
           numberOfLines={1}
         >
-          {localizeField(lesson.title, lesson.titleFr, uiLanguage)}
+          {localize(lesson.title, uiLanguage)}
         </Text>
         {lesson.description ? (
           <Text style={{ fontSize: 11, color: M.textDimDark, marginTop: 1 }} numberOfLines={1}>
-            {localizeField(lesson.description, lesson.descriptionFr, uiLanguage)}
+            {localize(lesson.description, uiLanguage)}
           </Text>
         ) : null}
       </View>
@@ -255,7 +256,7 @@ const CourseCard = memo(function CourseCard({
           onPress={() => setCollapsed((c) => !c)}
           className="p-4 active:opacity-70"
           accessibilityRole="button"
-          accessibilityLabel={`${localizeField(course.title, course.titleFr, uiLanguage)}, ${completedCount} of ${lessons.length} lessons completed`}
+          accessibilityLabel={`${localize(course.title, uiLanguage)}, ${completedCount} of ${lessons.length} lessons completed`}
           accessibilityHint={collapsed ? "Tap to expand course" : "Tap to collapse course"}
           accessibilityState={{ expanded: !collapsed }}
         >
@@ -299,10 +300,10 @@ const CourseCard = memo(function CourseCard({
           <Text
             style={{ fontSize: 18, fontWeight: "800", color: M.text, letterSpacing: -0.3, marginBottom: 4 }}
           >
-            {localizeField(course.title, course.titleFr, uiLanguage)}
+            {localize(course.title, uiLanguage)}
           </Text>
           <Text style={{ fontSize: 13, color: M.textDim, lineHeight: 18 }} numberOfLines={2}>
-            {localizeField(course.description, course.descriptionFr, uiLanguage)}
+            {localize(course.description, uiLanguage)}
           </Text>
 
           {/* Course type badge */}
@@ -390,16 +391,57 @@ const CourseCard = memo(function CourseCard({
           <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
             {lessonsLoading ? (
               <ActivityIndicator size="small" color={accentColor} style={{ paddingVertical: 12 }} />
-            ) : (
-              lessons.map((lesson) => (
-                <LessonRow
-                  key={lesson.id}
-                  lesson={lesson}
-                  completed={completedIds.has(lesson.id)}
-                  onPress={() => router.push(`/lesson/${lesson.id}`)}
-                />
-              ))
-            )}
+            ) : (() => {
+              const hasScenes = lessons.some((l) => l.sceneTitle);
+              if (!hasScenes) {
+                return lessons.map((lesson) => (
+                  <LessonRow
+                    key={lesson.id}
+                    lesson={lesson}
+                    completed={completedIds.has(lesson.id)}
+                    onPress={() => router.push(`/lesson/${lesson.id}`)}
+                  />
+                ));
+              }
+              // Group by scene, preserving scene order
+              const sceneMap = new Map<string, { order: number; lessons: typeof lessons }>();
+              const noScene: typeof lessons = [];
+              for (const lesson of lessons) {
+                if (!lesson.sceneTitle) { noScene.push(lesson); continue; }
+                if (!sceneMap.has(lesson.sceneTitle)) {
+                  sceneMap.set(lesson.sceneTitle, { order: lesson.sceneOrder ?? 999, lessons: [] });
+                }
+                sceneMap.get(lesson.sceneTitle)!.lessons.push(lesson);
+              }
+              const scenes = [...sceneMap.entries()].sort((a, b) => a[1].order - b[1].order);
+              return (
+                <>
+                  {scenes.map(([sceneTitle, { lessons: sceneLessons }]) => (
+                    <View key={sceneTitle}>
+                      <Text style={{ ...type.overline, color: M.muted, marginTop: 16, marginBottom: 6 }}>
+                        {sceneTitle}
+                      </Text>
+                      {sceneLessons.map((lesson) => (
+                        <LessonRow
+                          key={lesson.id}
+                          lesson={lesson}
+                          completed={completedIds.has(lesson.id)}
+                          onPress={() => router.push(`/lesson/${lesson.id}`)}
+                        />
+                      ))}
+                    </View>
+                  ))}
+                  {noScene.map((lesson) => (
+                    <LessonRow
+                      key={lesson.id}
+                      lesson={lesson}
+                      completed={completedIds.has(lesson.id)}
+                      onPress={() => router.push(`/lesson/${lesson.id}`)}
+                    />
+                  ))}
+                </>
+              );
+            })()}
 
             {/* Action buttons */}
             <View className="mt-3 flex-row gap-2">

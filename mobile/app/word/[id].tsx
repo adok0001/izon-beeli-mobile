@@ -1,5 +1,6 @@
 import { analytics } from "@/lib/analytics";
 import { friendlyError } from "@/lib/api";
+import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { LoadingScreen } from "@/components/loading-screen";
@@ -18,6 +19,7 @@ import { useSubmitEntryContribution } from "@/lib/hooks/use-contributions";
 import { useToast } from "@/lib/hooks/use-toast";
 import { useContributionStore } from "@/store/contribution-store";
 import { useDictionaryNavStore } from "@/store/dictionary-nav-store";
+import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useSaveWord, useRemoveWord, useWordBank } from "@/lib/hooks/use-wordbank";
 import { addRecentlyViewed } from "@/lib/hooks/use-recently-viewed";
 import { useTranslation } from "react-i18next";
@@ -61,6 +63,7 @@ export default function WordDetailScreen() {
   }>();
   const router = useRouter();
   const { t } = useTranslation();
+  const { uiLanguage } = useUiLanguageStore();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
 
   const { data: entries = [], isLoading } = useDictionary(languageId);
@@ -103,6 +106,8 @@ export default function WordDetailScreen() {
   }, [entryId, entryLanguageId]);
 
   const saved = entry ? savedSet.has(entry.id) : false;
+  const englishText = entry ? localize(entry.english, uiLanguage) : "";
+  const exampleTranslationText = entry ? localize(entry.exampleTranslation, uiLanguage) : "";
 
   const handleSubmitAudio = () => {
     if (!entry || !recordingUri) return;
@@ -112,7 +117,7 @@ export default function WordDetailScreen() {
         languageId: entry.languageId,
         dictionaryEntryId: entry.id,
         word: entry.word,
-        english: entry.english,
+        english: englishText,
         category: entry.category,
         audioUri: recordingUri,
       },
@@ -146,7 +151,7 @@ export default function WordDetailScreen() {
         languageId: entry.languageId,
         dictionaryEntryId: entry.id,
         word: entry.word,
-        english: entry.english,
+        english: englishText,
         category: entry.category,
         imageUri,
       },
@@ -202,7 +207,7 @@ export default function WordDetailScreen() {
       pathname: "/quiz",
       params: {
         focusWord: entry.word,
-        focusEnglish: entry.english,
+        focusEnglish: englishText,
         ...(typeof entry.audioUrl === "string" && entry.audioUrl
           ? { focusAudio: entry.audioUrl }
           : {}),
@@ -295,11 +300,11 @@ export default function WordDetailScreen() {
             )}
 
             {(() => {
-              const meanings = entry.english.split(";").map((m) => m.trim()).filter(Boolean);
+              const meanings = englishText.split(";").map((m) => m.trim()).filter(Boolean);
               if (meanings.length <= 1) {
                 return (
                   <Text style={{ marginTop: 12, textAlign: "center", fontSize: 20, color: M.sub }}>
-                    {entry.english}
+                    {englishText}
                   </Text>
                 );
               }
@@ -367,9 +372,9 @@ export default function WordDetailScreen() {
                   <InlineAudioButton audioUrl={entry.exampleAudioUrl} />
                 )}
               </View>
-              {entry.exampleTranslation && (
+              {exampleTranslationText && (
                 <Text style={{ marginTop: 6, fontSize: 13, color: M.sub }}>
-                  {entry.exampleTranslation}
+                  {exampleTranslationText}
                 </Text>
               )}
             </View>
@@ -403,7 +408,7 @@ export default function WordDetailScreen() {
                         {rel.word}
                       </Text>
                       <Text style={{ marginTop: 2, fontSize: 11, color: M.sub }} numberOfLines={1}>
-                        {rel.english}
+                        {localize(rel.english, uiLanguage)}
                       </Text>
                     </Pressable>
                   ))}
@@ -618,7 +623,7 @@ export default function WordDetailScreen() {
           template: "word",
           id: entry.id,
           word: entry.word,
-          translation: entry.english,
+          translation: englishText,
           language: entry.languageId,
           pronunciation: entry.pronunciation ?? undefined,
           audioUrl: entry.audioUrl,

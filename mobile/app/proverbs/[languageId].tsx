@@ -1,7 +1,9 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ShareModal } from "@/components/share/share-modal";
+import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useProverbs } from "@/lib/hooks/use-proverbs";
+import { useUiLanguageStore } from "@/store/ui-language-store";
 import { getLanguageName } from "@/lib/mock-data";
 import type { Proverb } from "@/types";
 import { Audio } from "expo-av";
@@ -22,6 +24,7 @@ function ProverbCard({
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
+  const { uiLanguage } = useUiLanguageStore();
   const [expanded, setExpanded] = useState(false);
   const [shareVisible, setShareVisible] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -71,13 +74,13 @@ function ProverbCard({
         &ldquo;{proverb.text}&rdquo;
       </Text>
       <Text style={{ marginTop: 6, fontSize: 13, lineHeight: 18, color: M.sub }}>
-        {proverb.translation}
+        {localize(proverb.translation, uiLanguage)}
       </Text>
 
       {expanded && (
         <View style={{ marginTop: 12, borderRadius: 8, backgroundColor: M.accentGlow, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: M.accentBorder }}>
           <Text style={{ fontSize: 12, lineHeight: 17, color: M.sub }}>
-            {proverb.meaning}
+            {localize(proverb.meaning, uiLanguage)}
           </Text>
           {proverb.literal && proverb.literal !== proverb.translation && (
             <Text style={{ marginTop: 4, fontSize: 11, fontStyle: "italic", color: M.muted }}>
@@ -153,7 +156,7 @@ function ProverbCard({
           template: "proverb",
           languageId,
           text: proverb.text,
-          translation: proverb.translation,
+          translation: localize(proverb.translation, uiLanguage),
           language: languageId,
           audioUrl: proverb.audioUrl,
         }}

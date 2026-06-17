@@ -1,13 +1,18 @@
+/** BCP-47 UI language code → localized string. Mirrors LocalizedText in @/types. */
+type LocalizedText = Partial<Record<"en" | "fr" | "pcm" | "ar" | "pt", string>>;
+
 export interface DictionaryEntry {
   id: string;
   word: string;
-  english: string;
+  english: string | LocalizedText;
+  /** @deprecated Use `english` as LocalizedText with key `"fr"` */
   french?: string;
   category: DictionaryCategory;
   languageId: string;
   pronunciation?: string;
   example?: string;
-  exampleTranslation?: string;
+  exampleTranslation?: string | LocalizedText;
+  /** @deprecated Use `exampleTranslation` as LocalizedText with key `"fr"` */
   exampleTranslationFr?: string;
   exampleAudioUrl?: string;
   audioUrl?: import("@/types").AudioSource;
@@ -92,15 +97,18 @@ export const CATEGORY_ICONS: Record<DictionaryCategory, string> = {
 export function searchDictionary(query: string, entries: DictionaryEntry[]): DictionaryEntry[] {
   const q = query.toLowerCase().trim();
   if (!q) return entries;
-  return entries.filter(
-    (e) =>
+  return entries.filter((e) => {
+    const eng = typeof e.english === "string" ? e.english : Object.values(e.english).join(" ");
+    const exTr = typeof e.exampleTranslation === "string" ? e.exampleTranslation : Object.values(e.exampleTranslation ?? {}).join(" ");
+    return (
       e.word.toLowerCase().includes(q) ||
-      e.english.toLowerCase().includes(q) ||
+      eng.toLowerCase().includes(q) ||
       e.french?.toLowerCase().includes(q) ||
       e.pronunciation?.toLowerCase().includes(q) ||
       e.example?.toLowerCase().includes(q) ||
-      e.exampleTranslation?.toLowerCase().includes(q)
-  );
+      exTr.toLowerCase().includes(q)
+    );
+  });
 }
 
 export function getDictionaryByCategory(category: DictionaryCategory, entries: DictionaryEntry[]): DictionaryEntry[] {

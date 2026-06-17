@@ -381,7 +381,7 @@ export const pt = {
     openAction: "Abrir ação",
     groupCore: "Essencial",
     groupReviewer: "Revisor",
-    groupAdmin: "Administração",
+    groupAdmin: "Admin",
     completeOneLessonTitle: "Conclua uma lição",
     completeOneLessonDetail: "Termine uma lição para começar a ganhar XP.",
     takeOneQuizTitle: "Faça um quiz",
@@ -1426,7 +1426,7 @@ export const pt = {
     imageSubmittedDesc: "A sua imagem foi enviada para revisão.",
   },
   admin: {
-    panelTitle: "Administração",
+    panelTitle: "Admin",
     internalTools: "Beeli — ferramentas internas",
     backToApp: "← Voltar à aplicação",
     nav: {
@@ -1795,7 +1795,7 @@ export const pt = {
     panelTitle: "Educador",
     subtitleAdmin: "Todas as línguas",
     subtitleReviewer: "Línguas: {{languages}}",
-    adminPanel: "Administração",
+    adminPanel: "Admin",
     nav: {
       overview: "Resumo",
       review: "Revisão",

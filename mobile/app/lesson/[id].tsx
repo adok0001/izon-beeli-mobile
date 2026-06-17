@@ -22,7 +22,7 @@ import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useTourStore } from "@/store/tour-store";
-import { localizeField } from "@/lib/localize";
+import { localize } from "@/lib/localize";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { LoadingScreen } from "@/components/loading-screen";
@@ -136,8 +136,8 @@ export default function LessonScreen() {
   const isCurrentTrack = currentTrackId === lesson.id;
   const completed = completedLessonIds?.includes(lesson.id) ?? false;
   const isSong = lesson.type === "song";
-  const lessonTitle = localizeField(lesson.title, lesson.titleFr, uiLanguage);
-  const lessonDescription = localizeField(lesson.description, lesson.descriptionFr, uiLanguage);
+  const lessonTitle = localize(lesson.title, uiLanguage);
+  const lessonDescription = localize(lesson.description, uiLanguage);
   const accentColor = typeColors.tickActive ?? M.accent;
 
   const handlePlayAudio = () => {

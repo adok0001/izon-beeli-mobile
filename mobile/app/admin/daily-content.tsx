@@ -2,6 +2,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LanguagePickerModal } from "@/components/language-picker";
 import { getAccent } from "@/constants/accent-colors";
 import { apiFetch } from "@/lib/api";
+import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { useProverbs } from "@/lib/hooks/use-proverbs";
@@ -109,11 +110,11 @@ export default function DailyContentAdminScreen() {
   // ---- Filtered lists ----
   const q = search.toLowerCase();
   const filteredWords = useMemo(() =>
-    dictEntries.filter((e) => e.word.toLowerCase().includes(q) || e.english.toLowerCase().includes(q)),
+    dictEntries.filter((e) => e.word.toLowerCase().includes(q) || localize(e.english, "en").toLowerCase().includes(q)),
     [dictEntries, q]
   );
   const filteredProverbs = useMemo(() =>
-    proverbsList.filter((p) => p.text.toLowerCase().includes(q) || p.translation.toLowerCase().includes(q)),
+    proverbsList.filter((p) => p.text.toLowerCase().includes(q) || localize(p.translation, "en").toLowerCase().includes(q)),
     [proverbsList, q]
   );
   const filteredSongs = useMemo(() =>
@@ -249,7 +250,7 @@ export default function DailyContentAdminScreen() {
                     <Badge pinned={wotdAdmin.isOverride} />
                   </View>
                   <Text className="text-xl font-bold text-neutral-900 dark:text-white">{wotdAdmin.entry.word}</Text>
-                  <Text className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">{wotdAdmin.entry.english}</Text>
+                  <Text className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">{localize(wotdAdmin.entry.english, "en")}</Text>
                   {wotdAdmin.isOverride && (
                     <Pressable
                       onPress={() =>
@@ -369,7 +370,7 @@ export default function DailyContentAdminScreen() {
                   >
                     <View className="flex-1 mr-3">
                       <Text className="text-sm font-semibold text-neutral-900 dark:text-white">{entry.word}</Text>
-                      <Text className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{entry.english}</Text>
+                      <Text className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{localize(entry.english, "en")}</Text>
                     </View>
                     {isSelected && <IconSymbol name="checkmark.circle.fill" size={20} color={getAccent("blue").solid} />}
                   </Pressable>
@@ -390,7 +391,7 @@ export default function DailyContentAdminScreen() {
                     <Badge pinned={potmAdmin.isOverride} />
                   </View>
                   <Text className="text-base font-bold text-neutral-900 dark:text-white">{potmAdmin.proverb.text}</Text>
-                  <Text className="text-sm text-neutral-500 dark:text-neutral-400 mt-1 italic">{potmAdmin.proverb.translation}</Text>
+                  <Text className="text-sm text-neutral-500 dark:text-neutral-400 mt-1 italic">{localize(potmAdmin.proverb.translation, "en")}</Text>
                   {potmAdmin.isOverride && (
                     <Pressable
                       onPress={() =>
@@ -440,7 +441,7 @@ export default function DailyContentAdminScreen() {
                   >
                     <View className="flex-1 mr-3">
                       <Text className="text-sm font-semibold text-neutral-900 dark:text-white">{proverb.text}</Text>
-                      <Text className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 italic">{proverb.translation}</Text>
+                      <Text className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 italic">{localize(proverb.translation, "en")}</Text>
                     </View>
                     {isSelected && <IconSymbol name="checkmark.circle.fill" size={20} color={getAccent("blue").solid} />}
                   </Pressable>
@@ -460,7 +461,7 @@ export default function DailyContentAdminScreen() {
                     <Text className="text-xs font-semibold uppercase tracking-widest text-neutral-400">{t("admin.dailyContent.current")}</Text>
                     <Badge pinned={sotwAdmin.isOverride} />
                   </View>
-                  <Text className="text-base font-bold text-neutral-900 dark:text-white">{sotwAdmin.lesson.title}</Text>
+                  <Text className="text-base font-bold text-neutral-900 dark:text-white">{localize(sotwAdmin.lesson.title, "en")}</Text>
                   {sotwAdmin.lesson.artist && (
                     <Text className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">{sotwAdmin.lesson.artist}</Text>
                   )}

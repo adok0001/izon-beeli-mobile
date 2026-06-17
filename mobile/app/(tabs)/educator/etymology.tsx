@@ -3,6 +3,7 @@ import { LanguagePickerModal } from "@/components/language-picker";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { getAccent } from "@/constants/accent-colors";
 import { friendlyError } from "@/lib/api";
+import { localize } from "@/lib/localize";
 import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
 import {
   useDeleteEtymology,
@@ -156,7 +157,7 @@ export default function EducatorEtymologyScreen() {
   const q = searchQuery.toLowerCase().trim();
   const filtered = q
     ? entries.filter(
-        (e) => e.word.toLowerCase().includes(q) || e.english.toLowerCase().includes(q),
+        (e) => e.word.toLowerCase().includes(q) || localize(e.english, "en").toLowerCase().includes(q),
       )
     : entries;
 
@@ -166,7 +167,7 @@ export default function EducatorEtymologyScreen() {
   };
 
   const startEdit = (entry: EtymologyEntry) => {
-    setForm({ id: entry.id, word: entry.word, english: entry.english, trail: entry.trail });
+    setForm({ id: entry.id, word: entry.word, english: localize(entry.english, "en"), trail: entry.trail });
     setEditing(true);
     flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
   };
@@ -332,7 +333,7 @@ export default function EducatorEtymologyScreen() {
       <View className="flex-row items-start justify-between">
         <View className="flex-1 pr-3">
           <Text className="text-base font-bold text-neutral-900 dark:text-white">{item.word}</Text>
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400">{item.english}</Text>
+          <Text className="text-sm text-neutral-500 dark:text-neutral-400">{localize(item.english, "en")}</Text>
           <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500" numberOfLines={1}>
             {item.trail.map((n) => n.era).join(" → ")}
           </Text>

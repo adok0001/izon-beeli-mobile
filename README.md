@@ -1,6 +1,23 @@
-# Beeli Mobile
+# Beeli
 
-Beeli is an Expo + React Native language-learning app focused on Izon and other African languages. It combines guided lessons, audio playback, quizzes, journaling, social learning, contributions, classroom tools, and real-time multiplayer.
+Beeli is a language-learning platform focused on Izon and other African languages. It combines guided lessons, audio playback, quizzes, journaling, social learning, community contributions, classroom tools, and real-time multiplayer.
+
+This repository is a monorepo containing the mobile app, two web apps, the API server, and the real-time multiplayer workers.
+
+## Repository layout
+
+```text
+mobile/        Expo + React Native app (iOS, Android, web)
+web/           Next.js consumer web companion app
+data/          Next.js org/educator content dashboard
+server/        Hono + Drizzle API (progress, content, feed, contributions, multiplayer)
+partykit/      Real-time multiplayer workers
+docs/          Build and troubleshooting docs
+userio-docs/   Product and planning docs
+scripts/       Repo-level scripts
+```
+
+Each workspace has its own `package.json` and is installed and run independently (there is no root `package.json`).
 
 ## Highlights
 
@@ -15,49 +32,44 @@ Beeli is an Expo + React Native language-learning app focused on Izon and other 
 - Journal, feed, notifications, contributor review, and feedback flows
 - Classroom and institution-oriented learning features
 - Real-time multiplayer backed by PartyKit
-- Hono + Drizzle backend API for progress, content, feed, contributions, bounties, and quiz results
+- Educator content dashboard for personalizing language content per organization/project
 
-## Stack
+## Apps
 
-### Mobile app
+### `mobile/` — Expo + React Native
 
-- Expo SDK 54
-- React Native 0.81
-- React 19
-- Expo Router 6
-- Clerk Expo
-- TanStack React Query
-- Zustand
-- NativeWind + Tailwind CSS
+The primary learning app, targeting iOS, Android, and web.
+
+- Expo SDK 54, React Native 0.81, React 19
+- Expo Router 6 (file-based, typed routes)
+- Clerk Expo auth
+- TanStack React Query + Zustand
+- NativeWind + Tailwind CSS (the dark-first "Museum" design system)
 - Expo AV, Notifications, Secure Store, Haptics
 
-### Backend
+### `web/` — Next.js consumer app (`beeli-web`)
 
-- Hono
-- Drizzle ORM
-- Neon / Postgres
+A Next.js 15 web companion: audio-first lessons, interactive transcripts with inline
+dictionary popups, a persistent audio bar, course browsing, and gamified learning.
+Uses its own purple "gradient/glow" design system (kept separate from the mobile "Museum" system).
+
+### `data/` — Next.js content dashboard (`beelidata`)
+
+An organization/project dashboard where educators personalize language content.
+Org- and project-scoped routes back the educator content workflow.
+
+### `server/` — Hono API (`izon-beeli-server`)
+
+- Hono HTTP framework
+- Drizzle ORM on Neon / Postgres
 - Clerk backend SDK
 - Vercel Blob for uploaded audio assets
 
-### Multiplayer
+### `partykit/` — Real-time multiplayer
 
-- PartyKit
-- Partysocket
+- PartyKit + Partysocket workers powering quiz battles and paired lesson sessions
 
-## Repository layout
-
-```text
-app/           Expo Router screens
-components/    Reusable UI and feature components
-lib/           API helpers, data helpers, analytics, hooks, utilities
-store/         Zustand stores
-types/         Shared TypeScript types
-server/        Hono API + Drizzle schema/routes
-partykit/      Real-time multiplayer workers
-userio-docs/   Product and planning docs
-```
-
-## Core product areas
+## Core product areas (mobile)
 
 - **Learn:** courses, lessons, quizzes, matching, stories, daily content, culture
 - **Listen:** audio-first lesson browsing
@@ -78,9 +90,9 @@ userio-docs/   Product and planning docs
 
 ## Environment variables
 
-### Mobile app
+### `mobile/`
 
-Create a local Expo env file such as `.env.local` in the repository root.
+Create a local Expo env file such as `mobile/.env.local`.
 
 ```env
 EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
@@ -88,7 +100,7 @@ EXPO_PUBLIC_API_URL=http://localhost:3000/api
 EXPO_PUBLIC_PARTYKIT_HOST=localhost:1999
 ```
 
-### Backend
+### `server/`
 
 Create `server/.env`.
 
@@ -101,28 +113,34 @@ PARTYKIT_API_KEY=...
 ALLOWED_ORIGINS=http://localhost:8081,http://localhost:19006
 ```
 
+The `web/` and `data/` apps each read their own Clerk and API configuration; see their
+respective `.env.local` files.
+
 ## Getting started
 
 ### 1. Install dependencies
 
-Install dependencies for each workspace used during development.
+Install dependencies per workspace you intend to run:
 
 ```bash
-npm install
-cd server && npm install
+cd mobile && npm install
+cd ../server && npm install
 cd ../partykit && npm install
+cd ../web && npm install      # optional, consumer web app
+cd ../data && npm install     # optional, educator dashboard
 ```
 
 ### 2. Prepare the backend
 
-From [server/package.json](server/package.json):
+From `server/`:
 
-- `npm run db:push` to apply the Drizzle schema
-- `npm run db:seed` to seed starter content if needed
+- `npm run db:push` — apply the Drizzle schema
+- `npm run db:seed` — seed starter content if needed
+- `npm run db:sync` — sync content (dict/lessons/proverbs/cultural/sentences)
 
 ### 3. Start local services
 
-Run these in separate terminals:
+Run each in its own terminal.
 
 #### API server
 
@@ -141,102 +159,91 @@ npm run dev
 #### Mobile app
 
 ```bash
+cd mobile
 npm start
-npx expo start --no-dev --minify --clear    
+# or a clean, production-like start:
+npx expo start --no-dev --minify --clear
 ```
 
-You can then open:
-
-- `i` for iOS simulator
-- `a` for Android emulator
-- `w` for web
-
-You can also use the native run commands:
+Then press `i` (iOS simulator), `a` (Android emulator), or `w` (web). Or use the
+native run commands:
 
 ```bash
+cd mobile
 npm run ios
 npm run android
 npm run web
 ```
 
+#### Web apps (optional)
+
+```bash
+cd web && npm run dev      # consumer web app on http://localhost:3001
+cd data && npm run dev     # educator dashboard on http://localhost:3002
+```
+
 ## Useful scripts
 
-### Root
+### `mobile/`
 
 - `npm start` — Expo dev server
-- `npm run ios` — run iOS app
-- `npm run android` — run Android app
-- `npm run web` — run web app
-- `npm run lint` — run Expo lint
-- `npm run dev:server` — start the API server from the root project
+- `npm run ios` / `npm run android` / `npm run web` — native/web runs
+- `npm run lint` — Expo lint
+- `npm test` — Jest
+- `npm run dev:server` — start the API server from the mobile workspace
 
-### Server
-
-From [server/package.json](server/package.json):
+### `server/`
 
 - `npm run dev` — watch-mode API server
-- `npm run build` — TypeScript build
-- `npm run start` — run built server
+- `npm run build` / `npm run start` — TypeScript build and run
 - `npm run db:push` — push schema changes
 - `npm run db:seed` — seed content
+- `npm run db:sync` — sync content (with `:dict`, `:lessons`, `:proverbs`, `:cultural`, `:sentences` variants)
 - `npm run db:studio` — open Drizzle Studio
 
-### PartyKit
-
-From [partykit/package.json](partykit/package.json):
+### `partykit/`
 
 - `npm run dev` — local PartyKit server
 - `npm run deploy` — deploy PartyKit workers
 
+### `web/` and `data/`
+
+- `npm run dev` — Next.js dev server (ports 3001 and 3002 respectively)
+- `npm run build` / `npm run start` — production build and run
+- `npm run lint` — Next.js lint
+
 ## Native IDE workflows
+
+Run these from the `mobile/` workspace. The Expo project already includes `mobile/ios/`
+and `mobile/android/`.
 
 ### Xcode
 
-The repository already includes an `ios/` project.
-
-Typical workflow:
-
 ```bash
+cd mobile
 npx expo prebuild --platform ios --clean
 npm run ios
 ```
 
-If you want to work directly in Xcode:
+To work directly in Xcode, run prebuild if native files need regeneration, open
+`mobile/ios/Beeli.xcworkspace`, pick a simulator or device, then build and run.
 
-1. Run prebuild if native files need regeneration.
-2. Open [ios/Beeli.xcworkspace](ios/Beeli.xcworkspace).
-3. Select a simulator or connected device.
-4. Build and run from Xcode.
-
-Use Xcode when you need:
-
-- native capability changes
-- signing or provisioning fixes
-- device logs and crash diagnostics
-- iOS-specific debugging
+Use Xcode for native capability changes, signing/provisioning fixes, device logs and
+crash diagnostics, and iOS-specific debugging.
 
 ### Android Studio
 
-For Android native work:
-
 ```bash
+cd mobile
 npx expo prebuild --platform android --clean
 npm run android
 ```
 
-If you want to work directly in Android Studio:
+To work directly in Android Studio, regenerate native files with prebuild when needed,
+open `mobile/android/` in Android Studio, sync Gradle, then run on an emulator or device.
 
-1. Regenerate native files with Expo prebuild when needed.
-2. Open the `android/` folder in Android Studio.
-3. Sync Gradle.
-4. Run on an emulator or physical device.
-
-Use Android Studio when you need:
-
-- Gradle or manifest changes
-- emulator inspection
-- native Android debugging
-- signing and release troubleshooting
+Use Android Studio for Gradle/manifest changes, emulator inspection, native Android
+debugging, and signing/release troubleshooting.
 
 ## Deployment and release workflows
 
@@ -244,9 +251,7 @@ See [docs/troubleshooting.md](docs/troubleshooting.md) for known build and provi
 
 ### Vercel deployment for the API
 
-The API lives in `server/` and is configured for Vercel with [server/vercel.json](server/vercel.json).
-
-Typical deploy flow:
+The API lives in `server/` and is configured for Vercel via `server/vercel.json`.
 
 ```bash
 cd server
@@ -262,32 +267,25 @@ Before deploying, make sure Vercel has these environment variables configured:
 - `PARTYKIT_API_KEY`
 - `ALLOWED_ORIGINS`
 
-After deployment:
-
-- verify `/api/health`
-- verify Clerk-authenticated routes
-- update `EXPO_PUBLIC_API_URL` in mobile environments if the domain changes
+After deployment, verify `/api/health` and the Clerk-authenticated routes, and update
+`EXPO_PUBLIC_API_URL` in mobile environments if the domain changes.
 
 ### PartyKit deployment for multiplayer
 
-Multiplayer workers live in `partykit/` and are configured in [partykit/partykit.json](partykit/partykit.json).
-
-Typical deploy flow:
+Multiplayer workers live in `partykit/` and are configured in `partykit/partykit.json`.
 
 ```bash
 cd partykit
 npx partykit deploy
 ```
 
-After deployment:
-
-- set the production PartyKit host in `EXPO_PUBLIC_PARTYKIT_HOST`
-- make sure the backend has a matching `PARTYKIT_API_KEY`
-- verify quiz battle, paired lesson, and matchmaking flows
+After deployment, set the production PartyKit host in `EXPO_PUBLIC_PARTYKIT_HOST`, make
+sure the backend has a matching `PARTYKIT_API_KEY`, and verify quiz battle, paired
+lesson, and matchmaking flows.
 
 ### EAS builds and releases
 
-EAS configuration is defined in [eas.json](eas.json).
+EAS configuration is defined in `mobile/eas.json`.
 
 Available profiles:
 
@@ -296,9 +294,8 @@ Available profiles:
 - `preview` — internal distribution against the hosted API
 - `production` — production build against the hosted API
 
-Typical commands:
-
 ```bash
+cd mobile
 eas build --platform ios --profile development
 eas build --platform ios --profile preview
 eas build --platform android --profile preview
@@ -315,37 +312,12 @@ Recommended release flow:
 
 ### EAS Update
 
-The app uses Expo updates with runtime version policy set to app version in [app.json](app.json).
+The app uses Expo updates with the runtime version policy set to app version in
+`mobile/app.json`.
 
-Use OTA updates only for JavaScript and asset changes that do not require native code changes. If you changed native modules, config plugins, iOS/Android permissions, or prebuild output, ship a new binary through EAS Build instead.
-
-## Current architecture notes
-
-- [app/_layout.tsx](app/_layout.tsx) wires Clerk, React Query, theming, analytics boot, and global navigation
-- [app/index.tsx](app/index.tsx) handles auth-aware landing and onboarding redirect
-- [app/(onboarding)/index.tsx](app/%28onboarding%29/index.tsx) sets initial learner language and daily-goal preferences
-- [app/(tabs)/learn.tsx](app/%28tabs%29/learn.tsx) is the main learning hub, including resume support
-- [app/lesson/[id].tsx](app/lesson/%5Bid%5D.tsx) drives lesson playback and completion
-- [app/quiz.tsx](app/quiz.tsx) generates quizzes from dictionary data and records results
-- [app/dashboard.tsx](app/dashboard.tsx) learner stats, XP, and streak overview
-- [app/dictionary.tsx](app/dictionary.tsx) full dictionary browser with saved-word management
-- [app/bounties.tsx](app/bounties.tsx) community bounty listings and contribution prompts
-- [app/word-review.tsx](app/word-review.tsx) spaced-repetition review flow
-- [app/my-contributions.tsx](app/my-contributions.tsx) personal contribution history
-- [app/adinkra.tsx](app/adinkra.tsx) Adinkra cultural symbols browser
-- [app/geez-lesson.tsx](app/geez-lesson.tsx) Geez script learning module
-- [store/audio-store.ts](store/audio-store.ts) manages playback state and persisted resume position
-- [store/language-store.ts](store/language-store.ts) persists selected language locally
-- [store/theme-store.ts](store/theme-store.ts) persists user theme preference
-- [store/notification-store.ts](store/notification-store.ts) manages in-app notification state
-- [store/quiz-store.ts](store/quiz-store.ts) active quiz session state
-- [store/story-store.ts](store/story-store.ts) story mode playback state
-- [store/geez-store.ts](store/geez-store.ts) Geez script session state
-- [store/classroom-store.ts](store/classroom-store.ts) classroom session and group state
-- [store/contribution-store.ts](store/contribution-store.ts) word/phrase contribution form state
-- [store/matching-store.ts](store/matching-store.ts) matching game session state
-- [server/src/app.ts](server/src/app.ts) mounts the API routers
-- [server/src/db/schema.ts](server/src/db/schema.ts) defines the Drizzle schema
+Use OTA updates only for JavaScript and asset changes that do not require native code
+changes. If you changed native modules, config plugins, iOS/Android permissions, or
+prebuild output, ship a new binary through EAS Build instead.
 
 ## API capabilities
 
@@ -370,18 +342,18 @@ The backend currently includes routes for:
 
 ## Notes for contributors
 
-- TypeScript strict mode is enabled
-- Expo Router typed routes are enabled
-- The app uses file-based routing and NativeWind classes throughout
-- Prefer shared hooks in `lib/hooks/` for server data access
-- Prefer Zustand only for local UI/session state
+- TypeScript strict mode is enabled across workspaces
+- The mobile app uses Expo Router file-based routing with typed routes and NativeWind classes
+- Prefer shared hooks in `mobile/lib/hooks/` for server data access; use Zustand only for local UI/session state
+- The mobile "Museum" design system and the `web/` "gradient/glow" system are separate — do not mix them
+- Educators personalize content through the `data/` dashboard, not by editing files directly
 - Some classroom and contributor areas still mix production-backed and mock-backed behavior, so validate flows before extending them
 
 ## Documentation
 
 - [CLAUDE.md](CLAUDE.md) — repository-specific architecture and workflow notes
-- [userio-docs/APP_IMPROVEMENTS_IMPLEMENTATION_GUIDE.md](userio-docs/APP_IMPROVEMENTS_IMPLEMENTATION_GUIDE.md) — implementation roadmap for product improvements
-- [userio-docs/DATABASE_SCHEMA_SNAPSHOT.md](userio-docs/DATABASE_SCHEMA_SNAPSHOT.md) — database reference
+- [web/README.md](web/README.md) — consumer web app details
+- [userio-docs/](userio-docs/) — product and planning docs
 
 ## Learn more
 
@@ -393,3 +365,4 @@ The backend currently includes routes for:
 - [Hono docs](https://hono.dev/)
 - [Drizzle docs](https://orm.drizzle.team/)
 - [PartyKit docs](https://www.partykit.io/docs)
+- [Next.js docs](https://nextjs.org/docs)

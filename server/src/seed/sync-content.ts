@@ -2,6 +2,7 @@ import "dotenv/config";
 import { eq, inArray, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 import {
+  courses,
   culturalContent,
   culturalKeyTerms,
   dictionaryEntries,
@@ -30,6 +31,11 @@ import { SWAHILI_DICTIONARY } from "../../../mobile/lib/data/swahili.js";
 import { TAMAZIGHT_DICTIONARY } from "../../../mobile/lib/data/tamazight.js";
 import { WOLOF_DICTIONARY } from "../../../mobile/lib/data/wolof.js";
 import { YORUBA_DICTIONARY } from "../../../mobile/lib/data/yoruba.js";
+
+// ---------------------------------------------------------------------------
+// Courses
+// ---------------------------------------------------------------------------
+import { COURSES } from "../../../mobile/lib/data/courses.js";
 
 // ---------------------------------------------------------------------------
 // Lessons
@@ -157,6 +163,22 @@ async function syncDict() {
   console.log(`    ${rows.length} dictionary entries synced.`);
 }
 
+/**
+ * Collapses a LocalizedText value (object) into a plain string for one language
+ * column. Source data files may provide either a legacy plain string or a
+ * `{ en, fr, ... }` map; the DB columns store one language each (e.g. `title`
+ * holds English, `titleFr` holds French). This keeps the API contract a plain
+ * string so older app builds — which don't parse LocalizedText — render cleanly.
+ */
+function resolveText(
+  v: string | Record<string, string | undefined> | null | undefined,
+  lang: "en" | "fr"
+): string | null {
+  if (v == null) return null;
+  if (typeof v === "string") return lang === "en" ? v : null;
+  return v[lang] ?? null;
+}
+
 async function syncLessons() {
   console.log("  Syncing lessons and transcripts...");
 
@@ -166,27 +188,43 @@ async function syncLessons() {
   for (const lesson of ALL_LESSONS) {
     const { transcript, ...lessonData } = lesson;
 
+    // Collapse LocalizedText -> per-language columns (mirrors syncCourses).
+    // The source `title`/`description` may be a `{ en, fr }` map; the DB stores
+    // English in `title`/`description` and French in `titleFr`/`descriptionFr`.
+    const title = resolveText(lessonData.title as any, "en") ?? "";
+    const titleFr = resolveText(lessonData.title as any, "fr") ?? lessonData.titleFr ?? null;
+    const description = resolveText(lessonData.description as any, "en") ?? "";
+    const descriptionFr = resolveText(lessonData.description as any, "fr") ?? lessonData.descriptionFr ?? null;
+
     await db.insert(lessons).values({
       ...lessonData,
       type: lessonData.type ?? "lesson",
-      titleFr: lessonData.titleFr ?? null,
-      descriptionFr: lessonData.descriptionFr ?? null,
+      title,
+      titleFr,
+      description,
+      descriptionFr,
       artist: lessonData.artist ?? null,
       genre: lessonData.genre ?? null,
       isActive: lessonData.isActive ?? true,
+      scene: (lessonData as any).scene ?? null,
+      sceneTitle: (lessonData as any).sceneTitle ?? null,
+      sceneOrder: (lessonData as any).sceneOrder ?? null,
     }).onConflictDoUpdate({
       target: lessons.id,
       set: {
         type:          lessonData.type ?? "lesson",
-        title:         lessonData.title,
-        titleFr:       lessonData.titleFr ?? null,
-        description:   lessonData.description,
-        descriptionFr: lessonData.descriptionFr ?? null,
+        title,
+        titleFr,
+        description,
+        descriptionFr,
         duration:      lessonData.duration,
         order:         lessonData.order,
         artist:        lessonData.artist ?? null,
         genre:         lessonData.genre ?? null,
         isActive:      lessonData.isActive ?? true,
+        scene:         (lessonData as any).scene ?? null,
+        sceneTitle:    (lessonData as any).sceneTitle ?? null,
+        sceneOrder:    (lessonData as any).sceneOrder ?? null,
         // Preserve educator-uploaded audio — never overwrite with placeholder from source file
         audioUrl: sql`COALESCE(lessons.audio_url, excluded.audio_url)`,
       },
@@ -200,8 +238,8 @@ async function syncLessons() {
         startTime: seg.startTime,
         endTime: seg.endTime,
         text: seg.text,
-        translation: seg.translation ?? null,
-        translationFr: (seg as any).translationFr ?? null,
+        translation: resolveText(seg.translation as any, "en"),
+        translationFr: resolveText(seg.translation as any, "fr") ?? (seg as any).translationFr ?? null,
         order: idx,
       }));
       for (let i = 0; i < segments.length; i += 100) {
@@ -376,11 +414,50 @@ async function syncSentences() {
   console.log(`    ${rows.length} sentence templates synced.`);
 }
 
+async function syncCourses() {
+  console.log("  Syncing courses...");
+
+  for (const course of COURSES) {
+    const title = resolveText(course.title as any, "en") ?? "";
+    const titleFr = resolveText(course.title as any, "fr");
+    const description = resolveText(course.description as any, "en") ?? "";
+    const descriptionFr = resolveText(course.description as any, "fr");
+
+    await db.insert(courses).values({
+      id: course.id,
+      languageId: course.languageId,
+      title,
+      titleFr,
+      description,
+      descriptionFr,
+      level: course.level,
+      lessonsCount: course.lessonsCount,
+      order: course.order,
+      courseType: course.courseType ?? null,
+      isActive: true,
+    }).onConflictDoUpdate({
+      target: courses.id,
+      set: {
+        title,
+        titleFr,
+        description,
+        descriptionFr,
+        level: course.level,
+        order: course.order,
+        courseType: course.courseType ?? null,
+      },
+    });
+  }
+
+  console.log(`    ${COURSES.length} courses synced.`);
+}
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
 const UNITS: Record<string, () => Promise<void>> = {
+  courses:   syncCourses,
   dict:      syncDict,
   lessons:   syncLessons,
   proverbs:  syncProverbs,

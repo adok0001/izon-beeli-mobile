@@ -10,6 +10,7 @@
     "db:push": "drizzle-kit push",
     "db:seed": "tsx src/seed/index.ts",
     "db:sync": "tsx src/seed/sync-content.ts all",
+    "db:sync-courses": "tsx src/seed/sync-content.ts courses",
     "db:sync-dict": "tsx src/seed/sync-content.ts dict",
     "db:sync-lessons": "tsx src/seed/sync-content.ts lessons",
     "db:sync-proverbs": "tsx src/seed/sync-content.ts proverbs",

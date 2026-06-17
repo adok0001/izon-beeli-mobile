@@ -1,3 +1,13 @@
+/**
+ * BCP-47 UI language code → localized string.
+ * The target-language content always lives in a bare field (e.g. `text`, `word`).
+ * Glosses and UI-facing translations live here.
+ *
+ * Omitted keys fall through to `en` then the first available value.
+ * Use `localize(field, uiLang)` from `@/lib/localize` to resolve.
+ */
+export type LocalizedText = Partial<Record<import("@/store/ui-language-store").UiLanguage, string>>;
+
 export type CourseType =
   | "first_words"
   | "sound_script"
@@ -7,7 +17,12 @@ export type CourseType =
   | "communicative"
   | "contemporary"
   | "songs"
-  | "colors";
+  | "colors"
+  | "house"
+  | "community"
+  | "work"
+  | "modern_life"
+  | "grammar";
 
 export type Skill =
   | "listening"
@@ -19,9 +34,11 @@ export type Skill =
 
 export interface Course {
   id: string;
-  title: string;
+  title: string | LocalizedText;
+  /** @deprecated Use `title` as LocalizedText */
   titleFr?: string | null;
-  description: string;
+  description: string | LocalizedText;
+  /** @deprecated Use `description` as LocalizedText */
   descriptionFr?: string | null;
   language: string;
   level: "beginner" | "intermediate" | "advanced";
@@ -40,9 +57,11 @@ export interface Lesson {
   courseId: string;
   /** @default "lesson" */
   type?: LessonType | null;
-  title: string;
+  title: string | LocalizedText;
+  /** @deprecated Use `title` as LocalizedText */
   titleFr?: string | null;
-  description: string;
+  description: string | LocalizedText;
+  /** @deprecated Use `description` as LocalizedText */
   descriptionFr?: string | null;
   audioUrl?: AudioSource;
   duration?: number; // seconds
@@ -54,6 +73,9 @@ export interface Lesson {
   genre?: string | null;
   skills?: Skill[];
   transcript?: TranscriptSegment[];
+  scene?: string;
+  sceneTitle?: string;
+  sceneOrder?: number;
 }
 
 export interface TranscriptSegment {
@@ -61,7 +83,8 @@ export interface TranscriptSegment {
   startTime: number; // seconds
   endTime: number; // seconds
   text: string;
-  translation?: string | null;
+  translation?: string | LocalizedText | null;
+  /** @deprecated Use `translation` as LocalizedText */
   translationFr?: string | null;
   colorHex?: string | null;
 }
@@ -87,9 +110,11 @@ export interface Comment {
 export interface FeedItem {
   id: string;
   type: "lesson_completed" | "achievement" | "contribution" | "community";
-  title: string;
+  title: string | LocalizedText;
+  /** @deprecated Use `title` as LocalizedText */
   titleFr?: string | null;
-  description: string;
+  description: string | LocalizedText;
+  /** @deprecated Use `description` as LocalizedText */
   descriptionFr?: string | null;
   userName: string;
   userAvatarUrl?: string;
@@ -136,11 +161,11 @@ export interface Contribution {
   type: ContributionType;
   languageId: string;
   word: string;
-  english: string;
+  english: string | LocalizedText;
   category: string;
   pronunciation?: string;
   example?: string;
-  exampleTranslation?: string;
+  exampleTranslation?: string | LocalizedText;
   audioUrl?: string;
   status: "draft" | "submitted" | "approved" | "rejected";
   createdAt: string;
@@ -152,9 +177,11 @@ export interface Proverb {
   id: string;
   languageId: string;
   text: string;
-  translation: string;
+  translation: string | LocalizedText;
+  /** @deprecated Use `translation` as LocalizedText */
   translationFr?: string | null;
-  meaning: string;
+  meaning: string | LocalizedText;
+  /** @deprecated Use `meaning` as LocalizedText */
   meaningFr?: string | null;
   literal?: string;
   context?: string;
@@ -176,7 +203,7 @@ export interface EtymologyEntry {
   id: string;
   languageId: string;
   word: string;
-  english: string;
+  english: string | LocalizedText;
   trail: EtymologyNode[];
 }
 
@@ -189,17 +216,17 @@ export interface SentenceTemplate {
   sentence: string;
   /** The word to blank out */
   answer: string;
-  /** English translation of the full sentence */
-  englishSentence: string;
+  /** Translation of the full sentence in the learner's UI language */
+  englishSentence: string | LocalizedText;
   /** Explicit question kind: "blank" or "equivalent". Defaults to "blank". */
   kind?: "blank" | "equivalent";
   /** Literal word-for-word gloss (for idioms/equivalents) */
-  literalTranslation?: string | null;
+  literalTranslation?: string | LocalizedText | null;
 }
 
 export interface ScenarioTurn {
   text: string;
-  translation: string;
+  translation: string | LocalizedText;
   audioUrl?: string;
 }
 
@@ -247,12 +274,14 @@ export interface CulturalContent {
   id: string;
   languageId: string;
   category: CulturalCategory;
-  title: string;
+  title: string | LocalizedText;
+  /** @deprecated Use `title` as LocalizedText */
   titleFr?: string | null;
-  description: string;
+  description: string | LocalizedText;
+  /** @deprecated Use `description` as LocalizedText */
   descriptionFr?: string | null;
   imageEmoji: string;
-  keyTerms: { word: string; english: string; french?: string | null }[];
+  keyTerms: { word: string; gloss?: string | LocalizedText; /** @deprecated Use `gloss` */ english?: string; /** @deprecated Use `gloss` */ french?: string | null }[];
 }
 
 // --- Matching Game ---
@@ -260,7 +289,7 @@ export interface CulturalContent {
 export interface MatchingPair {
   id: string;
   word: string;
-  english: string;
+  english: string | LocalizedText;
 }
 
 export interface MatchingGameConfig {

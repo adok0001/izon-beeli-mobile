@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { localize } from "@/lib/localize";
 import type { MatchingPair, MatchingGameResult } from "@/types";
 
 type TileKind = "word" | "english";
@@ -64,7 +65,7 @@ export const useMatchingStore = create<MatchingState>((set, get) => ({
       tiles.push({
         id: `${pair.id}-eng`,
         pairId: pair.id,
-        label: pair.english,
+        label: localize(pair.english, "en"),
         kind: "english",
         matched: false,
         selected: false,
