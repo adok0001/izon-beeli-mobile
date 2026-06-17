@@ -3,6 +3,7 @@
 import { ArrowRight, BookOpen, Globe, GraduationCap, Headphones, Languages, Mic, Monitor, Search, Smartphone, Users, Volume2 } from "lucide-react";
 import Link from "next/link";
 import { ScrollytellingSection } from "@/components/landing/scrollytelling-section";
+import { IzonSkitSection } from "@/components/marketing/izon-skit-section";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useUiLanguageStore } from "@/store/ui-language-store";
@@ -892,6 +893,9 @@ export function LandingPage() {
           ))}
         </div>
       </div>
+
+      {/* ── Izon skit ── */}
+      <IzonSkitSection />
 
       {/* ── How it works ── */}
       <section className="relative py-28 px-6 border-b border-white/[0.04]">
