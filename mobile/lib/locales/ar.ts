@@ -1200,6 +1200,7 @@ export const ar = {
     hearPronunciation: "اسمع النطق",
     example: "مثال",
     moreInCategory: "المزيد في {{category}}",
+    usedInLessons: "مُستخدَم في الدروس",
     contributedBy: "ساهم بها {{name}}",
     practiceWord: "تدرّب على هذه الكلمة",
     saveToWordBank: "احفظ في بنك الكلمات",

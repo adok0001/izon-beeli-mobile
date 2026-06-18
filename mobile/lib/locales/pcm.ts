@@ -1222,6 +1222,7 @@ export const pcm = {
     hearPronunciation: "Hear the word",
     example: "Example",
     moreInCategory: "More for {{category}}",
+    usedInLessons: "Dem use am for lessons",
     contributedBy: "Contributed by {{name}}",
     practiceWord: "Practice this word",
     saveToWordBank: "Save to Word Bank",

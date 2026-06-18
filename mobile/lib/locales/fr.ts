@@ -1202,6 +1202,7 @@ export const fr = {
     hearPronunciation: "Écouter la prononciation",
     example: "Exemple",
     moreInCategory: "Plus dans {{category}}",
+    usedInLessons: "Utilisé dans les leçons",
     contributedBy: "Contribué par {{name}}",
     practiceWord: "Pratiquer ce mot",
     saveToWordBank: "Ajouter à la banque",

@@ -1200,6 +1200,7 @@ export const en = {
     hearPronunciation: "Hear pronunciation",
     example: "Example",
     moreInCategory: "More in {{category}}",
+    usedInLessons: "Used in lessons",
     contributedBy: "Contributed by {{name}}",
     practiceWord: "Practice this word",
     saveToWordBank: "Save to Word Bank",

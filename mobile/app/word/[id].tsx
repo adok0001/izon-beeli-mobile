@@ -21,6 +21,7 @@ import { useContributionStore } from "@/store/contribution-store";
 import { useDictionaryNavStore } from "@/store/dictionary-nav-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useSaveWord, useRemoveWord, useWordBank } from "@/lib/hooks/use-wordbank";
+import { useLessonsForWord } from "@/lib/hooks/use-lessons-for-word";
 import { addRecentlyViewed } from "@/lib/hooks/use-recently-viewed";
 import { useTranslation } from "react-i18next";
 
@@ -79,6 +80,8 @@ export default function WordDetailScreen() {
   const prevId = currentIndex > 0 ? entryIds[currentIndex - 1] : null;
   const nextId = currentIndex < entryIds.length - 1 ? entryIds[currentIndex + 1] : null;
   const hasNavContext = entryIds.length > 0;
+
+  const lessonMatches = useLessonsForWord(entry?.word, entry?.languageId ?? languageId);
 
   const submitEntry = useSubmitEntryContribution();
   const {
@@ -377,6 +380,41 @@ export default function WordDetailScreen() {
                   {exampleTranslationText}
                 </Text>
               )}
+            </View>
+          )}
+
+          {/* Lessons that use this word */}
+          {lessonMatches.length > 0 && (
+            <View style={{ marginTop: 24 }}>
+              <Text style={{ marginHorizontal: 20, marginBottom: 8, fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
+                {t("wordDetail.usedInLessons", { defaultValue: "Used in lessons" })}
+              </Text>
+              <View style={{ marginHorizontal: 20, gap: 10 }}>
+                {lessonMatches.map(({ lesson, segment }) => (
+                  <Pressable
+                    key={lesson.id}
+                    onPress={() => router.push(`/lesson/${lesson.id}` as any)}
+                    style={{ borderRadius: 12, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 14, borderWidth: 1, borderColor: M.border }}
+                    className="active:opacity-70"
+                  >
+                    <View style={{ flexDirection: "row", alignItems: "center" }}>
+                      <IconSymbol name={lesson.type === "song" ? "music.note" : "book.fill"} size={13} color={M.accent} />
+                      <Text style={{ marginLeft: 6, flex: 1, fontSize: 14, fontWeight: "600", color: M.text }} numberOfLines={1}>
+                        {localize(lesson.title, uiLanguage)}
+                      </Text>
+                      <IconSymbol name="chevron.right" size={13} color={M.muted} />
+                    </View>
+                    <Text style={{ marginTop: 8, fontSize: 14, color: M.text }} numberOfLines={2}>
+                      {segment.text}
+                    </Text>
+                    {!!localize(segment.translation, uiLanguage) && (
+                      <Text style={{ marginTop: 2, fontSize: 12, color: M.sub }} numberOfLines={2}>
+                        {localize(segment.translation, uiLanguage)}
+                      </Text>
+                    )}
+                  </Pressable>
+                ))}
+              </View>
             </View>
           )}
 

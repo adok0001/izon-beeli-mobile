@@ -1200,6 +1200,7 @@ export const pt = {
     hearPronunciation: "Ouvir pronúncia",
     example: "Exemplo",
     moreInCategory: "Mais em {{category}}",
+    usedInLessons: "Usado nas lições",
     contributedBy: "Contribuído por {{name}}",
     practiceWord: "Praticar esta palavra",
     saveToWordBank: "Guardar no Banco de Palavras",
