@@ -10,6 +10,7 @@ import {
     useUpsertEducatorDictionary,
 } from "@/lib/hooks/use-educator-panel";
 import { friendlyError } from "@/lib/api";
+import { DICTIONARY_CATEGORY_VALUES } from "@/lib/dictionary";
 import { useDictionaryCoverage } from "@/lib/hooks/use-contributions";
 import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
@@ -19,24 +20,7 @@ import { useTranslation } from "react-i18next";
 import { Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const CATEGORIES: EducatorDictionaryCategory[] = [
-  "noun",
-  "verb",
-  "adjective",
-  "adverb",
-  "pronoun",
-  "greeting",
-  "phrase",
-  "number",
-  "color",
-  "body",
-  "food",
-  "family",
-  "nature",
-  "animal",
-  "place",
-  "other",
-];
+const CATEGORIES: EducatorDictionaryCategory[] = [...DICTIONARY_CATEGORY_VALUES];
 
 type EditorState = {
   id?: string;
@@ -51,7 +35,7 @@ type EditorState = {
 const EMPTY_EDITOR: EditorState = {
   word: "",
   english: "",
-  category: "noun",
+  category: "nouns",
   pronunciation: "",
   example: "",
   exampleTranslation: "",
@@ -133,7 +117,7 @@ export default function EducatorDictionaryScreen() {
           resetEditor();
           toastSuccess(isEditing ? "Entry updated" : "Entry created", `"${editor.word}" saved to dictionary.`);
         },
-        onError: (err: Error) => toastError("Save failed", friendlyError(err)),
+        onError: (err: Error) => toastError("Save failed", friendlyError(err, err.message)),
       },
     );
   };

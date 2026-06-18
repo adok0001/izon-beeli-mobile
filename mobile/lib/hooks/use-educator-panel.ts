@@ -1,5 +1,6 @@
-import { apiFetch } from "@/lib/api";
+import { apiFetch, ApiError } from "@/lib/api";
 import { API_BASE_URL } from "@/lib/constants";
+import type { DictionaryCategory } from "@/lib/dictionary";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -22,23 +23,10 @@ export interface AdminStats {
   feedbackReceived: number;
 }
 
-export type EducatorDictionaryCategory =
-  | "noun"
-  | "verb"
-  | "adjective"
-  | "adverb"
-  | "pronoun"
-  | "greeting"
-  | "phrase"
-  | "number"
-  | "color"
-  | "body"
-  | "food"
-  | "family"
-  | "nature"
-  | "animal"
-  | "place"
-  | "other";
+// Single source of truth for dictionary categories. These are stored on the entry
+// and drive CATEGORY_LABELS / CATEGORY_ICONS lookup, and must match the server's
+// VALID_CATEGORIES — so reuse the canonical list rather than redeclaring it here.
+export type EducatorDictionaryCategory = DictionaryCategory;
 
 export interface EducatorDictionaryEntry {
   id: string;
@@ -249,7 +237,13 @@ export function useUpsertEducatorDictionary() {
 
       if (!res.ok) {
         const text = await res.text();
-        throw new Error(`API error ${res.status}: ${text}`);
+        let message = text;
+        try {
+          message = (JSON.parse(text) as { error?: string }).error ?? text;
+        } catch {
+          // non-JSON body — fall back to the raw text
+        }
+        throw new ApiError(res.status, message);
       }
 
       return res.json() as Promise<EducatorDictionaryEntry>;
