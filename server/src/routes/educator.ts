@@ -498,10 +498,14 @@ educatorRouter.get("/dictionary", async (c) => {
   return c.json([...rows, ...mapped]);
 });
 
+// Canonical dictionary categories — must match the admin route (dictionary.ts),
+// the web/mobile editors, and CATEGORY_LABELS in mobile/lib/dictionary.ts. These
+// are stored on dictionary_entries.category and drive label/icon lookup in the app.
 const VALID_CATEGORIES = [
-  "noun", "verb", "adjective", "adverb", "pronoun",
-  "greeting", "phrase", "number", "color", "body",
-  "food", "family", "nature", "animal", "place", "other",
+  "greetings", "numbers", "family", "pronouns", "time", "verbs", "body",
+  "market", "occupations", "nouns", "phrases", "food", "possessives",
+  "ordinals", "commands", "animals", "phonetics", "money", "proverbs",
+  "adjectives",
 ] as const;
 
 // POST /educator/dictionary
