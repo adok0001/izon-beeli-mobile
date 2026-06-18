@@ -1130,6 +1130,8 @@ export const fr = {
     tabCoverage: "Couverture",
     coverageSummary: "{{covered}} mots de transcription sur {{total}} ont une entrée au dictionnaire ({{percent}} %)",
     coverageTapHint: "Touchez un mot pour proposer une entrée au dictionnaire",
+    coverageUsageHint: "Touchez un mot pour voir son usage dans les leçons, ou + pour ajouter une entrée",
+    coverageUsageTitle: "Utilisé dans les leçons",
     coverageComplete: "Tous les mots des transcriptions de leçons figurent au dictionnaire",
     filterAll: "Tout",
     adminRequired: "Accès administrateur requis",

@@ -1128,6 +1128,8 @@ export const en = {
     tabCoverage: "Coverage",
     coverageSummary: "{{covered}} of {{total}} transcript words have dictionary entries ({{percent}}%)",
     coverageTapHint: "Tap a word to contribute a dictionary entry",
+    coverageUsageHint: "Tap a word to see how it's used in lessons, or + to add an entry",
+    coverageUsageTitle: "Used in lessons",
     coverageComplete: "All lesson transcript words are in the dictionary",
     filterAll: "All",
     adminRequired: "Admin access required",

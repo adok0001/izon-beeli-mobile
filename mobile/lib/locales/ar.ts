@@ -1128,6 +1128,8 @@ export const ar = {
     tabCoverage: "التغطية",
     coverageSummary: "{{covered}} من {{total}} كلمة في النص لها مدخلات قاموسية ({{percent}}٪)",
     coverageTapHint: "اضغط كلمة للمساهمة بمدخلة قاموسية",
+    coverageUsageHint: "اضغط كلمة لرؤية استخدامها في الدروس، أو + لإضافة مدخلة",
+    coverageUsageTitle: "مستخدمة في الدروس",
     coverageComplete: "جميع كلمات نص الدرس موجودة في القاموس",
     filterAll: "الكل",
     adminRequired: "يلزم وصول المسؤول",

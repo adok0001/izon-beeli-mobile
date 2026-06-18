@@ -1150,6 +1150,8 @@ export const pcm = {
     tabCoverage: "Coverage",
     coverageSummary: "{{covered}} out of {{total}} transcript words don enter dictionary ({{percent}}%)",
     coverageTapHint: "Tap one word make you add am for dictionary",
+    coverageUsageHint: "Tap one word make you see how dem dey use am for lesson, or + to add entry",
+    coverageUsageTitle: "Dem use am for lesson",
     coverageComplete: "All di lesson transcript words don dey inside dictionary",
     filterAll: "All",
     adminRequired: "Admin access required",
