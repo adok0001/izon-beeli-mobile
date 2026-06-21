@@ -1,6 +1,7 @@
 import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LanguagePicker } from "@/components/ui/language-picker";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { apiFetch, friendlyError } from "@/lib/api";
 import {
@@ -71,7 +72,6 @@ export default function ContributeLessonScreen() {
 
   const [step, setStep] = useState<Step>("language");
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
-  const [langSearch, setLangSearch] = useState("");
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
@@ -286,118 +286,20 @@ export default function ContributeLessonScreen() {
             <View className="absolute left-[10%] right-[10%] top-[18px] z-[-1] h-[2px] bg-neutral-200 dark:bg-neutral-700" />
           </View>
 
+          {step === "language" ? (
+            <LanguagePicker
+              value={selectedLanguage ?? ""}
+              onSelect={setSelectedLanguage}
+              languages={LANGUAGES}
+              title={t("contribute.whichLanguage")}
+              subtitle={t("contribute.chooseLanguageDesc")}
+            />
+          ) : (
           <ScrollView
             className="flex-1 px-5 pt-4"
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {/* ── Step 1: Language ── */}
-            {step === "language" && (
-              <View>
-                <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
-                  {t("contribute.whichLanguage")}
-                </Text>
-                <Text className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
-                  {t("contribute.chooseLanguageDesc")}
-                </Text>
-
-                {/* Search */}
-                <View className="mb-4 flex-row items-center rounded-xl border border-neutral-200 bg-neutral-50 px-3 dark:border-neutral-700 dark:bg-neutral-800">
-                  <IconSymbol name="magnifyingglass" size={16} color={M.muted} />
-                  <TextInput
-                    value={langSearch}
-                    onChangeText={setLangSearch}
-                    placeholder={t("contribute.searchLanguage")}
-                    placeholderTextColor={M.muted}
-                    autoCorrect={false}
-                    autoCapitalize="none"
-                    returnKeyType="search"
-                    className="ml-2 flex-1 py-3 text-sm text-neutral-900 dark:text-white"
-                  />
-                  {langSearch.length > 0 && (
-                    <Pressable onPress={() => setLangSearch("")} hitSlop={8}>
-                      <IconSymbol name="xmark.circle.fill" size={16} color={M.muted} />
-                    </Pressable>
-                  )}
-                </View>
-
-                {(langSearch.trim()
-                  ? LANGUAGES.filter((l) => {
-                      const q = langSearch.toLowerCase();
-                      return (
-                        l.name.toLowerCase().includes(q) ||
-                        l.nativeName?.toLowerCase().includes(q) ||
-                        l.region?.toLowerCase().includes(q)
-                      );
-                    })
-                  : LANGUAGES
-                ).map((lang) => (
-                  <Pressable
-                    key={lang.id}
-                    onPress={() => setSelectedLanguage(lang.id)}
-                    className={`mb-2.5 flex-row items-center rounded-2xl p-4 ${
-                      selectedLanguage === lang.id
-                        ? "bg-blue-50 dark:bg-blue-950"
-                        : "bg-neutral-50 dark:bg-neutral-800"
-                    }`}
-                  >
-                    <View className={`mr-3 h-10 w-10 items-center justify-center rounded-full ${
-                      selectedLanguage === lang.id
-                        ? "bg-blue-500"
-                        : "bg-neutral-200 dark:bg-neutral-700"
-                    }`}>
-                      <Text className={`text-sm font-bold ${
-                        selectedLanguage === lang.id ? "text-white" : "text-neutral-500 dark:text-neutral-400"
-                      }`}>
-                        {lang.name.slice(0, 2).toUpperCase()}
-                      </Text>
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-base font-semibold text-neutral-900 dark:text-white">
-                        {lang.name}
-                      </Text>
-                      <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-                        {lang.nativeName} · {lang.region}
-                      </Text>
-                    </View>
-                    {selectedLanguage === lang.id && (
-                      <IconSymbol name="checkmark.circle.fill" size={22} color={getAccent("blue").solid} />
-                    )}
-                  </Pressable>
-                ))}
-
-                {langSearch.trim().length > 0 && (
-                  <Pressable
-                    onPress={() => setSelectedLanguage(langSearch.trim())}
-                    className={`mt-1 flex-row items-center rounded-2xl border-2 border-dashed p-4 ${
-                      selectedLanguage === langSearch.trim()
-                        ? "border-violet-500 bg-violet-50 dark:bg-violet-950"
-                        : "border-violet-300 dark:border-violet-700"
-                    }`}
-                  >
-                    <View className={`mr-3 h-10 w-10 items-center justify-center rounded-full ${
-                      selectedLanguage === langSearch.trim()
-                        ? "bg-violet-500"
-                        : "bg-violet-100 dark:bg-violet-900"
-                    }`}>
-                      <IconSymbol
-                        name="plus.circle"
-                        size={18}
-                        color={selectedLanguage === langSearch.trim() ? "white" : "#8b5cf6"}
-                      />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-base font-semibold text-violet-700 dark:text-violet-300">
-                        {t("contribute.useCustomLanguage", { name: langSearch.trim() })}
-                      </Text>
-                    </View>
-                    {selectedLanguage === langSearch.trim() && (
-                      <IconSymbol name="checkmark.circle.fill" size={22} color="#8b5cf6" />
-                    )}
-                  </Pressable>
-                )}
-              </View>
-            )}
 
             {/* ── Step 2: Course ── */}
             {step === "course" && (
@@ -773,6 +675,7 @@ export default function ContributeLessonScreen() {
               </View>
             )}
           </ScrollView>
+          )}
 
           {/* Bottom bar */}
           <View className="border-t border-neutral-100 px-5 py-4 dark:border-neutral-800">

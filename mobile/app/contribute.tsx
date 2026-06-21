@@ -1,5 +1,6 @@
 import { analytics } from "@/lib/analytics";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LanguagePicker } from "@/components/ui/language-picker";
 import { LocalizedTextInput } from "@/components/ui/localized-text-input";
 import { getAccent } from "@/constants/accent-colors";
 import { localize } from "@/lib/localize";
@@ -73,7 +74,6 @@ export default function ContributeScreen() {
   const [step, setStep] = useState<Step>(params.word ? "details" : params.languageId ? "entry" : "type");
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(params.languageId ?? null);
   const [selectedEntry, setSelectedEntry] = useState<DictionaryEntry | null>(null);
-  const [langSearch, setLangSearch] = useState("");
   const [word, setWord] = useState(params.word ?? "");
   const [english, setEnglish] = useState<LocalizedText>(params.english ? { en: params.english } : {});
   const [category, setCategory] = useState<DictionaryCategory | null>(
@@ -265,6 +265,18 @@ export default function ContributeScreen() {
             </View>
           )}
 
+          {step === "language" ? (
+            <LanguagePicker
+              value={selectedLanguage ?? ""}
+              onSelect={(id) => {
+                setSelectedLanguage(id);
+                setStep("entry");
+              }}
+              languages={LANGUAGES}
+              title={t("contribute.selectLanguage")}
+              subtitle={t("contribute.selectLanguageDesc")}
+            />
+          ) : (
           <ScrollView style={{ flex: 1, paddingHorizontal: 20, paddingTop: 16 }} showsVerticalScrollIndicator={false}>
             {step === "type" && (
               <View>
@@ -312,111 +324,6 @@ export default function ContributeScreen() {
                     </View>
                   </Pressable>
                 ))}
-              </View>
-            )}
-
-            {step === "language" && (
-              <View>
-                <Text style={{ marginBottom: 4, fontSize: 20, fontWeight: "700", color: M.text }}>
-                  {t("contribute.selectLanguage")}
-                </Text>
-                <Text style={{ marginBottom: 16, fontSize: 13, color: M.sub }}>
-                  {t("contribute.selectLanguageDesc")}
-                </Text>
-
-                <View style={{ marginBottom: 16, flexDirection: "row", alignItems: "center", borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, paddingHorizontal: 12 }}>
-                  <IconSymbol name="magnifyingglass" size={16} color={M.muted} />
-                  <TextInput
-                    value={langSearch}
-                    onChangeText={setLangSearch}
-                    placeholder={t("contribute.searchLanguage")}
-                    placeholderTextColor={M.muted}
-                    autoCorrect={false}
-                    autoCapitalize="none"
-                    returnKeyType="search"
-                    style={{ marginLeft: 8, flex: 1, paddingVertical: 12, fontSize: 14, color: M.text }}
-                  />
-                  {langSearch.length > 0 && (
-                    <Pressable onPress={() => setLangSearch("")} hitSlop={8}>
-                      <IconSymbol name="xmark.circle.fill" size={16} color={M.muted} />
-                    </Pressable>
-                  )}
-                </View>
-
-                {(() => {
-                  const q = langSearch.toLowerCase();
-                  const filtered = LANGUAGES.filter(
-                    (lang) =>
-                      !q ||
-                      lang.name.toLowerCase().includes(q) ||
-                      lang.nativeName?.toLowerCase().includes(q) ||
-                      lang.region?.toLowerCase().includes(q)
-                  );
-
-                  const customName = langSearch.trim();
-                  const customLangButton = customName.length > 0 && (
-                    <Pressable
-                      key="custom"
-                      onPress={() => {
-                        setSelectedLanguage(customName);
-                        setStep("entry");
-                      }}
-                      style={{ marginTop: 4, marginBottom: 16, flexDirection: "row", alignItems: "center", borderRadius: 12, borderWidth: 2, borderStyle: "dashed", borderColor: M.accentBorder, padding: 16 }}
-                      className="active:opacity-70"
-                    >
-                      <View style={{ marginRight: 12, height: 36, width: 36, alignItems: "center", justifyContent: "center", borderRadius: 8, backgroundColor: M.accentGlow }}>
-                        <IconSymbol name="plus.circle" size={20} color={M.accent} />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 13, fontWeight: "600", color: M.accent }}>
-                          {t("contribute.useCustomLanguage", { name: customName })}
-                        </Text>
-                      </View>
-                      <IconSymbol name="chevron.right" size={16} color={M.accent} />
-                    </Pressable>
-                  );
-
-                  if (filtered.length === 0) {
-                    return (
-                      <View>
-                        <View style={{ marginBottom: 16, alignItems: "center", paddingVertical: 24 }}>
-                          <IconSymbol name="magnifyingglass" size={32} color={M.border} />
-                          <Text style={{ marginTop: 8, fontSize: 13, color: M.muted }}>
-                            {t("contribute.noLanguageFound")}
-                          </Text>
-                        </View>
-                        {customLangButton}
-                      </View>
-                    );
-                  }
-
-                  return (
-                    <View>
-                      {filtered.map((lang) => (
-                        <Pressable
-                          key={lang.id}
-                          onPress={() => {
-                            setSelectedLanguage(lang.id);
-                            setStep("entry");
-                          }}
-                          style={{ marginBottom: 12, flexDirection: "row", alignItems: "center", borderRadius: 12, borderWidth: 2, padding: 16, backgroundColor: selectedLanguage === lang.id ? M.accentGlow : M.card, borderColor: selectedLanguage === lang.id ? M.accent : M.border }}
-                          className="active:opacity-70"
-                        >
-                          <View style={{ flex: 1 }}>
-                            <Text style={{ fontSize: 15, fontWeight: "600", color: selectedLanguage === lang.id ? M.accent : M.text }}>
-                              {lang.name}
-                            </Text>
-                            <Text style={{ marginTop: 2, fontSize: 13, color: M.sub }}>
-                              {lang.nativeName} · {lang.region}
-                            </Text>
-                          </View>
-                          <IconSymbol name="chevron.right" size={16} color={M.muted} />
-                        </Pressable>
-                      ))}
-                      {customLangButton}
-                    </View>
-                  );
-                })()}
               </View>
             )}
 
@@ -470,7 +377,7 @@ export default function ContributeScreen() {
                     setWord(text);
                     if (selectedEntry) setSelectedEntry(null);
                   }}
-                  placeholder="e.g. Baidẹ"
+                  placeholder={t("contribute.wordExamplePlaceholder")}
                   placeholderTextColor={M.muted}
                   editable={!selectedEntry}
                   style={{ borderRadius: dictMatches.length > 0 ? 0 : 12, borderTopLeftRadius: 12, borderTopRightRadius: 12, borderWidth: 1, borderBottomWidth: dictMatches.length > 0 ? 0 : 1, borderColor: M.border, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 12, fontSize: 15, color: M.text, marginBottom: dictMatches.length > 0 ? 0 : 16, opacity: selectedEntry ? 0.6 : 1 }}
@@ -552,7 +459,7 @@ export default function ContributeScreen() {
                   <TextInput
                     value={pronunciation}
                     onChangeText={setPronunciation}
-                    placeholder="e.g. bah-ee-DEH"
+                    placeholder={t("contribute.pronunciationPlaceholder")}
                     placeholderTextColor={M.muted}
                     style={{ marginBottom: 16, borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 12, fontSize: 15, color: M.text }}
                   />
@@ -562,7 +469,7 @@ export default function ContributeScreen() {
                   <TextInput
                     value={example}
                     onChangeText={setExample}
-                    placeholder="An example sentence using this word..."
+                    placeholder={t("contribute.examplePlaceholder")}
                     placeholderTextColor={M.muted}
                     style={{ marginBottom: 16, borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 12, fontSize: 15, color: M.text }}
                   />
@@ -660,6 +567,7 @@ export default function ContributeScreen() {
               </View>
             )}
           </ScrollView>
+          )}
 
           {step !== "type" && (
             <View style={{ borderTopWidth: 1, borderTopColor: M.border, paddingHorizontal: 20, paddingVertical: 16 }}>

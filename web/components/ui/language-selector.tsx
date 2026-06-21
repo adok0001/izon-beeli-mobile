@@ -141,25 +141,27 @@ export function LanguageSelector({
       {/* Dropdown */}
       {open && (
         <div className="absolute z-50 mt-1 w-full min-w-[260px] rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#0f0f1a] shadow-xl overflow-hidden">
-          {/* Search */}
-          <div className="flex items-center gap-2 border-b border-neutral-100 dark:border-white/[0.06] px-3 py-2.5">
-            <Search className="h-3.5 w-3.5 shrink-0 text-neutral-400" />
-            <input
-              ref={inputRef}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name, native name, or region…"
-              className="flex-1 bg-transparent text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none"
-            />
-            {search && (
-              <button onClick={() => setSearch("")} className="shrink-0 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200">
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
+          {/* Search + results share one scroll area so the search stays pinned
+              to the top no matter how tall the list or short the viewport. */}
+          <div className="max-h-72 overflow-y-auto py-1">
+            {/* Search (sticky header) */}
+            <div className="sticky top-0 z-10 -mt-1 mb-1 flex items-center gap-2 border-b border-neutral-100 dark:border-white/[0.06] bg-white dark:bg-[#0f0f1a] px-3 py-2.5">
+              <Search className="h-3.5 w-3.5 shrink-0 text-neutral-400" />
+              <input
+                ref={inputRef}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by name, native name, or region…"
+                className="flex-1 bg-transparent text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none"
+              />
+              {search && (
+                <button onClick={() => setSearch("")} className="shrink-0 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
 
-          {/* Results */}
-          <div className="max-h-64 overflow-y-auto py-1">
+            {/* Results */}
             {grouped.length === 0 && !showCustomOption && (
               <p className="px-4 py-3 text-xs text-neutral-400 dark:text-neutral-500">No languages found.</p>
             )}

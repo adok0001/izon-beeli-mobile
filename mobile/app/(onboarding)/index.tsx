@@ -3,6 +3,7 @@ import { analytics } from "@/lib/analytics";
 import { ProgressBar } from "@/components/quiz/progress-bar";
 import { QuestionTypeLabel } from "@/components/quiz/question-type-label";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LanguagePicker } from "@/components/ui/language-picker";
 import { getAccent } from "@/constants/accent-colors";
 import { apiFetch } from "@/lib/api";
 import { ONBOARDING_KEY } from "@/lib/constants";
@@ -29,7 +30,6 @@ import {
     Pressable,
     ScrollView,
     Text,
-    TextInput,
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -74,7 +74,6 @@ export default function OnboardingScreen() {
 
   const [step, setStep] = useState<Step>("language");
   const [selectedLangId, setSelectedLangId] = useState("izon");
-  const [langSearch, setLangSearch] = useState("");
   const [selectedGoal, setSelectedGoal] = useState<DailyGoal>("steady");
   const [saving, setSaving] = useState(false);
   const [tryItLoading, setTryItLoading] = useState(false);
@@ -228,86 +227,11 @@ export default function OnboardingScreen() {
             </Text>
           </View>
 
-          <ScrollView
-            style={{ flex: 1, paddingHorizontal: 16 }}
-            contentContainerStyle={{ paddingBottom: 16 }}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={{ marginBottom: 12, flexDirection: "row", alignItems: "center", borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, paddingHorizontal: 12 }}>
-              <IconSymbol name="magnifyingglass" size={16} color={M.muted} />
-              <TextInput
-                value={langSearch}
-                onChangeText={setLangSearch}
-                placeholder={t("contribute.searchLanguage")}
-                placeholderTextColor={M.muted}
-                autoCorrect={false}
-                autoCapitalize="none"
-                returnKeyType="search"
-                style={{ marginLeft: 8, flex: 1, paddingVertical: 12, fontSize: 14, color: M.text }}
-              />
-              {langSearch.length > 0 && (
-                <Pressable onPress={() => setLangSearch("")} hitSlop={8}>
-                  <IconSymbol name="xmark.circle.fill" size={16} color={M.muted} />
-                </Pressable>
-              )}
-            </View>
-
-            {(langSearch.trim()
-              ? ACTIVE_LANGUAGES.filter((l) => {
-                  const q = langSearch.toLowerCase();
-                  return (
-                    l.name.toLowerCase().includes(q) ||
-                    l.nativeName?.toLowerCase().includes(q) ||
-                    l.region?.toLowerCase().includes(q)
-                  );
-                })
-              : ACTIVE_LANGUAGES
-            ).map((lang) => {
-              const selected = lang.id === selectedLangId;
-              return (
-                <Pressable
-                  key={lang.id}
-                  onPress={() => setSelectedLangId(lang.id)}
-                  style={{ marginBottom: 8, flexDirection: "row", alignItems: "center", borderRadius: 12, borderWidth: 2, paddingHorizontal: 16, paddingVertical: 14, backgroundColor: selected ? M.accentGlow : M.card, borderColor: selected ? M.accent : M.border }}
-                  className="active:opacity-70"
-                >
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 15, fontWeight: "600", color: selected ? M.accent : M.text }}>
-                      {lang.name}
-                    </Text>
-                    <Text style={{ marginTop: 2, fontSize: 13, color: M.sub }}>
-                      {lang.nativeName} · {lang.region}
-                    </Text>
-                  </View>
-                  {selected && (
-                    <IconSymbol name="checkmark.circle.fill" size={22} color={M.accent} />
-                  )}
-                </Pressable>
-              );
-            })}
-
-            {langSearch.trim().length > 0 && (
-              <Pressable
-                onPress={() => setSelectedLangId(langSearch.trim())}
-                style={{ marginBottom: 8, flexDirection: "row", alignItems: "center", borderRadius: 12, borderWidth: 2, borderStyle: "dashed", paddingHorizontal: 16, paddingVertical: 14, borderColor: selectedLangId === langSearch.trim() ? M.accent : M.accentBorder, backgroundColor: selectedLangId === langSearch.trim() ? M.accentGlow : "transparent" }}
-                className={`active:opacity-70 ${
-                  selectedLangId === langSearch.trim()
-                    ? ""
-                    : ""
-                }`}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 15, fontWeight: "600", color: M.accent }}>
-                    {t("contribute.useCustomLanguage", { name: langSearch.trim() })}
-                  </Text>
-                </View>
-                {selectedLangId === langSearch.trim() && (
-                  <IconSymbol name="checkmark.circle.fill" size={22} color={M.accent} />
-                )}
-              </Pressable>
-            )}
-          </ScrollView>
+          <LanguagePicker
+            value={selectedLangId}
+            onSelect={setSelectedLangId}
+            languages={ACTIVE_LANGUAGES}
+          />
 
           <View style={{ paddingHorizontal: 24, paddingBottom: 24, paddingTop: 8, gap: 12 }}>
             <Pressable

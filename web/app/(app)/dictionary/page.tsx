@@ -632,44 +632,48 @@ export default function DictionaryPage() {
         </button>
       </div>
 
-      {/* Language selector */}
-      <div className="mb-3">
-        <LanguageSelector
-          value={selectedLanguageId}
-          onChange={(id) => { setLanguage(id); setCategory("all"); setSearch(""); }}
-          allowCustom={false}
-          className="w-52"
-        />
-      </div>
+      {/* Sticky controls: language selector, search, and category chips
+          stay pinned to the top while the word list scrolls beneath. */}
+      <div className="sticky top-0 z-20 -mx-4 px-4 pt-2 pb-3 mb-4 bg-neutral-50/80 dark:bg-[#07070f]/80 backdrop-blur supports-[backdrop-filter]:bg-neutral-50/70 dark:supports-[backdrop-filter]:bg-[#07070f]/70">
+        {/* Language selector */}
+        <div className="mb-3">
+          <LanguageSelector
+            value={selectedLanguageId}
+            onChange={(id) => { setLanguage(id); setCategory("all"); setSearch(""); }}
+            allowCustom={false}
+            className="w-52"
+          />
+        </div>
 
-      {/* Search */}
-      <div className="relative mb-3">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={t("dictionaryPage.searchPlaceholder")}
-          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
-        />
-      </div>
+        {/* Search */}
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t("dictionaryPage.searchPlaceholder")}
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+          />
+        </div>
 
-      {/* Category chips */}
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setCategory(cat)}
-            className={cn(
-              "shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border capitalize transition-colors",
-              category === cat
-                ? "bg-brand-600 text-white border-brand-600"
-                : "border-neutral-200 text-neutral-600 hover:border-brand-400 dark:border-neutral-700 dark:text-neutral-400"
-            )}
-          >
-            {cat === "all" ? t("dictionaryPage.allCategory") : cat}
-          </button>
-        ))}
+        {/* Category chips */}
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setCategory(cat)}
+              className={cn(
+                "shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border capitalize transition-colors",
+                category === cat
+                  ? "bg-brand-600 text-white border-brand-600"
+                  : "border-neutral-200 text-neutral-600 hover:border-brand-400 dark:border-neutral-700 dark:text-neutral-400"
+              )}
+            >
+              {cat === "all" ? t("dictionaryPage.allCategory") : cat}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Result count */}

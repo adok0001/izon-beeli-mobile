@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LanguagePicker } from "@/components/ui/language-picker";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { LANGUAGES } from "@/lib/mock-data";
 import { ALL_CATEGORIES, CATEGORY_LABELS, type DictionaryCategory } from "@/lib/dictionary";
@@ -148,47 +149,23 @@ export default function ContributeBulkScreen() {
             ))}
           </View>
 
+          {step === "language" ? (
+            <LanguagePicker
+              value={selectedLanguage ?? ""}
+              onSelect={(id) => {
+                setSelectedLanguage(id);
+                setStep("category");
+              }}
+              languages={LANGUAGES}
+              title={t("contribute.selectLanguage")}
+              subtitle={t("contribute.allEntriesLanguageDesc")}
+            />
+          ) : (
           <ScrollView
             className="flex-1 px-5 pt-4"
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {/* ── Step 1: Language ── */}
-            {step === "language" && (
-              <View>
-                <Text className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
-                  {t("contribute.selectLanguage")}
-                </Text>
-                <Text className="mb-5 text-sm text-neutral-500 dark:text-neutral-400">
-                  {t("contribute.allEntriesLanguageDesc")}
-                </Text>
-                {LANGUAGES.map((lang) => (
-                  <Pressable
-                    key={lang.id}
-                    onPress={() => {
-                      setSelectedLanguage(lang.id);
-                      setStep("category");
-                    }}
-                    className="mb-2.5 flex-row items-center rounded-2xl bg-neutral-50 p-4 active:opacity-70 dark:bg-neutral-800"
-                  >
-                    <View className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-neutral-200 dark:bg-neutral-700">
-                      <Text className="text-sm font-bold text-neutral-600 dark:text-neutral-300">
-                        {lang.name.slice(0, 2).toUpperCase()}
-                      </Text>
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-base font-semibold text-neutral-900 dark:text-white">
-                        {lang.name}
-                      </Text>
-                      <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-                        {lang.nativeName} · {lang.region}
-                      </Text>
-                    </View>
-                    <IconSymbol name="chevron.right" size={16} color={M.muted} />
-                  </Pressable>
-                ))}
-              </View>
-            )}
 
             {/* ── Step 2: Category ── */}
             {step === "category" && (
@@ -316,6 +293,7 @@ export default function ContributeBulkScreen() {
               </View>
             )}
           </ScrollView>
+          )}
 
           {/* Bottom bar (only shown on entries step) */}
           {step === "entries" && (
