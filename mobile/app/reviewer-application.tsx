@@ -57,6 +57,7 @@ function ReviewerProfileCard({
   withdrawing,
 }: Readonly<{ existing: ReviewerApp; currentUser: CurrentUser | null; onWithdraw: () => void; withdrawing: boolean }>) {
   const { t } = useTranslation();
+  const M = useMuseumTheme();
   const roleKey = currentUser?.reviewerRole ?? existing.role;
 
   const roleColors: Record<string, { bg: string; text: string }> = {
@@ -128,6 +129,7 @@ function PendingCard({
   createdAt, role, onCancel, cancelling,
 }: Readonly<{ createdAt: string; role: string; onCancel: () => void; cancelling: boolean }>) {
   const { t } = useTranslation();
+  const M = useMuseumTheme();
   return (
     <View className="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
       <View className="mb-2 flex-row items-center gap-2">
@@ -164,6 +166,7 @@ function PendingCard({
 
 function RejectedBanner({ note }: Readonly<{ note: string | null }>) {
   const { t } = useTranslation();
+  const M = useMuseumTheme();
   return (
     <View className="mb-5 rounded-2xl border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950/40">
       <View className="mb-1 flex-row items-center gap-2">
@@ -421,6 +424,7 @@ function ApplicationForm({
   canSubmit: boolean; pending: boolean; onSubmit: () => void;
   isUpdate: boolean;
 }>) {
+  const M = useMuseumTheme();
   const isDark = useColorScheme() === "dark";
   const chipIconColor = isDark ? "#c7d2fe" : "#4338ca";
   const [langSearch, setLangSearch] = useState("");
