@@ -179,6 +179,13 @@ export default function AdminPanelScreen() {
               onPress={() => router.push("/admin/culture-content")}
               accent={getAccent("purple").solid}
             />
+            <ActionRow
+              icon="flame.fill"
+              label={t("admin.streakTools.title", "Streak Tools")}
+              detail={t("admin.streakTools.subtitle", "Override your streak to test milestones")}
+              onPress={() => router.push("/admin/streak-tools")}
+              accent={getAccent("orange").solid}
+            />
             {currentUser && canManageBounties(currentUser) ? (
               <ActionRow
                 icon="star.fill"

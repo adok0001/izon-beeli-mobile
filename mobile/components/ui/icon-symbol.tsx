@@ -67,6 +67,8 @@ const MAPPING = {
   'bell.fill': 'notifications',
   'bell': 'notifications-none',
   'trophy.fill': 'emoji-events',
+  'snowflake': 'ac-unit',
+  'arrow.counterclockwise': 'refresh',
   'megaphone': 'campaign',
   'globe.fill': 'language',
   'play.circle.fill': 'play-circle',

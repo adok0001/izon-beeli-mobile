@@ -6,7 +6,7 @@ import { awardXP } from "../lib/award-xp.js";
 import { incrementDailyChallenge } from "../lib/daily-challenge.js";
 import { sendPushBatch, chunk } from "../lib/send-push.js";
 import { updateStreak, diffDaysFromToday } from "../lib/update-streak.js";
-import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
+import { authMiddleware, adminMiddleware, type AuthEnv } from "../middleware/auth.js";
 
 export const progressRouter = new Hono<AuthEnv>();
 
@@ -168,10 +168,16 @@ progressRouter.post("/:lessonId/listen", async (c) => {
     await db.insert(userProgress).values({ userId, lessonId, listenedAt: now });
   }
 
-  await updateStreak(userId);
+  const streakResult = await updateStreak(userId);
 
   incrementDailyChallenge(userId, "listen_lesson").catch(() => {});
-  return c.json({ tracked: true });
+  return c.json({
+    tracked: true,
+    streak: streakResult.newStreak,
+    streakIncremented: streakResult.streakIncremented,
+    streakMilestone: streakResult.streakMilestone ?? null,
+    freezeCount: streakResult.freezeCount,
+  });
 });
 
 // POST /api/progress/freeze - spend a freeze to restore broken streak
@@ -341,4 +347,77 @@ progressRouter.delete("/", async (c) => {
     .where(eq(users.id, userId));
 
   return c.json({ reset: true });
+});
+
+// Resolve a relative lastActive token to a YYYY-MM-DD string (or null to clear).
+// "yesterday" leaves the streak primed so the next activity increments it (diff 1);
+// "today" marks it active today (next activity is a no-op); "stale" simulates a
+// broken streak (diff >= 2). updateStreak keys entirely off this date, so tests
+// must set it explicitly or a set streak gets clobbered on the next activity.
+type LastActiveToken = "today" | "yesterday" | "stale" | "clear";
+
+function resolveLastActiveDate(token: LastActiveToken): string | null {
+  if (token === "clear") return null;
+  const offset = token === "today" ? 0 : token === "yesterday" ? 1 : 3;
+  const date = new Date();
+  date.setDate(date.getDate() - offset);
+  return date.toISOString().slice(0, 10);
+}
+
+// Coerce an optional body field to a non-negative integer. Returns the fallback
+// when omitted, or null when present-but-invalid (non-integer, negative, string,
+// NaN) so the caller can reject with a clear 400 instead of silently writing 0
+// or letting a bad value hit the integer column.
+function parseNonNegInt(value: unknown, fallback: number): number | null {
+  if (value === undefined) return fallback;
+  return Number.isInteger(value) && (value as number) >= 0 ? (value as number) : null;
+}
+
+// POST /api/progress/admin/set-streak - admin-only streak override for testing.
+// Body: { streak?, freezes?, lastActive?, userId? }. Defaults: streak 0,
+// lastActive "yesterday", target = caller. Set streak 6 + lastActive "yesterday"
+// to trip the 7-day milestone on the next lesson; streak 0 + "stale" to test the
+// broken-streak path.
+progressRouter.post("/admin/set-streak", adminMiddleware, async (c) => {
+  const body = await c.req.json<{
+    streak?: number;
+    freezes?: number;
+    lastActive?: LastActiveToken;
+    userId?: string;
+  }>().catch(() => ({}) as Record<string, never>);
+
+  const targetUserId = body.userId ?? c.get("userId");
+  const lastActive: LastActiveToken = body.lastActive ?? "yesterday";
+
+  // streak defaults to 0; freezes stays undefined when omitted (left untouched).
+  const streak = parseNonNegInt(body.streak, 0);
+  const freezes = body.freezes === undefined ? undefined : parseNonNegInt(body.freezes, 0);
+  if (streak === null || freezes === null) {
+    return c.json({ error: "streak and freezes must be non-negative integers" }, 400);
+  }
+
+  const lastActiveDate = resolveLastActiveDate(lastActive);
+
+  const [updated] = await db
+    .update(users)
+    .set({
+      streak,
+      lastActiveDate,
+      ...(freezes !== undefined ? { streakFreezes: freezes } : {}),
+    })
+    .where(eq(users.id, targetUserId))
+    .returning({
+      streak: users.streak,
+      lastActiveDate: users.lastActiveDate,
+      streakFreezes: users.streakFreezes,
+    });
+
+  if (!updated) return c.json({ error: "User not found" }, 404);
+
+  return c.json({
+    userId: targetUserId,
+    streak: updated.streak,
+    lastActiveDate: updated.lastActiveDate,
+    freezeCount: updated.streakFreezes,
+  });
 });
