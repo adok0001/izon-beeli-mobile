@@ -1,7 +1,9 @@
+import { MINI_PLAYER_HEIGHT } from "@/components/audio/audio-player";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
 import { hapticTap } from "@/lib/haptics";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useAudioStore } from "@/store/audio-store";
 import { useSpeedDialStore } from "@/store/speed-dial-store";
 import { useTourStore } from "@/store/tour-store";
 import { useRouter } from "expo-router";
@@ -75,6 +77,7 @@ export function GlobalSpeedDialFab() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const activeTour = useTourStore((s) => s.activeTour);
+  const currentTrackId = useAudioStore((s) => s.currentTrackId);
   const open = useSpeedDialStore((s) => s.open);
   const setOpen = useSpeedDialStore((s) => s.setOpen);
   const progress = useSharedValue(0);
@@ -116,7 +119,7 @@ export function GlobalSpeedDialFab() {
       )}
       <View
         pointerEvents="box-none"
-        style={{ position: "absolute", right: 16, bottom: 72 + insets.bottom, zIndex: 50, alignItems: "flex-end" }}
+        style={{ position: "absolute", right: 16, bottom: 72 + insets.bottom + (currentTrackId ? MINI_PLAYER_HEIGHT : 0), zIndex: 50, alignItems: "flex-end" }}
       >
         {open && (
           <View pointerEvents="box-none">

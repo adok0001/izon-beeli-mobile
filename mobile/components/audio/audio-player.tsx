@@ -14,6 +14,10 @@ import { formatDuration } from "@/lib/mock-data";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 
+/** Approximate rendered height of the compact mini-player bar (px). Used by
+ *  floating action buttons to clear the playback bar when a track is active. */
+export const MINI_PLAYER_HEIGHT = 54;
+
 export function AudioPlayer({ compact = false, position = "bottom", onPress }: { compact?: boolean; position?: "top" | "bottom"; onPress?: () => void }) {
   const M = useMuseumTheme();
   const {
@@ -115,6 +119,16 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
           <Text style={{ marginLeft: 8, fontSize: 12, color: M.sub }}>
             {formatDuration(progress)}
           </Text>
+          <Pressable
+            onPress={reset}
+            style={{ marginLeft: 12 }}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Remove track"
+            accessibilityHint="Stops playback and clears the player"
+          >
+            <IconSymbol name="xmark" size={18} color={M.sub} />
+          </Pressable>
         </View>
       </View>
     );
@@ -211,7 +225,16 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
           <IconSymbol name="forward.fill" size={28} color={M.sub} />
         </Pressable>
 
-        <View style={{ minWidth: 40 }} />
+        <Pressable
+          onPress={reset}
+          hitSlop={8}
+          style={{ minWidth: 40, alignItems: "center" }}
+          accessibilityRole="button"
+          accessibilityLabel="Remove track"
+          accessibilityHint="Stops playback and clears the player"
+        >
+          <IconSymbol name="xmark" size={22} color={M.sub} />
+        </Pressable>
       </View>
     </View>
   );

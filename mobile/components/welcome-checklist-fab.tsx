@@ -1,3 +1,4 @@
+import { MINI_PLAYER_HEIGHT } from "@/components/audio/audio-player";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useAwardChecklistBonus, useProgressSummary } from "@/lib/hooks/use-progress";
 import { useMyContributions } from "@/lib/hooks/use-contributions";
@@ -10,6 +11,7 @@ import {
     type MobileChecklistAudience,
     type MobileChecklistId,
 } from "@/lib/tours/mobile-checklist-registry";
+import { useAudioStore } from "@/store/audio-store";
 import { useSpeedDialStore } from "@/store/speed-dial-store";
 import { useWelcomeChecklistStore } from "@/store/welcome-checklist-store";
 import { LinearGradient } from "expo-linear-gradient";
@@ -258,6 +260,7 @@ export function WelcomeChecklistFab() {
   }, [pendingCount, isHydrated, bonusAwarded, markBonusAwarded, awardBonus]);
 
   const speedDialOpen = useSpeedDialStore((s) => s.open);
+  const currentTrackId = useAudioStore((s) => s.currentTrackId);
 
   if (!isHydrated) return null;
 
@@ -270,7 +273,7 @@ export function WelcomeChecklistFab() {
 
       {pendingCount > 0 && !speedDialOpen && (
       // bottom offset clears the global speed-dial FAB, which owns the bottom-right slot
-      <View pointerEvents="box-none" style={{ position: "absolute", right: 16, bottom: 136 + insets.bottom, zIndex: 60 }}>
+      <View pointerEvents="box-none" style={{ position: "absolute", right: 16, bottom: 136 + insets.bottom + (currentTrackId ? MINI_PLAYER_HEIGHT : 0), zIndex: 60 }}>
 
       {open ? (
         <View style={{ marginBottom: 12, width: 320, overflow: "hidden", borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.card }}>
