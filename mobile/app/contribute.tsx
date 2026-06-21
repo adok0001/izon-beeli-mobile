@@ -54,6 +54,7 @@ export default function ContributeScreen() {
     pronunciation?: string;
     example?: string;
     exampleTranslation?: string;
+    bountyId?: string;
   }>();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
   const {
@@ -118,7 +119,14 @@ export default function ContributeScreen() {
     selectedLanguage ?? undefined,
     category ?? undefined
   );
-  const activeBounty = matchingBounties?.[0]; // highest xpReward first
+  // Banner prefers the bounty the user explicitly opened (deep link), else the
+  // highest-reward match. Only an explicit deep link is stamped on the
+  // submission as its target — free-form entries stay untargeted and get
+  // auto-matched at approval, so they never fail on a full/expired bounty.
+  const activeBounty = params.bountyId
+    ? (matchingBounties?.find((b) => b.id === params.bountyId) ?? matchingBounties?.[0])
+    : matchingBounties?.[0];
+  const targetBountyId = params.bountyId;
 
   const { data: contributors = [] } = useContributors();
   const totalContributors = contributors.length;
@@ -206,6 +214,7 @@ export default function ContributeScreen() {
         exampleTranslation: data.exampleTranslation,
         audioUri: data.audioUri,
         imageUri: data.imageUri,
+        bountyId: targetBountyId,
       },
       {
         onSuccess: () => {

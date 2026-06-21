@@ -41,6 +41,45 @@ export interface UpdateBountyInput {
   expiresAt?: string | null;
 }
 
+export interface BountySubmission {
+  id: string;
+  word: string;
+  english: string;
+  category: string;
+  languageId: string;
+  type: string;
+  status: string;
+  audioUrl: string | null;
+  imageUrl: string | null;
+  userId: string;
+  submitterName: string | null;
+  bountyId: string | null;
+  bountyXpAwarded: number | null;
+  createdAt: string;
+}
+
+export interface BountySubmissions {
+  bountyId: string;
+  pending: BountySubmission[];
+  credited: BountySubmission[];
+}
+
+// Admin: submissions matching a bounty (pending) + already credited to it
+export function useBountySubmissions(id: string) {
+  const { getToken } = useAuth();
+
+  return useQuery<BountySubmissions>({
+    queryKey: ["bounty-submissions", id],
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch<BountySubmissions>(`/bounties/admin/${id}/submissions`, {
+        token: token!,
+      });
+    },
+    enabled: !!id,
+  });
+}
+
 // Public: active bounties for learners
 export function useBounties(languageId?: string, category?: string) {
   const params = new URLSearchParams();

@@ -29,8 +29,11 @@ import {
     X,
     XCircle,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+
+type BountyTarget = { id: string; languageId: string; category?: string };
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -115,17 +118,27 @@ function SuccessBanner({ message, onClose }: Readonly<{ message: string; onClose
 
 // ── Flow 1: Word / Phrase ─────────────────────────────────────────────────────
 
-function WordFlow({ onDone }: Readonly<{ onDone: () => void }>) {
+function WordFlow({
+  onDone,
+  bountyId,
+  initialLangId,
+  initialCategory,
+}: Readonly<{
+  onDone: () => void;
+  bountyId?: string;
+  initialLangId?: string;
+  initialCategory?: Category;
+}>) {
   const { t } = useTranslation();
   const { getToken } = useAuth();
   const { selectedLanguageId } = useLanguageStore();
   const qc = useQueryClient();
 
   const [step, setStep] = useState(1);
-  const [langId, setLangId] = useState(selectedLanguageId);
+  const [langId, setLangId] = useState(initialLangId ?? selectedLanguageId);
   const [word, setWord] = useState("");
   const [english, setEnglish] = useState("");
-  const [category, setCategory] = useState<Category>("other");
+  const [category, setCategory] = useState<Category>(initialCategory ?? "other");
   const [pronunciation, setPronunciation] = useState("");
   const [example, setExample] = useState("");
   const [exampleTranslation, setExampleTranslation] = useState("");
@@ -144,6 +157,7 @@ function WordFlow({ onDone }: Readonly<{ onDone: () => void }>) {
         pronunciation: pronunciation.trim() || undefined,
         example: example.trim() || undefined,
         exampleTranslation: exampleTranslation.trim() || undefined,
+        bountyId: bountyId || undefined,
       };
 
       if (audioFile) {
@@ -1111,7 +1125,7 @@ function ReviewerForm({
 
 // ── Flow 4: Bounties ──────────────────────────────────────────────────────────
 
-function BountiesView({ onContribute }: Readonly<{ onContribute: (langId: string) => void }>) {
+function BountiesView({ onContribute }: Readonly<{ onContribute: (target: BountyTarget) => void }>) {
   const { t } = useTranslation();
   const { getToken } = useAuth();
 
@@ -1183,7 +1197,7 @@ function BountiesView({ onContribute }: Readonly<{ onContribute: (langId: string
           </div>
 
           <button
-            onClick={() => onContribute(bounty.languageId)}
+            onClick={() => onContribute({ id: bounty.id, languageId: bounty.languageId, category: bounty.category ?? undefined })}
             className="w-full py-2 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 transition-colors"
           >
             {t("contribute.contributeWord")}
@@ -1198,21 +1212,43 @@ function BountiesView({ onContribute }: Readonly<{ onContribute: (langId: string
 
 type Flow = "word" | "bulk" | "lesson" | "bounties" | "reviewer";
 
-export default function ContributePage() {
+function ContributePageContent() {
   const { t } = useTranslation();
+  const searchParams = useSearchParams();
   const [activeFlow, setActiveFlow] = useState<Flow | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [bountyTarget, setBountyTarget] = useState<BountyTarget | null>(null);
   const { setLanguage } = useLanguageStore();
+  const appliedParams = useRef(false);
 
   function handleDone(msg?: string) {
     setActiveFlow(null);
+    setBountyTarget(null);
     setSuccess(msg ?? t("contribute.submittedSuccess"));
   }
 
-  function handleBountyContribute(langId: string) {
-    setLanguage(langId);
+  function handleBountyContribute(target: BountyTarget) {
+    setLanguage(target.languageId);
+    setBountyTarget(target);
     setActiveFlow("word");
   }
+
+  // Open the word flow pre-targeted when arriving from a bounty deep link
+  // (e.g. /contribute?bountyId=…&languageId=…&category=…).
+  useEffect(() => {
+    if (appliedParams.current) return;
+    const bountyId = searchParams.get("bountyId");
+    const languageId = searchParams.get("languageId");
+    if (bountyId && languageId) {
+      appliedParams.current = true;
+      handleBountyContribute({
+        id: bountyId,
+        languageId,
+        category: searchParams.get("category") ?? undefined,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const hubCards = [
     {
@@ -1296,7 +1332,12 @@ export default function ContributePage() {
       {/* Active flows */}
       {activeFlow === "word" && (
         <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-6">
-          <WordFlow onDone={() => handleDone()} />
+          <WordFlow
+            onDone={() => handleDone()}
+            bountyId={bountyTarget?.id}
+            initialLangId={bountyTarget?.languageId}
+            initialCategory={bountyTarget?.category as Category | undefined}
+          />
         </div>
       )}
 
@@ -1343,5 +1384,13 @@ export default function ContributePage() {
         </button>
       )}
     </div>
+  );
+}
+
+export default function ContributePage() {
+  return (
+    <Suspense>
+      <ContributePageContent />
+    </Suspense>
   );
 }

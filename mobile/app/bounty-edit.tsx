@@ -1,7 +1,13 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { ALL_CATEGORIES, CATEGORY_LABELS, type DictionaryCategory } from "@/lib/dictionary";
-import { useBounty, useUpdateBounty } from "@/lib/hooks/use-bounties";
+import {
+  useBounty,
+  useBountySubmissions,
+  useUpdateBounty,
+  type BountySubmission,
+} from "@/lib/hooks/use-bounties";
+import { useReviewContribution } from "@/lib/hooks/use-contributions";
 import { canManageBounties, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useToast } from "@/lib/hooks/use-toast";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -9,6 +15,7 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -47,6 +54,163 @@ function Field({
 
 function inputCls(extra?: string) {
   return `rounded-xl border border-neutral-200 bg-white px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white ${extra ?? ""}`;
+}
+
+const SUBMISSION_STATUS: Record<string, { label: string; cls: string }> = {
+  submitted: { label: "Pending", cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" },
+  approved: { label: "Approved", cls: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
+  rejected: { label: "Rejected", cls: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
+};
+
+type ReviewAction = (id: string, action: "approve" | "reject") => void;
+
+function SubmissionRow({
+  item,
+  canReview,
+  busy,
+  onAction,
+}: {
+  item: BountySubmission;
+  canReview: boolean;
+  busy: boolean;
+  onAction: ReviewAction;
+}) {
+  const M = useMuseumTheme();
+  const status = SUBMISSION_STATUS[item.status] ?? { label: item.status, cls: "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400" };
+  const actionable = canReview && item.status === "submitted";
+
+  return (
+    <View className="rounded-xl border border-neutral-200 bg-white px-3 py-2.5 dark:border-neutral-700 dark:bg-neutral-800">
+      <View className="flex-row items-center gap-3">
+        <View className="flex-1">
+          <Text className="text-sm font-semibold text-neutral-900 dark:text-white" numberOfLines={1}>
+            {item.word} → {item.english}
+          </Text>
+          <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
+            {item.submitterName ?? "Unknown"} · {item.type}
+          </Text>
+        </View>
+        <View className={`rounded-full px-2 py-0.5 ${status.cls}`}>
+          <Text className="text-[11px] font-semibold">{status.label}</Text>
+        </View>
+      </View>
+      {actionable ? (
+        <View className="mt-2.5 flex-row gap-2">
+          <Pressable
+            onPress={() => onAction(item.id, "reject")}
+            disabled={busy}
+            className="flex-1 flex-row items-center justify-center gap-1.5 rounded-lg border border-red-200 py-2 active:opacity-70 dark:border-red-900/50"
+          >
+            <IconSymbol name="xmark.circle.fill" size={14} color={M.error} />
+            <Text className="text-xs font-semibold text-red-600 dark:text-red-400">Reject</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => onAction(item.id, "approve")}
+            disabled={busy}
+            className="flex-1 flex-row items-center justify-center gap-1.5 rounded-lg bg-green-500 py-2 active:opacity-80"
+          >
+            <IconSymbol name="checkmark.circle.fill" size={14} color="#fff" />
+            <Text className="text-xs font-semibold text-white">Approve</Text>
+          </Pressable>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+function SubmissionGroup({
+  title,
+  items,
+  empty,
+  canReview,
+  busy,
+  onAction,
+}: {
+  title: string;
+  items: BountySubmission[];
+  empty: string;
+  canReview: boolean;
+  busy: boolean;
+  onAction: ReviewAction;
+}) {
+  return (
+    <>
+      <Text className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">
+        {title} ({items.length})
+      </Text>
+      {items.length > 0 ? (
+        <View className="gap-2">
+          {items.map((s) => (
+            <SubmissionRow key={s.id} item={s} canReview={canReview} busy={busy} onAction={onAction} />
+          ))}
+        </View>
+      ) : (
+        <Text className="text-sm text-neutral-400">{empty}</Text>
+      )}
+    </>
+  );
+}
+
+function BountySubmissionsSection({ id, canReview }: { id: string; canReview: boolean }) {
+  const { data, isLoading } = useBountySubmissions(id);
+  const review = useReviewContribution();
+
+  const handleAction: ReviewAction = (contributionId, action) => {
+    const verb = action === "approve" ? "Approve" : "Reject";
+    Alert.alert(
+      `${verb} submission?`,
+      action === "approve"
+        ? "This credits the contributor and counts toward the bounty."
+        : "This rejects the entry and notifies the contributor.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: verb,
+          style: action === "reject" ? "destructive" : "default",
+          onPress: () =>
+            review.mutate(
+              { id: contributionId, action },
+              {
+                onError: () =>
+                  Alert.alert("Error", `Failed to ${action} submission. Please try again.`),
+              }
+            ),
+        },
+      ]
+    );
+  };
+
+  return (
+    <View className="mt-8">
+      <Text className="mb-1 text-base font-bold text-neutral-900 dark:text-white">Submissions</Text>
+      <Text className="mb-4 text-xs text-neutral-500 dark:text-neutral-400">
+        Pending entries that match this bounty, plus those already credited to it.
+      </Text>
+      {isLoading ? (
+        <ActivityIndicator className="my-4" />
+      ) : (
+        <>
+          <SubmissionGroup
+            title="Pending review"
+            items={data?.pending ?? []}
+            empty="No pending submissions."
+            canReview={canReview}
+            busy={review.isPending}
+            onAction={handleAction}
+          />
+          <View className="h-5" />
+          <SubmissionGroup
+            title="Credited"
+            items={data?.credited ?? []}
+            empty="None credited yet."
+            canReview={false}
+            busy={false}
+            onAction={handleAction}
+          />
+        </>
+      )}
+    </View>
+  );
 }
 
 export default function BountyEditScreen() {
@@ -262,6 +426,11 @@ export default function BountyEditScreen() {
                 {updateBounty.isPending ? "Saving…" : "Save Changes"}
               </Text>
             </Pressable>
+
+            {/* Submissions */}
+            {id ? (
+              <BountySubmissionsSection id={id} canReview={!!currentUser?.isAdmin} />
+            ) : null}
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>

@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { db } from "../db/index.js";
 import { bounties, contributions, dictionaryEntries, feedItems, users } from "../db/schema.js";
 import { awardXP, CONTRIBUTION_BASE_XP } from "../lib/award-xp.js";
+import { bountyMatchesContribution } from "../lib/bounty-match.js";
 import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
 import { updateStreak } from "../lib/update-streak.js";
 import { errMessage } from "../lib/errors.js";
@@ -76,6 +77,7 @@ contributionsRouter.post("/", async (c) => {
   let audioUrl: string | undefined;
   let imageUrl: string | undefined;
   let dictionaryEntryId: string | undefined;
+  let bountyId: string | undefined;
 
   if (contentType.includes("multipart/form-data")) {
     const formData = await c.req.formData();
@@ -88,6 +90,7 @@ contributionsRouter.post("/", async (c) => {
     example = (formData.get("example") as string) || undefined;
     exampleTranslation = (formData.get("exampleTranslation") as string) || undefined;
     dictionaryEntryId = (formData.get("dictionaryEntryId") as string) || undefined;
+    bountyId = (formData.get("bountyId") as string) || undefined;
 
     const audioFile = formData.get("audio") as File | null;
     if (audioFile) {
@@ -129,6 +132,7 @@ contributionsRouter.post("/", async (c) => {
       example?: string;
       exampleTranslation?: string;
       dictionaryEntryId?: string;
+      bountyId?: string;
     }>();
     type = body.type ?? "";
     languageId = body.languageId ?? "";
@@ -139,6 +143,7 @@ contributionsRouter.post("/", async (c) => {
     example = body.example;
     exampleTranslation = body.exampleTranslation;
     dictionaryEntryId = body.dictionaryEntryId;
+    bountyId = body.bountyId;
   }
 
   // entry_audio, entry_meaning, entry_image target an existing dictionary entry
@@ -218,6 +223,36 @@ contributionsRouter.post("/", async (c) => {
     }
   }
 
+  // Validate an explicit target bounty: it must be open and the entry must fit
+  // its criteria. Entry contributions don't target bounties.
+  let targetBountyId: string | null = null;
+  if (bountyId && !isEntryContribution) {
+    const [bounty] = await db
+      .select()
+      .from(bounties)
+      .where(eq(bounties.id, bountyId))
+      .limit(1);
+
+    if (!bounty) return c.json({ error: "Target bounty not found" }, 404);
+    if (bounty.status !== "active") return c.json({ error: "Target bounty is not active" }, 400);
+    if (bounty.expiresAt && bounty.expiresAt <= new Date()) {
+      return c.json({ error: "Target bounty has expired" }, 400);
+    }
+    if (bounty.currentCount >= bounty.targetCount) {
+      return c.json({ error: "Target bounty is already complete" }, 400);
+    }
+    if (bounty.languageId !== languageId) {
+      return c.json({ error: "Entry language does not match the bounty" }, 400);
+    }
+    if (bounty.category && bounty.category !== category) {
+      return c.json({ error: "Entry category does not match the bounty" }, 400);
+    }
+    if (bounty.contributionType && bounty.contributionType !== type) {
+      return c.json({ error: "Entry type does not match the bounty" }, 400);
+    }
+    targetBountyId = bounty.id;
+  }
+
   try {
     const [contribution] = await db
       .insert(contributions)
@@ -234,6 +269,7 @@ contributionsRouter.post("/", async (c) => {
         audioUrl: audioUrl ?? null,
         imageUrl: imageUrl ?? null,
         dictionaryEntryId: dictionaryEntryId || null,
+        bountyId: targetBountyId,
       })
       .returning();
 
@@ -479,22 +515,36 @@ contributionsRouter.patch("/:id/review", adminMiddleware, async (c) => {
     await awardXP(existing.userId, baseXp, "contribution");
     xpAwarded = baseXp;
 
-    // Find matching active bounty (highest xpReward wins)
-    const [matchingBounty] = await db
-      .select()
-      .from(bounties)
-      .where(
-        and(
-          eq(bounties.status, "active"),
-          eq(bounties.languageId, existing.languageId),
-          sql`(${bounties.category} IS NULL OR ${bounties.category} = ${existing.category})`,
-          sql`(${bounties.contributionType} IS NULL OR ${bounties.contributionType} = ${existing.type})`,
-          sql`(${bounties.expiresAt} IS NULL OR ${bounties.expiresAt} > NOW())`,
-          sql`${bounties.currentCount} < ${bounties.targetCount}`
+    // Credit the bounty the contributor explicitly targeted, if it's still
+    // open; otherwise fall back to the best matching active bounty so a stale
+    // or untargeted entry can still earn a bounty reward.
+    let matchingBounty: typeof bounties.$inferSelect | undefined;
+    if (existing.bountyId) {
+      const rows = await db
+        .select()
+        .from(bounties)
+        .where(
+          and(
+            eq(bounties.id, existing.bountyId),
+            eq(bounties.status, "active"),
+            sql`(${bounties.expiresAt} IS NULL OR ${bounties.expiresAt} > NOW())`,
+            sql`${bounties.currentCount} < ${bounties.targetCount}`
+          )
         )
-      )
-      .orderBy(desc(bounties.xpReward))
-      .limit(1);
+        .limit(1);
+      matchingBounty = rows[0];
+    }
+    if (!matchingBounty) {
+      const rows = await db
+        .select()
+        .from(bounties)
+        .where(
+          bountyMatchesContribution(existing.languageId, existing.category, existing.type)
+        )
+        .orderBy(desc(bounties.xpReward))
+        .limit(1);
+      matchingBounty = rows[0];
+    }
 
     if (matchingBounty) {
       await awardXP(existing.userId, matchingBounty.xpReward, "contribution");
@@ -522,7 +572,7 @@ contributionsRouter.patch("/:id/review", adminMiddleware, async (c) => {
       reviewedBy: reviewerId,
       reviewedAt: new Date(),
       xpAwarded,
-      bountyId: matchedBountyId,
+      bountyId: matchedBountyId ?? existing.bountyId,
       bountyXpAwarded,
     })
     .where(eq(contributions.id, id))

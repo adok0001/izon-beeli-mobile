@@ -1,8 +1,25 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index.js";
-import { bounties, users } from "../db/schema.js";
+import { bounties, contributions, users } from "../db/schema.js";
 import { professorMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
+
+const submissionSelectFields = {
+  id: contributions.id,
+  word: contributions.word,
+  english: contributions.english,
+  category: contributions.category,
+  languageId: contributions.languageId,
+  type: contributions.type,
+  status: contributions.status,
+  audioUrl: contributions.audioUrl,
+  imageUrl: contributions.imageUrl,
+  userId: contributions.userId,
+  submitterName: users.name,
+  bountyId: contributions.bountyId,
+  bountyXpAwarded: contributions.bountyXpAwarded,
+  createdAt: contributions.createdAt,
+};
 
 const bountySelectFields = {
   id: bounties.id,
@@ -89,6 +106,32 @@ bountiesAdminRouter.get("/", async (c) => {
     .orderBy(desc(bounties.createdAt));
 
   return c.json(rows.map(withProgress));
+});
+
+// GET /api/bounties/admin/:id/submissions — contributions targeting this bounty.
+// `pending` = submitted contributions awaiting review. `credited` = approved.
+bountiesAdminRouter.get("/:id/submissions", async (c) => {
+  const { id } = c.req.param();
+
+  const [bounty] = await db
+    .select({ id: bounties.id })
+    .from(bounties)
+    .where(eq(bounties.id, id))
+    .limit(1);
+
+  if (!bounty) return c.json({ error: "Bounty not found" }, 404);
+
+  const byStatus = (status: "submitted" | "approved") =>
+    db
+      .select(submissionSelectFields)
+      .from(contributions)
+      .leftJoin(users, eq(contributions.userId, users.id))
+      .where(and(eq(contributions.bountyId, id), eq(contributions.status, status)))
+      .orderBy(desc(contributions.createdAt));
+
+  const [pending, credited] = await Promise.all([byStatus("submitted"), byStatus("approved")]);
+
+  return c.json({ bountyId: id, pending, credited });
 });
 
 // POST /api/bounties/admin/create

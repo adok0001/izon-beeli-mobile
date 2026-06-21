@@ -68,7 +68,7 @@ function BountyCard({ bounty, isAdmin }: { bounty: Bounty; isAdmin?: boolean }) 
       </View>
 
       <Pressable
-        onPress={() => router.push({ pathname: "/contribute", params: { languageId: bounty.languageId, ...(bounty.category ? { category: bounty.category } : {}) } } as any)}
+        onPress={() => router.push({ pathname: "/contribute", params: { bountyId: bounty.id, languageId: bounty.languageId, ...(bounty.category ? { category: bounty.category } : {}) } } as any)}
         style={{ alignItems: "center", borderRadius: 12, backgroundColor: M.accent, paddingVertical: 12 }}
         className="active:opacity-80"
       >

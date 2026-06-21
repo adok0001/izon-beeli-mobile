@@ -71,7 +71,7 @@ function BountyCard({ bounty }: Readonly<{ bounty: Bounty }>) {
       </div>
 
       <Link
-        href={`/contribute?languageId=${bounty.languageId}${bounty.category ? `&category=${bounty.category}` : ""}`}
+        href={`/contribute?bountyId=${bounty.id}&languageId=${bounty.languageId}${bounty.category ? `&category=${bounty.category}` : ""}`}
         className="block w-full text-center py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold transition-colors"
       >
         {t("bounties.contribute")}

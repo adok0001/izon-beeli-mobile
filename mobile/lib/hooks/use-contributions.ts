@@ -27,6 +27,7 @@ export interface ContributionInput {
   exampleTranslation?: LocalizedText;
   audioUri?: string;
   imageUri?: string;
+  bountyId?: string;
 }
 
 export function useSubmitContribution() {
@@ -47,6 +48,7 @@ export function useSubmitContribution() {
         if (input.pronunciation) formData.append("pronunciation", input.pronunciation);
         if (input.example) formData.append("example", input.example);
         if (input.exampleTranslation) formData.append("exampleTranslation", JSON.stringify(input.exampleTranslation));
+        if (input.bountyId) formData.append("bountyId", input.bountyId);
 
         if (input.audioUri) {
           appendFile(formData, "audio", {
@@ -87,6 +89,7 @@ export function useSubmitContribution() {
             pronunciation: input.pronunciation,
             example: input.example,
             exampleTranslation: input.exampleTranslation,
+            bountyId: input.bountyId,
           }),
         });
       }
@@ -299,6 +302,10 @@ export function useReviewContribution() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pending-contributions"] });
       queryClient.invalidateQueries({ queryKey: ["approved-words"] });
+      // A review can credit/complete a bounty, so refresh bounty views too.
+      queryClient.invalidateQueries({ queryKey: ["bounty-submissions"] });
+      queryClient.invalidateQueries({ queryKey: ["bounties-admin"] });
+      queryClient.invalidateQueries({ queryKey: ["bounties"] });
     },
   });
 }
