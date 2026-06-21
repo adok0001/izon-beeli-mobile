@@ -1,6 +1,9 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { QuizSaveStatus } from "@/components/quiz-save-status";
 import { useSubmitQuizResult } from "@/lib/hooks/use-quiz-result";
+import { useStreakCelebration } from "@/lib/hooks/use-progress";
+import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { Circle, Svg } from "react-native-svg";
 import { hapticError, hapticHeavy, hapticSuccess } from "@/lib/haptics";
 import { shuffle } from "@/lib/shuffle";
@@ -101,7 +104,8 @@ export { ErrorBoundary } from "@/components/screen-error-boundary";
 export default function SpeedRoundScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
-  const { submit: submitResult, retry: retryResult, status: saveStatus } = useSubmitQuizResult();
+  const { onStreakUpdate, pendingCelebration, showCelebration, dismissCelebration, celebration, toast, dismissToast } = useStreakCelebration();
+  const { submit: submitResult, retry: retryResult, status: saveStatus } = useSubmitQuizResult({ onStreakUpdate });
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
   const { data: entries = [] } = useDictionary(selectedLanguageId);
 
@@ -233,28 +237,32 @@ export default function SpeedRoundScreen() {
 
   if (phase === "results") {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["top", "bottom"]}>
-        <Stack.Screen options={{ title: "Speed Round", headerBackTitle: "Back" }} />
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32 }}>
-          <View style={{ width: 120, height: 120, borderRadius: 60, borderWidth: 3, borderColor: M.accent, alignItems: "center", justifyContent: "center", marginBottom: 24 }}>
-            <Text style={{ fontSize: 48, fontWeight: "900", color: M.accent }}>{score}</Text>
-            <Text style={{ fontSize: 10, fontWeight: "700", letterSpacing: 1.5, color: M.muted }}>CORRECT</Text>
+      <>
+        <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["top", "bottom"]}>
+          <Stack.Screen options={{ title: "Speed Round", headerBackTitle: "Back" }} />
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32 }}>
+            <View style={{ width: 120, height: 120, borderRadius: 60, borderWidth: 3, borderColor: M.accent, alignItems: "center", justifyContent: "center", marginBottom: 24 }}>
+              <Text style={{ fontSize: 48, fontWeight: "900", color: M.accent }}>{score}</Text>
+              <Text style={{ fontSize: 10, fontWeight: "700", letterSpacing: 1.5, color: M.muted }}>CORRECT</Text>
+            </View>
+            <Text style={{ fontSize: 24, fontWeight: "800", color: M.text, marginBottom: 8 }}>Time&apos;s Up!</Text>
+            <Text style={{ fontSize: 15, color: M.sub, textAlign: "center" }}>
+              You answered {score} {score === 1 ? "word" : "words"} correctly
+            </Text>
+            <QuizSaveStatus status={saveStatus} onRetry={retryResult} />
+            <View style={{ width: "100%", gap: 10, marginTop: 32 }}>
+              <Pressable onPress={() => { dismissCelebration(); startGame(); }} style={{ borderRadius: 14, paddingVertical: 16, backgroundColor: M.accent, alignItems: "center" }}>
+                <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>Play Again</Text>
+              </Pressable>
+              <Pressable onPress={() => { if (pendingCelebration) { showCelebration(); return; } router.back(); }} style={{ borderRadius: 14, paddingVertical: 16, borderWidth: 1.5, borderColor: M.border, alignItems: "center" }}>
+                <Text style={{ fontSize: 15, fontWeight: "600", color: M.text }}>Back to Discover</Text>
+              </Pressable>
+            </View>
           </View>
-          <Text style={{ fontSize: 24, fontWeight: "800", color: M.text, marginBottom: 8 }}>Time&apos;s Up!</Text>
-          <Text style={{ fontSize: 15, color: M.sub, textAlign: "center" }}>
-            You answered {score} {score === 1 ? "word" : "words"} correctly
-          </Text>
-          <QuizSaveStatus status={saveStatus} onRetry={retryResult} />
-          <View style={{ width: "100%", gap: 10, marginTop: 32 }}>
-            <Pressable onPress={startGame} style={{ borderRadius: 14, paddingVertical: 16, backgroundColor: M.accent, alignItems: "center" }}>
-              <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>Play Again</Text>
-            </Pressable>
-            <Pressable onPress={() => router.back()} style={{ borderRadius: 14, paddingVertical: 16, borderWidth: 1.5, borderColor: M.border, alignItems: "center" }}>
-              <Text style={{ fontSize: 15, fontWeight: "600", color: M.text }}>Back to Discover</Text>
-            </Pressable>
-          </View>
-        </View>
-      </SafeAreaView>
+        </SafeAreaView>
+        <NotificationBanner visible={toast.visible} title={toast.title} body={toast.body} type={toast.type} onDismiss={dismissToast} />
+        <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={() => { dismissCelebration(); router.back(); }} />
+      </>
     );
   }
 

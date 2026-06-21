@@ -5,6 +5,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/button";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useStreakCelebration } from "@/lib/hooks/use-progress";
+import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { MatchingBoard } from "@/components/quiz/matching-board";
 import { useMatchingStore } from "@/store/matching-store";
 import { generateMatchingPairs } from "@/lib/quiz-engine";
@@ -31,6 +34,7 @@ export default function MatchingGameScreen() {
   const initialized = useRef(false);
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
+  const { onStreakUpdate, pendingCelebration, showCelebration, dismissCelebration, celebration, toast, dismissToast } = useStreakCelebration();
 
   const languageName = getLanguageName(selectedLanguageId);
   const { t } = useTranslation();
@@ -68,7 +72,7 @@ export default function MatchingGameScreen() {
     const post = async () => {
       try {
         const token = await getToken();
-        await apiFetch("/matching-results", {
+        const res = await apiFetch<{ streak?: number; streakIncremented?: boolean; streakMilestone?: number | null }>("/matching-results", {
           method: "POST",
           token: token ?? undefined,
           body: JSON.stringify({
@@ -79,6 +83,9 @@ export default function MatchingGameScreen() {
           }),
         });
         queryClient.invalidateQueries({ queryKey: ["progress"] });
+        if (res.streakIncremented && res.streak) {
+          onStreakUpdate(res.streak, !!res.streakMilestone);
+        }
       } catch {
         // non-blocking
       }
@@ -87,6 +94,7 @@ export default function MatchingGameScreen() {
   }, [phase]);
 
   const handlePlayAgain = useCallback(() => {
+    dismissCelebration();
     const segments = lessonData?.transcript ?? [];
     const pairs = generateMatchingPairs(
       {
@@ -160,7 +168,7 @@ export default function MatchingGameScreen() {
 
             <View style={{ width: "100%", gap: 12 }}>
               <Button label={t("matching.playAgain")} onPress={handlePlayAgain} />
-              <Button label={t("matching.backToLearn")} onPress={() => { reset(); router.back(); }} variant="secondary" />
+              <Button label={t("matching.backToLearn")} onPress={() => { if (pendingCelebration) { showCelebration(); return; } reset(); router.back(); }} variant="secondary" />
             </View>
           </View>
         ) : (
@@ -172,6 +180,8 @@ export default function MatchingGameScreen() {
           </View>
         )}
       </SafeAreaView>
+      <NotificationBanner visible={toast.visible} title={toast.title} body={toast.body} type={toast.type} onDismiss={dismissToast} />
+      <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={() => { dismissCelebration(); reset(); router.back(); }} />
     </>
   );
 }

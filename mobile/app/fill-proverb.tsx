@@ -4,6 +4,9 @@ import { hapticError, hapticSuccess } from "@/lib/haptics";
 import { shuffle } from "@/lib/shuffle";
 import { QuizSaveStatus } from "@/components/quiz-save-status";
 import { useSubmitQuizResult } from "@/lib/hooks/use-quiz-result";
+import { useStreakCelebration } from "@/lib/hooks/use-progress";
+import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { playCorrectSound, playFinishSound, playIncorrectSound } from "@/lib/sounds";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
@@ -123,7 +126,8 @@ export { ErrorBoundary } from "@/components/screen-error-boundary";
 export default function FillTheProverbScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
-  const { submit: submitResult, retry: retryResult, status: saveStatus } = useSubmitQuizResult();
+  const { onStreakUpdate, pendingCelebration, showCelebration, dismissCelebration, celebration, toast, dismissToast } = useStreakCelebration();
+  const { submit: submitResult, retry: retryResult, status: saveStatus } = useSubmitQuizResult({ onStreakUpdate });
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
 
   const puzzles = useMemo(() => {
@@ -195,33 +199,37 @@ export default function FillTheProverbScreen() {
   if (phase === "results") {
     const accuracy = Math.round((correctCount / puzzles.length) * 100);
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["top", "bottom"]}>
-        <Stack.Screen options={{ title: "Fill the Proverb", headerBackTitle: "Back" }} />
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32 }}>
-          <View style={{ width: 112, height: 112, borderRadius: 56, borderWidth: 3, borderColor: M.accent, alignItems: "center", justifyContent: "center", marginBottom: 24 }}>
-            <Text style={{ fontSize: 36, fontWeight: "900", color: M.accent }}>{accuracy}%</Text>
+      <>
+        <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["top", "bottom"]}>
+          <Stack.Screen options={{ title: "Fill the Proverb", headerBackTitle: "Back" }} />
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32 }}>
+            <View style={{ width: 112, height: 112, borderRadius: 56, borderWidth: 3, borderColor: M.accent, alignItems: "center", justifyContent: "center", marginBottom: 24 }}>
+              <Text style={{ fontSize: 36, fontWeight: "900", color: M.accent }}>{accuracy}%</Text>
+            </View>
+            <Text style={{ fontSize: 24, fontWeight: "800", color: M.text, marginBottom: 8 }}>Completed</Text>
+            <Text style={{ fontSize: 15, color: M.sub, textAlign: "center" }}>
+              {correctCount} of {puzzles.length} proverbs completed correctly
+            </Text>
+            <QuizSaveStatus status={saveStatus} onRetry={retryResult} />
+            <View style={{ width: "100%", gap: 10, marginTop: 32 }}>
+              <Pressable
+                onPress={() => { dismissCelebration(); setIndex(0); setCorrectCount(0); correctRef.current = 0; setSelectedOption(null); setLocked(false); setPhase("active"); }}
+                style={{ borderRadius: 14, paddingVertical: 16, backgroundColor: M.accent, alignItems: "center" }}
+              >
+                <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>Play Again</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => { if (pendingCelebration) { showCelebration(); return; } router.back(); }}
+                style={{ borderRadius: 14, paddingVertical: 16, borderWidth: 1.5, borderColor: M.border, alignItems: "center" }}
+              >
+                <Text style={{ fontSize: 15, fontWeight: "600", color: M.text }}>Back to Discover</Text>
+              </Pressable>
+            </View>
           </View>
-          <Text style={{ fontSize: 24, fontWeight: "800", color: M.text, marginBottom: 8 }}>Completed</Text>
-          <Text style={{ fontSize: 15, color: M.sub, textAlign: "center" }}>
-            {correctCount} of {puzzles.length} proverbs completed correctly
-          </Text>
-          <QuizSaveStatus status={saveStatus} onRetry={retryResult} />
-          <View style={{ width: "100%", gap: 10, marginTop: 32 }}>
-            <Pressable
-              onPress={() => { setIndex(0); setCorrectCount(0); correctRef.current = 0; setSelectedOption(null); setLocked(false); setPhase("active"); }}
-              style={{ borderRadius: 14, paddingVertical: 16, backgroundColor: M.accent, alignItems: "center" }}
-            >
-              <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>Play Again</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => router.back()}
-              style={{ borderRadius: 14, paddingVertical: 16, borderWidth: 1.5, borderColor: M.border, alignItems: "center" }}
-            >
-              <Text style={{ fontSize: 15, fontWeight: "600", color: M.text }}>Back to Discover</Text>
-            </Pressable>
-          </View>
-        </View>
-      </SafeAreaView>
+        </SafeAreaView>
+        <NotificationBanner visible={toast.visible} title={toast.title} body={toast.body} type={toast.type} onDismiss={dismissToast} />
+        <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={() => { dismissCelebration(); router.back(); }} />
+      </>
     );
   }
 

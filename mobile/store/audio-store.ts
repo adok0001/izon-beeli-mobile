@@ -44,12 +44,13 @@ interface AudioState {
 
   // Internal
   _sound: Audio.Sound | null;
+  _onFinish: (() => void) | null;
 
   // Shadow loop state
   shadowSegment: { startTime: number; endTime: number } | null;
 
   // Actions
-  loadAndPlay: (trackId: string, source: AudioSource, title?: string, route?: string) => Promise<void>;
+  loadAndPlay: (trackId: string, source: AudioSource, title?: string, route?: string, options?: { onFinish?: () => void }) => Promise<void>;
   play: () => Promise<void>;
   pause: () => Promise<void>;
   togglePlayback: () => Promise<void>;
@@ -77,8 +78,9 @@ export const useAudioStore = create<AudioState>((set, get) => ({
   resumeState: null,
   shadowSegment: null,
   _sound: null,
+  _onFinish: null,
 
-  loadAndPlay: async (trackId, source, title, route) => {
+  loadAndPlay: async (trackId, source, title, route, options) => {
     const { _sound: currentSound, currentTrackId } = get();
 
     // If same track, just resume
@@ -101,6 +103,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
       shadowSegment: null,
       error: null,
       _sound: null,
+      _onFinish: options?.onFinish ?? null,
       progress: 0,
       duration: 0,
     });
@@ -144,9 +147,11 @@ export const useAudioStore = create<AudioState>((set, get) => ({
             get().saveResumeState(trackId, positionSeconds);
           }
           if (status.didJustFinish) {
-            set({ isPlaying: false, progress: 0 });
+            const finishCb = get()._onFinish;
+            set({ isPlaying: false, progress: 0, _onFinish: null });
             sound.setPositionAsync(0).catch(() => {});
             get().clearResumeState();
+            finishCb?.();
           }
         }
       );

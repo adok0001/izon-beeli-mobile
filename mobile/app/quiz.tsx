@@ -32,6 +32,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useStreakCelebration } from "@/lib/hooks/use-progress";
+import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 
 const QUESTION_COUNTS = [5, 10, 15, 20] as const;
 const TIME_ESTIMATE_MINUTES: Record<number, number> = { 5: 3, 10: 6, 15: 9, 20: 12 };
@@ -303,6 +306,7 @@ function ResultsView({ languageId }: { languageId: string }) {
   const startTime = useQuizStore((s) => s.startTime);
   const [xpResult, setXpResult] = useState<{ xpEarned: number; leveledUp: boolean } | null>(null);
   const purple = getAccent("purple");
+  const { onStreakUpdate, pendingCelebration, showCelebration, dismissCelebration, celebration, toast, dismissToast } = useStreakCelebration();
 
   useEffect(() => {
     hapticHeavy();
@@ -310,7 +314,7 @@ function ResultsView({ languageId }: { languageId: string }) {
       try {
         const token = await getToken();
         const durationMs = Date.now() - startTime;
-        const res = await apiFetch<{ xpEarned: number; leveledUp: boolean; newLevel?: number }>("/quiz-results", {
+        const res = await apiFetch<{ xpEarned: number; leveledUp: boolean; newLevel?: number; streak?: number; streakIncremented?: boolean; streakMilestone?: number | null }>("/quiz-results", {
           method: "POST",
           token: token ?? undefined,
           body: JSON.stringify({
@@ -332,6 +336,9 @@ function ResultsView({ languageId }: { languageId: string }) {
         queryClient.invalidateQueries({ queryKey: ["progress"] });
         invalidateDailyChallenges();
         analytics.quizFinished(languageId, result.accuracy, durationMs);
+        if (res.streakIncremented && res.streak) {
+          onStreakUpdate(res.streak, !!res.streakMilestone);
+        }
       } catch {
         // non-blocking — results display even if save fails
         analytics.quizFinished(languageId, result.accuracy, 0);
@@ -348,6 +355,7 @@ function ResultsView({ languageId }: { languageId: string }) {
   const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
 
   const handleTryAgain = () => {
+    dismissCelebration();
     const reshuffled = [...questions].sort(() => Math.random() - 0.5);
     const reshuffledQuestions = reshuffled.map((q) => ({
       ...q,
@@ -389,10 +397,10 @@ function ResultsView({ languageId }: { languageId: string }) {
           <Button label={t("quiz.tryAgain")} onPress={handleTryAgain} />
           <Button
             label="Review Weak Words"
-            onPress={() => { reset(); router.push("/practice-review"); }}
+            onPress={() => { dismissCelebration(); reset(); router.push("/practice-review"); }}
             variant="secondary"
           />
-          <Button label={t("quiz.backToLearn")} onPress={() => { reset(); router.back(); }} variant="secondary" />
+          <Button label={t("quiz.backToLearn")} onPress={() => { if (pendingCelebration) { showCelebration(); return; } reset(); router.back(); }} variant="secondary" />
         </View>
       </View>
 
@@ -425,6 +433,8 @@ function ResultsView({ languageId }: { languageId: string }) {
           ))}
         </View>
       )}
+      <NotificationBanner visible={toast.visible} title={toast.title} body={toast.body} type={toast.type} onDismiss={dismissToast} />
+      <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={() => { dismissCelebration(); reset(); router.back(); }} />
     </ScrollView>
   );
 }

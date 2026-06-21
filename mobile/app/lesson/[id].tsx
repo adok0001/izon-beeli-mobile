@@ -1,6 +1,7 @@
 import { AudioPlayer } from "@/components/audio/audio-player";
 import { InteractiveTranscript } from "@/components/audio/interactive-transcript";
 import { LevelUpModal } from "@/components/level-up-modal";
+import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
 import { ShareModal } from "@/components/share/share-modal";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -24,7 +25,7 @@ import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useTourStore } from "@/store/tour-store";
 import { localize } from "@/lib/localize";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { LoadingScreen } from "@/components/loading-screen";
 import { Animated, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -58,6 +59,7 @@ export default function LessonScreen() {
   const lessonCourse = courses?.find((c) => c.id === lesson?.courseId);
   const typeColors = getCourseTypeColors(lessonCourse?.courseType);
   const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
+  const [streakCelebration, setStreakCelebration] = useState<{ streak: number; isMilestone: boolean } | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [shareVisible, setShareVisible] = useState(false);
   const [pendingSummary, setPendingSummary] = useState(false);
@@ -85,11 +87,22 @@ export default function LessonScreen() {
   }, [pendingSummary, isPlaying]);
 
   const { t } = useTranslation();
-  const { toast, success: toastSuccess, show: toastShow, dismiss: dismissToast } = useToast();
+  const { toast, success: toastSuccess, dismiss: dismissToast } = useToast();
   const { data: nextLessonData } = useNextLesson(selectedLanguageId);
   const showTour = useTourStore((s) => s.showTour);
   const hasSeen = useTourStore((s) => s.hasSeen);
   const reviewPrompt = useReviewPrompt();
+  const handleStreakUpdate = useCallback(
+    (streak: number, isMilestone: boolean) => {
+      if (isMilestone) {
+        setStreakCelebration({ streak, isMilestone });
+      } else {
+        toastSuccess(t("streak.toastTitle", { count: streak }));
+      }
+    },
+    [toastSuccess, t]
+  );
+
   const completeLesson = useCompleteLesson({
     onLevelUp: (level, title) => {
       analytics.levelUp(level, title);
@@ -98,18 +111,10 @@ export default function LessonScreen() {
     },
     onStreakUpdate: (streak, isMilestone) => {
       reviewPrompt.onStreakUpdate(streak);
-      if (isMilestone) {
-        toastShow(
-          t("streak.toastMilestoneTitle", { count: streak }),
-          t("streak.toastMilestoneBody"),
-          "success"
-        );
-      } else {
-        toastSuccess(t("streak.toastTitle", { count: streak }));
-      }
+      handleStreakUpdate(streak, isMilestone);
     },
   });
-  const trackListen = useTrackListen();
+  const trackListen = useTrackListen({ onStreakUpdate: handleStreakUpdate });
 
   if (isLoading) {
     return (
@@ -144,8 +149,9 @@ export default function LessonScreen() {
     if (isCurrentTrack) {
       togglePlayback();
     } else if (audioSource) {
-      loadAndPlay(lesson.id, audioSource, lessonTitle, `/lesson/${lesson.id}`);
-      trackListen.mutate(lesson.id);
+      loadAndPlay(lesson.id, audioSource, lessonTitle, `/lesson/${lesson.id}`, {
+        onFinish: () => trackListen.mutate(lesson.id),
+      });
       analytics.lessonStarted(lesson.id, selectedLanguageId);
     }
   };
@@ -533,6 +539,13 @@ export default function LessonScreen() {
         level={levelUp?.level ?? 1}
         title={levelUp?.title ?? ""}
         onDismiss={() => setLevelUp(null)}
+      />
+
+      <StreakCelebrationModal
+        visible={!!streakCelebration}
+        streak={streakCelebration?.streak ?? 0}
+        isMilestone={streakCelebration?.isMilestone}
+        onDismiss={() => setStreakCelebration(null)}
       />
 
       <NotificationBanner

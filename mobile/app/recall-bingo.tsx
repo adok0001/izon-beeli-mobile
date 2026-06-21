@@ -1,6 +1,9 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { QuizSaveStatus } from "@/components/quiz-save-status";
 import { useSubmitQuizResult } from "@/lib/hooks/use-quiz-result";
+import { useStreakCelebration } from "@/lib/hooks/use-progress";
+import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { hapticError, hapticHeavy, hapticSuccess, hapticTap } from "@/lib/haptics";
 import { shuffle } from "@/lib/shuffle";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
@@ -115,7 +118,8 @@ export { ErrorBoundary } from "@/components/screen-error-boundary";
 export default function RecallBingoScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
-  const { submit: submitResult, retry: retryResult, status: saveStatus } = useSubmitQuizResult();
+  const { onStreakUpdate, pendingCelebration, showCelebration, dismissCelebration, celebration, toast, dismissToast } = useStreakCelebration();
+  const { submit: submitResult, retry: retryResult, status: saveStatus } = useSubmitQuizResult({ onStreakUpdate });
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
   const { data: dueWords = [] } = useWordsDueForReview(selectedLanguageId);
   const { data: allWords = [] } = useDictionary(selectedLanguageId);
@@ -239,25 +243,29 @@ export default function RecallBingoScreen() {
     const secs = duration % 60;
     const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["top", "bottom"]}>
-        <Stack.Screen options={{ title: "Recall Bingo", headerBackTitle: "Back" }} />
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32 }}>
-          <Text style={{ fontSize: 64, marginBottom: 8 }}>🎉</Text>
-          <Text style={{ fontSize: 32, fontWeight: "900", color: M.accent, marginBottom: 8 }}>BINGO!</Text>
-          <Text style={{ fontSize: 15, color: M.sub, textAlign: "center" }}>
-            {correctHits} tiles marked · {timeStr}
-          </Text>
-          <QuizSaveStatus status={saveStatus} onRetry={retryResult} />
-          <View style={{ width: "100%", gap: 10, marginTop: 32 }}>
-            <Pressable onPress={startGame} style={{ borderRadius: 14, paddingVertical: 16, backgroundColor: M.accent, alignItems: "center" }}>
-              <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>New Card</Text>
-            </Pressable>
-            <Pressable onPress={() => router.back()} style={{ borderRadius: 14, paddingVertical: 16, borderWidth: 1.5, borderColor: M.border, alignItems: "center" }}>
-              <Text style={{ fontSize: 15, fontWeight: "600", color: M.text }}>Back to Discover</Text>
-            </Pressable>
+      <>
+        <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["top", "bottom"]}>
+          <Stack.Screen options={{ title: "Recall Bingo", headerBackTitle: "Back" }} />
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32 }}>
+            <Text style={{ fontSize: 64, marginBottom: 8 }}>🎉</Text>
+            <Text style={{ fontSize: 32, fontWeight: "900", color: M.accent, marginBottom: 8 }}>BINGO!</Text>
+            <Text style={{ fontSize: 15, color: M.sub, textAlign: "center" }}>
+              {correctHits} tiles marked · {timeStr}
+            </Text>
+            <QuizSaveStatus status={saveStatus} onRetry={retryResult} />
+            <View style={{ width: "100%", gap: 10, marginTop: 32 }}>
+              <Pressable onPress={() => { dismissCelebration(); startGame(); }} style={{ borderRadius: 14, paddingVertical: 16, backgroundColor: M.accent, alignItems: "center" }}>
+                <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>New Card</Text>
+              </Pressable>
+              <Pressable onPress={() => { if (pendingCelebration) { showCelebration(); return; } router.back(); }} style={{ borderRadius: 14, paddingVertical: 16, borderWidth: 1.5, borderColor: M.border, alignItems: "center" }}>
+                <Text style={{ fontSize: 15, fontWeight: "600", color: M.text }}>Back to Discover</Text>
+              </Pressable>
+            </View>
           </View>
-        </View>
-      </SafeAreaView>
+        </SafeAreaView>
+        <NotificationBanner visible={toast.visible} title={toast.title} body={toast.body} type={toast.type} onDismiss={dismissToast} />
+        <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={() => { dismissCelebration(); router.back(); }} />
+      </>
     );
   }
 

@@ -8,8 +8,12 @@ import { hapticError, hapticSuccess } from "@/lib/haptics";
 import { apiFetch } from "@/lib/api";
 import { playCorrectSound, playFinishSound, playIncorrectSound } from "@/lib/sounds";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useLanguageStore } from "@/store/language-store";
 import { useAuth } from "@clerk/clerk-expo";
 import { Stack, useRouter } from "expo-router";
+import { useStreakCelebration } from "@/lib/hooks/use-progress";
+import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Animated, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -161,7 +165,9 @@ export default function ScriptDecodeScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
   const { getToken } = useAuth();
+  const { selectedLanguageId } = useLanguageStore();
 
+  const { onStreakUpdate, pendingCelebration, showCelebration, dismissCelebration, celebration, toast, dismissToast } = useStreakCelebration();
   const [mode, setMode] = useState<ScriptMode | null>(null);
   const [phase, setPhase] = useState<"config" | "active" | "results">("config");
   const [questions, setQuestions] = useState<DecodeQuestion[]>([]);
@@ -191,14 +197,22 @@ export default function ScriptDecodeScreen() {
       playFinishSound();
       setPhase("results");
       const duration = Math.round((Date.now() - startTime) / 1000);
-      getToken().then((token) => {
-        if (!token) return;
-        apiFetch("/quiz-results", {
-          method: "POST",
-          token,
-          body: JSON.stringify({ languageId: selectedLanguageId, score: correctCount, accuracy: questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0, durationMs: duration * 1000, questionCount: questions.length }),
-        }).catch(() => {});
-      });
+      (async () => {
+        try {
+          const token = await getToken();
+          if (!token) return;
+          const res = await apiFetch<{ streak?: number; streakIncremented?: boolean; streakMilestone?: number | null }>("/quiz-results", {
+            method: "POST",
+            token,
+            body: JSON.stringify({ languageId: selectedLanguageId, score: correctCount, accuracy: questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0, durationMs: duration * 1000, questionCount: questions.length }),
+          });
+          if (res.streakIncremented && res.streak) {
+            onStreakUpdate(res.streak, !!res.streakMilestone);
+          }
+        } catch {
+          // non-blocking
+        }
+      })();
       return;
     }
     Animated.timing(fadeAnim, { toValue: 0, duration: 160, useNativeDriver: true }).start(() => {
@@ -226,38 +240,42 @@ export default function ScriptDecodeScreen() {
   if (phase === "results") {
     const accuracy = Math.round((correctCount / questions.length) * 100);
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["top", "bottom"]}>
-        <Stack.Screen options={{ title: "Script Decode", headerBackTitle: "Back" }} />
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32 }}>
-          <View style={{ width: 112, height: 112, borderRadius: 56, borderWidth: 3, borderColor: accentColor, alignItems: "center", justifyContent: "center", marginBottom: 24 }}>
-            <Text style={{ fontSize: 36, fontWeight: "900", color: accentColor }}>{accuracy}%</Text>
+      <>
+        <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["top", "bottom"]}>
+          <Stack.Screen options={{ title: "Script Decode", headerBackTitle: "Back" }} />
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32 }}>
+            <View style={{ width: 112, height: 112, borderRadius: 56, borderWidth: 3, borderColor: accentColor, alignItems: "center", justifyContent: "center", marginBottom: 24 }}>
+              <Text style={{ fontSize: 36, fontWeight: "900", color: accentColor }}>{accuracy}%</Text>
+            </View>
+            <Text style={{ fontSize: 24, fontWeight: "800", color: M.text, marginBottom: 8 }}>Session Complete</Text>
+            <Text style={{ fontSize: 15, color: M.sub, textAlign: "center" }}>
+              {correctCount} of {questions.length} characters decoded correctly
+            </Text>
+            <View style={{ width: "100%", gap: 10, marginTop: 32 }}>
+              <Pressable
+                onPress={() => { dismissCelebration(); mode && handleStart(mode); }}
+                style={{ borderRadius: 14, paddingVertical: 16, backgroundColor: accentColor, alignItems: "center" }}
+              >
+                <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>Play Again</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => { dismissCelebration(); setPhase("config"); }}
+                style={{ borderRadius: 14, paddingVertical: 16, borderWidth: 1.5, borderColor: M.border, alignItems: "center" }}
+              >
+                <Text style={{ fontSize: 15, fontWeight: "600", color: M.text }}>Switch Script</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => { if (pendingCelebration) { showCelebration(); return; } router.back(); }}
+                style={{ borderRadius: 14, paddingVertical: 14, alignItems: "center" }}
+              >
+                <Text style={{ fontSize: 14, color: M.muted }}>Back to Discover</Text>
+              </Pressable>
+            </View>
           </View>
-          <Text style={{ fontSize: 24, fontWeight: "800", color: M.text, marginBottom: 8 }}>Session Complete</Text>
-          <Text style={{ fontSize: 15, color: M.sub, textAlign: "center" }}>
-            {correctCount} of {questions.length} characters decoded correctly
-          </Text>
-          <View style={{ width: "100%", gap: 10, marginTop: 32 }}>
-            <Pressable
-              onPress={() => mode && handleStart(mode)}
-              style={{ borderRadius: 14, paddingVertical: 16, backgroundColor: accentColor, alignItems: "center" }}
-            >
-              <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>Play Again</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setPhase("config")}
-              style={{ borderRadius: 14, paddingVertical: 16, borderWidth: 1.5, borderColor: M.border, alignItems: "center" }}
-            >
-              <Text style={{ fontSize: 15, fontWeight: "600", color: M.text }}>Switch Script</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => router.back()}
-              style={{ borderRadius: 14, paddingVertical: 14, alignItems: "center" }}
-            >
-              <Text style={{ fontSize: 14, color: M.muted }}>Back to Discover</Text>
-            </Pressable>
-          </View>
-        </View>
-      </SafeAreaView>
+        </SafeAreaView>
+        <NotificationBanner visible={toast.visible} title={toast.title} body={toast.body} type={toast.type} onDismiss={dismissToast} />
+        <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={() => { dismissCelebration(); router.back(); }} />
+      </>
     );
   }
 

@@ -4,6 +4,9 @@ import { Alert } from "react-native";
 import { apiFetch } from "@/lib/api";
 import { hapticHeavy } from "@/lib/haptics";
 import { useInvalidateDailyChallenges } from "./use-daily-challenge";
+import { useToast } from "./use-toast";
+import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export interface ProgressSummary {
   points: number;
@@ -107,20 +110,76 @@ export function useCompleteLesson(callbacks?: {
   });
 }
 
-export function useTrackListen() {
+export function useStreakCelebration() {
+  const { t } = useTranslation();
+  const { toast, success: toastSuccess, dismiss: dismissToast } = useToast();
+  const [pendingCelebration, setPendingCelebration] = useState<{ streak: number; isMilestone: boolean } | null>(null);
+  const [celebration, setCelebration] = useState<{ streak: number; isMilestone: boolean } | null>(null);
+
+  const onStreakUpdate = useCallback(
+    (streak: number, isMilestone: boolean) => {
+      if (isMilestone) {
+        setPendingCelebration({ streak, isMilestone });
+      } else {
+        toastSuccess(t("streak.toastTitle", { count: streak }));
+      }
+    },
+    [t, toastSuccess]
+  );
+
+  const showCelebration = useCallback(() => {
+    setPendingCelebration((pending) => {
+      if (pending) setCelebration(pending);
+      return null;
+    });
+  }, []);
+
+  const dismissCelebration = useCallback(() => {
+    setCelebration(null);
+    setPendingCelebration(null);
+  }, []);
+
+  return {
+    onStreakUpdate,
+    pendingCelebration,
+    showCelebration,
+    celebration,
+    dismissCelebration,
+    clearCelebration: dismissCelebration,
+    toast,
+    dismissToast,
+  };
+}
+
+interface ListenResult {
+  tracked: boolean;
+  streak?: number;
+  streakIncremented?: boolean;
+  streakMilestone?: number | null;
+  freezeCount?: number;
+}
+
+export function useTrackListen(callbacks?: { onStreakUpdate?: (streak: number, isMilestone: boolean) => void }) {
   const { getToken } = useAuth();
+  const queryClient = useQueryClient();
   const invalidateDailyChallenges = useInvalidateDailyChallenges();
 
   return useMutation({
     mutationFn: async (lessonId: string) => {
       const token = await getToken();
-      return apiFetch(`/progress/${lessonId}/listen`, {
+      return apiFetch<ListenResult>(`/progress/${lessonId}/listen`, {
         method: "POST",
         token: token!,
       });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       invalidateDailyChallenges();
+      if (data.streakIncremented && data.streak) {
+        queryClient.setQueryData<ProgressSummary>(["progress", "summary"], (old) =>
+          old ? { ...old, refreshedToday: true, streak: data.streak! } : old
+        );
+        callbacks?.onStreakUpdate?.(data.streak, !!data.streakMilestone);
+      }
     },
   });
 }
