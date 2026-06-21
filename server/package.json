@@ -1,13 +1,15 @@
 {
   "name": "izon-beeli-server",
-  "version": "2.9.0",
+  "version": "2.9.1",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
+    "vercel-build": "if [ \"$VERCEL_ENV\" = \"production\" ]; then npm run db:deploy; fi && npm run build",
     "start": "node dist/index.js",
     "db:push": "drizzle-kit push",
+    "db:deploy": "drizzle-kit push",
     "db:seed": "tsx src/seed/index.ts",
     "db:sync": "tsx src/seed/sync-content.ts all",
     "db:sync-courses": "tsx src/seed/sync-content.ts courses",
