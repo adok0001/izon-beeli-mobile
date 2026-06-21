@@ -68,11 +68,10 @@ asc xcode archive \
 
 # 5. Export IPA and upload directly to TestFlight
 echo "==> Exporting and uploading to TestFlight..."
-ASC_TIMEOUT=600s asc xcode export \
+asc xcode export \
   --archive-path "$ARCHIVE_PATH" \
   --export-options "$EXPORT_OPTIONS" \
-  --ipa-path "$IPA_PATH" \
-  --wait
+  --ipa-path "$IPA_PATH"
 
 echo "==> Done. Build is processing in TestFlight."
 echo "    App ID: $APP_ID"
