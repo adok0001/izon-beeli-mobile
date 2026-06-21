@@ -61,6 +61,7 @@ interface AudioState {
   reset: () => Promise<void>;
   loadResumeState: () => Promise<void>;
   saveResumeState: (lessonId: string, positionSeconds: number) => void;
+  clearResumeState: () => void;
 }
 
 export const useAudioStore = create<AudioState>((set, get) => ({
@@ -145,6 +146,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
           if (status.didJustFinish) {
             set({ isPlaying: false, progress: 0 });
             sound.setPositionAsync(0).catch(() => {});
+            get().clearResumeState();
           }
         }
       );
@@ -260,5 +262,10 @@ export const useAudioStore = create<AudioState>((set, get) => ({
     const state: ResumeState = { lessonId, positionSeconds, languageId };
     set({ resumeState: state });
     AsyncStorage.setItem(RESUME_KEY, JSON.stringify(state)).catch(() => {});
+  },
+
+  clearResumeState: () => {
+    set({ resumeState: null });
+    AsyncStorage.removeItem(RESUME_KEY).catch(() => {});
   },
 }));
