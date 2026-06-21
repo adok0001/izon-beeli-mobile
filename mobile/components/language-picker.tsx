@@ -106,11 +106,25 @@ export function EnrolledLanguageBar() {
   };
 
   return (
-    <View style={{ overflow: "hidden" }}>
+    <View style={{ overflow: "hidden", paddingTop: 10 }}>
+      {/* Section label — caps the selector so the two read as one unit */}
+      <Text
+        style={{
+          paddingHorizontal: 16,
+          marginBottom: 8,
+          fontSize: 10,
+          fontWeight: "700",
+          letterSpacing: 1.5,
+          textTransform: "uppercase",
+          color: M.muted,
+        }}
+      >
+        {t("learn.subtitle")}
+      </Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 8, flexGrow: 1, justifyContent: "flex-end" }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 10, gap: 8 }}
       >
         {enrolledLanguageIds.map((id) => {
           const isActive = id === selectedLanguageId;

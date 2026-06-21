@@ -143,12 +143,6 @@ export const LearnHeader = memo(function LearnHeader({
       >
         {greeting}
       </Animated.Text>
-      <Animated.Text
-        style={[{ fontSize: 13, color: M.textDim, marginTop: 4 }, rise(greetingAnim, 10)]}
-        numberOfLines={1}
-      >
-        {t("learn.subtitle")}
-      </Animated.Text>
 
       {/* Bronze hairline rule with engraved leading segment */}
       <Animated.View
