@@ -1,12 +1,13 @@
 "use client";
 
 import { LanguageSelector } from "@/components/ui/language-selector";
+import { LocalizedTextInput, type LocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { LANGUAGES } from "@mobile/lib/data/languages";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, BookText, CheckCircle2, ChevronDown, Edit2, ImageIcon, Mic, Plus, Search, Trash2, Upload, Volume2, X, XCircle } from "lucide-react";
+import { AlertTriangle, BookText, CheckCircle2, ChevronDown, Edit2, FileJson, ImageIcon, Mic, Plus, Search, Trash2, Upload, Volume2, X, XCircle } from "lucide-react";
 import Image from "next/image";
 import React, { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -18,6 +19,9 @@ interface DictEntry {
   word: string;
   english: string;
   french: string | null;
+  /** Full gloss map; english/french are the legacy flat projection for the table. */
+  translations?: LocalizedText;
+  exampleTranslations?: LocalizedText;
   category: string;
   pronunciation: string | null;
   example: string | null;
@@ -56,13 +60,18 @@ const CATEGORIES = [
 const fieldCls =
   "w-full rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm px-3 py-2 text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40";
 
-type EntryForm = Omit<DictEntry, "id">;
+type EntryForm = Omit<DictEntry, "id" | "translations" | "exampleTranslations" | "_source"> & {
+  translations: LocalizedText;
+  exampleTranslations: LocalizedText;
+};
 
 const EMPTY_FORM: EntryForm = {
   languageId: "",
   word: "",
   english: "",
   french: "",
+  translations: {},
+  exampleTranslations: {},
   category: "nouns",
   pronunciation: "",
   example: "",
@@ -127,9 +136,18 @@ function EntryModal({
   onClose: () => void; saving: boolean;
 }>) {
   const { t } = useTranslation();
-  const [form, setForm] = useState<EntryForm>(
-    initial ? { ...initial } : { ...EMPTY_FORM, languageId: defaultLanguageId, word: prefillWord ?? "" }
-  );
+  const [form, setForm] = useState<EntryForm>(() => {
+    const base = initial
+      ? { ...initial }
+      : { ...EMPTY_FORM, languageId: defaultLanguageId, word: prefillWord ?? "" };
+    return {
+      ...base,
+      // Prefer the full map; synthesize from legacy flat english/french for older entries.
+      translations: initial?.translations ?? toLocalizedText(initial?.english, initial?.french),
+      exampleTranslations:
+        initial?.exampleTranslations ?? toLocalizedText(initial?.exampleTranslation, initial?.exampleTranslationFr),
+    };
+  });
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
@@ -141,7 +159,7 @@ function EntryModal({
     (l) => LANGUAGES.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.nativeName, region: "Other" },
   );
 
-  const isValid = form.word.trim() && form.english.trim() && form.languageId.trim();
+  const isValid = form.word.trim() && form.translations.en?.trim() && form.languageId.trim();
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -176,34 +194,26 @@ function EntryModal({
               <input className={fieldCls} value={form.word} onChange={set("word")} placeholder="Native word" />
             </div>
             <div>
-              <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.dictionary.fieldEnglish")} *</label>
-              <input className={fieldCls} value={form.english} onChange={set("english")} placeholder="English translation" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.dictionary.fieldFrench")}</label>
-              <input className={fieldCls} value={form.french ?? ""} onChange={set("french")} placeholder="French translation" />
-            </div>
-            <div>
               <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.dictionary.fieldPronunciation")}</label>
               <input className={fieldCls} value={form.pronunciation ?? ""} onChange={set("pronunciation")} placeholder="Phonetic pronunciation" />
             </div>
           </div>
+          <LocalizedTextInput
+            label={t("admin.dictionary.fieldMeaning")}
+            value={form.translations}
+            onChange={(v) => setForm((f) => ({ ...f, translations: v }))}
+            required
+          />
           <div>
             <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.dictionary.fieldExample")}</label>
             <textarea className={cn(fieldCls, "resize-none")} rows={2} value={form.example ?? ""} onChange={set("example")} placeholder="Example sentence" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.dictionary.fieldExampleEn")}</label>
-              <textarea className={cn(fieldCls, "resize-none")} rows={2} value={form.exampleTranslation ?? ""} onChange={set("exampleTranslation")} placeholder="English translation" />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.dictionary.fieldExampleFr")}</label>
-              <textarea className={cn(fieldCls, "resize-none")} rows={2} value={form.exampleTranslationFr ?? ""} onChange={set("exampleTranslationFr")} placeholder="French translation" />
-            </div>
-          </div>
+          <LocalizedTextInput
+            label={t("admin.dictionary.fieldExampleTranslation")}
+            value={form.exampleTranslations}
+            onChange={(v) => setForm((f) => ({ ...f, exampleTranslations: v }))}
+            multiline
+          />
           <div className="grid grid-cols-2 gap-3">
             <FileUploadField label={t("admin.dictionary.fieldAudio")} accept="audio/*" existingUrl={form.audioUrl}
               file={audioFile} onFile={setAudioFile} onClear={() => { setAudioFile(null); setForm((f) => ({ ...f, audioUrl: null })); }}
@@ -372,6 +382,179 @@ function CoveragePanel({ coverage, onAddWord }: Readonly<{
   );
 }
 
+// ── Import Panel ──────────────────────────────────────────────────────────────
+
+interface ImportResult {
+  dryRun?: boolean;
+  total?: number;
+  valid?: number;
+  inserted?: number;
+  updated?: number;
+  skipped?: number;
+  errors: { id: string; reason: string }[];
+  preview?: { id: string; word: string; english: string; category: string }[];
+}
+
+function ImportPanel({ languageId }: Readonly<{ languageId: string }>) {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [result, setResult] = useState<ImportResult | null>(null);
+  const [parsed, setParsed] = useState<unknown[] | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [running, setRunning] = useState(false);
+
+  const reset = () => { setResult(null); setParsed(null); setFileName(null); };
+
+  const handleFile = async (file: File) => {
+    reset();
+    setFileName(file.name);
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text) as unknown[];
+      if (!Array.isArray(data)) { toast.error("JSON must be an array of entries"); return; }
+      setParsed(data);
+      // Auto dry-run
+      setRunning(true);
+      const token = await getToken();
+      const res = await apiFetch<ImportResult>("/admin/dictionary/import", {
+        method: "POST",
+        body: JSON.stringify({ languageId, entries: data, dryRun: true }),
+        token: token ?? undefined,
+      });
+      setResult(res);
+    } catch (e) {
+      toast.error("Failed to parse file", { description: (e as Error).message });
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  const confirm = async () => {
+    if (!parsed) return;
+    setRunning(true);
+    try {
+      const token = await getToken();
+      const res = await apiFetch<ImportResult>("/admin/dictionary/import", {
+        method: "POST",
+        body: JSON.stringify({ languageId, entries: parsed }),
+        token: token ?? undefined,
+      });
+      setResult(res);
+      void queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
+      toast.success(`Import complete — ${res.inserted} entries added`);
+      setParsed(null);
+    } catch (e) {
+      toast.error("Import failed", { description: (e as Error).message });
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  const downloadErrors = () => {
+    if (!result?.errors.length) return;
+    const blob = new Blob([JSON.stringify(result.errors, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "import-errors.json"; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 p-6">
+        <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-1">Bulk Import</h3>
+        <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
+          Upload a JSON array of dictionary entries in Beeli format. A dry-run preview runs automatically before you confirm.
+        </p>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => { reset(); fileRef.current?.click(); }}
+            disabled={running}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors disabled:opacity-50"
+          >
+            <Upload className="h-4 w-4" /> {fileName ? "Replace file" : "Choose JSON file"}
+          </button>
+          {fileName && <span className="text-xs text-neutral-500 truncate max-w-xs">{fileName}</span>}
+        </div>
+        <input ref={fileRef} type="file" accept=".json" className="hidden"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleFile(f); e.target.value = ""; }} />
+      </div>
+
+      {running && (
+        <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
+          <div className="h-4 w-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+          Processing…
+        </div>
+      )}
+
+      {result && (
+        <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+          <div className="px-4 py-3 bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+            <span className="text-sm font-semibold text-neutral-900 dark:text-white">
+              {result.dryRun ? "Dry-run preview" : "Import result"}
+            </span>
+            <div className="flex items-center gap-4 text-xs text-neutral-500">
+              {result.dryRun
+                ? <><span className="text-green-600 dark:text-green-400 font-medium">{result.valid} valid</span>
+                   {result.errors.length > 0 && <span className="text-red-500 font-medium">{result.errors.length} errors</span>}</>
+                : <><span className="text-green-600 dark:text-green-400 font-medium">{result.inserted} inserted</span>
+                   {result.skipped && result.skipped > 0 && <span className="text-amber-500 font-medium">{result.skipped} skipped</span>}</>
+              }
+            </div>
+          </div>
+
+          {result.preview && result.preview.length > 0 && (
+            <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+              {result.preview.map((row) => (
+                <div key={row.id} className="px-4 py-2.5 flex items-center gap-4 text-sm">
+                  <span className="font-semibold text-neutral-900 dark:text-white w-32 truncate">{row.word}</span>
+                  <span className="text-neutral-500 dark:text-neutral-400 flex-1 truncate">{row.english}</span>
+                  <span className="text-[10px] uppercase tracking-wider text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full">{row.category}</span>
+                </div>
+              ))}
+              {(result.total ?? 0) > 5 && (
+                <div className="px-4 py-2 text-xs text-neutral-400 dark:text-neutral-500">
+                  …and {(result.total ?? 0) - 5} more entries
+                </div>
+              )}
+            </div>
+          )}
+
+          {result.errors.length > 0 && (
+            <div className="px-4 py-3 bg-red-50/50 dark:bg-red-900/10 border-t border-neutral-200 dark:border-neutral-800">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-red-600 dark:text-red-400">{result.errors.length} errors</span>
+                <button onClick={downloadErrors} className="text-xs text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 underline">
+                  Download errors JSON
+                </button>
+              </div>
+              <ul className="space-y-1 max-h-32 overflow-y-auto">
+                {result.errors.slice(0, 5).map((e, i) => (
+                  <li key={i} className="text-xs text-red-600 dark:text-red-400">{e.reason}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {result.dryRun && parsed && (
+            <div className="px-4 py-3 border-t border-neutral-200 dark:border-neutral-800 flex items-center gap-3">
+              <button
+                onClick={() => void confirm()}
+                disabled={running || (result.valid ?? 0) === 0}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors disabled:opacity-50"
+              >
+                <Plus className="h-4 w-4" /> Import {result.valid} entries
+              </button>
+              <button onClick={reset} className="text-sm text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300">Cancel</button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 type SortKey = "word" | "english" | "category" | "audio" | "image";
 
 function SortIcon({ col, sortKey, sortDir }: Readonly<{ col: SortKey; sortKey: SortKey; sortDir: "asc" | "desc" }>) {
@@ -387,6 +570,7 @@ export default function EducatorDictionaryPage() {
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [view, setView] = useState<"entries" | "import">("entries");
   const [modal, setModal] = useState<{ mode: "create"; prefillWord?: string } | { mode: "edit"; entry: DictEntry } | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("word");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -436,14 +620,22 @@ export default function EducatorDictionaryPage() {
   });
 
   const buildBody = (data: EntryForm, audioFile: File | null, imageFile: File | null, isMultipart: boolean) => {
+    // Send the translation maps; the server derives the flat english/french columns.
+    const { translations, exampleTranslations } = data;
+    const rest: Record<string, unknown> = { ...data };
+    for (const k of ["translations", "exampleTranslations", "english", "french", "exampleTranslation", "exampleTranslationFr"]) {
+      delete rest[k];
+    }
     if (isMultipart) {
       const fd = new FormData();
-      Object.entries(data).forEach(([k, v]) => { if (v != null && v !== "") fd.append(k, String(v)); });
+      Object.entries(rest).forEach(([k, v]) => { if (v != null && v !== "") fd.append(k, String(v)); });
+      fd.append("translations", JSON.stringify(translations));
+      fd.append("exampleTranslations", JSON.stringify(exampleTranslations));
       if (audioFile) fd.append("audio", audioFile);
       if (imageFile) fd.append("image", imageFile);
       return fd;
     }
-    return JSON.stringify(data);
+    return JSON.stringify({ ...rest, translations, exampleTranslations });
   };
 
   const createEntry = useMutation({
@@ -540,16 +732,46 @@ export default function EducatorDictionaryPage() {
       <div className="mb-5 flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-1">{t("admin.dictionary.title")}</h2>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            {t("admin.dictionary.totalCount", { count: entries.length })}
-          </p>
+          <div className="flex items-center gap-3 flex-wrap">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              {t("admin.dictionary.totalCount", { count: entries.length })}
+            </p>
+            {entries.length > 0 && (() => {
+              const withAudio = entries.filter((e) => e.audioUrl).length;
+              const pct = Math.round((withAudio / entries.length) * 100);
+              return (
+                <span className="flex items-center gap-1 text-xs text-neutral-400 dark:text-neutral-500">
+                  <Mic className="h-3 w-3" />
+                  {withAudio} with audio ({pct}%)
+                </span>
+              );
+            })()}
+          </div>
         </div>
-        <button
-          onClick={() => setModal({ mode: "create" })}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors"
-        >
-          <Plus className="h-4 w-4" />{t("admin.dictionary.newEntry")}
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden text-sm">
+            <button
+              onClick={() => setView("entries")}
+              className={cn("px-3 py-1.5 font-medium transition-colors", view === "entries" ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900" : "text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200")}
+            >
+              Entries
+            </button>
+            <button
+              onClick={() => setView("import")}
+              className={cn("px-3 py-1.5 font-medium transition-colors flex items-center gap-1.5", view === "import" ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900" : "text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200")}
+            >
+              <FileJson className="h-3.5 w-3.5" /> Import
+            </button>
+          </div>
+          {view === "entries" && (
+            <button
+              onClick={() => setModal({ mode: "create" })}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors"
+            >
+              <Plus className="h-4 w-4" />{t("admin.dictionary.newEntry")}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex gap-3 mb-4 flex-wrap">
@@ -596,6 +818,10 @@ export default function EducatorDictionaryPage() {
         </div>
       )}
 
+      {view === "import" ? (
+        <ImportPanel languageId={effectiveLanguage} />
+      ) : (
+      <>
       <CoveragePanel coverage={coverage} onAddWord={(word) => setModal({ mode: "create", prefillWord: word })} />
 
       <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
@@ -770,6 +996,8 @@ export default function EducatorDictionaryPage() {
           </tbody>
         </table>
       </div>
+      </>
+      )}
 
       {modal && (
         <EntryModal

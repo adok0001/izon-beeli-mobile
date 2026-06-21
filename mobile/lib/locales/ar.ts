@@ -999,7 +999,7 @@ export const ar = {
     contribute: "ساهم",
     contributeTitle: "أضف كلمة",
     fieldWord: "الكلمة",
-    fieldEnglish: "الإنجليزية",
+    fieldEnglish: "المعنى",
     fieldPronunciation: "النطق",
     fieldCategory: "الفئة",
     fieldExample: "جملة مثال",
@@ -1211,6 +1211,8 @@ export const ar = {
     prevWord: "السابق",
     nextWord: "التالي",
     contributeExpand: "ساعد في تحسين هذه الكلمة",
+    senses: "المعاني",
+    senseCount: "{{count}} معانٍ",
   },
   contribute: {
     // Landing
@@ -1582,6 +1584,8 @@ export const ar = {
       fieldWord: "الكلمة",
       fieldEnglish: "الإنجليزية",
       fieldFrench: "الفرنسية",
+      fieldMeaning: "المعنى",
+      fieldExampleTranslation: "ترجمة المثال",
       fieldPronunciation: "النطق",
       fieldExample: "جملة مثال",
       fieldExampleEn: "مثال (EN)",

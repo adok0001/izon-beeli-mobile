@@ -48,6 +48,9 @@ import { wordbankRouter } from "./routes/wordbank.js";
 import { activitiesRouter, activitiesAdminRouter } from "./routes/activities.js";
 import { cultureItemsRouter, cultureItemsAdminRouter } from "./routes/culture-items.js";
 import { uploadAdminRouter } from "./routes/upload.js";
+import { partnersRouter, partnersAdminRouter } from "./routes/partners.js";
+import { adminImportRouter } from "./routes/admin-import.js";
+import { publicStatsRouter } from "./routes/public-stats.js";
 import { authMiddleware, adminMiddleware } from "./middleware/auth.js";
 import { logger as log } from "./lib/logger.js";
 
@@ -115,6 +118,8 @@ app.route("/sentences", sentencesRouter);
 app.route("/story-arcs", storyArcsRouter);
 app.route("/daily-content", dailyContentRouter);
 app.route("/activities", activitiesRouter);
+app.route("/partners", partnersRouter);
+app.route("/public/stats", publicStatsRouter);
 app.get("/health", (c) => c.json({ status: "ok" }));
 
 // Authenticated routes
@@ -150,6 +155,8 @@ app.route("/activities/admin", activitiesAdminRouter);
 app.route("/culture-items/admin", cultureItemsAdminRouter);
 app.route("/culture-items", cultureItemsRouter);
 app.route("/upload", uploadAdminRouter);
+app.route("/partners/admin", partnersAdminRouter);
+app.route("/admin/dictionary/import", adminImportRouter);
 app.route("/admin", adminStatsRouter);
 app.route("/educator", educatorRouter);
 app.route("/reviewer-applications", reviewerApplicationsRouter);

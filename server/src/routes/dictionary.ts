@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
 import { db } from "../db/index.js";
 import { contributions, dictionaryEntries, users } from "../db/schema.js";
+import { withTranslations } from "../lib/dictionary-translations.js";
 import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
 
 export const dictionaryRouter = new Hono();
@@ -80,7 +81,13 @@ dictionaryRouter.get("/", async (c) => {
     .where(and(...contribConditions))
     .orderBy(contributions.word);
 
-  const merged = [...staticEntries, ...approvedContribs];
+  const contribsWithMap = approvedContribs.map((r) => ({
+    ...r,
+    translations: { en: r.english },
+    exampleTranslations: r.exampleTranslation ? { en: r.exampleTranslation } : null,
+  }));
+
+  const merged = [...staticEntries.map(withTranslations), ...contribsWithMap];
   return c.json(limit ? merged.slice(0, limit) : merged);
 });
 
@@ -159,10 +166,12 @@ dictionaryAdminRouter.get("/", async (c) => {
   const mapped = contribRows.map(({ isContribution, ...row }) => ({
     ...row,
     notes: null,
+    translations: { en: row.english },
+    exampleTranslations: row.exampleTranslation ? { en: row.exampleTranslation } : null,
     _source: "contribution" as const,
   }));
 
-  return c.json([...staticRows, ...mapped]);
+  return c.json([...staticRows.map(withTranslations), ...mapped]);
 });
 
 // POST /api/dictionary/admin (supports multipart/form-data OR application/json)

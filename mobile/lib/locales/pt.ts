@@ -999,7 +999,7 @@ export const pt = {
     contribute: "Contribuir",
     contributeTitle: "Adicionar uma palavra",
     fieldWord: "Palavra",
-    fieldEnglish: "Inglês",
+    fieldEnglish: "Significado",
     fieldPronunciation: "Pronúncia",
     fieldCategory: "Categoria",
     fieldExample: "Frase de exemplo",
@@ -1211,6 +1211,8 @@ export const pt = {
     prevWord: "Anterior",
     nextWord: "Seguinte",
     contributeExpand: "Ajude a melhorar esta palavra",
+    senses: "Sentidos",
+    senseCount: "{{count}} sentidos",
   },
   contribute: {
     // Página inicial
@@ -1582,6 +1584,8 @@ export const pt = {
       fieldWord: "Palavra",
       fieldEnglish: "Inglês",
       fieldFrench: "Francês",
+      fieldMeaning: "Significado",
+      fieldExampleTranslation: "Tradução do exemplo",
       fieldPronunciation: "Pronúncia",
       fieldExample: "Frase de Exemplo",
       fieldExampleEn: "Exemplo (EN)",

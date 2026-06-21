@@ -13,7 +13,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { ShareModal } from "@/components/share/share-modal";
 import { WordAudioButton } from "@/components/dictionary/word-audio-button";
-import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/lib/dictionary";
+import { CATEGORY_LABELS, CATEGORY_ICONS, parseSenses } from "@/lib/dictionary";
+import { SensesPlacard } from "@/components/dictionary/senses-placard";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { useSubmitEntryContribution } from "@/lib/hooks/use-contributions";
 import { useToast } from "@/lib/hooks/use-toast";
@@ -109,8 +110,10 @@ export default function WordDetailScreen() {
   }, [entryId, entryLanguageId]);
 
   const saved = entry ? savedSet.has(entry.id) : false;
-  const englishText = entry ? localize(entry.english, uiLanguage) : "";
-  const exampleTranslationText = entry ? localize(entry.exampleTranslation, uiLanguage) : "";
+  const englishText = entry ? localize(entry.translations ?? entry.english, uiLanguage) : "";
+  const exampleTranslationText = entry ? localize(entry.exampleTranslations ?? entry.exampleTranslation, uiLanguage) : "";
+  const senses = parseSenses(englishText);
+  const hasMultipleSenses = senses.length > 1;
 
   const handleSubmitAudio = () => {
     if (!entry || !recordingUri) return;
@@ -302,30 +305,19 @@ export default function WordDetailScreen() {
               </Text>
             )}
 
-            {(() => {
-              const meanings = englishText.split(";").map((m) => m.trim()).filter(Boolean);
-              if (meanings.length <= 1) {
-                return (
-                  <Text style={{ marginTop: 12, textAlign: "center", fontSize: 20, color: M.sub }}>
-                    {englishText}
-                  </Text>
-                );
-              }
-              return (
-                <View style={{ marginTop: 12, alignItems: "center", gap: 4 }}>
-                  {meanings.map((meaning, i) => (
-                    <View key={i} style={{ flexDirection: "row", alignItems: "baseline", gap: 8 }}>
-                      <Text style={{ fontSize: 13, fontWeight: "600", color: M.accent }}>
-                        {i + 1}.
-                      </Text>
-                      <Text style={{ fontSize: 18, color: M.sub }}>
-                        {meaning}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              );
-            })()}
+            {hasMultipleSenses ? (
+              <View style={{ marginTop: 12, flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <View style={{ height: 1, width: 16, backgroundColor: M.accentBorder }} />
+                <Text style={{ fontSize: 11, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.accent }}>
+                  {t("wordDetail.senseCount", { count: senses.length })}
+                </Text>
+                <View style={{ height: 1, width: 16, backgroundColor: M.accentBorder }} />
+              </View>
+            ) : (
+              <Text style={{ marginTop: 12, textAlign: "center", fontSize: 20, color: M.sub }}>
+                {englishText}
+              </Text>
+            )}
 
             {!!entry.french && (
               <View style={{ marginTop: 8, flexDirection: "row", alignItems: "center", gap: 8 }}>
@@ -360,6 +352,9 @@ export default function WordDetailScreen() {
           </View>
 
           <View style={{ marginHorizontal: 20, height: 1, backgroundColor: M.border }} />
+
+          {/* Senses — the lexicon plate (only when the word carries several readings) */}
+          {hasMultipleSenses && <SensesPlacard senses={senses} />}
 
           {/* Example sentence */}
           {entry.example && (
@@ -446,7 +441,7 @@ export default function WordDetailScreen() {
                         {rel.word}
                       </Text>
                       <Text style={{ marginTop: 2, fontSize: 11, color: M.sub }} numberOfLines={1}>
-                        {localize(rel.english, uiLanguage)}
+                        {localize(rel.translations ?? rel.english, uiLanguage)}
                       </Text>
                     </Pressable>
                   ))}

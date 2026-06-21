@@ -4509,4 +4509,13 @@ export const IZON_DICTIONARY: DictionaryEntry[] = [
   e(4315, "gari", "gari (cassava flakes)", "food", undefined, "Gari faa.", "There is no gari."),
   e(4316, "kụrọemi", "is well; we are well", "phrases", undefined, "Awọụbo kụrọemi?", "Is everyone well?"),
   e(4317, "awọụbo", "everyone; everybody", "phrases", undefined, "Awọụbo kụrọemi?", "Is everyone well?"),
+  // --- Lesson 17-06-2026: More short sentences and phrases ---
+  e(4318, "owei", "man; male; husband", "nouns", undefined, "Owei bomịnị.", "The man is here."),
+  e(4319, "maa", "my (first-person possessive)", "pronouns", undefined, "Maa ereama bomịnị.", "My women are here."),
+  e(4320, "oweiama", "men; males (plural of owei)", "pronouns", undefined, "Oweiama bomịnị.", "The men are here."),
+  e(4321, "bomịnị", "is here; is present", "verbs", undefined, "Ere bomịnị.", "The woman is here."),
+  e(4322, "mumịnị", "wants; needs", "verbs", undefined, "Oweikịmị mumịnị.", "The boy wants."),
+  e(4323, "omịnị", "we (first person plural)", "pronouns", undefined, "Omịnị bomịnị.", "We are here."),
+  e(4324, "amịnị", "they; you all", "pronouns", undefined, "Amịnị mumịnị.", "They want."),
+  e(4325, "baị", "farewell; go well", "greetings", undefined, "A baị yoo!", "Farewell!"),
 ];

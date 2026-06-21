@@ -1,6 +1,7 @@
 import { apiFetch, ApiError } from "@/lib/api";
 import { API_BASE_URL } from "@/lib/constants";
 import type { DictionaryCategory } from "@/lib/dictionary";
+import type { LocalizedText } from "@/types";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -34,11 +35,13 @@ export interface EducatorDictionaryEntry {
   word: string;
   english: string;
   french?: string | null;
+  translations?: LocalizedText | null;
   category: EducatorDictionaryCategory;
   pronunciation?: string | null;
   example?: string | null;
   exampleTranslation?: string | null;
   exampleTranslationFr?: string | null;
+  exampleTranslations?: LocalizedText | null;
   audioUrl?: string | null;
   imageUrl?: string | null;
   _source?: "contribution";
@@ -51,10 +54,12 @@ export interface UpsertEducatorDictionaryInput {
   english: string;
   category: EducatorDictionaryCategory;
   french?: string;
+  translations?: LocalizedText;
   pronunciation?: string;
   example?: string;
   exampleTranslation?: string;
   exampleTranslationFr?: string;
+  exampleTranslations?: LocalizedText;
   audioUri?: string;
   imageUri?: string;
 }
@@ -202,6 +207,18 @@ export function useUpsertEducatorDictionary() {
       if (input.example) formData.append("example", input.example);
       if (input.exampleTranslation) formData.append("exampleTranslation", input.exampleTranslation);
       if (input.exampleTranslationFr) formData.append("exampleTranslationFr", input.exampleTranslationFr);
+
+      // Send the full gloss maps as JSON so the server can persist every language,
+      // not just the en/fr flat projection above. Drop empty values first.
+      const cleanMap = (map?: LocalizedText) => {
+        if (!map) return undefined;
+        const entries = Object.entries(map).filter(([, v]) => v?.trim());
+        return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+      };
+      const translations = cleanMap(input.translations);
+      const exampleTranslations = cleanMap(input.exampleTranslations);
+      if (translations) formData.append("translations", JSON.stringify(translations));
+      if (exampleTranslations) formData.append("exampleTranslations", JSON.stringify(exampleTranslations));
 
       if (input.audioUri) {
         const audioName = input.audioUri.split("/").pop() ?? "audio.m4a";

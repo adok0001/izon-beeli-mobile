@@ -15,6 +15,8 @@ import { KINYARWANDA_DICTIONARY } from "./kinyarwanda";
 import { EWE_DICTIONARY } from "./ewe";
 import { OROMO_DICTIONARY } from "./oromo";
 import { SHONA_DICTIONARY } from "./shona";
+import { EFIK_DICTIONARY } from "./efik";
+import { NDEBELE_DICTIONARY } from "./ndebele";
 
 const DICTIONARY_REGISTRY: Record<string, DictionaryEntry[]> = {
   izon: IZON_DICTIONARY,
@@ -33,6 +35,8 @@ const DICTIONARY_REGISTRY: Record<string, DictionaryEntry[]> = {
   ewe: EWE_DICTIONARY,
   oromo: OROMO_DICTIONARY,
   shona: SHONA_DICTIONARY,
+  efik: EFIK_DICTIONARY,
+  ndebele: NDEBELE_DICTIONARY,
 };
 
 export function getDictionaryForLanguage(languageId: string): DictionaryEntry[] {

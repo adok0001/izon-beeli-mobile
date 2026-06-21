@@ -1021,7 +1021,7 @@ export const pcm = {
     contribute: "Contribute",
     contributeTitle: "Add word",
     fieldWord: "Word",
-    fieldEnglish: "English",
+    fieldEnglish: "Meaning",
     fieldPronunciation: "Pronunciation",
     fieldCategory: "Category",
     fieldExample: "Example sentence",
@@ -1233,6 +1233,8 @@ export const pcm = {
     prevWord: "Previous",
     nextWord: "Next",
     contributeExpand: "Help improve this word",
+    senses: "Meanings",
+    senseCount: "{{count}} meanings",
   },
   contribute: {
     // Landing
@@ -1744,6 +1746,8 @@ export const pcm = {
       fieldWord: "Word",
       fieldEnglish: "English",
       fieldFrench: "French",
+      fieldMeaning: "Meaning",
+      fieldExampleTranslation: "Example translation",
       fieldPronunciation: "Pronunciation",
       fieldExample: "Example",
       fieldExampleEn: "Example (EN)",

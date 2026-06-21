@@ -1,6 +1,8 @@
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LocalizedTextInput, toLocalizedText } from "@/components/ui/localized-text-input";
+import type { LocalizedText } from "@/types";
 import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
 import {
     EducatorDictionaryCategory,
@@ -25,20 +27,20 @@ const CATEGORIES: EducatorDictionaryCategory[] = [...DICTIONARY_CATEGORY_VALUES]
 type EditorState = {
   id?: string;
   word: string;
-  english: string;
+  translations: LocalizedText;
   category: EducatorDictionaryCategory;
   pronunciation: string;
   example: string;
-  exampleTranslation: string;
+  exampleTranslations: LocalizedText;
 };
 
 const EMPTY_EDITOR: EditorState = {
   word: "",
-  english: "",
+  translations: {},
   category: "nouns",
   pronunciation: "",
   example: "",
-  exampleTranslation: "",
+  exampleTranslations: {},
 };
 
 export default function EducatorDictionaryScreen() {
@@ -85,19 +87,23 @@ export default function EducatorDictionaryScreen() {
     setEditor({
       id: entry.id,
       word: entry.word,
-      english: entry.english,
+      translations: toLocalizedText(entry.translations ?? entry.english, entry.french),
       category: entry.category,
       pronunciation: entry.pronunciation ?? "",
       example: entry.example ?? "",
-      exampleTranslation: entry.exampleTranslation ?? "",
+      exampleTranslations: toLocalizedText(
+        entry.exampleTranslations ?? entry.exampleTranslation,
+        entry.exampleTranslationFr,
+      ),
     });
     flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
     setIsEditing(true);
   }, []);
 
   const submit = () => {
-    if (!editor.word.trim() || !editor.english.trim()) {
-      toastError("Missing fields", "Word and English are required.");
+    const english = editor.translations.en?.trim() ?? "";
+    if (!editor.word.trim() || !english) {
+      toastError("Missing fields", "Word and meaning (English) are required.");
       return;
     }
 
@@ -106,11 +112,15 @@ export default function EducatorDictionaryScreen() {
         id: editor.id,
         languageId: activeLanguageId,
         word: editor.word.trim(),
-        english: editor.english.trim(),
+        english,
+        french: editor.translations.fr?.trim() || undefined,
+        translations: editor.translations,
         category: editor.category,
         pronunciation: editor.pronunciation.trim() || undefined,
         example: editor.example.trim() || undefined,
-        exampleTranslation: editor.exampleTranslation.trim() || undefined,
+        exampleTranslation: editor.exampleTranslations.en?.trim() || undefined,
+        exampleTranslationFr: editor.exampleTranslations.fr?.trim() || undefined,
+        exampleTranslations: editor.exampleTranslations,
       },
       {
         onSuccess: () => {
@@ -288,13 +298,14 @@ export default function EducatorDictionaryScreen() {
             placeholderTextColor={M.muted}
             className="mt-3 rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
           />
-          <TextInput
-            value={editor.english}
-            onChangeText={(english) => setEditor((prev) => ({ ...prev, english }))}
-            placeholder="English translation"
-            placeholderTextColor={M.muted}
-            className="mt-2 rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
-          />
+          <View className="mt-3">
+            <LocalizedTextInput
+              label={t("admin.dictionary.fieldMeaning")}
+              value={editor.translations}
+              onChange={(translations) => setEditor((prev) => ({ ...prev, translations }))}
+              required
+            />
+          </View>
           <TextInput
             value={editor.pronunciation}
             onChangeText={(pronunciation) => setEditor((prev) => ({ ...prev, pronunciation }))}
@@ -310,14 +321,14 @@ export default function EducatorDictionaryScreen() {
             multiline
             className="mt-2 min-h-[44px] rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
           />
-          <TextInput
-            value={editor.exampleTranslation}
-            onChangeText={(exampleTranslation) => setEditor((prev) => ({ ...prev, exampleTranslation }))}
-            placeholder="Example translation (optional)"
-            placeholderTextColor={M.muted}
-            multiline
-            className="mt-2 min-h-[44px] rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
-          />
+          <View className="mt-2">
+            <LocalizedTextInput
+              label={t("admin.dictionary.fieldExampleTranslation")}
+              value={editor.exampleTranslations}
+              onChange={(exampleTranslations) => setEditor((prev) => ({ ...prev, exampleTranslations }))}
+              multiline
+            />
+          </View>
 
           <View className="mt-3 flex-row flex-wrap gap-2">
             {CATEGORIES.map((category) => {

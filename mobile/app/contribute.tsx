@@ -461,7 +461,7 @@ export default function ContributeScreen() {
                     setWord(text);
                     if (selectedEntry) setSelectedEntry(null);
                   }}
-                  placeholder="e.g. Baid\u1EB9"
+                  placeholder="e.g. Baidẹ"
                   placeholderTextColor={M.muted}
                   editable={!selectedEntry}
                   style={{ borderRadius: dictMatches.length > 0 ? 0 : 12, borderTopLeftRadius: 12, borderTopRightRadius: 12, borderWidth: 1, borderBottomWidth: dictMatches.length > 0 ? 0 : 1, borderColor: M.border, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 12, fontSize: 15, color: M.text, marginBottom: dictMatches.length > 0 ? 0 : 16, opacity: selectedEntry ? 0.6 : 1 }}

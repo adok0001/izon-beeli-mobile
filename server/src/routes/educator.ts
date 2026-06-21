@@ -29,6 +29,7 @@ import {
 } from "../db/schema.js";
 import { AuthEnv, authMiddleware, reviewerMiddleware } from "../middleware/auth.js";
 import { computeCoverage } from "../lib/dictionary-coverage.js";
+import { withTranslations } from "../lib/dictionary-translations.js";
 import { stubForCourse, stubForLanguage } from "../lib/lesson-stubs.js";
 
 export const educatorRouter = new Hono<AuthEnv>();
@@ -492,10 +493,12 @@ educatorRouter.get("/dictionary", async (c) => {
     ...r,
     french: null,
     exampleTranslationFr: null,
+    translations: { en: r.english },
+    exampleTranslations: r.exampleTranslation ? { en: r.exampleTranslation } : null,
     _source: "contribution" as const,
   }));
 
-  return c.json([...rows, ...mapped]);
+  return c.json([...rows.map(withTranslations), ...mapped]);
 });
 
 // Canonical dictionary categories — must match the admin route (dictionary.ts),
@@ -507,6 +510,38 @@ const VALID_CATEGORIES = [
   "ordinals", "commands", "animals", "phonetics", "money", "proverbs",
   "adjectives",
 ] as const;
+
+/**
+ * Normalize an incoming translations map. Accepts an object (JSON body) or a
+ * JSON-stringified object (multipart field). Returns a trimmed { lang: text }
+ * map, or undefined when there is nothing usable.
+ */
+function parseMap(raw: unknown): Record<string, string> | undefined {
+  let obj: unknown = raw;
+  if (typeof raw === "string") {
+    const s = raw.trim();
+    if (!s) return undefined;
+    try {
+      obj = JSON.parse(s);
+    } catch {
+      return undefined;
+    }
+  }
+  if (typeof obj !== "object" || obj === null) return undefined;
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+    if (typeof v === "string" && v.trim()) out[k] = v.trim();
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
+/** Build a translations map from legacy flat english/french fields. */
+function flatToMap(en?: string | null, fr?: string | null): Record<string, string> | undefined {
+  const out: Record<string, string> = {};
+  if (en?.trim()) out.en = en.trim();
+  if (fr?.trim()) out.fr = fr.trim();
+  return Object.keys(out).length ? out : undefined;
+}
 
 // POST /educator/dictionary
 educatorRouter.post("/dictionary", async (c) => {
@@ -533,7 +568,14 @@ educatorRouter.post("/dictionary", async (c) => {
     fields = await c.req.json<Record<string, string>>();
   }
 
-  const { languageId, word, english, category } = fields;
+  const { languageId, word, category } = fields;
+
+  // Prefer the full translations map; fall back to legacy flat english/french.
+  const translations = parseMap((fields as Record<string, unknown>).translations)
+    ?? flatToMap(fields.english, fields.french);
+  const exampleTranslations = parseMap((fields as Record<string, unknown>).exampleTranslations)
+    ?? flatToMap(fields.exampleTranslation, fields.exampleTranslationFr);
+  const english = translations?.en;
 
   if (!languageId?.trim() || !word?.trim() || !english?.trim()) {
     return c.json({ error: "languageId, word, and english are required" }, 400);
@@ -577,12 +619,14 @@ educatorRouter.post("/dictionary", async (c) => {
       languageId: languageId.trim(),
       word: word.trim(),
       english: english.trim(),
-      french: fields.french?.trim() || null,
+      french: translations?.fr ?? null,
+      translations: translations ?? null,
       category: category as (typeof VALID_CATEGORIES)[number],
       pronunciation: fields.pronunciation?.trim() || null,
       example: fields.example?.trim() || null,
-      exampleTranslation: fields.exampleTranslation?.trim() || null,
-      exampleTranslationFr: fields.exampleTranslationFr?.trim() || null,
+      exampleTranslation: exampleTranslations?.en ?? null,
+      exampleTranslationFr: exampleTranslations?.fr ?? null,
+      exampleTranslations: exampleTranslations ?? null,
       audioUrl,
       imageUrl,
       exampleAudioUrl,
@@ -634,10 +678,35 @@ educatorRouter.patch("/dictionary/:id", async (c) => {
     return c.json({ error: `category must be one of: ${VALID_CATEGORIES.join(", ")}` }, 400);
   }
 
-  const updates: Record<string, string | null> = {};
-  for (const key of ["word", "english", "french", "category", "pronunciation", "example", "exampleTranslation", "exampleTranslationFr"] as const) {
+  const updates: Partial<typeof dictionaryEntries.$inferInsert> = {};
+  for (const key of ["pronunciation", "example"] as const) {
     if (key in fields) updates[key] = fields[key]?.trim() || null;
   }
+  for (const key of ["word", "category"] as const) {
+    if (fields[key]?.trim()) updates[key] = fields[key].trim();
+  }
+
+  // Translations: write the jsonb map plus the derived flat english/french projection.
+  const translations = parseMap((fields as Record<string, unknown>).translations);
+  if (translations) {
+    updates.translations = translations;
+    if (translations.en?.trim()) updates.english = translations.en.trim();
+    updates.french = translations.fr ?? null;
+  } else {
+    if ("english" in fields && fields.english?.trim()) updates.english = fields.english.trim();
+    if ("french" in fields) updates.french = fields.french?.trim() || null;
+  }
+
+  const exampleTranslations = parseMap((fields as Record<string, unknown>).exampleTranslations);
+  if (exampleTranslations) {
+    updates.exampleTranslations = exampleTranslations;
+    updates.exampleTranslation = exampleTranslations.en ?? null;
+    updates.exampleTranslationFr = exampleTranslations.fr ?? null;
+  } else {
+    if ("exampleTranslation" in fields) updates.exampleTranslation = fields.exampleTranslation?.trim() || null;
+    if ("exampleTranslationFr" in fields) updates.exampleTranslationFr = fields.exampleTranslationFr?.trim() || null;
+  }
+
   if ("audioUrl" in fields) updates.audioUrl = fields.audioUrl?.trim() || null;
   if ("imageUrl" in fields) updates.imageUrl = fields.imageUrl?.trim() || null;
   if ("exampleAudioUrl" in fields) updates.exampleAudioUrl = fields.exampleAudioUrl?.trim() || null;

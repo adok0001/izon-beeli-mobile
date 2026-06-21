@@ -3,6 +3,7 @@ import {
   boolean,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   real,
@@ -402,17 +403,31 @@ export const dictionaryEntries = pgTable(
     word: varchar("word", { length: 500 }).notNull(),
     english: varchar("english", { length: 500 }).notNull(),
     french: varchar("french", { length: 500 }),
+    /** Full gloss map { en, fr, pcm, ar, pt, ... }. `english`/`french` are kept as a derived projection. */
+    translations: jsonb("translations").$type<Record<string, string>>(),
     category: varchar("category", { length: 64 }).notNull(),
     pronunciation: varchar("pronunciation", { length: 500 }),
     example: text("example"),
     exampleTranslation: text("example_translation"),
     exampleTranslationFr: text("example_translation_fr"),
+    /** Full example-translation map; `exampleTranslation`/`exampleTranslationFr` are the en/fr projection. */
+    exampleTranslations: jsonb("example_translations").$type<Record<string, string>>(),
     audioUrl: text("audio_url"),
     imageUrl: text("image_url"),
     exampleAudioUrl: text("example_audio_url"),
     contributorName: varchar("contributor_name", { length: 200 }),
     contributorId: varchar("contributor_id", { length: 64 }),
     englishWordId: varchar("english_word_id", { length: 64 }).references(() => englishWordbank.id),
+    /** Words with equivalent or near-equivalent meaning in the same language. */
+    synonyms: text("synonyms").array(),
+    /** Words with opposite meaning. */
+    antonyms: text("antonyms").array(),
+    /** Hierarchical semantic domain, e.g. "body > senses > sight". */
+    semanticDomain: varchar("semantic_domain", { length: 200 }),
+    /** Dialect-specific forms: [{ dialect, form, region? }] */
+    dialectalVariants: jsonb("dialectal_variants").$type<
+      Array<{ dialect: string; form: string; region?: string }>
+    >(),
   },
   (table) => [
     index("dictionary_entries_language_idx").on(table.languageId),
@@ -952,6 +967,20 @@ export const gameSessionPlayersRelations = relations(
     }),
   })
 );
+
+// ---------- Content Partners ----------
+
+export const contentPartners = pgTable("content_partners", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  name: varchar("name", { length: 300 }).notNull(),
+  type: varchar("type", { length: 32 }).notNull(), // "university" | "research" | "institution"
+  region: varchar("region", { length: 100 }),
+  url: text("url"),
+  logoUrl: text("logo_url"),
+  languageIds: text("language_ids").array().default([]).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
 // ---------- Word Challenge Submissions ----------
 

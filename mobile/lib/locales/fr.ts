@@ -1001,7 +1001,7 @@ export const fr = {
     contribute: "Contribuer",
     contributeTitle: "Ajouter un mot",
     fieldWord: "Mot",
-    fieldEnglish: "Anglais",
+    fieldEnglish: "Signification",
     fieldPronunciation: "Prononciation",
     fieldCategory: "Catégorie",
     fieldExample: "Phrase exemple",
@@ -1213,6 +1213,8 @@ export const fr = {
     prevWord: "Précédent",
     nextWord: "Suivant",
     contributeExpand: "Améliorer ce mot",
+    senses: "Sens",
+    senseCount: "{{count}} sens",
   },
   contribute: {
     // Landing
@@ -1724,6 +1726,8 @@ export const fr = {
       fieldWord: "Mot",
       fieldEnglish: "Anglais",
       fieldFrench: "Français",
+      fieldMeaning: "Signification",
+      fieldExampleTranslation: "Traduction de l'exemple",
       fieldPronunciation: "Prononciation",
       fieldExample: "Exemple",
       fieldExampleEn: "Exemple (EN)",
