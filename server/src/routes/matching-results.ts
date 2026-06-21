@@ -19,7 +19,7 @@ matchingResultsRouter.post("/", async (c) => {
   }>();
 
   const xpEarned = Math.max(1, Math.round((body.accuracy / 100) * body.totalPairs * 0.3));
-  const [xpResult] = await Promise.all([
+  const [xpResult, streakResult] = await Promise.all([
     awardXP(userId, xpEarned, "quiz"),
     updateStreak(userId),
     incrementDailyChallenge(userId, "complete_quiz").catch(() => {}),
@@ -31,6 +31,10 @@ matchingResultsRouter.post("/", async (c) => {
       totalPoints: xpResult.totalPoints,
       leveledUp: xpResult.leveledUp,
       newLevel: xpResult.newLevel,
+      streak: streakResult.newStreak,
+      streakIncremented: streakResult.streakIncremented,
+      streakMilestone: streakResult.streakMilestone ?? null,
+      freezeCount: streakResult.freezeCount,
     },
     201
   );

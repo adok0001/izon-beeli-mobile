@@ -14,6 +14,10 @@ interface JournalEntryResponse {
   isPublic: boolean;
   createdAt: string;
   updatedAt: string;
+  streak?: number | null;
+  streakIncremented?: boolean;
+  streakMilestone?: number | null;
+  freezeCount?: number | null;
 }
 
 function toJournalEntry(r: JournalEntryResponse): JournalEntry {
@@ -42,7 +46,7 @@ export function useJournal() {
   });
 }
 
-export function useCreateJournalEntry() {
+export function useCreateJournalEntry(callbacks?: { onStreakUpdate?: (streak: number, isMilestone: boolean) => void }) {
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
 
@@ -54,7 +58,12 @@ export function useCreateJournalEntry() {
         token: token!,
         body: JSON.stringify(input),
       });
-      return toJournalEntry(data);
+      return {
+        entry: toJournalEntry(data),
+        streak: data.streak,
+        streakIncremented: data.streakIncremented,
+        streakMilestone: data.streakMilestone ?? null,
+      };
     },
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: ["journal"] });
@@ -72,6 +81,11 @@ export function useCreateJournalEntry() {
         old ? [optimistic, ...old] : [optimistic]
       );
       return { previous };
+    },
+    onSuccess: (data) => {
+      if (data.streakIncremented && data.streak) {
+        callbacks?.onStreakUpdate?.(data.streak, !!data.streakMilestone);
+      }
     },
     onError: (_err, _input, context) => {
       if (context?.previous) {

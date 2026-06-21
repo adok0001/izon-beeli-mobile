@@ -6,6 +6,9 @@ import {
   useJournal,
   useUpdateJournalEntry,
 } from "@/lib/hooks/use-journal";
+import { useStreakCelebration } from "@/lib/hooks/use-progress";
+import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { useVoiceRecording } from "@/lib/hooks/use-voice-recording";
 import {
   deleteRecording,
@@ -238,7 +241,8 @@ export default function JournalScreen() {
     setRefreshing(false);
   }, [refetch]);
 
-  const createEntry = useCreateJournalEntry();
+  const { onStreakUpdate, celebration, clearCelebration, toast: streakToast, dismissToast } = useStreakCelebration();
+  const createEntry = useCreateJournalEntry({ onStreakUpdate });
   const updateEntry = useUpdateJournalEntry();
   const deleteEntry = useDeleteJournalEntry();
 
@@ -352,7 +356,7 @@ export default function JournalScreen() {
       createEntry.mutate(
         { title: title.trim(), content: content.trim(), isPublic },
         {
-          onSuccess: async (entry) => {
+          onSuccess: async ({ entry }) => {
             if (voice.uri) {
               await migrateRecording(TEMP_RECORDING_ID, entry.id);
               setRecordingMap((m) => ({ ...m, [entry.id]: true }));
@@ -426,6 +430,7 @@ export default function JournalScreen() {
   const sections = entries && entries.length > 0 ? groupEntriesBySections(entries) : [];
 
   return (
+    <>
     <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
       {/* Header */}
       <View style={{ backgroundColor: M.ink, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20 }}>
@@ -749,5 +754,8 @@ export default function JournalScreen() {
         </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
+    <NotificationBanner visible={streakToast.visible} title={streakToast.title} body={streakToast.body} type={streakToast.type} onDismiss={dismissToast} />
+    <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={clearCelebration} />
+    </>
   );
 }

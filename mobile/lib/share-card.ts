@@ -5,7 +5,14 @@ import { captureRef } from "react-native-view-shot";
 import type { RefObject } from "react";
 import type { View } from "react-native";
 
-export type CardTemplate = "word" | "proverb" | "achievement" | "symbol" | "cultural" | "lesson";
+export type CardTemplate =
+  | "word"
+  | "proverb"
+  | "achievement"
+  | "streak"
+  | "symbol"
+  | "cultural"
+  | "lesson";
 
 export type ShareCardData =
   | {
@@ -29,6 +36,11 @@ export type ShareCardData =
       template: "achievement";
       title: string;
       detail: string;
+    }
+  | {
+      template: "streak";
+      streak: number;
+      isMilestone?: boolean;
     }
   | {
       template: "symbol";
@@ -70,6 +82,10 @@ export function buildShareMessage(data: ShareCardData, t: TFunction): string {
     case "achievement":
       msg = `${data.title}: ${data.detail}\n\n${t("share.learningGeneric")}`;
       deepLink = `${SCHEME}(tabs)/profile`;
+      break;
+    case "streak":
+      msg = `${t("share.streakBrag", { count: data.streak })}\n\n${t("share.learningGeneric")}`;
+      deepLink = `${SCHEME}(tabs)/learn`;
       break;
     case "symbol":
       msg = `${data.name} — ${data.meaning}\n\n${t("share.learningWith", { language: data.language })}`;

@@ -211,9 +211,10 @@ progressRouter.post("/freeze", async (c) => {
   }
 
   // Restore: set lastActiveDate to yesterday so next activity continues streak
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().slice(0, 10);
+  const now = new Date();
+  const yesterdayStr = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1))
+    .toISOString()
+    .slice(0, 10);
 
   await db
     .update(users)
@@ -359,9 +360,11 @@ type LastActiveToken = "today" | "yesterday" | "stale" | "clear";
 function resolveLastActiveDate(token: LastActiveToken): string | null {
   if (token === "clear") return null;
   const offset = token === "today" ? 0 : token === "yesterday" ? 1 : 3;
-  const date = new Date();
-  date.setDate(date.getDate() - offset);
-  return date.toISOString().slice(0, 10);
+  // Use UTC date arithmetic so the result is consistent with diffDaysFromToday.
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - offset))
+    .toISOString()
+    .slice(0, 10);
 }
 
 // Coerce an optional body field to a non-negative integer. Returns the fallback

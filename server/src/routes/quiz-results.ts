@@ -89,7 +89,7 @@ quizResultsRouter.post("/", async (c) => {
   // Award XP based on accuracy × questionCount × configurable multiplier
   const xpMultiplier = await getXpMultiplier();
   const xpEarned = Math.max(1, Math.round((body.accuracy / 100) * body.questionCount * xpMultiplier));
-  const [xpResult] = await Promise.all([
+  const [xpResult, streakResult] = await Promise.all([
     awardXP(userId, xpEarned, "quiz"),
     updateStreak(userId),
   ]);
@@ -112,6 +112,10 @@ quizResultsRouter.post("/", async (c) => {
       leveledUp: xpResult.leveledUp,
       newLevel: xpResult.newLevel,
       newTitle: xpResult.newTitle,
+      streak: streakResult.newStreak,
+      streakIncremented: streakResult.streakIncremented,
+      streakMilestone: streakResult.streakMilestone ?? null,
+      freezeCount: streakResult.freezeCount,
     },
     201
   );

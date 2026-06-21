@@ -5,6 +5,9 @@ import { hapticError, hapticSuccess, hapticTap } from "@/lib/haptics";
 import { useWordOfTheDay } from "@/lib/hooks/use-word-of-the-day";
 import { useSaveWord, useWordBank } from "@/lib/hooks/use-wordbank";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useStreakCelebration } from "@/lib/hooks/use-progress";
+import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { useLanguageStore } from "@/store/language-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useAuth } from "@clerk/clerk-expo";
@@ -51,6 +54,7 @@ export default function WordChallengeScreen() {
   const { data: savedIds } = useWordBank();
   const saveWord = useSaveWord();
 
+  const { onStreakUpdate, celebration, clearCelebration, toast, dismissToast } = useStreakCelebration();
   const [tab, setTab] = useState<Tab>("learn");
   const [sentenceInput, setSentenceInput] = useState("");
   const [submitStatus, setSubmitStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
@@ -115,18 +119,21 @@ export default function WordChallengeScreen() {
     try {
       const token = await getToken();
       if (!token) throw new Error("You need to be signed in to submit.");
-      await apiFetch("/word-challenge", {
+      const result = await apiFetch<{ streak?: number; streakIncremented?: boolean; streakMilestone?: number | null }>("/word-challenge", {
         method: "POST",
         token,
         body: JSON.stringify({ wordId: word.id, sentence: sentenceInput.trim(), languageId: selectedLanguageId }),
       });
       hapticSuccess();
       setSubmitStatus("success");
+      if (result.streakIncremented && result.streak) {
+        onStreakUpdate(result.streak, !!result.streakMilestone);
+      }
     } catch {
       hapticError();
       setSubmitStatus("error");
     }
-  }, [sentenceInput, word, getToken, selectedLanguageId]);
+  }, [sentenceInput, word, getToken, selectedLanguageId, onStreakUpdate]);
 
   if (!word) {
     return (
@@ -293,6 +300,8 @@ export default function WordChallengeScreen() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+      <NotificationBanner visible={toast.visible} title={toast.title} body={toast.body} type={toast.type} onDismiss={dismissToast} />
+      <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={clearCelebration} />
     </SafeAreaView>
   );
 }

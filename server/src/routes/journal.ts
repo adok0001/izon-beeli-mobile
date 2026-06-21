@@ -47,9 +47,15 @@ journalRouter.post("/", async (c) => {
     })
     .returning();
 
-  updateStreak(userId).catch(() => {});
+  const streakResult = await updateStreak(userId).catch(() => null);
 
-  return c.json(entry, 201);
+  return c.json({
+    ...entry,
+    streak: streakResult?.newStreak ?? null,
+    streakIncremented: streakResult?.streakIncremented ?? false,
+    streakMilestone: streakResult?.streakMilestone ?? null,
+    freezeCount: streakResult?.freezeCount ?? null,
+  }, 201);
 });
 
 // PATCH /api/journal/:id - update entry

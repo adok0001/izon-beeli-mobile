@@ -39,12 +39,20 @@ wordChallengeRouter.post("/", async (c) => {
     return c.json({ alreadySubmitted: true, xpEarned: 0 }, 200);
   }
 
-  const [xpResult] = await Promise.all([
+  const [xpResult, streakResult] = await Promise.all([
     awardXP(userId, 5, "quiz"),
     updateStreak(userId),
   ]);
 
-  return c.json({ id: row.id, xpEarned: 5, totalPoints: xpResult.totalPoints }, 201);
+  return c.json({
+    id: row.id,
+    xpEarned: 5,
+    totalPoints: xpResult.totalPoints,
+    streak: streakResult.newStreak,
+    streakIncremented: streakResult.streakIncremented,
+    streakMilestone: streakResult.streakMilestone ?? null,
+    freezeCount: streakResult.freezeCount,
+  }, 201);
 });
 
 // GET /api/word-challenge?wordId=... — count today's participants

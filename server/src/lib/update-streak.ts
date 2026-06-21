@@ -7,11 +7,16 @@ const FREEZE_GRANT_MILESTONES: Record<number, number> = { 7: 1, 30: 2 };
 
 export function diffDaysFromToday(dateStr: string | null | undefined): number {
   if (!dateStr) return Infinity;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const last = new Date(dateStr);
-  last.setHours(0, 0, 0, 0);
-  return Math.floor((today.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
+  // Both sides anchored to UTC midnight so non-UTC server timezones don't shift the diff.
+  const todayUtc = Date.UTC(
+    new Date().getUTCFullYear(),
+    new Date().getUTCMonth(),
+    new Date().getUTCDate()
+  );
+  // "YYYY-MM-DD" strings are stored in UTC — parse them as UTC midnight explicitly.
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const lastUtc = Date.UTC(y, m - 1, d);
+  return Math.floor((todayUtc - lastUtc) / (1000 * 60 * 60 * 24));
 }
 
 export interface StreakResult {

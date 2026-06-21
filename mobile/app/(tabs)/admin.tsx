@@ -181,8 +181,8 @@ export default function AdminPanelScreen() {
             />
             <ActionRow
               icon="flame.fill"
-              label={t("admin.streakTools.title", "Streak Tools")}
-              detail={t("admin.streakTools.subtitle", "Override your streak to test milestones")}
+              label={t("admin.streakTools.title")}
+              detail={t("admin.streakTools.subtitle")}
               onPress={() => router.push("/admin/streak-tools")}
               accent={getAccent("orange").solid}
             />

@@ -1,7 +1,9 @@
+import { getAccent } from "@/constants/accent-colors";
 import { fonts, type } from "@/constants/typography";
 import type { ShareCardData } from "@/lib/share-card";
 import { bronze, glass, MUSEUM } from "@/lib/use-museum-theme";
 import { Badge } from "@/components/ui/badge";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LinearGradient } from "expo-linear-gradient";
 import { forwardRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -76,6 +78,29 @@ export const ShareCardPreview = forwardRef<View, ShareCardData>((props, ref) => 
             <Text style={{ ...type.h2, color: MUSEUM.parchment }}>{props.title}</Text>
             <Text style={{ ...type.body, color: MUSEUM.textDim, marginTop: 6 }}>{props.detail}</Text>
           </>
+        )}
+
+        {props.template === "streak" && (
+          <View style={{ alignItems: "center" }}>
+            <View style={styles.flameRing}>
+              <View pointerEvents="none" style={styles.flameGlow} />
+              <IconSymbol name="flame.fill" size={34} color={getAccent("orange").solid} />
+            </View>
+            <Text style={styles.streakNumber}>{props.streak}</Text>
+            <Text style={{ ...type.overline, color: MUSEUM.accent }}>
+              {t("share.streakLabel").toUpperCase()}
+            </Text>
+            {props.isMilestone && (
+              <View style={{ marginTop: 14 }}>
+                <Badge
+                  label={t("share.streakMilestoneBadge")}
+                  color={MUSEUM.accent}
+                  bg={bronze(0.14)}
+                  border={bronze(0.3)}
+                />
+              </View>
+            )}
+          </View>
         )}
 
         {props.template === "symbol" && (
@@ -163,6 +188,31 @@ const styles = StyleSheet.create({
     backgroundColor: bronze(0.16),
     borderWidth: 1,
     borderColor: bronze(0.4),
+  },
+  flameRing: {
+    marginBottom: 18,
+    height: 72,
+    width: 72,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 36,
+    backgroundColor: bronze(0.16),
+    borderWidth: 1,
+    borderColor: bronze(0.4),
+  },
+  flameGlow: {
+    position: "absolute",
+    height: 96,
+    width: 96,
+    borderRadius: 48,
+    backgroundColor: bronze(0.18),
+  },
+  streakNumber: {
+    fontFamily: fonts.heading,
+    fontSize: 72,
+    lineHeight: 78,
+    letterSpacing: -1,
+    color: MUSEUM.parchment,
   },
   footerRule: { height: 1, width: 18, backgroundColor: glass(0.18) },
   footerText: { fontSize: 10, letterSpacing: 0.6, color: glass(0.45) },
