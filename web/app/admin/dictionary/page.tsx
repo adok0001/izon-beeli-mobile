@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { BookText, CheckCircle2, Edit2, ImageIcon, Mic, Plus, Search, Trash2, Upload, Volume2, X, XCircle } from "lucide-react";
 import { LANGUAGES as LANGUAGES_DATA } from "@mobile/lib/data/languages";
+import { splitList, type DialectalVariant } from "@mobile/lib/dictionary";
 import Image from "next/image";
 import React, { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -24,7 +25,23 @@ interface DictEntry {
   exampleTranslationFr: string | null;
   audioUrl: string | null;
   imageUrl: string | null;
+  synonyms: string[] | null;
+  antonyms: string[] | null;
+  semanticDomain: string | null;
+  dialectalVariants: DialectalVariant[] | null;
   _source?: "contribution";
+}
+
+/** Append entry fields to FormData, JSON-encoding arrays/objects so the server can parse them. */
+function appendEntryFields(fd: FormData, data: EntryForm): void {
+  Object.entries(data).forEach(([k, v]) => {
+    if (v == null || v === "") return;
+    if (Array.isArray(v)) {
+      if (v.length > 0) fd.append(k, JSON.stringify(v));
+    } else {
+      fd.append(k, String(v));
+    }
+  });
 }
 
 interface Language {
@@ -55,6 +72,10 @@ const EMPTY_FORM: EntryForm = {
   exampleTranslationFr: "",
   audioUrl: "",
   imageUrl: "",
+  synonyms: [],
+  antonyms: [],
+  semanticDomain: "",
+  dialectalVariants: [],
 };
 
 function FileUploadField({
@@ -139,6 +160,29 @@ function FileUploadField({
   );
 }
 
+/** Repeatable dialect / form / region rows for editing dialectal variants. */
+function VariantRows({ value, onChange }: Readonly<{ value: DialectalVariant[]; onChange: (v: DialectalVariant[]) => void }>) {
+  const update = (i: number, patch: Partial<DialectalVariant>) =>
+    onChange(value.map((v, idx) => (idx === i ? { ...v, ...patch } : v)));
+  return (
+    <div className="space-y-2">
+      {value.map((variant, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <input className={fieldCls} value={variant.dialect} onChange={(e) => update(i, { dialect: e.target.value })} placeholder="Dialect" />
+          <input className={fieldCls} value={variant.form} onChange={(e) => update(i, { form: e.target.value })} placeholder="Form" />
+          <input className={fieldCls} value={variant.region ?? ""} onChange={(e) => update(i, { region: e.target.value })} placeholder="Region (optional)" />
+          <button type="button" onClick={() => onChange(value.filter((_, idx) => idx !== i))} className="p-2 rounded-lg text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      ))}
+      <button type="button" onClick={() => onChange([...value, { dialect: "", form: "" }])} className="flex items-center gap-1 text-sm font-medium text-brand-600 hover:text-brand-700">
+        <Plus className="h-3.5 w-3.5" /> Add variant
+      </button>
+    </div>
+  );
+}
+
 function EntryModal({
   initial,
   defaultLanguageId,
@@ -160,11 +204,27 @@ function EntryModal({
   );
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  // Synonyms/antonyms are edited as comma-separated text, then split on save.
+  const [synonymsRaw, setSynonymsRaw] = useState((initial?.synonyms ?? []).join(", "));
+  const [antonymsRaw, setAntonymsRaw] = useState((initial?.antonyms ?? []).join(", "));
+  const [variants, setVariants] = useState<DialectalVariant[]>(initial?.dialectalVariants ?? []);
 
   const set = (key: keyof EntryForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
   const isValid = form.word.trim() && form.english.trim() && form.languageId.trim();
+
+  const handleSave = () =>
+    onSave(
+      {
+        ...form,
+        synonyms: splitList(synonymsRaw),
+        antonyms: splitList(antonymsRaw),
+        dialectalVariants: variants.filter((v) => v.dialect.trim() && v.form.trim()),
+      },
+      audioFile,
+      imageFile,
+    );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -252,6 +312,35 @@ function EntryModal({
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">
+                {t("admin.dictionary.fieldSynonyms")}
+              </label>
+              <input className={fieldCls} value={synonymsRaw} onChange={(e) => setSynonymsRaw(e.target.value)} placeholder="Comma-separated" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">
+                {t("admin.dictionary.fieldAntonyms")}
+              </label>
+              <input className={fieldCls} value={antonymsRaw} onChange={(e) => setAntonymsRaw(e.target.value)} placeholder="Comma-separated" />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">
+              {t("admin.dictionary.fieldSemanticDomain")}
+            </label>
+            <input className={fieldCls} value={form.semanticDomain ?? ""} onChange={set("semanticDomain")} placeholder="e.g. body > senses > sight" />
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">
+              {t("admin.dictionary.fieldDialectalVariants")}
+            </label>
+            <VariantRows value={variants} onChange={setVariants} />
+          </div>
+
           {/* Audio & Image upload */}
           <div className="grid grid-cols-2 gap-3">
             <FileUploadField
@@ -285,7 +374,7 @@ function EntryModal({
             {t("admin.courses.cancel")}
           </button>
           <button
-            onClick={() => onSave(form, audioFile, imageFile)}
+            onClick={handleSave}
             disabled={!isValid || saving}
             className="px-4 py-2 rounded-lg text-sm font-semibold bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-40 transition-colors"
           >
@@ -422,7 +511,7 @@ export default function AdminDictionaryPage() {
       const token = await getToken();
       if (audioFile ?? imageFile) {
         const fd = new FormData();
-        Object.entries(data).forEach(([k, v]) => { if (v != null && v !== "") fd.append(k, String(v)); });
+        appendEntryFields(fd, data);
         if (audioFile) fd.append("audio", audioFile);
         if (imageFile) fd.append("image", imageFile);
         return apiFetch("/dictionary/admin", { method: "POST", body: fd, token: token ?? undefined });
@@ -441,7 +530,7 @@ export default function AdminDictionaryPage() {
       const token = await getToken();
       if (audioFile ?? imageFile) {
         const fd = new FormData();
-        Object.entries(data).forEach(([k, v]) => { if (v != null && v !== "") fd.append(k, String(v)); });
+        appendEntryFields(fd, data);
         if (audioFile) fd.append("audio", audioFile);
         if (imageFile) fd.append("image", imageFile);
         return apiFetch(`/dictionary/admin/${id}`, { method: "PATCH", body: fd, token: token ?? undefined });

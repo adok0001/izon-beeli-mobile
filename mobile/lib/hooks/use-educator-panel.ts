@@ -1,6 +1,6 @@
 import { apiFetch, ApiError } from "@/lib/api";
 import { API_BASE_URL } from "@/lib/constants";
-import type { DictionaryCategory } from "@/lib/dictionary";
+import type { DialectalVariant, DictionaryCategory } from "@/lib/dictionary";
 import type { LocalizedText } from "@/types";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -44,6 +44,10 @@ export interface EducatorDictionaryEntry {
   exampleTranslations?: LocalizedText | null;
   audioUrl?: string | null;
   imageUrl?: string | null;
+  synonyms?: string[] | null;
+  antonyms?: string[] | null;
+  semanticDomain?: string | null;
+  dialectalVariants?: DialectalVariant[] | null;
   _source?: "contribution";
 }
 
@@ -60,6 +64,10 @@ export interface UpsertEducatorDictionaryInput {
   exampleTranslation?: string;
   exampleTranslationFr?: string;
   exampleTranslations?: LocalizedText;
+  synonyms?: string[];
+  antonyms?: string[];
+  semanticDomain?: string;
+  dialectalVariants?: DialectalVariant[];
   audioUri?: string;
   imageUri?: string;
 }
@@ -219,6 +227,13 @@ export function useUpsertEducatorDictionary() {
       const exampleTranslations = cleanMap(input.exampleTranslations);
       if (translations) formData.append("translations", JSON.stringify(translations));
       if (exampleTranslations) formData.append("exampleTranslations", JSON.stringify(exampleTranslations));
+
+      // Lexical enrichment: arrays/variants go as JSON, semantic domain as plain text.
+      // The caller is expected to pass already-trimmed, non-empty values.
+      if (input.synonyms?.length) formData.append("synonyms", JSON.stringify(input.synonyms));
+      if (input.antonyms?.length) formData.append("antonyms", JSON.stringify(input.antonyms));
+      if (input.dialectalVariants?.length) formData.append("dialectalVariants", JSON.stringify(input.dialectalVariants));
+      if (input.semanticDomain?.trim()) formData.append("semanticDomain", input.semanticDomain.trim());
 
       if (input.audioUri) {
         const audioName = input.audioUri.split("/").pop() ?? "audio.m4a";

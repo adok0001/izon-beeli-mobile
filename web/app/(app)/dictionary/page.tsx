@@ -12,6 +12,7 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/ui/empty-state";
+import type { DialectalVariant } from "@mobile/lib/dictionary";
 
 interface DictionaryWord {
   id: string;
@@ -23,6 +24,10 @@ interface DictionaryWord {
   example?: string | null;
   exampleTranslation?: string | null;
   audioUrl?: string | null;
+  synonyms?: string[] | null;
+  antonyms?: string[] | null;
+  semanticDomain?: string | null;
+  dialectalVariants?: DialectalVariant[] | null;
 }
 
 const CATEGORIES = [
@@ -94,7 +99,14 @@ function WordCard({ word, languageId, isSaved, onSignInRequired }: Readonly<{ wo
   });
 
   const [expanded, setExpanded] = useState(false);
-  const hasExtra = !!(word.example || word.audioUrl);
+  const hasExtra = !!(
+    word.example ||
+    word.audioUrl ||
+    word.dialectalVariants?.length ||
+    word.synonyms?.length ||
+    word.antonyms?.length ||
+    word.semanticDomain
+  );
 
   // Inline audio recorder state
   const [showRecorder, setShowRecorder] = useState(false);
@@ -190,6 +202,43 @@ function WordCard({ word, languageId, isSaved, onSignInRequired }: Readonly<{ wo
                   <p className="italic text-neutral-700 dark:text-neutral-300">{word.example}</p>
                   {word.exampleTranslation && (
                     <p className="text-neutral-400 dark:text-neutral-500">{word.exampleTranslation}</p>
+                  )}
+                </div>
+              )}
+              {word.dialectalVariants && word.dialectalVariants.length > 0 && (
+                <div className="text-xs rounded-lg bg-neutral-50 dark:bg-neutral-800 px-3 py-2">
+                  <p className="font-semibold uppercase tracking-wide text-[10px] text-neutral-400 dark:text-neutral-500 mb-1">
+                    {t("wordDetail.dialectalVariants")}
+                  </p>
+                  <ul className="space-y-0.5">
+                    {word.dialectalVariants.map((v, i) => (
+                      <li key={`${v.dialect}-${i}`} className="text-neutral-700 dark:text-neutral-300">
+                        <span className="font-medium">{v.form}</span>
+                        <span className="text-neutral-400 dark:text-neutral-500"> — {v.region ? `${v.dialect} · ${v.region}` : v.dialect}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {(word.synonyms?.length || word.antonyms?.length || word.semanticDomain) && (
+                <div className="text-xs rounded-lg bg-neutral-50 dark:bg-neutral-800 px-3 py-2 space-y-1">
+                  {word.synonyms && word.synonyms.length > 0 && (
+                    <p className="text-neutral-700 dark:text-neutral-300">
+                      <span className="text-neutral-400 dark:text-neutral-500">{t("wordDetail.synonyms")}: </span>
+                      {word.synonyms.join(", ")}
+                    </p>
+                  )}
+                  {word.antonyms && word.antonyms.length > 0 && (
+                    <p className="text-neutral-700 dark:text-neutral-300">
+                      <span className="text-neutral-400 dark:text-neutral-500">{t("wordDetail.antonyms")}: </span>
+                      {word.antonyms.join(", ")}
+                    </p>
+                  )}
+                  {word.semanticDomain && (
+                    <p className="text-neutral-700 dark:text-neutral-300">
+                      <span className="text-neutral-400 dark:text-neutral-500">{t("wordDetail.semanticDomain")}: </span>
+                      {word.semanticDomain}
+                    </p>
                   )}
                 </div>
               )}

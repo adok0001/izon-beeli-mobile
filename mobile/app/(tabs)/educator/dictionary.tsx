@@ -12,7 +12,7 @@ import {
     useUpsertEducatorDictionary,
 } from "@/lib/hooks/use-educator-panel";
 import { friendlyError } from "@/lib/api";
-import { DICTIONARY_CATEGORY_VALUES } from "@/lib/dictionary";
+import { DICTIONARY_CATEGORY_VALUES, splitList, type DialectalVariant } from "@/lib/dictionary";
 import { useDictionaryCoverage } from "@/lib/hooks/use-contributions";
 import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
@@ -32,6 +32,12 @@ type EditorState = {
   pronunciation: string;
   example: string;
   exampleTranslations: LocalizedText;
+  /** Comma-separated in-language synonyms. */
+  synonyms: string;
+  /** Comma-separated in-language antonyms. */
+  antonyms: string;
+  semanticDomain: string;
+  dialectalVariants: DialectalVariant[];
 };
 
 const EMPTY_EDITOR: EditorState = {
@@ -41,7 +47,38 @@ const EMPTY_EDITOR: EditorState = {
   pronunciation: "",
   example: "",
   exampleTranslations: {},
+  synonyms: "",
+  antonyms: "",
+  semanticDomain: "",
+  dialectalVariants: [],
 };
+
+/** Repeatable dialect / form / region rows for editing dialectal variants. */
+function VariantRows({ value, onChange }: { value: DialectalVariant[]; onChange: (v: DialectalVariant[]) => void }) {
+  const M = useMuseumTheme();
+  const update = (i: number, patch: Partial<DialectalVariant>) =>
+    onChange(value.map((v, idx) => (idx === i ? { ...v, ...patch } : v)));
+  const inputClass = "flex-1 rounded-lg bg-white px-3 py-2 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white";
+  return (
+    <View className="mt-2">
+      <Text className="mb-1 text-xs font-semibold text-neutral-600 dark:text-neutral-400">Dialectal variants (optional)</Text>
+      {value.map((variant, i) => (
+        <View key={i} className="mb-2 flex-row items-center gap-1.5">
+          <TextInput value={variant.dialect} onChangeText={(dialect) => update(i, { dialect })} placeholder="Dialect" placeholderTextColor={M.muted} className={inputClass} />
+          <TextInput value={variant.form} onChangeText={(form) => update(i, { form })} placeholder="Form" placeholderTextColor={M.muted} className={inputClass} />
+          <TextInput value={variant.region ?? ""} onChangeText={(region) => update(i, { region })} placeholder="Region" placeholderTextColor={M.muted} className={inputClass} />
+          <Pressable onPress={() => onChange(value.filter((_, idx) => idx !== i))} hitSlop={8} className="rounded-full bg-red-100 p-2 dark:bg-red-900/40">
+            <IconSymbol name="xmark" size={12} color={M.error} />
+          </Pressable>
+        </View>
+      ))}
+      <Pressable onPress={() => onChange([...value, { dialect: "", form: "" }])} className="mt-1 flex-row items-center self-start rounded-full bg-neutral-200 px-3 py-1.5 dark:bg-neutral-700">
+        <IconSymbol name="plus" size={12} color={M.text} />
+        <Text className="ml-1 text-xs font-semibold text-neutral-700 dark:text-neutral-300">Add variant</Text>
+      </Pressable>
+    </View>
+  );
+}
 
 export default function EducatorDictionaryScreen() {
   const M = useMuseumTheme();
@@ -95,6 +132,10 @@ export default function EducatorDictionaryScreen() {
         entry.exampleTranslations ?? entry.exampleTranslation,
         entry.exampleTranslationFr,
       ),
+      synonyms: (entry.synonyms ?? []).join(", "),
+      antonyms: (entry.antonyms ?? []).join(", "),
+      semanticDomain: entry.semanticDomain ?? "",
+      dialectalVariants: entry.dialectalVariants ?? [],
     });
     flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
     setIsEditing(true);
@@ -121,6 +162,10 @@ export default function EducatorDictionaryScreen() {
         exampleTranslation: editor.exampleTranslations.en?.trim() || undefined,
         exampleTranslationFr: editor.exampleTranslations.fr?.trim() || undefined,
         exampleTranslations: editor.exampleTranslations,
+        synonyms: splitList(editor.synonyms),
+        antonyms: splitList(editor.antonyms),
+        semanticDomain: editor.semanticDomain.trim() || undefined,
+        dialectalVariants: editor.dialectalVariants.filter((v) => v.dialect.trim() && v.form.trim()),
       },
       {
         onSuccess: () => {
@@ -329,6 +374,32 @@ export default function EducatorDictionaryScreen() {
               multiline
             />
           </View>
+
+          <TextInput
+            value={editor.synonyms}
+            onChangeText={(synonyms) => setEditor((prev) => ({ ...prev, synonyms }))}
+            placeholder="Synonyms (comma-separated, optional)"
+            placeholderTextColor={M.muted}
+            className="mt-2 rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
+          />
+          <TextInput
+            value={editor.antonyms}
+            onChangeText={(antonyms) => setEditor((prev) => ({ ...prev, antonyms }))}
+            placeholder="Antonyms (comma-separated, optional)"
+            placeholderTextColor={M.muted}
+            className="mt-2 rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
+          />
+          <TextInput
+            value={editor.semanticDomain}
+            onChangeText={(semanticDomain) => setEditor((prev) => ({ ...prev, semanticDomain }))}
+            placeholder="Semantic domain, e.g. body > senses (optional)"
+            placeholderTextColor={M.muted}
+            className="mt-2 rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
+          />
+          <VariantRows
+            value={editor.dialectalVariants}
+            onChange={(dialectalVariants) => setEditor((prev) => ({ ...prev, dialectalVariants }))}
+          />
 
           <View className="mt-3 flex-row flex-wrap gap-2">
             {CATEGORIES.map((category) => {

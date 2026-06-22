@@ -13,6 +13,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { ShareModal } from "@/components/share/share-modal";
 import { WordAudioButton } from "@/components/dictionary/word-audio-button";
+import { Badge } from "@/components/ui/badge";
 import { CATEGORY_LABELS, CATEGORY_ICONS, parseSenses } from "@/lib/dictionary";
 import { SensesPlacard } from "@/components/dictionary/senses-placard";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
@@ -54,6 +55,27 @@ function InlineAudioButton({ audioUrl }: { audioUrl: string }) {
         color={playing ? M.accent : M.muted}
       />
     </Pressable>
+  );
+}
+
+/** Small uppercase section label used throughout the word-detail screen. */
+function Overline({ label, color }: { label: string; color: string }) {
+  return (
+    <Text style={{ marginBottom: 8, fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color }}>
+      {label}
+    </Text>
+  );
+}
+
+/** A labeled row of neutral badges (synonyms, antonyms). */
+function BadgeRow({ label, items, color }: { label: string; items: string[]; color: string }) {
+  return (
+    <View>
+      <Overline label={label} color={color} />
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+        {items.map((x) => <Badge key={x} label={x} tone="neutral" />)}
+      </View>
+    </View>
   );
 }
 
@@ -100,6 +122,7 @@ export default function WordDetailScreen() {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [showContribute, setShowContribute] = useState(false);
   const [shareVisible, setShareVisible] = useState(false);
+  const [lessonsExpanded, setLessonsExpanded] = useState(false);
 
   const entryId = entry?.id;
   const entryLanguageId = entry?.languageId;
@@ -378,12 +401,49 @@ export default function WordDetailScreen() {
             </View>
           )}
 
+          {/* Lexical detail — dialectal variants, synonyms, antonyms, semantic domain */}
+          {(entry.dialectalVariants?.length || entry.synonyms?.length || entry.antonyms?.length || entry.semanticDomain) ? (
+            <View style={{ marginHorizontal: 20, marginTop: 20, borderRadius: 12, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 16, borderWidth: 1, borderColor: M.border, gap: 16 }}>
+              {entry.dialectalVariants?.length ? (
+                <View>
+                  <Overline label={t("wordDetail.dialectalVariants")} color={M.muted} />
+                  <View style={{ gap: 6 }}>
+                    {entry.dialectalVariants.map((v, i) => (
+                      <View key={`${v.dialect}-${i}`} style={{ flexDirection: "row", alignItems: "baseline", flexWrap: "wrap" }}>
+                        <Text style={{ fontSize: 15, fontWeight: "600", color: M.text }}>{v.form}</Text>
+                        <Text style={{ marginLeft: 8, fontSize: 13, color: M.sub }}>
+                          {v.region ? `${v.dialect} · ${v.region}` : v.dialect}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              ) : null}
+              {entry.synonyms?.length ? <BadgeRow label={t("wordDetail.synonyms")} items={entry.synonyms} color={M.muted} /> : null}
+              {entry.antonyms?.length ? <BadgeRow label={t("wordDetail.antonyms")} items={entry.antonyms} color={M.muted} /> : null}
+              {entry.semanticDomain ? (
+                <View>
+                  <Overline label={t("wordDetail.semanticDomain")} color={M.muted} />
+                  <Text style={{ fontSize: 14, color: M.sub }}>{entry.semanticDomain}</Text>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
+
           {/* Lessons that use this word */}
           {lessonMatches.length > 0 && (
             <View style={{ marginTop: 24 }}>
-              <Text style={{ marginHorizontal: 20, marginBottom: 8, fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
-                {t("wordDetail.usedInLessons", { defaultValue: "Used in lessons" })}
-              </Text>
+              <Pressable
+                onPress={() => setLessonsExpanded((v) => !v)}
+                style={{ marginHorizontal: 20, marginBottom: 8, flexDirection: "row", alignItems: "center" }}
+                hitSlop={8}
+              >
+                <Text style={{ flex: 1, fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
+                  {t("wordDetail.usedInLessons", { defaultValue: "Used in lessons" })} ({lessonMatches.length})
+                </Text>
+                <IconSymbol name={lessonsExpanded ? "chevron.up" : "chevron.down"} size={13} color={M.muted} />
+              </Pressable>
+              {lessonsExpanded && (
               <View style={{ marginHorizontal: 20, gap: 10 }}>
                 {lessonMatches.map(({ lesson, segment }) => (
                   <Pressable
@@ -410,6 +470,7 @@ export default function WordDetailScreen() {
                   </Pressable>
                 ))}
               </View>
+              )}
             </View>
           )}
 

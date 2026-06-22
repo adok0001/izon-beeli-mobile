@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { db } from "../db/index.js";
 import { contributions, dictionaryEntries, users } from "../db/schema.js";
 import { withTranslations } from "../lib/dictionary-translations.js";
+import { LexicalParseError, parseLexicalExtras } from "../lib/lexical-extras.js";
 import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
 
 export const dictionaryRouter = new Hono();
@@ -223,6 +224,14 @@ dictionaryAdminRouter.post("/", async (c) => {
     imageUrl = blob.url;
   }
 
+  let extras: ReturnType<typeof parseLexicalExtras>;
+  try {
+    extras = parseLexicalExtras(fields as Record<string, unknown>);
+  } catch (e) {
+    if (e instanceof LexicalParseError) return c.json({ error: e.message }, 400);
+    throw e;
+  }
+
   const id = `admin-${randomUUID()}`;
   const [inserted] = await db
     .insert(dictionaryEntries)
@@ -239,6 +248,7 @@ dictionaryAdminRouter.post("/", async (c) => {
       exampleTranslationFr: fields.exampleTranslationFr?.trim() || null,
       audioUrl,
       imageUrl,
+      ...extras,
     })
     .returning();
 
@@ -272,14 +282,24 @@ dictionaryAdminRouter.patch("/:id", async (c) => {
     return c.json({ error: `category must be one of: ${VALID_CATEGORIES.join(", ")}` }, 400);
   }
 
-  const updates: Record<string, string | null> = {};
-  for (const key of ["word", "english", "french", "category", "pronunciation", "example", "exampleTranslation", "exampleTranslationFr"] as const) {
+  const updates: Partial<typeof dictionaryEntries.$inferInsert> = {};
+  for (const key of ["french", "pronunciation", "example", "exampleTranslation", "exampleTranslationFr"] as const) {
     if (key in fields) updates[key] = fields[key]?.trim() || null;
+  }
+  for (const key of ["word", "english", "category"] as const) {
+    if (fields[key]?.trim()) updates[key] = fields[key].trim();
   }
 
   // Explicit URL overrides take priority; file uploads win if provided
   if ("audioUrl" in fields) updates.audioUrl = fields.audioUrl?.trim() || null;
   if ("imageUrl" in fields) updates.imageUrl = fields.imageUrl?.trim() || null;
+
+  try {
+    Object.assign(updates, parseLexicalExtras(fields as Record<string, unknown>));
+  } catch (e) {
+    if (e instanceof LexicalParseError) return c.json({ error: e.message }, 400);
+    throw e;
+  }
 
   if (audioFile?.size) {
     const [existing] = await db.select({ languageId: dictionaryEntries.languageId }).from(dictionaryEntries).where(eq(dictionaryEntries.id, id)).limit(1);

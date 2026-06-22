@@ -30,6 +30,7 @@ import {
 import { AuthEnv, authMiddleware, reviewerMiddleware } from "../middleware/auth.js";
 import { computeCoverage } from "../lib/dictionary-coverage.js";
 import { withTranslations } from "../lib/dictionary-translations.js";
+import { LexicalParseError, parseLexicalExtras } from "../lib/lexical-extras.js";
 import { stubForCourse, stubForLanguage } from "../lib/lesson-stubs.js";
 
 export const educatorRouter = new Hono<AuthEnv>();
@@ -611,6 +612,14 @@ educatorRouter.post("/dictionary", async (c) => {
     exampleAudioUrl = blob.url;
   }
 
+  let extras: ReturnType<typeof parseLexicalExtras>;
+  try {
+    extras = parseLexicalExtras(fields as Record<string, unknown>);
+  } catch (e) {
+    if (e instanceof LexicalParseError) return c.json({ error: e.message }, 400);
+    throw e;
+  }
+
   const id = `edu-${randomUUID()}`;
   const [inserted] = await db
     .insert(dictionaryEntries)
@@ -630,6 +639,7 @@ educatorRouter.post("/dictionary", async (c) => {
       audioUrl,
       imageUrl,
       exampleAudioUrl,
+      ...extras,
     })
     .returning();
 
@@ -710,6 +720,13 @@ educatorRouter.patch("/dictionary/:id", async (c) => {
   if ("audioUrl" in fields) updates.audioUrl = fields.audioUrl?.trim() || null;
   if ("imageUrl" in fields) updates.imageUrl = fields.imageUrl?.trim() || null;
   if ("exampleAudioUrl" in fields) updates.exampleAudioUrl = fields.exampleAudioUrl?.trim() || null;
+
+  try {
+    Object.assign(updates, parseLexicalExtras(fields as Record<string, unknown>));
+  } catch (e) {
+    if (e instanceof LexicalParseError) return c.json({ error: e.message }, 400);
+    throw e;
+  }
 
   if (audioFile?.size) {
     const blob = await put(`educator/audio/${existing.languageId}/${Date.now()}-${audioFile.name}`, audioFile, {

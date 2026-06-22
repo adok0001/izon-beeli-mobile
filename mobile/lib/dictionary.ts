@@ -1,6 +1,12 @@
 /** BCP-47 UI language code → localized string. Mirrors LocalizedText in @/types. */
 type LocalizedText = Partial<Record<"en" | "fr" | "pcm" | "ar" | "pt", string>>;
 
+/** A dialect-specific form of a word, optionally tied to a region. */
+export type DialectalVariant = { dialect: string; form: string; region?: string };
+
+/** Split a comma-separated input into a trimmed, non-empty string list. */
+export const splitList = (raw: string): string[] => raw.split(",").map((s) => s.trim()).filter(Boolean);
+
 export interface DictionaryEntry {
   id: string;
   word: string;
@@ -32,7 +38,7 @@ export interface DictionaryEntry {
   /** Hierarchical semantic domain, e.g. "body > senses > sight". */
   semanticDomain?: string;
   /** Dialect-specific variant forms. */
-  dialectalVariants?: Array<{ dialect: string; form: string; region?: string }>;
+  dialectalVariants?: DialectalVariant[];
 }
 
 export const DICTIONARY_CATEGORY_VALUES = [
