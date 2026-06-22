@@ -110,39 +110,45 @@ export function useCompleteLesson(callbacks?: {
   });
 }
 
+/**
+ * Drives the streak toast/celebration for every non-lesson activity. Mirrors the
+ * lesson screen (`app/lesson/[id].tsx`), which is the path that already works:
+ * the milestone modal is shown *directly* the moment the server response lands —
+ * no deferred "pending" state gated behind a specific button — and the new
+ * streak is written into the progress cache so the badge updates immediately
+ * instead of lagging until the next refetch.
+ */
 export function useStreakCelebration() {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const { toast, success: toastSuccess, dismiss: dismissToast } = useToast();
-  const [pendingCelebration, setPendingCelebration] = useState<{ streak: number; isMilestone: boolean } | null>(null);
   const [celebration, setCelebration] = useState<{ streak: number; isMilestone: boolean } | null>(null);
 
   const onStreakUpdate = useCallback(
     (streak: number, isMilestone: boolean) => {
+      // Reflect the incremented streak right away (the lesson hook does the same
+      // at use-progress.ts onSuccess) so the UI doesn't wait on a refetch.
+      queryClient.setQueryData<ProgressSummary>(["progress", "summary"], (old) =>
+        old ? { ...old, streak, refreshedToday: true } : old
+      );
+      queryClient.invalidateQueries({ queryKey: ["progress"] });
+
       if (isMilestone) {
-        setPendingCelebration({ streak, isMilestone });
+        hapticHeavy();
+        setCelebration({ streak, isMilestone });
       } else {
         toastSuccess(t("streak.toastTitle", { count: streak }));
       }
     },
-    [t, toastSuccess]
+    [t, toastSuccess, queryClient]
   );
-
-  const showCelebration = useCallback(() => {
-    setPendingCelebration((pending) => {
-      if (pending) setCelebration(pending);
-      return null;
-    });
-  }, []);
 
   const dismissCelebration = useCallback(() => {
     setCelebration(null);
-    setPendingCelebration(null);
   }, []);
 
   return {
     onStreakUpdate,
-    pendingCelebration,
-    showCelebration,
     celebration,
     dismissCelebration,
     clearCelebration: dismissCelebration,

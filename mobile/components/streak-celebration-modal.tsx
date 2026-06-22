@@ -73,8 +73,8 @@ export function StreakCelebrationModal({ visible, streak, isMilestone, onDismiss
             </Animated.View>
           ))}
 
-          <SafeAreaView className="flex-1" edges={["top", "bottom"]}>
-            <View className="flex-1 items-center justify-center px-8">
+          <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
+            <View style={styles.content}>
               {isMilestone && (
                 <Animated.Text
                   entering={FadeInUp.delay(80)}
@@ -105,7 +105,7 @@ export function StreakCelebrationModal({ visible, streak, isMilestone, onDismiss
             </View>
 
             {/* Two-tier CTA: share loudly, continue quietly */}
-            <Animated.View entering={FadeInUp.delay(380)} className="px-6 pb-2">
+            <Animated.View entering={FadeInUp.delay(380)} style={styles.ctaWrap}>
               <Pressable
                 onPress={() => setShareVisible(true)}
                 style={({ pressed }) => ({
@@ -153,6 +153,16 @@ export function StreakCelebrationModal({ visible, streak, isMilestone, onDismiss
 }
 
 const styles = StyleSheet.create({
+  content: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 32,
+  },
+  ctaWrap: {
+    paddingHorizontal: 24,
+    paddingBottom: 8,
+  },
   ambientGlow: {
     position: "absolute",
     top: "22%",
@@ -209,6 +219,7 @@ const styles = StyleSheet.create({
   },
   ctaLabel: { fontFamily: fonts.heading, fontSize: 16, color: MUSEUM.ink },
   continueBtn: {
+    alignSelf: "stretch",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 16,

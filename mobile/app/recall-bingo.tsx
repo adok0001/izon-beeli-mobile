@@ -118,7 +118,7 @@ export { ErrorBoundary } from "@/components/screen-error-boundary";
 export default function RecallBingoScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
-  const { onStreakUpdate, pendingCelebration, showCelebration, dismissCelebration, celebration, toast, dismissToast } = useStreakCelebration();
+  const { onStreakUpdate, dismissCelebration, celebration, toast, dismissToast } = useStreakCelebration();
   const { submit: submitResult, retry: retryResult, status: saveStatus } = useSubmitQuizResult({ onStreakUpdate });
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
   const { data: dueWords = [] } = useWordsDueForReview(selectedLanguageId);
@@ -257,14 +257,14 @@ export default function RecallBingoScreen() {
               <Pressable onPress={() => { dismissCelebration(); startGame(); }} style={{ borderRadius: 14, paddingVertical: 16, backgroundColor: M.accent, alignItems: "center" }}>
                 <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>New Card</Text>
               </Pressable>
-              <Pressable onPress={() => { if (pendingCelebration) { showCelebration(); return; } router.back(); }} style={{ borderRadius: 14, paddingVertical: 16, borderWidth: 1.5, borderColor: M.border, alignItems: "center" }}>
+              <Pressable onPress={() => router.back()} style={{ borderRadius: 14, paddingVertical: 16, borderWidth: 1.5, borderColor: M.border, alignItems: "center" }}>
                 <Text style={{ fontSize: 15, fontWeight: "600", color: M.text }}>Back to Discover</Text>
               </Pressable>
             </View>
           </View>
         </SafeAreaView>
         <NotificationBanner visible={toast.visible} title={toast.title} body={toast.body} type={toast.type} onDismiss={dismissToast} />
-        <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={() => { dismissCelebration(); router.back(); }} />
+        <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={dismissCelebration} />
       </>
     );
   }

@@ -34,7 +34,7 @@ export default function MatchingGameScreen() {
   const initialized = useRef(false);
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
-  const { onStreakUpdate, pendingCelebration, showCelebration, dismissCelebration, celebration, toast, dismissToast } = useStreakCelebration();
+  const { onStreakUpdate, dismissCelebration, celebration, toast, dismissToast } = useStreakCelebration();
 
   const languageName = getLanguageName(selectedLanguageId);
   const { t } = useTranslation();
@@ -168,7 +168,7 @@ export default function MatchingGameScreen() {
 
             <View style={{ width: "100%", gap: 12 }}>
               <Button label={t("matching.playAgain")} onPress={handlePlayAgain} />
-              <Button label={t("matching.backToLearn")} onPress={() => { if (pendingCelebration) { showCelebration(); return; } reset(); router.back(); }} variant="secondary" />
+              <Button label={t("matching.backToLearn")} onPress={() => { reset(); router.back(); }} variant="secondary" />
             </View>
           </View>
         ) : (
@@ -181,7 +181,7 @@ export default function MatchingGameScreen() {
         )}
       </SafeAreaView>
       <NotificationBanner visible={toast.visible} title={toast.title} body={toast.body} type={toast.type} onDismiss={dismissToast} />
-      <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={() => { dismissCelebration(); reset(); router.back(); }} />
+      <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={dismissCelebration} />
     </>
   );
 }

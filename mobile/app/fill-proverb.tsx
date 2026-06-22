@@ -126,7 +126,7 @@ export { ErrorBoundary } from "@/components/screen-error-boundary";
 export default function FillTheProverbScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
-  const { onStreakUpdate, pendingCelebration, showCelebration, dismissCelebration, celebration, toast, dismissToast } = useStreakCelebration();
+  const { onStreakUpdate, dismissCelebration, celebration, toast, dismissToast } = useStreakCelebration();
   const { submit: submitResult, retry: retryResult, status: saveStatus } = useSubmitQuizResult({ onStreakUpdate });
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
 
@@ -213,13 +213,13 @@ export default function FillTheProverbScreen() {
             <QuizSaveStatus status={saveStatus} onRetry={retryResult} />
             <View style={{ width: "100%", gap: 10, marginTop: 32 }}>
               <Pressable
-                onPress={() => { dismissCelebration(); setIndex(0); setCorrectCount(0); correctRef.current = 0; setSelectedOption(null); setLocked(false); setPhase("active"); }}
+                onPress={() => { setIndex(0); setCorrectCount(0); correctRef.current = 0; setSelectedOption(null); setLocked(false); setPhase("active"); }}
                 style={{ borderRadius: 14, paddingVertical: 16, backgroundColor: M.accent, alignItems: "center" }}
               >
                 <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>Play Again</Text>
               </Pressable>
               <Pressable
-                onPress={() => { if (pendingCelebration) { showCelebration(); return; } router.back(); }}
+                onPress={() => router.back()}
                 style={{ borderRadius: 14, paddingVertical: 16, borderWidth: 1.5, borderColor: M.border, alignItems: "center" }}
               >
                 <Text style={{ fontSize: 15, fontWeight: "600", color: M.text }}>Back to Discover</Text>
@@ -228,7 +228,7 @@ export default function FillTheProverbScreen() {
           </View>
         </SafeAreaView>
         <NotificationBanner visible={toast.visible} title={toast.title} body={toast.body} type={toast.type} onDismiss={dismissToast} />
-        <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={() => { dismissCelebration(); router.back(); }} />
+        <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={dismissCelebration} />
       </>
     );
   }

@@ -306,7 +306,7 @@ function ResultsView({ languageId }: { languageId: string }) {
   const startTime = useQuizStore((s) => s.startTime);
   const [xpResult, setXpResult] = useState<{ xpEarned: number; leveledUp: boolean } | null>(null);
   const purple = getAccent("purple");
-  const { onStreakUpdate, pendingCelebration, showCelebration, dismissCelebration, celebration, toast, dismissToast } = useStreakCelebration();
+  const { onStreakUpdate, dismissCelebration, celebration, toast, dismissToast } = useStreakCelebration();
 
   useEffect(() => {
     hapticHeavy();
@@ -355,7 +355,6 @@ function ResultsView({ languageId }: { languageId: string }) {
   const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
 
   const handleTryAgain = () => {
-    dismissCelebration();
     const reshuffled = [...questions].sort(() => Math.random() - 0.5);
     const reshuffledQuestions = reshuffled.map((q) => ({
       ...q,
@@ -397,10 +396,10 @@ function ResultsView({ languageId }: { languageId: string }) {
           <Button label={t("quiz.tryAgain")} onPress={handleTryAgain} />
           <Button
             label="Review Weak Words"
-            onPress={() => { dismissCelebration(); reset(); router.push("/practice-review"); }}
+            onPress={() => { reset(); router.push("/practice-review"); }}
             variant="secondary"
           />
-          <Button label={t("quiz.backToLearn")} onPress={() => { if (pendingCelebration) { showCelebration(); return; } reset(); router.back(); }} variant="secondary" />
+          <Button label={t("quiz.backToLearn")} onPress={() => { reset(); router.back(); }} variant="secondary" />
         </View>
       </View>
 
@@ -434,7 +433,7 @@ function ResultsView({ languageId }: { languageId: string }) {
         </View>
       )}
       <NotificationBanner visible={toast.visible} title={toast.title} body={toast.body} type={toast.type} onDismiss={dismissToast} />
-      <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={() => { dismissCelebration(); reset(); router.back(); }} />
+      <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={dismissCelebration} />
     </ScrollView>
   );
 }

@@ -167,7 +167,7 @@ export default function ScriptDecodeScreen() {
   const { getToken } = useAuth();
   const { selectedLanguageId } = useLanguageStore();
 
-  const { onStreakUpdate, pendingCelebration, showCelebration, dismissCelebration, celebration, toast, dismissToast } = useStreakCelebration();
+  const { onStreakUpdate, dismissCelebration, celebration, toast, dismissToast } = useStreakCelebration();
   const [mode, setMode] = useState<ScriptMode | null>(null);
   const [phase, setPhase] = useState<"config" | "active" | "results">("config");
   const [questions, setQuestions] = useState<DecodeQuestion[]>([]);
@@ -265,7 +265,7 @@ export default function ScriptDecodeScreen() {
                 <Text style={{ fontSize: 15, fontWeight: "600", color: M.text }}>Switch Script</Text>
               </Pressable>
               <Pressable
-                onPress={() => { if (pendingCelebration) { showCelebration(); return; } router.back(); }}
+                onPress={() => router.back()}
                 style={{ borderRadius: 14, paddingVertical: 14, alignItems: "center" }}
               >
                 <Text style={{ fontSize: 14, color: M.muted }}>Back to Discover</Text>
@@ -274,7 +274,7 @@ export default function ScriptDecodeScreen() {
           </View>
         </SafeAreaView>
         <NotificationBanner visible={toast.visible} title={toast.title} body={toast.body} type={toast.type} onDismiss={dismissToast} />
-        <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={() => { dismissCelebration(); router.back(); }} />
+        <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={dismissCelebration} />
       </>
     );
   }
