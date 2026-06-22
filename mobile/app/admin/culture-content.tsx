@@ -24,9 +24,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 type ContentFilter = "all" | DiscoverContentType;
 
 const TYPE_CONFIG: Record<DiscoverContentType, { color: string; label: string; icon: string }> = {
-  blog:    { color: "#38bdf8", label: "Blog",    icon: "doc.text.fill" },
-  podcast: { color: "#a78bfa", label: "Podcast", icon: "headphones" },
-  film:    { color: "#fb923c", label: "Film",    icon: "play.circle.fill" },
+  blog:    { color: getAccent("sky").solid,    label: "Blog",    icon: "doc.text.fill" },
+  podcast: { color: getAccent("purple").solid, label: "Podcast", icon: "headphones" },
+  film:    { color: getAccent("orange").solid, label: "Film",    icon: "play.circle.fill" },
 };
 
 const FILTER_OPTIONS: { id: ContentFilter; label: string }[] = [
@@ -99,7 +99,7 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
   function Field({ label, children }: { label: string; children: React.ReactNode }) {
     return (
       <View className="mb-4">
-        <Text className="text-xs font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-2">
+        <Text className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: M.muted }}>
           {label}
         </Text>
         {children}
@@ -107,8 +107,8 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
     );
   }
 
-  const inputClass =
-    "rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-4 py-3 text-sm text-neutral-900 dark:text-white";
+  const inputClass = "rounded-2xl border px-4 py-3 text-sm";
+  const inputStyle = { backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText };
 
   return (
     <ScrollView
@@ -129,7 +129,7 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
                 style={{
                   flex: 1, alignItems: "center", paddingVertical: 8, borderRadius: 12,
                   backgroundColor: active ? `${color}18` : undefined,
-                  borderWidth: 1, borderColor: active ? `${color}60` : "#2E3245",
+                  borderWidth: 1, borderColor: active ? `${color}60` : M.border,
                 }}
               >
                 <Text style={{ fontSize: 12, fontWeight: "700", color: active ? color : M.muted }}>
@@ -148,6 +148,7 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
           placeholder={t("admin.cultureContent.titlePlaceholder")}
           placeholderTextColor={M.muted}
           maxLength={120}
+          style={inputStyle}
           className={inputClass}
         />
       </Field>
@@ -162,6 +163,7 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
           multiline
           numberOfLines={3}
           textAlignVertical="top"
+          style={inputStyle}
           className={`${inputClass} min-h-[72px]`}
         />
       </Field>
@@ -173,13 +175,14 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
           placeholder={t("admin.cultureContent.authorPlaceholder")}
           placeholderTextColor={M.muted}
           maxLength={80}
+          style={inputStyle}
           className={inputClass}
         />
       </Field>
 
       <View className="flex-row gap-3 mb-4">
         <View className="flex-1">
-          <Text className="text-xs font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-2">
+          <Text className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: M.muted }}>
             {t("admin.cultureContent.formCoverEmoji")}
           </Text>
           <TextInput
@@ -188,11 +191,12 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
             placeholder="🎙️"
             placeholderTextColor={M.muted}
             maxLength={4}
+            style={inputStyle}
             className={inputClass}
           />
         </View>
         <View className="flex-1">
-          <Text className="text-xs font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-2">
+          <Text className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: M.muted }}>
             {t("admin.cultureContent.formDuration")}
           </Text>
           <TextInput
@@ -202,6 +206,7 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
             placeholderTextColor={M.muted}
             keyboardType="numeric"
             maxLength={6}
+            style={inputStyle}
             className={inputClass}
           />
         </View>
@@ -215,6 +220,7 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
           placeholderTextColor={M.muted}
           autoCapitalize="none"
           keyboardType="url"
+          style={inputStyle}
           className={inputClass}
         />
       </Field>
@@ -227,6 +233,7 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
           placeholderTextColor={M.muted}
           autoCapitalize="none"
           keyboardType="url"
+          style={inputStyle}
           className={inputClass}
         />
       </Field>
@@ -241,6 +248,7 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
             multiline
             numberOfLines={8}
             textAlignVertical="top"
+            style={inputStyle}
             className={`${inputClass} min-h-[160px]`}
           />
         </Field>
@@ -256,24 +264,25 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
             multiline
             numberOfLines={8}
             textAlignVertical="top"
+            style={inputStyle}
             className={`${inputClass} min-h-[160px]`}
           />
         </Field>
       )}
 
       {/* Featured toggle */}
-      <View className="flex-row items-center justify-between rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-4 py-3 mb-6">
+      <View className="flex-row items-center justify-between rounded-2xl border px-4 py-3 mb-6" style={{ backgroundColor: M.card, borderColor: M.border }}>
         <View>
-          <Text className="text-sm font-semibold text-neutral-900 dark:text-white">{t("admin.cultureContent.featuredLabel")}</Text>
-          <Text className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+          <Text className="text-sm font-semibold" style={{ color: M.text }}>{t("admin.cultureContent.featuredLabel")}</Text>
+          <Text className="text-xs mt-0.5" style={{ color: M.sub }}>
             {t("admin.cultureContent.featuredHint")}
           </Text>
         </View>
         <Switch
           value={featured}
           onValueChange={setFeatured}
-          trackColor={{ false: "#3A3A3A", true: "#C4862A" }}
-          thumbColor="#fff"
+          trackColor={{ false: M.border, true: M.accent }}
+          thumbColor={M.parchment}
         />
       </View>
 
@@ -281,19 +290,21 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
       <View className="flex-row gap-3">
         <Pressable
           onPress={onCancel}
-          className="flex-1 items-center rounded-2xl py-3.5 bg-neutral-100 dark:bg-neutral-800 active:opacity-70"
+          className="flex-1 items-center rounded-2xl py-3.5 active:opacity-70"
+          style={{ backgroundColor: M.card }}
         >
-          <Text className="text-sm font-bold text-neutral-600 dark:text-neutral-400">{t("admin.cultureContent.cancel")}</Text>
+          <Text className="text-sm font-bold" style={{ color: M.sub }}>{t("admin.cultureContent.cancel")}</Text>
         </Pressable>
         <Pressable
           onPress={handleSave}
           disabled={!canSave || saving}
-          className={`flex-1 items-center rounded-2xl py-3.5 ${canSave && !saving ? "bg-brand-600 active:opacity-80" : "bg-neutral-200 dark:bg-neutral-700"}`}
+          className={`flex-1 items-center rounded-2xl py-3.5 ${canSave && !saving ? "active:opacity-80" : ""}`}
+          style={{ backgroundColor: canSave && !saving ? M.accent : M.border }}
         >
           {saving ? (
-            <ActivityIndicator size="small" color="#fff" />
+            <ActivityIndicator size="small" color={M.parchment} />
           ) : (
-            <Text className={`text-sm font-bold ${canSave ? "text-white" : "text-neutral-400"}`}>
+            <Text className="text-sm font-bold" style={{ color: canSave ? M.parchment : M.muted }}>
               {initial ? t("admin.cultureContent.saveChanges") : t("admin.cultureContent.publish")}
             </Text>
           )}
@@ -404,19 +415,20 @@ export default function CultureContentAdminScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("admin.cultureContent.title") }} />
-      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+      <SafeAreaView className="flex-1" style={{ backgroundColor: M.bg }} edges={["top"]}>
         <View className="px-5 pt-5 pb-3">
           <View className="flex-row items-center justify-between mb-1">
-            <Text className="text-2xl font-bold text-neutral-900 dark:text-white">{t("admin.cultureContent.title")}</Text>
+            <Text className="text-2xl font-bold" style={{ color: M.text }}>{t("admin.cultureContent.title")}</Text>
             <Pressable
               onPress={() => { setEditTarget(null); setModalMode("create"); }}
-              className="flex-row items-center gap-1.5 rounded-2xl bg-brand-600 px-4 py-2 active:opacity-80"
+              className="flex-row items-center gap-1.5 rounded-2xl px-4 py-2 active:opacity-80"
+              style={{ backgroundColor: M.accent }}
             >
-              <IconSymbol name="plus" size={13} color="#fff" />
-              <Text className="text-sm font-bold text-white">{t("admin.cultureContent.newButton")}</Text>
+              <IconSymbol name="plus" size={13} color={M.parchment} />
+              <Text className="text-sm font-bold" style={{ color: M.parchment }}>{t("admin.cultureContent.newButton")}</Text>
             </Pressable>
           </View>
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+          <Text className="text-sm" style={{ color: M.sub }}>
             {t("admin.cultureContent.subtitle")}
           </Text>
         </View>
@@ -426,9 +438,9 @@ export default function CultureContentAdminScreen() {
           {FILTER_OPTIONS.map((opt) => {
             const active = filter === opt.id;
             const color =
-              opt.id === "blog" ? "#38bdf8" :
-              opt.id === "podcast" ? "#a78bfa" :
-              opt.id === "film" ? "#fb923c" : "#C4862A";
+              opt.id === "blog" ? getAccent("sky").solid :
+              opt.id === "podcast" ? getAccent("purple").solid :
+              opt.id === "film" ? getAccent("orange").solid : M.accent;
             const filterLabel = opt.id === "all"
               ? t("admin.cultureContent.filterAll")
               : t(`admin.cultureContent.typeLabel.${opt.id}` as const);
@@ -436,12 +448,12 @@ export default function CultureContentAdminScreen() {
               <Pressable
                 key={opt.id}
                 onPress={() => { setFilter(opt.id); setSearch(""); }}
-                className={`rounded-xl px-3.5 py-1.5 ${active ? "" : "bg-neutral-100 dark:bg-neutral-800"}`}
-                style={active ? { backgroundColor: `${color}18`, borderWidth: 1, borderColor: `${color}60` } : {}}
+                className="rounded-xl px-3.5 py-1.5"
+                style={active ? { backgroundColor: `${color}18`, borderWidth: 1, borderColor: `${color}60` } : { backgroundColor: M.card }}
               >
                 <Text
                   className="text-xs font-bold"
-                  style={{ color: active ? color : undefined }}
+                  style={{ color: active ? color : M.sub }}
                 >
                   {filterLabel}
                 </Text>
@@ -457,7 +469,8 @@ export default function CultureContentAdminScreen() {
             onChangeText={setSearch}
             placeholder={t("admin.cultureContent.searchPlaceholder")}
             placeholderTextColor={M.muted}
-            className="rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-4 py-2.5 text-sm text-neutral-900 dark:text-white"
+            style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
+            className="rounded-2xl border px-4 py-2.5 text-sm"
           />
         </View>
 
@@ -467,11 +480,11 @@ export default function CultureContentAdminScreen() {
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
         >
           {isLoading ? (
-            <ActivityIndicator className="my-8" />
+            <ActivityIndicator className="my-8" color={M.accent} />
           ) : filtered.length === 0 ? (
             <View className="items-center py-16">
               <Text className="text-3xl mb-3">🎬</Text>
-              <Text className="text-sm font-semibold text-neutral-500 dark:text-neutral-400">
+              <Text className="text-sm font-semibold" style={{ color: M.sub }}>
                 {items.length === 0 ? t("admin.cultureContent.emptyFirst") : t("admin.cultureContent.emptyNoResults")}
               </Text>
             </View>
@@ -508,8 +521,8 @@ export default function CultureContentAdminScreen() {
                             </Text>
                           </View>
                           {item.featured && (
-                            <View className="rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5">
-                              <Text className="text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                            <View className="rounded-full px-2 py-0.5" style={{ backgroundColor: M.warningBg }}>
+                              <Text className="text-[9px] font-bold uppercase tracking-wider" style={{ color: M.warning }}>
                                 {t("admin.cultureContent.featuredBadge")}
                               </Text>
                             </View>
@@ -573,12 +586,12 @@ export default function CultureContentAdminScreen() {
                         style={{
                           flexDirection: "row", alignItems: "center", gap: 5,
                           borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5,
-                          backgroundColor: "rgba(239,68,68,0.1)",
-                          borderWidth: 1, borderColor: "rgba(239,68,68,0.3)",
+                          backgroundColor: M.errorBg,
+                          borderWidth: 1, borderColor: M.errorBorder,
                         }}
                       >
-                        <IconSymbol name="trash" size={11} color="#ef4444" />
-                        <Text style={{ fontSize: 11, fontWeight: "700", color: "#ef4444" }}>{t("admin.cultureContent.deleteButton")}</Text>
+                        <IconSymbol name="trash" size={11} color={M.error} />
+                        <Text style={{ fontSize: 11, fontWeight: "700", color: M.error }}>{t("admin.cultureContent.deleteButton")}</Text>
                       </Pressable>
                     </View>
                   </View>
@@ -596,17 +609,19 @@ export default function CultureContentAdminScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => { setModalMode(null); setEditTarget(null); }}
       >
-        <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+        <SafeAreaView className="flex-1" style={{ backgroundColor: M.bg }} edges={["top"]}>
           <View
-            className="flex-row items-center justify-between px-5 py-4 border-b border-neutral-200 dark:border-neutral-800"
+            className="flex-row items-center justify-between px-5 py-4 border-b"
+            style={{ borderColor: M.border }}
           >
-            <Text className="text-lg font-bold text-neutral-900 dark:text-white">
+            <Text className="text-lg font-bold" style={{ color: M.text }}>
               {modalMode === "edit" ? t("admin.cultureContent.modalEditTitle") : t("admin.cultureContent.modalNewTitle")}
             </Text>
             <Pressable
               onPress={() => { setModalMode(null); setEditTarget(null); }}
               hitSlop={8}
-              className="h-8 w-8 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800 active:opacity-70"
+              className="h-8 w-8 items-center justify-center rounded-full active:opacity-70"
+              style={{ backgroundColor: M.card }}
             >
               <IconSymbol name="xmark" size={14} color={M.muted} />
             </Pressable>

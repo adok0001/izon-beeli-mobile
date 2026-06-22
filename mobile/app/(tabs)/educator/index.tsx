@@ -302,7 +302,7 @@ export default function EducatorPanelScreen() {
           <ActionRow icon="globe" label={t("educator.nav.culture")} detail={t("welcomeChecklist.exploreCultureMusicDetail")} onPress={() => router.push("/educator/culture" as never)} accent={getAccent("purple").solid} />
           <ActionRow icon="clock.arrow.circlepath" label={t("admin.nav.etymology")} detail={t("educator.etymology.subtitle")} onPress={() => router.push("/educator/etymology" as never)} accent={getAccent("sky").solid} />
           <ActionRow icon="book.closed.fill" label={t("educator.story.screenTitle")} detail={t("educator.story.screenSubtitle")} onPress={() => router.push("/educator/stories" as never)} accent={getAccent("orange").solid} />
-          <ActionRow icon="text.bubble.fill" label="Sentences & Scenarios" detail="Manage fill-in-blank templates and conversation scenarios" onPress={() => router.push("/educator/sentences" as never)} accent={getAccent("teal").solid} />
+          <ActionRow icon="text.bubble.fill" label={t("educator.sentences.screenTitle")} detail={t("educator.sentences.navDetail")} onPress={() => router.push("/educator/sentences" as never)} accent={getAccent("teal").solid} />
           {currentUser && canManageBounties(currentUser) ? (
             <ActionRow icon="star.fill" label={t("profile.bounties")} detail={t("admin.overview.manageCourses")} onPress={() => router.push("/bounties")} accent={getAccent("amber").solid} />
           ) : null}

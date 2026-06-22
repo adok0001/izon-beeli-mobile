@@ -95,7 +95,7 @@ export default function SentencesAdminScreen() {
 
   const handleSentSubmit = async () => {
     if (!sentForm.sentence.trim() || !sentForm.answer.trim() || !sentForm.englishSentence.trim()) {
-      toast.error("Sentence, answer, and English translation are required");
+      toast.error(t("educator.sentences.validationRequired"));
       return;
     }
     try {
@@ -110,7 +110,7 @@ export default function SentencesAdminScreen() {
       });
       setSentForm(EMPTY_SENTENCE);
       setSentEditing(false);
-      toast.success(sentForm.id ? "Sentence updated" : "Sentence added");
+      toast.success(sentForm.id ? t("educator.sentences.updated") : t("educator.sentences.added"));
     } catch (e) {
       toast.error(friendlyError(e));
     }
@@ -129,15 +129,15 @@ export default function SentencesAdminScreen() {
   };
 
   const handleSentDelete = (item: EducatorSentenceTemplate) => {
-    Alert.alert("Delete Sentence", `Delete "${item.sentence}"?`, [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t("educator.sentences.deleteTitle"), t("educator.sentences.deleteConfirm", { sentence: item.sentence }), [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: "Delete",
+        text: t("common.delete"),
         style: "destructive",
         onPress: async () => {
           try {
             await deleteSentence.mutateAsync({ id: item.id, languageId: selectedLanguage });
-            toast.success("Sentence deleted");
+            toast.success(t("educator.sentences.deleted"));
           } catch (e) {
             toast.error(friendlyError(e));
           }
@@ -149,8 +149,8 @@ export default function SentencesAdminScreen() {
   // ── Scenario handlers ──────────────────────────────────────────────────────
 
   const handleScenSubmit = async () => {
-    if (!scenForm.situation.trim() || scenForm.turns.some((t) => !t.text.trim() || !t.translation.trim())) {
-      toast.error("Situation and all turns (text + translation) are required");
+    if (!scenForm.situation.trim() || scenForm.turns.some((turn) => !turn.text.trim() || !turn.translation.trim())) {
+      toast.error(t("educator.scenarios.validationRequired"));
       return;
     }
     try {
@@ -170,7 +170,7 @@ export default function SentencesAdminScreen() {
       }
       setScenForm(EMPTY_SCENARIO);
       setScenEditing(false);
-      toast.success(scenForm.id ? "Scenario updated" : "Scenario added");
+      toast.success(scenForm.id ? t("educator.scenarios.updated") : t("educator.scenarios.added"));
     } catch (e) {
       toast.error(friendlyError(e));
     }
@@ -182,15 +182,15 @@ export default function SentencesAdminScreen() {
   };
 
   const handleScenDelete = (item: EducatorScenario) => {
-    Alert.alert("Delete Scenario", `Delete "${item.situation}"?`, [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t("educator.scenarios.deleteTitle"), t("educator.scenarios.deleteConfirm", { situation: item.situation }), [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: "Delete",
+        text: t("common.delete"),
         style: "destructive",
         onPress: async () => {
           try {
             await deleteScenario.mutateAsync({ id: item.id, languageId: selectedLanguage });
-            toast.success("Scenario deleted");
+            toast.success(t("educator.scenarios.deleted"));
           } catch (e) {
             toast.error(friendlyError(e));
           }
@@ -213,7 +213,7 @@ export default function SentencesAdminScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: "Sentences & Scenarios", headerShown: true }} />
+      <Stack.Screen options={{ title: t("educator.sentences.screenTitle"), headerShown: true }} />
       <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={[]}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
           {/* Language picker */}
@@ -237,14 +237,14 @@ export default function SentencesAdminScreen() {
 
           {/* Tab switcher */}
           <View style={{ flexDirection: "row", marginHorizontal: 16, marginBottom: 12, borderRadius: 10, backgroundColor: M.card, borderWidth: 1, borderColor: M.border, overflow: "hidden" }}>
-            {(["sentences", "scenarios"] as Tab[]).map((t) => (
+            {(["sentences", "scenarios"] as Tab[]).map((tabKey) => (
               <Pressable
-                key={t}
-                onPress={() => setTab(t)}
-                style={{ flex: 1, paddingVertical: 10, alignItems: "center", backgroundColor: tab === t ? M.accent : "transparent" }}
+                key={tabKey}
+                onPress={() => setTab(tabKey)}
+                style={{ flex: 1, paddingVertical: 10, alignItems: "center", backgroundColor: tab === tabKey ? M.accent : "transparent" }}
               >
-                <Text style={{ fontSize: 13, fontWeight: "600", color: tab === t ? M.ink : M.sub }}>
-                  {t === "sentences" ? "Sentences" : "Scenarios"}
+                <Text style={{ fontSize: 13, fontWeight: "600", color: tab === tabKey ? M.ink : M.sub }}>
+                  {tabKey === "sentences" ? t("educator.sentences.tabSentences") : t("educator.sentences.tabScenarios")}
                 </Text>
               </Pressable>
             ))}
@@ -255,25 +255,25 @@ export default function SentencesAdminScreen() {
               {/* Sentence form */}
               <View style={{ marginBottom: 20, borderRadius: 16, backgroundColor: M.card, padding: 16, borderWidth: 1, borderColor: M.border }}>
                 <Text style={{ fontSize: 13, fontWeight: "700", color: M.text, marginBottom: 10 }}>
-                  {sentEditing ? "Edit Sentence" : "Add Sentence"}
+                  {sentEditing ? t("educator.sentences.editTitle") : t("educator.sentences.addTitle")}
                 </Text>
                 <TextInput
                   style={inputStyle}
-                  placeholder="Sentence (native language)"
+                  placeholder={t("educator.sentences.sentencePlaceholder")}
                   placeholderTextColor={M.muted}
                   value={sentForm.sentence}
                   onChangeText={(v) => setSentForm((f) => ({ ...f, sentence: v }))}
                 />
                 <TextInput
                   style={inputStyle}
-                  placeholder="Answer (word to blank)"
+                  placeholder={t("educator.sentences.answerPlaceholder")}
                   placeholderTextColor={M.muted}
                   value={sentForm.answer}
                   onChangeText={(v) => setSentForm((f) => ({ ...f, answer: v }))}
                 />
                 <TextInput
                   style={inputStyle}
-                  placeholder="English sentence"
+                  placeholder={t("educator.sentences.englishPlaceholder")}
                   placeholderTextColor={M.muted}
                   value={sentForm.englishSentence}
                   onChangeText={(v) => setSentForm((f) => ({ ...f, englishSentence: v }))}
@@ -291,7 +291,7 @@ export default function SentencesAdminScreen() {
                       }}
                     >
                       <Text style={{ fontSize: 12, fontWeight: "600", color: sentForm.kind === k ? M.accent : M.sub }}>
-                        {k === "blank" ? "Fill-in-blank" : "Equivalent (idiom)"}
+                        {k === "blank" ? t("educator.sentences.kindBlank") : t("educator.sentences.kindEquivalent")}
                       </Text>
                     </Pressable>
                   ))}
@@ -299,7 +299,7 @@ export default function SentencesAdminScreen() {
                 {sentForm.kind === "equivalent" && (
                   <TextInput
                     style={inputStyle}
-                    placeholder="Literal translation (optional)"
+                    placeholder={t("educator.sentences.literalPlaceholder")}
                     placeholderTextColor={M.muted}
                     value={sentForm.literalTranslation}
                     onChangeText={(v) => setSentForm((f) => ({ ...f, literalTranslation: v }))}
@@ -307,14 +307,14 @@ export default function SentencesAdminScreen() {
                 )}
                 <View style={{ flexDirection: "row", gap: 8 }}>
                   <Button
-                    label={sentEditing ? "Update" : "Add"}
+                    label={sentEditing ? t("educator.sentences.update") : t("educator.sentences.add")}
                     onPress={handleSentSubmit}
                     style={{ flex: 1 }}
                     size="sm"
                   />
                   {sentEditing && (
                     <Button
-                      label="Cancel"
+                      label={t("common.cancel")}
                       onPress={() => { setSentForm(EMPTY_SENTENCE); setSentEditing(false); }}
                       variant="secondary"
                       style={{ flex: 1 }}
@@ -330,14 +330,14 @@ export default function SentencesAdminScreen() {
                   <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
                     <View style={{ flex: 1, marginRight: 8 }}>
                       <Text style={{ fontSize: 14, fontWeight: "600", color: M.text }}>{item.sentence}</Text>
-                      <Text style={{ marginTop: 2, fontSize: 12, color: M.sub }}>Answer: <Text style={{ fontWeight: "700", color: M.accent }}>{item.answer}</Text></Text>
+                      <Text style={{ marginTop: 2, fontSize: 12, color: M.sub }}>{t("educator.sentences.answerLabel")} <Text style={{ fontWeight: "700", color: M.accent }}>{item.answer}</Text></Text>
                       <Text style={{ marginTop: 2, fontSize: 12, color: M.muted }}>{item.englishSentence}</Text>
                       <View style={{ marginTop: 4, flexDirection: "row", alignItems: "center", gap: 6 }}>
                         <View style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, backgroundColor: item.kind === "equivalent" ? M.infoBg : M.accentGlow }}>
-                          <Text style={{ fontSize: 10, fontWeight: "600", color: item.kind === "equivalent" ? M.info : M.accent }}>{item.kind}</Text>
+                          <Text style={{ fontSize: 10, fontWeight: "600", color: item.kind === "equivalent" ? M.info : M.accent }}>{item.kind === "equivalent" ? t("educator.sentences.kindEquivalent") : t("educator.sentences.kindBlank")}</Text>
                         </View>
                         {item.literalTranslation && (
-                          <Text style={{ fontSize: 10, color: M.muted }}>lit. "{item.literalTranslation}"</Text>
+                          <Text style={{ fontSize: 10, color: M.muted }}>{t("educator.sentences.literalGloss", { text: item.literalTranslation })}</Text>
                         )}
                       </View>
                     </View>
@@ -353,7 +353,7 @@ export default function SentencesAdminScreen() {
                 </View>
               ))}
               {!sentLoading && sentences.length === 0 && (
-                <Text style={{ textAlign: "center", color: M.muted, fontSize: 13, marginTop: 12 }}>No sentences yet</Text>
+                <Text style={{ textAlign: "center", color: M.muted, fontSize: 13, marginTop: 12 }}>{t("educator.sentences.empty")}</Text>
               )}
             </ScrollView>
           ) : (
@@ -361,24 +361,24 @@ export default function SentencesAdminScreen() {
               {/* Scenario form */}
               <View style={{ marginBottom: 20, borderRadius: 16, backgroundColor: M.card, padding: 16, borderWidth: 1, borderColor: M.border }}>
                 <Text style={{ fontSize: 13, fontWeight: "700", color: M.text, marginBottom: 10 }}>
-                  {scenEditing ? "Edit Scenario" : "Add Scenario"}
+                  {scenEditing ? t("educator.scenarios.editTitle") : t("educator.scenarios.addTitle")}
                 </Text>
                 <TextInput
                   style={inputStyle}
-                  placeholder="Situation label (e.g. Greet someone)"
+                  placeholder={t("educator.scenarios.situationPlaceholder")}
                   placeholderTextColor={M.muted}
                   value={scenForm.situation}
                   onChangeText={(v) => setScenForm((f) => ({ ...f, situation: v }))}
                 />
                 <Text style={{ fontSize: 11, fontWeight: "600", color: M.muted, marginBottom: 6, letterSpacing: 1 }}>
-                  TURNS
+                  {t("educator.scenarios.turnsLabel")}
                 </Text>
                 {scenForm.turns.map((turn, idx) => (
                   <View key={idx} style={{ marginBottom: 8, borderRadius: 8, borderWidth: 1, borderColor: M.border, padding: 10 }}>
-                    <Text style={{ fontSize: 10, color: M.muted, marginBottom: 4 }}>Turn {idx + 1}</Text>
+                    <Text style={{ fontSize: 10, color: M.muted, marginBottom: 4 }}>{t("educator.scenarios.turnLabel", { number: idx + 1 })}</Text>
                     <TextInput
                       style={{ ...inputStyle, marginBottom: 4 }}
-                      placeholder="Native text"
+                      placeholder={t("educator.scenarios.nativePlaceholder")}
                       placeholderTextColor={M.muted}
                       value={turn.text}
                       onChangeText={(v) => setScenForm((f) => {
@@ -389,7 +389,7 @@ export default function SentencesAdminScreen() {
                     />
                     <TextInput
                       style={{ ...inputStyle, marginBottom: 0 }}
-                      placeholder="English translation"
+                      placeholder={t("educator.scenarios.translationPlaceholder")}
                       placeholderTextColor={M.muted}
                       value={turn.translation}
                       onChangeText={(v) => setScenForm((f) => {
@@ -403,7 +403,7 @@ export default function SentencesAdminScreen() {
                         onPress={() => setScenForm((f) => ({ ...f, turns: f.turns.filter((_, i) => i !== idx) }))}
                         style={{ marginTop: 4, alignSelf: "flex-end" }}
                       >
-                        <Text style={{ fontSize: 11, color: M.error }}>Remove turn</Text>
+                        <Text style={{ fontSize: 11, color: M.error }}>{t("educator.scenarios.removeTurn")}</Text>
                       </Pressable>
                     )}
                   </View>
@@ -413,13 +413,13 @@ export default function SentencesAdminScreen() {
                   style={{ marginBottom: 10, flexDirection: "row", alignItems: "center", gap: 6 }}
                 >
                   <IconSymbol name="plus.circle" size={14} color={M.accent} />
-                  <Text style={{ fontSize: 13, color: M.accent, fontWeight: "600" }}>Add turn</Text>
+                  <Text style={{ fontSize: 13, color: M.accent, fontWeight: "600" }}>{t("educator.scenarios.addTurn")}</Text>
                 </Pressable>
                 <View style={{ flexDirection: "row", gap: 8 }}>
-                  <Button label={scenEditing ? "Update" : "Add"} onPress={handleScenSubmit} style={{ flex: 1 }} size="sm" />
+                  <Button label={scenEditing ? t("educator.scenarios.update") : t("educator.scenarios.add")} onPress={handleScenSubmit} style={{ flex: 1 }} size="sm" />
                   {scenEditing && (
                     <Button
-                      label="Cancel"
+                      label={t("common.cancel")}
                       onPress={() => { setScenForm(EMPTY_SCENARIO); setScenEditing(false); }}
                       variant="secondary"
                       style={{ flex: 1 }}
@@ -452,7 +452,7 @@ export default function SentencesAdminScreen() {
                 </View>
               ))}
               {!scenLoading && scenarios.length === 0 && (
-                <Text style={{ textAlign: "center", color: M.muted, fontSize: 13, marginTop: 12 }}>No scenarios yet</Text>
+                <Text style={{ textAlign: "center", color: M.muted, fontSize: 13, marginTop: 12 }}>{t("educator.scenarios.empty")}</Text>
               )}
             </ScrollView>
           )}
