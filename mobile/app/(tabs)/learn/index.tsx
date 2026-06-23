@@ -1,671 +1,92 @@
 import { DailyChallengeCards } from "@/components/daily-challenge-card";
-import { EnrolledLanguageBar } from "@/components/language-picker";
-import { animStyle } from "@/components/learn/anim";
+import { JourneyMap } from "@/components/learn/journey-map";
 import { LearnHeader } from "@/components/learn/learn-header";
 import { LoadingScreen } from "@/components/loading-screen";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { StreakFreezeModal } from "@/components/streak-freeze-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { UpNextCard } from "@/components/up-next-card";
-import { WordChallengeCard } from "@/components/word-challenge-card";
-import { getAccent } from "@/constants/accent-colors";
-import { type } from "@/constants/typography";
-import { getCourseTypeColors, getLevelColors, getSkillMeta } from "@/constants/course-colors";
-import { useBounties } from "@/lib/hooks/use-bounties";
-import { useCourseLessons, useCourses, useLesson } from "@/lib/hooks/use-courses";
+import { useCourses, useLanguageLessons } from "@/lib/hooks/use-courses";
 import { useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
 import { useCompletedLessons, useProgressSummary } from "@/lib/hooks/use-progress";
-import { useStoryArcs } from "@/lib/hooks/use-story-arc";
 import { useToast } from "@/lib/hooks/use-toast";
 import { useWordsDueForReview } from "@/lib/hooks/use-wordbank";
-import { localize } from "@/lib/localize";
-import { BUNDLED_AUDIO, formatDuration } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { useAudioStore } from "@/store/audio-store";
 import { useLanguageStore } from "@/store/language-store";
 import { useTourStore } from "@/store/tour-store";
-import { useUiLanguageStore } from "@/store/ui-language-store";
-import type { Course, Lesson } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect, useRouter } from "expo-router";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  ActivityIndicator,
-  Animated,
-  FlatList,
-  Modal,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import { Modal, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// ─── ContinueCard ──────────────────────────────────────────────────────────
-const ContinueCard = memo(function ContinueCard({
-  lessonId,
-  positionSeconds,
-}: {
-  lessonId: string;
-  positionSeconds: number;
-}) {
-  const M = useMuseumTheme();
-  const { t } = useTranslation();
-  const router = useRouter();
-  const { uiLanguage } = useUiLanguageStore();
-  const { data: lesson } = useLesson(lessonId);
-  const { loadAndPlay, seekTo, currentTrackId } = useAudioStore();
-  const anim = useRef(new Animated.Value(0)).current;
+const DAILY_GOAL = 3;
 
-  useEffect(() => {
-    Animated.timing(anim, { toValue: 1, duration: 450, useNativeDriver: true }).start();
-  }, []);
-
-  if (!lesson) return null;
-
-  const audioSource = lesson.audioUrl ?? BUNDLED_AUDIO[lesson.id];
-  const mins = Math.floor(positionSeconds / 60);
-  const secs = Math.floor(positionSeconds % 60);
-  const posLabel = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
-
-  const handleResume = async () => {
-    if (audioSource) {
-      if (currentTrackId !== lessonId) {
-        await loadAndPlay(lessonId, audioSource, localize(lesson.title, uiLanguage), `/lesson/${lessonId}`);
-        await seekTo(positionSeconds);
-      } else {
-        await seekTo(positionSeconds);
-      }
-    }
-    router.push(`/lesson/${lessonId}`);
-  };
-
-  return (
-    <Animated.View style={animStyle(anim)}>
-      <Pressable
-        onPress={handleResume}
-        style={{
-          borderRadius: 16,
-          overflow: "hidden",
-          borderLeftWidth: 4,
-          borderLeftColor: M.success,
-          backgroundColor: M.successBg,
-          borderWidth: 1,
-          borderColor: M.successBorder,
-        }}
-        className="mb-3 p-4 active:opacity-70"
-        accessibilityRole="button"
-        accessibilityLabel={`Continue listening: ${localize(lesson.title, uiLanguage)}, paused at ${posLabel}`}
-        accessibilityHint="Tap to resume playback"
-      >
-        <View className="flex-row items-center">
-          <View
-            style={{ backgroundColor: M.success, borderRadius: 12 }}
-            className="mr-3 h-12 w-12 items-center justify-center"
-          >
-            <IconSymbol name="play.fill" size={20} color={M.ink} />
-          </View>
-          <View className="flex-1">
-            <Text style={{ color: M.success, fontSize: 10, fontWeight: "700", letterSpacing: 1.5 }}>
-              {t("learn.continueListening").toUpperCase()}
-            </Text>
-            <Text className="mt-0.5 text-base font-bold text-neutral-900 dark:text-white" numberOfLines={1}>
-              {localize(lesson.title, uiLanguage)}
-            </Text>
-            <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-              {t("learn.pausedAt", { time: posLabel })}
-            </Text>
-          </View>
-          <IconSymbol name="chevron.right" size={16} color={M.success} />
-        </View>
-      </Pressable>
-    </Animated.View>
-  );
-});
-
-// ─── LessonRow ─────────────────────────────────────────────────────────────
-function LessonRow({
-  lesson,
-  completed,
+// ─── DailyChallengeChip — the map's "défi du jour" affordance ────────────────
+function DailyChallengeChip({
+  completedToday,
   onPress,
 }: {
-  lesson: Lesson;
-  completed: boolean;
+  completedToday: number;
   onPress: () => void;
 }) {
   const M = useMuseumTheme();
-  const { uiLanguage } = useUiLanguageStore();
+  const { t } = useTranslation();
+  const done = completedToday >= DAILY_GOAL;
+  const accent = done ? M.success : M.accent;
 
   return (
     <Pressable
       onPress={onPress}
-      style={{ borderTopWidth: 1, borderTopColor: M.border }}
-      className="flex-row items-center py-3 active:opacity-60"
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        borderRadius: 16,
+        paddingVertical: 12,
+        paddingHorizontal: 14,
+        backgroundColor: M.card,
+        borderWidth: 1,
+        borderColor: `${accent}55`,
+      }}
+      className="active:opacity-70"
       accessibilityRole="button"
-      accessibilityLabel={`${localize(lesson.title, uiLanguage)}${completed ? ", completed" : ""}`}
-      accessibilityHint="Tap to open lesson"
+      accessibilityLabel={t("learn.dailyGoalTitle")}
     >
-      <View
-        style={{
-          width: 20,
-          height: 20,
-          borderRadius: 10,
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: completed ? M.successBg : "transparent",
-          borderWidth: 1.5,
-          borderColor: completed ? M.success : M.border,
-        }}
-      >
-        {completed && (
-          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: M.success }} />
-        )}
-      </View>
-      <View className="ml-3 flex-1">
-        <Text
-          style={{
-            fontSize: 13,
-            fontWeight: completed ? "500" : "600",
-            color: completed ? M.muted : M.text,
-            opacity: completed ? 0.6 : 1,
-          }}
-          numberOfLines={1}
-        >
-          {localize(lesson.title, uiLanguage)}
+      <Text style={{ fontSize: 20 }}>🎯</Text>
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 10, fontWeight: "800", letterSpacing: 1.4, color: accent }}>
+          {t("journey.dailyChallenge", { defaultValue: "Daily challenge" }).toUpperCase()}
         </Text>
-        {lesson.description ? (
-          <Text style={{ fontSize: 11, color: M.textDimDark, marginTop: 1 }} numberOfLines={1}>
-            {localize(lesson.description, uiLanguage)}
-          </Text>
-        ) : null}
-      </View>
-      {lesson.duration && (
-        <Text style={{ fontSize: 11, color: M.textDimDark, marginRight: 6 }}>
-          {formatDuration(lesson.duration)}
+        <Text style={{ fontSize: 13, fontWeight: "700", color: M.text, marginTop: 2 }}>
+          {t("journey.tasksDone", {
+            done: completedToday,
+            total: DAILY_GOAL,
+            defaultValue: `${completedToday} of ${DAILY_GOAL} done today`,
+          })}
         </Text>
-      )}
-      <IconSymbol name="chevron.right" size={14} color={M.textDimDark} />
+      </View>
+      <IconSymbol name="chevron.right" size={16} color={accent} />
     </Pressable>
   );
 }
 
-// ─── CourseCard ────────────────────────────────────────────────────────────
-const CourseCard = memo(function CourseCard({
-  course,
-  completedIds,
-  hasStoryArc,
-  index,
-}: {
-  course: Course;
-  completedIds: Set<string>;
-  hasStoryArc: boolean;
-  index: number;
-}) {
-  const M = useMuseumTheme();
-  const { t } = useTranslation();
-  const router = useRouter();
-  const { uiLanguage } = useUiLanguageStore();
-  const { data: lessons = [], isLoading: lessonsLoading } = useCourseLessons(course.id);
-  const completedCount = lessons.filter((l) => completedIds.has(l.id)).length;
-  const progressPercent = lessons.length > 0 ? (completedCount / lessons.length) * 100 : 0;
-  const [collapsed, setCollapsed] = useState(false);
-  const typeColors = getCourseTypeColors(course.courseType);
-  const levelColors = getLevelColors(course.level);
-  const anim = useRef(new Animated.Value(0)).current;
-  const progressAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.timing(anim, {
-      toValue: 1,
-      duration: 480,
-      delay: index * 90,
-      useNativeDriver: true,
-    }).start();
-  }, []);
-
-  useEffect(() => {
-    if (!collapsed) {
-      Animated.timing(progressAnim, {
-        toValue: progressPercent,
-        duration: 700,
-        delay: index * 90 + 200,
-        useNativeDriver: false,
-      }).start();
-    }
-  }, [collapsed, progressPercent]);
-
-  const accentColor = typeColors.tickActive ?? M.accent;
-
-  return (
-    <Animated.View style={[{ marginBottom: 16 }, animStyle(anim, 24)]}>
-      <View
-        style={{
-          borderRadius: 18,
-          overflow: "hidden",
-          backgroundColor: M.card,
-          borderWidth: 1,
-          borderColor: M.borderDark,
-          borderLeftWidth: 4,
-          borderLeftColor: accentColor,
-        }}
-      >
-        {/* Header */}
-        <Pressable
-          onPress={() => setCollapsed((c) => !c)}
-          className="p-4 active:opacity-70"
-          accessibilityRole="button"
-          accessibilityLabel={`${localize(course.title, uiLanguage)}, ${completedCount} of ${lessons.length} lessons completed`}
-          accessibilityHint={collapsed ? "Tap to expand course" : "Tap to collapse course"}
-          accessibilityState={{ expanded: !collapsed }}
-        >
-          {/* Top row: level badge + count */}
-          <View className="mb-2.5 flex-row items-center justify-between">
-            <View
-              style={{
-                paddingHorizontal: 10,
-                paddingVertical: 3,
-                borderRadius: 999,
-                backgroundColor: `${accentColor}20`,
-                borderWidth: 1,
-                borderColor: `${accentColor}40`,
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 9,
-                  fontWeight: "800",
-                  letterSpacing: 1.8,
-                  textTransform: "uppercase",
-                  color: accentColor,
-                }}
-              >
-                {t(`levels.${course.level}`, { defaultValue: course.level })}
-              </Text>
-            </View>
-            <View className="flex-row items-center gap-2">
-              <Text style={{ fontSize: 11, color: M.textDimDark }}>
-                {completedCount}/{lessons.length}
-              </Text>
-              <IconSymbol
-                name={collapsed ? "chevron.right" : "chevron.down"}
-                size={12}
-                color={M.textDimDark}
-              />
-            </View>
-          </View>
-
-          {/* Title */}
-          <Text
-            style={{ fontSize: 18, fontWeight: "800", color: M.text, letterSpacing: -0.3, marginBottom: 4 }}
-          >
-            {localize(course.title, uiLanguage)}
-          </Text>
-          <Text style={{ fontSize: 13, color: M.textDim, lineHeight: 18 }} numberOfLines={2}>
-            {localize(course.description, uiLanguage)}
-          </Text>
-
-          {/* Course type badge */}
-          {course.courseType && typeColors.label ? (
-            <View
-              style={{
-                marginTop: 10,
-                alignSelf: "flex-start",
-                paddingHorizontal: 8,
-                paddingVertical: 2,
-                borderRadius: 999,
-                backgroundColor: `${accentColor}18`,
-              }}
-            >
-              <Text style={{ fontSize: 10, fontWeight: "700", color: accentColor }}>
-                {typeColors.label}
-              </Text>
-            </View>
-          ) : null}
-
-          {/* Skill badges */}
-          {(() => {
-            const skillSet = Array.from(
-              new Set(lessons.flatMap((l) => (l.skills ?? []) as string[]))
-            );
-            if (skillSet.length === 0) return null;
-            return (
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 8 }}>
-                {skillSet.map((skill) => {
-                  const meta = getSkillMeta(skill);
-                  return (
-                    <View
-                      key={skill}
-                      style={{
-                        paddingHorizontal: 6,
-                        paddingVertical: 2,
-                        borderRadius: 999,
-                        backgroundColor: "rgba(255,255,255,0.08)",
-                      }}
-                    >
-                      <Text style={{ fontSize: 9, color: M.textDim }}>
-                        {meta.icon} {meta.label}
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
-            );
-          })()}
-
-          {/* Progress bar */}
-          {progressPercent > 0 && (
-            <View style={{ marginTop: 14 }}>
-              <View
-                style={{
-                  height: 3,
-                  borderRadius: 2,
-                  backgroundColor: "rgba(255,255,255,0.08)",
-                  overflow: "hidden",
-                }}
-              >
-                <Animated.View
-                  style={{
-                    height: 3,
-                    borderRadius: 2,
-                    backgroundColor: accentColor,
-                    width: progressAnim.interpolate({
-                      inputRange: [0, 100],
-                      outputRange: ["0%", "100%"],
-                    }),
-                  }}
-                />
-              </View>
-              {progressPercent >= 100 && (
-                <Text style={{ marginTop: 4, fontSize: 10, fontWeight: "700", color: M.success, textAlign: "right" }}>
-                  {t("learn.complete")}
-                </Text>
-              )}
-            </View>
-          )}
-        </Pressable>
-
-        {/* Lessons + Actions */}
-        {!collapsed && (
-          <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
-            {lessonsLoading ? (
-              <ActivityIndicator size="small" color={accentColor} style={{ paddingVertical: 12 }} />
-            ) : (() => {
-              const hasScenes = lessons.some((l) => l.sceneTitle);
-              if (!hasScenes) {
-                return lessons.map((lesson) => (
-                  <LessonRow
-                    key={lesson.id}
-                    lesson={lesson}
-                    completed={completedIds.has(lesson.id)}
-                    onPress={() => router.push(`/lesson/${lesson.id}`)}
-                  />
-                ));
-              }
-              // Group by scene, preserving scene order
-              const sceneMap = new Map<string, { order: number; lessons: typeof lessons }>();
-              const noScene: typeof lessons = [];
-              for (const lesson of lessons) {
-                if (!lesson.sceneTitle) { noScene.push(lesson); continue; }
-                if (!sceneMap.has(lesson.sceneTitle)) {
-                  sceneMap.set(lesson.sceneTitle, { order: lesson.sceneOrder ?? 999, lessons: [] });
-                }
-                sceneMap.get(lesson.sceneTitle)!.lessons.push(lesson);
-              }
-              const scenes = [...sceneMap.entries()].sort((a, b) => a[1].order - b[1].order);
-              return (
-                <>
-                  {scenes.map(([sceneTitle, { lessons: sceneLessons }]) => (
-                    <View key={sceneTitle}>
-                      <Text style={{ ...type.overline, color: M.muted, marginTop: 16, marginBottom: 6 }}>
-                        {sceneTitle}
-                      </Text>
-                      {sceneLessons.map((lesson) => (
-                        <LessonRow
-                          key={lesson.id}
-                          lesson={lesson}
-                          completed={completedIds.has(lesson.id)}
-                          onPress={() => router.push(`/lesson/${lesson.id}`)}
-                        />
-                      ))}
-                    </View>
-                  ))}
-                  {noScene.map((lesson) => (
-                    <LessonRow
-                      key={lesson.id}
-                      lesson={lesson}
-                      completed={completedIds.has(lesson.id)}
-                      onPress={() => router.push(`/lesson/${lesson.id}`)}
-                    />
-                  ))}
-                </>
-              );
-            })()}
-
-            {/* Action buttons */}
-            <View className="mt-3 flex-row gap-2">
-              <Pressable
-                onPress={() => router.push({ pathname: "/quiz", params: { courseId: course.id } })}
-                style={{
-                  flex: 1,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: 10,
-                  paddingVertical: 10,
-                  borderWidth: 1,
-                  borderColor: `${accentColor}40`,
-                  backgroundColor: `${accentColor}10`,
-                  gap: 6,
-                }}
-                className="active:opacity-70"
-                accessibilityRole="button"
-                accessibilityLabel={t("learn.practiceQuiz")}
-              >
-                <IconSymbol name="graduationcap.fill" size={14} color={accentColor} />
-                <Text style={{ fontSize: 12, fontWeight: "700", color: accentColor }}>
-                  {t("learn.practiceQuiz")}
-                </Text>
-              </Pressable>
-
-              {(() => {
-                const matchAccent = getAccent("purple");
-                return (
-                  <Pressable
-                    onPress={() => router.push({ pathname: "/matching-game", params: { courseId: course.id } })}
-                    style={{
-                      flex: 1,
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      borderRadius: 10,
-                      paddingVertical: 10,
-                      borderWidth: 1,
-                      borderColor: matchAccent.border,
-                      backgroundColor: matchAccent.bg,
-                      gap: 6,
-                    }}
-                    className="active:opacity-70"
-                    accessibilityRole="button"
-                    accessibilityLabel={t("learn.matchingGame")}
-                  >
-                    <IconSymbol name="rectangle.grid.2x2" size={14} color={matchAccent.solid} />
-                    <Text style={{ fontSize: 12, fontWeight: "700", color: matchAccent.solid }}>
-                      {t("learn.matchingGame")}
-                    </Text>
-                  </Pressable>
-                );
-              })()}
-            </View>
-
-            {hasStoryArc && (() => {
-              const storyAccent = getAccent("amber");
-              return (
-                <Pressable
-                  onPress={() => router.push(`/story/${course.id}` as any)}
-                  style={{
-                    marginTop: 8,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: 10,
-                    paddingVertical: 10,
-                    borderWidth: 1,
-                    borderColor: storyAccent.border,
-                    backgroundColor: storyAccent.bg,
-                    gap: 6,
-                  }}
-                  className="active:opacity-70"
-                  accessibilityRole="button"
-                  accessibilityLabel={t("learn.storyMode")}
-                >
-                  <IconSymbol name="book.fill" size={14} color={storyAccent.solid} />
-                  <Text style={{ fontSize: 12, fontWeight: "700", color: storyAccent.solid }}>
-                    {t("learn.storyMode")}
-                  </Text>
-                </Pressable>
-              );
-            })()}
-          </View>
-        )}
-      </View>
-    </Animated.View>
-  );
-});
-
-// ─── BountyTeaser ──────────────────────────────────────────────────────────
-function BountyTeaser({ languageId }: { languageId: string }) {
-  const M = useMuseumTheme();
-  const { t } = useTranslation();
-  const router = useRouter();
-  const { data: bounties } = useBounties(languageId);
-  const bountyAccent = getAccent("amber");
-
-  const visible = bounties?.filter((b) => b.status === "active") ?? [];
-  if (visible.length === 0) return null;
-
-  const preview = visible.slice(0, 4);
-
-  return (
-    <View>
-      {/* Header row */}
-      <Pressable
-        onPress={() => router.push("/bounties")}
-        className="active:opacity-70"
-        style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}
-        accessibilityRole="button"
-        accessibilityLabel={`View all ${visible.length} bounties`}
-      >
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <IconSymbol name="star.fill" size={13} color={bountyAccent.solid} />
-          <Text style={{ fontSize: 10, fontWeight: "800", letterSpacing: 1.6, color: bountyAccent.solid }}>
-            {t("learn.bountyLabel").toUpperCase()}
-          </Text>
-          <View
-            style={{
-              borderRadius: 999,
-              paddingHorizontal: 7,
-              paddingVertical: 2,
-              backgroundColor: bountyAccent.border,
-            }}
-          >
-            <Text style={{ fontSize: 10, fontWeight: "800", color: bountyAccent.solid }}>
-              {visible.length}
-            </Text>
-          </View>
-        </View>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
-          <Text style={{ fontSize: 11, fontWeight: "600", color: bountyAccent.solid }}>
-            {t("learn.seeAll", { defaultValue: "See all" })}
-          </Text>
-          <IconSymbol name="chevron.right" size={11} color={bountyAccent.solid} />
-        </View>
-      </Pressable>
-
-      {/* Horizontal scroll of bounty cards */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 10, paddingRight: 4 }}
-      >
-        {preview.map((bounty) => {
-          const progress = Math.min(bounty.progressPercent / 100, 1);
-          return (
-            <Pressable
-              key={bounty.id}
-              onPress={() => router.push("/bounties")}
-              style={{
-                width: 168,
-                borderRadius: 14,
-                borderWidth: 1,
-                borderColor: bountyAccent.border,
-                borderTopWidth: 3,
-                borderTopColor: bountyAccent.solid,
-                backgroundColor: bountyAccent.bg,
-                padding: 12,
-              }}
-              className="active:opacity-70"
-              accessibilityRole="button"
-              accessibilityLabel={`${bounty.title}, earn ${bounty.xpReward} XP, ${bounty.currentCount} of ${bounty.targetCount} complete`}
-            >
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-                <Text
-                  style={{ fontSize: 12, fontWeight: "700", color: M.text, flex: 1, marginRight: 6, lineHeight: 16 }}
-                  numberOfLines={2}
-                >
-                  {bounty.title}
-                </Text>
-                <View
-                  style={{
-                    borderRadius: 999,
-                    paddingHorizontal: 6,
-                    paddingVertical: 2,
-                    backgroundColor: bountyAccent.border,
-                    flexShrink: 0,
-                  }}
-                >
-                  <Text style={{ fontSize: 10, fontWeight: "800", color: bountyAccent.solid }}>
-                    +{bounty.xpReward}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Progress bar */}
-              <View style={{ height: 3, borderRadius: 2, backgroundColor: `${bountyAccent.solid}25`, overflow: "hidden" }}>
-                <View
-                  style={{
-                    height: "100%",
-                    borderRadius: 2,
-                    backgroundColor: progress >= 1 ? M.success : bountyAccent.solid,
-                    width: `${Math.round(progress * 100)}%`,
-                  }}
-                />
-              </View>
-
-              <Text style={{ marginTop: 5, fontSize: 10, color: bountyAccent.solid, fontWeight: "600" }}>
-                {bounty.currentCount}/{bounty.targetCount}
-                {bounty.category ? ` · ${bounty.category}` : ""}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
-    </View>
-  );
-}
-
-// ─── LearnScreen ───────────────────────────────────────────────────────────
+// ─── LearnScreen ─────────────────────────────────────────────────────────────
 export default function LearnScreen() {
   const M = useMuseumTheme();
   const { t } = useTranslation();
-  const router = useRouter();
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
+
   const {
     data: courses = [],
     isLoading: coursesLoading,
     refetch: refetchCourses,
   } = useCourses(selectedLanguageId);
+  const {
+    data: lessons = [],
+    isLoading: lessonsLoading,
+    refetch: refetchLessons,
+  } = useLanguageLessons(selectedLanguageId);
   const {
     data: completedLessonIds,
     isLoading: progressLoading,
@@ -674,19 +95,15 @@ export default function LearnScreen() {
   const { data: summary, refetch: refetchSummary } = useProgressSummary();
   const { refetch: refetchDue } = useWordsDueForReview(selectedLanguageId);
   const { data: todayChallenges = [] } = useTodayChallenges();
-  const { data: storyArcSummaries = [] } = useStoryArcs();
 
-  const storyArcCourseIds = useMemo(
-    () => new Set(storyArcSummaries.map((a) => a.courseId)),
-    [storyArcSummaries]
-  );
-  const completedIds = useMemo(
-    () => new Set(completedLessonIds ?? []),
-    [completedLessonIds]
-  );
+  const completedIds = useMemo(() => new Set(completedLessonIds ?? []), [completedLessonIds]);
   const completedToday = useMemo(
     () => todayChallenges.filter((c) => c.completed).length,
     [todayChallenges]
+  );
+  const pathDone = useMemo(
+    () => lessons.filter((l) => completedIds.has(l.id)).length,
+    [lessons, completedIds]
   );
 
   const [refreshing, setRefreshing] = useState(false);
@@ -695,13 +112,7 @@ export default function LearnScreen() {
   const freezeChecked = useRef(false);
   const goalCelebrationChecked = useRef(false);
   const { toast, success: toastSuccess, dismiss: dismissToast } = useToast();
-  const resumeState = useAudioStore((s) => s.resumeState);
-  const loadResumeState = useAudioStore((s) => s.loadResumeState);
   const activeTour = useTourStore((s) => s.activeTour);
-
-  useEffect(() => {
-    loadResumeState();
-  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -714,32 +125,41 @@ export default function LearnScreen() {
       return;
     freezeChecked.current = true;
     const today = new Date().toISOString().slice(0, 10);
-    AsyncStorage.getItem("streak-freeze-shown").then((lastShown) => {
-      if (lastShown === today) return;
-      AsyncStorage.setItem("streak-freeze-shown", today).catch(() => {});
-      setFreezeModalVisible(true);
-    }).catch(() => {});
+    AsyncStorage.getItem("streak-freeze-shown")
+      .then((lastShown) => {
+        if (lastShown === today) return;
+        AsyncStorage.setItem("streak-freeze-shown", today).catch(() => {});
+        setFreezeModalVisible(true);
+      })
+      .catch(() => {});
   }, [summary?.streakBroken, summary?.streak, activeTour]);
 
-  const DAILY_GOAL = 3;
   useEffect(() => {
     if (completedToday < DAILY_GOAL || goalCelebrationChecked.current) return;
     goalCelebrationChecked.current = true;
     const today = new Date().toISOString().slice(0, 10);
-    AsyncStorage.getItem("daily-goal-celebration-shown").then((lastShown) => {
-      if (lastShown === today) return;
-      AsyncStorage.setItem("daily-goal-celebration-shown", today).catch(() => {});
-      toastSuccess(t("dailyGoal.celebrationTitle"), t("dailyGoal.celebrationBody"));
-    }).catch(() => {});
+    AsyncStorage.getItem("daily-goal-celebration-shown")
+      .then((lastShown) => {
+        if (lastShown === today) return;
+        AsyncStorage.setItem("daily-goal-celebration-shown", today).catch(() => {});
+        toastSuccess(t("dailyGoal.celebrationTitle"), t("dailyGoal.celebrationBody"));
+      })
+      .catch(() => {});
   }, [completedToday]);
 
-  const isLoading = coursesLoading || progressLoading;
+  const isLoading = coursesLoading || lessonsLoading || progressLoading;
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([refetch(), refetchSummary(), refetchCourses(), refetchDue()]);
+    await Promise.all([
+      refetch(),
+      refetchSummary(),
+      refetchCourses(),
+      refetchLessons(),
+      refetchDue(),
+    ]);
     setRefreshing(false);
-  }, [refetch, refetchSummary, refetchCourses, refetchDue]);
+  }, [refetch, refetchSummary, refetchCourses, refetchLessons, refetchDue]);
 
   const onStreakPress = useCallback(() => {
     if (summary?.streakBroken && summary.streak > 0) setFreezeModalVisible(true);
@@ -748,69 +168,39 @@ export default function LearnScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
-      {/* ── Museum Foyer Header — exhibition placard ── */}
+      {/* ── Museum Foyer Header — placard fading into the gallery floor ── */}
       <LearnHeader
         summary={summary}
         completedToday={completedToday}
         selectedLanguageId={selectedLanguageId}
+        pathDone={pathDone}
+        pathTotal={lessons.length}
         onStreakPress={onStreakPress}
         onGoalPress={onGoalPress}
       />
 
-      {/* Language selector — sits at the boundary */}
-      <View style={{ backgroundColor: M.card, borderBottomWidth: 1, borderBottomColor: M.border }}>
-        <EnrolledLanguageBar />
-      </View>
-
-      {/* ── Gallery Content ── */}
-      <View style={{ flex: 1, backgroundColor: M.card }}>
-        {isLoading ? (
+      {/* ── The Journey ── */}
+      {isLoading ? (
+        <View style={{ flex: 1, backgroundColor: M.bg }}>
           <LoadingScreen />
-        ) : courses.length === 0 ? (
-          <View className="flex-1 items-center justify-center px-8">
-            <IconSymbol name="book.fill" size={44} color="rgba(255,255,255,0.1)" />
-            <Text style={{ marginTop: 16, textAlign: "center", fontSize: 14, color: M.textDimDark }}>
-              {t("learn.noCourses")}
-            </Text>
-          </View>
-        ) : (
-          <FlatList
-            data={courses}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32, paddingTop: 16 }}
-            renderItem={({ item, index }) => (
-              <CourseCard
-                course={item}
-                completedIds={completedIds}
-                hasStoryArc={storyArcCourseIds.has(item.id)}
-                index={index}
-              />
-            )}
-            ListHeaderComponent={
-              <View style={{ gap: 10, marginBottom: 16 }}>
-                {resumeState && resumeState.positionSeconds > 5 && resumeState.languageId === selectedLanguageId && (
-                  <ContinueCard
-                    lessonId={resumeState.lessonId}
-                    positionSeconds={resumeState.positionSeconds}
-                  />
-                )}
-                <UpNextCard languageId={selectedLanguageId} />
-                <BountyTeaser languageId={selectedLanguageId ?? ""} />
-                <WordChallengeCard languageId={selectedLanguageId ?? ""} />
-              </View>
-            }
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                tintColor={M.accent}
-                colors={[M.accent]}
-              />
-            }
-          />
-        )}
-      </View>
+        </View>
+      ) : courses.length === 0 ? (
+        <View style={{ flex: 1, backgroundColor: M.bg }} className="items-center justify-center px-8">
+          <IconSymbol name="book.fill" size={44} color={M.muted} />
+          <Text style={{ marginTop: 16, textAlign: "center", fontSize: 14, color: M.sub }}>
+            {t("learn.noCourses")}
+          </Text>
+        </View>
+      ) : (
+        <JourneyMap
+          courses={courses}
+          lessons={lessons}
+          completedIds={completedIds}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          accent={M.accent}
+        />
+      )}
 
       <StreakFreezeModal
         visible={freezeModalVisible}
@@ -851,14 +241,21 @@ export default function LearnScreen() {
         >
           <View
             style={{
-              width: 40, height: 4, borderRadius: 2,
-              backgroundColor: M.border, alignSelf: "center", marginBottom: 16,
+              width: 40,
+              height: 4,
+              borderRadius: 2,
+              backgroundColor: M.border,
+              alignSelf: "center",
+              marginBottom: 16,
             }}
           />
           <Text
             style={{
-              marginBottom: 20, textAlign: "center",
-              fontSize: 17, fontWeight: "800", color: M.parchment,
+              marginBottom: 20,
+              textAlign: "center",
+              fontSize: 17,
+              fontWeight: "800",
+              color: M.parchment,
             }}
           >
             {t("learn.dailyGoalTitle")}

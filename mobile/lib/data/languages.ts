@@ -110,3 +110,26 @@ export const ACTIVE_LANGUAGES = LANGUAGES.filter((l) => CONTENT_IDS.has(l.id));
 export function getLanguageName(id: string): string {
   return LANGUAGES.find((l) => l.id === id)?.name ?? id;
 }
+
+/** Maps a raw region string to its i18n key (e.g. "Niger Delta" → "regions.nigerDelta"). */
+export const REGION_KEY_MAP: Record<string, string> = {
+  "Niger Delta": "regions.nigerDelta",
+  Southwest: "regions.southwest",
+  Southeast: "regions.southeast",
+  "North Central": "regions.northCentral",
+  North: "regions.north",
+  "West Africa": "regions.westAfrica",
+  "East Africa": "regions.eastAfrica",
+  "North Africa": "regions.northAfrica",
+  "Southern Africa": "regions.southernAfrica",
+};
+
+/** Raw region name for a language id (e.g. "Niger Delta"), or "" if unknown. */
+export function getLanguageRegion(id: string): string {
+  return LANGUAGES.find((l) => l.id === id)?.region ?? "";
+}
+
+/** i18n key for a language's region label, or "" if unknown. */
+export function getLanguageRegionKey(id: string): string {
+  return REGION_KEY_MAP[getLanguageRegion(id)] ?? "";
+}
