@@ -392,6 +392,10 @@ export default function LessonScreen() {
               accentColor={accentColor}
             />
 
+            {/* Programme — the lesson plan, shown upfront in the preview (before the
+                learner starts), so it no longer collides with the audio player below. */}
+            <LessonProgram steps={programSteps} accentColor={accentColor} />
+
             {/* Basic audio + transcript — the core listen experience */}
             {audioSource ? (
               <LessonListen
@@ -418,8 +422,6 @@ export default function LessonScreen() {
             {lesson.vocab?.length ? (
               <LessonWords vocab={lesson.vocab} uiLanguage={uiLanguage} accentColor={accentColor} />
             ) : null}
-
-            <LessonProgram steps={programSteps} accentColor={accentColor} />
 
             {/* Transcript fallback — only for transcript-only lessons with no audio
                 (lessons with audio render the synced LessonListen block above). */}
