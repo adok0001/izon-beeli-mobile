@@ -82,7 +82,15 @@ function StatCell({
     <Pressable
       onPress={onPress}
       disabled={!onPress}
-      style={stripCell}
+      style={[
+        stripCell,
+        {
+          borderRadius: 14,
+          backgroundColor: "rgba(8,9,15,0.55)",
+          borderWidth: 1,
+          borderColor: bronze(0.28),
+        },
+      ]}
       accessibilityRole={onPress ? "button" : "text"}
       accessibilityLabel={a11y}
     >
@@ -253,20 +261,9 @@ export const LearnHeader = memo(function LearnHeader({
         </View>
       </View>
 
-      {/* Specimen strip — Série · Objectif · Niveau */}
+      {/* Specimen strip — three separate cards: Série · Objectif · Niveau */}
       <Animated.View
-        style={[
-          {
-            marginTop: 16,
-            flexDirection: "row",
-            borderRadius: 14,
-            backgroundColor: "rgba(8,9,15,0.55)",
-            borderWidth: 1,
-            borderColor: bronze(0.28),
-            overflow: "hidden",
-          },
-          rise(stripAnim, 8),
-        ]}
+        style={[{ marginTop: 16, flexDirection: "row", gap: 8 }, rise(stripAnim, 8)]}
       >
         <StatCell
           onPress={onStreakPress}
@@ -290,7 +287,6 @@ export const LearnHeader = memo(function LearnHeader({
             </Text>
           }
         />
-        <View style={{ width: 1, backgroundColor: bronze(0.18) }} />
         <StatCell
           onPress={onGoalPress}
           a11y={`Daily goal: ${completedToday} of 3 challenges completed`}
@@ -303,7 +299,6 @@ export const LearnHeader = memo(function LearnHeader({
             </Text>
           }
         />
-        <View style={{ width: 1, backgroundColor: bronze(0.18) }} />
         <StatCell
           a11y={`Level: ${level}`}
           medallion={

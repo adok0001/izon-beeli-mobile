@@ -36,9 +36,9 @@ interface JourneyMapProps {
 }
 
 /**
- * Chapter cartouche — an engraved museum placard flanked by hairline rules.
- * The medallion + bronze plaque is the map's signature "you've entered a new
- * gallery" marker, echoing the foyer placard language of the Museum system.
+ * Chapter cartouche — a dark left-floating pill marking "you've entered a new
+ * gallery": an emoji medallion, the (educator-authored) chapter name, and a
+ * short English category gloss ("· Community", "· Kitchen") echoing the scenery.
  */
 function AreaLabel({
   area,
@@ -54,59 +54,49 @@ function AreaLabel({
       style={{
         position: "absolute",
         top: area.y,
-        left: 0,
-        width,
+        left: 16,
+        maxWidth: width - 32,
         flexDirection: "row",
         alignItems: "center",
-        paddingHorizontal: 22,
-        gap: 12,
+        gap: 10,
+        paddingVertical: 7,
+        paddingLeft: 7,
+        paddingRight: 15,
+        borderRadius: 999,
+        backgroundColor: "rgba(8,9,15,0.86)",
+        borderWidth: 1,
+        borderColor: `${area.color}99`,
+        shadowColor: MUSEUM.ink,
+        shadowOpacity: 0.4,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 6 },
       }}
     >
-      <View style={{ flex: 1, height: 1, backgroundColor: `${area.color}55` }} />
       <View
         style={{
-          flexDirection: "row",
+          width: 32,
+          height: 32,
+          borderRadius: 16,
           alignItems: "center",
-          gap: 10,
-          paddingVertical: 7,
-          paddingLeft: 7,
-          paddingRight: 15,
-          borderRadius: 14,
-          backgroundColor: "rgba(8,9,15,0.94)",
-          borderWidth: 1,
-          borderColor: `${area.color}99`,
-          shadowColor: area.color,
-          shadowOpacity: 0.4,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 4 },
+          justifyContent: "center",
+          backgroundColor: `${area.color}24`,
+          borderWidth: 1.5,
+          borderColor: `${area.color}`,
         }}
       >
-        <View
-          style={{
-            width: 34,
-            height: 34,
-            borderRadius: 17,
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: `${area.color}24`,
-            borderWidth: 1.5,
-            borderColor: `${area.color}`,
-          }}
-        >
-          <Text style={{ fontSize: 16 }}>{area.emoji}</Text>
-        </View>
-        <View>
-          <Text style={{ fontSize: 13.5, fontWeight: "800", color: MUSEUM.parchment }}>
-            {localize(area.title, uiLanguage)}
-          </Text>
-          {area.level ? (
-            <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.6, color: area.color }}>
-              {area.level.toUpperCase()}
-            </Text>
-          ) : null}
-        </View>
+        <Text style={{ fontSize: 15 }}>{area.emoji}</Text>
       </View>
-      <View style={{ flex: 1, height: 1, backgroundColor: `${area.color}55` }} />
+      <Text
+        numberOfLines={1}
+        style={{ fontSize: 13, fontWeight: "800", letterSpacing: 0.2, color: MUSEUM.parchment }}
+      >
+        {localize(area.title, uiLanguage)}
+      </Text>
+      {area.gloss ? (
+        <Text style={{ fontSize: 10, fontWeight: "700", letterSpacing: 0.4, color: area.color }}>
+          · {area.gloss}
+        </Text>
+      ) : null}
     </View>
   );
 }

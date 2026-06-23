@@ -66,6 +66,8 @@ export interface JourneyArea {
   color: string;
   /** Owning course's type — picks the themed scenery drawn behind the nodes. */
   courseType?: CourseType | null;
+  /** Short English category gloss shown on the cartouche ("· Community"). */
+  gloss: string;
   /** Top of the area label pill in map space. */
   y: number;
 }
@@ -107,6 +109,32 @@ const COURSE_EMOJI: Record<CourseType, string> = {
 
 function emojiFor(courseType?: CourseType | null): string {
   return (courseType && COURSE_EMOJI[courseType]) || "📍";
+}
+
+/**
+ * Short English category gloss per course type — the "· Community / · House …"
+ * tag on each chapter cartouche. Mirrors the themed scenery so the gloss reads
+ * as the place the chapter lives in (kitchen, market, waterside, city, …).
+ */
+const COURSE_GLOSS: Record<CourseType, string> = {
+  first_words: "Community",
+  community: "Community",
+  sound_script: "Script",
+  songs: "Songs",
+  colors: "Colors",
+  grammar: "Grammar",
+  everyday_life: "House",
+  house: "House",
+  communicative: "Kitchen",
+  numbers_trade: "Market",
+  work: "Market",
+  oral_tradition: "Waterside",
+  contemporary: "City",
+  modern_life: "City",
+};
+
+function glossFor(courseType?: CourseType | null): string {
+  return (courseType && COURSE_GLOSS[courseType]) || "";
 }
 
 function colorFor(courseType?: CourseType | null): string {
@@ -179,6 +207,7 @@ function layoutNodes(
         emoji: emojiFor(course?.courseType),
         color: node.areaColor,
         courseType: course?.courseType,
+        gloss: glossFor(course?.courseType),
         y: y - LABEL_RISE,
       });
     }
