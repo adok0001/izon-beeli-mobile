@@ -52,6 +52,15 @@ export type AudioSource = string | number; // URI string or require() module ID
 
 export type LessonType = "lesson" | "song";
 
+export type WordTone = "high" | "rising" | "level" | "falling";
+
+export interface LessonWord {
+  text: string;
+  translation: string | LocalizedText;
+  tone?: WordTone;
+  audioUrl?: AudioSource;
+}
+
 export interface Lesson {
   id: string;
   courseId: string;
@@ -76,6 +85,10 @@ export interface Lesson {
   scene?: string;
   sceneTitle?: string;
   sceneOrder?: number;
+  /** What the learner will be able to do after this lesson. */
+  objectives?: (string | LocalizedText)[];
+  /** Key vocabulary with optional tone and gloss. */
+  vocab?: LessonWord[];
 }
 
 export interface TranscriptSegment {

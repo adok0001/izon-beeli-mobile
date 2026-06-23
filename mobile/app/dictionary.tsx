@@ -3,14 +3,29 @@ import { localize } from "@/lib/localize";
 import { WordAudioButton } from "@/components/dictionary/word-audio-button";
 import { NsibidiText } from "@/components/nsibidi/nsibidi-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { fonts } from "@/constants/typography";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { ActivityIndicator } from "react-native";
+import { searchDictionary, type DictionaryEntry } from "@/lib/dictionary";
 import {
-  ALL_CATEGORIES,
-  searchDictionary,
-  type DictionaryCategory,
-  type DictionaryEntry,
-} from "@/lib/dictionary";
+  DOMAIN_ICONS,
+  DOMAIN_LABELS,
+  DOMAIN_ORDER,
+  LEVEL_ORDER,
+  POS_ABBR,
+  POS_LABELS,
+  POS_ORDER,
+  TOPIC_ICONS,
+  TOPIC_LABELS,
+  TOPIC_ORDER,
+  derivePos,
+  deriveLevel,
+  entryInDomain,
+  entryInTopic,
+  type CefrLevel,
+  type Domain,
+  type PartOfSpeech,
+  type Topic,
+} from "@/lib/dictionary-taxonomy";
 import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { useIgboSearch } from "@/lib/hooks/use-igbo-search";
@@ -18,12 +33,12 @@ import { useRecentlyViewed } from "@/lib/hooks/use-recently-viewed";
 import { useRemoveWord, useSaveWord, useWordBank } from "@/lib/hooks/use-wordbank";
 import { useDictionaryNavStore } from "@/store/dictionary-nav-store";
 import { useLanguageStore } from "@/store/language-store";
-import { useWordProgress } from "@/lib/hooks/use-word-progress";
 import { Stack, useRouter } from "expo-router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LoadingScreen } from "@/components/loading-screen";
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -34,181 +49,244 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Swipeable } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type ViewMode = "all" | "saved" | "needs_audio";
+// ── Filter model ─────────────────────────────────────────────────────────────
+type Filter =
+  | { kind: "all" }
+  | { kind: "saved" }
+  | { kind: "history" }
+  | { kind: "needs_audio" }
+  | { kind: "topic"; topic: Topic }
+  | { kind: "domain"; domain: Domain }
+  | { kind: "pos"; pos: PartOfSpeech }
+  | { kind: "level"; level: CefrLevel };
 
-type Section = {
+interface AlphaSection {
   title: string;
-  category: DictionaryCategory;
   data: DictionaryEntry[];
-};
+}
 
-function SwipeActions({ saved, onToggle, side }: { saved: boolean; onToggle: () => void; side: "left" | "right" }) {
+// ── Landing card ─────────────────────────────────────────────────────────────
+function CategoryCard({
+  icon,
+  title,
+  count,
+  onPress,
+}: {
+  icon: string;
+  title: string;
+  count: number;
+  onPress: () => void;
+}) {
   const M = useMuseumTheme();
-  if (side === "right" && saved) return null;
-  if (side === "left" && !saved) return null;
-
+  const { t } = useTranslation();
   return (
     <Pressable
-      onPress={onToggle}
-      style={{ width: 64, alignItems: "center", justifyContent: "center", backgroundColor: side === "right" ? M.accent : M.border }}
+      onPress={onPress}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 14,
+        borderRadius: 16,
+        backgroundColor: M.card,
+        borderWidth: 1,
+        borderColor: M.border,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        marginBottom: 10,
+      }}
+      className="active:opacity-80"
+      accessibilityRole="button"
+      accessibilityLabel={`${title}, ${count}`}
     >
-      <IconSymbol
-        name={side === "right" ? "star.fill" : "star.slash"}
-        size={22}
-        color={side === "right" ? M.ink : M.sub}
-      />
+      <View
+        style={{
+          height: 40,
+          width: 40,
+          borderRadius: 12,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: M.accentGlow,
+          borderWidth: 1,
+          borderColor: M.accentBorder,
+        }}
+      >
+        <IconSymbol name={icon as any} size={20} color={M.accent} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 16, fontWeight: "700", color: M.text }}>{title}</Text>
+        <Text style={{ marginTop: 1, fontSize: 12, color: M.muted }}>
+          {t("dictionaryPage.browse.countWords", { count })}
+        </Text>
+      </View>
+      <IconSymbol name="chevron.right" size={18} color={M.muted} />
     </Pressable>
   );
 }
 
-function WordRow({
+function LandingSectionHeader({ title }: { title: string }) {
+  const M = useMuseumTheme();
+  return (
+    <Text
+      style={{
+        marginTop: 20,
+        marginBottom: 10,
+        fontFamily: fonts.headingMedium,
+        fontSize: 11,
+        letterSpacing: 1.5,
+        textTransform: "uppercase",
+        color: M.muted,
+      }}
+    >
+      {title}
+    </Text>
+  );
+}
+
+// ── Word row (drilldown) ─────────────────────────────────────────────────────
+function DictWordRow({
   entry,
   saved,
-  isEducator,
   onToggle,
   onPress,
 }: {
   entry: DictionaryEntry;
   saved: boolean;
-  isEducator: boolean;
   onToggle: () => void;
   onPress: () => void;
 }) {
   const M = useMuseumTheme();
-  const { t } = useTranslation();
-  const hasAudio = !!entry.audioUrl;
-  const swipeRef = useRef<Swipeable>(null);
-
-  const handleToggle = () => {
-    onToggle();
-    swipeRef.current?.close();
-  };
+  const pos = derivePos(entry);
+  const level = deriveLevel(entry);
+  const definition = ((): string => {
+    const eng = localize(entry.english, "en");
+    return eng.includes(";") ? eng.split(";").map((m) => m.trim()).filter(Boolean).join(" · ") : eng;
+  })();
 
   return (
-    <Swipeable
-      ref={swipeRef}
-      renderRightActions={() =>
-        !saved ? (
-          <SwipeActions saved={saved} onToggle={handleToggle} side="right" />
-        ) : null
-      }
-      renderLeftActions={() =>
-        saved ? (
-          <SwipeActions saved={saved} onToggle={handleToggle} side="left" />
-        ) : null
-      }
-      overshootRight={false}
-      overshootLeft={false}
-      onSwipeableOpen={(direction) => {
-        if (direction === "right" && !saved) handleToggle();
-        if (direction === "left" && saved) handleToggle();
-      }}
+    <Pressable
+      onPress={onPress}
+      style={{ borderBottomWidth: 1, borderBottomColor: M.border, backgroundColor: M.card, paddingHorizontal: 20, paddingVertical: 14 }}
+      className="active:opacity-80"
     >
-      <Pressable
-        onPress={onPress}
-        style={{ borderBottomWidth: 1, borderBottomColor: M.border, backgroundColor: M.card, paddingHorizontal: 20, paddingVertical: 12 }}
-        className="active:opacity-80"
-      >
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-              <Text style={{ fontSize: 16, fontWeight: "600", color: M.text }}>
-                {entry.word}
-              </Text>
-              {isEducator && !hasAudio && (
-                <View style={{ borderRadius: 4, backgroundColor: "#f9731620", paddingHorizontal: 6, paddingVertical: 2 }}>
-                  <Text style={{ fontSize: 10, fontWeight: "600", color: "#f97316" }}>
-                    {t("dictionaryPage.needsAudio")}
-                  </Text>
-                </View>
-              )}
+      <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+        <View style={{ flex: 1, paddingRight: 10 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <Text style={{ fontSize: 17, fontWeight: "700", color: M.text }}>{entry.word}</Text>
+            <Text style={{ fontSize: 12, fontStyle: "italic", color: M.muted }}>{POS_ABBR[pos]}</Text>
+            <View style={{ borderRadius: 6, backgroundColor: M.accentGlow, borderWidth: 1, borderColor: M.accentBorder, paddingHorizontal: 6, paddingVertical: 1 }}>
+              <Text style={{ fontSize: 10, fontWeight: "800", color: M.accent }}>{level}</Text>
             </View>
-            <Text style={{ marginTop: 2, fontSize: 13, color: M.sub }}>
-              {((): string => {
-                const eng = localize(entry.english, "en");
-                return eng.includes(";") ? eng.split(";").map((m) => m.trim()).filter(Boolean).join(" · ") : eng;
-              })()}
-            </Text>
-            {!!entry.nsibidi && (
-              <NsibidiText size={18} color={M.accent} style={{ marginTop: 2 }}>
-                {entry.nsibidi}
-              </NsibidiText>
-            )}
           </View>
+          {entry.pronunciation ? (
+            <Text style={{ marginTop: 2, fontSize: 12, fontStyle: "italic", color: M.muted }}>/{entry.pronunciation}/</Text>
+          ) : null}
+          <Text style={{ marginTop: 3, fontSize: 14, color: M.sub }}>{definition}</Text>
+          {entry.example ? (
+            <Text style={{ marginTop: 4, fontSize: 13, fontStyle: "italic", color: M.muted }} numberOfLines={2}>
+              “{entry.example}”
+            </Text>
+          ) : null}
+          {entry.nsibidi ? (
+            <NsibidiText size={18} color={M.accent} style={{ marginTop: 3 }}>
+              {entry.nsibidi}
+            </NsibidiText>
+          ) : null}
+        </View>
+        <View style={{ alignItems: "center", gap: 8 }}>
           <WordAudioButton audioSource={entry.audioUrl} word={entry.word} />
-          <Pressable onPress={onToggle} hitSlop={8} style={{ marginLeft: 4 }}>
-            <IconSymbol
-              name={saved ? "star.fill" : "star"}
-              size={20}
-              color={saved ? M.accent : M.border}
-            />
+          <Pressable onPress={onToggle} hitSlop={10} accessibilityRole="button" accessibilityLabel="Toggle save">
+            <IconSymbol name={saved ? "star.fill" : "star"} size={22} color={saved ? M.accent : M.border} />
           </Pressable>
         </View>
-      </Pressable>
-    </Swipeable>
+      </View>
+    </Pressable>
   );
 }
 
-function RecentlyViewedStrip({ entries, onPress }: { entries: DictionaryEntry[]; onPress: (entry: DictionaryEntry) => void }) {
-  const M = useMuseumTheme();
-  const { t } = useTranslation();
-  if (entries.length === 0) return null;
-
-  return (
-    <View style={{ borderBottomWidth: 1, borderBottomColor: M.border, paddingVertical: 12 }}>
-      <Text style={{ marginBottom: 8, paddingHorizontal: 20, fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
-        {t("dictionaryPage.recentlyViewed")}
-      </Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
-        {entries.map((entry) => (
-          <Pressable
-            key={entry.id}
-            onPress={() => onPress(entry)}
-            style={{ borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, paddingHorizontal: 12, paddingVertical: 8 }}
-            className="active:opacity-70"
-          >
-            <Text style={{ fontSize: 13, fontWeight: "600", color: M.text }}>{entry.word}</Text>
-            <Text style={{ fontSize: 11, color: M.sub }}>{localize(entry.english, "en").split(";")[0].trim()}</Text>
-          </Pressable>
-        ))}
-      </ScrollView>
-    </View>
-  );
-}
-
+// ── Screen ───────────────────────────────────────────────────────────────────
 export default function DictionaryScreen() {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
+
+  const [filter, setFilter] = useState<Filter | null>(null);
   const [query, setQuery] = useState("");
-  const [viewMode, setViewMode] = useState<ViewMode>("all");
-  const [selectedCategory, setSelectedCategory] = useState<DictionaryCategory | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const { selectedLanguageId } = useLanguageStore();
+  const { data: localEntries = [], isLoading, refetch } = useDictionary(selectedLanguageId);
   const { data: savedIds } = useWordBank();
   const saveWord = useSaveWord();
   const removeWord = useRemoveWord();
-  const { selectedLanguageId } = useLanguageStore();
-  const { data: localEntries = [], isLoading: localLoading, refetch } = useDictionary(selectedLanguageId);
-  const { data: wordProgressData } = useWordProgress(selectedLanguageId);
+  const recentIds = useRecentlyViewed();
+  const setNavContext = useDictionaryNavStore((s) => s.setContext);
+  const { data: currentUser } = useCurrentUser();
+  const isEducator = !!(currentUser && canAccessEducatorPanel(currentUser));
+
   const isIgbo = selectedLanguageId === "igbo";
   const { data: igboApiResults = [], isFetching: igboFetching } = useIgboSearch(isIgbo ? query : "");
-  const [refreshing, setRefreshing] = useState(false);
 
-  // Merge: local entries first, then API results not already present by word (case-insensitive)
+  // Merge live Igbo API matches that aren't already covered by local data.
   const allEntries = useMemo(() => {
     if (!isIgbo || igboApiResults.length === 0) return localEntries;
     const localWords = new Set(localEntries.map((e) => e.word.toLowerCase()));
-    const novel = igboApiResults.filter((e) => !localWords.has(e.word.toLowerCase()));
-    return [...localEntries, ...novel];
+    return [...localEntries, ...igboApiResults.filter((e) => !localWords.has(e.word.toLowerCase()))];
   }, [isIgbo, localEntries, igboApiResults]);
 
-  const isLoading = localLoading;
-  const { data: currentUser } = useCurrentUser();
-  const isEducator = !!(currentUser && canAccessEducatorPanel(currentUser));
-  const setNavContext = useDictionaryNavStore((s) => s.setContext);
-  const recentIds = useRecentlyViewed();
+  const savedSet = useMemo(() => new Set(savedIds ?? []), [savedIds]);
+  const recentIdSet = useMemo(() => new Set(recentIds.map((r) => r.id)), [recentIds]);
+
+  const matches = useCallback(
+    (e: DictionaryEntry, f: Filter): boolean => {
+      switch (f.kind) {
+        case "all":
+          return true;
+        case "saved":
+          return savedSet.has(e.id);
+        case "history":
+          return recentIdSet.has(e.id);
+        case "needs_audio":
+          return !e.audioUrl;
+        case "topic":
+          return entryInTopic(e, f.topic);
+        case "domain":
+          return entryInDomain(e, f.domain);
+        case "pos":
+          return derivePos(e) === f.pos;
+        case "level":
+          return deriveLevel(e) === f.level;
+      }
+    },
+    [savedSet, recentIdSet]
+  );
+
+  const count = useCallback((f: Filter) => allEntries.filter((e) => matches(e, f)).length, [allEntries, matches]);
+
+  const filterTitle = useCallback(
+    (f: Filter): string => {
+      switch (f.kind) {
+        case "all":
+          return t("dictionaryPage.browse.allWords");
+        case "saved":
+          return t("dictionaryPage.browse.savedWords");
+        case "history":
+          return t("dictionaryPage.browse.history");
+        case "needs_audio":
+          return t("dictionaryPage.browse.needsAudio");
+        case "topic":
+          return TOPIC_LABELS[f.topic];
+        case "domain":
+          return DOMAIN_LABELS[f.domain];
+        case "pos":
+          return POS_LABELS[f.pos];
+        case "level":
+          return `${t("dictionaryPage.browse.level")} ${f.level}`;
+      }
+    },
+    [t]
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -216,222 +294,188 @@ export default function DictionaryScreen() {
     setRefreshing(false);
   }, [refetch]);
 
-  const savedSet = useMemo(() => new Set(savedIds ?? []), [savedIds]);
+  const openCategory = useCallback((f: Filter) => {
+    setFilter(f);
+    setQuery("");
+  }, []);
 
-  const handleToggle = (entryId: string) => {
-    if (savedSet.has(entryId)) {
-      removeWord.mutate(entryId);
-    } else {
-      saveWord.mutate(entryId);
-      analytics.wordSaved(entryId, selectedLanguageId);
-    }
-  };
-
-  const sections = useMemo<Section[]>(() => {
-    const filtered =
-      query.trim().length > 0 ? searchDictionary(query, allEntries) : allEntries;
-
-    const entries =
-      viewMode === "saved"
-        ? filtered.filter((e) => savedSet.has(e.id))
-        : viewMode === "needs_audio"
-          ? filtered.filter((e) => !e.audioUrl)
-          : filtered;
-
-    const categoryFiltered =
-      selectedCategory ? entries.filter((e) => e.category === selectedCategory) : entries;
-
-    const grouped = new Map<DictionaryCategory, DictionaryEntry[]>();
-    for (const e of categoryFiltered) {
-      const existing = grouped.get(e.category) ?? [];
-      existing.push(e);
-      grouped.set(e.category, existing);
-    }
-
-    type CategoryI18nKey = `dictionaryPage.categoryLabels.${DictionaryCategory}`;
-    return ALL_CATEGORIES.filter((cat) => grouped.has(cat)).map((cat) => ({
-      title: t(`dictionaryPage.categoryLabels.${cat}` as CategoryI18nKey),
-      category: cat,
-      data: grouped.get(cat)!,
-    }));
-  }, [query, viewMode, selectedCategory, allEntries, savedSet, t]);
-
-  const savedCount = allEntries.filter((e) => savedSet.has(e.id)).length;
-  const needsAudioCount = allEntries.filter((e) => !e.audioUrl).length;
-
-  const recentEntries = useMemo(() => {
-    return recentIds
-      .map(({ id }) => allEntries.find((e) => e.id === id))
-      .filter((e): e is DictionaryEntry => !!e)
-      .slice(0, 5);
-  }, [recentIds, allEntries]);
-
-  const presentCategories = useMemo(
-    () => sections.map((s) => ({ category: s.category, title: s.title })),
-    [sections]
+  const handleToggle = useCallback(
+    (entryId: string) => {
+      if (savedSet.has(entryId)) {
+        removeWord.mutate(entryId);
+      } else {
+        saveWord.mutate(entryId);
+        analytics.wordSaved(entryId, selectedLanguageId);
+      }
+    },
+    [savedSet, removeWord, saveWord, selectedLanguageId]
   );
+
+  // Filtered + alphabetized entries for the drilldown list.
+  const { sections, listIds } = useMemo(() => {
+    if (!filter) return { sections: [] as AlphaSection[], listIds: [] as string[] };
+    const filtered = allEntries.filter((e) => matches(e, filter));
+    const searched = query.trim() ? searchDictionary(query, filtered) : filtered;
+    const byLetter = new Map<string, DictionaryEntry[]>();
+    for (const e of searched) {
+      const letter = (e.word[0] ?? "#").toUpperCase();
+      const bucket = byLetter.get(letter) ?? [];
+      bucket.push(e);
+      byLetter.set(letter, bucket);
+    }
+    const out: AlphaSection[] = [...byLetter.keys()]
+      .sort((a, b) => a.localeCompare(b))
+      .map((letter) => ({
+        title: letter,
+        data: byLetter.get(letter)!.sort((a, b) => a.word.localeCompare(b.word)),
+      }));
+    return { sections: out, listIds: searched.map((e) => e.id) };
+  }, [filter, allEntries, matches, query]);
 
   const handleWordPress = useCallback(
     (item: DictionaryEntry) => {
-      const allIds = sections.flatMap((s) => s.data.map((e) => e.id));
-      setNavContext(allIds, item.id, item.languageId);
+      setNavContext(listIds, item.id, item.languageId);
       router.push({ pathname: "/word/[id]", params: { id: item.id, languageId: item.languageId } });
     },
-    [sections, setNavContext, router]
+    [listIds, setNavContext, router]
   );
 
-  const handleCategoryChip = (cat: DictionaryCategory) => {
-    setSelectedCategory((prev) => (prev === cat ? null : cat));
-  };
+  // ── Landing ────────────────────────────────────────────────────────────────
+  if (!filter) {
+    const quickAccess: { filter: Filter; icon: string }[] = [
+      { filter: { kind: "all" }, icon: "book.fill" },
+      { filter: { kind: "saved" }, icon: "star.fill" },
+      { filter: { kind: "history" }, icon: "clock" },
+      ...(isEducator && count({ kind: "needs_audio" }) > 0 ? [{ filter: { kind: "needs_audio" } as Filter, icon: "mic.fill" }] : []),
+    ];
+    const topics = TOPIC_ORDER.map((topic) => ({ filter: { kind: "topic", topic } as Filter, icon: TOPIC_ICONS[topic] })).filter(
+      (x) => count(x.filter) > 0
+    );
+    const domains = DOMAIN_ORDER.map((domain) => ({ filter: { kind: "domain", domain } as Filter, icon: DOMAIN_ICONS[domain] })).filter(
+      (x) => count(x.filter) > 0
+    );
+    const partsOfSpeech = POS_ORDER.map((pos) => ({ filter: { kind: "pos", pos } as Filter, icon: "list.bullet" })).filter(
+      (x) => count(x.filter) > 0
+    );
+    const levels = LEVEL_ORDER.map((level) => ({ filter: { kind: "level", level } as Filter, icon: "graduationcap.fill" })).filter(
+      (x) => count(x.filter) > 0
+    );
 
+    return (
+      <>
+        <Stack.Screen options={{ title: t("dictionaryPage.title"), headerBackTitle: t("common.back") }} />
+        <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={[]}>
+          {isLoading ? (
+            <LoadingScreen />
+          ) : (
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
+            >
+              <LandingSectionHeader title={t("dictionaryPage.browse.sectionQuickAccess")} />
+              {quickAccess.map(({ filter: f, icon }) => (
+                <CategoryCard key={f.kind} icon={icon} title={filterTitle(f)} count={count(f)} onPress={() => openCategory(f)} />
+              ))}
+
+              {topics.length > 0 && <LandingSectionHeader title={t("dictionaryPage.browse.sectionTopics")} />}
+              {topics.map(({ filter: f, icon }) => (
+                <CategoryCard key={`topic-${(f as any).topic}`} icon={icon} title={filterTitle(f)} count={count(f)} onPress={() => openCategory(f)} />
+              ))}
+
+              {domains.length > 0 && <LandingSectionHeader title={t("dictionaryPage.browse.sectionDomains")} />}
+              {domains.map(({ filter: f, icon }) => (
+                <CategoryCard key={`domain-${(f as any).domain}`} icon={icon} title={filterTitle(f)} count={count(f)} onPress={() => openCategory(f)} />
+              ))}
+
+              {partsOfSpeech.length > 0 && <LandingSectionHeader title={t("dictionaryPage.browse.sectionPartOfSpeech")} />}
+              {partsOfSpeech.map(({ filter: f, icon }) => (
+                <CategoryCard key={`pos-${(f as any).pos}`} icon={icon} title={filterTitle(f)} count={count(f)} onPress={() => openCategory(f)} />
+              ))}
+
+              {levels.length > 0 && <LandingSectionHeader title={t("dictionaryPage.browse.sectionLevel")} />}
+              {levels.map(({ filter: f, icon }) => (
+                <CategoryCard key={`level-${(f as any).level}`} icon={icon} title={filterTitle(f)} count={count(f)} onPress={() => openCategory(f)} />
+              ))}
+            </ScrollView>
+          )}
+        </SafeAreaView>
+      </>
+    );
+  }
+
+  // ── Drilldown list ───────────────────────────────────────────────────────────
+  const title = filterTitle(filter);
   return (
     <>
-      <Stack.Screen options={{ title: "Dictionary", headerBackTitle: "Back" }} />
+      <Stack.Screen options={{ title, headerBackTitle: t("common.back") }} />
       <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={[]}>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
-        {/* Search bar */}
-        <View style={{ borderBottomWidth: 1, borderBottomColor: M.border, paddingHorizontal: 20, paddingBottom: 12, paddingTop: 8 }}>
-          <View style={{ flexDirection: "row", alignItems: "center", borderRadius: 12, backgroundColor: M.card, paddingHorizontal: 12, borderWidth: 1, borderColor: M.border }}>
-            <IconSymbol name="magnifyingglass" size={18} color={M.muted} />
-            <TextInput
-              value={query}
-              onChangeText={(v) => { setQuery(v); setSelectedCategory(null); }}
-              placeholder={t("dictionaryPage.searchPlaceholderMobile")}
-              placeholderTextColor={M.inputPlaceholder}
-              style={{ marginLeft: 8, flex: 1, paddingVertical: 10, fontSize: 16, color: M.inputText }}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            {igboFetching && isIgbo && query.length >= 2 && (
-              <ActivityIndicator size="small" color={M.accent} style={{ marginRight: 4 }} />
-            )}
-            {query.length > 0 && (
-              <Pressable onPress={() => setQuery("")} hitSlop={8}>
-                <IconSymbol name="xmark" size={16} color={M.muted} />
-              </Pressable>
-            )}
-          </View>
-
-          <View style={{ marginTop: 12, flexDirection: "row", gap: 8 }}>
-            {[
-              { mode: "all" as ViewMode, label: t("dictionaryPage.allWordsCount", { count: allEntries.length }), activeColor: M.accent },
-              { mode: "saved" as ViewMode, label: t("dictionaryPage.myWordsCount", { count: savedCount }), activeColor: M.accent },
-              ...(isEducator && needsAudioCount > 0 ? [{ mode: "needs_audio" as ViewMode, label: t("dictionaryPage.needsAudioCount", { count: needsAudioCount }), activeColor: "#f97316" }] : []),
-            ].map(({ mode, label, activeColor }) => (
-              <Pressable
-                key={mode}
-                onPress={() => setViewMode(mode)}
-                style={{ flex: 1, alignItems: "center", borderRadius: 8, paddingVertical: 8, backgroundColor: viewMode === mode ? activeColor : M.card, borderWidth: 1, borderColor: viewMode === mode ? activeColor : M.border }}
-              >
-                <Text style={{ fontSize: 13, fontWeight: "600", color: viewMode === mode ? M.ink : M.sub }}>{label}</Text>
-              </Pressable>
-            ))}
-          </View>
-
-          {viewMode === "saved" && savedCount > 0 && (
+          {/* Back to categories + title */}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingTop: 8 }}>
             <Pressable
-              onPress={() => router.push("/word-review")}
-              style={{ marginTop: 12, flexDirection: "row", alignItems: "center", justifyContent: "center", borderRadius: 12, backgroundColor: M.success, paddingVertical: 10 }}
-              className="active:opacity-80"
+              onPress={() => setFilter(null)}
+              hitSlop={8}
+              style={{ flexDirection: "row", alignItems: "center", paddingVertical: 6, paddingRight: 6 }}
+              accessibilityRole="button"
+              accessibilityLabel={t("dictionaryPage.browse.back")}
             >
-              <IconSymbol name="brain.head.profile" size={16} color={M.ink} />
-              <Text style={{ marginLeft: 8, fontSize: 13, fontWeight: "600", color: M.ink }}>
-                {t("dictionaryPage.reviewSavedWords")}
-              </Text>
+              <IconSymbol name="chevron.left" size={22} color={M.accent} />
+              <Text style={{ fontSize: 15, fontWeight: "600", color: M.accent }}>{t("dictionaryPage.browse.back")}</Text>
             </Pressable>
-          )}
-
-          {wordProgressData && wordProgressData.masteredCount > 0 && (
-            <View style={{ marginTop: 12, flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 12, backgroundColor: M.successBg, paddingHorizontal: 16, paddingVertical: 10, borderWidth: 1, borderColor: M.successBorder }}>
-              <IconSymbol name="checkmark.seal.fill" size={16} color={M.success} />
-              <Text style={{ fontSize: 13, fontWeight: "500", color: M.success }}>
-                {wordProgressData.masteredCount} of {allEntries.length} words mastered
-              </Text>
-            </View>
-          )}
-
-          {isEducator && viewMode === "needs_audio" && needsAudioCount > 0 && (
-            <View style={{ marginTop: 12, borderRadius: 12, backgroundColor: "#f9731615", paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: "#f9731630" }}>
-              <Text style={{ fontSize: 13, fontWeight: "500", color: "#f97316" }}>
-                {t("dictionaryPage.needsAudioCta", { count: needsAudioCount })}
-              </Text>
-              <Text style={{ marginTop: 2, fontSize: 11, color: "#f97316" }}>
-                {t("dictionaryPage.needsAudioCtaDesc")}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Category chip row */}
-        {!isLoading && presentCategories.length > 0 && (
-          <View style={{ borderBottomWidth: 1, borderBottomColor: M.border }}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}>
-              {[{ category: null, title: t("dictionaryPage.allCategory") }, ...presentCategories].map(({ category, title }) => {
-                const active = selectedCategory === category;
-                return (
-                  <Pressable
-                    key={category ?? "all"}
-                    onPress={() => setSelectedCategory(category as DictionaryCategory | null)}
-                    style={{ borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6, backgroundColor: active ? M.accent : M.card, borderWidth: 1, borderColor: active ? M.accent : M.border }}
-                  >
-                    <Text style={{ fontSize: 12, fontWeight: "600", color: active ? M.ink : M.sub }}>{title}</Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
+            <View style={{ flex: 1 }} />
+            <Text style={{ fontSize: 13, color: M.muted }}>{t("dictionaryPage.browse.countWords", { count: listIds.length })}</Text>
           </View>
-        )}
 
-        {isLoading ? (
-          <LoadingScreen />
-        ) : (
+          {/* Search */}
+          <View style={{ paddingHorizontal: 20, paddingBottom: 12, paddingTop: 8 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", borderRadius: 12, backgroundColor: M.card, paddingHorizontal: 12, borderWidth: 1, borderColor: M.border }}>
+              <IconSymbol name="magnifyingglass" size={18} color={M.muted} />
+              <TextInput
+                value={query}
+                onChangeText={setQuery}
+                placeholder={t("dictionaryPage.browse.searchInCategory", { category: title })}
+                placeholderTextColor={M.inputPlaceholder}
+                style={{ marginLeft: 8, flex: 1, paddingVertical: 10, fontSize: 16, color: M.inputText }}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              {igboFetching && isIgbo && query.length >= 2 && <ActivityIndicator size="small" color={M.accent} style={{ marginRight: 4 }} />}
+              {query.length > 0 && (
+                <Pressable onPress={() => setQuery("")} hitSlop={8}>
+                  <IconSymbol name="xmark" size={16} color={M.muted} />
+                </Pressable>
+              )}
+            </View>
+          </View>
+
           <SectionList
             sections={sections}
             keyExtractor={(item) => item.id}
             stickySectionHeadersEnabled
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />
-            }
-            ListHeaderComponent={
-              query === "" && viewMode === "all" && recentEntries.length > 0 ? (
-                <RecentlyViewedStrip
-                  entries={recentEntries}
-                  onPress={(entry) => {
-                    const allIds = sections.flatMap((s) => s.data.map((e) => e.id));
-                    setNavContext(allIds, entry.id, entry.languageId);
-                    router.push({ pathname: "/word/[id]", params: { id: entry.id, languageId: entry.languageId } });
-                  }}
-                />
-              ) : null
-            }
             renderSectionHeader={({ section }) => (
-              <View style={{ backgroundColor: M.bg, paddingHorizontal: 20, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: M.border }}>
-                <Text style={{ fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
-                  {section.title}
-                </Text>
+              <View style={{ backgroundColor: M.bg, paddingHorizontal: 20, paddingVertical: 6 }}>
+                <Text style={{ fontFamily: fonts.headingMedium, fontSize: 13, fontWeight: "700", color: M.accent }}>{section.title}</Text>
               </View>
             )}
             renderItem={({ item }) => (
-              <WordRow
-                entry={item}
-                saved={savedSet.has(item.id)}
-                isEducator={isEducator}
-                onToggle={() => handleToggle(item.id)}
-                onPress={() => handleWordPress(item)}
-              />
+              <DictWordRow entry={item} saved={savedSet.has(item.id)} onToggle={() => handleToggle(item.id)} onPress={() => handleWordPress(item)} />
             )}
             ListEmptyComponent={
               <View style={{ alignItems: "center", paddingHorizontal: 32, paddingVertical: 64 }}>
-                <IconSymbol name={viewMode === "saved" ? "star.fill" : "magnifyingglass"} size={40} color={M.border} />
+                <IconSymbol name={filter.kind === "saved" ? "star.fill" : "magnifyingglass"} size={40} color={M.border} />
                 <Text style={{ marginTop: 16, textAlign: "center", fontSize: 15, color: M.sub }}>
-                  {viewMode === "saved" ? t("dictionaryPage.noSavedWords") : t("dictionaryPage.noResults")}
+                  {query.trim()
+                    ? t("dictionaryPage.noResults")
+                    : filter.kind === "saved"
+                      ? t("dictionaryPage.noSavedWords")
+                      : t("dictionaryPage.browse.emptyCategory")}
                 </Text>
               </View>
             }
           />
-        )}
         </KeyboardAvoidingView>
       </SafeAreaView>
     </>
