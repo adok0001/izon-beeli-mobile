@@ -5,7 +5,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getSkillMeta } from "@/constants/course-colors";
 import { JOURNEY, type JourneyNode } from "@/lib/journey";
 import { localize } from "@/lib/localize";
-import { formatDuration } from "@/lib/mock-data";
 import type { UiLanguage } from "@/store/ui-language-store";
 
 interface MetaPillProps {
@@ -104,9 +103,12 @@ export function JourneySheet({ node, areaName, uiLanguage, onClose, onStart }: J
             }}
           />
 
-          <Text style={{ fontSize: 11, fontWeight: "800", letterSpacing: 1.4, color: node.areaColor }}>
-            {areaName.toUpperCase()}
-          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
+            <Text style={{ fontSize: 13, lineHeight: 13, color: node.areaColor }}>●</Text>
+            <Text style={{ fontSize: 11, fontWeight: "800", letterSpacing: 1.4, color: node.areaColor }}>
+              {areaName.toUpperCase()}
+            </Text>
+          </View>
           <Text style={{ marginTop: 6, fontSize: 22, fontWeight: "800", color: JOURNEY.sheetTitle }}>
             {localize(node.title, uiLanguage)}
           </Text>
@@ -122,7 +124,14 @@ export function JourneySheet({ node, areaName, uiLanguage, onClose, onStart }: J
               })}
               color={JOURNEY.bronze}
             />
-            {node.durationSeconds ? <MetaPill label={`⏱ ${formatDuration(node.durationSeconds)}`} /> : null}
+            {node.wordCount ? (
+              <MetaPill
+                label={`📖 ${t("journey.wordCount", {
+                  count: node.wordCount,
+                  defaultValue: `${node.wordCount} mots`,
+                })}`}
+              />
+            ) : null}
             {node.skills.slice(0, 3).map((skill) => {
               const meta = getSkillMeta(skill);
               return <MetaPill key={skill} label={`${meta.icon} ${meta.label}`} />;

@@ -10,7 +10,7 @@ import { ADINKRA_SYMBOLS } from "@/lib/data/adinkra";
 import type { ProgressSummary } from "@/lib/hooks/use-progress";
 import { pathLevelLabel } from "@/lib/journey";
 import { getLanguageName } from "@/lib/mock-data";
-import { MUSEUM, bronze, glass, useMuseumTheme } from "@/lib/use-museum-theme";
+import { bronze, glass, useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUser } from "@clerk/clerk-expo";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -152,10 +152,10 @@ function ParcoursBar({ done, total, anim }: { done: number; total: number; anim:
 }
 
 /**
- * Foyer header: profile avatar, gallery overline + greeting, quick actions, a
- * cartouche gem divider, the Série/Objectif/Niveau specimen strip, the active
- * language+region pill, and the overall Parcours bar. The dark surface fades to
- * parchment at the bottom so it melts into the light journey map below.
+ * Foyer header: profile avatar, gallery overline + greeting, quick actions, the
+ * Série/Objectif/Niveau specimen strip, the active language+region pill, and the
+ * overall Parcours bar. The dark surface fades to parchment at the bottom so it
+ * melts into the light journey map below.
  */
 export const LearnHeader = memo(function LearnHeader({
   summary,
@@ -253,32 +253,11 @@ export const LearnHeader = memo(function LearnHeader({
         </View>
       </View>
 
-      {/* Cartouche gem divider — echoes the chapter cartouches on the map below */}
-      <Animated.View
-        style={[
-          { marginTop: 16, flexDirection: "row", alignItems: "center", gap: 12 },
-          { opacity: stripAnim },
-        ]}
-      >
-        <View style={{ flex: 1, height: 1, backgroundColor: bronze(0.28) }} />
-        <View
-          style={{
-            width: 9, height: 9,
-            backgroundColor: M.accent,
-            transform: [{ rotate: "45deg" }],
-            borderWidth: 1, borderColor: MUSEUM.accentLight,
-            shadowColor: M.accent, shadowOpacity: 0.6, shadowRadius: 6,
-            shadowOffset: { width: 0, height: 0 },
-          }}
-        />
-        <View style={{ flex: 1, height: 1, backgroundColor: bronze(0.28) }} />
-      </Animated.View>
-
       {/* Specimen strip — Série · Objectif · Niveau */}
       <Animated.View
         style={[
           {
-            marginTop: 12,
+            marginTop: 16,
             flexDirection: "row",
             borderRadius: 14,
             backgroundColor: "rgba(8,9,15,0.55)",

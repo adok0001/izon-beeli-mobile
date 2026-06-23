@@ -21,55 +21,8 @@ import { Modal, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const DAILY_GOAL = 3;
-
-// ─── DailyChallengeChip — the map's "défi du jour" affordance ────────────────
-function DailyChallengeChip({
-  completedToday,
-  onPress,
-}: {
-  completedToday: number;
-  onPress: () => void;
-}) {
-  const M = useMuseumTheme();
-  const { t } = useTranslation();
-  const done = completedToday >= DAILY_GOAL;
-  const accent = done ? M.success : M.accent;
-
-  return (
-    <Pressable
-      onPress={onPress}
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 10,
-        borderRadius: 16,
-        paddingVertical: 12,
-        paddingHorizontal: 14,
-        backgroundColor: M.card,
-        borderWidth: 1,
-        borderColor: `${accent}55`,
-      }}
-      className="active:opacity-70"
-      accessibilityRole="button"
-      accessibilityLabel={t("learn.dailyGoalTitle")}
-    >
-      <Text style={{ fontSize: 20 }}>🎯</Text>
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 10, fontWeight: "800", letterSpacing: 1.4, color: accent }}>
-          {t("journey.dailyChallenge", { defaultValue: "Daily challenge" }).toUpperCase()}
-        </Text>
-        <Text style={{ fontSize: 13, fontWeight: "700", color: M.text, marginTop: 2 }}>
-          {t("journey.tasksDone", {
-            done: completedToday,
-            total: DAILY_GOAL,
-            defaultValue: `${completedToday} of ${DAILY_GOAL} done today`,
-          })}
-        </Text>
-      </View>
-      <IconSymbol name="chevron.right" size={16} color={accent} />
-    </Pressable>
-  );
-}
+/** Izon word riding the in-path défi coin (decorative, from the design proto). */
+const DEFI_WORD = "vírírií";
 
 // ─── LearnScreen ─────────────────────────────────────────────────────────────
 export default function LearnScreen() {
@@ -199,6 +152,11 @@ export default function LearnScreen() {
           refreshing={refreshing}
           onRefresh={onRefresh}
           accent={M.accent}
+          challenge={{
+            word: DEFI_WORD,
+            done: completedToday >= DAILY_GOAL,
+            onPress: onGoalPress,
+          }}
         />
       )}
 

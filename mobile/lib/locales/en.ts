@@ -145,6 +145,7 @@ export const en = {
     upNext: "Up next",
     locked: "Locked",
     lessonN: "Lesson {{n}}",
+    wordCount: "{{count}} words",
     start: "Start lesson",
     review: "Review lesson",
     lockedHint: "Finish the previous lessons to unlock this one",

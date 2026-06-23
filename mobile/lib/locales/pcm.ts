@@ -145,6 +145,7 @@ export const pcm = {
     upNext: "Next one",
     locked: "Lock",
     lessonN: "Lesson {{n}}",
+    wordCount: "{{count}} words",
     start: "Start the lesson",
     review: "Check am again",
     lockedHint: "Finish the lessons wey dey before to open dis one",

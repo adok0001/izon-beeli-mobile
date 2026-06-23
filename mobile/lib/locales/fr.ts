@@ -145,6 +145,7 @@ export const fr = {
     upNext: "À suivre",
     locked: "Verrouillé",
     lessonN: "Leçon {{n}}",
+    wordCount: "{{count}} mots",
     start: "Commencer la leçon",
     review: "Revoir la leçon",
     lockedHint: "Terminez les leçons précédentes pour débloquer celle-ci",

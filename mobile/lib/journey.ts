@@ -47,6 +47,8 @@ export interface JourneyNode {
   /** 1-based position within its own course (the "Lesson N" label). */
   lessonNumber: number;
   durationSeconds?: number;
+  /** Number of key vocabulary words taught (shown in the detail sheet). */
+  wordCount?: number;
   skills: string[];
   /** The owning course's accent hex — tints the label and detail sheet. */
   areaColor: string;
@@ -62,6 +64,8 @@ export interface JourneyArea {
   level: string;
   emoji: string;
   color: string;
+  /** Owning course's type — picks the themed scenery drawn behind the nodes. */
+  courseType?: CourseType | null;
   /** Top of the area label pill in map space. */
   y: number;
 }
@@ -135,6 +139,7 @@ function orderNodes(
         status: completedIds.has(lesson.id) ? "done" : "locked",
         lessonNumber: i + 1,
         durationSeconds: lesson.duration,
+        wordCount: lesson.vocab?.length,
         skills: (lesson.skills ?? []) as string[],
         areaColor: colorFor(course.courseType),
         x: 0,
@@ -173,6 +178,7 @@ function layoutNodes(
         level: course?.level ?? "",
         emoji: emojiFor(course?.courseType),
         color: node.areaColor,
+        courseType: course?.courseType,
         y: y - LABEL_RISE,
       });
     }

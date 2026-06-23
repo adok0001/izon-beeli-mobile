@@ -1,6 +1,9 @@
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
+  Pressable,
   RefreshControl,
   ScrollView,
   Text,
@@ -9,9 +12,10 @@ import {
 } from "react-native";
 import Svg, { Circle, Defs, Path, RadialGradient, Stop } from "react-native-svg";
 import { JourneyNodeView } from "@/components/learn/journey-node";
+import { JourneyScenery } from "@/components/learn/journey-scenery";
 import { JourneySheet } from "@/components/learn/journey-sheet";
 import { MUSEUM, useMuseumTheme } from "@/lib/use-museum-theme";
-import { buildJourney, type JourneyNode, smoothPath } from "@/lib/journey";
+import { buildJourney, JOURNEY, type JourneyNode, smoothPath } from "@/lib/journey";
 import { localize } from "@/lib/localize";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course, Lesson } from "@/types";
@@ -27,6 +31,8 @@ interface JourneyMapProps {
   header?: ReactNode;
   /** Animate fireflies and the active node (off honours reduced motion). */
   lively?: boolean;
+  /** The in-path "défi du jour" coin, pinned beside the active node. */
+  challenge?: { word: string; done: boolean; onPress: () => void };
 }
 
 /**
@@ -105,6 +111,75 @@ function AreaLabel({
   );
 }
 
+/**
+ * "Défi du jour" coin — a bronze medallion pinned just beside the active node,
+ * embedding the daily challenge directly in the path. Tapping it opens the same
+ * challenge flow as the header's Objectif stat.
+ */
+function DefiNode({
+  x,
+  y,
+  word,
+  done,
+  onPress,
+}: {
+  x: number;
+  y: number;
+  word: string;
+  done: boolean;
+  onPress: () => void;
+}) {
+  const M = useMuseumTheme();
+  const { t } = useTranslation();
+  const badge = done ? M.success : M.error;
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{ position: "absolute", left: Math.max(8, x - 96), top: y - 28, zIndex: 5 }}
+      accessibilityRole="button"
+      accessibilityLabel={t("journey.dailyChallenge", { defaultValue: "Daily challenge" })}
+    >
+      <LinearGradient
+        colors={[MUSEUM.parchment, "#F3D9A6", MUSEUM.accent]}
+        start={{ x: 0.35, y: 0.3 }}
+        end={{ x: 1, y: 1 }}
+        style={{
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+          alignItems: "center",
+          justifyContent: "center",
+          borderWidth: 2,
+          borderColor: JOURNEY.bronze,
+          shadowColor: JOURNEY.bronze,
+          shadowOpacity: 0.5,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 8 },
+        }}
+      >
+        <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: "800", color: JOURNEY.bronze, letterSpacing: 0.3 }}>
+          {word}
+        </Text>
+      </LinearGradient>
+      <View
+        style={{
+          position: "absolute",
+          top: -10,
+          right: -12,
+          backgroundColor: badge,
+          borderRadius: 999,
+          paddingHorizontal: 7,
+          paddingVertical: 2,
+        }}
+      >
+        <Text style={{ fontSize: 8.5, fontWeight: "800", color: "#fff", letterSpacing: 0.4 }}>
+          {done ? "✓ DÉFI" : "DÉFI"}
+        </Text>
+      </View>
+    </Pressable>
+  );
+}
+
 export function JourneyMap({
   courses,
   lessons,
@@ -114,6 +189,7 @@ export function JourneyMap({
   accent,
   header,
   lively = true,
+  challenge,
 }: JourneyMapProps) {
   const M = useMuseumTheme();
   const router = useRouter();
@@ -169,6 +245,9 @@ export function JourneyMap({
         {header ? <View style={{ paddingHorizontal: 16, paddingTop: 14 }}>{header}</View> : null}
 
         <View style={{ height: journey.height, width }}>
+          {/* Themed world the path winds through — drawn behind path + nodes */}
+          <JourneyScenery areas={journey.areas} width={width} height={journey.height} />
+
           {/* Daytime sun glow over the parchment gallery floor */}
           <Svg width={width} height={300} style={{ position: "absolute", top: 0 }}>
             <Defs>
@@ -221,6 +300,16 @@ export function JourneyMap({
               onPress={setSelected}
             />
           ))}
+
+          {challenge && journey.activeIndex >= 0 && (
+            <DefiNode
+              x={journey.nodes[journey.activeIndex].x}
+              y={journey.nodes[journey.activeIndex].y}
+              word={challenge.word}
+              done={challenge.done}
+              onPress={challenge.onPress}
+            />
+          )}
         </View>
       </ScrollView>
 

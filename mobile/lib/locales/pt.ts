@@ -145,6 +145,7 @@ export const pt = {
     upNext: "A seguir",
     locked: "Bloqueado",
     lessonN: "Lição {{n}}",
+    wordCount: "{{count}} palavras",
     start: "Começar a lição",
     review: "Rever a lição",
     lockedHint: "Conclua as lições anteriores para desbloquear esta",

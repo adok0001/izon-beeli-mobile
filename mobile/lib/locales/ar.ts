@@ -145,6 +145,7 @@ export const ar = {
     upNext: "التالي",
     locked: "مقفل",
     lessonN: "الدرس {{n}}",
+    wordCount: "{{count}} كلمة",
     start: "ابدأ الدرس",
     review: "راجع الدرس",
     lockedHint: "أكمل الدروس السابقة لفتح هذا الدرس",
