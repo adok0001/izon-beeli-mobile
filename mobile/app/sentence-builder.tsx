@@ -1,5 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { QuizSaveStatus } from "@/components/quiz-save-status";
+import { GameEyebrow, GameProgress, GameResultView, tint } from "@/components/games/game-kit";
+import { getAccent } from "@/constants/accent-colors";
 import { useSubmitQuizResult } from "@/lib/hooks/use-quiz-result";
 import { useStreakCelebration } from "@/lib/hooks/use-progress";
 import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
@@ -17,6 +19,10 @@ import { Animated, Pressable, ScrollView, Text, View } from "react-native";
 
 const SESSION_SIZE = 8;
 
+// Sentence Builder identity: orange "building blocks" — tactile tiles that snap
+// into a slotted construction tray.
+const ACCENT = getAccent("orange");
+
 interface WordTile {
   id: string;
   text: string;
@@ -28,16 +34,6 @@ function buildTiles(sentence: SentenceTemplate): WordTile[] {
       .split(/\s+/)
       .filter(Boolean)
       .map((w, i) => ({ id: `${i}-${w}`, text: w }))
-  );
-}
-
-function ProgressBar({ current, total }: { current: number; total: number }) {
-  const M = useMuseumTheme();
-  const pct = total > 0 ? (current / total) * 100 : 0;
-  return (
-    <View style={{ marginHorizontal: 20, marginTop: 8, height: 6, borderRadius: 999, backgroundColor: M.border }}>
-      <View style={{ height: 6, borderRadius: 999, backgroundColor: M.accent, width: `${pct}%` }} />
-    </View>
   );
 }
 
@@ -70,6 +66,7 @@ export default function SentenceBuilderScreen() {
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const current = sentences[index];
+  const totalWords = bank.length + placed.length;
 
   const doCheck = useCallback(() => {
     if (!current || placed.length === 0) return;
@@ -143,7 +140,7 @@ export default function SentenceBuilderScreen() {
         <Stack.Screen options={{ title: "Build a Sentence", headerBackTitle: "Back" }} />
         <Text style={{ fontSize: 15, color: M.sub, textAlign: "center" }}>No sentences available for this language yet.</Text>
         <Pressable onPress={() => router.back()} style={{ marginTop: 20 }}>
-          <Text style={{ fontSize: 14, fontWeight: "700", color: M.accent }}>Go Back</Text>
+          <Text style={{ fontSize: 14, fontWeight: "700", color: ACCENT.solid }}>Go Back</Text>
         </Pressable>
       </View>
     );
@@ -153,27 +150,20 @@ export default function SentenceBuilderScreen() {
     const accuracy = Math.round((correctCount / sentences.length) * 100);
     return (
       <>
-        <View style={{ flex: 1, backgroundColor: M.bg, alignItems: "center", justifyContent: "center", padding: 32 }}>
+        <View style={{ flex: 1, backgroundColor: M.bg }}>
           <Stack.Screen options={{ title: "Build a Sentence", headerBackTitle: "Back" }} />
-          <View style={{ width: 112, height: 112, borderRadius: 56, borderWidth: 3, borderColor: M.accent, alignItems: "center", justifyContent: "center", marginBottom: 24 }}>
-            <Text style={{ fontSize: 36, fontWeight: "900", color: M.accent }}>{accuracy}%</Text>
-          </View>
-          <Text style={{ fontSize: 24, fontWeight: "800", color: M.text, marginBottom: 8 }}>Done!</Text>
-          <Text style={{ fontSize: 15, color: M.sub, textAlign: "center" }}>
-            {correctCount} of {sentences.length} sentences built correctly
-          </Text>
-          <QuizSaveStatus status={saveStatus} onRetry={retryResult} />
-          <View style={{ width: "100%", gap: 10, marginTop: 32 }}>
-            <Pressable
-              onPress={() => { dismissCelebration(); setIndex(0); setCorrectCount(0); correctRef.current = 0; setBank(buildTiles(sentences[0]!)); setPlaced([]); setChecked(false); setCorrect(false); setPhase("active"); }}
-              style={{ borderRadius: 14, paddingVertical: 16, backgroundColor: M.accent, alignItems: "center" }}
-            >
-              <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>Play Again</Text>
-            </Pressable>
-            <Pressable onPress={() => router.back()} style={{ borderRadius: 14, paddingVertical: 16, borderWidth: 1.5, borderColor: M.border, alignItems: "center" }}>
-              <Text style={{ fontSize: 15, fontWeight: "600", color: M.text }}>Back to Discover</Text>
-            </Pressable>
-          </View>
+          <GameResultView
+            accent={ACCENT}
+            stat={`${accuracy}%`}
+            headline="Done!"
+            subtitle={`${correctCount} of ${sentences.length} sentences built correctly`}
+            actions={[
+              { label: "Play Again", kind: "primary", onPress: () => { dismissCelebration(); setIndex(0); setCorrectCount(0); correctRef.current = 0; setBank(buildTiles(sentences[0]!)); setPlaced([]); setChecked(false); setCorrect(false); setPhase("active"); } },
+              { label: "Back to Discover", kind: "secondary", onPress: () => router.back() },
+            ]}
+          >
+            <QuizSaveStatus status={saveStatus} onRetry={retryResult} />
+          </GameResultView>
         </View>
         <NotificationBanner visible={toast.visible} title={toast.title} body={toast.body} type={toast.type} onDismiss={dismissToast} />
         <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={dismissCelebration} />
@@ -183,36 +173,42 @@ export default function SentenceBuilderScreen() {
 
   if (!current) return null;
 
-  const answerBorderColor = checked
-    ? correct ? M.success : M.error
-    : M.border;
+  const trayBorderColor = checked ? (correct ? M.success : M.error) : tint(ACCENT.solid, 0.4);
 
   return (
     <View style={{ flex: 1, backgroundColor: M.bg }}>
       <Stack.Screen options={{ title: "Build a Sentence", headerBackTitle: "Back" }} />
-      <ProgressBar current={index} total={sentences.length} />
+      <GameProgress current={index} total={sentences.length} accent={ACCENT} variant="bar" />
 
       <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 20 }} showsVerticalScrollIndicator={false}>
-        <Text style={{ fontSize: 11, fontWeight: "800", letterSpacing: 1.8, color: M.muted, marginBottom: 16 }}>
-          {index + 1} / {sentences.length}
-        </Text>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+          <Text style={{ fontSize: 11, fontWeight: "800", letterSpacing: 1.8, color: M.muted }}>
+            {index + 1} / {sentences.length}
+          </Text>
+          {/* Block counter — how many slots are filled */}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, backgroundColor: tint(ACCENT.solid, 0.12), borderWidth: 1, borderColor: tint(ACCENT.solid, 0.3) }}>
+            <IconSymbol name="text.quote" size={11} color={ACCENT.solid} />
+            <Text style={{ fontSize: 11, fontWeight: "900", color: ACCENT.solid }}>{placed.length} / {totalWords}</Text>
+          </View>
+        </View>
 
         <Animated.View style={{ opacity: fadeAnim }}>
           {/* English translation hint */}
           <View style={{ borderRadius: 14, backgroundColor: M.card, borderWidth: 1, borderColor: M.border, padding: 14, marginBottom: 20 }}>
-            <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 2, color: M.muted, marginBottom: 4 }}>TRANSLATE INTO {selectedLanguageId.toUpperCase()}</Text>
+            <GameEyebrow label={`TRANSLATE INTO ${selectedLanguageId.toUpperCase()}`} accent={ACCENT} style={{ marginBottom: 6 }} />
             <Text style={{ fontSize: 16, fontWeight: "600", color: M.text }}>{current.englishSentence}</Text>
           </View>
 
-          {/* Answer row */}
+          {/* Build tray — the slotted construction area */}
           <Animated.View
             style={{
               transform: [{ translateX: shakeAnim }],
               borderRadius: 14,
               borderWidth: 2,
-              borderColor: answerBorderColor,
-              backgroundColor: checked ? (correct ? M.successBg : M.errorBg) : "transparent",
-              minHeight: 56,
+              borderStyle: "dashed",
+              borderColor: trayBorderColor,
+              backgroundColor: checked ? (correct ? M.successBg : M.errorBg) : tint(ACCENT.solid, 0.05),
+              minHeight: 60,
               padding: 12,
               flexDirection: "row",
               flexWrap: "wrap",
@@ -221,18 +217,23 @@ export default function SentenceBuilderScreen() {
             }}
           >
             {placed.length === 0 && (
-              <Text style={{ color: M.muted, fontSize: 13, alignSelf: "center" }}>Tap words below to place them here</Text>
+              <Text style={{ color: M.muted, fontSize: 13, alignSelf: "center" }}>Tap blocks below to stack them here</Text>
             )}
-            {placed.map((tile) => (
-              <Pressable
-                key={tile.id}
-                onPress={() => tapPlaced(tile)}
-                style={{ borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7, backgroundColor: checked ? (correct ? M.successBg : M.errorBg) : `${M.accent}15`, borderWidth: 1, borderColor: checked ? (correct ? M.successBorder : M.errorBorder) : `${M.accent}40` }}
-                className="active:opacity-60"
-              >
-                <Text style={{ fontSize: 14, fontWeight: "600", color: checked ? (correct ? M.success : M.error) : M.accent }}>{tile.text}</Text>
-              </Pressable>
-            ))}
+            {placed.map((tile) => {
+              const blockBg = checked ? (correct ? M.successBg : M.errorBg) : tint(ACCENT.solid, 0.16);
+              const blockEdge = checked ? (correct ? M.successBorder : M.errorBorder) : tint(ACCENT.solid, 0.5);
+              const blockText = checked ? (correct ? M.success : M.error) : ACCENT.solid;
+              return (
+                <Pressable
+                  key={tile.id}
+                  onPress={() => tapPlaced(tile)}
+                  style={{ borderRadius: 9, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: blockBg, borderWidth: 1, borderColor: blockEdge, borderBottomWidth: 3 }}
+                  className="active:opacity-60"
+                >
+                  <Text style={{ fontSize: 14, fontWeight: "700", color: blockText }}>{tile.text}</Text>
+                </Pressable>
+              );
+            })}
           </Animated.View>
 
           {/* Reveal answer on incorrect */}
@@ -243,16 +244,17 @@ export default function SentenceBuilderScreen() {
             </View>
           )}
 
-          {/* Word bank */}
+          {/* Word bank — loose blocks waiting to be stacked */}
+          <GameEyebrow label="BLOCKS" accent={ACCENT} style={{ marginBottom: 10 }} />
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
             {bank.map((tile) => (
               <Pressable
                 key={tile.id}
                 onPress={() => tapBank(tile)}
-                style={{ borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7, backgroundColor: M.card, borderWidth: 1.5, borderColor: M.border }}
+                style={{ borderRadius: 9, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: M.card, borderWidth: 1.5, borderColor: M.border, borderBottomWidth: 3, borderBottomColor: tint(ACCENT.solid, 0.35) }}
                 className="active:opacity-70"
               >
-                <Text style={{ fontSize: 14, fontWeight: "600", color: M.text }}>{tile.text}</Text>
+                <Text style={{ fontSize: 14, fontWeight: "700", color: M.text }}>{tile.text}</Text>
               </Pressable>
             ))}
           </View>
@@ -270,18 +272,18 @@ export default function SentenceBuilderScreen() {
               <Pressable
                 onPress={doCheck}
                 disabled={placed.length === 0}
-                style={{ flex: 2, borderRadius: 12, paddingVertical: 14, backgroundColor: placed.length > 0 ? M.accent : M.border, alignItems: "center" }}
+                style={{ flex: 2, borderRadius: 12, paddingVertical: 14, backgroundColor: placed.length > 0 ? ACCENT.solid : M.border, alignItems: "center" }}
                 className="active:opacity-80"
               >
-                <Text style={{ fontSize: 14, fontWeight: "700", color: M.ink }}>Check</Text>
+                <Text style={{ fontSize: 14, fontWeight: "800", color: M.ink }}>Check</Text>
               </Pressable>
             ) : (
               <Pressable
                 onPress={advance}
-                style={{ flex: 2, borderRadius: 12, paddingVertical: 14, backgroundColor: M.accent, alignItems: "center" }}
+                style={{ flex: 2, borderRadius: 12, paddingVertical: 14, backgroundColor: ACCENT.solid, alignItems: "center" }}
                 className="active:opacity-80"
               >
-                <Text style={{ fontSize: 14, fontWeight: "700", color: M.ink }}>
+                <Text style={{ fontSize: 14, fontWeight: "800", color: M.ink }}>
                   {index + 1 >= sentences.length ? "Finish" : "Next →"}
                 </Text>
               </Pressable>

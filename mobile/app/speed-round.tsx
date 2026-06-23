@@ -1,5 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { QuizSaveStatus } from "@/components/quiz-save-status";
+import { GameEyebrow, GameOption, GameResultView, GameStatChip, tint } from "@/components/games/game-kit";
+import { getAccent } from "@/constants/accent-colors";
 import { useSubmitQuizResult } from "@/lib/hooks/use-quiz-result";
 import { useStreakCelebration } from "@/lib/hooks/use-progress";
 import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
@@ -9,7 +11,6 @@ import { hapticError, hapticHeavy, hapticSuccess } from "@/lib/haptics";
 import { shuffle } from "@/lib/shuffle";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { playCorrectSound, playFinishSound, playIncorrectSound } from "@/lib/sounds";
-import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import type { DictionaryEntry } from "@/lib/dictionary";
@@ -20,6 +21,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const TOTAL_SECONDS = 60;
 const FEEDBACK_DELAY = 600;
+
+// Speed Round identity: amber "arcade" — energetic, timer-driven, combo streaks.
+const ACCENT = getAccent("amber");
 
 interface SpeedQuestion {
   word: string;
@@ -48,7 +52,7 @@ function buildQuestions(entries: DictionaryEntry[]): SpeedQuestion[] {
 function TimerArc({ timeLeft }: { timeLeft: number }) {
   const M = useMuseumTheme();
   const pct = timeLeft / TOTAL_SECONDS;
-  const color = pct > 0.5 ? M.accent : pct > 0.25 ? M.warning : M.error;
+  const color = pct > 0.5 ? ACCENT.solid : pct > 0.25 ? M.warning : M.error;
   const size = 72;
   const strokeWidth = 5;
   const radius = (size - strokeWidth) / 2;
@@ -57,7 +61,7 @@ function TimerArc({ timeLeft }: { timeLeft: number }) {
   return (
     <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
       <Svg width={size} height={size} style={{ position: "absolute" }}>
-        <Circle cx={size / 2} cy={size / 2} r={radius} stroke="rgba(255,255,255,0.08)" strokeWidth={strokeWidth} fill="none" />
+        <Circle cx={size / 2} cy={size / 2} r={radius} stroke={tint(color, 0.12)} strokeWidth={strokeWidth} fill="none" />
         <Circle
           cx={size / 2} cy={size / 2} r={radius}
           stroke={color} strokeWidth={strokeWidth} fill="none"
@@ -70,31 +74,6 @@ function TimerArc({ timeLeft }: { timeLeft: number }) {
       </Svg>
       <Text style={{ fontSize: 20, fontWeight: "900", color }}>{timeLeft}</Text>
     </View>
-  );
-}
-
-function OptionTile({
-  label,
-  state,
-  onPress,
-}: {
-  label: string;
-  state: "default" | "correct" | "incorrect" | "dimmed";
-  onPress: () => void;
-}) {
-  const M = useMuseumTheme();
-  const bg = { default: M.card, correct: M.successBg, incorrect: M.errorBg, dimmed: M.card }[state];
-  const border = { default: M.border, correct: M.success, incorrect: M.error, dimmed: M.border }[state];
-  const color = { default: M.text, correct: M.success, incorrect: M.error, dimmed: M.muted }[state];
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={state !== "default"}
-      style={{ marginBottom: 10, borderRadius: 12, borderWidth: 2, paddingVertical: 15, paddingHorizontal: 20, backgroundColor: bg, borderColor: border, opacity: state === "dimmed" ? 0.45 : 1 }}
-      className="active:opacity-70"
-    >
-      <Text style={{ fontSize: 15, fontWeight: "600", color, textAlign: "center" }}>{label}</Text>
-    </Pressable>
   );
 }
 
@@ -115,12 +94,14 @@ export default function SpeedRoundScreen() {
   const [selected, setSelected] = useState<number | null>(null);
   const [locked, setLocked] = useState(false);
   const [score, setScore] = useState(0);
+  const [combo, setCombo] = useState(0);
   const [timeLeft, setTimeLeft] = useState(TOTAL_SECONDS);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const feedbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scoreRef = useRef(0);
   const indexRef = useRef(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
+  const popAnim = useRef(new Animated.Value(1)).current;
 
   const endGame = useCallback((finalScore: number, total: number) => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -140,6 +121,7 @@ export default function SpeedRoundScreen() {
     indexRef.current = 0;
     setScore(0);
     scoreRef.current = 0;
+    setCombo(0);
     setSelected(null);
     setLocked(false);
     setTimeLeft(TOTAL_SECONDS);
@@ -172,9 +154,13 @@ export default function SpeedRoundScreen() {
       setIndex(nextIndex);
       setSelected(null);
       setLocked(false);
-      Animated.timing(fadeAnim, { toValue: 1, duration: 160, useNativeDriver: true }).start();
+      popAnim.setValue(0.92);
+      Animated.parallel([
+        Animated.timing(fadeAnim, { toValue: 1, duration: 160, useNativeDriver: true }),
+        Animated.spring(popAnim, { toValue: 1, friction: 5, tension: 140, useNativeDriver: true }),
+      ]).start();
     });
-  }, [fadeAnim, endGame]);
+  }, [fadeAnim, popAnim, endGame]);
 
   const handleOption = useCallback((optIdx: number) => {
     if (locked || phase !== "active") return;
@@ -188,9 +174,11 @@ export default function SpeedRoundScreen() {
       playCorrectSound();
       scoreRef.current += 1;
       setScore((s) => s + 1);
+      setCombo((c) => c + 1);
     } else {
       hapticError();
       playIncorrectSound();
+      setCombo(0);
     }
     feedbackRef.current = setTimeout(() => advance(questions), FEEDBACK_DELAY);
   }, [locked, phase, questions, index, advance]);
@@ -202,15 +190,15 @@ export default function SpeedRoundScreen() {
       <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["top", "bottom"]}>
         <Stack.Screen options={{ title: "Speed Round", headerBackTitle: "Back" }} />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32 }}>
-          <View style={{ width: 80, height: 80, borderRadius: 40, alignItems: "center", justifyContent: "center", backgroundColor: `${M.accent}15`, marginBottom: 20 }}>
-            <IconSymbol name="bolt.fill" size={38} color={M.accent} />
+          <View style={{ width: 84, height: 84, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: tint(ACCENT.solid, 0.14), borderWidth: 1, borderColor: tint(ACCENT.solid, 0.3), marginBottom: 20 }}>
+            <IconSymbol name="bolt.fill" size={40} color={ACCENT.solid} />
           </View>
           <Text style={{ fontSize: 28, fontWeight: "900", color: M.text, textAlign: "center" }}>Speed Round</Text>
           <Text style={{ fontSize: 15, color: M.sub, textAlign: "center", marginTop: 8, lineHeight: 22 }}>
             Answer as many word-to-English questions as you can in 60 seconds
           </Text>
           <View style={{ marginTop: 32, flexDirection: "row", gap: 24, marginBottom: 40 }}>
-            {[{ icon: "bolt.fill" as const, label: "60 sec", color: M.accent }, { icon: "trophy.fill" as const, label: "+XP", color: getAccent("purple").solid }].map((item) => (
+            {[{ icon: "clock.fill" as const, label: "60 sec", color: ACCENT.solid }, { icon: "flame.fill" as const, label: "Combos", color: M.warning }, { icon: "trophy.fill" as const, label: "+XP", color: getAccent("purple").solid }].map((item) => (
               <View key={item.label} style={{ alignItems: "center" }}>
                 <IconSymbol name={item.icon} size={22} color={item.color} />
                 <Text style={{ fontSize: 12, fontWeight: "700", color: item.color, marginTop: 4 }}>{item.label}</Text>
@@ -220,7 +208,7 @@ export default function SpeedRoundScreen() {
           <Pressable
             onPress={startGame}
             disabled={entries.length < 4}
-            style={{ borderRadius: 14, paddingVertical: 16, paddingHorizontal: 48, backgroundColor: M.accent }}
+            style={{ borderRadius: 14, paddingVertical: 16, paddingHorizontal: 48, backgroundColor: ACCENT.solid }}
             className="active:opacity-80"
           >
             <Text style={{ fontSize: 16, fontWeight: "800", color: M.ink }}>Start</Text>
@@ -240,25 +228,19 @@ export default function SpeedRoundScreen() {
       <>
         <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["top", "bottom"]}>
           <Stack.Screen options={{ title: "Speed Round", headerBackTitle: "Back" }} />
-          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32 }}>
-            <View style={{ width: 120, height: 120, borderRadius: 60, borderWidth: 3, borderColor: M.accent, alignItems: "center", justifyContent: "center", marginBottom: 24 }}>
-              <Text style={{ fontSize: 48, fontWeight: "900", color: M.accent }}>{score}</Text>
-              <Text style={{ fontSize: 10, fontWeight: "700", letterSpacing: 1.5, color: M.muted }}>CORRECT</Text>
-            </View>
-            <Text style={{ fontSize: 24, fontWeight: "800", color: M.text, marginBottom: 8 }}>Time&apos;s Up!</Text>
-            <Text style={{ fontSize: 15, color: M.sub, textAlign: "center" }}>
-              You answered {score} {score === 1 ? "word" : "words"} correctly
-            </Text>
+          <GameResultView
+            accent={ACCENT}
+            stat={String(score)}
+            statLabel="CORRECT"
+            headline="Time's Up!"
+            subtitle={`You answered ${score} ${score === 1 ? "word" : "words"} correctly`}
+            actions={[
+              { label: "Play Again", kind: "primary", onPress: () => { dismissCelebration(); startGame(); } },
+              { label: "Back to Discover", kind: "secondary", onPress: () => router.back() },
+            ]}
+          >
             <QuizSaveStatus status={saveStatus} onRetry={retryResult} />
-            <View style={{ width: "100%", gap: 10, marginTop: 32 }}>
-              <Pressable onPress={() => { dismissCelebration(); startGame(); }} style={{ borderRadius: 14, paddingVertical: 16, backgroundColor: M.accent, alignItems: "center" }}>
-                <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>Play Again</Text>
-              </Pressable>
-              <Pressable onPress={() => router.back()} style={{ borderRadius: 14, paddingVertical: 16, borderWidth: 1.5, borderColor: M.border, alignItems: "center" }}>
-                <Text style={{ fontSize: 15, fontWeight: "600", color: M.text }}>Back to Discover</Text>
-              </Pressable>
-            </View>
-          </View>
+          </GameResultView>
         </SafeAreaView>
         <NotificationBanner visible={toast.visible} title={toast.title} body={toast.body} type={toast.type} onDismiss={dismissToast} />
         <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={dismissCelebration} />
@@ -272,31 +254,33 @@ export default function SpeedRoundScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["top", "bottom"]}>
       <Stack.Screen options={{ title: "Speed Round", headerBackTitle: "Back" }} />
 
-      {/* Top bar */}
+      {/* Top bar — amber score, central timer, word counter */}
       <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-        <View style={{ borderRadius: 12, paddingHorizontal: 14, paddingVertical: 6, backgroundColor: `${M.accent}15`, borderWidth: 1, borderColor: `${M.accent}30` }}>
-          <Text style={{ fontSize: 18, fontWeight: "900", color: M.accent }}>{score}</Text>
-          <Text style={{ fontSize: 8, fontWeight: "700", letterSpacing: 1.5, color: M.muted }}>SCORE</Text>
-        </View>
+        <GameStatChip value={score} label="SCORE" accent={ACCENT} />
         <TimerArc timeLeft={timeLeft} />
-        <View style={{ borderRadius: 12, paddingHorizontal: 14, paddingVertical: 6, backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 1, borderColor: M.border }}>
-          <Text style={{ fontSize: 18, fontWeight: "900", color: M.text }}>{index + 1}</Text>
-          <Text style={{ fontSize: 8, fontWeight: "700", letterSpacing: 1.5, color: M.muted }}>WORD</Text>
-        </View>
+        <GameStatChip value={index + 1} label="WORD" />
       </View>
 
       <View style={{ flex: 1, padding: 20, justifyContent: "center" }}>
-        <Animated.View style={{ opacity: fadeAnim }}>
+        <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: popAnim }] }}>
+          {/* Combo streak pill */}
+          <View style={{ alignItems: "center", height: 26, marginBottom: 6 }}>
+            {combo >= 2 && (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: tint(M.warning, 0.14), borderWidth: 1, borderColor: tint(M.warning, 0.3) }}>
+                <IconSymbol name="flame.fill" size={12} color={M.warning} />
+                <Text style={{ fontSize: 12, fontWeight: "900", color: M.warning }}>{combo} streak</Text>
+              </View>
+            )}
+          </View>
+
           {/* Word display */}
-          <View style={{ alignItems: "center", marginBottom: 32 }}>
+          <View style={{ alignItems: "center", marginBottom: 28 }}>
             <Text style={{ fontSize: 44, fontWeight: "900", color: M.text, textAlign: "center", letterSpacing: -1 }}>
               {current.word}
             </Text>
           </View>
 
-          <Text style={{ fontSize: 12, fontWeight: "700", color: M.muted, marginBottom: 12, letterSpacing: 0.5, textAlign: "center" }}>
-            What does this mean in English?
-          </Text>
+          <GameEyebrow label="WHAT DOES THIS MEAN?" accent={ACCENT} icon="bolt.fill" align="center" style={{ marginBottom: 14 }} />
 
           {current.options.map((opt, i) => {
             let state: "default" | "correct" | "incorrect" | "dimmed" = "default";
@@ -305,7 +289,7 @@ export default function SpeedRoundScreen() {
               else if (i === selected) state = "incorrect";
               else state = "dimmed";
             }
-            return <OptionTile key={i} label={opt} state={state} onPress={() => handleOption(i)} />;
+            return <GameOption key={i} label={opt} state={state} accent={ACCENT} badge={String(i + 1)} onPress={() => handleOption(i)} />;
           })}
         </Animated.View>
       </View>

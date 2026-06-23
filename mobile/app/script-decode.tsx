@@ -1,9 +1,9 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { GameEyebrow, GameOption, GameProgress, GameResultView, tint } from "@/components/games/game-kit";
 import { getAccent } from "@/constants/accent-colors";
+import type { AccentColor } from "@/constants/accent-colors";
 import { FIDEL_CHART } from "@/lib/data/geez/fidel-chart";
-import type { GeezCharacter } from "@/lib/data/geez/fidel-chart";
 import { NSIBIDI_CHARACTERS } from "@/lib/data/nsibidi";
-import type { NsibidiCharacter } from "@/lib/data/nsibidi";
 import { hapticError, hapticSuccess } from "@/lib/haptics";
 import { apiFetch } from "@/lib/api";
 import { playCorrectSound, playFinishSound, playIncorrectSound } from "@/lib/sounds";
@@ -14,11 +14,16 @@ import { Stack, useRouter } from "expo-router";
 import { useStreakCelebration } from "@/lib/hooks/use-progress";
 import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Animated, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type ScriptMode = "geez" | "nsibidi";
+
+// Script Decode identity: "carved stone tablet" — the glyph sits in an
+// inscription frame, tinted with the per-script accent (teal Ge'ez / amber Nsibidi).
+const GEEZ_ACCENT = getAccent("teal");
+const NSIBIDI_ACCENT = getAccent("amber");
 
 interface DecodeQuestion {
   character: string;
@@ -69,56 +74,27 @@ function buildNsibidiQuestions(): DecodeQuestion[] {
   });
 }
 
-function ProgressBar({ current, total }: { current: number; total: number }) {
-  const M = useMuseumTheme();
-  const pct = total > 0 ? (current / total) * 100 : 0;
+// One L-shaped tick in a tablet corner.
+function CornerTick({ accent, corner }: { accent: AccentColor; corner: "tl" | "tr" | "bl" | "br" }) {
+  const v = corner[0] === "t" ? { top: 10 } : { bottom: 10 };
+  const h = corner[1] === "l" ? { left: 10 } : { right: 10 };
   return (
-    <View style={{ marginHorizontal: 20, marginTop: 8, height: 6, borderRadius: 999, backgroundColor: M.border }}>
-      <View style={{ height: 6, borderRadius: 999, backgroundColor: M.accent, width: `${pct}%` }} />
-    </View>
-  );
-}
-
-function OptionTile({
-  label,
-  state,
-  onPress,
-}: {
-  label: string;
-  state: "default" | "correct" | "incorrect" | "dimmed";
-  onPress: () => void;
-}) {
-  const M = useMuseumTheme();
-  const bg = { default: M.card, correct: M.successBg, incorrect: M.errorBg, dimmed: M.card }[state];
-  const border = { default: M.border, correct: M.success, incorrect: M.error, dimmed: M.border }[state];
-  const color = { default: M.text, correct: M.success, incorrect: M.error, dimmed: M.muted }[state];
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={state !== "default"}
-      style={{
-        marginBottom: 10, borderRadius: 12, borderWidth: 2,
-        paddingHorizontal: 20, paddingVertical: 15,
-        backgroundColor: bg, borderColor: border,
-        opacity: state === "dimmed" ? 0.45 : 1,
-      }}
-      className="active:opacity-70"
-    >
-      <Text style={{ fontSize: 14, fontWeight: "600", color, textAlign: "center" }}>{label}</Text>
-    </Pressable>
+    <>
+      <View style={{ position: "absolute", ...v, ...h, width: 14, height: 2, borderRadius: 1, backgroundColor: tint(accent.solid, 0.5) }} />
+      <View style={{ position: "absolute", ...v, ...h, width: 2, height: 14, borderRadius: 1, backgroundColor: tint(accent.solid, 0.5) }} />
+    </>
   );
 }
 
 function ConfigScreen({ onStart }: { onStart: (mode: ScriptMode) => void }) {
   const M = useMuseumTheme();
-  const router = useRouter();
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["top", "bottom"]}>
       <Stack.Screen options={{ title: "Script Decode", headerBackTitle: "Back" }} />
       <View style={{ flex: 1, justifyContent: "center", padding: 28 }}>
         <View style={{ alignItems: "center", marginBottom: 36 }}>
-          <View style={{ width: 80, height: 80, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: `${M.accent}15`, marginBottom: 16 }}>
-            <Text style={{ fontSize: 40, color: M.accent }}>ሀ</Text>
+          <View style={{ width: 84, height: 84, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: tint(GEEZ_ACCENT.solid, 0.14), borderWidth: 1, borderColor: tint(GEEZ_ACCENT.solid, 0.3), marginBottom: 16 }}>
+            <Text style={{ fontSize: 42, color: GEEZ_ACCENT.solid }}>ሀ</Text>
           </View>
           <Text style={{ fontSize: 26, fontWeight: "900", color: M.text, textAlign: "center" }}>Script Decode</Text>
           <Text style={{ fontSize: 14, color: M.sub, textAlign: "center", marginTop: 6 }}>
@@ -130,31 +106,31 @@ function ConfigScreen({ onStart }: { onStart: (mode: ScriptMode) => void }) {
         </Text>
         <Pressable
           onPress={() => onStart("geez")}
-          style={{ borderRadius: 16, backgroundColor: M.card, borderWidth: 1, borderColor: M.border, borderLeftWidth: 4, borderLeftColor: getAccent("teal").solid, padding: 16, flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 10 }}
+          style={{ borderRadius: 16, backgroundColor: M.card, borderWidth: 1, borderColor: M.border, borderLeftWidth: 4, borderLeftColor: GEEZ_ACCENT.solid, padding: 16, flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 10 }}
           className="active:opacity-70"
         >
-          <View style={{ width: 48, height: 48, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: getAccent("teal").bg }}>
-            <Text style={{ fontSize: 26, color: getAccent("teal").solid }}>ሀ</Text>
+          <View style={{ width: 48, height: 48, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: GEEZ_ACCENT.bg }}>
+            <Text style={{ fontSize: 26, color: GEEZ_ACCENT.solid }}>ሀ</Text>
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 15, fontWeight: "700", color: M.text }}>Ge&apos;ez / Fidel</Text>
             <Text style={{ fontSize: 12, color: M.sub, marginTop: 2 }}>Ethiopic alphabet · Amharic & Tigrinya</Text>
           </View>
-          <IconSymbol name="chevron.right" size={14} color={getAccent("teal").solid} />
+          <IconSymbol name="chevron.right" size={14} color={GEEZ_ACCENT.solid} />
         </Pressable>
         <Pressable
           onPress={() => onStart("nsibidi")}
-          style={{ borderRadius: 16, backgroundColor: M.card, borderWidth: 1, borderColor: M.border, borderLeftWidth: 4, borderLeftColor: getAccent("amber").solid, padding: 16, flexDirection: "row", alignItems: "center", gap: 14 }}
+          style={{ borderRadius: 16, backgroundColor: M.card, borderWidth: 1, borderColor: M.border, borderLeftWidth: 4, borderLeftColor: NSIBIDI_ACCENT.solid, padding: 16, flexDirection: "row", alignItems: "center", gap: 14 }}
           className="active:opacity-70"
         >
-          <View style={{ width: 48, height: 48, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: getAccent("amber").bg }}>
-            <Text style={{ fontSize: 26, color: getAccent("amber").solid }}>𐘕</Text>
+          <View style={{ width: 48, height: 48, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: NSIBIDI_ACCENT.bg }}>
+            <Text style={{ fontSize: 26, color: NSIBIDI_ACCENT.solid }}>𐘕</Text>
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 15, fontWeight: "700", color: M.text }}>Nsịbịdị</Text>
             <Text style={{ fontSize: 12, color: M.sub, marginTop: 2 }}>Indigenous Igbo script</Text>
           </View>
-          <IconSymbol name="chevron.right" size={14} color={getAccent("amber").solid} />
+          <IconSymbol name="chevron.right" size={14} color={NSIBIDI_ACCENT.solid} />
         </Pressable>
       </View>
     </SafeAreaView>
@@ -177,8 +153,9 @@ export default function ScriptDecodeScreen() {
   const [correctCount, setCorrectCount] = useState(0);
   const [startTime, setStartTime] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
+  const popAnim = useRef(new Animated.Value(1)).current;
 
-  const accentColor = mode === "geez" ? getAccent("teal").solid : getAccent("amber").solid;
+  const accent: AccentColor = mode === "geez" ? GEEZ_ACCENT : NSIBIDI_ACCENT;
 
   const handleStart = useCallback((selectedMode: ScriptMode) => {
     const qs = selectedMode === "geez" ? buildGeezQuestions() : buildNsibidiQuestions();
@@ -219,9 +196,13 @@ export default function ScriptDecodeScreen() {
       setIndex((i) => i + 1);
       setSelected(null);
       setLocked(false);
-      Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }).start();
+      popAnim.setValue(0.8);
+      Animated.parallel([
+        Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
+        Animated.spring(popAnim, { toValue: 1, friction: 5, tension: 120, useNativeDriver: true }),
+      ]).start();
     });
-  }, [index, questions.length, correctCount, fadeAnim, startTime, getToken]);
+  }, [index, questions.length, correctCount, fadeAnim, popAnim, startTime, getToken, onStreakUpdate, selectedLanguageId]);
 
   const handleOption = useCallback((optIdx: number) => {
     if (locked) return;
@@ -243,35 +224,17 @@ export default function ScriptDecodeScreen() {
       <>
         <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["top", "bottom"]}>
           <Stack.Screen options={{ title: "Script Decode", headerBackTitle: "Back" }} />
-          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32 }}>
-            <View style={{ width: 112, height: 112, borderRadius: 56, borderWidth: 3, borderColor: accentColor, alignItems: "center", justifyContent: "center", marginBottom: 24 }}>
-              <Text style={{ fontSize: 36, fontWeight: "900", color: accentColor }}>{accuracy}%</Text>
-            </View>
-            <Text style={{ fontSize: 24, fontWeight: "800", color: M.text, marginBottom: 8 }}>Session Complete</Text>
-            <Text style={{ fontSize: 15, color: M.sub, textAlign: "center" }}>
-              {correctCount} of {questions.length} characters decoded correctly
-            </Text>
-            <View style={{ width: "100%", gap: 10, marginTop: 32 }}>
-              <Pressable
-                onPress={() => { dismissCelebration(); mode && handleStart(mode); }}
-                style={{ borderRadius: 14, paddingVertical: 16, backgroundColor: accentColor, alignItems: "center" }}
-              >
-                <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>Play Again</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => { dismissCelebration(); setPhase("config"); }}
-                style={{ borderRadius: 14, paddingVertical: 16, borderWidth: 1.5, borderColor: M.border, alignItems: "center" }}
-              >
-                <Text style={{ fontSize: 15, fontWeight: "600", color: M.text }}>Switch Script</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => router.back()}
-                style={{ borderRadius: 14, paddingVertical: 14, alignItems: "center" }}
-              >
-                <Text style={{ fontSize: 14, color: M.muted }}>Back to Discover</Text>
-              </Pressable>
-            </View>
-          </View>
+          <GameResultView
+            accent={accent}
+            stat={`${accuracy}%`}
+            headline="Session Complete"
+            subtitle={`${correctCount} of ${questions.length} characters decoded correctly`}
+            actions={[
+              { label: "Play Again", kind: "primary", onPress: () => { dismissCelebration(); mode && handleStart(mode); } },
+              { label: "Switch Script", kind: "secondary", onPress: () => { dismissCelebration(); setPhase("config"); } },
+              { label: "Back to Discover", kind: "ghost", onPress: () => router.back() },
+            ]}
+          />
         </SafeAreaView>
         <NotificationBanner visible={toast.visible} title={toast.title} body={toast.body} type={toast.type} onDismiss={dismissToast} />
         <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={dismissCelebration} />
@@ -285,27 +248,34 @@ export default function ScriptDecodeScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["top", "bottom"]}>
       <Stack.Screen options={{ title: "Script Decode", headerBackTitle: "Back" }} />
-      <ProgressBar current={index} total={questions.length} />
+      <GameProgress current={index} total={questions.length} accent={accent} variant="segments" />
 
       <View style={{ flex: 1, padding: 20 }}>
-        <Text style={{ fontSize: 11, fontWeight: "800", letterSpacing: 1.8, color: M.muted, marginBottom: 16 }}>
+        <Text style={{ fontSize: 11, fontWeight: "800", letterSpacing: 1.8, color: M.muted, marginBottom: 16, marginTop: 8 }}>
           {index + 1} / {questions.length}
         </Text>
 
         <Animated.View style={{ opacity: fadeAnim, flex: 1 }}>
-          {/* Big character display */}
-          <View style={{ alignItems: "center", justifyContent: "center", marginBottom: 32, flex: 1, maxHeight: 180 }}>
-            <View style={{ width: 140, height: 140, borderRadius: 28, alignItems: "center", justifyContent: "center", backgroundColor: `${accentColor}12`, borderWidth: 2, borderColor: `${accentColor}30` }}>
-              <Text style={{ fontSize: 72, color: accentColor, lineHeight: 84 }}>{current.character}</Text>
-            </View>
+          {/* Carved inscription tablet */}
+          <View style={{ alignItems: "center", justifyContent: "center", marginBottom: 32, flex: 1, maxHeight: 200 }}>
+            <Animated.View style={{ width: 168, height: 168, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: tint(accent.solid, 0.1), borderWidth: 2, borderColor: tint(accent.solid, 0.3), transform: [{ scale: popAnim }] }}>
+              <CornerTick accent={accent} corner="tl" />
+              <CornerTick accent={accent} corner="tr" />
+              <CornerTick accent={accent} corner="bl" />
+              <CornerTick accent={accent} corner="br" />
+              <Text style={{ fontSize: 84, color: accent.solid, lineHeight: 96 }}>{current.character}</Text>
+            </Animated.View>
             {current.hint && (
-              <Text style={{ marginTop: 10, fontSize: 11, color: M.muted, letterSpacing: 0.5 }}>{current.hint}</Text>
+              <Text style={{ marginTop: 12, fontSize: 11, color: M.muted, letterSpacing: 0.5 }}>{current.hint}</Text>
             )}
           </View>
 
-          <Text style={{ fontSize: 12, fontWeight: "700", color: M.muted, marginBottom: 12, letterSpacing: 0.5 }}>
-            What does this {mode === "geez" ? "character" : "symbol"} represent?
-          </Text>
+          <GameEyebrow
+            label={mode === "geez" ? "DECODE THE CHARACTER" : "DECODE THE SYMBOL"}
+            accent={accent}
+            icon="character.book.closed"
+            style={{ marginBottom: 12 }}
+          />
 
           {current.options.map((opt, i) => {
             let state: "default" | "correct" | "incorrect" | "dimmed" = "default";
@@ -314,7 +284,7 @@ export default function ScriptDecodeScreen() {
               else if (i === selected) state = "incorrect";
               else state = "dimmed";
             }
-            return <OptionTile key={i} label={opt} state={state} onPress={() => handleOption(i)} />;
+            return <GameOption key={i} label={opt} state={state} accent={accent} marker onPress={() => handleOption(i)} />;
           })}
         </Animated.View>
       </View>
