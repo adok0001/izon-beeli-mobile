@@ -1,5 +1,5 @@
-import { useCallback, useEffect } from "react";
-import { View, Text, Pressable, Dimensions } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { View, Text, Pressable, type LayoutChangeEvent } from "react-native";
 import { useTranslation } from "react-i18next";
 import Animated, {
   useSharedValue,
@@ -13,10 +13,21 @@ import { hapticSuccess, hapticError, hapticTap } from "@/lib/haptics";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 
 const FLASH_DURATION = 600;
-const COLUMNS = 4;
 const GAP = 8;
-const screenWidth = Dimensions.get("window").width;
-const tileSize = (screenWidth - 40 - GAP * (COLUMNS - 1)) / COLUMNS;
+// Target tile size band — keeps tiles a sensible size on phones *and* tablets
+// instead of ballooning to fill a wide window.
+const TARGET_TILE = 116;
+const MIN_TILE = 88;
+const MAX_TILE = 148;
+
+// Derive an adaptive column count + tile size from the *measured* container
+// width (not the full window), so the board reflows on large screens.
+function computeLayout(width: number): { columns: number; tileSize: number } {
+  const columns = Math.max(2, Math.round((width + GAP) / (TARGET_TILE + GAP)));
+  const rawSize = (width - GAP * (columns - 1)) / columns;
+  const tileSize = Math.max(MIN_TILE, Math.min(rawSize, MAX_TILE));
+  return { columns, tileSize };
+}
 
 function getTileColors(tile: Tile, M: ReturnType<typeof useMuseumTheme>): { bg: string; border: string; text: string } {
   if (tile.matched) return { bg: M.successBg, border: M.successBorder, text: M.success };
@@ -27,7 +38,7 @@ function getTileColors(tile: Tile, M: ReturnType<typeof useMuseumTheme>): { bg: 
   return { bg: getAccent("amber").bg, border: getAccent("amber").border, text: getAccent("amber").solid };
 }
 
-function MatchingTile({ tile, onPress }: { tile: Tile; onPress: () => void }) {
+function MatchingTile({ tile, size, onPress }: { tile: Tile; size: number; onPress: () => void }) {
   const M = useMuseumTheme();
   const scale = useSharedValue(1);
   const colors = getTileColors(tile, M);
@@ -50,7 +61,7 @@ function MatchingTile({ tile, onPress }: { tile: Tile; onPress: () => void }) {
       <Pressable
         onPress={onPress}
         disabled={tile.matched}
-        style={{ width: tileSize, height: tileSize, alignItems: "center", justifyContent: "center", borderRadius: 12, borderWidth: 2, padding: 6, backgroundColor: colors.bg, borderColor: colors.border }}
+        style={{ width: size, height: size, alignItems: "center", justifyContent: "center", borderRadius: 12, borderWidth: 2, padding: 6, backgroundColor: colors.bg, borderColor: colors.border }}
         className="active:opacity-70"
       >
         <Text
@@ -70,6 +81,13 @@ export function MatchingBoard() {
   const { t } = useTranslation();
   const { tiles, selectTile, clearFlash, matchedCount, totalPairs, attempts } =
     useMatchingStore();
+  const [boardWidth, setBoardWidth] = useState(0);
+
+  const handleLayout = useCallback((e: LayoutChangeEvent) => {
+    setBoardWidth(e.nativeEvent.layout.width);
+  }, []);
+
+  const { tileSize } = boardWidth > 0 ? computeLayout(boardWidth) : { tileSize: 0 };
 
   const handlePress = useCallback(
     (tileId: string) => {
@@ -98,14 +116,19 @@ export function MatchingBoard() {
         </Text>
       </View>
 
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: GAP }}>
-        {tiles.map((tile) => (
-          <MatchingTile
-            key={tile.id}
-            tile={tile}
-            onPress={() => handlePress(tile.id)}
-          />
-        ))}
+      <View
+        onLayout={handleLayout}
+        style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: GAP }}
+      >
+        {tileSize > 0 &&
+          tiles.map((tile) => (
+            <MatchingTile
+              key={tile.id}
+              tile={tile}
+              size={tileSize}
+              onPress={() => handlePress(tile.id)}
+            />
+          ))}
       </View>
 
       <View style={{ marginTop: 12, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 16 }}>
