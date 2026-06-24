@@ -9,6 +9,7 @@ import { useCourses, useLanguageLessons } from "@/lib/hooks/use-courses";
 import { useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
 import { useCompletedLessons, useProgressSummary } from "@/lib/hooks/use-progress";
 import { useToast } from "@/lib/hooks/use-toast";
+import { useWordOfTheDay } from "@/lib/hooks/use-word-of-the-day";
 import { useWordsDueForReview } from "@/lib/hooks/use-wordbank";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
@@ -21,8 +22,8 @@ import { Modal, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const DAILY_GOAL = 3;
-/** Izon word riding the in-path défi coin (decorative, from the design proto). */
-const DEFI_WORD = "vírírií";
+/** Fallback word for the in-path défi coin before the word of the day loads. */
+const DEFI_WORD_FALLBACK = "vírírií";
 
 // ─── LearnScreen ─────────────────────────────────────────────────────────────
 export default function LearnScreen() {
@@ -49,6 +50,7 @@ export default function LearnScreen() {
   const { data: summary, refetch: refetchSummary } = useProgressSummary();
   const { refetch: refetchDue } = useWordsDueForReview(selectedLanguageId);
   const { data: todayChallenges = [] } = useTodayChallenges();
+  const wotd = useWordOfTheDay(selectedLanguageId);
 
   const completedIds = useMemo(() => new Set(completedLessonIds ?? []), [completedLessonIds]);
   const completedToday = useMemo(
@@ -155,7 +157,7 @@ export default function LearnScreen() {
           onRefresh={onRefresh}
           accent={M.accent}
           challenge={{
-            word: DEFI_WORD,
+            word: wotd?.word ?? DEFI_WORD_FALLBACK,
             done: completedToday >= DAILY_GOAL,
             onPress: onDefiPress,
           }}
