@@ -82,19 +82,21 @@ export default function LobbyScreen() {
   const [ready, setReady] = useState(false);
   const [copied, setCopied] = useState(false);
   const matchHandled = useRef(false);
+  const leaving = useRef(false);
   const { toast, show: toastShow, dismiss: dismissToast } = useToast();
 
   const playerName = user?.username ?? user?.firstName ?? "Player";
-  const connectToRoom = useCallback(async () => {
+  const connectToRoom = useCallback(() => {
     if (!params.partyRoomId || !params.sessionId) return;
-    const token = await getToken();
-    if (!token) return;
 
     const partyName =
       params.type === "paired_lesson" ? "paired_lesson" : "main";
     const roomUrl = `${PARTYKIT_PROTOCOL}://${PARTYKIT_HOST}/parties/${partyName}/${params.partyRoomId}`;
 
-    connect(roomUrl, token, {
+    // Pass the token *provider* so the store mints a fresh Clerk token on every
+    // (re)connect — session tokens expire in ~60s and a cached one fails on
+    // reconnect.
+    connect(roomUrl, getToken, {
       name: playerName,
       sessionId: params.sessionId,
       languageId: params.languageId ?? "",
@@ -233,11 +235,29 @@ export default function LobbyScreen() {
   };
 
   const handleCancel = () => {
+    // Guard against the X and the Cancel button both firing, or a rapid
+    // double-tap, which would dispatch navigation twice.
+    if (leaving.current) return;
+    leaving.current = true;
+    hapticTap();
+
+    // Prevent an in-flight matchmaking poll from navigating us into a game
+    // we're trying to leave: stop the effect from acting and drop the cached
+    // status so a late "matched" result can't re-route after we're gone.
+    matchHandled.current = true;
     if (isMatchmaking) {
+      queryClient.removeQueries({
+        queryKey: ["multiplayer", "matchmaking", "status"],
+      });
       leaveMatchmaking.mutate();
     }
     reset();
-    router.back();
+
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/multiplayer");
+    }
   };
 
   return (

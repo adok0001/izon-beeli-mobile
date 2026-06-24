@@ -27,9 +27,10 @@ interface MultiplayerState {
   players: PlayerInfo[];
   myPlayerId: string;
 
-  // Reconnect params (kept so we can rejoin after a drop)
+  // Reconnect params (kept so we can rejoin after a drop). The auth token is
+  // deliberately NOT stored — see _getTokenFn — because Clerk session tokens
+  // expire in ~60s and a cached one would be rejected on reconnect.
   _roomUrl: string;
-  _token: string;
   _params: Record<string, string>;
   _reconnectAttempts: number;
 
@@ -69,7 +70,11 @@ interface MultiplayerState {
   } | null;
 
   // Actions
-  connect: (roomUrl: string, token: string, params: Record<string, string>) => void;
+  connect: (
+    roomUrl: string,
+    getToken: () => Promise<string | null>,
+    params: Record<string, string>
+  ) => void;
   disconnect: () => void;
   sendReady: () => void;
   sendAnswer: (questionId: string, answer: string) => void;
@@ -88,7 +93,6 @@ const initialState = {
   players: [] as PlayerInfo[],
   myPlayerId: "",
   _roomUrl: "",
-  _token: "",
   _params: {} as Record<string, string>,
   _reconnectAttempts: 0,
   rematchRequested: false,
@@ -114,19 +118,19 @@ const initialState = {
 export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
   ...initialState,
 
-  connect: (roomUrl, token, params) => {
+  connect: (roomUrl, getToken, params) => {
     const { socket: existing } = get();
     if (existing) existing.close();
 
+    _getTokenFn = getToken;
     set({
       connectionStatus: "connecting",
       _roomUrl: roomUrl,
-      _token: token,
       _params: params,
       _reconnectAttempts: 0,
     });
 
-    _openSocket(roomUrl, token, params, set, get);
+    void _openSocket(roomUrl, params, set, get);
   },
 
   disconnect: () => {
@@ -171,6 +175,9 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
 }));
 
 let _reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+// Provider for a fresh Clerk session token, captured on connect(). Reconnects
+// call this again rather than replaying the original token, which has expired.
+let _getTokenFn: (() => Promise<string | null>) | null = null;
 
 function _clearReconnectTimer() {
   if (_reconnectTimer) {
@@ -179,13 +186,45 @@ function _clearReconnectTimer() {
   }
 }
 
-function _openSocket(
+// Schedule a backed-off reconnect, or give up after too many attempts.
+function _scheduleReconnect(
+  set: (state: Partial<MultiplayerState>) => void,
+  get: () => MultiplayerState
+) {
+  const { phase, _reconnectAttempts } = get();
+  // Don't reconnect if the game has ended or we've tried too many times.
+  if (phase === "results" || _reconnectAttempts >= 5) {
+    set({ connectionStatus: "disconnected" });
+    return;
+  }
+  const delay = Math.min(1000 * Math.pow(2, _reconnectAttempts), 30000);
+  set({ connectionStatus: "reconnecting", _reconnectAttempts: _reconnectAttempts + 1 });
+  _clearReconnectTimer();
+  _reconnectTimer = setTimeout(() => {
+    const state = get();
+    void _openSocket(state._roomUrl, state._params, set, get);
+  }, delay);
+}
+
+async function _openSocket(
   roomUrl: string,
-  token: string,
   params: Record<string, string>,
   set: (state: Partial<MultiplayerState>) => void,
   get: () => MultiplayerState
 ) {
+  // Mint a fresh token for every (re)connect. A stale token makes the PartyKit
+  // server reject the handshake, which would silently strand us mid-game.
+  let token: string | null = null;
+  try {
+    token = _getTokenFn ? await _getTokenFn() : null;
+  } catch {
+    token = null;
+  }
+  if (!token) {
+    _scheduleReconnect(set, get);
+    return;
+  }
+
   const url = new URL(roomUrl);
   url.searchParams.set("token", token);
   for (const [k, v] of Object.entries(params)) {
@@ -200,19 +239,7 @@ function _openSocket(
 
   ws.onclose = () => {
     set({ socket: null });
-    const { phase, _reconnectAttempts } = get();
-    // Don't reconnect if the game has ended or we've tried too many times
-    if (phase === "results" || _reconnectAttempts >= 5) {
-      set({ connectionStatus: "disconnected" });
-      return;
-    }
-    const delay = Math.min(1000 * Math.pow(2, _reconnectAttempts), 30000);
-    set({ connectionStatus: "reconnecting", _reconnectAttempts: _reconnectAttempts + 1 });
-    _clearReconnectTimer();
-    _reconnectTimer = setTimeout(() => {
-      const state = get();
-      _openSocket(state._roomUrl, state._token, state._params, set, get);
-    }, delay);
+    _scheduleReconnect(set, get);
   };
 
   ws.onerror = () => {
