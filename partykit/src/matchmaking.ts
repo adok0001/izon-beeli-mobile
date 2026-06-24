@@ -72,7 +72,7 @@ export default class MatchmakingRoom implements Party.Server {
 
       for (const [playerId, player] of this.players) {
         const res = await fetch(
-          `${apiUrl}/multiplayer/matchmaking/status?playerId=${playerId}`,
+          `${apiUrl}/internal/multiplayer/matchmaking/status?playerId=${playerId}`,
           { headers: { "x-api-key": apiKey } }
         );
 

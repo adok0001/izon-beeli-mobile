@@ -235,7 +235,7 @@ export default class PairedLessonRoom implements Party.Server {
       const apiUrl = process.env.API_URL ?? "http://localhost:3000/api";
       const apiKey = process.env.PARTYKIT_API_KEY ?? "";
       const res = await fetch(
-        `${apiUrl}/multiplayer/quiz-questions?languageId=${this.state.languageId}&count=10`,
+        `${apiUrl}/internal/multiplayer/quiz-questions?languageId=${this.state.languageId}&count=10`,
         { headers: { "x-api-key": apiKey } }
       );
       if (!res.ok) throw new Error("Failed to fetch exercises");
@@ -392,7 +392,7 @@ export default class PairedLessonRoom implements Party.Server {
     try {
       const apiUrl = process.env.API_URL ?? "http://localhost:3000/api";
       const apiKey = process.env.PARTYKIT_API_KEY ?? "";
-      await fetch(`${apiUrl}/multiplayer/sessions/${this.state.sessionId}/complete`, {
+      await fetch(`${apiUrl}/internal/multiplayer/sessions/${this.state.sessionId}/complete`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-api-key": apiKey },
         body: JSON.stringify({

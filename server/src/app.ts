@@ -133,7 +133,11 @@ app.route("/wordbank", wordbankRouter);
 app.route("/feedback", feedbackRouter);
 app.route("/feedback/admin", feedbackAdminRouter);
 app.route("/multiplayer", multiplayerRouter);
-app.route("/multiplayer", multiplayerInternalRouter);
+// Internal PartyKit-only routes (api-key auth). Mounted OUTSIDE /multiplayer so
+// the authenticated router's `use("*")` wildcard can't shadow them — sharing the
+// /multiplayer prefix made every server-to-server call 401. Keep in sync with the
+// fetch URLs in partykit/src/*.
+app.route("/internal/multiplayer", multiplayerInternalRouter);
 app.route("/quiz-results", quizResultsRouter);
 app.route("/word-progress", wordProgressRouter);
 app.route("/word-challenge", wordChallengeRouter);
