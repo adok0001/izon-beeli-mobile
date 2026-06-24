@@ -7,10 +7,14 @@ import {
     useMatchmakingStatus,
 } from "@/lib/hooks/use-multiplayer";
 import { useToast } from "@/lib/hooks/use-toast";
+import { hapticTap } from "@/lib/haptics";
 import { useMultiplayerStore } from "@/store/multiplayer-store";
 import { useAuth, useUser } from "@clerk/clerk-expo";
+import { useQueryClient } from "@tanstack/react-query";
+import * as Linking from "expo-linking";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
     Platform,
@@ -21,12 +25,35 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const PARTYKIT_HOST =
-  process.env.EXPO_PUBLIC_PARTYKIT_HOST ?? "localhost:1999";
+// Resolve the configured PartyKit host into a clean "host:port" plus the right
+// WebSocket scheme. The env var may or may not include a scheme (EAS stores it
+// as "https://…", local .env stores a bare "host:port"), so we must strip any
+// scheme — otherwise we'd build "wss://https://…", an invalid URL. A local
+// `partykit dev` server (localhost / LAN IP) only speaks plain ws; deployed
+// hosts (e.g. *.partykit.dev) need wss. Picking the wrong one fails silently
+// and leaves both players stuck in the lobby.
+function resolvePartyKit(raw: string): { host: string; protocol: "ws" | "wss" } {
+  const scheme = raw.match(/^(https?|wss?):\/\//i)?.[1]?.toLowerCase();
+  const host = raw.replace(/^(https?|wss?):\/\//i, "");
+  const hostname = host.split(":")[0];
+
+  if (scheme === "https" || scheme === "wss") return { host, protocol: "wss" };
+  if (scheme === "http" || scheme === "ws") return { host, protocol: "ws" };
+
+  const isLocal =
+    hostname === "localhost" || /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname);
+  return { host, protocol: isLocal ? "ws" : "wss" };
+}
+
+const { host: PARTYKIT_HOST, protocol: PARTYKIT_PROTOCOL } = resolvePartyKit(
+  process.env.EXPO_PUBLIC_PARTYKIT_HOST ?? "localhost:1999"
+);
 
 export default function LobbyScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const { user } = useUser();
   const { getToken, userId } = useAuth();
   const params = useLocalSearchParams<{
@@ -53,43 +80,66 @@ export default function LobbyScreen() {
   // Only poll while still in matchmaking mode (no session yet)
   const { data: matchStatus } = useMatchmakingStatus(isMatchmaking && !hasSessionInfo);
   const [ready, setReady] = useState(false);
+  const [copied, setCopied] = useState(false);
   const matchHandled = useRef(false);
   const { toast, show: toastShow, dismiss: dismissToast } = useToast();
 
+  const playerName = user?.username ?? user?.firstName ?? "Player";
+  const connectToRoom = useCallback(async () => {
+    if (!params.partyRoomId || !params.sessionId) return;
+    const token = await getToken();
+    if (!token) return;
+
+    const partyName =
+      params.type === "paired_lesson" ? "paired_lesson" : "main";
+    const roomUrl = `${PARTYKIT_PROTOCOL}://${PARTYKIT_HOST}/parties/${partyName}/${params.partyRoomId}`;
+
+    connect(roomUrl, token, {
+      name: playerName,
+      sessionId: params.sessionId,
+      languageId: params.languageId ?? "",
+      playerId: userId ?? params.sessionId,
+    });
+  }, [
+    params.partyRoomId,
+    params.sessionId,
+    params.type,
+    params.languageId,
+    getToken,
+    connect,
+    playerName,
+    userId,
+  ]);
+
   // Connect to PartyKit room when we have session info
   useEffect(() => {
-    if (!params.partyRoomId || !params.sessionId) return;
-
-    const connectToRoom = async () => {
-      const token = await getToken();
-      if (!token) return;
-
-      const partyName =
-        params.type === "paired_lesson" ? "paired_lesson" : "main";
-      const protocol = PARTYKIT_HOST.includes("localhost") ? "ws" : "wss";
-      const roomUrl = `${protocol}://${PARTYKIT_HOST}/parties/${partyName}/${params.partyRoomId}`;
-
-      connect(roomUrl, token, {
-        name: user?.username ?? user?.firstName ?? "Player",
-        sessionId: params.sessionId!,
-        languageId: params.languageId ?? "",
-        playerId: userId ?? params.sessionId!,
-      });
-    };
-
     connectToRoom();
-
     return () => {
       // Don't disconnect if navigating to game screen
     };
-  }, [params.partyRoomId, params.sessionId]);
+  }, [connectToRoom]);
 
-  // Handle matchmaking result — guard against double navigation
+  const handleRetryConnect = () => {
+    hapticTap();
+    connectToRoom();
+  };
+
+  // Handle matchmaking result — guard against double navigation.
+  // Once we already have session info (or are no longer in matchmaking
+  // mode) there is nothing to handle; bailing here prevents the replaced
+  // lobby instance from acting on the still-cached "matched" status and
+  // re-navigating to itself in an infinite loop.
   useEffect(() => {
     if (matchHandled.current) return;
+    if (!isMatchmaking || hasSessionInfo) return;
     if (matchStatus?.status === "matched" && matchStatus.session) {
       matchHandled.current = true;
       const session = matchStatus.session;
+      // Drop the stale matchmaking status so the next lobby instance does
+      // not re-trigger on cached data.
+      queryClient.removeQueries({
+        queryKey: ["multiplayer", "matchmaking", "status"],
+      });
       router.replace({
         pathname: "/multiplayer/lobby",
         params: {
@@ -101,7 +151,7 @@ export default function LobbyScreen() {
         },
       });
     }
-  }, [matchStatus]);
+  }, [matchStatus, isMatchmaking, hasSessionInfo]);
 
   // Navigate to game when phase changes
   useEffect(() => {
@@ -126,24 +176,59 @@ export default function LobbyScreen() {
     setReady(true);
   };
 
-  const handleShare = async () => {
-    const code = params.inviteCode ?? "";
-    if (!code) return;
+  const inviteCode = params.inviteCode ?? "";
+  // Deep link a friend can tap to open the app straight into the join flow
+  // with the code pre-filled.
+  const inviteLink = inviteCode
+    ? Linking.createURL("/multiplayer", { queryParams: { code: inviteCode } })
+    : "";
+  const modeLabel =
+    params.type === "quiz_battle"
+      ? t("multiplayer.quizBattle")
+      : t("multiplayer.pairedLesson");
+  const shareMessage = t("multiplayer.shareMessage", {
+    mode: modeLabel,
+    code: inviteCode,
+    link: inviteLink,
+  });
 
+  const flashCopied = () => {
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Copy the bare code to the clipboard (web only — native exposes copy via
+  // the system share sheet instead).
+  const handleCopy = async () => {
+    if (!inviteCode) return;
+    hapticTap();
+    try {
+      await navigator.clipboard?.writeText(inviteCode);
+      flashCopied();
+    } catch {
+      toastShow(t("multiplayer.inviteCodeLabel"), inviteCode, "info");
+    }
+  };
+
+  // Primary action: open the native share sheet (or the Web Share API),
+  // falling back to a clipboard copy where neither is available.
+  const handleShare = async () => {
+    if (!inviteCode) return;
+    hapticTap();
     try {
       if (Platform.OS === "web") {
-        // Try clipboard on web
-        await navigator.clipboard?.writeText(code);
-        toastShow("Copied!", `Invite code ${code} copied to clipboard`, "success");
+        if (typeof navigator !== "undefined" && navigator.share) {
+          await navigator.share({ text: shareMessage });
+        } else {
+          await handleCopy();
+        }
       } else {
-        await Share.share({
-          message: `Join my ${
-            params.type === "quiz_battle" ? "Quiz Battle" : "Paired Lesson"
-          } on Beeli! Use invite code: ${code}`,
-        });
+        await Share.share({ message: shareMessage });
       }
     } catch {
-      toastShow("Invite Code", code, "info");
+      // User dismissed the share sheet, or it is unavailable — fall back to
+      // surfacing the code so it can still be shared manually.
+      toastShow(t("multiplayer.inviteCodeLabel"), inviteCode, "info");
     }
   };
 
@@ -180,24 +265,54 @@ export default function LobbyScreen() {
         />
         <View className="flex-1 items-center justify-center px-8">
           {/* Invite Code */}
-          {params.inviteCode && (
-            <Pressable
-              onPress={handleShare}
-              className="mb-8 items-center rounded-2xl bg-neutral-50 px-8 py-6 active:opacity-80 dark:bg-neutral-800"
-            >
-              <Text className="mb-1 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-                Invite Code
-              </Text>
-              <Text className="text-4xl font-bold tracking-[0.3em] text-neutral-900 dark:text-white">
-                {params.inviteCode}
-              </Text>
-              <View className="mt-2 flex-row items-center">
-                <IconSymbol name="square.on.square" size={14} color={getAccent("blue").solid} />
-                <Text className="ml-1 text-sm text-blue-500">
-                  Tap to share
+          {inviteCode && (
+            <View className="mb-8 w-full items-center">
+              <View className="w-full items-center rounded-2xl bg-neutral-50 px-8 py-6 dark:bg-neutral-800">
+                <Text className="mb-1 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                  {t("multiplayer.inviteCodeLabel")}
+                </Text>
+                <Text
+                  accessibilityLabel={t("multiplayer.inviteCodeLabel")}
+                  className="text-4xl font-bold tracking-[0.3em] text-neutral-900 dark:text-white"
+                >
+                  {inviteCode}
+                </Text>
+                <Text className="mt-2 text-center text-sm text-neutral-500 dark:text-neutral-400">
+                  {t("multiplayer.shareHint")}
                 </Text>
               </View>
-            </Pressable>
+
+              {/* Share / copy actions */}
+              <View className="mt-4 w-full flex-row gap-3">
+                <Pressable
+                  onPress={handleShare}
+                  accessibilityRole="button"
+                  className="flex-1 flex-row items-center justify-center rounded-xl bg-blue-500 py-3.5 active:opacity-80"
+                >
+                  <IconSymbol name="square.and.arrow.up" size={18} color="#fff" />
+                  <Text className="ml-2 font-semibold text-white">
+                    {t("multiplayer.shareInvite")}
+                  </Text>
+                </Pressable>
+
+                {Platform.OS === "web" && (
+                  <Pressable
+                    onPress={handleCopy}
+                    accessibilityRole="button"
+                    className="flex-1 flex-row items-center justify-center rounded-xl border-2 border-neutral-200 py-3.5 active:opacity-80 dark:border-neutral-700"
+                  >
+                    <IconSymbol
+                      name={copied ? "checkmark" : "square.on.square"}
+                      size={18}
+                      color={copied ? getAccent("green").solid : M.muted}
+                    />
+                    <Text className="ml-2 font-semibold text-neutral-700 dark:text-neutral-300">
+                      {copied ? t("multiplayer.copied") : t("multiplayer.copyCode")}
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
+            </View>
           )}
 
           {/* Players */}
@@ -264,6 +379,30 @@ export default function LobbyScreen() {
               <Text className="mt-2 text-sm text-neutral-500">
                 Connecting...
               </Text>
+            </View>
+          )}
+
+          {connectionStatus === "reconnecting" && (
+            <View className="mb-6 items-center">
+              <ActivityIndicator size="small" color={M.warning} />
+              <Text className="mt-2 text-sm" style={{ color: M.warning }}>
+                Connection lost — reconnecting…
+              </Text>
+            </View>
+          )}
+
+          {connectionStatus === "disconnected" && hasSessionInfo && (
+            <View className="mb-6 items-center">
+              <IconSymbol name="xmark.circle.fill" size={28} color={M.error} />
+              <Text className="mt-2 text-center text-sm" style={{ color: M.error }}>
+                Couldn&apos;t reach the game server.
+              </Text>
+              <Pressable
+                onPress={handleRetryConnect}
+                className="mt-3 rounded-xl bg-blue-500 px-5 py-2.5 active:opacity-80"
+              >
+                <Text className="font-semibold text-white">Retry</Text>
+              </Pressable>
             </View>
           )}
 

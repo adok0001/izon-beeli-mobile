@@ -1145,6 +1145,13 @@ export const ar = {
     opponentAnswered: "أجاب الخصم",
     you: "أنت",
     opponent: "الخصم",
+    inviteCodeLabel: "رمز الدعوة",
+    shareHint: "ينضم أصدقاؤك بهذا الرمز",
+    shareInvite: "مشاركة الدعوة",
+    copyCode: "نسخ الرمز",
+    copied: "تم النسخ!",
+    shareMessage:
+      "انضم إلى {{mode}} على Beeli! اضغط للعب: {{link}} — أو أدخل الرمز {{code}}",
   },
   geez: {
     title: "تعلّم كتابة الجعز",

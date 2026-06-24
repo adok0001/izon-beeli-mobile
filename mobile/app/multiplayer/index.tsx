@@ -1,7 +1,7 @@
 import { analytics } from "@/lib/analytics";
 import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   ScrollView,
 } from "react-native";
-import { useRouter, Stack } from "expo-router";
+import { useRouter, Stack, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
@@ -106,9 +106,15 @@ export default function MultiplayerHubScreen() {
   const joinSession = useJoinSession();
   const joinMatchmaking = useJoinMatchmaking();
   const { data: recentSessions = [] } = useRecentSessions();
+  const { code: deepLinkCode } = useLocalSearchParams<{ code?: string }>();
   const [joinCode, setJoinCode] = useState("");
   const [joining, setJoining] = useState(false);
   const { toast, error: toastError, dismiss: dismissToast } = useToast();
+
+  // Pre-fill the join field when opened from an invite deep link.
+  useEffect(() => {
+    if (deepLinkCode) setJoinCode(deepLinkCode.toUpperCase());
+  }, [deepLinkCode]);
 
   const handleInvite = async (type: GameSessionType) => {
     try {

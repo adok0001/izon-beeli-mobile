@@ -89,6 +89,7 @@ const MAPPING = {
   'film.stack': 'video-library',
   'checkmark': 'check',
   'questionmark': 'help-outline',
+  'square.on.square': 'content-copy',
 } as IconMapping;
 
 /**

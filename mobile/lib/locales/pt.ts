@@ -1145,6 +1145,13 @@ export const pt = {
     opponentAnswered: "O adversário respondeu",
     you: "Você",
     opponent: "Adversário",
+    inviteCodeLabel: "Código de convite",
+    shareHint: "Seus amigos entram com este código",
+    shareInvite: "Compartilhar convite",
+    copyCode: "Copiar código",
+    copied: "Copiado!",
+    shareMessage:
+      "Entre no meu {{mode}} no Beeli! Toque para jogar: {{link}} — ou use o código {{code}}",
   },
   geez: {
     title: "Aprender a Escrita Ge'ez",
