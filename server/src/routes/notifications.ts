@@ -95,17 +95,23 @@ notificationsRouter.post("/broadcast", adminMiddleware, async (c) => {
     body: string;
     data?: Record<string, string | number | boolean>;
     languageId?: string;
+    audience?: "admins" | "educators";
   }>();
 
   if (!body.title || !body.body) {
     return c.json({ error: "title and body are required" }, 400);
   }
 
+  const conditions = [];
+  if (body.audience === "admins") conditions.push(eq(users.isAdmin, true));
+  else if (body.audience === "educators") conditions.push(eq(users.isReviewer, true));
+  if (body.languageId) conditions.push(eq(users.selectedLanguageId, body.languageId));
+
   const rows = await db
     .select({ token: pushTokens.token })
     .from(pushTokens)
     .innerJoin(users, eq(pushTokens.userId, users.id))
-    .where(body.languageId ? eq(users.selectedLanguageId, body.languageId) : undefined);
+    .where(conditions.length ? and(...conditions) : undefined);
 
   if (rows.length === 0) return c.json({ sent: 0, total: 0 });
 
@@ -248,15 +254,17 @@ notificationsAdminRouter.post("/broadcast", async (c) => {
     body: string;
     data?: Record<string, string | number | boolean>;
     languageId?: string;
+    audience?: "admins" | "educators";
   }>();
 
   if (!body.title || !body.body) {
     return c.json({ error: "title and body are required" }, 400);
   }
 
-  const conditions = body.languageId
-    ? [eq(users.selectedLanguageId, body.languageId)]
-    : [];
+  const conditions = [];
+  if (body.audience === "admins") conditions.push(eq(users.isAdmin, true));
+  else if (body.audience === "educators") conditions.push(eq(users.isReviewer, true));
+  if (body.languageId) conditions.push(eq(users.selectedLanguageId, body.languageId));
 
   const rows = await db
     .select({ token: pushTokens.token })

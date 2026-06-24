@@ -36,12 +36,21 @@ export default function BroadcastScreen() {
   const { getToken } = useAuth();
   const { data: languages = [] } = useLanguages();
 
+  type Audience = "all" | "admins" | "educators";
+
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [selectedIcon, setSelectedIcon] = useState("bell.fill");
+  const [audience, setAudience] = useState<Audience>("all");
   const [languageId, setLanguageId] = useState<string | null>(null);
   const [pickerVisible, setPickerVisible] = useState(false);
   const [sending, setSending] = useState(false);
+
+  const ROLE_OPTIONS: { value: Audience; label: string }[] = [
+    { value: "all", label: t("admin.notifications.roleAll") },
+    { value: "admins", label: t("admin.notifications.roleAdmins") },
+    { value: "educators", label: t("admin.notifications.roleEducators") },
+  ];
 
   const selectedLanguageName = languageId
     ? languages.find((l) => l.id === languageId)?.name ?? languageId
@@ -55,7 +64,13 @@ export default function BroadcastScreen() {
       const result = await apiFetch<{ sent: number; total: number }>("/notifications/broadcast", {
         token: token ?? undefined,
         method: "POST",
-        body: JSON.stringify({ title, body, data: { icon: selectedIcon }, ...(languageId ? { languageId } : {}) }),
+        body: JSON.stringify({
+          title,
+          body,
+          data: { icon: selectedIcon },
+          ...(audience !== "all" ? { audience } : {}),
+          ...(languageId ? { languageId } : {}),
+        }),
       });
       Alert.alert(
         t("admin.notifications.sent"),
@@ -64,6 +79,7 @@ export default function BroadcastScreen() {
       setTitle("");
       setBody("");
       setSelectedIcon("bell.fill");
+      setAudience("all");
       setLanguageId(null);
     } catch {
       Alert.alert(t("common.error"), t("admin.notifications.error"));
@@ -93,10 +109,31 @@ export default function BroadcastScreen() {
             {t("admin.notifications.subtitle")}
           </Text>
 
-          {/* Audience picker */}
+          {/* Audience role */}
           <Text className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: M.muted }}>
             {t("admin.notifications.audience")}
           </Text>
+          <View className="flex-row gap-2 mb-3">
+            {ROLE_OPTIONS.map(({ value, label }) => {
+              const active = audience === value;
+              return (
+                <Pressable
+                  key={value}
+                  onPress={() => setAudience(value)}
+                  className="flex-1 items-center rounded-2xl border px-3 py-2.5 active:opacity-70"
+                  style={active
+                    ? { backgroundColor: M.infoBg, borderColor: M.infoBorder }
+                    : { backgroundColor: M.card, borderColor: M.border }}
+                >
+                  <Text className="text-xs font-semibold" style={{ color: active ? blue : M.sub }}>
+                    {label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {/* Language filter */}
           <View className="flex-row items-center gap-2">
             <Pressable
               onPress={() => setPickerVisible(true)}
@@ -120,7 +157,11 @@ export default function BroadcastScreen() {
             )}
           </View>
           <Text className="mt-1.5 text-xs mb-5" style={{ color: M.muted }}>
-            {languageId
+            {audience === "admins"
+              ? t("admin.notifications.audienceAdmins", "Only admins will receive this.")
+              : audience === "educators"
+              ? t("admin.notifications.audienceEducators", "Only educators (reviewers) will receive this.")
+              : languageId
               ? t("admin.notifications.audienceFiltered", { language: selectedLanguageName, defaultValue: "Only {{language}} learners will receive this." })
               : t("admin.notifications.audienceAll", "No language selected — all users will receive this.")}
           </Text>
