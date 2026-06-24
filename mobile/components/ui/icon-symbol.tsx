@@ -87,6 +87,8 @@ const MAPPING = {
   'play.circle.fill': 'play-circle',
   'doc.text.fill': 'article',
   'film.stack': 'video-library',
+  'checkmark': 'check',
+  'questionmark': 'help-outline',
 } as IconMapping;
 
 /**

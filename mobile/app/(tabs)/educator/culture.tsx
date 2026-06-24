@@ -1,4 +1,6 @@
 import { getAccent } from "@/constants/accent-colors";
+import { ColorSwatchInput, isHex } from "@/components/educator/color-swatch-input";
+import { HeadwordField } from "@/components/educator/headword-field";
 import { LocalizedTextInput, toLocalizedText } from "@/components/ui/localized-text-input";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -122,10 +124,6 @@ function safeParseLocalized(s: string): LocalizedText {
   } catch {
     return { en: s };
   }
-}
-
-function isHex(v: string): boolean {
-  return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v.trim());
 }
 
 /** Drop empty/whitespace entries; returns undefined when nothing remains. */
@@ -323,8 +321,10 @@ export default function EducatorCultureScreen() {
     const applications = culturalForm.applications
       .map(cleanLocalized)
       .filter((a): a is LocalizedText => a !== undefined);
+    // A colour band is defined by its colours; the label is optional. Only drop
+    // bands with an invalid/empty colour stop (which the reader can't render).
     const heroBands = culturalForm.heroBands
-      .filter((b) => b.label.trim() && b.from.trim() && b.to.trim())
+      .filter((b) => isHex(b.from) && isHex(b.to))
       .map((b) => ({
         label: b.label.trim(),
         sublabel: cleanLocalized(b.sublabel),
@@ -670,28 +670,30 @@ export default function EducatorCultureScreen() {
           <Text className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
             {t("educator.culture.headwordLabel")}
           </Text>
-          <TextInput
-            value={culturalForm.headwordWord}
-            onChangeText={(headwordWord) => setCulturalForm((c) => ({ ...c, headwordWord }))}
-            placeholder={t("educator.culture.headwordWord")}
-            placeholderTextColor={M.muted}
-            className={inputCls}
-          />
-          <View style={{ marginTop: 8 }}>
-            <LocalizedTextInput
-              label={t("educator.culture.headwordGloss")}
-              value={culturalForm.headwordGloss}
-              onChange={(headwordGloss) => setCulturalForm((c) => ({ ...c, headwordGloss }))}
-            />
-          </View>
-          <TextInput
-            value={culturalForm.headwordAudioUrl}
-            onChangeText={(headwordAudioUrl) => setCulturalForm((c) => ({ ...c, headwordAudioUrl }))}
-            placeholder={t("educator.culture.headwordAudio")}
-            placeholderTextColor={M.muted}
-            autoCapitalize="none"
-            autoCorrect={false}
-            className={`mt-2 ${inputCls}`}
+          <HeadwordField
+            languageId={activeLanguageId}
+            value={{
+              word: culturalForm.headwordWord,
+              gloss: culturalForm.headwordGloss,
+              audioUrl: culturalForm.headwordAudioUrl,
+            }}
+            onChange={(patch) =>
+              setCulturalForm((c) => ({
+                ...c,
+                ...(patch.word !== undefined && { headwordWord: patch.word }),
+                ...(patch.gloss !== undefined && { headwordGloss: patch.gloss }),
+                ...(patch.audioUrl !== undefined && { headwordAudioUrl: patch.audioUrl }),
+              }))
+            }
+            labels={{
+              word: t("educator.culture.headwordWord"),
+              gloss: t("educator.culture.headwordGloss"),
+              audio: t("educator.culture.headwordAudio"),
+              pick: t("educator.culture.headwordPick"),
+              search: t("educator.culture.headwordSearch"),
+              noEntries: t("educator.culture.headwordNoEntries"),
+              createHint: t("educator.culture.headwordCreateHint"),
+            }}
           />
 
           {/* Applications */}
@@ -759,8 +761,13 @@ export default function EducatorCultureScreen() {
             return (
               <View key={i} className="mt-2 rounded-xl bg-white p-3 dark:bg-neutral-900">
                 <View className="flex-row items-center gap-2">
-                  <View className="h-8 w-8 rounded-md border border-neutral-200 dark:border-neutral-700" style={{ backgroundColor: isHex(band.from) ? band.from : "transparent" }} />
-                  <View className="h-8 w-8 rounded-md border border-neutral-200 dark:border-neutral-700" style={{ backgroundColor: isHex(band.to) ? band.to : "transparent" }} />
+                  <View
+                    className="h-8 w-12 rounded-md border border-neutral-200 dark:border-neutral-700"
+                    style={{ overflow: "hidden", flexDirection: "row" }}
+                  >
+                    <View style={{ flex: 1, backgroundColor: isHex(band.from) ? band.from : "transparent" }} />
+                    <View style={{ flex: 1, backgroundColor: isHex(band.to) ? band.to : "transparent" }} />
+                  </View>
                   <TextInput
                     value={band.label}
                     onChangeText={(label) => updateBand({ label })}
@@ -775,24 +782,16 @@ export default function EducatorCultureScreen() {
                     <IconSymbol name="xmark.circle.fill" size={18} color={M.error} />
                   </Pressable>
                 </View>
-                <View className="mt-2 flex-row gap-2">
-                  <TextInput
+                <View className="mt-3 gap-3">
+                  <ColorSwatchInput
+                    label={t("educator.culture.bandFrom")}
                     value={band.from}
-                    onChangeText={(from) => updateBand({ from })}
-                    placeholder={t("educator.culture.bandFrom")}
-                    placeholderTextColor={M.muted}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    className={`${inputCls} flex-1`}
+                    onChange={(from) => updateBand({ from })}
                   />
-                  <TextInput
+                  <ColorSwatchInput
+                    label={t("educator.culture.bandTo")}
                     value={band.to}
-                    onChangeText={(to) => updateBand({ to })}
-                    placeholder={t("educator.culture.bandTo")}
-                    placeholderTextColor={M.muted}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    className={`${inputCls} flex-1`}
+                    onChange={(to) => updateBand({ to })}
                   />
                 </View>
                 <View style={{ marginTop: 8 }}>
@@ -811,6 +810,14 @@ export default function EducatorCultureScreen() {
               </View>
             );
           })}
+          {culturalForm.heroBands.some((b) => !(isHex(b.from) && isHex(b.to))) && (
+            <View className="mt-2 flex-row items-center gap-1.5">
+              <IconSymbol name="exclamationmark.triangle.fill" size={13} color={M.warning} />
+              <Text className="flex-1 text-xs" style={{ color: M.warning }}>
+                {t("educator.culture.bandIncomplete")}
+              </Text>
+            </View>
+          )}
 
           <View className="mt-4 flex-row gap-2">
             <Pressable

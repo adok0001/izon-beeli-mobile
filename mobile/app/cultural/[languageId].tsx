@@ -101,9 +101,9 @@ function ReaderHero({ item, height }: { item: CulturalContent; height: number })
   if (item.heroBands && item.heroBands.length > 0) {
     return (
       <View style={{ flexDirection: "row", height }}>
-        {item.heroBands.map((band) => (
+        {item.heroBands.map((band, i) => (
           <LinearGradient
-            key={band.label}
+            key={`${band.label}-${i}`}
             colors={[band.from, band.to]}
             start={{ x: 0.2, y: 0 }}
             end={{ x: 0.8, y: 1 }}
@@ -274,8 +274,8 @@ function FeaturedCard({ item, onOpen }: { item: CulturalContent; onOpen: () => v
     >
       {bands && bands.length > 0 ? (
         <View style={{ flexDirection: "row", height: 118 }}>
-          {bands.map((band) => (
-            <LinearGradient key={band.label} colors={[band.from, band.to]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={{ flex: 1, justifyContent: "flex-end", padding: 11 }}>
+          {bands.map((band, i) => (
+            <LinearGradient key={`${band.label}-${i}`} colors={[band.from, band.to]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={{ flex: 1, justifyContent: "flex-end", padding: 11 }}>
               <Text style={{ fontSize: 10, fontWeight: "800", letterSpacing: 0.4, color: band.dark ? "rgba(255,255,255,0.82)" : "rgba(58,49,40,0.6)" }}>{band.label}</Text>
             </LinearGradient>
           ))}
