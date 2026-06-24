@@ -143,6 +143,7 @@ export const pt = {
     tasksDone: "{{done}} de {{total}} hoje",
     done: "Concluído",
     upNext: "A seguir",
+    open: "Aberto",
     locked: "Bloqueado",
     lessonN: "Lição {{n}}",
     wordCount: "{{count}} palavras",

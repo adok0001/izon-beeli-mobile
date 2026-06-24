@@ -143,6 +143,7 @@ export const fr = {
     tasksDone: "{{done}} sur {{total}} aujourd'hui",
     done: "Terminé",
     upNext: "À suivre",
+    open: "Ouvert",
     locked: "Verrouillé",
     lessonN: "Leçon {{n}}",
     wordCount: "{{count}} mots",

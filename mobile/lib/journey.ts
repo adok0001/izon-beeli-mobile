@@ -10,7 +10,8 @@ import type { Course, CourseType, Lesson, LocalizedText } from "@/types";
  *
  * Areas  = courses (themed region labels down the path)
  * Nodes  = lessons (discs on the path), ordered course-by-course
- * Status = done (completed) · active (first incomplete) · locked (after active)
+ * Status = done (completed) · active (first incomplete) · open (every other
+ *          lesson — all levels are unlocked, so any lesson can be started)
  */
 
 /**
@@ -37,7 +38,7 @@ export const JOURNEY = {
   discLockedBorder: "#CBBC9F",
 } as const;
 
-export type NodeStatus = "done" | "active" | "locked";
+export type NodeStatus = "done" | "active" | "open" | "locked";
 
 export interface JourneyNode {
   lessonId: string;
@@ -171,7 +172,7 @@ function orderNodes(
         courseId: course.id,
         title: lesson.title,
         description: lesson.description,
-        status: completedIds.has(lesson.id) ? "done" : "locked",
+        status: completedIds.has(lesson.id) ? "done" : "open",
         lessonNumber: i + 1,
         durationSeconds: lesson.duration,
         wordCount: lesson.vocab?.length,
@@ -186,8 +187,8 @@ function orderNodes(
     });
   }
 
-  // The active node is the first lesson that isn't done; everything before it
-  // stays done, everything after stays locked.
+  // The active node is the first lesson that isn't done — the "you are here"
+  // marker. Every other unfinished lesson stays "open" (unlocked & startable).
   const activeIndex = nodes.findIndex((n) => n.status !== "done");
   if (activeIndex >= 0) nodes[activeIndex].status = "active";
   return { nodes, activeIndex };

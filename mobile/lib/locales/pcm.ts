@@ -143,6 +143,7 @@ export const pcm = {
     tasksDone: "{{done}} out of {{total}} you don do today",
     done: "Don finish",
     upNext: "Next one",
+    open: "Open",
     locked: "Lock",
     lessonN: "Lesson {{n}}",
     wordCount: "{{count}} words",

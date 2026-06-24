@@ -19,12 +19,14 @@ const WRAP = 124;
 const DISC_GRADIENT: Record<NodeStatus, [string, string]> = {
   done: ["#EFC479", "#A66E1C"],
   active: ["#F6D08A", "#B5781E"],
+  open: ["#F2D9A0", "#C4862A"],
   locked: ["#EDE6D6", "#D6CAB2"],
 };
 
 const DISC_BORDER: Record<NodeStatus, { color: string; width: number }> = {
   done: { color: JOURNEY.discDoneBorder, width: 2 },
   active: { color: "#FFFFFF", width: 3 },
+  open: { color: JOURNEY.discDoneBorder, width: 2 },
   locked: { color: JOURNEY.discLockedBorder, width: 2 },
 };
 
@@ -105,7 +107,7 @@ export const JourneyNodeView = memo(function JourneyNodeView({
         alignItems: "center",
       }}
       accessibilityRole="button"
-      accessibilityLabel={`${title}${status === "done" ? ", completed" : status === "locked" ? ", locked" : ", up next"}`}
+      accessibilityLabel={`${title}${status === "done" ? ", completed" : status === "active" ? ", up next" : status === "locked" ? ", locked" : ", available"}`}
       accessibilityHint="Tap to open lesson details"
     >
       <View style={{ width: DISC, height: DISC, alignItems: "center", justifyContent: "center" }}>

@@ -143,6 +143,7 @@ export const ar = {
     tasksDone: "{{done}} من {{total}} اليوم",
     done: "مكتمل",
     upNext: "التالي",
+    open: "متاح",
     locked: "مقفل",
     lessonN: "الدرس {{n}}",
     wordCount: "{{count}} كلمة",

@@ -1,7 +1,10 @@
 import Svg, { Path, Rect } from "react-native-svg";
 import type { NodeStatus } from "@/lib/journey";
 
-/** The glyph inside a journey disc — check (done), play (active), lock (locked). */
+/**
+ * The glyph inside a journey disc — check (done), play (active), play in bronze
+ * (open / unlocked), lock (locked).
+ */
 export function NodeGlyph({ status }: { status: NodeStatus }) {
   if (status === "done") {
     return (
@@ -20,6 +23,13 @@ export function NodeGlyph({ status }: { status: NodeStatus }) {
     return (
       <Svg viewBox="0 0 24 24" width={26} height={26}>
         <Path d="M8 5v14l11-7z" fill="#fff" />
+      </Svg>
+    );
+  }
+  if (status === "open") {
+    return (
+      <Svg viewBox="0 0 24 24" width={24} height={24}>
+        <Path d="M8 5v14l11-7z" fill="#fff" fillOpacity={0.92} />
       </Svg>
     );
   }

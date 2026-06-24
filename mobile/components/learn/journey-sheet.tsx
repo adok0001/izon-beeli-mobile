@@ -85,6 +85,16 @@ function StatusPill({ status }: { status: JourneyNode["status"] }) {
       />
     );
   }
+  if (status === "open") {
+    return (
+      <MetaPill
+        label={`▷ ${t("journey.open", { defaultValue: "Open" })}`}
+        color={JOURNEY.bronze}
+        bg="rgba(196,134,42,0.06)"
+        border={JOURNEY.bronzeMid}
+      />
+    );
+  }
   return <MetaPill label={`🔒 ${t("journey.locked", { defaultValue: "Locked" })}`} />;
 }
 
@@ -195,7 +205,7 @@ export function JourneySheet({ node, areaName, uiLanguage, onClose, onStart }: J
                 style={{ marginTop: 18, borderRadius: 16, overflow: "hidden" }}
                 accessibilityRole="button"
               >
-                {node.status === "active" ? (
+                {node.status !== "done" ? (
                   <LinearGradient
                     colors={["#D89A3A", JOURNEY.bronze]}
                     style={{ paddingVertical: 16, alignItems: "center" }}
