@@ -86,6 +86,15 @@ export default function LobbyScreen() {
   const { toast, show: toastShow, dismiss: dismissToast } = useToast();
 
   const playerName = user?.username ?? user?.firstName ?? "Player";
+
+  // Keep the latest getToken in a ref and expose a *stable* provider. Clerk
+  // hands back a new getToken identity whenever it refreshes its session, so
+  // depending on getToken directly would change connectToRoom every render and
+  // re-fire the connect effect in an infinite loop.
+  const getTokenRef = useRef(getToken);
+  getTokenRef.current = getToken;
+  const provideToken = useCallback(() => getTokenRef.current(), []);
+
   const connectToRoom = useCallback(() => {
     if (!params.partyRoomId || !params.sessionId) return;
 
@@ -96,7 +105,7 @@ export default function LobbyScreen() {
     // Pass the token *provider* so the store mints a fresh Clerk token on every
     // (re)connect — session tokens expire in ~60s and a cached one fails on
     // reconnect.
-    connect(roomUrl, getToken, {
+    connect(roomUrl, provideToken, {
       name: playerName,
       sessionId: params.sessionId,
       languageId: params.languageId ?? "",
@@ -107,7 +116,7 @@ export default function LobbyScreen() {
     params.sessionId,
     params.type,
     params.languageId,
-    getToken,
+    provideToken,
     connect,
     playerName,
     userId,

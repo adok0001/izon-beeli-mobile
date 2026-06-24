@@ -119,10 +119,19 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
   ...initialState,
 
   connect: (roomUrl, getToken, params) => {
-    const { socket: existing } = get();
-    if (existing) existing.close();
+    const { socket: existing, _roomUrl, connectionStatus } = get();
 
+    // Always refresh the token provider so reconnects use the live one.
     _getTokenFn = getToken;
+
+    // Idempotent: if we're already live on this exact room, don't tear the
+    // socket down and reopen it. A repeated connect() call (e.g. an effect that
+    // re-fires) would otherwise thrash the connection or loop.
+    if (existing && _roomUrl === roomUrl && connectionStatus !== "disconnected") {
+      return;
+    }
+
+    if (existing) existing.close();
     set({
       connectionStatus: "connecting",
       _roomUrl: roomUrl,
