@@ -476,6 +476,24 @@ export const culturalContent = pgTable(
     description: text("description").notNull(),
     descriptionFr: text("description_fr"),
     imageEmoji: varchar("image_emoji", { length: 16 }).notNull(),
+    /** Surfaced as the "Featured" hero card at the top of the gallery. */
+    featured: boolean("featured").default(false).notNull(),
+    /** Primary headword shown with an audio button in the reader. */
+    headword: jsonb("headword").$type<{
+      word: string;
+      gloss?: unknown;
+      audioUrl?: string;
+    } | null>(),
+    /** Contexts where this appears, rendered as chips. LocalizedText or plain strings. */
+    applications: jsonb("applications").$type<unknown[] | null>(),
+    /** Colour-band reader hero (e.g. the Izon colour-symbolism entry). */
+    heroBands: jsonb("hero_bands").$type<{
+      label: string;
+      sublabel?: unknown;
+      from: string;
+      to: string;
+      dark?: boolean;
+    }[] | null>(),
   },
   (table) => [index("cultural_content_language_id_idx").on(table.languageId)]
 );

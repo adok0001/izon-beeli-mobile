@@ -1104,6 +1104,12 @@ export const ar = {
     all: "الكل",
     keyTerms: "المصطلحات الرئيسية",
     noContent: "لا يوجد محتوى ثقافي متاح لهذه الفئة بعد.",
+    subtitle: "ما وراء الكلمات: المعارف والفنون والمعتقدات التي تُبقي اللغة حية.",
+    featured: "مميَّز",
+    readArticle: "اقرأ المقال",
+    entries: "مدخلات",
+    entryCount: "{{count}} مدخلات",
+    applications: "أين تجدها",
     categories: {
       colors: "الألوان",
       naming_ceremonies: "التسمية",

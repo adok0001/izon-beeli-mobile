@@ -54,12 +54,11 @@ export const useQuizStore = create<QuizState>((set, get) => ({
       ? [...answeredQuestions, { questionId: question.id, selectedAnswer, correct }]
       : answeredQuestions;
 
-    // On incorrect answer, re-insert the question 2 positions later (until correct)
+    // On incorrect answer, move the question to the back of the queue so every
+    // other remaining question is served before it reappears (until correct).
     let newQuestions = questions;
     if (!correct) {
-      const insertAt = Math.min(currentIndex + 2, questions.length);
-      newQuestions = [...questions];
-      newQuestions.splice(insertAt, 0, question);
+      newQuestions = [...questions, question];
     }
 
     set({ questions: newQuestions, answeredQuestions: newAnswered, lastAnswerCorrect: correct });

@@ -49,6 +49,8 @@ culturalRouter.get("/", async (c) => {
 // ── Educator / Admin write routes ─────────────────────────────────────────────
 
 type KeyTermInput = { word: string; english: string };
+type HeadwordInput = { word: string; gloss?: unknown; audioUrl?: string } | null;
+type HeroBandInput = { label: string; sublabel?: unknown; from: string; to: string; dark?: boolean };
 
 export const culturalAdminRouter = new Hono<AuthEnv>();
 culturalAdminRouter.use("*", authMiddleware);
@@ -67,6 +69,10 @@ culturalAdminRouter.post("/", async (c) => {
     descriptionFr?: string;
     imageEmoji: string;
     keyTerms?: KeyTermInput[];
+    featured?: boolean;
+    headword?: HeadwordInput;
+    applications?: unknown[] | null;
+    heroBands?: HeroBandInput[] | null;
   }>();
 
   const { languageId, category, title, description, imageEmoji } = body;
@@ -89,6 +95,10 @@ culturalAdminRouter.post("/", async (c) => {
       description,
       descriptionFr: body.descriptionFr ?? null,
       imageEmoji,
+      featured: body.featured ?? false,
+      headword: body.headword ?? null,
+      applications: body.applications ?? null,
+      heroBands: body.heroBands ?? null,
     })
     .returning();
 
@@ -132,6 +142,10 @@ culturalAdminRouter.patch("/:id", async (c) => {
     descriptionFr: string | null;
     imageEmoji: string;
     keyTerms: KeyTermInput[];
+    featured: boolean;
+    headword: HeadwordInput;
+    applications: unknown[] | null;
+    heroBands: HeroBandInput[] | null;
   }>>();
 
   const { keyTerms, ...fields } = body;

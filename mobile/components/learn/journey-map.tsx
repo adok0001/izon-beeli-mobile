@@ -103,8 +103,8 @@ function AreaLabel({
 
 /**
  * "Défi du jour" coin — a bronze medallion pinned just beside the active node,
- * embedding the daily challenge directly in the path. Tapping it opens the same
- * challenge flow as the header's Objectif stat.
+ * embedding the day's Izon word directly in the path. Tapping it opens the
+ * word-of-the-day challenge flow.
  */
 function DefiNode({
   x,

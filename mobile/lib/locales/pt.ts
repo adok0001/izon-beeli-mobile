@@ -1104,6 +1104,12 @@ export const pt = {
     all: "Tudo",
     keyTerms: "Termos-chave",
     noContent: "Ainda não há conteúdo cultural disponível para esta categoria.",
+    subtitle: "Para além das palavras: os saberes, as artes e as crenças que mantêm a língua viva.",
+    featured: "Em destaque",
+    readArticle: "Ler artigo",
+    entries: "Entradas",
+    entryCount: "{{count}} entradas",
+    applications: "Onde os encontrar",
     categories: {
       colors: "Cores",
       naming_ceremonies: "Nomeação",

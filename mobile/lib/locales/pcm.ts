@@ -1126,6 +1126,12 @@ export const pcm = {
     all: "All",
     keyTerms: "Key Terms",
     noContent: "No cultural content available for this category yet.",
+    subtitle: "Pass di words: di sabi, di arts, an di belief wey dey keep di language alive.",
+    featured: "Wetin dey hot",
+    readArticle: "Read di article",
+    entries: "Entries",
+    entryCount: "{{count}} entries",
+    applications: "Where you go see dem",
     categories: {
       colors: "Colors",
       naming_ceremonies: "Naming",

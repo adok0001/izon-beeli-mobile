@@ -20,6 +20,9 @@ export interface ProgramStep {
 interface LessonProgramProps {
   steps: ProgramStep[];
   accentColor: string;
+  /** Horizontal padding for the header + step rows. Defaults to 22 (full-page).
+   *  Pass 0 when embedding inside an already-padded container (e.g. the sheet). */
+  paddingHorizontal?: number;
 }
 
 // Render functions so the colour is resolved fresh each render (safe for future dynamic theming).
@@ -61,7 +64,7 @@ const STEP_ICONS: Record<StepKey, () => React.ReactNode> = {
   ),
 };
 
-export function LessonProgram({ steps, accentColor }: LessonProgramProps) {
+export function LessonProgram({ steps, accentColor, paddingHorizontal = 22 }: LessonProgramProps) {
   const { t } = useTranslation();
   if (!steps.length) return null;
 
@@ -69,10 +72,14 @@ export function LessonProgram({ steps, accentColor }: LessonProgramProps) {
 
   return (
     <View style={{ paddingTop: 24 }}>
-      <LessonSectionHeader label={headerLabel} accentColor={accentColor} />
-      <View style={{ paddingHorizontal: 22, gap: 2 }}>
-        {steps.map((step, i) => (
-          <Pressable
+      <LessonSectionHeader label={headerLabel} accentColor={accentColor} paddingHorizontal={paddingHorizontal} />
+      <View style={{ paddingHorizontal, gap: 2 }}>
+        {steps.map((step, i) => {
+          // Interactive on the lesson page (each step deep-links), but a static
+          // preview when embedded in the course-review sheet (no onPress yet).
+          const Row = step.onPress ? Pressable : View;
+          return (
+          <Row
             key={step.key}
             onPress={step.onPress}
             style={{
@@ -86,8 +93,8 @@ export function LessonProgram({ steps, accentColor }: LessonProgramProps) {
               borderWidth: 1,
               borderColor: JOURNEY.hairline,
             }}
-            className="active:opacity-70"
-            accessibilityRole="button"
+            className={step.onPress ? "active:opacity-70" : undefined}
+            accessibilityRole={step.onPress ? "button" : undefined}
           >
             <View
               style={{
@@ -107,8 +114,9 @@ export function LessonProgram({ steps, accentColor }: LessonProgramProps) {
             <Text style={{ fontSize: 11.5, fontWeight: "700", color: JOURNEY.capLocked }}>
               {String(i + 1).padStart(2, "0")}
             </Text>
-          </Pressable>
-        ))}
+          </Row>
+          );
+        })}
       </View>
     </View>
   );

@@ -24,7 +24,13 @@ const SESSION_SIZE = 6;
 const BUNDLED_PHRASE_AUDIO: Record<string, string> = {};
 
 function normalise(s: string): string {
-  return s.toLowerCase().replace(/[^a-zÀ-ɏḀ-ỿ]/gi, "").trim();
+  return s
+    .normalize("NFD")
+    .replace(/\p{Mn}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z\s]/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function scoreAnswer(userAnswer: string, correct: string): { exact: boolean; pct: number } {
@@ -83,7 +89,7 @@ export default function DictationScreen() {
       setSpeed(slow ? 0.75 : 1);
       await loadAndPlay(`dictation-${current.id}`, audioUrl, current.sentence);
     } else {
-      const { default: Speech } = await import("expo-speech");
+      const Speech = await import("expo-speech");
       Speech.speak(current.sentence, { rate: slow ? 0.6 : 0.85 });
     }
   }, [current, loadAndPlay, setSpeed]);

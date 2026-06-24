@@ -20,20 +20,22 @@ class BeeliWidgetModule : Module() {
     }
 
     Function("reloadWidgetTimelines") {
-      val ctx = appContext.reactContext ?: return@Function
-      val mgr = AppWidgetManager.getInstance(ctx)
-      listOf(
-        BeeliWotdWidget::class.java,
-        BeeliPotmWidget::class.java,
-        BeeliSotwWidget::class.java,
-      ).forEach { cls ->
-        val ids = mgr.getAppWidgetIds(ComponentName(ctx, cls))
-        if (ids.isNotEmpty()) {
-          val intent = Intent(ctx, cls).apply {
-            action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+      val ctx = appContext.reactContext
+      if (ctx != null) {
+        val mgr = AppWidgetManager.getInstance(ctx)
+        listOf(
+          BeeliWotdWidget::class.java,
+          BeeliPotmWidget::class.java,
+          BeeliSotwWidget::class.java,
+        ).forEach { cls ->
+          val ids = mgr.getAppWidgetIds(ComponentName(ctx, cls))
+          if (ids.isNotEmpty()) {
+            val intent = Intent(ctx, cls).apply {
+              action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+              putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+            }
+            ctx.sendBroadcast(intent)
           }
-          ctx.sendBroadcast(intent)
         }
       }
     }

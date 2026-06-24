@@ -14,7 +14,7 @@ import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import type { SentenceTemplate } from "@/types";
 import { Stack, useRouter } from "expo-router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Animated, Pressable, ScrollView, Text, View } from "react-native";
 
 const SESSION_SIZE = 8;
@@ -47,10 +47,15 @@ export default function SentenceBuilderScreen() {
   const { submit: submitResult, retry: retryResult, status: saveStatus } = useSubmitQuizResult({ onStreakUpdate });
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
 
-  const sentences = useMemo(() => {
-    const all = getSentencesForLanguage(selectedLanguageId);
-    return shuffle(all).slice(0, SESSION_SIZE);
-  }, [selectedLanguageId]);
+  // Mutable queue: wrongly-answered sentences are appended to the back (until
+  // correct), so `sentences.length` grows past the original session size.
+  const [sentences, setSentences] = useState<SentenceTemplate[]>(() =>
+    shuffle(getSentencesForLanguage(selectedLanguageId)).slice(0, SESSION_SIZE)
+  );
+  // Original session size — the score denominator, unaffected by re-queuing.
+  const [originalCount] = useState(() => sentences.length);
+  // Sentence ids already scored, so a re-queued sentence is counted only once.
+  const scoredIds = useRef<Set<string>>(new Set());
 
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<"active" | "results">("active");
@@ -58,7 +63,6 @@ export default function SentenceBuilderScreen() {
   const [placed, setPlaced] = useState<WordTile[]>([]);
   const [checked, setChecked] = useState(false);
   const [correct, setCorrect] = useState(false);
-  const [attempts, setAttempts] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const correctRef = useRef(0);
   const [startTime] = useState(Date.now());
@@ -72,14 +76,18 @@ export default function SentenceBuilderScreen() {
     if (!current || placed.length === 0) return;
     const userSentence = placed.map((t) => t.text).join(" ");
     const isCorrect = userSentence === current.sentence;
-    setAttempts((a) => a + 1);
+    // Score only the first encounter; re-queued retries don't change the tally.
+    const firstAttempt = !scoredIds.current.has(current.id);
+    scoredIds.current.add(current.id);
     setChecked(true);
     setCorrect(isCorrect);
     if (isCorrect) {
       hapticSuccess();
       playCorrectSound();
-      correctRef.current += 1;
-      setCorrectCount((c) => c + 1);
+      if (firstAttempt) {
+        correctRef.current += 1;
+        setCorrectCount((c) => c + 1);
+      }
     } else {
       hapticError();
       playIncorrectSound();
@@ -93,24 +101,27 @@ export default function SentenceBuilderScreen() {
   }, [current, placed, shakeAnim]);
 
   const advance = useCallback(() => {
-    if (index + 1 >= sentences.length) {
+    // Move a wrongly-built sentence to the back of the queue (re-asked until correct).
+    const queue = checked && !correct ? [...sentences, current!] : sentences;
+    if (queue !== sentences) setSentences(queue);
+
+    if (index + 1 >= queue.length) {
       playFinishSound();
       setPhase("results");
       const duration = Math.round((Date.now() - startTime) / 1000);
-      void submitResult({ languageId: selectedLanguageId, score: correctRef.current, accuracy: sentences.length > 0 ? Math.round((correctRef.current / sentences.length) * 100) : 0, durationMs: duration * 1000, questionCount: sentences.length });
+      void submitResult({ languageId: selectedLanguageId, score: correctRef.current, accuracy: originalCount > 0 ? Math.round((correctRef.current / originalCount) * 100) : 0, durationMs: duration * 1000, questionCount: originalCount });
       return;
     }
     Animated.timing(fadeAnim, { toValue: 0, duration: 180, useNativeDriver: true }).start(() => {
       const next = index + 1;
       setIndex(next);
-      setBank(buildTiles(sentences[next]!));
+      setBank(buildTiles(queue[next]!));
       setPlaced([]);
       setChecked(false);
       setCorrect(false);
-      setAttempts(0);
       Animated.timing(fadeAnim, { toValue: 1, duration: 220, useNativeDriver: true }).start();
     });
-  }, [index, sentences, fadeAnim, startTime, submitResult, selectedLanguageId]);
+  }, [index, sentences, current, checked, correct, originalCount, fadeAnim, startTime, submitResult, selectedLanguageId]);
 
   const tapBank = useCallback((tile: WordTile) => {
     hapticTap();
@@ -147,7 +158,7 @@ export default function SentenceBuilderScreen() {
   }
 
   if (phase === "results") {
-    const accuracy = Math.round((correctCount / sentences.length) * 100);
+    const accuracy = originalCount > 0 ? Math.round((correctCount / originalCount) * 100) : 0;
     return (
       <>
         <View style={{ flex: 1, backgroundColor: M.bg }}>
@@ -156,9 +167,9 @@ export default function SentenceBuilderScreen() {
             accent={ACCENT}
             stat={`${accuracy}%`}
             headline="Done!"
-            subtitle={`${correctCount} of ${sentences.length} sentences built correctly`}
+            subtitle={`${correctCount} of ${originalCount} sentences built correctly`}
             actions={[
-              { label: "Play Again", kind: "primary", onPress: () => { dismissCelebration(); setIndex(0); setCorrectCount(0); correctRef.current = 0; setBank(buildTiles(sentences[0]!)); setPlaced([]); setChecked(false); setCorrect(false); setPhase("active"); } },
+              { label: "Play Again", kind: "primary", onPress: () => { dismissCelebration(); const fresh = shuffle(getSentencesForLanguage(selectedLanguageId)).slice(0, SESSION_SIZE); scoredIds.current = new Set(); setSentences(fresh); setIndex(0); setCorrectCount(0); correctRef.current = 0; setBank(buildTiles(fresh[0]!)); setPlaced([]); setChecked(false); setCorrect(false); setPhase("active"); } },
               { label: "Back to Discover", kind: "secondary", onPress: () => router.back() },
             ]}
           >
@@ -178,7 +189,7 @@ export default function SentenceBuilderScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: M.bg }}>
       <Stack.Screen options={{ title: "Build a Sentence", headerBackTitle: "Back" }} />
-      <GameProgress current={index} total={sentences.length} accent={ACCENT} variant="bar" />
+      <GameProgress current={index} total={originalCount} accent={ACCENT} variant="bar" />
 
       <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 20 }} showsVerticalScrollIndicator={false}>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
@@ -284,7 +295,7 @@ export default function SentenceBuilderScreen() {
                 className="active:opacity-80"
               >
                 <Text style={{ fontSize: 14, fontWeight: "800", color: M.ink }}>
-                  {index + 1 >= sentences.length ? "Finish" : "Next →"}
+                  {correct && index + 1 >= sentences.length ? "Finish" : "Next →"}
                 </Text>
               </Pressable>
             )}

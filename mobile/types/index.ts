@@ -283,6 +283,17 @@ export type CulturalCategory =
   | "cuisine"
   | "greetings_etiquette";
 
+/** A colour stripe in a cultural reader hero (e.g. the Izon colour symbolism entry). */
+export interface CulturalHeroBand {
+  label: string;
+  sublabel?: string | LocalizedText;
+  /** gradient start / end fills */
+  from: string;
+  to: string;
+  /** true when the band is dark and needs light text */
+  dark?: boolean;
+}
+
 export interface CulturalContent {
   id: string;
   languageId: string;
@@ -295,6 +306,14 @@ export interface CulturalContent {
   descriptionFr?: string | null;
   imageEmoji: string;
   keyTerms: { word: string; gloss?: string | LocalizedText; /** @deprecated Use `gloss` */ english?: string; /** @deprecated Use `gloss` */ french?: string | null }[];
+  /** Surfaced as the "Featured" hero card at the top of the gallery. */
+  featured?: boolean;
+  /** Primary headword shown with an audio button in the reader. */
+  headword?: { word: string; gloss?: string | LocalizedText; audioUrl?: string };
+  /** Contexts where this appears, rendered as chips ("Where you'll find them"). */
+  applications?: (string | LocalizedText)[];
+  /** Colour-band reader hero (falls back to an emoji hero when absent). */
+  heroBands?: CulturalHeroBand[];
 }
 
 // --- Matching Game ---

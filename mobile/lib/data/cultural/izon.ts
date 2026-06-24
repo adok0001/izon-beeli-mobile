@@ -9,6 +9,21 @@ export const IZON_CULTURAL: CulturalContent[] = [
     description:
       "The Izon recognise three major colour categories — kwa-kwa (red), pena-pena (white), and dirimo (black) — and all other colours are classified under one of these three. Traditional Izon colours are sourced from tree roots, sea shells, and earth. Kwa-kwa (red) represents strength, power, and royalty, and encompasses orange, red-violet, and red-orange. Pena-pena (white) stands for purity, holiness, peace, and cleanliness, and covers all light colours including yellow and yellow-orange. Dirimo (black) signifies death, evil, witchcraft, and secrecy, and encompasses violet, blue, green, purple, and all dark shades. Colours are applied in traditional textiles, painting, sculpture, architecture, masquerade costume, and warrior body art. They are not merely decorative — they carry mystical messages and religious meaning.",
     imageEmoji: "\uD83C\uDFA8",
+    featured: true,
+    headword: { word: "ẹwiri", gloss: { en: "colour", fr: "couleur" } },
+    heroBands: [
+      { label: "kwa-kwa", sublabel: { en: "strength · power · royalty", fr: "force · pouvoir · royauté" }, from: "#B5462F", to: "#7E2C1B", dark: true },
+      { label: "pena-pena", sublabel: { en: "purity · peace · holiness", fr: "pureté · paix · sainteté" }, from: "#FBF4E3", to: "#E6D2A9" },
+      { label: "dirimo", sublabel: { en: "death · evil · secrecy", fr: "mort · mal · secret" }, from: "#2A2531", to: "#0B0D17", dark: true },
+    ],
+    applications: [
+      { en: "Textiles", fr: "Textiles" },
+      { en: "Painting", fr: "Peinture" },
+      { en: "Sculpture", fr: "Sculpture" },
+      { en: "Architecture", fr: "Architecture" },
+      { en: "Masquerade costume", fr: "Costume de mascarade" },
+      { en: "Warrior body art", fr: "Art corporel guerrier" },
+    ],
     keyTerms: [
       { word: "kwa-kwa", english: "red — strength, power, royalty" },
       { word: "pena-pena", english: "white — purity, holiness, peace" },

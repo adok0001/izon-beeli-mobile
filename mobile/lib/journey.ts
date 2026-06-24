@@ -1,4 +1,5 @@
 import { getCourseTypeColors } from "@/constants/course-colors";
+import { BUNDLED_AUDIO } from "@/lib/mock-data";
 import { MUSEUM } from "@/lib/use-museum-theme";
 import type { Course, CourseType, Lesson, LocalizedText } from "@/types";
 
@@ -50,6 +51,12 @@ export interface JourneyNode {
   /** Number of key vocabulary words taught (shown in the detail sheet). */
   wordCount?: number;
   skills: string[];
+  /** Whether the lesson has playable audio — drives the program preview. */
+  hasAudio: boolean;
+  /** Whether the lesson carries a transcript/lyrics block. */
+  hasTranscript: boolean;
+  /** Whether the lesson is a song (story step vs. flashcards step). */
+  isSong: boolean;
   /** The owning course's accent hex — tints the label and detail sheet. */
   areaColor: string;
   /** Center coordinates in map space. */
@@ -169,6 +176,9 @@ function orderNodes(
         durationSeconds: lesson.duration,
         wordCount: lesson.vocab?.length,
         skills: (lesson.skills ?? []) as string[],
+        hasAudio: !!(lesson.audioUrl ?? BUNDLED_AUDIO[lesson.id]),
+        hasTranscript: !!lesson.transcript?.length,
+        isSong: lesson.type === "song",
         areaColor: colorFor(course.courseType),
         x: 0,
         y: 0,

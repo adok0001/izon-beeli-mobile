@@ -335,6 +335,10 @@ async function syncCultural() {
     description: c.description,
     descriptionFr: (c as any).descriptionFr ?? null,
     imageEmoji: c.imageEmoji,
+    featured: (c as any).featured ?? false,
+    headword: (c as any).headword ?? null,
+    applications: (c as any).applications ?? null,
+    heroBands: (c as any).heroBands ?? null,
   }));
 
   for (let i = 0; i < culturalRows.length; i += 100) {
@@ -348,6 +352,10 @@ async function syncCultural() {
         description: sql`excluded.description`,
         descriptionFr: sql`excluded.description_fr`,
         imageEmoji:  sql`excluded.image_emoji`,
+        featured:    sql`excluded.featured`,
+        headword:    sql`excluded.headword`,
+        applications: sql`excluded.applications`,
+        heroBands:   sql`excluded.hero_bands`,
       },
     });
   }

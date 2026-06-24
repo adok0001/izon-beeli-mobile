@@ -636,6 +636,20 @@ export interface CulturalKeyTerm {
   english: string;
 }
 
+export interface CulturalHeadword {
+  word: string;
+  gloss?: LocalizedText | string;
+  audioUrl?: string;
+}
+
+export interface CulturalHeroBand {
+  label: string;
+  sublabel?: LocalizedText | string;
+  from: string;
+  to: string;
+  dark?: boolean;
+}
+
 export interface CulturalItem {
   id: string;
   languageId: string;
@@ -646,6 +660,10 @@ export interface CulturalItem {
   descriptionFr?: string | null;
   imageEmoji: string;
   keyTerms?: CulturalKeyTerm[];
+  featured?: boolean;
+  headword?: CulturalHeadword | null;
+  applications?: (LocalizedText | string)[] | null;
+  heroBands?: CulturalHeroBand[] | null;
 }
 
 export interface UpsertCulturalInput {
@@ -658,6 +676,10 @@ export interface UpsertCulturalInput {
   descriptionFr?: string;
   imageEmoji: string;
   keyTerms?: CulturalKeyTerm[];
+  featured?: boolean;
+  headword?: CulturalHeadword | null;
+  applications?: (LocalizedText | string)[] | null;
+  heroBands?: CulturalHeroBand[] | null;
 }
 
 export function useCulturalItems(languageId?: string, enabled = true) {

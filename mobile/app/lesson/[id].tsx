@@ -6,7 +6,6 @@ import { LessonMetaPills } from "@/components/lesson/lesson-meta-pills";
 import { LessonListen } from "@/components/lesson/lesson-listen";
 import { LessonObjectives } from "@/components/lesson/lesson-objectives";
 import { LessonWords } from "@/components/lesson/lesson-words";
-import { LessonProgram, type ProgramStep } from "@/components/lesson/lesson-program";
 import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
 import { ShareModal } from "@/components/share/share-modal";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
@@ -147,16 +146,6 @@ export default function LessonScreen() {
         .filter(Boolean)
     ).size;
   })();
-
-  const programSteps: ProgramStep[] = [
-    ...(audioSource ? [{ key: "stepListen" as const, onPress: handlePlayAudio }] : []),
-    ...(lesson.transcript?.length
-      ? [{ key: isSong ? ("stepStory" as const) : ("stepFlashcards" as const), onPress: () => setShowSummary(false) }]
-      : []),
-    { key: "stepQuiz" as const, onPress: () => router.push({ pathname: "/quiz", params: { courseId: lesson.courseId, lessonId: lesson.id } }) },
-    { key: "stepReview" as const, onPress: () => router.push({ pathname: "/word-review", params: { lessonId: lesson.id } }) },
-    { key: "stepWriteReflection" as const, onPress: () => router.push("/journal" as any) },
-  ];
 
   const overline = [
     typeColors.label,
@@ -391,10 +380,6 @@ export default function LessonScreen() {
               duration={lesson.duration}
               accentColor={accentColor}
             />
-
-            {/* Programme — the lesson plan, shown upfront in the preview (before the
-                learner starts), so it no longer collides with the audio player below. */}
-            <LessonProgram steps={programSteps} accentColor={accentColor} />
 
             {/* Basic audio + transcript — the core listen experience */}
             {audioSource ? (

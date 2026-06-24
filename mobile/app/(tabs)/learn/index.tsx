@@ -14,7 +14,7 @@ import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import { useTourStore } from "@/store/tour-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal, Pressable, Text, View } from "react-native";
@@ -28,6 +28,7 @@ const DEFI_WORD = "vírírií";
 export default function LearnScreen() {
   const M = useMuseumTheme();
   const { t } = useTranslation();
+  const router = useRouter();
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
 
   const {
@@ -118,6 +119,7 @@ export default function LearnScreen() {
     if (summary?.streakBroken && summary.streak > 0) setFreezeModalVisible(true);
   }, [summary?.streakBroken, summary?.streak]);
   const onGoalPress = useCallback(() => setGoalModalVisible(true), []);
+  const onDefiPress = useCallback(() => router.push("/word-challenge"), [router]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
@@ -155,7 +157,7 @@ export default function LearnScreen() {
           challenge={{
             word: DEFI_WORD,
             done: completedToday >= DAILY_GOAL,
-            onPress: onGoalPress,
+            onPress: onDefiPress,
           }}
         />
       )}

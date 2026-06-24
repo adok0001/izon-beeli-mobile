@@ -1,11 +1,36 @@
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Modal, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getSkillMeta } from "@/constants/course-colors";
+import { LessonProgram, type ProgramStep } from "@/components/lesson/lesson-program";
 import { JOURNEY, type JourneyNode } from "@/lib/journey";
 import { localize } from "@/lib/localize";
 import type { UiLanguage } from "@/store/ui-language-store";
+
+/** The lesson plan shown on the course-review sheet. Each step deep-links to the
+ *  same destination the lesson page uses, dismissing the sheet on the way. */
+function buildProgramSteps(
+  node: JourneyNode,
+  router: ReturnType<typeof useRouter>,
+  onClose: () => void
+): ProgramStep[] {
+  const go = (navigate: () => void) => () => {
+    onClose();
+    navigate();
+  };
+  const openLesson = go(() => router.push(`/lesson/${node.lessonId}`));
+  return [
+    ...(node.hasAudio ? [{ key: "stepListen" as const, onPress: openLesson }] : []),
+    ...(node.hasTranscript
+      ? [{ key: node.isSong ? ("stepStory" as const) : ("stepFlashcards" as const), onPress: openLesson }]
+      : []),
+    { key: "stepQuiz" as const, onPress: go(() => router.push({ pathname: "/quiz", params: { courseId: node.courseId, lessonId: node.lessonId } })) },
+    { key: "stepReview" as const, onPress: go(() => router.push({ pathname: "/word-review", params: { lessonId: node.lessonId } })) },
+    { key: "stepWriteReflection" as const, onPress: go(() => router.push("/journal" as any)) },
+  ];
+}
 
 interface MetaPillProps {
   label: string;
@@ -74,6 +99,7 @@ interface JourneySheetProps {
 export function JourneySheet({ node, areaName, uiLanguage, onClose, onStart }: JourneySheetProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const open = node !== null;
 
   return (
@@ -159,6 +185,11 @@ export function JourneySheet({ node, areaName, uiLanguage, onClose, onStart }: J
                   }}
                 />
               </View>
+
+              {/* Programme — the lesson plan, shown here before the learner taps
+                  Start/Review. Each step deep-links like the lesson page did. */}
+              <LessonProgram steps={buildProgramSteps(node, router, onClose)} accentColor={node.areaColor} paddingHorizontal={0} />
+
               <Pressable
                 onPress={() => onStart(node)}
                 style={{ marginTop: 18, borderRadius: 16, overflow: "hidden" }}

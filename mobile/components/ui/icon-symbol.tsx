@@ -28,6 +28,7 @@ const MAPPING = {
   'person.fill': 'person',
   'play.fill': 'play-arrow',
   'pause.fill': 'pause',
+  'speaker.wave.2.fill': 'volume-up',
   'forward.fill': 'forward-10',
   'backward.fill': 'replay-10',
   'gobackward.5': 'replay-5',
