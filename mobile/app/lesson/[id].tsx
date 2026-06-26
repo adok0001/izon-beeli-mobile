@@ -6,7 +6,6 @@ import { LessonMetaPills } from "@/components/lesson/lesson-meta-pills";
 import { LessonListen } from "@/components/lesson/lesson-listen";
 import { LessonObjectives } from "@/components/lesson/lesson-objectives";
 import { LessonWords } from "@/components/lesson/lesson-words";
-import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
 import { ShareModal } from "@/components/share/share-modal";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -28,19 +27,22 @@ import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useTourStore } from "@/store/tour-store";
+import { useForegroundClaim, useOverlayStore } from "@/store/overlay-store";
 import { localize } from "@/lib/localize";
 import { JOURNEY } from "@/lib/journey";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { LoadingScreen } from "@/components/loading-screen";
+import { useHeaderHeight } from "@react-navigation/elements";
+import { useIsFocused } from "@react-navigation/native";
 import { Pressable, ScrollView, Text, View } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
 export default function LessonScreen() {
   const M = useMuseumTheme();
-  const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: lesson, isLoading, isError } = useLesson(id ?? "");
@@ -53,7 +55,6 @@ export default function LessonScreen() {
   const lessonCourse = courses?.find((c) => c.id === lesson?.courseId);
   const typeColors = getCourseTypeColors(lessonCourse?.courseType);
   const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
-  const [streakCelebration, setStreakCelebration] = useState<{ streak: number; isMilestone: boolean } | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [shareVisible, setShareVisible] = useState(false);
   const [pendingSummary, setPendingSummary] = useState(false);
@@ -72,10 +73,21 @@ export default function LessonScreen() {
   const hasSeen = useTourStore((s) => s.hasSeen);
   const reviewPrompt = useReviewPrompt();
 
+  // Queue the milestone celebration; hold the foreground while the lesson stays
+  // in front of the learner so the app-level modal waits until they move on.
+  const isFocused = useIsFocused();
+  const pendingStreak = useOverlayStore((s) => s.pendingStreak);
+  const [streakHolding, setStreakHolding] = useState(false);
+  useForegroundClaim(streakHolding && isFocused);
+  useEffect(() => {
+    if (!pendingStreak) setStreakHolding(false);
+  }, [pendingStreak]);
+
   const handleStreakUpdate = useCallback(
     (streak: number, isMilestone: boolean) => {
       if (isMilestone) {
-        setStreakCelebration({ streak, isMilestone });
+        useOverlayStore.getState().showStreak(streak, true);
+        setStreakHolding(true);
       } else {
         toastSuccess(t("streak.toastTitle", { count: streak }));
       }
@@ -200,7 +212,7 @@ export default function LessonScreen() {
           /* ── Post-lesson summary — parchment styled ── */
           <ScrollView
             style={{ flex: 1, backgroundColor: JOURNEY.sheetBg }}
-            contentContainerStyle={{ paddingHorizontal: 22, paddingTop: insets.top + 16, paddingBottom: 48 }}
+            contentContainerStyle={{ paddingHorizontal: 22, paddingTop: headerHeight + 16, paddingBottom: 48 }}
             showsVerticalScrollIndicator={false}
           >
             <View style={{ alignItems: "center", marginBottom: 28 }}>
@@ -498,13 +510,6 @@ export default function LessonScreen() {
         level={levelUp?.level ?? 1}
         title={levelUp?.title ?? ""}
         onDismiss={() => setLevelUp(null)}
-      />
-
-      <StreakCelebrationModal
-        visible={!!streakCelebration}
-        streak={streakCelebration?.streak ?? 0}
-        isMilestone={streakCelebration?.isMilestone}
-        onDismiss={() => setStreakCelebration(null)}
       />
 
       <NotificationBanner

@@ -4,7 +4,7 @@ import { getAccent } from "@/constants/accent-colors";
 import { fonts, type } from "@/constants/typography";
 import { hapticHeavy } from "@/lib/haptics";
 import { playFinishSound } from "@/lib/sounds";
-import { bronze, glass, MUSEUM } from "@/lib/use-museum-theme";
+import { bronze, glass, MUSEUM, useMuseumTheme } from "@/lib/use-museum-theme";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
@@ -20,16 +20,22 @@ interface Props {
   onDismiss: () => void;
 }
 
-const BACKDROP_COLORS = [MUSEUM.inkRaised, MUSEUM.ink, MUSEUM.inkDeep] as const;
+// The foyer-dark gallery backdrop, plus a warm parchment counterpart for light
+// mode. The bronze accent (flame, glow, CTA) is identical in both, so only the
+// canvas and text flip.
+const BACKDROP_DARK = [MUSEUM.inkRaised, MUSEUM.ink, MUSEUM.inkDeep] as const;
+const BACKDROP_LIGHT = ["#FBF7EF", "#F1EBDF", "#E6DCC9"] as const;
 const CTA_COLORS = [MUSEUM.accentLight, MUSEUM.accent, MUSEUM.accentDark] as const;
 
-/** Decorative sparkles scattered around the flame — purely ambient. */
+// Sparkles carry a tone ("glass" = neutral hairline, "bronze" = warm) and an
+// alpha; the actual color resolves per mode so the glass ones stay visible on a
+// light canvas. Positions/sizes are mode-invariant.
 const SPARKLES = [
-  { top: "14%", left: "18%", size: 10, color: glass(0.5) },
-  { top: "10%", right: "22%", size: 14, color: bronze(0.7) },
-  { top: "30%", right: "14%", size: 8, color: glass(0.35) },
-  { top: "34%", left: "12%", size: 12, color: bronze(0.5) },
-  { top: "46%", right: "20%", size: 9, color: glass(0.4) },
+  { top: "14%", left: "18%", size: 10, tone: "glass", alpha: 0.5 },
+  { top: "10%", right: "22%", size: 14, tone: "bronze", alpha: 0.7 },
+  { top: "30%", right: "14%", size: 8, tone: "glass", alpha: 0.35 },
+  { top: "34%", left: "12%", size: 12, tone: "bronze", alpha: 0.5 },
+  { top: "46%", right: "20%", size: 9, tone: "glass", alpha: 0.4 },
 ] as const;
 
 /**
@@ -40,7 +46,13 @@ const SPARKLES = [
  */
 export function StreakCelebrationModal({ visible, streak, isMilestone, onDismiss }: Props) {
   const { t } = useTranslation();
+  const M = useMuseumTheme();
   const [shareVisible, setShareVisible] = useState(false);
+
+  const backdrop = M.isDark ? BACKDROP_DARK : BACKDROP_LIGHT;
+  // Neutral hairline sparkles: parchment-white on dark, ink on light.
+  const sparkColor = (tone: "glass" | "bronze", alpha: number) =>
+    tone === "bronze" ? bronze(alpha) : M.isDark ? glass(alpha) : `rgba(26,21,32,${alpha})`;
 
   useEffect(() => {
     if (visible && !shareVisible) {
@@ -57,19 +69,19 @@ export function StreakCelebrationModal({ visible, streak, isMilestone, onDismiss
         transparent={false}
         onRequestClose={onDismiss}
       >
-        <LinearGradient colors={BACKDROP_COLORS} style={{ flex: 1 }}>
+        <LinearGradient colors={backdrop} style={{ flex: 1 }}>
           {/* Radial bronze glow behind the flame */}
           <View pointerEvents="none" style={styles.ambientGlow} />
 
           {/* Ambient sparkles */}
-          {SPARKLES.map((s, i) => (
+          {SPARKLES.map(({ tone, alpha, size, ...pos }, i) => (
             <Animated.View
               key={i}
               entering={FadeIn.delay(200 + i * 90).duration(500)}
               pointerEvents="none"
-              style={{ position: "absolute", ...s }}
+              style={{ position: "absolute", ...pos }}
             >
-              <Ionicons name="sparkles" size={s.size} color={s.color} />
+              <Ionicons name="sparkles" size={size} color={sparkColor(tone, alpha)} />
             </Animated.View>
           ))}
 
@@ -89,7 +101,10 @@ export function StreakCelebrationModal({ visible, streak, isMilestone, onDismiss
                 <IconSymbol name="flame.fill" size={56} color={getAccent("orange").solid} />
               </Animated.View>
 
-              <Animated.Text entering={ZoomIn.delay(120).springify().damping(15)} style={styles.number}>
+              <Animated.Text
+                entering={ZoomIn.delay(120).springify().damping(15)}
+                style={[styles.number, { color: M.text }]}
+              >
                 {streak}
               </Animated.Text>
 
@@ -97,7 +112,10 @@ export function StreakCelebrationModal({ visible, streak, isMilestone, onDismiss
                 {t("streakCelebration.dayStreak")}
               </Animated.Text>
 
-              <Animated.Text entering={FadeInUp.delay(300)} style={styles.subtitle}>
+              <Animated.Text
+                entering={FadeInUp.delay(300)}
+                style={[styles.subtitle, { color: M.sub }]}
+              >
                 {isMilestone
                   ? t("streakCelebration.milestoneBody")
                   : t("streakCelebration.body")}
@@ -133,7 +151,9 @@ export function StreakCelebrationModal({ visible, streak, isMilestone, onDismiss
                 accessibilityRole="button"
                 accessibilityLabel={t("streakCelebration.continue")}
               >
-                <Text style={styles.continueLabel}>{t("streakCelebration.continue")}</Text>
+                <Text style={[styles.continueLabel, { color: M.text }]}>
+                  {t("streakCelebration.continue")}
+                </Text>
               </Pressable>
             </Animated.View>
           </SafeAreaView>
@@ -160,8 +180,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   ctaWrap: {
+    // Reanimated entering animations measure the view at its intrinsic content
+    // size and ignore the parent's `align-items: stretch`, which collapses this
+    // wrapper into the corner. Pin it to full width so the CTAs span the screen.
+    width: "100%",
     paddingHorizontal: 24,
-    paddingBottom: 8,
+    paddingTop: 4,
+    paddingBottom: 28,
+    gap: 12,
   },
   ambientGlow: {
     position: "absolute",
@@ -194,7 +220,6 @@ const styles = StyleSheet.create({
     fontSize: 96,
     lineHeight: 104,
     letterSpacing: -2,
-    color: MUSEUM.parchment,
     marginTop: 20,
   },
   label: {
@@ -204,7 +229,6 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     ...type.body,
-    color: MUSEUM.textDim,
     textAlign: "center",
     marginTop: 20,
     paddingHorizontal: 12,
@@ -219,11 +243,18 @@ const styles = StyleSheet.create({
   },
   ctaLabel: { fontFamily: fonts.heading, fontSize: 16, color: MUSEUM.ink },
   continueBtn: {
-    alignSelf: "stretch",
+    width: "100%",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 16,
-    marginTop: 4,
+    paddingVertical: 18,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: bronze(0.7),
+    backgroundColor: bronze(0.24),
   },
-  continueLabel: { fontFamily: fonts.headingMedium, fontSize: 15, color: MUSEUM.textDim },
+  continueLabel: {
+    fontFamily: fonts.heading,
+    fontSize: 16,
+    textAlign: "center",
+  },
 });

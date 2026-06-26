@@ -4,7 +4,6 @@ import { GameEyebrow, GameProgress, GameResultView, tint } from "@/components/ga
 import { getAccent } from "@/constants/accent-colors";
 import { useSubmitQuizResult } from "@/lib/hooks/use-quiz-result";
 import { useStreakCelebration } from "@/lib/hooks/use-progress";
-import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { getSentencesForLanguage } from "@/lib/data/sentences";
 import { hapticError, hapticSuccess, hapticTap } from "@/lib/haptics";
@@ -43,7 +42,7 @@ export { ErrorBoundary } from "@/components/screen-error-boundary";
 export default function SentenceBuilderScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
-  const { onStreakUpdate, dismissCelebration, celebration, toast, dismissToast } = useStreakCelebration();
+  const { onStreakUpdate, dismissCelebration, toast, dismissToast } = useStreakCelebration();
   const { submit: submitResult, retry: retryResult, status: saveStatus } = useSubmitQuizResult({ onStreakUpdate });
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
 
@@ -177,7 +176,6 @@ export default function SentenceBuilderScreen() {
           </GameResultView>
         </View>
         <NotificationBanner visible={toast.visible} title={toast.title} body={toast.body} type={toast.type} onDismiss={dismissToast} />
-        <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={dismissCelebration} />
       </>
     );
   }

@@ -6,7 +6,6 @@ import { useWordOfTheDay } from "@/lib/hooks/use-word-of-the-day";
 import { useSaveWord, useWordBank } from "@/lib/hooks/use-wordbank";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useStreakCelebration } from "@/lib/hooks/use-progress";
-import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { useLanguageStore } from "@/store/language-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
@@ -54,7 +53,7 @@ export default function WordChallengeScreen() {
   const { data: savedIds } = useWordBank();
   const saveWord = useSaveWord();
 
-  const { onStreakUpdate, celebration, clearCelebration, toast, dismissToast } = useStreakCelebration();
+  const { onStreakUpdate, toast, dismissToast } = useStreakCelebration();
   const [tab, setTab] = useState<Tab>("learn");
   const [sentenceInput, setSentenceInput] = useState("");
   const [submitStatus, setSubmitStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
@@ -301,7 +300,6 @@ export default function WordChallengeScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
       <NotificationBanner visible={toast.visible} title={toast.title} body={toast.body} type={toast.type} onDismiss={dismissToast} />
-      <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={clearCelebration} />
     </SafeAreaView>
   );
 }

@@ -12,7 +12,6 @@ import { useLanguageStore } from "@/store/language-store";
 import { useAuth } from "@clerk/clerk-expo";
 import { Stack, useRouter } from "expo-router";
 import { useStreakCelebration } from "@/lib/hooks/use-progress";
-import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { useCallback, useRef, useState } from "react";
 import { Animated, Pressable, Text, View } from "react-native";
@@ -143,7 +142,7 @@ export default function ScriptDecodeScreen() {
   const { getToken } = useAuth();
   const { selectedLanguageId } = useLanguageStore();
 
-  const { onStreakUpdate, dismissCelebration, celebration, toast, dismissToast } = useStreakCelebration();
+  const { onStreakUpdate, dismissCelebration, toast, dismissToast } = useStreakCelebration();
   const [mode, setMode] = useState<ScriptMode | null>(null);
   const [phase, setPhase] = useState<"config" | "active" | "results">("config");
   const [questions, setQuestions] = useState<DecodeQuestion[]>([]);
@@ -237,7 +236,6 @@ export default function ScriptDecodeScreen() {
           />
         </SafeAreaView>
         <NotificationBanner visible={toast.visible} title={toast.title} body={toast.body} type={toast.type} onDismiss={dismissToast} />
-        <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={dismissCelebration} />
       </>
     );
   }

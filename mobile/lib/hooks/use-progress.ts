@@ -1,11 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/clerk-expo";
+import { useIsFocused } from "@react-navigation/native";
 import { Alert } from "react-native";
 import { apiFetch } from "@/lib/api";
 import { hapticHeavy } from "@/lib/haptics";
+import { useForegroundClaim, useOverlayStore } from "@/store/overlay-store";
 import { useInvalidateDailyChallenges } from "./use-daily-challenge";
 import { useToast } from "./use-toast";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 export interface ProgressSummary {
@@ -111,18 +113,28 @@ export function useCompleteLesson(callbacks?: {
 }
 
 /**
- * Drives the streak toast/celebration for every non-lesson activity. Mirrors the
- * lesson screen (`app/lesson/[id].tsx`), which is the path that already works:
- * the milestone modal is shown *directly* the moment the server response lands —
- * no deferred "pending" state gated behind a specific button — and the new
- * streak is written into the progress cache so the badge updates immediately
- * instead of lagging until the next refetch.
+ * Drives the streak toast/celebration for every non-lesson activity. The
+ * incremented streak is written into the progress cache immediately, but the
+ * milestone celebration is *queued* into the {@link useOverlayStore}: this screen
+ * holds the foreground while it stays focused, so the app-level
+ * {@link StreakCelebrationModal} only appears once the learner has cleared the
+ * current screen (results, level-up, etc.) rather than overtaking it.
  */
 export function useStreakCelebration() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { toast, success: toastSuccess, dismiss: dismissToast } = useToast();
-  const [celebration, setCelebration] = useState<{ streak: number; isMilestone: boolean } | null>(null);
+  const isFocused = useIsFocused();
+  const pendingStreak = useOverlayStore((s) => s.pendingStreak);
+  const [holding, setHolding] = useState(false);
+
+  // Defer the queued milestone while this screen is the one in front of the user.
+  useForegroundClaim(holding && isFocused);
+
+  // Once the milestone has been celebrated (or cleared) elsewhere, stop holding.
+  useEffect(() => {
+    if (!pendingStreak) setHolding(false);
+  }, [pendingStreak]);
 
   const onStreakUpdate = useCallback(
     (streak: number, isMilestone: boolean) => {
@@ -134,8 +146,8 @@ export function useStreakCelebration() {
       queryClient.invalidateQueries({ queryKey: ["progress"] });
 
       if (isMilestone) {
-        hapticHeavy();
-        setCelebration({ streak, isMilestone });
+        useOverlayStore.getState().showStreak(streak, true);
+        setHolding(true);
       } else {
         toastSuccess(t("streak.toastTitle", { count: streak }));
       }
@@ -144,12 +156,12 @@ export function useStreakCelebration() {
   );
 
   const dismissCelebration = useCallback(() => {
-    setCelebration(null);
+    useOverlayStore.getState().dismissStreak();
+    setHolding(false);
   }, []);
 
   return {
     onStreakUpdate,
-    celebration,
     dismissCelebration,
     clearCelebration: dismissCelebration,
     toast,

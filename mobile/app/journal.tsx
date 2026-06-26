@@ -7,7 +7,6 @@ import {
   useUpdateJournalEntry,
 } from "@/lib/hooks/use-journal";
 import { useStreakCelebration } from "@/lib/hooks/use-progress";
-import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { useVoiceRecording } from "@/lib/hooks/use-voice-recording";
 import {
@@ -241,7 +240,7 @@ export default function JournalScreen() {
     setRefreshing(false);
   }, [refetch]);
 
-  const { onStreakUpdate, celebration, clearCelebration, toast: streakToast, dismissToast } = useStreakCelebration();
+  const { onStreakUpdate, toast: streakToast, dismissToast } = useStreakCelebration();
   const createEntry = useCreateJournalEntry({ onStreakUpdate });
   const updateEntry = useUpdateJournalEntry();
   const deleteEntry = useDeleteJournalEntry();
@@ -755,7 +754,6 @@ export default function JournalScreen() {
       </Modal>
     </SafeAreaView>
     <NotificationBanner visible={streakToast.visible} title={streakToast.title} body={streakToast.body} type={streakToast.type} onDismiss={dismissToast} />
-    <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={clearCelebration} />
     </>
   );
 }

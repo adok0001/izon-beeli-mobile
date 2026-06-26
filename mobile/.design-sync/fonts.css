@@ -1,0 +1,21 @@
+/* Brand display faces. RN uses the literal weight name as the font family
+ * (fonts.heading = "PlusJakartaSans_700Bold"), so the @font-face family must
+ * match that string exactly for react-native-web text to pick it up. */
+@font-face {
+  font-family: "PlusJakartaSans_700Bold";
+  font-style: normal;
+  font-weight: 400;
+  src: url("../node_modules/@expo-google-fonts/plus-jakarta-sans/700Bold/PlusJakartaSans_700Bold.ttf") format("truetype");
+}
+@font-face {
+  font-family: "PlusJakartaSans_600SemiBold";
+  font-style: normal;
+  font-weight: 400;
+  src: url("../node_modules/@expo-google-fonts/plus-jakarta-sans/600SemiBold/PlusJakartaSans_600SemiBold.ttf") format("truetype");
+}
+@font-face {
+  font-family: "PlusJakartaSans_400Regular";
+  font-style: normal;
+  font-weight: 400;
+  src: url("../node_modules/@expo-google-fonts/plus-jakarta-sans/400Regular/PlusJakartaSans_400Regular.ttf") format("truetype");
+}

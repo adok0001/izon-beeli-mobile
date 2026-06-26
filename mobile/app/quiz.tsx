@@ -33,7 +33,6 @@ import { useTranslation } from "react-i18next";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useStreakCelebration } from "@/lib/hooks/use-progress";
-import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 
 const QUESTION_COUNTS = [5, 10, 15, 20] as const;
@@ -306,7 +305,7 @@ function ResultsView({ languageId }: { languageId: string }) {
   const startTime = useQuizStore((s) => s.startTime);
   const [xpResult, setXpResult] = useState<{ xpEarned: number; leveledUp: boolean } | null>(null);
   const purple = getAccent("purple");
-  const { onStreakUpdate, dismissCelebration, celebration, toast, dismissToast } = useStreakCelebration();
+  const { onStreakUpdate, toast, dismissToast } = useStreakCelebration();
 
   useEffect(() => {
     hapticHeavy();
@@ -433,7 +432,6 @@ function ResultsView({ languageId }: { languageId: string }) {
         </View>
       )}
       <NotificationBanner visible={toast.visible} title={toast.title} body={toast.body} type={toast.type} onDismiss={dismissToast} />
-      <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={dismissCelebration} />
     </ScrollView>
   );
 }
