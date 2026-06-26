@@ -399,8 +399,6 @@ export default function ProfileScreen() {
             detail={currentUser?.dailyGoal ? t(`onboarding.goal${currentUser.dailyGoal.charAt(0).toUpperCase()}${currentUser.dailyGoal.slice(1)}` as any) : undefined}
             onPress={() => setGoalPickerVisible(true)}
           />
-          <MenuRow icon="character.book.closed" label={t("profile.dictionary")} onPress={() => router.push("/dictionary")} />
-
           {currentUser?.isAdmin ? (
             <>
               <SectionLabel label="Admin" />

@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { fonts } from "@/constants/typography";
 import { ACTIVE_LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { getLanguageRegionKey, REGION_KEY_MAP } from "@/lib/data/languages";
 import { MUSEUM, bronze, useMuseumTheme } from "@/lib/use-museum-theme";
@@ -120,6 +121,67 @@ export function EnrolledLanguageBar() {
         onClose={() => setPickerVisible(false)}
       />
     </View>
+  );
+}
+
+// ─── LanguageExhibitCard (used on Learn/Home header) ─────────────────────────
+
+export function LanguageExhibitCard() {
+  const M = useMuseumTheme();
+  const [visible, setVisible] = useState(false);
+  const { selectedLanguageId, setLanguage } = useLanguageStore();
+  const lang = ACTIVE_LANGUAGES.find((l) => l.id === selectedLanguageId);
+  const displayName = lang?.name ?? selectedLanguageId;
+  const detail = [lang?.nativeName, lang?.region].filter(Boolean).join(" · ");
+
+  return (
+    <>
+      <Pressable
+        onPress={() => setVisible(true)}
+        accessibilityRole="button"
+        accessibilityLabel="Switch language"
+        className="active:opacity-75"
+        style={{
+          flexDirection: "row",
+          alignItems: "stretch",
+          borderRadius: 12,
+          overflow: "hidden",
+          backgroundColor: bronze(0.07),
+          borderWidth: 1,
+          borderColor: bronze(0.25),
+        }}
+      >
+        {/* Left accent stripe */}
+        <View style={{ width: 3, backgroundColor: MUSEUM.accent }} />
+
+        {/* Label block */}
+        <View style={{ flex: 1, paddingHorizontal: 14, paddingVertical: 10 }}>
+          <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 2.5, color: M.textDimDark, textTransform: "uppercase" }}>
+            Now Studying
+          </Text>
+          <Text style={{ fontFamily: fonts.heading, fontSize: 18, color: M.parchment, marginTop: 2 }}>
+            {displayName}
+          </Text>
+          {!!detail && (
+            <Text style={{ fontSize: 11, color: M.textDim, marginTop: 2 }}>
+              {detail}
+            </Text>
+          )}
+        </View>
+
+        {/* Switch affordance */}
+        <View style={{ justifyContent: "center", paddingHorizontal: 14 }}>
+          <IconSymbol name="arrow.left.arrow.right" size={14} color={M.accent} />
+        </View>
+      </Pressable>
+
+      <LanguagePickerModal
+        visible={visible}
+        selectedId={selectedLanguageId}
+        onSelect={(id) => { setLanguage(id); setVisible(false); }}
+        onClose={() => setVisible(false)}
+      />
+    </>
   );
 }
 

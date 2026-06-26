@@ -1,9 +1,10 @@
 import { CultureFeed } from "@/components/explore/culture-feed";
 import { DailyExhibits } from "@/components/explore/daily-exhibits";
-import { LanguagePickerButton } from "@/components/language-picker";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
 import { type DiscoverFilter } from "@/lib/hooks/use-discover";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, Text, View } from "react-native";
@@ -33,6 +34,7 @@ export default function ExploreScreen() {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const tr = (key: string) => t(key as never) as string;
+  const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<ExploreFilter>("daily");
 
   return (
@@ -48,11 +50,16 @@ export default function ExploreScreen() {
               {t("explore.subtitle").toUpperCase()}
             </Text>
           </View>
-          {activeFilter === "daily" && (
-            <View style={{ marginTop: 4 }}>
-              <LanguagePickerButton />
-            </View>
-          )}
+          <Pressable
+            onPress={() => router.push("/dictionary")}
+            style={{ marginTop: 4, flexDirection: "row", alignItems: "center", gap: 6, borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: M.accentBorder }}
+            accessibilityRole="button"
+            accessibilityLabel={t("profile.dictionary")}
+            className="active:opacity-70"
+          >
+            <IconSymbol name="character.book.closed" size={15} color={M.accent} />
+            <Text style={{ fontSize: 13, fontWeight: "600", color: M.accent }}>{t("profile.dictionary")}</Text>
+          </Pressable>
         </View>
 
         {/* Gold rule */}

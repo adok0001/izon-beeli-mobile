@@ -1,10 +1,16 @@
 import { DailyChallengeCards } from "@/components/daily-challenge-card";
-import { JourneyMap } from "@/components/learn/journey-map";
-import { LearnHeader } from "@/components/learn/learn-header";
+import { LanguageExhibitCard } from "@/components/language-picker";
+import { ContinueCard } from "@/components/learn/continue-card";
+import { CourseCarousel } from "@/components/learn/course-carousel";
+import { DailyReadCard } from "@/components/learn/daily-read-card";
+import { ExploreAllRow } from "@/components/learn/explore-all-row";
+import { StreakWeekStrip } from "@/components/learn/streak-week-strip";
 import { LoadingScreen } from "@/components/loading-screen";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
+import { NotificationBell } from "@/components/notifications/notification-center";
 import { StreakFreezeModal } from "@/components/streak-freeze-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { fonts } from "@/constants/typography";
 import { useCourses, useLanguageLessons } from "@/lib/hooks/use-courses";
 import { useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
 import { useCompletedLessons, useProgressSummary } from "@/lib/hooks/use-progress";
@@ -12,25 +18,35 @@ import { useToast } from "@/lib/hooks/use-toast";
 import { useWordOfTheDay } from "@/lib/hooks/use-word-of-the-day";
 import { useWordsDueForReview } from "@/lib/hooks/use-wordbank";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useAudioStore } from "@/store/audio-store";
 import { useLanguageStore } from "@/store/language-store";
 import { useTourStore } from "@/store/tour-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Modal, Pressable, Text, View } from "react-native";
+import { Modal, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useUser } from "@clerk/clerk-expo";
 
 const DAILY_GOAL = 3;
-/** Fallback word for the in-path défi coin before the word of the day loads. */
-const DEFI_WORD_FALLBACK = "vírírií";
+
+function greetingKey(): "learn.goodMorning" | "learn.goodAfternoon" | "learn.goodEvening" {
+  const h = new Date().getHours();
+  if (h < 12) return "learn.goodMorning";
+  if (h < 18) return "learn.goodAfternoon";
+  return "learn.goodEvening";
+}
 
 // ─── LearnScreen ─────────────────────────────────────────────────────────────
 export default function LearnScreen() {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
+  const { user } = useUser();
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
+  const resumeState = useAudioStore((s) => s.resumeState);
 
   const {
     data: courses = [],
@@ -57,12 +73,7 @@ export default function LearnScreen() {
     () => todayChallenges.filter((c) => c.completed).length,
     [todayChallenges]
   );
-  const pathDone = useMemo(
-    () => lessons.filter((l) => completedIds.has(l.id)).length,
-    [lessons, completedIds]
-  );
 
-  const [refreshing, setRefreshing] = useState(false);
   const [freezeModalVisible, setFreezeModalVisible] = useState(false);
   const [goalModalVisible, setGoalModalVisible] = useState(false);
   const freezeChecked = useRef(false);
@@ -105,6 +116,7 @@ export default function LearnScreen() {
 
   const isLoading = coursesLoading || lessonsLoading || progressLoading;
 
+  const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await Promise.all([
@@ -117,51 +129,115 @@ export default function LearnScreen() {
     setRefreshing(false);
   }, [refetch, refetchSummary, refetchCourses, refetchLessons, refetchDue]);
 
-  const onStreakPress = useCallback(() => {
-    if (summary?.streakBroken && summary.streak > 0) setFreezeModalVisible(true);
-  }, [summary?.streakBroken, summary?.streak]);
-  const onGoalPress = useCallback(() => setGoalModalVisible(true), []);
-  const onDefiPress = useCallback(() => router.push("/word-challenge"), [router]);
+  const firstName = user?.firstName ?? null;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
-      {/* ── Museum Foyer Header — placard fading into the gallery floor ── */}
-      <LearnHeader
-        summary={summary}
-        completedToday={completedToday}
-        selectedLanguageId={selectedLanguageId}
-        pathDone={pathDone}
-        pathTotal={lessons.length}
-        onStreakPress={onStreakPress}
-        onGoalPress={onGoalPress}
-      />
+      {/* Foyer greeting header */}
+      <LinearGradient
+        colors={[M.ink, `${M.ink}EE`, `${M.ink}00`]}
+        style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 20 }}
+      >
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <Text style={{ fontFamily: fonts.heading, fontSize: 26, color: M.parchment, flex: 1, marginRight: 12 }} numberOfLines={1}>
+            {t(greetingKey(), {
+              defaultValue: greetingKey() === "learn.goodMorning" ? "Good Morning" :
+                greetingKey() === "learn.goodAfternoon" ? "Good Afternoon" : "Good Evening",
+            })}
+            {firstName ? `, ${firstName}` : ""}
+          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <Pressable
+              onPress={() => router.push("/dictionary")}
+              style={{ width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: M.accentGlow, borderWidth: 1, borderColor: M.accentBorder }}
+              accessibilityRole="button"
+              accessibilityLabel={t("profile.dictionary")}
+              className="active:opacity-70"
+            >
+              <IconSymbol name="character.book.closed" size={17} color={M.accent} />
+            </Pressable>
+            <NotificationBell />
+          </View>
+        </View>
+        <View style={{ marginTop: 10 }}>
+          <LanguageExhibitCard />
+        </View>
+      </LinearGradient>
 
-      {/* ── The Journey ── */}
       {isLoading ? (
         <View style={{ flex: 1, backgroundColor: M.bg }}>
           <LoadingScreen />
         </View>
-      ) : courses.length === 0 ? (
-        <View style={{ flex: 1, backgroundColor: M.bg }} className="items-center justify-center px-8">
-          <IconSymbol name="book.fill" size={44} color={M.muted} />
-          <Text style={{ marginTop: 16, textAlign: "center", fontSize: 14, color: M.sub }}>
-            {t("learn.noCourses")}
-          </Text>
-        </View>
       ) : (
-        <JourneyMap
-          courses={courses}
-          lessons={lessons}
-          completedIds={completedIds}
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          accent={M.accent}
-          challenge={{
-            word: wotd?.word ?? DEFI_WORD_FALLBACK,
-            done: completedToday >= DAILY_GOAL,
-            onPress: onDefiPress,
-          }}
-        />
+        <ScrollView
+          style={{ flex: 1, backgroundColor: M.bg }}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingTop: 4, paddingBottom: 32, gap: 24 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={M.accent}
+              colors={[M.accent]}
+            />
+          }
+        >
+          {/* Streak week-strip */}
+          <View style={{ paddingHorizontal: 20 }}>
+            <StreakWeekStrip
+              summary={summary}
+              onPress={() => {
+                if (summary?.streakBroken && summary.streak > 0) setFreezeModalVisible(true);
+              }}
+            />
+          </View>
+
+          {/* Course carousel */}
+          {courses.length > 0 && (
+            <CourseCarousel
+              courses={courses}
+              lessons={lessons}
+              completedIds={completedIds}
+            />
+          )}
+
+          {/* Explore all courses */}
+          <ExploreAllRow courses={courses} />
+
+          {/* Daily Read */}
+          <DailyReadCard entry={wotd} />
+
+          {/* Jump Back In — resume last partially-played lesson */}
+          {resumeState?.lessonId && (
+            <View style={{ paddingHorizontal: 20 }}>
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: "700",
+                  letterSpacing: 1,
+                  color: M.muted,
+                  marginBottom: 8,
+                }}
+              >
+                {t("learn.jumpBackIn", { defaultValue: "Jump Back In" }).toUpperCase()}
+              </Text>
+              <ContinueCard
+                lessonId={resumeState.lessonId}
+                positionSeconds={resumeState.positionSeconds}
+              />
+            </View>
+          )}
+
+          {/* Empty state */}
+          {courses.length === 0 && (
+            <View className="items-center justify-center px-8 py-16">
+              <IconSymbol name="book.fill" size={44} color={M.muted} />
+              <Text style={{ marginTop: 16, textAlign: "center", fontSize: 14, color: M.sub }}>
+                {t("learn.noCourses")}
+              </Text>
+            </View>
+          )}
+        </ScrollView>
       )}
 
       <StreakFreezeModal
