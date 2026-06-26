@@ -1,0 +1,47 @@
+{
+  "projectId": "428d4ed0-35b4-454a-b6cc-3a50a4d9c803",
+  "pkg": "izon-beeli-mobile",
+  "globalName": "BeeliMuseum",
+  "shape": "package",
+  "entry": ".design-sync/ds-entry.ts",
+  "tsconfig": "tsconfig.json",
+  "cssEntry": ".design-sync/museum.css",
+  "extraFonts": ".design-sync/fonts.css",
+  "provider": { "component": "DesignSyncProvider" },
+  "readmeHeader": ".design-sync/conventions.md",
+  "extraEntries": ["./.design-sync/ds-provider.tsx"],
+  "libOverrides": {
+    "bundle.mjs": "React Native port — esbuild react-native→react-native-web alias, NativeWind jsx-runtime, web shims for expo/clerk/i18next/router/reanimated/native modules, font loaders",
+    "dts.mjs": "no shipped .d.ts (Expo app) — extract <Name>Props from .tsx source with @/ path resolution"
+  },
+  "overrides": {
+    "Badge": { "cardMode": "column" },
+    "Button": { "cardMode": "column" },
+    "DiscoverCard": { "cardMode": "column" },
+    "DueDatePicker": { "cardMode": "column" },
+    "LocalizedTextInput": { "cardMode": "column" },
+    "ProverbCard": { "cardMode": "column" },
+    "SectionHeader": { "cardMode": "column" },
+    "XpLevelBadge": { "cardMode": "column" }
+  },
+  "componentSrcMap": {
+    "Button": "components/ui/button.tsx",
+    "Badge": "components/ui/badge.tsx",
+    "SectionHeader": "components/ui/section-header.tsx",
+    "ExhibitDivider": "components/ui/section-header.tsx",
+    "ScreenContainer": "components/ui/screen-container.tsx",
+    "LocalizedTextInput": "components/ui/localized-text-input.tsx",
+    "LanguagePicker": "components/ui/language-picker.tsx",
+    "DueDatePicker": "components/ui/due-date-picker.web.tsx",
+    "IconSymbol": "components/ui/icon-symbol.tsx",
+    "XpLevelBadge": "components/xp-level-badge.tsx",
+    "ProverbCard": "components/proverb-card.tsx",
+    "WordOfTheDay": "components/word-of-the-day.tsx",
+    "ProverbOfTheDay": "components/proverb-of-the-day.tsx",
+    "DiscoverCard": "components/discover-card.tsx",
+    "DailyChallengeCards": "components/daily-challenge-card.tsx",
+    "UpNextCard": "components/up-next-card.tsx",
+    "WordChallengeCard": "components/word-challenge-card.tsx",
+    "ContributionSpotlightCard": "components/contribution-spotlight-card.tsx"
+  }
+}

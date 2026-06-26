@@ -9,3 +9,14 @@ expo-env.d.ts
 !.env.example
 credentials.json
 .env
+
+# local tooling artifacts
+.claude/
+posthog-setup-report.md
+scripts/out/
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules
+.ds-spike/
