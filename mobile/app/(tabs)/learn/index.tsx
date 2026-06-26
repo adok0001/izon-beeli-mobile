@@ -4,6 +4,8 @@ import { ContinueCard } from "@/components/learn/continue-card";
 import { CourseCarousel } from "@/components/learn/course-carousel";
 import { DailyReadCard } from "@/components/learn/daily-read-card";
 import { ExploreAllRow } from "@/components/learn/explore-all-row";
+import { LibraryTeaser } from "@/components/learn/library-teaser";
+import { TodaysGalleryCard } from "@/components/learn/todays-gallery-card";
 import { StreakWeekStrip } from "@/components/learn/streak-week-strip";
 import { LoadingScreen } from "@/components/loading-screen";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
@@ -204,8 +206,14 @@ export default function LearnScreen() {
           {/* Explore all courses */}
           <ExploreAllRow courses={courses} />
 
+          {/* Today's Gallery — doorway to practice, games & cultural content */}
+          <TodaysGalleryCard />
+
           {/* Daily Read */}
           <DailyReadCard entry={wotd} />
+
+          {/* Library teaser — rotating featured media item */}
+          <LibraryTeaser />
 
           {/* Jump Back In — resume last partially-played lesson */}
           {resumeState?.lessonId && (

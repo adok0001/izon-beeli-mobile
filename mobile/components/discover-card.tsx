@@ -13,6 +13,10 @@ export const DISCOVER_TYPE_CONFIG = {
     cta: "Read Article",
     accentDim: "rgba(56, 189, 248, 0.12)",
     accentBorder: "rgba(56, 189, 248, 0.25)",
+    roomKickerKey: "library.readingRoomKicker" as const,
+    roomTitleKey: "library.readingRoom" as const,
+    heroGlyph: "📖",
+    gradient: ["#0e2a3a", "#0b0d17"] as [string, string],
   },
   podcast: {
     color: "#a78bfa",
@@ -21,6 +25,10 @@ export const DISCOVER_TYPE_CONFIG = {
     cta: "Listen",
     accentDim: "rgba(167, 139, 250, 0.12)",
     accentBorder: "rgba(167, 139, 250, 0.25)",
+    roomKickerKey: "library.listeningBoothKicker" as const,
+    roomTitleKey: "library.listeningBooth" as const,
+    heroGlyph: "🎙️",
+    gradient: ["#241a3a", "#0b0d17"] as [string, string],
   },
   film: {
     color: "#fb923c",
@@ -29,6 +37,10 @@ export const DISCOVER_TYPE_CONFIG = {
     cta: "Watch",
     accentDim: "rgba(251, 146, 60, 0.12)",
     accentBorder: "rgba(251, 146, 60, 0.25)",
+    roomKickerKey: "library.screeningRoomKicker" as const,
+    roomTitleKey: "library.screeningRoom" as const,
+    heroGlyph: "🎬",
+    gradient: ["#3a1f0e", "#0b0d17"] as [string, string],
   },
 } as const;
 
