@@ -2,7 +2,6 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { QuizSaveStatus } from "@/components/quiz-save-status";
 import { useSubmitQuizResult } from "@/lib/hooks/use-quiz-result";
 import { useStreakCelebration } from "@/lib/hooks/use-progress";
-import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { hapticError, hapticHeavy, hapticSuccess, hapticTap } from "@/lib/haptics";
 import { shuffle } from "@/lib/shuffle";
@@ -118,7 +117,7 @@ export { ErrorBoundary } from "@/components/screen-error-boundary";
 export default function RecallBingoScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
-  const { onStreakUpdate, dismissCelebration, celebration, toast, dismissToast } = useStreakCelebration();
+  const { onStreakUpdate, dismissCelebration, toast, dismissToast } = useStreakCelebration();
   const { submit: submitResult, retry: retryResult, status: saveStatus } = useSubmitQuizResult({ onStreakUpdate });
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
   const { data: dueWords = [] } = useWordsDueForReview(selectedLanguageId);
@@ -264,7 +263,6 @@ export default function RecallBingoScreen() {
           </View>
         </SafeAreaView>
         <NotificationBanner visible={toast.visible} title={toast.title} body={toast.body} type={toast.type} onDismiss={dismissToast} />
-        <StreakCelebrationModal visible={!!celebration} streak={celebration?.streak ?? 0} isMilestone={celebration?.isMilestone} onDismiss={dismissCelebration} />
       </>
     );
   }

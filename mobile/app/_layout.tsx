@@ -1,4 +1,5 @@
 import { ErrorBoundary } from "@/components/error-boundary";
+import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { analytics, posthogClient } from "@/lib/analytics";
 import { queryClient } from "@/lib/api";
@@ -14,6 +15,7 @@ import {
 } from "@/lib/push-notifications";
 import { useLanguageStore } from "@/store/language-store";
 import { useNotificationStore } from "@/store/notification-store";
+import { useOverlayStore } from "@/store/overlay-store";
 import { useThemeStore } from "@/store/theme-store";
 import { useTourStore } from "@/store/tour-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
@@ -29,8 +31,8 @@ import { PostHogProvider } from "posthog-react-native";
 import { Stack, useGlobalSearchParams, usePathname, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useRef } from "react";
-import { Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { InteractionManager, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import "../global.css";
@@ -56,6 +58,42 @@ const MuseumNavigationTheme: Theme = {
     notification: "#C4862A",
   },
 };
+/**
+ * App-level host for the streak milestone celebration. The modal is mounted once,
+ * above every screen, and only surfaces the queued milestone when no screen or
+ * overlay is holding the foreground — so it stacks behind the learner's current
+ * screen instead of overtaking it.
+ */
+function StreakCelebrationHost() {
+  const pendingStreak = useOverlayStore((s) => s.pendingStreak);
+  const busy = useOverlayStore((s) => s.claims.length > 0);
+  const dismissStreak = useOverlayStore((s) => s.dismissStreak);
+  const [ready, setReady] = useState(false);
+
+  // The foreground clears the instant the learner leaves the screen — but that
+  // leave is usually a navigation transition, and a full-screen <Modal> shown
+  // mid-transition gets swallowed by RN. Wait for interactions to settle so the
+  // celebration reliably presents on the screen they land on.
+  const queued = !!pendingStreak && !busy;
+  useEffect(() => {
+    if (!queued) {
+      setReady(false);
+      return;
+    }
+    const task = InteractionManager.runAfterInteractions(() => setReady(true));
+    return () => task.cancel();
+  }, [queued]);
+
+  return (
+    <StreakCelebrationModal
+      visible={queued && ready}
+      streak={pendingStreak?.streak ?? 0}
+      isMilestone={pendingStreak?.isMilestone}
+      onDismiss={dismissStreak}
+    />
+  );
+}
+
 function AuthGate({ children }: Readonly<{ children: React.ReactNode }>) {
   const { isSignedIn, isLoaded, getToken, userId } = useAuth();
   const router = useRouter();
@@ -255,6 +293,7 @@ export default function RootLayout() {
                   <Stack.Screen name="leaderboard" options={{ headerShown: false }} />
                   <Stack.Screen name="playground" options={{ headerShown: false }} />
                 </Stack>
+                <StreakCelebrationHost />
               </GestureHandlerRootView>
               </PostHogProvider>
               <StatusBar style="light" />
