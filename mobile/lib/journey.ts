@@ -242,6 +242,61 @@ export function buildJourney(
 }
 
 /**
+ * Per-course progress — computed client-side since `Course.progress` is never
+ * populated by the API. Filter all-language lessons by courseId and count hits
+ * in the completedIds set.
+ */
+export function courseProgress(
+  lessons: Lesson[],
+  completedIds: Set<string>,
+  courseId: string
+): { completed: number; total: number; percent: number } {
+  const courseLessons = lessons.filter((l) => l.courseId === courseId);
+  const completed = courseLessons.filter((l) => completedIds.has(l.id)).length;
+  const total = courseLessons.length;
+  return { completed, total, percent: total ? Math.round((completed / total) * 100) : 0 };
+}
+
+/** Return the next course in the ordered list after `courseId`, or null. */
+export function nextCourse(courses: Course[], courseId: string): Course | null {
+  const idx = courses.findIndex((c) => c.id === courseId);
+  return idx >= 0 ? (courses[idx + 1] ?? null) : null;
+}
+
+/** 1-based unit number of `courseId` within the ordered courses list. */
+export function courseUnitNumber(courses: Course[], courseId: string): number {
+  const idx = courses.findIndex((c) => c.id === courseId);
+  return idx >= 0 ? idx + 1 : 1;
+}
+
+/**
+ * Approximate week-strip: returns a boolean[7] (Sun…Sat) where true = that day
+ * is part of the learner's current streak. Derived from summary fields only —
+ * no per-day history endpoint exists yet, so days older than the streak window
+ * may be inaccurate, but today and yesterday are always correct.
+ */
+export function weekStreakDays(
+  streak: number,
+  refreshedToday: boolean,
+  streakBroken: boolean,
+  today: Date = new Date()
+): boolean[] {
+  const result = Array(7).fill(false) as boolean[];
+  if (streak <= 0 || (streakBroken && !refreshedToday)) return result;
+  const todayIdx = today.getDay(); // 0=Sun … 6=Sat
+  // Determine which day is the last "active" day
+  const lastActiveIdx = refreshedToday ? todayIdx : ((todayIdx + 6) % 7);
+  const daysToMark = Math.min(streak, 7);
+  for (let i = 0; i < daysToMark; i++) {
+    result[(lastActiveIdx - i + 7) % 7] = true;
+  }
+  return result;
+}
+
+/** Map course type to its emoji — exported so CourseArtwork can reuse it. */
+export { COURSE_EMOJI };
+
+/**
  * A CEFR-style proficiency label derived from how far along the language path
  * the learner is (e.g. 7% → "A1.1"). Six bands (A1…C2), each split into two
  * sub-levels, so the header's "Niveau" cell reflects real progress.

@@ -289,6 +289,36 @@ function renderScene(kind: SceneKind, width: number): ReactNode {
   }
 }
 
+/**
+ * Standalone scene for a single course type — exported so CourseArtwork can
+ * render it as a hero illustration without needing the full JourneyScenery.
+ */
+export function CourseScene({ courseType, width }: { courseType: CourseType | null | undefined; width: number }) {
+  const kind = (courseType && SCENE_FOR[courseType]) || "bushes";
+  const place = PLACEMENT[kind];
+  return (
+    <Svg width={width} height={160} style={{ position: "absolute", top: 0, left: 0 }} pointerEvents="none">
+      <Defs>
+        <LinearGradient id={`roofG-cs`} x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0" stopColor="#E0B97E" />
+          <Stop offset="1" stopColor="#B98A4E" />
+        </LinearGradient>
+        <LinearGradient id={`riverG-cs`} x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0" stopColor="#5C97A4" />
+          <Stop offset="1" stopColor="#244C58" />
+        </LinearGradient>
+        <RadialGradient id={`fireglow-cs`} cx="50%" cy="50%" r="50%">
+          <Stop offset="0" stopColor="#FF9A3C" stopOpacity={0.5} />
+          <Stop offset="1" stopColor="#FF9A3C" stopOpacity={0} />
+        </RadialGradient>
+      </Defs>
+      <G x={width * place.x} y={place.top} opacity={place.opacity}>
+        {renderScene(kind, width)}
+      </G>
+    </Svg>
+  );
+}
+
 interface JourneySceneryProps {
   areas: JourneyArea[];
   width: number;

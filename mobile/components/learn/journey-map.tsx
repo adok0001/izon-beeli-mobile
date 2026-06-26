@@ -29,10 +29,14 @@ interface JourneyMapProps {
   accent: string;
   /** Content rendered above the map (e.g. the daily-challenge chip). */
   header?: ReactNode;
+  /** Content rendered below the map inside the ScrollView (e.g. UP NEXT teaser). */
+  footer?: ReactNode;
   /** Animate fireflies and the active node (off honours reduced motion). */
   lively?: boolean;
   /** The in-path "défi du jour" coin, pinned beside the active node. */
   challenge?: { word: string; done: boolean; onPress: () => void };
+  /** Show a "Start" pill anchored above the active node — use on per-course screens. */
+  showStartBubble?: boolean;
 }
 
 /**
@@ -178,11 +182,14 @@ export function JourneyMap({
   onRefresh,
   accent,
   header,
+  footer,
   lively = true,
   challenge,
+  showStartBubble = false,
 }: JourneyMapProps) {
   const M = useMuseumTheme();
   const router = useRouter();
+  const { t } = useTranslation();
   const { uiLanguage } = useUiLanguageStore();
   const { width } = useWindowDimensions();
   const scrollRef = useRef<ScrollView>(null);
@@ -300,7 +307,38 @@ export function JourneyMap({
               onPress={challenge.onPress}
             />
           )}
+
+          {showStartBubble && journey.activeIndex >= 0 && (() => {
+            const n = journey.nodes[journey.activeIndex];
+            return (
+              <Pressable
+                onPress={() => setSelected(n)}
+                style={{
+                  position: "absolute",
+                  left: n.x - 36,
+                  top: n.y - 80,
+                  zIndex: 6,
+                  backgroundColor: MUSEUM.accent,
+                  borderRadius: 999,
+                  paddingHorizontal: 20,
+                  paddingVertical: 8,
+                  shadowColor: MUSEUM.accent,
+                  shadowOpacity: 0.55,
+                  shadowRadius: 10,
+                  shadowOffset: { width: 0, height: 4 },
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={t("learn.startShort", { defaultValue: "Start" })}
+              >
+                <Text style={{ color: "#fff", fontSize: 14, fontWeight: "800", letterSpacing: 0.3 }}>
+                  {t("learn.startShort", { defaultValue: "Start" })}
+                </Text>
+              </Pressable>
+            );
+          })()}
         </View>
+
+        {footer ? <View style={{ paddingBottom: 16 }}>{footer}</View> : null}
       </ScrollView>
 
       <JourneySheet

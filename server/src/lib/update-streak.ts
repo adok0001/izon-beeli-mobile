@@ -2,8 +2,8 @@ import { eq } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { users } from "../db/schema.js";
 
-const STREAK_MILESTONES = new Set([3, 7, 14, 30, 60, 100]);
-const FREEZE_GRANT_MILESTONES: Record<number, number> = { 7: 1, 30: 2 };
+const STREAK_MILESTONES = new Set([3, 7, 14, 30, 50, 75, 100]);
+const FREEZE_GRANT_MILESTONES: Record<number, number> = { 7: 1, 30: 2, 50:1, 100:2 };
 
 export function diffDaysFromToday(dateStr: string | null | undefined): number {
   if (!dateStr) return Infinity;

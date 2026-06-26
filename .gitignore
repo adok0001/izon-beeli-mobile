@@ -4,7 +4,13 @@ userio-*
 .claude/settings.local.json
 .claude/**/.DS_Store
 .claude/worktrees/
+.claude/skills/design-course/
+mobile/.claude/
 scripts/.cache/
+
+# local docs exports / offline captures
+docs/*.html
+docs/files*/
 
 # dependencies
 node_modules/
