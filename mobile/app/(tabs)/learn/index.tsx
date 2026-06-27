@@ -7,6 +7,7 @@ import { ExploreAllRow } from "@/components/learn/explore-all-row";
 import { LibraryTeaser } from "@/components/learn/library-teaser";
 import { TodaysGalleryCard } from "@/components/learn/todays-gallery-card";
 import { StreakWeekStrip } from "@/components/learn/streak-week-strip";
+import { Eyebrow } from "@/components/ui/section-header";
 import { LoadingScreen } from "@/components/loading-screen";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { NotificationBell } from "@/components/notifications/notification-center";
@@ -218,17 +219,10 @@ export default function LearnScreen() {
           {/* Jump Back In — resume last partially-played lesson */}
           {resumeState?.lessonId && (
             <View style={{ paddingHorizontal: 20 }}>
-              <Text
-                style={{
-                  fontSize: 11,
-                  fontWeight: "700",
-                  letterSpacing: 1,
-                  color: M.muted,
-                  marginBottom: 8,
-                }}
-              >
-                {t("learn.jumpBackIn", { defaultValue: "Jump Back In" }).toUpperCase()}
-              </Text>
+              <Eyebrow
+                label={t("learn.jumpBackIn", { defaultValue: "Jump Back In" })}
+                style={{ marginBottom: 8 }}
+              />
               <ContinueCard
                 lessonId={resumeState.lessonId}
                 positionSeconds={resumeState.positionSeconds}

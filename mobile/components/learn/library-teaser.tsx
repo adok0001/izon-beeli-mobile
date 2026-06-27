@@ -1,5 +1,6 @@
 import { DISCOVER_TYPE_CONFIG } from "@/components/discover-card";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Eyebrow } from "@/components/ui/section-header";
 import { useDiscover } from "@/lib/hooks/use-discover";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useRouter } from "expo-router";
@@ -20,13 +21,11 @@ export function LibraryTeaser() {
 
   return (
     <View style={{ paddingHorizontal: 20 }}>
-      <Text style={{ fontSize: 10, fontWeight: "800", letterSpacing: 1.5, color: M.muted, marginBottom: 8 }}>
-        {tr("learn.fromLibrary")}
-      </Text>
+      <Eyebrow label={tr("learn.fromLibrary")} style={{ marginBottom: 8 }} />
       <Pressable
         onPress={() => router.push(`/explore/${item.type}` as never)}
         style={{
-          borderRadius: 14,
+          borderRadius: 16,
           backgroundColor: M.card,
           borderWidth: 1,
           borderColor: M.border,

@@ -15,7 +15,7 @@ export function TodaysGalleryCard() {
       <Pressable
         onPress={() => router.push("/today" as never)}
         style={{
-          borderRadius: 14,
+          borderRadius: 16,
           backgroundColor: M.card,
           borderWidth: 1,
           borderColor: M.border,
@@ -35,9 +35,9 @@ export function TodaysGalleryCard() {
             width: 44,
             height: 44,
             borderRadius: 10,
-            backgroundColor: `${M.accent}18`,
+            backgroundColor: M.accentGlow,
             borderWidth: 1,
-            borderColor: `${M.accent}35`,
+            borderColor: M.accentBorder,
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,

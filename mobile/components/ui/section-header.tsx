@@ -1,6 +1,6 @@
 import { fonts, type } from "@/constants/typography";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { Text, View, type StyleProp, type ViewStyle } from "react-native";
+import { Text, View, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
 
 export interface SectionHeaderProps {
   title: string;
@@ -46,6 +46,34 @@ export function SectionHeader({ title, eyebrow, subtitle, action, style }: Secti
       </View>
       {action ? <View style={{ marginLeft: 12 }}>{action}</View> : null}
     </View>
+  );
+}
+
+export interface EyebrowProps {
+  label: string;
+  /** "muted" for neutral section labels, "accent" for a featured / active eyebrow. */
+  tone?: "muted" | "accent";
+  style?: StyleProp<TextStyle>;
+}
+
+/**
+ * Museum micro-label — the small uppercase overline that sits above a section
+ * card ("JUMP BACK IN") or as an in-card eyebrow ("DAILY READ"). Unifies the
+ * ad-hoc 10–11px / 700–800 / muted-or-accent labels that had drifted across the
+ * learn screen onto the single `type.overline` token.
+ */
+export function Eyebrow({ label, tone = "muted", style }: EyebrowProps) {
+  const M = useMuseumTheme();
+
+  return (
+    <Text
+      style={[
+        { ...type.overline, color: tone === "accent" ? M.accent : M.muted, textTransform: "uppercase" },
+        style,
+      ]}
+    >
+      {label}
+    </Text>
   );
 }
 

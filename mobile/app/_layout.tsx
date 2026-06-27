@@ -240,6 +240,10 @@ export default function RootLayout() {
                     headerTintColor: "#F7F2E8",
                     headerTitleStyle: { color: "#F7F2E8", fontWeight: "700" },
                     headerShadowVisible: false,
+                    // Inherited by every screen so the iOS back button never falls
+                    // back to the previous route name (e.g. "(tabs)"). Per-screen
+                    // overrides below are now redundant but harmless.
+                    headerBackTitle: "Back",
                   }}
                 >
                   <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -292,6 +296,17 @@ export default function RootLayout() {
                   <Stack.Screen name="journal" options={{ headerShown: false }} />
                   <Stack.Screen name="leaderboard" options={{ headerShown: false }} />
                   <Stack.Screen name="playground" options={{ headerShown: false }} />
+                  <Stack.Screen name="today" options={{ headerShown: false }} />
+                  <Stack.Screen name="explore/[type]" options={{ headerShown: false }} />
+                  <Stack.Screen name="songs/[languageId]" options={{ headerBackTitle: "Back" }} />
+                  <Stack.Screen name="account" options={{ headerShown: false }} />
+                  <Stack.Screen name="plus-paywall" options={{ headerShown: false }} />
+                  <Stack.Screen name="practice-review" options={{ headerShown: false }} />
+                  <Stack.Screen name="restore-account" options={{ headerShown: false }} />
+                  <Stack.Screen name="admin/broadcast" options={{ headerShown: false }} />
+                  <Stack.Screen name="admin/culture-content" options={{ headerShown: false }} />
+                  <Stack.Screen name="admin/daily-content" options={{ headerShown: false }} />
+                  <Stack.Screen name="admin/streak-tools" options={{ headerShown: false }} />
                 </Stack>
                 <StreakCelebrationHost />
               </GestureHandlerRootView>

@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from "react-native";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Eyebrow } from "@/components/ui/section-header";
 import { weekStreakDays } from "@/lib/journey";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useTranslation } from "react-i18next";
@@ -36,11 +37,10 @@ export function StreakWeekStrip({ summary, onPress }: StreakWeekStripProps) {
       accessibilityRole="button"
       accessibilityLabel={t("learn.streakDays", { count: summary?.streak ?? 0, defaultValue: "{{count}} day streak" })}
     >
-      <Text
-        style={{ fontSize: 11, fontWeight: "700", letterSpacing: 1, color: M.muted, marginBottom: 10, textAlign: "center" }}
-      >
-        {t("learn.currentStreak", { defaultValue: "Current Streak" }).toUpperCase()}: {summary?.streak ?? 0} {t("learn.dayShort", { defaultValue: "d" }).toUpperCase()}
-      </Text>
+      <Eyebrow
+        label={`${t("learn.currentStreak", { defaultValue: "Current Streak" })}: ${summary?.streak ?? 0} ${t("learn.dayShort", { defaultValue: "d" })}`}
+        style={{ marginBottom: 10, textAlign: "center" }}
+      />
       <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
         {days.map((active, i) => {
           const isToday = i === today;

@@ -2,6 +2,7 @@ import { Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Eyebrow } from "@/components/ui/section-header";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUiLanguageStore } from "@/store/ui-language-store";
@@ -44,9 +45,9 @@ export function DailyReadCard({ entry }: DailyReadCardProps) {
           width: 52,
           height: 52,
           borderRadius: 12,
-          backgroundColor: `${M.accent}22`,
+          backgroundColor: M.accentGlow,
           borderWidth: 1.5,
-          borderColor: `${M.accent}55`,
+          borderColor: M.accentBorder,
           alignItems: "center",
           justifyContent: "center",
         }}
@@ -54,9 +55,11 @@ export function DailyReadCard({ entry }: DailyReadCardProps) {
         <Text style={{ fontSize: 24 }}>📖</Text>
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 10, fontWeight: "700", letterSpacing: 1, color: M.accent, marginBottom: 2 }}>
-          {t("learn.dailyRead", { defaultValue: "Daily Read" }).toUpperCase()}
-        </Text>
+        <Eyebrow
+          label={t("learn.dailyRead", { defaultValue: "Daily Read" })}
+          tone="accent"
+          style={{ marginBottom: 2 }}
+        />
         <Text style={{ fontSize: 16, fontWeight: "800", color: M.text }} numberOfLines={1}>
           {entry.word}
         </Text>
