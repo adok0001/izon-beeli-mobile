@@ -29,6 +29,7 @@ import { SEED_COMMENTS, SEED_FEED } from "../../../mobile/lib/data/feed.js";
 import { LANGUAGES } from "../../../mobile/lib/data/languages.js";
 import { FIDEL_CHART } from "../../../mobile/lib/data/geez/fidel-chart.js";
 import { NSIBIDI_CHARACTERS } from "../../../mobile/lib/data/nsibidi/index.js";
+import { NSIBIDI_API_CHARACTERS } from "../../../mobile/lib/data/nsibidi/characters.js";
 import { ALL_LESSONS } from "../../../mobile/lib/data/lessons/index.js";
 
 // ---------------------------------------------------------------------------
@@ -428,7 +429,9 @@ async function seed() {
     category: c.baseConsonant,
     displayOrder: i,
   }));
-  const nsibidiChars = NSIBIDI_CHARACTERS.map((c, i) => ({
+  // Prefer the full API dataset (~2,572 characters); fall back to the 20-entry curated set.
+  const nsibidiSource = NSIBIDI_API_CHARACTERS.length > 0 ? NSIBIDI_API_CHARACTERS : NSIBIDI_CHARACTERS;
+  const nsibidiChars = nsibidiSource.map((c, i) => ({
     id: `nsibidi-${c.id}`,
     scriptId: "nsibidi-igbo",
     character: c.character,

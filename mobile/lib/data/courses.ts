@@ -121,6 +121,11 @@ const RAW_COURSES: RawCourseEntry[] = [
     title: { en: "Igbo — First Words", fr: "Igbo — Premiers Mots" },
     description: { en: "Start with the greetings and introductions that mark belonging and respect in Igbo — the emotional entry point into the language.", fr: "Commencez par les salutations et les présentations qui marquent l'appartenance et le respect en Igbo — le point d'entrée affectif dans la langue." },
   },
+  {
+    id: "course-igbo-ns",  languageId: "igbo", order: 3, level: "beginner", courseType: "script",
+    title: { en: "Nsịbịdị — The Script", fr: "Nsịbịdị — L'Écriture" },
+    description: { en: "Discover Nsịbịdị — the indigenous Igbo pictographic script used by the Ekpe secret society. Learn to read and recognize symbols across eight thematic domains.", fr: "Découvrez Nsịbịdị — l'écriture pictographique indigène Igbo utilisée par la société secrète Ekpe. Apprenez à lire et à reconnaître les symboles dans huit domaines thématiques." },
+  },
 
   // Hausa
   {

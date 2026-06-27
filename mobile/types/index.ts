@@ -22,7 +22,8 @@ export type CourseType =
   | "community"
   | "work"
   | "modern_life"
-  | "grammar";
+  | "grammar"
+  | "script";
 
 export type Skill =
   | "listening"

@@ -40,7 +40,7 @@ export function NsibidiDetail({ character, isLearned, onMarkLearned, onClose }: 
           </View>
 
           <Text style={{ fontSize: 10, color: M.muted }}>
-            U+{character.codePoint.toString(16).toUpperCase().padStart(4, "0")} · Akagu PUA
+            U+{character.codePoint.toString(16).toUpperCase().padStart(4, "0")} · Akagu
           </Text>
 
           {!isLearned ? (

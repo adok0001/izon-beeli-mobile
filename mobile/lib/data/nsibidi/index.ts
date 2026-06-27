@@ -1,9 +1,9 @@
 export interface NsibidiCharacter {
   id: string;
-  character: string;       // PUA code point string rendered with Akagu font
-  codePoint: number;       // Unicode PUA code point (0xE000–0xF8FF range)
-  name: string;            // English label
-  meaning: string;         // Conceptual meaning
+  character: string;       // Unicode string rendered with the Akagu font
+  codePoint: number;       // Primary Unicode code point of the character
+  name: string;            // English label (romanized Igbo pronunciation or name)
+  meaning: string;         // Conceptual meaning in English
   category: NsibidiCategory;
 }
 
@@ -45,9 +45,9 @@ function n(
   };
 }
 
-// Representative sample set sourced from the Nkọwa okwu / Igbo API dataset.
-// Full character set (~2,572) is available via the Igbo API /nsibidi endpoint.
-// Rendering requires the Akagu font (see mobile/assets/fonts/Akagu.ttf).
+// Curated reference set of 20 key symbols — used as the "featured" display in the
+// nsibidi intro lesson. Encoding uses CJK code points that the Akagu font maps to
+// nsibidi glyphs. Full dataset (~2,572) lives in nsibidi/characters.ts.
 export const NSIBIDI_CHARACTERS: NsibidiCharacter[] = [
   n(1,  0xE001, "Ékpè", "Leopard society / sacred assembly", "community"),
   n(2,  0xE002, "Ọfọ", "Staff of justice and righteousness", "justice"),
@@ -70,3 +70,4 @@ export const NSIBIDI_CHARACTERS: NsibidiCharacter[] = [
   n(19, 0xE013, "Chi", "Personal spirit / destiny", "spirituality"),
   n(20, 0xE014, "Ikenga", "Personal strength / achievement", "power"),
 ];
+
