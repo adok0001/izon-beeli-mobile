@@ -87,6 +87,11 @@ const RAW_COURSES: RawCourseEntry[] = [
     title: { en: "Izon Ekenemọ — Modern Life", fr: "Izon Ekenemọ — Vie Moderne" },
     description: { en: "Engage with news, technology, dining out, and civic debate in contemporary Izon — advanced register, minimal support.", fr: "Engagez-vous avec l'actualité, la technologie, les restaurants et le débat civique en izon contemporain — registre avancé, soutien minimal." },
   },
+  {
+    id: "course-izon-dc", languageId: "izon", order: 11, level: "intermediate", courseType: "communicative",
+    title: { en: "Izon Dictionary — Core Vocabulary", fr: "Dictionnaire Izon — Vocabulaire de Base" },
+    description: { en: "The full Izon core vocabulary, A–Z, drawn from the Kolokuma dictionary and lesson corpus — thousands of words and their meanings.", fr: "Le vocabulaire de base complet de l'izon, de A à Z, tiré du dictionnaire Kolokuma et du corpus de leçons — des milliers de mots et leurs sens." },
+  },
 
   // Yoruba
   {

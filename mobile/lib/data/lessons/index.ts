@@ -31,6 +31,7 @@ import { IZON_ORAL_TRADITION_LESSONS } from "./izon-oral-tradition";
 import { IZON_SONGS } from "./izon-songs";
 import { IZON_EVERYDAY_LIFE_LESSONS } from "./izon-everyday-life";
 import { IZON_CONTEMPORARY_LESSONS } from "./izon-contemporary";
+import { IZON_DICTIONARY_LESSONS } from "./izon-dictionary";
 import { KINYARWANDA_LESSONS } from "./kinyarwanda";
 import { KINYARWANDA_SONGS } from "./kinyarwanda-songs";
 import { SOMALI_LESSONS } from "./somali";
@@ -57,6 +58,7 @@ export const ALL_LESSONS: LessonData[] = [
   ...IZON_SONGS,
   ...IZON_EVERYDAY_LIFE_LESSONS,
   ...IZON_CONTEMPORARY_LESSONS,
+  ...IZON_DICTIONARY_LESSONS,
   ...YORUBA_LESSONS,
   ...YORUBA_SONGS,
   ...IGBO_LESSONS,
