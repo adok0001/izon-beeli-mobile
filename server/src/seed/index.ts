@@ -431,15 +431,20 @@ async function seed() {
   }));
   // Prefer the full API dataset (~2,572 characters); fall back to the 20-entry curated set.
   const nsibidiSource = NSIBIDI_API_CHARACTERS.length > 0 ? NSIBIDI_API_CHARACTERS : NSIBIDI_CHARACTERS;
-  const nsibidiChars = nsibidiSource.map((c, i) => ({
-    id: `nsibidi-${c.id}`,
-    scriptId: "nsibidi-igbo",
-    character: c.character,
-    answer: c.meaning,
-    hint: c.name,
-    category: c.category,
-    displayOrder: i,
-  }));
+  const nsibidiChars = nsibidiSource.map((c, i) => {
+    // Trim meaning to the first semicolon-separated definition, then cap at 197 chars.
+    const firstMeaning = c.meaning.split(";")[0]!.trim();
+    const answer = firstMeaning.length > 197 ? firstMeaning.slice(0, 197) + "…" : firstMeaning;
+    return {
+      id: `nsibidi-${c.id}`,
+      scriptId: "nsibidi-igbo",
+      character: c.character,
+      answer,
+      hint: c.name.length > 197 ? c.name.slice(0, 197) + "…" : c.name,
+      category: c.category,
+      displayOrder: i,
+    };
+  });
   await batchInsert(scriptCharacters, [...geezChars, ...geezTigrinyaChars, ...nsibidiChars]);
 
   // 11. UGC: placeholder user + feed + comments
