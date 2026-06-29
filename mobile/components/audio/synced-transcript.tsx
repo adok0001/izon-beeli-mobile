@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, View, type LayoutChangeEvent } from "react-native";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { JOURNEY } from "@/lib/journey";
+import { MUSEUM, useMuseumTheme } from "@/lib/use-museum-theme";
 import { fonts } from "@/constants/typography";
 import { localize } from "@/lib/localize";
 import { useAudioStore } from "@/store/audio-store";
@@ -25,6 +25,7 @@ interface Props {
  * auto-follow toggle keeps the active line scrolled into view.
  */
 export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 380 }: Props) {
+  const M = useMuseumTheme();
   const { progress, seekTo, currentTrackId } = useAudioStore();
   const { uiLanguage } = useUiLanguageStore();
   const scrollRef = useRef<ScrollView>(null);
@@ -62,14 +63,14 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
     <View>
       {/* Section header with auto-follow toggle */}
       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
-        <View style={{ width: 16, height: 1, backgroundColor: `${JOURNEY.bronzeMid}99` }} />
+        <View style={{ width: 16, height: 1, backgroundColor: M.border }} />
         <Text
           style={{
             marginLeft: 8,
             fontFamily: fonts.headingMedium,
             fontSize: 9,
             letterSpacing: 1.8,
-            color: JOURNEY.bronze,
+            color: M.accent,
           }}
         >
           {label}
@@ -88,16 +89,16 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
             borderRadius: 999,
             paddingHorizontal: 11,
             paddingVertical: 5,
-            backgroundColor: autoFollow ? JOURNEY.bronze : "transparent",
+            backgroundColor: autoFollow ? M.accent : "transparent",
             borderWidth: 1,
-            borderColor: autoFollow ? JOURNEY.bronze : JOURNEY.hairline,
+            borderColor: autoFollow ? M.accent : M.border,
           }}
           accessibilityRole="switch"
           accessibilityState={{ checked: autoFollow }}
           accessibilityLabel="Auto-follow transcript"
         >
-          <IconSymbol name="arrow.down" size={12} color={autoFollow ? JOURNEY.sheetBg : JOURNEY.capLocked} />
-          <Text style={{ fontSize: 11, fontWeight: "700", color: autoFollow ? JOURNEY.sheetBg : JOURNEY.capLocked }}>
+          <IconSymbol name="arrow.down" size={12} color={autoFollow ? MUSEUM.parchment : M.muted} />
+          <Text style={{ fontSize: 11, fontWeight: "700", color: autoFollow ? MUSEUM.parchment : M.muted }}>
             Auto-follow
           </Text>
         </Pressable>
@@ -128,16 +129,16 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
                 paddingHorizontal: 14,
                 paddingVertical: 12,
                 borderRadius: 14,
-                backgroundColor: isActive ? "rgba(196,134,42,0.12)" : "transparent",
+                backgroundColor: isActive ? M.accentGlow : "transparent",
                 borderWidth: 1,
-                borderColor: isActive ? "rgba(196,134,42,0.45)" : "transparent",
+                borderColor: isActive ? M.accentBorder : "transparent",
                 borderLeftWidth: isActive ? 3 : 1,
-                borderLeftColor: isActive ? JOURNEY.bronze : "transparent",
+                borderLeftColor: isActive ? M.accent : "transparent",
               }}
               accessibilityRole="button"
               accessibilityLabel={`Jump to: ${seg.text}`}
             >
-              <Text style={{ fontSize: 17, lineHeight: 26, color: isActive ? JOURNEY.sheetTitle : JOURNEY.sheetBody }}>
+              <Text style={{ fontSize: 17, lineHeight: 26, color: isActive ? M.text : M.sub }}>
                 {tokens.map((tok, i) => {
                   if (/^\s*$/.test(tok)) return tok || null;
                   wordOrdinal += 1;
@@ -146,7 +147,7 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
                     <Text
                       key={i}
                       style={{
-                        color: isWordActive ? JOURNEY.bronze : undefined,
+                        color: isWordActive ? M.accent : undefined,
                         fontWeight: isWordActive ? "800" : isActive ? "600" : "400",
                       }}
                     >
@@ -156,7 +157,7 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
                 })}
               </Text>
               {translation ? (
-                <Text style={{ marginTop: 4, fontSize: 13, color: isActive ? JOURNEY.bronze : JOURNEY.capLocked }}>
+                <Text style={{ marginTop: 4, fontSize: 13, color: isActive ? M.accent : M.muted }}>
                   {translation}
                 </Text>
               ) : null}

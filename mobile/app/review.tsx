@@ -218,7 +218,7 @@ function ContributionCard({
             </View>
           </View>
 
-          {item.pronunciation && (
+          {item.pronunciation && !item.pronunciation.startsWith("http") && (
             <Text className="mt-2 text-sm italic text-neutral-500 dark:text-neutral-400">
               /{item.pronunciation}/
             </Text>

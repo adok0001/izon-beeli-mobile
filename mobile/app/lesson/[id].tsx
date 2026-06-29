@@ -207,11 +207,11 @@ export default function LessonScreen() {
         }}
       />
 
-      <SafeAreaView style={{ flex: 1, backgroundColor: JOURNEY.sheetBg }} edges={[]}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={[]}>
         {showSummary ? (
-          /* ── Post-lesson summary — parchment styled ── */
+          /* ── Post-lesson summary ── */
           <ScrollView
-            style={{ flex: 1, backgroundColor: JOURNEY.sheetBg }}
+            style={{ flex: 1, backgroundColor: M.bg }}
             contentContainerStyle={{ paddingHorizontal: 22, paddingTop: headerHeight + 16, paddingBottom: 48 }}
             showsVerticalScrollIndicator={false}
           >
@@ -223,15 +223,15 @@ export default function LessonScreen() {
                   borderRadius: 36,
                   alignItems: "center",
                   justifyContent: "center",
-                  backgroundColor: "rgba(22,163,74,0.10)",
+                  backgroundColor: M.successBg,
                   borderWidth: 1.5,
-                  borderColor: "rgba(22,163,74,0.35)",
+                  borderColor: M.successBorder,
                 }}
               >
-                <IconSymbol name="checkmark.circle.fill" size={38} color={JOURNEY.success} />
+                <IconSymbol name="checkmark.circle.fill" size={38} color={M.success} />
               </View>
               <Text
-                style={{ marginTop: 14, fontSize: 22, fontWeight: "900", color: JOURNEY.sheetTitle, letterSpacing: -0.3 }}
+                style={{ marginTop: 14, fontSize: 22, fontWeight: "900", color: M.text, letterSpacing: -0.3 }}
               >
                 {t("lesson.summary")}
               </Text>
@@ -245,14 +245,14 @@ export default function LessonScreen() {
                     alignItems: "center",
                     paddingVertical: 16,
                     borderRadius: 16,
-                    backgroundColor: "rgba(196,134,42,0.10)",
+                    backgroundColor: M.accentGlow,
                     borderWidth: 1,
-                    borderColor: "rgba(196,134,42,0.28)",
+                    borderColor: M.accentBorder,
                   }}
                 >
-                  <Text style={{ fontSize: 26, fontWeight: "900", color: JOURNEY.bronze }}>{wordCount}</Text>
+                  <Text style={{ fontSize: 26, fontWeight: "900", color: M.accent }}>{wordCount}</Text>
                   <Text
-                    style={{ marginTop: 4, fontSize: 10, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase", color: JOURNEY.capLocked }}
+                    style={{ marginTop: 4, fontSize: 10, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase", color: M.muted }}
                   >
                     {t("lesson.wordsLearned")}
                   </Text>
@@ -265,16 +265,16 @@ export default function LessonScreen() {
                     alignItems: "center",
                     paddingVertical: 16,
                     borderRadius: 16,
-                    backgroundColor: "rgba(22,163,74,0.08)",
+                    backgroundColor: M.successBg,
                     borderWidth: 1,
-                    borderColor: "rgba(22,163,74,0.28)",
+                    borderColor: M.successBorder,
                   }}
                 >
-                  <Text style={{ fontSize: 26, fontWeight: "900", color: JOURNEY.success }}>
+                  <Text style={{ fontSize: 26, fontWeight: "900", color: M.success }}>
                     {formatDuration(lesson.duration)}
                   </Text>
                   <Text
-                    style={{ marginTop: 4, fontSize: 10, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase", color: JOURNEY.capLocked }}
+                    style={{ marginTop: 4, fontSize: 10, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase", color: M.muted }}
                   >
                     {t("lesson.timeSpent")}
                   </Text>
@@ -284,10 +284,10 @@ export default function LessonScreen() {
 
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 14 }}>
               <View style={{ width: 16, height: 1, backgroundColor: `${accentColor}60` }} />
-              <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.8, textTransform: "uppercase", color: JOURNEY.capLocked }}>
+              <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.8, textTransform: "uppercase", color: M.muted }}>
                 {t("lesson.whatsNext")}
               </Text>
-              <View style={{ flex: 1, height: 1, backgroundColor: JOURNEY.hairline }} />
+              <View style={{ flex: 1, height: 1, backgroundColor: M.border }} />
             </View>
 
             <View style={{ gap: 10 }}>
@@ -330,13 +330,13 @@ export default function LessonScreen() {
                   onPress={() => router.push({ pathname: "/word-review", params: { lessonId: lesson.id } })}
                   style={{
                     flex: 1, alignItems: "center", paddingVertical: 16, borderRadius: 16,
-                    borderWidth: 1, borderColor: "rgba(22,163,74,0.28)", backgroundColor: "rgba(22,163,74,0.06)",
+                    borderWidth: 1, borderColor: M.successBorder, backgroundColor: M.successBg,
                   }}
                   className="active:opacity-70"
                   accessibilityRole="button"
                 >
-                  <IconSymbol name="brain.head.profile" size={18} color={JOURNEY.success} />
-                  <Text style={{ marginTop: 5, fontSize: 12, fontWeight: "700", color: JOURNEY.success }}>{t("lesson.reviewWords")}</Text>
+                  <IconSymbol name="brain.head.profile" size={18} color={M.success} />
+                  <Text style={{ marginTop: 5, fontSize: 12, fontWeight: "700", color: M.success }}>{t("lesson.reviewWords")}</Text>
                 </Pressable>
               </View>
 
@@ -345,13 +345,13 @@ export default function LessonScreen() {
                 style={{
                   flexDirection: "row", alignItems: "center", gap: 10,
                   paddingHorizontal: 16, paddingVertical: 14, borderRadius: 16,
-                  borderWidth: 1, borderColor: JOURNEY.hairline, backgroundColor: JOURNEY.pillBg,
+                  borderWidth: 1, borderColor: M.border, backgroundColor: M.card,
                 }}
                 className="active:opacity-70"
                 accessibilityRole="button"
               >
-                <IconSymbol name="pencil.and.list.clipboard" size={16} color={JOURNEY.capLocked} />
-                <Text style={{ fontSize: 14, fontWeight: "600", color: JOURNEY.sheetBody }}>{t("lesson.writeReflection")}</Text>
+                <IconSymbol name="pencil.and.list.clipboard" size={16} color={M.muted} />
+                <Text style={{ fontSize: 14, fontWeight: "600", color: M.sub }}>{t("lesson.writeReflection")}</Text>
               </Pressable>
 
               <Pressable
@@ -359,7 +359,7 @@ export default function LessonScreen() {
                 style={{ alignItems: "center", paddingVertical: 12 }}
                 accessibilityRole="button"
               >
-                <Text style={{ fontSize: 13, color: JOURNEY.capLocked }}>
+                <Text style={{ fontSize: 13, color: M.muted }}>
                   {isSong ? t("songs.lyrics") : t("lesson.transcript")}
                 </Text>
               </Pressable>
@@ -378,7 +378,7 @@ export default function LessonScreen() {
             {/* Song artist */}
             {isSong && lesson.artist ? (
               <View style={{ paddingHorizontal: 22, paddingTop: 10 }}>
-                <Text style={{ fontSize: 12, color: JOURNEY.capLocked }}>
+                <Text style={{ fontSize: 12, color: M.muted }}>
                   {lesson.artist}
                   {lesson.genre ? ` · ${t(`songs.genre_${lesson.genre}`, { defaultValue: lesson.genre })}` : ""}
                 </Text>
@@ -426,10 +426,10 @@ export default function LessonScreen() {
               <View style={{ paddingTop: 24 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 22, marginBottom: 12 }}>
                   <View style={{ width: 16, height: 1, backgroundColor: `${accentColor}60` }} />
-                  <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.8, color: JOURNEY.bronze }}>
+                  <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.8, color: M.accent }}>
                     {(isSong ? t("songs.lyrics") : t("lesson.transcript")).toUpperCase()}
                   </Text>
-                  <View style={{ flex: 1, height: 1, backgroundColor: JOURNEY.hairline }} />
+                  <View style={{ flex: 1, height: 1, backgroundColor: M.border }} />
                 </View>
                 <View style={{ paddingHorizontal: 4 }}>
                   <InteractiveTranscript segments={lesson.transcript} />
@@ -445,12 +445,12 @@ export default function LessonScreen() {
                   style={{
                     flexDirection: "row", alignItems: "center", justifyContent: "center",
                     gap: 6, paddingVertical: 8, marginBottom: 12, borderRadius: 12,
-                    backgroundColor: "rgba(22,163,74,0.08)",
-                    borderWidth: 1, borderColor: "rgba(22,163,74,0.25)",
+                    backgroundColor: M.successBg,
+                    borderWidth: 1, borderColor: M.successBorder,
                   }}
                 >
-                  <IconSymbol name="checkmark.circle.fill" size={13} color={JOURNEY.success} />
-                  <Text style={{ fontSize: 11, fontWeight: "800", color: JOURNEY.success, letterSpacing: 0.5 }}>
+                  <IconSymbol name="checkmark.circle.fill" size={13} color={M.success} />
+                  <Text style={{ fontSize: 11, fontWeight: "800", color: M.success, letterSpacing: 0.5 }}>
                     {t("lesson.done").toUpperCase()}
                   </Text>
                 </View>
@@ -484,14 +484,14 @@ export default function LessonScreen() {
                   style={{
                     marginTop: 10, flexDirection: "row", alignItems: "center", justifyContent: "center",
                     gap: 7, paddingVertical: 12, borderRadius: 14,
-                    borderWidth: 1, borderColor: "rgba(22,163,74,0.28)",
-                    backgroundColor: "rgba(22,163,74,0.06)",
+                    borderWidth: 1, borderColor: M.successBorder,
+                    backgroundColor: M.successBg,
                   }}
                   className="active:opacity-75"
                   accessibilityRole="button"
                 >
-                  <IconSymbol name="checkmark.circle.fill" size={14} color={JOURNEY.success} />
-                  <Text style={{ fontSize: 13, fontWeight: "700", color: JOURNEY.success }}>
+                  <IconSymbol name="checkmark.circle.fill" size={14} color={M.success} />
+                  <Text style={{ fontSize: 13, fontWeight: "700", color: M.success }}>
                     {isSong ? t("songs.listened") : t("lesson.markComplete")}
                   </Text>
                 </Pressable>

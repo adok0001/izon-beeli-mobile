@@ -55,7 +55,7 @@ export function WordOfTheDay({ languageId }: Props) {
 
         <Text style={{ fontSize: 24, fontWeight: "700", color: M.text }}>{word.word}</Text>
 
-        {word.pronunciation && (
+        {word.pronunciation && !word.pronunciation.startsWith("http") && (
           <Text style={{ marginTop: 2, fontSize: 13, fontStyle: "italic", color: M.sub }}>
             /{word.pronunciation}/
           </Text>

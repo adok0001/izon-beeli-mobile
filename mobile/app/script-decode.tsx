@@ -3,7 +3,7 @@ import { GameEyebrow, GameOption, GameProgress, GameResultView, tint } from "@/c
 import { getAccent } from "@/constants/accent-colors";
 import type { AccentColor } from "@/constants/accent-colors";
 import { FIDEL_CHART } from "@/lib/data/geez/fidel-chart";
-import { NSIBIDI_CHARACTERS } from "@/lib/data/nsibidi";
+import { ALL_NSIBIDI_CHARACTERS } from "@/lib/data/nsibidi";
 import { hapticError, hapticSuccess } from "@/lib/haptics";
 import { apiFetch } from "@/lib/api";
 import { playCorrectSound, playFinishSound, playIncorrectSound } from "@/lib/sounds";
@@ -57,7 +57,7 @@ function buildGeezQuestions(): DecodeQuestion[] {
 }
 
 function buildNsibidiQuestions(): DecodeQuestion[] {
-  const pool = shuffle(NSIBIDI_CHARACTERS).slice(0, SESSION_SIZE + 12);
+  const pool = shuffle(ALL_NSIBIDI_CHARACTERS).slice(0, SESSION_SIZE + 12);
   return pool.slice(0, SESSION_SIZE).map((char) => {
     const distractors = shuffle(pool.filter((c) => c.id !== char.id))
       .slice(0, 3)

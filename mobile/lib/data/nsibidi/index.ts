@@ -1,3 +1,6 @@
+import { NSIBIDI_API_CHARACTERS } from "./characters";
+export { NSIBIDI_API_CHARACTERS };
+
 export interface NsibidiCharacter {
   id: string;
   character: string;       // Unicode string rendered with the Akagu font
@@ -45,9 +48,7 @@ function n(
   };
 }
 
-// Curated reference set of 20 key symbols — used as the "featured" display in the
-// nsibidi intro lesson. Encoding uses CJK code points that the Akagu font maps to
-// nsibidi glyphs. Full dataset (~2,572) lives in nsibidi/characters.ts.
+// Curated reference set of 20 key symbols. Full API dataset lives in ./characters.ts.
 export const NSIBIDI_CHARACTERS: NsibidiCharacter[] = [
   n(1,  0xE001, "Ékpè", "Leopard society / sacred assembly", "community"),
   n(2,  0xE002, "Ọfọ", "Staff of justice and righteousness", "justice"),
@@ -69,5 +70,10 @@ export const NSIBIDI_CHARACTERS: NsibidiCharacter[] = [
   n(18, 0xE012, "Ọjị", "Kola nut / sacred offering", "spirituality"),
   n(19, 0xE013, "Chi", "Personal spirit / destiny", "spirituality"),
   n(20, 0xE014, "Ikenga", "Personal strength / achievement", "power"),
+];
+
+export const ALL_NSIBIDI_CHARACTERS: NsibidiCharacter[] = [
+  ...NSIBIDI_CHARACTERS,
+  ...NSIBIDI_API_CHARACTERS,
 ];
 

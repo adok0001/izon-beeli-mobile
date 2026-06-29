@@ -179,7 +179,7 @@ function DictWordRow({
               <Text style={{ fontSize: 10, fontWeight: "800", color: M.accent }}>{level}</Text>
             </View>
           </View>
-          {entry.pronunciation ? (
+          {entry.pronunciation && !entry.pronunciation.startsWith("http") ? (
             <Text style={{ marginTop: 2, fontSize: 12, fontStyle: "italic", color: M.muted }}>/{entry.pronunciation}/</Text>
           ) : null}
           <Text style={{ marginTop: 3, fontSize: 14, color: M.sub }}>{definition}</Text>

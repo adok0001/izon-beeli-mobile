@@ -22,6 +22,7 @@ import { HAUSA_LESSONS } from "./hausa";
 import { HAUSA_SONGS } from "./hausa-songs";
 import { IGBO_LESSONS } from "./igbo";
 import { IGBO_SONGS } from "./igbo-songs";
+import { IGBO_NSIBIDI_LESSONS } from "./igbo-nsibidi";
 import { IZON_FIRST_WORDS_LESSONS } from "./izon-first-words";
 import { IZON_SOUND_SCRIPT_LESSONS } from "./izon-sound-script";
 import { IZON_NUMBERS_TRADE_LESSONS } from "./izon-numbers-trade";
@@ -63,6 +64,7 @@ export const ALL_LESSONS: LessonData[] = [
   ...YORUBA_SONGS,
   ...IGBO_LESSONS,
   ...IGBO_SONGS,
+  ...IGBO_NSIBIDI_LESSONS,
   ...HAUSA_LESSONS,
   ...HAUSA_SONGS,
   ...SWAHILI_LESSONS,

@@ -1,6 +1,6 @@
 import { NsibidiDetail } from "@/components/nsibidi/nsibidi-detail";
 import { NsibidiGrid } from "@/components/nsibidi/nsibidi-grid";
-import { NSIBIDI_CHARACTERS, type NsibidiCharacter } from "@/lib/data/nsibidi";
+import { ALL_NSIBIDI_CHARACTERS, type NsibidiCharacter } from "@/lib/data/nsibidi";
 import { hapticSuccess } from "@/lib/haptics";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useNsibidiStore } from "@/store/nsibidi-store";
@@ -9,7 +9,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const TOTAL = NSIBIDI_CHARACTERS.length;
+const TOTAL = ALL_NSIBIDI_CHARACTERS.length;
 
 export default function NsibidiLessonScreen() {
   const M = useMuseumTheme();

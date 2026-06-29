@@ -10,7 +10,6 @@ import { useSaveWord, useWordBank } from "@/lib/hooks/use-wordbank";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { WordAudioButton } from "@/components/dictionary/word-audio-button";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { JOURNEY } from "@/lib/journey";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import type { TranscriptSegment } from "@/types";
@@ -146,6 +145,7 @@ function WordLookupSheet({
 }
 
 export function InteractiveTranscript({ segments, onSegmentPress }: Props) {
+  const M = useMuseumTheme();
   const { progress, seekTo, currentTrackId, shadowSegment, setShadowLoop } = useAudioStore();
   const { uiLanguage } = useUiLanguageStore();
   const { selectedLanguageId } = useLanguageStore();
@@ -240,7 +240,7 @@ export function InteractiveTranscript({ segments, onSegmentPress }: Props) {
   if (segments.length === 0) {
     return (
       <View className="items-center py-8">
-        <Text className="text-sm text-neutral-400">
+        <Text className="text-sm text-neutral-400 dark:text-neutral-500">
           No transcript available
         </Text>
       </View>
@@ -262,19 +262,19 @@ export function InteractiveTranscript({ segments, onSegmentPress }: Props) {
               onPress={() => handleSegmentPress(segment)}
               className={`relative border-l-2 px-4 py-3 ${
                 isLoopingThisSegment
-                  ? "border-l-amber-400 bg-amber-50"
+                  ? "border-l-amber-400 bg-amber-50 dark:bg-amber-900/20"
                   : isActive
-                  ? "border-l-blue-500 bg-blue-50"
+                  ? "border-l-blue-500 bg-blue-50 dark:bg-blue-900/20"
                   : "border-l-transparent"
               }`}
             >
               <Text
                 className={`text-base leading-6 ${
                   isLoopingThisSegment
-                    ? "font-semibold text-amber-700"
+                    ? "font-semibold text-amber-700 dark:text-amber-400"
                     : isActive
-                    ? "font-semibold text-blue-700"
-                    : "text-neutral-800"
+                    ? "font-semibold text-blue-700 dark:text-blue-400"
+                    : "text-neutral-800 dark:text-neutral-200"
                 }`}
               >
                 {words.map((w, i) => {
@@ -298,10 +298,10 @@ export function InteractiveTranscript({ segments, onSegmentPress }: Props) {
                 <Text
                   className={`mt-1 text-sm ${
                     isLoopingThisSegment
-                      ? "text-amber-500"
+                      ? "text-amber-500 dark:text-amber-400"
                       : isActive
-                      ? "text-blue-500"
-                      : "text-neutral-500"
+                      ? "text-blue-500 dark:text-blue-400"
+                      : "text-neutral-500 dark:text-neutral-400"
                   }`}
                 >
                   {localize(segment.translation, uiLanguage)}
@@ -313,11 +313,11 @@ export function InteractiveTranscript({ segments, onSegmentPress }: Props) {
                   accessible={false}
                 >
                   <View
-                    className="h-4 w-4 rounded-full border border-neutral-200"
+                    className="h-4 w-4 rounded-full border border-neutral-200 dark:border-neutral-700"
                     style={{ backgroundColor: segment.colorHex }}
                   />
                   <View
-                    className="h-1.5 flex-1 rounded-full border border-neutral-200"
+                    className="h-1.5 flex-1 rounded-full border border-neutral-200 dark:border-neutral-700"
                     style={{ backgroundColor: segment.colorHex, opacity: 0.3 }}
                   />
                 </View>
@@ -332,7 +332,7 @@ export function InteractiveTranscript({ segments, onSegmentPress }: Props) {
                   <IconSymbol
                     name="repeat.1"
                     size={16}
-                    color={isLoopingThisSegment ? getAccent("amber").solid : JOURNEY.capLocked}
+                    color={isLoopingThisSegment ? getAccent("amber").solid : M.muted}
                   />
                 </Pressable>
               )}

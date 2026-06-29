@@ -1,5 +1,5 @@
 import { ScrollView, View, Text, Pressable } from "react-native";
-import { NSIBIDI_CHARACTERS, NSIBIDI_CATEGORY_LABELS, type NsibidiCharacter, type NsibidiCategory } from "@/lib/data/nsibidi";
+import { ALL_NSIBIDI_CHARACTERS, NSIBIDI_CATEGORY_LABELS, type NsibidiCharacter, type NsibidiCategory } from "@/lib/data/nsibidi";
 import { NsibidiText } from "./nsibidi-text";
 import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -22,7 +22,7 @@ export function NsibidiGrid({ learnedIds, onSelect }: NsibidiGridProps) {
       contentContainerStyle={{ paddingBottom: 32, paddingHorizontal: 16 }}
     >
       {CATEGORIES.map((category) => {
-        const chars = NSIBIDI_CHARACTERS.filter((c) => c.category === category);
+        const chars = ALL_NSIBIDI_CHARACTERS.filter((c) => c.category === category);
         if (chars.length === 0) return null;
         return (
           <View key={category} style={{ marginTop: 20 }}>

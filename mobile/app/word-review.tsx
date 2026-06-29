@@ -97,7 +97,7 @@ function ReviewCard({
             <Text style={{ textAlign: "center", fontSize: 40, fontWeight: "700", color: M.text }}>
               {entry.word}
             </Text>
-            {entry.pronunciation && (
+            {entry.pronunciation && !entry.pronunciation.startsWith("http") && (
               <Text style={{ marginTop: 8, textAlign: "center", fontSize: 16, color: M.sub }}>
                 /{entry.pronunciation}/
               </Text>

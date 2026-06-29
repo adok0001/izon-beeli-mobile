@@ -237,8 +237,8 @@ export default function WordDetailScreen() {
       params: {
         focusWord: entry.word,
         focusEnglish: englishText,
-        ...(typeof entry.audioUrl === "string" && entry.audioUrl
-          ? { focusAudio: entry.audioUrl }
+        ...(typeof effectiveAudioUrl === "string" && effectiveAudioUrl
+          ? { focusAudio: effectiveAudioUrl }
           : {}),
       },
     });
@@ -276,7 +276,12 @@ export default function WordDetailScreen() {
 
   const categoryLabel = CATEGORY_LABELS[entry.category];
   const categoryIcon = CATEGORY_ICONS[entry.category];
-  const hasContributable = !entry.audioUrl || !entry.imageUrl;
+
+  const pronunciationIsUrl = typeof entry.pronunciation === "string" && entry.pronunciation.startsWith("http");
+  const effectiveAudioUrl = entry.audioUrl ?? (pronunciationIsUrl ? entry.pronunciation : undefined);
+  const displayPronunciation = pronunciationIsUrl ? undefined : entry.pronunciation;
+
+  const hasContributable = !effectiveAudioUrl || !entry.imageUrl;
 
   return (
     <>
@@ -322,9 +327,9 @@ export default function WordDetailScreen() {
               {entry.word}
             </Text>
 
-            {entry.pronunciation && (
+            {displayPronunciation && (
               <Text style={{ marginTop: 8, fontSize: 16, fontStyle: "italic", color: M.sub }}>
-                /{entry.pronunciation}/
+                /{displayPronunciation}/
               </Text>
             )}
 
@@ -358,10 +363,10 @@ export default function WordDetailScreen() {
             {/* Audio button */}
             <View style={{ marginTop: 24, alignItems: "center" }}>
               <View style={{ height: 64, width: 64, alignItems: "center", justifyContent: "center", borderRadius: 32, backgroundColor: M.accent }}>
-                <WordAudioButton audioSource={entry.audioUrl} word={entry.word} size={28} />
+                <WordAudioButton audioSource={effectiveAudioUrl} word={entry.word} size={28} />
               </View>
               <Text style={{ marginTop: 8, fontSize: 11, fontWeight: "600", color: M.accent }}>
-                {entry.audioUrl ? t("wordDetail.hearPronunciation") : t("wordDetail.textToSpeech")}
+                {effectiveAudioUrl ? t("wordDetail.hearPronunciation") : t("wordDetail.textToSpeech")}
               </Text>
             </View>
 
@@ -602,7 +607,7 @@ export default function WordDetailScreen() {
                     {t("entryContribute.title")}
                   </Text>
 
-                  {!entry.audioUrl && (
+                  {!effectiveAudioUrl && (
                     <View style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, padding: 16 }}>
                       <Text style={{ marginBottom: 4, fontSize: 14, fontWeight: "600", color: M.text }}>
                         {t("entryContribute.recordAudio")}
@@ -719,8 +724,8 @@ export default function WordDetailScreen() {
           word: entry.word,
           translation: englishText,
           language: entry.languageId,
-          pronunciation: entry.pronunciation ?? undefined,
-          audioUrl: entry.audioUrl,
+          pronunciation: displayPronunciation ?? undefined,
+          audioUrl: effectiveAudioUrl,
         }}
       />
     </>
