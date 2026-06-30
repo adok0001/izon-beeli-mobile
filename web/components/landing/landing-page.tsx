@@ -8,61 +8,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { localeHref } from "@/lib/locale-href";
-
-// ── Scroll reveal ─────────────────────────────────────────────────────────────
-
-function useReveal(threshold = 0.12) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
-      { threshold }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [threshold]);
-  return { ref, visible };
-}
-
-function Reveal({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
-  const { ref, visible } = useReveal();
-  return (
-    <div
-      ref={ref}
-      className={className}
-      style={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(30px)",
-        transition: `opacity 0.75s cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform 0.75s cubic-bezier(0.16,1,0.3,1) ${delay}ms`,
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
-// ── Fractal SVG background ────────────────────────────────────────────────────
-
-function FractalBackground() {
-  return (
-    <svg
-      aria-hidden
-      className="pointer-events-none absolute inset-0 w-full h-full opacity-[0.025] select-none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <pattern id="tri" x="0" y="0" width="80" height="69.28" patternUnits="userSpaceOnUse">
-          <polygon points="40,0 80,69.28 0,69.28" fill="none" stroke="rgb(245,158,11)" strokeWidth="0.5" />
-          <polygon points="0,0 40,69.28 80,0" fill="none" stroke="rgb(245,158,11)" strokeWidth="0.5" />
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#tri)" />
-    </svg>
-  );
-}
+import { Reveal, useReveal } from "@/components/landing/shared/reveal";
+import { FractalBackground } from "@/components/landing/shared/fractal-background";
 
 // ── Editorial pull-quote ──────────────────────────────────────────────────────
 
@@ -793,7 +740,7 @@ export function LandingPage() {
 
       {/* ── Hero ── */}
       <section className="relative min-h-[92vh] flex flex-col justify-center px-6 py-32 overflow-hidden">
-        <FractalBackground />
+        <FractalBackground patternId="tri" strokeColor="rgb(245,158,11)" />
         {/* Circular orbit — positioned left of headline, like Wispr */}
         <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 hidden lg:block opacity-60">
           <CircularOrbit text="Hear it · Speak it · Live it · Hear it · Speak it · Live it · " radius={120} />
