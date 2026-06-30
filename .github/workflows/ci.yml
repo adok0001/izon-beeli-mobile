@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  server:
+    name: Server — build, test, audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: server/package-lock.json
+      - working-directory: ./server
+        run: npm ci
+      - working-directory: ./server
+        run: npm run build
+      - working-directory: ./server
+        run: npm test
+      # Gated at critical, not high: 7 high-severity findings are pinned behind
+      # drizzle-kit/@vercel/node major version bumps, deliberately deferred as
+      # a separate piece of work (see commit 761ebc9). Raise to --audit-level=high
+      # once those bumps land.
+      - working-directory: ./server
+        run: npm audit --audit-level=critical
+
+  web:
+    name: Web — build, audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
+      - working-directory: ./web
+        run: npm ci
+      - working-directory: ./web
+        run: npm run build
+      - working-directory: ./web
+        run: npm audit --audit-level=high
+
+  mobile:
+    name: Mobile — test, audit, lint changed files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: mobile/package-lock.json
+      - working-directory: ./mobile
+        run: npm ci
+      - working-directory: ./mobile
+        run: npm test
+      # Gated at critical, not high: 5 high-severity findings are pinned behind
+      # an Expo SDK 54->57 jump and a @clerk/clerk-expo major bump, deliberately
+      # deferred (see commit 761ebc9). Raise to --audit-level=high once those
+      # land.
+      - working-directory: ./mobile
+        run: npm audit --audit-level=critical
+      # Existing `any` usage / 500+ line files are pre-existing debt (tracked,
+      # not blocking). This only fails on NEW violations in files the PR
+      # actually touches, so debt can't grow without surfacing in review.
+      - name: Lint files changed in this PR
+        if: github.event_name == 'pull_request'
+        working-directory: ./mobile
+        run: |
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.ts' '*.tsx' | grep '^mobile/' | sed 's#^mobile/##' || true)
+          if [ -z "$CHANGED" ]; then
+            echo "No mobile .ts/.tsx files changed."
+            exit 0
+          fi
+          echo "$CHANGED" | xargs npx eslint --max-warnings 0
