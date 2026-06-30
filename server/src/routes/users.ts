@@ -42,6 +42,7 @@ usersRouter.get("/leaderboard", async (c) => {
       id: users.id,
       name: users.name,
       avatarUrl: users.avatarUrl,
+      profileAvatarId: users.profileAvatarId,
       points: users.points,
       streak: users.streak,
       selectedLanguageId: users.selectedLanguageId,
@@ -56,6 +57,7 @@ usersRouter.get("/leaderboard", async (c) => {
     rank: i + 1,
     name: u.name,
     avatarUrl: u.avatarUrl ?? null,
+    profileAvatarId: u.profileAvatarId ?? null,
     points: u.points ?? 0,
     streak: u.streak ?? 0,
     selectedLanguageId: u.selectedLanguageId ?? null,
@@ -137,6 +139,7 @@ usersRouter.get("/me", authMiddleware, async (c) => {
     name: user.name,
     email: user.email,
     avatarUrl: user.avatarUrl,
+    profileAvatarId: user.profileAvatarId,
     streak: user.streak,
     points: user.points,
     selectedLanguageId: user.selectedLanguageId,
@@ -156,6 +159,7 @@ usersRouter.patch("/me", authMiddleware, async (c) => {
     name?: string;
     selectedLanguageId?: string;
     dailyGoal?: string;
+    profileAvatarId?: string;
   }>();
 
   await db
@@ -166,6 +170,7 @@ usersRouter.patch("/me", authMiddleware, async (c) => {
         ? { selectedLanguageId: body.selectedLanguageId }
         : {}),
       ...(body.dailyGoal ? { dailyGoal: body.dailyGoal } : {}),
+      ...(body.profileAvatarId ? { profileAvatarId: body.profileAvatarId } : {}),
     })
     .where(eq(users.id, userId));
 

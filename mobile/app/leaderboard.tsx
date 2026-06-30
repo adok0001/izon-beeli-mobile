@@ -1,3 +1,4 @@
+import { AvatarCircle } from "@/components/ui/avatar-circle";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useLeaderboard, type LeaderboardEntry } from "@/lib/hooks/use-leaderboard";
@@ -11,8 +12,11 @@ function getInitials(name: string): string {
   return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 }
 
-function Avatar({ name, avatarUrl, color }: Readonly<{ name: string; avatarUrl?: string | null; color: string }>) {
+function Avatar({ name, avatarUrl, profileAvatarId, color }: Readonly<{ name: string; avatarUrl?: string | null; profileAvatarId?: string | null; color: string }>) {
   const M = useMuseumTheme();
+  if (profileAvatarId) {
+    return <AvatarCircle avatarId={profileAvatarId} size={36} />;
+  }
   if (avatarUrl) {
     return <Image source={{ uri: avatarUrl }} style={{ width: 36, height: 36, borderRadius: 18 }} resizeMode="cover" />;
   }
@@ -85,7 +89,7 @@ function EntryRow({ entry }: Readonly<{ entry: LeaderboardEntry }>) {
       }}
     >
       <RankBadge rank={entry.rank} />
-      <Avatar name={entry.name} avatarUrl={entry.avatarUrl} color={avatarColor} />
+      <Avatar name={entry.name} avatarUrl={entry.avatarUrl} profileAvatarId={entry.profileAvatarId} color={avatarColor} />
       <View style={{ flex: 1, minWidth: 0 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <Text

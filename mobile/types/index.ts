@@ -132,6 +132,7 @@ export interface FeedItem {
   descriptionFr?: string | null;
   userName: string;
   userAvatarUrl?: string;
+  profileAvatarId?: string | null;
   createdAt: string;
   likes: number;
   comments: number;

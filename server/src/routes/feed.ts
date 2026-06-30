@@ -1,4 +1,5 @@
 import { and, desc, eq, inArray, lt, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { Hono } from "hono";
 import { verifyToken } from "@clerk/backend";
 import { db } from "../db/index.js";
@@ -30,6 +31,8 @@ feedPublicRouter.get("/", async (c) => {
     conditions.push(eq(feedItems.type, typeFilter as (typeof VALID_FEED_TYPES)[number]));
   }
 
+  const feedAuthors = alias(users, "feed_authors");
+
   const rows = await db
     .select({
       id: feedItems.id,
@@ -40,6 +43,8 @@ feedPublicRouter.get("/", async (c) => {
       descriptionFr: feedItems.descriptionFr,
       userName: feedItems.userName,
       userAvatarUrl: feedItems.userAvatarUrl,
+      authorAvatarUrl: feedAuthors.avatarUrl,
+      profileAvatarId: feedAuthors.profileAvatarId,
       audioUrl: feedItems.audioUrl,
       likesCount: feedItems.likesCount,
       commentsCount: feedItems.commentsCount,
@@ -47,6 +52,7 @@ feedPublicRouter.get("/", async (c) => {
       contributionLanguageId: contributions.languageId,
     })
     .from(feedItems)
+    .leftJoin(feedAuthors, eq(feedItems.userId, feedAuthors.id))
     .leftJoin(contributions, eq(feedItems.contributionId, contributions.id))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(feedItems.createdAt))
@@ -97,7 +103,8 @@ feedPublicRouter.get("/", async (c) => {
     description: item.description,
     descriptionFr: item.descriptionFr ?? null,
     userName: item.userName,
-    userAvatarUrl: item.userAvatarUrl,
+    userAvatarUrl: item.userAvatarUrl ?? item.authorAvatarUrl ?? null,
+    profileAvatarId: item.profileAvatarId ?? null,
     audioUrl: item.audioUrl,
     likes: item.likesCount,
     comments: item.commentsCount,

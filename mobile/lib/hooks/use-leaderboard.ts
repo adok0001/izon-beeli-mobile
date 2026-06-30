@@ -7,6 +7,7 @@ export interface LeaderboardEntry {
   rank: number;
   name: string;
   avatarUrl?: string | null;
+  profileAvatarId?: string | null;
   points: number;
   streak: number;
   selectedLanguageId?: string | null;

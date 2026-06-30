@@ -2,7 +2,7 @@ import { FeedbackModal } from "@/components/feedback-modal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { AVATAR_PAGES, PROFILE_AVATARS, type ProfileAvatar } from "@/constants/profile-avatars";
 import { getAccent } from "@/constants/accent-colors";
-import { canAccessEducatorPanel, type DailyGoal, useCurrentUser, useUpdateDailyGoal } from "@/lib/hooks/use-current-user";
+import { canAccessEducatorPanel, type DailyGoal, useCurrentUser, useUpdateDailyGoal, useUpdateProfileAvatar } from "@/lib/hooks/use-current-user";
 import { analytics } from "@/lib/analytics";
 import { useAppConfig } from "@/lib/hooks/use-app-config";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
@@ -258,6 +258,7 @@ export default function ProfileScreen() {
   const [goalPickerVisible, setGoalPickerVisible] = useState(false);
   const [avatarPickerVisible, setAvatarPickerVisible] = useState(false);
   const updateDailyGoal = useUpdateDailyGoal();
+  const updateProfileAvatar = useUpdateProfileAvatar();
   const { data: summary } = useProgressSummary();
   const { data: config } = useAppConfig();
   const { selectedLanguageId } = useLanguageStore();
@@ -265,7 +266,7 @@ export default function ProfileScreen() {
   const showTour = useTourStore((s) => s.showTour);
   const resetChecklist = useWelcomeChecklistStore((s) => s.reset);
   const resetTours = useTourStore((s) => s.reset);
-  const { selectedId: avatarId, setSelectedId: setAvatarId, hydrate: hydrateAvatar } = useProfileAvatarStore();
+  const { selectedId: avatarId, hydrate: hydrateAvatar } = useProfileAvatarStore();
 
   useEffect(() => { hydrateAvatar(); }, [hydrateAvatar]);
 
@@ -469,7 +470,7 @@ export default function ProfileScreen() {
       <AvatarPickerModal
         visible={avatarPickerVisible}
         current={avatarId}
-        onSave={setAvatarId}
+        onSave={(id) => updateProfileAvatar.mutate(id)}
         onClose={() => setAvatarPickerVisible(false)}
       />
     </SafeAreaView>

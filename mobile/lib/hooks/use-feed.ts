@@ -1,6 +1,7 @@
 import { apiFetch } from "@/lib/api";
 import type { Comment, FeedItem } from "@/types";
 import { useFeedLikesStore } from "@/store/feed-likes-store";
+import { useProfileAvatarStore } from "@/store/profile-avatar-store";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert } from "react-native";
@@ -14,6 +15,7 @@ interface FeedItemResponse {
   descriptionFr?: string | null;
   userName: string;
   userAvatarUrl?: string;
+  profileAvatarId?: string | null;
   audioUrl?: string;
   likes: number;
   comments: number;
@@ -50,6 +52,7 @@ export function useCreatePost() {
   const { getToken } = useAuth();
   const { user } = useUser();
   const queryClient = useQueryClient();
+  const profileAvatarId = useProfileAvatarStore((s) => s.selectedId);
 
   return useMutation({
     mutationFn: async (input: { title: string; description: string }) => {
@@ -69,6 +72,7 @@ export function useCreatePost() {
         title: input.title,
         description: input.description,
         userName: user?.username ?? "You",
+        profileAvatarId,
         likes: 0,
         comments: 0,
         isLiked: false,

@@ -11,7 +11,8 @@
     "lint": "expo lint",
     "test": "jest",
     "dev:server": "cd server && npm run dev",
-    "eas-build-post-install": "bash scripts/eas-build-pre-build.sh"
+    "eas-build-post-install": "bash scripts/eas-build-pre-build.sh",
+    "distribute:android": "bash ../scripts/distribute-android.sh"
   },
   "jest": {
     "preset": "ts-jest",

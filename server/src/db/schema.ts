@@ -137,6 +137,7 @@ export const users = pgTable("users", {
   organizationId: uuid("organization_id").references(() => organizations.id),
   accentColor: varchar("accent_color", { length: 16 }), // e.g. "#6366f1"
   profileTheme: varchar("profile_theme", { length: 16 }),
+  profileAvatarId: varchar("profile_avatar_id", { length: 32 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   // Soft-delete: set when user requests deletion; hard purge runs after 30 days
   deletedAt: timestamp("deleted_at"),

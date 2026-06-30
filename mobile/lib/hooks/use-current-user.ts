@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api";
+import { useProfileAvatarStore } from "@/store/profile-avatar-store";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -9,6 +10,7 @@ export interface CurrentUser {
   name: string;
   email: string;
   avatarUrl: string | null;
+  profileAvatarId: string | null;
   streak: number;
   points: number;
   selectedLanguageId: string | null;
@@ -17,7 +19,6 @@ export interface CurrentUser {
   isReviewer: boolean;
   reviewerLanguages: string[];
   reviewerRole: "teacher" | "professor" | "elder" | null;
-  dailyGoal: "casual" | "steady" | "intensive" | null;
   planTier: "free" | "plus";
   accentColor: string | null;
   profileTheme: string | null;
@@ -51,6 +52,29 @@ export function useCurrentUser() {
     },
     enabled: !!isSignedIn,
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useUpdateProfileAvatar() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  const setSelectedId = useProfileAvatarStore((s) => s.setSelectedId);
+
+  return useMutation({
+    mutationFn: async (profileAvatarId: string) => {
+      setSelectedId(profileAvatarId);
+      const token = await getToken();
+      return apiFetch("/users/me", {
+        method: "PATCH",
+        token: token!,
+        body: JSON.stringify({ profileAvatarId }),
+      });
+    },
+    onSuccess: (_data, profileAvatarId) => {
+      queryClient.setQueryData<CurrentUser>(["current-user"], (prev) =>
+        prev ? { ...prev, profileAvatarId } : prev
+      );
+    },
   });
 }
 

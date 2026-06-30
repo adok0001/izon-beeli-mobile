@@ -1,4 +1,5 @@
 import { FeedbackModal } from "@/components/feedback-modal";
+import { AvatarCircle } from "@/components/ui/avatar-circle";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { hapticSuccess } from "@/lib/haptics";
 import {
@@ -23,6 +24,7 @@ import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -346,18 +348,28 @@ function FeedCard({ item, onOpenComments }: Readonly<{ item: FeedItem; onOpenCom
     >
       {/* Header */}
       <View style={{ flexDirection: "row", alignItems: "center", padding: 14, paddingBottom: 10 }}>
-        <View
-          style={{
-            width: 36, height: 36, borderRadius: 18,
-            alignItems: "center", justifyContent: "center",
-            backgroundColor: `${config.color}15`,
-            borderWidth: 1, borderColor: `${config.color}30`,
-          }}
-        >
-          <Text style={{ fontSize: 13, fontWeight: "800", color: config.color }}>
-            {item.userName.charAt(0)}
-          </Text>
-        </View>
+        {item.profileAvatarId ? (
+          <AvatarCircle avatarId={item.profileAvatarId} size={36} />
+        ) : item.userAvatarUrl ? (
+          <Image
+            source={{ uri: item.userAvatarUrl }}
+            style={{ width: 36, height: 36, borderRadius: 18 }}
+            accessibilityLabel={item.userName}
+          />
+        ) : (
+          <View
+            style={{
+              width: 36, height: 36, borderRadius: 18,
+              alignItems: "center", justifyContent: "center",
+              backgroundColor: `${config.color}15`,
+              borderWidth: 1, borderColor: `${config.color}30`,
+            }}
+          >
+            <Text style={{ fontSize: 13, fontWeight: "800", color: config.color }}>
+              {item.userName.charAt(0)}
+            </Text>
+          </View>
+        )}
         <View style={{ marginLeft: 10, flex: 1 }}>
           <Text style={{ fontSize: 13, fontWeight: "700", color: M.text }}>{item.userName}</Text>
           <Text style={{ fontSize: 10, color: M.muted }}>{timeAgo(item.createdAt)}</Text>
