@@ -43,11 +43,11 @@ export function useSubmitContribution() {
         formData.append("type", input.type);
         formData.append("languageId", input.languageId);
         formData.append("word", input.word);
-        formData.append("english", JSON.stringify(input.english));
+        formData.append("english", localize(input.english, "en"));
         formData.append("category", input.category);
         if (input.pronunciation) formData.append("pronunciation", input.pronunciation);
         if (input.example) formData.append("example", input.example);
-        if (input.exampleTranslation) formData.append("exampleTranslation", JSON.stringify(input.exampleTranslation));
+        if (input.exampleTranslation) formData.append("exampleTranslation", localize(input.exampleTranslation, "en"));
         if (input.bountyId) formData.append("bountyId", input.bountyId);
 
         if (input.audioUri) {
@@ -84,11 +84,11 @@ export function useSubmitContribution() {
             type: input.type,
             languageId: input.languageId,
             word: input.word,
-            english: input.english,
+            english: localize(input.english, "en"),
             category: input.category,
             pronunciation: input.pronunciation,
             example: input.example,
-            exampleTranslation: input.exampleTranslation,
+            exampleTranslation: input.exampleTranslation ? localize(input.exampleTranslation, "en") : undefined,
             bountyId: input.bountyId,
           }),
         });
@@ -127,7 +127,7 @@ export function useSubmitEntryContribution() {
         formData.append("languageId", input.languageId);
         formData.append("dictionaryEntryId", input.dictionaryEntryId);
         formData.append("word", input.word);
-        formData.append("english", input.english ? JSON.stringify(input.english) : input.word);
+        formData.append("english", localize(input.english, "en") || input.word);
         formData.append("category", input.category);
 
         appendFile(formData, "audio", {
@@ -153,7 +153,7 @@ export function useSubmitEntryContribution() {
         formData.append("languageId", input.languageId);
         formData.append("dictionaryEntryId", input.dictionaryEntryId);
         formData.append("word", input.word);
-        formData.append("english", input.english ? JSON.stringify(input.english) : input.word);
+        formData.append("english", localize(input.english, "en") || input.word);
         formData.append("category", input.category);
 
         const filename = input.imageUri.split("/").pop() ?? "image.jpg";
@@ -186,7 +186,7 @@ export function useSubmitEntryContribution() {
             languageId: input.languageId,
             dictionaryEntryId: input.dictionaryEntryId,
             word: input.word,
-            english: input.english ?? {},
+            english: localize(input.english, "en") || input.word,
             category: input.category,
           }),
         });

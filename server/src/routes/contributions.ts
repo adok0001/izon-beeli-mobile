@@ -18,6 +18,25 @@ import {
 const VALID_TYPES = ["word", "phrase", "audio", "entry_audio", "entry_meaning", "entry_image"] as const;
 const VALID_REVIEW_ACTIONS = ["approve", "reject"] as const;
 
+// Clients may send english/exampleTranslation as a LocalizedText object or JSON string.
+// Normalise to a plain string by preferring the "en" key.
+function toEnglishString(raw: unknown): string {
+  if (typeof raw === "string") {
+    if (raw.startsWith("{")) {
+      try {
+        const parsed = JSON.parse(raw) as Record<string, string>;
+        return parsed.en ?? Object.values(parsed).find(Boolean) ?? raw;
+      } catch { /* not JSON */ }
+    }
+    return raw;
+  }
+  if (raw && typeof raw === "object") {
+    const obj = raw as Record<string, string>;
+    return obj.en ?? Object.values(obj).find(Boolean) ?? "";
+  }
+  return "";
+}
+
 // Public routes (no auth required)
 export const contributionsPublicRouter = new Hono();
 
@@ -84,11 +103,11 @@ contributionsRouter.post("/", async (c) => {
     type = (formData.get("type") as string) ?? "";
     languageId = (formData.get("languageId") as string) ?? "";
     word = (formData.get("word") as string) ?? "";
-    english = (formData.get("english") as string) ?? "";
+    english = toEnglishString(formData.get("english") as string);
     category = (formData.get("category") as string) ?? "";
     pronunciation = (formData.get("pronunciation") as string) || undefined;
     example = (formData.get("example") as string) || undefined;
-    exampleTranslation = (formData.get("exampleTranslation") as string) || undefined;
+    exampleTranslation = toEnglishString(formData.get("exampleTranslation") as string) || undefined;
     dictionaryEntryId = (formData.get("dictionaryEntryId") as string) || undefined;
     bountyId = (formData.get("bountyId") as string) || undefined;
 
@@ -137,11 +156,11 @@ contributionsRouter.post("/", async (c) => {
     type = body.type ?? "";
     languageId = body.languageId ?? "";
     word = body.word ?? "";
-    english = body.english ?? "";
+    english = toEnglishString(body.english);
     category = body.category ?? "";
     pronunciation = body.pronunciation;
     example = body.example;
-    exampleTranslation = body.exampleTranslation;
+    exampleTranslation = body.exampleTranslation ? toEnglishString(body.exampleTranslation) : undefined;
     dictionaryEntryId = body.dictionaryEntryId;
     bountyId = body.bountyId;
   }
