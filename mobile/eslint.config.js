@@ -71,4 +71,14 @@ module.exports = defineConfig([
       'beeli-design/no-raw-hex': 'warn',
     },
   },
+  // Debt-prevention gates: warn so existing violations don't break the build,
+  // but new `any` usage and new 500+ line files get flagged going forward.
+  {
+    files: ['app/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}', 'lib/**/*.{ts,tsx}'],
+    ignores: ['lib/data/**', 'lib/locales/**'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'warn',
+      'max-lines': ['warn', { max: 500, skipBlankLines: true, skipComments: true }],
+    },
+  },
 ]);
