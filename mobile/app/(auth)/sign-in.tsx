@@ -1,5 +1,6 @@
 import { analytics } from "@/lib/analytics";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useGuestStore } from "@/store/guest-store";
 import { useSignIn } from "@clerk/clerk-expo";
 import { Image } from "expo-image";
 import { Link, useRouter } from "expo-router";
@@ -29,6 +30,7 @@ export default function SignInScreen() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
+  const enterGuest = useGuestStore((s) => s.enterGuest);
 
   const logoAnim = useRef(new Animated.Value(0)).current;
   const formAnim = useRef(new Animated.Value(0)).current;
@@ -41,6 +43,12 @@ export default function SignInScreen() {
   }, []);
 
   const canSubmit = email.trim().length > 0 && password.length > 0 && !loading;
+
+  const onContinueAsGuest = () => {
+    analytics.guestStart();
+    enterGuest();
+    router.replace("/(tabs)/learn");
+  };
 
   const onSignIn = async () => {
     if (!isLoaded || !canSubmit) return;
@@ -240,6 +248,16 @@ export default function SignInScreen() {
               </Text>
             </Pressable>
           </Link>
+
+          <Pressable
+            onPress={onContinueAsGuest}
+            disabled={loading}
+            style={{ alignItems: "center", marginTop: 18 }}
+          >
+            <Text style={{ fontSize: 13, color: M.muted, textDecorationLine: "underline" }}>
+              {t("auth.continueAsGuest")}
+            </Text>
+          </Pressable>
         </Animated.View>
       </KeyboardAvoidingView>
     </SafeAreaView>

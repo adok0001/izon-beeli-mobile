@@ -90,6 +90,7 @@ const MAPPING = {
   'checkmark': 'check',
   'questionmark': 'help-outline',
   'square.on.square': 'content-copy',
+  'lock.fill': 'lock',
 } as IconMapping;
 
 /**

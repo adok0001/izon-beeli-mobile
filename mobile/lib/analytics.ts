@@ -14,6 +14,7 @@ type EventName =
   | "app_open"
   | "sign_in"
   | "sign_up"
+  | "guest_start"
   | "lesson_started"
   | "lesson_completed"
   | "quiz_started"
@@ -41,6 +42,7 @@ export const analytics = {
   appOpen: () => __sendEvent("app_open"),
   signIn: () => __sendEvent("sign_in"),
   signUp: () => __sendEvent("sign_up"),
+  guestStart: () => __sendEvent("guest_start"),
   lessonStarted: (lessonId: string, languageId: string) =>
     __sendEvent("lesson_started", { lessonId, languageId }),
   lessonCompleted: (lessonId: string, languageId: string) =>

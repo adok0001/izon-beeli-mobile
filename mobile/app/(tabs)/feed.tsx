@@ -1,4 +1,5 @@
 import { FeedbackModal } from "@/components/feedback-modal";
+import { SignInPrompt, useRequireAuth } from "@/components/sign-in-prompt";
 import { AvatarCircle } from "@/components/ui/avatar-circle";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { hapticSuccess } from "@/lib/haptics";
@@ -120,7 +121,13 @@ function CommentsModal({
   visible,
   feedItemId,
   onClose,
-}: Readonly<{ visible: boolean; feedItemId: string | null; onClose: () => void }>) {
+  requireAuth,
+}: Readonly<{
+  visible: boolean;
+  feedItemId: string | null;
+  onClose: () => void;
+  requireAuth: (action: () => void, descriptionKey?: string) => void;
+}>) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const { data: commentsData } = useComments(feedItemId);
@@ -130,8 +137,10 @@ function CommentsModal({
 
   const handleSend = () => {
     if (!text.trim() || !feedItemId) return;
-    addComment.mutate({ feedItemId, text: text.trim() });
-    setText("");
+    requireAuth(() => {
+      addComment.mutate({ feedItemId, text: text.trim() });
+      setText("");
+    }, "common.signInFeedDesc");
   };
 
   return (
@@ -306,7 +315,15 @@ function NewPostModal({ visible, onClose }: Readonly<{ visible: boolean; onClose
   );
 }
 
-function FeedCard({ item, onOpenComments }: Readonly<{ item: FeedItem; onOpenComments: (id: string) => void }>) {
+function FeedCard({
+  item,
+  onOpenComments,
+  requireAuth,
+}: Readonly<{
+  item: FeedItem;
+  onOpenComments: (id: string) => void;
+  requireAuth: (action: () => void, descriptionKey?: string) => void;
+}>) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
@@ -444,7 +461,7 @@ function FeedCard({ item, onOpenComments }: Readonly<{ item: FeedItem; onOpenCom
         }}
       >
         <Pressable
-          onPress={() => toggleLike.mutate(item.id)}
+          onPress={() => requireAuth(() => toggleLike.mutate(item.id), "common.signInFeedDesc")}
           style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
           hitSlop={8}
           accessibilityRole="button"
@@ -532,6 +549,7 @@ export default function FeedScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const { t } = useTranslation();
   const items = data?.pages.flatMap((p) => p.items) ?? [];
+  const { requireAuth, descriptionKey, closePrompt } = useRequireAuth();
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -567,7 +585,9 @@ export default function FeedScreen() {
               <IconSymbol name="trophy.fill" size={16} color={M.accent} />
             </Pressable>
             <Pressable
-              onPress={() => router.push("/contribute")}
+              onPress={() =>
+                requireAuth(() => router.push("/contribute"), "common.signInDictionaryDesc")
+              }
               style={{
                 width: 36, height: 36, borderRadius: 18,
                 alignItems: "center", justifyContent: "center",
@@ -580,7 +600,7 @@ export default function FeedScreen() {
               <IconSymbol name="mic.fill" size={16} color="#60a5fa" />
             </Pressable>
             <Pressable
-              onPress={() => setShowNewPost(true)}
+              onPress={() => requireAuth(() => setShowNewPost(true), "common.signInFeedDesc")}
               style={{
                 width: 36, height: 36, borderRadius: 18,
                 alignItems: "center", justifyContent: "center",
@@ -634,7 +654,9 @@ export default function FeedScreen() {
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32, paddingTop: 12 }}
             ListHeaderComponent={<FeedbackBanner onPress={() => setShowFeedback(true)} />}
-            renderItem={({ item }) => <FeedCard item={item} onOpenComments={setCommentsItemId} />}
+            renderItem={({ item }) => (
+              <FeedCard item={item} onOpenComments={setCommentsItemId} requireAuth={requireAuth} />
+            )}
             showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl
@@ -661,9 +683,11 @@ export default function FeedScreen() {
         visible={commentsItemId !== null}
         feedItemId={commentsItemId}
         onClose={() => setCommentsItemId(null)}
+        requireAuth={requireAuth}
       />
       <NewPostModal visible={showNewPost} onClose={() => setShowNewPost(false)} />
       <FeedbackModal visible={showFeedback} onClose={() => setShowFeedback(false)} />
+      <SignInPrompt descriptionKey={descriptionKey} onClose={closePrompt} />
     </SafeAreaView>
   );
 }

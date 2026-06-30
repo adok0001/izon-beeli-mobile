@@ -11,6 +11,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { JOURNEY } from "@/lib/journey";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { formatDuration } from "@/lib/mock-data";
+import { getCachedAudioSource } from "@/lib/audio-cache";
 import { useAudioStore } from "@/store/audio-store";
 import { hapticTap } from "@/lib/haptics";
 import type { AudioSource } from "@/types";
@@ -60,6 +61,7 @@ export function SyncedAudioPlayer({ trackId, source, title, route, onFinish }: P
   const dur = isCurrent ? duration : 0;
 
   const [dragFrac, setDragFrac] = useState<number | null>(null);
+  const [isResolving, setIsResolving] = useState(false);
   const widthRef = useRef(0);
   const durRef = useRef(0);
   durRef.current = dur;
@@ -90,7 +92,7 @@ export function SyncedAudioPlayer({ trackId, source, title, route, onFinish }: P
     })
   ).current;
 
-  const handlePlayPause = () => {
+  const handlePlayPause = async () => {
     hapticTap();
     if (error) {
       reset();
@@ -98,9 +100,12 @@ export function SyncedAudioPlayer({ trackId, source, title, route, onFinish }: P
     }
     if (isCurrent) {
       togglePlayback();
-    } else {
-      loadAndPlay(trackId, source, title, route, { onFinish });
+      return;
     }
+    setIsResolving(true);
+    const resolved = await getCachedAudioSource(trackId, source);
+    setIsResolving(false);
+    loadAndPlay(trackId, resolved ?? source, title, route, { onFinish });
   };
 
   const cycleSpeed = () => {
@@ -208,9 +213,9 @@ export function SyncedAudioPlayer({ trackId, source, title, route, onFinish }: P
           }}
           accessibilityRole="button"
           accessibilityLabel={error ? "Dismiss error" : isPlaying && isCurrent ? "Pause" : "Play"}
-          accessibilityState={{ busy: isLoading }}
+          accessibilityState={{ busy: isResolving || (isLoading && isCurrent) }}
         >
-          {isLoading && isCurrent ? (
+          {isResolving || (isLoading && isCurrent) ? (
             <ActivityIndicator color={JOURNEY.sheetBg} />
           ) : (
             <IconSymbol

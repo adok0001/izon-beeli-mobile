@@ -1,4 +1,8 @@
 import { apiFetch } from "@/lib/api";
+import { useIsOffline } from "@/lib/hooks/use-offline";
+import { useGuestProgressStore } from "@/store/guest-progress-store";
+import { useGuestStore } from "@/store/guest-store";
+import { useWriteQueueStore } from "@/store/write-queue-store";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
@@ -16,24 +20,40 @@ export interface WordBankEntry {
 
 export function useWordBank() {
   const { getToken, isSignedIn } = useAuth();
+  const isGuest = useGuestStore((s) => s.isGuest);
 
   return useQuery<string[]>({
     queryKey: ["wordbank"],
     queryFn: async () => {
+      if (isGuest) return useGuestProgressStore.getState().wordbankIds;
       const token = await getToken();
       return apiFetch<string[]>("/wordbank", { token: token! });
     },
-    enabled: !!isSignedIn,
+    enabled: !!isSignedIn || isGuest,
   });
 }
 
 export function useSaveWord() {
   const { getToken } = useAuth();
+  const isGuest = useGuestStore((s) => s.isGuest);
+  const isOffline = useIsOffline();
   const queryClient = useQueryClient();
   const invalidateDailyChallenges = useInvalidateDailyChallenges();
 
   return useMutation({
     mutationFn: async (dictionaryEntryId: string) => {
+      if (isGuest) {
+        useGuestProgressStore.getState().saveWord(dictionaryEntryId);
+        return { saved: true };
+      }
+      if (isOffline) {
+        useWriteQueueStore.getState().enqueue({
+          kind: "saveWord",
+          dictionaryEntryId,
+          ts: new Date().toISOString(),
+        });
+        return { saved: true };
+      }
       const token = await getToken();
       return apiFetch("/wordbank", {
         method: "POST",
@@ -109,10 +129,24 @@ export function useInvalidateReviewQueue() {
 
 export function useRemoveWord() {
   const { getToken } = useAuth();
+  const isGuest = useGuestStore((s) => s.isGuest);
+  const isOffline = useIsOffline();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (dictionaryEntryId: string) => {
+      if (isGuest) {
+        useGuestProgressStore.getState().removeWord(dictionaryEntryId);
+        return { removed: true };
+      }
+      if (isOffline) {
+        useWriteQueueStore.getState().enqueue({
+          kind: "removeWord",
+          dictionaryEntryId,
+          ts: new Date().toISOString(),
+        });
+        return { removed: true };
+      }
       const token = await getToken();
       return apiFetch(`/wordbank/${dictionaryEntryId}`, {
         method: "DELETE",

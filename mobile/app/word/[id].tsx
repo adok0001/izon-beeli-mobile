@@ -1,5 +1,6 @@
 import { analytics } from "@/lib/analytics";
 import { friendlyError } from "@/lib/api";
+import { SignInPrompt, useRequireAuth } from "@/components/sign-in-prompt";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -123,6 +124,7 @@ export default function WordDetailScreen() {
   const [showContribute, setShowContribute] = useState(false);
   const [shareVisible, setShareVisible] = useState(false);
   const [lessonsExpanded, setLessonsExpanded] = useState(false);
+  const { requireAuth, descriptionKey, closePrompt } = useRequireAuth();
 
   const entryId = entry?.id;
   const entryLanguageId = entry?.languageId;
@@ -588,7 +590,9 @@ export default function WordDetailScreen() {
           {hasContributable && (
             <View style={{ marginHorizontal: 20, marginTop: 32, marginBottom: 8 }}>
               <Pressable
-                onPress={() => setShowContribute((v) => !v)}
+                onPress={() =>
+                  requireAuth(() => setShowContribute((v) => !v), "common.signInDictionaryDesc")
+                }
                 style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderRadius: 16, borderWidth: 1, borderColor: M.border, paddingHorizontal: 16, paddingVertical: 14 }}
                 className="active:opacity-80"
               >
@@ -728,6 +732,7 @@ export default function WordDetailScreen() {
           audioUrl: effectiveAudioUrl,
         }}
       />
+      <SignInPrompt descriptionKey={descriptionKey} onClose={closePrompt} />
     </>
   );
 }

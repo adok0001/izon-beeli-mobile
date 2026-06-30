@@ -1,5 +1,8 @@
 import i18n from "./i18n";
-import { QueryClient, focusManager } from "@tanstack/react-query";
+import { QueryClient, focusManager, onlineManager } from "@tanstack/react-query";
+import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import NetInfo from "@react-native-community/netinfo";
 import { AppState, Platform } from "react-native";
 import { API_BASE_URL } from "./constants";
 
@@ -9,6 +12,15 @@ if (Platform.OS !== "web") {
   AppState.addEventListener("change", (status) => {
     focusManager.setFocused(status === "active");
   });
+
+  // Same story for connectivity detection (default uses `navigator.onLine`,
+  // always true in React Native) — wire it to NetInfo so queries pause while
+  // offline and mutations/refetches resume the moment connectivity returns.
+  onlineManager.setEventListener((setOnline) =>
+    NetInfo.addEventListener((state) => {
+      setOnline(!!state.isConnected && state.isInternetReachable !== false);
+    })
+  );
 }
 
 export const queryClient = new QueryClient({
@@ -18,6 +30,13 @@ export const queryClient = new QueryClient({
       retry: 2,
     },
   },
+});
+
+// Lets previously-fetched content (courses, lessons, dictionary, etc.) survive
+// app restarts so a cold launch offline still has something to show.
+export const queryPersister = createAsyncStoragePersister({
+  storage: AsyncStorage,
+  key: "beeli-query-cache",
 });
 
 export class ApiError extends Error {

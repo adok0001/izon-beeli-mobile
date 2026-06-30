@@ -1,6 +1,7 @@
 import { apiFetch } from "@/lib/api";
 import type { Comment, FeedItem } from "@/types";
 import { useFeedLikesStore } from "@/store/feed-likes-store";
+import { useGuestStore } from "@/store/guest-store";
 import { useProfileAvatarStore } from "@/store/profile-avatar-store";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -32,19 +33,22 @@ export type FeedTypeFilter = "all" | "achievement" | "contribution" | "community
 
 export function useFeed(typeFilter?: FeedTypeFilter) {
   const { getToken, isSignedIn } = useAuth();
+  const isGuest = useGuestStore((s) => s.isGuest);
 
   return useInfiniteQuery<FeedPage>({
     queryKey: ["feed", typeFilter ?? "all"],
     queryFn: async ({ pageParam }) => {
-      const token = await getToken();
+      // GET /feed is publicly mounted server-side; the token is only sent to
+      // resolve isLiked for the caller, so it's optional for guests.
+      const token = isSignedIn ? await getToken() : undefined;
       const params = new URLSearchParams({ limit: "20" });
       if (pageParam) params.set("cursor", pageParam as string);
       if (typeFilter && typeFilter !== "all") params.set("type", typeFilter);
-      return apiFetch<FeedPage>(`/feed?${params}`, { token: token! });
+      return apiFetch<FeedPage>(`/feed?${params}`, { token: token ?? undefined });
     },
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
-    enabled: !!isSignedIn,
+    enabled: !!isSignedIn || isGuest,
   });
 }
 
@@ -169,14 +173,15 @@ export function useToggleLike() {
 
 export function useComments(feedItemId: string | null) {
   const { getToken, isSignedIn } = useAuth();
+  const isGuest = useGuestStore((s) => s.isGuest);
 
   return useQuery<Comment[]>({
     queryKey: ["comments", feedItemId],
     queryFn: async () => {
-      const token = await getToken();
-      return apiFetch<Comment[]>(`/feed/${feedItemId}/comments`, { token: token! });
+      const token = isSignedIn ? await getToken() : undefined;
+      return apiFetch<Comment[]>(`/feed/${feedItemId}/comments`, { token: token ?? undefined });
     },
-    enabled: !!isSignedIn && !!feedItemId,
+    enabled: (!!isSignedIn || isGuest) && !!feedItemId,
   });
 }
 

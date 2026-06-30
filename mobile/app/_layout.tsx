@@ -3,10 +3,12 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { analytics, posthogClient } from "@/lib/analytics";
-import { queryClient } from "@/lib/api";
+import { queryClient, queryPersister } from "@/lib/api";
 import { tokenCache } from "@/lib/auth";
+import { migrateGuestToAccount } from "@/lib/guest-migration";
 import { useSyncUser } from "@/lib/hooks/use-sync-user";
 import { useWidgetSync } from "@/lib/hooks/use-widget-sync";
+import { startWriteQueueReplay } from "@/lib/write-queue";
 import "@/lib/i18n";
 import {
   addNotificationListener,
@@ -14,12 +16,15 @@ import {
   configurePushNotifications,
   registerPushToken,
 } from "@/lib/push-notifications";
+import { useGuestProgressStore } from "@/store/guest-progress-store";
+import { useGuestStore } from "@/store/guest-store";
 import { useLanguageStore } from "@/store/language-store";
 import { useNotificationStore } from "@/store/notification-store";
 import { useOverlayStore } from "@/store/overlay-store";
 import { useThemeStore } from "@/store/theme-store";
 import { useTourStore } from "@/store/tour-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
+import { useWriteQueueStore } from "@/store/write-queue-store";
 import { ClerkLoaded, ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import {
   PlusJakartaSans_600SemiBold,
@@ -27,7 +32,8 @@ import {
   useFonts,
 } from "@expo-google-fonts/plus-jakarta-sans";
 import { DarkTheme, ThemeProvider, type Theme } from "@react-navigation/native";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { onlineManager } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { PostHogProvider } from "posthog-react-native";
 import { Stack, useGlobalSearchParams, usePathname, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -35,6 +41,7 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef, useState } from "react";
 import { InteractionManager, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useTranslation } from "react-i18next";
 import "react-native-reanimated";
 import "../global.css";
 
@@ -95,12 +102,40 @@ function StreakCelebrationHost() {
   );
 }
 
+/**
+ * Buster is keyed to identity (signed-in user id, or "guest") so switching
+ * accounts on the same device discards the previous identity's persisted
+ * cache instead of briefly showing stale data from someone else.
+ */
+function PersistedQueryProvider({ children }: Readonly<{ children: React.ReactNode }>) {
+  const { userId } = useAuth();
+  const isGuest = useGuestStore((s) => s.isGuest);
+  const buster = userId ?? (isGuest ? "guest" : "anonymous");
+
+  return (
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{
+        persister: queryPersister,
+        buster,
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+      }}
+    >
+      {children}
+    </PersistQueryClientProvider>
+  );
+}
+
 function AuthGate({ children }: Readonly<{ children: React.ReactNode }>) {
   const { isSignedIn, isLoaded, getToken, userId } = useAuth();
+  const { t } = useTranslation();
   const router = useRouter();
   const segments = useSegments();
   const prevSignedIn = useRef<boolean | undefined>(undefined);
+  const migratingGuestRef = useRef(false);
   const addNotification = useNotificationStore((s) => s.addNotification);
+  const isGuest = useGuestStore((s) => s.isGuest);
+  const guestHydrated = useGuestStore((s) => s._hydrated);
 
   const deletionPending = useSyncUser();
 
@@ -124,6 +159,42 @@ function AuthGate({ children }: Readonly<{ children: React.ReactNode }>) {
     if (isSignedIn && userId) analytics.identify(userId);
   }, [isSignedIn, userId]);
 
+  // Drains any progress/wordbank writes queued while offline, replaying
+  // immediately if already online and again on every reconnect.
+  useEffect(() => {
+    if (!isSignedIn) return;
+    return startWriteQueueReplay(getToken);
+  }, [isSignedIn, getToken]);
+
+  // A guest who signs in still has isGuest=true until migration finishes, so
+  // this naturally retries on every reconnect alongside the write-queue
+  // replay above until the local progress has fully landed on the account.
+  useEffect(() => {
+    if (!isSignedIn || !isGuest || !guestHydrated) return;
+
+    const attemptMigration = async () => {
+      if (migratingGuestRef.current) return;
+      migratingGuestRef.current = true;
+      try {
+        const migrated = await migrateGuestToAccount(getToken);
+        if (migrated) {
+          addNotification(
+            "achievement",
+            t("auth.guestMigrationTitle"),
+            t("auth.guestMigrationBody")
+          );
+        }
+      } finally {
+        migratingGuestRef.current = false;
+      }
+    };
+
+    attemptMigration();
+    return onlineManager.subscribe((online) => {
+      if (online) attemptMigration();
+    });
+  }, [isSignedIn, isGuest, guestHydrated, getToken, addNotification, t]);
+
   useEffect(() => {
     return addNotificationTapListener((route) => {
       router.push(route as never);
@@ -139,7 +210,7 @@ function AuthGate({ children }: Readonly<{ children: React.ReactNode }>) {
   }, [addNotification]);
 
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded || !guestHydrated) return;
 
     const wasSignedIn = prevSignedIn.current;
     prevSignedIn.current = isSignedIn;
@@ -151,18 +222,19 @@ function AuthGate({ children }: Readonly<{ children: React.ReactNode }>) {
     const seg0 = (segments as readonly string[])[0];
     const inAuthGroup = seg0 === "(auth)";
     const inDeepRoute = !!seg0 && seg0 !== "(auth)";
+    const allowed = isSignedIn || isGuest;
 
-    if (!isSignedIn) {
+    if (!allowed) {
       if (!inAuthGroup) router.replace("/(auth)/sign-in");
       return;
     }
 
-    if (deletionPending || seg0 === "restore-account") return;
+    if (isSignedIn && (deletionPending || seg0 === "restore-account")) return;
 
     if (inAuthGroup || !inDeepRoute) {
       router.replace("/(tabs)/learn");
     }
-  }, [isSignedIn, isLoaded, segments, router, deletionPending]);
+  }, [isSignedIn, isLoaded, isGuest, guestHydrated, segments, router, deletionPending]);
 
   return <>{children}</>;
 }
@@ -174,6 +246,9 @@ export default function RootLayout() {
   const hydrateLanguage = useLanguageStore((s) => s.hydrate);
   const hydrateUiLanguage = useUiLanguageStore((s) => s.hydrate);
   const hydrateTours = useTourStore((s) => s.hydrate);
+  const hydrateGuest = useGuestStore((s) => s.hydrate);
+  const hydrateGuestProgress = useGuestProgressStore((s) => s.hydrate);
+  const hydrateWriteQueue = useWriteQueueStore((s) => s.hydrate);
   const [fontsLoaded, fontError] = useFonts({
     PlusJakartaSans_700Bold,
     PlusJakartaSans_600SemiBold,
@@ -202,8 +277,19 @@ export default function RootLayout() {
     hydrateLanguage();
     hydrateUiLanguage();
     hydrateTours();
+    hydrateGuest();
+    hydrateGuestProgress();
+    hydrateWriteQueue();
     analytics.appOpen();
-  }, [hydrateTheme, hydrateLanguage, hydrateUiLanguage, hydrateTours]);
+  }, [
+    hydrateTheme,
+    hydrateLanguage,
+    hydrateUiLanguage,
+    hydrateTours,
+    hydrateGuest,
+    hydrateGuestProgress,
+    hydrateWriteQueue,
+  ]);
 
   // The native splash is hidden by <BrandSplash> on its first layout (not here),
   // so the ink overlay is already covering the screen when the native splash
@@ -225,7 +311,7 @@ export default function RootLayout() {
     <ErrorBoundary>
     <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
       <ClerkLoaded>
-        <QueryClientProvider client={queryClient}>
+        <PersistedQueryProvider>
           <ThemeProvider value={MuseumNavigationTheme}>
             <AuthGate>
               <PostHogProvider
@@ -317,7 +403,7 @@ export default function RootLayout() {
               <StatusBar style="light" />
             </AuthGate>
           </ThemeProvider>
-        </QueryClientProvider>
+        </PersistedQueryProvider>
       </ClerkLoaded>
     </ClerkProvider>
     </ErrorBoundary>

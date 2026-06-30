@@ -4,7 +4,11 @@ import { useIsFocused } from "@react-navigation/native";
 import { Alert } from "react-native";
 import { apiFetch } from "@/lib/api";
 import { hapticHeavy } from "@/lib/haptics";
+import { useIsOffline } from "@/lib/hooks/use-offline";
+import { useGuestProgressStore } from "@/store/guest-progress-store";
+import { useGuestStore } from "@/store/guest-store";
 import { useForegroundClaim, useOverlayStore } from "@/store/overlay-store";
+import { useWriteQueueStore } from "@/store/write-queue-store";
 import { useInvalidateDailyChallenges } from "./use-daily-challenge";
 import { useToast } from "./use-toast";
 import { useCallback, useEffect, useState } from "react";
@@ -37,27 +41,33 @@ interface CompleteLessonResponse {
 
 export function useProgressSummary() {
   const { getToken, isSignedIn } = useAuth();
+  const isGuest = useGuestStore((s) => s.isGuest);
 
   return useQuery<ProgressSummary>({
     queryKey: ["progress", "summary"],
     queryFn: async () => {
+      if (isGuest) return useGuestProgressStore.getState().getSummary();
       const token = await getToken();
       return apiFetch("/progress/summary", { token: token! });
     },
-    enabled: !!isSignedIn,
+    enabled: !!isSignedIn || isGuest,
   });
 }
 
 export function useCompletedLessons() {
   const { getToken, isSignedIn } = useAuth();
+  const isGuest = useGuestStore((s) => s.isGuest);
 
   return useQuery<string[]>({
     queryKey: ["progress", "completed"],
     queryFn: async () => {
+      if (isGuest) {
+        return useGuestProgressStore.getState().completedLessons.map((c) => c.lessonId);
+      }
       const token = await getToken();
       return apiFetch("/progress", { token: token! });
     },
-    enabled: !!isSignedIn,
+    enabled: !!isSignedIn || isGuest,
   });
 }
 
@@ -66,11 +76,22 @@ export function useCompleteLesson(callbacks?: {
   onStreakUpdate?: (streak: number, isMilestone: boolean) => void;
 }) {
   const { getToken } = useAuth();
+  const isGuest = useGuestStore((s) => s.isGuest);
+  const isOffline = useIsOffline();
   const queryClient = useQueryClient();
   const invalidateDailyChallenges = useInvalidateDailyChallenges();
 
   return useMutation({
-    mutationFn: async (lessonId: string) => {
+    mutationFn: async (lessonId: string): Promise<CompleteLessonResponse> => {
+      if (isGuest) return useGuestProgressStore.getState().completeLesson(lessonId);
+      if (isOffline) {
+        useWriteQueueStore.getState().enqueue({
+          kind: "completeLesson",
+          lessonId,
+          ts: new Date().toISOString(),
+        });
+        return {};
+      }
       const token = await getToken();
       return apiFetch<CompleteLessonResponse>(
         `/progress/${lessonId}/complete`,
@@ -179,11 +200,22 @@ interface ListenResult {
 
 export function useTrackListen(callbacks?: { onStreakUpdate?: (streak: number, isMilestone: boolean) => void }) {
   const { getToken } = useAuth();
+  const isGuest = useGuestStore((s) => s.isGuest);
+  const isOffline = useIsOffline();
   const queryClient = useQueryClient();
   const invalidateDailyChallenges = useInvalidateDailyChallenges();
 
   return useMutation({
-    mutationFn: async (lessonId: string) => {
+    mutationFn: async (lessonId: string): Promise<ListenResult> => {
+      if (isGuest) return { tracked: true, ...useGuestProgressStore.getState().trackListen() };
+      if (isOffline) {
+        useWriteQueueStore.getState().enqueue({
+          kind: "trackListen",
+          lessonId,
+          ts: new Date().toISOString(),
+        });
+        return { tracked: true };
+      }
       const token = await getToken();
       return apiFetch<ListenResult>(`/progress/${lessonId}/listen`, {
         method: "POST",

@@ -21,6 +21,7 @@ import { playFinishSound } from "@/lib/sounds";
 import { hapticHeavy } from "@/lib/haptics";
 import { cancelDailyStreakReminder } from "@/lib/hooks/use-daily-reminder";
 import { useReviewPrompt } from "@/lib/hooks/use-review-prompt";
+import { getCachedAudioSource } from "@/lib/audio-cache";
 import { useAudioStore } from "@/store/audio-store";
 import { analytics } from "@/lib/analytics";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -36,7 +37,7 @@ import { useCallback, useEffect, useState } from "react";
 import { LoadingScreen } from "@/components/loading-screen";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useIsFocused } from "@react-navigation/native";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
@@ -58,6 +59,7 @@ export default function LessonScreen() {
   const [showSummary, setShowSummary] = useState(false);
   const [shareVisible, setShareVisible] = useState(false);
   const [pendingSummary, setPendingSummary] = useState(false);
+  const [isResolvingAudio, setIsResolvingAudio] = useState(false);
 
   useEffect(() => {
     if (pendingSummary && !isPlaying) {
@@ -137,15 +139,19 @@ export default function LessonScreen() {
   const lessonDescription = localize(lesson.description, uiLanguage);
   const accentColor = typeColors.tickActive ?? M.accent;
 
-  const handlePlayAudio = () => {
+  const handlePlayAudio = async () => {
     if (isCurrentTrack) {
       togglePlayback();
-    } else if (audioSource) {
-      loadAndPlay(lesson.id, audioSource, lessonTitle, `/lesson/${lesson.id}`, {
-        onFinish: () => trackListen.mutate(lesson.id),
-      });
-      analytics.lessonStarted(lesson.id, selectedLanguageId);
+      return;
     }
+    if (!audioSource) return;
+    setIsResolvingAudio(true);
+    const resolved = await getCachedAudioSource(lesson.id, audioSource);
+    setIsResolvingAudio(false);
+    loadAndPlay(lesson.id, resolved ?? audioSource, lessonTitle, `/lesson/${lesson.id}`, {
+      onFinish: () => trackListen.mutate(lesson.id),
+    });
+    analytics.lessonStarted(lesson.id, selectedLanguageId);
   };
 
   const wordCount = (() => {
@@ -458,22 +464,28 @@ export default function LessonScreen() {
 
               <Pressable
                 onPress={audioSource ? handlePlayAudio : handleMarkComplete}
+                disabled={isResolvingAudio}
                 style={{ borderRadius: 16, overflow: "hidden" }}
                 className="active:opacity-80"
                 accessibilityRole="button"
                 accessibilityLabel={t("lesson.startLesson", { defaultValue: "Start lesson" })}
+                accessibilityState={{ busy: isResolvingAudio }}
               >
                 <LinearGradient
                   colors={["#D89A3A", JOURNEY.bronze]}
                   style={{ paddingVertical: 17, alignItems: "center" }}
                 >
-                  <Text style={{ fontSize: 15, fontWeight: "800", color: JOURNEY.sheetBg }}>
-                    {isCurrentTrack && isPlaying
-                      ? t("lesson.pause")
-                      : completed
-                      ? t("journey.review", { defaultValue: "Review lesson" })
-                      : t("lesson.startLesson", { defaultValue: "Start lesson" })} ›
-                  </Text>
+                  {isResolvingAudio ? (
+                    <ActivityIndicator color={JOURNEY.sheetBg} />
+                  ) : (
+                    <Text style={{ fontSize: 15, fontWeight: "800", color: JOURNEY.sheetBg }}>
+                      {isCurrentTrack && isPlaying
+                        ? t("lesson.pause")
+                        : completed
+                        ? t("journey.review", { defaultValue: "Review lesson" })
+                        : t("lesson.startLesson", { defaultValue: "Start lesson" })} ›
+                    </Text>
+                  )}
                 </LinearGradient>
               </Pressable>
 
