@@ -1,3 +1,4 @@
+import { BrandSplash } from "@/components/brand-splash";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -179,6 +180,8 @@ export default function RootLayout() {
     Akagu: require("../assets/fonts/Akagu.ttf"),
    });
 
+  const [brandSplashDone, setBrandSplashDone] = useState(false);
+
   const pathname = usePathname();
   const params = useGlobalSearchParams();
   const previousPathname = useRef<string | undefined>(undefined);
@@ -202,10 +205,9 @@ export default function RootLayout() {
     analytics.appOpen();
   }, [hydrateTheme, hydrateLanguage, hydrateUiLanguage, hydrateTours]);
 
-  useEffect(() => {
-    if (fontsLoaded || fontError) void SplashScreen.hideAsync().catch(() => {});
-  }, [fontsLoaded, fontError]);
-
+  // The native splash is hidden by <BrandSplash> on its first layout (not here),
+  // so the ink overlay is already covering the screen when the native splash
+  // lifts — otherwise the white root view flashes for a frame in the handoff.
   if (!fontsLoaded && !fontError) return null;
 
   if (!clerkPublishableKey) {
@@ -219,6 +221,7 @@ export default function RootLayout() {
   }
 
   return (
+    <>
     <ErrorBoundary>
     <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
       <ClerkLoaded>
@@ -318,5 +321,7 @@ export default function RootLayout() {
       </ClerkLoaded>
     </ClerkProvider>
     </ErrorBoundary>
+    {!brandSplashDone && <BrandSplash onFinish={() => setBrandSplashDone(true)} />}
+    </>
   );
 }
