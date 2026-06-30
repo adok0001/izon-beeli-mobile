@@ -28,6 +28,16 @@ export const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
       retry: 2,
+      // Query/mutation fns here already branch on useIsOffline() to serve
+      // bundled content or enqueue writes locally. The default 'online'
+      // networkMode pauses fetches without ever calling those fns when
+      // onlineManager reports offline, so queries never resolve (stuck
+      // loading) and refetches never settle (stuck spinner). 'always' lets
+      // the fns run and handle connectivity themselves.
+      networkMode: "always",
+    },
+    mutations: {
+      networkMode: "always",
     },
   },
 });

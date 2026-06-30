@@ -1,4 +1,5 @@
 import { FeedbackModal } from "@/components/feedback-modal";
+import { SignInPrompt, useRequireAuth } from "@/components/sign-in-prompt";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { AVATAR_PAGES, PROFILE_AVATARS, type ProfileAvatar } from "@/constants/profile-avatars";
 import { getAccent } from "@/constants/accent-colors";
@@ -267,6 +268,7 @@ export default function ProfileScreen() {
   const resetChecklist = useWelcomeChecklistStore((s) => s.reset);
   const resetTours = useTourStore((s) => s.reset);
   const { selectedId: avatarId, hydrate: hydrateAvatar } = useProfileAvatarStore();
+  const { requireAuth, descriptionKey, closePrompt } = useRequireAuth();
 
   useEffect(() => { hydrateAvatar(); }, [hydrateAvatar]);
 
@@ -437,7 +439,11 @@ export default function ProfileScreen() {
           {(isAdmin || currentUser?.isReviewer) && (
             <MenuRow icon="checkmark.shield.fill" label={t("profile.reviewContributions")} onPress={() => router.push("/review")} />
           )}
-          <MenuRow icon="doc.text.fill" label={t("profile.myContributions")} onPress={() => router.push("/my-contributions")} />
+          <MenuRow
+            icon="doc.text.fill"
+            label={t("profile.myContributions")}
+            onPress={() => requireAuth(() => router.push("/my-contributions"), "common.signInDictionaryDesc")}
+          />
           <MenuRow icon="star.fill" label={t("profile.bounties")} onPress={() => router.push("/bounties")} />
           <MenuRow icon="trophy.fill" label={t("profile.contributors")} onPress={() => router.push("/contributors")} />
           <MenuRow icon="person.3.fill" label={t("profile.classroom")} onPress={() => router.push("/classroom")} />
@@ -461,6 +467,7 @@ export default function ProfileScreen() {
       </ScrollView>
 
       <FeedbackModal visible={feedbackVisible} onClose={() => setFeedbackVisible(false)} />
+      <SignInPrompt descriptionKey={descriptionKey} onClose={closePrompt} />
       <GoalPickerModal
         visible={goalPickerVisible}
         current={currentUser?.dailyGoal ?? null}

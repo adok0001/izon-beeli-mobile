@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { SignInPrompt, useRequireAuth } from "@/components/sign-in-prompt";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useBounties, type Bounty } from "@/lib/hooks/use-bounties";
 import { canManageBounties, useCurrentUser } from "@/lib/hooks/use-current-user";
@@ -10,7 +11,7 @@ import { useTranslation } from "react-i18next";
 import { FlatList, Pressable, RefreshControl, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-function BountyCard({ bounty, isAdmin }: { bounty: Bounty; isAdmin?: boolean }) {
+function BountyCard({ bounty, isAdmin, onClaim }: { bounty: Bounty; isAdmin?: boolean; onClaim: (bounty: Bounty) => void }) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
@@ -68,7 +69,7 @@ function BountyCard({ bounty, isAdmin }: { bounty: Bounty; isAdmin?: boolean }) 
       </View>
 
       <Pressable
-        onPress={() => router.push({ pathname: "/contribute", params: { bountyId: bounty.id, languageId: bounty.languageId, ...(bounty.category ? { category: bounty.category } : {}) } } as any)}
+        onPress={() => onClaim(bounty)}
         style={{ alignItems: "center", borderRadius: 12, backgroundColor: M.accent, paddingVertical: 12 }}
         className="active:opacity-80"
       >
@@ -86,12 +87,27 @@ export default function BountiesScreen() {
   const { data, isLoading, refetch } = useBounties(selectedLanguageId);
   const { data: currentUser } = useCurrentUser();
   const [refreshing, setRefreshing] = useState(false);
+  const { requireAuth, descriptionKey, closePrompt } = useRequireAuth();
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await refetch();
     setRefreshing(false);
   }, [refetch]);
+
+  const onClaim = useCallback(
+    (bounty: Bounty) => {
+      requireAuth(
+        () =>
+          router.push({
+            pathname: "/contribute",
+            params: { bountyId: bounty.id, languageId: bounty.languageId, ...(bounty.category ? { category: bounty.category } : {}) },
+          } as any),
+        "common.signInDictionaryDesc"
+      );
+    },
+    [requireAuth, router]
+  );
 
   return (
     <>
@@ -104,7 +120,7 @@ export default function BountiesScreen() {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           renderItem={({ item }) => (
-            <BountyCard bounty={item} isAdmin={!!(currentUser && canManageBounties(currentUser))} />
+            <BountyCard bounty={item} isAdmin={!!(currentUser && canManageBounties(currentUser))} onClaim={onClaim} />
           )}
           ListEmptyComponent={
             <View style={{ alignItems: "center", paddingHorizontal: 32, paddingVertical: 80 }}>
@@ -132,6 +148,8 @@ export default function BountiesScreen() {
             <IconSymbol name="plus" size={26} color={M.ink} />
           </Pressable>
         )}
+
+        <SignInPrompt descriptionKey={descriptionKey} onClose={closePrompt} />
       </SafeAreaView>
     </>
   );
