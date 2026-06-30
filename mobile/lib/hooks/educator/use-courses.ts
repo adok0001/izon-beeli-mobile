@@ -1,0 +1,77 @@
+import { apiFetch } from "@/lib/api";
+import { useAuth } from "@clerk/clerk-expo";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+export interface EducatorCourse {
+  id: string;
+  title: string;
+  titleFr?: string | null;
+  description: string;
+  descriptionFr?: string | null;
+  languageId: string;
+  level: string;
+  order: number;
+  courseType?: string | null;
+  isActive?: boolean;
+}
+
+export interface UpdateEducatorCourseInput {
+  id: string;
+  title?: string;
+  titleFr?: string | null;
+  description?: string;
+  descriptionFr?: string | null;
+  level?: string;
+  order?: number;
+}
+
+export function useEducatorCourses(enabled = true) {
+  const { getToken, isSignedIn } = useAuth();
+
+  return useQuery<EducatorCourse[]>({
+    queryKey: ["educator", "courses"],
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch<EducatorCourse[]>("/educator/courses", { token });
+    },
+    enabled: !!isSignedIn && enabled,
+  });
+}
+
+export function useToggleCourseActive() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      const token = await getToken();
+      return apiFetch<{ ok: true }>(`/educator/courses/${id}`, {
+        method: "PATCH",
+        token,
+        body: JSON.stringify({ isActive }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["educator", "courses"] });
+    },
+  });
+}
+
+export function useUpdateEducatorCourse() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...fields }: UpdateEducatorCourseInput) => {
+      const token = await getToken();
+      return apiFetch<{ ok: true }>(`/educator/courses/${id}`, {
+        method: "PATCH",
+        token,
+        body: JSON.stringify(fields),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["educator", "courses"] });
+    },
+  });
+}
