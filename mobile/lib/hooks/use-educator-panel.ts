@@ -1,5 +1,4 @@
-import { apiFetch, ApiError } from "@/lib/api";
-import { API_BASE_URL } from "@/lib/constants";
+import { apiFetch, apiFetchMultipart } from "@/lib/api";
 import type { DialectalVariant, DictionaryCategory } from "@/lib/dictionary";
 import type { LocalizedText } from "@/types";
 import { useAuth } from "@clerk/clerk-expo";
@@ -259,26 +258,7 @@ export function useUpsertEducatorDictionary() {
 
       const path = input.id ? `/educator/dictionary/${input.id}` : "/educator/dictionary";
       const method = input.id ? "PATCH" : "POST";
-      const res = await fetch(`${API_BASE_URL}${path}`, {
-        method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        let message = text;
-        try {
-          message = (JSON.parse(text) as { error?: string }).error ?? text;
-        } catch {
-          // non-JSON body — fall back to the raw text
-        }
-        throw new ApiError(res.status, message);
-      }
-
-      return res.json() as Promise<EducatorDictionaryEntry>;
+      return apiFetchMultipart<EducatorDictionaryEntry>(path, formData, { method, token });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
@@ -379,20 +359,7 @@ export function useCreateEducatorLesson() {
         } as never);
       }
 
-      const res = await fetch(`${API_BASE_URL}/educator/lessons`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`API error ${res.status}: ${text}`);
-      }
-
-      return res.json() as Promise<{ id: string }>;
+      return apiFetchMultipart<{ id: string }>("/educator/lessons", formData, { token });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["educator", "lessons"] });
@@ -471,20 +438,7 @@ export function useReplaceEducatorLessonAudio() {
         formData.append("duration", String(duration));
       }
 
-      const res = await fetch(`${API_BASE_URL}/educator/lessons/${id}/audio`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`API error ${res.status}: ${text}`);
-      }
-
-      return res.json() as Promise<{ audioUrl: string }>;
+      return apiFetchMultipart<{ audioUrl: string }>(`/educator/lessons/${id}/audio`, formData, { token });
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["educator", "lesson", variables.id] });

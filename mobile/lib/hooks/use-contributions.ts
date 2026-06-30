@@ -1,5 +1,4 @@
-import { apiFetch } from "@/lib/api";
-import { API_BASE_URL } from "@/lib/constants";
+import { apiFetch, apiFetchMultipart } from "@/lib/api";
 import type { DictionaryCategory, DictionaryEntry } from "@/lib/dictionary";
 import { localize } from "@/lib/localize";
 import type { LocalizedText } from "@/types";
@@ -65,17 +64,7 @@ export function useSubmitContribution() {
           appendFile(formData, "image", { uri: input.imageUri, type: mimeType, name: filename });
         }
 
-        const res = await fetch(`${API_BASE_URL}/contributions`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData,
-        });
-
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(`API error ${res.status}: ${text}`);
-        }
-        return res.json();
+        return apiFetchMultipart("/contributions", formData, { token });
       } else {
         return apiFetch("/contributions", {
           method: "POST",
@@ -136,17 +125,7 @@ export function useSubmitEntryContribution() {
           name: "pronunciation.m4a",
         });
 
-        const res = await fetch(`${API_BASE_URL}/contributions`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData,
-        });
-
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(`API error ${res.status}: ${text}`);
-        }
-        return res.json();
+        return apiFetchMultipart("/contributions", formData, { token });
       } else if (input.type === "entry_image" && input.imageUri) {
         const formData = new FormData();
         formData.append("type", "entry_image");
@@ -166,17 +145,7 @@ export function useSubmitEntryContribution() {
           name: filename,
         });
 
-        const res = await fetch(`${API_BASE_URL}/contributions`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData,
-        });
-
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(`API error ${res.status}: ${text}`);
-        }
-        return res.json();
+        return apiFetchMultipart("/contributions", formData, { token });
       } else {
         return apiFetch("/contributions", {
           method: "POST",
@@ -381,17 +350,7 @@ export function useSubmitLessonContribution() {
         name: filename,
       });
 
-      const res = await fetch(`${API_BASE_URL}/lesson-contributions`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`API error ${res.status}: ${text}`);
-      }
-      return res.json();
+      return apiFetchMultipart("/lesson-contributions", formData, { token });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["feed"] });
@@ -511,16 +470,7 @@ export function useUpdateContribution() {
           const mimeType = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
           appendFile(formData, "image", { uri: imageUri, type: mimeType, name: filename });
         }
-        const res = await fetch(`${API_BASE_URL}/contributions/${id}`, {
-          method: "PATCH",
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData,
-        });
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(`API error ${res.status}: ${text}`);
-        }
-        return res.json() as Promise<MyContribution>;
+        return apiFetchMultipart<MyContribution>(`/contributions/${id}`, formData, { method: "PATCH", token });
       }
 
       return apiFetch<MyContribution>(`/contributions/${id}`, {
