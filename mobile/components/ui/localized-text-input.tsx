@@ -278,6 +278,14 @@ export function toLocalizedText(
   fr?: string | null,
 ): LocalizedText {
   if (en && typeof en === "object") return en;
+  // Server may serialize LocalizedText as a JSON string — parse it transparently.
+  if (typeof en === "string" && en.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(en) as LocalizedText;
+      if (fr && !parsed.fr) parsed.fr = fr;
+      return parsed;
+    } catch { /* fall through */ }
+  }
   const result: LocalizedText = {};
   if (en) result.en = en as string;
   if (fr) result.fr = fr;

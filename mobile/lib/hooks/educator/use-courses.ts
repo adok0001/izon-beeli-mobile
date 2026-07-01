@@ -1,12 +1,13 @@
 import { apiFetch } from "@/lib/api";
+import type { LocalizedText } from "@/types";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export interface EducatorCourse {
   id: string;
-  title: string;
+  title: string | LocalizedText;
   titleFr?: string | null;
-  description: string;
+  description: string | LocalizedText;
   descriptionFr?: string | null;
   languageId: string;
   level: string;

@@ -1,4 +1,5 @@
 import { apiFetch, apiFetchMultipart } from "@/lib/api";
+import type { LocalizedText } from "@/types";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -7,8 +8,8 @@ export interface EducatorLesson {
   courseId: string;
   courseTitle: string;
   languageId: string;
-  title: string;
-  description: string;
+  title: string | LocalizedText;
+  description: string | LocalizedText;
   type: string;
   audioUrl?: string | null;
   duration?: number | null;
@@ -20,7 +21,8 @@ export interface EducatorLesson {
 
 export interface EducatorLessonSegment {
   text: string;
-  translation?: string | null;
+  translation?: string | LocalizedText | null;
+  translationFr?: string | null;
   startTime?: number;
   endTime?: number;
   order: number;

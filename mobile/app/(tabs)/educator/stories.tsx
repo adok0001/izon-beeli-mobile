@@ -12,7 +12,9 @@ import {
   useEducatorStoryArcs,
 } from "@/lib/hooks/use-educator-panel";
 import { useToast } from "@/lib/hooks/use-toast";
+import { localize } from "@/lib/localize";
 import { getLanguageName } from "@/lib/mock-data";
+import { useUiLanguageStore } from "@/store/ui-language-store";
 import { Stack, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import {
@@ -84,6 +86,7 @@ export default function EducatorStoriesScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
+  const { uiLanguage } = useUiLanguageStore();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
   const { data: currentUser } = useCurrentUser();
   const canAccess = currentUser ? canAccessEducatorPanel(currentUser) : false;
@@ -164,7 +167,7 @@ export default function EducatorStoriesScreen() {
                   <ArcCard
                     key={arc.id}
                     arc={arc}
-                    courseName={course?.title ?? arc.courseId}
+                    courseName={course ? localize(course.title, uiLanguage) : arc.courseId}
                     languageName={course ? getLanguageName(course.languageId) : ""}
                     onEdit={() =>
                       router.push({

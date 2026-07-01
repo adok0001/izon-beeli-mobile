@@ -65,7 +65,7 @@ educatorLessonsRouter.post("/lessons", async (c) => {
     return c.json({ error: "Forbidden: not assigned to this language" }, 403);
   }
 
-  let segments: { text: string; translation?: string; startTime?: number; endTime?: number; order: number }[] = [];
+  let segments: { text: string; translation?: string; translationFr?: string; startTime?: number; endTime?: number; order: number }[] = [];
   try { segments = JSON.parse(segmentsJson); } catch { /* no segments */ }
 
   // Resolve courseId
@@ -115,6 +115,7 @@ educatorLessonsRouter.post("/lessons", async (c) => {
         lessonId,
         text: seg.text,
         translation: seg.translation || null,
+        translationFr: seg.translationFr || null,
         startTime: seg.startTime ?? 0,
         endTime: seg.endTime ?? 0,
         order: seg.order,
@@ -228,7 +229,7 @@ educatorLessonsRouter.put("/lessons/:id/segments", async (c) => {
   }
 
   const { segments } = await c.req.json<{
-    segments: { text: string; translation?: string; startTime: number; endTime: number; order: number }[];
+    segments: { text: string; translation?: string; translationFr?: string; startTime: number; endTime: number; order: number }[];
   }>();
 
   for (const seg of segments) {
@@ -246,6 +247,7 @@ educatorLessonsRouter.put("/lessons/:id/segments", async (c) => {
         lessonId: id,
         text: seg.text.trim(),
         translation: seg.translation?.trim() || null,
+        translationFr: seg.translationFr?.trim() || null,
         startTime: seg.startTime,
         endTime: seg.endTime,
         order: seg.order ?? i,

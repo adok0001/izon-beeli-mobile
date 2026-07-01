@@ -1,5 +1,6 @@
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { GLOSS_LANGUAGES, toLocalizedText } from "@/components/ui/localized-text-input";
 import { getAccent } from "@/constants/accent-colors";
 import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -16,6 +17,9 @@ import {
 } from "@/lib/hooks/use-educator-panel";
 import { friendlyError } from "@/lib/api";
 import { useToast } from "@/lib/hooks/use-toast";
+import { localize } from "@/lib/localize";
+import { useUiLanguageStore, type UiLanguage } from "@/store/ui-language-store";
+import type { LocalizedText } from "@/types";
 import * as DocumentPicker from "expo-document-picker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Audio } from "expo-av";
@@ -27,7 +31,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 type SegmentEditor = {
   uid: string;
   text: string;
-  translation: string;
+  translation: LocalizedText;
   startTime: string;
   endTime: string;
 };
@@ -36,7 +40,7 @@ let _segUid = 0;
 const makeSegment = (overrides?: Partial<Omit<SegmentEditor, "uid">>): SegmentEditor => ({
   uid: `seg-${(_segUid++).toString()}`,
   text: "",
-  translation: "",
+  translation: {},
   startTime: "",
   endTime: "",
   ...overrides,
@@ -44,24 +48,67 @@ const makeSegment = (overrides?: Partial<Omit<SegmentEditor, "uid">>): SegmentEd
 
 const EMPTY_SEGMENT = (): SegmentEditor => makeSegment();
 
+/** Compact chip row for picking which language's translation to view/edit across all segments. */
+function TranslationLanguagePicker({
+  value,
+  onChange,
+  filledLangs,
+}: Readonly<{ value: UiLanguage; onChange: (lang: UiLanguage) => void; filledLangs: Set<UiLanguage> }>) {
+  const M = useMuseumTheme();
+  return (
+    <View className="mb-3 flex-row flex-wrap gap-2">
+      {GLOSS_LANGUAGES.map((lang) => {
+        const active = value === lang.key;
+        const filled = filledLangs.has(lang.key);
+        return (
+          <Pressable
+            key={lang.key}
+            onPress={() => onChange(lang.key)}
+            className="flex-row items-center gap-1.5 rounded-full border px-3 py-1.5 active:opacity-70"
+            style={{
+              borderColor: active ? getAccent("blue").solid : M.border,
+              backgroundColor: active ? `${getAccent("blue").solid}20` : "transparent",
+            }}
+          >
+            {filled ? (
+              <IconSymbol name="checkmark.circle.fill" size={11} color={active ? getAccent("blue").solid : M.muted} />
+            ) : null}
+            <Text
+              className="text-xs font-bold"
+              style={{ color: active ? getAccent("blue").solid : M.muted }}
+            >
+              {lang.label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 function SegmentItem({
   segment,
   index,
   total,
+  translationLang,
   playbackPositionSeconds,
   onChange,
+  onChangeTranslation,
   onRemove,
 }: Readonly<{
   segment: SegmentEditor;
   index: number;
   total: number;
+  translationLang: UiLanguage;
   playbackPositionSeconds: number;
-  onChange: (index: number, key: keyof SegmentEditor, value: string) => void;
+  onChange: (index: number, key: "text" | "startTime" | "endTime", value: string) => void;
+  onChangeTranslation: (index: number, lang: UiLanguage, value: string) => void;
   onRemove: (index: number) => void;
 }>) {
   const M = useMuseumTheme();
   const stamp = (key: "startTime" | "endTime") =>
     onChange(index, key, playbackPositionSeconds.toFixed(1));
+  const translationLabel = GLOSS_LANGUAGES.find((l) => l.key === translationLang)?.label ?? translationLang.toUpperCase();
 
   return (
     <View className="mb-2 rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-900">
@@ -73,9 +120,9 @@ function SegmentItem({
         className="rounded-lg bg-neutral-50 px-3 py-2 text-sm text-neutral-900 dark:bg-neutral-800 dark:text-white"
       />
       <TextInput
-        value={segment.translation}
-        onChangeText={(v) => onChange(index, "translation", v)}
-        placeholder="Translation (optional)"
+        value={segment.translation[translationLang] ?? ""}
+        onChangeText={(v) => onChangeTranslation(index, translationLang, v)}
+        placeholder={`Translation (${translationLabel}, optional)`}
         placeholderTextColor={M.muted}
         className="mt-2 rounded-lg bg-neutral-50 px-3 py-2 text-sm text-neutral-900 dark:bg-neutral-800 dark:text-white"
       />
@@ -330,11 +377,26 @@ function AudioSection({
   );
 }
 
+/**
+ * en/fr persist through their dedicated DB columns (translation/translationFr).
+ * Other languages (pcm/ar/pt) have no dedicated column, so once any of those are
+ * filled the whole map is JSON-encoded into `translation` — `localize()` already
+ * unpacks that transparently wherever segment translations are read.
+ */
+function serializeSegmentTranslation(t: LocalizedText): { translation?: string; translationFr?: string } {
+  const hasExtraLangs = !!(t.pcm?.trim() || t.ar?.trim() || t.pt?.trim());
+  if (hasExtraLangs) return { translation: JSON.stringify(t) };
+  return {
+    translation: t.en?.trim() || undefined,
+    translationFr: t.fr?.trim() || undefined,
+  };
+}
+
 function toSegmentsPayload(source: SegmentEditor[]): EducatorLessonSegment[] {
   return source
     .map((seg, i) => ({
       text: seg.text.trim(),
-      translation: seg.translation.trim() || undefined,
+      ...serializeSegmentTranslation(seg.translation),
       startTime: seg.startTime ? Number(seg.startTime) : 0,
       endTime: seg.endTime ? Number(seg.endTime) : 0,
       order: i,
@@ -348,6 +410,7 @@ export default function EducatorLessonEditScreen() {
   const { t } = useTranslation();
   const { lessonId, courseId } = useLocalSearchParams<{ lessonId?: string; courseId: string }>();
   const isEditMode = !!lessonId;
+  const { uiLanguage } = useUiLanguageStore();
 
   const { data: currentUser } = useCurrentUser();
   const canAccess = currentUser ? canAccessEducatorPanel(currentUser) : false;
@@ -359,6 +422,7 @@ export default function EducatorLessonEditScreen() {
   const [genre, setGenre] = useState("");
   const [audioUri, setAudioUri] = useState<string | undefined>(undefined);
   const [segments, setSegments] = useState<SegmentEditor[]>([EMPTY_SEGMENT()]);
+  const [translationLang, setTranslationLang] = useState<UiLanguage>(uiLanguage);
   const [playbackPos, setPlaybackPos] = useState(0);
   const [previewVisible, setPreviewVisible] = useState(false);
 
@@ -378,8 +442,8 @@ export default function EducatorLessonEditScreen() {
   // Pre-populate form when editing
   useEffect(() => {
     if (!lessonDetail) return;
-    setTitle(lessonDetail.title);
-    setDescription(lessonDetail.description);
+    setTitle(localize(lessonDetail.title, uiLanguage));
+    setDescription(localize(lessonDetail.description, uiLanguage));
     setType(lessonDetail.type ?? "");
     setArtist(lessonDetail.artist ?? "");
     setGenre(lessonDetail.genre ?? "");
@@ -388,14 +452,14 @@ export default function EducatorLessonEditScreen() {
         ? lessonDetail.segments.map((seg) =>
             makeSegment({
               text: seg.text,
-              translation: seg.translation ?? "",
+              translation: toLocalizedText(seg.translation, seg.translationFr),
               startTime: String(seg.startTime ?? 0),
               endTime: String(seg.endTime ?? 0),
             }),
           )
         : [EMPTY_SEGMENT()],
     );
-  }, [lessonDetail]);
+  }, [lessonDetail, uiLanguage]);
 
   const pickAudio = async () => {
     const result = await DocumentPicker.getDocumentAsync({
@@ -499,10 +563,19 @@ export default function EducatorLessonEditScreen() {
   };
 
   const addSegment = () => setSegments((prev) => [...prev, EMPTY_SEGMENT()]);
-  const updateSegment = (index: number, key: keyof SegmentEditor, value: string) =>
+  const updateSegment = (index: number, key: "text" | "startTime" | "endTime", value: string) =>
     setSegments((prev) => prev.map((seg, idx) => (idx === index ? { ...seg, [key]: value } : seg)));
+  const updateSegmentTranslation = (index: number, lang: UiLanguage, value: string) =>
+    setSegments((prev) =>
+      prev.map((seg, idx) =>
+        idx === index ? { ...seg, translation: { ...seg.translation, [lang]: value } } : seg,
+      ),
+    );
   const removeSegment = (index: number) =>
     setSegments((prev) => (prev.length > 1 ? prev.filter((_, idx) => idx !== index) : prev));
+  const filledTranslationLangs = new Set(
+    GLOSS_LANGUAGES.map((l) => l.key).filter((lang) => segments.some((s) => s.translation[lang]?.trim())),
+  );
 
   const isSaving = createLesson.isPending || updateLesson.isPending || replaceSegments.isPending;
 
@@ -538,7 +611,7 @@ export default function EducatorLessonEditScreen() {
   return (
     <>
       <Stack.Screen
-        options={{ title: screenTitle, headerBackTitle: course?.title ?? "Lessons" }}
+        options={{ title: screenTitle, headerBackTitle: course ? localize(course.title, uiLanguage) : "Lessons" }}
       />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
@@ -554,7 +627,7 @@ export default function EducatorLessonEditScreen() {
           {course ? (
             <View className="flex-row items-center gap-1 px-5 pt-4">
               <IconSymbol name="book.fill" size={12} color={M.muted} />
-              <Text className="text-xs text-neutral-400 dark:text-neutral-500">{course.title}</Text>
+              <Text className="text-xs text-neutral-400 dark:text-neutral-500">{localize(course.title, uiLanguage)}</Text>
             </View>
           ) : null}
 
@@ -631,14 +704,21 @@ export default function EducatorLessonEditScreen() {
               <Text className="mb-3 text-xs font-semibold uppercase tracking-[1.2px] text-neutral-400 dark:text-neutral-500">
                 Transcript Segments ({segments.length})
               </Text>
+              <TranslationLanguagePicker
+                value={translationLang}
+                onChange={setTranslationLang}
+                filledLangs={filledTranslationLangs}
+              />
               {segments.map((segment, index) => (
                 <SegmentItem
                   key={segment.uid}
                   segment={segment}
                   index={index}
                   total={segments.length}
+                  translationLang={translationLang}
                   playbackPositionSeconds={playbackPos}
                   onChange={updateSegment}
+                  onChangeTranslation={updateSegmentTranslation}
                   onRemove={removeSegment}
                 />
               ))}
@@ -690,18 +770,21 @@ export default function EducatorLessonEditScreen() {
                     </Text>
                     {segments
                       .filter((s) => s.text.trim().length > 0)
-                      .map((s, i) => (
-                        <View key={s.uid} className={`${i > 0 ? "mt-3" : ""}`}>
-                          <Text className="text-base text-neutral-900 dark:text-white">
-                            {s.text}
-                          </Text>
-                          {s.translation ? (
-                            <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
-                              {s.translation}
+                      .map((s, i) => {
+                        const previewTranslation = localize(s.translation, uiLanguage);
+                        return (
+                          <View key={s.uid} className={`${i > 0 ? "mt-3" : ""}`}>
+                            <Text className="text-base text-neutral-900 dark:text-white">
+                              {s.text}
                             </Text>
-                          ) : null}
-                        </View>
-                      ))}
+                            {previewTranslation ? (
+                              <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
+                                {previewTranslation}
+                              </Text>
+                            ) : null}
+                          </View>
+                        );
+                      })}
                   </View>
                 ) : (
                   <View className="px-4 py-6 items-center">

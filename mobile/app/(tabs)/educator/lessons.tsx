@@ -9,7 +9,9 @@ import {
     useUpdateEducatorLesson,
 } from "@/lib/hooks/use-educator-panel";
 import { useToast } from "@/lib/hooks/use-toast";
+import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useUiLanguageStore } from "@/store/ui-language-store";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -27,7 +29,10 @@ function LessonRow({
   toggling: boolean;
 }>) {
   const M = useMuseumTheme();
+  const { uiLanguage } = useUiLanguageStore();
   const isActive = lesson.isActive !== false;
+  const title = localize(lesson.title, uiLanguage);
+  const description = localize(lesson.description, uiLanguage);
   return (
     <Pressable
       onPress={onPress}
@@ -38,10 +43,10 @@ function LessonRow({
           <IconSymbol name="waveform" size={18} color={getAccent("blue").solid} />
         </View>
         <View className="flex-1">
-          <Text className="text-base font-semibold text-neutral-900 dark:text-white">{lesson.title}</Text>
-          {lesson.description ? (
+          <Text className="text-base font-semibold text-neutral-900 dark:text-white">{title}</Text>
+          {description ? (
             <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400" numberOfLines={1}>
-              {lesson.description}
+              {description}
             </Text>
           ) : null}
           <View className="mt-1.5 flex-row gap-2">
@@ -90,6 +95,7 @@ export default function EducatorLessonsScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
+  const { uiLanguage } = useUiLanguageStore();
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
   const { data: currentUser } = useCurrentUser();
   const canAccess = currentUser ? canAccessEducatorPanel(currentUser) : false;
@@ -101,6 +107,8 @@ export default function EducatorLessonsScreen() {
 
   const course = courses.find((c) => c.id === courseId);
   const courseLessons = lessons.filter((l) => l.courseId === courseId);
+  const courseTitle = course ? localize(course.title, uiLanguage) : undefined;
+  const courseDescription = course ? localize(course.description, uiLanguage) : "";
 
   if (!canAccess) {
     return (
@@ -118,7 +126,7 @@ export default function EducatorLessonsScreen() {
   return (
     <>
       <Stack.Screen
-        options={{ title: course?.title ?? "Lessons", headerBackTitle: "Courses" }}
+        options={{ title: courseTitle ?? "Lessons", headerBackTitle: "Courses" }}
       />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
         <NotificationBanner
@@ -132,11 +140,11 @@ export default function EducatorLessonsScreen() {
           {/* Header */}
           <View className="px-5 pt-4">
             <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
-              {course?.title ?? "Lessons"}
+              {courseTitle ?? "Lessons"}
             </Text>
-            {course?.description ? (
+            {courseDescription ? (
               <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-                {course.description}
+                {courseDescription}
               </Text>
             ) : null}
             {course?.courseType ? (
@@ -188,7 +196,7 @@ export default function EducatorLessonsScreen() {
                           onSuccess: () =>
                             toastSuccess(
                               lesson.isActive === false ? "Lesson published" : "Lesson hidden",
-                              lesson.title,
+                              localize(lesson.title, uiLanguage),
                             ),
                           onError: (err: Error) => toastError("Failed", err.message),
                         },
