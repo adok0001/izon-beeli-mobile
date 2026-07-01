@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/clerk-expo";
 import { useIsFocused } from "@react-navigation/native";
 import { Alert } from "react-native";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, isNetworkError } from "@/lib/api";
 import { hapticHeavy } from "@/lib/haptics";
 import { useIsOffline } from "@/lib/hooks/use-offline";
 import { useGuestProgressStore } from "@/store/guest-progress-store";
@@ -42,13 +42,22 @@ interface CompleteLessonResponse {
 export function useProgressSummary() {
   const { getToken, isSignedIn } = useAuth();
   const isGuest = useGuestStore((s) => s.isGuest);
+  const isOffline = useIsOffline();
+  const queryClient = useQueryClient();
 
   return useQuery<ProgressSummary>({
     queryKey: ["progress", "summary"],
     queryFn: async () => {
       if (isGuest) return useGuestProgressStore.getState().getSummary();
+      const cached = () => queryClient.getQueryData<ProgressSummary>(["progress", "summary"]);
+      if (isOffline) return cached() ?? { points: 0, streak: 0, completedCount: 0, quizCount: 0, freezeCount: 0, streakBroken: false, refreshedToday: false };
       const token = await getToken();
-      return apiFetch("/progress/summary", { token: token! });
+      try {
+        return await apiFetch<ProgressSummary>("/progress/summary", { token: token! });
+      } catch (err) {
+        if (isNetworkError(err) && cached()) return cached()!;
+        throw err;
+      }
     },
     enabled: !!isSignedIn || isGuest,
   });
@@ -57,6 +66,8 @@ export function useProgressSummary() {
 export function useCompletedLessons() {
   const { getToken, isSignedIn } = useAuth();
   const isGuest = useGuestStore((s) => s.isGuest);
+  const isOffline = useIsOffline();
+  const queryClient = useQueryClient();
 
   return useQuery<string[]>({
     queryKey: ["progress", "completed"],
@@ -64,8 +75,15 @@ export function useCompletedLessons() {
       if (isGuest) {
         return useGuestProgressStore.getState().completedLessons.map((c) => c.lessonId);
       }
+      const cached = () => queryClient.getQueryData<string[]>(["progress", "completed"]);
+      if (isOffline) return cached() ?? [];
       const token = await getToken();
-      return apiFetch("/progress", { token: token! });
+      try {
+        return await apiFetch<string[]>("/progress", { token: token! });
+      } catch (err) {
+        if (isNetworkError(err)) return cached() ?? [];
+        throw err;
+      }
     },
     enabled: !!isSignedIn || isGuest,
   });
