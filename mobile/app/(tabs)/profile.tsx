@@ -451,6 +451,7 @@ export default function ProfileScreen() {
           <SectionLabel label={t("settings.app")} />
           <MenuRow icon="exclamationmark.bubble" label={t("profile.sendFeedback")} onPress={() => setFeedbackVisible(true)} />
           <MenuRow icon="map.fill" label={t("profile.restartWelcomeTour")} onPress={async () => { await resetChecklist(); await resetTours(); showTour("welcome"); }} />
+          <MenuRow icon="arrow.down.circle" label={t("profile.downloads")} onPress={() => router.push("/downloads")} />
           <MenuRow icon="gearshape.fill" label={t("profile.settings")} onPress={() => router.push("/settings")} />
 
           <SectionLabel label="Follow Us" />

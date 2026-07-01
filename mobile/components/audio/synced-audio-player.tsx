@@ -11,7 +11,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { JOURNEY } from "@/lib/journey";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { formatDuration } from "@/lib/mock-data";
-import { getCachedAudioSource } from "@/lib/audio-cache";
+import { resolveDownloadedAudioSource } from "@/lib/downloads";
 import { useAudioStore } from "@/store/audio-store";
 import { hapticTap } from "@/lib/haptics";
 import type { AudioSource } from "@/types";
@@ -103,7 +103,7 @@ export function SyncedAudioPlayer({ trackId, source, title, route, onFinish }: P
       return;
     }
     setIsResolving(true);
-    const resolved = await getCachedAudioSource(trackId, source);
+    const resolved = await resolveDownloadedAudioSource(trackId, source);
     setIsResolving(false);
     loadAndPlay(trackId, resolved ?? source, title, route, { onFinish });
   };

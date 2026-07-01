@@ -218,6 +218,9 @@ export function JourneyMap({
   const selectedArea = selected
     ? journey.areas.find((a) => a.courseId === selected.courseId)
     : undefined;
+  const selectedAudioUrl = selected
+    ? lessons.find((l) => l.id === selected.lessonId)?.audioUrl
+    : undefined;
 
   const handleStart = (node: JourneyNode) => {
     setSelected(null);
@@ -344,6 +347,7 @@ export function JourneyMap({
       <JourneySheet
         node={selected}
         areaName={selectedArea ? localize(selectedArea.title, uiLanguage) : ""}
+        audioUrl={selectedAudioUrl}
         uiLanguage={uiLanguage}
         onClose={() => setSelected(null)}
         onStart={handleStart}

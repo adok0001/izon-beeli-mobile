@@ -16,6 +16,7 @@ import {
   configurePushNotifications,
   registerPushToken,
 } from "@/lib/push-notifications";
+import { useDownloadsStore } from "@/store/downloads-store";
 import { useGuestProgressStore } from "@/store/guest-progress-store";
 import { useGuestStore } from "@/store/guest-store";
 import { useLanguageStore } from "@/store/language-store";
@@ -249,6 +250,7 @@ export default function RootLayout() {
   const hydrateGuest = useGuestStore((s) => s.hydrate);
   const hydrateGuestProgress = useGuestProgressStore((s) => s.hydrate);
   const hydrateWriteQueue = useWriteQueueStore((s) => s.hydrate);
+  const hydrateDownloads = useDownloadsStore((s) => s.hydrate);
   const [fontsLoaded, fontError] = useFonts({
     PlusJakartaSans_700Bold,
     PlusJakartaSans_600SemiBold,
@@ -280,6 +282,7 @@ export default function RootLayout() {
     hydrateGuest();
     hydrateGuestProgress();
     hydrateWriteQueue();
+    hydrateDownloads();
     analytics.appOpen();
   }, [
     hydrateTheme,
@@ -289,6 +292,7 @@ export default function RootLayout() {
     hydrateGuest,
     hydrateGuestProgress,
     hydrateWriteQueue,
+    hydrateDownloads,
   ]);
 
   // The native splash is hidden by <BrandSplash> on its first layout (not here),
@@ -349,6 +353,7 @@ export default function RootLayout() {
                   <Stack.Screen name="dictionary" options={{ headerBackTitle: "Back" }} />
                   <Stack.Screen name="word-review" options={{ headerBackTitle: "Back" }} />
                   <Stack.Screen name="my-contributions" options={{ headerBackTitle: "Back" }} />
+                  <Stack.Screen name="downloads" options={{ headerBackTitle: "Back" }} />
                   <Stack.Screen name="review" options={{ headerBackTitle: "Back" }} />
                   <Stack.Screen name="quiz" options={{ presentation: "modal", headerShown: true }} />
                   <Stack.Screen name="matching-game" options={{ presentation: "modal", headerShown: false }} />

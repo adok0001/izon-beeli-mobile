@@ -21,7 +21,8 @@ import { playFinishSound } from "@/lib/sounds";
 import { hapticHeavy } from "@/lib/haptics";
 import { cancelDailyStreakReminder } from "@/lib/hooks/use-daily-reminder";
 import { useReviewPrompt } from "@/lib/hooks/use-review-prompt";
-import { getCachedAudioSource } from "@/lib/audio-cache";
+import { isRemoteAudioSource, resolveDownloadedAudioSource } from "@/lib/downloads";
+import { useLessonDownload } from "@/lib/hooks/use-lesson-download";
 import { useAudioStore } from "@/store/audio-store";
 import { analytics } from "@/lib/analytics";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -74,6 +75,18 @@ export default function LessonScreen() {
   const showTour = useTourStore((s) => s.showTour);
   const hasSeen = useTourStore((s) => s.hasSeen);
   const reviewPrompt = useReviewPrompt();
+  const lessonAudioSource = lesson ? (lesson.audioUrl ?? BUNDLED_AUDIO[lesson.id]) : undefined;
+  const downloadInput =
+    lesson && isRemoteAudioSource(lessonAudioSource)
+      ? {
+          lessonId: lesson.id,
+          courseId: lesson.courseId,
+          title: lesson.title,
+          courseTitle: lessonCourse?.title,
+          remoteUrl: lessonAudioSource,
+        }
+      : null;
+  const { isDownloaded, isDownloading, onPress: handleDownloadPress } = useLessonDownload(downloadInput);
 
   // Queue the milestone celebration; hold the foreground while the lesson stays
   // in front of the learner so the app-level modal waits until they move on.
@@ -131,13 +144,14 @@ export default function LessonScreen() {
     );
   }
 
-  const audioSource = lesson.audioUrl ?? BUNDLED_AUDIO[lesson.id];
+  const audioSource = lessonAudioSource;
   const isCurrentTrack = currentTrackId === lesson.id;
   const completed = completedLessonIds?.includes(lesson.id) ?? false;
   const isSong = lesson.type === "song";
   const lessonTitle = localize(lesson.title, uiLanguage);
   const lessonDescription = localize(lesson.description, uiLanguage);
   const accentColor = typeColors.tickActive ?? M.accent;
+  const canDownload = downloadInput !== null;
 
   const handlePlayAudio = async () => {
     if (isCurrentTrack) {
@@ -146,7 +160,7 @@ export default function LessonScreen() {
     }
     if (!audioSource) return;
     setIsResolvingAudio(true);
-    const resolved = await getCachedAudioSource(lesson.id, audioSource);
+    const resolved = await resolveDownloadedAudioSource(lesson.id, audioSource);
     setIsResolvingAudio(false);
     loadAndPlay(lesson.id, resolved ?? audioSource, lessonTitle, `/lesson/${lesson.id}`, {
       onFinish: () => trackListen.mutate(lesson.id),
@@ -201,14 +215,35 @@ export default function LessonScreen() {
           headerBackTitle: t("common.back"),
           headerShadowVisible: false,
           headerRight: () => (
-            <Pressable
-              onPress={() => setShareVisible(true)}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={t("share.shareButton")}
-            >
-              <IconSymbol name="square.and.arrow.up" size={20} color={JOURNEY.sheetBg} />
-            </Pressable>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
+              {canDownload ? (
+                <Pressable
+                  onPress={handleDownloadPress}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={isDownloaded ? t("downloads.removeDownload") : t("downloads.download")}
+                  accessibilityState={{ busy: isDownloading }}
+                >
+                  {isDownloading ? (
+                    <ActivityIndicator size="small" color={JOURNEY.sheetBg} />
+                  ) : (
+                    <IconSymbol
+                      name={isDownloaded ? "checkmark.circle.fill" : "arrow.down.circle"}
+                      size={20}
+                      color={JOURNEY.sheetBg}
+                    />
+                  )}
+                </Pressable>
+              ) : null}
+              <Pressable
+                onPress={() => setShareVisible(true)}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={t("share.shareButton")}
+              >
+                <IconSymbol name="square.and.arrow.up" size={20} color={JOURNEY.sheetBg} />
+              </Pressable>
+            </View>
           ),
         }}
       />
