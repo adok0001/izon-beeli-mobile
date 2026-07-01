@@ -10,7 +10,7 @@ import { isRemoteAudioSource } from "@/lib/downloads";
 import { useLessonDownload } from "@/lib/hooks/use-lesson-download";
 import type { JourneyNode } from "@/lib/journey";
 import { localize } from "@/lib/localize";
-import { glass, MUSEUM, useMuseumTheme } from "@/lib/use-museum-theme";
+import { MUSEUM, useMuseumTheme } from "@/lib/use-museum-theme";
 import type { UiLanguage } from "@/store/ui-language-store";
 import type { AudioSource } from "@/types";
 
@@ -46,7 +46,7 @@ interface MetaPillProps {
 
 function MetaPill({ label, color, bg, border }: MetaPillProps) {
   const M = useMuseumTheme();
-  const pillBg = M.isDark ? glass(0.06) : "#F4EFE4";
+  const resolved = { color: color ?? M.sub, bg: bg ?? M.pillBg, border: border ?? M.border };
   return (
     <View
       style={{
@@ -55,12 +55,12 @@ function MetaPill({ label, color, bg, border }: MetaPillProps) {
         borderRadius: 999,
         paddingHorizontal: 12,
         paddingVertical: 6,
-        backgroundColor: bg ?? pillBg,
+        backgroundColor: resolved.bg,
         borderWidth: 1,
-        borderColor: border ?? M.border,
+        borderColor: resolved.border,
       }}
     >
-      <Text style={{ fontSize: 11.5, fontWeight: "700", color: color ?? M.sub }}>{label}</Text>
+      <Text style={{ fontSize: 11.5, fontWeight: "700", color: resolved.color }}>{label}</Text>
     </View>
   );
 }
@@ -84,7 +84,6 @@ function DownloadRow({
     courseTitle: areaName,
     remoteUrl,
   });
-  const pillBg = M.isDark ? glass(0.06) : "#F4EFE4";
   const tint = isDownloaded ? M.success : M.sub;
 
   return (
@@ -98,7 +97,7 @@ function DownloadRow({
         paddingHorizontal: 12,
         paddingVertical: 6,
         gap: 5,
-        backgroundColor: isDownloaded ? M.successBg : pillBg,
+        backgroundColor: isDownloaded ? M.successBg : M.pillBg,
         borderWidth: 1,
         borderColor: isDownloaded ? M.successBorder : M.border,
       }}
@@ -307,7 +306,7 @@ export function JourneySheet({ node, areaName, audioUrl, uiLanguage, onClose, on
                 marginTop: 18,
                 borderRadius: 14,
                 padding: 14,
-                backgroundColor: M.isDark ? glass(0.06) : "#F4EFE4",
+                backgroundColor: M.pillBg,
                 borderWidth: 1,
                 borderColor: M.border,
               }}

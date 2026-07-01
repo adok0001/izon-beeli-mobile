@@ -1,5 +1,5 @@
 import { View, Text } from "react-native";
-import { JOURNEY } from "@/lib/journey";
+import { MUSEUM, useMuseumTheme } from "@/lib/use-museum-theme";
 
 interface LessonSectionHeaderProps {
   label: string;
@@ -10,6 +10,7 @@ interface LessonSectionHeaderProps {
 
 /** Left-aligned hairline · bronze overline · trailing full hairline used in all lesson sections. */
 export function LessonSectionHeader({ label, accentColor, paddingHorizontal = 22 }: LessonSectionHeaderProps) {
+  const M = useMuseumTheme();
   return (
     <View
       style={{
@@ -21,10 +22,10 @@ export function LessonSectionHeader({ label, accentColor, paddingHorizontal = 22
       }}
     >
       <View style={{ width: 16, height: 1, backgroundColor: `${accentColor}60` }} />
-      <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.8, color: JOURNEY.bronze }}>
+      <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.8, color: MUSEUM.accentDark }}>
         {label.toUpperCase()}
       </Text>
-      <View style={{ flex: 1, height: 1, backgroundColor: JOURNEY.hairline }} />
+      <View style={{ flex: 1, height: 1, backgroundColor: M.border }} />
     </View>
   );
 }

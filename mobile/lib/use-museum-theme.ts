@@ -77,6 +77,9 @@ export function useMuseumTheme() {
     infoBg:        dark ? "rgba(96,165,250,0.12)"  : "rgba(37,99,235,0.10)",
     infoBorder:    dark ? "rgba(96,165,250,0.25)"  : "rgba(37,99,235,0.25)",
 
+    // Neutral pill/card fill — subtler than `card`, for meta pills over a card bg.
+    pillBg: dark ? glass(0.06) : "#F4EFE4",
+
     // ── Input fields ─────────────────────────────────────────────
     inputBg:          dark ? "#161826" : "#FDFAF5",
     inputBorder:      dark ? "#2E3245" : "#D4C9B8",

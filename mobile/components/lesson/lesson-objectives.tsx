@@ -2,7 +2,7 @@ import { View, Text } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { useTranslation } from "react-i18next";
 import { localize } from "@/lib/localize";
-import { JOURNEY } from "@/lib/journey";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { LessonSectionHeader } from "@/components/lesson/lesson-section-header";
 import type { LocalizedText } from "@/types";
 import type { UiLanguage } from "@/store/ui-language-store";
@@ -30,6 +30,7 @@ function CheckIcon() {
 
 export function LessonObjectives({ objectives, uiLanguage, accentColor }: LessonObjectivesProps) {
   const { t } = useTranslation();
+  const M = useMuseumTheme();
   if (!objectives.length) return null;
 
   return (
@@ -53,7 +54,7 @@ export function LessonObjectives({ objectives, uiLanguage, accentColor }: Lesson
             >
               <CheckIcon />
             </View>
-            <Text style={{ flex: 1, fontSize: 14, lineHeight: 20, color: JOURNEY.sheetBody }}>
+            <Text style={{ flex: 1, fontSize: 14, lineHeight: 20, color: M.sub }}>
               {localize(obj, uiLanguage)}
             </Text>
           </View>

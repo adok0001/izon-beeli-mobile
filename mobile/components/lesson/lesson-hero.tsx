@@ -3,7 +3,6 @@ import { memo } from "react";
 import { View, Text, useWindowDimensions } from "react-native";
 import Svg, { Circle, Ellipse, Path, Rect } from "react-native-svg";
 import { fonts } from "@/constants/typography";
-import { JOURNEY } from "@/lib/journey";
 import { MUSEUM } from "@/lib/use-museum-theme";
 
 interface LessonHeroProps {
@@ -91,7 +90,7 @@ export function LessonHero({ title, overline, accentColor, scene: _scene }: Less
             fontFamily: fonts.heading,
             fontSize: 30,
             fontWeight: "800",
-            color: JOURNEY.sheetBg,
+            color: MUSEUM.parchment,
             lineHeight: 34,
             letterSpacing: -0.5,
           }}

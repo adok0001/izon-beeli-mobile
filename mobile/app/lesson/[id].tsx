@@ -25,13 +25,12 @@ import { isRemoteAudioSource, resolveDownloadedAudioSource } from "@/lib/downloa
 import { useLessonDownload } from "@/lib/hooks/use-lesson-download";
 import { useAudioStore } from "@/store/audio-store";
 import { analytics } from "@/lib/analytics";
-import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { MUSEUM, useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useTourStore } from "@/store/tour-store";
 import { useForegroundClaim, useOverlayStore } from "@/store/overlay-store";
 import { localize } from "@/lib/localize";
-import { JOURNEY } from "@/lib/journey";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -211,7 +210,7 @@ export default function LessonScreen() {
           title: "",
           headerTransparent: true,
           headerTitle: "",
-          headerTintColor: JOURNEY.sheetBg,
+          headerTintColor: M.parchment,
           headerBackTitle: t("common.back"),
           headerShadowVisible: false,
           headerRight: () => (
@@ -225,12 +224,12 @@ export default function LessonScreen() {
                   accessibilityState={{ busy: isDownloading }}
                 >
                   {isDownloading ? (
-                    <ActivityIndicator size="small" color={JOURNEY.sheetBg} />
+                    <ActivityIndicator size="small" color={M.parchment} />
                   ) : (
                     <IconSymbol
                       name={isDownloaded ? "checkmark.circle.fill" : "arrow.down.circle"}
                       size={20}
-                      color={JOURNEY.sheetBg}
+                      color={M.parchment}
                     />
                   )}
                 </Pressable>
@@ -241,7 +240,7 @@ export default function LessonScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={t("share.shareButton")}
               >
-                <IconSymbol name="square.and.arrow.up" size={20} color={JOURNEY.sheetBg} />
+                <IconSymbol name="square.and.arrow.up" size={20} color={M.parchment} />
               </Pressable>
             </View>
           ),
@@ -344,10 +343,10 @@ export default function LessonScreen() {
                   accessibilityLabel={t("lesson.continueToNext")}
                 >
                   <LinearGradient
-                    colors={["#D89A3A", JOURNEY.bronze]}
+                    colors={[MUSEUM.accentLight, MUSEUM.accentDark]}
                     style={{ paddingVertical: 16, alignItems: "center" }}
                   >
-                    <Text style={{ fontSize: 15, fontWeight: "800", color: JOURNEY.sheetBg }}>
+                    <Text style={{ fontSize: 15, fontWeight: "800", color: M.parchment }}>
                       {t("lesson.continueToNext")} ›
                     </Text>
                   </LinearGradient>
@@ -507,13 +506,13 @@ export default function LessonScreen() {
                 accessibilityState={{ busy: isResolvingAudio }}
               >
                 <LinearGradient
-                  colors={["#D89A3A", JOURNEY.bronze]}
+                  colors={[MUSEUM.accentLight, MUSEUM.accentDark]}
                   style={{ paddingVertical: 17, alignItems: "center" }}
                 >
                   {isResolvingAudio ? (
-                    <ActivityIndicator color={JOURNEY.sheetBg} />
+                    <ActivityIndicator color={M.parchment} />
                   ) : (
-                    <Text style={{ fontSize: 15, fontWeight: "800", color: JOURNEY.sheetBg }}>
+                    <Text style={{ fontSize: 15, fontWeight: "800", color: M.parchment }}>
                       {isCurrentTrack && isPlaying
                         ? t("lesson.pause")
                         : completed

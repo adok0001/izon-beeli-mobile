@@ -2,7 +2,7 @@ import { ScrollView, View, Text, Pressable } from "react-native";
 import { useTranslation } from "react-i18next";
 import Svg, { Path } from "react-native-svg";
 import { localize } from "@/lib/localize";
-import { JOURNEY } from "@/lib/journey";
+import { MUSEUM, useMuseumTheme } from "@/lib/use-museum-theme";
 import { LessonSectionHeader } from "@/components/lesson/lesson-section-header";
 import { useAudioStore } from "@/store/audio-store";
 import type { LessonWord, WordTone } from "@/types";
@@ -22,6 +22,7 @@ const TONE_LABELS: Record<WordTone, string> = {
 };
 
 function PlayButton({ onPress, playing }: { onPress: () => void; playing: boolean }) {
+  const M = useMuseumTheme();
   return (
     <Pressable
       onPress={onPress}
@@ -31,16 +32,16 @@ function PlayButton({ onPress, playing }: { onPress: () => void; playing: boolea
         borderRadius: 14,
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: JOURNEY.pillBg,
+        backgroundColor: M.pillBg,
         borderWidth: 1,
-        borderColor: JOURNEY.hairline,
+        borderColor: M.border,
       }}
       accessibilityRole="button"
     >
       <Svg viewBox="0 0 24 24" width={13} height={13}>
         {playing
-          ? <Path d="M6 5h3v14H6zm9 0h3v14h-3z" fill={JOURNEY.bronze} />
-          : <Path d="M8 5v14l11-7z" fill={JOURNEY.bronze} />
+          ? <Path d="M6 5h3v14H6zm9 0h3v14h-3z" fill={MUSEUM.accentDark} />
+          : <Path d="M8 5v14l11-7z" fill={MUSEUM.accentDark} />
         }
       </Svg>
     </Pressable>
@@ -49,6 +50,7 @@ function PlayButton({ onPress, playing }: { onPress: () => void; playing: boolea
 
 function WordCard({ word, uiLanguage, accentColor }: { word: LessonWord; uiLanguage: UiLanguage; accentColor: string }) {
   const { t } = useTranslation();
+  const M = useMuseumTheme();
   const loadAndPlay = useAudioStore((s) => s.loadAndPlay);
   const togglePlayback = useAudioStore((s) => s.togglePlayback);
   const currentTrackId = useAudioStore((s) => s.currentTrackId);
@@ -72,9 +74,9 @@ function WordCard({ word, uiLanguage, accentColor }: { word: LessonWord; uiLangu
         paddingHorizontal: 14,
         paddingVertical: 12,
         borderRadius: 14,
-        backgroundColor: JOURNEY.pillBg,
+        backgroundColor: M.pillBg,
         borderWidth: 1,
-        borderColor: JOURNEY.hairline,
+        borderColor: M.border,
         gap: 6,
       }}
     >
@@ -91,14 +93,14 @@ function WordCard({ word, uiLanguage, accentColor }: { word: LessonWord; uiLangu
         </Text>
       ) : null}
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-        <Text style={{ fontSize: 18, fontWeight: "700", color: JOURNEY.sheetTitle }}>
+        <Text style={{ fontSize: 18, fontWeight: "700", color: M.text }}>
           {word.text}
         </Text>
         {word.audioUrl ? (
           <PlayButton onPress={handlePlay} playing={isCurrentTrack && isPlaying} />
         ) : null}
       </View>
-      <Text style={{ fontSize: 11, color: JOURNEY.sheetBody, lineHeight: 14 }} numberOfLines={2}>
+      <Text style={{ fontSize: 11, color: M.sub, lineHeight: 14 }} numberOfLines={2}>
         {localize(word.translation, uiLanguage)}
       </Text>
     </View>

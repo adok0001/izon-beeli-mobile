@@ -8,8 +8,7 @@ import {
   type LayoutChangeEvent,
 } from "react-native";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { JOURNEY } from "@/lib/journey";
-import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { MUSEUM, useMuseumTheme } from "@/lib/use-museum-theme";
 import { formatDuration } from "@/lib/mock-data";
 import { resolveDownloadedAudioSource } from "@/lib/downloads";
 import { useAudioStore } from "@/store/audio-store";
@@ -120,13 +119,13 @@ export function SyncedAudioPlayer({ trackId, source, title, route, onFinish }: P
     <View
       style={{
         borderRadius: 20,
-        backgroundColor: "#FFFFFF",
+        backgroundColor: M.card,
         borderWidth: 1,
-        borderColor: JOURNEY.hairline,
+        borderColor: M.border,
         paddingHorizontal: 18,
         paddingTop: 18,
         paddingBottom: 16,
-        shadowColor: JOURNEY.sheetTitle,
+        shadowColor: MUSEUM.inkDeep,
         shadowOpacity: 0.06,
         shadowRadius: 16,
         shadowOffset: { width: 0, height: 6 },
@@ -148,7 +147,7 @@ export function SyncedAudioPlayer({ trackId, source, title, route, onFinish }: P
               flex: 1,
               height: `${h * 100}%`,
               borderRadius: 999,
-              backgroundColor: i < filledBars ? JOURNEY.bronzeMid : JOURNEY.trackEmpty,
+              backgroundColor: i < filledBars ? M.accent : M.border,
             }}
           />
         ))}
@@ -156,10 +155,10 @@ export function SyncedAudioPlayer({ trackId, source, title, route, onFinish }: P
 
       {/* Time row */}
       <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 6, marginBottom: 14 }}>
-        <Text style={{ fontSize: 12, fontWeight: "600", color: JOURNEY.capLocked, fontVariant: ["tabular-nums"] }}>
+        <Text style={{ fontSize: 12, fontWeight: "600", color: M.muted, fontVariant: ["tabular-nums"] }}>
           {formatDuration(pos)}
         </Text>
-        <Text style={{ fontSize: 12, fontWeight: "600", color: JOURNEY.capLocked, fontVariant: ["tabular-nums"] }}>
+        <Text style={{ fontSize: 12, fontWeight: "600", color: M.muted, fontVariant: ["tabular-nums"] }}>
           {dur > 0 ? formatDuration(dur) : "--:--"}
         </Text>
       </View>
@@ -178,7 +177,7 @@ export function SyncedAudioPlayer({ trackId, source, title, route, onFinish }: P
           accessibilityRole="button"
           accessibilityLabel={`Playback speed ${playbackSpeed}×`}
         >
-          <Text style={{ fontSize: 15, fontWeight: "800", color: JOURNEY.bronze }}>{playbackSpeed}×</Text>
+          <Text style={{ fontSize: 15, fontWeight: "800", color: MUSEUM.accentDark }}>{playbackSpeed}×</Text>
         </Pressable>
 
         {/* −5s replay */}
@@ -193,7 +192,7 @@ export function SyncedAudioPlayer({ trackId, source, title, route, onFinish }: P
           accessibilityRole="button"
           accessibilityLabel="Replay 5 seconds"
         >
-          <IconSymbol name="gobackward.5" size={30} color={JOURNEY.sheetTitle} />
+          <IconSymbol name="gobackward.5" size={30} color={M.text} />
         </Pressable>
 
         {/* Play / pause */}
@@ -205,8 +204,8 @@ export function SyncedAudioPlayer({ trackId, source, title, route, onFinish }: P
             borderRadius: 30,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: error ? M.error : JOURNEY.bronze,
-            shadowColor: JOURNEY.bronze,
+            backgroundColor: error ? M.error : MUSEUM.accentDark,
+            shadowColor: MUSEUM.accentDark,
             shadowOpacity: 0.4,
             shadowRadius: 12,
             shadowOffset: { width: 0, height: 4 },
@@ -216,12 +215,12 @@ export function SyncedAudioPlayer({ trackId, source, title, route, onFinish }: P
           accessibilityState={{ busy: isResolving || (isLoading && isCurrent) }}
         >
           {isResolving || (isLoading && isCurrent) ? (
-            <ActivityIndicator color={JOURNEY.sheetBg} />
+            <ActivityIndicator color={MUSEUM.parchment} />
           ) : (
             <IconSymbol
               name={error ? "xmark" : isPlaying && isCurrent ? "pause.fill" : "play.fill"}
               size={26}
-              color={JOURNEY.sheetBg}
+              color={MUSEUM.parchment}
             />
           )}
         </Pressable>
@@ -238,7 +237,7 @@ export function SyncedAudioPlayer({ trackId, source, title, route, onFinish }: P
           accessibilityRole="button"
           accessibilityLabel="Skip forward 10 seconds"
         >
-          <IconSymbol name="goforward.10" size={30} color={JOURNEY.sheetTitle} />
+          <IconSymbol name="goforward.10" size={30} color={M.text} />
         </Pressable>
 
         {/* Spacer to mirror the speed control width and keep the cluster centered */}
