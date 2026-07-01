@@ -4,27 +4,17 @@ import { ApiError, apiFetch, friendlyError } from "@/lib/api";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Stack } from "expo-router";
-import { useState } from "react";
+import { Stack, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-interface AdminUser {
-  id: string;
-  name: string;
-  email: string;
-  planTier: "free" | "plus";
-}
-
-const MAX_RESULTS = 20;
 
 export default function PlusGateScreen() {
   const M = useMuseumTheme();
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
-  const [search, setSearch] = useState("");
+  const router = useRouter();
   const amber = getAccent("amber").solid;
 
   const { data: config } = useQuery<{ plusEnabled: boolean }>({
@@ -47,38 +37,6 @@ export default function PlusGateScreen() {
     onError: (err) => {
       console.error("[plus-gate] global toggle failed:", err instanceof ApiError ? `${err.status} ${err.message}` : err);
       Alert.alert(t("admin.organizations.plusSectionTitle"), friendlyError(err));
-    },
-  });
-
-  const { data: users = [], isLoading: usersLoading } = useQuery<AdminUser[]>({
-    queryKey: ["admin", "users"],
-    queryFn: async () => {
-      const token = await getToken();
-      return apiFetch<AdminUser[]>("/admin/users?limit=100", { token: token ?? undefined });
-    },
-    staleTime: 30_000,
-  });
-
-  const q = search.trim().toLowerCase();
-  const filtered = q
-    ? users.filter((u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)).slice(0, MAX_RESULTS)
-    : [];
-
-  const togglePlan = useMutation({
-    mutationFn: async ({ id, planTier }: { id: string; planTier: "free" | "plus" }) => {
-      const token = await getToken();
-      return apiFetch(`/admin/users/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ planTier }),
-        token: token ?? undefined,
-      });
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
-    },
-    onError: (err) => {
-      console.error("[plus-gate] grant/revoke failed:", err instanceof ApiError ? `${err.status} ${err.message}` : err);
-      Alert.alert(t("admin.users.title"), friendlyError(err));
     },
   });
 
@@ -149,88 +107,26 @@ export default function PlusGateScreen() {
             </Pressable>
           </View>
 
-          {/* Per-user grant/revoke */}
-          <Text className="text-xs font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-4">
-            {t("admin.users.title")}
-          </Text>
-
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder={t("admin.users.searchPlaceholder")}
-            placeholderTextColor={M.muted}
-            autoCapitalize="none"
-            autoCorrect={false}
+          {/* Per-user Plus grant/revoke lives in the comprehensive Users screen */}
+          <Pressable
+            onPress={() => router.push("/admin/users")}
             style={{
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: M.border,
-              backgroundColor: M.card,
-              color: M.text,
-              fontSize: 14,
-              paddingHorizontal: 14,
-              paddingVertical: 12,
-              marginBottom: 12,
+              flexDirection: "row", alignItems: "center",
+              borderRadius: 16, paddingHorizontal: 14, paddingVertical: 14,
+              backgroundColor: M.card, borderWidth: 1, borderColor: M.border,
             }}
-          />
-
-          {q.length > 0 && usersLoading && (
-            <ActivityIndicator size="small" color={M.muted} style={{ marginTop: 8 }} />
-          )}
-
-          {q.length > 0 && !usersLoading && filtered.length === 0 && (
-            <Text style={{ fontSize: 13, color: M.muted, marginTop: 4 }}>
-              {t("admin.users.noResults")}
-            </Text>
-          )}
-
-          <View style={{ gap: 10 }}>
-            {filtered.map((user) => {
-              const isPlus = user.planTier === "plus";
-              const busy = togglePlan.isPending && togglePlan.variables?.id === user.id;
-              return (
-                <View
-                  key={user.id}
-                  style={{
-                    flexDirection: "row", alignItems: "center",
-                    borderRadius: 16, paddingHorizontal: 14, paddingVertical: 12,
-                    backgroundColor: M.card, borderWidth: 1, borderColor: M.border,
-                  }}
-                >
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: "700", color: M.text }} numberOfLines={1}>
-                      {user.name}
-                    </Text>
-                    <Text style={{ marginTop: 2, fontSize: 12, color: M.sub }} numberOfLines={1}>
-                      {user.email}
-                    </Text>
-                  </View>
-                  <Pressable
-                    onPress={() => togglePlan.mutate({ id: user.id, planTier: isPlus ? "free" : "plus" })}
-                    disabled={togglePlan.isPending}
-                    style={{
-                      flexDirection: "row", alignItems: "center", gap: 6,
-                      paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999,
-                      backgroundColor: isPlus ? `${M.error}18` : `${amber}18`,
-                      opacity: togglePlan.isPending && !busy ? 0.5 : 1,
-                    }}
-                    className="active:opacity-70"
-                  >
-                    {busy ? (
-                      <ActivityIndicator size="small" color={isPlus ? M.error : amber} />
-                    ) : (
-                      <>
-                        <IconSymbol name="crown.fill" size={12} color={isPlus ? M.error : amber} />
-                        <Text style={{ fontSize: 11, fontWeight: "700", color: isPlus ? M.error : amber }}>
-                          {isPlus ? t("admin.users.revokePlus") : t("admin.users.grantPlus")}
-                        </Text>
-                      </>
-                    )}
-                  </Pressable>
-                </View>
-              );
-            })}
-          </View>
+            className="active:opacity-70"
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 14, fontWeight: "700", color: M.text }}>
+                {t("admin.overview.manageUsers")}
+              </Text>
+              <Text style={{ marginTop: 2, fontSize: 12, color: M.sub }}>
+                {t("admin.overview.manageUsersDesc")}
+              </Text>
+            </View>
+            <IconSymbol name="chevron.right" size={14} color={M.muted} />
+          </Pressable>
         </ScrollView>
       </SafeAreaView>
     </>

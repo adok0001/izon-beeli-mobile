@@ -152,6 +152,13 @@ export default function AdminPanelScreen() {
           <SectionLabel label={t("admin.overview.quickActions")} />
           <View style={{ gap: 10 }}>
             <ActionRow
+              icon="person.fill"
+              label={t("admin.overview.manageUsers")}
+              detail={t("admin.overview.manageUsersDesc")}
+              onPress={() => router.push("/admin/users")}
+              accent={getAccent("purple").solid}
+            />
+            <ActionRow
               icon="shield.fill"
               label={t("educator.panelTitle")}
               detail={t("educator.nav.overview")}

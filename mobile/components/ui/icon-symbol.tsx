@@ -92,6 +92,7 @@ const MAPPING = {
   'square.on.square': 'content-copy',
   'lock.fill': 'lock',
   'crown.fill': 'workspace-premium',
+  'shield.slash.fill': 'remove-moderator',
 } as IconMapping;
 
 /**
