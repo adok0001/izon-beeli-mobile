@@ -17,7 +17,7 @@ import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function CourseTreeScreen() {
@@ -50,17 +50,22 @@ export default function CourseTreeScreen() {
 
   const { isPlus, showPaywall } = usePlusGate();
   const downloadCourse = useDownloadsStore((s) => s.downloadCourse);
+  const downloads = useDownloadsStore((s) => s.downloads);
+  const downloadingIds = useDownloadsStore((s) => s.downloadingIds);
   const downloadableLessons = useMemo(
     () => lessons.filter((l) => isRemoteAudioSource(l.audioUrl)),
     [lessons]
   );
+  const allLessonsDownloaded =
+    downloadableLessons.length > 0 && downloadableLessons.every((l) => downloads[l.id]);
+  const isDownloadingCourse = downloadableLessons.some((l) => downloadingIds[l.id]);
 
   const handleDownloadAll = () => {
     if (!isPlus) {
       showPaywall();
       return;
     }
-    if (downloadableLessons.length === 0) return;
+    if (downloadableLessons.length === 0 || allLessonsDownloaded || isDownloadingCourse) return;
     Alert.alert(
       t("downloads.downloadAllConfirmTitle"),
       t("downloads.downloadAllConfirmMessage", { count: downloadableLessons.length }),
@@ -125,11 +130,22 @@ export default function CourseTreeScreen() {
         {downloadableLessons.length > 0 ? (
           <Pressable
             onPress={handleDownloadAll}
+            disabled={allLessonsDownloaded || isDownloadingCourse}
             hitSlop={12}
             accessibilityRole="button"
-            accessibilityLabel={t("downloads.downloadAll")}
+            accessibilityLabel={
+              allLessonsDownloaded ? t("downloads.downloaded") : t("downloads.downloadAll")
+            }
           >
-            <IconSymbol name="arrow.down.circle" size={20} color={M.accent} />
+            {isDownloadingCourse ? (
+              <ActivityIndicator size="small" color={M.accent} />
+            ) : (
+              <IconSymbol
+                name={allLessonsDownloaded ? "checkmark.circle.fill" : "arrow.down.circle"}
+                size={20}
+                color={allLessonsDownloaded ? M.success : M.accent}
+              />
+            )}
           </Pressable>
         ) : null}
         <Text style={{ fontSize: 13, fontWeight: "700", color: M.accent }}>
