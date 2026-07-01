@@ -52,6 +52,18 @@ export async function getKnownAccounts(): Promise<KnownAccountSnapshot[]> {
   return readAll();
 }
 
+/**
+ * Synchronous read of the in-memory mirror — `null` until the first
+ * `getKnownAccounts()` call hydrates it from SecureStore. Upsert/remove
+ * update `cache` synchronously (before their SecureStore write resolves),
+ * so a caller that awaits one of those and then reads this immediately
+ * afterwards (e.g. AuthGate reacting to a same-session sign-out) always
+ * sees the fresh list — no stale React state to race against.
+ */
+export function getCachedKnownAccountIds(): string[] | null {
+  return cache ? cache.map((a) => a.userId) : null;
+}
+
 export async function upsertKnownAccount(snapshot: KnownAccountSnapshot): Promise<void> {
   const accounts = await readAll();
   const next = [snapshot, ...accounts.filter((a) => a.userId !== snapshot.userId)]
