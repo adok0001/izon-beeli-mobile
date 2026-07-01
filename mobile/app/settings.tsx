@@ -6,6 +6,7 @@ import { apiFetch } from "@/lib/api";
 import { useNotificationPrefs, useUpdateNotificationPrefs } from "@/lib/hooks/use-notification-prefs";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
 import { useToast } from "@/lib/hooks/use-toast";
+import { signOutForgettingAccount } from "@/lib/known-accounts";
 import { getLanguageName } from "@/lib/mock-data";
 import { useLanguageStore } from "@/store/language-store";
 import { useThemeStore } from "@/store/theme-store";
@@ -122,7 +123,7 @@ export default function SettingsScreen() {
   const { data: summary } = useProgressSummary();
   const { preference, setPreference } = useThemeStore();
   const { uiLanguage, setUiLanguage } = useUiLanguageStore();
-  const { getToken } = useAuth();
+  const { getToken, userId } = useAuth();
   const { signOut } = useClerk();
   const queryClient = useQueryClient();
   const { data: prefs, isLoading: prefsLoading } = useNotificationPrefs();
@@ -168,7 +169,7 @@ export default function SettingsScreen() {
               const token = await getToken();
               await apiFetch("/users/me", { method: "DELETE", token: token ?? undefined });
               analytics.reset();
-              await signOut();
+              await signOutForgettingAccount({ userId, signOut });
               router.replace("/(auth)/sign-in");
             } catch {
               toastError(t("common.error"), t("settings.deleteAccountError"));

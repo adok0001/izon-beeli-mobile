@@ -8,6 +8,7 @@ import { analytics } from "@/lib/analytics";
 import { useAppConfig } from "@/lib/hooks/use-app-config";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
 import { getLevelInfo } from "@/lib/xp-levels";
+import { signOutPreservingOtherAccounts } from "@/lib/known-accounts";
 import { useMuseumTheme, MUSEUM } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import { useProfileAvatarStore } from "@/store/profile-avatar-store";
@@ -252,7 +253,7 @@ export default function ProfileScreen() {
   const orange = getAccent("orange");
   const green = getAccent("green");
   const router = useRouter();
-  const { signOut } = useAuth();
+  const { signOut, sessionId } = useAuth();
   const { user } = useUser();
   const { data: currentUser } = useCurrentUser();
   const [feedbackVisible, setFeedbackVisible] = useState(false);
@@ -460,7 +461,15 @@ export default function ProfileScreen() {
           <MenuRow icon="at" label="X (Twitter)" detail="@beeliapp" onPress={() => Linking.openURL("https://x.com/beeliapp")} />
 
           <View style={{ marginTop: 20 }}>
-            <MenuRow icon="xmark" label={t("profile.signOut")} onPress={() => { analytics.reset(); signOut(); }} danger />
+            <MenuRow
+              icon="xmark"
+              label={t("profile.signOut")}
+              onPress={async () => {
+                analytics.reset();
+                if (user) await signOutPreservingOtherAccounts({ user, sessionId, signOut });
+              }}
+              danger
+            />
           </View>
         </View>
 

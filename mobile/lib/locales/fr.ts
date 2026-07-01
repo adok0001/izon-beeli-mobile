@@ -430,6 +430,13 @@ export const fr = {
     newPassword: "Nouveau mot de passe",
     resetPasswordButton: "Réinitialiser le mot de passe",
     resetIncomplete: "Réinitialisation incomplète. Veuillez réessayer.",
+    signBackInTitle: "Se reconnecter",
+    addAnotherAccount: "Ajouter un autre compte",
+    manageAccounts: "Gérer les comptes",
+    manageAccountsTitle: "Gérer les comptes",
+    removeAccount: "Retirer",
+    removeAccountConfirmTitle: "Retirer ce compte ?",
+    removeAccountConfirmBody: "Vous devrez vous reconnecter pour l'utiliser sur cet appareil.",
   },
   welcomeChecklist: {
     title: "Liste de bienvenue",

@@ -428,6 +428,13 @@ export const pt = {
     newPassword: "Nova Palavra-passe",
     resetPasswordButton: "Repor Palavra-passe",
     resetIncomplete: "Reposição incompleta. Tente novamente.",
+    signBackInTitle: "Iniciar sessão novamente",
+    addAnotherAccount: "Adicionar outra conta",
+    manageAccounts: "Gerir contas",
+    manageAccountsTitle: "Gerir contas",
+    removeAccount: "Remover",
+    removeAccountConfirmTitle: "Remover esta conta?",
+    removeAccountConfirmBody: "Terá de iniciar sessão novamente para a usar neste dispositivo.",
   },
   welcomeChecklist: {
     title: "Lista de Boas-vindas",

@@ -428,6 +428,13 @@ export const ar = {
     newPassword: "كلمة المرور الجديدة",
     resetPasswordButton: "إعادة تعيين كلمة المرور",
     resetIncomplete: "لم تكتمل إعادة التعيين. يرجى المحاولة مرة أخرى.",
+    signBackInTitle: "تسجيل الدخول مرة أخرى",
+    addAnotherAccount: "إضافة حساب آخر",
+    manageAccounts: "إدارة الحسابات",
+    manageAccountsTitle: "إدارة الحسابات",
+    removeAccount: "إزالة",
+    removeAccountConfirmTitle: "إزالة هذا الحساب؟",
+    removeAccountConfirmBody: "ستحتاج إلى تسجيل الدخول مرة أخرى لاستخدامه على هذا الجهاز.",
   },
   welcomeChecklist: {
     title: "قائمة الترحيب",

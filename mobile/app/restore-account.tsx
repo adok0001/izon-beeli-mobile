@@ -2,6 +2,7 @@ import { analytics } from "@/lib/analytics";
 import { apiFetch } from "@/lib/api";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { useToast } from "@/lib/hooks/use-toast";
+import { signOutForgettingAccount } from "@/lib/known-accounts";
 import { useAuth, useClerk } from "@clerk/clerk-expo";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
@@ -18,7 +19,7 @@ export default function RestoreAccountScreen() {
   const { restoreBy } = useLocalSearchParams<{ restoreBy: string }>();
   const router = useRouter();
   const { signOut } = useClerk();
-  const { getToken } = useAuth();
+  const { getToken, userId } = useAuth();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const { toast, error: toastError, dismiss: dismissToast } = useToast();
@@ -49,7 +50,7 @@ export default function RestoreAccountScreen() {
 
   const handleContinueDeletion = async () => {
     analytics.reset();
-    await signOut();
+    await signOutForgettingAccount({ userId, signOut });
     router.replace("/(auth)/sign-in");
   };
 

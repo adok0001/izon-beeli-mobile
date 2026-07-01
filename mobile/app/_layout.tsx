@@ -6,6 +6,7 @@ import { analytics, posthogClient } from "@/lib/analytics";
 import { queryClient, queryPersister } from "@/lib/api";
 import { tokenCache } from "@/lib/auth";
 import { migrateGuestToAccount } from "@/lib/guest-migration";
+import { getKnownAccounts } from "@/lib/known-accounts";
 import { useSyncUser } from "@/lib/hooks/use-sync-user";
 import { useWidgetSync } from "@/lib/hooks/use-widget-sync";
 import { startWriteQueueReplay } from "@/lib/write-queue";
@@ -137,8 +138,15 @@ function AuthGate({ children }: Readonly<{ children: React.ReactNode }>) {
   const addNotification = useNotificationStore((s) => s.addNotification);
   const isGuest = useGuestStore((s) => s.isGuest);
   const guestHydrated = useGuestStore((s) => s._hydrated);
+  // null = not read from SecureStore yet; only consulted on the signed-out
+  // path below, so it never blocks the already-signed-in fast path.
+  const [knownAccountIds, setKnownAccountIds] = useState<string[] | null>(null);
 
   const deletionPending = useSyncUser();
+
+  useEffect(() => {
+    getKnownAccounts().then((accounts) => setKnownAccountIds(accounts.map((a) => a.userId)));
+  }, []);
 
   useEffect(() => {
     if (deletionPending) {
@@ -226,7 +234,12 @@ function AuthGate({ children }: Readonly<{ children: React.ReactNode }>) {
     const allowed = isSignedIn || isGuest;
 
     if (!allowed) {
-      if (!inAuthGroup) router.replace("/(auth)/sign-in");
+      // Wait for the known-accounts cache read before choosing where to send
+      // a signed-out user, so this never flashes straight to sign-in first.
+      if (knownAccountIds === null) return;
+      if (!inAuthGroup) {
+        router.replace(knownAccountIds.length > 0 ? "/(auth)/sign-back-in" : "/(auth)/sign-in");
+      }
       return;
     }
 
@@ -235,7 +248,7 @@ function AuthGate({ children }: Readonly<{ children: React.ReactNode }>) {
     if (inAuthGroup || !inDeepRoute) {
       router.replace("/(tabs)/learn");
     }
-  }, [isSignedIn, isLoaded, isGuest, guestHydrated, segments, router, deletionPending]);
+  }, [isSignedIn, isLoaded, isGuest, guestHydrated, knownAccountIds, segments, router, deletionPending]);
 
   return <>{children}</>;
 }

@@ -428,6 +428,13 @@ export const en = {
     newPassword: "New Password",
     resetPasswordButton: "Reset Password",
     resetIncomplete: "Reset incomplete. Please try again.",
+    signBackInTitle: "Sign back in",
+    addAnotherAccount: "Add another account",
+    manageAccounts: "Manage accounts",
+    manageAccountsTitle: "Manage accounts",
+    removeAccount: "Remove",
+    removeAccountConfirmTitle: "Remove this account?",
+    removeAccountConfirmBody: "You'll need to sign in again to use it on this device.",
   },
   welcomeChecklist: {
     title: "Welcome Checklist",

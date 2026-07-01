@@ -1,9 +1,10 @@
 import { analytics } from "@/lib/analytics";
+import { sessionToSnapshot, upsertKnownAccount } from "@/lib/known-accounts";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useGuestStore } from "@/store/guest-store";
-import { useSignIn } from "@clerk/clerk-expo";
+import { useClerk, useSignIn } from "@clerk/clerk-expo";
 import { Image } from "expo-image";
-import { Link, useRouter } from "expo-router";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -24,8 +25,10 @@ const mascot = require("../../public/mascot.jpg");
 export default function SignInScreen() {
   const M = useMuseumTheme();
   const { signIn, setActive, isLoaded } = useSignIn();
+  const clerk = useClerk();
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const { identifier: prefillIdentifier } = useLocalSearchParams<{ identifier?: string }>();
+  const [email, setEmail] = useState(prefillIdentifier ?? "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -58,6 +61,11 @@ export default function SignInScreen() {
       const result = await signIn.create({ identifier: email.trim(), password });
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
+        const session = clerk.client.signedInSessions.find(
+          (s) => s.id === result.createdSessionId
+        );
+        const snapshot = session ? sessionToSnapshot(session) : null;
+        if (snapshot) await upsertKnownAccount(snapshot);
         analytics.signIn();
         analytics.identify(email.trim(), { email: email.trim() });
         router.replace("/(tabs)/learn");
