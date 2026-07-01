@@ -5,7 +5,7 @@ import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
-import { BarChart2, Bell, BrainCircuit, Clapperboard, Gamepad2, GraduationCap, Landmark, MessageSquare, Sun, UserCheck, Users } from "lucide-react";
+import { BarChart2, Bell, BrainCircuit, Clapperboard, CreditCard, Gamepad2, GraduationCap, Landmark, MessageSquare, Sun, UserCheck, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -16,6 +16,7 @@ const ADMIN_NAV = [
   { href: "/admin/users",        labelKey: "admin.nav.users",        icon: Users, tourId: "admin-nav-users" },
   { href: "/educator",           labelKey: "educator.panelTitle",    icon: GraduationCap, tourId: "admin-nav-educator" },
   { href: "/admin/applications", labelKey: "admin.nav.applications", icon: UserCheck, tourId: "admin-nav-applications" },
+  { href: "/admin/organizations", labelKey: "admin.nav.billing",     icon: CreditCard, tourId: "admin-nav-billing" },
   { href: "/admin/feedback",       labelKey: "admin.nav.feedback",       icon: MessageSquare, tourId: "admin-nav-feedback" },
   { href: "/admin/notifications",   labelKey: "admin.nav.notifications",  icon: Bell,          tourId: "admin-nav-notifications" },
   { href: "/admin/daily-content", labelKey: "admin.nav.dailyContent",  icon: Sun,      tourId: "admin-nav-daily-content" },

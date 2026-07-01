@@ -245,6 +245,7 @@ adminUsersRouter.get("/", async (c) => {
       reviewerLanguages: users.reviewerLanguages,
       reviewerRole: users.reviewerRole,
       selectedLanguageId: users.selectedLanguageId,
+      planTier: users.planTier,
       createdAt: users.createdAt,
     })
     .from(users)
@@ -255,16 +256,20 @@ adminUsersRouter.get("/", async (c) => {
   return c.json(rows);
 });
 
-// PATCH /api/admin/users/:id — toggle isAdmin or set reviewer role
+// PATCH /api/admin/users/:id — toggle isAdmin, set reviewer role, or grant/revoke Plus
 adminUsersRouter.patch("/:id", async (c) => {
   const targetId = c.req.param("id");
-  const body = await c.req.json<{ isAdmin?: boolean; isReviewer?: boolean; reviewerLanguages?: string[]; reviewerRole?: string | null }>();
+  const body = await c.req.json<{ isAdmin?: boolean; isReviewer?: boolean; reviewerLanguages?: string[]; reviewerRole?: string | null; planTier?: "free" | "plus" }>();
 
   const updates: Record<string, unknown> = {};
   if (typeof body.isAdmin === "boolean") updates.isAdmin = body.isAdmin;
   if (typeof body.isReviewer === "boolean") updates.isReviewer = body.isReviewer;
   if (Array.isArray(body.reviewerLanguages)) updates.reviewerLanguages = body.reviewerLanguages;
   if (body.reviewerRole !== undefined) updates.reviewerRole = body.reviewerRole ?? null;
+  if (body.planTier === "free" || body.planTier === "plus") {
+    updates.planTier = body.planTier;
+    updates.plusEnabledAt = body.planTier === "plus" ? new Date() : null;
+  }
 
   if (Object.keys(updates).length === 0) {
     return c.json({ error: "No valid fields to update" }, 400);

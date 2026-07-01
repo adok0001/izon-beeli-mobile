@@ -4,7 +4,7 @@ import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, Shield, ShieldOff, UserCheck, X } from "lucide-react";
+import { Crown, Search, Shield, ShieldOff, UserCheck, X } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -21,6 +21,7 @@ interface AdminUser {
   reviewerLanguages: string[];
   reviewerRole?: string | null;
   selectedLanguageId?: string | null;
+  planTier: "free" | "plus";
   createdAt: string;
 }
 
@@ -100,6 +101,20 @@ export default function AdminUsersPage() {
     },
   });
 
+  const togglePlus = useMutation({
+    mutationFn: async ({ id, planTier }: { id: string; planTier: "free" | "plus" }) => {
+      const token = await getToken();
+      return apiFetch(`/admin/users/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ planTier }),
+        token: token ?? undefined,
+      });
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+
   return (
     <div>
       <div className="mb-6">
@@ -128,6 +143,7 @@ export default function AdminUsersPage() {
               <th className="text-left px-4 py-3 font-semibold text-neutral-600 dark:text-neutral-400 hidden md:table-cell">{t("admin.users.colEmail")}</th>
               <th className="text-right px-4 py-3 font-semibold text-neutral-600 dark:text-neutral-400">{t("admin.users.colPoints")}</th>
               <th className="text-center px-4 py-3 font-semibold text-neutral-600 dark:text-neutral-400">{t("admin.users.colAdmin")}</th>
+              <th className="text-center px-4 py-3 font-semibold text-neutral-600 dark:text-neutral-400">{t("admin.users.colPlan")}</th>
               <th className="text-left px-4 py-3 font-semibold text-neutral-600 dark:text-neutral-400 hidden lg:table-cell">Role</th>
               <th className="px-4 py-3" />
             </tr>
@@ -136,14 +152,14 @@ export default function AdminUsersPage() {
             {isLoading &&
               Array.from({ length: 8 }, (_, i) => (
                 <tr key={i} className="border-b border-neutral-100 dark:border-neutral-800">
-                  <td colSpan={6} className="px-4 py-3">
+                  <td colSpan={7} className="px-4 py-3">
                     <div className="h-5 bg-neutral-100 dark:bg-neutral-800 rounded animate-pulse" />
                   </td>
                 </tr>
               ))}
             {!isLoading && filtered.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-sm text-neutral-400 dark:text-neutral-500">
+                <td colSpan={7} className="px-4 py-8 text-center text-sm text-neutral-400 dark:text-neutral-500">
                   {t("admin.users.noResults")}
                 </td>
               </tr>
@@ -175,6 +191,15 @@ export default function AdminUsersPage() {
                     </span>
                   ) : (
                     <span className="text-xs text-neutral-400 dark:text-neutral-500">—</span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-center">
+                  {user.planTier === "plus" ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full">
+                      <Crown className="h-3 w-3" /> {t("admin.users.planPlus")}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-neutral-400 dark:text-neutral-500">{t("admin.users.planFree")}</span>
                   )}
                 </td>
                 {/* Role cell */}
@@ -297,6 +322,22 @@ export default function AdminUsersPage() {
                         <><ShieldOff className="h-3 w-3" /> {t("admin.users.demote")}</>
                       ) : (
                         <><Shield className="h-3 w-3" /> {t("admin.users.promote")}</>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => togglePlus.mutate({ id: user.id, planTier: user.planTier === "plus" ? "free" : "plus" })}
+                      disabled={togglePlus.isPending}
+                      className={cn(
+                        "flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg transition-colors",
+                        user.planTier === "plus"
+                          ? "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40"
+                          : "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40"
+                      )}
+                    >
+                      {user.planTier === "plus" ? (
+                        <><Crown className="h-3 w-3" /> {t("admin.users.revokePlus")}</>
+                      ) : (
+                        <><Crown className="h-3 w-3" /> {t("admin.users.grantPlus")}</>
                       )}
                     </button>
                   </div>

@@ -1,9 +1,10 @@
 "use client";
 
 import { apiFetch } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Building2, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
+import { Building2, CheckCircle2, XCircle, AlertTriangle, Crown } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -44,6 +45,25 @@ export default function AdminOrganizationsPage() {
     },
   });
 
+  const { data: config } = useQuery<{ plusEnabled: boolean }>({
+    queryKey: ["admin", "billing", "plus-config"],
+    queryFn: async () => apiFetch("/config/public"),
+  });
+
+  const togglePlusEnabled = useMutation({
+    mutationFn: async (plusEnabled: boolean) => {
+      const token = await getToken();
+      return apiFetch("/admin/config", {
+        method: "PATCH",
+        body: JSON.stringify({ key: "plus_enabled", value: plusEnabled ? "true" : "false" }),
+        token: token ?? undefined,
+      });
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["admin", "billing", "plus-config"] });
+    },
+  });
+
   const provisionMutation = useMutation({
     mutationFn: async () => {
       const token = await getToken();
@@ -66,11 +86,46 @@ export default function AdminOrganizationsPage() {
         {t("admin.organizations.title")}
       </h1>
 
+      {/* Global Beeli Plus paywall toggle */}
+      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 mb-8">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Crown className="h-4 w-4 text-amber-500" />
+            <div>
+              <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                {t("admin.organizations.plusSectionTitle")}
+              </h2>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                {t("admin.organizations.plusSectionDesc")}
+              </p>
+            </div>
+          </div>
+          <button
+            role="switch"
+            aria-checked={config?.plusEnabled ?? false}
+            aria-label={t("admin.organizations.plusEnabledLabel")}
+            onClick={() => togglePlusEnabled.mutate(!(config?.plusEnabled ?? false))}
+            disabled={togglePlusEnabled.isPending || config === undefined}
+            className={cn(
+              "flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-lg transition-colors disabled:opacity-50",
+              config?.plusEnabled
+                ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
+                : "text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700"
+            )}
+          >
+            {config?.plusEnabled ? t("admin.organizations.plusToggleOn") : t("admin.organizations.plusToggleOff")}
+          </button>
+        </div>
+      </div>
+
       {/* Provision institution form */}
       <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 mb-8">
-        <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-3">
-          {t("admin.organizations.provisionTitle")}
+        <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-1">
+          {t("admin.organizations.organizationsSectionTitle")}
         </h2>
+        <h3 className="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-3">
+          {t("admin.organizations.provisionTitle")}
+        </h3>
         <div className="flex gap-3 flex-wrap">
           <input
             className="flex-1 min-w-40 px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
