@@ -91,6 +91,7 @@ const MAPPING = {
   'questionmark': 'help-outline',
   'square.on.square': 'content-copy',
   'lock.fill': 'lock',
+  'crown.fill': 'workspace-premium',
 } as IconMapping;
 
 /**

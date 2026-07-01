@@ -186,6 +186,13 @@ export default function AdminPanelScreen() {
               onPress={() => router.push("/admin/streak-tools")}
               accent={getAccent("orange").solid}
             />
+            <ActionRow
+              icon="crown.fill"
+              label={t("admin.nav.billing")}
+              detail={t("admin.organizations.plusSectionTitle")}
+              onPress={() => router.push("/admin/plus-gate")}
+              accent={getAccent("amber").solid}
+            />
             {currentUser && canManageBounties(currentUser) ? (
               <ActionRow
                 icon="star.fill"
