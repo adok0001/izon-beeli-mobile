@@ -62,6 +62,7 @@ EOF
 - Never amend commits unless explicitly asked
 - Never skip hooks (`--no-verify` is forbidden)
 - Never force push
+- Tag only on version-bump commits; never push tags automatically (`git push --tags` is the user's deliberate action)
 - When in doubt, `git status` and `git diff --staged` before committing
 
 ## Required Version Bump (Before Every Commit)
@@ -129,6 +130,25 @@ node -e "const fs=require('fs');const p='mobile/app.json';const j=JSON.parse(fs.
 
 If the user explicitly requests a bump type, follow the user request unless it would violate the principles due to a clear breaking change.
 
+## Version Tagging (After Commit)
+
+When — and only when — the commit changed the shared version value, tag it. This
+anchors release boundaries so `git log vX..vY` and the `app-store-changelog` skill
+can resolve ranges without reverse-engineering commit subjects.
+
+- Create an **annotated, `v`-prefixed** tag on the commit that carries the bump.
+- Tag **locally only** — never `git push --tags`. Pushing tags is outward-facing and
+  awkward to retract, so leave it to the user's deliberate action.
+- Skip tagging on the vast majority of commits, which share the current version.
+
+```bash
+# Run only after a commit that bumped the shared version value.
+V=$(node -p "require('./server/package.json').version")
+if [ -z "$(git tag -l "v$V")" ]; then
+  git tag -a "v$V" -m "release v$V"   # local only; the user pushes tags deliberately
+fi
+```
+
 ## Required Build Gate (Before Every Commit)
 
 Run a build command before every commit, based on what changed:
@@ -178,3 +198,4 @@ grep -oE "EXPO_PUBLIC_[A-Z_]+" mobile/.env.example | sort -u
 6. Stage relevant files individually: `git add mobile/...` / `git add web/...` / `git add server/...` / `git add partykit/...` / `git add data/...`
 7. Verify staged changes: `git diff --staged`
 8. Confirm success with `git status`
+9. If this commit bumped the shared version, tag it locally (see Version Tagging)
