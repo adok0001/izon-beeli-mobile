@@ -1,7 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, ScrollView, Text, View, type LayoutChangeEvent } from "react-native";
+import {
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+  type GestureResponderEvent,
+  type LayoutChangeEvent,
+} from "react-native";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { MUSEUM, useMuseumTheme } from "@/lib/use-museum-theme";
+import { getAccent } from "@/constants/accent-colors";
 import { fonts } from "@/constants/typography";
 import { localize } from "@/lib/localize";
 import { useAudioStore } from "@/store/audio-store";
@@ -26,8 +34,9 @@ interface Props {
  */
 export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 380 }: Props) {
   const M = useMuseumTheme();
-  const { progress, seekTo, currentTrackId } = useAudioStore();
+  const { progress, seekTo, currentTrackId, shadowSegment, setShadowLoop } = useAudioStore();
   const { uiLanguage } = useUiLanguageStore();
+  const amber = getAccent("amber").solid;
   const scrollRef = useRef<ScrollView>(null);
   const lineY = useRef<Record<number, number>>({});
   const [autoFollow, setAutoFollow] = useState(true);
@@ -57,6 +66,20 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
   const handleLinePress = (seg: TranscriptSegment) => {
     hapticTap();
     if (currentTrackId) seekTo(seg.startTime);
+  };
+
+  // Toggle a per-line repeat loop: the store seeks back to startTime whenever
+  // playback crosses endTime, so the phrase repeats until looping is turned off.
+  const handleLoopPress = (seg: TranscriptSegment, e: GestureResponderEvent) => {
+    e.stopPropagation();
+    hapticTap();
+    const isLooping = shadowSegment?.startTime === seg.startTime;
+    if (isLooping) {
+      setShadowLoop(null);
+    } else {
+      setShadowLoop({ startTime: seg.startTime, endTime: seg.endTime });
+      if (currentTrackId) seekTo(seg.startTime);
+    }
   };
 
   return (
@@ -113,6 +136,7 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
       >
         {segments.map((seg, index) => {
           const isActive = index === activeIndex;
+          const isLooping = shadowSegment?.startTime === seg.startTime;
           const translation = localize(seg.translation, uiLanguage);
           const tokens = seg.text.split(/(\s+)/);
           let wordOrdinal = -1;
@@ -126,14 +150,19 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
               }}
               style={{
                 marginBottom: 8,
-                paddingHorizontal: 14,
+                paddingLeft: 14,
+                paddingRight: currentTrackId ? 40 : 14,
                 paddingVertical: 12,
                 borderRadius: 14,
-                backgroundColor: isActive ? M.accentGlow : "transparent",
+                backgroundColor: isLooping
+                  ? `${amber}22`
+                  : isActive
+                  ? M.accentGlow
+                  : "transparent",
                 borderWidth: 1,
-                borderColor: isActive ? M.accentBorder : "transparent",
-                borderLeftWidth: isActive ? 3 : 1,
-                borderLeftColor: isActive ? M.accent : "transparent",
+                borderColor: isLooping ? amber : isActive ? M.accentBorder : "transparent",
+                borderLeftWidth: isLooping || isActive ? 3 : 1,
+                borderLeftColor: isLooping ? amber : isActive ? M.accent : "transparent",
               }}
               accessibilityRole="button"
               accessibilityLabel={`Jump to: ${seg.text}`}
@@ -160,6 +189,18 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
                 <Text style={{ marginTop: 4, fontSize: 13, color: isActive ? M.accent : M.muted }}>
                   {translation}
                 </Text>
+              ) : null}
+              {currentTrackId ? (
+                <Pressable
+                  onPress={(e) => handleLoopPress(seg, e)}
+                  hitSlop={10}
+                  style={{ position: "absolute", right: 12, top: 12 }}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isLooping }}
+                  accessibilityLabel={isLooping ? "Stop repeating this line" : "Repeat this line"}
+                >
+                  <IconSymbol name="repeat.1" size={16} color={isLooping ? amber : M.muted} />
+                </Pressable>
               ) : null}
             </Pressable>
           );

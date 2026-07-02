@@ -93,6 +93,7 @@ const MAPPING = {
   'lock.fill': 'lock',
   'crown.fill': 'workspace-premium',
   'shield.slash.fill': 'remove-moderator',
+  'repeat.1': 'repeat-one',
 } as IconMapping;
 
 /**
