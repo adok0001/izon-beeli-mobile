@@ -1,15 +1,27 @@
 ---
 name: app-store-changelog
-description: This skill should be used when the user asks to "draft what's new", "write release notes", "create App Store changelog", "write promotional text for the new version", "generate store listing copy", or "what changed since the last release". Produces two outputs: App Store "What's New" notes and a full promotional store listing for Beeli version updates.
+description: This skill should be used when the user asks to "draft what's new", "write release notes", "create App Store changelog", "write promotional text for the new version", "generate store listing copy", or "what changed since the last release". Produces three outputs: a per-release App Store "What's New" block, Promotional Text, and a fuller internal/website changelog for Beeli version updates.
 version: 0.1.0
 ---
 
 # App Store Changelog & Promotional Copy
 
-Drafts two release artifacts whenever Beeli ships a new version:
+Drafts three release artifacts whenever Beeli ships a new version:
 
-1. **What's New** — concise App Store version notes (≤4000 chars, plain prose, no markdown)
+1. **What's New (App Store — paste this)** — concise, storefront-ready version notes for the single build being submitted (≤4000 chars, plain prose, no markdown). Short by design; only the first 2–3 lines show before "more".
 2. **Promotional text** — the dedicated App Store "Promotional Text" field (170 chars max, plain text, appears above the description, can be updated without a new release submission)
+3. **Internal / website changelog** — the fuller grouped list (New / Improved / Fixed) for release records and a website release-notes page. This is the raw material you *derive* the storefront block from — **do not paste it into the App Store**.
+
+## Scope: default to one release
+
+Default to a **single release** — the commits since the previous version tag. App Store
+"What's New" describes *that build's* changes, not a cumulative history; a multi-release
+wall reads as noise and confuses users who already received earlier updates.
+
+Only produce a cumulative range when the user explicitly asks for one (e.g.
+`/app-store-changelog 2.2.0 2.37.0`). When you do, the grouped list is the **internal /
+website changelog only** — still hand back a tight per-build "What's New" for the actual
+submission.
 
 ## Inputs
 
@@ -23,18 +35,25 @@ Accept optional arguments in the form `from-version to-version` (e.g. `/app-stor
 
 ### Step 1 — Resolve the version range
 
+Version-bump commits are tagged (annotated, `v`-prefixed — created by the `git-commit`
+skill). Use tags as the range boundaries; they are the reliable anchors.
+
 ```bash
 # Current version
 cat mobile/app.json | grep '"version"'
 
-# Most recent version-bump commits to find the previous release
-git log --oneline --grep="bump" --grep="version" --all-match | head -10
+# Previous release tag (the range floor for a normal, per-release run)
+git describe --tags --abbrev=0
 
-# All commits since the previous version tag/bump
-git log --oneline <from-commit>..HEAD
+# All commits in this release
+git log --oneline "$(git describe --tags --abbrev=0)"..HEAD
+
+# For an explicit cumulative range: git log --oneline vFROM..vTO
 ```
 
-Use the commit hash of the previous version bump (e.g. a `chore: bump app version` commit) as the range floor if no git tags exist.
+Fallback if a needed tag is missing: find the version-bump commit by inspecting
+`mobile/app.json` history (`git log -p -- mobile/app.json | grep '"version"'`) and use
+that commit hash as the floor.
 
 ### Step 2 — Classify commits
 
@@ -67,9 +86,21 @@ Group included commits into themes: **New Features**, **Design & UI**, **Content
 - Lead with the most exciting change in this release. One punchy sentence or two tight clauses.
 - Flag any feature that may not be live for all users with a `[CONFIRM AVAILABILITY]` note.
 
-### Step 5 — Present both outputs
+### Step 5 — Draft the internal / website changelog
 
-Present them as two clearly labelled blocks so the user can copy each independently. After both outputs, list any `[CONFIRM AVAILABILITY]` flags for the user to resolve.
+- Group the included commits under **New**, **Improved**, and **Fixed**.
+- Fuller than the storefront block — this is the record, not the pitch — but still in the brand voice and free of internal implementation detail.
+- For a cumulative range, this is the primary artifact; for a single release it is the backing record for the "What's New" block.
+
+### Step 6 — Present all three outputs
+
+Present them as clearly labelled blocks so the user can copy each independently, in this order:
+
+1. **What's New (App Store — paste this)**
+2. **Promotional Text**
+3. **Internal / website changelog** — labelled as *not for the App Store*.
+
+After the outputs, list any `[CONFIRM AVAILABILITY]` flags for the user to resolve.
 
 ## Key conventions
 
