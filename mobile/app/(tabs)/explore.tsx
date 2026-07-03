@@ -8,7 +8,7 @@ import { useDiscover } from "@/lib/hooks/use-discover";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export { ErrorBoundary } from "@/components/screen-error-boundary";
@@ -52,10 +52,26 @@ export default function LibraryScreen() {
       >
         {/* Spotlight */}
         {featuredItem ? (
-          <View style={{ marginBottom: 24 }}>
+          <View style={{ marginBottom: 16 }}>
             <FeaturedHero item={featuredItem} />
           </View>
         ) : null}
+
+        {/* Today's gallery — cross-link to the daily surface so it isn't a
+            second competing "library" (word/proverb/song of the day + games). */}
+        <Pressable
+          onPress={() => router.push("/today" as never)}
+          className="active:opacity-80"
+          style={{ flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 14, padding: 14, marginBottom: 24, backgroundColor: M.card, borderWidth: 1, borderColor: M.border, borderLeftWidth: 3, borderLeftColor: M.accent }}
+          accessibilityRole="button"
+        >
+          <IconSymbol name="sparkles" size={18} color={M.accent} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 14, fontWeight: "800", color: M.text }}>Today&apos;s Gallery</Text>
+            <Text style={{ fontSize: 12, color: M.sub }}>Word & proverb of the day, and quick games</Text>
+          </View>
+          <IconSymbol name="chevron.right" size={15} color={M.muted} />
+        </Pressable>
 
         {/* Editorial rails */}
         <DiscoverRail title="Series" items={series} onSeeAll={() => router.push("/explore/podcast" as never)} onStoryPress={openStory} />

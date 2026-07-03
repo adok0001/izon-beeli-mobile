@@ -192,9 +192,16 @@ export default function SayItBackScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["top", "bottom"]}>
       <Stack.Screen options={{ title: "Say It Back", headerBackTitle: "Back" }} />
       <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24 }} showsVerticalScrollIndicator={false}>
-        <Text style={{ fontSize: 11, fontWeight: "800", letterSpacing: 1.8, color: M.muted, marginBottom: 20 }}>
-          WORD {wordIndex + 1}
-        </Text>
+        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+          <Text style={{ flex: 1, fontSize: 11, fontWeight: "800", letterSpacing: 1.8, color: M.muted }}>
+            WORD {wordIndex + 1}
+          </Text>
+          {/* Honest framing: the app compares audio; the learner judges. No
+              automated pronunciation scoring is implied. */}
+          <View style={{ borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3, backgroundColor: M.pillBg, borderWidth: 1, borderColor: M.border }}>
+            <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 0.8, color: M.muted }}>SELF-GRADED · BETA</Text>
+          </View>
+        </View>
 
         <Animated.View style={{ opacity: fadeAnim, alignItems: "center" }}>
           {/* Word card */}
