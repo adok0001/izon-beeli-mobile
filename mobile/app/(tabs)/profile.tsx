@@ -11,6 +11,7 @@ import { useProgressSummary } from "@/lib/hooks/use-progress";
 import { getLevelInfo } from "@/lib/xp-levels";
 import { signOutPreservingOtherAccounts } from "@/lib/known-accounts";
 import { useMuseumTheme, MUSEUM } from "@/lib/use-museum-theme";
+import { useGuestStore } from "@/store/guest-store";
 import { useLanguageStore } from "@/store/language-store";
 import { useProfileAvatarStore } from "@/store/profile-avatar-store";
 import { useTourStore } from "@/store/tour-store";
@@ -256,6 +257,8 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { signOut, sessionId } = useAuth();
   const { user } = useUser();
+  const isGuest = useGuestStore((s) => s.isGuest);
+  const exitGuest = useGuestStore((s) => s.exitGuest);
   const { data: currentUser } = useCurrentUser();
   const [feedbackVisible, setFeedbackVisible] = useState(false);
   const [goalPickerVisible, setGoalPickerVisible] = useState(false);
@@ -471,6 +474,7 @@ export default function ProfileScreen() {
               onPress={async () => {
                 analytics.reset();
                 if (user) await signOutPreservingOtherAccounts({ user, sessionId, signOut });
+                else if (isGuest) exitGuest();
               }}
               danger
             />
