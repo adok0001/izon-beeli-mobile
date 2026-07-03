@@ -37,6 +37,30 @@ const config: Config = {
           900: "#78350f",
           950: "#451a03",
         },
+        // ── Museum system (shared canonical brand — mirrors mobile
+        //    lib/use-museum-theme.ts). Bronze is the brand accent; the purple
+        //    `brand.*` scale above is being retired in favour of these. See
+        //    docs/brand-guidelines.md.
+        bronze: {
+          50: "#fbf3e6",
+          100: "#f5e8cc",
+          200: "#e9ce9a",
+          300: "#dcb368",
+          400: "#d89a3a",
+          500: "#c4862a", // Museum accent
+          600: "#a66e1c",
+          700: "#8b5e1a",
+          800: "#6e4a15",
+          900: "#4a3210",
+        },
+        museum: {
+          ink: "#0d0f1a",
+          "ink-deep": "#07080f",
+          "ink-raised": "#1a1d2c",
+          parchment: "#f7f2e8",
+          "text-dim": "#9a9480",
+          border: "#2e3245",
+        },
       },
       fontFamily: {
         sans: ["var(--font-jakarta)", "Inter", "system-ui", "sans-serif"],
@@ -53,6 +77,7 @@ const config: Config = {
         "glow-lg":    "0 0 88px -20px rgb(168 85 247 / 0.6)",
         "glow-xl":    "0 0 130px -30px rgb(168 85 247 / 0.65)",
         "glow-gold":  "0 0 44px -10px rgb(245 158 11 / 0.5)",
+        "glow-bronze":"0 0 44px -10px rgb(196 134 42 / 0.5)",
         "aurora":     "0 0 80px -20px rgb(168 85 247 / 0.45), 0 0 40px -10px rgb(99 102 241 / 0.3)",
         "card":       "0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06)",
         "card-hover": "0 8px 32px -8px rgb(0 0 0 / 0.18), 0 2px 8px -2px rgb(0 0 0 / 0.1)",
@@ -64,6 +89,7 @@ const config: Config = {
       },
       backgroundImage: {
         "gradient-brand":        "linear-gradient(135deg, #c084fc 0%, #a855f7 45%, #7e22ce 100%)",
+        "gradient-bronze":       "linear-gradient(135deg, #d89a3a 0%, #c4862a 55%, #a66e1c 100%)",
         "gradient-gold":         "linear-gradient(135deg, #fbbf24 0%, #f59e0b 60%, #d97706 100%)",
         "gradient-aurora":       "linear-gradient(135deg, #a855f7 0%, #6366f1 40%, #0ea5e9 75%, #10b981 100%)",
         "gradient-brand-subtle": "linear-gradient(135deg, rgba(168,85,247,0.15) 0%, rgba(99,102,241,0.08) 100%)",

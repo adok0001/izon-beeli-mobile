@@ -16,12 +16,13 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
+  /* Bronze is the canonical Museum brand accent (see docs/brand-guidelines.md). */
   ::selection {
-    @apply bg-brand-500/25 text-brand-100;
+    @apply bg-bronze-500/25 text-bronze-100;
   }
 
   :focus-visible {
-    @apply outline-none ring-2 ring-brand-500/70 ring-offset-2 ring-offset-white dark:ring-offset-[#07070f];
+    @apply outline-none ring-2 ring-bronze-500/70 ring-offset-2 ring-offset-white dark:ring-offset-[#07070f];
   }
 }
 
