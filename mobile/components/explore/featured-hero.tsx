@@ -1,5 +1,6 @@
 import { DISCOVER_TYPE_CONFIG } from "@/components/discover-card";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { hasInteractiveStory } from "@/lib/data/interactive-stories";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { DiscoverItem } from "@/types";
 import { LinearGradient } from "expo-linear-gradient";
@@ -19,7 +20,9 @@ export function FeaturedHero({ item }: FeaturedHeroProps) {
   const cfg = DISCOVER_TYPE_CONFIG[item.type];
 
   function handlePress() {
-    if (item.type === "film" && item.storyId) {
+    if (item.type === "podcast" && item.storyId) {
+      router.push(`/series/${item.storyId}` as never);
+    } else if (item.type === "film" && item.storyId && hasInteractiveStory(item.storyId)) {
       router.push(`/discover-story/${item.storyId}` as never);
     } else {
       router.push(`/discover-content/${item.id}` as never);

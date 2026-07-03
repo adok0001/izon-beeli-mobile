@@ -272,6 +272,14 @@ export interface StoryChapter {
   narrativeIntro: string;
   narrativeOutro: string;
   order: number;
+  /** Level of the linked lesson (from `podcast.<level>` scene). Enriched server-side. */
+  level?: "beginner" | "intermediate" | "advanced" | string | null;
+  /** Runtime of the linked lesson in minutes. Enriched server-side. */
+  lessonDuration?: number | null;
+  /** Genre of the linked lesson (e.g. "podcast"). Enriched server-side. */
+  lessonGenre?: string | null;
+  /** Whether the linked lesson is live/playable. false = "coming soon". */
+  lessonIsActive?: boolean;
 }
 
 export interface StoryArc {

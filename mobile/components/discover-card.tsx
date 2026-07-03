@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { hasInteractiveStory } from "@/lib/data/interactive-stories";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useAudioStore } from "@/store/audio-store";
 import type { DiscoverItem } from "@/types";
@@ -80,7 +81,12 @@ export function DiscoverCard({ item, onStoryPress, compact = false }: DiscoverCa
   const isCurrentPodcast = item.type === "podcast" && currentTrackId === item.id;
 
   function handlePress() {
-    if (item.type === "film" && item.storyId && onStoryPress) {
+    // A podcast season (storyId, no inline audio) opens the Series screen.
+    if (item.type === "podcast" && item.storyId) {
+      router.push(`/series/${item.storyId}` as never);
+    } else if (item.type === "film" && item.storyId && hasInteractiveStory(item.storyId) && onStoryPress) {
+      // Only branching interactive stories go to the story player; grouped
+      // mini-series films (no interactive story) fall through to their detail.
       onStoryPress(item.storyId);
     } else if (item.type === "podcast" && item.audioUrl) {
       if (isCurrentPodcast) {
