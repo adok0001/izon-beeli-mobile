@@ -1,3 +1,4 @@
+import { CanDoResume } from "@/components/profile/can-do-resume";
 import { FeedbackModal } from "@/components/feedback-modal";
 import { SignInPrompt, useRequireAuth } from "@/components/sign-in-prompt";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -369,6 +370,9 @@ export default function ProfileScreen() {
             <HeroStat value={String(summary?.points ?? 0)} label="Total XP" />
           </View>
         </View>
+
+        {/* What you can do — honest competence résumé */}
+        <CanDoResume />
 
         {/* Plus CTA */}
         {showPlusCta ? (

@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index.js";
 import { courses, lessons, pushTokens, quizResults, userProgress, users } from "../db/schema.js";
@@ -66,6 +66,27 @@ progressRouter.get("/", async (c) => {
     .where(and(eq(userProgress.userId, userId), eq(userProgress.completed, true)));
 
   return c.json(rows.map((r) => r.lessonId));
+});
+
+// GET /api/progress/can-do - "what you can do" competence statements for the
+// user's completed lessons (honest, real-world milestones — not XP/streaks).
+progressRouter.get("/can-do", async (c) => {
+  const userId = c.get("userId");
+
+  const rows = await db
+    .select({
+      lessonId: lessons.id,
+      title: lessons.title,
+      canDo: lessons.canDo,
+      canDoFr: lessons.canDoFr,
+      completedAt: userProgress.completedAt,
+    })
+    .from(userProgress)
+    .innerJoin(lessons, eq(lessons.id, userProgress.lessonId))
+    .where(and(eq(userProgress.userId, userId), eq(userProgress.completed, true)))
+    .orderBy(desc(userProgress.completedAt));
+
+  return c.json(rows.filter((r) => r.canDo != null && r.canDo !== ""));
 });
 
 // POST /api/progress/:lessonId/complete - mark complete

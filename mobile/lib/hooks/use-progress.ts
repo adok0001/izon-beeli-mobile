@@ -4,6 +4,7 @@ import { useIsFocused } from "@react-navigation/native";
 import { Alert } from "react-native";
 import { apiFetch, isNetworkError } from "@/lib/api";
 import { hapticHeavy } from "@/lib/haptics";
+import type { LocalizedText } from "@/types";
 import { useIsOffline } from "@/lib/hooks/use-offline";
 import { useGuestProgressStore } from "@/store/guest-progress-store";
 import { useGuestStore } from "@/store/guest-store";
@@ -86,6 +87,42 @@ export function useCompletedLessons() {
       }
     },
     enabled: !!isSignedIn || isGuest,
+  });
+}
+
+export interface CanDoStatement {
+  lessonId: string;
+  title: string | LocalizedText;
+  canDo: string | null;
+  canDoFr: string | null;
+  completedAt: string | null;
+}
+
+/**
+ * "What you can do" — honest, real-world competence statements for the user's
+ * completed lessons (only lessons that declare a `canDo`). Powers the Profile
+ * competence résumé, the counterweight to XP/streak vanity metrics.
+ */
+export function useCanDoStatements() {
+  const { getToken, isSignedIn } = useAuth();
+  const isOffline = useIsOffline();
+  const queryClient = useQueryClient();
+
+  return useQuery<CanDoStatement[]>({
+    queryKey: ["progress", "can-do"],
+    queryFn: async () => {
+      const cached = () => queryClient.getQueryData<CanDoStatement[]>(["progress", "can-do"]);
+      if (isOffline) return cached() ?? [];
+      const token = await getToken();
+      try {
+        return await apiFetch<CanDoStatement[]>("/progress/can-do", { token: token! });
+      } catch (err) {
+        if (isNetworkError(err)) return cached() ?? [];
+        throw err;
+      }
+    },
+    enabled: !!isSignedIn,
+    staleTime: 1000 * 60 * 5,
   });
 }
 

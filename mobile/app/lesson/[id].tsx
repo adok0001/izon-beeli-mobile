@@ -152,6 +152,17 @@ export default function LessonScreen() {
   const accentColor = typeColors.tickActive ?? M.accent;
   const canDownload = downloadInput !== null;
 
+  // Honest, real-world competence line ("You can now …"). Server sends `canDo`
+  // (en) + `canDoFr`; bundled data may send a LocalizedText map directly.
+  const canDoField =
+    lesson.canDo == null
+      ? null
+      : typeof lesson.canDo === "string"
+        ? { en: lesson.canDo, fr: lesson.canDoFr ?? undefined }
+        : lesson.canDo;
+  const canDoText = canDoField ? localize(canDoField, uiLanguage) : "";
+  const canDoLabel = localize({ en: "You can now", fr: "Vous savez maintenant" }, uiLanguage);
+
   const handlePlayAudio = async () => {
     if (isCurrentTrack) {
       togglePlayback();
@@ -321,6 +332,27 @@ export default function LessonScreen() {
                 </View>
               ) : null}
             </View>
+
+            {canDoText ? (
+              <View
+                style={{
+                  marginBottom: 28,
+                  borderRadius: 16,
+                  padding: 18,
+                  backgroundColor: M.accentGlow,
+                  borderWidth: 1,
+                  borderColor: M.accentBorder,
+                }}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                  <IconSymbol name="checkmark.seal.fill" size={14} color={M.accent} />
+                  <Text style={{ fontSize: 10, fontWeight: "800", letterSpacing: 1.4, textTransform: "uppercase", color: M.accent }}>
+                    {canDoLabel}
+                  </Text>
+                </View>
+                <Text style={{ fontSize: 16, lineHeight: 23, fontWeight: "600", color: M.text }}>{canDoText}</Text>
+              </View>
+            ) : null}
 
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 14 }}>
               <View style={{ width: 16, height: 1, backgroundColor: `${accentColor}60` }} />
