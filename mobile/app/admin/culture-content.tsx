@@ -74,6 +74,7 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
   const [contentUrl, setContentUrl] = useState(base.contentUrl ?? "");
   const [body, setBody] = useState(base.body ?? "");
   const [showNotes, setShowNotes] = useState(base.showNotes ?? "");
+  const [storyId, setStoryId] = useState(base.storyId ?? "");
 
   const canSave = title.trim() && description.trim() && author.trim() && coverEmoji.trim();
 
@@ -93,6 +94,7 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
       contentUrl: contentUrl.trim() || undefined,
       body: body.trim() || undefined,
       showNotes: showNotes.trim() || undefined,
+      storyId: storyId.trim() || undefined,
     });
   }
 
@@ -267,6 +269,24 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
             style={inputStyle}
             className={`${inputClass} min-h-[160px]`}
           />
+        </Field>
+      )}
+
+      {(type === "podcast" || type === "film") && (
+        <Field label={t("admin.discoverStories.storyLinkLabel")}>
+          <TextInput
+            value={storyId}
+            onChangeText={setStoryId}
+            placeholder={t("admin.discoverStories.storyLinkPlaceholder")}
+            placeholderTextColor={M.muted}
+            autoCapitalize="none"
+            autoCorrect={false}
+            style={inputStyle}
+            className={inputClass}
+          />
+          <Text className="text-xs mt-1.5" style={{ color: M.sub }}>
+            {t("admin.discoverStories.storyLinkHint")}
+          </Text>
         </Field>
       )}
 

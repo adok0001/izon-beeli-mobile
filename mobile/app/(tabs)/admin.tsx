@@ -187,6 +187,13 @@ export default function AdminPanelScreen() {
               accent={getAccent("purple").solid}
             />
             <ActionRow
+              icon="film"
+              label={t("admin.discoverStories.title")}
+              detail={t("admin.discoverStories.navDetail")}
+              onPress={() => router.push("/admin/discover-stories")}
+              accent={getAccent("teal").solid}
+            />
+            <ActionRow
               icon="flame.fill"
               label={t("admin.streakTools.title")}
               detail={t("admin.streakTools.subtitle")}
