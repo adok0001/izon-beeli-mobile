@@ -13,6 +13,8 @@ import type { CourseType } from "../../types/index";
 import type { LocalizedText } from "../../types/index";
 import { ALL_LESSONS } from "./lessons/index";
 import { STUB_COURSES } from "./lessons/stub";
+// Bou Mie / "The Long Way Home" — the three structured courses' registry entries.
+import { IZON_BM_COURSE_ENTRIES } from "./podcasts/izon";
 
 export type CourseEntry = {
   id: string;
@@ -267,6 +269,9 @@ const RAW_COURSES: RawCourseEntry[] = [
 
 export const COURSES: CourseEntry[] = withDerivedCounts([
   ...RAW_COURSES,
+  // Bou Mie companion courses (beginner/intermediate/advanced). lessonsCount is
+  // derived from ALL_LESSONS, which now includes their lessons.
+  ...IZON_BM_COURSE_ENTRIES,
   // Template stub courses for all unlaunched languages.
   // Educators fill in native-language phrases through the /educator portal.
   ...STUB_COURSES,

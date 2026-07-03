@@ -14,9 +14,16 @@ export interface TranscriptSegment {
   translation?: string | LocalizedText;
   /** @deprecated Use `translation` as LocalizedText */
   translationFr?: string;
+  /** Who speaks this line (audio-drama attribution). Omit for narration. */
+  speaker?: string;
+  /** Romanized / pronunciation guidance for the learner (never spoken). */
+  roman?: string;
 }
 
 export type LessonType = "lesson" | "song";
+
+/** How to interpret a transcript. `plain` = published target-language lines. */
+export type TranscriptType = "plain" | "helper";
 
 export interface LessonData {
   id: string;
@@ -48,5 +55,9 @@ export interface LessonData {
   sceneTitle?: string;
   /** Sort order of this scene within its course (lower = first) */
   sceneOrder?: number;
+  /** How to interpret `transcript`. Defaults to "plain". */
+  transcriptType?: TranscriptType;
+  /** Honest real-world competence statement ("You can now …"). */
+  canDo?: string | LocalizedText;
   transcript: TranscriptSegment[];
 }

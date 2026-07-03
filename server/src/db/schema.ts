@@ -363,6 +363,12 @@ export const lessons = pgTable(
     scene: varchar("scene", { length: 64 }),
     sceneTitle: varchar("scene_title", { length: 128 }),
     sceneOrder: integer("scene_order"),
+    // "plain" (published, target-language transcript) | "helper" (includes production cues).
+    // null is treated as "plain" by the app.
+    transcriptType: varchar("transcript_type", { length: 16 }),
+    // Honest real-world competence statement shown on completion ("You can now …").
+    canDo: text("can_do"),
+    canDoFr: text("can_do_fr"),
   },
   (table) => [index("lessons_course_id_idx").on(table.courseId)]
 );
@@ -378,6 +384,10 @@ export const transcriptSegments = pgTable(
     translation: text("translation"),
     translationFr: text("translation_fr"),
     order: integer("order").default(0).notNull(),
+    // Who speaks this line (audio-drama attribution). null = unattributed / narration.
+    speaker: varchar("speaker", { length: 64 }),
+    // Romanized / pronunciation guidance for the learner (never spoken).
+    roman: text("roman"),
   },
   (table) => [index("transcript_segments_lesson_id_idx").on(table.lessonId)]
 );

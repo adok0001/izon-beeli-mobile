@@ -46,10 +46,15 @@ import { WOLOF_SONGS } from "./wolof-songs";
 import { YORUBA_LESSONS } from "./yoruba";
 import { YORUBA_SONGS } from "./yoruba-songs";
 import { STUB_LESSONS } from "./stub";
+// Bou Mie / "The Long Way Home" media package — podcast episodes (down-converted
+// to LessonData) + the three structured courses' lessons. All isActive:false.
+import { IZON_PODCAST_LESSONS, IZON_BM_COURSE_LESSONS } from "../podcasts/izon";
 
 export type { LessonData, LessonType, TranscriptSegment } from "./types";
 
 export const ALL_LESSONS: LessonData[] = [
+  ...IZON_PODCAST_LESSONS,
+  ...IZON_BM_COURSE_LESSONS,
   ...IZON_FIRST_WORDS_LESSONS,
   ...IZON_SOUND_SCRIPT_LESSONS,
   ...IZON_NUMBERS_TRADE_LESSONS,

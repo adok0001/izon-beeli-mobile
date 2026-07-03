@@ -5,10 +5,13 @@ import {
   courses,
   culturalContent,
   culturalKeyTerms,
+  cultureItems,
   dictionaryEntries,
   lessons,
   proverbs,
   sentenceTemplates,
+  storyArcs,
+  storyChapters,
   transcriptSegments,
 } from "../db/schema.js";
 
@@ -36,6 +39,18 @@ import { YORUBA_DICTIONARY } from "../../../mobile/lib/data/yoruba.js";
 // Courses
 // ---------------------------------------------------------------------------
 import { COURSES } from "../../../mobile/lib/data/courses.js";
+
+// ---------------------------------------------------------------------------
+// Bou Mie media package — story arcs (podcast season + 3 courses) and the
+// Discover culture items (3 films + the podcast season). Podcast episode
+// lessons and course lessons ride in via ALL_LESSONS / COURSES above.
+// ---------------------------------------------------------------------------
+import {
+  IZON_PODCAST_STORY,
+  IZON_BM_COURSE_STORIES,
+  IZON_FILM_DISCOVER_ITEMS,
+  buildIzonPodcastDiscoverItem,
+} from "../../../mobile/lib/data/podcasts/izon/index.js";
 
 // ---------------------------------------------------------------------------
 // Lessons
@@ -196,6 +211,10 @@ async function syncLessons() {
     const description = resolveText(lessonData.description as any, "en") ?? "";
     const descriptionFr = resolveText(lessonData.description as any, "fr") ?? lessonData.descriptionFr ?? null;
 
+    const transcriptType = (lessonData as any).transcriptType ?? null;
+    const canDo = resolveText((lessonData as any).canDo, "en");
+    const canDoFr = resolveText((lessonData as any).canDo, "fr") ?? (lessonData as any).canDoFr ?? null;
+
     await db.insert(lessons).values({
       ...lessonData,
       type: lessonData.type ?? "lesson",
@@ -209,6 +228,9 @@ async function syncLessons() {
       scene: (lessonData as any).scene ?? null,
       sceneTitle: (lessonData as any).sceneTitle ?? null,
       sceneOrder: (lessonData as any).sceneOrder ?? null,
+      transcriptType,
+      canDo,
+      canDoFr,
     }).onConflictDoUpdate({
       target: lessons.id,
       set: {
@@ -225,6 +247,9 @@ async function syncLessons() {
         scene:         (lessonData as any).scene ?? null,
         sceneTitle:    (lessonData as any).sceneTitle ?? null,
         sceneOrder:    (lessonData as any).sceneOrder ?? null,
+        transcriptType,
+        canDo,
+        canDoFr,
         // Preserve educator-uploaded audio — never overwrite with placeholder from source file
         audioUrl: sql`COALESCE(lessons.audio_url, excluded.audio_url)`,
       },
@@ -240,6 +265,8 @@ async function syncLessons() {
         text: seg.text,
         translation: resolveText(seg.translation as any, "en"),
         translationFr: resolveText(seg.translation as any, "fr") ?? (seg as any).translationFr ?? null,
+        speaker: (seg as any).speaker ?? null,
+        roman: (seg as any).roman ?? null,
         order: idx,
       }));
       for (let i = 0; i < segments.length; i += 100) {
@@ -460,17 +487,122 @@ async function syncCourses() {
   console.log(`    ${COURSES.length} courses synced.`);
 }
 
+async function syncStories() {
+  console.log("  Syncing story arcs...");
+
+  const arcs = [IZON_PODCAST_STORY, ...IZON_BM_COURSE_STORIES];
+  let arcCount = 0;
+  let chapterCount = 0;
+
+  for (const arc of arcs) {
+    await db.insert(storyArcs).values({
+      id: arc.id,
+      courseId: arc.courseId,
+      title: arc.title,
+      description: arc.description,
+    }).onConflictDoUpdate({
+      target: storyArcs.id,
+      set: {
+        courseId:    sql`excluded.course_id`,
+        title:       sql`excluded.title`,
+        description: sql`excluded.description`,
+        updatedAt:   sql`now()`,
+      },
+    });
+
+    // Chapters have stable external ids — delete per arc and re-insert.
+    await db.delete(storyChapters).where(eq(storyChapters.storyArcId, arc.id));
+    if (arc.chapters.length > 0) {
+      await db.insert(storyChapters).values(
+        arc.chapters.map((ch) => ({
+          id: ch.id,
+          storyArcId: arc.id,
+          lessonId: ch.lessonId,
+          title: ch.title,
+          narrativeIntro: ch.narrativeIntro,
+          narrativeOutro: ch.narrativeOutro,
+          order: ch.order,
+        })),
+      );
+      chapterCount += arc.chapters.length;
+    }
+    arcCount++;
+  }
+
+  console.log(`    ${arcCount} story arcs, ${chapterCount} chapters synced.`);
+}
+
+async function syncCultureItems() {
+  console.log("  Syncing culture items (Discover)...");
+
+  // The podcast season card + the three films.
+  const items = [
+    buildIzonPodcastDiscoverItem("2026-07-01T00:00:00Z"),
+    ...IZON_FILM_DISCOVER_ITEMS,
+  ];
+
+  const rows = items.map((it) => ({
+    id: it.id,
+    type: it.type,
+    title: it.title,
+    description: it.description,
+    author: it.author,
+    publishedAt: new Date(it.publishedAt),
+    duration: it.duration,
+    coverGradientFrom: it.coverGradient[0],
+    coverGradientTo: it.coverGradient[1],
+    coverEmoji: it.coverEmoji,
+    // NOTE: culture_items has no is_active gate. These pieces are unverified
+    // (podcast/films authored, not yet natively recorded), so they are seeded
+    // NOT featured to keep them out of the Discover spotlight until verified.
+    featured: false,
+    storyId: it.storyId ?? null,
+    audioUrl: typeof it.audioUrl === "string" ? it.audioUrl : null,
+    contentUrl: (it as { videoUrl?: string | null }).videoUrl ?? null,
+    body: it.body ?? null,
+    showNotes: it.showNotes ?? null,
+  }));
+
+  for (const row of rows) {
+    await db.insert(cultureItems).values(row).onConflictDoUpdate({
+      target: cultureItems.id,
+      set: {
+        type:              sql`excluded.type`,
+        title:             sql`excluded.title`,
+        description:       sql`excluded.description`,
+        author:            sql`excluded.author`,
+        publishedAt:       sql`excluded.published_at`,
+        duration:          sql`excluded.duration`,
+        coverGradientFrom: sql`excluded.cover_gradient_from`,
+        coverGradientTo:   sql`excluded.cover_gradient_to`,
+        coverEmoji:        sql`excluded.cover_emoji`,
+        featured:          sql`excluded.featured`,
+        storyId:           sql`excluded.story_id`,
+        audioUrl:          sql`excluded.audio_url`,
+        contentUrl:        sql`excluded.content_url`,
+        body:              sql`excluded.body`,
+        showNotes:         sql`excluded.show_notes`,
+        updatedAt:         sql`now()`,
+      },
+    });
+  }
+
+  console.log(`    ${rows.length} culture items synced (featured=false; no is_active gate on this table).`);
+}
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
 const UNITS: Record<string, () => Promise<void>> = {
-  courses:   syncCourses,
-  dict:      syncDict,
-  lessons:   syncLessons,
-  proverbs:  syncProverbs,
-  cultural:  syncCultural,
-  sentences: syncSentences,
+  courses:      syncCourses,
+  dict:         syncDict,
+  lessons:      syncLessons,
+  proverbs:     syncProverbs,
+  cultural:     syncCultural,
+  sentences:    syncSentences,
+  stories:      syncStories,
+  cultureItems: syncCultureItems,
 };
 
 const unit = process.argv[2] ?? "all";

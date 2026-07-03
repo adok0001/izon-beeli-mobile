@@ -85,6 +85,8 @@ lessonsRouter.get("/:id", async (c) => {
       text: s.text,
       translation: s.translation,
       translationFr: s.translationFr,
+      speaker: s.speaker,
+      roman: s.roman,
     })),
   });
 });

@@ -83,11 +83,16 @@ export interface Lesson {
   genre?: string | null;
   skills?: Skill[];
   transcript?: TranscriptSegment[];
+  /** How to interpret `transcript`. Defaults to "plain". */
+  transcriptType?: "plain" | "helper" | null;
   scene?: string;
   sceneTitle?: string;
   sceneOrder?: number;
   /** What the learner will be able to do after this lesson. */
   objectives?: (string | LocalizedText)[];
+  /** Honest real-world competence statement ("You can now …"). */
+  canDo?: string | LocalizedText | null;
+  canDoFr?: string | null;
   /** Key vocabulary with optional tone and gloss. */
   vocab?: LessonWord[];
 }
@@ -101,6 +106,10 @@ export interface TranscriptSegment {
   /** @deprecated Use `translation` as LocalizedText */
   translationFr?: string | null;
   colorHex?: string | null;
+  /** Who speaks this line (audio-drama attribution). */
+  speaker?: string | null;
+  /** Romanized / pronunciation guidance for the learner (never spoken). */
+  roman?: string | null;
 }
 
 export interface JournalEntry {
