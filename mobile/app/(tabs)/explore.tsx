@@ -1,6 +1,7 @@
+import { DISCOVER_TYPE_CONFIG } from "@/components/discover-card";
+import { DiscoverRail } from "@/components/explore/discover-rail";
 import { FeaturedHero } from "@/components/explore/featured-hero";
 import { RoomTile } from "@/components/explore/room-tile";
-import { DISCOVER_TYPE_CONFIG } from "@/components/discover-card";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ExhibitDivider } from "@/components/ui/section-header";
 import { useDiscover } from "@/lib/hooks/use-discover";
@@ -22,6 +23,14 @@ export default function LibraryScreen() {
   const { all } = useDiscover("all");
 
   const featuredItem = all.find((i) => i.featured) ?? all[0] ?? null;
+  const openStory = (storyId: string) => router.push(`/discover-story/${storyId}` as never);
+
+  // Editorial rails. A podcast season (has storyId) reads as a "series";
+  // podcasts without one are standalone episodes to "listen" to.
+  const series = all.filter((i) => i.type === "podcast" && i.storyId);
+  const episodes = all.filter((i) => i.type === "podcast" && !i.storyId);
+  const films = all.filter((i) => i.type === "film");
+  const blogs = all.filter((i) => i.type === "blog");
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
@@ -38,18 +47,24 @@ export default function LibraryScreen() {
 
       <ScrollView
         style={{ flex: 1, backgroundColor: M.bg }}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40, paddingTop: 12 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40, paddingTop: 14 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Featured hero */}
+        {/* Spotlight */}
         {featuredItem ? (
-          <View style={{ marginBottom: 20 }}>
+          <View style={{ marginBottom: 24 }}>
             <FeaturedHero item={featuredItem} />
           </View>
         ) : null}
 
-        {/* Room tiles */}
-        <ExhibitDivider label={tr("explore.title").toUpperCase()} style={{ marginBottom: 12 }} />
+        {/* Editorial rails */}
+        <DiscoverRail title="Series" items={series} onSeeAll={() => router.push("/explore/podcast" as never)} onStoryPress={openStory} />
+        <DiscoverRail title="Films" items={films} onSeeAll={() => router.push("/explore/film" as never)} onStoryPress={openStory} />
+        <DiscoverRail title="Listen" items={episodes} onSeeAll={() => router.push("/explore/podcast" as never)} onStoryPress={openStory} />
+        <DiscoverRail title="Read" items={blogs} onSeeAll={() => router.push("/explore/blog" as never)} onStoryPress={openStory} />
+
+        {/* Browse the library — demoted room tiles */}
+        <ExhibitDivider label={tr("explore.title").toUpperCase()} style={{ marginBottom: 12, marginTop: 4 }} />
         <View style={{ gap: 12 }}>
           {ROOMS.map((type) => {
             const cfg = DISCOVER_TYPE_CONFIG[type];
