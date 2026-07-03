@@ -117,7 +117,12 @@ export function buildIzonPodcastDiscoverItem(publishedAt: string) {
 // ── Films (mini-series) — app-shaped views ──────────────────────────────────
 export { IZON_FILMS } from "./films";
 /** Discover cards (type "film"); integrator supplies publishedAt or uses each film's. */
-export const IZON_FILM_DISCOVER_ITEMS = IZON_FILMS.map((f) => toFilmDiscoverItem(f));
+const IZON_CAST_NAMES: Record<string, string> = Object.fromEntries(
+  IZON_CAST.map((c) => [c.id, c.name]),
+);
+export const IZON_FILM_DISCOVER_ITEMS = IZON_FILMS.map((f) =>
+  toFilmDiscoverItem(f, undefined, IZON_CAST_NAMES),
+);
 
 // ── Courses (the podcast-world companion) — app-shaped views ─────────────────
 export {

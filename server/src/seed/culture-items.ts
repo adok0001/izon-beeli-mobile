@@ -54,7 +54,7 @@ Recommended for: diaspora learners, anyone who has experienced heritage language
     coverGradientTo: "#0D0F1A",
     coverEmoji: "✍️",
     featured: true,
-    storyId: "naming-ceremony",
+    storyId: "writing-systems",
     audioUrl: null,
     contentUrl: "https://beeli.app/film/writing-systems",
     body: null, showNotes: null,

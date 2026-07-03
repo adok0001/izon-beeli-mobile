@@ -102,6 +102,8 @@ export default function DiscoverContentScreen() {
       ? item.body
       : item.type === "podcast"
       ? item.showNotes
+      : item.type === "film"
+      ? item.body // director's note + working transcript
       : null;
 
   function handleAudio() {
@@ -285,18 +287,14 @@ export default function DiscoverContentScreen() {
         <View style={{ paddingHorizontal: 20, paddingTop: 20 }}>
           {bodyText ? (
             <Paragraphs text={bodyText} M={M} />
-          ) : item.type === "film" ? (
-            <>
-              <Text style={{ fontSize: 15, lineHeight: 24, color: M.text, marginBottom: 16 }}>
-                {item.description}
-              </Text>
-              <Text style={{ fontSize: 14, color: M.muted, fontStyle: "italic" }}>
-                Full film coming soon.
-              </Text>
-            </>
           ) : (
             <Text style={{ fontSize: 14, color: M.muted }}>{item.description}</Text>
           )}
+          {item.type === "film" ? (
+            <Text style={{ fontSize: 13, color: M.muted, fontStyle: "italic", marginTop: 8 }}>
+              The full film is in production — the working transcript is shown above.
+            </Text>
+          ) : null}
         </View>
 
         {/* Footer */}

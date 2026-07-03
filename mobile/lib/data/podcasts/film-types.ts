@@ -108,13 +108,72 @@ export function toFilmTranscript(film: FilmItem): {
   }));
 }
 
+/** Human-readable speaker label from a cast id, when no name map is supplied. */
+function prettySpeaker(id: string | undefined, names?: Record<string, string>): string {
+  if (!id) return "";
+  if (names && names[id]) return names[id];
+  const tail = id.replace(/^.*cast-/, "");
+  return tail.charAt(0).toUpperCase() + tail.slice(1);
+}
+
+/**
+ * Render a film's actual CONTENT — the director's note plus the working
+ * script/transcript — as a single readable string for the app's film detail
+ * screen (`DiscoverItem.body`). `culture_items` has no structured transcript
+ * column, so the readable transcript lives here in `body`. Target-language
+ * lines are shown with pronunciation and gloss; heritage placeholders are
+ * surfaced honestly rather than as raw brackets.
+ *
+ * Blocks are separated by blank lines so the screen's paragraph renderer
+ * spaces them; each spoken beat keeps its Izon / roman / gloss on their own
+ * lines.
+ */
+export function renderFilmContent(
+  film: FilmItem,
+  opts: { speakerNames?: Record<string, string>; lang?: "en" | "fr" } = {},
+): string {
+  const lang = opts.lang ?? "en";
+  const intro = film.body[lang] ?? film.body.en ?? "";
+  const blocks: string[] = [];
+
+  for (const l of film.script) {
+    if (l.kind === "chapter") {
+      blocks.push(`— ${l.text.toUpperCase()} —`);
+      continue;
+    }
+    if (!spoken(l)) continue;
+
+    const who = prettySpeaker(l.speaker, opts.speakerNames);
+    const prefix = who ? `${who} — ` : "";
+    const gloss = l.translation?.[lang] ?? l.translation?.en ?? "";
+
+    if (/\[\[/.test(l.text)) {
+      // Heritage / not-yet-attested passage — show the gloss, never the brackets.
+      const note = "[Heritage passage — to be recorded with a community keeper]";
+      blocks.push(gloss ? `${prefix}${note}\n${gloss}` : `${prefix}${note}`);
+      continue;
+    }
+
+    const lines = [`${prefix}${l.text}`];
+    if (l.roman) lines.push(l.roman);
+    if (gloss) lines.push(`“${gloss}”`);
+    blocks.push(lines.join("\n"));
+  }
+
+  const transcript = blocks.join("\n\n");
+  return intro ? `${intro}\n\n———\n\n${transcript}` : transcript;
+}
+
 /**
  * Down-convert to the app's `DiscoverItem`. Return type is the real app type,
- * so this fails to compile if the shape ever drifts.
+ * so this fails to compile if the shape ever drifts. `body` carries the full
+ * readable content (director's note + working transcript); pass `speakerNames`
+ * to render cast ids as display names.
  */
 export function toFilmDiscoverItem(
   film: FilmItem,
   publishedAt: string = film.publishedAt,
+  speakerNames?: Record<string, string>,
 ): DiscoverItem {
   return {
     id: film.id,
@@ -130,7 +189,7 @@ export function toFilmDiscoverItem(
     audioUrl: film.audioUrl ?? undefined,
     videoUrl: film.videoUrl ?? undefined,
     storyId: film.storyId,
-    body: film.body.en,
+    body: renderFilmContent(film, { speakerNames, lang: "en" }),
     showNotes: film.showNotes.en,
   };
 }
