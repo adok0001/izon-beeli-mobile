@@ -8,14 +8,24 @@ import {
   type LayoutChangeEvent,
 } from "react-native";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { WordLookupSheet } from "@/components/audio/word-lookup-sheet";
 import { MUSEUM, useMuseumTheme } from "@/lib/use-museum-theme";
 import { getAccent } from "@/constants/accent-colors";
 import { fonts } from "@/constants/typography";
 import { localize } from "@/lib/localize";
 import { useAudioStore } from "@/store/audio-store";
+import { useLanguageStore } from "@/store/language-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { hapticTap } from "@/lib/haptics";
 import type { TranscriptSegment } from "@/types";
+
+/** Turn a cast id ("izon-cast-mama-seibi" | "SPEAKER_A") into a display name. */
+function speakerLabel(id?: string | null): string | null {
+  if (!id) return null;
+  const name = id.replace(/^[a-z]{2,3}-cast-/i, "").replace(/[_-]/g, " ").trim();
+  if (!name) return null;
+  return name.replace(/\b\w/g, (ch) => ch.toUpperCase());
+}
 
 interface Props {
   segments: TranscriptSegment[];
@@ -36,10 +46,12 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
   const M = useMuseumTheme();
   const { progress, seekTo, currentTrackId, shadowSegment, setShadowLoop } = useAudioStore();
   const { uiLanguage } = useUiLanguageStore();
+  const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
   const amber = getAccent("amber").solid;
   const scrollRef = useRef<ScrollView>(null);
   const lineY = useRef<Record<number, number>>({});
   const [autoFollow, setAutoFollow] = useState(true);
+  const [lookupWord, setLookupWord] = useState<string | null>(null);
 
   const activeIndex = useMemo(
     () => segments.findIndex((s) => progress >= s.startTime && progress < s.endTime),
@@ -140,10 +152,19 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
           const translation = localize(seg.translation, uiLanguage);
           const tokens = seg.text.split(/(\s+)/);
           let wordOrdinal = -1;
+          // Show a speaker label when it changes from the previous line (groups
+          // consecutive same-speaker lines into a readable audio-drama script).
+          const speaker = speakerLabel(seg.speaker);
+          const showSpeaker = !!speaker && seg.speaker !== segments[index - 1]?.speaker;
 
           return (
+            <View key={seg.id}>
+              {showSpeaker ? (
+                <Text style={{ marginTop: index === 0 ? 0 : 6, marginBottom: 3, marginLeft: 2, fontSize: 11, fontWeight: "800", letterSpacing: 0.5, textTransform: "uppercase", color: M.accent }}>
+                  {speaker}
+                </Text>
+              ) : null}
             <Pressable
-              key={seg.id}
               onPress={() => handleLinePress(seg)}
               onLayout={(e: LayoutChangeEvent) => {
                 lineY.current[index] = e.nativeEvent.layout.y;
@@ -175,6 +196,8 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
                   return (
                     <Text
                       key={i}
+                      onLongPress={() => { hapticTap(); setLookupWord(tok); }}
+                      suppressHighlighting
                       style={{
                         color: isWordActive ? M.accent : undefined,
                         fontWeight: isWordActive ? "800" : isActive ? "600" : "400",
@@ -185,6 +208,11 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
                   );
                 })}
               </Text>
+              {seg.roman ? (
+                <Text style={{ marginTop: 3, fontSize: 12, fontStyle: "italic", color: isActive ? M.sub : M.muted }}>
+                  {seg.roman}
+                </Text>
+              ) : null}
               {translation ? (
                 <Text style={{ marginTop: 4, fontSize: 13, color: isActive ? M.accent : M.muted }}>
                   {translation}
@@ -203,10 +231,21 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
                 </Pressable>
               ) : null}
             </Pressable>
+            </View>
           );
         })}
         <View style={{ height: 12 }} />
       </ScrollView>
+
+      <Text style={{ marginTop: 6, fontSize: 11, color: M.muted, textAlign: "center" }}>
+        Hold a word to look it up
+      </Text>
+
+      <WordLookupSheet
+        word={lookupWord}
+        languageId={selectedLanguageId}
+        onClose={() => setLookupWord(null)}
+      />
     </View>
   );
 }
