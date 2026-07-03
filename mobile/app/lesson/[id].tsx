@@ -1,6 +1,7 @@
 import { AudioPlayer } from "@/components/audio/audio-player";
 import { InteractiveTranscript } from "@/components/audio/interactive-transcript";
 import { LevelUpModal } from "@/components/level-up-modal";
+import { LessonCultureNote } from "@/components/lesson/lesson-culture-note";
 import { LessonHero } from "@/components/lesson/lesson-hero";
 import { LessonMetaPills } from "@/components/lesson/lesson-meta-pills";
 import { LessonListen } from "@/components/lesson/lesson-listen";
@@ -491,6 +492,11 @@ export default function LessonScreen() {
             {lesson.vocab?.length ? (
               <LessonWords vocab={lesson.vocab} uiLanguage={uiLanguage} accentColor={accentColor} />
             ) : null}
+
+            {/* Inline cultural beat — language and culture together */}
+            <View style={{ paddingHorizontal: 22 }}>
+              <LessonCultureNote languageId={selectedLanguageId} />
+            </View>
 
             {/* Transcript fallback — only for transcript-only lessons with no audio
                 (lessons with audio render the synced LessonListen block above). */}

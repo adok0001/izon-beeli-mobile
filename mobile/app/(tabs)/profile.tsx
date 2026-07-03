@@ -1,4 +1,5 @@
 import { CanDoResume } from "@/components/profile/can-do-resume";
+import { SkillsPracticed } from "@/components/profile/skills-practiced";
 import { FeedbackModal } from "@/components/feedback-modal";
 import { SignInPrompt, useRequireAuth } from "@/components/sign-in-prompt";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -376,6 +377,9 @@ export default function ProfileScreen() {
 
         {/* What you can do — honest competence résumé */}
         <CanDoResume />
+
+        {/* Skills practiced — the six-competency framework, surfaced */}
+        <SkillsPracticed />
 
         {/* Plus CTA */}
         {showPlusCta ? (
