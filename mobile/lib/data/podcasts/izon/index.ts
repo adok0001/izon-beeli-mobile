@@ -84,27 +84,15 @@ export const IZON_PODCAST_SERIES: PodcastSeries = {
 };
 
 // ── Go-live curation ─────────────────────────────────────────────────────────
-// The user's call: ship the Bou Mie content that has real, authored Izon text.
-// A handful of episodes/lessons still carry [[bracketed]] heritage placeholders
-// (the Woyengi creation narrative, the festival libation, and the per-episode
-// "Story" beats that must be composed & recorded with a native keeper). Those
-// stay gated so no placeholder text ever reaches a learner; everything else goes
-// live. The authored source keeps its own isActive:false verification ledger
-// (so validatePodcast stays green); activation is decided here, at the app
-// boundary, and is trivially reversed by moving an id out of a HELD set once its
-// content is recorded and verified.
-const HELD_PODCAST_IDS = new Set<string>([
-  "izon-pod-b2", // Ep2 Inside the House — Story beat is an [[IZON NARRATION]] placeholder
-  "izon-pod-b3", // Ep3 Market Day — Story beat is an [[IZON STORY]] placeholder
-  "izon-pod-i2", // Ep5 The Masquerade — Owuamapu Story is a heritage placeholder
-  "izon-pod-i3", // Ep6 A Union — marriage-custom Story is a placeholder
-  "izon-pod-a2", // Ep8 The Story of Woyengi — creation narrative placeholders
-  "izon-pod-a3", // Ep9 Pouring the Water — libation-formula placeholders
-]);
-const HELD_COURSE_LESSON_IDS = new Set<string>([
-  "izon-bmc-a2", // Woyengi story lesson — the full creation narrative is a placeholder
-  "izon-bmc-a3", // Libation lesson — the libation formula is a placeholder
-]);
+// The owner's explicit call: ALL Bou Mie content goes live — no exceptions. The
+// HELD sets are intentionally empty, so every podcast episode and course lesson
+// down-converts with isActive:true, including the ones whose Woyengi creation
+// narrative, festival libation, and per-episode "Story" beats are still
+// [[bracketed]] placeholders. Those now ship as-authored per the owner's
+// decision. (To re-gate any item pending a native keeper's recording, add its
+// id back to the relevant set — the mechanism is preserved.)
+const HELD_PODCAST_IDS = new Set<string>([]);
+const HELD_COURSE_LESSON_IDS = new Set<string>([]);
 const withGoLive = (l: LessonData, held: Set<string>): LessonData => ({
   ...l,
   isActive: !held.has(l.id),
