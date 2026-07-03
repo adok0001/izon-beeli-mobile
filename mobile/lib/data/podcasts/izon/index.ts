@@ -37,9 +37,10 @@ import { IZON_FILMS } from "./films";
 import {
   IZON_BM_COURSES,
   IZON_BM_COURSE_ENTRIES,
-  IZON_BM_COURSE_LESSONS,
+  IZON_BM_COURSE_LESSONS as IZON_BM_COURSE_LESSONS_RAW,
   IZON_BM_COURSE_STORIES,
 } from "./courses";
+import type { LessonData } from "../../lessons/types";
 
 export const IZON_PODCAST_EPISODES: PodcastEpisode[] = [
   ...IZON_PODCAST_BEGINNER,
@@ -82,8 +83,40 @@ export const IZON_PODCAST_SERIES: PodcastSeries = {
   coverGradient: ["#0E3A46", "#C4862A"], // creek teal → bronze gold (Museum accent)
 };
 
+// ── Go-live curation ─────────────────────────────────────────────────────────
+// The user's call: ship the Bou Mie content that has real, authored Izon text.
+// A handful of episodes/lessons still carry [[bracketed]] heritage placeholders
+// (the Woyengi creation narrative, the festival libation, and the per-episode
+// "Story" beats that must be composed & recorded with a native keeper). Those
+// stay gated so no placeholder text ever reaches a learner; everything else goes
+// live. The authored source keeps its own isActive:false verification ledger
+// (so validatePodcast stays green); activation is decided here, at the app
+// boundary, and is trivially reversed by moving an id out of a HELD set once its
+// content is recorded and verified.
+const HELD_PODCAST_IDS = new Set<string>([
+  "izon-pod-b2", // Ep2 Inside the House — Story beat is an [[IZON NARRATION]] placeholder
+  "izon-pod-b3", // Ep3 Market Day — Story beat is an [[IZON STORY]] placeholder
+  "izon-pod-i2", // Ep5 The Masquerade — Owuamapu Story is a heritage placeholder
+  "izon-pod-i3", // Ep6 A Union — marriage-custom Story is a placeholder
+  "izon-pod-a2", // Ep8 The Story of Woyengi — creation narrative placeholders
+  "izon-pod-a3", // Ep9 Pouring the Water — libation-formula placeholders
+]);
+const HELD_COURSE_LESSON_IDS = new Set<string>([
+  "izon-bmc-a2", // Woyengi story lesson — the full creation narrative is a placeholder
+  "izon-bmc-a3", // Libation lesson — the libation formula is a placeholder
+]);
+const withGoLive = (l: LessonData, held: Set<string>): LessonData => ({
+  ...l,
+  isActive: !held.has(l.id),
+});
+
 // ── App-shaped views (adapters). Import these when wiring into the app. ──
-export const IZON_PODCAST_LESSONS = IZON_PODCAST_EPISODES.map(toLessonData);
+export const IZON_PODCAST_LESSONS = IZON_PODCAST_EPISODES.map(toLessonData).map(
+  (l) => withGoLive(l, HELD_PODCAST_IDS),
+);
+export const IZON_BM_COURSE_LESSONS = IZON_BM_COURSE_LESSONS_RAW.map((l) =>
+  withGoLive(l, HELD_COURSE_LESSON_IDS),
+);
 export const IZON_PODCAST_STORY = toStoryArc(
   IZON_PODCAST_SERIES,
   IZON_PODCAST_EPISODES,
@@ -102,9 +135,9 @@ export const IZON_FILM_DISCOVER_ITEMS = IZON_FILMS.map((f) => toFilmDiscoverItem
 export {
   IZON_BM_COURSES,
   IZON_BM_COURSE_ENTRIES,
-  IZON_BM_COURSE_LESSONS,
   IZON_BM_COURSE_STORIES,
 } from "./courses";
+// IZON_BM_COURSE_LESSONS is re-exported above with go-live curation applied.
 
 // ── Content validation. Call in a test; returns issues (empty = clean). ──
 export const IZON_PODCAST_ISSUES = validatePodcast(

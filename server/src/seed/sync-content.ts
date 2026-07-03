@@ -552,10 +552,12 @@ async function syncCultureItems() {
     coverGradientFrom: it.coverGradient[0],
     coverGradientTo: it.coverGradient[1],
     coverEmoji: it.coverEmoji,
-    // NOTE: culture_items has no is_active gate. These pieces are unverified
-    // (podcast/films authored, not yet natively recorded), so they are seeded
-    // NOT featured to keep them out of the Discover spotlight until verified.
-    featured: false,
+    // culture_items has no is_active gate; each card carries its own authored
+    // `featured` flag. The Bou Mie content is now live per the owner's call, so
+    // the spotlight follows the author's intent: the podcast season and the
+    // fully-authored film are featured; the two heritage films that still await
+    // a keeper's recording stay present (in the Films rail) but not spotlighted.
+    featured: (it as { featured?: boolean }).featured ?? false,
     storyId: it.storyId ?? null,
     audioUrl: typeof it.audioUrl === "string" ? it.audioUrl : null,
     contentUrl: (it as { videoUrl?: string | null }).videoUrl ?? null,
