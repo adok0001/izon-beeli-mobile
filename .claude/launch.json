@@ -37,6 +37,13 @@
       "port": 3003,
       "autoPort": true,
       "cwd": "apps/vendors_portal"
+    },
+    {
+      "name": "beeli-mobile-web",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "start", "--web", "--port", "8088"],
+      "port": 8088,
+      "cwd": "mobile"
     }
   ]
 }
