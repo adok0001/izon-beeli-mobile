@@ -72,7 +72,7 @@ export default function LessonScreen() {
 
   const { t } = useTranslation();
   const { toast, success: toastSuccess, dismiss: dismissToast } = useToast();
-  const { data: nextLessonData } = useNextLesson(selectedLanguageId);
+  const { data: nextLessonData } = useNextLesson(selectedLanguageId, lesson?.id);
   const showTour = useTourStore((s) => s.showTour);
   const hasSeen = useTourStore((s) => s.hasSeen);
   const reviewPrompt = useReviewPrompt();

@@ -254,9 +254,14 @@ progressRouter.post("/freeze", async (c) => {
 });
 
 // GET /api/progress/next-lesson - next uncompleted lesson in path order
+// If afterLessonId is given, returns the lesson immediately following it in
+// path order (unit-aware) rather than the first uncompleted lesson overall —
+// this is what the post-lesson "Next Lesson" button uses so it always
+// advances forward instead of jumping back to an earlier skipped lesson.
 progressRouter.get("/next-lesson", async (c) => {
   const userId = c.get("userId");
   const queryLangId = c.req.query("languageId");
+  const afterLessonId = c.req.query("afterLessonId");
 
   const [user] = await db
     .select({ selectedLanguageId: users.selectedLanguageId })
@@ -309,17 +314,19 @@ progressRouter.get("/next-lesson", async (c) => {
   );
 
   const completedSet = new Set(completedRows.map((r) => r.lessonId));
-
-  // Single pass: count completed + find first uncompleted
   const total = allLessons.length;
-  let completed = 0;
+  const completed = allLessons.filter((l) => completedSet.has(l.id)).length;
+
   let next: (typeof allLessons)[0] | undefined;
-  for (const lesson of allLessons) {
-    if (completedSet.has(lesson.id)) {
-      completed++;
-    } else if (!next) {
-      next = lesson;
-    }
+  const afterIndex = afterLessonId ? allLessons.findIndex((l) => l.id === afterLessonId) : -1;
+  if (afterIndex !== -1) {
+    // Sequential: the lesson right after the one just completed, unit-aware
+    // since allLessons is sorted by course order then lesson order.
+    next = allLessons[afterIndex + 1];
+  } else {
+    // No anchor lesson (e.g. dashboard "up next" card) — resume at the
+    // first uncompleted lesson in path order.
+    next = allLessons.find((l) => !completedSet.has(l.id));
   }
 
   if (!next) return c.json({ overallProgress: { completed, total } });
