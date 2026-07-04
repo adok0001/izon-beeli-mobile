@@ -580,7 +580,7 @@ export default function LessonScreen() {
                 with no lesson-specific notes (gallery fallback) or no transcript. */}
             {!culturalNotesRenderInline ? (
               <View style={{ paddingHorizontal: 22 }}>
-                <LessonCultureNote languageId={selectedLanguageId} notes={lessonCulturalNotes} />
+                <LessonCultureNote languageId={selectedLanguageId} notes={lessonCulturalNotes} lessonId={lesson.id} />
               </View>
             ) : null}
 

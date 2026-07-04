@@ -126,7 +126,9 @@ export function CulturalNoteCards({ languageId, notes }: { languageId: string; n
  *
  * Prefers notes authored for THIS lesson (`notes`, from the podcast package's
  * per-episode `culturalNotes`) so the right beat lands on the right lesson,
- * and only then falls back to fetching the language's featured gallery item.
+ * and only then falls back to a gallery item. The fallback is keyed to
+ * `lessonId` so different lessons surface different cultural items instead of
+ * every lesson repeating the language's one featured entry.
  * Renders nothing when neither is available. Use `CulturalNoteCards` directly
  * when notes are already known to exist (e.g. anchored inline in a
  * transcript) to skip this fallback's data fetch.
@@ -134,18 +136,33 @@ export function CulturalNoteCards({ languageId, notes }: { languageId: string; n
 export function LessonCultureNote({
   languageId,
   notes,
+  lessonId,
 }: {
   languageId: string;
   notes?: CulturalNote[];
+  lessonId?: string;
 }) {
   if (notes && notes.length > 0) {
     return <CulturalNoteCards languageId={languageId} notes={notes} />;
   }
-  return <CulturalGalleryFallback languageId={languageId} />;
+  return <CulturalGalleryFallback languageId={languageId} lessonId={lessonId} />;
 }
 
-/** The language's featured gallery item, shown when a lesson has no notes of its own. */
-function CulturalGalleryFallback({ languageId }: { languageId: string }) {
+/** Stable non-negative hash of a string, for deterministic per-lesson selection. */
+function hashString(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash * 31 + value.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
+/**
+ * A gallery item shown when a lesson has no notes of its own. Deterministically
+ * keyed to the lesson so each lesson gets a different (but stable) item, rather
+ * than every lesson repeating the language's single featured entry.
+ */
+function CulturalGalleryFallback({ languageId, lessonId }: { languageId: string; lessonId?: string }) {
   const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
@@ -153,7 +170,9 @@ function CulturalGalleryFallback({ languageId }: { languageId: string }) {
   const { data } = useCultural(languageId);
 
   if (!data || data.length === 0) return null;
-  const item = data.find((c) => c.featured) ?? data[0];
+  const item = lessonId
+    ? data[hashString(lessonId) % data.length]
+    : data.find((c) => c.featured) ?? data[0];
   const title = localize(item.title, uiLanguage);
   const description = localize(item.description, uiLanguage);
   const category = item.category.replace(/_/g, " ");
