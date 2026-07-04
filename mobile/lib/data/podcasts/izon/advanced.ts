@@ -33,6 +33,10 @@ const A1: PodcastEpisode = {
     en: "Two neighbours bring a quarrel over a canoe to Pa Boma's assembly. No one shouts; the elder settles it with a single proverb. Follow an argument, hear a proverb do real work, and learn the language of judgement.",
     fr: "Deux voisins portent une querelle de pirogue devant l'assemblée de Pa Boma. Personne ne crie ; l'aîné tranche d'un seul proverbe. Suivez un différend et voyez un proverbe à l'œuvre.",
   },
+  canDo: {
+    en: "Follow an argument and recognise a proverb settling a dispute, in Izon.",
+    fr: "Suivre un différend et reconnaître un proverbe qui règle une dispute, en izon.",
+  },
   logline: {
     en: "In the assembly, the sharpest weapon is a proverb — and the elder never misses.",
     fr: "À l'assemblée, l'arme la plus tranchante est un proverbe — et l'aîné ne rate jamais.",
@@ -151,6 +155,10 @@ const A2: PodcastEpisode = {
   description: {
     en: "By lamplight Ebiere tells Tari the Izon creation story: Woyengi, the great mother, who moulded humankind from earth and let each choose their own destiny. Follow an extended traditional narrative and retell it in your own words.",
     fr: "À la lampe, Ebiere raconte à Tari l'histoire de la création izon : Woyengi, la grande mère, qui façonna l'humanité et laissa chacun choisir son destin. Suivez un récit traditionnel étendu et racontez-le.",
+  },
+  canDo: {
+    en: "Follow an extended traditional narrative in the storytelling past tense, and retell its spine, in Izon.",
+    fr: "Suivre un récit traditionnel étendu au passé narratif, et en raconter la trame, en izon.",
   },
   logline: {
     en: "Before there were people, there was the Mother, the clay, and the choosing.",
@@ -277,6 +285,10 @@ const A3: PodcastEpisode = {
   description: {
     en: "The season's festival. Pa Boma pours libation to the ancestors and the water spirits, and — for the first time — Tari stands to speak a short praise for the family. The language of blessing, thanks, and belonging, at its summit.",
     fr: "La fête de la saison. Pa Boma verse la libation aux ancêtres et aux esprits de l'eau, et — pour la première fois — Tari se lève pour dire une louange pour la famille. Le langage de la bénédiction, à son sommet.",
+  },
+  canDo: {
+    en: "Recognise the language of libation and blessing, and follow a short praise spoken for a family, in Izon.",
+    fr: "Reconnaître le langage de la libation et de la bénédiction, et suivre une courte louange dite pour une famille, en izon.",
   },
   logline: {
     en: "The long way home ends where it began — at the water. This time, Tari speaks.",

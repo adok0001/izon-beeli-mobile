@@ -1,34 +1,166 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import type { CulturalNote } from "@/lib/data/podcasts/podcast-types";
 import { useCultural } from "@/lib/hooks/use-cultural";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useRouter } from "expo-router";
-import { Pressable, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
+import { Pressable, Text, View, type StyleProp, type ViewStyle } from "react-native";
+
+/** Shared "tap through to the Cultural gallery" card chrome for every variant below. */
+function NoteCard({
+  style,
+  label,
+  onPress,
+  children,
+}: {
+  style: StyleProp<ViewStyle>;
+  label: string;
+  onPress: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      className="active:opacity-80"
+      style={style}
+      accessibilityRole="button"
+      accessibilityLabel={`Cultural note: ${label}`}
+    >
+      {children}
+    </Pressable>
+  );
+}
+
+/** The "✦ CULTURE · meta" overline shared by every card variant below. */
+function NoteHeader({ label, meta }: { label: string; meta?: string | null }) {
+  const M = useMuseumTheme();
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
+      <IconSymbol name="sparkles" size={13} color={M.accent} />
+      <Text style={{ fontSize: 10, fontWeight: "800", letterSpacing: 1.2, textTransform: "uppercase", color: M.accent }}>
+        {label}
+        {meta ? <Text style={{ color: M.muted }}>{`  ·  ${meta}`}</Text> : null}
+      </Text>
+    </View>
+  );
+}
+
+/**
+ * Renders a lesson's own authored culture beats — the first as a prominent
+ * card, any further notes as compact companion cards right below it. Pure:
+ * no data fetching, so it's safe to mount many times inline in a transcript.
+ */
+export function CulturalNoteCards({ languageId, notes }: { languageId: string; notes: CulturalNote[] }) {
+  const M = useMuseumTheme();
+  const router = useRouter();
+  const { t } = useTranslation();
+  const { uiLanguage } = useUiLanguageStore();
+  const label = t("lesson.culture", { defaultValue: "Culture" });
+
+  const cardStyle = {
+    marginTop: 20,
+    borderRadius: 16,
+    padding: 16,
+    backgroundColor: M.card,
+    borderWidth: 1,
+    borderColor: M.border,
+    borderLeftWidth: 3,
+    borderLeftColor: M.accent,
+  } as const;
+
+  const secondaryCardStyle = {
+    marginTop: 12,
+    borderRadius: 14,
+    padding: 14,
+    backgroundColor: M.card,
+    borderWidth: 1,
+    borderColor: M.border,
+    flexDirection: "row" as const,
+    gap: 12,
+    alignItems: "flex-start" as const,
+  };
+
+  return (
+    <>
+      {notes.map((note, i) => {
+        const title = localize(note.title, uiLanguage);
+        const body = localize(note.body, uiLanguage);
+        const onPress = () => router.push(`/cultural/${languageId}` as never);
+
+        if (i === 0) {
+          return (
+            <NoteCard key={title} style={cardStyle} label={title} onPress={onPress}>
+              <NoteHeader label={label} meta={note.tags?.[0]?.replace(/_/g, " ")} />
+              <Text style={{ fontSize: 15, fontWeight: "800", color: M.text }}>{title}</Text>
+              {body ? (
+                <Text style={{ marginTop: 4, fontSize: 13, lineHeight: 19, color: M.sub }} numberOfLines={4}>
+                  {body}
+                </Text>
+              ) : null}
+            </NoteCard>
+          );
+        }
+        return (
+          <NoteCard key={title} style={secondaryCardStyle} label={title} onPress={onPress}>
+            <IconSymbol name="sparkles" size={18} color={M.accent} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 14, fontWeight: "700", color: M.text }}>{title}</Text>
+              {body ? (
+                <Text style={{ marginTop: 3, fontSize: 12.5, lineHeight: 18, color: M.sub }} numberOfLines={3}>
+                  {body}
+                </Text>
+              ) : null}
+            </View>
+          </NoteCard>
+        );
+      })}
+    </>
+  );
+}
 
 /**
  * Inline cultural beat inside the lesson flow. Beeli's wedge is language AND
- * culture together, so culture shouldn't live only behind a side route — a
- * relevant cultural note surfaces here and opens the full reader. Renders
- * nothing when the language has no cultural content.
+ * culture together, so culture shouldn't live only behind a side route.
+ *
+ * Prefers notes authored for THIS lesson (`notes`, from the podcast package's
+ * per-episode `culturalNotes`) so the right beat lands on the right lesson,
+ * and only then falls back to fetching the language's featured gallery item.
+ * Renders nothing when neither is available. Use `CulturalNoteCards` directly
+ * when notes are already known to exist (e.g. anchored inline in a
+ * transcript) to skip this fallback's data fetch.
  */
-export function LessonCultureNote({ languageId }: { languageId: string }) {
+export function LessonCultureNote({
+  languageId,
+  notes,
+}: {
+  languageId: string;
+  notes?: CulturalNote[];
+}) {
+  if (notes && notes.length > 0) {
+    return <CulturalNoteCards languageId={languageId} notes={notes} />;
+  }
+  return <CulturalGalleryFallback languageId={languageId} />;
+}
+
+/** The language's featured gallery item, shown when a lesson has no notes of its own. */
+function CulturalGalleryFallback({ languageId }: { languageId: string }) {
   const M = useMuseumTheme();
   const router = useRouter();
+  const { t } = useTranslation();
   const { uiLanguage } = useUiLanguageStore();
   const { data } = useCultural(languageId);
 
   if (!data || data.length === 0) return null;
   const item = data.find((c) => c.featured) ?? data[0];
-
   const title = localize(item.title, uiLanguage);
   const description = localize(item.description, uiLanguage);
   const category = item.category.replace(/_/g, " ");
+  const label = t("lesson.culture", { defaultValue: "Culture" });
 
   return (
-    <Pressable
-      onPress={() => router.push(`/cultural/${languageId}` as never)}
-      className="active:opacity-80"
+    <NoteCard
       style={{
         marginTop: 20,
         borderRadius: 16,
@@ -39,16 +171,10 @@ export function LessonCultureNote({ languageId }: { languageId: string }) {
         borderLeftWidth: 3,
         borderLeftColor: M.accent,
       }}
-      accessibilityRole="button"
-      accessibilityLabel={`Cultural note: ${title}`}
+      label={title}
+      onPress={() => router.push(`/cultural/${languageId}` as never)}
     >
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
-        <IconSymbol name="sparkles" size={13} color={M.accent} />
-        <Text style={{ fontSize: 10, fontWeight: "800", letterSpacing: 1.2, textTransform: "uppercase", color: M.accent }}>
-          {localize({ en: "Culture", fr: "Culture" }, uiLanguage)}
-          <Text style={{ color: M.muted }}>{`  ·  ${category}`}</Text>
-        </Text>
-      </View>
+      <NoteHeader label={label} meta={category} />
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
         <Text style={{ fontSize: 30 }}>{item.imageEmoji}</Text>
         <View style={{ flex: 1 }}>
@@ -59,6 +185,6 @@ export function LessonCultureNote({ languageId }: { languageId: string }) {
         </View>
         <IconSymbol name="chevron.right" size={15} color={M.muted} />
       </View>
-    </Pressable>
+    </NoteCard>
   );
 }

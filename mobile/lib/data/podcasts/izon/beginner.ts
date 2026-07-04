@@ -38,6 +38,10 @@ const B1: PodcastEpisode = {
     en: "Tari steps off the boat at Grandmother Ebiere's village and is greeted only in Izon. Greet by time of day, say your name, and say you have come to learn.",
     fr: "Tari descend du bateau au village de Grand-mère Ebiere et n'est accueilli qu'en Izon. Saluez selon l'heure, dites votre nom et dites que vous êtes venu apprendre.",
   },
+  canDo: {
+    en: "Greet someone at any time of day, give your name, and say you've come to learn — entirely in Izon.",
+    fr: "Saluer selon l'heure du jour, dire votre nom et dire que vous êtes venu apprendre — entièrement en izon.",
+  },
   logline: {
     en: "The boat touches the jetty. The old words are waiting.",
     fr: "Le bateau touche l'embarcadère. Les vieux mots attendent.",
@@ -83,6 +87,7 @@ const B1: PodcastEpisode = {
         fr: "Dans les concessions izon, la salutation est posée et vient en premier — avant les questions, avant les affaires. La bâcler est un manque de respect. On salue l'aîné avant tout le monde.",
       },
       tags: ["greetings_etiquette", "kinship"],
+      afterSeq: 5, // → "Preye! Baidẹ!"
     },
     {
       title: { en: "Arriving by water", fr: "Arriver par l'eau" },
@@ -91,6 +96,7 @@ const B1: PodcastEpisode = {
         fr: "Isampou et la plupart des villes izon sont fluviales — on arrive en bateau à un embarcadère en bois, pas par la route. Le ruisseau (bou) est la porte d'entrée de la communauté.",
       },
       tags: ["geography", "land_livelihood"],
+      afterSeq: 3, // → "Tari bou mie. Arụ toru fie."
     },
   ],
   script: [
@@ -170,6 +176,10 @@ const B2: PodcastEpisode = {
     en: "Ebiere walks Tari through the compound and the kitchen and puts the first meal in front of them. Name family members, name household things and foods, and accept food graciously.",
     fr: "Ebiere fait visiter la concession et la cuisine à Tari et lui sert le premier repas. Nommez les membres de la famille, les objets et les aliments, et acceptez la nourriture avec grâce.",
   },
+  canDo: {
+    en: "Name family members and household foods, and accept food graciously, in Izon.",
+    fr: "Nommer les membres de la famille et les aliments du foyer, et accepter la nourriture avec grâce, en izon.",
+  },
   logline: {
     en: "You cannot refuse the food of the house. Learn to name it — and to thank it.",
     fr: "On ne refuse pas la nourriture de la maison. Apprenez à la nommer — et à la remercier.",
@@ -229,6 +239,7 @@ const B2: PodcastEpisode = {
         fr: "Refuser la nourriture de la main d'un hôte, c'est refuser le foyer lui-même. Même une bouchée l'honore. Le plat emblématique du Delta est le banga (soupe de noix de palme) avec de l'amidon et du poisson frais.",
       },
       tags: ["cuisine", "food_hospitality"],
+      afterSeq: 19, // → "Doo, Ebiere. Fịyaị ebi!"
     },
     {
       title: { en: "Everyone in the compound is 'family'", fr: "Toute la concession est 'la famille'" },
@@ -237,6 +248,7 @@ const B2: PodcastEpisode = {
         fr: "La parenté izon est large : les cousins sont 'frères/sœurs', l'amie d'une mère est une 'tante', l'aînée est la grand-mère de chaque enfant. Les formes d'adresse portent le respect.",
       },
       tags: ["kinship", "greetings_etiquette"],
+      afterSeq: 9, // → "Mị enị awọụ. Anị Preye. Mị enị eye."
     },
   ],
   script: [
@@ -314,6 +326,10 @@ const B3: PodcastEpisode = {
     en: "Mama Seibi narrates a morning at the waterside market while Tari learns to count to ten, ask a price, call it too dear, and bargain. Numbers 1–10, money words, and the art of the deal.",
     fr: "Mama Seibi raconte une matinée au marché du bord de l'eau pendant que Tari apprend à compter jusqu'à dix, demander un prix, le trouver trop cher et marchander. Les nombres 1 à 10, l'argent et l'art de négocier.",
   },
+  canDo: {
+    en: "Count to ten, ask a price, and bargain at the market, in Izon.",
+    fr: "Compter jusqu'à dix, demander un prix et marchander au marché, en izon.",
+  },
   logline: {
     en: "Never pay the first price. First — learn to count.",
     fr: "Ne payez jamais le premier prix. D'abord — apprenez à compter.",
@@ -374,6 +390,7 @@ const B3: PodcastEpisode = {
         fr: "Foubai, le jour de marché, règle l'horloge de la communauté. Les commerçants arrivent en pirogue ; le marché est autant échange de nouvelles que commerce. Marchander est attendu et apprécié.",
       },
       tags: ["land_livelihood", "time_seasons_festivals", "market"],
+      afterSeq: 4, // → "Emịnị Mama Seibi. Mị emi ogbo. Kịẹn — kẹnị!"
     },
     {
       title: { en: "Counting in bags", fr: "Compter en sacs" },
@@ -382,6 +399,7 @@ const B3: PodcastEpisode = {
         fr: "L'ancienne tarification du marché du Delta se compte en akpa, 'sacs', historiquement une unité de 200 ₦, trace vivante de l'esprit vigésimal.",
       },
       tags: ["numbers_trade"],
+      afterSeq: 14, // → "Endi kẹnị — sịlị ma akpa."
     },
   ],
   script: [

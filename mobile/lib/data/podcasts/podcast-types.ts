@@ -167,6 +167,16 @@ export interface CulturalNote {
   body: LocalizedText;
   /** e.g. ["festival", "food", "cosmology"]. */
   tags?: string[];
+  /**
+   * The script line (`PodcastLine.seq`) after which this note is relevant, so
+   * it surfaces inline right where it's relevant — "language and culture
+   * together" as a literal reading position, not a separate destination.
+   * Resolved to a transcript segment index via `resolveCulturalNoteAnchor`.
+   * Omitted = render after the transcript instead.
+   */
+  afterSeq?: number;
+  /** Resolved by `resolveCulturalNoteAnchor` — not authored directly. */
+  afterSegmentIndex?: number;
 }
 
 export interface ProductionNotes {
@@ -205,8 +215,14 @@ export interface PodcastEpisode {
 
   /** Interface-language card title (NOT spoken). */
   title: LocalizedText;
-  /** Interface-language card description — what the learner can DO. */
+  /** Interface-language card description — the episode synopsis. */
   description: LocalizedText;
+  /**
+   * The honest "You can now …" competence line surfaced on lesson completion.
+   * A single real-world ability sentence, distinct from `description` (which
+   * is the narrative synopsis). Falls back to `description` if omitted.
+   */
+  canDo?: LocalizedText;
   /** One-line teaser for the series/episode list. */
   logline: LocalizedText;
 
@@ -283,6 +299,23 @@ function isSpokenLine(l: PodcastLine): boolean {
 }
 
 /**
+ * Resolve a `CulturalNote.afterSeq` to a 0-based index into
+ * `toPlainTranscript(ep)`. Anchoring by `seq` (rather than a hand-counted
+ * transcript index) keeps the anchor legible right in the script a
+ * contributor edits, and failing loudly here means a script edit that drops
+ * or reorders the anchored line surfaces as a build-time crash instead of a
+ * silently mis-anchored or vanished note.
+ */
+export function resolveCulturalNoteAnchor(ep: PodcastEpisode, afterSeq: number): number {
+  const spokenSeqs = ep.script.filter(isSpokenLine).map((l) => l.seq);
+  const index = spokenSeqs.indexOf(afterSeq);
+  if (index === -1) {
+    throw new Error(`${ep.id}: cultural note afterSeq ${afterSeq} does not match a spoken script line`);
+  }
+  return index;
+}
+
+/**
  * The published, screen-safe transcript: target-language lines only.
  * Now carries `speaker` + `roman` — the core TranscriptSegment gained those
  * fields (see migration 0010_media_schema_enablers), so the audio-drama
@@ -336,8 +369,8 @@ export function toLessonData(ep: PodcastEpisode): LessonData {
     sceneTitle: "Podcast",
     sceneOrder: ep.order,
     transcriptType: "plain",
-    // Surface the "what the learner can DO" description as the competence line.
-    canDo: ep.description,
+    // Prefer the authored "you can now" line; fall back to the synopsis.
+    canDo: ep.canDo ?? ep.description,
     transcript: toPlainTranscript(ep),
   };
 }

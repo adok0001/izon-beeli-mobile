@@ -32,6 +32,10 @@ const I1: PodcastEpisode = {
     en: "Before dawn, Tari joins Timi and Uncle Ere to fish. Give and follow simple commands (paddle, throw the net, be quiet), talk about the catch, and hear the elders' quiet worry that the fish are fewer.",
     fr: "Avant l'aube, Tari rejoint Timi et Oncle Ere pour pêcher. Donnez et suivez des ordres simples, parlez de la prise et entendez l'inquiétude des aînés : il y a moins de poissons.",
   },
+  canDo: {
+    en: "Give and follow simple commands — paddle, bring it, be quiet — in Izon.",
+    fr: "Donner et suivre des ordres simples — pagayer, apporter, se taire — en izon.",
+  },
   logline: {
     en: "The creek gives less than it used to. The old men have noticed.",
     fr: "Le ruisseau donne moins qu'avant. Les vieux l'ont remarqué.",
@@ -155,6 +159,10 @@ const I2: PodcastEpisode = {
   description: {
     en: "The town prepares for the Ekine water-spirit dance. Preye teaches Tari the colours and their meanings, the drum and the dance, and what the masquerade is really for. Colour words, ceremony vocabulary, and describing what you see.",
     fr: "La ville prépare la danse Ekine des esprits de l'eau. Preye enseigne à Tari les couleurs et leurs sens, le tambour et la danse. Les couleurs, le vocabulaire cérémoniel, décrire ce qu'on voit.",
+  },
+  canDo: {
+    en: "Name the three mother-colours and describe what you see at a festival, in Izon.",
+    fr: "Nommer les trois couleurs-mères et décrire ce que vous voyez à une fête, en izon.",
   },
   logline: {
     en: "The drum calls the water spirits ashore. Tari learns to read the colours.",
@@ -282,6 +290,10 @@ const I3: PodcastEpisode = {
   description: {
     en: "Preye's marriage is being arranged, and Tari sits in as two families meet — greetings in the formal register, the language of request and agreement, and the customs of the Izon marriage. Formal address, polite requests, and yes/no in ceremony.",
     fr: "Le mariage de Preye se prépare, et Tari assiste à la rencontre de deux familles — salutations en registre formel, langage de la demande et de l'accord, coutumes du mariage izon.",
+  },
+  canDo: {
+    en: "Greet elders formally, make a polite request, and answer yes or no in ceremony, in Izon.",
+    fr: "Saluer les aînés avec formalité, faire une demande polie et répondre oui ou non en cérémonie, en izon.",
   },
   logline: {
     en: "Two families, one table, and every word weighed. Tari watches a marriage begin.",

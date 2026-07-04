@@ -1,8 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useWordAudio } from "@/lib/hooks/use-word-audio";
-import { useWordLookup } from "@/lib/hooks/use-dictionary";
-import { useSaveWord, useWordBank } from "@/lib/hooks/use-wordbank";
-import { hapticTap } from "@/lib/haptics";
+import { useWordLookupCard } from "@/lib/hooks/use-word-lookup-card";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUiLanguageStore } from "@/store/ui-language-store";
@@ -22,16 +19,11 @@ interface Props {
 export function WordLookupSheet({ word, languageId, onClose }: Props) {
   const M = useMuseumTheme();
   const { uiLanguage } = useUiLanguageStore();
-  const { data: entry, isLoading } = useWordLookup(languageId, word ?? "");
-  const { data: savedIds } = useWordBank();
-  const saveWord = useSaveWord();
-  const { play } = useWordAudio();
+  const { entry, isLoading, gloss, isSaved, save, playAudio } = useWordLookupCard(word ?? "", languageId);
 
   const visible = word != null;
-  const gloss = entry ? localize(entry.translations ?? entry.english, uiLanguage) : "";
   const example = entry?.example ?? "";
   const exampleGloss = entry ? localize(entry.exampleTranslations ?? entry.exampleTranslation, uiLanguage) : "";
-  const isSaved = !!entry && (savedIds?.includes(entry.id) ?? false);
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -65,7 +57,7 @@ export function WordLookupSheet({ word, languageId, onClose }: Props) {
                 </Text>
                 {entry?.audioUrl ? (
                   <Pressable
-                    onPress={() => { hapticTap(); play(entry.audioUrl!); }}
+                    onPress={playAudio}
                     hitSlop={8}
                     style={{ width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: M.accentGlow, borderWidth: 1, borderColor: M.accentBorder }}
                     accessibilityRole="button"
@@ -91,7 +83,7 @@ export function WordLookupSheet({ word, languageId, onClose }: Props) {
                   ) : null}
 
                   <Pressable
-                    onPress={() => { if (!isSaved) { hapticTap(); saveWord.mutate(entry.id); } }}
+                    onPress={save}
                     disabled={isSaved}
                     style={{
                       marginTop: 18,

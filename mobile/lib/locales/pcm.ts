@@ -496,6 +496,7 @@ export const pcm = {
     allCompleteDismiss: "Make we go",
   },
   lesson: {
+    culture: "Culture",
     title: "Lesson",
     notFound: "Lesson no dey",
     done: "Don do",

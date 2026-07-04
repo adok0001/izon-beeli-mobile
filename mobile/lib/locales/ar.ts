@@ -474,6 +474,7 @@ export const ar = {
     allCompleteDismiss: "هيا بنا",
   },
   lesson: {
+    culture: "ثقافة",
     title: "الدرس",
     notFound: "الدرس غير موجود",
     done: "تم",

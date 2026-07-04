@@ -9,8 +9,12 @@ import {
 } from "react-native";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { WordLookupSheet } from "@/components/audio/word-lookup-sheet";
+import { InlineWordPopover } from "@/components/audio/inline-word-popover";
+import { CulturalNoteCards } from "@/components/lesson/lesson-culture-note";
 import { MUSEUM, useMuseumTheme } from "@/lib/use-museum-theme";
 import { getAccent } from "@/constants/accent-colors";
+import { getCastAvatar } from "@/lib/data/series";
+import { groupCulturalNotesByAnchor } from "@/lib/lesson-culture-anchor";
 import { fonts } from "@/constants/typography";
 import { localize } from "@/lib/localize";
 import { useAudioStore } from "@/store/audio-store";
@@ -18,6 +22,7 @@ import { useLanguageStore } from "@/store/language-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { hapticTap } from "@/lib/haptics";
 import type { TranscriptSegment } from "@/types";
+import type { CulturalNote } from "@/lib/data/podcasts/podcast-types";
 
 /** Turn a cast id ("izon-cast-mama-seibi" | "SPEAKER_A") into a display name. */
 function speakerLabel(id?: string | null): string | null {
@@ -33,6 +38,8 @@ interface Props {
   label?: string;
   /** Bounds the inner scroll so auto-follow stays inside the transcript card. */
   maxHeight?: number;
+  /** Lesson-specific culture beats, surfaced inline at the segment they explain. */
+  culturalNotes?: CulturalNote[];
 }
 
 /**
@@ -42,7 +49,7 @@ interface Props {
  * the data is line-timed rather than word-timed). Tapping a line seeks to it; the
  * auto-follow toggle keeps the active line scrolled into view.
  */
-export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 380 }: Props) {
+export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 380, culturalNotes }: Props) {
   const M = useMuseumTheme();
   const { progress, seekTo, currentTrackId, shadowSegment, setShadowLoop } = useAudioStore();
   const { uiLanguage } = useUiLanguageStore();
@@ -52,11 +59,25 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
   const lineY = useRef<Record<number, number>>({});
   const [autoFollow, setAutoFollow] = useState(true);
   const [lookupWord, setLookupWord] = useState<string | null>(null);
+  // Word tapped on the ACTIVE line — opens inline, in-flow, so looking a word
+  // up doesn't cover the transcript or pause playback (see InlineWordPopover).
+  const [activeLookupWord, setActiveLookupWord] = useState<string | null>(null);
 
   const activeIndex = useMemo(
     () => segments.findIndex((s) => progress >= s.startTime && progress < s.endTime),
     [segments, progress]
   );
+
+  const notesByAnchor = useMemo(
+    () => groupCulturalNotesByAnchor(culturalNotes, segments.length - 1),
+    [culturalNotes, segments.length]
+  );
+
+  // The active line changed — drop any open inline popover so it doesn't
+  // linger under a line that's no longer being read.
+  useEffect(() => {
+    setActiveLookupWord(null);
+  }, [activeIndex]);
 
   // The active word's ordinal within the active line, by interpolated position.
   const activeWordOrdinal = useMemo(() => {
@@ -156,13 +177,32 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
           // consecutive same-speaker lines into a readable audio-drama script).
           const speaker = speakerLabel(seg.speaker);
           const showSpeaker = !!speaker && seg.speaker !== segments[index - 1]?.speaker;
+          const castAvatar = getCastAvatar(seg.speaker);
+          const castAccent = getAccent(castAvatar.hue);
+          const notesHere = notesByAnchor[index];
 
           return (
             <View key={seg.id}>
               {showSpeaker ? (
-                <Text style={{ marginTop: index === 0 ? 0 : 6, marginBottom: 3, marginLeft: 2, fontSize: 11, fontWeight: "800", letterSpacing: 0.5, textTransform: "uppercase", color: M.accent }}>
-                  {speaker}
-                </Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: index === 0 ? 0 : 8, marginBottom: 4, marginLeft: 2 }}>
+                  <View
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: 10,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: castAccent.bg,
+                      borderWidth: 1,
+                      borderColor: castAccent.border,
+                    }}
+                  >
+                    <Text style={{ fontSize: 11 }}>{castAvatar.avatar}</Text>
+                  </View>
+                  <Text style={{ fontSize: 11, fontWeight: "800", letterSpacing: 0.5, textTransform: "uppercase", color: M.accent }}>
+                    {speaker}
+                  </Text>
+                </View>
               ) : null}
             <Pressable
               onPress={() => handleLinePress(seg)}
@@ -195,8 +235,20 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
                   const isWordActive = isActive && wordOrdinal === activeWordOrdinal;
                   return (
                     <Text
-                      key={i}
-                      onLongPress={() => { hapticTap(); setLookupWord(tok); }}
+                      key={`${seg.startTime}-${i}`}
+                      // The active line is being read right now — a single tap opens
+                      // the inline popover without interrupting playback. Other
+                      // lines keep long-press, since they're not mid-utterance.
+                      onPress={isActive ? () => {
+                        hapticTap();
+                        setLookupWord(null);
+                        setActiveLookupWord((w) => (w === tok ? null : tok));
+                      } : undefined}
+                      onLongPress={!isActive ? () => {
+                        hapticTap();
+                        setActiveLookupWord(null);
+                        setLookupWord(tok);
+                      } : undefined}
                       suppressHighlighting
                       style={{
                         color: isWordActive ? M.accent : undefined,
@@ -218,6 +270,13 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
                   {translation}
                 </Text>
               ) : null}
+              {isActive && activeLookupWord ? (
+                <InlineWordPopover
+                  word={activeLookupWord}
+                  languageId={selectedLanguageId}
+                  onClose={() => setActiveLookupWord(null)}
+                />
+              ) : null}
               {currentTrackId ? (
                 <Pressable
                   onPress={(e) => handleLoopPress(seg, e)}
@@ -231,6 +290,7 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
                 </Pressable>
               ) : null}
             </Pressable>
+              {notesHere ? <CulturalNoteCards languageId={selectedLanguageId} notes={notesHere} /> : null}
             </View>
           );
         })}
@@ -238,7 +298,7 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
       </ScrollView>
 
       <Text style={{ marginTop: 6, fontSize: 11, color: M.muted, textAlign: "center" }}>
-        Hold a word to look it up
+        Tap the current word, or hold any other, to look it up
       </Text>
 
       <WordLookupSheet

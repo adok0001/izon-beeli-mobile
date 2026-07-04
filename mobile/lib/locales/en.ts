@@ -474,6 +474,7 @@ export const en = {
     allCompleteDismiss: "Let's go",
   },
   lesson: {
+    culture: "Culture",
     title: "Lesson",
     notFound: "Lesson not found",
     done: "Done",

@@ -476,6 +476,7 @@ export const fr = {
     allCompleteDismiss: "C'est parti",
   },
   lesson: {
+    culture: "Culture",
     title: "Leçon",
     notFound: "Leçon introuvable",
     done: "Terminé",

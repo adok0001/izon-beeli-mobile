@@ -2,6 +2,7 @@ import { AudioPlayer } from "@/components/audio/audio-player";
 import { InteractiveTranscript } from "@/components/audio/interactive-transcript";
 import { LevelUpModal } from "@/components/level-up-modal";
 import { LessonCultureNote } from "@/components/lesson/lesson-culture-note";
+import { getLessonCulturalNotes } from "@/lib/data/podcasts/cultural-notes-map";
 import { LessonHero } from "@/components/lesson/lesson-hero";
 import { LessonMetaPills } from "@/components/lesson/lesson-meta-pills";
 import { LessonListen } from "@/components/lesson/lesson-listen";
@@ -13,7 +14,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useCompletedLessons, useCompleteLesson, useTrackListen } from "@/lib/hooks/use-progress";
 import { useToast } from "@/lib/hooks/use-toast";
 import { useLesson } from "@/lib/hooks/use-courses";
-import { getCourseTypeColors } from "@/constants/course-colors";
+import { getCourseTypeColors, getSkillMeta } from "@/constants/course-colors";
 import { useNextLesson } from "@/lib/hooks/use-next-lesson";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Course } from "@/types";
@@ -34,7 +35,7 @@ import { useForegroundClaim, useOverlayStore } from "@/store/overlay-store";
 import { localize } from "@/lib/localize";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { LoadingScreen } from "@/components/loading-screen";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useIsFocused } from "@react-navigation/native";
@@ -163,6 +164,14 @@ export default function LessonScreen() {
         : lesson.canDo;
   const canDoText = canDoField ? localize(canDoField, uiLanguage) : "";
   const canDoLabel = localize({ en: "You can now", fr: "Vous savez maintenant" }, uiLanguage);
+  const canDoSkills = (lesson.skills ?? []).slice(0, 3).map((skill) => getSkillMeta(skill));
+
+  // "Prove it" — the first transcript line with a translation, echoed as a
+  // production prompt alongside the passive "you can now" statement.
+  const proveItSegment = lesson.transcript?.find((seg) => seg.text && seg.translation);
+  const proveItText = proveItSegment ? localize(proveItSegment.translation ?? "", uiLanguage) : "";
+  const proveItLabel = localize({ en: "Prove it — say it back", fr: "Prouvez-le — répétez-le" }, uiLanguage);
+  const addToAbilitiesLabel = localize({ en: "Add to my abilities", fr: "Ajouter à mes acquis" }, uiLanguage);
 
   const handlePlayAudio = async () => {
     if (isCurrentTrack) {
@@ -178,6 +187,12 @@ export default function LessonScreen() {
     });
     analytics.lessonStarted(lesson.id, selectedLanguageId);
   };
+
+  const lessonCulturalNotes = getLessonCulturalNotes(lesson.id);
+  // Notes render inline within the transcript, anchored to the segment they
+  // explain — the standalone block below only covers lessons with no
+  // transcript to anchor into (falls back to the language's gallery item).
+  const culturalNotesRenderInline = !!lessonCulturalNotes?.length && !!lesson.transcript?.length;
 
   const wordCount = (() => {
     if (lesson.vocab?.length) return lesson.vocab.length;
@@ -337,7 +352,7 @@ export default function LessonScreen() {
             {canDoText ? (
               <View
                 style={{
-                  marginBottom: 28,
+                  marginBottom: 12,
                   borderRadius: 16,
                   padding: 18,
                   backgroundColor: M.accentGlow,
@@ -352,7 +367,63 @@ export default function LessonScreen() {
                   </Text>
                 </View>
                 <Text style={{ fontSize: 16, lineHeight: 23, fontWeight: "600", color: M.text }}>{canDoText}</Text>
+
+                {canDoSkills.length > 0 ? (
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      gap: 14,
+                      marginTop: 16,
+                      paddingTop: 14,
+                      borderTopWidth: 1,
+                      borderTopColor: M.border,
+                    }}
+                  >
+                    {canDoSkills.map((skill, i) => (
+                      <View key={i} style={{ flex: 1, alignItems: "center" }}>
+                        <Text style={{ fontSize: 20 }}>{skill.icon}</Text>
+                        <Text style={{ marginTop: 4, fontSize: 11, color: M.sub }}>{skill.label}</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
+
+                {proveItText ? (
+                  <View
+                    style={{
+                      marginTop: 14,
+                      backgroundColor: M.pillBg,
+                      borderWidth: 1,
+                      borderColor: M.border,
+                      borderRadius: 12,
+                      padding: 12,
+                    }}
+                  >
+                    <Text style={{ fontSize: 10, fontWeight: "800", letterSpacing: 0.8, textTransform: "uppercase", color: M.muted }}>
+                      {proveItLabel}
+                    </Text>
+                    <Text style={{ marginTop: 5, fontSize: 15, fontWeight: "700", color: M.text }}>{proveItText}</Text>
+                  </View>
+                ) : null}
               </View>
+            ) : null}
+
+            {canDoText ? (
+              <Pressable
+                onPress={() => router.push("/(tabs)/profile")}
+                style={{
+                  marginBottom: 28,
+                  backgroundColor: M.accent,
+                  alignItems: "center",
+                  paddingVertical: 15,
+                  borderRadius: 14,
+                }}
+                className="active:opacity-80"
+                accessibilityRole="button"
+                accessibilityLabel={addToAbilitiesLabel}
+              >
+                <Text style={{ fontSize: 15, fontWeight: "800", color: M.parchment }}>{addToAbilitiesLabel} →</Text>
+              </Pressable>
             ) : null}
 
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 14 }}>
@@ -476,6 +547,7 @@ export default function LessonScreen() {
                 segments={lesson.transcript ?? []}
                 transcriptLabel={(isSong ? t("songs.lyrics") : t("lesson.transcript")).toUpperCase()}
                 onFinish={() => trackListen.mutate(lesson.id)}
+                culturalNotes={lessonCulturalNotes}
               />
             ) : null}
 
@@ -493,10 +565,15 @@ export default function LessonScreen() {
               <LessonWords vocab={lesson.vocab} uiLanguage={uiLanguage} accentColor={accentColor} />
             ) : null}
 
-            {/* Inline cultural beat — language and culture together */}
-            <View style={{ paddingHorizontal: 22 }}>
-              <LessonCultureNote languageId={selectedLanguageId} />
-            </View>
+            {/* Inline cultural beat — language and culture together. Notes with a
+                transcript to anchor into render inline within it instead (see
+                LessonListen/InteractiveTranscript below); this covers lessons
+                with no lesson-specific notes (gallery fallback) or no transcript. */}
+            {!culturalNotesRenderInline ? (
+              <View style={{ paddingHorizontal: 22 }}>
+                <LessonCultureNote languageId={selectedLanguageId} notes={lessonCulturalNotes} />
+              </View>
+            ) : null}
 
             {/* Transcript fallback — only for transcript-only lessons with no audio
                 (lessons with audio render the synced LessonListen block above). */}
@@ -510,7 +587,7 @@ export default function LessonScreen() {
                   <View style={{ flex: 1, height: 1, backgroundColor: M.border }} />
                 </View>
                 <View style={{ paddingHorizontal: 4 }}>
-                  <InteractiveTranscript segments={lesson.transcript} />
+                  <InteractiveTranscript segments={lesson.transcript} culturalNotes={lessonCulturalNotes} />
                 </View>
               </View>
             ) : null}
