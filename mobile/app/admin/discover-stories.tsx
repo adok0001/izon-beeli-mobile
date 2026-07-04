@@ -1,22 +1,21 @@
 /**
  * Admin — Series & Stories overview (read-only).
  *
- * Surfaces the Discover "story" layer that otherwise lives across bundled code
- * and the DB, in one place:
- *   • Interactive stories (bundled in lib/data/interactive-stories) — the
- *     branching film experiences (Griot's Path, the Bou Mie films, Writing
- *     Systems of Africa, …).
+ * Surfaces the Discover "story" layer in one place:
+ *   • Interactive stories (`interactive_stories` table, served from
+ *     `/interactive-stories`) — the branching film experiences (Griot's Path,
+ *     the Bou Mie films, Writing Systems of Africa, …).
  *   • Story arcs (podcast season + course arcs, from /story-arcs).
  *   • Link health — films whose `storyId` resolves to neither, so a
  *     broken/plain link is easy to spot.
  *
  * Culture items themselves are edited on /admin/culture-content (including the
- * Story link field). Interactive-story *content* is bundled code, so it is
- * read-only here; a future DB migration would make it fully editable.
+ * Story link field). Interactive-story content is DB-backed now, but authoring
+ * it still requires the web CMS; this screen stays read-only.
  */
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { INTERACTIVE_STORIES } from "@/lib/data/interactive-stories";
-import { useDiscover } from "@/lib/hooks/use-discover";
+import { LoadingScreen } from "@/components/loading-screen";
+import { useDiscover, useInteractiveStories } from "@/lib/hooks/use-discover";
 import { useStoryArcs } from "@/lib/hooks/use-story-arc";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { Stack, useRouter } from "expo-router";
@@ -30,8 +29,10 @@ export default function DiscoverStoriesAdminScreen() {
   const router = useRouter();
   const { all } = useDiscover("all");
   const { data: arcs = [] } = useStoryArcs();
+  const { data: stories, isLoading } = useInteractiveStories();
 
-  const stories = Object.values(INTERACTIVE_STORIES);
+  if (isLoading || !stories) return <LoadingScreen />;
+
   const storyIds = new Set(stories.map((s) => s.id));
   const arcIds = new Set(arcs.map((a) => a.id));
   const linkedTo = (id: string) => all.filter((i) => i.storyId === id);

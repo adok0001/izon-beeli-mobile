@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { View, Text, Pressable, PanResponder } from "react-native";
 import Svg, { Path, Text as SvgText } from "react-native-svg";
 import { getAccent } from "@/constants/accent-colors";
-import type { GeezCharacter } from "@/lib/data/geez";
+import type { GeezCharacter } from "@/types/scripts";
 import { hapticTap } from "@/lib/haptics";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 

@@ -15,6 +15,7 @@ import {
   proverbs,
   scriptCharacters,
   scripts,
+  interactiveStories,
   sentenceTemplates,
   transcriptSegments,
   users,
@@ -30,6 +31,8 @@ import { LANGUAGES } from "../../../mobile/lib/data/languages.js";
 import { FIDEL_CHART } from "../../../mobile/lib/data/geez/fidel-chart.js";
 import { NSIBIDI_CHARACTERS } from "../../../mobile/lib/data/nsibidi/index.js";
 import { NSIBIDI_API_CHARACTERS } from "../../../mobile/lib/data/nsibidi/characters.js";
+import { ADINKRA_SYMBOLS } from "../../../mobile/lib/data/adinkra/index.js";
+import { INTERACTIVE_STORIES } from "../../../mobile/lib/data/interactive-stories/index.js";
 import { ALL_LESSONS } from "../../../mobile/lib/data/lessons/index.js";
 
 // ---------------------------------------------------------------------------
@@ -406,29 +409,28 @@ async function seed() {
     { id: "geez-amharic",  languageId: "amharic",  name: "Ge’ez / Fidel", description: "Ethiopic alphabet used in Amharic", iconCharacter: "ሀ", accentColor: "#4ade80" },
     { id: "geez-tigrinya", languageId: "tigrinya", name: "Ge’ez / Fidel", description: "Ethiopic alphabet used in Tigrinya",  iconCharacter: "ሀ", accentColor: "#4ade80" },
     { id: "nsibidi-igbo",  languageId: "igbo",     name: "Nsọbịdị", description: "Indigenous Igbo pictographic script",  iconCharacter: "", accentColor: "#f59e0b" },
+    { id: "adinkra-akan",  languageId: "akan",     name: "Adinkra", description: "Akan visual symbols stamped on cloth", iconCharacter: "", accentColor: "#eab308" },
   ];
   await batchInsert(scripts, SCRIPT_DEFS);
 
   console.log("  Inserting script characters...");
-  const geezChars = FIDEL_CHART.map((c, i) => ({
-    id: `geez-${c.id}`,
-    scriptId: "geez-amharic",
+  // Ge'ez: keep baseConsonant + vowelOrder as first-class columns (no longer
+  // folded into category/hint), so the mobile Fidel grid reconstructs exactly.
+  const geezRow = (c: (typeof FIDEL_CHART)[number], i: number, scriptId: string) => ({
+    id: scriptId === "geez-amharic" ? `geez-${c.id}` : `${scriptId}-${c.id}`,
+    scriptId,
     character: c.character,
     answer: c.romanization,
     hint: `Order ${c.order}`,
     category: c.baseConsonant,
     displayOrder: i,
-  }));
+    name: c.romanization,
+    baseConsonant: c.baseConsonant,
+    vowelOrder: c.order,
+  });
+  const geezChars = FIDEL_CHART.map((c, i) => geezRow(c, i, "geez-amharic"));
   // Tigrinya reuses the same Ge'ez character set
-  const geezTigrinyaChars = FIDEL_CHART.map((c, i) => ({
-    id: `geez-tigrinya-${c.id}`,
-    scriptId: "geez-tigrinya",
-    character: c.character,
-    answer: c.romanization,
-    hint: `Order ${c.order}`,
-    category: c.baseConsonant,
-    displayOrder: i,
-  }));
+  const geezTigrinyaChars = FIDEL_CHART.map((c, i) => geezRow(c, i, "geez-tigrinya"));
   // Prefer the full API dataset (~2,572 characters); fall back to the 20-entry curated set.
   const nsibidiSource = NSIBIDI_API_CHARACTERS.length > 0 ? NSIBIDI_API_CHARACTERS : NSIBIDI_CHARACTERS;
   const nsibidiChars = nsibidiSource.map((c, i) => {
@@ -443,9 +445,73 @@ async function seed() {
       hint: c.name.length > 197 ? c.name.slice(0, 197) + "…" : c.name,
       category: c.category,
       displayOrder: i,
+      name: c.name,
+      meaning: c.meaning,
+      codePoint: c.codePoint,
     };
   });
-  await batchInsert(scriptCharacters, [...geezChars, ...geezTigrinyaChars, ...nsibidiChars]);
+  // Adinkra: no unicode glyph — the app renders svgPath. Store the full symbol.
+  const adinkraChars = ADINKRA_SYMBOLS.map((s, i) => ({
+    id: `adinkra-${s.id}`,
+    scriptId: "adinkra-akan",
+    character: "",
+    answer: s.akanName,
+    hint: s.meaning.length > 197 ? s.meaning.slice(0, 197) : s.meaning,
+    category: s.category,
+    displayOrder: i,
+    name: s.name,
+    meaning: s.meaning,
+    akanName: s.akanName,
+    proverb: s.proverb,
+    svgPath: s.svgPath,
+    svgViewBox: s.svgViewBox,
+  }));
+  // Upsert (not DoNothing) so the new parity columns backfill onto any
+  // Ge'ez/Nsibidi rows seeded before those columns existed.
+  const allScriptChars = [...geezChars, ...geezTigrinyaChars, ...nsibidiChars, ...adinkraChars];
+  for (let i = 0; i < allScriptChars.length; i += 100) {
+    const chunk = allScriptChars.slice(i, i + 100);
+    await db
+      .insert(scriptCharacters)
+      .values(chunk as any)
+      .onConflictDoUpdate({
+        target: scriptCharacters.id,
+        set: {
+          character: sql`excluded.character`,
+          answer: sql`excluded.answer`,
+          hint: sql`excluded.hint`,
+          category: sql`excluded.category`,
+          displayOrder: sql`excluded.display_order`,
+          name: sql`excluded.name`,
+          meaning: sql`excluded.meaning`,
+          codePoint: sql`excluded.code_point`,
+          baseConsonant: sql`excluded.base_consonant`,
+          vowelOrder: sql`excluded.vowel_order`,
+          akanName: sql`excluded.akan_name`,
+          proverb: sql`excluded.proverb`,
+          svgPath: sql`excluded.svg_path`,
+          svgViewBox: sql`excluded.svg_view_box`,
+          isActive: sql`true`,
+        },
+      });
+  }
+
+  // 10b. Interactive (branching) stories — port the bundled scene graphs.
+  console.log("  Inserting interactive stories...");
+  const interactiveStoryRows = Object.values(INTERACTIVE_STORIES).map((s) => ({
+    id: s.id,
+    language: s.language ?? null,
+    title: s.title,
+    description: s.description,
+    coverGradientFrom: s.coverGradient[0],
+    coverGradientTo: s.coverGradient[1],
+    coverEmoji: s.coverEmoji,
+    estimatedMinutes: s.estimatedMinutes,
+    author: s.author,
+    initialSceneId: s.initialSceneId,
+    scenes: s.scenes,
+  }));
+  await batchInsert(interactiveStories, interactiveStoryRows);
 
   // 11. UGC: placeholder user + feed + comments
   console.log("  Seeding UGC (feed & comments)...");

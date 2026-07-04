@@ -10,9 +10,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LoadingScreen } from "@/components/loading-screen";
 import { AdinkraSymbolView } from "@/components/adinkra/adinkra-symbol";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { ADINKRA_SYMBOLS, type AdinkraSymbol } from "@/lib/data/adinkra";
+import { useAdinkraSymbols } from "@/lib/hooks/use-script-data";
+import type { AdinkraSymbol } from "@/types/scripts";
 
 const CATEGORIES = [
   "all",
@@ -111,11 +113,13 @@ export default function AdinkraScreen() {
   const [selectedSymbol, setSelectedSymbol] = useState<AdinkraSymbol | null>(
     null
   );
+  const { data: symbols, isLoading } = useAdinkraSymbols();
 
-  const filteredSymbols =
-    selectedCategory === "all"
-      ? ADINKRA_SYMBOLS
-      : ADINKRA_SYMBOLS.filter((s) => s.category === selectedCategory);
+  const filteredSymbols = !symbols
+    ? []
+    : selectedCategory === "all"
+      ? symbols
+      : symbols.filter((s) => s.category === selectedCategory);
 
   const renderItem = useCallback(
     ({ item, index }: { item: AdinkraSymbol; index: number }) => {
@@ -140,6 +144,8 @@ export default function AdinkraScreen() {
   for (let i = 0; i < filteredSymbols.length; i += 2) {
     pairedData.push(filteredSymbols.slice(i, i + 2));
   }
+
+  if (isLoading || !symbols) return <LoadingScreen />;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["bottom"]}>

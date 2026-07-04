@@ -1,6 +1,8 @@
+import { LoadingScreen } from "@/components/loading-screen";
 import { NsibidiDetail } from "@/components/nsibidi/nsibidi-detail";
 import { NsibidiGrid } from "@/components/nsibidi/nsibidi-grid";
-import { ALL_NSIBIDI_CHARACTERS, type NsibidiCharacter } from "@/lib/data/nsibidi";
+import { useNsibidiCharacters } from "@/lib/hooks/use-script-data";
+import type { NsibidiCharacter } from "@/types/scripts";
 import { hapticSuccess } from "@/lib/haptics";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useNsibidiStore } from "@/store/nsibidi-store";
@@ -9,16 +11,16 @@ import { useCallback, useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const TOTAL = ALL_NSIBIDI_CHARACTERS.length;
-
 export default function NsibidiLessonScreen() {
   const M = useMuseumTheme();
   const [selected, setSelected] = useState<NsibidiCharacter | null>(null);
   const { learnedIds, markLearned, hydrate, _hydrated } = useNsibidiStore();
+  const { data: characters, isLoading } = useNsibidiCharacters();
 
   useEffect(() => { hydrate(); }, []);
 
   const learnedCount = learnedIds.size;
+  const TOTAL = characters?.length ?? 0;
 
   const handleMarkLearned = useCallback(() => {
     if (selected) {
@@ -28,7 +30,7 @@ export default function NsibidiLessonScreen() {
     }
   }, [selected, markLearned]);
 
-  if (!_hydrated) return null;
+  if (!_hydrated || isLoading || !characters) return <LoadingScreen />;
 
   return (
     <>
@@ -57,7 +59,7 @@ export default function NsibidiLessonScreen() {
           </Text>
         </View>
 
-        <NsibidiGrid learnedIds={learnedIds} onSelect={setSelected} />
+        <NsibidiGrid characters={characters} learnedIds={learnedIds} onSelect={setSelected} />
 
         {learnedCount === TOTAL && TOTAL > 0 && (
           <View style={{ padding: 20, alignItems: "center" }}>

@@ -5,7 +5,7 @@ import { getAccent } from "@/constants/accent-colors";
 import { useSubmitQuizResult } from "@/lib/hooks/use-quiz-result";
 import { useStreakCelebration } from "@/lib/hooks/use-progress";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
-import { getSentencesForLanguage } from "@/lib/data/sentences";
+import { getSnapshotSentences as getSentencesForLanguage } from "@/store/content-store";
 import { hapticError, hapticSuccess, hapticTap } from "@/lib/haptics";
 import { shuffle } from "@/lib/shuffle";
 import { playCorrectSound, playFinishSound, playIncorrectSound } from "@/lib/sounds";

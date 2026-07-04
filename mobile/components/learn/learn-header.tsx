@@ -6,7 +6,7 @@ import { NotificationBell } from "@/components/notifications/notification-center
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
 import { fonts } from "@/constants/typography";
-import { ADINKRA_SYMBOLS } from "@/lib/data/adinkra";
+import { useAdinkraSymbols } from "@/lib/hooks/use-script-data";
 import type { ProgressSummary } from "@/lib/hooks/use-progress";
 import { pathLevelLabel } from "@/lib/journey";
 import { getLanguageName } from "@/lib/mock-data";
@@ -20,12 +20,14 @@ import { Animated, Image, Pressable, Text, View } from "react-native";
 
 /** Daily-rotating Adinkra symbol — the embossed wall texture behind the greeting. */
 function useDailyAdinkra() {
+  const { data: symbols } = useAdinkraSymbols();
   return useMemo(() => {
+    if (!symbols || symbols.length === 0) return undefined;
     const dayOfYear = Math.floor(
       (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86_400_000
     );
-    return ADINKRA_SYMBOLS[dayOfYear % ADINKRA_SYMBOLS.length];
-  }, []);
+    return symbols[dayOfYear % symbols.length];
+  }, [symbols]);
 }
 
 const overline = {

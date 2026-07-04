@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch, isNetworkError } from "@/lib/api";
-import { getDictionaryForLanguage } from "@/lib/data";
 import type { DictionaryEntry } from "@/lib/dictionary";
 import { useIsOffline } from "@/lib/hooks/use-offline";
 import { useGuestStore } from "@/store/guest-store";
+import { getSnapshotDictionary } from "@/store/content-store";
 
 function bundledDictionary(languageId: string, category?: string): DictionaryEntry[] {
-  const entries = getDictionaryForLanguage(languageId);
+  const entries = getSnapshotDictionary(languageId);
   return category ? entries.filter((e) => e.category === category) : entries;
 }
 

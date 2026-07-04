@@ -1,6 +1,6 @@
 import { DISCOVER_TYPE_CONFIG } from "@/components/discover-card";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { hasInteractiveStory } from "@/lib/data/interactive-stories";
+import { hasSnapshotInteractiveStory as hasInteractiveStory } from "@/store/content-store";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { DiscoverItem } from "@/types";
 import { LinearGradient } from "expo-linear-gradient";

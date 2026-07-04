@@ -1,17 +1,12 @@
 import { SKILL_META } from "@/constants/course-colors";
-import { ALL_LESSONS } from "@/lib/data/lessons";
 import { useCompletedLessons } from "@/lib/hooks/use-progress";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { getSnapshotLessonSkills } from "@/store/content-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useMemo } from "react";
 import { Text, View } from "react-native";
 import Svg, { Circle, Line, Polygon } from "react-native-svg";
-
-// Lesson id -> skills, built once from bundled data.
-const SKILLS_BY_LESSON = new Map<string, string[]>(
-  ALL_LESSONS.map((l) => [l.id, l.skills ?? []]),
-);
 
 const SKILL_ORDER = Object.keys(SKILL_META) as (keyof typeof SKILL_META)[];
 const N = SKILL_ORDER.length;
@@ -43,7 +38,7 @@ export function SkillsPracticed() {
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
     for (const id of completed ?? []) {
-      for (const skill of SKILLS_BY_LESSON.get(id) ?? []) {
+      for (const skill of getSnapshotLessonSkills(id)) {
         c[skill] = (c[skill] ?? 0) + 1;
       }
     }

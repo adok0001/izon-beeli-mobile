@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq, asc } from "drizzle-orm";
+import { and, eq, asc } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { courses } from "../db/schema.js";
 
@@ -15,7 +15,7 @@ coursesRouter.get("/", async (c) => {
   const result = await db
     .select()
     .from(courses)
-    .where(eq(courses.languageId, languageId))
+    .where(and(eq(courses.languageId, languageId), eq(courses.isActive, true)))
     .orderBy(asc(courses.order));
 
   return c.json(result);

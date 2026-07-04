@@ -1,7 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { GameEyebrow, GameOption, GameProgress, GameResultView, tint } from "@/components/games/game-kit";
 import { getAccent } from "@/constants/accent-colors";
-import { getProverbsForLanguage } from "@/lib/data/proverbs";
+import { getSnapshotProverbs as getProverbsForLanguage } from "@/store/content-store";
 import { hapticError, hapticSuccess } from "@/lib/haptics";
 import { shuffle } from "@/lib/shuffle";
 import { QuizSaveStatus } from "@/components/quiz-save-status";

@@ -1,5 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { getSentencesForLanguage } from "@/lib/data/sentences";
+import { getSnapshotSentences as getSentencesForLanguage } from "@/store/content-store";
 import { hapticError, hapticSuccess, hapticTap } from "@/lib/haptics";
 import { shuffle } from "@/lib/shuffle";
 import { useMuseumTheme } from "@/lib/use-museum-theme";

@@ -1,6 +1,6 @@
 import { Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { ADINKRA_SYMBOLS } from "@/lib/data/adinkra";
+import { useAdinkraSymbols } from "@/lib/hooks/use-script-data";
 import { getDailyItem } from "@/lib/daily-picker";
 import { AdinkraSymbolView } from "./adinkra-symbol";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -9,7 +9,8 @@ import { useMuseumTheme } from "@/lib/use-museum-theme";
 export function SymbolOfTheDay() {
   const M = useMuseumTheme();
   const router = useRouter();
-  const symbol = getDailyItem(ADINKRA_SYMBOLS);
+  const { data: symbols } = useAdinkraSymbols();
+  const symbol = getDailyItem(symbols ?? []);
 
   if (!symbol) return null;
 

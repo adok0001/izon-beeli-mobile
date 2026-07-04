@@ -1,7 +1,9 @@
 import { CharacterDetail } from "@/components/geez/character-detail";
 import { FidelGrid } from "@/components/geez/fidel-grid";
 import { TracingCanvas } from "@/components/geez/tracing-canvas";
-import { FIDEL_CHART, type GeezCharacter } from "@/lib/data/geez";
+import { LoadingScreen } from "@/components/loading-screen";
+import { useGeezCharacters } from "@/lib/hooks/use-script-data";
+import type { GeezCharacter } from "@/types/scripts";
 import { hapticSuccess } from "@/lib/haptics";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useGeezStore } from "@/store/geez-store";
@@ -12,8 +14,6 @@ import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type Tab = "chart" | "practice";
-
-const TOTAL_CHARS = FIDEL_CHART.length;
 
 function TabSegment({ active, onPress, label }: { active: boolean; onPress: () => void; label: string }) {
   const M = useMuseumTheme();
@@ -37,28 +37,30 @@ export default function GeezLessonScreen() {
   // null = auto-pick next unlearned.
   const [pinnedChar, setPinnedChar] = useState<GeezCharacter | null>(null);
   const { learnedIds, markLearned, hydrate, _hydrated } = useGeezStore();
+  const { data: characters, isLoading } = useGeezCharacters();
 
   useEffect(() => {
     hydrate();
   }, []);
 
   const learnedCount = learnedIds.size;
+  const TOTAL_CHARS = characters?.length ?? 0;
 
   // Ordered list of all unlearned characters
   const unlearnedChars = useMemo(
-    () => FIDEL_CHART.filter((c) => !learnedIds.has(c.id)),
-    [learnedIds]
+    () => (characters ?? []).filter((c) => !learnedIds.has(c.id)),
+    [characters, learnedIds]
   );
 
   // The character currently being practiced
   const practiceChar = useMemo(() => {
     if (pinnedChar) return pinnedChar;
-    return unlearnedChars[0] ?? FIDEL_CHART[0];
-  }, [pinnedChar, unlearnedChars]);
+    return unlearnedChars[0] ?? characters?.[0];
+  }, [pinnedChar, unlearnedChars, characters]);
 
   // Index within unlearned list (for Next navigation)
   const practiceIndex = useMemo(
-    () => unlearnedChars.findIndex((c) => c.id === practiceChar.id),
+    () => unlearnedChars.findIndex((c) => c.id === practiceChar?.id),
     [unlearnedChars, practiceChar]
   );
 
@@ -79,6 +81,7 @@ export default function GeezLessonScreen() {
   }, [selectedChar]);
 
   const handleMarkPracticeLearned = useCallback(() => {
+    if (!practiceChar) return;
     markLearned(practiceChar.id);
     hapticSuccess();
     // Advance to next unlearned
@@ -95,7 +98,7 @@ export default function GeezLessonScreen() {
     setPinnedChar(unlearnedChars[practiceIndex - 1]);
   }, [unlearnedChars, practiceIndex]);
 
-  if (!_hydrated) return null;
+  if (!_hydrated || isLoading || !characters) return <LoadingScreen />;
 
   const allLearned = unlearnedChars.length === 0;
 
@@ -130,7 +133,7 @@ export default function GeezLessonScreen() {
         </View>
 
         {tab === "chart" ? (
-          <FidelGrid learnedIds={learnedIds} onSelect={setSelectedChar} />
+          <FidelGrid characters={characters} learnedIds={learnedIds} onSelect={setSelectedChar} />
         ) : (
           <View style={{ flex: 1, paddingHorizontal: 20 }}>
             {allLearned ? (
@@ -174,7 +177,7 @@ export default function GeezLessonScreen() {
                 </View>
 
                 <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-                  <TracingCanvas character={practiceChar} />
+                  {practiceChar && <TracingCanvas character={practiceChar} />}
                 </View>
 
                 <View style={{ gap: 8, paddingBottom: 24, paddingTop: 8 }}>

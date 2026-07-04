@@ -1,9 +1,10 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LoadingScreen } from "@/components/loading-screen";
 import { GameEyebrow, GameOption, GameProgress, GameResultView, tint } from "@/components/games/game-kit";
 import { getAccent } from "@/constants/accent-colors";
 import type { AccentColor } from "@/constants/accent-colors";
-import { FIDEL_CHART } from "@/lib/data/geez/fidel-chart";
-import { ALL_NSIBIDI_CHARACTERS } from "@/lib/data/nsibidi";
+import { useGeezCharacters, useNsibidiCharacters } from "@/lib/hooks/use-script-data";
+import type { GeezCharacter, NsibidiCharacter } from "@/types/scripts";
 import { hapticError, hapticSuccess } from "@/lib/haptics";
 import { apiFetch } from "@/lib/api";
 import { playCorrectSound, playFinishSound, playIncorrectSound } from "@/lib/sounds";
@@ -39,8 +40,8 @@ function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
-function buildGeezQuestions(): DecodeQuestion[] {
-  const pool = shuffle(FIDEL_CHART).slice(0, SESSION_SIZE + 12);
+function buildGeezQuestions(chart: GeezCharacter[]): DecodeQuestion[] {
+  const pool = shuffle(chart).slice(0, SESSION_SIZE + 12);
   return pool.slice(0, SESSION_SIZE).map((char) => {
     const distractors = shuffle(pool.filter((c) => c.id !== char.id))
       .slice(0, 3)
@@ -56,8 +57,8 @@ function buildGeezQuestions(): DecodeQuestion[] {
   });
 }
 
-function buildNsibidiQuestions(): DecodeQuestion[] {
-  const pool = shuffle(ALL_NSIBIDI_CHARACTERS).slice(0, SESSION_SIZE + 12);
+function buildNsibidiQuestions(characters: NsibidiCharacter[]): DecodeQuestion[] {
+  const pool = shuffle(characters).slice(0, SESSION_SIZE + 12);
   return pool.slice(0, SESSION_SIZE).map((char) => {
     const distractors = shuffle(pool.filter((c) => c.id !== char.id))
       .slice(0, 3)
@@ -143,6 +144,8 @@ export default function ScriptDecodeScreen() {
   const { selectedLanguageId } = useLanguageStore();
 
   const { onStreakUpdate, dismissCelebration, toast, dismissToast } = useStreakCelebration();
+  const { data: geezChart, isLoading: geezLoading } = useGeezCharacters();
+  const { data: nsibidiCharacters, isLoading: nsibidiLoading } = useNsibidiCharacters();
   const [mode, setMode] = useState<ScriptMode | null>(null);
   const [phase, setPhase] = useState<"config" | "active" | "results">("config");
   const [questions, setQuestions] = useState<DecodeQuestion[]>([]);
@@ -157,7 +160,9 @@ export default function ScriptDecodeScreen() {
   const accent: AccentColor = mode === "geez" ? GEEZ_ACCENT : NSIBIDI_ACCENT;
 
   const handleStart = useCallback((selectedMode: ScriptMode) => {
-    const qs = selectedMode === "geez" ? buildGeezQuestions() : buildNsibidiQuestions();
+    const qs = selectedMode === "geez"
+      ? buildGeezQuestions(geezChart ?? [])
+      : buildNsibidiQuestions(nsibidiCharacters ?? []);
     setMode(selectedMode);
     setQuestions(qs);
     setIndex(0);
@@ -166,7 +171,7 @@ export default function ScriptDecodeScreen() {
     setLocked(false);
     setStartTime(Date.now());
     setPhase("active");
-  }, []);
+  }, [geezChart, nsibidiCharacters]);
 
   const advance = useCallback(() => {
     if (index + 1 >= questions.length) {
@@ -215,7 +220,10 @@ export default function ScriptDecodeScreen() {
     setTimeout(advance, FEEDBACK_DELAY);
   }, [locked, questions, index, advance]);
 
-  if (phase === "config") return <ConfigScreen onStart={handleStart} />;
+  if (phase === "config") {
+    if (geezLoading || nsibidiLoading || !geezChart || !nsibidiCharacters) return <LoadingScreen />;
+    return <ConfigScreen onStart={handleStart} />;
+  }
 
   if (phase === "results") {
     const accuracy = Math.round((correctCount / questions.length) * 100);

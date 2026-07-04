@@ -1,11 +1,9 @@
 import { TracingCanvas } from "@/components/geez/tracing-canvas";
+import { LoadingScreen } from "@/components/loading-screen";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
-import { FIDEL_CHART } from "@/lib/data/geez/fidel-chart";
-import { NSIBIDI_CHARACTERS } from "@/lib/data/nsibidi";
-import { ADINKRA_SYMBOLS } from "@/lib/data/adinkra";
-import type { GeezCharacter } from "@/lib/data/geez/fidel-chart";
-import type { NsibidiCharacter } from "@/lib/data/nsibidi";
+import { useGeezCharacters, useNsibidiCharacters, useAdinkraSymbols } from "@/lib/hooks/use-script-data";
+import type { NsibidiCharacter } from "@/types/scripts";
 import { hapticSuccess, hapticTap } from "@/lib/haptics";
 import { useGeezStore } from "@/store/geez-store";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -145,6 +143,9 @@ export { ErrorBoundary } from "@/components/screen-error-boundary";
 export default function TraceSymbolScreen() {
   const M = useMuseumTheme();
   const { learnedIds, markLearned, hydrate, _hydrated } = useGeezStore();
+  const { data: geezChars, isLoading: geezLoading } = useGeezCharacters();
+  const { data: nsibidiChars, isLoading: nsibidiLoading } = useNsibidiCharacters();
+  const { data: adinkraSymbols, isLoading: adinkraLoading } = useAdinkraSymbols();
 
   useEffect(() => { if (!_hydrated) hydrate(); }, [_hydrated]);
 
@@ -153,10 +154,18 @@ export default function TraceSymbolScreen() {
   const [nsibidiIndex, setNsibidiIndex] = useState(0);
   const [adinkraIndex, setAdinkraIndex] = useState(0);
 
-  const unlearnedGeez = useMemo(() => FIDEL_CHART.filter((c) => !learnedIds.has(c.id)), [learnedIds]);
-  const currentGeez = unlearnedGeez[geezIndex] ?? FIDEL_CHART[0]!;
-  const currentNsibidi = NSIBIDI_CHARACTERS[nsibidiIndex % NSIBIDI_CHARACTERS.length]!;
-  const currentAdinkra = ADINKRA_SYMBOLS[adinkraIndex % ADINKRA_SYMBOLS.length]!;
+  const loading = geezLoading || nsibidiLoading || adinkraLoading || !geezChars || !nsibidiChars || !adinkraSymbols;
+
+  const unlearnedGeez = useMemo(
+    () => (geezChars ?? []).filter((c) => !learnedIds.has(c.id)),
+    [geezChars, learnedIds]
+  );
+  // Non-null: the component returns a loading state below whenever any of
+  // these three arrays is still empty/unloaded, so by the time this screen's
+  // main JSX renders, each is guaranteed to have at least one entry.
+  const currentGeez = (unlearnedGeez[geezIndex] ?? geezChars?.[0])!;
+  const currentNsibidi = (nsibidiChars ?? [])[nsibidiIndex % Math.max(nsibidiChars?.length ?? 1, 1)]!;
+  const currentAdinkra = (adinkraSymbols ?? [])[adinkraIndex % Math.max(adinkraSymbols?.length ?? 1, 1)]!;
 
   const modeColor = { geez: getAccent("teal").solid, nsibidi: getAccent("amber").solid, adinkra: getAccent("purple").solid }[mode];
 
@@ -179,6 +188,8 @@ export default function TraceSymbolScreen() {
     else setAdinkraIndex((i) => i + 1);
   }, [mode, unlearnedGeez.length]);
 
+  if (!_hydrated || loading) return <LoadingScreen />;
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["top", "bottom"]}>
       <Stack.Screen options={{ title: "Trace the Symbol", headerBackTitle: "Back" }} />
@@ -200,7 +211,7 @@ export default function TraceSymbolScreen() {
                 Order {currentGeez.order} · {currentGeez.baseConsonant} · romanized: {currentGeez.romanization}
               </Text>
               <Text style={{ fontSize: 11, color: M.muted, marginTop: 4 }}>
-                {learnedIds.size} / {FIDEL_CHART.length} characters learned
+                {learnedIds.size} / {geezChars.length} characters learned
               </Text>
             </View>
           )}

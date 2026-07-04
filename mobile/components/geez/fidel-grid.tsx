@@ -1,30 +1,46 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { View, Text, Pressable, ScrollView } from "react-native";
-import {
-  FIDEL_CHART,
-  FAMILY_GROUPS,
-  FAMILY_LABELS,
-  type GeezCharacter,
-} from "@/lib/data/geez";
+import type { GeezCharacter } from "@/types/scripts";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 
 const VOWEL_LABELS = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th"];
 
+// Fixed linguistic grouping for the grid header — a display convention, not
+// content, so it stays in code independent of which characters are loaded.
+const FAMILY_GROUPS: { label: string; families: string[] }[] = [
+  { label: "Basic", families: ["ha", "la", "hha", "ma", "ra", "sa", "sha"] },
+  { label: "Velars", families: ["qa", "ba", "va"] },
+  { label: "Dentals", families: ["ta", "cha"] },
+  { label: "Nasals & Glides", families: ["na", "nya", "a", "ka", "wa", "aa"] },
+  { label: "Sibilants", families: ["za", "zha", "ya"] },
+  { label: "Stops", families: ["da", "ja", "ga"] },
+  { label: "Ejectives", families: ["tha", "Cha", "pha", "tsa"] },
+  { label: "Labials", families: ["fa", "pa"] },
+];
+
 interface FidelGridProps {
+  characters: GeezCharacter[];
   learnedIds: Set<string>;
   onSelect: (character: GeezCharacter) => void;
 }
 
-export function FidelGrid({ learnedIds, onSelect }: FidelGridProps) {
+export function FidelGrid({ characters, learnedIds, onSelect }: FidelGridProps) {
   const M = useMuseumTheme();
 
   const getChar = useCallback(
     (consonant: string, order: number) =>
-      FIDEL_CHART.find(
-        (c) => c.baseConsonant === consonant && c.order === order
-      ),
-    []
+      characters.find((c) => c.baseConsonant === consonant && c.order === order),
+    [characters]
   );
+
+  // The 1st-order glyph of each family, for the grid's left-hand label column.
+  const familyLabels = useMemo(() => {
+    const labels: Record<string, string> = {};
+    for (const c of characters) {
+      if (c.order === 1) labels[c.baseConsonant] = c.character;
+    }
+    return labels;
+  }, [characters]);
 
   return (
     <ScrollView
@@ -52,7 +68,7 @@ export function FidelGrid({ learnedIds, onSelect }: FidelGridProps) {
           {group.families.map((family) => (
             <View key={family} style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 8, paddingVertical: 2 }}>
               <View style={{ width: 40, alignItems: "center" }}>
-                <Text style={{ fontSize: 15, color: M.sub }}>{FAMILY_LABELS[family]}</Text>
+                <Text style={{ fontSize: 15, color: M.sub }}>{familyLabels[family]}</Text>
               </View>
 
               {[1, 2, 3, 4, 5, 6, 7].map((order) => {

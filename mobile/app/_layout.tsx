@@ -21,6 +21,7 @@ import { useDownloadsStore } from "@/store/downloads-store";
 import { useGuestProgressStore } from "@/store/guest-progress-store";
 import { useGuestStore } from "@/store/guest-store";
 import { useLanguageStore } from "@/store/language-store";
+import { useContentStore } from "@/store/content-store";
 import { useNotificationStore } from "@/store/notification-store";
 import { useOverlayStore } from "@/store/overlay-store";
 import { useThemeStore } from "@/store/theme-store";
@@ -271,6 +272,9 @@ export default function RootLayout() {
   const hydrateGuestProgress = useGuestProgressStore((s) => s.hydrate);
   const hydrateWriteQueue = useWriteQueueStore((s) => s.hydrate);
   const hydrateDownloads = useDownloadsStore((s) => s.hydrate);
+  const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
+  const enrolledLanguageIds = useLanguageStore((s) => s.enrolledLanguageIds);
+  const hydrateContent = useContentStore((s) => s.hydrate);
   const [fontsLoaded, fontError] = useFonts({
     PlusJakartaSans_700Bold,
     PlusJakartaSans_600SemiBold,
@@ -314,6 +318,17 @@ export default function RootLayout() {
     hydrateWriteQueue,
     hydrateDownloads,
   ]);
+
+  // Offline/guest content snapshot (dictionary, sentences, proverbs, cultural,
+  // scripts, interactive stories) — re-hydrates whenever the active language
+  // changes, including the first (default) value before language-store's own
+  // async hydrate() resolves. Every enrolled language is hydrated too (not just
+  // the selected one) so the profile résumé can resolve completed lessons from
+  // any language the learner has studied, not only the one currently active.
+  useEffect(() => {
+    if (selectedLanguageId) hydrateContent(selectedLanguageId);
+    for (const id of enrolledLanguageIds) hydrateContent(id);
+  }, [selectedLanguageId, enrolledLanguageIds, hydrateContent]);
 
   // The native splash is hidden by <BrandSplash> on its first layout (not here),
   // so the ink overlay is already covering the screen when the native splash

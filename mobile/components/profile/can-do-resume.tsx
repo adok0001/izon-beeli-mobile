@@ -1,21 +1,17 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { COURSES } from "@/lib/data/courses";
-import { ALL_LESSONS } from "@/lib/data/lessons";
 import { LEVEL_CEFR } from "@/lib/data/series";
 import { useCanDoStatements } from "@/lib/hooks/use-progress";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { getSnapshotCourseLevel } from "@/store/content-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { Text, View } from "react-native";
 
-// lessonId -> course level -> CEFR band, so each ability can show the real
-// level it was earned at (bundled data only; server-authored lessons won't
-// resolve and simply render without a badge).
-const COURSE_ID_BY_LESSON = new Map(ALL_LESSONS.map((l) => [l.id, l.courseId]));
-const LEVEL_BY_COURSE = new Map(COURSES.map((c) => [c.id, c.level]));
+// Each ability shows the real level it was earned at, resolved from whichever
+// language snapshot has hydrated for that lesson (see content-store.ts); a
+// lesson whose snapshot hasn't loaded yet simply renders without a badge.
 function cefrForLesson(lessonId: string): string | null {
-  const courseId = COURSE_ID_BY_LESSON.get(lessonId);
-  const level = courseId ? LEVEL_BY_COURSE.get(courseId) : undefined;
+  const level = getSnapshotCourseLevel(lessonId);
   return level ? (LEVEL_CEFR[level] ?? null) : null;
 }
 

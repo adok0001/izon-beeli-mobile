@@ -1,9 +1,10 @@
 import { useMemo } from "react";
-import { ALL_LESSONS, type LessonData, type TranscriptSegment } from "@/lib/data/lessons";
 import { useCourses } from "@/lib/hooks/use-courses";
+import { getSnapshotLessons } from "@/store/content-store";
+import type { Lesson, TranscriptSegment } from "@/types";
 
 export interface LessonWordMatch {
-  lesson: LessonData;
+  lesson: Lesson;
   /** The first transcript line where the word appears — shown as the usage snippet. */
   segment: TranscriptSegment;
 }
@@ -14,12 +15,12 @@ function tokenize(text: string): string[] {
 }
 
 /** First transcript line that uses `word`, or null. Phrases match as a substring. */
-function findUsage(lesson: LessonData, word: string): TranscriptSegment | null {
+function findUsage(lesson: Lesson, word: string): TranscriptSegment | null {
   const target = word.toLowerCase().trim();
   if (!target) return null;
   const isPhrase = /\s/.test(target);
   return (
-    lesson.transcript.find((seg) =>
+    lesson.transcript?.find((seg) =>
       isPhrase ? seg.text.toLowerCase().includes(target) : tokenize(seg.text).includes(target)
     ) ?? null
   );
@@ -32,11 +33,11 @@ export function useLessonsForWord(word: string | undefined, languageId: string):
     if (!word) return [];
     const courseIds = new Set(courses.map((c) => c.id));
     const matches: LessonWordMatch[] = [];
-    for (const lesson of ALL_LESSONS) {
+    for (const lesson of getSnapshotLessons(languageId)) {
       if (!courseIds.has(lesson.courseId)) continue;
       const segment = findUsage(lesson, word);
       if (segment) matches.push({ lesson, segment });
     }
     return matches;
-  }, [word, courses]);
+  }, [word, courses, languageId]);
 }

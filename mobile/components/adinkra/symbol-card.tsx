@@ -1,6 +1,6 @@
 import { Pressable, Text, TouchableOpacity, View } from "react-native";
 import { useRouter } from "expo-router";
-import type { AdinkraSymbol } from "@/lib/data/adinkra";
+import type { AdinkraSymbol } from "@/types/scripts";
 import { AdinkraSymbolView } from "./adinkra-symbol";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ShareModal } from "@/components/share/share-modal";

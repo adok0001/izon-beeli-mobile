@@ -1,19 +1,22 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LoadingScreen } from "@/components/loading-screen";
-import { ALL_LESSONS } from "@/lib/data/lessons";
-import { useCourses } from "@/lib/hooks/use-courses";
+import { useCourses, useLanguageLessons } from "@/lib/hooks/use-courses";
 import { getLanguageName } from "@/lib/mock-data";
+import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useUiLanguageStore } from "@/store/ui-language-store";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { FlatList, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import type { LessonData } from "@/lib/data/lessons";
+import type { Lesson } from "@/types";
 
-function SongCard({ song }: { song: LessonData }) {
+function SongCard({ song }: { song: Lesson }) {
   const M = useMuseumTheme();
   const router = useRouter();
+  const uiLanguage = useUiLanguageStore((s) => s.uiLanguage);
+  const title = localize(song.title, uiLanguage, song.id);
 
   return (
     <Pressable
@@ -31,7 +34,7 @@ function SongCard({ song }: { song: LessonData }) {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 14, fontWeight: "600", color: M.text }} numberOfLines={1}>
-            {song.title}
+            {title}
           </Text>
           {song.artist && (
             <Text style={{ fontSize: 12, marginTop: 2, color: M.sub }} numberOfLines={1}>
@@ -50,17 +53,16 @@ export default function SongsScreen() {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const { languageId } = useLocalSearchParams<{ languageId: string }>();
-  const { data: courses = [], isLoading } = useCourses(languageId ?? "");
+  const { data: courses = [] } = useCourses(languageId ?? "");
+  const { data: lessons = [], isLoading } = useLanguageLessons(languageId ?? "");
 
   const songs = useMemo(() => {
-    const songCourseIds = courses
-      .filter((c) => c.courseType === "songs")
-      .map((c) => c.id);
-    if (songCourseIds.length === 0) return [];
-    return ALL_LESSONS.filter(
-      (l) => l.type === "song" && songCourseIds.includes(l.courseId)
+    const songCourseIds = new Set(
+      courses.filter((c) => c.courseType === "songs").map((c) => c.id)
     );
-  }, [courses]);
+    if (songCourseIds.size === 0) return [];
+    return lessons.filter((l) => l.type === "song" && songCourseIds.has(l.courseId));
+  }, [courses, lessons]);
 
   const languageName = getLanguageName(languageId ?? "");
 

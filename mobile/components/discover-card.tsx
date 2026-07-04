@@ -1,5 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { hasInteractiveStory } from "@/lib/data/interactive-stories";
+import { hasSnapshotInteractiveStory as hasInteractiveStory } from "@/store/content-store";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useAudioStore } from "@/store/audio-store";
 import type { DiscoverItem } from "@/types";

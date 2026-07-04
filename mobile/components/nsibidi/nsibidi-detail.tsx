@@ -1,7 +1,7 @@
 import { Modal, Pressable, View, Text } from "react-native";
-import type { NsibidiCharacter } from "@/lib/data/nsibidi";
+import type { NsibidiCharacter } from "@/types/scripts";
 import { NsibidiText } from "./nsibidi-text";
-import { NSIBIDI_CATEGORY_LABELS } from "@/lib/data/nsibidi";
+import { NSIBIDI_CATEGORY_LABELS } from "@/types/scripts";
 import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 

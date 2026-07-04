@@ -1,5 +1,5 @@
 import Svg, { Path } from "react-native-svg";
-import type { AdinkraSymbol } from "@/lib/data/adinkra";
+import type { AdinkraSymbol } from "@/types/scripts";
 
 interface Props {
   symbol: AdinkraSymbol;

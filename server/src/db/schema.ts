@@ -1040,8 +1040,54 @@ export const scriptCharacters = pgTable(
     category: varchar("category", { length: 64 }),
     displayOrder: integer("display_order").default(0).notNull(),
     isActive: boolean("is_active").default(true).notNull(),
+    // Full, untruncated fields per script type (previously lossy in the seed).
+    // Nsibidi: codePoint + name + meaning. Ge'ez: baseConsonant + vowelOrder.
+    // Adinkra: akanName + meaning + proverb + svgPath + svgViewBox.
+    name: text("name"),
+    meaning: text("meaning"),
+    codePoint: integer("code_point"),
+    baseConsonant: varchar("base_consonant", { length: 32 }),
+    vowelOrder: smallint("vowel_order"),
+    akanName: varchar("akan_name", { length: 200 }),
+    proverb: text("proverb"),
+    svgPath: text("svg_path"),
+    svgViewBox: varchar("svg_view_box", { length: 64 }),
   },
   (table) => [index("script_characters_script_id_idx").on(table.scriptId)]
+);
+
+// ---------- Interactive (branching) Stories ----------
+// Choose-your-path narrative experiences surfaced in Discover. The branching
+// scene graph is stored as jsonb; the app looks each story up by its storyId.
+
+type InteractiveStoryScene = {
+  id: string;
+  type: "narrative" | "choice" | "conclusion";
+  gradient: [string, string];
+  backgroundEmoji: string;
+  title?: string;
+  text: string;
+  choices?: { id: string; text: string; nextSceneId: string }[];
+  nextSceneId?: string;
+};
+
+export const interactiveStories = pgTable(
+  "interactive_stories",
+  {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    // Display language string (e.g. "Izon"); optional, mirrors the bundle shape.
+    language: varchar("language", { length: 64 }),
+    title: varchar("title", { length: 300 }).notNull(),
+    description: text("description").notNull(),
+    coverGradientFrom: varchar("cover_gradient_from", { length: 16 }).notNull(),
+    coverGradientTo: varchar("cover_gradient_to", { length: 16 }).notNull(),
+    coverEmoji: varchar("cover_emoji", { length: 16 }).notNull(),
+    estimatedMinutes: integer("estimated_minutes").notNull(),
+    author: varchar("author", { length: 200 }).notNull(),
+    initialSceneId: varchar("initial_scene_id", { length: 64 }).notNull(),
+    scenes: jsonb("scenes").$type<Record<string, InteractiveStoryScene>>().notNull(),
+    isActive: boolean("is_active").default(true).notNull(),
+  }
 );
 
 export const cultureItemTypeEnum = pgEnum("culture_item_type", ["film", "podcast", "blog"]);

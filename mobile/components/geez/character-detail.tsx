@@ -1,5 +1,5 @@
 import { View, Text, Pressable, Modal } from "react-native";
-import type { GeezCharacter } from "@/lib/data/geez";
+import type { GeezCharacter } from "@/types/scripts";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 
 const ORDER_LABELS: Record<number, string> = {
