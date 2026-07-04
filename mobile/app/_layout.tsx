@@ -432,10 +432,7 @@ export default function RootLayout() {
                   <Stack.Screen name="plus-paywall" options={{ headerShown: false }} />
                   <Stack.Screen name="practice-review" options={{ headerShown: false }} />
                   <Stack.Screen name="restore-account" options={{ headerShown: false }} />
-                  <Stack.Screen name="admin/broadcast" options={{ headerShown: false }} />
-                  <Stack.Screen name="admin/culture-content" options={{ headerShown: false }} />
-                  <Stack.Screen name="admin/daily-content" options={{ headerShown: false }} />
-                  <Stack.Screen name="admin/streak-tools" options={{ headerShown: false }} />
+                  <Stack.Screen name="admin" options={{ headerShown: false }} />
                 </Stack>
                 <StreakCelebrationHost />
               </GestureHandlerRootView>

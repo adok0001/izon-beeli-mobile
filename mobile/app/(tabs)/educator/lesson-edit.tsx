@@ -1,8 +1,8 @@
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { GLOSS_LANGUAGES, toLocalizedText } from "@/components/ui/localized-text-input";
+import { useStudioAccess } from "@/components/studio/studio-gate";
 import { getAccent } from "@/constants/accent-colors";
-import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useAudioStore } from "@/store/audio-store";
 import {
@@ -412,8 +412,7 @@ export default function EducatorLessonEditScreen() {
   const isEditMode = !!lessonId;
   const { uiLanguage } = useUiLanguageStore();
 
-  const { data: currentUser } = useCurrentUser();
-  const canAccess = currentUser ? canAccessEducatorPanel(currentUser) : false;
+  const { canAccess } = useStudioAccess();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -583,19 +582,6 @@ export default function EducatorLessonEditScreen() {
   const savedLabel = isEditMode ? t("common.save") : "Create Lesson";
   const saveButtonLabel = isSaving ? t("common.loading") : savedLabel;
   const deleteButtonLabel = deleteLesson.isPending ? t("common.loading") : "Delete Lesson";
-
-  if (!canAccess) {
-    return (
-      <>
-        <Stack.Screen options={{ title: screenTitle }} />
-        <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-neutral-900">
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-            {t("review.adminRequired")}
-          </Text>
-        </SafeAreaView>
-      </>
-    );
-  }
 
   if (isEditMode && detailLoading) {
     return (

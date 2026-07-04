@@ -3,7 +3,7 @@ import { NotificationBanner } from "@/components/notifications/notification-bann
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LocalizedTextInput, toLocalizedText } from "@/components/ui/localized-text-input";
 import type { LocalizedText } from "@/types";
-import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
+import { useStudioAccess } from "@/components/studio/studio-gate";
 import {
     EducatorDictionaryCategory,
     EducatorDictionaryEntry,
@@ -83,7 +83,7 @@ function VariantRows({ value, onChange }: { value: DialectalVariant[]; onChange:
 export default function EducatorDictionaryScreen() {
   const M = useMuseumTheme();
   const { t } = useTranslation();
-  const { data: currentUser } = useCurrentUser();
+  const { user: currentUser, canAccess } = useStudioAccess();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
   const [selectedLanguageId, setSelectedLanguageId] = useState<string | undefined>(undefined);
   const [editor, setEditor] = useState<EditorState>(EMPTY_EDITOR);
@@ -92,7 +92,6 @@ export default function EducatorDictionaryScreen() {
   const [filterCategory, setFilterCategory] = useState<EducatorDictionaryCategory | undefined>(undefined);
   const flatListRef = useRef<FlatList>(null);
 
-  const canAccess = currentUser ? canAccessEducatorPanel(currentUser) : false;
   const allowedLanguages = useMemo(() => {
     if (!currentUser) return [] as string[];
     if (currentUser.isAdmin) return LANGUAGES.map((l) => l.id);
@@ -514,17 +513,6 @@ export default function EducatorDictionaryScreen() {
       )}
     </View>
   );
-
-  if (!canAccess) {
-    return (
-      <>
-        <Stack.Screen options={{ title: t("educator.nav.dictionary") }} />
-        <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-neutral-900">
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400">{t("review.adminRequired")}</Text>
-        </SafeAreaView>
-      </>
-    );
-  }
 
   return (
     <>

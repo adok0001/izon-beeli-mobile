@@ -1,10 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useStudioAccess } from "@/components/studio/studio-gate";
 import { getAccent } from "@/constants/accent-colors";
-import {
-  canAccessEducatorPanel,
-  canManageBounties,
-  useCurrentUser,
-} from "@/lib/hooks/use-current-user";
+import { canManageBounties } from "@/lib/hooks/use-current-user";
 import { useEducatorStats } from "@/lib/hooks/use-educator-panel";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { getLanguageName } from "@/lib/mock-data";
@@ -91,8 +88,7 @@ export default function EducatorPanelScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
-  const { data: currentUser, isLoading } = useCurrentUser();
-  const canAccess = currentUser ? canAccessEducatorPanel(currentUser) : false;
+  const { user: currentUser, canAccess } = useStudioAccess();
   const { data: educatorStats } = useEducatorStats(canAccess);
   const [onboardingStep, setOnboardingStep] = useState<1 | 2 | 3 | null>(null);
 
@@ -112,37 +108,6 @@ export default function EducatorPanelScreen() {
     setOnboardingStep(null);
     AsyncStorage.setItem(ONBOARDING_KEY, "done").catch(() => {});
   };
-
-  if (!isLoading && !canAccess) {
-    return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: M.ink, alignItems: "center", justifyContent: "center" }} edges={["top"]}>
-        <View
-          style={{
-            width: 64, height: 64, borderRadius: 32,
-            alignItems: "center", justifyContent: "center",
-            backgroundColor: `${M.accent}12`,
-            borderWidth: 1, borderColor: `${M.accent}25`,
-          }}
-        >
-          <IconSymbol name="shield.fill" size={26} color={M.muted} />
-        </View>
-        <Text style={{ marginTop: 16, paddingHorizontal: 32, textAlign: "center", fontSize: 14, fontWeight: "600", color: M.sub }}>
-          {t("review.adminRequired")}
-        </Text>
-        <Pressable
-          onPress={() => router.replace("/(tabs)/profile")}
-          style={{
-            marginTop: 20, borderRadius: 999,
-            paddingHorizontal: 24, paddingVertical: 10,
-            borderWidth: 1, borderColor: M.border, backgroundColor: M.card,
-          }}
-          className="active:opacity-80"
-        >
-          <Text style={{ fontWeight: "700", color: M.text }}>{t("common.goBack")}</Text>
-        </Pressable>
-      </SafeAreaView>
-    );
-  }
 
   const languageNames = (currentUser?.reviewerLanguages ?? [])
     .map((languageId) => getLanguageName(languageId))

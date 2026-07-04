@@ -2,8 +2,8 @@ import { NotificationBanner } from "@/components/notifications/notification-bann
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
 import { friendlyError } from "@/lib/api";
+import { useStudioAccess } from "@/components/studio/studio-gate";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
 import {
   EducatorStoryChapter,
   useEducatorLessons,
@@ -138,8 +138,7 @@ export default function StoryEditScreen() {
   const { t } = useTranslation();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
-  const { data: currentUser } = useCurrentUser();
-  const canAccess = currentUser ? canAccessEducatorPanel(currentUser) : false;
+  const { canAccess } = useStudioAccess();
 
   const { data: arc, isLoading } = useEducatorStoryArc(courseId, canAccess);
   const { data: allLessons = [] } = useEducatorLessons(canAccess);

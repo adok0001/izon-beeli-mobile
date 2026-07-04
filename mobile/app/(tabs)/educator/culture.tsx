@@ -7,8 +7,8 @@ import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { LocalizedText } from "@/types";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useStudioAccess } from "@/components/studio/studio-gate";
 import { friendlyError } from "@/lib/api";
-import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
 import {
   CulturalItem,
   CulturalKeyTerm,
@@ -145,7 +145,7 @@ const inputCls =
 export default function EducatorCultureScreen() {
   const M = useMuseumTheme();
   const { t } = useTranslation();
-  const { data: currentUser } = useCurrentUser();
+  const { user: currentUser, canAccess } = useStudioAccess();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
   const flatListRef = useRef<FlatList>(null);
 
@@ -156,8 +156,6 @@ export default function EducatorCultureScreen() {
   const [editingProverb, setEditingProverb] = useState(false);
   const [culturalForm, setCulturalForm] = useState<CulturalForm>(EMPTY_CULTURAL);
   const [editingCultural, setEditingCultural] = useState(false);
-
-  const canAccess = currentUser ? canAccessEducatorPanel(currentUser) : false;
 
   const allowedLanguages = currentUser?.isAdmin
     ? LANGUAGES.map((l) => l.id)
@@ -1026,21 +1024,6 @@ export default function EducatorCultureScreen() {
       )}
     </View>
   );
-
-  // ── Access guard ──────────────────────────────────────────────────────────────
-
-  if (!canAccess) {
-    return (
-      <>
-        <Stack.Screen options={{ title: t("educator.nav.culture") }} />
-        <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-neutral-900">
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-            {t("review.adminRequired")}
-          </Text>
-        </SafeAreaView>
-      </>
-    );
-  }
 
   return (
     <>

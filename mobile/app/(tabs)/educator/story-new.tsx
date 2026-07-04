@@ -1,8 +1,8 @@
 import { LanguagePickerModal } from "@/components/language-picker";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
+import { useStudioAccess } from "@/components/studio/studio-gate";
 import { friendlyError } from "@/lib/api";
-import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import {
   useCreateStoryArc,
@@ -28,8 +28,7 @@ export default function StoryNewScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
-  const { data: currentUser } = useCurrentUser();
-  const canAccess = currentUser ? canAccessEducatorPanel(currentUser) : false;
+  const { user: currentUser, canAccess } = useStudioAccess();
 
   const { data: arcs = [] } = useEducatorStoryArcs(canAccess);
   const { data: courses = [], isLoading: coursesLoading } = useEducatorCourses(canAccess);

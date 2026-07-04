@@ -2,8 +2,8 @@ import { LanguagePickerModal } from "@/components/language-picker";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LocalizedTextInput, toLocalizedText } from "@/components/ui/localized-text-input";
+import { useStudioAccess } from "@/components/studio/studio-gate";
 import { getAccent } from "@/constants/accent-colors";
-import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { localize } from "@/lib/localize";
 import type { LocalizedText } from "@/types";
 import {
@@ -199,8 +199,7 @@ export default function EducatorCoursesScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
-  const { data: currentUser } = useCurrentUser();
-  const canAccess = currentUser ? canAccessEducatorPanel(currentUser) : false;
+  const { user: currentUser, canAccess } = useStudioAccess();
 
   const [selectedLanguageId, setSelectedLanguageId] = useState<string | undefined>(undefined);
   const [languagePickerVisible, setLanguagePickerVisible] = useState(false);
@@ -276,19 +275,6 @@ export default function EducatorCoursesScreen() {
   const generateLabel =
     courseActionMode === "new" ? "Create Starter Set" : `Generate "${effectiveStubLabel}"`;
   const actionButtonLabel = generateStubs.isPending ? t("common.loading") : generateLabel;
-
-  if (!canAccess) {
-    return (
-      <>
-        <Stack.Screen options={{ title: "Courses" }} />
-        <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-neutral-900">
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-            {t("review.adminRequired")}
-          </Text>
-        </SafeAreaView>
-      </>
-    );
-  }
 
   return (
     <>

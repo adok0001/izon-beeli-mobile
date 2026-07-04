@@ -1,7 +1,7 @@
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useStudioAccess } from "@/components/studio/studio-gate";
 import { getAccent } from "@/constants/accent-colors";
-import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
 import {
     EducatorLesson,
     useEducatorCourses,
@@ -13,7 +13,6 @@ import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -94,11 +93,9 @@ function LessonRow({
 export default function EducatorLessonsScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
-  const { t } = useTranslation();
   const { uiLanguage } = useUiLanguageStore();
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
-  const { data: currentUser } = useCurrentUser();
-  const canAccess = currentUser ? canAccessEducatorPanel(currentUser) : false;
+  const { canAccess } = useStudioAccess();
 
   const { data: courses = [] } = useEducatorCourses(canAccess);
   const { data: lessons = [] } = useEducatorLessons(canAccess);
@@ -109,19 +106,6 @@ export default function EducatorLessonsScreen() {
   const courseLessons = lessons.filter((l) => l.courseId === courseId);
   const courseTitle = course ? localize(course.title, uiLanguage) : undefined;
   const courseDescription = course ? localize(course.description, uiLanguage) : "";
-
-  if (!canAccess) {
-    return (
-      <>
-        <Stack.Screen options={{ title: "Lessons" }} />
-        <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-neutral-900">
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-            {t("review.adminRequired")}
-          </Text>
-        </SafeAreaView>
-      </>
-    );
-  }
 
   return (
     <>

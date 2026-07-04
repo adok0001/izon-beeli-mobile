@@ -1,4 +1,5 @@
 import { AudioPlayer } from "@/components/audio/audio-player";
+import { StudioGate } from "@/components/studio/studio-gate";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useAudioStore } from "@/store/audio-store";
 import { Stack, useRouter } from "expo-router";
@@ -26,11 +27,13 @@ export default function EducatorLayout() {
   const M = useMuseumTheme();
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: M.ink },
-      }}
-    />
+    <StudioGate role="educator">
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: M.ink },
+        }}
+      />
+    </StudioGate>
   );
 }

@@ -4,7 +4,7 @@ import { NotificationBanner } from "@/components/notifications/notification-bann
 import { getAccent } from "@/constants/accent-colors";
 import { friendlyError } from "@/lib/api";
 import { localize } from "@/lib/localize";
-import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
+import { useStudioAccess } from "@/components/studio/studio-gate";
 import {
   useDeleteEtymology,
   useEtymologyEntries,
@@ -131,7 +131,7 @@ function TrailEditor({
 export default function EducatorEtymologyScreen() {
   const M = useMuseumTheme();
   const { t } = useTranslation();
-  const { data: currentUser } = useCurrentUser();
+  const { user: currentUser, canAccess } = useStudioAccess();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
   const flatListRef = useRef<FlatList>(null);
 
@@ -140,8 +140,6 @@ export default function EducatorEtymologyScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [form, setForm] = useState<EtymologyForm>(EMPTY_FORM);
   const [editing, setEditing] = useState(false);
-
-  const canAccess = currentUser ? canAccessEducatorPanel(currentUser) : false;
 
   const allowedLanguages = currentUser?.isAdmin
     ? LANGUAGES.map((l) => l.id)
@@ -379,19 +377,6 @@ export default function EducatorEtymologyScreen() {
       )}
     </View>
   );
-
-  if (!canAccess) {
-    return (
-      <>
-        <Stack.Screen options={{ title: t("admin.nav.etymology") }} />
-        <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-neutral-900">
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-            {t("review.adminRequired")}
-          </Text>
-        </SafeAreaView>
-      </>
-    );
-  }
 
   return (
     <>
