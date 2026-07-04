@@ -1,6 +1,7 @@
 import { useInteractiveStory } from "@/lib/hooks/use-discover";
-import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { bronze, glass, MUSEUM, useMuseumTheme } from "@/lib/use-museum-theme";
 import type { StoryChoice } from "@/types";
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -56,6 +57,88 @@ function FilmstripProgress({
   );
 }
 
+const ROMAN_NUMERALS = ["I", "II", "III", "IV", "V", "VI"];
+
+function ChoiceTablet({
+  choice,
+  index,
+  onSelect,
+}: {
+  choice: StoryChoice;
+  index: number;
+  onSelect: (nextId: string) => void;
+}) {
+  const M = useMuseumTheme();
+  const reveal = useRef(new Animated.Value(0)).current;
+  const press = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.timing(reveal, {
+      toValue: 1,
+      duration: 420,
+      delay: 150 + index * 100,
+      useNativeDriver: true,
+    }).start();
+  }, [reveal, index]);
+
+  return (
+    <Animated.View
+      style={{
+        opacity: reveal,
+        transform: [
+          { translateY: reveal.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) },
+          { scale: press },
+        ],
+      }}
+    >
+      <Pressable
+        onPressIn={() =>
+          Animated.spring(press, { toValue: 0.97, speed: 40, useNativeDriver: true }).start()
+        }
+        onPressOut={() =>
+          Animated.spring(press, { toValue: 1, speed: 40, useNativeDriver: true }).start()
+        }
+        onPress={() => onSelect(choice.nextSceneId)}
+        style={({ pressed }) => ({
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 14,
+          borderRadius: 14,
+          paddingVertical: 14,
+          paddingHorizontal: 16,
+          marginBottom: 10,
+          backgroundColor: pressed ? bronze(0.16) : glass(0.05),
+          borderWidth: 1,
+          borderColor: pressed ? bronze(0.55) : glass(0.12),
+        })}
+        accessibilityRole="button"
+        accessibilityLabel={choice.text}
+      >
+        <View
+          style={{
+            width: 30,
+            height: 30,
+            borderRadius: 15,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: bronze(0.16),
+            borderWidth: 1,
+            borderColor: bronze(0.4),
+          }}
+        >
+          <Text style={{ fontSize: 11, fontWeight: "800", color: M.accentLight, letterSpacing: 0.5 }}>
+            {ROMAN_NUMERALS[index] ?? `${index + 1}`}
+          </Text>
+        </View>
+        <Text style={{ flex: 1, fontSize: 14, fontWeight: "600", color: M.parchment, lineHeight: 20 }}>
+          {choice.text}
+        </Text>
+        <Text style={{ fontSize: 15, color: bronze(0.55) }}>→</Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
 function ChoiceOverlay({
   choices,
   onSelect,
@@ -63,8 +146,7 @@ function ChoiceOverlay({
   choices: StoryChoice[];
   onSelect: (nextId: string) => void;
 }) {
-  const M = useMuseumTheme();
-  const slideAnim = useRef(new Animated.Value(100)).current;
+  const slideAnim = useRef(new Animated.Value(60)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -81,46 +163,34 @@ function ChoiceOverlay({
         bottom: 0,
         left: 0,
         right: 0,
-        paddingHorizontal: 20,
-        paddingBottom: 40,
-        paddingTop: 28,
-        backgroundColor: "rgba(7, 8, 15, 0.9)",
         opacity: fadeAnim,
         transform: [{ translateY: slideAnim }],
       }}
     >
-      <Text
-        style={{
-          fontSize: 9,
-          fontWeight: "800",
-          letterSpacing: 2.5,
-          color: "rgba(196,134,42,0.75)",
-          textAlign: "center",
-          marginBottom: 16,
-        }}
+      <LinearGradient
+        colors={["rgba(7,8,15,0)", "rgba(7,8,15,0.88)", MUSEUM.inkDeep]}
+        locations={[0, 0.32, 1]}
+        style={{ paddingHorizontal: 20, paddingTop: 50, paddingBottom: 40 }}
       >
-        — WHAT DO YOU DO? —
-      </Text>
-      {choices.map((choice) => (
-        <Pressable
-          key={choice.id}
-          onPress={() => onSelect(choice.nextSceneId)}
-          style={({ pressed }) => ({
-            borderRadius: 12,
-            paddingHorizontal: 18,
-            paddingVertical: 14,
-            marginBottom: 10,
-            backgroundColor: pressed ? "rgba(196, 134, 42, 0.18)" : "rgba(255, 255, 255, 0.06)",
-            borderWidth: 1,
-            borderColor: pressed ? "rgba(196, 134, 42, 0.5)" : "rgba(255, 255, 255, 0.14)",
-          })}
-          accessibilityRole="button"
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 9,
+            marginBottom: 18,
+          }}
         >
-          <Text style={{ fontSize: 14, fontWeight: "600", color: M.parchment, lineHeight: 20 }}>
-            {choice.text}
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: bronze(0.55) }} />
+          <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 3, color: bronze(0.8) }}>
+            WHAT DO YOU DO?
           </Text>
-        </Pressable>
-      ))}
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: bronze(0.55) }} />
+        </View>
+        {choices.map((choice, i) => (
+          <ChoiceTablet key={choice.id} choice={choice} index={i} onSelect={onSelect} />
+        ))}
+      </LinearGradient>
     </Animated.View>
   );
 }
@@ -169,6 +239,15 @@ export default function InteractiveStoryNative() {
       }, 50);
     }
   }, [story, currentPath]);
+
+  const goBack = useCallback(() => {
+    if (currentPath.length <= 1) return;
+    const next = currentPath.slice(0, -1);
+    setCurrentPath(next);
+    setTimeout(() => {
+      listRef.current?.scrollToIndex({ index: next.length - 1, animated: true });
+    }, 50);
+  }, [currentPath]);
 
   const handleChoice = useCallback(
     (nextId: string) => {
@@ -310,6 +389,27 @@ export default function InteractiveStoryNative() {
                 >
                   {scene.text}
                 </Text>
+
+                {/* Tap zone for back */}
+                {currentPath.length > 1 && isActive && (
+                  <Pressable
+                    onPress={goBack}
+                    style={{
+                      position: "absolute",
+                      left: 0,
+                      top: 80,
+                      bottom: 0,
+                      width: "35%",
+                      alignItems: "flex-start",
+                      justifyContent: "center",
+                      paddingLeft: 20,
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Previous scene"
+                  >
+                    <Text style={{ fontSize: 32, color: "rgba(255,255,255,0.25)" }}>‹</Text>
+                  </Pressable>
+                )}
 
                 {/* Tap zone for forward (narrative) */}
                 {scene.type === "narrative" && scene.nextSceneId && isActive && (
