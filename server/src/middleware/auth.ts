@@ -97,6 +97,39 @@ export const authMiddleware = createMiddleware<AuthEnv>(async (c, next) => {
 });
 
 /**
+ * Like authMiddleware, but treats a missing/invalid/expired token as
+ * anonymous instead of rejecting — for routes that accept both guest and
+ * signed-in submissions (userId stays unset for guests).
+ */
+export const optionalAuthMiddleware = createMiddleware<AuthEnv>(async (c, next) => {
+  const authHeader = c.req.header("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    await next();
+    return;
+  }
+
+  try {
+    const payload = await verifyToken(authHeader.slice(7), { secretKey: clerkSecretKey });
+    const clerkId = payload.sub;
+    if (clerkId) {
+      const [user] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.clerkId, clerkId))
+        .limit(1);
+      if (user) {
+        c.set("userId", user.id);
+        c.set("clerkId", clerkId);
+      }
+    }
+  } catch {
+    // Invalid/expired token — fall through as anonymous.
+  }
+
+  await next();
+});
+
+/**
  * Requires authMiddleware to have already run (userId set in context).
  * Rejects with 403 if the user does not have isAdmin = true.
  */

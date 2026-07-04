@@ -2,16 +2,16 @@ import { desc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index.js";
 import { feedback, users } from "../db/schema.js";
-import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
+import { adminMiddleware, authMiddleware, optionalAuthMiddleware, type AuthEnv } from "../middleware/auth.js";
 
 const VALID_CATEGORIES = ["bug", "suggestion", "other"] as const;
 
 export const feedbackRouter = new Hono<AuthEnv>();
 
-feedbackRouter.use("*", authMiddleware);
+feedbackRouter.use("*", optionalAuthMiddleware);
 
 feedbackRouter.post("/", async (c) => {
-  const userId = c.get("userId");
+  const userId = c.get("userId") as string | undefined;
   const body = await c.req.json<{
     category: string;
     message: string;
@@ -37,7 +37,7 @@ feedbackRouter.post("/", async (c) => {
   }
 
   await db.insert(feedback).values({
-    userId,
+    userId: userId ?? null,
     category: category as (typeof VALID_CATEGORIES)[number],
     message: message.trim(),
     platform: platform || null,
