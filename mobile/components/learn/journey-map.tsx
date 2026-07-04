@@ -287,9 +287,11 @@ export function JourneyMap({
             />
           </Svg>
 
-          {journey.areas.map((area) => (
-            <AreaLabel key={area.courseId} area={area} width={width} />
-          ))}
+          {/* On per-course screens the header already shows the unit title, so the
+              floating cartouche would be redundant — and would sit right where the
+              "Commencer" start bubble is anchored above the active node. */}
+          {!showStartBubble &&
+            journey.areas.map((area) => <AreaLabel key={area.courseId} area={area} width={width} />)}
 
           {journey.nodes.map((node) => (
             <JourneyNodeView
