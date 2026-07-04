@@ -36,6 +36,13 @@ interface PersistedShape {
   streak: number;
   lastActiveDate: string | null;
   freezeCount: number;
+  lastFreezeUsedDate: string | null;
+}
+
+export interface UseFreezeResult {
+  restored: boolean;
+  streak: number;
+  freezesRemaining: number;
 }
 
 export interface TrackListenResult {
@@ -51,6 +58,7 @@ interface GuestProgressState extends PersistedShape {
   isWordSaved: (dictionaryEntryId: string) => boolean;
   completeLesson: (lessonId: string) => CompleteLessonResult;
   trackListen: () => TrackListenResult;
+  useFreeze: () => UseFreezeResult;
   saveWord: (dictionaryEntryId: string) => void;
   removeWord: (dictionaryEntryId: string) => void;
   getSummary: () => ProgressSummary;
@@ -108,6 +116,7 @@ const INITIAL: PersistedShape = {
   streak: 0,
   lastActiveDate: null,
   freezeCount: 0,
+  lastFreezeUsedDate: null,
 };
 
 export const useGuestProgressStore = create<GuestProgressState>((set, get) => ({
@@ -181,6 +190,32 @@ export const useGuestProgressStore = create<GuestProgressState>((set, get) => ({
       streakMilestone: streakUpdate.streakMilestone,
       freezeCount: streakUpdate.freezeCount,
     };
+  },
+
+  useFreeze: () => {
+    const state = get();
+    const today = todayUtcStr();
+    const diff = diffDaysFromToday(state.lastActiveDate);
+
+    if (diff < 2) throw new Error("Streak is not broken");
+    if (state.freezeCount <= 0) throw new Error("No freezes available");
+    if (state.lastFreezeUsedDate === today) throw new Error("Already used a freeze today");
+
+    const now = new Date();
+    const yesterdayStr = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1))
+      .toISOString()
+      .slice(0, 10);
+
+    const next: PersistedShape = {
+      ...state,
+      lastActiveDate: yesterdayStr,
+      freezeCount: state.freezeCount - 1,
+      lastFreezeUsedDate: today,
+    };
+    set(next);
+    persist(next);
+
+    return { restored: true, streak: state.streak, freezesRemaining: next.freezeCount };
   },
 
   saveWord: (dictionaryEntryId) => {

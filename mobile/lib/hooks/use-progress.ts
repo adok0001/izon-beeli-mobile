@@ -313,10 +313,12 @@ export function useAwardChecklistBonus() {
 
 export function useUseFreeze() {
   const { getToken } = useAuth();
+  const isGuest = useGuestStore((s) => s.isGuest);
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async () => {
+      if (isGuest) return useGuestProgressStore.getState().useFreeze();
       const token = await getToken();
       return apiFetch<{ restored: boolean; streak: number; freezesRemaining: number }>(
         "/progress/freeze",
