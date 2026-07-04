@@ -1,11 +1,14 @@
-import { DISCOVER_TYPE_CONFIG } from "@/components/discover-card";
+import { ContinueListeningCard } from "@/components/explore/continue-listening-card";
 import { DiscoverRail } from "@/components/explore/discover-rail";
 import { FeaturedHero } from "@/components/explore/featured-hero";
-import { RoomTile } from "@/components/explore/room-tile";
+import { LevelBandRail } from "@/components/explore/level-band-rail";
+import { ProverbOfTheDay } from "@/components/proverb-of-the-day";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { ExhibitDivider } from "@/components/ui/section-header";
+import { getSeriesMeta } from "@/lib/data/series";
 import { useDiscover } from "@/lib/hooks/use-discover";
+import { useResumeLesson } from "@/lib/hooks/use-resume-lesson";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useLanguageStore } from "@/store/language-store";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -13,14 +16,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export { ErrorBoundary } from "@/components/screen-error-boundary";
 
-const ROOMS = ["blog", "podcast", "film"] as const;
-
 export default function LibraryScreen() {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const tr = (key: string) => t(key as never, { defaultValue: key }) as string;
   const router = useRouter();
   const { all } = useDiscover("all");
+  const { resumeState } = useResumeLesson();
+  const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
 
   const featuredItem = all.find((i) => i.featured) ?? all[0] ?? null;
   const openStory = (storyId: string) => router.push(`/discover-story/${storyId}` as never);
@@ -28,9 +31,15 @@ export default function LibraryScreen() {
   // Editorial rails. A podcast season (has storyId) reads as a "series";
   // podcasts without one are standalone episodes to "listen" to.
   const series = all.filter((i) => i.type === "podcast" && i.storyId);
-  const episodes = all.filter((i) => i.type === "podcast" && !i.storyId);
   const films = all.filter((i) => i.type === "film");
-  const blogs = all.filter((i) => i.type === "blog");
+
+  // Level bands ride on whichever season is currently promoted — today
+  // that's the one series in the registry (Bou Mie).
+  const primaryStoryId = series[0]?.storyId;
+  const seriesMeta = getSeriesMeta(primaryStoryId);
+  const levelBands = seriesMeta?.levelBands ?? [];
+  const openSeriesLevel = (level: string) =>
+    router.push({ pathname: "/series/[id]", params: { id: primaryStoryId!, level } });
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
@@ -52,17 +61,58 @@ export default function LibraryScreen() {
       >
         {/* Spotlight */}
         {featuredItem ? (
-          <View style={{ marginBottom: 16 }}>
-            <FeaturedHero item={featuredItem} />
+          <View style={{ marginBottom: 22 }}>
+            <FeaturedHero
+              item={featuredItem}
+              ctaLabel={featuredItem.type === "podcast" && featuredItem.storyId ? "Start Episode 1" : undefined}
+            />
           </View>
         ) : null}
+
+        {/* Continue listening — the last partially-played lesson, if any */}
+        {resumeState ? (
+          <View style={{ marginBottom: 22 }}>
+            <Text style={{ marginBottom: 10, paddingHorizontal: 4, fontSize: 15, fontWeight: "800", color: M.text, letterSpacing: -0.2 }}>
+              Continue listening
+            </Text>
+            <ContinueListeningCard />
+          </View>
+        ) : null}
+
+        {/* Editorial rails */}
+        <DiscoverRail title="New series" items={series} onSeeAll={() => router.push("/explore/podcast" as never)} onStoryPress={openStory} />
+        <DiscoverRail title="Films" items={films} onSeeAll={() => router.push("/explore/film" as never)} onStoryPress={openStory} />
+
+        {/* By level */}
+        {primaryStoryId ? (
+          <LevelBandRail bands={levelBands} onPress={(band) => openSeriesLevel(band.key)} />
+        ) : null}
+
+        {/* Cultural */}
+        <View style={{ marginBottom: 22 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10, paddingHorizontal: 4 }}>
+            <Text style={{ flex: 1, fontSize: 15, fontWeight: "800", color: M.text, letterSpacing: -0.2 }}>Cultural</Text>
+            <Pressable
+              onPress={() => router.push(`/cultural/${selectedLanguageId}` as never)}
+              hitSlop={8}
+              className="active:opacity-70"
+              style={{ flexDirection: "row", alignItems: "center", gap: 2 }}
+            >
+              <Text style={{ fontSize: 12, fontWeight: "700", color: M.accent }}>Gallery</Text>
+              <IconSymbol name="chevron.right" size={11} color={M.accent} />
+            </Pressable>
+          </View>
+          <Pressable onPress={() => router.push(`/cultural/${selectedLanguageId}` as never)} className="active:opacity-80">
+            <ProverbOfTheDay languageId={selectedLanguageId} />
+          </Pressable>
+        </View>
 
         {/* Today's gallery — cross-link to the daily surface so it isn't a
             second competing "library" (word/proverb/song of the day + games). */}
         <Pressable
           onPress={() => router.push("/today" as never)}
           className="active:opacity-80"
-          style={{ flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 14, padding: 14, marginBottom: 24, backgroundColor: M.card, borderWidth: 1, borderColor: M.border, borderLeftWidth: 3, borderLeftColor: M.accent }}
+          style={{ flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 14, padding: 14, marginBottom: 12, backgroundColor: M.card, borderWidth: 1, borderColor: M.border, borderLeftWidth: 3, borderLeftColor: M.accent }}
           accessibilityRole="button"
         >
           <IconSymbol name="sparkles" size={18} color={M.accent} />
@@ -72,32 +122,6 @@ export default function LibraryScreen() {
           </View>
           <IconSymbol name="chevron.right" size={15} color={M.muted} />
         </Pressable>
-
-        {/* Editorial rails */}
-        <DiscoverRail title="Series" items={series} onSeeAll={() => router.push("/explore/podcast" as never)} onStoryPress={openStory} />
-        <DiscoverRail title="Films" items={films} onSeeAll={() => router.push("/explore/film" as never)} onStoryPress={openStory} />
-        <DiscoverRail title="Listen" items={episodes} onSeeAll={() => router.push("/explore/podcast" as never)} onStoryPress={openStory} />
-        <DiscoverRail title="Read" items={blogs} onSeeAll={() => router.push("/explore/blog" as never)} onStoryPress={openStory} />
-
-        {/* Browse the library — demoted room tiles */}
-        <ExhibitDivider label={tr("explore.title").toUpperCase()} style={{ marginBottom: 12, marginTop: 4 }} />
-        <View style={{ gap: 12 }}>
-          {ROOMS.map((type) => {
-            const cfg = DISCOVER_TYPE_CONFIG[type];
-            return (
-              <RoomTile
-                key={type}
-                kicker={tr(cfg.roomKickerKey)}
-                title={tr(cfg.roomTitleKey)}
-                subtitle={tr(`library.${type === "blog" ? "readingRoomSub" : type === "podcast" ? "listeningBoothSub" : "screeningRoomSub"}`)}
-                glyph={cfg.heroGlyph}
-                color={cfg.color}
-                gradient={cfg.gradient}
-                onPress={() => router.push(`/explore/${type}` as never)}
-              />
-            );
-          })}
-        </View>
 
         {/* Empty state */}
         {all.length === 0 ? (

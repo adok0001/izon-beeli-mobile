@@ -223,10 +223,7 @@ export default function LearnScreen() {
                 label={t("learn.jumpBackIn", { defaultValue: "Jump Back In" })}
                 style={{ marginBottom: 8 }}
               />
-              <ContinueCard
-                lessonId={resumeState.lessonId}
-                positionSeconds={resumeState.positionSeconds}
-              />
+              <ContinueCard />
             </View>
           )}
 

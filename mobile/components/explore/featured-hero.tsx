@@ -10,9 +10,11 @@ import { Pressable, Text, View } from "react-native";
 
 interface FeaturedHeroProps {
   item: DiscoverItem;
+  /** Overrides the type's default CTA copy (e.g. "Start Episode 1" for a season spotlight). */
+  ctaLabel?: string;
 }
 
-export function FeaturedHero({ item }: FeaturedHeroProps) {
+export function FeaturedHero({ item, ctaLabel }: FeaturedHeroProps) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const tr = (key: string) => t(key as never, { defaultValue: key }) as string;
@@ -105,7 +107,7 @@ export function FeaturedHero({ item }: FeaturedHeroProps) {
           }}
         >
           <IconSymbol name={cfg.icon} size={11} color={cfg.color} />
-          <Text style={{ fontSize: 11, fontWeight: "700", color: cfg.color }}>{cfg.cta}</Text>
+          <Text style={{ fontSize: 11, fontWeight: "700", color: cfg.color }}>{ctaLabel ?? cfg.cta}</Text>
         </View>
       </LinearGradient>
     </Pressable>

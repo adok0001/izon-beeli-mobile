@@ -1,8 +1,10 @@
 /**
  * "Bou Mie" — FILMS (Izon reference mini-series)
  * ----------------------------------------------
- * Three films in the same world as the podcast "The Long Way Home", sharing a
- * mini-series storyId so the Discover feed groups them:
+ * Three films in the same world as the podcast "The Long Way Home". They share a
+ * `seriesId` (the mini-series grouping) and each carries its own interactive
+ * `storyId` so it opens as a playable branching story; the series screen surfaces
+ * them together in its "Also in this world" rail.
  *   F1  izon-film-creeks     · DOCUMENTARY     ~8m  — the creeks & the thinning catch
  *   F2  izon-film-emptynet   · NARRATIVE SHORT ~12m — Tari, Timi & Uncle Ere, one bad day
  *   F3  izon-film-woyengi    · HERITAGE FILM   ~10m — the Woyengi creation story, retold
@@ -18,8 +20,6 @@
 import type { FilmItem } from "../film-types";
 
 const FILM_SERIES = "izon-boumie-films";
-/** Shared so the three films group as a mini-series in Discover. */
-const FILM_STORY = "story-izon-boumie-films";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // F1 — DOCUMENTARY (short) — "Toru Angọ — The Creeks Remember"
@@ -295,4 +295,3 @@ const F3: FilmItem = {
 };
 
 export const IZON_FILMS: FilmItem[] = [F1, F2, F3];
-export const IZON_FILM_STORY_ID = FILM_STORY;
