@@ -11,11 +11,19 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
-function FilmstripProgress({ total, current }: { total: number; current: number }) {
+function FilmstripProgress({
+  total,
+  current,
+  topInset,
+}: {
+  total: number;
+  current: number;
+  topInset: number;
+}) {
   const M = useMuseumTheme();
   return (
     <View
@@ -26,7 +34,7 @@ function FilmstripProgress({ total, current }: { total: number; current: number 
         paddingTop: 14,
         paddingBottom: 10,
         position: "absolute",
-        top: 0,
+        top: topInset,
         left: 0,
         right: 0,
         zIndex: 10,
@@ -122,6 +130,7 @@ export { ErrorBoundary } from "@/components/screen-error-boundary";
 
 export default function InteractiveStoryNative() {
   const M = useMuseumTheme();
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: story } = useInteractiveStory(id);
@@ -192,10 +201,10 @@ export default function InteractiveStoryNative() {
     <View style={{ flex: 1, backgroundColor: M.inkDeep }}>
       <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
         {/* Filmstrip */}
-        <FilmstripProgress total={totalScenes} current={currentIndex} />
+        <FilmstripProgress total={totalScenes} current={currentIndex} topInset={insets.top} />
 
         {/* Exit button */}
-        <View style={{ position: "absolute", top: 40, right: 16, zIndex: 20 }}>
+        <View style={{ position: "absolute", top: insets.top + 8, right: 16, zIndex: 20 }}>
           <Pressable
             onPress={() => router.back()}
             style={{
