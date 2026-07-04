@@ -184,7 +184,7 @@ export default function CourseTreeScreen() {
           refreshing={refreshing}
           onRefresh={onRefresh}
           accent={M.accent}
-          showStartBubble
+          perCourse
           footer={upNextTeaser}
         />
       )}

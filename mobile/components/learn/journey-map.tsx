@@ -35,8 +35,9 @@ interface JourneyMapProps {
   lively?: boolean;
   /** The in-path "défi du jour" coin, pinned beside the active node. */
   challenge?: { word: string; done: boolean; onPress: () => void };
-  /** Show a "Start" pill anchored above the active node — use on per-course screens. */
-  showStartBubble?: boolean;
+  /** Per-course screen: the header already shows the unit title, so hide the
+   *  redundant floating chapter cartouche. */
+  perCourse?: boolean;
 }
 
 /**
@@ -185,11 +186,10 @@ export function JourneyMap({
   footer,
   lively = true,
   challenge,
-  showStartBubble = false,
+  perCourse = false,
 }: JourneyMapProps) {
   const M = useMuseumTheme();
   const router = useRouter();
-  const { t } = useTranslation();
   const { uiLanguage } = useUiLanguageStore();
   const { width } = useWindowDimensions();
   const scrollRef = useRef<ScrollView>(null);
@@ -288,9 +288,8 @@ export function JourneyMap({
           </Svg>
 
           {/* On per-course screens the header already shows the unit title, so the
-              floating cartouche would be redundant — and would sit right where the
-              "Commencer" start bubble is anchored above the active node. */}
-          {!showStartBubble &&
+              floating cartouche would be redundant. */}
+          {!perCourse &&
             journey.areas.map((area) => <AreaLabel key={area.courseId} area={area} width={width} />)}
 
           {journey.nodes.map((node) => (
@@ -313,34 +312,6 @@ export function JourneyMap({
             />
           )}
 
-          {showStartBubble && journey.activeIndex >= 0 && (() => {
-            const n = journey.nodes[journey.activeIndex];
-            return (
-              <Pressable
-                onPress={() => setSelected(n)}
-                style={{
-                  position: "absolute",
-                  left: n.x - 36,
-                  top: n.y - 80,
-                  zIndex: 6,
-                  backgroundColor: MUSEUM.accent,
-                  borderRadius: 999,
-                  paddingHorizontal: 20,
-                  paddingVertical: 8,
-                  shadowColor: MUSEUM.accent,
-                  shadowOpacity: 0.55,
-                  shadowRadius: 10,
-                  shadowOffset: { width: 0, height: 4 },
-                }}
-                accessibilityRole="button"
-                accessibilityLabel={t("learn.startShort", { defaultValue: "Start" })}
-              >
-                <Text style={{ color: "#fff", fontSize: 14, fontWeight: "800", letterSpacing: 0.3 }}>
-                  {t("learn.startShort", { defaultValue: "Start" })}
-                </Text>
-              </Pressable>
-            );
-          })()}
         </View>
 
         {footer ? <View style={{ paddingBottom: 16 }}>{footer}</View> : null}
