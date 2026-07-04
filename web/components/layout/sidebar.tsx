@@ -1,10 +1,8 @@
 "use client";
 
-import { apiFetch } from "@/lib/api";
+import { useMe } from "@/lib/hooks/use-me";
 import { cn } from "@/lib/utils";
-import type { UserMe } from "@/types";
 import { useAuth, UserButton } from "@clerk/nextjs";
-import { useQuery } from "@tanstack/react-query";
 import {
     BarChart2,
     BookOpen,
@@ -91,16 +89,9 @@ const SECONDARY_GROUPS = [
 export function Sidebar() {
   const pathname = usePathname();
   const { t } = useTranslation();
-  const { getToken, isSignedIn } = useAuth();
+  const { isSignedIn } = useAuth();
 
-  const { data: me } = useQuery<UserMe>({
-    queryKey: ["me"],
-    queryFn: async () => {
-      const token = await getToken();
-      return apiFetch<UserMe>("/users/me", { token: token ?? undefined });
-    },
-    enabled: !!isSignedIn,
-  });
+  const { data: me } = useMe();
 
   return (
     <aside

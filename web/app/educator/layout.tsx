@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { EducatorShell } from "./_components/educator-shell";
+import { StudioShell } from "../(studio)/_components/studio-shell";
 
 export const metadata: Metadata = {
   title: { default: "Educator Panel", template: "%s | Educator — Beeli" },
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function EducatorLayout({ children }: { children: React.ReactNode }) {
-  return <EducatorShell>{children}</EducatorShell>;
+  return <StudioShell access="reviewer">{children}</StudioShell>;
 }

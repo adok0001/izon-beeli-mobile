@@ -1,8 +1,9 @@
 "use client";
 
 import { apiFetch } from "@/lib/api";
+import { useMe } from "@/lib/hooks/use-me";
 import { useTourStore } from "@/store/tour-store";
-import type { UserMe, UserProfile } from "@/types";
+import type { UserProfile } from "@/types";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
@@ -223,13 +224,7 @@ export default function ProfilePage() {
     },
   });
 
-  const { data: me } = useQuery<UserMe>({
-    queryKey: ["me"],
-    queryFn: async () => {
-      const token = await getToken();
-      return apiFetch<UserMe>("/users/me", { token: token ?? undefined });
-    },
-  });
+  const { data: me } = useMe();
 
   return (
     <div className="max-w-xl mx-auto px-4 py-6">

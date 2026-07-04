@@ -1,11 +1,9 @@
 "use client";
 
-import { apiFetch } from "@/lib/api";
+import { useMe } from "@/lib/hooks/use-me";
 import { WEB_TOUR_REGISTRY, type WebTourAudience, type WebTourId } from "@/lib/tours/web-tour-registry";
 import { useTourStore } from "@/store/tour-store";
 import type { UserMe } from "@/types";
-import { useAuth } from "@clerk/nextjs";
-import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronDown, Circle, ExternalLink, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -43,21 +41,13 @@ function audienceLabel(audience: WebTourAudience): string {
 }
 
 export function TourFloatingButton() {
-  const { getToken, isLoaded, isSignedIn } = useAuth();
   const { completedStepIds, markStepsCompleted, finishSteps } = useTourStore();
   const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
-  const { data: me, refetch: refetchMe } = useQuery<UserMe>({
-    queryKey: ["me"],
-    queryFn: async () => {
-      const token = await getToken();
-      return apiFetch<UserMe>("/users/me", { token: token ?? undefined });
-    },
-    enabled: isLoaded && isSignedIn === true,
-  });
+  const { data: me, refetch: refetchMe } = useMe();
 
   useEffect(() => {
     setMounted(true);

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AdminShell } from "./_components/admin-shell";
+import { StudioShell } from "../(studio)/_components/studio-shell";
 
 export const metadata: Metadata = {
   title: { default: "Admin Panel", template: "%s | Admin — Beeli" },
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return <AdminShell>{children}</AdminShell>;
+  return <StudioShell access="admin">{children}</StudioShell>;
 }

@@ -1,11 +1,9 @@
 "use client";
 
-import { apiFetch } from "@/lib/api";
+import { useMe } from "@/lib/hooks/use-me";
 import { WEB_TOUR_REGISTRY, type WebTourAudience } from "@/lib/tours/web-tour-registry";
 import { useTourStore } from "@/store/tour-store";
 import type { UserMe } from "@/types";
-import { useAuth } from "@clerk/nextjs";
-import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 
 function canSeeAudience(audience: WebTourAudience, me?: UserMe): boolean {
@@ -17,17 +15,9 @@ function canSeeAudience(audience: WebTourAudience, me?: UserMe): boolean {
 
 /** Auto-starts a local tour only for the current screen when unseen steps exist. */
 export function TourLauncher() {
-  const { getToken, isLoaded, isSignedIn } = useAuth();
   const { completedStepIds, active, start } = useTourStore();
 
-  const { data: me } = useQuery<UserMe>({
-    queryKey: ["me"],
-    queryFn: async () => {
-      const token = await getToken();
-      return apiFetch<UserMe>("/users/me", { token: token ?? undefined });
-    },
-    enabled: isLoaded && isSignedIn === true,
-  });
+  const { data: me } = useMe();
 
   const visibleSteps = Object.entries(WEB_TOUR_REGISTRY)
     .map(([id, definition]) => ({ id, ...definition }))

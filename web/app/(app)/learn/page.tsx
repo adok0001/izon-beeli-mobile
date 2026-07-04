@@ -5,10 +5,11 @@ import { SoundMap } from "@/components/learn/sound-map";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { apiFetch } from "@/lib/api";
+import { useMe } from "@/lib/hooks/use-me";
 import { generateIzonDefaults } from "@/lib/izon-map-defaults";
 import { useLanguageStore } from "@/store/language-store";
-import type { Course, MapNodeConfig, UserMe } from "@/types";
-import { useAuth, useUser } from "@clerk/nextjs";
+import type { Course, MapNodeConfig } from "@/types";
+import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Flame, LayoutGrid, Map, Star, Zap } from "lucide-react";
 import Link from "next/link";
@@ -143,19 +144,11 @@ type ViewMode = "grid" | "map";
 
 export default function LearnPage() {
   const { getToken } = useAuth();
-  const { isSignedIn } = useUser();
   const { selectedLanguageId, setLanguage } = useLanguageStore();
   const { t } = useTranslation();
   const [view, setView] = useState<ViewMode>("grid");
 
-  const { data: me } = useQuery<UserMe>({
-    queryKey: ["me"],
-    queryFn: async () => {
-      const token = await getToken();
-      return apiFetch<UserMe>("/users/me", { token: token ?? undefined });
-    },
-    enabled: !!isSignedIn,
-  });
+  const { data: me } = useMe();
 
   const { data: allCourses = [], isLoading } = useQuery<Course[]>({
     queryKey: ["courses", selectedLanguageId],
