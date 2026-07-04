@@ -1,9 +1,23 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { COURSES } from "@/lib/data/courses";
+import { ALL_LESSONS } from "@/lib/data/lessons";
+import { LEVEL_CEFR } from "@/lib/data/series";
 import { useCanDoStatements } from "@/lib/hooks/use-progress";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { Text, View } from "react-native";
+
+// lessonId -> course level -> CEFR band, so each ability can show the real
+// level it was earned at (bundled data only; server-authored lessons won't
+// resolve and simply render without a badge).
+const COURSE_ID_BY_LESSON = new Map(ALL_LESSONS.map((l) => [l.id, l.courseId]));
+const LEVEL_BY_COURSE = new Map(COURSES.map((c) => [c.id, c.level]));
+function cefrForLesson(lessonId: string): string | null {
+  const courseId = COURSE_ID_BY_LESSON.get(lessonId);
+  const level = courseId ? LEVEL_BY_COURSE.get(courseId) : undefined;
+  return level ? (LEVEL_CEFR[level] ?? null) : null;
+}
 
 /**
  * "What you can do" — the honest competence résumé. A growing list of real-world
@@ -40,21 +54,53 @@ export function CanDoResume() {
           <Text style={{ fontSize: 12, fontWeight: "700", color: M.muted }}>{`  ${data.length}`}</Text>
         </View>
 
-        {data.map((s) => {
-          const text = localize(
-            typeof s.canDo === "string" ? { en: s.canDo, fr: s.canDoFr ?? undefined } : s.canDo,
-            uiLanguage,
-          );
+        {data.map((s, i) => {
+          const text = localize({ en: s.canDo ?? "", fr: s.canDoFr ?? undefined }, uiLanguage);
           if (!text) return null;
+          const sourceTitle = localize(s.title, uiLanguage);
+          const cefr = cefrForLesson(s.lessonId);
           return (
-            <View key={s.lessonId} style={{ flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 10 }}>
+            <View
+              key={s.lessonId}
+              style={{
+                flexDirection: "row",
+                alignItems: "flex-start",
+                gap: 10,
+                paddingBottom: 10,
+                marginBottom: 10,
+                borderBottomWidth: i === data.length - 1 ? 0 : 1,
+                borderBottomColor: M.border,
+              }}
+            >
               <View style={{ marginTop: 2 }}>
                 <IconSymbol name="checkmark.circle.fill" size={16} color={M.success} />
               </View>
-              <Text style={{ flex: 1, fontSize: 14, lineHeight: 20, color: M.text }}>
-                <Text style={{ color: M.muted }}>{prefix}</Text>
-                {text}
-              </Text>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, lineHeight: 20, color: M.text }}>
+                  <Text style={{ color: M.muted }}>{prefix}</Text>
+                  {text}
+                </Text>
+                {sourceTitle ? (
+                  <Text style={{ marginTop: 3, fontSize: 11, color: M.muted }} numberOfLines={1}>
+                    {sourceTitle}
+                  </Text>
+                ) : null}
+              </View>
+              {cefr ? (
+                <View
+                  style={{
+                    marginTop: 2,
+                    borderRadius: 6,
+                    paddingHorizontal: 7,
+                    paddingVertical: 3,
+                    backgroundColor: M.accentGlow,
+                    borderWidth: 1,
+                    borderColor: M.accentBorder,
+                  }}
+                >
+                  <Text style={{ fontSize: 10, fontWeight: "800", color: M.accent }}>{cefr}</Text>
+                </View>
+              ) : null}
             </View>
           );
         })}

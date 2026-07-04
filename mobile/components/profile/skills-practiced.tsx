@@ -6,6 +6,7 @@ import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useMemo } from "react";
 import { Text, View } from "react-native";
+import Svg, { Circle, Line, Polygon } from "react-native-svg";
 
 // Lesson id -> skills, built once from bundled data.
 const SKILLS_BY_LESSON = new Map<string, string[]>(
@@ -13,6 +14,20 @@ const SKILLS_BY_LESSON = new Map<string, string[]>(
 );
 
 const SKILL_ORDER = Object.keys(SKILL_META) as (keyof typeof SKILL_META)[];
+const N = SKILL_ORDER.length;
+const RADAR_CENTER = 100;
+const RADAR_RADIUS = 80;
+
+/** Vertex of a regular N-gon, clockwise from the top, scaled by `value` (0-1). */
+function radarPoint(index: number, value: number): [number, number] {
+  const angle = -Math.PI / 2 + (index * 2 * Math.PI) / N;
+  const r = RADAR_RADIUS * value;
+  return [RADAR_CENTER + r * Math.cos(angle), RADAR_CENTER + r * Math.sin(angle)];
+}
+
+function polygonPoints(values: number[]): string {
+  return values.map((v, i) => radarPoint(i, v).join(",")).join(" ");
+}
 
 /**
  * "Skills practiced" — surfaces the six-competency framework (Listening,
@@ -38,48 +53,45 @@ export function SkillsPracticed() {
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   if (total === 0) return null;
 
-  const label = localize({ en: "Skills practiced", fr: "Compétences pratiquées" }, uiLanguage);
+  const label = localize({ en: "Your six skills", fr: "Vos six compétences" }, uiLanguage);
+  const maxCount = Math.max(1, ...Object.values(counts));
+  const values = SKILL_ORDER.map((skill) => (counts[skill] ?? 0) / maxCount);
 
   return (
     <View style={{ paddingHorizontal: 16, marginBottom: 12 }}>
       <View style={{ borderRadius: 16, padding: 16, backgroundColor: M.card, borderWidth: 1, borderColor: M.border }}>
-        <Text style={{ marginBottom: 12, fontSize: 12, fontWeight: "800", letterSpacing: 0.6, textTransform: "uppercase", color: M.muted }}>
+        <Text style={{ marginBottom: 14, fontSize: 12, fontWeight: "800", letterSpacing: 0.6, textTransform: "uppercase", color: M.muted }}>
           {label}
         </Text>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-          {SKILL_ORDER.map((skill) => {
-            const meta = SKILL_META[skill];
-            const n = counts[skill] ?? 0;
-            const active = n > 0;
-            return (
-              <View
-                key={skill}
-                className={active ? meta.badgeBg : ""}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 6,
-                  borderRadius: 999,
-                  paddingHorizontal: 11,
-                  paddingVertical: 6,
-                  borderWidth: 1,
-                  borderColor: active ? "transparent" : M.border,
-                  backgroundColor: active ? undefined : M.pillBg,
-                  opacity: active ? 1 : 0.5,
-                }}
-              >
-                <Text style={{ fontSize: 13 }}>{meta.icon}</Text>
-                <Text className={active ? meta.badgeText : ""} style={{ fontSize: 12, fontWeight: "700", color: active ? undefined : M.muted }}>
-                  {meta.label}
-                </Text>
-                {active ? (
-                  <Text className={meta.badgeText} style={{ fontSize: 11, fontWeight: "800", opacity: 0.8 }}>
-                    {n}
-                  </Text>
-                ) : null}
-              </View>
-            );
-          })}
+        <View style={{ flexDirection: "row", gap: 18, alignItems: "center" }}>
+          <Svg width={112} height={112} viewBox="0 0 200 200">
+            {[0.333, 0.667, 1].map((ring) => (
+              <Polygon key={ring} points={polygonPoints(SKILL_ORDER.map(() => ring))} fill="none" stroke={M.border} strokeWidth={1} />
+            ))}
+            {SKILL_ORDER.map((_, i) => {
+              const [x, y] = radarPoint(i, 1);
+              return <Line key={i} x1={RADAR_CENTER} y1={RADAR_CENTER} x2={x} y2={y} stroke={M.border} strokeWidth={1} />;
+            })}
+            <Polygon points={polygonPoints(values)} fill={M.accentGlow} stroke={M.accent} strokeWidth={2} />
+            {values.map((v, i) => {
+              const [x, y] = radarPoint(i, v);
+              return <Circle key={i} cx={x} cy={y} r={3} fill={M.accent} />;
+            })}
+          </Svg>
+          <View style={{ flex: 1, gap: 9 }}>
+            {SKILL_ORDER.map((skill, i) => {
+              const meta = SKILL_META[skill];
+              return (
+                <View key={skill} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <Text style={{ fontSize: 14 }}>{meta.icon}</Text>
+                  <Text style={{ fontSize: 12, color: M.sub, flex: 1 }}>{meta.label}</Text>
+                  <View style={{ width: 48, height: 4, borderRadius: 2, backgroundColor: M.pillBg, overflow: "hidden" }}>
+                    <View style={{ width: `${Math.round(values[i] * 100)}%`, height: "100%", borderRadius: 2, backgroundColor: M.accent }} />
+                  </View>
+                </View>
+              );
+            })}
+          </View>
         </View>
       </View>
     </View>
