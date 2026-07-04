@@ -12,6 +12,7 @@ const THUMB_SIZE = 72;
 interface CourseArtworkProps {
   course: Course;
   size?: "hero" | "thumb";
+  height?: number;
 }
 
 function accentFor(course: Course): string {
@@ -23,8 +24,9 @@ function gradientColors(accent: string): [string, string] {
   return [`${accent}55`, `${accent}22`];
 }
 
-export function CourseArtwork({ course, size = "hero" }: CourseArtworkProps) {
+export function CourseArtwork({ course, size = "hero", height }: CourseArtworkProps) {
   const isHero = size === "hero";
+  const resolvedHeight = height ?? (isHero ? HERO_HEIGHT : THUMB_SIZE);
   const accent = accentFor(course);
   const emoji = (course.courseType && COURSE_EMOJI[course.courseType]) || "📍";
 
@@ -33,7 +35,7 @@ export function CourseArtwork({ course, size = "hero" }: CourseArtworkProps) {
       <View
         style={{
           width: "100%",
-          height: isHero ? HERO_HEIGHT : THUMB_SIZE,
+          height: resolvedHeight,
           borderRadius: isHero ? 0 : 12,
           overflow: "hidden",
         }}
@@ -58,7 +60,7 @@ export function CourseArtwork({ course, size = "hero" }: CourseArtworkProps) {
       end={{ x: 1, y: 1 }}
       style={{
         width: "100%",
-        height: isHero ? HERO_HEIGHT : THUMB_SIZE,
+        height: resolvedHeight,
         borderRadius: isHero ? 0 : 12,
         overflow: "hidden",
         alignItems: "center",

@@ -155,15 +155,15 @@ export default function CourseTreeScreen() {
 
       {/* Unit artwork strip */}
       {course && (
-        <View style={{ height: 100, overflow: "hidden" }}>
-          <CourseArtwork course={course} size="hero" />
+        <View style={{ height: 160, overflow: "hidden" }}>
+          <CourseArtwork course={course} size="hero" height={160} />
           <View
             style={{
               position: "absolute",
               bottom: 0,
               left: 0,
               right: 0,
-              height: 40,
+              height: 56,
               backgroundColor: M.ink,
               opacity: 0.6,
             }}
