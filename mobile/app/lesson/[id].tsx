@@ -389,21 +389,30 @@ export default function LessonScreen() {
                 ) : null}
 
                 {proveItText ? (
-                  <View
+                  <Pressable
+                    onPress={() => router.push({ pathname: "/quiz", params: { courseId: lesson.courseId, lessonId: lesson.id } })}
                     style={{
                       marginTop: 14,
+                      flexDirection: "row",
+                      alignItems: "center",
                       backgroundColor: M.pillBg,
                       borderWidth: 1,
                       borderColor: M.border,
                       borderRadius: 12,
                       padding: 12,
                     }}
+                    className="active:opacity-70"
+                    accessibilityRole="button"
+                    accessibilityLabel={`${proveItLabel}: ${proveItText}`}
                   >
-                    <Text style={{ fontSize: 10, fontWeight: "800", letterSpacing: 0.8, textTransform: "uppercase", color: M.muted }}>
-                      {proveItLabel}
-                    </Text>
-                    <Text style={{ marginTop: 5, fontSize: 15, fontWeight: "700", color: M.text }}>{proveItText}</Text>
-                  </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 10, fontWeight: "800", letterSpacing: 0.8, textTransform: "uppercase", color: M.muted }}>
+                        {proveItLabel}
+                      </Text>
+                      <Text style={{ marginTop: 5, fontSize: 15, fontWeight: "700", color: M.text }}>{proveItText}</Text>
+                    </View>
+                    <IconSymbol name="trophy.fill" size={16} color={M.accent} />
+                  </Pressable>
                 ) : null}
               </View>
             ) : null}
