@@ -20,6 +20,7 @@ export interface EducatorLesson {
   isActive?: boolean;
   status: ContentStatus;
   createdBy: string | null;
+  publishAt?: string | null;
 }
 
 export interface EducatorLessonSegment {

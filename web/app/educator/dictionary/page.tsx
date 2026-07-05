@@ -1,15 +1,27 @@
 "use client";
 
+import { FileUploadField } from "@/components/media/file-upload-field";
+import { DevicePreview } from "@/components/studio/device-preview";
+import { DictionaryPreviewCard } from "@/components/studio/dictionary-preview-card";
+import { SchedulePublishModal } from "@/components/studio/schedule-publish-modal";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { LocalizedTextInput, type LocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
 import { StatusPill } from "@/components/ui/status-pill";
 import { apiFetch } from "@/lib/api";
-import { canPublishContent, canSubmitForReview, publishContent, type ContentStatus } from "@/lib/content-workflow";
+import {
+  canPublishContent,
+  canSubmitForReview,
+  isScheduled,
+  publishContent,
+  schedulePublishContent,
+  unschedulePublishContent,
+  type ContentStatus,
+} from "@/lib/content-workflow";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { LANGUAGES } from "@mobile/lib/data/languages";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, BookText, CheckCircle2, ChevronDown, Edit2, FileJson, ImageIcon, Mic, Plus, Search, Send, Trash2, Upload, Volume2, X, XCircle } from "lucide-react";
+import { AlertTriangle, BookText, CheckCircle2, ChevronDown, Clock, Edit2, Eye, FileJson, ImageIcon, Mic, Plus, Search, Send, Trash2, Upload, Volume2, X, XCircle } from "lucide-react";
 import Image from "next/image";
 import React, { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -34,6 +46,7 @@ interface DictEntry {
   /** Absent on contribution-sourced rows (_source: "contribution") — those use their own approval status. */
   status?: ContentStatus;
   createdBy?: string | null;
+  publishAt?: string | null;
   _source?: "contribution";
 }
 
@@ -88,53 +101,6 @@ const EMPTY_FORM: EntryForm = {
   imageUrl: null,
 };
 
-function FileUploadField({
-  label, accept, existingUrl, file, onFile, onClear, icon: Icon, previewType,
-}: Readonly<{
-  label: string; accept: string; existingUrl: string | null;
-  file: File | null; onFile: (f: File) => void; onClear: () => void;
-  icon: React.ElementType; previewType: "audio" | "image";
-}>) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const previewUrl = file ? URL.createObjectURL(file) : existingUrl;
-  return (
-    <div>
-      <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1.5 block">{label}</label>
-      <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50 p-3 space-y-2">
-        {previewUrl && previewType === "audio" && (
-          <audio controls src={previewUrl} className="w-full h-8" />
-        )}
-        {previewUrl && previewType === "image" && (
-          <div className="relative w-full h-28 rounded-md overflow-hidden border border-neutral-200 dark:border-neutral-700">
-            <Image src={previewUrl} alt="preview" fill className="object-cover" unoptimized />
-          </div>
-        )}
-        {previewUrl && !file && <p className="text-[10px] text-neutral-400 dark:text-neutral-500 truncate">{previewUrl}</p>}
-        {file && <p className="text-[10px] text-brand-600 dark:text-brand-400 font-medium truncate">↑ {file.name}</p>}
-        <div className="flex items-center gap-2">
-          <button type="button" onClick={() => inputRef.current?.click()}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors">
-            <Upload className="h-3 w-3" />{file ?? existingUrl ? "Replace" : "Upload"}
-          </button>
-          {previewUrl && (
-            <button type="button" onClick={onClear}
-              className="flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-              <X className="h-3 w-3" /> Remove
-            </button>
-          )}
-          {!previewUrl && (
-            <span className="text-xs text-neutral-400 dark:text-neutral-500 flex items-center gap-1">
-              <Icon className="h-3 w-3" /> No {previewType}
-            </span>
-          )}
-        </div>
-      </div>
-      <input ref={inputRef} type="file" accept={accept} className="hidden"
-        onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }} />
-    </div>
-  );
-}
-
 function EntryModal({
   initial, defaultLanguageId, prefillWord, languages, onSave, onClose, saving,
 }: Readonly<{
@@ -157,6 +123,7 @@ function EntryModal({
   });
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const set = (key: keyof EntryForm) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
@@ -224,13 +191,19 @@ function EntryModal({
           <div className="grid grid-cols-2 gap-3">
             <FileUploadField label={t("admin.dictionary.fieldAudio")} accept="audio/*" existingUrl={form.audioUrl}
               file={audioFile} onFile={setAudioFile} onClear={() => { setAudioFile(null); setForm((f) => ({ ...f, audioUrl: null })); }}
+              onPickUrl={(url) => { setAudioFile(null); setForm((f) => ({ ...f, audioUrl: url })); }}
               icon={Mic} previewType="audio" />
             <FileUploadField label={t("admin.dictionary.fieldImage")} accept="image/*" existingUrl={form.imageUrl}
               file={imageFile} onFile={setImageFile} onClear={() => { setImageFile(null); setForm((f) => ({ ...f, imageUrl: null })); }}
+              onPickUrl={(url) => { setImageFile(null); setForm((f) => ({ ...f, imageUrl: url })); }}
               icon={ImageIcon} previewType="image" />
           </div>
         </div>
         <div className="flex items-center justify-end gap-2 p-5 border-t border-neutral-200 dark:border-neutral-800">
+          <button onClick={() => setPreviewOpen(true)}
+            className="mr-auto flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+            <Eye className="h-4 w-4" /> Preview
+          </button>
           <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
             {t("admin.courses.cancel")}
           </button>
@@ -240,6 +213,24 @@ function EntryModal({
           </button>
         </div>
       </div>
+
+      <DevicePreview open={previewOpen} onClose={() => setPreviewOpen(false)}>
+        <DictionaryPreviewCard
+          entry={{
+            word: form.word,
+            translations: form.translations,
+            english: form.translations.en ?? form.english,
+            french: form.french,
+            category: form.category,
+            pronunciation: form.pronunciation,
+            example: form.example,
+            exampleTranslations: form.exampleTranslations,
+            exampleTranslation: form.exampleTranslation,
+            audioUrl: audioFile ? URL.createObjectURL(audioFile) : form.audioUrl,
+            imageUrl: imageFile ? URL.createObjectURL(imageFile) : form.imageUrl,
+          }}
+        />
+      </DevicePreview>
     </div>
   );
 }
@@ -584,6 +575,7 @@ export default function EducatorDictionaryPage() {
   const [expandedAudio, setExpandedAudio] = useState<string | null>(null);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const [editingContrib, setEditingContrib] = useState<{ id: string; draft: Partial<DictEntry> } | null>(null);
+  const [schedulingEntryId, setSchedulingEntryId] = useState<string | null>(null);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -701,6 +693,31 @@ export default function EducatorDictionaryPage() {
       toast.success("Published");
     },
     onError: (e: Error) => toast.error("Failed to publish", { description: e.message }),
+  });
+
+  const schedulePublishEntry = useMutation({
+    mutationFn: async ({ id, publishAt }: { id: string; publishAt: Date }) => {
+      const token = await getToken();
+      return schedulePublishContent("dictionary_entries", id, publishAt, token ?? undefined);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
+      toast.success("Publish scheduled");
+      setSchedulingEntryId(null);
+    },
+    onError: (e: Error) => toast.error("Failed to schedule", { description: e.message }),
+  });
+
+  const unschedulePublishEntry = useMutation({
+    mutationFn: async (id: string) => {
+      const token = await getToken();
+      return unschedulePublishContent("dictionary_entries", id, token ?? undefined);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
+      toast.success("Schedule cancelled");
+    },
+    onError: (e: Error) => toast.error("Failed to unschedule", { description: e.message }),
   });
 
   const deleteEntry = useMutation({
@@ -919,7 +936,7 @@ export default function EducatorDictionaryPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <p className="font-semibold text-neutral-900 dark:text-white">{entry.word}</p>
-                        <StatusPill status={entry.status} />
+                        <StatusPill status={entry.status} publishAt={entry.publishAt} />
                         {isContrib && (
                           <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 border border-brand-300 dark:border-brand-700">
                             Contrib
@@ -1013,6 +1030,26 @@ export default function EducatorDictionaryPage() {
                               <CheckCircle2 className="h-3.5 w-3.5" />
                             </button>
                           )}
+                          {me && canPublishContent(entry.status, entry.createdBy, { isAdmin: me.isAdmin, reviewerRole: me.reviewerRole, userId: me.id }) && (
+                            isScheduled(entry.status, entry.publishAt) ? (
+                              <button
+                                onClick={() => unschedulePublishEntry.mutate(entry.id)}
+                                disabled={unschedulePublishEntry.isPending}
+                                className="p-1.5 rounded-lg text-blue-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                title="Cancel scheduled publish"
+                              >
+                                <Clock className="h-3.5 w-3.5" />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => setSchedulingEntryId(entry.id)}
+                                className="p-1.5 rounded-lg text-neutral-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                title="Schedule publish…"
+                              >
+                                <Clock className="h-3.5 w-3.5" />
+                              </button>
+                            )
+                          )}
                           <button onClick={() => setModal({ mode: "edit", entry })}
                             className="p-1.5 rounded-lg text-neutral-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors">
                             <Edit2 className="h-3.5 w-3.5" />
@@ -1082,6 +1119,15 @@ export default function EducatorDictionaryPage() {
           saving={editContrib.isPending}
         />
       )}
+
+      {schedulingEntryId && (
+        <SchedulePublishModal
+          onClose={() => setSchedulingEntryId(null)}
+          onSchedule={(publishAt) => schedulePublishEntry.mutate({ id: schedulingEntryId, publishAt })}
+          saving={schedulePublishEntry.isPending}
+        />
+      )}
     </div>
   );
 }
+

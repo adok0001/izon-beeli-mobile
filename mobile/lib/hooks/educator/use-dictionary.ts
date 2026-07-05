@@ -32,6 +32,7 @@ export interface EducatorDictionaryEntry {
   /** Absent on contribution-sourced rows (_source: "contribution") — those use their own approval status. */
   status?: ContentStatus;
   createdBy?: string | null;
+  publishAt?: string | null;
   _source?: "contribution";
 }
 

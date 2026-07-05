@@ -3,6 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { GLOSS_LANGUAGES, toLocalizedText } from "@/components/ui/localized-text-input";
 import { useStudioAccess } from "@/components/studio/studio-gate";
+import { LessonHero } from "@/components/lesson/lesson-hero";
+import { SchedulePublishModal } from "@/components/studio/schedule-publish-modal";
 import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useAudioStore } from "@/store/audio-store";
@@ -10,6 +12,7 @@ import {
     canPublishContent,
     canSubmitForReview,
     EducatorLessonSegment,
+    isScheduled,
     STATUS_LABEL,
     STATUS_TONE,
     useCreateEducatorLesson,
@@ -19,6 +22,8 @@ import {
     usePublishContent,
     useReplaceEducatorLessonAudio,
     useReplaceEducatorLessonSegments,
+    useSchedulePublishContent,
+    useUnschedulePublishContent,
     useUpdateEducatorLesson,
 } from "@/lib/hooks/use-educator-panel";
 import { friendlyError } from "@/lib/api";
@@ -442,6 +447,9 @@ export default function EducatorLessonEditScreen() {
   const replaceAudio = useReplaceEducatorLessonAudio();
   const deleteLesson = useDeleteEducatorLesson();
   const publishLesson = usePublishContent("lessons", [["educator", "lesson", lessonId ?? null], ["educator", "lessons"]]);
+  const schedulePublishLesson = useSchedulePublishContent("lessons", [["educator", "lesson", lessonId ?? null], ["educator", "lessons"]]);
+  const unschedulePublishLesson = useUnschedulePublishContent("lessons", [["educator", "lesson", lessonId ?? null], ["educator", "lessons"]]);
+  const [schedulingOpen, setSchedulingOpen] = useState(false);
 
   const course = courses.find((c) => c.id === courseId);
 
@@ -765,16 +773,18 @@ export default function EducatorLessonEditScreen() {
             </Pressable>
             {previewVisible && (
               <View className="mt-2 overflow-hidden rounded-2xl border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900">
-                <View className="border-b border-neutral-100 px-4 py-4 dark:border-neutral-800">
-                  <Text className="text-xl font-bold text-neutral-900 dark:text-white">
-                    {title || t("educator.lessonEdit.untitled")}
-                  </Text>
-                  {description ? (
-                    <Text className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+                <LessonHero
+                  title={title || t("educator.lessonEdit.untitled")}
+                  overline={type ? type.toUpperCase() : "LESSON"}
+                  accentColor={getAccent("blue").solid}
+                />
+                {description ? (
+                  <View className="border-b border-neutral-100 px-4 pb-4 dark:border-neutral-800">
+                    <Text className="text-sm text-neutral-600 dark:text-neutral-400">
                       {description}
                     </Text>
-                  ) : null}
-                </View>
+                  </View>
+                ) : null}
                 {segments.some((s) => s.text.trim().length > 0) ? (
                   <View className="px-4 py-3">
                     <Text className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
@@ -843,6 +853,26 @@ export default function EducatorLessonEditScreen() {
                 <Text className="text-center font-semibold text-white">Publish</Text>
               </Pressable>
             ) : null}
+            {isEditMode && lessonDetail && currentUser && canPublishContent(lessonDetail.status, lessonDetail.createdBy, {
+              isAdmin: currentUser.isAdmin, reviewerRole: currentUser.reviewerRole, userId: currentUser.id,
+            }) ? (
+              isScheduled(lessonDetail.status, lessonDetail.publishAt) ? (
+                <Pressable
+                  onPress={() => lessonId && unschedulePublishLesson.mutate(lessonId)}
+                  disabled={unschedulePublishLesson.isPending}
+                  className="rounded-2xl bg-blue-100 py-4 active:opacity-70 dark:bg-blue-900/40"
+                >
+                  <Text className="text-center font-semibold text-blue-700 dark:text-blue-400">Cancel scheduled publish</Text>
+                </Pressable>
+              ) : (
+                <Pressable
+                  onPress={() => setSchedulingOpen(true)}
+                  className="rounded-2xl bg-neutral-100 py-4 active:opacity-70 dark:bg-neutral-800"
+                >
+                  <Text className="text-center font-semibold text-neutral-700 dark:text-neutral-200">Schedule publish…</Text>
+                </Pressable>
+              )
+            ) : null}
             {isEditMode ? (
               <Pressable
                 onPress={confirmDelete}
@@ -856,6 +886,18 @@ export default function EducatorLessonEditScreen() {
         </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+      {schedulingOpen && lessonId && (
+        <SchedulePublishModal
+          onClose={() => setSchedulingOpen(false)}
+          onSchedule={(publishAt) =>
+            schedulePublishLesson.mutate(
+              { id: lessonId, publishAt },
+              { onSuccess: () => setSchedulingOpen(false) }
+            )
+          }
+          saving={schedulePublishLesson.isPending}
+        />
+      )}
     </>
   );
 }

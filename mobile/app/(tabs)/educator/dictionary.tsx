@@ -10,24 +10,56 @@ import {
     canSubmitForReview,
     EducatorDictionaryCategory,
     EducatorDictionaryEntry,
+    isScheduled,
     STATUS_LABEL,
     STATUS_TONE,
     useDeleteEducatorDictionaryEntry,
     useEducatorDictionary,
     usePublishContent,
+    useSchedulePublishContent,
     useSubmitEducatorDictionaryForReview,
+    useUnschedulePublishContent,
     useUpsertEducatorDictionary,
 } from "@/lib/hooks/use-educator-panel";
 import { friendlyError } from "@/lib/api";
-import { DICTIONARY_CATEGORY_VALUES, splitList, type DialectalVariant } from "@/lib/dictionary";
+import { DICTIONARY_CATEGORY_VALUES, splitList, type DialectalVariant, type DictionaryEntry } from "@/lib/dictionary";
 import { useDictionaryCoverage } from "@/lib/hooks/use-contributions";
 import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
-import { Stack } from "expo-router";
+import { SchedulePublishModal } from "@/components/studio/schedule-publish-modal";
+import { usePreviewStore } from "@/store/preview-store";
+import { useUiLanguageStore } from "@/store/ui-language-store";
+import { Stack, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+/** Educator/admin dictionary rows carry nullable fields; the learner-facing
+ * DictionaryEntry type (shared with the real word screen) doesn't — bridge
+ * the two so the Studio preview can reuse the exact same renderer. */
+function toPreviewEntry(item: EducatorDictionaryEntry): DictionaryEntry {
+  return {
+    id: item.id,
+    word: item.word,
+    english: item.english,
+    translations: item.translations ?? undefined,
+    french: item.french ?? undefined,
+    category: item.category,
+    languageId: item.languageId,
+    pronunciation: item.pronunciation ?? undefined,
+    example: item.example ?? undefined,
+    exampleTranslation: item.exampleTranslation ?? undefined,
+    exampleTranslations: item.exampleTranslations ?? undefined,
+    exampleTranslationFr: item.exampleTranslationFr ?? undefined,
+    audioUrl: item.audioUrl ?? undefined,
+    imageUrl: item.imageUrl ?? undefined,
+    synonyms: item.synonyms ?? undefined,
+    antonyms: item.antonyms ?? undefined,
+    semanticDomain: item.semanticDomain ?? undefined,
+    dialectalVariants: item.dialectalVariants ?? undefined,
+  };
+}
 
 const CATEGORIES: EducatorDictionaryCategory[] = [...DICTIONARY_CATEGORY_VALUES];
 
@@ -90,6 +122,9 @@ function VariantRows({ value, onChange }: { value: DialectalVariant[]; onChange:
 export default function EducatorDictionaryScreen() {
   const M = useMuseumTheme();
   const { t } = useTranslation();
+  const router = useRouter();
+  const { uiLanguage } = useUiLanguageStore();
+  const setPreview = usePreviewStore((s) => s.setPreview);
   const { user: currentUser, canAccess } = useStudioAccess();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
   const [selectedLanguageId, setSelectedLanguageId] = useState<string | undefined>(undefined);
@@ -119,6 +154,9 @@ export default function EducatorDictionaryScreen() {
   const deleteEntry = useDeleteEducatorDictionaryEntry();
   const submitForReview = useSubmitEducatorDictionaryForReview();
   const publishEntry = usePublishContent("dictionary_entries", [["educator", "dictionary"]]);
+  const schedulePublishEntry = useSchedulePublishContent("dictionary_entries", [["educator", "dictionary"]]);
+  const unschedulePublishEntry = useUnschedulePublishContent("dictionary_entries", [["educator", "dictionary"]]);
+  const [schedulingEntryId, setSchedulingEntryId] = useState<string | null>(null);
   let saveButtonLabel = "Create";
   if (isEditing) saveButtonLabel = t("common.save");
   if (upsertEntry.isPending) saveButtonLabel = t("common.loading");
@@ -200,6 +238,11 @@ export default function EducatorDictionaryScreen() {
     ]);
   }, [deleteEntry, toastSuccess, toastError, t]);
 
+  const openPreview = useCallback((item: EducatorDictionaryEntry) => {
+    setPreview({ kind: "dictionary", entry: toPreviewEntry(item), uiLanguage });
+    router.push("/admin/preview" as never);
+  }, [setPreview, uiLanguage, router]);
+
   const filteredEntries = useMemo(() => {
     let result = entries;
     const q = searchQuery.toLowerCase().trim();
@@ -239,6 +282,29 @@ export default function EducatorDictionaryScreen() {
                 <IconSymbol name="checkmark.circle.fill" size={14} color={M.success} />
               </Pressable>
             ) : null}
+            {currentUser && canPublishContent(item.status, item.createdBy, {
+              isAdmin: currentUser.isAdmin, reviewerRole: currentUser.reviewerRole, userId: currentUser.id,
+            }) ? (
+              isScheduled(item.status, item.publishAt) ? (
+                <Pressable
+                  onPress={() => unschedulePublishEntry.mutate(item.id)}
+                  disabled={unschedulePublishEntry.isPending}
+                  className="rounded-full bg-blue-100 p-2 dark:bg-blue-900/40"
+                >
+                  <IconSymbol name="clock.fill" size={14} color={M.info} />
+                </Pressable>
+              ) : (
+                <Pressable
+                  onPress={() => setSchedulingEntryId(item.id)}
+                  className="rounded-full bg-neutral-100 p-2 dark:bg-neutral-800"
+                >
+                  <IconSymbol name="clock.fill" size={14} color={M.muted} />
+                </Pressable>
+              )
+            ) : null}
+            <Pressable onPress={() => openPreview(item)} className="rounded-full bg-blue-100 p-2 dark:bg-blue-900/40">
+              <IconSymbol name="eye.fill" size={14} color={M.info} />
+            </Pressable>
             <Pressable onPress={() => startEdit(item)} className="rounded-full bg-neutral-100 p-2 dark:bg-neutral-800">
               <IconSymbol name="gearshape.fill" size={14} color={M.muted} />
             </Pressable>
@@ -260,7 +326,7 @@ export default function EducatorDictionaryScreen() {
         </View>
       </View>
     ),
-    [startEdit, confirmDelete, submitForReview, publishEntry, currentUser],
+    [startEdit, confirmDelete, openPreview, submitForReview, publishEntry, unschedulePublishEntry, currentUser],
   );
 
   const listHeader = (
@@ -570,6 +636,18 @@ export default function EducatorDictionaryScreen() {
         />
         </KeyboardAvoidingView>
       </SafeAreaView>
+      {schedulingEntryId && (
+        <SchedulePublishModal
+          onClose={() => setSchedulingEntryId(null)}
+          onSchedule={(publishAt) =>
+            schedulePublishEntry.mutate(
+              { id: schedulingEntryId, publishAt },
+              { onSuccess: () => setSchedulingEntryId(null) }
+            )
+          }
+          saving={schedulePublishEntry.isPending}
+        />
+      )}
     </>
   );
 }
