@@ -385,7 +385,7 @@ function VisualPlacementForm({
       setUploading(true);
       try {
         const fd = new FormData();
-        fd.append("image", imageFile);
+        fd.append("file", imageFile);
         const res = await apiFetch<{ url: string }>("/upload/image", {
           method: "POST", body: fd, token: (await getToken()) ?? undefined,
         });
@@ -757,7 +757,7 @@ function VisualSoundboardForm({
       setUploading(true);
       try {
         const fd = new FormData();
-        fd.append("audio", audioFile);
+        fd.append("file", audioFile);
         const res = await apiFetch<{ url: string }>("/upload/audio", {
           method: "POST", body: fd, token: (await getToken()) ?? undefined,
         });
