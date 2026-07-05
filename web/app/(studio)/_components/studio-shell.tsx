@@ -6,18 +6,29 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import {
   Bell,
+  BookMarked,
   BookOpen,
   BookText,
   BrainCircuit,
+  Clapperboard,
   ClipboardList,
   CreditCard,
+  Flag,
+  Flame,
   Gamepad2,
   Globe2,
+  Handshake,
   Landmark,
+  Languages,
   LayoutDashboard,
+  ListChecks,
   MessageSquare,
   MessageSquareDiff,
+  MessagesSquare,
+  Quote,
+  SpellCheck,
   Sun,
+  Target,
   UserCheck,
   Users,
   type LucideIcon,
@@ -60,11 +71,14 @@ const AUTHORING_NAV: readonly NavItem[] = [
   { href: "/educator/courses",    labelKey: "educator.nav.lessons",    icon: BookOpen,          tourId: "educator-nav-courses" },
   { href: "/educator/sentences",  labelKey: "educator.nav.sentences",  icon: MessageSquareDiff, tourId: "educator-nav-sentences" },
   { href: "/educator/culture",    adminHref: "/admin/culture",    labelKey: "educator.nav.culture",    icon: Globe2,            tourId: "educator-nav-culture" },
+  { href: "/educator/etymology",  labelKey: "admin.nav.etymology",     icon: Landmark,          tourId: "educator-nav-etymology" },
+  { href: "/educator/proverbs",   labelKey: "educator.nav.proverbs",   icon: Quote,             tourId: "educator-nav-proverbs" },
+  { href: "/educator/scenarios",  labelKey: "educator.nav.scenarios",  icon: MessagesSquare,    tourId: "educator-nav-scenarios" },
+  { href: "/educator/story-arcs", labelKey: "educator.nav.storyArcs",  icon: BookMarked,        tourId: "educator-nav-story-arcs" },
+  { href: "/educator/quiz-bank",  labelKey: "educator.nav.quizBank",   icon: ListChecks,        tourId: "educator-nav-quiz-bank" },
 ];
 
-// Operations surfaces — admin only. Etymology stays here for now; making it
-// reviewer-accessible is Phase 1b (it must first move out from under the
-// admin-gated route group).
+// Operations surfaces — admin only.
 const OPS_NAV: readonly NavItem[] = [
   { href: "/admin/users",         labelKey: "admin.nav.users",         icon: Users,        tourId: "admin-nav-users" },
   { href: "/admin/applications",  labelKey: "admin.nav.applications",  icon: UserCheck,    tourId: "admin-nav-applications" },
@@ -74,7 +88,13 @@ const OPS_NAV: readonly NavItem[] = [
   { href: "/admin/daily-content", labelKey: "admin.nav.dailyContent",  icon: Sun,          tourId: "admin-nav-daily-content" },
   { href: "/admin/activities",    labelKey: "admin.nav.activities",    icon: Gamepad2,     tourId: "admin-nav-activities" },
   { href: "/admin/quiz",          labelKey: "admin.nav.quiz",          icon: BrainCircuit, tourId: "admin-nav-quiz" },
-  { href: "/admin/etymology",     labelKey: "admin.nav.etymology",     icon: Landmark,     tourId: "admin-nav-etymology" },
+  { href: "/admin/bounties",      labelKey: "admin.nav.bounties",      icon: Target,       tourId: "admin-nav-bounties" },
+  { href: "/admin/discover-stories", labelKey: "admin.nav.discoverStories", icon: Clapperboard, tourId: "admin-nav-discover-stories" },
+  { href: "/admin/streak-tools",  labelKey: "admin.nav.streakTools",   icon: Flame,        tourId: "admin-nav-streak-tools" },
+  { href: "/admin/languages",     labelKey: "admin.nav.languages",     icon: Languages,    tourId: "admin-nav-languages" },
+  { href: "/admin/content-partners", labelKey: "admin.nav.contentPartners", icon: Handshake, tourId: "admin-nav-content-partners" },
+  { href: "/admin/english-wordbank", labelKey: "admin.nav.englishWordbank", icon: SpellCheck, tourId: "admin-nav-english-wordbank" },
+  { href: "/admin/app-config",    labelKey: "admin.nav.appConfig",     icon: Flag,         tourId: "admin-nav-app-config" },
 ];
 
 function hasAccess(access: StudioAccess, me: { isAdmin: boolean; isReviewer: boolean }): boolean {

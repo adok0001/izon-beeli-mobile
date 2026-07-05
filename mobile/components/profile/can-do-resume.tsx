@@ -3,7 +3,7 @@ import { LEVEL_CEFR } from "@/lib/data/series";
 import { useCanDoStatements } from "@/lib/hooks/use-progress";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { getSnapshotCourseLevel } from "@/store/content-store";
+import { getSnapshotCourseLevel, useContentStore } from "@/store/content-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { Text, View } from "react-native";
 
@@ -25,6 +25,10 @@ export function CanDoResume() {
   const M = useMuseumTheme();
   const { uiLanguage } = useUiLanguageStore();
   const { data } = useCanDoStatements();
+  // Subscribe to snapshots so CEFR badges appear once content hydrates —
+  // cefrForLesson() reads the store non-reactively, so without this the badges
+  // stay missing until an unrelated re-render (see skills-practiced.tsx).
+  useContentStore((s) => s.snapshots);
 
   if (!data || data.length === 0) return null;
 

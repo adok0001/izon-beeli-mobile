@@ -15,3 +15,5 @@ export * from "./educator/use-etymology";
 export * from "./educator/use-story-arcs";
 export * from "./educator/use-sentences";
 export * from "./educator/use-scenarios";
+export * from "./educator/use-reviewer-applications";
+export * from "./educator/use-content-workflow";

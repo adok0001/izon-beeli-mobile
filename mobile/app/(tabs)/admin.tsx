@@ -207,6 +207,34 @@ export default function AdminPanelScreen() {
               onPress={() => router.push("/admin/plus-gate")}
               accent={getAccent("amber").solid}
             />
+            <ActionRow
+              icon="globe"
+              label={t("admin.nav.languages")}
+              detail="Manage the language catalogue"
+              onPress={() => router.push("/admin/languages" as never)}
+              accent={getAccent("sky").solid}
+            />
+            <ActionRow
+              icon="building.2.fill"
+              label={t("admin.nav.contentPartners")}
+              detail="Universities & institutions"
+              onPress={() => router.push("/admin/content-partners" as never)}
+              accent={getAccent("teal").solid}
+            />
+            <ActionRow
+              icon="textformat.abc"
+              label={t("admin.nav.englishWordbank")}
+              detail="English target-word reference"
+              onPress={() => router.push("/admin/english-wordbank" as never)}
+              accent={getAccent("purple").solid}
+            />
+            <ActionRow
+              icon="flag.fill"
+              label={t("admin.nav.appConfig")}
+              detail="Feature flags & config"
+              onPress={() => router.push("/admin/app-config" as never)}
+              accent={getAccent("orange").solid}
+            />
             {currentUser && canManageBounties(currentUser) ? (
               <ActionRow
                 icon="star.fill"

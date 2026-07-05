@@ -2,7 +2,7 @@ import { SKILL_META } from "@/constants/course-colors";
 import { useCompletedLessons } from "@/lib/hooks/use-progress";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { getSnapshotLessonSkills } from "@/store/content-store";
+import { getSnapshotLessonSkills, useContentStore } from "@/store/content-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useMemo } from "react";
 import { Text, View } from "react-native";
@@ -34,6 +34,11 @@ export function SkillsPracticed() {
   const M = useMuseumTheme();
   const { uiLanguage } = useUiLanguageStore();
   const { data: completed } = useCompletedLessons();
+  // Subscribe to snapshots so the radar recomputes once content hydrates —
+  // getSnapshotLessonSkills() reads the store non-reactively, so without this
+  // dependency the memo runs while snapshots are still empty (cold start) and
+  // never re-runs, leaving the radar permanently hidden (total === 0).
+  const snapshots = useContentStore((s) => s.snapshots);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
@@ -43,7 +48,7 @@ export function SkillsPracticed() {
       }
     }
     return c;
-  }, [completed]);
+  }, [completed, snapshots]);
 
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   if (total === 0) return null;

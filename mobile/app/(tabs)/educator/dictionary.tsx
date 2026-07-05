@@ -1,14 +1,21 @@
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
+import { Badge } from "@/components/ui/badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LocalizedTextInput, toLocalizedText } from "@/components/ui/localized-text-input";
 import type { LocalizedText } from "@/types";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import {
+    canPublishContent,
+    canSubmitForReview,
     EducatorDictionaryCategory,
     EducatorDictionaryEntry,
+    STATUS_LABEL,
+    STATUS_TONE,
     useDeleteEducatorDictionaryEntry,
     useEducatorDictionary,
+    usePublishContent,
+    useSubmitEducatorDictionaryForReview,
     useUpsertEducatorDictionary,
 } from "@/lib/hooks/use-educator-panel";
 import { friendlyError } from "@/lib/api";
@@ -110,6 +117,8 @@ export default function EducatorDictionaryScreen() {
   const [coverageOpen, setCoverageOpen] = useState(false);
   const upsertEntry = useUpsertEducatorDictionary();
   const deleteEntry = useDeleteEducatorDictionaryEntry();
+  const submitForReview = useSubmitEducatorDictionaryForReview();
+  const publishEntry = usePublishContent("dictionary_entries", [["educator", "dictionary"]]);
   let saveButtonLabel = "Create";
   if (isEditing) saveButtonLabel = t("common.save");
   if (upsertEntry.isPending) saveButtonLabel = t("common.loading");
@@ -210,6 +219,26 @@ export default function EducatorDictionaryScreen() {
             <Text className="text-sm text-neutral-500 dark:text-neutral-400">{item.english}</Text>
           </View>
           <View className="flex-row gap-2">
+            {canSubmitForReview(item.status) ? (
+              <Pressable
+                onPress={() => submitForReview.mutate(item.id)}
+                disabled={submitForReview.isPending}
+                className="rounded-full bg-amber-100 p-2 dark:bg-amber-900/40"
+              >
+                <IconSymbol name="paperplane.fill" size={14} color={M.warning} />
+              </Pressable>
+            ) : null}
+            {currentUser && canPublishContent(item.status, item.createdBy, {
+              isAdmin: currentUser.isAdmin, reviewerRole: currentUser.reviewerRole, userId: currentUser.id,
+            }) ? (
+              <Pressable
+                onPress={() => publishEntry.mutate(item.id)}
+                disabled={publishEntry.isPending}
+                className="rounded-full bg-green-100 p-2 dark:bg-green-900/40"
+              >
+                <IconSymbol name="checkmark.circle.fill" size={14} color={M.success} />
+              </Pressable>
+            ) : null}
             <Pressable onPress={() => startEdit(item)} className="rounded-full bg-neutral-100 p-2 dark:bg-neutral-800">
               <IconSymbol name="gearshape.fill" size={14} color={M.muted} />
             </Pressable>
@@ -222,6 +251,7 @@ export default function EducatorDictionaryScreen() {
           <View className="rounded-full bg-neutral-100 px-2 py-1 dark:bg-neutral-800">
             <Text className="text-[10px] font-semibold uppercase text-neutral-600 dark:text-neutral-400">{item.category}</Text>
           </View>
+          {item.status ? <Badge label={STATUS_LABEL[item.status]} tone={STATUS_TONE[item.status]} /> : null}
           {item._source === "contribution" ? (
             <View className="rounded-full bg-amber-100 px-2 py-1 dark:bg-amber-900/40">
               <Text className="text-[10px] font-semibold uppercase text-amber-700 dark:text-amber-400">contribution</Text>
@@ -230,7 +260,7 @@ export default function EducatorDictionaryScreen() {
         </View>
       </View>
     ),
-    [startEdit, confirmDelete],
+    [startEdit, confirmDelete, submitForReview, publishEntry, currentUser],
   );
 
   const listHeader = (

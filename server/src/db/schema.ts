@@ -48,6 +48,16 @@ export const contributionStatusEnum = pgEnum("contribution_status", [
   "rejected",
 ]);
 
+// Beeli Studio editorial workflow (Phase 2). Existing rows default to
+// "published" so the content-selectors filter (added alongside this) doesn't
+// hide anything that was already live before the workflow existed.
+export const contentStatusEnum = pgEnum("content_status", [
+  "draft",
+  "in_review",
+  "published",
+  "archived",
+]);
+
 export const bountyStatusEnum = pgEnum("bounty_status", [
   "active",
   "completed",
@@ -339,6 +349,12 @@ export const courses = pgTable(
     order: integer("order").default(0).notNull(),
     courseType: varchar("course_type", { length: 32 }),
     isActive: boolean("is_active").default(true).notNull(),
+    status: contentStatusEnum("status").default("published").notNull(),
+    publishAt: timestamp("publish_at"),
+    createdBy: uuid("created_by").references(() => users.id),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    publishedBy: uuid("published_by").references(() => users.id),
+    publishedAt: timestamp("published_at"),
   },
   (table) => [index("courses_language_id_idx").on(table.languageId)]
 );
@@ -369,6 +385,12 @@ export const lessons = pgTable(
     // Honest real-world competence statement shown on completion ("You can now …").
     canDo: text("can_do"),
     canDoFr: text("can_do_fr"),
+    status: contentStatusEnum("status").default("published").notNull(),
+    publishAt: timestamp("publish_at"),
+    createdBy: uuid("created_by").references(() => users.id),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    publishedBy: uuid("published_by").references(() => users.id),
+    publishedAt: timestamp("published_at"),
   },
   (table) => [index("lessons_course_id_idx").on(table.courseId)]
 );
@@ -439,6 +461,13 @@ export const dictionaryEntries = pgTable(
     dialectalVariants: jsonb("dialectal_variants").$type<
       Array<{ dialect: string; form: string; region?: string }>
     >(),
+    // Editorial workflow (Beeli Studio) — see contentStatusEnum.
+    status: contentStatusEnum("status").default("published").notNull(),
+    publishAt: timestamp("publish_at"),
+    createdBy: uuid("created_by").references(() => users.id),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    publishedBy: uuid("published_by").references(() => users.id),
+    publishedAt: timestamp("published_at"),
   },
   (table) => [
     index("dictionary_entries_language_idx").on(table.languageId),
@@ -460,6 +489,12 @@ export const proverbs = pgTable(
     literal: text("literal"),
     context: text("context"),
     tags: text("tags").array(),
+    status: contentStatusEnum("status").default("published").notNull(),
+    publishAt: timestamp("publish_at"),
+    createdBy: uuid("created_by").references(() => users.id),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    publishedBy: uuid("published_by").references(() => users.id),
+    publishedAt: timestamp("published_at"),
   },
   (table) => [index("proverbs_language_id_idx").on(table.languageId)]
 );
@@ -472,6 +507,12 @@ export const etymologyEntries = pgTable(
     word: varchar("word", { length: 200 }).notNull(),
     english: varchar("english", { length: 300 }).notNull(),
     trail: text("trail").notNull(), // JSON array of { era, form, language, note }
+    status: contentStatusEnum("status").default("published").notNull(),
+    publishAt: timestamp("publish_at"),
+    createdBy: uuid("created_by").references(() => users.id),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    publishedBy: uuid("published_by").references(() => users.id),
+    publishedAt: timestamp("published_at"),
   },
   (table) => [index("etymology_entries_language_id_idx").on(table.languageId)]
 );
@@ -505,6 +546,12 @@ export const culturalContent = pgTable(
       to: string;
       dark?: boolean;
     }[] | null>(),
+    status: contentStatusEnum("status").default("published").notNull(),
+    publishAt: timestamp("publish_at"),
+    createdBy: uuid("created_by").references(() => users.id),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    publishedBy: uuid("published_by").references(() => users.id),
+    publishedAt: timestamp("published_at"),
   },
   (table) => [index("cultural_content_language_id_idx").on(table.languageId)]
 );
@@ -537,6 +584,12 @@ export const sentenceTemplates = pgTable(
     kind: sentenceKindEnum("kind").default("blank").notNull(),
     /** Literal gloss of the sentence (e.g. "wake up well" for an idiom). Null for regular templates. */
     literalTranslation: text("literal_translation"),
+    status: contentStatusEnum("status").default("published").notNull(),
+    publishAt: timestamp("publish_at"),
+    createdBy: uuid("created_by").references(() => users.id),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    publishedBy: uuid("published_by").references(() => users.id),
+    publishedAt: timestamp("published_at"),
   },
   (table) => [index("sentence_templates_language_id_idx").on(table.languageId)]
 );
@@ -552,8 +605,47 @@ export const scenarios = pgTable(
     turns: text("turns").notNull(), // JSON: {text, translation, audioUrl?}[]
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    status: contentStatusEnum("status").default("published").notNull(),
+    publishAt: timestamp("publish_at"),
+    createdBy: uuid("created_by").references(() => users.id),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    publishedBy: uuid("published_by").references(() => users.id),
+    publishedAt: timestamp("published_at"),
   },
   (table) => [index("scenarios_language_id_idx").on(table.languageId)]
+);
+
+// ---------- Quiz Question Bank ----------
+
+/**
+ * Authored quiz questions (Beeli Studio question bank). Distinct from
+ * `quizResults`, which only records learner scores. Reviewer-scoped by
+ * language and carries the full editorial workflow so the four-eyes rule
+ * applies here too.
+ */
+export const quizQuestions = pgTable(
+  "quiz_questions",
+  {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    languageId: varchar("language_id", { length: 64 }).notNull(),
+    // "word-to-english" | "english-to-word" | "fill-in-the-blank" | "listening"
+    type: varchar("type", { length: 32 }).notNull(),
+    prompt: text("prompt").notNull(),
+    answer: text("answer").notNull(),
+    // Multiple-choice options (includes the answer). Empty for free-text types.
+    options: text("options").array().default([]).notNull(),
+    audioUrl: text("audio_url"),
+    explanation: text("explanation"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    status: contentStatusEnum("status").default("draft").notNull(),
+    publishAt: timestamp("publish_at"),
+    createdBy: uuid("created_by").references(() => users.id),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    publishedBy: uuid("published_by").references(() => users.id),
+    publishedAt: timestamp("published_at"),
+  },
+  (table) => [index("quiz_questions_language_id_idx").on(table.languageId)]
 );
 
 // ---------- Lesson Contributions ----------
@@ -868,6 +960,12 @@ export const storyArcs = pgTable("story_arcs", {
   description: text("description").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  status: contentStatusEnum("status").default("published").notNull(),
+  publishAt: timestamp("publish_at"),
+  createdBy: uuid("created_by").references(() => users.id),
+  updatedBy: uuid("updated_by").references(() => users.id),
+  publishedBy: uuid("published_by").references(() => users.id),
+  publishedAt: timestamp("published_at"),
 });
 
 export const storyChapters = pgTable(
@@ -903,6 +1001,12 @@ export const activities = pgTable(
     tokens: text("tokens"), // JSON array of WordToken
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    status: contentStatusEnum("status").default("published").notNull(),
+    publishAt: timestamp("publish_at"),
+    createdBy: uuid("created_by").references(() => users.id),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    publishedBy: uuid("published_by").references(() => users.id),
+    publishedAt: timestamp("published_at"),
   },
   (t) => [index("activities_language_id_idx").on(t.languageId)]
 );
@@ -1009,6 +1113,12 @@ export const contentPartners = pgTable("content_partners", {
   languageIds: text("language_ids").array().default([]).notNull(),
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  status: contentStatusEnum("status").default("published").notNull(),
+  publishAt: timestamp("publish_at"),
+  createdBy: uuid("created_by").references(() => users.id),
+  updatedBy: uuid("updated_by").references(() => users.id),
+  publishedBy: uuid("published_by").references(() => users.id),
+  publishedAt: timestamp("published_at"),
 });
 
 // ---------- Word Challenge Submissions ----------
@@ -1025,6 +1135,12 @@ export const scripts = pgTable(
     iconCharacter: varchar("icon_character", { length: 16 }),
     accentColor: varchar("accent_color", { length: 32 }),
     isActive: boolean("is_active").default(true).notNull(),
+    status: contentStatusEnum("status").default("published").notNull(),
+    publishAt: timestamp("publish_at"),
+    createdBy: uuid("created_by").references(() => users.id),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    publishedBy: uuid("published_by").references(() => users.id),
+    publishedAt: timestamp("published_at"),
   },
   (table) => [index("scripts_language_id_idx").on(table.languageId)]
 );
@@ -1052,6 +1168,12 @@ export const scriptCharacters = pgTable(
     proverb: text("proverb"),
     svgPath: text("svg_path"),
     svgViewBox: varchar("svg_view_box", { length: 64 }),
+    status: contentStatusEnum("status").default("published").notNull(),
+    publishAt: timestamp("publish_at"),
+    createdBy: uuid("created_by").references(() => users.id),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    publishedBy: uuid("published_by").references(() => users.id),
+    publishedAt: timestamp("published_at"),
   },
   (table) => [index("script_characters_script_id_idx").on(table.scriptId)]
 );
@@ -1087,6 +1209,12 @@ export const interactiveStories = pgTable(
     initialSceneId: varchar("initial_scene_id", { length: 64 }).notNull(),
     scenes: jsonb("scenes").$type<Record<string, InteractiveStoryScene>>().notNull(),
     isActive: boolean("is_active").default(true).notNull(),
+    status: contentStatusEnum("status").default("published").notNull(),
+    publishAt: timestamp("publish_at"),
+    createdBy: uuid("created_by").references(() => users.id),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    publishedBy: uuid("published_by").references(() => users.id),
+    publishedAt: timestamp("published_at"),
   }
 );
 
@@ -1113,6 +1241,14 @@ export const cultureItems = pgTable(
     showNotes: text("show_notes"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    status: contentStatusEnum("status").default("published").notNull(),
+    publishAt: timestamp("publish_at"),
+    createdBy: uuid("created_by").references(() => users.id),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    publishedBy: uuid("published_by").references(() => users.id),
+    // Distinct from `publishedAt` above, which is the content's own display
+    // date (e.g. the film's release date), not editorial-workflow state.
+    studioPublishedAt: timestamp("studio_published_at"),
   },
   (table) => [index("culture_items_type_idx").on(table.type)]
 );
@@ -1156,5 +1292,49 @@ export const wordChallengeSubmissions = pgTable(
     // blocks XP farming via repeated submissions of the same word.
     uniqueIndex("wc_submissions_user_word_idx").on(table.userId, table.wordId),
     index("wc_submissions_word_idx").on(table.wordId),
+  ]
+);
+
+// ---------- Editorial Workflow (Beeli Studio) ----------
+// entityType/entityId are polymorphic (point at any content table above, whose
+// primary keys are a mix of varchar and uuid), so they're plain strings rather
+// than a real FK.
+
+export const contentVersions = pgTable(
+  "content_versions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    entityType: varchar("entity_type", { length: 64 }).notNull(),
+    entityId: varchar("entity_id", { length: 64 }).notNull(),
+    version: integer("version").notNull(),
+    snapshot: jsonb("snapshot").notNull(),
+    createdBy: uuid("created_by").references(() => users.id),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("content_versions_entity_version_idx").on(
+      table.entityType,
+      table.entityId,
+      table.version
+    ),
+    index("content_versions_entity_idx").on(table.entityType, table.entityId),
+  ]
+);
+
+export const auditLog = pgTable(
+  "audit_log",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    actorId: uuid("actor_id").references(() => users.id),
+    action: varchar("action", { length: 64 }).notNull(),
+    entityType: varchar("entity_type", { length: 64 }).notNull(),
+    entityId: varchar("entity_id", { length: 64 }).notNull(),
+    before: jsonb("before"),
+    after: jsonb("after"),
+    at: timestamp("at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("audit_log_entity_idx").on(table.entityType, table.entityId),
+    index("audit_log_actor_id_idx").on(table.actorId),
   ]
 );

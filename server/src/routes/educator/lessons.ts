@@ -30,6 +30,8 @@ educatorLessonsRouter.get("/lessons", async (c) => {
       artist: lessons.artist,
       genre: lessons.genre,
       isActive: lessons.isActive,
+      status: lessons.status,
+      createdBy: lessons.createdBy,
     })
     .from(lessons)
     .innerJoin(courses, eq(lessons.courseId, courses.id))
@@ -41,6 +43,7 @@ educatorLessonsRouter.get("/lessons", async (c) => {
 
 // POST /educator/lessons — create a lesson directly (bypasses contribution review)
 educatorLessonsRouter.post("/lessons", async (c) => {
+  const userId = c.get("userId");
   const isAdmin = c.get("isAdmin");
   const reviewerLanguages = c.get("reviewerLanguages");
 
@@ -107,6 +110,9 @@ educatorLessonsRouter.post("/lessons", async (c) => {
     order: isNaN(order) ? 999 : order,
     artist,
     genre,
+    status: "draft",
+    createdBy: userId,
+    updatedBy: userId,
   });
 
   if (segments.length > 0) {
@@ -133,8 +139,11 @@ educatorLessonsRouter.post("/lessons", async (c) => {
   return c.json({ id: lessonId }, 201);
 });
 
+const PATCHABLE_LESSON_STATUSES = ["draft", "in_review", "archived"] as const;
+
 // PATCH /educator/lessons/:id
 educatorLessonsRouter.patch("/lessons/:id", async (c) => {
+  const userId = c.get("userId");
   const isAdmin = c.get("isAdmin");
   const reviewerLanguages = c.get("reviewerLanguages");
   const { id } = c.req.param();
@@ -154,9 +163,15 @@ educatorLessonsRouter.patch("/lessons/:id", async (c) => {
   const body = await c.req.json<{
     title?: string; description?: string; type?: string;
     artist?: string | null; genre?: string | null; order?: number; isActive?: boolean;
+    status?: string;
   }>();
 
-  const updates: Record<string, unknown> = {};
+  if (body.status && !PATCHABLE_LESSON_STATUSES.includes(body.status as (typeof PATCHABLE_LESSON_STATUSES)[number])) {
+    // "published" only happens through the guarded POST /content/lessons/:id/publish endpoint.
+    return c.json({ error: `status must be one of: ${PATCHABLE_LESSON_STATUSES.join(", ")}` }, 400);
+  }
+
+  const updates: Record<string, unknown> = { updatedBy: userId };
   if (body.title !== undefined) updates.title = body.title.trim();
   if (body.description !== undefined) updates.description = body.description.trim();
   if (body.type !== undefined) updates.type = body.type;
@@ -164,6 +179,7 @@ educatorLessonsRouter.patch("/lessons/:id", async (c) => {
   if (body.genre !== undefined) updates.genre = body.genre?.trim() || null;
   if (body.order !== undefined) updates.order = body.order;
   if (body.isActive !== undefined) updates.isActive = body.isActive;
+  if (body.status !== undefined) updates.status = body.status;
 
   await db.update(lessons).set(updates).where(eq(lessons.id, id));
   return c.json({ success: true });
@@ -190,6 +206,8 @@ educatorLessonsRouter.get("/lessons/:id", async (c) => {
       artist: lessons.artist,
       genre: lessons.genre,
       isActive: lessons.isActive,
+      status: lessons.status,
+      createdBy: lessons.createdBy,
     })
     .from(lessons)
     .innerJoin(courses, eq(lessons.courseId, courses.id))

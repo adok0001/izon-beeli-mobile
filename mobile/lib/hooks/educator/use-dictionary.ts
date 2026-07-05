@@ -1,5 +1,6 @@
 import { apiFetch, apiFetchMultipart } from "@/lib/api";
 import type { DialectalVariant, DictionaryCategory } from "@/lib/dictionary";
+import type { ContentStatus } from "@/lib/hooks/educator/use-content-workflow";
 import type { LocalizedText } from "@/types";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -28,6 +29,9 @@ export interface EducatorDictionaryEntry {
   antonyms?: string[] | null;
   semanticDomain?: string | null;
   dialectalVariants?: DialectalVariant[] | null;
+  /** Absent on contribution-sourced rows (_source: "contribution") — those use their own approval status. */
+  status?: ContentStatus;
+  createdBy?: string | null;
   _source?: "contribution";
 }
 
@@ -138,6 +142,25 @@ export function useUpsertEducatorDictionary() {
       queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
       queryClient.invalidateQueries({ queryKey: ["dictionary"] });
       queryClient.invalidateQueries({ queryKey: ["dictionary-coverage"] });
+    },
+  });
+}
+
+export function useSubmitEducatorDictionaryForReview() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const token = await getToken();
+      return apiFetch(`/educator/dictionary/${id}`, {
+        method: "PATCH",
+        token,
+        body: JSON.stringify({ status: "in_review" }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
     },
   });
 }

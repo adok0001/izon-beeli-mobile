@@ -1,4 +1,4 @@
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index.js";
 import { storyArcs, storyChapters, lessons } from "../db/schema.js";
@@ -50,6 +50,7 @@ storyArcsRouter.get("/", async (c) => {
   const arcs = await db
     .select({ id: storyArcs.id, courseId: storyArcs.courseId, title: storyArcs.title })
     .from(storyArcs)
+    .where(eq(storyArcs.status, "published"))
     .orderBy(storyArcs.courseId);
   return c.json(arcs);
 });
@@ -64,7 +65,7 @@ storyArcsRouter.get("/arc/:id", async (c) => {
   const [arc] = await db
     .select()
     .from(storyArcs)
-    .where(eq(storyArcs.id, id))
+    .where(and(eq(storyArcs.id, id), eq(storyArcs.status, "published")))
     .limit(1);
 
   if (!arc) return c.json({ error: "Not found" }, 404);
@@ -85,7 +86,7 @@ storyArcsRouter.get("/:courseId", async (c) => {
   const [arc] = await db
     .select()
     .from(storyArcs)
-    .where(eq(storyArcs.courseId, courseId))
+    .where(and(eq(storyArcs.courseId, courseId), eq(storyArcs.status, "published")))
     .limit(1);
 
   if (!arc) return c.json({ error: "Not found" }, 404);

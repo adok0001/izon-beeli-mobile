@@ -12,6 +12,7 @@ educatorMeRouter.get("/me", async (c) => {
   const userId = c.get("userId");
   const isAdmin = c.get("isAdmin");
   const reviewerLanguages = c.get("reviewerLanguages");
+  const reviewerRole = c.get("reviewerRole");
 
   const [user] = await db
     .select({ name: users.name, email: users.email, avatarUrl: users.avatarUrl })
@@ -23,5 +24,5 @@ educatorMeRouter.get("/me", async (c) => {
   const allLangs = await db.select().from(languages);
   const scopedLangs = isAdmin ? allLangs : allLangs.filter((l) => reviewerLanguages.includes(l.id));
 
-  return c.json({ ...user, isAdmin, reviewerLanguages, languages: scopedLangs });
+  return c.json({ ...user, id: userId, isAdmin, reviewerLanguages, reviewerRole, languages: scopedLangs });
 });

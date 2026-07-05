@@ -1,6 +1,7 @@
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { ContentStatus } from "./use-content-workflow";
 
 export interface Proverb {
   id: string;
@@ -13,6 +14,8 @@ export interface Proverb {
   literal?: string | null;
   context?: string | null;
   tags?: string[] | null;
+  status?: ContentStatus;
+  createdBy?: string | null;
 }
 
 export interface UpsertProverbInput {
@@ -42,6 +45,26 @@ export function useProverbs(languageId?: string, enabled = true) {
   });
 }
 
+/** Editor read: all proverbs (any status) for a language, from the admin route. */
+export function useEducatorProverbs(languageId?: string, enabled = true) {
+  const { getToken, isSignedIn } = useAuth();
+  return useQuery<Proverb[]>({
+    queryKey: ["educator", "proverbs", languageId ?? null],
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch<Proverb[]>(`/proverbs/admin?languageId=${encodeURIComponent(languageId!)}`, {
+        token: token ?? undefined,
+      });
+    },
+    enabled: !!isSignedIn && !!languageId && enabled,
+  });
+}
+
+function invalidateProverbs(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries({ queryKey: ["proverbs"] });
+  queryClient.invalidateQueries({ queryKey: ["educator", "proverbs"] });
+}
+
 export function useUpsertProverb() {
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
@@ -55,9 +78,24 @@ export function useUpsertProverb() {
         body: JSON.stringify(body),
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["proverbs"] });
+    onSuccess: () => invalidateProverbs(queryClient),
+  });
+}
+
+/** Moves a draft proverb to in_review (submit for the four-eyes queue). */
+export function useSubmitProverbForReview() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const token = await getToken();
+      return apiFetch<Proverb>(`/proverbs/admin/${id}`, {
+        method: "PATCH",
+        token: token ?? undefined,
+        body: JSON.stringify({ status: "in_review" }),
+      });
     },
+    onSuccess: () => invalidateProverbs(queryClient),
   });
 }
 
@@ -72,8 +110,6 @@ export function useDeleteProverb() {
         token: token ?? undefined,
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["proverbs"] });
-    },
+    onSuccess: () => invalidateProverbs(queryClient),
   });
 }

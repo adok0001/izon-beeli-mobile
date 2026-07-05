@@ -1,6 +1,7 @@
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { ContentStatus } from "./use-content-workflow";
 
 export interface ScenarioTurn {
   text: string;
@@ -15,6 +16,8 @@ export interface EducatorScenario {
   turns: ScenarioTurn[];
   createdAt: string;
   updatedAt: string;
+  status?: ContentStatus;
+  createdBy?: string | null;
 }
 
 export interface UpsertScenarioInput {
@@ -58,7 +61,7 @@ export function useUpdateScenario() {
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, languageId, ...patch }: { id: string; languageId: string; situation?: string; turns?: ScenarioTurn[] }) => {
+    mutationFn: async ({ id, languageId, ...patch }: { id: string; languageId: string; situation?: string; turns?: ScenarioTurn[]; status?: ContentStatus }) => {
       const token = await getToken();
       return apiFetch<EducatorScenario>(`/educator/scenarios/${id}`, {
         method: "PATCH",

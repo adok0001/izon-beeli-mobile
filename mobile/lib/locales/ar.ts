@@ -1577,6 +1577,9 @@ export const ar = {
       quiz: "الاختبار",
       culture: "الثقافة",
       etymology: "مسار الاشتقاق",
+      streakTools: "أدوات السلسلة",
+      bounties: "المكافآت",
+      discoverStories: "المسلسلات والقصص",
       billing: "الفوترة",
     },
     dailyContent: {
@@ -1774,6 +1777,10 @@ export const ar = {
       labelReviewerNote: "ملاحظة المراجع",
       emptyFiltered: "لا توجد طلبات {{status}}",
       emptyAll: "لا توجد طلبات",
+      statusPending: "قيد الانتظار",
+      statusApproved: "مقبولة",
+      statusRejected: "مرفوضة",
+      filterAll: "الكل",
     },
     organizations: {
       title: "المؤسّسات",

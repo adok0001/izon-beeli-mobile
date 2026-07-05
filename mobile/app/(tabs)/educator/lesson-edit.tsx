@@ -1,4 +1,5 @@
 import { NotificationBanner } from "@/components/notifications/notification-banner";
+import { Badge } from "@/components/ui/badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { GLOSS_LANGUAGES, toLocalizedText } from "@/components/ui/localized-text-input";
 import { useStudioAccess } from "@/components/studio/studio-gate";
@@ -6,11 +7,16 @@ import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useAudioStore } from "@/store/audio-store";
 import {
+    canPublishContent,
+    canSubmitForReview,
     EducatorLessonSegment,
+    STATUS_LABEL,
+    STATUS_TONE,
     useCreateEducatorLesson,
     useDeleteEducatorLesson,
     useEducatorCourses,
     useEducatorLessonDetail,
+    usePublishContent,
     useReplaceEducatorLessonAudio,
     useReplaceEducatorLessonSegments,
     useUpdateEducatorLesson,
@@ -412,7 +418,7 @@ export default function EducatorLessonEditScreen() {
   const isEditMode = !!lessonId;
   const { uiLanguage } = useUiLanguageStore();
 
-  const { canAccess } = useStudioAccess();
+  const { user: currentUser, canAccess } = useStudioAccess();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -435,6 +441,7 @@ export default function EducatorLessonEditScreen() {
   const replaceSegments = useReplaceEducatorLessonSegments();
   const replaceAudio = useReplaceEducatorLessonAudio();
   const deleteLesson = useDeleteEducatorLesson();
+  const publishLesson = usePublishContent("lessons", [["educator", "lesson", lessonId ?? null], ["educator", "lessons"]]);
 
   const course = courses.find((c) => c.id === courseId);
 
@@ -538,6 +545,25 @@ export default function EducatorLessonEditScreen() {
     } else {
       handleCreate();
     }
+  };
+
+  const handleSubmitForReview = () => {
+    if (!lessonId) return;
+    updateLesson.mutate(
+      { id: lessonId, payload: { status: "in_review" } },
+      {
+        onSuccess: () => toastSuccess("Submitted for review"),
+        onError: (err: Error) => toastError("Failed to submit for review", friendlyError(err)),
+      },
+    );
+  };
+
+  const handlePublish = () => {
+    if (!lessonId) return;
+    publishLesson.mutate(lessonId, {
+      onSuccess: () => toastSuccess("Published"),
+      onError: (err: Error) => toastError("Failed to publish", friendlyError(err)),
+    });
   };
 
   const confirmDelete = () => {
@@ -785,6 +811,11 @@ export default function EducatorLessonEditScreen() {
 
           {/* Actions */}
           <View className="mt-5 gap-2 px-5">
+            {isEditMode && lessonDetail ? (
+              <View className="mb-1 flex-row items-center">
+                <Badge label={STATUS_LABEL[lessonDetail.status]} tone={STATUS_TONE[lessonDetail.status]} />
+              </View>
+            ) : null}
             <Pressable
               onPress={handleSave}
               disabled={isSaving}
@@ -792,6 +823,26 @@ export default function EducatorLessonEditScreen() {
             >
               <Text className="text-center font-semibold text-white">{saveButtonLabel}</Text>
             </Pressable>
+            {isEditMode && lessonDetail && canSubmitForReview(lessonDetail.status) ? (
+              <Pressable
+                onPress={handleSubmitForReview}
+                disabled={updateLesson.isPending}
+                className="rounded-2xl bg-amber-500 py-4 active:opacity-80 disabled:opacity-50"
+              >
+                <Text className="text-center font-semibold text-white">Submit for review</Text>
+              </Pressable>
+            ) : null}
+            {isEditMode && lessonDetail && currentUser && canPublishContent(lessonDetail.status, lessonDetail.createdBy, {
+              isAdmin: currentUser.isAdmin, reviewerRole: currentUser.reviewerRole, userId: currentUser.id,
+            }) ? (
+              <Pressable
+                onPress={handlePublish}
+                disabled={publishLesson.isPending}
+                className="rounded-2xl bg-green-600 py-4 active:opacity-80 disabled:opacity-50"
+              >
+                <Text className="text-center font-semibold text-white">Publish</Text>
+              </Pressable>
+            ) : null}
             {isEditMode ? (
               <Pressable
                 onPress={confirmDelete}

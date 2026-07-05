@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { db } from "../db/index.js";
 import { proverbs } from "../db/schema.js";
+import { selectProverbs } from "../lib/content-selectors.js";
 import { AuthEnv, authMiddleware, reviewerMiddleware } from "../middleware/auth.js";
 
 export const proverbsRouter = new Hono();
@@ -14,12 +15,7 @@ proverbsRouter.get("/", async (c) => {
     return c.json({ error: "Valid languageId query param required" }, 400);
   }
 
-  const result = await db
-    .select()
-    .from(proverbs)
-    .where(eq(proverbs.languageId, languageId));
-
-  return c.json(result);
+  return c.json(await selectProverbs(languageId));
 });
 
 // ── Educator / Admin write routes ─────────────────────────────────────────────
@@ -27,6 +23,23 @@ proverbsRouter.get("/", async (c) => {
 export const proverbsAdminRouter = new Hono<AuthEnv>();
 proverbsAdminRouter.use("*", authMiddleware);
 proverbsAdminRouter.use("*", reviewerMiddleware);
+
+// GET /api/proverbs/admin?languageId= — all proverbs (any status) for editing
+proverbsAdminRouter.get("/", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const languageId = c.req.query("languageId");
+  if (!languageId) return c.json({ error: "languageId required" }, 400);
+  if (!isAdmin && !reviewerLanguages.includes(languageId)) {
+    return c.json({ error: "Forbidden: not assigned to this language" }, 403);
+  }
+  const rows = await db
+    .select()
+    .from(proverbs)
+    .where(eq(proverbs.languageId, languageId))
+    .orderBy(proverbs.text);
+  return c.json(rows);
+});
 
 // POST /api/proverbs/admin
 proverbsAdminRouter.post("/", async (c) => {
@@ -65,6 +78,8 @@ proverbsAdminRouter.post("/", async (c) => {
       literal: body.literal ?? null,
       context: body.context ?? null,
       tags: body.tags ?? null,
+      status: "draft",
+      createdBy: c.get("userId"),
     })
     .returning();
 
@@ -92,11 +107,22 @@ proverbsAdminRouter.patch("/:id", async (c) => {
     literal: string | null;
     context: string | null;
     tags: string[] | null;
+    status: string;
   }>>();
+
+  // Whitelist columns so a PATCH can't stamp publish fields or set
+  // status='published' directly — that must go through the four-eyes endpoint.
+  const updates: Record<string, unknown> = { updatedBy: c.get("userId") };
+  for (const key of ["text", "translation", "translationFr", "meaning", "meaningFr", "literal", "context", "tags"] as const) {
+    if (body[key] !== undefined) updates[key] = body[key];
+  }
+  if (body.status !== undefined && ["draft", "in_review", "archived"].includes(body.status)) {
+    updates.status = body.status;
+  }
 
   const [updated] = await db
     .update(proverbs)
-    .set(body)
+    .set(updates)
     .where(eq(proverbs.id, id))
     .returning();
 

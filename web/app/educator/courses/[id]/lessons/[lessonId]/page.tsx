@@ -1,6 +1,8 @@
 "use client";
 
+import { StatusPill } from "@/components/ui/status-pill";
 import { apiFetch } from "@/lib/api";
+import { canPublishContent, canSubmitForReview, publishContent, type ContentStatus } from "@/lib/content-workflow";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -12,6 +14,7 @@ import {
     Mic,
     Plus,
     Save,
+    Send,
     Square,
     Trash2,
     Upload,
@@ -35,6 +38,12 @@ interface DictEntry {
   word: string;
 }
 
+interface EducatorMe {
+  id: string;
+  isAdmin: boolean;
+  reviewerRole?: string | null;
+}
+
 function normalizeWord(w: string): string {
   return w.toLowerCase().replace(/[.,!?;:'"()[\]{}""''…«»]/g, "").trim();
 }
@@ -53,6 +62,8 @@ interface LessonDetail {
   artist: string | null;
   genre: string | null;
   isActive: boolean;
+  status: ContentStatus;
+  createdBy: string | null;
   segments: Segment[];
 }
 
@@ -248,6 +259,15 @@ export default function LessonDetailPage() {
     },
   });
 
+  const { data: me } = useQuery<EducatorMe>({
+    queryKey: ["educator", "me"],
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch<EducatorMe>("/educator/me", { token: token ?? undefined });
+    },
+    staleTime: 60_000,
+  });
+
   const { data: dictEntries = [] } = useQuery<DictEntry[]>({
     queryKey: ["educator-dict-words", lesson?.languageId],
     queryFn: async () => {
@@ -372,6 +392,34 @@ export default function LessonDetailPage() {
       toast.success(lesson?.isActive ? t("educator.lessonDetail.lessonHidden") : t("educator.lessonDetail.lessonPublished"));
     },
     onError: (e: Error) => toast.error(t("educator.lessonDetail.lessonUpdateFailed"), { description: e.message }),
+  });
+
+  const submitForReview = useMutation({
+    mutationFn: async () => {
+      const token = await getToken();
+      return apiFetch(`/educator/lessons/${lessonId}`, {
+        method: "PATCH",
+        token: token!,
+        body: JSON.stringify({ status: "in_review" }),
+      });
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["educator-lesson", lessonId] });
+      toast.success("Submitted for review");
+    },
+    onError: (e: Error) => toast.error("Failed to submit for review", { description: e.message }),
+  });
+
+  const publishLesson = useMutation({
+    mutationFn: async () => {
+      const token = await getToken();
+      return publishContent("lessons", lessonId, token ?? undefined);
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["educator-lesson", lessonId] });
+      toast.success("Published");
+    },
+    onError: (e: Error) => toast.error("Failed to publish", { description: e.message }),
   });
 
   function updateSegment(i: number, updated: Segment) {
@@ -515,6 +563,7 @@ export default function LessonDetailPage() {
             <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-neutral-100 dark:bg-white/[0.06] text-neutral-600 dark:text-neutral-300 capitalize">
               {lesson.type}
             </span>
+            <StatusPill status={lesson.status} />
             <span className="text-xs text-neutral-500 dark:text-neutral-300">{t("educator.lessonDetail.lessonOrder", { order: lesson.order })}</span>
           </div>
           <h1 className="text-xl font-bold text-neutral-900 dark:text-white">{lesson.title}</h1>
@@ -525,17 +574,37 @@ export default function LessonDetailPage() {
             </p>
           )}
         </div>
-        <button
-          onClick={() => toggleActive.mutate()}
-          disabled={toggleActive.isPending}
-          className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors disabled:opacity-50 ${
-            lesson.isActive
-              ? "border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30 hover:bg-green-100 dark:hover:bg-green-900/30"
-              : "border-neutral-200 dark:border-white/[0.08] text-neutral-500 dark:text-neutral-300 bg-white dark:bg-white/[0.04] hover:bg-neutral-50 dark:hover:bg-white/[0.06]"
-          }`}
-        >
-          {lesson.isActive ? <><Eye className="h-3.5 w-3.5" /> {t("educator.lessonDetail.statusActive")}</> : <><EyeOff className="h-3.5 w-3.5" /> {t("educator.lessonDetail.statusInactive")}</>}
-        </button>
+        <div className="shrink-0 flex items-center gap-2">
+          {canSubmitForReview(lesson.status) && (
+            <button
+              onClick={() => submitForReview.mutate()}
+              disabled={submitForReview.isPending}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors disabled:opacity-50"
+            >
+              <Send className="h-3.5 w-3.5" /> Submit for review
+            </button>
+          )}
+          {me && canPublishContent(lesson.status, lesson.createdBy, { isAdmin: me.isAdmin, reviewerRole: me.reviewerRole, userId: me.id }) && (
+            <button
+              onClick={() => publishLesson.mutate()}
+              disabled={publishLesson.isPending}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors disabled:opacity-50"
+            >
+              <CheckCircle2 className="h-3.5 w-3.5" /> Publish
+            </button>
+          )}
+          <button
+            onClick={() => toggleActive.mutate()}
+            disabled={toggleActive.isPending}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors disabled:opacity-50 ${
+              lesson.isActive
+                ? "border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30 hover:bg-green-100 dark:hover:bg-green-900/30"
+                : "border-neutral-200 dark:border-white/[0.08] text-neutral-500 dark:text-neutral-300 bg-white dark:bg-white/[0.04] hover:bg-neutral-50 dark:hover:bg-white/[0.06]"
+            }`}
+          >
+            {lesson.isActive ? <><Eye className="h-3.5 w-3.5" /> {t("educator.lessonDetail.statusActive")}</> : <><EyeOff className="h-3.5 w-3.5" /> {t("educator.lessonDetail.statusInactive")}</>}
+          </button>
+        </div>
       </div>
 
       {/* Audio */}

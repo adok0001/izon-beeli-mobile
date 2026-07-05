@@ -23,6 +23,7 @@ dictionaryRouter.get("/", async (c) => {
 
   const entryConditions = [
     eq(dictionaryEntries.languageId, languageId),
+    eq(dictionaryEntries.status, "published"),
     category ? eq(dictionaryEntries.category, category) : undefined,
     search
       ? or(

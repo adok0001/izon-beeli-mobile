@@ -1,7 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { getAccent } from "@/constants/accent-colors";
-import { canManageBounties } from "@/lib/hooks/use-current-user";
+import { canManageBounties, canReviewApplications } from "@/lib/hooks/use-current-user";
 import { useEducatorStats } from "@/lib/hooks/use-educator-panel";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { getLanguageName } from "@/lib/mock-data";
@@ -268,8 +268,14 @@ export default function EducatorPanelScreen() {
           <ActionRow icon="clock.arrow.circlepath" label={t("admin.nav.etymology")} detail={t("educator.etymology.subtitle")} onPress={() => router.push("/educator/etymology" as never)} accent={getAccent("sky").solid} />
           <ActionRow icon="book.closed.fill" label={t("educator.story.screenTitle")} detail={t("educator.story.screenSubtitle")} onPress={() => router.push("/educator/stories" as never)} accent={getAccent("orange").solid} />
           <ActionRow icon="text.bubble.fill" label={t("educator.sentences.screenTitle")} detail={t("educator.sentences.navDetail")} onPress={() => router.push("/educator/sentences" as never)} accent={getAccent("teal").solid} />
+          <ActionRow icon="quote.bubble.fill" label={t("educator.nav.proverbs")} detail="Proverbs and their meanings" onPress={() => router.push("/educator/proverbs" as never)} accent={getAccent("amber").solid} />
+          <ActionRow icon="bubble.left.and.bubble.right.fill" label={t("educator.nav.scenarios")} detail="Conversation scenarios" onPress={() => router.push("/educator/scenarios" as never)} accent={getAccent("blue").solid} />
+          <ActionRow icon="list.bullet.clipboard.fill" label={t("educator.nav.quizBank")} detail="Quiz question bank" onPress={() => router.push("/educator/quiz-bank" as never)} accent={getAccent("green").solid} />
           {currentUser && canManageBounties(currentUser) ? (
             <ActionRow icon="star.fill" label={t("profile.bounties")} detail={t("admin.overview.manageCourses")} onPress={() => router.push("/bounties")} accent={getAccent("amber").solid} />
+          ) : null}
+          {currentUser && canReviewApplications(currentUser) ? (
+            <ActionRow icon="person.badge.shield.checkmark.fill" label={t("admin.nav.applications")} detail={t("admin.applications.subtitle")} onPress={() => router.push("/educator/applications" as never)} accent={getAccent("teal").solid} />
           ) : null}
         </View>
       </ScrollView>

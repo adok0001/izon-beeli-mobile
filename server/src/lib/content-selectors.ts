@@ -3,11 +3,10 @@
  * learning content. Both the public read routes and the offline snapshot
  * exporter call these, so the two can never drift.
  *
- * Publish gating: tables that already carry a boolean gate are filtered here
- * (`courses`, `lessons`, `scripts`, `scriptCharacters`, `interactiveStories` via
- * `isActive`). Tables without a status column yet (dictionary, sentences,
- * proverbs, cultural) return all rows — swap in `status = 'published'` once the
- * CMS editorial workflow (Phase 2) adds that column.
+ * Publish gating: `courses`, `lessons`, `scripts`, `scriptCharacters`, and
+ * `interactiveStories` are filtered on their boolean `isActive` gate.
+ * `dictionaryEntries`, `sentenceTemplates`, `proverbs`, and `culturalContent`
+ * are filtered on the Beeli Studio `status = 'published'` column (Phase 2).
  */
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { db } from "../db/index.js";
@@ -20,6 +19,7 @@ import {
   interactiveStories,
   lessons,
   proverbs,
+  quizQuestions,
   scriptCharacters,
   scripts,
   sentenceTemplates,
@@ -34,7 +34,12 @@ export async function selectDictionary(languageId: string) {
   const staticEntries = await db
     .select()
     .from(dictionaryEntries)
-    .where(eq(dictionaryEntries.languageId, languageId))
+    .where(
+      and(
+        eq(dictionaryEntries.languageId, languageId),
+        eq(dictionaryEntries.status, "published")
+      )
+    )
     .orderBy(asc(dictionaryEntries.word));
 
   const approvedContribs = await db
@@ -69,11 +74,27 @@ export async function selectSentences(languageId: string) {
   return db
     .select()
     .from(sentenceTemplates)
-    .where(eq(sentenceTemplates.languageId, languageId));
+    .where(
+      and(
+        eq(sentenceTemplates.languageId, languageId),
+        eq(sentenceTemplates.status, "published")
+      )
+    );
 }
 
 export async function selectProverbs(languageId: string) {
-  return db.select().from(proverbs).where(eq(proverbs.languageId, languageId));
+  return db
+    .select()
+    .from(proverbs)
+    .where(and(eq(proverbs.languageId, languageId), eq(proverbs.status, "published")));
+}
+
+export async function selectQuizQuestions(languageId: string) {
+  return db
+    .select()
+    .from(quizQuestions)
+    .where(and(eq(quizQuestions.languageId, languageId), eq(quizQuestions.status, "published")))
+    .orderBy(asc(quizQuestions.createdAt));
 }
 
 /** Cultural content with its key terms grouped in (matches GET /cultural). */
@@ -81,7 +102,12 @@ export async function selectCultural(languageId: string) {
   const content = await db
     .select()
     .from(culturalContent)
-    .where(eq(culturalContent.languageId, languageId));
+    .where(
+      and(
+        eq(culturalContent.languageId, languageId),
+        eq(culturalContent.status, "published")
+      )
+    );
   if (content.length === 0) return [];
 
   const contentIds = content.map((c) => c.id);

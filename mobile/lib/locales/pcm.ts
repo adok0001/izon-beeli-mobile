@@ -1599,6 +1599,9 @@ export const pcm = {
       quiz: "Quiz",
       culture: "Culture",
       etymology: "Etymology Trail",
+      streakTools: "Streak Tools",
+      bounties: "Bounties",
+      discoverStories: "Series & Stories",
       billing: "Billing",
     },
     dailyContent: {
@@ -1748,6 +1751,10 @@ export const pcm = {
       labelReviewerNote: "Reviewer note",
       emptyFiltered: "No {{status}} applications",
       emptyAll: "No applications",
+      statusPending: "Dey wait",
+      statusApproved: "Approve",
+      statusRejected: "Reject",
+      filterAll: "All",
     },
     organizations: {
       title: "Organisations",

@@ -50,6 +50,8 @@ educatorScenariosRouter.post("/scenarios", async (c) => {
       languageId: body.languageId,
       situation: body.situation.trim(),
       turns: JSON.stringify(body.turns),
+      status: "draft",
+      createdBy: c.get("userId"),
     })
     .returning();
 
@@ -73,6 +75,7 @@ educatorScenariosRouter.patch("/scenarios/:id", async (c) => {
   const body = await c.req.json<{
     situation?: string;
     turns?: { text: string; translation: string; audioUrl?: string }[];
+    status?: string;
   }>();
 
   if (body.turns) {
@@ -83,12 +86,20 @@ educatorScenariosRouter.patch("/scenarios/:id", async (c) => {
     }
   }
 
+  // Going live only happens through the four-eyes publish endpoint.
+  const statusTransition =
+    body.status !== undefined && ["draft", "in_review", "archived"].includes(body.status)
+      ? { status: body.status as "draft" | "in_review" | "archived" }
+      : {};
+
   const [row] = await db
     .update(scenarios)
     .set({
       ...(body.situation ? { situation: body.situation.trim() } : {}),
       ...(body.turns ? { turns: JSON.stringify(body.turns) } : {}),
+      ...statusTransition,
       updatedAt: new Date(),
+      updatedBy: c.get("userId"),
     })
     .where(eq(scenarios.id, id))
     .returning();

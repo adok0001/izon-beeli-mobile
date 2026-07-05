@@ -21,6 +21,9 @@ educatorStoryArcsRouter.get("/story-arcs", async (c) => {
       title: storyArcs.title,
       description: storyArcs.description,
       updatedAt: storyArcs.updatedAt,
+      status: storyArcs.status,
+      createdBy: storyArcs.createdBy,
+      languageId: courses.languageId,
     })
     .from(storyArcs)
     .innerJoin(courses, eq(storyArcs.courseId, courses.id))
@@ -83,7 +86,14 @@ educatorStoryArcsRouter.post("/story-arcs", async (c) => {
   }
 
   const id = `story-arc-${randomUUID()}`;
-  await db.insert(storyArcs).values({ id, courseId, title: title.trim(), description: description.trim() });
+  await db.insert(storyArcs).values({
+    id,
+    courseId,
+    title: title.trim(),
+    description: description.trim(),
+    status: "draft",
+    createdBy: c.get("userId"),
+  });
 
   return c.json({ id }, 201);
 });
@@ -106,10 +116,15 @@ educatorStoryArcsRouter.put("/story-arcs/:id", async (c) => {
     return c.json({ error: "Forbidden" }, 403);
   }
 
-  const body = await c.req.json<{ title?: string; description?: string }>();
-  const updates: Record<string, unknown> = { updatedAt: new Date() };
+  const body = await c.req.json<{ title?: string; description?: string; status?: string }>();
+  const updates: Record<string, unknown> = { updatedAt: new Date(), updatedBy: c.get("userId") };
   if (body.title !== undefined) updates.title = body.title.trim();
   if (body.description !== undefined) updates.description = body.description.trim();
+  // Editors may move an arc between draft/in_review/archived; going live only
+  // happens through POST /content/story_arcs/:id/publish (four-eyes guard).
+  if (body.status !== undefined && ["draft", "in_review", "archived"].includes(body.status)) {
+    updates.status = body.status;
+  }
 
   await db.update(storyArcs).set(updates).where(eq(storyArcs.id, id));
   return c.json({ success: true });

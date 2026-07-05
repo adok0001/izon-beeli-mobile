@@ -2,6 +2,7 @@ import { and, asc, eq, ilike, or } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index.js";
 import { dictionaryEntries, englishWordbank } from "../db/schema.js";
+import { adminMiddleware, authMiddleware } from "../middleware/auth.js";
 
 export const englishWordbankRouter = new Hono();
 
@@ -68,4 +69,70 @@ englishWordbankRouter.get("/", async (c) => {
   });
 
   return c.json(result);
+});
+
+// ── Admin write routes ────────────────────────────────────────────────────────
+// The English wordbank is a reference table (the target words that language
+// entries translate), so it carries no editorial workflow — just admin CRUD.
+
+export const englishWordbankAdminRouter = new Hono();
+englishWordbankAdminRouter.use("*", authMiddleware, adminMiddleware);
+
+// POST /api/english-wordbank/admin — create a word
+englishWordbankAdminRouter.post("/", async (c) => {
+  const body = await c.req.json<{
+    id: string;
+    word: string;
+    definition?: string | null;
+    category: string;
+    posType?: string | null;
+  }>();
+
+  const id = body.id?.trim();
+  if (!id || !body.word?.trim() || !body.category?.trim()) {
+    return c.json({ error: "id, word, and category are required" }, 400);
+  }
+
+  const [existing] = await db.select({ id: englishWordbank.id }).from(englishWordbank).where(eq(englishWordbank.id, id)).limit(1);
+  if (existing) return c.json({ error: "A wordbank entry with this id already exists" }, 409);
+
+  const [created] = await db
+    .insert(englishWordbank)
+    .values({
+      id,
+      word: body.word.trim(),
+      definition: body.definition ?? null,
+      category: body.category.trim(),
+      posType: body.posType ?? null,
+    })
+    .returning();
+
+  return c.json(created, 201);
+});
+
+// PATCH /api/english-wordbank/admin/:id
+englishWordbankAdminRouter.patch("/:id", async (c) => {
+  const id = c.req.param("id");
+  const [existing] = await db.select().from(englishWordbank).where(eq(englishWordbank.id, id)).limit(1);
+  if (!existing) return c.json({ error: "Not found" }, 404);
+
+  const body = await c.req.json<Partial<{ word: string; definition: string | null; category: string; posType: string | null }>>();
+  const updates: Record<string, unknown> = {};
+  if (body.word !== undefined) updates.word = body.word.trim();
+  if (body.category !== undefined) updates.category = body.category.trim();
+  if (body.definition !== undefined) updates.definition = body.definition;
+  if (body.posType !== undefined) updates.posType = body.posType;
+  if (Object.keys(updates).length === 0) return c.json(existing);
+
+  const [updated] = await db.update(englishWordbank).set(updates).where(eq(englishWordbank.id, id)).returning();
+  return c.json(updated);
+});
+
+// DELETE /api/english-wordbank/admin/:id
+englishWordbankAdminRouter.delete("/:id", async (c) => {
+  const id = c.req.param("id");
+  const [existing] = await db.select({ id: englishWordbank.id }).from(englishWordbank).where(eq(englishWordbank.id, id)).limit(1);
+  if (!existing) return c.json({ error: "Not found" }, 404);
+  await db.delete(englishWordbank).where(eq(englishWordbank.id, id));
+  return c.json({ success: true });
 });

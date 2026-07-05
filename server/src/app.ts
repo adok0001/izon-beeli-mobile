@@ -13,12 +13,12 @@ import { culturalAdminRouter, culturalRouter } from "./routes/cultural.js";
 import { dailyChallengesRouter } from "./routes/daily-challenges.js";
 import { dashboardRouter } from "./routes/dashboard.js";
 import { dictionaryAdminRouter, dictionaryRouter } from "./routes/dictionary.js";
-import { englishWordbankRouter } from "./routes/english-wordbank.js";
+import { englishWordbankAdminRouter, englishWordbankRouter } from "./routes/english-wordbank.js";
 import { educatorRouter } from "./routes/educator.js";
 import { feedPublicRouter, feedRouter } from "./routes/feed.js";
 import { feedbackAdminRouter, feedbackRouter } from "./routes/feedback.js";
 import { journalRouter } from "./routes/journal.js";
-import { languagesRouter } from "./routes/languages.js";
+import { languagesAdminRouter, languagesRouter } from "./routes/languages.js";
 import { scriptsRouter } from "./routes/scripts.js";
 import { lessonContributionsRouter } from "./routes/lesson-contributions.js";
 import { lessonsRouter } from "./routes/lessons.js";
@@ -34,18 +34,18 @@ import { wordProgressRouter } from "./routes/word-progress.js";
 import { wordChallengeRouter, wordChallengeAdminRouter } from "./routes/word-challenge.js";
 import { quizRouter } from "./routes/quiz.js";
 import { quizAdminRouter } from "./routes/quiz-admin.js";
+import { quizBankRouter, quizBankAdminRouter } from "./routes/quiz-bank.js";
+import { appConfigAdminRouter } from "./routes/app-config.js";
 import { reviewerApplicationsAdminRouter, reviewerApplicationsRouter } from "./routes/reviewer-applications.js";
 import { sentencesRouter } from "./routes/sentences.js";
 import { storyArcsRouter } from "./routes/story-arcs.js";
 import { interactiveStoriesRouter } from "./routes/interactive-stories.js";
 import { contentSnapshotRouter } from "./routes/content-snapshot.js";
+import { contentPublishRouter } from "./routes/content-publish.js";
 import { adminStatsRouter, adminUsersRouter, purgeExpiredDeletedUsers, usersRouter } from "./routes/users.js";
 import { isPlusGloballyEnabled } from "./middleware/plus-gate.js";
 import { restockPlusFreezes } from "./lib/restock-freezes.js";
 import { sendReengagementNotifications } from "./lib/send-reengagement-notifications.js";
-import { eq } from "drizzle-orm";
-import { appConfig } from "./db/schema.js";
-import { db } from "./db/index.js";
 import { wordbankRouter } from "./routes/wordbank.js";
 import { activitiesRouter, activitiesAdminRouter } from "./routes/activities.js";
 import { cultureItemsRouter, cultureItemsAdminRouter } from "./routes/culture-items.js";
@@ -53,7 +53,6 @@ import { uploadAdminRouter } from "./routes/upload.js";
 import { partnersRouter, partnersAdminRouter } from "./routes/partners.js";
 import { adminImportRouter } from "./routes/admin-import.js";
 import { publicStatsRouter } from "./routes/public-stats.js";
-import { authMiddleware, adminMiddleware } from "./middleware/auth.js";
 import { logger as log } from "./lib/logger.js";
 
 const isDev = process.env.NODE_ENV !== "production";
@@ -117,9 +116,11 @@ app.route("/proverbs/admin", proverbsAdminRouter);
 app.route("/cultural", culturalRouter);
 app.route("/cultural/admin", culturalAdminRouter);
 app.route("/sentences", sentencesRouter);
+app.route("/quiz-bank", quizBankRouter);
 app.route("/story-arcs", storyArcsRouter);
 app.route("/interactive-stories", interactiveStoriesRouter);
 app.route("/content", contentSnapshotRouter);
+app.route("/content", contentPublishRouter);
 app.route("/daily-content", dailyContentRouter);
 app.route("/activities", activitiesRouter);
 app.route("/partners", partnersRouter);
@@ -164,7 +165,12 @@ app.route("/culture-items/admin", cultureItemsAdminRouter);
 app.route("/culture-items", cultureItemsRouter);
 app.route("/upload", uploadAdminRouter);
 app.route("/partners/admin", partnersAdminRouter);
+app.route("/languages/admin", languagesAdminRouter);
+app.route("/english-wordbank/admin", englishWordbankAdminRouter);
+app.route("/quiz-bank/admin", quizBankAdminRouter);
 app.route("/admin/dictionary/import", adminImportRouter);
+// Mount /admin/config before the /admin catch-all so it isn't shadowed.
+app.route("/admin/config", appConfigAdminRouter);
 app.route("/admin", adminStatsRouter);
 app.route("/educator", educatorRouter);
 app.route("/reviewer-applications", reviewerApplicationsRouter);
@@ -179,16 +185,6 @@ app.post("/internal/restock-plus-freezes", async (c) => {
   }
   const restocked = await restockPlusFreezes();
   return c.json({ restocked });
-});
-
-// PATCH /api/admin/config — toggle app config values (admin only)
-app.patch("/admin/config", authMiddleware, adminMiddleware, async (c) => {
-  const body = await c.req.json<{ key: string; value: string }>();
-  await db
-    .insert(appConfig)
-    .values({ key: body.key, value: body.value })
-    .onConflictDoUpdate({ target: appConfig.key, set: { value: body.value } });
-  return c.json({ ok: true });
 });
 
 // POST /api/internal/purge-deleted-users

@@ -1579,6 +1579,9 @@ export const fr = {
       quiz: "Quiz",
       culture: "Culture",
       etymology: "Piste étymologique",
+      streakTools: "Outils de série",
+      bounties: "Primes",
+      discoverStories: "Séries et histoires",
       billing: "Facturation",
     },
     dailyContent: {
@@ -1728,6 +1731,10 @@ export const fr = {
       labelReviewerNote: "Note de l'évaluateur",
       emptyFiltered: "Aucune candidature {{status}}",
       emptyAll: "Aucune candidature",
+      statusPending: "En attente",
+      statusApproved: "Approuvée",
+      statusRejected: "Refusée",
+      filterAll: "Toutes",
     },
     organizations: {
       title: "Organisations",

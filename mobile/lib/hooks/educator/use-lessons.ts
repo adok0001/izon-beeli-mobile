@@ -1,4 +1,5 @@
 import { apiFetch, apiFetchMultipart } from "@/lib/api";
+import type { ContentStatus } from "@/lib/hooks/educator/use-content-workflow";
 import type { LocalizedText } from "@/types";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -17,6 +18,8 @@ export interface EducatorLesson {
   artist?: string | null;
   genre?: string | null;
   isActive?: boolean;
+  status: ContentStatus;
+  createdBy: string | null;
 }
 
 export interface EducatorLessonSegment {
@@ -138,7 +141,7 @@ export function useUpdateEducatorLesson() {
       payload,
     }: {
       id: string;
-      payload: Partial<Pick<EducatorLesson, "title" | "description" | "type" | "artist" | "genre" | "order" | "isActive">>;
+      payload: Partial<Pick<EducatorLesson, "title" | "description" | "type" | "artist" | "genre" | "order" | "isActive" | "status">>;
     }) => {
       const token = await getToken();
       return apiFetch<{ success: true }>(`/educator/lessons/${id}`, {

@@ -2,12 +2,14 @@
 
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { LocalizedTextInput, type LocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
+import { StatusPill } from "@/components/ui/status-pill";
 import { apiFetch } from "@/lib/api";
+import { canPublishContent, canSubmitForReview, publishContent, type ContentStatus } from "@/lib/content-workflow";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { LANGUAGES } from "@mobile/lib/data/languages";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, BookText, CheckCircle2, ChevronDown, Edit2, FileJson, ImageIcon, Mic, Plus, Search, Trash2, Upload, Volume2, X, XCircle } from "lucide-react";
+import { AlertTriangle, BookText, CheckCircle2, ChevronDown, Edit2, FileJson, ImageIcon, Mic, Plus, Search, Send, Trash2, Upload, Volume2, X, XCircle } from "lucide-react";
 import Image from "next/image";
 import React, { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -29,6 +31,9 @@ interface DictEntry {
   exampleTranslationFr: string | null;
   audioUrl: string | null;
   imageUrl: string | null;
+  /** Absent on contribution-sourced rows (_source: "contribution") — those use their own approval status. */
+  status?: ContentStatus;
+  createdBy?: string | null;
   _source?: "contribution";
 }
 
@@ -39,8 +44,10 @@ interface ScopedLanguage {
 }
 
 interface EducatorMe {
+  id: string;
   languages: ScopedLanguage[];
   isAdmin: boolean;
+  reviewerRole?: string | null;
 }
 
 interface CoverageReport {
@@ -60,7 +67,7 @@ const CATEGORIES = [
 const fieldCls =
   "w-full rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm px-3 py-2 text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40";
 
-type EntryForm = Omit<DictEntry, "id" | "translations" | "exampleTranslations" | "_source"> & {
+type EntryForm = Omit<DictEntry, "id" | "translations" | "exampleTranslations" | "_source" | "status" | "createdBy"> & {
   translations: LocalizedText;
   exampleTranslations: LocalizedText;
 };
@@ -668,6 +675,34 @@ export default function EducatorDictionaryPage() {
     onError: (e: Error) => toast.error("Failed to update entry", { description: e.message }),
   });
 
+  const submitForReview = useMutation({
+    mutationFn: async (id: string) => {
+      const token = await getToken();
+      return apiFetch(`/educator/dictionary/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "in_review" }),
+        token: token ?? undefined,
+      });
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
+      toast.success("Submitted for review");
+    },
+    onError: (e: Error) => toast.error("Failed to submit for review", { description: e.message }),
+  });
+
+  const publishEntry = useMutation({
+    mutationFn: async (id: string) => {
+      const token = await getToken();
+      return publishContent("dictionary_entries", id, token ?? undefined);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
+      toast.success("Published");
+    },
+    onError: (e: Error) => toast.error("Failed to publish", { description: e.message }),
+  });
+
   const deleteEntry = useMutation({
     mutationFn: async (id: string) => {
       const token = await getToken();
@@ -884,6 +919,7 @@ export default function EducatorDictionaryPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <p className="font-semibold text-neutral-900 dark:text-white">{entry.word}</p>
+                        <StatusPill status={entry.status} />
                         {isContrib && (
                           <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 border border-brand-300 dark:border-brand-700">
                             Contrib
@@ -957,6 +993,26 @@ export default function EducatorDictionaryPage() {
                         </div>
                       ) : (
                         <div className="flex items-center gap-1 justify-end">
+                          {canSubmitForReview(entry.status) && (
+                            <button
+                              onClick={() => submitForReview.mutate(entry.id)}
+                              disabled={submitForReview.isPending}
+                              className="p-1.5 rounded-lg text-neutral-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                              title="Submit for review"
+                            >
+                              <Send className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                          {me && canPublishContent(entry.status, entry.createdBy, { isAdmin: me.isAdmin, reviewerRole: me.reviewerRole, userId: me.id }) && (
+                            <button
+                              onClick={() => publishEntry.mutate(entry.id)}
+                              disabled={publishEntry.isPending}
+                              className="p-1.5 rounded-lg text-neutral-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+                              title="Publish"
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
                           <button onClick={() => setModal({ mode: "edit", entry })}
                             className="p-1.5 rounded-lg text-neutral-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors">
                             <Edit2 className="h-3.5 w-3.5" />

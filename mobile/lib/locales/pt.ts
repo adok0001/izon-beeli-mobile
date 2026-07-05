@@ -1577,6 +1577,9 @@ export const pt = {
       quiz: "Quiz",
       culture: "Cultura",
       etymology: "Trilho Etimológico",
+      streakTools: "Ferramentas de sequência",
+      bounties: "Recompensas",
+      discoverStories: "Séries e histórias",
       billing: "Faturação",
     },
     dailyContent: {
@@ -1774,6 +1777,10 @@ export const pt = {
       labelReviewerNote: "Nota do revisor",
       emptyFiltered: "Nenhuma candidatura {{status}}",
       emptyAll: "Nenhuma candidatura",
+      statusPending: "Pendente",
+      statusApproved: "Aprovada",
+      statusRejected: "Recusada",
+      filterAll: "Todas",
     },
     organizations: {
       title: "Organizações",

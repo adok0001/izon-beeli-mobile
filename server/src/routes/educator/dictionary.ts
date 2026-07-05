@@ -84,6 +84,7 @@ educatorDictionaryRouter.get("/dictionary", async (c) => {
 
 // POST /educator/dictionary
 educatorDictionaryRouter.post("/dictionary", async (c) => {
+  const userId = c.get("userId");
   const isAdmin = c.get("isAdmin");
   const reviewerLanguages = c.get("reviewerLanguages");
 
@@ -178,14 +179,20 @@ educatorDictionaryRouter.post("/dictionary", async (c) => {
       imageUrl,
       exampleAudioUrl,
       ...extras,
+      status: "draft",
+      createdBy: userId,
+      updatedBy: userId,
     })
     .returning();
 
   return c.json(inserted, 201);
 });
 
+const PATCHABLE_STATUSES = ["draft", "in_review", "archived"] as const;
+
 // PATCH /educator/dictionary/:id
 educatorDictionaryRouter.patch("/dictionary/:id", async (c) => {
+  const userId = c.get("userId");
   const isAdmin = c.get("isAdmin");
   const reviewerLanguages = c.get("reviewerLanguages");
   const { id } = c.req.param();
@@ -225,8 +232,13 @@ educatorDictionaryRouter.patch("/dictionary/:id", async (c) => {
   if (fields.category && !VALID_CATEGORIES.includes(fields.category as (typeof VALID_CATEGORIES)[number])) {
     return c.json({ error: `category must be one of: ${VALID_CATEGORIES.join(", ")}` }, 400);
   }
+  if (fields.status && !PATCHABLE_STATUSES.includes(fields.status as (typeof PATCHABLE_STATUSES)[number])) {
+    // "published" only happens through the guarded POST /content/dictionary_entries/:id/publish endpoint.
+    return c.json({ error: `status must be one of: ${PATCHABLE_STATUSES.join(", ")}` }, 400);
+  }
 
-  const updates: Partial<typeof dictionaryEntries.$inferInsert> = {};
+  const updates: Partial<typeof dictionaryEntries.$inferInsert> = { updatedBy: userId };
+  if (fields.status) updates.status = fields.status as (typeof PATCHABLE_STATUSES)[number];
   for (const key of ["pronunciation", "example"] as const) {
     if (key in fields) updates[key] = fields[key]?.trim() || null;
   }
