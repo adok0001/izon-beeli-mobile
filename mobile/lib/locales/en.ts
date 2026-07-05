@@ -2114,6 +2114,7 @@ export const en = {
       scenarios: "Scenarios",
       storyArcs: "Story Arcs",
       quizBank: "Quiz Bank",
+      translations: "Translations",
     },
     sentences: {
       screenTitle: "Sentences & Scenarios",

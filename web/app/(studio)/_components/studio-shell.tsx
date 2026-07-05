@@ -30,6 +30,7 @@ import {
   SpellCheck,
   Sun,
   Target,
+  Type,
   UserCheck,
   Users,
   type LucideIcon,
@@ -77,6 +78,7 @@ const AUTHORING_NAV: readonly NavItem[] = [
   { href: "/educator/scenarios",  labelKey: "educator.nav.scenarios",  icon: MessagesSquare,    tourId: "educator-nav-scenarios" },
   { href: "/educator/story-arcs", labelKey: "educator.nav.storyArcs",  icon: BookMarked,        tourId: "educator-nav-story-arcs" },
   { href: "/educator/quiz-bank",  labelKey: "educator.nav.quizBank",   icon: ListChecks,        tourId: "educator-nav-quiz-bank" },
+  { href: "/educator/translations", labelKey: "educator.nav.translations", icon: Type,          tourId: "educator-nav-translations" },
 ];
 
 // Operations surfaces — admin only.

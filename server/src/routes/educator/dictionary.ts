@@ -328,18 +328,8 @@ educatorDictionaryRouter.delete("/dictionary/:id", async (c) => {
   return c.json({ deleted: true });
 });
 
-// GET /educator/dictionary-coverage?languageId=xx
-// Transcript words in the language's lessons that have no dictionary entry.
-educatorDictionaryRouter.get("/dictionary-coverage", async (c) => {
-  const isAdmin = c.get("isAdmin");
-  const reviewerLanguages = c.get("reviewerLanguages");
-  const languageId = c.req.query("languageId") ?? (isAdmin ? "" : reviewerLanguages[0]);
-
-  if (!languageId) return c.json({ error: "languageId is required" }, 400);
-  if (!isAdmin && !reviewerLanguages.includes(languageId)) {
-    return c.json({ error: "Forbidden: not assigned to this language" }, 403);
-  }
-
+/** Shared by GET /dictionary-coverage and GET /content-health so the two never drift. */
+export async function getDictionaryCoverageReport(languageId: string) {
   const lessonRows = await db
     .select({ id: lessons.id, title: lessons.title })
     .from(lessons)
@@ -377,5 +367,78 @@ educatorDictionaryRouter.get("/dictionary-coverage", async (c) => {
     lessonsById,
     englishRows.map((r) => r.word),
   );
-  return c.json({ languageId, lessonCount: lessonRows.length, ...report });
+  return { languageId, lessonCount: lessonRows.length, ...report };
+}
+
+// GET /educator/dictionary-coverage?languageId=xx
+// Transcript words in the language's lessons that have no dictionary entry.
+educatorDictionaryRouter.get("/dictionary-coverage", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const languageId = c.req.query("languageId") ?? (isAdmin ? "" : reviewerLanguages[0]);
+
+  if (!languageId) return c.json({ error: "languageId is required" }, 400);
+  if (!isAdmin && !reviewerLanguages.includes(languageId)) {
+    return c.json({ error: "Forbidden: not assigned to this language" }, 403);
+  }
+
+  return c.json(await getDictionaryCoverageReport(languageId));
+});
+
+// The canonical UI/gloss locales (web/lib/ui-language.ts). Translation-queue
+// scope is limited to these — `translations`/`exampleTranslations` are gloss
+// maps, not per-content-language data.
+export const GLOSS_LOCALES = ["en", "fr", "pcm", "ar", "pt"] as const;
+export type GlossLocale = (typeof GLOSS_LOCALES)[number];
+
+/** Per-locale gloss coverage for a language's dictionary — shared with GET /content-health. */
+export async function getTranslationCoverageReport(languageId: string) {
+  const rows = await db
+    .select()
+    .from(dictionaryEntries)
+    .where(eq(dictionaryEntries.languageId, languageId));
+  const entries = rows.map(withTranslations);
+  const total = entries.length;
+
+  return GLOSS_LOCALES.map((locale) => {
+    const covered = entries.filter((entry) => {
+      const hasGloss = !!entry.translations?.[locale];
+      const hasExampleGloss = !entry.example || !!entry.exampleTranslations?.[locale];
+      return hasGloss && hasExampleGloss;
+    }).length;
+    return { locale, total, covered, pct: total > 0 ? Math.round((covered / total) * 100) : 0 };
+  });
+}
+
+// GET /educator/translation-queue?languageId=xx&locale=fr
+// Dictionary entries (any status) missing a gloss for the given locale.
+educatorDictionaryRouter.get("/translation-queue", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const languageId = c.req.query("languageId") ?? (isAdmin ? "" : reviewerLanguages[0]);
+  const locale = c.req.query("locale");
+
+  if (!languageId) return c.json({ error: "languageId is required" }, 400);
+  if (!isAdmin && !reviewerLanguages.includes(languageId)) {
+    return c.json({ error: "Forbidden: not assigned to this language" }, 403);
+  }
+  if (!locale || !GLOSS_LOCALES.includes(locale as GlossLocale)) {
+    return c.json({ error: `locale must be one of: ${GLOSS_LOCALES.join(", ")}` }, 400);
+  }
+
+  const rows = await db
+    .select()
+    .from(dictionaryEntries)
+    .where(eq(dictionaryEntries.languageId, languageId))
+    .orderBy(dictionaryEntries.word);
+
+  const missing = rows
+    .map(withTranslations)
+    .filter((entry) => {
+      const missingGloss = !entry.translations?.[locale];
+      const missingExampleGloss = !!entry.example && !entry.exampleTranslations?.[locale];
+      return missingGloss || missingExampleGloss;
+    });
+
+  return c.json({ languageId, locale, total: rows.length, missing });
 });

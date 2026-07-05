@@ -1,6 +1,7 @@
 "use client";
 
 import { apiFetch } from "@/lib/api";
+import { ContentHealthPanel } from "@/components/studio/content-health-panel";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -14,7 +15,12 @@ import {
   Mic,
   Users,
 } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
+
+interface AdminMe {
+  languages: { id: string; name: string }[];
+}
 
 interface AdminStats {
   users: number;
@@ -80,6 +86,7 @@ function StatCard({
 export default function AdminDashboardPage() {
   const { getToken } = useAuth();
   const { t } = useTranslation();
+  const [healthLanguageId, setHealthLanguageId] = useState("");
 
   const { data: stats, isLoading } = useQuery<AdminStats>({
     queryKey: ["admin", "stats"],
@@ -88,6 +95,12 @@ export default function AdminDashboardPage() {
       return apiFetch<AdminStats>("/admin/stats", { token: token ?? undefined });
     },
     staleTime: 30_000,
+  });
+
+  const { data: me } = useQuery<AdminMe>({
+    queryKey: ["educator", "me"],
+    queryFn: async () => apiFetch<AdminMe>("/educator/me", { token: (await getToken()) ?? undefined }),
+    staleTime: 60_000,
   });
 
   return (
@@ -109,6 +122,28 @@ export default function AdminDashboardPage() {
           />
         ))}
       </div>
+
+      {/* Content health */}
+      {me && me.languages.length > 0 && (
+        <div className="mb-10 space-y-3">
+          <div className="flex items-center gap-2">
+            <label htmlFor="content-health-language" className="text-xs font-medium text-neutral-500">
+              Language
+            </label>
+            <select
+              id="content-health-language"
+              value={healthLanguageId || me.languages[0].id}
+              onChange={(e) => setHealthLanguageId(e.target.value)}
+              className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm px-2 py-1 text-neutral-900 dark:text-white"
+            >
+              {me.languages.map((lang) => (
+                <option key={lang.id} value={lang.id}>{lang.name}</option>
+              ))}
+            </select>
+          </div>
+          <ContentHealthPanel languageId={healthLanguageId || me.languages[0].id} />
+        </div>
+      )}
 
       {/* Quick links */}
       <div>

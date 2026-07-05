@@ -2,6 +2,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { getAccent } from "@/constants/accent-colors";
 import { canManageBounties, canReviewApplications } from "@/lib/hooks/use-current-user";
+import { useContentHealth } from "@/lib/hooks/educator/use-content-health";
 import { useEducatorStats } from "@/lib/hooks/use-educator-panel";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { getLanguageName } from "@/lib/mock-data";
@@ -84,12 +85,28 @@ function SectionLabel({ label }: { label: string }) {
   );
 }
 
+function HealthBar({ label, pct }: Readonly<{ label: string; pct: number }>) {
+  const M = useMuseumTheme();
+  return (
+    <View>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 4 }}>
+        <Text style={{ fontSize: 12, color: M.sub }}>{label}</Text>
+        <Text style={{ fontSize: 12, fontWeight: "800", color: M.text }}>{pct}%</Text>
+      </View>
+      <View style={{ height: 6, borderRadius: 3, backgroundColor: M.card, overflow: "hidden" }}>
+        <View style={{ height: "100%", width: `${pct}%`, borderRadius: 3, backgroundColor: M.accent }} />
+      </View>
+    </View>
+  );
+}
+
 export default function EducatorPanelScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
   const { user: currentUser, canAccess } = useStudioAccess();
   const { data: educatorStats } = useEducatorStats(canAccess);
+  const { data: contentHealth } = useContentHealth(currentUser?.reviewerLanguages?.[0]);
   const [onboardingStep, setOnboardingStep] = useState<1 | 2 | 3 | null>(null);
 
   useEffect(() => {
@@ -258,6 +275,18 @@ export default function EducatorPanelScreen() {
           <StatCard icon="chart.bar.fill" label={t("educator.stats.approvedContributions")} value={educatorStats?.approvedContributions ?? 0} />
         </View>
 
+        {/* Content health */}
+        {contentHealth && (
+          <>
+            <SectionLabel label="Content Health" />
+            <View style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 16, gap: 10, marginBottom: 24 }}>
+              <HealthBar label="Dictionary coverage" pct={contentHealth.dictionaryCoverage.pct} />
+              <HealthBar label="Audio coverage" pct={contentHealth.mediaCoverage.audio.pct} />
+              <HealthBar label="Image coverage" pct={contentHealth.mediaCoverage.image.pct} />
+            </View>
+          </>
+        )}
+
         {/* Actions */}
         <SectionLabel label={t("admin.overview.quickActions")} />
         <View style={{ gap: 10 }}>
@@ -271,6 +300,8 @@ export default function EducatorPanelScreen() {
           <ActionRow icon="quote.bubble.fill" label={t("educator.nav.proverbs")} detail="Proverbs and their meanings" onPress={() => router.push("/educator/proverbs" as never)} accent={getAccent("amber").solid} />
           <ActionRow icon="bubble.left.and.bubble.right.fill" label={t("educator.nav.scenarios")} detail="Conversation scenarios" onPress={() => router.push("/educator/scenarios" as never)} accent={getAccent("blue").solid} />
           <ActionRow icon="list.bullet.clipboard.fill" label={t("educator.nav.quizBank")} detail="Quiz question bank" onPress={() => router.push("/educator/quiz-bank" as never)} accent={getAccent("green").solid} />
+          <ActionRow icon="photo" label={t("admin.nav.media")} detail="Browse and reuse uploaded images and audio" onPress={() => router.push("/admin/media" as never)} accent={getAccent("indigo").solid} />
+          <ActionRow icon="globe.fill" label={t("educator.nav.translations")} detail="Fill in missing glosses per locale" onPress={() => router.push("/educator/translations" as never)} accent={getAccent("sky").solid} />
           {currentUser && canManageBounties(currentUser) ? (
             <ActionRow icon="star.fill" label={t("profile.bounties")} detail={t("admin.overview.manageCourses")} onPress={() => router.push("/bounties")} accent={getAccent("amber").solid} />
           ) : null}
