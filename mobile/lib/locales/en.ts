@@ -1615,6 +1615,7 @@ export const en = {
       contentPartners: "Partners",
       englishWordbank: "Wordbank",
       appConfig: "Feature Flags",
+      media: "Media Library",
     },
     dailyContent: {
       title: "Daily Content",

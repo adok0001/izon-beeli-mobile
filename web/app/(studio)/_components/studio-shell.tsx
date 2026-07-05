@@ -18,6 +18,7 @@ import {
   Gamepad2,
   Globe2,
   Handshake,
+  Images,
   Landmark,
   Languages,
   LayoutDashboard,
@@ -95,6 +96,7 @@ const OPS_NAV: readonly NavItem[] = [
   { href: "/admin/content-partners", labelKey: "admin.nav.contentPartners", icon: Handshake, tourId: "admin-nav-content-partners" },
   { href: "/admin/english-wordbank", labelKey: "admin.nav.englishWordbank", icon: SpellCheck, tourId: "admin-nav-english-wordbank" },
   { href: "/admin/app-config",    labelKey: "admin.nav.appConfig",     icon: Flag,         tourId: "admin-nav-app-config" },
+  { href: "/admin/media",         labelKey: "admin.nav.media",        icon: Images,       tourId: "admin-nav-media" },
 ];
 
 function hasAccess(access: StudioAccess, me: { isAdmin: boolean; isReviewer: boolean }): boolean {

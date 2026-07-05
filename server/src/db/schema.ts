@@ -1338,3 +1338,26 @@ export const auditLog = pgTable(
     index("audit_log_actor_id_idx").on(table.actorId),
   ]
 );
+
+// Beeli Studio media library (Phase 5). Tracks every file uploaded through
+// upload.ts so it can be browsed and reused instead of re-uploaded per entity.
+export const mediaKindEnum = pgEnum("media_kind", ["image", "audio"]);
+
+export const mediaAssets = pgTable(
+  "media_assets",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    url: text("url").notNull(),
+    pathname: text("pathname").notNull(),
+    kind: mediaKindEnum("kind").notNull(),
+    filename: varchar("filename", { length: 500 }).notNull(),
+    mimeType: varchar("mime_type", { length: 128 }),
+    size: integer("size"),
+    uploadedBy: uuid("uploaded_by").references(() => users.id),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("media_assets_kind_idx").on(table.kind),
+    index("media_assets_created_at_idx").on(table.createdAt),
+  ]
+);

@@ -94,6 +94,8 @@ const MAPPING = {
   'crown.fill': 'workspace-premium',
   'shield.slash.fill': 'remove-moderator',
   'repeat.1': 'repeat-one',
+  'trash.fill': 'delete',
+  'eye.fill': 'visibility',
 } as IconMapping;
 
 /**
