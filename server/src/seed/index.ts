@@ -1,4 +1,5 @@
 import "dotenv/config";
+import "./_guard.js";
 import { eq, inArray, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 import {
