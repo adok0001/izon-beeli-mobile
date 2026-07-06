@@ -1,4 +1,5 @@
 import { Modal, View, Text, Pressable } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { StoryChapter } from "@/types";
@@ -22,7 +23,7 @@ export function ChapterIntro({ visible, chapter, onStart, onClose }: Props) {
       onRequestClose={onClose}
     >
       <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.5)" }}>
-        <View style={{ borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: M.card, paddingHorizontal: 24, paddingBottom: 40, paddingTop: 24, borderTopWidth: 1, borderColor: M.border }}>
+        <SafeAreaView edges={["bottom"]} style={{ borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: M.card, paddingHorizontal: 24, paddingBottom: 16, paddingTop: 24, borderTopWidth: 1, borderColor: M.border }}>
           <Pressable
             onPress={onClose}
             style={{ position: "absolute", right: 16, top: 16, height: 32, width: 32, alignItems: "center", justifyContent: "center", borderRadius: 16, backgroundColor: M.border }}
@@ -54,7 +55,7 @@ export function ChapterIntro({ visible, chapter, onStart, onClose }: Props) {
               {t("educator.story.beginChapter")}
             </Text>
           </Pressable>
-        </View>
+        </SafeAreaView>
       </View>
     </Modal>
   );

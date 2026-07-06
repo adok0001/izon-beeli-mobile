@@ -65,7 +65,7 @@ export default function DiscoverStoriesAdminScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("admin.discoverStories.title") }} />
-      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["bottom"]}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["top", "bottom"]}>
         <ScrollView contentContainerStyle={{ paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
           <View style={{ paddingHorizontal: 20, paddingTop: 16 }}>
             <Text style={{ fontSize: 13, lineHeight: 19, color: M.sub }}>

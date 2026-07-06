@@ -181,7 +181,7 @@ export default function StoryScreen() {
             onRequestClose={() => setOutroChapter(null)}
           >
             <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.5)" }}>
-              <View style={{ borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: M.card, paddingHorizontal: 24, paddingBottom: 40, paddingTop: 24, borderWidth: 1, borderColor: M.border }}>
+              <SafeAreaView edges={["bottom"]} style={{ borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: M.card, paddingHorizontal: 24, paddingBottom: 16, paddingTop: 24, borderWidth: 1, borderColor: M.border }}>
                 <Text style={{ marginBottom: 4, fontSize: 13, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: M.success }}>
                   {t("educator.story.chapterComplete", { number: outroChapter.order })}
                 </Text>
@@ -202,7 +202,7 @@ export default function StoryScreen() {
                     {t("educator.story.continueButton")}
                   </Text>
                 </Pressable>
-              </View>
+              </SafeAreaView>
             </View>
           </Modal>
         )}
