@@ -2045,8 +2045,12 @@ export const en = {
       linksHealthy: "Every film links to a valid interactive story or arc.",
       brokenDetail: "storyId “{{storyId}}” matches no interactive story or arc — opens a plain detail page.",
       storyLinkLabel: "Story link",
-      storyLinkPlaceholder: "e.g. writing-systems · izon-creeks · story-izon-pod-longwayhome",
+      storyLinkPlaceholder: "Search by title or ID…",
       storyLinkHint: "Links a film to an interactive story (opens the story player), or a podcast to its series arc. Leave blank for a plain detail page.",
+      storyLinkNone: "No story link (plain detail page)",
+      storyLinkNoResults: "No stories or arcs match your search.",
+      storyGroupStory: "Interactive Story",
+      storyGroupArc: "Story Arc",
     },
     cultureContent: {
       title: "Culture Content",

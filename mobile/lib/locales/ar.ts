@@ -1976,8 +1976,12 @@ export const ar = {
       linksHealthy: "كل فيلم مرتبط بقصة تفاعلية أو قوس صالح.",
       brokenDetail: "المعرّف «{{storyId}}» لا يطابق أي قصة أو قوس — يفتح صفحة عادية.",
       storyLinkLabel: "رابط القصة",
-      storyLinkPlaceholder: "مثال: writing-systems · izon-creeks · story-izon-pod-longwayhome",
+      storyLinkPlaceholder: "ابحث بالعنوان أو المعرف…",
       storyLinkHint: "يربط الفيلم بقصة تفاعلية (يفتح مشغّل القصة)، أو البودكاست بقوس سلسلته. اتركه فارغًا لصفحة عادية.",
+      storyLinkNone: "بلا رابط (صفحة عادية)",
+      storyLinkNoResults: "لا توجد قصص أو أقواس تطابق بحثك.",
+      storyGroupStory: "قصة تفاعلية",
+      storyGroupArc: "قوس القصة",
     },
     cultureContent: {
       title: "محتوى الثقافة",

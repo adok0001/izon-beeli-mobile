@@ -1991,8 +1991,12 @@ export const fr = {
       linksHealthy: "Chaque film renvoie à une histoire interactive ou un arc valide.",
       brokenDetail: "L'identifiant « {{storyId}} » ne correspond à aucune histoire ni aucun arc — ouvre une simple fiche.",
       storyLinkLabel: "Lien d'histoire",
-      storyLinkPlaceholder: "ex. : writing-systems · izon-creeks · story-izon-pod-longwayhome",
+      storyLinkPlaceholder: "Rechercher par titre ou ID…",
       storyLinkHint: "Relie un film à une histoire interactive (ouvre le lecteur d'histoire) ou un podcast à l'arc de sa série. Laissez vide pour une simple fiche.",
+      storyLinkNone: "Aucun lien (fiche simple)",
+      storyLinkNoResults: "Aucune histoire ni arc ne correspond à votre recherche.",
+      storyGroupStory: "Histoire interactive",
+      storyGroupArc: "Arc narratif",
     },
     cultureContent: {
       title: "Contenu culturel",

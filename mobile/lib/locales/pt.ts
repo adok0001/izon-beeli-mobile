@@ -1976,8 +1976,12 @@ export const pt = {
       linksHealthy: "Cada filme liga-se a uma história interativa ou arco válido.",
       brokenDetail: "O storyId “{{storyId}}” não corresponde a nenhuma história ou arco — abre uma página simples.",
       storyLinkLabel: "Ligação de história",
-      storyLinkPlaceholder: "ex.: writing-systems · izon-creeks · story-izon-pod-longwayhome",
+      storyLinkPlaceholder: "Pesquisar por título ou ID…",
       storyLinkHint: "Liga um filme a uma história interativa (abre o leitor de histórias) ou um podcast ao arco da sua série. Deixe em branco para uma página simples.",
+      storyLinkNone: "Sem ligação (página simples)",
+      storyLinkNoResults: "Nenhuma história ou arco corresponde à pesquisa.",
+      storyGroupStory: "História interativa",
+      storyGroupArc: "Arco da história",
     },
     cultureContent: {
       title: "Conteúdo Cultural",

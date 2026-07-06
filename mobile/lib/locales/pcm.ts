@@ -2011,8 +2011,12 @@ export const pcm = {
       linksHealthy: "Every film dey link to correct interactive story or arc.",
       brokenDetail: "storyId “{{storyId}}” no match any story or arc — e go just open plain page.",
       storyLinkLabel: "Story link",
-      storyLinkPlaceholder: "e.g. writing-systems · izon-creeks · story-izon-pod-longwayhome",
+      storyLinkPlaceholder: "Search by title or ID…",
       storyLinkHint: "E dey link film to interactive story (wey go open di story player), or podcast to im series arc. Leave am empty for plain page.",
+      storyLinkNone: "No story link (plain page)",
+      storyLinkNoResults: "No story or arc match your search.",
+      storyGroupStory: "Interactive Story",
+      storyGroupArc: "Story Arc",
     },
     cultureContent: {
       title: "Culture Content",

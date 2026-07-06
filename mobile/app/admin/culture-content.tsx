@@ -1,6 +1,8 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
 import { apiFetch } from "@/lib/api";
+import { useInteractiveStories } from "@/lib/hooks/use-discover";
+import { useStoryArcs } from "@/lib/hooks/use-story-arc";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { DiscoverContentType, DiscoverItem } from "@/types";
 import { useAuth } from "@clerk/clerk-expo";
@@ -75,6 +77,22 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
   const [body, setBody] = useState(base.body ?? "");
   const [showNotes, setShowNotes] = useState(base.showNotes ?? "");
   const [storyId, setStoryId] = useState(base.storyId ?? "");
+  const [storySearch, setStorySearch] = useState("");
+
+  const { data: interactiveStories, isLoading: storiesLoading } = useInteractiveStories();
+  const { data: storyArcs, isLoading: arcsLoading } = useStoryArcs();
+
+  const storyOptions = useMemo(() => {
+    const stories = (interactiveStories ?? []).map((s) => ({ id: s.id, title: s.title, kind: "story" as const }));
+    const arcs = (storyArcs ?? []).map((a) => ({ id: a.id, title: a.title, kind: "arc" as const }));
+    return [...stories, ...arcs];
+  }, [interactiveStories, storyArcs]);
+
+  const filteredStoryOptions = useMemo(() => {
+    const q = storySearch.trim().toLowerCase();
+    if (!q) return storyOptions;
+    return storyOptions.filter((o) => o.title.toLowerCase().includes(q) || o.id.toLowerCase().includes(q));
+  }, [storyOptions, storySearch]);
 
   const canSave = title.trim() && description.trim() && author.trim() && coverEmoji.trim();
 
@@ -274,19 +292,64 @@ function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
 
       {(type === "podcast" || type === "film") && (
         <Field label={t("admin.discoverStories.storyLinkLabel")}>
+          <Text className="text-xs mb-2" style={{ color: M.sub }}>
+            {t("admin.discoverStories.storyLinkHint")}
+          </Text>
           <TextInput
-            value={storyId}
-            onChangeText={setStoryId}
+            value={storySearch}
+            onChangeText={setStorySearch}
             placeholder={t("admin.discoverStories.storyLinkPlaceholder")}
             placeholderTextColor={M.muted}
             autoCapitalize="none"
             autoCorrect={false}
             style={inputStyle}
-            className={inputClass}
+            className={`${inputClass} mb-2`}
           />
-          <Text className="text-xs mt-1.5" style={{ color: M.sub }}>
-            {t("admin.discoverStories.storyLinkHint")}
-          </Text>
+
+          {storiesLoading || arcsLoading ? (
+            <ActivityIndicator color={M.accent} style={{ marginVertical: 8 }} />
+          ) : (
+            <>
+              <Pressable
+                onPress={() => setStoryId("")}
+                className="flex-row items-center justify-between rounded-2xl border px-4 py-3 mb-2"
+                style={!storyId ? { backgroundColor: M.accentGlow, borderColor: M.accentBorder } : { backgroundColor: M.card, borderColor: M.border }}
+              >
+                <Text className="text-sm font-semibold" style={{ color: M.text }}>
+                  {t("admin.discoverStories.storyLinkNone")}
+                </Text>
+                {!storyId && <IconSymbol name="checkmark.circle.fill" size={18} color={M.accent} />}
+              </Pressable>
+
+              {filteredStoryOptions.map((opt) => {
+                const isSelected = storyId === opt.id;
+                return (
+                  <Pressable
+                    key={opt.id}
+                    onPress={() => setStoryId(opt.id)}
+                    className="flex-row items-center justify-between rounded-2xl border px-4 py-3 mb-2"
+                    style={isSelected ? { backgroundColor: M.accentGlow, borderColor: M.accentBorder } : { backgroundColor: M.card, borderColor: M.border }}
+                  >
+                    <View className="flex-1 mr-3">
+                      <Text className="text-sm font-semibold" style={{ color: M.text }} numberOfLines={1}>
+                        {opt.title}
+                      </Text>
+                      <Text className="text-xs mt-0.5" style={{ color: M.sub }}>
+                        {opt.kind === "story" ? t("admin.discoverStories.storyGroupStory") : t("admin.discoverStories.storyGroupArc")} · {opt.id}
+                      </Text>
+                    </View>
+                    {isSelected && <IconSymbol name="checkmark.circle.fill" size={18} color={M.accent} />}
+                  </Pressable>
+                );
+              })}
+
+              {filteredStoryOptions.length === 0 && (
+                <Text className="text-xs" style={{ color: M.muted }}>
+                  {t("admin.discoverStories.storyLinkNoResults")}
+                </Text>
+              )}
+            </>
+          )}
         </Field>
       )}
 
