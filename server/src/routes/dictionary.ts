@@ -7,6 +7,7 @@ import { contributions, dictionaryEntries, users } from "../db/schema.js";
 import { withTranslations } from "../lib/dictionary-translations.js";
 import { LexicalParseError, parseLexicalExtras } from "../lib/lexical-extras.js";
 import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
+import { recordMediaAsset } from "./upload.js";
 
 export const dictionaryRouter = new Hono();
 
@@ -210,12 +211,15 @@ dictionaryAdminRouter.post("/", async (c) => {
   let audioUrl = fields.audioUrl?.trim() || null;
   let imageUrl = fields.imageUrl?.trim() || null;
 
+  const uploaderId = c.get("userId");
+
   if (audioFile?.size) {
     const blob = await put(`dictionary/audio/${languageId}/${Date.now()}-${audioFile.name}`, audioFile, {
       access: "public",
       token: process.env.BLOB_READ_WRITE_TOKEN!,
     });
     audioUrl = blob.url;
+    await recordMediaAsset("audio", audioFile, blob, uploaderId);
   }
   if (imageFile?.size) {
     const blob = await put(`dictionary/images/${languageId}/${Date.now()}-${imageFile.name}`, imageFile, {
@@ -223,6 +227,7 @@ dictionaryAdminRouter.post("/", async (c) => {
       token: process.env.BLOB_READ_WRITE_TOKEN!,
     });
     imageUrl = blob.url;
+    await recordMediaAsset("image", imageFile, blob, uploaderId);
   }
 
   let extras: ReturnType<typeof parseLexicalExtras>;
@@ -309,6 +314,7 @@ dictionaryAdminRouter.patch("/:id", async (c) => {
       token: process.env.BLOB_READ_WRITE_TOKEN!,
     });
     updates.audioUrl = blob.url;
+    await recordMediaAsset("audio", audioFile, blob, c.get("userId"));
   }
   if (imageFile?.size) {
     const [existing] = await db.select({ languageId: dictionaryEntries.languageId }).from(dictionaryEntries).where(eq(dictionaryEntries.id, id)).limit(1);
@@ -317,6 +323,7 @@ dictionaryAdminRouter.patch("/:id", async (c) => {
       token: process.env.BLOB_READ_WRITE_TOKEN!,
     });
     updates.imageUrl = blob.url;
+    await recordMediaAsset("image", imageFile, blob, c.get("userId"));
   }
 
   const [updated] = await db

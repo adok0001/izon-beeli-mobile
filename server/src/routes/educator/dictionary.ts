@@ -15,6 +15,7 @@ import { AuthEnv } from "../../middleware/auth.js";
 import { computeCoverage } from "../../lib/dictionary-coverage.js";
 import { withTranslations } from "../../lib/dictionary-translations.js";
 import { LexicalParseError, parseLexicalExtras } from "../../lib/lexical-extras.js";
+import { recordMediaAsset } from "../upload.js";
 import { VALID_CATEGORIES, flatToMap, parseMap } from "./_shared.js";
 
 export const educatorDictionaryRouter = new Hono<AuthEnv>();
@@ -136,12 +137,14 @@ educatorDictionaryRouter.post("/dictionary", async (c) => {
       access: "public", token: process.env.BLOB_READ_WRITE_TOKEN!,
     });
     audioUrl = blob.url;
+    await recordMediaAsset("audio", audioFile, blob, userId);
   }
   if (imageFile?.size) {
     const blob = await put(`educator/images/${languageId}/${Date.now()}-${imageFile.name}`, imageFile, {
       access: "public", token: process.env.BLOB_READ_WRITE_TOKEN!,
     });
     imageUrl = blob.url;
+    await recordMediaAsset("image", imageFile, blob, userId);
   }
   const exampleAudioFile = isMultipart ? (await c.req.formData()).get("exampleAudio") as File | null : null;
   if (exampleAudioFile?.size) {
@@ -149,6 +152,7 @@ educatorDictionaryRouter.post("/dictionary", async (c) => {
       access: "public", token: process.env.BLOB_READ_WRITE_TOKEN!,
     });
     exampleAudioUrl = blob.url;
+    await recordMediaAsset("audio", exampleAudioFile, blob, userId);
   }
 
   let extras: ReturnType<typeof parseLexicalExtras>;
@@ -283,12 +287,14 @@ educatorDictionaryRouter.patch("/dictionary/:id", async (c) => {
       access: "public", token: process.env.BLOB_READ_WRITE_TOKEN!,
     });
     updates.audioUrl = blob.url;
+    await recordMediaAsset("audio", audioFile, blob, userId);
   }
   if (imageFile?.size) {
     const blob = await put(`educator/images/${existing.languageId}/${Date.now()}-${imageFile.name}`, imageFile, {
       access: "public", token: process.env.BLOB_READ_WRITE_TOKEN!,
     });
     updates.imageUrl = blob.url;
+    await recordMediaAsset("image", imageFile, blob, userId);
   }
   const patchExampleAudioFile = isMultipart ? (await c.req.formData()).get("exampleAudio") as File | null : null;
   if (patchExampleAudioFile?.size) {
@@ -296,6 +302,7 @@ educatorDictionaryRouter.patch("/dictionary/:id", async (c) => {
       access: "public", token: process.env.BLOB_READ_WRITE_TOKEN!,
     });
     updates.exampleAudioUrl = blob.url;
+    await recordMediaAsset("audio", patchExampleAudioFile, blob, userId);
   }
 
   const [updated] = await db

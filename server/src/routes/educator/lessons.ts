@@ -6,6 +6,7 @@ import { db } from "../../db/index.js";
 import { courses, languages, lessons, transcriptSegments } from "../../db/schema.js";
 import { AuthEnv } from "../../middleware/auth.js";
 import { stubForCourse, stubForLanguage } from "../../lib/lesson-stubs.js";
+import { recordMediaAsset } from "../upload.js";
 import { isAudioUpload } from "./_shared.js";
 
 export const educatorLessonsRouter = new Hono<AuthEnv>();
@@ -92,6 +93,7 @@ educatorLessonsRouter.post("/lessons", async (c) => {
         { access: "public", token: process.env.BLOB_READ_WRITE_TOKEN! }
       );
       audioUrl = blob.url;
+      await recordMediaAsset("audio", audioFile, blob, userId);
     } catch {
       return c.json({ error: "Failed to upload audio" }, 500);
     }
@@ -278,6 +280,7 @@ educatorLessonsRouter.put("/lessons/:id/segments", async (c) => {
 
 // POST /educator/lessons/:id/audio — replace audio file
 educatorLessonsRouter.post("/lessons/:id/audio", async (c) => {
+  const userId = c.get("userId");
   const isAdmin = c.get("isAdmin");
   const reviewerLanguages = c.get("reviewerLanguages");
   const { id } = c.req.param();
@@ -311,6 +314,7 @@ educatorLessonsRouter.post("/lessons/:id/audio", async (c) => {
       audioUrl: blob.url,
       ...(durationStr ? { duration: parseInt(durationStr, 10) } : {}),
     }).where(eq(lessons.id, id));
+    await recordMediaAsset("audio", audioFile, blob, userId);
     return c.json({ audioUrl: blob.url });
   } catch {
     return c.json({ error: "Failed to upload audio" }, 500);

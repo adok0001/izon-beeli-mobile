@@ -10,7 +10,7 @@ import { AuthEnv, authMiddleware, reviewerMiddleware } from "../middleware/auth.
 export const uploadAdminRouter = new Hono<AuthEnv>();
 uploadAdminRouter.use("*", authMiddleware, reviewerMiddleware);
 
-async function recordUpload(
+export async function recordUpload(
   kind: "image" | "audio",
   file: File,
   blob: { url: string; pathname: string },
@@ -29,6 +29,21 @@ async function recordUpload(
     })
     .returning();
   return row;
+}
+
+// Best-effort variant for call sites (dictionary/lesson editors) whose primary
+// save must not fail just because the media library's index insert did.
+export async function recordMediaAsset(
+  kind: "image" | "audio",
+  file: File,
+  blob: { url: string; pathname: string },
+  uploadedBy: string
+) {
+  try {
+    await recordUpload(kind, file, blob, uploadedBy);
+  } catch (err) {
+    console.error("Failed to index media asset for library", err);
+  }
 }
 
 uploadAdminRouter.post("/image", async (c) => {
