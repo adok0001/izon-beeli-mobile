@@ -1,7 +1,7 @@
 import { getAccent } from "@/constants/accent-colors";
 import { ColorSwatchInput, isHex } from "@/components/educator/color-swatch-input";
 import { HeadwordField } from "@/components/educator/headword-field";
-import { LocalizedTextInput, toLocalizedText } from "@/components/ui/localized-text-input";
+import { LocalizedTextInput, serializeLocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { LocalizedText } from "@/types";
@@ -224,15 +224,17 @@ export default function EducatorCultureScreen() {
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
+    const translationSer = serializeLocalizedText(proverbForm.translation);
+    const meaningSer = serializeLocalizedText(proverbForm.meaning);
     upsertProverb.mutate(
       {
         id: proverbForm.id,
         languageId: activeLanguageId,
         text: proverbForm.text.trim(),
-        translation: proverbForm.translation.en?.trim() ?? "",
-        translationFr: proverbForm.translation.fr?.trim() || undefined,
-        meaning: proverbForm.meaning.en?.trim() ?? "",
-        meaningFr: proverbForm.meaning.fr?.trim() || undefined,
+        translation: translationSer.primary,
+        translationFr: translationSer.fr,
+        meaning: meaningSer.primary,
+        meaningFr: meaningSer.fr,
         literal: proverbForm.literal.trim() || undefined,
         context: proverbForm.context.trim() || undefined,
         tags: tags.length > 0 ? tags : undefined,
@@ -331,16 +333,18 @@ export default function EducatorCultureScreen() {
         dark: b.dark,
       }));
 
+    const titleSer = serializeLocalizedText(culturalForm.title);
+    const descriptionSer = serializeLocalizedText(culturalForm.description);
     upsertCultural.mutate(
       {
         id: culturalForm.id,
         languageId: activeLanguageId,
         imageEmoji: culturalForm.imageEmoji.trim(),
-        title: culturalForm.title.en?.trim() ?? "",
-        titleFr: culturalForm.title.fr?.trim() || undefined,
+        title: titleSer.primary,
+        titleFr: titleSer.fr,
         category: culturalForm.category,
-        description: culturalForm.description.en?.trim() ?? "",
-        descriptionFr: culturalForm.description.fr?.trim() || undefined,
+        description: descriptionSer.primary,
+        descriptionFr: descriptionSer.fr,
         keyTerms: culturalForm.keyTerms.filter((kt) => kt.word.trim() && kt.english.trim()),
         featured: culturalForm.featured,
         headword,
@@ -909,13 +913,13 @@ export default function EducatorCultureScreen() {
                 className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400"
                 numberOfLines={1}
               >
-                {p.translation}
+                {localize(p.translation, "en")}
               </Text>
               <Text
                 className="mt-1 text-xs text-neutral-400 dark:text-neutral-500"
                 numberOfLines={2}
               >
-                {p.meaning}
+                {localize(p.meaning, "en")}
               </Text>
             </View>
             <View className="flex-row gap-2">
@@ -959,13 +963,13 @@ export default function EducatorCultureScreen() {
             <Text className="text-2xl">{c.imageEmoji}</Text>
             <View className="flex-1">
               <Text className="text-base font-semibold text-neutral-900 dark:text-white">
-                {c.title}
+                {localize(c.title, "en")}
               </Text>
               <Text
                 className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500"
                 numberOfLines={1}
               >
-                {c.description}
+                {localize(c.description, "en")}
               </Text>
             </View>
           </View>

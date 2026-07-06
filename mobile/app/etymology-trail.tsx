@@ -6,9 +6,9 @@ import { hapticTap } from "@/lib/haptics";
 import { useSaveWord } from "@/lib/hooks/use-wordbank";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { useUiLanguageStore } from "@/store/ui-language-store";
+import { useUiLanguageStore, type UiLanguage } from "@/store/ui-language-store";
 import { useLanguageStore } from "@/store/language-store";
-import type { EtymologyEntry } from "@/types";
+import type { EtymologyEntry, EtymologyNode } from "@/types";
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { Animated, Pressable, ScrollView, Text, View } from "react-native";
@@ -38,12 +38,14 @@ function TrailNode({
   onToggle,
   isLast,
   color,
+  uiLanguage,
 }: {
-  node: { era: string; form: string; language: string; note: string };
+  node: EtymologyNode;
   expanded: boolean;
   onToggle: () => void;
   isLast: boolean;
   color: string;
+  uiLanguage: UiLanguage;
 }) {
   const M = useMuseumTheme();
 
@@ -78,7 +80,7 @@ function TrailNode({
           </View>
           {expanded && (
             <View style={{ paddingHorizontal: 14, paddingBottom: 14, borderTopWidth: 1, borderTopColor: M.border, paddingTop: 12 }}>
-              <Text style={{ fontSize: 13, color: M.sub, lineHeight: 19 }}>{node.note}</Text>
+              <Text style={{ fontSize: 13, color: M.sub, lineHeight: 19 }}>{localize(node.note, uiLanguage)}</Text>
             </View>
           )}
         </View>
@@ -140,6 +142,7 @@ function EntryView({ entry }: { entry: EtymologyEntry }) {
           onToggle={() => toggleNode(i)}
           isLast={i === entry.trail.length - 1}
           color={colors[i % colors.length]!}
+          uiLanguage={uiLanguage}
         />
       ))}
     </View>

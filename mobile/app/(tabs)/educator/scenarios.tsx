@@ -1,5 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { GhostButton, LabeledInput, NewButton, PrimaryButton, SmallButton } from "@/components/studio/editor-form";
+import { LocalizedTextInput, serializeLocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { friendlyError } from "@/lib/api";
 import {
@@ -21,9 +23,11 @@ import {
 import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import type { LocalizedText } from "@/types";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { useTranslation } from "react-i18next";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 /**
@@ -32,13 +36,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
  * a situation plus an ordered list of dialogue turns (native text + translation).
  */
 
-type TurnDraft = { text: string; translation: string };
+type TurnDraft = { text: string; translation: LocalizedText };
 
-const EMPTY_TURN: TurnDraft = { text: "", translation: "" };
+const EMPTY_TURN: TurnDraft = { text: "", translation: {} };
 
 export default function ScenariosScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
+  const { t } = useTranslation();
   const { user } = useStudioAccess();
   const { success: toastSuccess, error: toastError } = useToast();
 
@@ -52,6 +57,7 @@ export default function ScenariosScreen() {
   const [editingId, setEditingId] = useState<string | undefined>(undefined);
   const [situation, setSituation] = useState("");
   const [turns, setTurns] = useState<TurnDraft[]>([{ ...EMPTY_TURN }]);
+  const [formOpen, setFormOpen] = useState(false);
   const editing = !!editingId;
 
   const scenariosQuery = useEducatorScenarios(activeLanguageId);
@@ -66,6 +72,7 @@ export default function ScenariosScreen() {
     setEditingId(undefined);
     setSituation("");
     setTurns([{ ...EMPTY_TURN }]);
+    setFormOpen(false);
   }
 
   function startEdit(s: EducatorScenario) {
@@ -73,9 +80,10 @@ export default function ScenariosScreen() {
     setSituation(s.situation);
     setTurns(
       s.turns.length > 0
-        ? s.turns.map((t) => ({ text: t.text, translation: t.translation }))
+        ? s.turns.map((turn) => ({ text: turn.text, translation: toLocalizedText(turn.translation) }))
         : [{ ...EMPTY_TURN }]
     );
+    setFormOpen(true);
   }
 
   function addTurn() {
@@ -87,21 +95,22 @@ export default function ScenariosScreen() {
   }
 
   function updateTurn(index: number, patch: Partial<TurnDraft>) {
-    setTurns((prev) => prev.map((t, i) => (i === index ? { ...t, ...patch } : t)));
+    setTurns((prev) => prev.map((turn, i) => (i === index ? { ...turn, ...patch } : turn)));
   }
 
   function handleSave() {
     const cleanSituation = situation.trim();
     const cleanTurns: ScenarioTurn[] = turns
-      .map((t) => ({ text: t.text.trim(), translation: t.translation.trim() }))
-      .filter((t) => t.text && t.translation);
+      .map((turn) => ({ text: turn.text.trim(), translation: turn.translation }))
+      .filter((turn) => turn.text && turn.translation.en?.trim())
+      .map((turn) => ({ text: turn.text, translation: serializeLocalizedText(turn.translation).primary }));
 
     if (!cleanSituation) {
-      toastError("Missing fields", "A situation is required.");
+      toastError(t("educator.scenariosEditor.missingSituation"), t("educator.scenariosEditor.missingSituationDetail"));
       return;
     }
     if (cleanTurns.length === 0) {
-      toastError("Missing turns", "Add at least one turn with text and translation.");
+      toastError(t("educator.scenariosEditor.missingTurns"), t("educator.scenariosEditor.missingTurnsDetail"));
       return;
     }
 
@@ -110,10 +119,10 @@ export default function ScenariosScreen() {
         { id: editingId, languageId: activeLanguageId, situation: cleanSituation, turns: cleanTurns },
         {
           onSuccess: () => {
-            toastSuccess("Scenario updated");
+            toastSuccess(t("educator.scenariosEditor.updated"));
             resetForm();
           },
-          onError: (err: Error) => toastError("Save failed", friendlyError(err, err.message)),
+          onError: (err: Error) => toastError(t("educator.scenariosEditor.saveFailed"), friendlyError(err, err.message)),
         }
       );
     } else {
@@ -121,10 +130,10 @@ export default function ScenariosScreen() {
         { languageId: activeLanguageId, situation: cleanSituation, turns: cleanTurns },
         {
           onSuccess: () => {
-            toastSuccess("Draft created");
+            toastSuccess(t("educator.scenariosEditor.created"));
             resetForm();
           },
-          onError: (err: Error) => toastError("Save failed", friendlyError(err, err.message)),
+          onError: (err: Error) => toastError(t("educator.scenariosEditor.saveFailed"), friendlyError(err, err.message)),
         }
       );
     }
@@ -139,8 +148,8 @@ export default function ScenariosScreen() {
           <IconSymbol name="chevron.left" size={22} color={M.parchment} />
         </Pressable>
         <View>
-          <Text style={{ fontSize: 24, fontWeight: "900", color: M.parchment }}>Scenarios</Text>
-          <Text style={{ fontSize: 12, color: M.textDim }}>Situational dialogues with turn-by-turn translations.</Text>
+          <Text style={{ fontSize: 24, fontWeight: "900", color: M.parchment }}>{t("admin.nav.scenarios")}</Text>
+          <Text style={{ fontSize: 12, color: M.textDim }}>{t("educator.scenariosEditor.subtitle")}</Text>
         </View>
       </View>
 
@@ -173,40 +182,56 @@ export default function ScenariosScreen() {
           </View>
         </ScrollView>
 
+        {!formOpen && (
+          <NewButton label={t("educator.scenariosEditor.newButton")} onPress={() => setFormOpen(true)} M={M} />
+        )}
+
         {/* Editor form */}
-        <View style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 16, gap: 10, marginBottom: 20 }}>
-          <Text style={{ fontSize: 14, fontWeight: "800", color: M.text }}>
-            {editing ? "Edit scenario" : "New scenario"}
-          </Text>
-          <LabeledInput label="Situation *" value={situation} onChange={setSituation} />
+        {formOpen && (
+          <View style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 16, gap: 10, marginBottom: 20 }}>
+            <Text style={{ fontSize: 14, fontWeight: "800", color: M.text }}>
+              {editing ? t("educator.scenariosEditor.editTitle") : t("educator.scenariosEditor.newTitle")}
+            </Text>
+            <LabeledInput label={t("educator.scenariosEditor.situationLabel")} value={situation} onChange={setSituation} />
 
-          <Text style={{ fontSize: 12, fontWeight: "800", color: M.text, marginTop: 4 }}>Turns *</Text>
-          {turns.map((turn, index) => (
-            <View key={index} style={{ borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, padding: 12, gap: 8 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                <Text style={{ fontSize: 11, fontWeight: "700", color: M.sub }}>Turn {index + 1}</Text>
-                {turns.length > 1 && (
-                  <SmallButton label="Remove" tone="danger" onPress={() => removeTurn(index)} M={M} />
-                )}
+            <Text style={{ fontSize: 12, fontWeight: "800", color: M.text, marginTop: 4 }}>{t("educator.scenariosEditor.turnsLabel")}</Text>
+            {turns.map((turn, index) => (
+              <View key={index} style={{ borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, padding: 12, gap: 8 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                  <Text style={{ fontSize: 11, fontWeight: "700", color: M.sub }}>{t("educator.scenariosEditor.turnLabel", { number: index + 1 })}</Text>
+                  {turns.length > 1 && (
+                    <SmallButton label={t("educator.scenariosEditor.removeTurn")} tone="danger" onPress={() => removeTurn(index)} M={M} />
+                  )}
+                </View>
+                <LabeledInput label={t("educator.scenariosEditor.textLabel")} value={turn.text} onChange={(v) => updateTurn(index, { text: v })} />
+                <LocalizedTextInput
+                  label={t("educator.scenariosEditor.translationLabel")}
+                  value={turn.translation}
+                  onChange={(translation) => updateTurn(index, { translation })}
+                  required
+                />
               </View>
-              <LabeledInput label="Text (native)" value={turn.text} onChange={(v) => updateTurn(index, { text: v })} />
-              <LabeledInput label="Translation (EN)" value={turn.translation} onChange={(v) => updateTurn(index, { translation: v })} />
+            ))}
+            <View style={{ marginTop: 2 }}>
+              <GhostButton label={t("educator.scenariosEditor.addTurn")} onPress={addTurn} M={M} />
             </View>
-          ))}
-          <View style={{ marginTop: 2 }}>
-            <GhostButton label="Add turn" onPress={addTurn} M={M} />
-          </View>
 
-          <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
-            <PrimaryButton label={saving ? "Saving…" : editing ? "Save" : "Create draft"} onPress={handleSave} M={M} />
-            {editing && <GhostButton label="Cancel" onPress={resetForm} M={M} />}
+            <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
+              <PrimaryButton
+                label={saving ? t("educator.scenariosEditor.saving") : editing ? t("common.save") : t("educator.scenariosEditor.createDraft")}
+                onPress={handleSave}
+                M={M}
+                disabled={saving}
+              />
+              <GhostButton label={t("common.cancel")} onPress={resetForm} M={M} />
+            </View>
           </View>
-        </View>
+        )}
 
         {/* List */}
-        {scenariosQuery.isPending && <Text style={{ color: M.muted, fontSize: 13 }}>Loading…</Text>}
+        {scenariosQuery.isPending && <Text style={{ color: M.muted, fontSize: 13 }}>{t("common.loading")}</Text>}
         {scenariosQuery.data?.length === 0 && (
-          <Text style={{ color: M.muted, fontSize: 13 }}>No scenarios yet for {getLanguageName(activeLanguageId)}.</Text>
+          <Text style={{ color: M.muted, fontSize: 13 }}>{t("educator.scenariosEditor.empty", { language: getLanguageName(activeLanguageId) })}</Text>
         )}
         <View style={{ gap: 10 }}>
           {scenariosQuery.data?.map((s) => (
@@ -216,35 +241,37 @@ export default function ScenariosScreen() {
                 {s.status && <Badge label={STATUS_LABEL[s.status as ContentStatus]} tone={STATUS_TONE[s.status as ContentStatus]} />}
               </View>
               <Text style={{ marginTop: 4, fontSize: 13, color: M.sub }}>
-                {s.turns.length} {s.turns.length === 1 ? "turn" : "turns"}
+                {s.turns.length === 1
+                  ? t("educator.scenariosEditor.turnsCountOne", { count: 1 })
+                  : t("educator.scenariosEditor.turnsCountMany", { count: s.turns.length })}
               </Text>
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
                 {canSubmitForReview(s.status) && (
-                  <SmallButton label="Submit" onPress={() =>
+                  <SmallButton label={t("educator.scenariosEditor.submitButton")} onPress={() =>
                     update.mutate(
                       { id: s.id, languageId: activeLanguageId, status: "in_review" },
                       {
-                        onSuccess: () => toastSuccess("Submitted for review"),
-                        onError: (e: Error) => toastError("Failed", friendlyError(e)),
+                        onSuccess: () => toastSuccess(t("educator.scenariosEditor.submitted")),
+                        onError: (e: Error) => toastError(t("educator.scenariosEditor.submitFailed"), friendlyError(e)),
                       }
                     )
                   } M={M} />
                 )}
                 {canPublishContent(s.status, s.createdBy, actor) && (
-                  <SmallButton label="Publish" tone="publish" onPress={() =>
+                  <SmallButton label={t("educator.scenariosEditor.publishButton")} tone="publish" onPress={() =>
                     publish.mutate(s.id, {
-                      onSuccess: () => toastSuccess("Published"),
-                      onError: (e: Error) => toastError("Publish failed", friendlyError(e)),
+                      onSuccess: () => toastSuccess(t("educator.scenariosEditor.published")),
+                      onError: (e: Error) => toastError(t("educator.scenariosEditor.publishFailed"), friendlyError(e)),
                     })
                   } M={M} />
                 )}
-                <SmallButton label="Edit" onPress={() => startEdit(s)} M={M} />
-                <SmallButton label="Delete" tone="danger" onPress={() =>
+                <SmallButton label={t("common.edit")} onPress={() => startEdit(s)} M={M} />
+                <SmallButton label={t("common.delete")} tone="danger" onPress={() =>
                   remove.mutate(
                     { id: s.id, languageId: activeLanguageId },
                     {
-                      onSuccess: () => toastSuccess("Deleted"),
-                      onError: (e: Error) => toastError("Delete failed", friendlyError(e)),
+                      onSuccess: () => toastSuccess(t("educator.scenariosEditor.deleted")),
+                      onError: (e: Error) => toastError(t("educator.scenariosEditor.deleteFailed"), friendlyError(e)),
                     }
                   )
                 } M={M} />
@@ -254,51 +281,5 @@ export default function ScenariosScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-}
-
-type M = ReturnType<typeof useMuseumTheme>;
-
-function LabeledInput({ label, value, onChange }: Readonly<{ label: string; value: string; onChange: (v: string) => void }>) {
-  const M = useMuseumTheme();
-  return (
-    <View>
-      <Text style={{ fontSize: 11, fontWeight: "600", color: M.sub, marginBottom: 4 }}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChange}
-        placeholderTextColor={M.inputPlaceholder}
-        style={{
-          borderRadius: 10, borderWidth: 1, borderColor: M.inputBorder,
-          backgroundColor: M.inputBg, color: M.inputText,
-          paddingHorizontal: 12, paddingVertical: 10, fontSize: 14,
-        }}
-      />
-    </View>
-  );
-}
-
-function PrimaryButton({ label, onPress, M }: Readonly<{ label: string; onPress: () => void; M: M }>) {
-  return (
-    <Pressable onPress={onPress} style={{ borderRadius: 12, paddingHorizontal: 16, paddingVertical: 11, backgroundColor: M.accent }} className="active:opacity-80">
-      <Text style={{ fontWeight: "800", color: M.ink, fontSize: 14 }}>{label}</Text>
-    </Pressable>
-  );
-}
-
-function GhostButton({ label, onPress, M }: Readonly<{ label: string; onPress: () => void; M: M }>) {
-  return (
-    <Pressable onPress={onPress} style={{ borderRadius: 12, paddingHorizontal: 16, paddingVertical: 11, backgroundColor: M.bg, borderWidth: 1, borderColor: M.border }} className="active:opacity-70">
-      <Text style={{ fontWeight: "700", color: M.sub, fontSize: 14 }}>{label}</Text>
-    </Pressable>
-  );
-}
-
-function SmallButton({ label, onPress, tone, M }: Readonly<{ label: string; onPress: () => void; tone?: "publish" | "danger"; M: M }>) {
-  const color = tone === "publish" ? M.success : tone === "danger" ? M.error : M.sub;
-  return (
-    <Pressable onPress={onPress} style={{ borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7, backgroundColor: M.card, borderWidth: 1, borderColor: M.border }} className="active:opacity-70">
-      <Text style={{ fontWeight: "700", color, fontSize: 12 }}>{label}</Text>
-    </Pressable>
   );
 }

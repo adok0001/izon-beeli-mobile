@@ -1,6 +1,8 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LanguagePickerModal } from "@/components/language-picker";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
+import { LabeledInput, NewButton } from "@/components/studio/editor-form";
+import { LocalizedTextInput, serializeLocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
 import { getAccent } from "@/constants/accent-colors";
 import { friendlyError } from "@/lib/api";
 import { localize } from "@/lib/localize";
@@ -13,7 +15,7 @@ import {
 import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import type { EtymologyEntry, EtymologyNode } from "@/types";
+import type { EtymologyEntry, EtymologyNode, LocalizedText } from "@/types";
 import { Stack } from "expo-router";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -29,21 +31,18 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const inputCls =
-  "rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white";
-
-const EMPTY_NODE: EtymologyNode = { era: "", form: "", language: "", note: "" };
+const EMPTY_NODE: EtymologyNode = { era: "", form: "", language: "", note: {} };
 
 type EtymologyForm = {
   id?: string;
   word: string;
-  english: string;
+  english: LocalizedText;
   trail: EtymologyNode[];
 };
 
 const EMPTY_FORM: EtymologyForm = {
   word: "",
-  english: "",
+  english: {},
   trail: [{ ...EMPTY_NODE }],
 };
 
@@ -59,8 +58,13 @@ function TrailEditor({
   const M = useMuseumTheme();
   const { t } = useTranslation();
 
-  function update(i: number, field: keyof EtymologyNode, value: string) {
+  function update(i: number, field: "era" | "form" | "language", value: string) {
     const next = trail.map((n, idx) => (idx === i ? { ...n, [field]: value } : n));
+    onChange(next);
+  }
+
+  function updateNote(i: number, value: LocalizedText) {
+    const next = trail.map((n, idx) => (idx === i ? { ...n, note: value } : n));
     onChange(next);
   }
 
@@ -82,35 +86,21 @@ function TrailEditor({
               </Pressable>
             )}
           </View>
-          <TextInput
-            value={node.era}
-            onChangeText={(v) => update(i, "era", v)}
-            placeholder={t("educator.etymology.eraPlaceholder")}
-            placeholderTextColor={M.muted}
-            className={inputCls}
-          />
-          <TextInput
-            value={node.form}
-            onChangeText={(v) => update(i, "form", v)}
-            placeholder={t("educator.etymology.formPlaceholder")}
-            placeholderTextColor={M.muted}
-            className={`mt-2 ${inputCls}`}
-          />
-          <TextInput
-            value={node.language}
-            onChangeText={(v) => update(i, "language", v)}
-            placeholder={t("educator.etymology.languagePlaceholder")}
-            placeholderTextColor={M.muted}
-            className={`mt-2 ${inputCls}`}
-          />
-          <TextInput
-            value={node.note}
-            onChangeText={(v) => update(i, "note", v)}
-            placeholder={t("educator.etymology.notePlaceholder")}
-            placeholderTextColor={M.muted}
-            multiline
-            className={`mt-2 ${inputCls} min-h-[44px]`}
-          />
+          <LabeledInput label={t("educator.etymology.eraPlaceholder")} value={node.era} onChange={(v) => update(i, "era", v)} />
+          <View className="mt-2">
+            <LabeledInput label={t("educator.etymology.formPlaceholder")} value={node.form} onChange={(v) => update(i, "form", v)} />
+          </View>
+          <View className="mt-2">
+            <LabeledInput label={t("educator.etymology.languagePlaceholder")} value={node.language} onChange={(v) => update(i, "language", v)} />
+          </View>
+          <View className="mt-2">
+            <LocalizedTextInput
+              label={t("educator.etymology.notePlaceholder")}
+              value={toLocalizedText(node.note)}
+              onChange={(v) => updateNote(i, v)}
+              multiline
+            />
+          </View>
         </View>
       ))}
       <Pressable
@@ -140,6 +130,7 @@ export default function EducatorEtymologyScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [form, setForm] = useState<EtymologyForm>(EMPTY_FORM);
   const [editing, setEditing] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
 
   const allowedLanguages = currentUser?.isAdmin
     ? LANGUAGES.map((l) => l.id)
@@ -162,16 +153,23 @@ export default function EducatorEtymologyScreen() {
   const reset = () => {
     setForm(EMPTY_FORM);
     setEditing(false);
+    setFormOpen(false);
   };
 
   const startEdit = (entry: EtymologyEntry) => {
-    setForm({ id: entry.id, word: entry.word, english: localize(entry.english, "en"), trail: entry.trail });
+    setForm({
+      id: entry.id,
+      word: entry.word,
+      english: toLocalizedText(entry.english),
+      trail: entry.trail.map((n) => ({ ...n, note: toLocalizedText(n.note) })),
+    });
     setEditing(true);
+    setFormOpen(true);
     flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
   };
 
   const submit = () => {
-    if (!form.word.trim() || !form.english.trim()) {
+    if (!form.word.trim() || !form.english.en?.trim()) {
       toastError(t("educator.etymology.missingFields"), t("educator.etymology.missingWordEnglish"));
       return;
     }
@@ -184,8 +182,8 @@ export default function EducatorEtymologyScreen() {
         id: form.id,
         languageId: activeLanguageId,
         word: form.word.trim(),
-        english: form.english.trim(),
-        trail: form.trail,
+        english: serializeLocalizedText(form.english).primary,
+        trail: form.trail.map((n) => ({ ...n, note: serializeLocalizedText(toLocalizedText(n.note)).primary })),
       },
       {
         onSuccess: () => {
@@ -244,43 +242,44 @@ export default function EducatorEtymologyScreen() {
         </Pressable>
       </View>
 
+      {!formOpen && (
+        <View className="mx-5 mt-4">
+          <NewButton label={t("educator.etymology.newEntry")} onPress={() => setFormOpen(true)} M={M} />
+        </View>
+      )}
+
       {/* Form */}
-      <View className="mx-5 mt-4 rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
-        <Text className="mb-3 text-base font-semibold text-neutral-900 dark:text-white">
-          {editing ? t("educator.etymology.editEntry") : t("educator.etymology.newEntry")}
-        </Text>
-        <TextInput
-          value={form.word}
-          onChangeText={(word) => setForm((f) => ({ ...f, word }))}
-          placeholder={t("educator.etymology.wordLabel")}
-          placeholderTextColor={M.muted}
-          className={inputCls}
-        />
-        <TextInput
-          value={form.english}
-          onChangeText={(english) => setForm((f) => ({ ...f, english }))}
-          placeholder={t("educator.etymology.englishLabel")}
-          placeholderTextColor={M.muted}
-          className={`mt-2 ${inputCls}`}
-        />
+      {formOpen && (
+        <View className="mx-5 mt-4 rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
+          <Text className="mb-3 text-base font-semibold text-neutral-900 dark:text-white">
+            {editing ? t("educator.etymology.editEntry") : t("educator.etymology.newEntry")}
+          </Text>
+          <LabeledInput label={t("educator.etymology.wordLabel")} value={form.word} onChange={(word) => setForm((f) => ({ ...f, word }))} />
+          <View className="mt-2">
+            <LocalizedTextInput
+              label={t("educator.etymology.englishLabel")}
+              value={form.english}
+              onChange={(english) => setForm((f) => ({ ...f, english }))}
+              required
+            />
+          </View>
 
-        <Text className="mt-4 mb-1 text-xs font-semibold uppercase tracking-widest text-neutral-500 dark:text-neutral-400">
-          {t("educator.etymology.trailLabel")}
-        </Text>
-        <TrailEditor trail={form.trail} onChange={(trail) => setForm((f) => ({ ...f, trail }))} />
+          <Text className="mt-4 mb-1 text-xs font-semibold uppercase tracking-widest text-neutral-500 dark:text-neutral-400">
+            {t("educator.etymology.trailLabel")}
+          </Text>
+          <TrailEditor trail={form.trail} onChange={(trail) => setForm((f) => ({ ...f, trail }))} />
 
-        <View className="mt-4 flex-row gap-2">
-          <Pressable
-            onPress={submit}
-            disabled={upsert.isPending}
-            className="flex-1 rounded-xl py-3 active:opacity-80 disabled:opacity-40"
-            style={{ backgroundColor: getAccent("sky").solid }}
-          >
-            <Text className="text-center font-semibold text-white">
-              {upsert.isPending ? t("common.loading") : editing ? t("common.save") : t("educator.culture.create")}
-            </Text>
-          </Pressable>
-          {editing && (
+          <View className="mt-4 flex-row gap-2">
+            <Pressable
+              onPress={submit}
+              disabled={upsert.isPending}
+              className="flex-1 rounded-xl py-3 active:opacity-80 disabled:opacity-40"
+              style={{ backgroundColor: getAccent("sky").solid }}
+            >
+              <Text className="text-center font-semibold text-white">
+                {upsert.isPending ? t("common.loading") : editing ? t("common.save") : t("educator.culture.create")}
+              </Text>
+            </Pressable>
             <Pressable
               onPress={reset}
               className="rounded-xl bg-neutral-200 px-4 py-3 active:opacity-80 dark:bg-neutral-700"
@@ -289,9 +288,9 @@ export default function EducatorEtymologyScreen() {
                 {t("common.cancel")}
               </Text>
             </Pressable>
-          )}
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Search */}
       <View className="mt-5 px-5">

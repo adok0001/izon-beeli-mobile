@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { GhostButton, LabeledInput, NewButton, PrimaryButton, SmallButton } from "@/components/studio/editor-form";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { friendlyError } from "@/lib/api";
 import {
@@ -22,7 +23,8 @@ import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { useTranslation } from "react-i18next";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 /**
@@ -55,6 +57,7 @@ const EMPTY_FORM: QuizForm = {
 export default function QuizBankScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
+  const { t } = useTranslation();
   const { user } = useStudioAccess();
   const { success: toastSuccess, error: toastError } = useToast();
 
@@ -66,6 +69,7 @@ export default function QuizBankScreen() {
   const activeLanguageId = selectedLanguageId ?? allowedLanguages[0] ?? user.selectedLanguageId ?? "izon";
 
   const [form, setForm] = useState<QuizForm>(EMPTY_FORM);
+  const [formOpen, setFormOpen] = useState(false);
   const editing = !!form.id;
 
   const quizQuery = useEducatorQuizBank(activeLanguageId);
@@ -78,6 +82,7 @@ export default function QuizBankScreen() {
 
   function resetForm() {
     setForm(EMPTY_FORM);
+    setFormOpen(false);
   }
 
   function startEdit(q: QuizQuestion) {
@@ -90,11 +95,12 @@ export default function QuizBankScreen() {
       audioUrl: q.audioUrl ?? "",
       explanation: q.explanation ?? "",
     });
+    setFormOpen(true);
   }
 
   function handleSave() {
     if (!form.type.trim() || !form.prompt.trim() || !form.answer.trim()) {
-      toastError("Missing fields", "Type, prompt, and answer are required.");
+      toastError(t("educator.quizBankEditor.missingFields"), t("educator.quizBankEditor.missingFieldsDetail"));
       return;
     }
     upsert.mutate(
@@ -110,10 +116,10 @@ export default function QuizBankScreen() {
       },
       {
         onSuccess: () => {
-          toastSuccess(editing ? "Question updated" : "Draft created");
+          toastSuccess(editing ? t("educator.quizBankEditor.updated") : t("educator.quizBankEditor.created"));
           resetForm();
         },
-        onError: (err: Error) => toastError("Save failed", friendlyError(err, err.message)),
+        onError: (err: Error) => toastError(t("educator.quizBankEditor.saveFailed"), friendlyError(err, err.message)),
       }
     );
   }
@@ -125,8 +131,8 @@ export default function QuizBankScreen() {
           <IconSymbol name="chevron.left" size={22} color={M.parchment} />
         </Pressable>
         <View>
-          <Text style={{ fontSize: 24, fontWeight: "900", color: M.parchment }}>Quiz bank</Text>
-          <Text style={{ fontSize: 12, color: M.textDim }}>Authored quiz questions for practice.</Text>
+          <Text style={{ fontSize: 24, fontWeight: "900", color: M.parchment }}>{t("admin.nav.quizBank")}</Text>
+          <Text style={{ fontSize: 12, color: M.textDim }}>{t("educator.quizBankEditor.subtitle")}</Text>
         </View>
       </View>
 
@@ -159,47 +165,58 @@ export default function QuizBankScreen() {
           </View>
         </ScrollView>
 
+        {!formOpen && (
+          <NewButton label={t("educator.quizBankEditor.newButton")} onPress={() => setFormOpen(true)} M={M} />
+        )}
+
         {/* Editor form */}
-        <View style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 16, gap: 10, marginBottom: 20 }}>
-          <Text style={{ fontSize: 14, fontWeight: "800", color: M.text }}>
-            {editing ? "Edit question" : "New question"}
-          </Text>
-          <View>
-            <Text style={{ fontSize: 11, fontWeight: "600", color: M.sub, marginBottom: 4 }}>Type *</Text>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-              {QUIZ_TYPES.map((t) => {
-                const active = t === form.type;
-                return (
-                  <Pressable
-                    key={t}
-                    onPress={() => setForm({ ...form, type: t })}
-                    style={{
-                      paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999,
-                      backgroundColor: active ? M.accent : M.card,
-                      borderWidth: 1, borderColor: active ? M.accent : M.border,
-                    }}
-                  >
-                    <Text style={{ fontSize: 12, fontWeight: "700", color: active ? M.ink : M.sub }}>{t}</Text>
-                  </Pressable>
-                );
-              })}
+        {formOpen && (
+          <View style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 16, gap: 10, marginBottom: 20 }}>
+            <Text style={{ fontSize: 14, fontWeight: "800", color: M.text }}>
+              {editing ? t("educator.quizBankEditor.editTitle") : t("educator.quizBankEditor.newTitle")}
+            </Text>
+            <View>
+              <Text style={{ fontSize: 11, fontWeight: "600", color: M.sub, marginBottom: 4 }}>{t("educator.quizBankEditor.typeLabel")}</Text>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                {QUIZ_TYPES.map((qt) => {
+                  const active = qt === form.type;
+                  return (
+                    <Pressable
+                      key={qt}
+                      onPress={() => setForm({ ...form, type: qt })}
+                      style={{
+                        paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999,
+                        backgroundColor: active ? M.accent : M.card,
+                        borderWidth: 1, borderColor: active ? M.accent : M.border,
+                      }}
+                    >
+                      <Text style={{ fontSize: 12, fontWeight: "700", color: active ? M.ink : M.sub }}>{qt}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+            <LabeledInput label={t("educator.quizBankEditor.promptLabel")} value={form.prompt} onChange={(v) => setForm({ ...form, prompt: v })} />
+            <LabeledInput label={t("educator.quizBankEditor.answerLabel")} value={form.answer} onChange={(v) => setForm({ ...form, answer: v })} />
+            <LabeledInput label={t("educator.quizBankEditor.optionsLabel")} value={form.options} onChange={(v) => setForm({ ...form, options: v })} />
+            <LabeledInput label={t("educator.quizBankEditor.audioUrlLabel")} value={form.audioUrl} onChange={(v) => setForm({ ...form, audioUrl: v })} />
+            <LabeledInput label={t("educator.quizBankEditor.explanationLabel")} value={form.explanation} onChange={(v) => setForm({ ...form, explanation: v })} />
+            <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
+              <PrimaryButton
+                label={upsert.isPending ? t("educator.quizBankEditor.saving") : editing ? t("common.save") : t("educator.quizBankEditor.createDraft")}
+                onPress={handleSave}
+                M={M}
+                disabled={upsert.isPending}
+              />
+              <GhostButton label={t("common.cancel")} onPress={resetForm} M={M} />
             </View>
           </View>
-          <LabeledInput label="Prompt *" value={form.prompt} onChange={(v) => setForm({ ...form, prompt: v })} />
-          <LabeledInput label="Answer *" value={form.answer} onChange={(v) => setForm({ ...form, answer: v })} />
-          <LabeledInput label="Options (comma-separated)" value={form.options} onChange={(v) => setForm({ ...form, options: v })} />
-          <LabeledInput label="Audio URL" value={form.audioUrl} onChange={(v) => setForm({ ...form, audioUrl: v })} />
-          <LabeledInput label="Explanation" value={form.explanation} onChange={(v) => setForm({ ...form, explanation: v })} />
-          <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
-            <PrimaryButton label={upsert.isPending ? "Saving…" : editing ? "Save" : "Create draft"} onPress={handleSave} M={M} />
-            {editing && <GhostButton label="Cancel" onPress={resetForm} M={M} />}
-          </View>
-        </View>
+        )}
 
         {/* List */}
-        {quizQuery.isPending && <Text style={{ color: M.muted, fontSize: 13 }}>Loading…</Text>}
+        {quizQuery.isPending && <Text style={{ color: M.muted, fontSize: 13 }}>{t("common.loading")}</Text>}
         {quizQuery.data?.length === 0 && (
-          <Text style={{ color: M.muted, fontSize: 13 }}>No quiz questions yet for {getLanguageName(activeLanguageId)}.</Text>
+          <Text style={{ color: M.muted, fontSize: 13 }}>{t("educator.quizBankEditor.empty", { language: getLanguageName(activeLanguageId) })}</Text>
         )}
         <View style={{ gap: 10 }}>
           {quizQuery.data?.map((q) => (
@@ -212,26 +229,26 @@ export default function QuizBankScreen() {
               <Text style={{ marginTop: 2, fontSize: 12, color: M.muted }}>{q.answer}</Text>
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
                 {canSubmitForReview(q.status) && (
-                  <SmallButton label="Submit" onPress={() =>
+                  <SmallButton label={t("educator.quizBankEditor.submitButton")} onPress={() =>
                     submitForReview.mutate(q.id, {
-                      onSuccess: () => toastSuccess("Submitted for review"),
-                      onError: (e: Error) => toastError("Failed", friendlyError(e)),
+                      onSuccess: () => toastSuccess(t("educator.quizBankEditor.submitted")),
+                      onError: (e: Error) => toastError(t("educator.quizBankEditor.submitFailed"), friendlyError(e)),
                     })
                   } M={M} />
                 )}
                 {canPublishContent(q.status, q.createdBy, actor) && (
-                  <SmallButton label="Publish" tone="publish" onPress={() =>
+                  <SmallButton label={t("educator.quizBankEditor.publishButton")} tone="publish" onPress={() =>
                     publish.mutate(q.id, {
-                      onSuccess: () => toastSuccess("Published"),
-                      onError: (e: Error) => toastError("Publish failed", friendlyError(e)),
+                      onSuccess: () => toastSuccess(t("educator.quizBankEditor.published")),
+                      onError: (e: Error) => toastError(t("educator.quizBankEditor.publishFailed"), friendlyError(e)),
                     })
                   } M={M} />
                 )}
-                <SmallButton label="Edit" onPress={() => startEdit(q)} M={M} />
-                <SmallButton label="Delete" tone="danger" onPress={() =>
+                <SmallButton label={t("common.edit")} onPress={() => startEdit(q)} M={M} />
+                <SmallButton label={t("common.delete")} tone="danger" onPress={() =>
                   remove.mutate(q.id, {
-                    onSuccess: () => toastSuccess("Deleted"),
-                    onError: (e: Error) => toastError("Delete failed", friendlyError(e)),
+                    onSuccess: () => toastSuccess(t("educator.quizBankEditor.deleted")),
+                    onError: (e: Error) => toastError(t("educator.quizBankEditor.deleteFailed"), friendlyError(e)),
                   })
                 } M={M} />
               </View>
@@ -240,51 +257,5 @@ export default function QuizBankScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-}
-
-type M = ReturnType<typeof useMuseumTheme>;
-
-function LabeledInput({ label, value, onChange }: Readonly<{ label: string; value: string; onChange: (v: string) => void }>) {
-  const M = useMuseumTheme();
-  return (
-    <View>
-      <Text style={{ fontSize: 11, fontWeight: "600", color: M.sub, marginBottom: 4 }}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChange}
-        placeholderTextColor={M.inputPlaceholder}
-        style={{
-          borderRadius: 10, borderWidth: 1, borderColor: M.inputBorder,
-          backgroundColor: M.inputBg, color: M.inputText,
-          paddingHorizontal: 12, paddingVertical: 10, fontSize: 14,
-        }}
-      />
-    </View>
-  );
-}
-
-function PrimaryButton({ label, onPress, M }: Readonly<{ label: string; onPress: () => void; M: M }>) {
-  return (
-    <Pressable onPress={onPress} style={{ borderRadius: 12, paddingHorizontal: 16, paddingVertical: 11, backgroundColor: M.accent }} className="active:opacity-80">
-      <Text style={{ fontWeight: "800", color: M.ink, fontSize: 14 }}>{label}</Text>
-    </Pressable>
-  );
-}
-
-function GhostButton({ label, onPress, M }: Readonly<{ label: string; onPress: () => void; M: M }>) {
-  return (
-    <Pressable onPress={onPress} style={{ borderRadius: 12, paddingHorizontal: 16, paddingVertical: 11, backgroundColor: M.bg, borderWidth: 1, borderColor: M.border }} className="active:opacity-70">
-      <Text style={{ fontWeight: "700", color: M.sub, fontSize: 14 }}>{label}</Text>
-    </Pressable>
-  );
-}
-
-function SmallButton({ label, onPress, tone, M }: Readonly<{ label: string; onPress: () => void; tone?: "publish" | "danger"; M: M }>) {
-  const color = tone === "publish" ? M.success : tone === "danger" ? M.error : M.sub;
-  return (
-    <Pressable onPress={onPress} style={{ borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7, backgroundColor: M.card, borderWidth: 1, borderColor: M.border }} className="active:opacity-70">
-      <Text style={{ fontWeight: "700", color, fontSize: 12 }}>{label}</Text>
-    </Pressable>
   );
 }

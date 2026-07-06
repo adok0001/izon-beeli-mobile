@@ -1,5 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { GhostButton, LabeledInput, NewButton, PrimaryButton, SmallButton } from "@/components/studio/editor-form";
+import { LocalizedTextInput, serializeLocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { friendlyError } from "@/lib/api";
 import {
@@ -18,11 +20,15 @@ import {
   type Proverb,
 } from "@/lib/hooks/educator/use-proverbs";
 import { useToast } from "@/lib/hooks/use-toast";
+import { localize } from "@/lib/localize";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useUiLanguageStore } from "@/store/ui-language-store";
+import type { LocalizedText } from "@/types";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { useTranslation } from "react-i18next";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 /**
@@ -34,10 +40,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 type ProverbForm = {
   id?: string;
   text: string;
-  translation: string;
-  translationFr: string;
-  meaning: string;
-  meaningFr: string;
+  translation: LocalizedText;
+  meaning: LocalizedText;
   literal: string;
   context: string;
   tags: string;
@@ -45,10 +49,8 @@ type ProverbForm = {
 
 const EMPTY_FORM: ProverbForm = {
   text: "",
-  translation: "",
-  translationFr: "",
-  meaning: "",
-  meaningFr: "",
+  translation: {},
+  meaning: {},
   literal: "",
   context: "",
   tags: "",
@@ -57,7 +59,9 @@ const EMPTY_FORM: ProverbForm = {
 export default function ProverbsScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
+  const { t } = useTranslation();
   const { user } = useStudioAccess();
+  const { uiLanguage } = useUiLanguageStore();
   const { success: toastSuccess, error: toastError } = useToast();
 
   const allowedLanguages = useMemo(
@@ -68,6 +72,7 @@ export default function ProverbsScreen() {
   const activeLanguageId = selectedLanguageId ?? allowedLanguages[0] ?? user.selectedLanguageId ?? "izon";
 
   const [form, setForm] = useState<ProverbForm>(EMPTY_FORM);
+  const [formOpen, setFormOpen] = useState(false);
   const editing = !!form.id;
 
   const proverbsQuery = useEducatorProverbs(activeLanguageId);
@@ -80,46 +85,48 @@ export default function ProverbsScreen() {
 
   function resetForm() {
     setForm(EMPTY_FORM);
+    setFormOpen(false);
   }
 
   function startEdit(p: Proverb) {
     setForm({
       id: p.id,
       text: p.text,
-      translation: p.translation,
-      translationFr: p.translationFr ?? "",
-      meaning: p.meaning,
-      meaningFr: p.meaningFr ?? "",
+      translation: toLocalizedText(p.translation, p.translationFr),
+      meaning: toLocalizedText(p.meaning, p.meaningFr),
       literal: p.literal ?? "",
       context: p.context ?? "",
       tags: (p.tags ?? []).join(", "),
     });
+    setFormOpen(true);
   }
 
   function handleSave() {
-    if (!form.text.trim() || !form.translation.trim() || !form.meaning.trim()) {
-      toastError("Missing fields", "Proverb, translation, and meaning are required.");
+    if (!form.text.trim() || !form.translation.en?.trim() || !form.meaning.en?.trim()) {
+      toastError(t("educator.proverbsEditor.missingFields"), t("educator.proverbsEditor.missingFieldsDetail"));
       return;
     }
+    const translationSer = serializeLocalizedText(form.translation);
+    const meaningSer = serializeLocalizedText(form.meaning);
     upsert.mutate(
       {
         id: form.id,
         languageId: activeLanguageId,
         text: form.text.trim(),
-        translation: form.translation.trim(),
-        translationFr: form.translationFr.trim() || undefined,
-        meaning: form.meaning.trim(),
-        meaningFr: form.meaningFr.trim() || undefined,
+        translation: translationSer.primary,
+        translationFr: translationSer.fr,
+        meaning: meaningSer.primary,
+        meaningFr: meaningSer.fr,
         literal: form.literal.trim() || undefined,
         context: form.context.trim() || undefined,
-        tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
+        tags: form.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
       },
       {
         onSuccess: () => {
-          toastSuccess(editing ? "Proverb updated" : "Draft created");
+          toastSuccess(editing ? t("educator.proverbsEditor.updated") : t("educator.proverbsEditor.created"));
           resetForm();
         },
-        onError: (err: Error) => toastError("Save failed", friendlyError(err, err.message)),
+        onError: (err: Error) => toastError(t("educator.proverbsEditor.saveFailed"), friendlyError(err, err.message)),
       }
     );
   }
@@ -131,8 +138,8 @@ export default function ProverbsScreen() {
           <IconSymbol name="chevron.left" size={22} color={M.parchment} />
         </Pressable>
         <View>
-          <Text style={{ fontSize: 24, fontWeight: "900", color: M.parchment }}>Proverbs</Text>
-          <Text style={{ fontSize: 12, color: M.textDim }}>Authored proverbs with their meanings.</Text>
+          <Text style={{ fontSize: 24, fontWeight: "900", color: M.parchment }}>{t("admin.nav.proverbs")}</Text>
+          <Text style={{ fontSize: 12, color: M.textDim }}>{t("educator.proverbsEditor.subtitle")}</Text>
         </View>
       </View>
 
@@ -165,29 +172,48 @@ export default function ProverbsScreen() {
           </View>
         </ScrollView>
 
+        {!formOpen && (
+          <NewButton label={t("educator.proverbsEditor.newButton")} onPress={() => setFormOpen(true)} M={M} />
+        )}
+
         {/* Editor form */}
-        <View style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 16, gap: 10, marginBottom: 20 }}>
-          <Text style={{ fontSize: 14, fontWeight: "800", color: M.text }}>
-            {editing ? "Edit proverb" : "New proverb"}
-          </Text>
-          <LabeledInput label="Proverb (native) *" value={form.text} onChange={(v) => setForm({ ...form, text: v })} />
-          <LabeledInput label="Translation (EN) *" value={form.translation} onChange={(v) => setForm({ ...form, translation: v })} />
-          <LabeledInput label="Translation (FR)" value={form.translationFr} onChange={(v) => setForm({ ...form, translationFr: v })} />
-          <LabeledInput label="Meaning (EN) *" value={form.meaning} onChange={(v) => setForm({ ...form, meaning: v })} />
-          <LabeledInput label="Meaning (FR)" value={form.meaningFr} onChange={(v) => setForm({ ...form, meaningFr: v })} />
-          <LabeledInput label="Literal" value={form.literal} onChange={(v) => setForm({ ...form, literal: v })} />
-          <LabeledInput label="Context" value={form.context} onChange={(v) => setForm({ ...form, context: v })} />
-          <LabeledInput label="Tags (comma-separated)" value={form.tags} onChange={(v) => setForm({ ...form, tags: v })} />
-          <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
-            <PrimaryButton label={upsert.isPending ? "Saving…" : editing ? "Save" : "Create draft"} onPress={handleSave} M={M} />
-            {editing && <GhostButton label="Cancel" onPress={resetForm} M={M} />}
+        {formOpen && (
+          <View style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 16, gap: 10, marginBottom: 20 }}>
+            <Text style={{ fontSize: 14, fontWeight: "800", color: M.text }}>
+              {editing ? t("educator.proverbsEditor.editTitle") : t("educator.proverbsEditor.newTitle")}
+            </Text>
+            <LabeledInput label={t("educator.proverbsEditor.textLabel")} value={form.text} onChange={(v) => setForm({ ...form, text: v })} />
+            <LocalizedTextInput
+              label={t("educator.proverbsEditor.translationLabel")}
+              value={form.translation}
+              onChange={(translation) => setForm((f) => ({ ...f, translation }))}
+              required
+            />
+            <LocalizedTextInput
+              label={t("educator.proverbsEditor.meaningLabel")}
+              value={form.meaning}
+              onChange={(meaning) => setForm((f) => ({ ...f, meaning }))}
+              required
+            />
+            <LabeledInput label={t("educator.proverbsEditor.literalLabel")} value={form.literal} onChange={(v) => setForm({ ...form, literal: v })} />
+            <LabeledInput label={t("educator.proverbsEditor.contextLabel")} value={form.context} onChange={(v) => setForm({ ...form, context: v })} />
+            <LabeledInput label={t("educator.proverbsEditor.tagsLabel")} value={form.tags} onChange={(v) => setForm({ ...form, tags: v })} />
+            <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
+              <PrimaryButton
+                label={upsert.isPending ? t("educator.proverbsEditor.saving") : editing ? t("common.save") : t("educator.proverbsEditor.createDraft")}
+                onPress={handleSave}
+                M={M}
+                disabled={upsert.isPending}
+              />
+              <GhostButton label={t("common.cancel")} onPress={resetForm} M={M} />
+            </View>
           </View>
-        </View>
+        )}
 
         {/* List */}
-        {proverbsQuery.isPending && <Text style={{ color: M.muted, fontSize: 13 }}>Loading…</Text>}
+        {proverbsQuery.isPending && <Text style={{ color: M.muted, fontSize: 13 }}>{t("common.loading")}</Text>}
         {proverbsQuery.data?.length === 0 && (
-          <Text style={{ color: M.muted, fontSize: 13 }}>No proverbs yet for {getLanguageName(activeLanguageId)}.</Text>
+          <Text style={{ color: M.muted, fontSize: 13 }}>{t("educator.proverbsEditor.empty", { language: getLanguageName(activeLanguageId) })}</Text>
         )}
         <View style={{ gap: 10 }}>
           {proverbsQuery.data?.map((p) => (
@@ -196,30 +222,30 @@ export default function ProverbsScreen() {
                 <Text style={{ flex: 1, fontSize: 15, fontWeight: "800", color: M.text }}>{p.text}</Text>
                 {p.status && <Badge label={STATUS_LABEL[p.status as ContentStatus]} tone={STATUS_TONE[p.status as ContentStatus]} />}
               </View>
-              <Text style={{ marginTop: 4, fontSize: 13, color: M.sub }}>{p.translation}</Text>
-              <Text style={{ marginTop: 2, fontSize: 12, color: M.muted }}>{p.meaning}</Text>
+              <Text style={{ marginTop: 4, fontSize: 13, color: M.sub }}>{localize(p.translation, uiLanguage)}</Text>
+              <Text style={{ marginTop: 2, fontSize: 12, color: M.muted }}>{localize(p.meaning, uiLanguage)}</Text>
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
                 {canSubmitForReview(p.status) && (
-                  <SmallButton label="Submit" onPress={() =>
+                  <SmallButton label={t("educator.proverbsEditor.submitButton")} onPress={() =>
                     submitForReview.mutate(p.id, {
-                      onSuccess: () => toastSuccess("Submitted for review"),
-                      onError: (e: Error) => toastError("Failed", friendlyError(e)),
+                      onSuccess: () => toastSuccess(t("educator.proverbsEditor.submitted")),
+                      onError: (e: Error) => toastError(t("educator.proverbsEditor.submitFailed"), friendlyError(e)),
                     })
                   } M={M} />
                 )}
                 {canPublishContent(p.status, p.createdBy, actor) && (
-                  <SmallButton label="Publish" tone="publish" onPress={() =>
+                  <SmallButton label={t("educator.proverbsEditor.publishButton")} tone="publish" onPress={() =>
                     publish.mutate(p.id, {
-                      onSuccess: () => toastSuccess("Published"),
-                      onError: (e: Error) => toastError("Publish failed", friendlyError(e)),
+                      onSuccess: () => toastSuccess(t("educator.proverbsEditor.published")),
+                      onError: (e: Error) => toastError(t("educator.proverbsEditor.publishFailed"), friendlyError(e)),
                     })
                   } M={M} />
                 )}
-                <SmallButton label="Edit" onPress={() => startEdit(p)} M={M} />
-                <SmallButton label="Delete" tone="danger" onPress={() =>
+                <SmallButton label={t("common.edit")} onPress={() => startEdit(p)} M={M} />
+                <SmallButton label={t("common.delete")} tone="danger" onPress={() =>
                   remove.mutate(p.id, {
-                    onSuccess: () => toastSuccess("Deleted"),
-                    onError: (e: Error) => toastError("Delete failed", friendlyError(e)),
+                    onSuccess: () => toastSuccess(t("educator.proverbsEditor.deleted")),
+                    onError: (e: Error) => toastError(t("educator.proverbsEditor.deleteFailed"), friendlyError(e)),
                   })
                 } M={M} />
               </View>
@@ -228,51 +254,5 @@ export default function ProverbsScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-}
-
-type M = ReturnType<typeof useMuseumTheme>;
-
-function LabeledInput({ label, value, onChange }: Readonly<{ label: string; value: string; onChange: (v: string) => void }>) {
-  const M = useMuseumTheme();
-  return (
-    <View>
-      <Text style={{ fontSize: 11, fontWeight: "600", color: M.sub, marginBottom: 4 }}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChange}
-        placeholderTextColor={M.inputPlaceholder}
-        style={{
-          borderRadius: 10, borderWidth: 1, borderColor: M.inputBorder,
-          backgroundColor: M.inputBg, color: M.inputText,
-          paddingHorizontal: 12, paddingVertical: 10, fontSize: 14,
-        }}
-      />
-    </View>
-  );
-}
-
-function PrimaryButton({ label, onPress, M }: Readonly<{ label: string; onPress: () => void; M: M }>) {
-  return (
-    <Pressable onPress={onPress} style={{ borderRadius: 12, paddingHorizontal: 16, paddingVertical: 11, backgroundColor: M.accent }} className="active:opacity-80">
-      <Text style={{ fontWeight: "800", color: M.ink, fontSize: 14 }}>{label}</Text>
-    </Pressable>
-  );
-}
-
-function GhostButton({ label, onPress, M }: Readonly<{ label: string; onPress: () => void; M: M }>) {
-  return (
-    <Pressable onPress={onPress} style={{ borderRadius: 12, paddingHorizontal: 16, paddingVertical: 11, backgroundColor: M.bg, borderWidth: 1, borderColor: M.border }} className="active:opacity-70">
-      <Text style={{ fontWeight: "700", color: M.sub, fontSize: 14 }}>{label}</Text>
-    </Pressable>
-  );
-}
-
-function SmallButton({ label, onPress, tone, M }: Readonly<{ label: string; onPress: () => void; tone?: "publish" | "danger"; M: M }>) {
-  const color = tone === "publish" ? M.success : tone === "danger" ? M.error : M.sub;
-  return (
-    <Pressable onPress={onPress} style={{ borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7, backgroundColor: M.card, borderWidth: 1, borderColor: M.border }} className="active:opacity-70">
-      <Text style={{ fontWeight: "700", color, fontSize: 12 }}>{label}</Text>
-    </Pressable>
   );
 }

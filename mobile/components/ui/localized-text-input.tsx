@@ -291,3 +291,16 @@ export function toLocalizedText(
   if (fr) result.fr = fr;
   return result;
 }
+
+/**
+ * Inverse of `toLocalizedText` for endpoints that only have `<field>` / `<field>Fr`
+ * columns (no pcm/ar/pt columns yet). When only en/fr are filled, writes them to
+ * their dedicated columns as before. Once pcm/ar/pt has anything, the whole map is
+ * JSON-encoded into `primary` instead — `localize()`/`toLocalizedText()` already
+ * unpack that transparently wherever the field is read back.
+ */
+export function serializeLocalizedText(value: LocalizedText): { primary: string; fr?: string } {
+  const hasExtraLangs = !!(value.pcm?.trim() || value.ar?.trim() || value.pt?.trim());
+  if (hasExtraLangs) return { primary: JSON.stringify(value) };
+  return { primary: value.en?.trim() ?? "", fr: value.fr?.trim() || undefined };
+}
