@@ -174,6 +174,7 @@ export interface Language {
   name: string;
   nativeName: string;
   region: string;
+  isActive: boolean;
 }
 
 export type ContributionType = "word" | "phrase" | "audio" | "entry_audio" | "entry_meaning";
@@ -220,7 +221,7 @@ export interface EtymologyNode {
   era: string;
   form: string;
   language: string;
-  note: string;
+  note: string | LocalizedText;
 }
 
 export interface EtymologyEntry {

@@ -333,6 +333,7 @@ export const languages = pgTable("languages", {
   name: varchar("name", { length: 200 }).notNull(),
   nativeName: varchar("native_name", { length: 200 }).notNull(),
   region: varchar("region", { length: 100 }).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
 });
 
 export const courses = pgTable(

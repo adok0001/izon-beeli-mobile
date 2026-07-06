@@ -11,7 +11,7 @@ import { useToast } from "@/lib/hooks/use-toast";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, Switch, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 /**
@@ -24,6 +24,7 @@ type LanguageForm = {
   name: string;
   nativeName: string;
   region: string;
+  isActive: boolean;
   isNew: boolean;
 };
 
@@ -32,6 +33,7 @@ const EMPTY_FORM: LanguageForm = {
   name: "",
   nativeName: "",
   region: "",
+  isActive: true,
   isNew: true,
 };
 
@@ -57,6 +59,7 @@ export default function LanguagesScreen() {
       name: l.name,
       nativeName: l.nativeName,
       region: l.region,
+      isActive: l.isActive,
       isNew: false,
     });
   }
@@ -72,6 +75,7 @@ export default function LanguagesScreen() {
         name: form.name.trim(),
         nativeName: form.nativeName.trim(),
         region: form.region.trim(),
+        isActive: form.isActive,
         isNew: form.isNew,
       },
       {
@@ -117,6 +121,15 @@ export default function LanguagesScreen() {
           <LabeledInput label="Name *" value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
           <LabeledInput label="Native name *" value={form.nativeName} onChange={(v) => setForm({ ...form, nativeName: v })} />
           <LabeledInput label="Region *" value={form.region} onChange={(v) => setForm({ ...form, region: v })} />
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
+            <Text style={{ fontSize: 13, fontWeight: "700", color: M.text }}>Active</Text>
+            <Switch
+              value={form.isActive}
+              onValueChange={(v) => setForm({ ...form, isActive: v })}
+              trackColor={{ false: M.border, true: M.accent }}
+              thumbColor={M.parchment}
+            />
+          </View>
           <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
             <PrimaryButton label={upsert.isPending ? "Saving…" : form.isNew ? "Create" : "Save"} onPress={handleSave} M={M} />
             {!form.isNew && <GhostButton label="Cancel" onPress={resetForm} M={M} />}
@@ -131,12 +144,48 @@ export default function LanguagesScreen() {
         <View style={{ gap: 10 }}>
           {languagesQuery.data?.map((l) => (
             <View key={l.id} style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 14 }}>
-              <Text style={{ fontSize: 15, fontWeight: "800", color: M.text }}>{l.name}</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <Text style={{ fontSize: 15, fontWeight: "800", color: M.text }}>{l.name}</Text>
+                <View
+                  style={{
+                    borderRadius: 999,
+                    paddingHorizontal: 8,
+                    paddingVertical: 2,
+                    backgroundColor: l.isActive ? M.successBg : M.card,
+                    borderWidth: 1,
+                    borderColor: l.isActive ? M.successBorder : M.border,
+                  }}
+                >
+                  <Text style={{ fontSize: 10, fontWeight: "800", color: l.isActive ? M.success : M.muted }}>
+                    {l.isActive ? "ACTIVE" : "INACTIVE"}
+                  </Text>
+                </View>
+              </View>
               <Text style={{ marginTop: 4, fontSize: 13, color: M.sub }}>
                 {l.nativeName} · {l.region} · {l.id}
               </Text>
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
                 <SmallButton label="Edit" onPress={() => startEdit(l)} M={M} />
+                <SmallButton
+                  label={l.isActive ? "Deactivate" : "Activate"}
+                  onPress={() =>
+                    upsert.mutate(
+                      {
+                        id: l.id,
+                        name: l.name,
+                        nativeName: l.nativeName,
+                        region: l.region,
+                        isActive: !l.isActive,
+                        isNew: false,
+                      },
+                      {
+                        onSuccess: () => toastSuccess(l.isActive ? "Language deactivated" : "Language activated"),
+                        onError: (e: Error) => toastError("Update failed", friendlyError(e)),
+                      }
+                    )
+                  }
+                  M={M}
+                />
                 <SmallButton label="Delete" tone="danger" onPress={() =>
                   remove.mutate(l.id, {
                     onSuccess: () => toastSuccess("Deleted"),

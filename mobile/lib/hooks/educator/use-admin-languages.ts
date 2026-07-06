@@ -7,6 +7,7 @@ export interface Language {
   name: string;
   nativeName: string;
   region: string;
+  isActive: boolean;
 }
 
 export interface UpsertLanguageInput {
@@ -14,6 +15,7 @@ export interface UpsertLanguageInput {
   name: string;
   nativeName: string;
   region: string;
+  isActive: boolean;
   isNew: boolean;
 }
 
@@ -33,10 +35,12 @@ export function useUpsertLanguage() {
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, name, nativeName, region, isNew }: UpsertLanguageInput) => {
+    mutationFn: async ({ id, name, nativeName, region, isActive, isNew }: UpsertLanguageInput) => {
       const token = await getToken();
       const path = isNew ? "/languages/admin" : `/languages/admin/${id}`;
-      const body = isNew ? { id, name, nativeName, region } : { name, nativeName, region };
+      const body = isNew
+        ? { id, name, nativeName, region, isActive }
+        : { name, nativeName, region, isActive };
       return apiFetch<Language>(path, {
         method: isNew ? "POST" : "PATCH",
         token: token ?? undefined,

@@ -30,6 +30,7 @@ languagesAdminRouter.post("/", async (c) => {
     name: string;
     nativeName: string;
     region: string;
+    isActive?: boolean;
   }>();
 
   const id = body.id?.trim();
@@ -47,6 +48,7 @@ languagesAdminRouter.post("/", async (c) => {
       name: body.name.trim(),
       nativeName: body.nativeName.trim(),
       region: body.region.trim(),
+      isActive: body.isActive ?? true,
     })
     .returning();
 
@@ -59,11 +61,14 @@ languagesAdminRouter.patch("/:id", async (c) => {
   const [existing] = await db.select().from(languages).where(eq(languages.id, id)).limit(1);
   if (!existing) return c.json({ error: "Not found" }, 404);
 
-  const body = await c.req.json<Partial<{ name: string; nativeName: string; region: string }>>();
+  const body = await c.req.json<
+    Partial<{ name: string; nativeName: string; region: string; isActive: boolean }>
+  >();
   const updates: Record<string, unknown> = {};
   for (const key of ["name", "nativeName", "region"] as const) {
     if (body[key] !== undefined) updates[key] = body[key]?.trim();
   }
+  if (body.isActive !== undefined) updates.isActive = body.isActive;
   if (Object.keys(updates).length === 0) return c.json(existing);
 
   const [updated] = await db.update(languages).set(updates).where(eq(languages.id, id)).returning();
