@@ -1,7 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { friendlyError } from "@/lib/api";
-import { useCurrentUser } from "@/lib/hooks/use-current-user";
 import {
   GLOSS_LOCALES,
   useSaveTranslationGloss,
@@ -10,22 +9,28 @@ import {
   type TranslationQueueEntry,
 } from "@/lib/hooks/educator/use-translations";
 import { useToast } from "@/lib/hooks/use-toast";
+import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function TranslationQueueScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
-  useStudioAccess();
+  const { user } = useStudioAccess();
   const { success: toastSuccess, error: toastError } = useToast();
-  const { data: currentUser } = useCurrentUser();
+
+  const allowedLanguages = useMemo(
+    () => (user.isAdmin ? LANGUAGES.map((l) => l.id) : user.reviewerLanguages),
+    [user]
+  );
+  const [selectedLanguageId, setSelectedLanguageId] = useState<string | null>(null);
+  const activeLanguageId = selectedLanguageId ?? allowedLanguages[0] ?? user.selectedLanguageId ?? "izon";
 
   const [locale, setLocale] = useState<GlossLocale>("fr");
-  const languageId = currentUser?.reviewerLanguages?.[0];
-  const queueQuery = useTranslationQueue(languageId, locale);
+  const queueQuery = useTranslationQueue(activeLanguageId, locale);
   const save = useSaveTranslationGloss();
 
   const [drafts, setDrafts] = useState<Record<string, { gloss: string; exampleGloss: string }>>({});
@@ -52,6 +57,29 @@ export default function TranslationQueueScreen() {
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            {allowedLanguages.map((languageId) => {
+              const active = languageId === activeLanguageId;
+              return (
+                <Pressable
+                  key={languageId}
+                  onPress={() => { setSelectedLanguageId(languageId); setDrafts({}); }}
+                  style={{
+                    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
+                    backgroundColor: active ? M.accent : M.bg,
+                    borderWidth: 1, borderColor: active ? M.accent : M.border,
+                  }}
+                >
+                  <Text style={{ fontSize: 13, fontWeight: "700", color: active ? M.ink : M.sub }}>
+                    {getLanguageName(languageId)}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </ScrollView>
+
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
           {GLOSS_LOCALES.map((l) => (
             <Pressable
