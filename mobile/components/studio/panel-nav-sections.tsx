@@ -264,7 +264,7 @@ export function ExploreSection({ currentUser, open, onToggle }: SectionProps) {
       accent={getAccent("purple").solid}
     >
       <SubRow label="Dictionary" meta="Words, translations, audio" onPress={() => router.push("/educator/dictionary" as never)} />
-      <SubRow label="Cultural & Proverbs" meta="Proverbs, cultural notes" onPress={() => router.push("/educator/culture" as never)} />
+      <SubRow label="Cultural" meta="Cultural notes, ceremonies" onPress={() => router.push("/educator/culture" as never)} />
       {currentUser.isAdmin && (
         <>
           <SubRow label="Discover" meta="Series, films" badge="Admin" onPress={() => router.push("/admin/discover-stories" as never)} />
