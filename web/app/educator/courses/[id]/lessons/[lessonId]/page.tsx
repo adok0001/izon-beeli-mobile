@@ -3,15 +3,11 @@
 import { DevicePreview } from "@/components/studio/device-preview";
 import { LessonPreviewCard } from "@/components/studio/lesson-preview-card";
 import { SchedulePublishModal } from "@/components/studio/schedule-publish-modal";
-import { AudioAssetPopover } from "@/components/studio/replica/audio-asset-popover";
-import { EditableField } from "@/components/studio/replica/editable-field";
-import { ReplicaLessonHero } from "@/components/studio/replica/replica-lesson-hero";
 import { StatusPill } from "@/components/ui/status-pill";
 import { apiFetch } from "@/lib/api";
 import { localizeField } from "@/lib/localize";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import {
-  canEditContent,
   canPublishContent,
   canSubmitForReview,
   isScheduled,
@@ -30,7 +26,6 @@ import {
     EyeOff,
     GripVertical,
     Mic,
-    Palette,
     Plus,
     Save,
     Send,
@@ -270,7 +265,6 @@ export default function LessonDetailPage() {
   const [pendingAudioPreviewUrl, setPendingAudioPreviewUrl] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [schedulingOpen, setSchedulingOpen] = useState(false);
-  const [replicaMode, setReplicaMode] = useState(false);
 
   const canRecordAudio =
     typeof window !== "undefined" &&
@@ -419,28 +413,6 @@ export default function LessonDetailPage() {
       toast.success(lesson?.isActive ? t("educator.lessonDetail.lessonHidden") : t("educator.lessonDetail.lessonPublished"));
     },
     onError: (e: Error) => toast.error(t("educator.lessonDetail.lessonUpdateFailed"), { description: e.message }),
-  });
-
-  const updateField = useMutation({
-    mutationFn: async (fields: Partial<Pick<LessonDetail, "title" | "description">>) => {
-      const token = await getToken();
-      return apiFetch(`/educator/lessons/${lessonId}`, {
-        method: "PATCH",
-        token: token!,
-        body: JSON.stringify(fields),
-      });
-    },
-    onMutate: async (fields) => {
-      await qc.cancelQueries({ queryKey: ["educator-lesson", lessonId] });
-      const previous = qc.getQueryData<LessonDetail>(["educator-lesson", lessonId]);
-      if (previous) qc.setQueryData(["educator-lesson", lessonId], { ...previous, ...fields });
-      return { previous };
-    },
-    onError: (e: Error, _fields, context) => {
-      if (context?.previous) qc.setQueryData(["educator-lesson", lessonId], context.previous);
-      toast.error("Failed to save", { description: e.message });
-    },
-    onSettled: () => void qc.invalidateQueries({ queryKey: ["educator-lesson", lessonId] }),
   });
 
   const submitForReview = useMutation({
@@ -621,8 +593,6 @@ export default function LessonDetailPage() {
     );
   }
 
-  const canEdit = me ? canEditContent({ isAdmin: me.isAdmin, reviewerRole: me.reviewerRole }) : false;
-
   // This endpoint doesn't expose titleFr/descriptionFr, so any {en,fr} blob
   // still living in the plain title/description column only surfaces via
   // localizeField's own unwrapping.
@@ -649,31 +619,8 @@ export default function LessonDetailPage() {
             <StatusPill status={lesson.status} publishAt={lesson.publishAt} />
             <span className="text-xs text-neutral-500 dark:text-neutral-300">{t("educator.lessonDetail.lessonOrder", { order: lesson.order })}</span>
           </div>
-          {replicaMode ? (
-            <div className="mt-2 max-w-md">
-              <ReplicaLessonHero
-                title={displayTitle}
-                overline={displayCourseTitle}
-                readOnly={!canEdit}
-                onSaveTitle={async (title) => { await updateField.mutateAsync({ title }); }}
-              />
-              <EditableField
-                variant="text"
-                value={displayDescription}
-                onSave={async (description) => { await updateField.mutateAsync({ description }); }}
-                readOnly={!canEdit}
-                as="p"
-                multiline
-                className="mt-2 block text-sm text-neutral-500 dark:text-neutral-300"
-                placeholder="Lesson description"
-              />
-            </div>
-          ) : (
-            <>
-              <h1 className="text-xl font-bold text-neutral-900 dark:text-white">{displayTitle}</h1>
-              <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-300">{displayDescription}</p>
-            </>
-          )}
+          <h1 className="text-xl font-bold text-neutral-900 dark:text-white">{displayTitle}</h1>
+          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-300">{displayDescription}</p>
           {(lesson.artist || lesson.genre) && (
             <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-300">
               {[lesson.artist, lesson.genre].filter(Boolean).join(" · ")}
@@ -681,17 +628,6 @@ export default function LessonDetailPage() {
           )}
         </div>
         <div className="shrink-0 flex items-center gap-2">
-          <button
-            onClick={() => setReplicaMode((v) => !v)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
-              replicaMode
-                ? "border-bronze-500/60 bg-bronze-500/10 text-bronze-500"
-                : "border-neutral-200 dark:border-white/[0.08] text-neutral-600 dark:text-neutral-300 bg-white dark:bg-white/[0.04] hover:bg-neutral-50 dark:hover:bg-white/[0.06]"
-            }`}
-            title="Edit directly on a replica of the mobile lesson screen"
-          >
-            <Palette className="h-3.5 w-3.5" /> {replicaMode ? "Editing replica" : "Edit as replica"}
-          </button>
           <button
             onClick={() => setPreviewOpen(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-neutral-200 dark:border-white/[0.08] text-neutral-600 dark:text-neutral-300 bg-white dark:bg-white/[0.04] hover:bg-neutral-50 dark:hover:bg-white/[0.06] transition-colors"
@@ -752,13 +688,6 @@ export default function LessonDetailPage() {
       <div className="mb-8 rounded-2xl border border-neutral-200 dark:border-white/[0.07] bg-neutral-50 dark:bg-white/[0.02] p-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-bold text-neutral-700 dark:text-neutral-200">{t("educator.lessonDetail.audioTitle")}</h2>
-          {replicaMode ? (
-            <AudioAssetPopover
-              audioUrl={lesson.audioUrl}
-              uploading={uploadAudio.isPending}
-              onUpload={(file) => uploadAudio.mutate(file)}
-            />
-          ) : (
           <div className="flex items-center gap-2">
             {canRecordAudio && (
               <button
@@ -800,7 +729,6 @@ export default function LessonDetailPage() {
               </button>
             )}
           </div>
-          )}
           <input
             ref={audioInputRef}
             type="file"

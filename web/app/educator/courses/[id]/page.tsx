@@ -1,9 +1,7 @@
 "use client";
 
-import { ReplicaCourseCard } from "@/components/studio/replica/replica-course-card";
 import { apiFetch, ApiError } from "@/lib/api";
-import { canEditContent } from "@/lib/content-workflow";
-import { localizeField, unwrapLocalizedBlob } from "@/lib/localize";
+import { localizeField } from "@/lib/localize";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -14,7 +12,6 @@ import {
     Eye,
     EyeOff,
     GripVertical,
-    Palette,
     Pencil,
     Play,
     Plus,
@@ -58,11 +55,6 @@ interface Course {
   level: string;
   courseType: string | null;
   order: number;
-}
-
-interface EducatorMe {
-  isAdmin: boolean;
-  reviewerRole?: string | null;
 }
 
 const LESSON_TYPES = ["lesson", "story", "music", "pronunciation"] as const;
@@ -755,16 +747,6 @@ export default function CourseDetailPage() {
   const [modal, setModal] = useState<"create" | Lesson | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [playUrl, setPlayUrl] = useState<string | null>(null);
-  const [replicaMode, setReplicaMode] = useState(false);
-
-  const { data: me } = useQuery<EducatorMe>({
-    queryKey: ["educator-me"],
-    queryFn: async () => {
-      const token = await getToken();
-      return apiFetch<EducatorMe>("/educator/me", { token: token! });
-    },
-  });
-  const canEdit = me ? canEditContent({ isAdmin: me.isAdmin, reviewerRole: me.reviewerRole }) : false;
 
   const { data: courses = [] } = useQuery<Course[]>({
     queryKey: ["educator-courses"],
@@ -817,29 +799,6 @@ export default function CourseDetailPage() {
     onError: (e: Error) => toast.error(t("educator.courseDetail.failedUpdate"), { description: e.message }),
   });
 
-  // Per-field autosave for the "Edit as replica" view — no prior UI exposed
-  // title/description editing at all, but PATCH /educator/courses/:id has
-  // always accepted these fields.
-  const updateCourseField = useMutation({
-    mutationFn: async (data: Partial<Pick<Course, "title" | "titleFr" | "description" | "descriptionFr" | "level">>) => {
-      const token = await getToken();
-      return apiFetch(`/educator/courses/${courseId}`, { method: "PATCH", token: token!, body: JSON.stringify(data) });
-    },
-    onMutate: async (data) => {
-      await qc.cancelQueries({ queryKey: ["educator-courses"] });
-      const previous = qc.getQueryData<Course[]>(["educator-courses"]);
-      if (previous) {
-        qc.setQueryData<Course[]>(["educator-courses"], previous.map((c) => (c.id === courseId ? { ...c, ...data } : c)));
-      }
-      return { previous };
-    },
-    onError: (e: Error, _vars, context) => {
-      if (context?.previous) qc.setQueryData(["educator-courses"], context.previous);
-      toast.error(t("educator.courseDetail.failedUpdate"), { description: e.message });
-    },
-    onSettled: () => void qc.invalidateQueries({ queryKey: ["educator-courses"] }),
-  });
-
   const generateStubsMutation = useMutation({
     mutationFn: async () => {
       const token = await getToken();
@@ -856,16 +815,6 @@ export default function CourseDetailPage() {
     },
     onError: (e: Error) => toast.error(t("educator.courseDetail.stubsFailed"), { description: e.message }),
   });
-
-  // course.title/description sometimes hold a JSON-encoded {en,fr} blob instead
-  // of a plain string with a separate titleFr/descriptionFr — unwrap defensively
-  // so the replica editor doesn't display or re-save the raw blob.
-  const unwrappedTitle = course ? unwrapLocalizedBlob(course.title) : null;
-  const titleEn = unwrappedTitle?.en ?? course?.title ?? "";
-  const titleFr = unwrappedTitle?.fr ?? course?.titleFr ?? undefined;
-  const unwrappedDescription = course ? unwrapLocalizedBlob(course.description) : null;
-  const descriptionEn = unwrappedDescription?.en ?? course?.description ?? "";
-  const descriptionFr = unwrappedDescription?.fr ?? course?.descriptionFr ?? undefined;
 
   const displayTitle = course ? localizeField(course.title, course.titleFr, uiLanguage) : undefined;
   const displayDescription = course ? localizeField(course.description, course.descriptionFr, uiLanguage) : undefined;
@@ -884,64 +833,31 @@ export default function CourseDetailPage() {
 
       {/* Course header */}
       <div className="mb-6 flex items-start justify-between gap-4">
-        {replicaMode && course ? (
-          <div className="max-w-md flex-1">
-            <ReplicaCourseCard
-              title={{ en: titleEn, fr: titleFr }}
-              description={{ en: descriptionEn, fr: descriptionFr }}
-              level={course.level}
-              courseTypeLabel={course.courseType?.replace(/_/g, " ")}
-              readOnly={!canEdit}
-              onSaveTitle={async (v) => {
-                await updateCourseField.mutateAsync({ title: v.en ?? titleEn, titleFr: v.fr ?? null });
-              }}
-              onSaveDescription={async (v) => {
-                await updateCourseField.mutateAsync({ description: v.en ?? descriptionEn, descriptionFr: v.fr ?? null });
-              }}
-            />
-          </div>
-        ) : (
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              {levelLabel && (
-                <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-neutral-100 dark:bg-white/[0.06] text-neutral-600 dark:text-neutral-300 capitalize">
-                  {levelLabel}
-                </span>
-              )}
-              {course?.courseType && (
-                <span className="text-xs text-neutral-500 dark:text-neutral-300 capitalize">
-                  {course.courseType.replace(/_/g, " ")}
-                </span>
-              )}
-            </div>
-            <h1 className="text-xl font-bold text-neutral-900 dark:text-white">{courseTitle}</h1>
-            {course?.description && (
-              <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-300 max-w-2xl">{displayDescription}</p>
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            {levelLabel && (
+              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-neutral-100 dark:bg-white/[0.06] text-neutral-600 dark:text-neutral-300 capitalize">
+                {levelLabel}
+              </span>
+            )}
+            {course?.courseType && (
+              <span className="text-xs text-neutral-500 dark:text-neutral-300 capitalize">
+                {course.courseType.replace(/_/g, " ")}
+              </span>
             )}
           </div>
-        )}
-        <div className="flex shrink-0 items-center gap-2">
-          {course && (
-            <button
-              onClick={() => setReplicaMode((v) => !v)}
-              className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors ${
-                replicaMode
-                  ? "border-bronze-500 bg-bronze-500/10 text-bronze-600 dark:text-bronze-400"
-                  : "border-neutral-200 dark:border-white/[0.08] text-neutral-500 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06]"
-              }`}
-              title="Edit directly on a replica of the mobile course card"
-            >
-              <Palette className="h-3.5 w-3.5" /> {replicaMode ? "Editing replica" : "Edit as replica"}
-            </button>
+          <h1 className="text-xl font-bold text-neutral-900 dark:text-white">{courseTitle}</h1>
+          {course?.description && (
+            <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-300 max-w-2xl">{displayDescription}</p>
           )}
-          <button
-            onClick={() => setModal("create")}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-500 text-white text-sm font-semibold hover:bg-brand-600 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            {t("educator.courseDetail.newLesson")}
-          </button>
         </div>
+        <button
+          onClick={() => setModal("create")}
+          className="flex shrink-0 items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-500 text-white text-sm font-semibold hover:bg-brand-600 transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          {t("educator.courseDetail.newLesson")}
+        </button>
       </div>
 
       {/* Lessons */}
