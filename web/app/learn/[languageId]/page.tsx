@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import Script from "next/script";
 import { breadcrumbJsonLd } from "@/lib/structured-data";
 import { getRequestLocale, localeAlternates } from "@/lib/locale-meta";
+import { localizeField } from "@/lib/localize";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api";
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://izon-beeli.com";
@@ -106,8 +107,8 @@ export default async function LearnLanguagePage({
       position: i + 1,
       item: {
         "@type": "Course",
-        name: c.title,
-        description: c.description,
+        name: localizeField(c.title, c.titleFr, "en"),
+        description: localizeField(c.description, c.descriptionFr, "en"),
         url: `${BASE_URL}/learn`,
         provider: {
           "@type": "Organization",
@@ -208,14 +209,14 @@ export default async function LearnLanguagePage({
                   >
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <h3 className="font-semibold text-neutral-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
-                        {course.title}
+                        {localizeField(course.title, course.titleFr, "en")}
                       </h3>
                       <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${LEVEL_COLOR[course.level] ?? "bg-neutral-100 text-neutral-600"}`}>
                         {LEVEL_LABEL[course.level] ?? course.level}
                       </span>
                     </div>
                     <p className="text-sm text-neutral-500 dark:text-neutral-400 line-clamp-2 mb-3">
-                      {course.description}
+                      {localizeField(course.description, course.descriptionFr, "en")}
                     </p>
                     <p className="text-xs text-neutral-400 dark:text-neutral-500">
                       {course.lessonsCount} {course.lessonsCount === 1 ? "lesson" : "lessons"}
