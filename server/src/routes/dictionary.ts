@@ -51,10 +51,13 @@ dictionaryRouter.get("/", async (c) => {
 
   const staticEntries = limit ? await staticQuery.limit(limit) : await staticQuery;
 
-  // Also merge approved contributions for this language
+  // Also merge approved contributions for this language. Excludes entry_audio/
+  // entry_image/entry_meaning — those are amendments to an existing entry, not
+  // standalone words, and would otherwise show up as phantom duplicate entries.
   const contribConditions = [
     eq(contributions.languageId, languageId),
     eq(contributions.status, "approved"),
+    notInArray(contributions.type, ["entry_audio", "entry_image", "entry_meaning"]),
     category ? eq(contributions.category, category) : undefined,
     search
       ? or(
