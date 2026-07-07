@@ -1,16 +1,23 @@
-import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LanguagePickerModal } from "@/components/language-picker";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
+import { CourseEditModal } from "@/components/studio/course-editor";
+import { ExploreSection, LearnSection, ToolsStrip } from "@/components/studio/panel-nav-sections";
 import { useStudioAccess } from "@/components/studio/studio-gate";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
-import { canManageBounties, canReviewApplications } from "@/lib/hooks/use-current-user";
+import { friendlyError } from "@/lib/api";
 import { useContentHealth } from "@/lib/hooks/educator/use-content-health";
-import { useEducatorStats } from "@/lib/hooks/use-educator-panel";
+import { EducatorCourse, useEducatorStats, useUpdateEducatorCourse } from "@/lib/hooks/use-educator-panel";
+import { useToast } from "@/lib/hooks/use-toast";
+import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { getLanguageName } from "@/lib/mock-data";
+import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
+import { NestableScrollContainer } from "react-native-draggable-flatlist";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const ONBOARDING_KEY = "educator_onboarded";
@@ -36,40 +43,6 @@ function StatCard({ icon, label, value }: Readonly<{ icon: string; label: string
       <Text style={{ marginTop: 12, fontSize: 26, fontWeight: "800", color: M.text }}>{value}</Text>
       <Text style={{ marginTop: 3, fontSize: 12, color: M.muted }}>{label}</Text>
     </View>
-  );
-}
-
-function ActionRow({ icon, label, detail, onPress, accent }: Readonly<{
-  icon: string; label: string; detail: string; onPress: () => void; accent?: string;
-}>) {
-  const M = useMuseumTheme();
-  const color = accent ?? M.accent;
-  return (
-    <Pressable
-      onPress={onPress}
-      style={{
-        flexDirection: "row", alignItems: "center",
-        borderRadius: 16, paddingHorizontal: 14, paddingVertical: 14,
-        backgroundColor: M.card, borderWidth: 1, borderColor: M.border,
-        borderLeftWidth: 4, borderLeftColor: color,
-      }}
-      className="active:opacity-70"
-    >
-      <View
-        style={{
-          width: 40, height: 40, borderRadius: 10,
-          alignItems: "center", justifyContent: "center",
-          backgroundColor: `${color}15`, marginRight: 12,
-        }}
-      >
-        <IconSymbol name={icon as never} size={18} color={color} />
-      </View>
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 14, fontWeight: "700", color: M.text }}>{label}</Text>
-        <Text style={{ marginTop: 2, fontSize: 12, color: M.sub }}>{detail}</Text>
-      </View>
-      <IconSymbol name="chevron.right" size={14} color={M.muted} />
-    </Pressable>
   );
 }
 
@@ -108,6 +81,19 @@ export default function EducatorPanelScreen() {
   const { data: educatorStats } = useEducatorStats(canAccess);
   const { data: contentHealth } = useContentHealth(currentUser?.reviewerLanguages?.[0]);
   const [onboardingStep, setOnboardingStep] = useState<1 | 2 | 3 | null>(null);
+  const [openSection, setOpenSection] = useState<"learn" | "explore" | null>("learn");
+  const [selectedLanguageId, setSelectedLanguageId] = useState<string | undefined>(undefined);
+  const [languagePickerOpen, setLanguagePickerOpen] = useState(false);
+  const [editingCourse, setEditingCourse] = useState<EducatorCourse | null>(null);
+  const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
+  const updateCourse = useUpdateEducatorCourse();
+
+  const allowedLanguages = useMemo(() => {
+    if (!currentUser) return [] as string[];
+    return currentUser.isAdmin ? LANGUAGES.map((l) => l.id) : currentUser.reviewerLanguages;
+  }, [currentUser]);
+  const activeLanguageId =
+    selectedLanguageId ?? allowedLanguages[0] ?? currentUser?.selectedLanguageId ?? "izon";
 
   useEffect(() => {
     if (!educatorStats) return;
@@ -138,6 +124,13 @@ export default function EducatorPanelScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
+      <NotificationBanner
+        visible={toast.visible}
+        title={toast.title}
+        body={toast.body}
+        type={toast.type}
+        onDismiss={dismissToast}
+      />
       {/* Header */}
       <View style={{ backgroundColor: M.ink, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20 }}>
         <Text style={{ fontSize: 32, fontWeight: "900", color: M.parchment, letterSpacing: -0.5 }}>
@@ -151,7 +144,7 @@ export default function EducatorPanelScreen() {
         <Text style={{ marginTop: 2, fontSize: 12, color: M.textDimDark }}>{assignedLanguages}</Text>
       </View>
 
-      <ScrollView
+      <NestableScrollContainer
         style={{ flex: 1, backgroundColor: M.card }}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32, paddingTop: 16 }}
         showsVerticalScrollIndicator={false}
@@ -287,29 +280,94 @@ export default function EducatorPanelScreen() {
           </>
         )}
 
-        {/* Actions */}
+        {/* Navigation — mirrors the app's own Learn/Explore structure instead
+            of a flat list of content-type editors; everything with no single
+            learner screen to map to lives in Tools below. */}
         <SectionLabel label={t("admin.overview.quickActions")} />
-        <View style={{ gap: 10 }}>
-          <ActionRow icon="checkmark.circle.fill" label={t("educator.nav.review")} detail={t("educator.review.subtitle")} onPress={() => router.push("/review")} accent={getAccent("green").solid} />
-          <ActionRow icon="character.book.closed" label={t("educator.nav.dictionary")} detail={t("profile.dictionary")} onPress={() => router.push("/educator/dictionary")} />
-          <ActionRow icon="book.fill" label={t("educator.nav.lessons")} detail={t("learn.webSubtitle")} onPress={() => router.push("/educator/courses")} />
-          <ActionRow icon="globe" label={t("educator.nav.culture")} detail={t("welcomeChecklist.exploreCultureMusicDetail")} onPress={() => router.push("/educator/culture" as never)} accent={getAccent("purple").solid} />
-          <ActionRow icon="clock.arrow.circlepath" label={t("admin.nav.etymology")} detail={t("educator.etymology.subtitle")} onPress={() => router.push("/educator/etymology" as never)} accent={getAccent("sky").solid} />
-          <ActionRow icon="book.closed.fill" label={t("educator.story.screenTitle")} detail={t("educator.story.screenSubtitle")} onPress={() => router.push("/educator/stories" as never)} accent={getAccent("orange").solid} />
-          <ActionRow icon="text.bubble.fill" label={t("educator.sentences.screenTitle")} detail={t("educator.sentences.navDetail")} onPress={() => router.push("/educator/sentences" as never)} accent={getAccent("teal").solid} />
-          <ActionRow icon="quote.bubble.fill" label={t("educator.nav.proverbs")} detail="Proverbs and their meanings" onPress={() => router.push("/educator/proverbs" as never)} accent={getAccent("amber").solid} />
-          <ActionRow icon="bubble.left.and.bubble.right.fill" label={t("educator.nav.scenarios")} detail="Conversation scenarios" onPress={() => router.push("/educator/scenarios" as never)} accent={getAccent("blue").solid} />
-          <ActionRow icon="list.bullet.clipboard.fill" label={t("educator.nav.quizBank")} detail="Quiz question bank" onPress={() => router.push("/educator/quiz-bank" as never)} accent={getAccent("green").solid} />
-          <ActionRow icon="photo" label={t("admin.nav.media")} detail="Browse and reuse uploaded images and audio" onPress={() => router.push("/admin/media" as never)} accent={getAccent("indigo").solid} />
-          <ActionRow icon="globe.fill" label={t("educator.nav.translations")} detail="Fill in missing glosses per locale" onPress={() => router.push("/educator/translations" as never)} accent={getAccent("sky").solid} />
-          {currentUser && canManageBounties(currentUser) ? (
-            <ActionRow icon="star.fill" label={t("profile.bounties")} detail={t("admin.overview.manageCourses")} onPress={() => router.push("/bounties")} accent={getAccent("amber").solid} />
-          ) : null}
-          {currentUser && canReviewApplications(currentUser) ? (
-            <ActionRow icon="person.badge.shield.checkmark.fill" label={t("admin.nav.applications")} detail={t("admin.applications.subtitle")} onPress={() => router.push("/educator/applications" as never)} accent={getAccent("teal").solid} />
-          ) : null}
-        </View>
-      </ScrollView>
+        {currentUser && (
+          <>
+            <Pressable
+              onPress={() => setLanguagePickerOpen(true)}
+              style={{
+                flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+                borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 14,
+                backgroundColor: M.bg, borderWidth: 1, borderColor: M.border,
+              }}
+              className="active:opacity-70"
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <IconSymbol name="globe.fill" size={14} color={M.accent} />
+                <Text style={{ fontSize: 13, fontWeight: "700", color: M.text }}>
+                  {getLanguageName(activeLanguageId)}
+                </Text>
+              </View>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <Text style={{ fontSize: 11, color: M.muted }}>
+                  {allowedLanguages.length} language{allowedLanguages.length === 1 ? "" : "s"} assigned
+                </Text>
+                <IconSymbol name="chevron.right" size={12} color={M.muted} />
+              </View>
+            </Pressable>
+
+            <View style={{ gap: 10, marginBottom: 24 }}>
+              <LearnSection
+                currentUser={currentUser}
+                activeLanguageId={activeLanguageId}
+                open={openSection === "learn"}
+                onToggle={() => setOpenSection((s) => (s === "learn" ? null : "learn"))}
+                onSelectCourse={setEditingCourse}
+                onToastSuccess={toastSuccess}
+                onToastError={toastError}
+              />
+              <ExploreSection
+                currentUser={currentUser}
+                activeLanguageId={activeLanguageId}
+                open={openSection === "explore"}
+                onToggle={() => setOpenSection((s) => (s === "explore" ? null : "explore"))}
+              />
+            </View>
+          </>
+        )}
+
+        {currentUser && <ToolsStrip currentUser={currentUser} />}
+      </NestableScrollContainer>
+
+      <LanguagePickerModal
+        visible={languagePickerOpen}
+        selectedId={activeLanguageId}
+        allowedIds={allowedLanguages.length > 0 ? allowedLanguages : undefined}
+        onSelect={(languageId) => {
+          setSelectedLanguageId(languageId);
+          setLanguagePickerOpen(false);
+        }}
+        onClose={() => setLanguagePickerOpen(false)}
+      />
+
+      {editingCourse && (
+        <CourseEditModal
+          course={editingCourse}
+          visible
+          saving={updateCourse.isPending}
+          onClose={() => setEditingCourse(null)}
+          onManageLessons={() => {
+            const courseId = editingCourse.id;
+            setEditingCourse(null);
+            router.push({ pathname: "/educator/lessons", params: { courseId } });
+          }}
+          onSave={(fields) =>
+            updateCourse.mutate(
+              { id: editingCourse.id, ...fields },
+              {
+                onSuccess: () => {
+                  toastSuccess("Course updated", localize(editingCourse.title, "en"));
+                  setEditingCourse(null);
+                },
+                onError: (err: Error) => toastError("Update failed", friendlyError(err)),
+              },
+            )
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }

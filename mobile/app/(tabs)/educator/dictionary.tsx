@@ -1,85 +1,46 @@
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
+import { DictionaryEntryEditorModal, VariantRows } from "@/components/studio/dictionary-entry-editor-modal";
 import { Badge } from "@/components/ui/badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { LocalizedTextInput, toLocalizedText } from "@/components/ui/localized-text-input";
-import type { LocalizedText } from "@/types";
+import { LocalizedTextInput } from "@/components/ui/localized-text-input";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import {
-    canPublishContent,
-    canSubmitForReview,
     EducatorDictionaryCategory,
     EducatorDictionaryEntry,
-    isScheduled,
     STATUS_LABEL,
     STATUS_TONE,
-    useDeleteEducatorDictionaryEntry,
     useEducatorDictionary,
-    usePublishContent,
-    useSchedulePublishContent,
-    useSubmitEducatorDictionaryForReview,
-    useUnschedulePublishContent,
     useUpsertEducatorDictionary,
 } from "@/lib/hooks/use-educator-panel";
 import { friendlyError } from "@/lib/api";
-import { DICTIONARY_CATEGORY_VALUES, splitList, type DialectalVariant, type DictionaryEntry } from "@/lib/dictionary";
+import { DICTIONARY_CATEGORY_VALUES, splitList, type DialectalVariant } from "@/lib/dictionary";
 import { useDictionaryCoverage } from "@/lib/hooks/use-contributions";
 import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
-import { SchedulePublishModal } from "@/components/studio/schedule-publish-modal";
-import { usePreviewStore } from "@/store/preview-store";
-import { useUiLanguageStore } from "@/store/ui-language-store";
-import { Stack, useRouter } from "expo-router";
+import type { LocalizedText } from "@/types";
+import { Stack } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { FlatList, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-/** Educator/admin dictionary rows carry nullable fields; the learner-facing
- * DictionaryEntry type (shared with the real word screen) doesn't — bridge
- * the two so the Studio preview can reuse the exact same renderer. */
-function toPreviewEntry(item: EducatorDictionaryEntry): DictionaryEntry {
-  return {
-    id: item.id,
-    word: item.word,
-    english: item.english,
-    translations: item.translations ?? undefined,
-    french: item.french ?? undefined,
-    category: item.category,
-    languageId: item.languageId,
-    pronunciation: item.pronunciation ?? undefined,
-    example: item.example ?? undefined,
-    exampleTranslation: item.exampleTranslation ?? undefined,
-    exampleTranslations: item.exampleTranslations ?? undefined,
-    exampleTranslationFr: item.exampleTranslationFr ?? undefined,
-    audioUrl: item.audioUrl ?? undefined,
-    imageUrl: item.imageUrl ?? undefined,
-    synonyms: item.synonyms ?? undefined,
-    antonyms: item.antonyms ?? undefined,
-    semanticDomain: item.semanticDomain ?? undefined,
-    dialectalVariants: item.dialectalVariants ?? undefined,
-  };
-}
 
 const CATEGORIES: EducatorDictionaryCategory[] = [...DICTIONARY_CATEGORY_VALUES];
 
-type EditorState = {
-  id?: string;
+type NewEntryForm = {
   word: string;
   translations: LocalizedText;
   category: EducatorDictionaryCategory;
   pronunciation: string;
   example: string;
   exampleTranslations: LocalizedText;
-  /** Comma-separated in-language synonyms. */
   synonyms: string;
-  /** Comma-separated in-language antonyms. */
   antonyms: string;
   semanticDomain: string;
   dialectalVariants: DialectalVariant[];
 };
 
-const EMPTY_EDITOR: EditorState = {
+const EMPTY_NEW_ENTRY: NewEntryForm = {
   word: "",
   translations: {},
   category: "nouns",
@@ -92,44 +53,15 @@ const EMPTY_EDITOR: EditorState = {
   dialectalVariants: [],
 };
 
-/** Repeatable dialect / form / region rows for editing dialectal variants. */
-function VariantRows({ value, onChange }: { value: DialectalVariant[]; onChange: (v: DialectalVariant[]) => void }) {
-  const M = useMuseumTheme();
-  const update = (i: number, patch: Partial<DialectalVariant>) =>
-    onChange(value.map((v, idx) => (idx === i ? { ...v, ...patch } : v)));
-  const inputClass = "flex-1 rounded-lg bg-white px-3 py-2 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white";
-  return (
-    <View className="mt-2">
-      <Text className="mb-1 text-xs font-semibold text-neutral-600 dark:text-neutral-400">Dialectal variants (optional)</Text>
-      {value.map((variant, i) => (
-        <View key={i} className="mb-2 flex-row items-center gap-1.5">
-          <TextInput value={variant.dialect} onChangeText={(dialect) => update(i, { dialect })} placeholder="Dialect" placeholderTextColor={M.muted} className={inputClass} />
-          <TextInput value={variant.form} onChangeText={(form) => update(i, { form })} placeholder="Form" placeholderTextColor={M.muted} className={inputClass} />
-          <TextInput value={variant.region ?? ""} onChangeText={(region) => update(i, { region })} placeholder="Region" placeholderTextColor={M.muted} className={inputClass} />
-          <Pressable onPress={() => onChange(value.filter((_, idx) => idx !== i))} hitSlop={8} className="rounded-full bg-red-100 p-2 dark:bg-red-900/40">
-            <IconSymbol name="xmark" size={12} color={M.error} />
-          </Pressable>
-        </View>
-      ))}
-      <Pressable onPress={() => onChange([...value, { dialect: "", form: "" }])} className="mt-1 flex-row items-center self-start rounded-full bg-neutral-200 px-3 py-1.5 dark:bg-neutral-700">
-        <IconSymbol name="plus" size={12} color={M.text} />
-        <Text className="ml-1 text-xs font-semibold text-neutral-700 dark:text-neutral-300">Add variant</Text>
-      </Pressable>
-    </View>
-  );
-}
-
 export default function EducatorDictionaryScreen() {
   const M = useMuseumTheme();
   const { t } = useTranslation();
-  const router = useRouter();
-  const { uiLanguage } = useUiLanguageStore();
-  const setPreview = usePreviewStore((s) => s.setPreview);
   const { user: currentUser, canAccess } = useStudioAccess();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
   const [selectedLanguageId, setSelectedLanguageId] = useState<string | undefined>(undefined);
-  const [editor, setEditor] = useState<EditorState>(EMPTY_EDITOR);
-  const [isEditing, setIsEditing] = useState(false);
+  const [newEntry, setNewEntry] = useState<NewEntryForm>(EMPTY_NEW_ENTRY);
+  const [creatorOpen, setCreatorOpen] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<EducatorDictionaryEntry | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [filterCategory, setFilterCategory] = useState<EducatorDictionaryCategory | undefined>(undefined);
   const flatListRef = useRef<FlatList>(null);
@@ -150,98 +82,59 @@ export default function EducatorDictionaryScreen() {
   const { data: entries = [], isLoading } = useEducatorDictionary(activeLanguageId, undefined, canAccess);
   const { data: coverage } = useDictionaryCoverage(canAccess ? activeLanguageId : null);
   const [coverageOpen, setCoverageOpen] = useState(false);
-  const upsertEntry = useUpsertEducatorDictionary();
-  const deleteEntry = useDeleteEducatorDictionaryEntry();
-  const submitForReview = useSubmitEducatorDictionaryForReview();
-  const publishEntry = usePublishContent("dictionary_entries", [["educator", "dictionary"]]);
-  const schedulePublishEntry = useSchedulePublishContent("dictionary_entries", [["educator", "dictionary"]]);
-  const unschedulePublishEntry = useUnschedulePublishContent("dictionary_entries", [["educator", "dictionary"]]);
-  const [schedulingEntryId, setSchedulingEntryId] = useState<string | null>(null);
-  let saveButtonLabel = "Create";
-  if (isEditing) saveButtonLabel = t("common.save");
-  if (upsertEntry.isPending) saveButtonLabel = t("common.loading");
+  const createEntry = useUpsertEducatorDictionary();
+  const actor = currentUser
+    ? { isAdmin: currentUser.isAdmin, reviewerRole: currentUser.reviewerRole, userId: currentUser.id }
+    : { isAdmin: false, reviewerRole: null, userId: null };
 
-  const resetEditor = () => {
-    setEditor(EMPTY_EDITOR);
-    setIsEditing(false);
+  // Keep the open editor's entry in sync with the freshly-fetched list (e.g.
+  // after a replica field save invalidates the query) rather than showing a
+  // stale snapshot from when the modal opened.
+  useEffect(() => {
+    if (!editingEntry) return;
+    const fresh = entries.find((e) => e.id === editingEntry.id);
+    if (fresh && fresh !== editingEntry) setEditingEntry(fresh);
+  }, [entries, editingEntry]);
+
+  const resetCreator = () => {
+    setNewEntry(EMPTY_NEW_ENTRY);
+    setCreatorOpen(false);
   };
 
-  const startEdit = useCallback((entry: EducatorDictionaryEntry) => {
-    setEditor({
-      id: entry.id,
-      word: entry.word,
-      translations: toLocalizedText(entry.translations ?? entry.english, entry.french),
-      category: entry.category,
-      pronunciation: entry.pronunciation ?? "",
-      example: entry.example ?? "",
-      exampleTranslations: toLocalizedText(
-        entry.exampleTranslations ?? entry.exampleTranslation,
-        entry.exampleTranslationFr,
-      ),
-      synonyms: (entry.synonyms ?? []).join(", "),
-      antonyms: (entry.antonyms ?? []).join(", "),
-      semanticDomain: entry.semanticDomain ?? "",
-      dialectalVariants: entry.dialectalVariants ?? [],
-    });
-    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-    setIsEditing(true);
-  }, []);
-
-  const submit = () => {
-    const english = editor.translations.en?.trim() ?? "";
-    if (!editor.word.trim() || !english) {
+  const submitNewEntry = () => {
+    const english = newEntry.translations.en?.trim() ?? "";
+    if (!newEntry.word.trim() || !english) {
       toastError("Missing fields", "Word and meaning (English) are required.");
       return;
     }
 
-    upsertEntry.mutate(
+    createEntry.mutate(
       {
-        id: editor.id,
         languageId: activeLanguageId,
-        word: editor.word.trim(),
+        word: newEntry.word.trim(),
         english,
-        french: editor.translations.fr?.trim() || undefined,
-        translations: editor.translations,
-        category: editor.category,
-        pronunciation: editor.pronunciation.trim() || undefined,
-        example: editor.example.trim() || undefined,
-        exampleTranslation: editor.exampleTranslations.en?.trim() || undefined,
-        exampleTranslationFr: editor.exampleTranslations.fr?.trim() || undefined,
-        exampleTranslations: editor.exampleTranslations,
-        synonyms: splitList(editor.synonyms),
-        antonyms: splitList(editor.antonyms),
-        semanticDomain: editor.semanticDomain.trim() || undefined,
-        dialectalVariants: editor.dialectalVariants.filter((v) => v.dialect.trim() && v.form.trim()),
+        french: newEntry.translations.fr?.trim() || undefined,
+        translations: newEntry.translations,
+        category: newEntry.category,
+        pronunciation: newEntry.pronunciation.trim() || undefined,
+        example: newEntry.example.trim() || undefined,
+        exampleTranslation: newEntry.exampleTranslations.en?.trim() || undefined,
+        exampleTranslationFr: newEntry.exampleTranslations.fr?.trim() || undefined,
+        exampleTranslations: newEntry.exampleTranslations,
+        synonyms: splitList(newEntry.synonyms),
+        antonyms: splitList(newEntry.antonyms),
+        semanticDomain: newEntry.semanticDomain.trim() || undefined,
+        dialectalVariants: newEntry.dialectalVariants.filter((v) => v.dialect.trim() && v.form.trim()),
       },
       {
         onSuccess: () => {
-          resetEditor();
-          toastSuccess(isEditing ? "Entry updated" : "Entry created", `"${editor.word}" saved to dictionary.`);
+          resetCreator();
+          toastSuccess("Entry created", `"${newEntry.word}" saved to dictionary.`);
         },
         onError: (err: Error) => toastError("Save failed", friendlyError(err, err.message)),
       },
     );
   };
-
-  const confirmDelete = useCallback((id: string) => {
-    Alert.alert("Delete entry", "This will permanently delete this dictionary entry.", [
-      { text: t("common.cancel"), style: "cancel" },
-      {
-        text: t("common.delete"),
-        style: "destructive",
-        onPress: () =>
-          deleteEntry.mutate(id, {
-            onSuccess: () => toastSuccess("Entry deleted"),
-            onError: (err: Error) => toastError("Delete failed", friendlyError(err)),
-          }),
-      },
-    ]);
-  }, [deleteEntry, toastSuccess, toastError, t]);
-
-  const openPreview = useCallback((item: EducatorDictionaryEntry) => {
-    setPreview({ kind: "dictionary", entry: toPreviewEntry(item), uiLanguage });
-    router.push("/admin/preview" as never);
-  }, [setPreview, uiLanguage, router]);
 
   const filteredEntries = useMemo(() => {
     let result = entries;
@@ -255,63 +148,16 @@ export default function EducatorDictionaryScreen() {
 
   const renderItem = useCallback(
     ({ item }: { item: EducatorDictionaryEntry }) => (
-      <View className="mx-5 rounded-2xl border border-neutral-200 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-900">
+      <Pressable
+        onPress={() => setEditingEntry(item)}
+        className="mx-5 rounded-2xl border border-neutral-200 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-900"
+      >
         <View className="flex-row items-center justify-between">
           <View className="flex-1 pr-3">
             <Text className="text-base font-semibold text-neutral-900 dark:text-white">{item.word}</Text>
             <Text className="text-sm text-neutral-500 dark:text-neutral-400">{item.english}</Text>
           </View>
-          <View className="flex-row gap-2">
-            {canSubmitForReview(item.status) ? (
-              <Pressable
-                onPress={() => submitForReview.mutate(item.id)}
-                disabled={submitForReview.isPending}
-                className="rounded-full bg-amber-100 p-2 dark:bg-amber-900/40"
-              >
-                <IconSymbol name="paperplane.fill" size={14} color={M.warning} />
-              </Pressable>
-            ) : null}
-            {currentUser && canPublishContent(item.status, item.createdBy, {
-              isAdmin: currentUser.isAdmin, reviewerRole: currentUser.reviewerRole, userId: currentUser.id,
-            }) ? (
-              <Pressable
-                onPress={() => publishEntry.mutate(item.id)}
-                disabled={publishEntry.isPending}
-                className="rounded-full bg-green-100 p-2 dark:bg-green-900/40"
-              >
-                <IconSymbol name="checkmark.circle.fill" size={14} color={M.success} />
-              </Pressable>
-            ) : null}
-            {currentUser && canPublishContent(item.status, item.createdBy, {
-              isAdmin: currentUser.isAdmin, reviewerRole: currentUser.reviewerRole, userId: currentUser.id,
-            }) ? (
-              isScheduled(item.status, item.publishAt) ? (
-                <Pressable
-                  onPress={() => unschedulePublishEntry.mutate(item.id)}
-                  disabled={unschedulePublishEntry.isPending}
-                  className="rounded-full bg-blue-100 p-2 dark:bg-blue-900/40"
-                >
-                  <IconSymbol name="clock.fill" size={14} color={M.info} />
-                </Pressable>
-              ) : (
-                <Pressable
-                  onPress={() => setSchedulingEntryId(item.id)}
-                  className="rounded-full bg-neutral-100 p-2 dark:bg-neutral-800"
-                >
-                  <IconSymbol name="clock.fill" size={14} color={M.muted} />
-                </Pressable>
-              )
-            ) : null}
-            <Pressable onPress={() => openPreview(item)} className="rounded-full bg-blue-100 p-2 dark:bg-blue-900/40">
-              <IconSymbol name="eye.fill" size={14} color={M.info} />
-            </Pressable>
-            <Pressable onPress={() => startEdit(item)} className="rounded-full bg-neutral-100 p-2 dark:bg-neutral-800">
-              <IconSymbol name="gearshape.fill" size={14} color={M.muted} />
-            </Pressable>
-            <Pressable onPress={() => confirmDelete(item.id)} className="rounded-full bg-red-100 p-2 dark:bg-red-900/40">
-              <IconSymbol name="xmark.circle.fill" size={14} color={M.error} />
-            </Pressable>
-          </View>
+          <IconSymbol name="chevron.right" size={16} color={M.muted} />
         </View>
         <View className="mt-2 flex-row flex-wrap gap-1.5">
           <View className="rounded-full bg-neutral-100 px-2 py-1 dark:bg-neutral-800">
@@ -324,9 +170,9 @@ export default function EducatorDictionaryScreen() {
             </View>
           ) : null}
         </View>
-      </View>
+      </Pressable>
     ),
-    [startEdit, confirmDelete, openPreview, submitForReview, publishEntry, unschedulePublishEntry, currentUser],
+    [M],
   );
 
   const listHeader = (
@@ -402,8 +248,8 @@ export default function EducatorDictionaryScreen() {
                   <Pressable
                     key={m.word}
                     onPress={() => {
-                      setEditor({ ...EMPTY_EDITOR, word: m.word });
-                      setIsEditing(false);
+                      setNewEntry({ ...EMPTY_NEW_ENTRY, word: m.word });
+                      setCreatorOpen(true);
                       flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
                     }}
                     className="flex-row items-center rounded-full bg-white px-3 py-1.5 dark:bg-neutral-900"
@@ -426,111 +272,120 @@ export default function EducatorDictionaryScreen() {
       ) : null}
 
       <View className="mt-5 px-5">
-        <View className="rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
-          <Text className="text-base font-semibold text-neutral-900 dark:text-white">
-            {isEditing ? "Edit Entry" : "New Entry"}
-          </Text>
+        {!creatorOpen && (
+          <Pressable
+            onPress={() => setCreatorOpen(true)}
+            className="flex-row items-center justify-center gap-1.5 rounded-xl bg-blue-500 py-3 active:opacity-80"
+          >
+            <IconSymbol name="plus" size={14} color="#fff" />
+            <Text className="text-sm font-semibold text-white">New Entry</Text>
+          </Pressable>
+        )}
+        {creatorOpen && (
+          <View className="rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
+            <Text className="text-base font-semibold text-neutral-900 dark:text-white">New Entry</Text>
 
-          <TextInput
-            value={editor.word}
-            onChangeText={(word) => setEditor((prev) => ({ ...prev, word }))}
-            placeholder="Word"
-            placeholderTextColor={M.muted}
-            className="mt-3 rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
-          />
-          <View className="mt-3">
-            <LocalizedTextInput
-              label={t("admin.dictionary.fieldMeaning")}
-              value={editor.translations}
-              onChange={(translations) => setEditor((prev) => ({ ...prev, translations }))}
-              required
+            <TextInput
+              value={newEntry.word}
+              onChangeText={(word) => setNewEntry((prev) => ({ ...prev, word }))}
+              placeholder="Word"
+              placeholderTextColor={M.muted}
+              className="mt-3 rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
             />
-          </View>
-          <TextInput
-            value={editor.pronunciation}
-            onChangeText={(pronunciation) => setEditor((prev) => ({ ...prev, pronunciation }))}
-            placeholder="Pronunciation (optional)"
-            placeholderTextColor={M.muted}
-            className="mt-2 rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
-          />
-          <TextInput
-            value={editor.example}
-            onChangeText={(example) => setEditor((prev) => ({ ...prev, example }))}
-            placeholder="Example sentence (optional)"
-            placeholderTextColor={M.muted}
-            multiline
-            className="mt-2 min-h-[44px] rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
-          />
-          <View className="mt-2">
-            <LocalizedTextInput
-              label={t("admin.dictionary.fieldExampleTranslation")}
-              value={editor.exampleTranslations}
-              onChange={(exampleTranslations) => setEditor((prev) => ({ ...prev, exampleTranslations }))}
+            <View className="mt-3">
+              <LocalizedTextInput
+                label={t("admin.dictionary.fieldMeaning")}
+                value={newEntry.translations}
+                onChange={(translations) => setNewEntry((prev) => ({ ...prev, translations }))}
+                required
+              />
+            </View>
+            <TextInput
+              value={newEntry.pronunciation}
+              onChangeText={(pronunciation) => setNewEntry((prev) => ({ ...prev, pronunciation }))}
+              placeholder="Pronunciation (optional)"
+              placeholderTextColor={M.muted}
+              className="mt-2 rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
+            />
+            <TextInput
+              value={newEntry.example}
+              onChangeText={(example) => setNewEntry((prev) => ({ ...prev, example }))}
+              placeholder="Example sentence (optional)"
+              placeholderTextColor={M.muted}
               multiline
+              className="mt-2 min-h-[44px] rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
             />
-          </View>
+            <View className="mt-2">
+              <LocalizedTextInput
+                label={t("admin.dictionary.fieldExampleTranslation")}
+                value={newEntry.exampleTranslations}
+                onChange={(exampleTranslations) => setNewEntry((prev) => ({ ...prev, exampleTranslations }))}
+                multiline
+              />
+            </View>
 
-          <TextInput
-            value={editor.synonyms}
-            onChangeText={(synonyms) => setEditor((prev) => ({ ...prev, synonyms }))}
-            placeholder="Synonyms (comma-separated, optional)"
-            placeholderTextColor={M.muted}
-            className="mt-2 rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
-          />
-          <TextInput
-            value={editor.antonyms}
-            onChangeText={(antonyms) => setEditor((prev) => ({ ...prev, antonyms }))}
-            placeholder="Antonyms (comma-separated, optional)"
-            placeholderTextColor={M.muted}
-            className="mt-2 rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
-          />
-          <TextInput
-            value={editor.semanticDomain}
-            onChangeText={(semanticDomain) => setEditor((prev) => ({ ...prev, semanticDomain }))}
-            placeholder="Semantic domain, e.g. body > senses (optional)"
-            placeholderTextColor={M.muted}
-            className="mt-2 rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
-          />
-          <VariantRows
-            value={editor.dialectalVariants}
-            onChange={(dialectalVariants) => setEditor((prev) => ({ ...prev, dialectalVariants }))}
-          />
+            <TextInput
+              value={newEntry.synonyms}
+              onChangeText={(synonyms) => setNewEntry((prev) => ({ ...prev, synonyms }))}
+              placeholder="Synonyms (comma-separated, optional)"
+              placeholderTextColor={M.muted}
+              className="mt-2 rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
+            />
+            <TextInput
+              value={newEntry.antonyms}
+              onChangeText={(antonyms) => setNewEntry((prev) => ({ ...prev, antonyms }))}
+              placeholder="Antonyms (comma-separated, optional)"
+              placeholderTextColor={M.muted}
+              className="mt-2 rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
+            />
+            <TextInput
+              value={newEntry.semanticDomain}
+              onChangeText={(semanticDomain) => setNewEntry((prev) => ({ ...prev, semanticDomain }))}
+              placeholder="Semantic domain, e.g. body > senses (optional)"
+              placeholderTextColor={M.muted}
+              className="mt-2 rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white"
+            />
+            <VariantRows
+              value={newEntry.dialectalVariants}
+              onChange={(dialectalVariants) => setNewEntry((prev) => ({ ...prev, dialectalVariants }))}
+            />
 
-          <View className="mt-3 flex-row flex-wrap gap-2">
-            {CATEGORIES.map((category) => {
-              const active = editor.category === category;
-              return (
-                <Pressable
-                  key={category}
-                  onPress={() => setEditor((prev) => ({ ...prev, category }))}
-                  className={`rounded-full px-3 py-1.5 ${active ? "bg-blue-500" : "bg-white dark:bg-neutral-900"}`}
-                >
-                  <Text className={`text-xs font-semibold uppercase ${active ? "text-white" : "text-neutral-600 dark:text-neutral-400"}`}>
-                    {category}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+            <View className="mt-3 flex-row flex-wrap gap-2">
+              {CATEGORIES.map((category) => {
+                const active = newEntry.category === category;
+                return (
+                  <Pressable
+                    key={category}
+                    onPress={() => setNewEntry((prev) => ({ ...prev, category }))}
+                    className={`rounded-full px-3 py-1.5 ${active ? "bg-blue-500" : "bg-white dark:bg-neutral-900"}`}
+                  >
+                    <Text className={`text-xs font-semibold uppercase ${active ? "text-white" : "text-neutral-600 dark:text-neutral-400"}`}>
+                      {category}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
 
-          <View className="mt-4 flex-row gap-2">
-            <Pressable
-              onPress={submit}
-              disabled={upsertEntry.isPending}
-              className="flex-1 rounded-xl bg-blue-500 py-3 active:opacity-80"
-            >
-              <Text className="text-center font-semibold text-white">{saveButtonLabel}</Text>
-            </Pressable>
-            {isEditing ? (
+            <View className="mt-4 flex-row gap-2">
               <Pressable
-                onPress={resetEditor}
+                onPress={submitNewEntry}
+                disabled={createEntry.isPending}
+                className="flex-1 rounded-xl bg-blue-500 py-3 active:opacity-80"
+              >
+                <Text className="text-center font-semibold text-white">
+                  {createEntry.isPending ? t("common.loading") : "Create"}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={resetCreator}
                 className="rounded-xl bg-neutral-200 px-4 py-3 active:opacity-80 dark:bg-neutral-700"
               >
                 <Text className="font-semibold text-neutral-700 dark:text-neutral-300">{t("common.cancel")}</Text>
               </Pressable>
-            ) : null}
+            </View>
           </View>
-        </View>
+        )}
       </View>
 
       <View className="mt-5 px-5">
@@ -636,16 +491,11 @@ export default function EducatorDictionaryScreen() {
         />
         </KeyboardAvoidingView>
       </SafeAreaView>
-      {schedulingEntryId && (
-        <SchedulePublishModal
-          onClose={() => setSchedulingEntryId(null)}
-          onSchedule={(publishAt) =>
-            schedulePublishEntry.mutate(
-              { id: schedulingEntryId, publishAt },
-              { onSuccess: () => setSchedulingEntryId(null) }
-            )
-          }
-          saving={schedulePublishEntry.isPending}
+      {editingEntry && (
+        <DictionaryEntryEditorModal
+          entry={editingEntry}
+          actor={actor}
+          onClose={() => setEditingEntry(null)}
         />
       )}
     </>

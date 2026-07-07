@@ -96,6 +96,8 @@ const MAPPING = {
   'repeat.1': 'repeat-one',
   'trash.fill': 'delete',
   'eye.fill': 'visibility',
+  'pencil': 'edit',
+  'line.3.horizontal': 'drag-handle',
 } as IconMapping;
 
 /**

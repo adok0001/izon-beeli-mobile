@@ -50,6 +50,14 @@ export function canSubmitForReview(status: ContentStatus | undefined): boolean {
   return status === "draft";
 }
 
+/** Broader than canPublishContent: any admin or scoped reviewer can edit content
+ * fields (including a teacher editing their own submitted draft) — only
+ * publishing itself is four-eyes gated. Matches the existing forms' behavior,
+ * which never restricted Edit/Delete by status or authorship. */
+export function canEditContent(actor: WorkflowActor): boolean {
+  return actor.isAdmin || !!actor.reviewerRole;
+}
+
 /** publishable entity types accepted by POST /content/:entityType/:id/publish.
  * Keep in sync with ENTITY_TYPES in server/src/routes/content-publish.ts. */
 export type PublishableEntityType =
