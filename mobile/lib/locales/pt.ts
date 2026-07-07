@@ -1718,6 +1718,7 @@ export const pt = {
     dictionary: {
       title: "Dicionário",
       totalCount: "{{count}} entradas",
+      totalCountForLanguage: "{{count}} entradas em {{language}}",
       newEntry: "Nova Entrada",
       editEntry: "Editar Entrada",
       noEntries: "Nenhuma entrada de dicionário encontrada.",

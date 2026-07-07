@@ -1787,6 +1787,7 @@ export const en = {
     dictionary: {
       title: "Dictionary",
       totalCount: "{{count}} entries",
+      totalCountForLanguage: "{{count}} entries in {{language}}",
       newEntry: "New Entry",
       editEntry: "Edit Entry",
       noEntries: "No dictionary entries found.",

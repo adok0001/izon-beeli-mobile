@@ -1718,6 +1718,7 @@ export const ar = {
     dictionary: {
       title: "القاموس",
       totalCount: "{{count}} مدخلة",
+      totalCountForLanguage: "{{count}} مدخلة في {{language}}",
       newEntry: "مدخلة جديدة",
       editEntry: "تعديل المدخلة",
       noEntries: "لم يُعثر على مدخلات قاموسية.",

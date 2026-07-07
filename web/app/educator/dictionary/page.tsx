@@ -786,7 +786,10 @@ export default function EducatorDictionaryPage() {
           <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-1">{t("admin.dictionary.title")}</h2>
           <div className="flex items-center gap-3 flex-wrap">
             <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              {t("admin.dictionary.totalCount", { count: entries.length })}
+              {t("admin.dictionary.totalCountForLanguage", {
+                count: entries.length,
+                language: languages.find((l) => l.id === effectiveLanguage)?.name ?? effectiveLanguage,
+              })}
             </p>
             {entries.length > 0 && (() => {
               const withAudio = entries.filter((e) => e.audioUrl).length;

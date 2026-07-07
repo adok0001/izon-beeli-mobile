@@ -1888,6 +1888,7 @@ export const pcm = {
       title: "Dictionary",
       count: "{{count}} entries",
       totalCount: "{{count}} entries",
+      totalCountForLanguage: "{{count}} entries for {{language}}",
       newEntry: "New Entry",
       editEntry: "Edit Entry",
       searchPlaceholder: "Search word or translation…",

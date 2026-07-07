@@ -1868,6 +1868,7 @@ export const fr = {
       title: "Dictionnaire",
       count: "{{count}} entrées",
         totalCount: "{{count}} entrées",
+      totalCountForLanguage: "{{count}} entrées en {{language}}",
       newEntry: "Nouvelle entrée",
       editEntry: "Modifier l'entrée",
       searchPlaceholder: "Chercher un mot ou une traduction…",
