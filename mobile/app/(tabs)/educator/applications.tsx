@@ -12,7 +12,7 @@ import {
 } from "@/lib/hooks/use-educator-panel";
 import { useToast } from "@/lib/hooks/use-toast";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { Redirect, Stack } from "expo-router";
+import { Redirect, Stack, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -295,6 +295,7 @@ function Detail({ label, value, italic }: Readonly<{ label: string; value: strin
 
 export default function ReviewerApplicationsScreen() {
   const M = useMuseumTheme();
+  const router = useRouter();
   const { t } = useTranslation();
   const { user, canAccess } = useStudioAccess();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
@@ -406,6 +407,11 @@ export default function ReviewerApplicationsScreen() {
     <>
       <Stack.Screen options={{ title: t("admin.nav.applications"), headerBackTitle: "Back" }} />
       <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["top"]}>
+        <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 }}>
+          <Pressable onPress={() => router.back()} hitSlop={12} style={{ marginLeft: -4, padding: 4 }} className="active:opacity-60">
+            <IconSymbol name="chevron.left" size={22} color={M.text} />
+          </Pressable>
+        </View>
         <NotificationBanner
           visible={toast.visible}
           title={toast.title}

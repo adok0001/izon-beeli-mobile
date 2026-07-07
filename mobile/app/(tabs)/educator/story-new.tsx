@@ -97,6 +97,11 @@ export default function StoryNewScreen() {
         }}
       />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+        <View className="flex-row items-center px-5 pb-1 pt-2">
+          <Pressable onPress={() => router.back()} hitSlop={12} className="-ml-1 p-1 active:opacity-60">
+            <IconSymbol name="chevron.left" size={22} color={M.text} />
+          </Pressable>
+        </View>
         <KeyboardAvoidingView
           className="flex-1"
           behavior={Platform.OS === "ios" ? "padding" : "height"}

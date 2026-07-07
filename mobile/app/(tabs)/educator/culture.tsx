@@ -22,7 +22,7 @@ import {
 } from "@/lib/hooks/use-educator-panel";
 import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -144,6 +144,7 @@ const inputCls =
 
 export default function EducatorCultureScreen() {
   const M = useMuseumTheme();
+  const router = useRouter();
   const { t } = useTranslation();
   const { user: currentUser, canAccess } = useStudioAccess();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
@@ -1033,6 +1034,11 @@ export default function EducatorCultureScreen() {
     <>
       <Stack.Screen options={{ title: t("educator.nav.culture"), headerBackTitle: "Back" }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+        <View className="flex-row items-center px-5 pb-1 pt-2">
+          <Pressable onPress={() => router.back()} hitSlop={12} className="-ml-1 p-1 active:opacity-60">
+            <IconSymbol name="chevron.left" size={22} color={M.text} />
+          </Pressable>
+        </View>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         <NotificationBanner
           visible={toast.visible}

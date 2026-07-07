@@ -621,8 +621,15 @@ export default function EducatorLessonEditScreen() {
     return (
       <>
         <Stack.Screen options={{ title: "Edit Lesson" }} />
-        <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-neutral-900">
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400">{t("common.loading")}</Text>
+        <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+          <View className="flex-row items-center px-5 pb-1 pt-2">
+            <Pressable onPress={() => router.back()} hitSlop={12} className="-ml-1 p-1 active:opacity-60">
+              <IconSymbol name="chevron.left" size={22} color={M.text} />
+            </Pressable>
+          </View>
+          <View className="flex-1 items-center justify-center">
+            <Text className="text-sm text-neutral-500 dark:text-neutral-400">{t("common.loading")}</Text>
+          </View>
         </SafeAreaView>
       </>
     );
@@ -634,6 +641,11 @@ export default function EducatorLessonEditScreen() {
         options={{ title: screenTitle, headerBackTitle: course ? localize(course.title, uiLanguage) : "Lessons" }}
       />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+        <View className="flex-row items-center px-5 pb-1 pt-2">
+          <Pressable onPress={() => router.back()} hitSlop={12} className="-ml-1 p-1 active:opacity-60">
+            <IconSymbol name="chevron.left" size={22} color={M.text} />
+          </Pressable>
+        </View>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         <NotificationBanner
           visible={toast.visible}
