@@ -1,4 +1,4 @@
-import { CourseCard } from "@/components/studio/course-editor";
+import { CourseArtwork } from "@/components/learn/course-artwork";
 import { CourseGeneratorPanel } from "@/components/studio/course-generator-panel";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
@@ -6,10 +6,11 @@ import { useEducatorCourses, useToggleCourseActive, useUpdateEducatorCourse, typ
 import { canManageBounties, canReviewApplications, type CurrentUser } from "@/lib/hooks/use-current-user";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import type { Course } from "@/types";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
-import { NestableDraggableFlatList, RenderItemParams, ScaleDecorator } from "react-native-draggable-flatlist";
+import DraggableFlatList, { RenderItemParams, ScaleDecorator } from "react-native-draggable-flatlist";
 
 /**
  * Studio home's navigation, reframed to mirror the app's own Learn/Explore
@@ -86,6 +87,67 @@ function SubRow({ label, meta, onPress, badge }: Readonly<{ label: string; meta?
   );
 }
 
+const CAROUSEL_CARD_WIDTH = 168;
+
+function CourseCarouselCard({
+  course,
+  onPress,
+  onToggleActive,
+  onDrag,
+  dragging,
+  toggling,
+}: Readonly<{
+  course: EducatorCourse;
+  onPress: () => void;
+  onToggleActive: () => void;
+  onDrag: () => void;
+  dragging: boolean;
+  toggling: boolean;
+}>) {
+  const M = useMuseumTheme();
+  const isActive = course.isActive !== false;
+  return (
+    <Pressable
+      onPress={onPress}
+      onLongPress={onDrag}
+      delayLongPress={200}
+      style={{
+        width: CAROUSEL_CARD_WIDTH, borderRadius: 16, overflow: "hidden",
+        backgroundColor: M.card, borderWidth: 1, borderColor: M.border,
+        opacity: dragging ? 0.85 : 1,
+      }}
+      className="active:opacity-80"
+    >
+      <CourseArtwork course={course as unknown as Course} size="thumb" height={92} />
+      <View style={{ padding: 10, gap: 6 }}>
+        <Text numberOfLines={2} style={{ fontSize: 13, fontWeight: "700", color: M.text, minHeight: 34 }}>
+          {localize(course.title, "en")}
+        </Text>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <Pressable
+            onPress={() => onToggleActive()}
+            disabled={toggling}
+            style={{
+              flexDirection: "row", alignItems: "center", gap: 4,
+              borderRadius: 999, paddingHorizontal: 8, paddingVertical: 4,
+              backgroundColor: isActive ? getAccent("teal").bg : M.bg,
+            }}
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          >
+            <IconSymbol name={isActive ? "eye" : "eye.slash"} size={10} color={isActive ? getAccent("teal").solid : M.muted} />
+            <Text style={{ fontSize: 10, fontWeight: "700", color: isActive ? getAccent("teal").solid : M.muted }}>
+              {toggling ? "…" : isActive ? "Active" : "Hidden"}
+            </Text>
+          </Pressable>
+          <Pressable onPressIn={onDrag} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <IconSymbol name="line.3.horizontal" size={13} color={M.muted} />
+          </Pressable>
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
 interface SectionProps {
   currentUser: CurrentUser;
   activeLanguageId: string;
@@ -136,35 +198,35 @@ export function LearnSection({
     >
       {languageCourses.length > 0 ? (
         <>
-          <NestableDraggableFlatList<EducatorCourse>
+          <DraggableFlatList<EducatorCourse>
             data={dragOrder}
             keyExtractor={(course) => course.id}
             onDragEnd={handleDragEnd}
-            scrollEnabled={false}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 10, paddingRight: 4, paddingVertical: 3 }}
             renderItem={({ item: course, drag, isActive }: RenderItemParams<EducatorCourse>) => (
               <ScaleDecorator>
-                <View style={{ paddingVertical: 3 }}>
-                  <CourseCard
-                    course={course}
-                    onPress={() => onSelectCourse(course)}
-                    onDrag={drag}
-                    dragging={isActive}
-                    onToggleActive={() =>
-                      toggleCourse.mutate(
-                        { id: course.id, isActive: course.isActive === false },
-                        {
-                          onSuccess: () =>
-                            onToastSuccess(
-                              course.isActive !== false ? "Course hidden" : "Course published",
-                              localize(course.title, "en"),
-                            ),
-                          onError: (err: Error) => onToastError("Failed", err.message),
-                        },
-                      )
-                    }
-                    toggling={toggleCourse.isPending && toggleCourse.variables?.id === course.id}
-                  />
-                </View>
+                <CourseCarouselCard
+                  course={course}
+                  onPress={() => onSelectCourse(course)}
+                  onDrag={drag}
+                  dragging={isActive}
+                  onToggleActive={() =>
+                    toggleCourse.mutate(
+                      { id: course.id, isActive: course.isActive === false },
+                      {
+                        onSuccess: () =>
+                          onToastSuccess(
+                            course.isActive !== false ? "Course hidden" : "Course published",
+                            localize(course.title, "en"),
+                          ),
+                        onError: (err: Error) => onToastError("Failed", err.message),
+                      },
+                    )
+                  }
+                  toggling={toggleCourse.isPending && toggleCourse.variables?.id === course.id}
+                />
               </ScaleDecorator>
             )}
           />
