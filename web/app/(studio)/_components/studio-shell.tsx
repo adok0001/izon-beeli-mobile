@@ -3,6 +3,7 @@
 import { TourFloatingButton } from "@/components/tour/tour-floating-button";
 import { useMe } from "@/lib/hooks/use-me";
 import { cn } from "@/lib/utils";
+import { useUiLanguageStore, type UiLanguage } from "@/store/ui-language-store";
 import { useAuth } from "@clerk/nextjs";
 import {
   Bell,
@@ -37,7 +38,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 /**
@@ -105,6 +106,20 @@ function hasAccess(access: StudioAccess, me: { isAdmin: boolean; isReviewer: boo
   return access === "admin" ? me.isAdmin : me.isAdmin || me.isReviewer;
 }
 
+/**
+ * Which language content fields (title/description, etc.) render in across
+ * Studio — drives every `localizeField(...)` call on these pages. Separate
+ * from the learner-facing UI chrome language, though it shares the same
+ * store so a Studio pick also updates the "Retour à l'application" chrome.
+ */
+const CONTENT_LANGS: readonly { id: UiLanguage; label: string; flag: string }[] = [
+  { id: "en",  label: "English",   flag: "🇬🇧" },
+  { id: "fr",  label: "Français",  flag: "🇫🇷" },
+  { id: "pcm", label: "Naija",     flag: "🇳🇬" },
+  { id: "ar",  label: "العربية",   flag: "🇸🇦" },
+  { id: "pt",  label: "Português", flag: "🇵🇹" },
+];
+
 export function StudioShell({
   access,
   children,
@@ -114,6 +129,8 @@ export function StudioShell({
   const pathname = usePathname();
   const { t } = useTranslation();
   const { data: me, isPending } = useMe();
+  const { uiLanguage, setUiLanguage } = useUiLanguageStore();
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -121,7 +138,13 @@ export function StudioShell({
       router.replace("/sign-in");
       return;
     }
-    if (me !== undefined && !hasAccess(access, me)) router.replace("/learn");
+    if (me !== undefined && !hasAccess(access, me)) {
+      // No Studio access at all (not admin, not a reviewer) → send them to apply.
+      // A reviewer hitting an admin-only page already has *some* access, just
+      // not this route's — that's a permissions mismatch, not a missing
+      // application, so send them to their own home instead of the apply flow.
+      router.replace(me.isAdmin || me.isReviewer ? "/educator" : "/contribute?flow=reviewer");
+    }
   }, [isLoaded, isSignedIn, me, access, router]);
 
   if (!isLoaded || isPending || me === undefined) {
@@ -172,9 +195,43 @@ export function StudioShell({
                 : t("educator.subtitleReviewer", { languages: me.reviewerLanguages.join(", ") })}
             </p>
           </div>
-          <Link href="/learn" className="text-sm font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 transition-colors">
-            {t("admin.backToApp")}
-          </Link>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <button
+                onClick={() => setLangMenuOpen((v) => !v)}
+                className="flex items-center gap-1.5 rounded-lg border border-neutral-200 dark:border-white/[0.08] px-2.5 py-1.5 text-xs font-semibold text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors"
+                title="Content display language"
+              >
+                <Globe2 className="h-3.5 w-3.5" />
+                {CONTENT_LANGS.find((l) => l.id === uiLanguage)?.flag}
+              </button>
+              {langMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setLangMenuOpen(false)} />
+                  <div className="absolute right-0 top-full mt-1 z-50 w-40 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#0b0b16] shadow-lg overflow-hidden">
+                    {CONTENT_LANGS.map(({ id, label, flag }) => (
+                      <button
+                        key={id}
+                        onClick={() => { setUiLanguage(id); setLangMenuOpen(false); }}
+                        className={cn(
+                          "flex w-full items-center gap-2 px-3 py-2 text-xs font-medium text-left transition-colors",
+                          uiLanguage === id
+                            ? "bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                            : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06]"
+                        )}
+                      >
+                        <span className="leading-none">{flag}</span>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+            <Link href="/learn" className="text-sm font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 transition-colors">
+              {t("admin.backToApp")}
+            </Link>
+          </div>
         </div>
         <div className="max-w-7xl mx-auto px-6 pb-0 flex gap-0.5 overflow-x-auto scrollbar-hide">
           {navItems.map(({ href, labelKey, icon: Icon, exact, tourId }) => {

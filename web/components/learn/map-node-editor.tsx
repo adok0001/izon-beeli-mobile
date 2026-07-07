@@ -1,6 +1,8 @@
 "use client";
 
+import { localizeField } from "@/lib/localize";
 import { cn } from "@/lib/utils";
+import type { UiLanguage } from "@/store/ui-language-store";
 import type { MapNodeConfig } from "@/types";
 
 type CourseOption = { id: string; title: string; level: string };
@@ -15,6 +17,7 @@ interface MapNodeEditorProps {
   draft: NodeDraft;
   courses: CourseOption[];
   existingZones: string[];   // datalist suggestions
+  uiLanguage?: UiLanguage;
   onChange: (patch: Partial<NodeDraft>) => void;
 }
 
@@ -138,7 +141,7 @@ const inputCls = "w-full px-3 py-2 rounded-lg text-sm bg-neutral-100 dark:bg-whi
 
 // ── MapNodeEditor ─────────────────────────────────────────────────────────────
 
-export function MapNodeEditor({ draft, courses, existingZones, onChange }: Readonly<MapNodeEditorProps>) {
+export function MapNodeEditor({ draft, courses, existingZones, uiLanguage = "en", onChange }: Readonly<MapNodeEditorProps>) {
   return (
     <div className="space-y-5">
       <Field label="Community name">
@@ -179,7 +182,7 @@ export function MapNodeEditor({ draft, courses, existingZones, onChange }: Reado
           <option value="">— Select a course —</option>
           {courses.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.title} ({c.level})
+              {localizeField(c.title, null, uiLanguage)} ({c.level})
             </option>
           ))}
         </select>

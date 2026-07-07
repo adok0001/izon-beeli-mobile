@@ -3,6 +3,8 @@
 import { MapNodeEditor, type NodeDraft } from "@/components/learn/map-node-editor";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { apiFetch } from "@/lib/api";
+import { localizeField } from "@/lib/localize";
+import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useAuth } from "@clerk/nextjs";
 import { LANGUAGES } from "@mobile/lib/data/languages";
 import type { MapNodeConfig } from "@/types";
@@ -270,6 +272,7 @@ function MapNodesTab({
   const { t } = useTranslation();
   const { getToken } = useAuth();
   const qc = useQueryClient();
+  const { uiLanguage } = useUiLanguageStore();
   const [editingId, setEditingId] = useState<string | "new" | null>(null);
   const [draft, setDraft] = useState<NodeDraft>(EMPTY_DRAFT);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -409,7 +412,7 @@ function MapNodesTab({
                     </td>
                     <td className="px-4 py-3 text-neutral-500 dark:text-neutral-400 text-xs">{node.zoneName}</td>
                     <td className="px-4 py-3 text-neutral-500 dark:text-neutral-400 text-xs truncate max-w-[160px]">
-                      {linkedCourse?.title ?? <span className="text-red-400">{t("educator.coursesPage.mapUnlinked")}</span>}
+                      {linkedCourse ? localizeField(linkedCourse.title, null, uiLanguage) : <span className="text-red-400">{t("educator.coursesPage.mapUnlinked")}</span>}
                     </td>
                     <td className="px-4 py-3 text-neutral-400 dark:text-neutral-600 text-xs font-mono">
                       {node.x}, {node.y}
@@ -482,6 +485,7 @@ function MapNodesTab({
             draft={draft}
             courses={courses}
             existingZones={existingZones}
+            uiLanguage={uiLanguage}
             onChange={(patch) => setDraft((prev) => ({ ...prev, ...patch }))}
           />
           <div className="flex items-center gap-3 mt-6 pt-4 border-t border-neutral-200 dark:border-white/[0.07]">
@@ -512,6 +516,7 @@ function MapNodesTab({
 export default function EducatorCoursesPage() {
   const { t } = useTranslation();
   const { getToken } = useAuth();
+  const { uiLanguage } = useUiLanguageStore();
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const [activeTab, setActiveTab] = useState<"courses" | "map">("courses");
   const [sortKey, setSortKey] = useState<SortKey>("order");
@@ -594,7 +599,7 @@ export default function EducatorCoursesPage() {
     .sort((a, b) => {
       const sign = sortDir === "asc" ? 1 : -1;
       if (sortKey === "order") return (a.order - b.order) * sign;
-      if (sortKey === "title") return a.title.localeCompare(b.title) * sign;
+      if (sortKey === "title") return localizeField(a.title, null, uiLanguage).localeCompare(localizeField(b.title, null, uiLanguage)) * sign;
       if (sortKey === "level") return a.level.localeCompare(b.level) * sign;
       if (sortKey === "total") return ((countsByCourse[a.id]?.total ?? 0) - (countsByCourse[b.id]?.total ?? 0)) * sign;
       if (sortKey === "active") return ((countsByCourse[a.id]?.active ?? 0) - (countsByCourse[b.id]?.active ?? 0)) * sign;
@@ -737,9 +742,10 @@ export default function EducatorCoursesPage() {
             <tbody>
               {filtered.map((course, i) => {
                 const counts = countsByCourse[course.id] ?? { total: 0, active: 0 };
-                const shortTitle = course.title.includes(" — ")
-                  ? course.title.split(" — ").slice(1).join(" — ")
-                  : course.title;
+                const localizedTitle = localizeField(course.title, null, uiLanguage);
+                const shortTitle = localizedTitle.includes(" — ")
+                  ? localizedTitle.split(" — ").slice(1).join(" — ")
+                  : localizedTitle;
                 return (
                   <tr
                     key={course.id}

@@ -5,7 +5,7 @@ import type { UiLanguage } from "@/lib/ui-language";
  * description column instead of splitting into the dedicated *Fr column. Unwrap
  * that shape here so every caller gets a plain string either way.
  */
-function unwrapLocalizedBlob(value: string): { en: string; fr?: string } | null {
+export function unwrapLocalizedBlob(value: string): { en: string; fr?: string } | null {
   if (!value.startsWith("{")) return null;
   try {
     const parsed = JSON.parse(value);
