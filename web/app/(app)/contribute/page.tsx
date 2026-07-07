@@ -1234,11 +1234,14 @@ function ContributePageContent() {
   }
 
   // Open the word flow pre-targeted when arriving from a bounty deep link
-  // (e.g. /contribute?bountyId=…&languageId=…&category=…).
+  // (e.g. /contribute?bountyId=…&languageId=…&category=…), or jump straight
+  // into a named flow (e.g. /contribute?flow=reviewer — used when Studio
+  // redirects a signed-in user with no admin/reviewer access here).
   useEffect(() => {
     if (appliedParams.current) return;
     const bountyId = searchParams.get("bountyId");
     const languageId = searchParams.get("languageId");
+    const flow = searchParams.get("flow");
     if (bountyId && languageId) {
       appliedParams.current = true;
       handleBountyContribute({
@@ -1246,6 +1249,9 @@ function ContributePageContent() {
         languageId,
         category: searchParams.get("category") ?? undefined,
       });
+    } else if (flow && (["word", "bulk", "lesson", "bounties", "reviewer"] as const).includes(flow as Flow)) {
+      appliedParams.current = true;
+      setActiveFlow(flow as Flow);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
