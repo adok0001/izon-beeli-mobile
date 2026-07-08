@@ -19,7 +19,7 @@ import DraggableFlatList, { RenderItemParams, ScaleDecorator } from "react-nativ
  * editor screens unchanged — this only changes how you get there.
  */
 
-function SectionShell({
+export function SectionShell({
   icon, label, meta, open, onToggle, accent, children,
 }: Readonly<{
   icon: string; label: string; meta: string; open: boolean; onToggle: () => void;
@@ -62,7 +62,7 @@ function SectionShell({
   );
 }
 
-function SubRow({ label, meta, onPress, badge }: Readonly<{ label: string; meta?: string; onPress: () => void; badge?: string }>) {
+export function SubRow({ label, meta, onPress, badge }: Readonly<{ label: string; meta?: string; onPress: () => void; badge?: string }>) {
   const M = useMuseumTheme();
   return (
     <Pressable
@@ -275,32 +275,17 @@ export function ExploreSection({ currentUser, open, onToggle }: SectionProps) {
   );
 }
 
-/** Content types with no single learner screen to mirror (review queue,
- * translation worklist, roleplay/quiz/sentence banks not yet tied to a
- * learner-facing renderer) — kept as a flat, visually quieter strip rather
- * than forced into the Learn/Explore metaphor. */
-export function ToolsStrip({ currentUser }: Readonly<{ currentUser: CurrentUser }>) {
+/** Flat, visually quieter strip of pill links — for items with no single
+ * learner screen to mirror, so they don't get forced into the Learn/Explore
+ * metaphor. Shared by the educator and admin panel homes. */
+export function ToolsGrid({ title, tools }: Readonly<{ title: string; tools: { label: string; href: string }[] }>) {
   const M = useMuseumTheme();
   const router = useRouter();
-
-  const tools: { label: string; href: string }[] = [
-    { label: "Review", href: "/review" },
-    { label: "Proverbs", href: "/educator/proverbs" },
-    { label: "Etymology", href: "/educator/etymology" },
-    { label: "Stories", href: "/educator/stories" },
-    { label: "Sentences", href: "/educator/sentences" },
-    { label: "Scenarios", href: "/educator/scenarios" },
-    { label: "Quiz Bank", href: "/educator/quiz-bank" },
-    { label: "Translations", href: "/educator/translations" },
-    ...(currentUser.isAdmin ? [{ label: "Media Library", href: "/admin/media" }] : []),
-    ...(canManageBounties(currentUser) ? [{ label: "Bounties", href: "/bounties" }] : []),
-    ...(canReviewApplications(currentUser) ? [{ label: "Applications", href: "/educator/applications" }] : []),
-  ];
 
   return (
     <View>
       <Text style={{ fontSize: 9.5, fontWeight: "800", letterSpacing: 2, textTransform: "uppercase", color: M.muted, marginBottom: 10 }}>
-        Tools
+        {title}
       </Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         {tools.map((tool) => (
@@ -319,4 +304,22 @@ export function ToolsStrip({ currentUser }: Readonly<{ currentUser: CurrentUser 
       </View>
     </View>
   );
+}
+
+export function ToolsStrip({ currentUser }: Readonly<{ currentUser: CurrentUser }>) {
+  const tools: { label: string; href: string }[] = [
+    { label: "Review", href: "/review" },
+    { label: "Proverbs", href: "/educator/proverbs" },
+    { label: "Etymology", href: "/educator/etymology" },
+    { label: "Stories", href: "/educator/stories" },
+    { label: "Sentences", href: "/educator/sentences" },
+    { label: "Scenarios", href: "/educator/scenarios" },
+    { label: "Quiz Bank", href: "/educator/quiz-bank" },
+    { label: "Translations", href: "/educator/translations" },
+    ...(currentUser.isAdmin ? [{ label: "Media Library", href: "/admin/media" }] : []),
+    ...(canManageBounties(currentUser) ? [{ label: "Bounties", href: "/bounties" }] : []),
+    ...(canReviewApplications(currentUser) ? [{ label: "Applications", href: "/educator/applications" }] : []),
+  ];
+
+  return <ToolsGrid title="Tools" tools={tools} />;
 }

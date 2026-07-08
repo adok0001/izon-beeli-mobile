@@ -1,8 +1,8 @@
 import { LanguagePickerModal } from "@/components/language-picker";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { getAccent } from "@/constants/accent-colors";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { friendlyError } from "@/lib/api";
+import { fonts } from "@/constants/typography";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import {
   useCreateStoryArc,
@@ -86,9 +86,8 @@ export default function StoryNewScreen() {
           headerRight: () => (
             <Pressable onPress={handleCreate} disabled={createArc.isPending} className="mr-2">
               <Text
-                className={`text-base font-semibold ${
-                  createArc.isPending ? "text-neutral-400" : "text-amber-500"
-                }`}
+                className="text-base font-semibold"
+                style={{ color: createArc.isPending ? M.muted : M.warning }}
               >
                 {createArc.isPending ? t("educator.story.creating") : t("educator.story.saveHeader")}
               </Text>
@@ -96,7 +95,7 @@ export default function StoryNewScreen() {
           ),
         }}
       />
-      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+      <SafeAreaView className="flex-1" style={{ backgroundColor: M.bg }} edges={["top"]}>
         <View className="flex-row items-center px-5 pb-1 pt-2">
           <Pressable onPress={() => router.back()} hitSlop={12} className="-ml-1 p-1 active:opacity-60">
             <IconSymbol name="chevron.left" size={22} color={M.text} />
@@ -112,37 +111,38 @@ export default function StoryNewScreen() {
             keyboardShouldPersistTaps="handled"
           >
             <View className="px-5 pt-4">
-              <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
+              <Text className="text-2xl" style={{ fontFamily: fonts.heading, color: M.text }}>
                 {t("educator.story.newArcTitle")}
               </Text>
-              <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+              <Text className="mt-1 text-sm" style={{ color: M.sub }}>
                 {t("educator.story.newArcSubtitle")}
               </Text>
             </View>
 
             {error ? (
-              <View className="mx-5 mt-4 rounded-xl bg-red-50 px-4 py-3 dark:bg-red-950/30">
-                <Text className="text-sm text-red-600 dark:text-red-400">{error}</Text>
+              <View className="mx-5 mt-4 rounded-xl px-4 py-3" style={{ backgroundColor: M.errorBg }}>
+                <Text className="text-sm" style={{ color: M.error }}>{error}</Text>
               </View>
             ) : null}
 
             {/* Language */}
             <View className="mt-5 px-5">
-              <Text className="mb-1.5 text-xs font-semibold uppercase tracking-[1.2px] text-neutral-400 dark:text-neutral-500">
+              <Text className="mb-1.5 text-xs font-semibold uppercase tracking-[1.2px]" style={{ color: M.muted }}>
                 {t("educator.story.labelLanguage")}
               </Text>
               <Pressable
                 onPress={() => setLanguagePickerVisible(true)}
-                className="flex-row items-center justify-between rounded-xl border border-neutral-300 bg-neutral-50 px-3 py-2.5 dark:border-neutral-600 dark:bg-neutral-800"
+                className="flex-row items-center justify-between rounded-xl border px-3 py-2.5"
+                style={{ backgroundColor: M.card, borderColor: M.border }}
               >
                 <View className="flex-row items-center">
-                  <IconSymbol name="globe" size={16} color={getAccent("amber").solid} />
-                  <Text className="ml-2 text-sm font-semibold text-neutral-800 dark:text-neutral-100">
+                  <IconSymbol name="globe" size={16} color={M.warning} />
+                  <Text className="ml-2 text-sm font-semibold" style={{ color: M.text }}>
                     {getLanguageName(languageId)}
                   </Text>
                 </View>
                 <View className="flex-row items-center gap-2">
-                  <Text className="text-xs text-neutral-400 dark:text-neutral-500">
+                  <Text className="text-xs" style={{ color: M.muted }}>
                     {t("educator.story.coursesAvailable", { count: languageCourses.length })}
                   </Text>
                   <IconSymbol name="chevron.right" size={14} color={M.muted} />
@@ -152,14 +152,14 @@ export default function StoryNewScreen() {
 
             {/* Course */}
             <View className="mt-5 px-5">
-              <Text className="mb-2 text-xs font-semibold uppercase tracking-[1.2px] text-neutral-400 dark:text-neutral-500">
+              <Text className="mb-2 text-xs font-semibold uppercase tracking-[1.2px]" style={{ color: M.muted }}>
                 {t("educator.story.labelCourse")}
               </Text>
               {coursesLoading ? (
-                <Text className="text-sm text-neutral-400">{t("educator.story.loading")}</Text>
+                <Text className="text-sm" style={{ color: M.muted }}>{t("educator.story.loading")}</Text>
               ) : languageCourses.length === 0 ? (
-                <View className="rounded-xl bg-neutral-50 px-4 py-4 dark:bg-neutral-800">
-                  <Text className="text-center text-sm text-neutral-500 dark:text-neutral-400">
+                <View className="rounded-xl px-4 py-4" style={{ backgroundColor: M.card, borderWidth: 1, borderColor: M.border }}>
+                  <Text className="text-center text-sm" style={{ color: M.sub }}>
                     {t("educator.story.allCoursesHaveArc", { language: getLanguageName(languageId) })}
                   </Text>
                 </View>
@@ -169,30 +169,28 @@ export default function StoryNewScreen() {
                     <Pressable
                       key={c.id}
                       onPress={() => setCourseId(c.id)}
-                      className={`rounded-xl border p-3 ${
+                      className="rounded-xl border p-3"
+                      style={
                         courseId === c.id
-                          ? "border-amber-400 bg-amber-50 dark:border-amber-600 dark:bg-amber-900/20"
-                          : "border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800"
-                      }`}
+                          ? { borderColor: M.warningBorder, backgroundColor: M.warningBg }
+                          : { borderColor: M.border, backgroundColor: M.pillBg }
+                      }
                     >
                       <View className="flex-row items-center">
                         <IconSymbol
                           name={courseId === c.id ? "checkmark.circle.fill" : "circle"}
                           size={18}
-                          color={courseId === c.id ? getAccent("amber").solid : M.border}
+                          color={courseId === c.id ? M.warning : M.border}
                         />
                         <View className="ml-2.5 flex-1">
                           <Text
-                            className={`text-sm font-semibold ${
-                              courseId === c.id
-                                ? "text-amber-700 dark:text-amber-400"
-                                : "text-neutral-800 dark:text-neutral-200"
-                            }`}
+                            className="text-sm font-semibold"
+                            style={{ color: courseId === c.id ? M.warning : M.text }}
                           >
                             {c.title}
                           </Text>
                           {c.description ? (
-                            <Text className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500" numberOfLines={1}>
+                            <Text className="mt-0.5 text-xs" style={{ color: M.muted }} numberOfLines={1}>
                               {c.description}
                             </Text>
                           ) : null}
@@ -206,7 +204,7 @@ export default function StoryNewScreen() {
 
             {/* Title */}
             <View className="mt-5 px-5">
-              <Text className="mb-1.5 text-xs font-semibold uppercase tracking-[1.2px] text-neutral-400 dark:text-neutral-500">
+              <Text className="mb-1.5 text-xs font-semibold uppercase tracking-[1.2px]" style={{ color: M.muted }}>
                 {t("educator.story.labelTitle")}
               </Text>
               <TextInput
@@ -214,14 +212,15 @@ export default function StoryNewScreen() {
                 onChangeText={setTitle}
                 placeholder={t("educator.story.titlePlaceholder")}
                 returnKeyType="next"
-                className="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                className="rounded-xl border px-4 py-3 text-base"
+                style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
                 placeholderTextColor={M.muted}
               />
             </View>
 
             {/* Description */}
             <View className="mt-5 px-5">
-              <Text className="mb-1.5 text-xs font-semibold uppercase tracking-[1.2px] text-neutral-400 dark:text-neutral-500">
+              <Text className="mb-1.5 text-xs font-semibold uppercase tracking-[1.2px]" style={{ color: M.muted }}>
                 {t("educator.story.labelDescription")}
               </Text>
               <TextInput
@@ -230,7 +229,8 @@ export default function StoryNewScreen() {
                 placeholder={t("educator.story.descriptionPlaceholder")}
                 multiline
                 numberOfLines={4}
-                className="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                className="rounded-xl border px-4 py-3 text-base"
+                style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
                 placeholderTextColor={M.muted}
                 textAlignVertical="top"
               />
@@ -240,7 +240,8 @@ export default function StoryNewScreen() {
               <Pressable
                 onPress={handleCreate}
                 disabled={createArc.isPending || languageCourses.length === 0}
-                className="items-center rounded-xl bg-amber-500 py-4 active:opacity-80 disabled:opacity-50"
+                className="items-center rounded-xl py-4 active:opacity-80 disabled:opacity-50"
+                style={{ backgroundColor: M.warning }}
               >
                 <Text className="text-base font-bold text-white">
                   {createArc.isPending ? t("educator.story.creating") : t("educator.story.createButton")}

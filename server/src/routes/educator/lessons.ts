@@ -3,7 +3,7 @@ import { eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
 import { db } from "../../db/index.js";
-import { courses, languages, lessons, transcriptSegments } from "../../db/schema.js";
+import { courses, culturalContent, languages, lessonCulturalContent, lessons, transcriptSegments } from "../../db/schema.js";
 import { AuthEnv } from "../../middleware/auth.js";
 import { stubForCourse, stubForLanguage } from "../../lib/lesson-stubs.js";
 import { recordMediaAsset } from "../upload.js";
@@ -231,7 +231,68 @@ educatorLessonsRouter.get("/lessons/:id", async (c) => {
     .where(eq(transcriptSegments.lessonId, id))
     .orderBy(transcriptSegments.order);
 
-  return c.json({ ...lesson, segments: segs });
+  const attachedCulturalContent = await db
+    .select({ culturalContentId: lessonCulturalContent.culturalContentId })
+    .from(lessonCulturalContent)
+    .where(eq(lessonCulturalContent.lessonId, id))
+    .orderBy(lessonCulturalContent.order);
+
+  return c.json({
+    ...lesson,
+    segments: segs,
+    culturalContentIds: attachedCulturalContent.map((r) => r.culturalContentId),
+  });
+});
+
+// PUT /educator/lessons/:id/cultural-content — replace attached cultural content
+educatorLessonsRouter.put("/lessons/:id/cultural-content", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const { id } = c.req.param();
+
+  const [lesson] = await db
+    .select({ languageId: courses.languageId })
+    .from(lessons)
+    .innerJoin(courses, eq(lessons.courseId, courses.id))
+    .where(eq(lessons.id, id))
+    .limit(1);
+
+  if (!lesson) return c.json({ error: "Not found" }, 404);
+  if (!isAdmin && !reviewerLanguages.includes(lesson.languageId)) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  const { culturalContentIds } = await c.req.json<{ culturalContentIds: string[] }>();
+
+  if (culturalContentIds.length > 0) {
+    const rows = await db
+      .select({ id: culturalContent.id, languageId: culturalContent.languageId })
+      .from(culturalContent)
+      .where(inArray(culturalContent.id, culturalContentIds));
+    const foundIds = new Set(rows.map((r) => r.id));
+    const missing = culturalContentIds.filter((cid) => !foundIds.has(cid));
+    if (missing.length > 0) {
+      return c.json({ error: `Unknown cultural content id(s): ${missing.join(", ")}` }, 400);
+    }
+    const wrongLanguage = rows.filter((r) => r.languageId !== lesson.languageId);
+    if (wrongLanguage.length > 0) {
+      return c.json({ error: "Cultural content must be in the lesson's language" }, 400);
+    }
+  }
+
+  await db.delete(lessonCulturalContent).where(eq(lessonCulturalContent.lessonId, id));
+
+  if (culturalContentIds.length > 0) {
+    await db.insert(lessonCulturalContent).values(
+      culturalContentIds.map((culturalContentId, index) => ({
+        lessonId: id,
+        culturalContentId,
+        order: index,
+      }))
+    );
+  }
+
+  return c.json({ success: true, count: culturalContentIds.length });
 });
 
 // PUT /educator/lessons/:id/segments — replace all transcript segments

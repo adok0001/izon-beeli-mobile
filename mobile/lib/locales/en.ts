@@ -2341,7 +2341,7 @@ export const en = {
       empty: "No quiz questions yet for {{language}}.",
     },
     culture: {
-      subtitle: "Manage proverbs and cultural content for your language community.",
+      subtitle: "Manage cultural content for your language community.",
       tabProverbs: "Proverbs",
       tabCultural: "Cultural",
       newProverb: "New Proverb",

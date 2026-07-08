@@ -2266,7 +2266,7 @@ export const ar = {
       empty: "لا توجد أسئلة اختبار لـ {{language}} بعد.",
     },
     culture: {
-      subtitle: "أدر الأمثال والمحتوى الثقافي لمجتمع لغتك.",
+      subtitle: "أدر المحتوى الثقافي لمجتمع لغتك.",
       tabProverbs: "الأمثال",
       tabCultural: "الثقافي",
       newProverb: "مثل جديد",

@@ -24,6 +24,7 @@ export interface UpdateEducatorCourseInput {
   descriptionFr?: string | null;
   level?: string;
   order?: number;
+  courseType?: string | null;
 }
 
 export function useEducatorCourses(enabled = true) {

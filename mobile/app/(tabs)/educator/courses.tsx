@@ -4,7 +4,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { CourseCard, CourseEditModal } from "@/components/studio/course-editor";
 import { CourseGeneratorPanel } from "@/components/studio/course-generator-panel";
 import { useStudioAccess } from "@/components/studio/studio-gate";
-import { getAccent } from "@/constants/accent-colors";
+import { fonts } from "@/constants/typography";
 import { localize } from "@/lib/localize";
 import {
     EducatorCourse,
@@ -69,7 +69,7 @@ export default function EducatorCoursesScreen() {
   return (
     <>
       <Stack.Screen options={{ title: "Courses", headerBackTitle: "Back" }} />
-      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+      <SafeAreaView className="flex-1" style={{ backgroundColor: M.bg }} edges={["top"]}>
         <View className="flex-row items-center px-5 pb-1 pt-2">
           <Pressable onPress={() => router.back()} hitSlop={12} className="-ml-1 p-1 active:opacity-60">
             <IconSymbol name="chevron.left" size={22} color={M.text} />
@@ -118,29 +118,30 @@ export default function EducatorCoursesScreen() {
             <>
               {/* Header */}
               <View className="px-5 pt-4">
-                <Text className="text-2xl font-bold text-neutral-900 dark:text-white">Courses</Text>
-                <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                <Text className="text-2xl" style={{ fontFamily: fonts.heading, color: M.text }}>Courses</Text>
+                <Text className="mt-1 text-sm" style={{ color: M.sub }}>
                   Select a language, manage its courses, then add lessons.
                 </Text>
               </View>
 
               {/* Language Picker */}
               <View className="mt-4 px-5">
-                <Text className="mb-1.5 text-xs font-semibold uppercase tracking-[1.2px] text-neutral-400 dark:text-neutral-500">
+                <Text className="mb-1.5 text-xs font-semibold uppercase tracking-[1.2px]" style={{ color: M.muted }}>
                   Language
                 </Text>
                 <Pressable
                   onPress={() => setLanguagePickerVisible(true)}
-                  className="flex-row items-center justify-between rounded-xl border border-neutral-300 bg-neutral-50 px-3 py-2.5 dark:border-neutral-600 dark:bg-neutral-800"
+                  className="flex-row items-center justify-between rounded-xl border px-3 py-2.5"
+                  style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder }}
                 >
                   <View className="flex-row items-center">
-                    <IconSymbol name="book.fill" size={16} color={getAccent("blue").solid} />
-                    <Text className="ml-2 text-sm font-semibold text-neutral-800 dark:text-neutral-100">
+                    <IconSymbol name="book.fill" size={16} color={M.accent} />
+                    <Text className="ml-2 text-sm font-semibold" style={{ color: M.text }}>
                       {getLanguageName(activeLanguageId)}
                     </Text>
                   </View>
                   <View className="flex-row items-center gap-2">
-                    <Text className="text-xs text-neutral-400 dark:text-neutral-500">
+                    <Text className="text-xs" style={{ color: M.muted }}>
                       {languageCourses.length} course{languageCourses.length === 1 ? "" : "s"}
                     </Text>
                     <IconSymbol name="chevron.right" size={14} color={M.muted} />
@@ -150,11 +151,11 @@ export default function EducatorCoursesScreen() {
 
               {/* Course List label */}
               <View className="mt-5 px-5">
-                <Text className="mb-1 text-xs font-semibold uppercase tracking-[1.2px] text-neutral-400 dark:text-neutral-500">
+                <Text className="mb-1 text-xs font-semibold uppercase tracking-[1.2px]" style={{ color: M.muted }}>
                   Courses ({languageCourses.length})
                 </Text>
                 {languageCourses.length > 0 && (
-                  <Text className="text-[11px] text-neutral-400 dark:text-neutral-500">
+                  <Text className="text-[11px]" style={{ color: M.muted }}>
                     Long-press and drag to reorder.
                   </Text>
                 )}
@@ -162,11 +163,11 @@ export default function EducatorCoursesScreen() {
             </>
           }
           ListEmptyComponent={
-            <View className="mx-5 mt-2 rounded-2xl bg-neutral-50 px-4 py-6 dark:bg-neutral-800">
-              <Text className="text-center text-sm font-semibold text-neutral-500 dark:text-neutral-400">
+            <View className="mx-5 mt-2 rounded-2xl border px-4 py-6" style={{ backgroundColor: M.card, borderColor: M.border }}>
+              <Text className="text-center text-sm font-semibold" style={{ color: M.sub }}>
                 No courses yet for {getLanguageName(activeLanguageId)}.
               </Text>
-              <Text className="mt-1 text-center text-xs text-neutral-400 dark:text-neutral-500">
+              <Text className="mt-1 text-center text-xs" style={{ color: M.muted }}>
                 Use the actions below to generate a starter set.
               </Text>
             </View>

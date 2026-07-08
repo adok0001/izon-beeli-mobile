@@ -34,6 +34,8 @@ export interface EducatorLessonSegment {
 
 export interface EducatorLessonDetail extends EducatorLesson {
   segments: EducatorLessonSegment[];
+  /** Studio-attached cultural_content ids, in display order. */
+  culturalContentIds: string[];
 }
 
 export interface CreateEducatorLessonInput {
@@ -169,6 +171,26 @@ export function useReplaceEducatorLessonSegments() {
         method: "PUT",
         token,
         body: JSON.stringify({ segments }),
+      });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["educator", "lesson", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["educator", "lessons"] });
+    },
+  });
+}
+
+export function useReplaceEducatorLessonCulturalContent() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, culturalContentIds }: { id: string; culturalContentIds: string[] }) => {
+      const token = await getToken();
+      return apiFetch<{ success: true; count: number }>(`/educator/lessons/${id}/cultural-content`, {
+        method: "PUT",
+        token,
+        body: JSON.stringify({ culturalContentIds }),
       });
     },
     onSuccess: (_, variables) => {

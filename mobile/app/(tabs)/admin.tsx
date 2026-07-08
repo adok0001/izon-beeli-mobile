@@ -1,9 +1,11 @@
+import { SectionShell, SubRow, ToolsGrid } from "@/components/studio/panel-nav-sections";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
 import { canManageBounties, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useAdminStats } from "@/lib/hooks/use-educator-panel";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { Stack, useRouter } from "expo-router";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -32,40 +34,6 @@ function StatCard({ icon, label, value }: Readonly<{ icon: string; label: string
   );
 }
 
-function ActionRow({ icon, label, detail, onPress, accent }: Readonly<{
-  icon: string; label: string; detail: string; onPress: () => void; accent?: string;
-}>) {
-  const M = useMuseumTheme();
-  const color = accent ?? M.accent;
-  return (
-    <Pressable
-      onPress={onPress}
-      style={{
-        flexDirection: "row", alignItems: "center",
-        borderRadius: 16, paddingHorizontal: 14, paddingVertical: 14,
-        backgroundColor: M.card, borderWidth: 1, borderColor: M.border,
-        borderLeftWidth: 4, borderLeftColor: color,
-      }}
-      className="active:opacity-70"
-    >
-      <View
-        style={{
-          width: 40, height: 40, borderRadius: 10,
-          alignItems: "center", justifyContent: "center",
-          backgroundColor: `${color}15`, marginRight: 12,
-        }}
-      >
-        <IconSymbol name={icon as never} size={18} color={color} />
-      </View>
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 14, fontWeight: "700", color: M.text }}>{label}</Text>
-        <Text style={{ marginTop: 2, fontSize: 12, color: M.sub }}>{detail}</Text>
-      </View>
-      <IconSymbol name="chevron.right" size={14} color={M.muted} />
-    </Pressable>
-  );
-}
-
 function SectionLabel({ label }: { label: string }) {
   const M = useMuseumTheme();
   return (
@@ -85,6 +53,7 @@ export default function AdminPanelScreen() {
   const { data: currentUser, isLoading } = useCurrentUser();
   const isAdmin = currentUser?.isAdmin ?? false;
   const { data: adminStats } = useAdminStats(isAdmin);
+  const [openSection, setOpenSection] = useState<"people" | "content" | null>("people");
 
   if (!isLoading && !isAdmin) {
     return (
@@ -148,103 +117,103 @@ export default function AdminPanelScreen() {
             <StatCard icon="character.book.closed" label={t("admin.stats.dictionaryEntries")} value={adminStats?.dictionaryEntries ?? 0} />
           </View>
 
-          {/* Actions */}
+          {/* Studio cross-link — admins don't see the Educator tab, so this is
+              the only way back into the Learn/Explore content nav. */}
+          <Pressable
+            onPress={() => router.push("/(tabs)/educator")}
+            style={{
+              marginBottom: 20, borderRadius: 16, padding: 16,
+              backgroundColor: M.accent, flexDirection: "row", alignItems: "center", gap: 14,
+            }}
+            className="active:opacity-80"
+          >
+            <View
+              style={{
+                width: 44, height: 44, borderRadius: 12,
+                alignItems: "center", justifyContent: "center",
+                backgroundColor: "rgba(255,255,255,0.2)",
+              }}
+            >
+              <IconSymbol name="shield.fill" size={22} color={M.parchment} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 15, fontWeight: "800", color: M.parchment }}>
+                {t("educator.panelTitle")}
+              </Text>
+              <Text style={{ marginTop: 2, fontSize: 12, color: `${M.parchment}BF` }}>
+                {t("educator.nav.overview")}
+              </Text>
+            </View>
+            <IconSymbol name="chevron.right" size={16} color={`${M.parchment}B3`} />
+          </Pressable>
+
+          {/* Navigation — mirrors the Studio home's Learn/Explore/Tools
+              grammar instead of a flat, rainbow-coded action list. */}
           <SectionLabel label={t("admin.overview.quickActions")} />
-          <View style={{ gap: 10 }}>
-            <ActionRow
-              icon="person.fill"
-              label={t("admin.overview.manageUsers")}
-              detail={t("admin.overview.manageUsersDesc")}
-              onPress={() => router.push("/admin/users")}
-              accent={getAccent("purple").solid}
-            />
-            <ActionRow
-              icon="shield.fill"
-              label={t("educator.panelTitle")}
-              detail={t("educator.nav.overview")}
-              onPress={() => router.push("/(tabs)/educator")}
+          <View style={{ gap: 10, marginBottom: 24 }}>
+            <SectionShell
+              icon="person.2.fill"
+              label="People & Access"
+              meta="2 tools"
+              open={openSection === "people"}
+              onToggle={() => setOpenSection((s) => (s === "people" ? null : "people"))}
               accent={getAccent("green").solid}
-            />
-            <ActionRow
-              icon="sun.max.fill"
-              label={t("admin.dailyContent.title")}
-              detail={t("admin.dailyContent.actionRowDetail")}
-              onPress={() => router.push("/admin/daily-content")}
-              accent={getAccent("orange").solid}
-            />
-            <ActionRow
-              icon="bell.fill"
-              label={t("admin.notifications.title", "Push Notifications")}
-              detail={t("admin.notifications.subtitle", "Broadcast a message to all users")}
-              onPress={() => router.push("/admin/broadcast")}
-              accent={getAccent("sky").solid}
-            />
-            <ActionRow
-              icon="film"
-              label={t("admin.cultureContent.title")}
-              detail={t("admin.cultureContent.subtitle")}
-              onPress={() => router.push("/admin/culture-content")}
-              accent={getAccent("purple").solid}
-            />
-            <ActionRow
-              icon="film"
-              label={t("admin.discoverStories.title")}
-              detail={t("admin.discoverStories.navDetail")}
-              onPress={() => router.push("/admin/discover-stories")}
-              accent={getAccent("teal").solid}
-            />
-            <ActionRow
-              icon="flame.fill"
-              label={t("admin.streakTools.title")}
-              detail={t("admin.streakTools.subtitle")}
-              onPress={() => router.push("/admin/streak-tools")}
-              accent={getAccent("orange").solid}
-            />
-            <ActionRow
-              icon="crown.fill"
-              label={t("admin.nav.billing")}
-              detail={t("admin.organizations.plusSectionTitle")}
-              onPress={() => router.push("/admin/plus-gate")}
-              accent={getAccent("amber").solid}
-            />
-            <ActionRow
-              icon="globe"
-              label={t("admin.nav.languages")}
-              detail="Manage the language catalogue"
-              onPress={() => router.push("/admin/languages" as never)}
-              accent={getAccent("sky").solid}
-            />
-            <ActionRow
-              icon="building.2.fill"
-              label={t("admin.nav.contentPartners")}
-              detail="Universities & institutions"
-              onPress={() => router.push("/admin/content-partners" as never)}
-              accent={getAccent("teal").solid}
-            />
-            <ActionRow
-              icon="textformat.abc"
-              label={t("admin.nav.englishWordbank")}
-              detail="English target-word reference"
-              onPress={() => router.push("/admin/english-wordbank" as never)}
-              accent={getAccent("purple").solid}
-            />
-            <ActionRow
-              icon="flag.fill"
-              label={t("admin.nav.appConfig")}
-              detail="Feature flags & config"
-              onPress={() => router.push("/admin/app-config" as never)}
-              accent={getAccent("orange").solid}
-            />
-            {currentUser && canManageBounties(currentUser) ? (
-              <ActionRow
-                icon="star.fill"
-                label={t("profile.bounties")}
-                detail={t("admin.overview.manageCourses")}
-                onPress={() => router.push("/bounties")}
-                accent={getAccent("amber").solid}
+            >
+              <SubRow
+                label={t("admin.overview.manageUsers")}
+                meta={t("admin.overview.manageUsersDesc")}
+                onPress={() => router.push("/admin/users")}
               />
-            ) : null}
+              <SubRow
+                label={t("admin.streakTools.title")}
+                meta={t("admin.streakTools.subtitle")}
+                onPress={() => router.push("/admin/streak-tools")}
+              />
+            </SectionShell>
+
+            <SectionShell
+              icon="film.fill"
+              label="Content Ops"
+              meta="4 tools"
+              open={openSection === "content"}
+              onToggle={() => setOpenSection((s) => (s === "content" ? null : "content"))}
+              accent={getAccent("teal").solid}
+            >
+              <SubRow
+                label={t("admin.dailyContent.title")}
+                meta={t("admin.dailyContent.actionRowDetail")}
+                onPress={() => router.push("/admin/daily-content")}
+              />
+              <SubRow
+                label={t("admin.cultureContent.title")}
+                meta={t("admin.cultureContent.subtitle")}
+                onPress={() => router.push("/admin/culture-content")}
+              />
+              <SubRow
+                label={t("admin.discoverStories.title")}
+                meta={t("admin.discoverStories.navDetail")}
+                onPress={() => router.push("/admin/discover-stories")}
+              />
+              <SubRow
+                label={t("admin.nav.media")}
+                meta="Photos, audio, video assets"
+                onPress={() => router.push("/admin/media" as never)}
+              />
+            </SectionShell>
           </View>
+
+          <ToolsGrid
+            title="Platform"
+            tools={[
+              { label: t("admin.notifications.title", "Push Notifications"), href: "/admin/broadcast" },
+              { label: t("admin.nav.billing"), href: "/admin/plus-gate" },
+              { label: t("admin.nav.languages"), href: "/admin/languages" },
+              { label: t("admin.nav.contentPartners"), href: "/admin/content-partners" },
+              { label: t("admin.nav.englishWordbank"), href: "/admin/english-wordbank" },
+              { label: t("admin.nav.appConfig"), href: "/admin/app-config" },
+              ...(currentUser && canManageBounties(currentUser) ? [{ label: t("profile.bounties"), href: "/bounties" }] : []),
+            ]}
+          />
         </ScrollView>
       </SafeAreaView>
     </>

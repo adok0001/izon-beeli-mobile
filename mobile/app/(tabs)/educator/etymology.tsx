@@ -15,6 +15,7 @@ import {
 import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { fonts } from "@/constants/typography";
 import type { EtymologyEntry, EtymologyNode, LocalizedText } from "@/types";
 import { Stack, useRouter } from "expo-router";
 import { useRef, useState } from "react";
@@ -73,11 +74,11 @@ function TrailEditor({
       {trail.map((node, i) => (
         <View
           key={i}
-          className="mt-3 rounded-2xl bg-white p-3 dark:bg-neutral-900"
-          style={{ borderLeftWidth: 3, borderLeftColor: getAccent("sky").solid }}
+          className="mt-3 rounded-2xl p-3"
+          style={{ backgroundColor: M.card, borderLeftWidth: 3, borderLeftColor: getAccent("sky").solid }}
         >
           <View className="flex-row items-center justify-between mb-2">
-            <Text className="text-[10px] font-black uppercase tracking-widest text-neutral-400">
+            <Text className="text-[10px] font-black uppercase tracking-widest" style={{ color: M.muted }}>
               {t("educator.etymology.nodeLabel", { number: i + 1 })}
             </Text>
             {trail.length > 1 && (
@@ -214,10 +215,10 @@ export default function EducatorEtymologyScreen() {
   const listHeader = (
     <View>
       <View className="px-5 pt-4">
-        <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
+        <Text className="text-2xl" style={{ fontFamily: fonts.heading, color: M.text }}>
           {t("admin.nav.etymology")}
         </Text>
-        <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+        <Text className="mt-1 text-sm" style={{ color: M.sub }}>
           {t("educator.etymology.subtitle")}
         </Text>
       </View>
@@ -226,7 +227,8 @@ export default function EducatorEtymologyScreen() {
       <View className="mt-4 px-5">
         <Pressable
           onPress={() => setLangPickerVisible(true)}
-          className="flex-row items-center justify-between rounded-xl border border-neutral-300 bg-neutral-50 px-3 py-2.5 dark:border-neutral-600 dark:bg-neutral-800 active:opacity-70"
+          className="flex-row items-center justify-between rounded-xl border px-3 py-2.5 active:opacity-70"
+          style={{ backgroundColor: M.card, borderColor: M.border }}
         >
           <View className="flex-row items-center">
             <IconSymbol name="clock.arrow.circlepath" size={16} color={getAccent("sky").solid} />
@@ -235,7 +237,7 @@ export default function EducatorEtymologyScreen() {
             </Text>
           </View>
           <View className="flex-row items-center gap-2">
-            <Text className="text-xs text-neutral-400 dark:text-neutral-500">
+            <Text className="text-xs" style={{ color: M.muted }}>
               {entries.length === 1 ? t("educator.etymology.countOne", { count: 1 }) : t("educator.etymology.countMany", { count: entries.length })}
             </Text>
             <IconSymbol name="chevron.right" size={14} color={M.muted} />
@@ -251,8 +253,8 @@ export default function EducatorEtymologyScreen() {
 
       {/* Form */}
       {formOpen && (
-        <View className="mx-5 mt-4 rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
-          <Text className="mb-3 text-base font-semibold text-neutral-900 dark:text-white">
+        <View className="mx-5 mt-4 rounded-2xl p-4" style={{ backgroundColor: M.card, borderColor: M.border, borderWidth: 1 }}>
+          <Text className="mb-3 text-base font-semibold" style={{ color: M.text }}>
             {editing ? t("educator.etymology.editEntry") : t("educator.etymology.newEntry")}
           </Text>
           <LabeledInput label={t("educator.etymology.wordLabel")} value={form.word} onChange={(word) => setForm((f) => ({ ...f, word }))} />
@@ -265,7 +267,7 @@ export default function EducatorEtymologyScreen() {
             />
           </View>
 
-          <Text className="mt-4 mb-1 text-xs font-semibold uppercase tracking-widest text-neutral-500 dark:text-neutral-400">
+          <Text className="mt-4 mb-1 text-xs font-semibold uppercase tracking-widest" style={{ color: M.sub }}>
             {t("educator.etymology.trailLabel")}
           </Text>
           <TrailEditor trail={form.trail} onChange={(trail) => setForm((f) => ({ ...f, trail }))} />
@@ -283,9 +285,10 @@ export default function EducatorEtymologyScreen() {
             </Pressable>
             <Pressable
               onPress={reset}
-              className="rounded-xl bg-neutral-200 px-4 py-3 active:opacity-80 dark:bg-neutral-700"
+              className="rounded-xl px-4 py-3 active:opacity-80"
+              style={{ backgroundColor: M.pillBg }}
             >
-              <Text className="font-semibold text-neutral-700 dark:text-neutral-300">
+              <Text className="font-semibold" style={{ color: M.text }}>
                 {t("common.cancel")}
               </Text>
             </Pressable>
@@ -295,7 +298,7 @@ export default function EducatorEtymologyScreen() {
 
       {/* Search */}
       <View className="mt-5 px-5">
-        <View className="flex-row items-center rounded-xl bg-neutral-100 px-3 dark:bg-neutral-800">
+        <View className="flex-row items-center rounded-xl px-3" style={{ backgroundColor: M.inputBg }}>
           <IconSymbol name="magnifyingglass" size={16} color={M.muted} />
           <TextInput
             value={searchQuery}
@@ -304,7 +307,8 @@ export default function EducatorEtymologyScreen() {
             placeholderTextColor={M.muted}
             autoCapitalize="none"
             autoCorrect={false}
-            className="ml-2 flex-1 py-2.5 text-sm text-neutral-900 dark:text-white"
+            className="ml-2 flex-1 py-2.5 text-sm"
+            style={{ color: M.inputText }}
           />
           {searchQuery.length > 0 && (
             <Pressable onPress={() => setSearchQuery("")} hitSlop={8}>
@@ -315,7 +319,7 @@ export default function EducatorEtymologyScreen() {
       </View>
 
       <View className="mt-4 px-5">
-        <Text className="mb-2 text-xs font-semibold uppercase tracking-[1.4px] text-neutral-400 dark:text-neutral-500">
+        <Text className="mb-2 text-xs font-semibold uppercase tracking-[1.4px]" style={{ color: M.muted }}>
           {filtered.length !== entries.length
             ? t("educator.etymology.countFiltered", { count: filtered.length, total: entries.length })
             : filtered.length === 1
@@ -327,25 +331,27 @@ export default function EducatorEtymologyScreen() {
   );
 
   const renderItem = ({ item }: { item: EtymologyEntry }) => (
-    <View className="mx-5 rounded-2xl border border-neutral-200 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-900">
+    <View className="mx-5 rounded-2xl border p-3" style={{ backgroundColor: M.card, borderColor: M.border }}>
       <View className="flex-row items-start justify-between">
         <View className="flex-1 pr-3">
-          <Text className="text-base font-bold text-neutral-900 dark:text-white">{item.word}</Text>
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400">{localize(item.english, "en")}</Text>
-          <Text className="mt-1 text-xs text-neutral-400 dark:text-neutral-500" numberOfLines={1}>
+          <Text className="text-base font-bold" style={{ color: M.text }}>{item.word}</Text>
+          <Text className="text-sm" style={{ color: M.sub }}>{localize(item.english, "en")}</Text>
+          <Text className="mt-1 text-xs" style={{ color: M.muted }} numberOfLines={1}>
             {item.trail.map((n) => n.era).join(" → ")}
           </Text>
         </View>
         <View className="flex-row gap-2">
           <Pressable
             onPress={() => startEdit(item)}
-            className="rounded-full bg-neutral-100 p-2 dark:bg-neutral-800"
+            className="rounded-full p-2"
+            style={{ backgroundColor: M.pillBg }}
           >
             <IconSymbol name="gearshape.fill" size={14} color={M.muted} />
           </Pressable>
           <Pressable
             onPress={() => confirmDelete(item.id, item.word)}
-            className="rounded-full bg-red-100 p-2 dark:bg-red-900/40"
+            className="rounded-full p-2"
+            style={{ backgroundColor: M.errorBg }}
           >
             <IconSymbol name="xmark.circle.fill" size={14} color={M.error} />
           </Pressable>
@@ -366,11 +372,11 @@ export default function EducatorEtymologyScreen() {
   const listEmpty = (
     <View className="px-5">
       {isLoading ? (
-        <Text className="text-sm text-neutral-500 dark:text-neutral-400">{t("common.loading")}</Text>
+        <Text className="text-sm" style={{ color: M.sub }}>{t("common.loading")}</Text>
       ) : (
         <View className="items-center py-12">
           <IconSymbol name="clock.arrow.circlepath" size={32} color={M.border} />
-          <Text className="mt-3 text-center text-sm text-neutral-400 dark:text-neutral-500">
+          <Text className="mt-3 text-center text-sm" style={{ color: M.muted }}>
             {q ? t("educator.etymology.noResults") : t("educator.etymology.noEntries")}
           </Text>
         </View>
@@ -381,7 +387,7 @@ export default function EducatorEtymologyScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("admin.nav.etymology"), headerBackTitle: "Back" }} />
-      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+      <SafeAreaView className="flex-1" style={{ backgroundColor: M.bg }} edges={["top"]}>
         <View className="flex-row items-center px-5 pb-1 pt-2">
           <Pressable onPress={() => router.back()} hitSlop={12} className="-ml-1 p-1 active:opacity-60">
             <IconSymbol name="chevron.left" size={22} color={M.text} />

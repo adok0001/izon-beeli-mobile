@@ -2266,7 +2266,7 @@ export const pt = {
       empty: "Ainda não há perguntas de questionário para {{language}}.",
     },
     culture: {
-      subtitle: "Faça a gestão de provérbios e conteúdo cultural para a sua comunidade linguística.",
+      subtitle: "Faça a gestão de conteúdo cultural para a sua comunidade linguística.",
       tabProverbs: "Provérbios",
       tabCultural: "Cultural",
       newProverb: "Novo Provérbio",

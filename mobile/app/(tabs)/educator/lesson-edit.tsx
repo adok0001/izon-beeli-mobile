@@ -16,11 +16,13 @@ import {
     STATUS_LABEL,
     STATUS_TONE,
     useCreateEducatorLesson,
+    useCulturalItems,
     useDeleteEducatorLesson,
     useEducatorCourses,
     useEducatorLessonDetail,
     usePublishContent,
     useReplaceEducatorLessonAudio,
+    useReplaceEducatorLessonCulturalContent,
     useReplaceEducatorLessonSegments,
     useSchedulePublishContent,
     useUnschedulePublishContent,
@@ -77,16 +79,16 @@ function TranslationLanguagePicker({
             onPress={() => onChange(lang.key)}
             className="flex-row items-center gap-1.5 rounded-full border px-3 py-1.5 active:opacity-70"
             style={{
-              borderColor: active ? getAccent("blue").solid : M.border,
-              backgroundColor: active ? `${getAccent("blue").solid}20` : "transparent",
+              borderColor: active ? M.accentBorder : M.border,
+              backgroundColor: active ? M.accentGlow : "transparent",
             }}
           >
             {filled ? (
-              <IconSymbol name="checkmark.circle.fill" size={11} color={active ? getAccent("blue").solid : M.muted} />
+              <IconSymbol name="checkmark.circle.fill" size={11} color={active ? M.accent : M.muted} />
             ) : null}
             <Text
               className="text-xs font-bold"
-              style={{ color: active ? getAccent("blue").solid : M.muted }}
+              style={{ color: active ? M.accent : M.muted }}
             >
               {lang.label}
             </Text>
@@ -122,25 +124,33 @@ function SegmentItem({
   const translationLabel = GLOSS_LANGUAGES.find((l) => l.key === translationLang)?.label ?? translationLang.toUpperCase();
 
   return (
-    <View className="mb-2 rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-900">
+    <View
+      className="mb-2 rounded-xl border p-3"
+      style={{ backgroundColor: M.card, borderColor: M.border }}
+    >
       <TextInput
         value={segment.text}
         onChangeText={(v) => onChange(index, "text", v)}
         placeholder="Segment text"
         placeholderTextColor={M.muted}
-        className="rounded-lg bg-neutral-50 px-3 py-2 text-sm text-neutral-900 dark:bg-neutral-800 dark:text-white"
+        className="rounded-lg px-3 py-2 text-sm"
+        style={{ backgroundColor: M.inputBg, color: M.inputText }}
       />
       <TextInput
         value={segment.translation[translationLang] ?? ""}
         onChangeText={(v) => onChangeTranslation(index, translationLang, v)}
         placeholder={`Translation (${translationLabel}, optional)`}
         placeholderTextColor={M.muted}
-        className="mt-2 rounded-lg bg-neutral-50 px-3 py-2 text-sm text-neutral-900 dark:bg-neutral-800 dark:text-white"
+        className="mt-2 rounded-lg px-3 py-2 text-sm"
+        style={{ backgroundColor: M.inputBg, color: M.inputText }}
       />
       <View className="mt-2 flex-row gap-2">
         {(["startTime", "endTime"] as const).map((key) => (
           <View key={key} className="flex-1">
-            <Text className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+            <Text
+              className="mb-1 text-[10px] font-semibold uppercase tracking-wide"
+              style={{ color: M.muted }}
+            >
               {key === "startTime" ? "Start" : "End"}
             </Text>
             <View className="flex-row items-center gap-1">
@@ -150,14 +160,15 @@ function SegmentItem({
                 keyboardType="decimal-pad"
                 placeholder="0.0"
                 placeholderTextColor={M.muted}
-                className="flex-1 rounded-lg bg-neutral-50 px-2.5 py-2 text-sm text-neutral-900 dark:bg-neutral-800 dark:text-white"
+                className="flex-1 rounded-lg px-2.5 py-2 text-sm"
+                style={{ backgroundColor: M.inputBg, color: M.inputText }}
               />
               <Pressable
                 onPress={() => stamp(key)}
                 hitSlop={4}
-                className="items-center justify-center rounded-lg bg-blue-50 px-2.5 py-2 active:opacity-70 dark:bg-blue-950/30"
+                className="items-center justify-center rounded-lg bg-brand-50 px-2.5 py-2 active:opacity-70 dark:bg-brand-900/30"
               >
-                <IconSymbol name="record.circle" size={16} color={getAccent("blue").solid} />
+                <IconSymbol name="record.circle" size={16} color={M.accent} />
               </Pressable>
             </View>
           </View>
@@ -165,7 +176,7 @@ function SegmentItem({
       </View>
       {total > 1 ? (
         <Pressable onPress={() => onRemove(index)} className="mt-2 self-end">
-          <Text className="text-xs font-semibold text-red-500">Remove</Text>
+          <Text className="text-xs font-semibold" style={{ color: M.error }}>Remove</Text>
         </Pressable>
       ) : null}
     </View>
@@ -203,7 +214,10 @@ function PlaybackButton({ source, onPositionChange }: Readonly<{ source?: string
   };
 
   return (
-    <View className="overflow-hidden rounded-xl border border-emerald-200 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-950/20">
+    <View
+      className="overflow-hidden rounded-xl border"
+      style={{ backgroundColor: M.successBg, borderColor: M.successBorder }}
+    >
       <Pressable
         onPress={handleToggle}
         className="flex-row items-center gap-2 px-3 py-2.5 active:opacity-70"
@@ -217,20 +231,20 @@ function PlaybackButton({ source, onPositionChange }: Readonly<{ source?: string
             color={getAccent("teal").solid}
           />
         )}
-        <Text className="flex-1 text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+        <Text className="flex-1 text-sm font-semibold" style={{ color: M.success }}>
           {thisIsPlaying ? "Pause" : "Play audio"}
         </Text>
         {durationMs > 0 ? (
-          <Text className="text-xs text-emerald-600 dark:text-emerald-400">
+          <Text className="text-xs" style={{ color: M.success }}>
             {formatMs(positionMs)} / {formatMs(durationMs)}
           </Text>
         ) : null}
       </Pressable>
       {durationMs > 0 ? (
-        <View className="mx-3 mb-2 h-1 overflow-hidden rounded-full bg-emerald-200 dark:bg-emerald-800">
+        <View className="mx-3 mb-2 h-1 overflow-hidden rounded-full" style={{ backgroundColor: M.successBorder }}>
           <View
-            className="h-full rounded-full bg-emerald-500"
-            style={{ width: `${Math.round(progressRatio * 100)}%` }}
+            className="h-full rounded-full"
+            style={{ width: `${Math.round(progressRatio * 100)}%`, backgroundColor: M.success }}
           />
         </View>
       ) : null}
@@ -266,7 +280,7 @@ function RecordButton({
   const startRecording = async () => {
     const { status } = await Audio.requestPermissionsAsync();
     if (status !== "granted") {
-      toastError("Permission required", "Microphone access is needed to record audio.");
+      Alert.alert("Permission required", "Microphone access is needed to record audio.");
       return;
     }
     await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
@@ -300,17 +314,20 @@ function RecordButton({
       onPress={isRecording ? stopRecording : startRecording}
       disabled={isDisabled && !isRecording}
       className={`flex-row items-center justify-center rounded-xl py-3 active:opacity-70 disabled:opacity-40 ${
-        isRecording
-          ? "bg-red-500"
-          : "border border-dashed border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950/20"
+        isRecording ? "" : "border border-dashed"
       }`}
+      style={
+        isRecording
+          ? { backgroundColor: M.error }
+          : { backgroundColor: M.errorBg, borderColor: M.errorBorder }
+      }
     >
       <IconSymbol
         name={isRecording ? "stop.circle.fill" : "mic.fill"}
         size={16}
         color={isRecording ? M.parchment : M.error}
       />
-      <Text className={`ml-2 text-sm font-semibold ${isRecording ? "text-white" : "text-red-500"}`}>
+      <Text className="ml-2 text-sm font-semibold" style={{ color: isRecording ? M.parchment : M.error }}>
         {isRecording ? `Stop  ${formatTime(elapsedMs)}` : "Record audio"}
       </Text>
     </Pressable>
@@ -338,6 +355,7 @@ function AudioSection({
   onPositionChange?: (posSeconds: number) => void;
   loadingLabel: string;
 }>) {
+  const M = useMuseumTheme();
   const [recordedUri, setRecordedUri] = useState<string | undefined>(undefined);
 
   const pickAndReplace = () => {
@@ -377,10 +395,11 @@ function AudioSection({
       <Pressable
         onPress={isEditMode ? pickAndReplace : onPick}
         disabled={isPending}
-        className="flex-row items-center justify-center rounded-xl border border-dashed border-neutral-300 py-3 active:opacity-70 disabled:opacity-40 dark:border-neutral-600"
+        className="flex-row items-center justify-center rounded-xl border border-dashed py-3 active:opacity-70 disabled:opacity-40"
+        style={{ backgroundColor: M.inputBg, borderColor: M.border }}
       >
-        <IconSymbol name="square.and.arrow.up" size={16} color={getAccent("blue").solid} />
-        <Text className="ml-2 text-sm font-semibold text-blue-600 dark:text-blue-400">
+        <IconSymbol name="square.and.arrow.up" size={16} color={M.accent} />
+        <Text className="ml-2 text-sm font-semibold text-brand-600 dark:text-brand-400">
           {isPending ? loadingLabel : uploadLabel}
         </Text>
       </Pressable>
@@ -415,6 +434,72 @@ function toSegmentsPayload(source: SegmentEditor[]): EducatorLessonSegment[] {
     .filter((seg) => seg.text.length > 0);
 }
 
+/** Lets an educator pick which of the language's cultural_content entries
+ * surface on this lesson, in tap order. Only meaningful once a lesson exists
+ * (edit mode) — a brand-new lesson has no id to attach against yet. */
+function CulturalContentSection({
+  languageId,
+  selectedIds,
+  onChange,
+}: Readonly<{ languageId: string; selectedIds: string[]; onChange: (ids: string[]) => void }>) {
+  const M = useMuseumTheme();
+  const { data: items = [] } = useCulturalItems(languageId);
+
+  const toggle = (id: string) => {
+    onChange(selectedIds.includes(id) ? selectedIds.filter((i) => i !== id) : [...selectedIds, id]);
+  };
+
+  return (
+    <View className="mt-4 px-5">
+      <View className="rounded-2xl p-4" style={{ backgroundColor: M.card, borderWidth: 1, borderColor: M.border }}>
+        <Text className="mb-1 text-xs font-semibold uppercase tracking-[1.2px]" style={{ color: M.muted }}>
+          Cultural Content ({selectedIds.length})
+        </Text>
+        <Text className="mb-3 text-xs" style={{ color: M.sub }}>
+          Attach culture notes from this language&apos;s Cultural gallery to this lesson.
+        </Text>
+        {items.length === 0 ? (
+          <Text className="text-sm" style={{ color: M.sub }}>
+            No cultural content exists yet for this language.
+          </Text>
+        ) : (
+          <View className="flex-row flex-wrap gap-2">
+            {items.map((item) => {
+              const position = selectedIds.indexOf(item.id);
+              const active = position !== -1;
+              return (
+                <Pressable
+                  key={item.id}
+                  onPress={() => toggle(item.id)}
+                  className="flex-row items-center gap-1.5 rounded-full border px-3 py-1.5"
+                  style={
+                    active
+                      ? { backgroundColor: M.accentGlow, borderColor: M.accentBorder }
+                      : { backgroundColor: M.card, borderColor: M.border }
+                  }
+                >
+                  <Text className="text-sm">{item.imageEmoji}</Text>
+                  <Text
+                    className="text-xs font-semibold"
+                    style={{ color: active ? M.accent : M.sub }}
+                  >
+                    {item.title}
+                  </Text>
+                  {active ? (
+                    <View className="ml-0.5 h-4 w-4 items-center justify-center rounded-full" style={{ backgroundColor: M.accent }}>
+                      <Text className="text-[9px] font-bold" style={{ color: M.parchment }}>{position + 1}</Text>
+                    </View>
+                  ) : null}
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
+      </View>
+    </View>
+  );
+}
+
 export default function EducatorLessonEditScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
@@ -432,6 +517,7 @@ export default function EducatorLessonEditScreen() {
   const [genre, setGenre] = useState("");
   const [audioUri, setAudioUri] = useState<string | undefined>(undefined);
   const [segments, setSegments] = useState<SegmentEditor[]>([EMPTY_SEGMENT()]);
+  const [culturalContentIds, setCulturalContentIds] = useState<string[]>([]);
   const [translationLang, setTranslationLang] = useState<UiLanguage>(uiLanguage);
   const [playbackPos, setPlaybackPos] = useState(0);
   const [previewVisible, setPreviewVisible] = useState(false);
@@ -444,6 +530,7 @@ export default function EducatorLessonEditScreen() {
   const createLesson = useCreateEducatorLesson();
   const updateLesson = useUpdateEducatorLesson();
   const replaceSegments = useReplaceEducatorLessonSegments();
+  const replaceCulturalContent = useReplaceEducatorLessonCulturalContent();
   const replaceAudio = useReplaceEducatorLessonAudio();
   const deleteLesson = useDeleteEducatorLesson();
   const publishLesson = usePublishContent("lessons", [["educator", "lesson", lessonId ?? null], ["educator", "lessons"]]);
@@ -473,6 +560,7 @@ export default function EducatorLessonEditScreen() {
           )
         : [EMPTY_SEGMENT()],
     );
+    setCulturalContentIds(lessonDetail.culturalContentIds ?? []);
   }, [lessonDetail, uiLanguage]);
 
   const pickAudio = async () => {
@@ -540,6 +628,10 @@ export default function EducatorLessonEditScreen() {
         onSuccess: () => toastSuccess("Saved", "Lesson and segments updated."),
         onError: (err: Error) => toastError("Segments failed", friendlyError(err)),
       },
+    );
+    replaceCulturalContent.mutate(
+      { id: lessonId, culturalContentIds },
+      { onError: (err: Error) => toastError("Cultural content failed", friendlyError(err)) },
     );
   };
 
@@ -621,14 +713,14 @@ export default function EducatorLessonEditScreen() {
     return (
       <>
         <Stack.Screen options={{ title: "Edit Lesson" }} />
-        <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+        <SafeAreaView className="flex-1" style={{ backgroundColor: M.bg }} edges={["top"]}>
           <View className="flex-row items-center px-5 pb-1 pt-2">
             <Pressable onPress={() => router.back()} hitSlop={12} className="-ml-1 p-1 active:opacity-60">
               <IconSymbol name="chevron.left" size={22} color={M.text} />
             </Pressable>
           </View>
           <View className="flex-1 items-center justify-center">
-            <Text className="text-sm text-neutral-500 dark:text-neutral-400">{t("common.loading")}</Text>
+            <Text className="text-sm" style={{ color: M.sub }}>{t("common.loading")}</Text>
           </View>
         </SafeAreaView>
       </>
@@ -640,7 +732,7 @@ export default function EducatorLessonEditScreen() {
       <Stack.Screen
         options={{ title: screenTitle, headerBackTitle: course ? localize(course.title, uiLanguage) : "Lessons" }}
       />
-      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+      <SafeAreaView className="flex-1" style={{ backgroundColor: M.bg }} edges={["top"]}>
         <View className="flex-row items-center px-5 pb-1 pt-2">
           <Pressable onPress={() => router.back()} hitSlop={12} className="-ml-1 p-1 active:opacity-60">
             <IconSymbol name="chevron.left" size={22} color={M.text} />
@@ -659,14 +751,14 @@ export default function EducatorLessonEditScreen() {
           {course ? (
             <View className="flex-row items-center gap-1 px-5 pt-4">
               <IconSymbol name="book.fill" size={12} color={M.muted} />
-              <Text className="text-xs text-neutral-400 dark:text-neutral-500">{localize(course.title, uiLanguage)}</Text>
+              <Text className="text-xs" style={{ color: M.muted }}>{localize(course.title, uiLanguage)}</Text>
             </View>
           ) : null}
 
           {/* Basic Details */}
           <View className="mt-3 px-5">
-            <View className="rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
-              <Text className="mb-3 text-xs font-semibold uppercase tracking-[1.2px] text-neutral-400 dark:text-neutral-500">
+            <View className="rounded-2xl p-4" style={{ backgroundColor: M.card, borderWidth: 1, borderColor: M.border }}>
+              <Text className="mb-3 text-xs font-semibold uppercase tracking-[1.2px]" style={{ color: M.muted }}>
                 Lesson Details
               </Text>
               <TextInput
@@ -674,7 +766,8 @@ export default function EducatorLessonEditScreen() {
                 onChangeText={setTitle}
                 placeholder="Lesson title *"
                 placeholderTextColor={M.muted}
-                className="rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+                className="rounded-xl border px-3.5 py-2.5 text-sm"
+                style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
               />
               <TextInput
                 value={description}
@@ -682,14 +775,16 @@ export default function EducatorLessonEditScreen() {
                 placeholder="Lesson description *"
                 placeholderTextColor={M.muted}
                 multiline
-                className="mt-2 min-h-[64px] rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+                className="mt-2 min-h-[64px] rounded-xl border px-3.5 py-2.5 text-sm"
+                style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
               />
               <TextInput
                 value={type}
                 onChangeText={setType}
                 placeholder="Type (e.g. podcast, song, story)"
                 placeholderTextColor={M.muted}
-                className="mt-2 rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+                className="mt-2 rounded-xl border px-3.5 py-2.5 text-sm"
+                style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
               />
               <View className="mt-2 flex-row gap-2">
                 <TextInput
@@ -697,14 +792,16 @@ export default function EducatorLessonEditScreen() {
                   onChangeText={setArtist}
                   placeholder="Artist"
                   placeholderTextColor={M.muted}
-                  className="flex-1 rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+                  className="flex-1 rounded-xl border px-3.5 py-2.5 text-sm"
+                  style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
                 />
                 <TextInput
                   value={genre}
                   onChangeText={setGenre}
                   placeholder="Genre"
                   placeholderTextColor={M.muted}
-                  className="flex-1 rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+                  className="flex-1 rounded-xl border px-3.5 py-2.5 text-sm"
+                  style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
                 />
               </View>
             </View>
@@ -712,8 +809,8 @@ export default function EducatorLessonEditScreen() {
 
           {/* Audio */}
           <View className="mt-4 px-5">
-            <View className="rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
-              <Text className="mb-3 text-xs font-semibold uppercase tracking-[1.2px] text-neutral-400 dark:text-neutral-500">
+            <View className="rounded-2xl p-4" style={{ backgroundColor: M.card, borderWidth: 1, borderColor: M.border }}>
+              <Text className="mb-3 text-xs font-semibold uppercase tracking-[1.2px]" style={{ color: M.muted }}>
                 Audio
               </Text>
               <AudioSection
@@ -732,8 +829,8 @@ export default function EducatorLessonEditScreen() {
 
           {/* Transcript Segments */}
           <View className="mt-4 px-5">
-            <View className="rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
-              <Text className="mb-3 text-xs font-semibold uppercase tracking-[1.2px] text-neutral-400 dark:text-neutral-500">
+            <View className="rounded-2xl p-4" style={{ backgroundColor: M.card, borderWidth: 1, borderColor: M.border }}>
+              <Text className="mb-3 text-xs font-semibold uppercase tracking-[1.2px]" style={{ color: M.muted }}>
                 Transcript Segments ({segments.length})
               </Text>
               <TranslationLanguagePicker
@@ -756,24 +853,35 @@ export default function EducatorLessonEditScreen() {
               ))}
               <Pressable
                 onPress={addSegment}
-                className="rounded-xl bg-neutral-200 py-2.5 active:opacity-80 dark:bg-neutral-700"
+                className="rounded-xl py-2.5 active:opacity-80"
+                style={{ backgroundColor: M.pillBg }}
               >
-                <Text className="text-center text-sm font-semibold text-neutral-700 dark:text-neutral-200">
+                <Text className="text-center text-sm font-semibold" style={{ color: M.text }}>
                   + Add segment
                 </Text>
               </Pressable>
             </View>
           </View>
 
+          {/* Cultural Content — only meaningful once the lesson exists */}
+          {isEditMode && course ? (
+            <CulturalContentSection
+              languageId={course.languageId}
+              selectedIds={culturalContentIds}
+              onChange={setCulturalContentIds}
+            />
+          ) : null}
+
           {/* Learner Preview */}
           <View className="mt-4 px-5">
             <Pressable
               onPress={() => setPreviewVisible((v) => !v)}
-              className="flex-row items-center justify-between rounded-2xl bg-neutral-50 px-4 py-3 active:opacity-70 dark:bg-neutral-800"
+              className="flex-row items-center justify-between rounded-2xl px-4 py-3 active:opacity-70"
+              style={{ backgroundColor: M.card, borderWidth: 1, borderColor: M.border }}
             >
               <View className="flex-row items-center gap-2">
-                <IconSymbol name="eye.fill" size={16} color={getAccent("blue").solid} />
-                <Text className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                <IconSymbol name="eye.fill" size={16} color={M.accent} />
+                <Text className="text-sm font-semibold text-brand-600 dark:text-brand-400">
                   {t("educator.lessonEdit.previewTitle")}
                 </Text>
               </View>
@@ -784,22 +892,22 @@ export default function EducatorLessonEditScreen() {
               />
             </Pressable>
             {previewVisible && (
-              <View className="mt-2 overflow-hidden rounded-2xl border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900">
+              <View className="mt-2 overflow-hidden rounded-2xl border" style={{ backgroundColor: M.card, borderColor: M.border }}>
                 <LessonHero
                   title={title || t("educator.lessonEdit.untitled")}
                   overline={type ? type.toUpperCase() : "LESSON"}
-                  accentColor={getAccent("blue").solid}
+                  accentColor={M.accent}
                 />
                 {description ? (
-                  <View className="border-b border-neutral-100 px-4 pb-4 dark:border-neutral-800">
-                    <Text className="text-sm text-neutral-600 dark:text-neutral-400">
+                  <View className="border-b px-4 pb-4" style={{ borderColor: M.border }}>
+                    <Text className="text-sm" style={{ color: M.sub }}>
                       {description}
                     </Text>
                   </View>
                 ) : null}
                 {segments.some((s) => s.text.trim().length > 0) ? (
                   <View className="px-4 py-3">
-                    <Text className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                    <Text className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: M.muted }}>
                       {t("review.transcript")}
                     </Text>
                     {segments
@@ -808,11 +916,11 @@ export default function EducatorLessonEditScreen() {
                         const previewTranslation = localize(s.translation, uiLanguage);
                         return (
                           <View key={s.uid} className={`${i > 0 ? "mt-3" : ""}`}>
-                            <Text className="text-base text-neutral-900 dark:text-white">
+                            <Text className="text-base" style={{ color: M.text }}>
                               {s.text}
                             </Text>
                             {previewTranslation ? (
-                              <Text className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
+                              <Text className="mt-0.5 text-sm" style={{ color: M.sub }}>
                                 {previewTranslation}
                               </Text>
                             ) : null}
@@ -822,7 +930,7 @@ export default function EducatorLessonEditScreen() {
                   </View>
                 ) : (
                   <View className="px-4 py-6 items-center">
-                    <Text className="text-sm text-neutral-400 dark:text-neutral-500">
+                    <Text className="text-sm" style={{ color: M.muted }}>
                       {t("educator.lessonEdit.noSegments")}
                     </Text>
                   </View>
@@ -841,7 +949,7 @@ export default function EducatorLessonEditScreen() {
             <Pressable
               onPress={handleSave}
               disabled={isSaving}
-              className="rounded-2xl bg-blue-500 py-4 active:opacity-80 disabled:opacity-50"
+              className="rounded-2xl bg-brand-500 py-4 active:opacity-80 disabled:opacity-50"
             >
               <Text className="text-center font-semibold text-white">{saveButtonLabel}</Text>
             </Pressable>
@@ -849,7 +957,8 @@ export default function EducatorLessonEditScreen() {
               <Pressable
                 onPress={handleSubmitForReview}
                 disabled={updateLesson.isPending}
-                className="rounded-2xl bg-amber-500 py-4 active:opacity-80 disabled:opacity-50"
+                className="rounded-2xl py-4 active:opacity-80 disabled:opacity-50"
+                style={{ backgroundColor: M.warning }}
               >
                 <Text className="text-center font-semibold text-white">Submit for review</Text>
               </Pressable>
@@ -860,7 +969,8 @@ export default function EducatorLessonEditScreen() {
               <Pressable
                 onPress={handlePublish}
                 disabled={publishLesson.isPending}
-                className="rounded-2xl bg-green-600 py-4 active:opacity-80 disabled:opacity-50"
+                className="rounded-2xl py-4 active:opacity-80 disabled:opacity-50"
+                style={{ backgroundColor: M.success }}
               >
                 <Text className="text-center font-semibold text-white">Publish</Text>
               </Pressable>
@@ -872,16 +982,18 @@ export default function EducatorLessonEditScreen() {
                 <Pressable
                   onPress={() => lessonId && unschedulePublishLesson.mutate(lessonId)}
                   disabled={unschedulePublishLesson.isPending}
-                  className="rounded-2xl bg-blue-100 py-4 active:opacity-70 dark:bg-blue-900/40"
+                  className="rounded-2xl py-4 active:opacity-70"
+                  style={{ backgroundColor: M.infoBg }}
                 >
-                  <Text className="text-center font-semibold text-blue-700 dark:text-blue-400">Cancel scheduled publish</Text>
+                  <Text className="text-center font-semibold" style={{ color: M.info }}>Cancel scheduled publish</Text>
                 </Pressable>
               ) : (
                 <Pressable
                   onPress={() => setSchedulingOpen(true)}
-                  className="rounded-2xl bg-neutral-100 py-4 active:opacity-70 dark:bg-neutral-800"
+                  className="rounded-2xl py-4 active:opacity-70"
+                  style={{ backgroundColor: M.pillBg }}
                 >
-                  <Text className="text-center font-semibold text-neutral-700 dark:text-neutral-200">Schedule publish…</Text>
+                  <Text className="text-center font-semibold" style={{ color: M.text }}>Schedule publish…</Text>
                 </Pressable>
               )
             ) : null}
@@ -889,7 +1001,8 @@ export default function EducatorLessonEditScreen() {
               <Pressable
                 onPress={confirmDelete}
                 disabled={deleteLesson.isPending}
-                className="rounded-2xl bg-red-600 py-4 active:opacity-80 disabled:opacity-50"
+                className="rounded-2xl py-4 active:opacity-80 disabled:opacity-50"
+                style={{ backgroundColor: M.error }}
               >
                 <Text className="text-center font-semibold text-white">{deleteButtonLabel}</Text>
               </Pressable>

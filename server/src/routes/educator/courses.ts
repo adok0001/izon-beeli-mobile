@@ -33,6 +33,7 @@ educatorCoursesRouter.patch("/courses/:id", async (c) => {
     descriptionFr?: string | null;
     level?: string;
     order?: number;
+    courseType?: string | null;
   }>();
 
   const [course] = await db.select({ languageId: courses.languageId }).from(courses).where(eq(courses.id, courseId)).limit(1);
@@ -47,6 +48,7 @@ educatorCoursesRouter.patch("/courses/:id", async (c) => {
   if (body.descriptionFr !== undefined) patch.descriptionFr = body.descriptionFr;
   if (body.level !== undefined) patch.level = body.level;
   if (body.order !== undefined) patch.order = body.order;
+  if (body.courseType !== undefined) patch.courseType = body.courseType;
 
   if (Object.keys(patch).length === 0) return c.json({ error: "No fields to update" }, 400);
 

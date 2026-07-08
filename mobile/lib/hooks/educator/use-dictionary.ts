@@ -1,5 +1,5 @@
 import { apiFetch, apiFetchMultipart } from "@/lib/api";
-import type { DialectalVariant, DictionaryCategory, DictionaryEntry } from "@/lib/dictionary";
+import type { DialectalVariant, DictionaryCategory } from "@/lib/dictionary";
 import type { ContentStatus } from "@/lib/hooks/educator/use-content-workflow";
 import type { LocalizedText } from "@/types";
 import { useAuth } from "@clerk/clerk-expo";
@@ -55,33 +55,6 @@ export interface UpsertEducatorDictionaryInput {
   dialectalVariants?: DialectalVariant[];
   audioUri?: string;
   imageUri?: string;
-}
-
-/** Educator/admin dictionary rows carry nullable fields; the learner-facing
- * DictionaryEntry type (shared with the real word screen) doesn't — bridge
- * the two so the Studio replica editor and preview can reuse the exact same
- * renderer as the real word screen. */
-export function toPreviewEntry(item: EducatorDictionaryEntry): DictionaryEntry {
-  return {
-    id: item.id,
-    word: item.word,
-    english: item.english,
-    translations: item.translations ?? undefined,
-    french: item.french ?? undefined,
-    category: item.category,
-    languageId: item.languageId,
-    pronunciation: item.pronunciation ?? undefined,
-    example: item.example ?? undefined,
-    exampleTranslation: item.exampleTranslation ?? undefined,
-    exampleTranslations: item.exampleTranslations ?? undefined,
-    exampleTranslationFr: item.exampleTranslationFr ?? undefined,
-    audioUrl: item.audioUrl ?? undefined,
-    imageUrl: item.imageUrl ?? undefined,
-    synonyms: item.synonyms ?? undefined,
-    antonyms: item.antonyms ?? undefined,
-    semanticDomain: item.semanticDomain ?? undefined,
-    dialectalVariants: item.dialectalVariants ?? undefined,
-  };
 }
 
 export function useEducatorDictionary(languageId?: string, category?: string, enabled = true) {
@@ -170,66 +143,6 @@ export function useUpsertEducatorDictionary() {
       queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
       queryClient.invalidateQueries({ queryKey: ["dictionary"] });
       queryClient.invalidateQueries({ queryKey: ["dictionary-coverage"] });
-    },
-  });
-}
-
-export interface PatchEducatorDictionaryFields {
-  word?: string;
-  pronunciation?: string;
-  example?: string;
-  translations?: LocalizedText;
-  exampleTranslations?: LocalizedText;
-  audioUrl?: string;
-  exampleAudioUrl?: string;
-  category?: EducatorDictionaryCategory;
-  synonyms?: string[];
-  antonyms?: string[];
-  semanticDomain?: string;
-  dialectalVariants?: DialectalVariant[];
-}
-
-/** Single-field partial PATCH for the live-replica editor — the server route
- * already whitelists individual keys present in the JSON body (see
- * server/src/routes/educator/dictionary.ts), so this sends only what changed
- * rather than the full-form shape `useUpsertEducatorDictionary` sends. */
-export function usePatchEducatorDictionaryField() {
-  const { getToken } = useAuth();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, ...fields }: PatchEducatorDictionaryFields & { id: string }) => {
-      const token = await getToken();
-      return apiFetch<EducatorDictionaryEntry>(`/educator/dictionary/${id}`, {
-        method: "PATCH",
-        token,
-        body: JSON.stringify(fields),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
-      queryClient.invalidateQueries({ queryKey: ["dictionary"] });
-    },
-  });
-}
-
-/** Audio replace for the live-replica editor — a single file field, distinct
- * from `useUpsertEducatorDictionary`'s combined create/update multipart body. */
-export function usePatchEducatorDictionaryAudio() {
-  const { getToken } = useAuth();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, field, uri }: { id: string; field: "audio" | "exampleAudio"; uri: string }) => {
-      const token = await getToken();
-      const formData = new FormData();
-      const name = uri.split("/").pop() ?? "audio.m4a";
-      formData.append(field, { uri, type: "audio/m4a", name } as never);
-      return apiFetchMultipart<EducatorDictionaryEntry>(`/educator/dictionary/${id}`, formData, { method: "PATCH", token });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
-      queryClient.invalidateQueries({ queryKey: ["dictionary"] });
     },
   });
 }

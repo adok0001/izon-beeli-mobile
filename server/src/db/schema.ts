@@ -571,6 +571,25 @@ export const culturalKeyTerms = pgTable(
   ]
 );
 
+/** Studio-authored attachment of cultural_content entries to a lesson — lets an
+ * educator surface specific culture beats on a specific lesson instead of the
+ * app's deterministic per-lesson fallback pick (see lib/journey-style code in
+ * mobile's LessonCultureNote). `order` controls display order when a lesson has
+ * more than one. */
+export const lessonCulturalContent = pgTable(
+  "lesson_cultural_content",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    lessonId: varchar("lesson_id", { length: 64 }).notNull(),
+    culturalContentId: varchar("cultural_content_id", { length: 64 }).notNull(),
+    order: integer("order").default(0).notNull(),
+  },
+  (table) => [
+    index("lesson_cultural_content_lesson_id_idx").on(table.lessonId),
+    uniqueIndex("lesson_cultural_content_unique_idx").on(table.lessonId, table.culturalContentId),
+  ]
+);
+
 export const sentenceKindEnum = pgEnum("sentence_kind", ["blank", "equivalent"]);
 
 export const sentenceTemplates = pgTable(

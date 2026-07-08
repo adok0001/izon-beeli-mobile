@@ -4,6 +4,7 @@ import { HeadwordField } from "@/components/educator/headword-field";
 import { LocalizedTextInput, serializeLocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { fonts } from "@/constants/typography";
 import type { LocalizedText } from "@/types";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -12,13 +13,9 @@ import { friendlyError } from "@/lib/api";
 import {
   CulturalItem,
   CulturalKeyTerm,
-  Proverb,
   useCulturalItems,
   useDeleteCulturalItem,
-  useDeleteProverb,
-  useProverbs,
   useUpsertCulturalItem,
-  useUpsertProverb,
 } from "@/lib/hooks/use-educator-panel";
 import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
@@ -54,25 +51,6 @@ const CULTURAL_CATEGORIES = [
 type CulturalCategory = (typeof CULTURAL_CATEGORIES)[number];
 
 // ── Form state types ──────────────────────────────────────────────────────────
-
-type ProverbForm = {
-  id?: string;
-  text: string;
-  translation: LocalizedText;
-  meaning: LocalizedText;
-  literal: string;
-  context: string;
-  tags: string;
-};
-
-const EMPTY_PROVERB: ProverbForm = {
-  text: "",
-  translation: {},
-  meaning: {},
-  literal: "",
-  context: "",
-  tags: "",
-};
 
 type HeroBandForm = {
   label: string;
@@ -135,10 +113,7 @@ function cleanLocalized(v: LocalizedText): LocalizedText | undefined {
   return Object.keys(out).length > 0 ? out : undefined;
 }
 
-type Tab = "proverbs" | "cultural";
-
-const inputCls =
-  "rounded-xl bg-white px-3.5 py-2.5 text-sm text-neutral-900 dark:bg-neutral-900 dark:text-white";
+const inputCls = "rounded-xl border px-3.5 py-2.5 text-sm";
 
 // ── Main component ────────────────────────────────────────────────────────────
 
@@ -150,13 +125,11 @@ export default function EducatorCultureScreen() {
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
   const flatListRef = useRef<FlatList>(null);
 
-  const [tab, setTab] = useState<Tab>("proverbs");
   const [selectedLanguageId, setSelectedLanguageId] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
-  const [proverbForm, setProverbForm] = useState<ProverbForm>(EMPTY_PROVERB);
-  const [editingProverb, setEditingProverb] = useState(false);
   const [culturalForm, setCulturalForm] = useState<CulturalForm>(EMPTY_CULTURAL);
   const [editingCultural, setEditingCultural] = useState(false);
+  const [culturalFormOpen, setCulturalFormOpen] = useState(false);
 
   const allowedLanguages = currentUser?.isAdmin
     ? LANGUAGES.map((l) => l.id)
@@ -165,117 +138,24 @@ export default function EducatorCultureScreen() {
   const activeLanguageId =
     selectedLanguageId ?? allowedLanguages[0] ?? currentUser?.selectedLanguageId ?? "izon";
 
-  const { data: proverbs = [], isLoading: proverbsLoading } = useProverbs(
-    activeLanguageId,
-    canAccess && tab === "proverbs",
-  );
-  const { data: culturalItems = [], isLoading: culturalLoading } = useCulturalItems(
-    activeLanguageId,
-    canAccess && tab === "cultural",
-  );
+  const { data: culturalItems = [], isLoading } = useCulturalItems(activeLanguageId, canAccess);
 
-  const upsertProverb = useUpsertProverb();
-  const deleteProverb = useDeleteProverb();
   const upsertCultural = useUpsertCulturalItem();
   const deleteCultural = useDeleteCulturalItem();
 
   const q = searchQuery.toLowerCase().trim();
-  const filteredProverbs = q
-    ? proverbs.filter(
-        (p) => p.text.toLowerCase().includes(q) || localize(p.translation, "en").toLowerCase().includes(q),
-      )
-    : proverbs;
   const filteredCultural = q
     ? culturalItems.filter(
         (c) => localize(c.title, "en").toLowerCase().includes(q) || c.category.toLowerCase().includes(q),
       )
     : culturalItems;
 
-  const isLoading = tab === "proverbs" ? proverbsLoading : culturalLoading;
-  const listData: (Proverb | CulturalItem)[] =
-    tab === "proverbs" ? filteredProverbs : filteredCultural;
-
-  // ── Proverb handlers ──────────────────────────────────────────────────────────
-
-  const resetProverb = () => {
-    setProverbForm(EMPTY_PROVERB);
-    setEditingProverb(false);
-  };
-
-  const startEditProverb = (item: Proverb) => {
-    setProverbForm({
-      id: item.id,
-      text: item.text,
-      translation: toLocalizedText(item.translation, item.translationFr),
-      meaning: toLocalizedText(item.meaning, item.meaningFr),
-      literal: item.literal ?? "",
-      context: item.context ?? "",
-      tags: (item.tags ?? []).join(", "),
-    });
-    setEditingProverb(true);
-    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-  };
-
-  const submitProverb = () => {
-    if (!proverbForm.text.trim() || !proverbForm.translation.en?.trim() || !proverbForm.meaning.en?.trim()) {
-      toastError(t("educator.culture.missingFields"), t("educator.culture.proverbRequired"));
-      return;
-    }
-    const tags = proverbForm.tags
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    const translationSer = serializeLocalizedText(proverbForm.translation);
-    const meaningSer = serializeLocalizedText(proverbForm.meaning);
-    upsertProverb.mutate(
-      {
-        id: proverbForm.id,
-        languageId: activeLanguageId,
-        text: proverbForm.text.trim(),
-        translation: translationSer.primary,
-        translationFr: translationSer.fr,
-        meaning: meaningSer.primary,
-        meaningFr: meaningSer.fr,
-        literal: proverbForm.literal.trim() || undefined,
-        context: proverbForm.context.trim() || undefined,
-        tags: tags.length > 0 ? tags : undefined,
-      },
-      {
-        onSuccess: () => {
-          resetProverb();
-          toastSuccess(
-            editingProverb ? t("educator.culture.proverbUpdated") : t("educator.culture.proverbCreated"),
-          );
-        },
-        onError: (err) => toastError(t("educator.culture.saveFailed"), friendlyError(err)),
-      },
-    );
-  };
-
-  const confirmDeleteProverb = (id: string) => {
-    Alert.alert(
-      t("educator.culture.deleteProverbTitle"),
-      t("educator.culture.deleteProverbMessage"),
-      [
-        { text: t("common.cancel"), style: "cancel" },
-        {
-          text: t("common.delete"),
-          style: "destructive",
-          onPress: () =>
-            deleteProverb.mutate(id, {
-              onSuccess: () => toastSuccess(t("educator.culture.proverbDeleted")),
-              onError: (err) => toastError(t("educator.culture.deleteFailed"), friendlyError(err)),
-            }),
-        },
-      ],
-    );
-  };
-
   // ── Cultural handlers ─────────────────────────────────────────────────────────
 
   const resetCultural = () => {
     setCulturalForm(EMPTY_CULTURAL);
     setEditingCultural(false);
+    setCulturalFormOpen(false);
   };
 
   const startEditCultural = (item: CulturalItem) => {
@@ -300,6 +180,7 @@ export default function EducatorCultureScreen() {
       })),
     });
     setEditingCultural(true);
+    setCulturalFormOpen(true);
     flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
   };
 
@@ -391,10 +272,10 @@ export default function EducatorCultureScreen() {
   const listHeader = (
     <View>
       <View className="px-5 pt-4">
-        <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
+        <Text className="text-2xl" style={{ fontFamily: fonts.heading, color: M.text }}>
           {t("educator.nav.culture")}
         </Text>
-        <Text className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+        <Text className="mt-1 text-sm" style={{ color: M.sub }}>
           {t("educator.culture.subtitle")}
         </Text>
       </View>
@@ -411,10 +292,12 @@ export default function EducatorCultureScreen() {
                   setSelectedLanguageId(langId);
                   setSearchQuery("");
                 }}
-                className={`mr-2 rounded-full px-4 py-2 ${active ? "bg-blue-500" : "bg-neutral-100 dark:bg-neutral-800"}`}
+                className="mr-2 rounded-full px-4 py-2"
+                style={{ backgroundColor: active ? M.accent : M.pillBg }}
               >
                 <Text
-                  className={`text-sm font-semibold ${active ? "text-white" : "text-neutral-700 dark:text-neutral-300"}`}
+                  className="text-sm font-semibold"
+                  style={{ color: active ? M.parchment : M.text }}
                 >
                   {getLanguageName(langId)}
                 </Text>
@@ -424,448 +307,360 @@ export default function EducatorCultureScreen() {
         </ScrollView>
       </View>
 
-      {/* Tab switcher */}
-      <View className="mt-4 flex-row gap-2 px-5">
-        <Pressable
-          onPress={() => {
-            setTab("proverbs");
-            resetProverb();
-            setSearchQuery("");
-          }}
-          className={`flex-1 items-center rounded-xl py-2.5 ${tab === "proverbs" ? "bg-amber-500" : "bg-neutral-100 dark:bg-neutral-800"}`}
-        >
-          <Text
-            className={`text-sm font-semibold ${tab === "proverbs" ? "text-white" : "text-neutral-600 dark:text-neutral-400"}`}
-          >
-            {t("educator.culture.tabProverbs")}
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => {
-            setTab("cultural");
-            resetCultural();
-            setSearchQuery("");
-          }}
-          className={`flex-1 items-center rounded-xl py-2.5 ${tab === "cultural" ? "bg-purple-500" : "bg-neutral-100 dark:bg-neutral-800"}`}
-        >
-          <Text
-            className={`text-sm font-semibold ${tab === "cultural" ? "text-white" : "text-neutral-600 dark:text-neutral-400"}`}
-          >
-            {t("educator.culture.tabCultural")}
-          </Text>
-        </Pressable>
-      </View>
-
-      {/* ── Proverb form ─────────────────────────────────────────────────────── */}
-      {tab === "proverbs" && (
-        <View className="mx-5 mt-4 rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
-          <Text className="mb-3 text-base font-semibold text-neutral-900 dark:text-white">
-            {editingProverb ? t("educator.culture.editProverb") : t("educator.culture.newProverb")}
-          </Text>
-          <TextInput
-            value={proverbForm.text}
-            onChangeText={(text) => setProverbForm((p) => ({ ...p, text }))}
-            placeholder={t("educator.culture.proverbText")}
-            placeholderTextColor={M.muted}
-            multiline
-            className={`${inputCls} min-h-[44px]`}
-          />
-          <View style={{ marginTop: 8 }}>
-            <LocalizedTextInput
-              label={t("educator.culture.englishTranslation")}
-              value={proverbForm.translation}
-              onChange={(translation) => setProverbForm((p) => ({ ...p, translation }))}
-              required
-            />
-          </View>
-          <LocalizedTextInput
-            label={t("educator.culture.meaningLabel")}
-            value={proverbForm.meaning}
-            onChange={(meaning) => setProverbForm((p) => ({ ...p, meaning }))}
-            multiline
-            required
-          />
-          <TextInput
-            value={proverbForm.literal}
-            onChangeText={(literal) => setProverbForm((p) => ({ ...p, literal }))}
-            placeholder={t("educator.culture.literalLabel")}
-            placeholderTextColor={M.muted}
-            className={`mt-2 ${inputCls}`}
-          />
-          <TextInput
-            value={proverbForm.context}
-            onChangeText={(context) => setProverbForm((p) => ({ ...p, context }))}
-            placeholder={t("educator.culture.contextLabel")}
-            placeholderTextColor={M.muted}
-            className={`mt-2 ${inputCls}`}
-          />
-          <TextInput
-            value={proverbForm.tags}
-            onChangeText={(tags) => setProverbForm((p) => ({ ...p, tags }))}
-            placeholder={t("educator.culture.tagsLabel")}
-            placeholderTextColor={M.muted}
-            className={`mt-2 ${inputCls}`}
-          />
-          <View className="mt-4 flex-row gap-2">
-            <Pressable
-              onPress={submitProverb}
-              disabled={upsertProverb.isPending}
-              className="flex-1 rounded-xl bg-amber-500 py-3 active:opacity-80 disabled:opacity-40"
-            >
-              <Text className="text-center font-semibold text-white">
-                {upsertProverb.isPending
-                  ? t("common.loading")
-                  : editingProverb
-                    ? t("common.save")
-                    : t("educator.culture.create")}
-              </Text>
-            </Pressable>
-            {editingProverb && (
-              <Pressable
-                onPress={resetProverb}
-                className="rounded-xl bg-neutral-200 px-4 py-3 active:opacity-80 dark:bg-neutral-700"
-              >
-                <Text className="font-semibold text-neutral-700 dark:text-neutral-300">
-                  {t("common.cancel")}
-                </Text>
-              </Pressable>
-            )}
-          </View>
-        </View>
-      )}
-
       {/* ── Cultural form ─────────────────────────────────────────────────────── */}
-      {tab === "cultural" && (
-        <View className="mx-5 mt-4 rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
-          <Text className="mb-3 text-base font-semibold text-neutral-900 dark:text-white">
+      <View className="mx-5 mt-4 rounded-2xl border p-4" style={{ backgroundColor: M.card, borderColor: M.border }}>
+        <Pressable
+          onPress={() => setCulturalFormOpen((o) => !o)}
+          disabled={editingCultural}
+          className="flex-row items-center justify-between"
+          style={culturalFormOpen ? { marginBottom: 12 } : undefined}
+        >
+          <Text className="text-base font-semibold" style={{ color: M.text }}>
             {editingCultural
               ? t("educator.culture.editCultural")
               : t("educator.culture.newCultural")}
           </Text>
-
-          <View className="flex-row gap-2 items-center" style={{ marginBottom: 8 }}>
-            <TextInput
-              value={culturalForm.imageEmoji}
-              onChangeText={(imageEmoji) => setCulturalForm((c) => ({ ...c, imageEmoji }))}
-              placeholder="🌍"
-              placeholderTextColor={M.muted}
-              maxLength={8}
-              className={`${inputCls} w-16 text-center text-xl`}
-            />
-          </View>
-          <LocalizedTextInput
-            label={t("educator.culture.titleLabel")}
-            value={culturalForm.title}
-            onChange={(title) => setCulturalForm((c) => ({ ...c, title }))}
-            required
+          {!editingCultural ? (
+            <IconSymbol name={culturalFormOpen ? "chevron.up" : "chevron.down"} size={14} color={M.muted} />
+          ) : null}
+        </Pressable>
+        {culturalFormOpen ? (
+        <>
+        <View className="flex-row gap-2 items-center" style={{ marginBottom: 8 }}>
+          <TextInput
+            value={culturalForm.imageEmoji}
+            onChangeText={(imageEmoji) => setCulturalForm((c) => ({ ...c, imageEmoji }))}
+            placeholder="🌍"
+            placeholderTextColor={M.muted}
+            maxLength={8}
+            style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
+            className={`${inputCls} w-16 text-center text-xl`}
           />
+        </View>
+        <LocalizedTextInput
+          label={t("educator.culture.titleLabel")}
+          value={culturalForm.title}
+          onChange={(title) => setCulturalForm((c) => ({ ...c, title }))}
+          required
+        />
 
-          <Text className="mb-2 mt-3 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-            {t("educator.culture.categoryLabel")}
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {CULTURAL_CATEGORIES.map((cat) => {
-              const active = culturalForm.category === cat;
-              return (
-                <Pressable
-                  key={cat}
-                  onPress={() => setCulturalForm((c) => ({ ...c, category: cat }))}
-                  className={`mr-2 rounded-full px-3 py-1.5 ${active ? "bg-purple-500" : "bg-white dark:bg-neutral-900"}`}
-                >
-                  <Text
-                    className={`text-xs font-semibold ${active ? "text-white" : "text-neutral-600 dark:text-neutral-400"}`}
-                  >
-                    {(t as (k: string) => string)(`educator.culture.categories.${cat}`)}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-
-          <LocalizedTextInput
-            label={t("educator.culture.descriptionLabel")}
-            value={culturalForm.description}
-            onChange={(description) => setCulturalForm((c) => ({ ...c, description }))}
-            multiline
-            required
-          />
-
-          <View className="mt-3 flex-row items-center justify-between">
-            <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-              {t("educator.culture.keyTermsLabel")}
-            </Text>
-            <Pressable
-              onPress={() =>
-                setCulturalForm((c) => ({
-                  ...c,
-                  keyTerms: [...c.keyTerms, { word: "", english: "" }],
-                }))
-              }
-              className="flex-row items-center gap-1"
-            >
-              <IconSymbol name="plus.circle.fill" size={16} color={getAccent("purple").solid} />
-              <Text className="text-xs font-semibold text-purple-500">
-                {t("educator.culture.addTerm")}
-              </Text>
-            </Pressable>
-          </View>
-          {culturalForm.keyTerms.map((kt, i) => (
-            <View key={i} className="mt-2 flex-row gap-2">
-              <TextInput
-                value={kt.word}
-                onChangeText={(word) =>
-                  setCulturalForm((c) => {
-                    const keyTerms = [...c.keyTerms];
-                    keyTerms[i] = { ...keyTerms[i], word };
-                    return { ...c, keyTerms };
-                  })
-                }
-                placeholder={t("educator.culture.nativeWord")}
-                placeholderTextColor={M.muted}
-                className={`${inputCls} flex-1`}
-              />
-              <TextInput
-                value={kt.english}
-                onChangeText={(english) =>
-                  setCulturalForm((c) => {
-                    const keyTerms = [...c.keyTerms];
-                    keyTerms[i] = { ...keyTerms[i], english };
-                    return { ...c, keyTerms };
-                  })
-                }
-                placeholder={t("educator.culture.englishWord")}
-                placeholderTextColor={M.muted}
-                className={`${inputCls} flex-1`}
-              />
-              <Pressable
-                onPress={() =>
-                  setCulturalForm((c) => ({
-                    ...c,
-                    keyTerms: c.keyTerms.filter((_, idx) => idx !== i),
-                  }))
-                }
-                className="w-8 items-center justify-center"
-              >
-                <IconSymbol name="xmark.circle.fill" size={18} color={M.error} />
-              </Pressable>
-            </View>
-          ))}
-
-          {/* Featured toggle */}
-          <Pressable
-            onPress={() => setCulturalForm((c) => ({ ...c, featured: !c.featured }))}
-            className="mt-4 flex-row items-center justify-between rounded-xl bg-white p-3 dark:bg-neutral-900"
-          >
-            <View className="flex-1 pr-3">
-              <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-                {t("educator.culture.featuredLabel")}
-              </Text>
-              <Text className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">
-                {t("educator.culture.featuredHint")}
-              </Text>
-            </View>
-            <View className={`h-6 w-11 justify-center rounded-full p-0.5 ${culturalForm.featured ? "bg-purple-500" : "bg-neutral-300 dark:bg-neutral-700"}`}>
-              <View className={`h-5 w-5 rounded-full bg-white ${culturalForm.featured ? "ml-auto" : ""}`} />
-            </View>
-          </Pressable>
-
-          {/* Headword + audio */}
-          <Text className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-            {t("educator.culture.headwordLabel")}
-          </Text>
-          <HeadwordField
-            languageId={activeLanguageId}
-            value={{
-              word: culturalForm.headwordWord,
-              gloss: culturalForm.headwordGloss,
-              audioUrl: culturalForm.headwordAudioUrl,
-            }}
-            onChange={(patch) =>
-              setCulturalForm((c) => ({
-                ...c,
-                ...(patch.word !== undefined && { headwordWord: patch.word }),
-                ...(patch.gloss !== undefined && { headwordGloss: patch.gloss }),
-                ...(patch.audioUrl !== undefined && { headwordAudioUrl: patch.audioUrl }),
-              }))
-            }
-            labels={{
-              word: t("educator.culture.headwordWord"),
-              gloss: t("educator.culture.headwordGloss"),
-              audio: t("educator.culture.headwordAudio"),
-              pick: t("educator.culture.headwordPick"),
-              search: t("educator.culture.headwordSearch"),
-              noEntries: t("educator.culture.headwordNoEntries"),
-              createHint: t("educator.culture.headwordCreateHint"),
-            }}
-          />
-
-          {/* Applications */}
-          <View className="mt-4 flex-row items-center justify-between">
-            <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-              {t("educator.culture.applicationsLabel")}
-            </Text>
-            <Pressable
-              onPress={() => setCulturalForm((c) => ({ ...c, applications: [...c.applications, {}] }))}
-              className="flex-row items-center gap-1"
-            >
-              <IconSymbol name="plus.circle.fill" size={16} color={getAccent("purple").solid} />
-              <Text className="text-xs font-semibold text-purple-500">{t("educator.culture.addApplication")}</Text>
-            </Pressable>
-          </View>
-          {culturalForm.applications.map((app, i) => (
-            <View key={i} className="mt-2 flex-row items-start gap-2">
-              <View className="flex-1">
-                <LocalizedTextInput
-                  label={`${t("educator.culture.applicationItem")} ${i + 1}`}
-                  value={app}
-                  onChange={(val) =>
-                    setCulturalForm((c) => {
-                      const applications = [...c.applications];
-                      applications[i] = val;
-                      return { ...c, applications };
-                    })
-                  }
-                />
-              </View>
-              <Pressable
-                onPress={() => setCulturalForm((c) => ({ ...c, applications: c.applications.filter((_, idx) => idx !== i) }))}
-                className="w-8 items-center justify-center pt-7"
-              >
-                <IconSymbol name="xmark.circle.fill" size={18} color={M.error} />
-              </Pressable>
-            </View>
-          ))}
-
-          {/* Colour bands */}
-          <View className="mt-4 flex-row items-center justify-between">
-            <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-              {t("educator.culture.heroBandsLabel")}
-            </Text>
-            <Pressable
-              onPress={() =>
-                setCulturalForm((c) => ({
-                  ...c,
-                  heroBands: [...c.heroBands, { label: "", sublabel: {}, from: "#C4862A", to: "#0B0D17", dark: true }],
-                }))
-              }
-              className="flex-row items-center gap-1"
-            >
-              <IconSymbol name="plus.circle.fill" size={16} color={getAccent("purple").solid} />
-              <Text className="text-xs font-semibold text-purple-500">{t("educator.culture.addBand")}</Text>
-            </Pressable>
-          </View>
-          {culturalForm.heroBands.map((band, i) => {
-            const updateBand = (patch: Partial<HeroBandForm>) =>
-              setCulturalForm((c) => {
-                const heroBands = [...c.heroBands];
-                heroBands[i] = { ...heroBands[i], ...patch };
-                return { ...c, heroBands };
-              });
+        <Text className="mb-2 mt-3 text-xs font-semibold uppercase tracking-wide" style={{ color: M.sub }}>
+          {t("educator.culture.categoryLabel")}
+        </Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {CULTURAL_CATEGORIES.map((cat) => {
+            const active = culturalForm.category === cat;
             return (
-              <View key={i} className="mt-2 rounded-xl bg-white p-3 dark:bg-neutral-900">
-                <View className="flex-row items-center gap-2">
-                  <View
-                    className="h-8 w-12 rounded-md border border-neutral-200 dark:border-neutral-700"
-                    style={{ overflow: "hidden", flexDirection: "row" }}
-                  >
-                    <View style={{ flex: 1, backgroundColor: isHex(band.from) ? band.from : "transparent" }} />
-                    <View style={{ flex: 1, backgroundColor: isHex(band.to) ? band.to : "transparent" }} />
-                  </View>
-                  <TextInput
-                    value={band.label}
-                    onChangeText={(label) => updateBand({ label })}
-                    placeholder={t("educator.culture.bandLabel")}
-                    placeholderTextColor={M.muted}
-                    className={`${inputCls} flex-1`}
-                  />
-                  <Pressable
-                    onPress={() => setCulturalForm((c) => ({ ...c, heroBands: c.heroBands.filter((_, idx) => idx !== i) }))}
-                    className="w-8 items-center justify-center"
-                  >
-                    <IconSymbol name="xmark.circle.fill" size={18} color={M.error} />
-                  </Pressable>
-                </View>
-                <View className="mt-3 gap-3">
-                  <ColorSwatchInput
-                    label={t("educator.culture.bandFrom")}
-                    value={band.from}
-                    onChange={(from) => updateBand({ from })}
-                  />
-                  <ColorSwatchInput
-                    label={t("educator.culture.bandTo")}
-                    value={band.to}
-                    onChange={(to) => updateBand({ to })}
-                  />
-                </View>
-                <View style={{ marginTop: 8 }}>
-                  <LocalizedTextInput
-                    label={t("educator.culture.bandSublabel")}
-                    value={band.sublabel}
-                    onChange={(sublabel) => updateBand({ sublabel })}
-                  />
-                </View>
-                <Pressable onPress={() => updateBand({ dark: !band.dark })} className="mt-2 flex-row items-center justify-between">
-                  <Text className="text-xs text-neutral-600 dark:text-neutral-300">{t("educator.culture.bandDark")}</Text>
-                  <View className={`h-6 w-11 justify-center rounded-full p-0.5 ${band.dark ? "bg-purple-500" : "bg-neutral-300 dark:bg-neutral-700"}`}>
-                    <View className={`h-5 w-5 rounded-full bg-white ${band.dark ? "ml-auto" : ""}`} />
-                  </View>
-                </Pressable>
-              </View>
-            );
-          })}
-          {culturalForm.heroBands.some((b) => !(isHex(b.from) && isHex(b.to))) && (
-            <View className="mt-2 flex-row items-center gap-1.5">
-              <IconSymbol name="exclamationmark.triangle.fill" size={13} color={M.warning} />
-              <Text className="flex-1 text-xs" style={{ color: M.warning }}>
-                {t("educator.culture.bandIncomplete")}
-              </Text>
-            </View>
-          )}
-
-          <View className="mt-4 flex-row gap-2">
-            <Pressable
-              onPress={submitCultural}
-              disabled={upsertCultural.isPending}
-              className="flex-1 rounded-xl bg-purple-500 py-3 active:opacity-80 disabled:opacity-40"
-            >
-              <Text className="text-center font-semibold text-white">
-                {upsertCultural.isPending
-                  ? t("common.loading")
-                  : editingCultural
-                    ? t("common.save")
-                    : t("educator.culture.create")}
-              </Text>
-            </Pressable>
-            {editingCultural && (
               <Pressable
-                onPress={resetCultural}
-                className="rounded-xl bg-neutral-200 px-4 py-3 active:opacity-80 dark:bg-neutral-700"
+                key={cat}
+                onPress={() => setCulturalForm((c) => ({ ...c, category: cat }))}
+                className="mr-2 rounded-full px-3 py-1.5"
+                style={{ backgroundColor: active ? getAccent("purple").solid : M.card }}
               >
-                <Text className="font-semibold text-neutral-700 dark:text-neutral-300">
-                  {t("common.cancel")}
+                <Text
+                  className="text-xs font-semibold"
+                  style={{ color: active ? "#FFFFFF" : M.sub }}
+                >
+                  {(t as (k: string) => string)(`educator.culture.categories.${cat}`)}
                 </Text>
               </Pressable>
-            )}
-          </View>
+            );
+          })}
+        </ScrollView>
+
+        <LocalizedTextInput
+          label={t("educator.culture.descriptionLabel")}
+          value={culturalForm.description}
+          onChange={(description) => setCulturalForm((c) => ({ ...c, description }))}
+          multiline
+          required
+        />
+
+        <View className="mt-3 flex-row items-center justify-between">
+          <Text className="text-xs font-semibold uppercase tracking-wide" style={{ color: M.sub }}>
+            {t("educator.culture.keyTermsLabel")}
+          </Text>
+          <Pressable
+            onPress={() =>
+              setCulturalForm((c) => ({
+                ...c,
+                keyTerms: [...c.keyTerms, { word: "", english: "" }],
+              }))
+            }
+            className="flex-row items-center gap-1"
+          >
+            <IconSymbol name="plus.circle.fill" size={16} color={getAccent("purple").solid} />
+            <Text className="text-xs font-semibold text-purple-500">
+              {t("educator.culture.addTerm")}
+            </Text>
+          </Pressable>
         </View>
-      )}
+        {culturalForm.keyTerms.map((kt, i) => (
+          <View key={i} className="mt-2 flex-row gap-2">
+            <TextInput
+              value={kt.word}
+              onChangeText={(word) =>
+                setCulturalForm((c) => {
+                  const keyTerms = [...c.keyTerms];
+                  keyTerms[i] = { ...keyTerms[i], word };
+                  return { ...c, keyTerms };
+                })
+              }
+              placeholder={t("educator.culture.nativeWord")}
+              placeholderTextColor={M.muted}
+              style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
+              className={`${inputCls} flex-1`}
+            />
+            <TextInput
+              value={kt.english}
+              onChangeText={(english) =>
+                setCulturalForm((c) => {
+                  const keyTerms = [...c.keyTerms];
+                  keyTerms[i] = { ...keyTerms[i], english };
+                  return { ...c, keyTerms };
+                })
+              }
+              placeholder={t("educator.culture.englishWord")}
+              placeholderTextColor={M.muted}
+              style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
+              className={`${inputCls} flex-1`}
+            />
+            <Pressable
+              onPress={() =>
+                setCulturalForm((c) => ({
+                  ...c,
+                  keyTerms: c.keyTerms.filter((_, idx) => idx !== i),
+                }))
+              }
+              className="w-8 items-center justify-center"
+            >
+              <IconSymbol name="xmark.circle.fill" size={18} color={M.error} />
+            </Pressable>
+          </View>
+        ))}
+
+        {/* Featured toggle */}
+        <Pressable
+          onPress={() => setCulturalForm((c) => ({ ...c, featured: !c.featured }))}
+          className="mt-4 flex-row items-center justify-between rounded-xl border p-3"
+          style={{ backgroundColor: M.card, borderColor: M.border }}
+        >
+          <View className="flex-1 pr-3">
+            <Text className="text-sm font-semibold" style={{ color: M.text }}>
+              {t("educator.culture.featuredLabel")}
+            </Text>
+            <Text className="mt-0.5 text-xs" style={{ color: M.muted }}>
+              {t("educator.culture.featuredHint")}
+            </Text>
+          </View>
+          <View
+            className="h-6 w-11 justify-center rounded-full p-0.5"
+            style={{ backgroundColor: culturalForm.featured ? getAccent("purple").solid : M.pillBg }}
+          >
+            <View className={`h-5 w-5 rounded-full bg-white ${culturalForm.featured ? "ml-auto" : ""}`} />
+          </View>
+        </Pressable>
+
+        {/* Headword + audio */}
+        <Text className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide" style={{ color: M.sub }}>
+          {t("educator.culture.headwordLabel")}
+        </Text>
+        <HeadwordField
+          languageId={activeLanguageId}
+          value={{
+            word: culturalForm.headwordWord,
+            gloss: culturalForm.headwordGloss,
+            audioUrl: culturalForm.headwordAudioUrl,
+          }}
+          onChange={(patch) =>
+            setCulturalForm((c) => ({
+              ...c,
+              ...(patch.word !== undefined && { headwordWord: patch.word }),
+              ...(patch.gloss !== undefined && { headwordGloss: patch.gloss }),
+              ...(patch.audioUrl !== undefined && { headwordAudioUrl: patch.audioUrl }),
+            }))
+          }
+          labels={{
+            word: t("educator.culture.headwordWord"),
+            gloss: t("educator.culture.headwordGloss"),
+            audio: t("educator.culture.headwordAudio"),
+            pick: t("educator.culture.headwordPick"),
+            search: t("educator.culture.headwordSearch"),
+            noEntries: t("educator.culture.headwordNoEntries"),
+            createHint: t("educator.culture.headwordCreateHint"),
+          }}
+        />
+
+        {/* Applications */}
+        <View className="mt-4 flex-row items-center justify-between">
+          <Text className="text-xs font-semibold uppercase tracking-wide" style={{ color: M.sub }}>
+            {t("educator.culture.applicationsLabel")}
+          </Text>
+          <Pressable
+            onPress={() => setCulturalForm((c) => ({ ...c, applications: [...c.applications, {}] }))}
+            className="flex-row items-center gap-1"
+          >
+            <IconSymbol name="plus.circle.fill" size={16} color={getAccent("purple").solid} />
+            <Text className="text-xs font-semibold text-purple-500">{t("educator.culture.addApplication")}</Text>
+          </Pressable>
+        </View>
+        {culturalForm.applications.map((app, i) => (
+          <View key={i} className="mt-2 flex-row items-start gap-2">
+            <View className="flex-1">
+              <LocalizedTextInput
+                label={`${t("educator.culture.applicationItem")} ${i + 1}`}
+                value={app}
+                onChange={(val) =>
+                  setCulturalForm((c) => {
+                    const applications = [...c.applications];
+                    applications[i] = val;
+                    return { ...c, applications };
+                  })
+                }
+              />
+            </View>
+            <Pressable
+              onPress={() => setCulturalForm((c) => ({ ...c, applications: c.applications.filter((_, idx) => idx !== i) }))}
+              className="w-8 items-center justify-center pt-7"
+            >
+              <IconSymbol name="xmark.circle.fill" size={18} color={M.error} />
+            </Pressable>
+          </View>
+        ))}
+
+        {/* Colour bands */}
+        <View className="mt-4 flex-row items-center justify-between">
+          <Text className="text-xs font-semibold uppercase tracking-wide" style={{ color: M.sub }}>
+            {t("educator.culture.heroBandsLabel")}
+          </Text>
+          <Pressable
+            onPress={() =>
+              setCulturalForm((c) => ({
+                ...c,
+                heroBands: [...c.heroBands, { label: "", sublabel: {}, from: "#C4862A", to: "#0B0D17", dark: true }],
+              }))
+            }
+            className="flex-row items-center gap-1"
+          >
+            <IconSymbol name="plus.circle.fill" size={16} color={getAccent("purple").solid} />
+            <Text className="text-xs font-semibold text-purple-500">{t("educator.culture.addBand")}</Text>
+          </Pressable>
+        </View>
+        {culturalForm.heroBands.map((band, i) => {
+          const updateBand = (patch: Partial<HeroBandForm>) =>
+            setCulturalForm((c) => {
+              const heroBands = [...c.heroBands];
+              heroBands[i] = { ...heroBands[i], ...patch };
+              return { ...c, heroBands };
+            });
+          return (
+            <View key={i} className="mt-2 rounded-xl border p-3" style={{ backgroundColor: M.card, borderColor: M.border }}>
+              <View className="flex-row items-center gap-2">
+                <View
+                  className="h-8 w-12 rounded-md border"
+                  style={{ overflow: "hidden", flexDirection: "row", borderColor: M.border }}
+                >
+                  <View style={{ flex: 1, backgroundColor: isHex(band.from) ? band.from : "transparent" }} />
+                  <View style={{ flex: 1, backgroundColor: isHex(band.to) ? band.to : "transparent" }} />
+                </View>
+                <TextInput
+                  value={band.label}
+                  onChangeText={(label) => updateBand({ label })}
+                  placeholder={t("educator.culture.bandLabel")}
+                  placeholderTextColor={M.muted}
+                  style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
+                  className={`${inputCls} flex-1`}
+                />
+                <Pressable
+                  onPress={() => setCulturalForm((c) => ({ ...c, heroBands: c.heroBands.filter((_, idx) => idx !== i) }))}
+                  className="w-8 items-center justify-center"
+                >
+                  <IconSymbol name="xmark.circle.fill" size={18} color={M.error} />
+                </Pressable>
+              </View>
+              <View className="mt-3 gap-3">
+                <ColorSwatchInput
+                  label={t("educator.culture.bandFrom")}
+                  value={band.from}
+                  onChange={(from) => updateBand({ from })}
+                />
+                <ColorSwatchInput
+                  label={t("educator.culture.bandTo")}
+                  value={band.to}
+                  onChange={(to) => updateBand({ to })}
+                />
+              </View>
+              <View style={{ marginTop: 8 }}>
+                <LocalizedTextInput
+                  label={t("educator.culture.bandSublabel")}
+                  value={band.sublabel}
+                  onChange={(sublabel) => updateBand({ sublabel })}
+                />
+              </View>
+              <Pressable onPress={() => updateBand({ dark: !band.dark })} className="mt-2 flex-row items-center justify-between">
+                <Text className="text-xs" style={{ color: M.sub }}>{t("educator.culture.bandDark")}</Text>
+                <View
+                  className="h-6 w-11 justify-center rounded-full p-0.5"
+                  style={{ backgroundColor: band.dark ? getAccent("purple").solid : M.pillBg }}
+                >
+                  <View className={`h-5 w-5 rounded-full bg-white ${band.dark ? "ml-auto" : ""}`} />
+                </View>
+              </Pressable>
+            </View>
+          );
+        })}
+        {culturalForm.heroBands.some((b) => !(isHex(b.from) && isHex(b.to))) && (
+          <View className="mt-2 flex-row items-center gap-1.5">
+            <IconSymbol name="exclamationmark.triangle.fill" size={13} color={M.warning} />
+            <Text className="flex-1 text-xs" style={{ color: M.warning }}>
+              {t("educator.culture.bandIncomplete")}
+            </Text>
+          </View>
+        )}
+
+        <View className="mt-4 flex-row gap-2">
+          <Pressable
+            onPress={submitCultural}
+            disabled={upsertCultural.isPending}
+            className="flex-1 rounded-xl bg-purple-500 py-3 active:opacity-80 disabled:opacity-40"
+          >
+            <Text className="text-center font-semibold text-white">
+              {upsertCultural.isPending
+                ? t("common.loading")
+                : editingCultural
+                  ? t("common.save")
+                  : t("educator.culture.create")}
+            </Text>
+          </Pressable>
+          {editingCultural && (
+            <Pressable
+              onPress={resetCultural}
+              className="rounded-xl px-4 py-3 active:opacity-80"
+              style={{ backgroundColor: M.pillBg }}
+            >
+              <Text className="font-semibold" style={{ color: M.text }}>
+                {t("common.cancel")}
+              </Text>
+            </Pressable>
+          )}
+        </View>
+        </>
+        ) : null}
+      </View>
 
       {/* Search */}
       <View className="mt-5 px-5">
-        <View className="flex-row items-center rounded-xl bg-neutral-100 px-3 dark:bg-neutral-800">
+        <View className="flex-row items-center rounded-xl px-3" style={{ backgroundColor: M.pillBg }}>
           <IconSymbol name="magnifyingglass" size={16} color={M.muted} />
           <TextInput
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder={
-              tab === "proverbs"
-                ? t("educator.culture.searchProverbs")
-                : t("educator.culture.searchCultural")
-            }
+            placeholder={t("educator.culture.searchCultural")}
             placeholderTextColor={M.muted}
             autoCapitalize="none"
             autoCorrect={false}
-            className="ml-2 flex-1 py-2.5 text-sm text-neutral-900 dark:text-white"
+            style={{ color: M.text }}
+            className="ml-2 flex-1 py-2.5 text-sm"
           />
           {searchQuery.length > 0 && (
             <Pressable onPress={() => setSearchQuery("")} hitSlop={8}>
@@ -876,20 +671,13 @@ export default function EducatorCultureScreen() {
       </View>
 
       <View className="mt-4 px-5">
-        <Text className="mb-2 text-xs font-semibold uppercase tracking-[1.4px] text-neutral-400 dark:text-neutral-500">
-          {tab === "proverbs"
-            ? q
-              ? t("educator.culture.proverbsCountFiltered", {
-                  count: filteredProverbs.length,
-                  total: proverbs.length,
-                })
-              : t("educator.culture.proverbsCount", { count: filteredProverbs.length })
-            : q
-              ? t("educator.culture.culturalCountFiltered", {
-                  count: filteredCultural.length,
-                  total: culturalItems.length,
-                })
-              : t("educator.culture.culturalCount", { count: filteredCultural.length })}
+        <Text className="mb-2 text-xs font-semibold uppercase tracking-[1.4px]" style={{ color: M.muted }}>
+          {q
+            ? t("educator.culture.culturalCountFiltered", {
+                count: filteredCultural.length,
+                total: culturalItems.length,
+              })
+            : t("educator.culture.culturalCount", { count: filteredCultural.length })}
         </Text>
       </View>
     </View>
@@ -897,133 +685,67 @@ export default function EducatorCultureScreen() {
 
   // ── renderItem ────────────────────────────────────────────────────────────────
 
-  const renderItem = ({ item }: { item: Proverb | CulturalItem }) => {
-    if (tab === "proverbs") {
-      const p = item as Proverb;
-      return (
-        <View className="mx-5 rounded-2xl border border-neutral-200 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-900">
-          <View className="flex-row items-start justify-between">
-            <View className="flex-1 pr-3">
-              <Text
-                className="text-base font-semibold italic text-neutral-900 dark:text-white"
-                numberOfLines={2}
-              >
-                &ldquo;{p.text}&rdquo;
-              </Text>
-              <Text
-                className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400"
-                numberOfLines={1}
-              >
-                {localize(p.translation, "en")}
-              </Text>
-              <Text
-                className="mt-1 text-xs text-neutral-400 dark:text-neutral-500"
-                numberOfLines={2}
-              >
-                {localize(p.meaning, "en")}
-              </Text>
-            </View>
-            <View className="flex-row gap-2">
-              <Pressable
-                onPress={() => startEditProverb(p)}
-                className="rounded-full bg-neutral-100 p-2 dark:bg-neutral-800"
-              >
-                <IconSymbol name="gearshape.fill" size={14} color={M.muted} />
-              </Pressable>
-              <Pressable
-                onPress={() => confirmDeleteProverb(p.id)}
-                className="rounded-full bg-red-100 p-2 dark:bg-red-900/40"
-              >
-                <IconSymbol name="xmark.circle.fill" size={14} color={M.error} />
-              </Pressable>
-            </View>
-          </View>
-          {(p.tags ?? []).length > 0 && (
-            <View className="mt-2 flex-row flex-wrap gap-1.5">
-              {p.tags!.map((tag) => (
-                <View
-                  key={tag}
-                  className="rounded-full bg-amber-100 px-2 py-0.5 dark:bg-amber-900/40"
-                >
-                  <Text className="text-[10px] font-semibold text-amber-700 dark:text-amber-400">
-                    {tag}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
-      );
-    }
-
-    const c = item as CulturalItem;
-    return (
-      <View className="mx-5 rounded-2xl border border-neutral-200 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-900">
-        <View className="flex-row items-center justify-between">
-          <View className="flex-1 flex-row items-center gap-2.5 pr-3">
-            <Text className="text-2xl">{c.imageEmoji}</Text>
-            <View className="flex-1">
-              <Text className="text-base font-semibold text-neutral-900 dark:text-white">
-                {localize(c.title, "en")}
-              </Text>
-              <Text
-                className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500"
-                numberOfLines={1}
-              >
-                {localize(c.description, "en")}
-              </Text>
-            </View>
-          </View>
-          <View className="flex-row gap-2">
-            <Pressable
-              onPress={() => startEditCultural(c)}
-              className="rounded-full bg-neutral-100 p-2 dark:bg-neutral-800"
+  const renderItem = ({ item }: { item: CulturalItem }) => (
+    <View className="mx-5 rounded-2xl border p-3" style={{ backgroundColor: M.card, borderColor: M.border }}>
+      <View className="flex-row items-center justify-between">
+        <View className="flex-1 flex-row items-center gap-2.5 pr-3">
+          <Text className="text-2xl">{item.imageEmoji}</Text>
+          <View className="flex-1">
+            <Text className="text-base font-semibold" style={{ color: M.text }}>
+              {localize(item.title, "en")}
+            </Text>
+            <Text
+              className="mt-0.5 text-xs"
+              style={{ color: M.muted }}
+              numberOfLines={1}
             >
-              <IconSymbol name="gearshape.fill" size={14} color={M.muted} />
-            </Pressable>
-            <Pressable
-              onPress={() => confirmDeleteCultural(c.id)}
-              className="rounded-full bg-red-100 p-2 dark:bg-red-900/40"
-            >
-              <IconSymbol name="xmark.circle.fill" size={14} color={M.error} />
-            </Pressable>
-          </View>
-        </View>
-        <View className="mt-2 flex-row items-center gap-2">
-          <View className="self-start rounded-full bg-purple-100 px-2 py-0.5 dark:bg-purple-900/40">
-            <Text className="text-[10px] font-semibold uppercase text-purple-700 dark:text-purple-400">
-              {(t as (k: string) => string)(`educator.culture.categories.${c.category}`)}
+              {localize(item.description, "en")}
             </Text>
           </View>
-          {(c.keyTerms ?? []).length > 0 && (
-            <Text className="text-xs text-neutral-400 dark:text-neutral-500">
-              {t("educator.culture.keyTermsCount", { count: c.keyTerms!.length })}
-            </Text>
-          )}
+        </View>
+        <View className="flex-row gap-2">
+          <Pressable
+            onPress={() => startEditCultural(item)}
+            className="rounded-full p-2"
+            style={{ backgroundColor: M.pillBg }}
+          >
+            <IconSymbol name="gearshape.fill" size={14} color={M.muted} />
+          </Pressable>
+          <Pressable
+            onPress={() => confirmDeleteCultural(item.id)}
+            className="rounded-full p-2"
+            style={{ backgroundColor: M.errorBg }}
+          >
+            <IconSymbol name="xmark.circle.fill" size={14} color={M.error} />
+          </Pressable>
         </View>
       </View>
-    );
-  };
+      <View className="mt-2 flex-row items-center gap-2">
+        <View className="self-start rounded-full bg-purple-100 px-2 py-0.5 dark:bg-purple-900/40">
+          <Text className="text-[10px] font-semibold uppercase text-purple-700 dark:text-purple-400">
+            {(t as (k: string) => string)(`educator.culture.categories.${item.category}`)}
+          </Text>
+        </View>
+        {(item.keyTerms ?? []).length > 0 && (
+          <Text className="text-xs" style={{ color: M.muted }}>
+            {t("educator.culture.keyTermsCount", { count: item.keyTerms!.length })}
+          </Text>
+        )}
+      </View>
+    </View>
+  );
 
   // ── Empty state ───────────────────────────────────────────────────────────────
 
   const listEmpty = (
     <View className="px-5">
       {isLoading ? (
-        <Text className="text-sm text-neutral-500 dark:text-neutral-400">{t("common.loading")}</Text>
+        <Text className="text-sm" style={{ color: M.sub }}>{t("common.loading")}</Text>
       ) : (
         <View className="items-center py-12">
-          <IconSymbol
-            name={tab === "proverbs" ? "quote.bubble.fill" : "globe"}
-            size={32}
-            color={M.border}
-          />
-          <Text className="mt-3 text-center text-sm text-neutral-400 dark:text-neutral-500">
-            {q
-              ? t("educator.culture.noResults")
-              : tab === "proverbs"
-                ? t("educator.culture.noProverbs")
-                : t("educator.culture.noCultural")}
+          <IconSymbol name="globe" size={32} color={M.border} />
+          <Text className="mt-3 text-center text-sm" style={{ color: M.muted }}>
+            {q ? t("educator.culture.noResults") : t("educator.culture.noCultural")}
           </Text>
         </View>
       )}
@@ -1033,7 +755,7 @@ export default function EducatorCultureScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("educator.nav.culture"), headerBackTitle: "Back" }} />
-      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+      <SafeAreaView className="flex-1" style={{ backgroundColor: M.bg }} edges={["top"]}>
         <View className="flex-row items-center px-5 pb-1 pt-2">
           <Pressable onPress={() => router.back()} hitSlop={12} className="-ml-1 p-1 active:opacity-60">
             <IconSymbol name="chevron.left" size={22} color={M.text} />
@@ -1049,7 +771,7 @@ export default function EducatorCultureScreen() {
         />
         <FlatList
           ref={flatListRef}
-          data={listData}
+          data={filteredCultural}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           keyboardShouldPersistTaps="handled"

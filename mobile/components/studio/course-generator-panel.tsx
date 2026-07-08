@@ -2,6 +2,7 @@ import { friendlyError } from "@/lib/api";
 import type { EducatorCourse, EducatorStubCourseType } from "@/lib/hooks/use-educator-panel";
 import { useGenerateEducatorStubs } from "@/lib/hooks/use-educator-panel";
 import { getLanguageName } from "@/lib/mock-data";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -36,6 +37,7 @@ export function CourseGeneratorPanel({
   onSuccess: (title: string, body: string) => void;
   onError: (title: string, body: string) => void;
 }>) {
+  const M = useMuseumTheme();
   const { t } = useTranslation();
   const [courseActionMode, setCourseActionMode] = useState<CourseActionMode>("generate");
   const [selectedStubType, setSelectedStubType] = useState<EducatorStubCourseType>("first-words");
@@ -90,22 +92,24 @@ export function CourseGeneratorPanel({
   const actionButtonLabel = generateStubs.isPending ? t("common.loading") : generateLabel;
 
   return (
-    <View className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800">
-      <Text className="text-xs font-semibold uppercase tracking-[1.2px] text-neutral-400 dark:text-neutral-500">
+    <View className="rounded-2xl border p-4" style={{ backgroundColor: M.card, borderColor: M.border }}>
+      <Text className="text-xs font-semibold uppercase tracking-[1.2px]" style={{ color: M.muted }}>
         Add Courses
       </Text>
 
-      <View className="mt-3 flex-row rounded-xl bg-neutral-100 p-1 dark:bg-neutral-700">
+      <View className="mt-3 flex-row rounded-xl p-1" style={{ backgroundColor: M.pillBg }}>
         {(["new", "generate"] as CourseActionMode[]).map((mode) => {
           const active = courseActionMode === mode;
           return (
             <Pressable
               key={mode}
               onPress={() => setCourseActionMode(mode)}
-              className={`flex-1 rounded-lg px-3 py-2 ${active ? "bg-white dark:bg-neutral-600" : "bg-transparent"}`}
+              className="flex-1 rounded-lg px-3 py-2"
+              style={{ backgroundColor: active ? M.card : "transparent" }}
             >
               <Text
-                className={`text-center text-xs font-semibold ${active ? "text-neutral-900 dark:text-white" : "text-neutral-500 dark:text-neutral-400"}`}
+                className="text-center text-xs font-semibold"
+                style={{ color: active ? M.text : M.sub }}
               >
                 {mode === "new" ? "Starter Set" : "One Type"}
               </Text>
@@ -116,13 +120,13 @@ export function CourseGeneratorPanel({
 
       {courseActionMode === "new" ? (
         <View className="mt-3">
-          <Text className="text-xs text-neutral-500 dark:text-neutral-400">
+          <Text className="text-xs" style={{ color: M.sub }}>
             Seeds all {STUB_TYPES.length} recommended course types with lesson stubs for{" "}
             <Text className="font-semibold">{getLanguageName(activeLanguageId)}</Text>.
           </Text>
           {hasCoursesForLanguage ? (
-            <View className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-700 dark:bg-amber-950/30">
-              <Text className="text-xs font-semibold text-amber-700 dark:text-amber-300">
+            <View className="mt-2 rounded-xl border px-3 py-2" style={{ backgroundColor: M.warningBg, borderColor: M.warningBorder }}>
+              <Text className="text-xs font-semibold" style={{ color: M.warning }}>
                 Courses already exist. Only missing types will be added.
               </Text>
             </View>
@@ -130,7 +134,7 @@ export function CourseGeneratorPanel({
         </View>
       ) : (
         <View className="mt-3">
-          <Text className="mb-2 text-xs text-neutral-500 dark:text-neutral-400">
+          <Text className="mb-2 text-xs" style={{ color: M.sub }}>
             Choose which course type to generate:
           </Text>
           {missingStubTypes.length > 0 ? (
@@ -141,10 +145,15 @@ export function CourseGeneratorPanel({
                   <Pressable
                     key={stubType.value}
                     onPress={() => setSelectedStubType(stubType.value)}
-                    className={`rounded-full border px-3 py-1.5 ${active ? "border-fuchsia-500 bg-fuchsia-50 dark:bg-fuchsia-950/30" : "border-neutral-300 bg-white dark:border-neutral-600 dark:bg-neutral-900"}`}
+                    className="rounded-full border px-3 py-1.5"
+                    style={{
+                      backgroundColor: active ? M.accentGlow : M.card,
+                      borderColor: active ? M.accent : M.border,
+                    }}
                   >
                     <Text
-                      className={`text-xs font-semibold ${active ? "text-fuchsia-700 dark:text-fuchsia-300" : "text-neutral-600 dark:text-neutral-300"}`}
+                      className="text-xs font-semibold"
+                      style={{ color: active ? M.accent : M.text }}
                     >
                       {stubType.label}
                     </Text>
@@ -153,8 +162,8 @@ export function CourseGeneratorPanel({
               })}
             </ScrollView>
           ) : (
-            <View className="rounded-xl bg-emerald-50 px-3 py-2 dark:bg-emerald-950/30">
-              <Text className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+            <View className="rounded-xl px-3 py-2" style={{ backgroundColor: M.successBg }}>
+              <Text className="text-xs font-semibold" style={{ color: M.success }}>
                 All course types already exist for this language.
               </Text>
             </View>
@@ -165,7 +174,7 @@ export function CourseGeneratorPanel({
       <Pressable
         onPress={runCourseAction}
         disabled={generateStubs.isPending || (courseActionMode === "generate" && missingStubTypes.length === 0)}
-        className="mt-4 rounded-xl bg-fuchsia-600 py-3 active:opacity-80 disabled:opacity-50"
+        className="mt-4 rounded-xl bg-brand-600 py-3 active:opacity-80 disabled:opacity-50"
       >
         <Text className="text-center text-sm font-semibold text-white">{actionButtonLabel}</Text>
       </Pressable>

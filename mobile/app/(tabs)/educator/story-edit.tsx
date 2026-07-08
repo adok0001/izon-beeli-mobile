@@ -1,6 +1,5 @@
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { getAccent } from "@/constants/accent-colors";
 import { friendlyError } from "@/lib/api";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -46,9 +45,9 @@ function ChapterEditor({
 }>) {
   const M = useMuseumTheme();
   return (
-    <View className="mb-4 rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-900">
+    <View className="mb-4 rounded-2xl border p-4" style={{ backgroundColor: M.card, borderColor: M.border }}>
       <View className="mb-3 flex-row items-center justify-between">
-        <Text className="text-xs font-bold uppercase tracking-widest text-amber-500">
+        <Text className="text-xs font-bold uppercase tracking-widest" style={{ color: M.warning }}>
           {t("educator.story.chapterLabel", { number: index + 1 })}
         </Text>
         <Pressable onPress={onDelete} hitSlop={8}>
@@ -56,18 +55,19 @@ function ChapterEditor({
         </Pressable>
       </View>
 
-      <Text className="mb-1 text-xs font-semibold text-neutral-500 dark:text-neutral-400">
+      <Text className="mb-1 text-xs font-semibold" style={{ color: M.sub }}>
         {t("educator.story.chapterTitleLabel")}
       </Text>
       <TextInput
         value={chapter.title}
         onChangeText={(v) => onChange({ ...chapter, title: v })}
         placeholder={t("educator.story.chapterTitlePlaceholder")}
-        className="mb-3 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+        className="mb-3 rounded-xl border px-3 py-2.5 text-sm"
+        style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
         placeholderTextColor={M.muted}
       />
 
-      <Text className="mb-1 text-xs font-semibold text-neutral-500 dark:text-neutral-400">
+      <Text className="mb-1 text-xs font-semibold" style={{ color: M.sub }}>
         {t("educator.story.chapterLessonLabel")}
       </Text>
       <ScrollView
@@ -80,18 +80,15 @@ function ChapterEditor({
             <Pressable
               key={l.id}
               onPress={() => onChange({ ...chapter, lessonId: l.id })}
-              className={`rounded-lg border px-2.5 py-1.5 ${
-                chapter.lessonId === l.id
-                  ? "border-amber-400 bg-amber-50 dark:border-amber-600 dark:bg-amber-900/20"
-                  : "border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800"
-              }`}
+              className="rounded-lg border px-2.5 py-1.5"
+              style={{
+                backgroundColor: chapter.lessonId === l.id ? M.warningBg : M.pillBg,
+                borderColor: chapter.lessonId === l.id ? M.warningBorder : M.border,
+              }}
             >
               <Text
-                className={`text-xs font-semibold ${
-                  chapter.lessonId === l.id
-                    ? "text-amber-700 dark:text-amber-400"
-                    : "text-neutral-600 dark:text-neutral-400"
-                }`}
+                className="text-xs font-semibold"
+                style={{ color: chapter.lessonId === l.id ? M.warning : M.sub }}
                 numberOfLines={1}
               >
                 {l.title}
@@ -101,7 +98,7 @@ function ChapterEditor({
         </View>
       </ScrollView>
 
-      <Text className="mb-1 text-xs font-semibold text-neutral-500 dark:text-neutral-400">
+      <Text className="mb-1 text-xs font-semibold" style={{ color: M.sub }}>
         {t("educator.story.chapterNarrativeIntroLabel")}
       </Text>
       <TextInput
@@ -110,12 +107,13 @@ function ChapterEditor({
         placeholder={t("educator.story.chapterNarrativeIntroPlaceholder")}
         multiline
         numberOfLines={3}
-        className="mb-3 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+        className="mb-3 rounded-xl border px-3 py-2.5 text-sm"
+        style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
         placeholderTextColor={M.muted}
         textAlignVertical="top"
       />
 
-      <Text className="mb-1 text-xs font-semibold text-neutral-500 dark:text-neutral-400">
+      <Text className="mb-1 text-xs font-semibold" style={{ color: M.sub }}>
         {t("educator.story.chapterNarrativeOutroLabel")}
       </Text>
       <TextInput
@@ -124,7 +122,8 @@ function ChapterEditor({
         placeholder={t("educator.story.chapterNarrativeOutroPlaceholder")}
         multiline
         numberOfLines={3}
-        className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+        className="rounded-xl border px-3 py-2.5 text-sm"
+        style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
         placeholderTextColor={M.muted}
         textAlignVertical="top"
       />
@@ -250,7 +249,7 @@ export default function StoryEditScreen() {
               disabled={saving}
               className="mr-2"
             >
-              <Text className="text-base font-semibold text-amber-500 disabled:opacity-50">
+              <Text className="text-base font-semibold disabled:opacity-50" style={{ color: M.warning }}>
                 {saving ? t("educator.story.saving") : t("educator.story.saveHeader")}
               </Text>
             </Pressable>
@@ -264,16 +263,16 @@ export default function StoryEditScreen() {
         type={toast.type}
         onDismiss={dismissToast}
       />
-      <SafeAreaView className="flex-1 bg-neutral-50 dark:bg-neutral-950" edges={["bottom"]}>
+      <SafeAreaView className="flex-1" style={{ backgroundColor: M.bg }} edges={["bottom"]}>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         {isLoading ? (
           <View className="flex-1 items-center justify-center">
-            <Text className="text-sm text-neutral-400">{t("educator.story.loading")}</Text>
+            <Text className="text-sm" style={{ color: M.muted }}>{t("educator.story.loading")}</Text>
           </View>
         ) : !arc ? (
           <View className="flex-1 items-center justify-center px-8">
             <IconSymbol name="exclamationmark.triangle" size={40} color={M.border} />
-            <Text className="mt-4 text-center text-base text-neutral-500">
+            <Text className="mt-4 text-center text-base" style={{ color: M.sub }}>
               {t("educator.story.noArcsTitle")}
             </Text>
           </View>
@@ -284,18 +283,19 @@ export default function StoryEditScreen() {
             keyboardShouldPersistTaps="handled"
           >
             {/* Arc metadata */}
-            <View className="mb-5 rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-900">
-              <Text className="mb-1 text-xs font-semibold uppercase tracking-wider text-neutral-400">
+            <View className="mb-5 rounded-2xl border p-4" style={{ backgroundColor: M.card, borderColor: M.border }}>
+              <Text className="mb-1 text-xs font-semibold uppercase tracking-wider" style={{ color: M.muted }}>
                 {t("educator.story.labelArcTitle")}
               </Text>
               <TextInput
                 value={title}
                 onChangeText={setTitle}
-                className="mb-3 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                className="mb-3 rounded-xl border px-3 py-2.5 text-base"
+                style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
                 placeholderTextColor={M.muted}
                 placeholder={t("educator.story.arcTitlePlaceholder")}
               />
-              <Text className="mb-1 text-xs font-semibold uppercase tracking-wider text-neutral-400">
+              <Text className="mb-1 text-xs font-semibold uppercase tracking-wider" style={{ color: M.muted }}>
                 {t("educator.story.labelDescription")}
               </Text>
               <TextInput
@@ -303,7 +303,8 @@ export default function StoryEditScreen() {
                 onChangeText={setDescription}
                 multiline
                 numberOfLines={3}
-                className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                className="rounded-xl border px-3 py-2.5 text-base"
+                style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
                 placeholderTextColor={M.muted}
                 placeholder={t("educator.story.arcDescriptionPlaceholder")}
                 textAlignVertical="top"
@@ -312,24 +313,24 @@ export default function StoryEditScreen() {
 
             {/* Chapter list */}
             <View className="mb-3 flex-row items-center justify-between">
-              <Text className="text-xs font-semibold uppercase tracking-[1.5px] text-neutral-400 dark:text-neutral-500">
+              <Text className="text-xs font-semibold uppercase tracking-[1.5px]" style={{ color: M.muted }}>
                 {t("educator.story.chaptersCount", { count: chapters.length })}
               </Text>
               <Pressable
                 onPress={addChapter}
                 className="flex-row items-center gap-1"
               >
-                <IconSymbol name="plus.circle.fill" size={18} color={getAccent("amber").solid} />
-                <Text className="text-sm font-semibold text-amber-500">
+                <IconSymbol name="plus.circle.fill" size={18} color={M.warning} />
+                <Text className="text-sm font-semibold" style={{ color: M.warning }}>
                   {t("educator.story.addChapter")}
                 </Text>
               </Pressable>
             </View>
 
             {chapters.length === 0 ? (
-              <View className="mb-4 items-center rounded-2xl border border-dashed border-neutral-300 py-10 dark:border-neutral-700">
+              <View className="mb-4 items-center rounded-2xl border border-dashed py-10" style={{ borderColor: M.border }}>
                 <IconSymbol name="book.pages" size={32} color={M.border} />
-                <Text className="mt-2 text-sm text-neutral-400">
+                <Text className="mt-2 text-sm" style={{ color: M.muted }}>
                   {t("educator.story.noChapters")}
                 </Text>
               </View>
@@ -357,7 +358,8 @@ export default function StoryEditScreen() {
             <Pressable
               onPress={handleSave}
               disabled={saving}
-              className="mt-2 items-center rounded-xl bg-amber-500 py-4 active:opacity-80 disabled:opacity-50"
+              className="mt-2 items-center rounded-xl py-4 active:opacity-80 disabled:opacity-50"
+              style={{ backgroundColor: M.warning }}
             >
               <Text className="text-base font-bold text-white">
                 {saving ? t("educator.story.saving") : t("educator.story.saveButton")}
