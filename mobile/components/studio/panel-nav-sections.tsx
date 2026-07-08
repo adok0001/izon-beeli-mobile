@@ -267,7 +267,7 @@ export function ExploreSection({ currentUser, open, onToggle }: SectionProps) {
       <SubRow label="Cultural" meta="Cultural notes, ceremonies" onPress={() => router.push("/educator/culture" as never)} />
       {currentUser.isAdmin && (
         <>
-          <SubRow label="Discover" meta="Series, films" badge="Admin" onPress={() => router.push("/admin/discover-stories" as never)} />
+          <SubRow label="Discover" meta="Blogs, podcasts, films" badge="Admin" onPress={() => router.push("/admin/culture-content" as never)} />
           <SubRow label="Today" meta="Word / proverb / song of the day" badge="Admin" onPress={() => router.push("/admin/daily-content" as never)} />
         </>
       )}

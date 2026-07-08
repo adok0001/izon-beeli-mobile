@@ -174,7 +174,7 @@ export default function AdminPanelScreen() {
             <SectionShell
               icon="film.fill"
               label="Content Ops"
-              meta="4 tools"
+              meta="3 tools"
               open={openSection === "content"}
               onToggle={() => setOpenSection((s) => (s === "content" ? null : "content"))}
               accent={getAccent("teal").solid}
@@ -188,11 +188,6 @@ export default function AdminPanelScreen() {
                 label={t("admin.cultureContent.title")}
                 meta={t("admin.cultureContent.subtitle")}
                 onPress={() => router.push("/admin/culture-content")}
-              />
-              <SubRow
-                label={t("admin.discoverStories.title")}
-                meta={t("admin.discoverStories.navDetail")}
-                onPress={() => router.push("/admin/discover-stories")}
               />
               <SubRow
                 label={t("admin.nav.media")}

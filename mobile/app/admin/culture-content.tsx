@@ -7,8 +7,8 @@ import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { DiscoverContentType, DiscoverItem } from "@/types";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Stack } from "expo-router";
-import { useState, useMemo } from "react";
+import { Stack, useLocalSearchParams } from "expo-router";
+import { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
@@ -402,6 +402,7 @@ export default function CultureContentAdminScreen() {
   const M = useMuseumTheme();
   const { getToken } = useAuth();
   const qc = useQueryClient();
+  const { editId, newStoryId } = useLocalSearchParams<{ editId?: string; newStoryId?: string }>();
   const [filter, setFilter] = useState<ContentFilter>("all");
   const [search, setSearch] = useState("");
   const [modalMode, setModalMode] = useState<"create" | "edit" | null>(null);
@@ -417,6 +418,30 @@ export default function CultureContentAdminScreen() {
     queryFn: () => authedFetch("/culture-items"),
     placeholderData: [],
   });
+
+  const { data: interactiveStories } = useInteractiveStories();
+  const { data: storyArcs } = useStoryArcs();
+  const storyTitleById = useMemo(() => {
+    const map = new Map<string, string>();
+    (interactiveStories ?? []).forEach((s) => map.set(s.id, s.title));
+    (storyArcs ?? []).forEach((a) => map.set(a.id, a.title));
+    return map;
+  }, [interactiveStories, storyArcs]);
+
+  useEffect(() => {
+    if (!editId) return;
+    const target = items.find((i) => i.id === editId);
+    if (target) {
+      setEditTarget(target);
+      setModalMode("edit");
+    }
+  }, [editId, items]);
+
+  useEffect(() => {
+    if (!newStoryId || modalMode) return;
+    setEditTarget({ id: "", ...EMPTY_FORM, type: "film", storyId: newStoryId } as DiscoverItem);
+    setModalMode("create");
+  }, [newStoryId, modalMode]);
 
   const createItem = useMutation({
     mutationFn: (data: Omit<DiscoverItem, "id">) => {
@@ -618,6 +643,21 @@ export default function CultureContentAdminScreen() {
                           {item.coverEmoji} {item.title}
                         </Text>
                         <Text style={{ fontSize: 11, color: M.muted, marginTop: 2 }}>{item.author}</Text>
+                        {(item.type === "film" || item.type === "podcast") && item.storyId && (
+                          storyTitleById.has(item.storyId) ? (
+                            <View className="self-start flex-row items-center rounded-full px-2 py-0.5 mt-2" style={{ backgroundColor: M.pillBg, borderWidth: 1, borderColor: M.border }}>
+                              <Text style={{ fontSize: 10, fontWeight: "700", color: M.sub }}>
+                                {t("admin.cultureContent.linkedStoryBadge", { title: storyTitleById.get(item.storyId) ?? "" })}
+                              </Text>
+                            </View>
+                          ) : (
+                            <View className="self-start flex-row items-center rounded-full px-2 py-0.5 mt-2" style={{ backgroundColor: M.errorBg, borderWidth: 1, borderColor: M.errorBorder }}>
+                              <Text style={{ fontSize: 10, fontWeight: "700", color: M.error }}>
+                                {t("admin.cultureContent.brokenStoryBadge")}
+                              </Text>
+                            </View>
+                          )
+                        )}
                       </View>
                     </View>
 
