@@ -1,7 +1,10 @@
 import { useEffect, useRef } from "react";
 import { AppState, type AppStateStatus, Platform } from "react-native";
 import { apiFetch } from "@/lib/api";
+import { localize } from "@/lib/localize";
 import { useLanguageStore } from "@/store/language-store";
+import { useUiLanguageStore, type UiLanguage } from "@/store/ui-language-store";
+import type { LocalizedText } from "@/types";
 
 // Lazy-load the native module so the app still works before a native build
 function getWidgetModule() {
@@ -12,7 +15,7 @@ function getWidgetModule() {
   }
 }
 
-async function syncWidgets(languageId: string) {
+async function syncWidgets(languageId: string, uiLanguage: UiLanguage) {
   const mod = getWidgetModule();
   if (!mod) {
     console.warn("[WidgetSync] Native BeeliWidget module not available");
@@ -24,7 +27,7 @@ async function syncWidgets(languageId: string) {
   const [wotd, potm, sotw] = await Promise.allSettled([
     apiFetch<{ entry: { word: string; pronunciation?: string; english: string } | null }>(`/daily-content/wotd?languageId=${encoded}`),
     apiFetch<{ proverb: { text: string; translation: string } | null }>(`/daily-content/potm?languageId=${encoded}`),
-    apiFetch<{ lesson: { title: string } | null }>(`/daily-content/sotw?languageId=${encoded}`),
+    apiFetch<{ lesson: { title: string | LocalizedText } | null }>(`/daily-content/sotw?languageId=${encoded}`),
   ]);
 
   const nativeAvailable = mod.isNativeModuleLoaded?.() ?? false;
@@ -51,7 +54,7 @@ async function syncWidgets(languageId: string) {
   }
 
   if (sotw.status === "fulfilled" && sotw.value.lesson) {
-    mod.writeSotw({ title: sotw.value.lesson.title, languageId });
+    mod.writeSotw({ title: localize(sotw.value.lesson.title, uiLanguage, "—"), languageId });
     wrote = true;
   } else if (sotw.status === "rejected") {
     console.warn("[WidgetSync] sotw fetch failed:", sotw.reason);
@@ -69,6 +72,7 @@ async function syncWidgets(languageId: string) {
 
 export function useWidgetSync() {
   const languageId = useLanguageStore((s) => s.selectedLanguageId);
+  const uiLanguage = useUiLanguageStore((s) => s.uiLanguage);
   const lastSynced = useRef<string | null>(null);
 
   useEffect(() => {
@@ -78,16 +82,16 @@ export function useWidgetSync() {
 
     console.warn("[WidgetSync] starting sync for language:", languageId);
     // Sync immediately on mount
-    syncWidgets(languageId).catch((e) => console.warn("[WidgetSync] uncaught:", e));
+    syncWidgets(languageId, uiLanguage).catch((e) => console.warn("[WidgetSync] uncaught:", e));
     lastSynced.current = languageId;
 
     const handler = (state: AppStateStatus) => {
       if (state === "active") {
-        syncWidgets(languageId).catch(() => {});
+        syncWidgets(languageId, uiLanguage).catch(() => {});
       }
     };
 
     const sub = AppState.addEventListener("change", handler);
     return () => sub.remove();
-  }, [languageId]);
+  }, [languageId, uiLanguage]);
 }
