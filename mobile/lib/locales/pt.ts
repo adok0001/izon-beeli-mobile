@@ -2357,6 +2357,7 @@ export const pt = {
       chapterTitleLabel: "Título do capítulo",
       chapterTitlePlaceholder: "ex.: A Chegar à Margem do Rio",
       chapterLessonLabel: "Lição",
+      openLessonHint: "Abrir lição · editar o roteiro",
       chapterNarrativeIntroLabel: "Introdução narrativa",
       chapterNarrativeIntroPlaceholder: "O que acontece antes de esta lição começar…",
       chapterNarrativeOutroLabel: "Desfecho narrativo",

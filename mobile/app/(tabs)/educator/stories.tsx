@@ -141,7 +141,19 @@ export default function EducatorStoriesScreen() {
         type={toast.type}
         onDismiss={dismissToast}
       />
-      <SafeAreaView className="flex-1 bg-neutral-50 dark:bg-neutral-950" edges={["bottom"]}>
+      <SafeAreaView className="flex-1 bg-neutral-50 dark:bg-neutral-950" edges={["top", "bottom"]}>
+        <View className="flex-row items-center justify-between px-5 pb-1 pt-2">
+          <Pressable onPress={() => router.back()} hitSlop={12} className="-ml-1 p-1 active:opacity-60">
+            <IconSymbol name="chevron.left" size={22} color={M.text} />
+          </Pressable>
+          <Pressable
+            onPress={() => router.push("/educator/story-new" as never)}
+            hitSlop={12}
+            className="p-1 active:opacity-60"
+          >
+            <IconSymbol name="plus.circle.fill" size={22} color={getAccent("amber").solid} />
+          </Pressable>
+        </View>
         <ScrollView
           contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
           showsVerticalScrollIndicator={false}

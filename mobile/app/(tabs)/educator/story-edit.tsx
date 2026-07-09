@@ -11,6 +11,8 @@ import {
   useUpdateStoryArc,
 } from "@/lib/hooks/use-educator-panel";
 import { useToast } from "@/lib/hooks/use-toast";
+import { localize } from "@/lib/localize";
+import { useUiLanguageStore } from "@/store/ui-language-store";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -34,6 +36,7 @@ function ChapterEditor({
   lessonOptions,
   onChange,
   onDelete,
+  onOpenLesson,
   t,
 }: Readonly<{
   index: number;
@@ -41,9 +44,11 @@ function ChapterEditor({
   lessonOptions: { id: string; title: string }[];
   onChange: (updated: ChapterDraft) => void;
   onDelete: () => void;
+  onOpenLesson: (lessonId: string) => void;
   t: (key: string, opts?: Record<string, unknown>) => string;
 }>) {
   const M = useMuseumTheme();
+  const selectedLesson = lessonOptions.find((l) => l.id === chapter.lessonId);
   return (
     <View className="mb-4 rounded-2xl border p-4" style={{ backgroundColor: M.card, borderColor: M.border }}>
       <View className="mb-3 flex-row items-center justify-between">
@@ -98,6 +103,25 @@ function ChapterEditor({
         </View>
       </ScrollView>
 
+      {selectedLesson ? (
+        <Pressable
+          onPress={() => onOpenLesson(chapter.lessonId)}
+          className="mb-3 flex-row items-center gap-2.5 rounded-xl border px-3 py-2.5 active:opacity-70"
+          style={{ backgroundColor: M.warningBg, borderColor: M.warningBorder }}
+        >
+          <IconSymbol name="waveform" size={16} color={M.warning} />
+          <View className="flex-1">
+            <Text className="text-xs font-bold" style={{ color: M.text }} numberOfLines={1}>
+              {selectedLesson.title}
+            </Text>
+            <Text className="text-[11px]" style={{ color: M.muted }}>
+              {t("educator.story.openLessonHint")}
+            </Text>
+          </View>
+          <IconSymbol name="chevron.right" size={13} color={M.warning} />
+        </Pressable>
+      ) : null}
+
       <Text className="mb-1 text-xs font-semibold" style={{ color: M.sub }}>
         {t("educator.story.chapterNarrativeIntroLabel")}
       </Text>
@@ -138,6 +162,7 @@ export default function StoryEditScreen() {
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
   const { canAccess } = useStudioAccess();
+  const { uiLanguage } = useUiLanguageStore();
 
   const { data: arc, isLoading } = useEducatorStoryArc(courseId, canAccess);
   const { data: allLessons = [] } = useEducatorLessons(canAccess);
@@ -263,7 +288,12 @@ export default function StoryEditScreen() {
         type={toast.type}
         onDismiss={dismissToast}
       />
-      <SafeAreaView className="flex-1" style={{ backgroundColor: M.bg }} edges={["bottom"]}>
+      <SafeAreaView className="flex-1" style={{ backgroundColor: M.bg }} edges={["top", "bottom"]}>
+        <View className="flex-row items-center px-5 pb-1 pt-2">
+          <Pressable onPress={() => router.back()} hitSlop={12} className="-ml-1 p-1 active:opacity-60">
+            <IconSymbol name="chevron.left" size={22} color={M.text} />
+          </Pressable>
+        </View>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         {isLoading ? (
           <View className="flex-1 items-center justify-center">
@@ -342,7 +372,7 @@ export default function StoryEditScreen() {
                   chapter={ch}
                   lessonOptions={courseLessons.map((l) => ({
                     id: l.id,
-                    title: l.title,
+                    title: localize(l.title, uiLanguage),
                   }))}
                   onChange={(updated) =>
                     setChapters((prev) =>
@@ -350,6 +380,12 @@ export default function StoryEditScreen() {
                     )
                   }
                   onDelete={() => confirmDeleteChapter(i)}
+                  onOpenLesson={(lessonId) =>
+                    router.push({
+                      pathname: "/educator/lesson-edit",
+                      params: { lessonId, courseId },
+                    } as never)
+                  }
                   t={(key, opts) => t(key as any, opts as any) as string}
                 />
               ))

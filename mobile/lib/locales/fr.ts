@@ -2393,6 +2393,7 @@ export const fr = {
       chapterTitleLabel: "Titre du chapitre",
       chapterTitlePlaceholder: "ex. Arrivée au bord de l'eau",
       chapterLessonLabel: "Leçon",
+      openLessonHint: "Ouvrir la leçon · modifier le script",
       chapterNarrativeIntroLabel: "Introduction narrative",
       chapterNarrativeIntroPlaceholder: "Ce qui se passe avant le début de cette leçon…",
       chapterNarrativeOutroLabel: "Conclusion narrative",

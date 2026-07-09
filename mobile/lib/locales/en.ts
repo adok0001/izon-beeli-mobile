@@ -2453,6 +2453,7 @@ export const en = {
       chapterTitleLabel: "Chapter title",
       chapterTitlePlaceholder: "e.g. Arriving at the Waterside",
       chapterLessonLabel: "Lesson",
+      openLessonHint: "Open lesson · edit script",
       chapterNarrativeIntroLabel: "Narrative intro",
       chapterNarrativeIntroPlaceholder: "What happens before this lesson begins…",
       chapterNarrativeOutroLabel: "Narrative outro",

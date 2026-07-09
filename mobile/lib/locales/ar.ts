@@ -2357,6 +2357,7 @@ export const ar = {
       chapterTitleLabel: "عنوان الفصل",
       chapterTitlePlaceholder: "مثال: الوصول إلى ضفّة الماء",
       chapterLessonLabel: "الدرس",
+      openLessonHint: "افتح الدرس · تحرير النص",
       chapterNarrativeIntroLabel: "مقدّمة سردية",
       chapterNarrativeIntroPlaceholder: "ما يحدث قبل بدء هذا الدرس…",
       chapterNarrativeOutroLabel: "خاتمة سردية",

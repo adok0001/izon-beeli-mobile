@@ -2392,6 +2392,7 @@ export const pcm = {
       chapterTitleLabel: "Chapter title",
       chapterTitlePlaceholder: "e.g. Arriving at the Waterside",
       chapterLessonLabel: "Lesson",
+      openLessonHint: "Open lesson · edit di script",
       chapterNarrativeIntroLabel: "Narrative intro",
       chapterNarrativeIntroPlaceholder: "Wetin happen before this lesson start…",
       chapterNarrativeOutroLabel: "Narrative outro",
