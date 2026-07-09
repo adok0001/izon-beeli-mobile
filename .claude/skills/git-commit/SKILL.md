@@ -130,23 +130,6 @@ node -e "const fs=require('fs');const p='mobile/app.json';const j=JSON.parse(fs.
 
 If the user explicitly requests a bump type, follow the user request unless it would violate the principles due to a clear breaking change.
 
-## Widget Version Check (Before Every Commit)
-
-The `BeeliWidget` iOS extension's `CFBundleShortVersionString` must always match the
-containing app's version, or Xcode archive/export emits an "Upload Symbols Failed" /
-version-mismatch warning and App Store review can reject the build.
-
-- Target file: `mobile/modules/beeli-widget/plugin/index.ts` (and its compiled sibling
-  `mobile/modules/beeli-widget/plugin/index.js`, which is the file Expo actually loads
-  per `expo.plugin` in `mobile/modules/beeli-widget/package.json`) — `MARKETING_VERSION`
-  is set from `config.version`, so it tracks the shared app version bump automatically.
-- If a commit touches `mobile/modules/beeli-widget/**` or `mobile/ios/BeeliWidget/**`,
-  verify `MARKETING_VERSION` in both `index.ts` and `index.js` still reads
-  `config.version` rather than a hardcoded string (e.g. `"1.0"`) — keep the two files
-  in sync if either is edited.
-- No manual widget version bump is needed beyond the shared version bump above; this
-  check exists to catch regressions back to a hardcoded value.
-
 ## Version Tagging (After Commit)
 
 When — and only when — the commit changed the shared version value, tag it. This
@@ -210,10 +193,9 @@ grep -oE "EXPO_PUBLIC_[A-Z_]+" mobile/.env.example | sort -u
 1. Run `git status` to see what changed
 2. Run `git diff` to review changes
 3. Bump versions across `mobile/app.json`, `web/package.json`, `server/package.json`, and `partykit/package.json`
-4. If `mobile/modules/beeli-widget/**` or `mobile/ios/BeeliWidget/**` changed, verify the widget version check above still holds
-5. Sync `.env.example` files for any touched package (see above)
-6. Run required build command(s) for changed package(s)
-7. Stage relevant files individually: `git add mobile/...` / `git add web/...` / `git add server/...` / `git add partykit/...` / `git add data/...`
-8. Verify staged changes: `git diff --staged`
-9. Confirm success with `git status`
-10. If this commit bumped the shared version, tag it locally (see Version Tagging)
+4. Sync `.env.example` files for any touched package (see above)
+5. Run required build command(s) for changed package(s)
+6. Stage relevant files individually: `git add mobile/...` / `git add web/...` / `git add server/...` / `git add partykit/...` / `git add data/...`
+7. Verify staged changes: `git diff --staged`
+8. Confirm success with `git status`
+9. If this commit bumped the shared version, tag it locally (see Version Tagging)
