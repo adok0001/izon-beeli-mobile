@@ -52,6 +52,7 @@ const withIosWidgetExtension = (config) => (0, config_plugins_1.withXcodeProject
     const mainBundleId = config.ios?.bundleIdentifier ?? "com.izonbeeli.app";
     const widgetBundleId = `${mainBundleId}.BeeliWidget`;
     const deploymentTarget = "16.0";
+    const marketingVersion = config.version ?? "1.0";
     const nativeTargets = project.pbxNativeTargetSection();
     const alreadyAdded = Object.values(nativeTargets).some((t) => typeof t === "object" &&
         (t.name === extName || t.name === `"${extName}"`));
@@ -239,7 +240,7 @@ const withIosWidgetExtension = (config) => (0, config_plugins_1.withXcodeProject
             '"@executable_path/Frameworks"',
             '"@executable_path/../../Frameworks"',
         ],
-        MARKETING_VERSION: "1.0",
+        MARKETING_VERSION: marketingVersion,
         PRODUCT_BUNDLE_IDENTIFIER: `"${widgetBundleId}"`,
         PRODUCT_NAME: '"$(TARGET_NAME)"',
         SKIP_INSTALL: "YES",
