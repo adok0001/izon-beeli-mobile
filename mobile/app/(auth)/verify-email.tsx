@@ -1,25 +1,26 @@
+import { AuthErrorBanner } from "@/components/auth/auth-error-banner";
+import { AuthHeader } from "@/components/auth/auth-header";
+import { SpecimenInput } from "@/components/auth/specimen-input";
+import { useAuthReveal } from "@/components/auth/use-auth-reveal";
+import { Button } from "@/components/ui/button";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useSignUp } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { useMuseumTheme } from "@/lib/use-museum-theme";
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { useTranslation } from "react-i18next";
+import { KeyboardAvoidingView, Platform, Pressable, Text } from "react-native";
+import Animated from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function VerifyEmailScreen() {
   const { signUp, setActive } = useSignUp();
   const router = useRouter();
+  const { t } = useTranslation();
   const M = useMuseumTheme();
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const formStyle = useAuthReveal();
 
   const canSubmit = code.trim().length === 6 && !loading;
 
@@ -28,22 +29,20 @@ export default function VerifyEmailScreen() {
     setError("");
     setLoading(true);
     try {
-      const result = await signUp!.attemptEmailAddressVerification({
-        code,
-      });
+      const result = await signUp!.attemptEmailAddressVerification({ code });
 
       if (result.status === "complete") {
         await setActive?.({ session: result.createdSessionId });
         router.replace("/(tabs)/learn");
       } else {
-        setError("Verification incomplete. Please try again.");
+        setError(t("auth.verifyIncomplete"));
       }
     } catch (err: unknown) {
       console.error("Verify error:", err);
       const clerkErr = err as { errors?: { message: string }[] };
       const message =
         clerkErr.errors?.[0]?.message ??
-        (err instanceof Error ? err.message : "Invalid code");
+        (err instanceof Error ? err.message : t("common.error"));
       setError(message);
     } finally {
       setLoading(false);
@@ -51,60 +50,41 @@ export default function VerifyEmailScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900">
+    <SafeAreaView style={{ flex: 1, backgroundColor: M.authBg }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1 justify-center px-6"
+        style={{ flex: 1, justifyContent: "center", paddingHorizontal: 28 }}
       >
-        <Text className="mb-2 text-center text-3xl font-bold text-neutral-900 dark:text-white">
-          Verify Email
-        </Text>
-        <Text className="mb-8 text-center text-sm text-neutral-500 dark:text-neutral-400">
-          Enter the 6-digit code sent to your email
-        </Text>
+        <AuthHeader title={t("auth.verifyEmailTitle")} subtitle={t("auth.verifyEmailSubtitle")} size="compact" />
 
-        {error ? (
-          <View className="mb-4 rounded-lg bg-red-50 px-4 py-3 dark:bg-red-950">
-            <Text className="text-center text-sm text-red-600 dark:text-red-400">
-              {error}
-            </Text>
-          </View>
-        ) : null}
+        <Animated.View style={formStyle}>
+          <AuthErrorBanner message={error} />
 
-        <TextInput
-          className="mb-6 rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3.5 text-center text-2xl font-bold text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-          placeholder="000000"
-          placeholderTextColor={M.muted}
-          value={code}
-          onChangeText={setCode}
-          keyboardType="number-pad"
-          maxLength={6}
-          editable={!loading}
-          autoFocus
-        />
+          <SpecimenInput
+            label={t("auth.verificationCode")}
+            placeholder="000000"
+            value={code}
+            onChangeText={setCode}
+            keyboardType="number-pad"
+            maxLength={6}
+            editable={!loading}
+            autoFocus
+            textAlign="center"
+            large
+          />
 
-        <Pressable
-          onPress={onVerify}
-          disabled={!canSubmit}
-          className={`mb-4 flex-row items-center justify-center rounded-xl py-3.5 ${
-            canSubmit ? "bg-blue-600 active:opacity-80" : "bg-blue-300 dark:bg-blue-800"
-          }`}
-        >
-          {loading ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text className="font-semibold text-white">Verify</Text>
-          )}
-        </Pressable>
+          <Button
+            label={t("auth.verifyButton")}
+            onPress={onVerify}
+            disabled={!canSubmit}
+            loading={loading}
+            style={{ marginTop: 8, marginBottom: 14 }}
+          />
 
-        <Pressable
-          onPress={() => router.back()}
-          disabled={loading}
-        >
-          <Text className="text-center text-blue-600 dark:text-blue-400">
-            Back to Sign Up
-          </Text>
-        </Pressable>
+          <Pressable onPress={() => router.back()} disabled={loading} style={{ alignItems: "center" }}>
+            <Text style={{ fontSize: 13, color: M.sub }}>{t("auth.backToSignUp")}</Text>
+          </Pressable>
+        </Animated.View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

@@ -1,21 +1,16 @@
+import { AuthErrorBanner } from "@/components/auth/auth-error-banner";
+import { AuthHeader } from "@/components/auth/auth-header";
+import { SpecimenInput } from "@/components/auth/specimen-input";
+import { useAuthReveal } from "@/components/auth/use-auth-reveal";
+import { Button } from "@/components/ui/button";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useSignIn } from "@clerk/clerk-expo";
-import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useMuseumTheme } from "@/lib/use-museum-theme";
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, Text } from "react-native";
+import Animated from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-const mascot = require("../../public/mascot.jpg");
 
 export default function ForgotPasswordScreen() {
   const { signIn, isLoaded } = useSignIn();
@@ -25,6 +20,7 @@ export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const formStyle = useAuthReveal();
 
   const canSubmit = email.trim().length > 0 && !loading;
 
@@ -50,69 +46,46 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900">
+    <SafeAreaView style={{ flex: 1, backgroundColor: M.authBg }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1 justify-center px-6"
+        style={{ flex: 1, justifyContent: "center", paddingHorizontal: 28 }}
       >
-        <View className="mb-4 items-center">
-          <Image
-            source={mascot}
-            style={{ width: 100, height: 68 }}
-            contentFit="contain"
-          />
-        </View>
-        <Text className="mb-2 text-center text-3xl font-bold text-neutral-900 dark:text-white">
-          {t("auth.forgotPasswordTitle")}
-        </Text>
-        <Text className="mb-8 text-center text-sm text-neutral-500 dark:text-neutral-400">
-          {t("auth.forgotPasswordSubtitle")}
-        </Text>
-
-        {error ? (
-          <View className="mb-4 rounded-lg bg-red-50 px-4 py-3 dark:bg-red-950">
-            <Text className="text-center text-sm text-red-600 dark:text-red-400">
-              {error}
-            </Text>
-          </View>
-        ) : null}
-
-        <TextInput
-          className="mb-6 rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-          placeholder={t("auth.email")}
-          placeholderTextColor={M.muted}
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          autoComplete="email"
-          editable={!loading}
-          onSubmitEditing={onRequestReset}
-          returnKeyType="send"
-          autoFocus
+        <AuthHeader
+          title={t("auth.forgotPasswordTitle")}
+          subtitle={t("auth.forgotPasswordSubtitle")}
+          size="compact"
         />
 
-        <Pressable
-          onPress={onRequestReset}
-          disabled={!canSubmit}
-          className={`mb-4 flex-row items-center justify-center rounded-xl py-3.5 ${
-            canSubmit ? "bg-blue-600 active:opacity-80" : "bg-blue-300 dark:bg-blue-800"
-          }`}
-        >
-          {loading ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text className="font-semibold text-white">
-              {t("auth.sendResetCode")}
-            </Text>
-          )}
-        </Pressable>
+        <Animated.View style={formStyle}>
+          <AuthErrorBanner message={error} />
 
-        <Pressable onPress={() => router.back()} disabled={loading}>
-          <Text className="text-center text-blue-600 dark:text-blue-400">
-            {t("auth.backToSignIn")}
-          </Text>
-        </Pressable>
+          <SpecimenInput
+            label={t("auth.email")}
+            placeholder={t("auth.email")}
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            autoComplete="email"
+            editable={!loading}
+            onSubmitEditing={onRequestReset}
+            returnKeyType="send"
+            autoFocus
+          />
+
+          <Button
+            label={t("auth.sendResetCode")}
+            onPress={onRequestReset}
+            disabled={!canSubmit}
+            loading={loading}
+            style={{ marginTop: 8, marginBottom: 14 }}
+          />
+
+          <Pressable onPress={() => router.back()} disabled={loading} style={{ alignItems: "center" }}>
+            <Text style={{ fontSize: 13, color: M.sub }}>{t("auth.backToSignIn")}</Text>
+          </Pressable>
+        </Animated.View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

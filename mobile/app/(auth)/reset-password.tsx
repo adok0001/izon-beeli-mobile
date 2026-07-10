@@ -1,17 +1,15 @@
+import { AuthErrorBanner } from "@/components/auth/auth-error-banner";
+import { AuthHeader } from "@/components/auth/auth-header";
+import { SpecimenInput } from "@/components/auth/specimen-input";
+import { useAuthReveal } from "@/components/auth/use-auth-reveal";
+import { Button } from "@/components/ui/button";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useSignIn } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useMuseumTheme } from "@/lib/use-museum-theme";
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, Text } from "react-native";
+import Animated from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ResetPasswordScreen() {
@@ -24,6 +22,7 @@ export default function ResetPasswordScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const formStyle = useAuthReveal();
 
   const passwordTooShort = password.length > 0 && password.length < 8;
   const passwordsMismatch = confirmPassword.length > 0 && password !== confirmPassword;
@@ -61,104 +60,71 @@ export default function ResetPasswordScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900">
+    <SafeAreaView style={{ flex: 1, backgroundColor: M.authBg }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1 justify-center px-6"
+        style={{ flex: 1, justifyContent: "center", paddingHorizontal: 28 }}
       >
-        <Text className="mb-2 text-center text-3xl font-bold text-neutral-900 dark:text-white">
-          {t("auth.resetPasswordTitle")}
-        </Text>
-        <Text className="mb-8 text-center text-sm text-neutral-500 dark:text-neutral-400">
-          {t("auth.resetPasswordSubtitle")}
-        </Text>
-
-        {error ? (
-          <View className="mb-4 rounded-lg bg-red-50 px-4 py-3 dark:bg-red-950">
-            <Text className="text-center text-sm text-red-600 dark:text-red-400">
-              {error}
-            </Text>
-          </View>
-        ) : null}
-
-        <TextInput
-          className="mb-4 rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3.5 text-center text-2xl font-bold text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-          placeholder="000000"
-          placeholderTextColor={M.muted}
-          value={code}
-          onChangeText={setCode}
-          keyboardType="number-pad"
-          maxLength={6}
-          editable={!loading}
-          autoFocus
+        <AuthHeader
+          title={t("auth.resetPasswordTitle")}
+          subtitle={t("auth.resetPasswordSubtitle")}
+          size="compact"
         />
 
-        <TextInput
-          className={`mb-1 rounded-xl border bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:bg-neutral-800 dark:text-white ${
-            passwordTooShort
-              ? "border-amber-400 dark:border-amber-600"
-              : "border-neutral-300 dark:border-neutral-700"
-          }`}
-          placeholder={t("auth.newPassword")}
-          placeholderTextColor={M.muted}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          autoComplete="new-password"
-          editable={!loading}
-        />
-        {passwordTooShort ? (
-          <Text className="mb-3 ml-1 text-xs text-amber-600 dark:text-amber-400">
-            {t("auth.passwordTooShort")}
-          </Text>
-        ) : (
-          <View className="mb-3" />
-        )}
+        <Animated.View style={formStyle}>
+          <AuthErrorBanner message={error} />
 
-        <TextInput
-          className={`mb-1 rounded-xl border bg-neutral-50 px-4 py-3.5 text-base text-neutral-900 dark:bg-neutral-800 dark:text-white ${
-            passwordsMismatch
-              ? "border-red-400 dark:border-red-600"
-              : "border-neutral-300 dark:border-neutral-700"
-          }`}
-          placeholder={t("auth.confirmPassword")}
-          placeholderTextColor={M.muted}
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry
-          editable={!loading}
-          onSubmitEditing={onResetPassword}
-          returnKeyType="go"
-        />
-        {passwordsMismatch ? (
-          <Text className="mb-5 ml-1 text-xs text-red-500">
-            {t("auth.passwordsMismatch")}
-          </Text>
-        ) : (
-          <View className="mb-5" />
-        )}
+          <SpecimenInput
+            label={t("auth.verificationCode")}
+            placeholder="000000"
+            value={code}
+            onChangeText={setCode}
+            keyboardType="number-pad"
+            maxLength={6}
+            editable={!loading}
+            autoFocus
+            textAlign="center"
+            large
+          />
 
-        <Pressable
-          onPress={onResetPassword}
-          disabled={!canSubmit}
-          className={`mb-4 flex-row items-center justify-center rounded-xl py-3.5 ${
-            canSubmit ? "bg-blue-600 active:opacity-80" : "bg-blue-300 dark:bg-blue-800"
-          }`}
-        >
-          {loading ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text className="font-semibold text-white">
-              {t("auth.resetPasswordButton")}
-            </Text>
-          )}
-        </Pressable>
+          <SpecimenInput
+            label={t("auth.newPassword")}
+            placeholder={t("auth.newPassword")}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoComplete="new-password"
+            editable={!loading}
+            error={passwordTooShort}
+            hint={passwordTooShort ? t("auth.passwordTooShort") : undefined}
+            hintTone="warning"
+          />
 
-        <Pressable onPress={() => router.back()} disabled={loading}>
-          <Text className="text-center text-blue-600 dark:text-blue-400">
-            {t("auth.backToSignIn")}
-          </Text>
-        </Pressable>
+          <SpecimenInput
+            label={t("auth.confirmPassword")}
+            placeholder={t("auth.confirmPassword")}
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry
+            editable={!loading}
+            onSubmitEditing={onResetPassword}
+            returnKeyType="go"
+            error={passwordsMismatch}
+            hint={passwordsMismatch ? t("auth.passwordsMismatch") : undefined}
+          />
+
+          <Button
+            label={t("auth.resetPasswordButton")}
+            onPress={onResetPassword}
+            disabled={!canSubmit}
+            loading={loading}
+            style={{ marginTop: 8, marginBottom: 14 }}
+          />
+
+          <Pressable onPress={() => router.back()} disabled={loading} style={{ alignItems: "center" }}>
+            <Text style={{ fontSize: 13, color: M.sub }}>{t("auth.backToSignIn")}</Text>
+          </Pressable>
+        </Animated.View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
