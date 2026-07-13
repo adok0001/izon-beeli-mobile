@@ -22,9 +22,9 @@ import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 /**
@@ -73,12 +73,20 @@ export default function QuizBankScreen() {
   const editing = !!form.id;
 
   const quizQuery = useEducatorQuizBank(activeLanguageId);
+  const { refetch: refetchQuiz } = quizQuery;
   const upsert = useUpsertQuizQuestion();
   const remove = useDeleteQuizQuestion();
   const submitForReview = useSubmitQuizForReview();
   const publish = usePublishContent("quiz_questions", [["educator", "quiz-bank", activeLanguageId]]);
 
   const actor = { isAdmin: user.isAdmin, reviewerRole: user.reviewerRole, userId: user.id };
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetchQuiz();
+    setRefreshing(false);
+  }, [refetchQuiz]);
 
   function resetForm() {
     setForm(EMPTY_FORM);
@@ -140,6 +148,7 @@ export default function QuizBankScreen() {
         style={{ flex: 1, backgroundColor: M.card }}
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
       >
         {/* Language tabs */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>

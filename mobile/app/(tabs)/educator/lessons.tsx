@@ -13,8 +13,8 @@ import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Pressable, RefreshControl, Text, View } from "react-native";
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from "react-native-draggable-flatlist";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -111,10 +111,17 @@ export default function EducatorLessonsScreen() {
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
   const { canAccess } = useStudioAccess();
 
-  const { data: courses = [] } = useEducatorCourses(canAccess);
-  const { data: lessons = [] } = useEducatorLessons(canAccess);
+  const { data: courses = [], refetch: refetchCourses } = useEducatorCourses(canAccess);
+  const { data: lessons = [], refetch: refetchLessons } = useEducatorLessons(canAccess);
   const updateLesson = useUpdateEducatorLesson();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([refetchCourses(), refetchLessons()]);
+    setRefreshing(false);
+  }, [refetchCourses, refetchLessons]);
 
   const course = courses.find((c) => c.id === courseId);
   const courseLessons = useMemo(
@@ -163,6 +170,7 @@ export default function EducatorLessonsScreen() {
           onDragEnd={handleDragEnd}
           contentContainerStyle={{ paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
           renderItem={({ item: lesson, drag, isActive }: RenderItemParams<EducatorLesson>) => (
             <ScaleDecorator>
               <View className="px-5 py-1">

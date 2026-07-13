@@ -33,7 +33,7 @@ import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 /**
@@ -79,12 +79,20 @@ export default function InteractiveStoriesScreen() {
   const editing = !!editingId;
 
   const storiesQuery = useEducatorInteractiveStories(activeLanguageId);
+  const { refetch: refetchStories } = storiesQuery;
   const create = useCreateInteractiveStory();
   const update = useUpdateInteractiveStory();
   const remove = useDeleteInteractiveStory();
   const publish = usePublishContent("interactive_stories", [["educator", "interactive-stories", activeLanguageId]]);
 
   const actor = { isAdmin: user.isAdmin, reviewerRole: user.reviewerRole, userId: user.id };
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetchStories();
+    setRefreshing(false);
+  }, [refetchStories]);
 
   function resetForm() {
     setEditingId(undefined);
@@ -295,6 +303,7 @@ export default function InteractiveStoriesScreen() {
         style={{ flex: 1, backgroundColor: M.card }}
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
       >
         {/* Language tabs */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>

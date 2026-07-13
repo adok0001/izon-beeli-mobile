@@ -1,7 +1,7 @@
 import { LanguagePickerModal } from "@/components/language-picker";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { CourseEditModal } from "@/components/studio/course-editor";
-import { ExploreSection, LearnSection, ToolsStrip } from "@/components/studio/panel-nav-sections";
+import { ExploreSection, LearnSection, StoriesSection, ToolsStrip } from "@/components/studio/panel-nav-sections";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
@@ -14,9 +14,9 @@ import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, RefreshControl, Text, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -78,15 +78,21 @@ export default function EducatorPanelScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { user: currentUser, canAccess } = useStudioAccess();
-  const { data: educatorStats } = useEducatorStats(canAccess);
-  const { data: contentHealth } = useContentHealth(currentUser?.reviewerLanguages?.[0]);
+  const { data: educatorStats, refetch: refetchStats } = useEducatorStats(canAccess);
+  const { data: contentHealth, refetch: refetchHealth } = useContentHealth(currentUser?.reviewerLanguages?.[0]);
   const [onboardingStep, setOnboardingStep] = useState<1 | 2 | 3 | null>(null);
-  const [openSection, setOpenSection] = useState<"learn" | "explore" | null>("learn");
+  const [openSection, setOpenSection] = useState<"learn" | "stories" | "explore" | null>("learn");
   const [selectedLanguageId, setSelectedLanguageId] = useState<string | undefined>(undefined);
   const [languagePickerOpen, setLanguagePickerOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<EducatorCourse | null>(null);
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
   const updateCourse = useUpdateEducatorCourse();
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([refetchStats(), refetchHealth()]);
+    setRefreshing(false);
+  }, [refetchStats, refetchHealth]);
 
   const allowedLanguages = useMemo(() => {
     if (!currentUser) return [] as string[];
@@ -148,6 +154,7 @@ export default function EducatorPanelScreen() {
         style={{ flex: 1, backgroundColor: M.card }}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32, paddingTop: 16 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
       >
         {/* Onboarding */}
         {onboardingStep != null && (
@@ -318,6 +325,12 @@ export default function EducatorPanelScreen() {
                 onSelectCourse={setEditingCourse}
                 onToastSuccess={toastSuccess}
                 onToastError={toastError}
+              />
+              <StoriesSection
+                currentUser={currentUser}
+                activeLanguageId={activeLanguageId}
+                open={openSection === "stories"}
+                onToggle={() => setOpenSection((s) => (s === "stories" ? null : "stories"))}
               />
               <ExploreSection
                 currentUser={currentUser}

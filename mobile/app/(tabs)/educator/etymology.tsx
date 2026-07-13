@@ -18,7 +18,7 @@ import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { fonts } from "@/constants/typography";
 import type { EtymologyEntry, EtymologyNode, LocalizedText } from "@/types";
 import { Stack, useRouter } from "expo-router";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
@@ -26,6 +26,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  RefreshControl,
   Text,
   TextInput,
   View,
@@ -141,9 +142,16 @@ export default function EducatorEtymologyScreen() {
   const activeLanguageId =
     selectedLanguageId ?? allowedLanguages[0] ?? currentUser?.selectedLanguageId ?? "izon";
 
-  const { data: entries = [], isLoading } = useEtymologyEntries(activeLanguageId, canAccess);
+  const { data: entries = [], isLoading, refetch } = useEtymologyEntries(activeLanguageId, canAccess);
   const upsert = useUpsertEtymology();
   const del = useDeleteEtymology();
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   const q = searchQuery.toLowerCase().trim();
   const filtered = q
@@ -412,6 +420,7 @@ export default function EducatorEtymologyScreen() {
             ItemSeparatorComponent={() => <View className="h-2" />}
             ListHeaderComponent={listHeader}
             ListEmptyComponent={listEmpty}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
           />
         </KeyboardAvoidingView>
         <LanguagePickerModal

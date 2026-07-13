@@ -17,7 +17,7 @@ import {
 import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { Stack } from "expo-router";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
@@ -25,6 +25,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  RefreshControl,
   ScrollView,
   Text,
   TextInput,
@@ -77,19 +78,26 @@ export default function SentencesAdminScreen() {
   const [tab, setTab] = useState<Tab>("sentences");
 
   // Sentences state
-  const { data: sentences = [], isLoading: sentLoading } = useEducatorSentences(selectedLanguage);
+  const { data: sentences = [], isLoading: sentLoading, refetch: refetchSentences } = useEducatorSentences(selectedLanguage);
   const upsertSentence = useUpsertSentence();
   const deleteSentence = useDeleteSentence();
   const [sentForm, setSentForm] = useState<SentenceForm>(EMPTY_SENTENCE);
   const [sentEditing, setSentEditing] = useState(false);
 
   // Scenarios state
-  const { data: scenarios = [], isLoading: scenLoading } = useEducatorScenarios(selectedLanguage);
+  const { data: scenarios = [], isLoading: scenLoading, refetch: refetchScenarios } = useEducatorScenarios(selectedLanguage);
   const createScenario = useCreateScenario();
   const updateScenario = useUpdateScenario();
   const deleteScenario = useDeleteScenario();
   const [scenForm, setScenForm] = useState<ScenarioForm>(EMPTY_SCENARIO);
   const [scenEditing, setScenEditing] = useState(false);
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([refetchSentences(), refetchScenarios()]);
+    setRefreshing(false);
+  }, [refetchSentences, refetchScenarios]);
 
   // ── Sentence handlers ──────────────────────────────────────────────────────
 
@@ -251,7 +259,10 @@ export default function SentencesAdminScreen() {
           </View>
 
           {tab === "sentences" ? (
-            <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
+            <ScrollView
+              contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
+            >
               {/* Sentence form */}
               <View style={{ marginBottom: 20, borderRadius: 16, backgroundColor: M.card, padding: 16, borderWidth: 1, borderColor: M.border }}>
                 <Text style={{ fontSize: 13, fontWeight: "700", color: M.text, marginBottom: 10 }}>
@@ -357,7 +368,10 @@ export default function SentencesAdminScreen() {
               )}
             </ScrollView>
           ) : (
-            <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
+            <ScrollView
+              contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
+            >
               {/* Scenario form */}
               <View style={{ marginBottom: 20, borderRadius: 16, backgroundColor: M.card, padding: 16, borderWidth: 1, borderColor: M.border }}>
                 <Text style={{ fontSize: 13, fontWeight: "700", color: M.text, marginBottom: 10 }}>

@@ -33,7 +33,7 @@ import { useUiLanguageStore } from "@/store/ui-language-store";
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 /** Educator/admin dictionary rows carry nullable fields; the learner-facing
@@ -149,8 +149,14 @@ export default function EducatorDictionaryScreen() {
     setFilterCategory(undefined);
   }, [activeLanguageId]);
 
-  const { data: entries = [], isLoading } = useEducatorDictionary(activeLanguageId, undefined, canAccess);
+  const { data: entries = [], isLoading, refetch } = useEducatorDictionary(activeLanguageId, undefined, canAccess);
   const { data: coverage } = useDictionaryCoverage(canAccess ? activeLanguageId : null);
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
   const [coverageOpen, setCoverageOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const upsertEntry = useUpsertEducatorDictionary();
@@ -676,6 +682,7 @@ export default function EducatorDictionaryScreen() {
           ItemSeparatorComponent={() => <View className="h-2" />}
           ListHeaderComponent={listHeader}
           ListEmptyComponent={listEmpty}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
         />
         </KeyboardAvoidingView>
       </SafeAreaView>

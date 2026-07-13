@@ -16,10 +16,12 @@ import { localize } from "@/lib/localize";
 import { getLanguageName } from "@/lib/mock-data";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { Stack, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
   Pressable,
+  RefreshControl,
   ScrollView,
   Text,
   View,
@@ -90,9 +92,27 @@ export default function EducatorStoriesScreen() {
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
   const { canAccess } = useStudioAccess();
 
-  const { data: arcs = [], isLoading: arcsLoading } = useEducatorStoryArcs(canAccess);
-  const { data: courses = [], isLoading: coursesLoading } = useEducatorCourses(canAccess);
+  const { data: arcs = [], isLoading: arcsLoading, refetch: refetchArcs } = useEducatorStoryArcs(canAccess);
+  const { data: courses = [], isLoading: coursesLoading, refetch: refetchCourses } = useEducatorCourses(canAccess);
   const deleteArc = useDeleteStoryArc();
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([refetchArcs(), refetchCourses()]);
+    setRefreshing(false);
+  }, [refetchArcs, refetchCourses]);
+
+  const handleEdit = (arc: EducatorStoryArc) => {
+    if (!arc.courseId) {
+      toastError(t("educator.story.standaloneEditUnsupported"));
+      return;
+    }
+    router.push({
+      pathname: "/educator/story-edit",
+      params: { courseId: arc.courseId },
+    } as never);
+  };
 
   const courseMap = Object.fromEntries(courses.map((c) => [c.id, c]));
   const isLoading = arcsLoading || coursesLoading;
@@ -157,6 +177,7 @@ export default function EducatorStoriesScreen() {
         <ScrollView
           contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
           showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
         >
           {isLoading ? (
             <Text className="mt-8 text-center text-sm text-neutral-400">{t("educator.story.loading")}</Text>
@@ -173,19 +194,14 @@ export default function EducatorStoriesScreen() {
           ) : (
             <View className="gap-3">
               {arcs.map((arc) => {
-                const course: EducatorCourse | undefined = courseMap[arc.courseId];
+                const course: EducatorCourse | undefined = arc.courseId ? courseMap[arc.courseId] : undefined;
                 return (
                   <ArcCard
                     key={arc.id}
                     arc={arc}
-                    courseName={course ? localize(course.title, uiLanguage) : arc.courseId}
-                    languageName={course ? getLanguageName(course.languageId) : ""}
-                    onEdit={() =>
-                      router.push({
-                        pathname: "/educator/story-edit",
-                        params: { courseId: arc.courseId },
-                      } as never)
-                    }
+                    courseName={course ? localize(course.title, uiLanguage) : t("educator.story.standaloneLabel")}
+                    languageName={getLanguageName(arc.languageId ?? course?.languageId ?? "")}
+                    onEdit={() => handleEdit(arc)}
                     onDelete={() => handleDelete(arc)}
                   />
                 );

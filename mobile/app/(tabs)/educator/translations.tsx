@@ -12,8 +12,8 @@ import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { useCallback, useMemo, useState } from "react";
+import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function TranslationQueueScreen() {
@@ -31,7 +31,15 @@ export default function TranslationQueueScreen() {
 
   const [locale, setLocale] = useState<GlossLocale>("fr");
   const queueQuery = useTranslationQueue(activeLanguageId, locale);
+  const { refetch: refetchQueue } = queueQuery;
   const save = useSaveTranslationGloss();
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetchQueue();
+    setRefreshing(false);
+  }, [refetchQueue]);
 
   const [drafts, setDrafts] = useState<Record<string, { gloss: string; exampleGloss: string }>>({});
   function draftFor(entry: TranslationQueueEntry) {
@@ -56,6 +64,7 @@ export default function TranslationQueueScreen() {
         style={{ flex: 1, backgroundColor: M.card }}
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
       >
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
           <View style={{ flexDirection: "row", gap: 8 }}>

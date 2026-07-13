@@ -25,9 +25,9 @@ import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { LocalizedText } from "@/types";
 import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 /**
@@ -61,12 +61,20 @@ export default function ScenariosScreen() {
   const editing = !!editingId;
 
   const scenariosQuery = useEducatorScenarios(activeLanguageId);
+  const { refetch: refetchScenarios } = scenariosQuery;
   const create = useCreateScenario();
   const update = useUpdateScenario();
   const remove = useDeleteScenario();
   const publish = usePublishContent("scenarios", [["educator", "scenarios", activeLanguageId]]);
 
   const actor = { isAdmin: user.isAdmin, reviewerRole: user.reviewerRole, userId: user.id };
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetchScenarios();
+    setRefreshing(false);
+  }, [refetchScenarios]);
 
   function resetForm() {
     setEditingId(undefined);
@@ -157,6 +165,7 @@ export default function ScenariosScreen() {
         style={{ flex: 1, backgroundColor: M.card }}
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
       >
         {/* Language tabs */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>

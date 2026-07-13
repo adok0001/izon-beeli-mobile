@@ -13,7 +13,7 @@ import {
 import { useToast } from "@/lib/hooks/use-toast";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { Redirect, Stack, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   FlatList,
@@ -21,6 +21,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  RefreshControl,
   Text,
   TextInput,
   View,
@@ -305,8 +306,15 @@ export default function ReviewerApplicationsScreen() {
   // The educator gate admits any reviewer; approving applications is elder/admin
   // only, so re-gate here and bounce teachers/professors back to the hub.
   const allowed = canReviewApplications(user);
-  const { data: apps = [], isLoading } = useReviewerApplications(canAccess && allowed);
+  const { data: apps = [], isLoading, refetch } = useReviewerApplications(canAccess && allowed);
   const review = useReviewApplication();
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   const counts = useMemo(
     () => ({
@@ -434,6 +442,7 @@ export default function ReviewerApplicationsScreen() {
           ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
           contentContainerStyle={{ paddingBottom: 32 }}
           showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
         />
       </SafeAreaView>
       {modal && (

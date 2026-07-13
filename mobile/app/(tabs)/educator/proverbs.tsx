@@ -26,9 +26,9 @@ import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { LocalizedText } from "@/types";
 import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 /**
@@ -76,12 +76,20 @@ export default function ProverbsScreen() {
   const editing = !!form.id;
 
   const proverbsQuery = useEducatorProverbs(activeLanguageId);
+  const { refetch: refetchProverbs } = proverbsQuery;
   const upsert = useUpsertProverb();
   const remove = useDeleteProverb();
   const submitForReview = useSubmitProverbForReview();
   const publish = usePublishContent("proverbs", [["educator", "proverbs"], ["proverbs"]]);
 
   const actor = { isAdmin: user.isAdmin, reviewerRole: user.reviewerRole, userId: user.id };
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetchProverbs();
+    setRefreshing(false);
+  }, [refetchProverbs]);
 
   function resetForm() {
     setForm(EMPTY_FORM);
@@ -147,6 +155,7 @@ export default function ProverbsScreen() {
         style={{ flex: 1, backgroundColor: M.card }}
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
       >
         {/* Language tabs */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>

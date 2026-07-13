@@ -20,7 +20,7 @@ import {
 import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { Stack, useRouter } from "expo-router";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
@@ -28,6 +28,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  RefreshControl,
   ScrollView,
   Text,
   TextInput,
@@ -138,10 +139,17 @@ export default function EducatorCultureScreen() {
   const activeLanguageId =
     selectedLanguageId ?? allowedLanguages[0] ?? currentUser?.selectedLanguageId ?? "izon";
 
-  const { data: culturalItems = [], isLoading } = useCulturalItems(activeLanguageId, canAccess);
+  const { data: culturalItems = [], isLoading, refetch } = useCulturalItems(activeLanguageId, canAccess);
 
   const upsertCultural = useUpsertCulturalItem();
   const deleteCultural = useDeleteCulturalItem();
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   const q = searchQuery.toLowerCase().trim();
   const filteredCultural = q
@@ -780,6 +788,7 @@ export default function EducatorCultureScreen() {
           ItemSeparatorComponent={() => <View className="h-2" />}
           ListHeaderComponent={listHeader}
           ListEmptyComponent={listEmpty}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
         />
         </KeyboardAvoidingView>
       </SafeAreaView>

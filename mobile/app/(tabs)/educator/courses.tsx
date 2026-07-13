@@ -17,8 +17,8 @@ import { useToast } from "@/lib/hooks/use-toast";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { getLanguageName } from "@/lib/mock-data";
 import { Stack, useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Pressable, RefreshControl, Text, View } from "react-native";
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from "react-native-draggable-flatlist";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -33,9 +33,16 @@ export default function EducatorCoursesScreen() {
   const [editingCourse, setEditingCourse] = useState<EducatorCourse | null>(null);
 
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
-  const { data: courses = [] } = useEducatorCourses(canAccess);
+  const { data: courses = [], refetch: refetchCourses } = useEducatorCourses(canAccess);
   const toggleCourse = useToggleCourseActive();
   const updateCourse = useUpdateEducatorCourse();
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetchCourses();
+    setRefreshing(false);
+  }, [refetchCourses]);
 
   const allowedLanguages = useMemo(() => {
     if (!currentUser) return [] as string[];
@@ -88,6 +95,7 @@ export default function EducatorCoursesScreen() {
           onDragEnd={handleDragEnd}
           contentContainerStyle={{ paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
           renderItem={({ item: course, drag, isActive }: RenderItemParams<EducatorCourse>) => (
             <ScaleDecorator>
               <View className="px-5 py-1">
