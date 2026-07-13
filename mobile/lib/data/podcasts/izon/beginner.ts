@@ -57,28 +57,21 @@ const B1: PodcastEpisode = {
   targetVocab: [
     { izon: "Baidẹ", roman: "BY-deh", gloss: { en: "good morning", fr: "bonjour" }, source: "izon_master_dictionary.csv" },
     { izon: "Doo", roman: "doh", gloss: { en: "good afternoon / a greeting & thanks particle", fr: "bon après-midi / salutation" }, source: "corpus" },
-    { izon: "Baịyo", roman: "BY-yo", gloss: { en: "good evening / goodbye", fr: "bonsoir / au revoir" }, source: "izon-first-words.ts" },
+    { izon: "Baịyo", roman: "BY-yo", gloss: { en: "goodbye", fr: "au revoir" }, source: "izon_master_dictionary.csv" },
     { izon: "Tụbara?", roman: "TOO-bah-rah", gloss: { en: "how are you?", fr: "comment vas-tu ?" }, source: "sentences/izon.ts" },
     { izon: "Emi, kuro nimi", roman: "EH-mee KOO-ro NEE-mee", gloss: { en: "I am fine, I am well", fr: "je vais bien" }, source: "izon-first-words.ts" },
     { izon: "Nụa!", roman: "NOO-ah", gloss: { en: "welcome!", fr: "bienvenue !" }, source: "corpus (bundled audio izon_nua)" },
-    { izon: "Teki ina ẹrẹ?", roman: "TEH-ki EE-na EH-reh", gloss: { en: "what is your name?", fr: "comment t'appelles-tu ?" }, source: "sentences/izon.ts" },
-    { izon: "Ina ẹrẹmẹ …", roman: "EE-na EH-reh-meh", gloss: { en: "my name is …", fr: "je m'appelle …" }, source: "izon-first-words.ts" },
+    // roman is intentionally empty: we have no attested form, so we have no
+    // pronunciation to give. Filling it would be re-inventing the word.
+    { izon: "[[what is your name?]]", roman: "", gloss: { en: "what is your name?", fr: "comment t'appelles-tu ?" }, verify: true },
+    { izon: "[[my name is …]]", roman: "", gloss: { en: "my name is …", fr: "je m'appelle …" }, verify: true },
     { izon: "Ụmbana", roman: "oom-BAH-na", gloss: { en: "thank you", fr: "merci" }, source: "izon_master_dictionary.csv" },
     { izon: "Emịnị Ịzọn ye", roman: "eh-MEE-nee EE-zon yeh", gloss: { en: "I am Izon", fr: "je suis Izon" }, source: "izon-first-words.ts" },
   ],
-  grammarPoints: [
-    {
-      point: { en: "Naming yourself: X ẹrẹmẹ Y", fr: "Se nommer : X ẹrẹmẹ Y" },
-      explanation: {
-        en: "'ina ẹrẹ' = your name; 'ina ẹrẹmẹ …' = my name is …. The possessor comes before the thing possessed (ina = your, ẹrẹ = name).",
-        fr: "'ina ẹrẹ' = ton nom ; 'ina ẹrẹmẹ …' = je m'appelle …. Le possesseur précède la chose possédée.",
-      },
-      examples: [
-        { izon: "Teki ina ẹrẹ?", roman: "TEH-ki EE-na EH-reh", gloss: { en: "What is your name?", fr: "Comment t'appelles-tu ?" } },
-        { izon: "Ina ẹrẹmẹ Tari.", roman: "EE-na EH-reh-meh TAH-ri", gloss: { en: "My name is Tari.", fr: "Je m'appelle Tari." } },
-      ],
-    },
-  ],
+  // The self-introduction grammar point ("X ẹrẹmẹ Y") was removed: the educator
+  // review found teki / ina ẹrẹ / ẹrẹmẹ unattested, so the rule it taught was
+  // invented. Restore only once a keeper supplies the real naming construction.
+  grammarPoints: [],
   culturalNotes: [
     {
       title: { en: "Greeting is not optional", fr: "Saluer n'est pas facultatif" },
@@ -111,13 +104,13 @@ const B1: PodcastEpisode = {
     { seq: 9, kind: "pause", text: "2s — learner absorbs the exchange." },
     { seq: 10, kind: "sfx", text: "Footsteps on wooden planks; a screen door; an older voice from inside the compound." },
     { seq: 11, kind: "dialogue", speaker: "izon-cast-ebiere", text: "Bo! Mịyọ a bo. Awọụ, bo dii.", roman: "boh! MEE-yaw ah boh. AH-wow, boh dee", translation: { en: "Come! Come here. Children, come and look.", fr: "Viens ! Viens ici. Les enfants, venez voir." }, source: "izon_master_dictionary.csv", startTime: 34, endTime: 39 },
-    { seq: 12, kind: "dialogue", speaker: "izon-cast-tari", text: "Ẹrẹmẹ… Baidẹ, Ebiere.", roman: "EH-reh-meh… BY-deh, eh-bee-EH-reh", translation: { en: "Grandma… Good morning, Ebiere.", fr: "Grand-mère… Bonjour, Ebiere." }, verify: true, startTime: 39, endTime: 43 },
-    { seq: 13, kind: "dialogue", speaker: "izon-cast-ebiere", text: "Nụa, tụbọụ. Teki ina ẹrẹ?", roman: "NOO-ah, TOO-bow. TEH-ki EE-na EH-reh", translation: { en: "Welcome, child. (Now —) what is your name?", fr: "Bienvenue, mon enfant. Comment t'appelles-tu ?" }, startTime: 43, endTime: 47 },
+    { seq: 12, kind: "dialogue", speaker: "izon-cast-tari", text: "[[Grandma…]] Baidẹ, Ebiere.", translation: { en: "Grandma… Good morning, Ebiere.", fr: "Grand-mère… Bonjour, Ebiere." }, verify: true, startTime: 39, endTime: 43 },
+    { seq: 13, kind: "dialogue", speaker: "izon-cast-ebiere", text: "Nụa, tụbọụ. [[what is your name?]]", translation: { en: "Welcome, child. (Now —) what is your name?", fr: "Bienvenue, mon enfant. Comment t'appelles-tu ?" }, verify: true, startTime: 43, endTime: 47 },
     { seq: 14, kind: "note", text: "Ebiere knows Tari's name — she is prompting the ritual self-introduction. A gentle test." },
-    { seq: 15, kind: "dialogue", speaker: "izon-cast-tari", text: "Ina ẹrẹmẹ Tari.", roman: "EE-na EH-reh-meh TAH-ri", translation: { en: "My name is Tari.", fr: "Je m'appelle Tari." }, startTime: 47, endTime: 50 },
+    { seq: 15, kind: "dialogue", speaker: "izon-cast-tari", text: "[[My name is Tari.]]", translation: { en: "My name is Tari.", fr: "Je m'appelle Tari." }, verify: true, startTime: 47, endTime: 50 },
     { seq: 16, kind: "dialogue", speaker: "izon-cast-ebiere", text: "Ọ dẹ! Emịnị Ịzọn ye. Emịnị warị ye.", roman: "aw deh! eh-MEE-nee EE-zon yeh. eh-MEE-nee WAH-ri yeh", translation: { en: "Good! You are Izon. You are of this house.", fr: "Bien ! Tu es Izon. Tu es de cette maison." }, verify: true, startTime: 50, endTime: 55 },
     { seq: 17, kind: "dialogue", speaker: "izon-cast-tari", text: "Emịnị Ịzọn ye… duọ, emịnị fun tolumọ bomị.", roman: "eh-MEE-nee EE-zon yeh… doo-aw, eh-MEE-nee foon toh-loo-maw BOH-mee", translation: { en: "I am Izon… but I have come to learn.", fr: "Je suis Izon… mais je suis venu apprendre." }, verify: true, startTime: 55, endTime: 60 },
-    { seq: 18, kind: "dialogue", speaker: "izon-cast-ebiere", text: "Ụmbana. Bo eye fị. Baịyo.", roman: "oom-BAH-na. boh EH-yeh fee. BY-yo", translation: { en: "Thank you. Come and eat. (For now —) good day.", fr: "Merci. Viens manger. Bonne journée." }, source: "izon_master_dictionary.csv", startTime: 60, endTime: 65 },
+    { seq: 18, kind: "dialogue", speaker: "izon-cast-ebiere", text: "Ụmbana. Bo eye fị. Baịyo.", roman: "oom-BAH-na. boh EH-yeh fee. BY-yo", translation: { en: "Thank you. Come and eat. (For now —) goodbye.", fr: "Merci. Viens manger. Au revoir." }, source: "izon_master_dictionary.csv", startTime: 60, endTime: 65 },
     { seq: 19, kind: "pause", text: "3s." },
     // Echo block — learner produces the four keystones.
     { seq: 20, kind: "screen", text: "Script reveal: the four key phrases appear in Izon with their icons." },
@@ -125,9 +118,9 @@ const B1: PodcastEpisode = {
     { seq: 22, kind: "pause", text: "4s — learner echoes 'Baidẹ!'" },
     { seq: 23, kind: "dialogue", speaker: "izon-cast-preye", text: "Tụbara?", roman: "TOO-bah-rah", translation: { en: "How are you?", fr: "Comment vas-tu ?" }, startTime: 72, endTime: 74 },
     { seq: 24, kind: "pause", text: "4s — learner echoes." },
-    { seq: 25, kind: "dialogue", speaker: "izon-cast-preye", text: "Ina ẹrẹmẹ Tari.", roman: "EE-na EH-reh-meh TAH-ri", translation: { en: "My name is Tari.", fr: "Je m'appelle Tari." }, startTime: 78, endTime: 81 },
+    { seq: 25, kind: "dialogue", speaker: "izon-cast-preye", text: "[[My name is Tari.]]", translation: { en: "My name is Tari.", fr: "Je m'appelle Tari." }, verify: true, startTime: 78, endTime: 81 },
     { seq: 26, kind: "pause", text: "4s — learner substitutes their own name." },
-    { seq: 27, kind: "dialogue", speaker: "izon-cast-preye", text: "Ụmbana. Baịyo!", roman: "oom-BAH-na. BY-yo", translation: { en: "Thank you. Good day!", fr: "Merci. Bonne journée !" }, startTime: 81, endTime: 84 },
+    { seq: 27, kind: "dialogue", speaker: "izon-cast-preye", text: "Ụmbana. Baịyo!", roman: "oom-BAH-na. BY-yo", translation: { en: "Thank you. Goodbye!", fr: "Merci. Au revoir !" }, source: "izon_master_dictionary.csv", startTime: 81, endTime: 84 },
     { seq: 28, kind: "sfx", text: "Ambient jetty returns briefly, fades to silence." },
   ],
   production: {
@@ -152,9 +145,11 @@ const B1: PodcastEpisode = {
   audioUrl: null,
   isActive: false,
   sources: [
-    "userio-docs/izon_master_dictionary.csv (Baidẹ, Doo, Nụa, Ụmbana, Bo/Mịyọ a bo, A bọọ bomaaa)",
-    "mobile/lib/data/lessons/izon-first-words.ts (Emi kuro nimi, Baịyo, Emịnị Ịzọn ye, Teki ina ẹrẹ)",
-    "mobile/lib/data/sentences/izon.ts (Tụbara, Teki ina ẹrẹ)",
+    "userio-docs/izon_master_dictionary.csv (Baidẹ, Doo, Baịyo, Nụa, Ụmbana, Bo/Mịyọ a bo, A bọọ bomaaa)",
+    // izon-first-words.ts / sentences/izon.ts were RETIRED, not sources: the
+    // educator review (izon_educator_translation_worksheet.csv) found their
+    // naming forms fabricated. The self-introduction lines are [[placeholders]]
+    // until a keeper supplies the attested construction.
   ],
 };
 

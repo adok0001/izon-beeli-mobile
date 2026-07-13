@@ -84,15 +84,16 @@ export const IZON_PODCAST_SERIES: PodcastSeries = {
 };
 
 // ── Go-live curation ─────────────────────────────────────────────────────────
-// The owner's explicit call: ALL Bou Mie content goes live — no exceptions. The
-// HELD sets are intentionally empty, so every podcast episode and course lesson
-// down-converts with isActive:true, including the ones whose Woyengi creation
-// narrative, festival libation, and per-episode "Story" beats are still
-// [[bracketed]] placeholders. Those now ship as-authored per the owner's
-// decision. (To re-gate any item pending a native keeper's recording, add its
-// id back to the relevant set — the mechanism is preserved.)
-const HELD_PODCAST_IDS = new Set<string>([]);
-const HELD_COURSE_LESSON_IDS = new Set<string>([]);
+// Everything else in Bou Mie still goes live per the owner's call. The items
+// below are held back because the educator review
+// (userio-docs/izon_educator_translation_worksheet.csv) found their Izon
+// FABRICATED — teki / ina ẹrẹ / ẹrẹmẹ are unattested, and "Baịyo" means GOODBYE,
+// not "good evening". Those forms have been replaced with [[placeholders]], and a
+// placeholder must never reach a learner (podcast-types.ts: any [[placeholder]]
+// ⇒ isActive:false). Clear an id from these sets only once a keeper has supplied
+// the attested form — not before.
+const HELD_PODCAST_IDS = new Set<string>(["izon-pod-b1"]);
+const HELD_COURSE_LESSON_IDS = new Set<string>(["izon-bmc-b1", "izon-bmc-b2"]);
 const withGoLive = (l: LessonData, held: Set<string>): LessonData => ({
   ...l,
   isActive: !held.has(l.id),

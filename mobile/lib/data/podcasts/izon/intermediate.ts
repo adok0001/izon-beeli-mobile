@@ -188,7 +188,7 @@ const I2: PodcastEpisode = {
     { izon: "bite", roman: "BEE-teh", gloss: { en: "cloth / wrapper", fr: "pagne / tissu" }, source: "mobile/lib/data/cultural/izon.ts" },
     { izon: "toru", roman: "TOH-roo", gloss: { en: "river / waterway", fr: "rivière" }, source: "izon_master_dictionary.csv" },
     { izon: "dii", roman: "dee", gloss: { en: "to look / see", fr: "regarder / voir" }, source: "izon_master_dictionary.csv ('bo dii')" },
-    { izon: "ebi", roman: "EH-bee", gloss: { en: "good / beautiful", fr: "bon / beau" }, source: "izon-first-words.ts", verify: true },
+    { izon: "ebi", roman: "EH-bee", gloss: { en: "good / beautiful", fr: "bon / beau" }, verify: true },
   ],
   grammarPoints: [
     {

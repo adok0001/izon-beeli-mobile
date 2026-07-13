@@ -312,7 +312,7 @@ const A3: PodcastEpisode = {
     { izon: "kuro", roman: "KOO-ro", gloss: { en: "health / wellbeing", fr: "santé / bien-être" }, source: "izon_master_dictionary.csv" },
     { izon: "tọrụ angọ", roman: "TOH-roo AN-gaw", gloss: { en: "the source of the river", fr: "la source de la rivière" }, source: "proverbs/izon.ts (pv-iz-16)" },
     { izon: "bọ / ineé", roman: "baw / ee-NEH", gloss: { en: "come / remember", fr: "venir / se souvenir" }, source: "Izon dictionary.pdf (ineé ukie = 'think of me')", verify: true },
-    { izon: "Ịzọn didi", roman: "EE-zon DEE-dee", gloss: { en: "Izon is proud / long live Izon", fr: "fierté izon" }, source: "izon-first-words.ts", verify: true },
+    { izon: "Ịzọn didi", roman: "EE-zon DEE-dee", gloss: { en: "Izon is proud / long live Izon", fr: "fierté izon" }, verify: true },
   ],
   grammarPoints: [
     {
@@ -371,10 +371,10 @@ const A3: PodcastEpisode = {
     { seq: 13, kind: "note", text: "The pivot the whole season built toward. Let the surprised murmur, then the hush, breathe." },
     // Tari's praise — SHORT, simple, true. The learner's summit; deliberately achievable.
     { seq: 14, kind: "dialogue", speaker: "izon-cast-tari", text: "Daubọ, doo. Owuamapu, doo. Emịnị Tari — emịnị bou mie, warị mie.", roman: "DAH-oo-baw, doh. oh-woo-AH-mah-poo, doh. eh-MEE-nee TAH-ri — eh-MEE-nee boh MEE-eh, WAH-ri MEE-eh", translation: { en: "Ancestors, thank you. Water spirits, thank you. I am Tari — I came to the creek, and I have come home.", fr: "Ancêtres, merci. Esprits de l'eau, merci. Je suis Tari — je suis venu au ruisseau, et je suis rentré chez moi." }, verify: true, startTime: 164, endTime: 174 },
-    { seq: 15, kind: "dialogue", speaker: "izon-cast-tari", text: "Emịnị Ịzọn ye. Amọ fie mie. Toru angọ kụlụ bogha. Ụmbana.", roman: "eh-MEE-nee EE-zon yeh. AH-maw fee-eh MEE-eh. TOH-roo AN-gaw KOO-loo BOH-gha. oom-BAH-na", translation: { en: "I am Izon. May the town have peace. The river does not forget its source. Thank you.", fr: "Je suis Izon. Que la ville ait la paix. La rivière n'oublie pas sa source. Merci." }, literal: "…river source forget NEG…", source: "proverbs/izon.ts (pv-iz-16); izon-first-words.ts (Emịnị Ịzọn ye)", verify: true, startTime: 174, endTime: 183 },
+    { seq: 15, kind: "dialogue", speaker: "izon-cast-tari", text: "Emịnị Ịzọn ye. Amọ fie mie. Toru angọ kụlụ bogha. Ụmbana.", roman: "eh-MEE-nee EE-zon yeh. AH-maw fee-eh MEE-eh. TOH-roo AN-gaw KOO-loo BOH-gha. oom-BAH-na", translation: { en: "I am Izon. May the town have peace. The river does not forget its source. Thank you.", fr: "Je suis Izon. Que la ville ait la paix. La rivière n'oublie pas sa source. Merci." }, literal: "…river source forget NEG…", source: "proverbs/izon.ts (pv-iz-16)", verify: true, startTime: 174, endTime: 183 },
     { seq: 16, kind: "note", text: "Tari closes with the proverb 'the river does not forget its source' — the exact meaning of the homecoming, and a callback to Episode 1. Learner speaks Tari's praise in the second pass." },
     { seq: 17, kind: "sfx", text: "The crowd erupts — ululation, the great drum re-enters, Ekine bells. Ebiere's laugh cuts through." },
-    { seq: 18, kind: "dialogue", speaker: "izon-cast-ebiere", text: "Ịzọn didi! Enị bọ ọfọn kọndẹ. Enị warị mie, tụbọụ.", roman: "EE-zon DEE-dee! EH-nee baw AW-fawn KAWN-deh. EH-nee WAH-ri MEE-eh, TOO-bow", translation: { en: "Izon is proud! You carry the words now. You have come home, child.", fr: "L'Izon est fier ! Tu portes les paroles maintenant. Tu es rentré chez toi, mon enfant." }, source: "izon-first-words.ts (Ịzọn didi)", verify: true, startTime: 186, endTime: 194 },
+    { seq: 18, kind: "dialogue", speaker: "izon-cast-ebiere", text: "Ịzọn didi! Enị bọ ọfọn kọndẹ. Enị warị mie, tụbọụ.", roman: "EE-zon DEE-dee! EH-nee baw AW-fawn KAWN-deh. EH-nee WAH-ri MEE-eh, TOO-bow", translation: { en: "Izon is proud! You carry the words now. You have come home, child.", fr: "L'Izon est fier ! Tu portes les paroles maintenant. Tu es rentré chez toi, mon enfant." }, verify: true, startTime: 186, endTime: 194 },
     { seq: 19, kind: "note", text: "Ebiere's line = commemoration, not flattery (per her character brief). The season's emotional payoff." },
     { seq: 20, kind: "pause", text: "3s." },
     // Callback close — Episode 1's opening phrase returns, now fully understood.

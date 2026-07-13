@@ -47,7 +47,10 @@ const BEG_LESSONS: LessonData[] = [
     transcript: [
       { id: "izon-bmc-b1-1", startTime: 0, endTime: 3, text: "Baidẹ!", translation: { en: "Good morning!", fr: "Bonjour !" } },
       { id: "izon-bmc-b1-2", startTime: 3, endTime: 6, text: "E baịdẹ!", translation: { en: "Good afternoon!", fr: "Bon après-midi !" } },
-      { id: "izon-bmc-b1-3", startTime: 6, endTime: 9, text: "Baịyo!", translation: { en: "Good evening!", fr: "Bonsoir !" } },
+      // "Baịyo" was glossed "good evening" here — the educator review confirmed it
+      // means GOODBYE (evening = buború). No attested "good evening" greeting is on
+      // record, so this stays a placeholder rather than a second invented form.
+      { id: "izon-bmc-b1-3", startTime: 6, endTime: 9, text: "[[good evening!]]", translation: { en: "Good evening!", fr: "Bonsoir !" } },
       { id: "izon-bmc-b1-4", startTime: 9, endTime: 12, text: "Tụbara?", translation: { en: "How are you?", fr: "Comment vas-tu ?" } },
       { id: "izon-bmc-b1-5", startTime: 12, endTime: 15, text: "Emi, kuro nimi.", translation: { en: "I am fine, I am well.", fr: "Je vais bien." } },
       { id: "izon-bmc-b1-6", startTime: 15, endTime: 18, text: "A bọọ bomaaa! Nụa!", translation: { en: "Welcome! Welcome!", fr: "Bienvenue ! Bienvenue !" } },
@@ -70,8 +73,10 @@ const BEG_LESSONS: LessonData[] = [
     sceneTitle: "The Waterside",
     sceneOrder: 1,
     transcript: [
-      { id: "izon-bmc-b2-1", startTime: 0, endTime: 3, text: "Teki ina ẹrẹ?", translation: { en: "What is your name?", fr: "Comment t'appelles-tu ?" } },
-      { id: "izon-bmc-b2-2", startTime: 3, endTime: 6, text: "Ina ẹrẹmẹ Tari.", translation: { en: "My name is Tari.", fr: "Je m'appelle Tari." } },
+      // teki / ina ẹrẹ / ẹrẹmẹ are unattested (educator review). Placeholders until
+      // a keeper supplies the real naming construction — do not re-invent one.
+      { id: "izon-bmc-b2-1", startTime: 0, endTime: 3, text: "[[what is your name?]]", translation: { en: "What is your name?", fr: "Comment t'appelles-tu ?" } },
+      { id: "izon-bmc-b2-2", startTime: 3, endTime: 6, text: "[[my name is Tari.]]", translation: { en: "My name is Tari.", fr: "Je m'appelle Tari." } },
       { id: "izon-bmc-b2-3", startTime: 6, endTime: 10, text: "Emịnị tị ibe ye?", translation: { en: "Which place are you from?", fr: "D'où viens-tu ?" } },
       { id: "izon-bmc-b2-4", startTime: 10, endTime: 14, text: "Emịnị Kolokuma ye.", translation: { en: "I am from Kolokuma.", fr: "Je viens de Kolokuma." } },
       { id: "izon-bmc-b2-5", startTime: 14, endTime: 18, text: "Emịnị Yenagoa ama ka emi.", translation: { en: "I am from Yenagoa.", fr: "Je viens de Yenagoa." } },
