@@ -2467,6 +2467,8 @@ export const fr = {
       deleteArcCancel: "Annuler",
       arcDeleted: "Arc narratif supprimé",
       arcSaved: "Arc narratif enregistré",
+      standaloneLabel: "Autonome",
+      standaloneEditUnsupported: "La modification des arcs narratifs autonomes n'est pas encore prise en charge.",
       chapterLabel: "Chapitre {{number}}",
       chapterTitleLabel: "Titre du chapitre",
       chapterTitlePlaceholder: "ex. Arrivée au bord de l'eau",

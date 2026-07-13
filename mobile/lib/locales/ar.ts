@@ -2431,6 +2431,8 @@ export const ar = {
       deleteArcCancel: "إلغاء",
       arcDeleted: "حُذف قوس القصة",
       arcSaved: "حُفظ قوس القصة",
+      standaloneLabel: "قائم بذاته",
+      standaloneEditUnsupported: "تعديل أقواس القصص القائمة بذاتها غير مدعوم بعد.",
       chapterLabel: "الفصل {{number}}",
       chapterTitleLabel: "عنوان الفصل",
       chapterTitlePlaceholder: "مثال: الوصول إلى ضفّة الماء",

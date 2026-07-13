@@ -70,7 +70,7 @@ export default function StoryNewScreen() {
     if (!description.trim()) { setError(t("educator.story.errorDescriptionRequired")); return; }
     setError("");
     try {
-      await createArc.mutateAsync({ courseId, title: title.trim(), description: description.trim() });
+      await createArc.mutateAsync({ courseId, languageId, title: title.trim(), description: description.trim() });
       router.back();
     } catch (e) {
       setError(friendlyError(e as Error));

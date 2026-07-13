@@ -4,9 +4,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export interface EducatorStoryArc {
   id: string;
-  courseId: string;
+  courseId: string | null;
+  languageId: string | null;
   title: string;
   description: string;
+  status?: string;
+  createdBy?: string;
   updatedAt?: string;
 }
 
@@ -53,7 +56,7 @@ export function useCreateStoryArc() {
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body: { courseId: string; title: string; description: string }) => {
+    mutationFn: async (body: { courseId?: string; languageId?: string; title: string; description: string }) => {
       const token = await getToken();
       return apiFetch<{ id: string }>("/educator/story-arcs", {
         method: "POST",

@@ -2527,6 +2527,8 @@ export const en = {
       deleteArcCancel: "Cancel",
       arcDeleted: "Story arc deleted",
       arcSaved: "Story arc saved",
+      standaloneLabel: "Standalone",
+      standaloneEditUnsupported: "Editing standalone story arcs isn't supported yet.",
       chapterLabel: "Chapter {{number}}",
       chapterTitleLabel: "Chapter title",
       chapterTitlePlaceholder: "e.g. Arriving at the Waterside",

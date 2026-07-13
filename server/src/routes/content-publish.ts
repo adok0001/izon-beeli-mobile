@@ -326,13 +326,7 @@ async function publishEntity(entityType: EntityType, id: string, actor: Actor): 
     case "story_arcs": {
       const [row] = await db.select().from(storyArcs).where(eq(storyArcs.id, id)).limit(1);
       if (!row) return NOT_FOUND;
-      // Story arcs aren't language-scoped directly — resolve it via the course.
-      const [course] = await db
-        .select({ languageId: courses.languageId })
-        .from(courses)
-        .where(eq(courses.id, row.courseId))
-        .limit(1);
-      const guard = assertCanPublish({ languageId: course?.languageId ?? null, createdBy: row.createdBy }, actor);
+      const guard = assertCanPublish({ languageId: row.languageId, createdBy: row.createdBy }, actor);
       if (!guard.ok) return guard;
       const [after] = await db
         .update(storyArcs)
@@ -415,9 +409,8 @@ async function findRowScope(entityType: EntityType, id: string): Promise<RowScop
     return row ? { adminOnly: true } : null;
   }
 
-  if (entityType === "lessons" || entityType === "story_arcs") {
-    const table = entityType === "lessons" ? lessons : storyArcs;
-    const [row] = await db.select().from(table).where(eq(table.id, id)).limit(1);
+  if (entityType === "lessons") {
+    const [row] = await db.select().from(lessons).where(eq(lessons.id, id)).limit(1);
     if (!row) return null;
     const [course] = await db
       .select({ languageId: courses.languageId })
@@ -425,6 +418,12 @@ async function findRowScope(entityType: EntityType, id: string): Promise<RowScop
       .where(eq(courses.id, row.courseId))
       .limit(1);
     return { adminOnly: false, languageId: course?.languageId ?? null, createdBy: row.createdBy, updatedBy: row.updatedBy };
+  }
+
+  if (entityType === "story_arcs") {
+    const [row] = await db.select().from(storyArcs).where(eq(storyArcs.id, id)).limit(1);
+    if (!row) return null;
+    return { adminOnly: false, languageId: row.languageId, createdBy: row.createdBy, updatedBy: row.updatedBy };
   }
 
   if (entityType === "interactive_stories") {

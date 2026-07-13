@@ -2466,6 +2466,8 @@ export const pcm = {
       deleteArcCancel: "Cancel",
       arcDeleted: "Story arc deleted",
       arcSaved: "Story arc saved",
+      standaloneLabel: "Standalone",
+      standaloneEditUnsupported: "E no dey work yet to edit standalone story arc.",
       chapterLabel: "Chapter {{number}}",
       chapterTitleLabel: "Chapter title",
       chapterTitlePlaceholder: "e.g. Arriving at the Waterside",

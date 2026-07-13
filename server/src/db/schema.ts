@@ -975,7 +975,15 @@ export const bounties = pgTable(
 
 export const storyArcs = pgTable("story_arcs", {
   id: varchar("id", { length: 64 }).primaryKey(),
-  courseId: varchar("course_id", { length: 64 }).notNull().unique(),
+  // Null for standalone arcs that aren't attached to a single course (e.g. a
+  // season-long narrative spanning a podcast). Real course-bound arcs still
+  // get a unique courseId — one arc per course.
+  courseId: varchar("course_id", { length: 64 }).unique(),
+  // Free-text language slug (e.g. "izon"), same convention as every other
+  // languageId column in this schema — no FK, just an app-enforced value.
+  // Always set on create, whether derived from the course or supplied
+  // directly for standalone arcs.
+  languageId: varchar("language_id", { length: 64 }),
   title: varchar("title", { length: 300 }).notNull(),
   description: text("description").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

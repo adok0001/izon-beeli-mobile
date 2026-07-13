@@ -2431,6 +2431,8 @@ export const pt = {
       deleteArcCancel: "Cancelar",
       arcDeleted: "Arco de história eliminado",
       arcSaved: "Arco de história guardado",
+      standaloneLabel: "Independente",
+      standaloneEditUnsupported: "A edição de arcos de história independentes ainda não é suportada.",
       chapterLabel: "Capítulo {{number}}",
       chapterTitleLabel: "Título do capítulo",
       chapterTitlePlaceholder: "ex.: A Chegar à Margem do Rio",
