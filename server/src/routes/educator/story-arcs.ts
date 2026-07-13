@@ -1,4 +1,4 @@
-import { eq, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
 import { db } from "../../db/index.js";
@@ -8,6 +8,19 @@ import { AuthEnv } from "../../middleware/auth.js";
 export const educatorStoryArcsRouter = new Hono<AuthEnv>();
 
 // ─── Story Arcs ───────────────────────────────────────────────────────────────
+
+/**
+ * A story arc's courseId is usually a real course, but a season-long narrative
+ * that spans several courses (e.g. a podcast's overarching arc) deliberately
+ * gets its own id instead of shadowing one course's arc — see
+ * mobile/lib/data/podcasts/izon/index.ts. Such an arc has no matching `courses`
+ * row, so a plain join can't resolve its language scope; fall back to the
+ * language prefix baked into every arc id ("story-izon-..." → "izon"), the same
+ * language-prefixed-id convention used throughout the content package.
+ */
+function languageIdFromArcId(arcId: string): string | null {
+  return /^story-([a-z]+)-/.exec(arcId)?.[1] ?? null;
+}
 
 // GET /educator/story-arcs — arcs within the educator's language scope
 educatorStoryArcsRouter.get("/story-arcs", async (c) => {
@@ -26,11 +39,15 @@ educatorStoryArcsRouter.get("/story-arcs", async (c) => {
       languageId: courses.languageId,
     })
     .from(storyArcs)
-    .innerJoin(courses, eq(storyArcs.courseId, courses.id))
-    .where(!isAdmin && reviewerLanguages.length > 0 ? inArray(courses.languageId, reviewerLanguages) : undefined)
-    .orderBy(courses.languageId, storyArcs.courseId);
+    .leftJoin(courses, eq(storyArcs.courseId, courses.id))
+    .orderBy(storyArcs.courseId);
 
-  return c.json(rows);
+  const scoped = rows.map((r) => ({ ...r, languageId: r.languageId ?? languageIdFromArcId(r.id) }));
+  const visible = isAdmin
+    ? scoped
+    : scoped.filter((r) => r.languageId != null && reviewerLanguages.includes(r.languageId));
+
+  return c.json(visible);
 });
 
 // GET /educator/story-arcs/:courseId — arc with chapters for a specific course
@@ -48,12 +65,13 @@ educatorStoryArcsRouter.get("/story-arcs/:courseId", async (c) => {
       languageId: courses.languageId,
     })
     .from(storyArcs)
-    .innerJoin(courses, eq(storyArcs.courseId, courses.id))
+    .leftJoin(courses, eq(storyArcs.courseId, courses.id))
     .where(eq(storyArcs.courseId, courseId))
     .limit(1);
 
   if (!arc) return c.json({ error: "Not found" }, 404);
-  if (!isAdmin && !reviewerLanguages.includes(arc.languageId)) {
+  const languageId = arc.languageId ?? languageIdFromArcId(arc.id);
+  if (!isAdmin && !(languageId != null && reviewerLanguages.includes(languageId))) {
     return c.json({ error: "Forbidden" }, 403);
   }
 
@@ -107,12 +125,13 @@ educatorStoryArcsRouter.put("/story-arcs/:id", async (c) => {
   const [arc] = await db
     .select({ courseId: storyArcs.courseId, languageId: courses.languageId })
     .from(storyArcs)
-    .innerJoin(courses, eq(storyArcs.courseId, courses.id))
+    .leftJoin(courses, eq(storyArcs.courseId, courses.id))
     .where(eq(storyArcs.id, id))
     .limit(1);
 
   if (!arc) return c.json({ error: "Not found" }, 404);
-  if (!isAdmin && !reviewerLanguages.includes(arc.languageId)) {
+  const putLanguageId = arc.languageId ?? languageIdFromArcId(id);
+  if (!isAdmin && !(putLanguageId != null && reviewerLanguages.includes(putLanguageId))) {
     return c.json({ error: "Forbidden" }, 403);
   }
 
@@ -139,12 +158,13 @@ educatorStoryArcsRouter.delete("/story-arcs/:id", async (c) => {
   const [arc] = await db
     .select({ languageId: courses.languageId })
     .from(storyArcs)
-    .innerJoin(courses, eq(storyArcs.courseId, courses.id))
+    .leftJoin(courses, eq(storyArcs.courseId, courses.id))
     .where(eq(storyArcs.id, id))
     .limit(1);
 
   if (!arc) return c.json({ error: "Not found" }, 404);
-  if (!isAdmin && !reviewerLanguages.includes(arc.languageId)) {
+  const deleteLanguageId = arc.languageId ?? languageIdFromArcId(id);
+  if (!isAdmin && !(deleteLanguageId != null && reviewerLanguages.includes(deleteLanguageId))) {
     return c.json({ error: "Forbidden" }, 403);
   }
 
@@ -163,12 +183,13 @@ educatorStoryArcsRouter.put("/story-arcs/:id/chapters", async (c) => {
   const [arc] = await db
     .select({ languageId: courses.languageId })
     .from(storyArcs)
-    .innerJoin(courses, eq(storyArcs.courseId, courses.id))
+    .leftJoin(courses, eq(storyArcs.courseId, courses.id))
     .where(eq(storyArcs.id, id))
     .limit(1);
 
   if (!arc) return c.json({ error: "Not found" }, 404);
-  if (!isAdmin && !reviewerLanguages.includes(arc.languageId)) {
+  const chaptersLanguageId = arc.languageId ?? languageIdFromArcId(id);
+  if (!isAdmin && !(chaptersLanguageId != null && reviewerLanguages.includes(chaptersLanguageId))) {
     return c.json({ error: "Forbidden" }, 403);
   }
 
