@@ -64,7 +64,8 @@ export type PublishableEntityType =
   | "lessons"
   | "story_arcs"
   | "content_partners"
-  | "quiz_questions";
+  | "quiz_questions"
+  | "interactive_stories";
 
 /** Publishes an entity and invalidates the given query keys on success. */
 export function usePublishContent(entityType: PublishableEntityType, invalidateKeys: unknown[][]) {

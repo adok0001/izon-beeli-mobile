@@ -19,6 +19,7 @@ import { educatorLessonsRouter } from "./educator/lessons.js";
 import { educatorStoryArcsRouter } from "./educator/story-arcs.js";
 import { educatorSentencesRouter } from "./educator/sentences.js";
 import { educatorScenariosRouter } from "./educator/scenarios.js";
+import { educatorInteractiveStoriesRouter } from "./educator/interactive-stories.js";
 import { educatorContentHealthRouter } from "./educator/content-health.js";
 
 export const educatorRouter = new Hono<AuthEnv>();
@@ -34,4 +35,5 @@ educatorRouter.route("/", educatorLessonsRouter);
 educatorRouter.route("/", educatorStoryArcsRouter);
 educatorRouter.route("/", educatorSentencesRouter);
 educatorRouter.route("/", educatorScenariosRouter);
+educatorRouter.route("/", educatorInteractiveStoriesRouter);
 educatorRouter.route("/", educatorContentHealthRouter);

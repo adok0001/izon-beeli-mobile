@@ -1202,7 +1202,7 @@ export const scriptCharacters = pgTable(
 // Choose-your-path narrative experiences surfaced in Discover. The branching
 // scene graph is stored as jsonb; the app looks each story up by its storyId.
 
-type InteractiveStoryScene = {
+export type InteractiveStoryScene = {
   id: string;
   type: "narrative" | "choice" | "conclusion";
   gradient: [string, string];

@@ -312,6 +312,7 @@ export function ToolsStrip({ currentUser }: Readonly<{ currentUser: CurrentUser 
     { label: "Proverbs", href: "/educator/proverbs" },
     { label: "Etymology", href: "/educator/etymology" },
     { label: "Stories", href: "/educator/stories" },
+    { label: "Interactive Stories", href: "/educator/interactive-stories" },
     { label: "Sentences", href: "/educator/sentences" },
     { label: "Scenarios", href: "/educator/scenarios" },
     { label: "Quiz Bank", href: "/educator/quiz-bank" },

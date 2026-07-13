@@ -10,6 +10,7 @@ import {
   culturalContent,
   dictionaryEntries,
   etymologyEntries,
+  interactiveStories,
   lessons,
   proverbs,
   quizQuestions,
@@ -29,11 +30,13 @@ import { AuthEnv, authMiddleware, reviewerMiddleware } from "../middleware/auth.
  * a row directly.
  *
  * Directly language-scoped entities resolve scope from their own row;
- * lessons and story arcs resolve it via their course; content partners are an
- * operational catalogue with no language scope (admin-only publish). scripts/
- * scriptCharacters/interactiveStories/cultureItems carry the same workflow
- * columns but aren't registered here yet — they need a scoping decision before
- * they can reuse this guard.
+ * lessons and story arcs resolve it via their course; interactive stories are
+ * scoped via their own `language` column (aliased to languageId below, since
+ * the column predates this workflow and wasn't named to match); content
+ * partners are an operational catalogue with no language scope (admin-only
+ * publish). scripts/scriptCharacters/cultureItems carry the same workflow
+ * columns but aren't registered here yet — they need a scoping decision
+ * before they can reuse this guard.
  */
 export const contentPublishRouter = new Hono<AuthEnv>();
 contentPublishRouter.use("*", authMiddleware);
@@ -52,6 +55,7 @@ export const ENTITY_TYPES = [
   "story_arcs",
   "content_partners",
   "quiz_questions",
+  "interactive_stories",
 ] as const;
 export type EntityType = (typeof ENTITY_TYPES)[number];
 
@@ -83,6 +87,7 @@ const ALL_ENTITY_TABLES = [
   { entityType: "story_arcs", table: storyArcs },
   { entityType: "content_partners", table: contentPartners },
   { entityType: "quiz_questions", table: quizQuestions },
+  { entityType: "interactive_stories", table: interactiveStories },
 ] as const;
 
 function tableFor(entityType: EntityType) {
@@ -344,6 +349,20 @@ async function publishEntity(entityType: EntityType, id: string, actor: Actor): 
       return { ok: true, row: after };
     }
 
+    case "interactive_stories": {
+      const [row] = await db.select().from(interactiveStories).where(eq(interactiveStories.id, id)).limit(1);
+      if (!row) return NOT_FOUND;
+      const guard = assertCanPublish({ languageId: row.language, createdBy: row.createdBy }, actor);
+      if (!guard.ok) return guard;
+      const [after] = await db
+        .update(interactiveStories)
+        .set({ status: "published", updatedBy: actor.userId, publishedBy: actor.userId, publishedAt: new Date() })
+        .where(eq(interactiveStories.id, id))
+        .returning();
+      await recordPublish(entityType, id, actor.userId, row, after);
+      return { ok: true, row: after };
+    }
+
     case "content_partners": {
       // Partners aren't language-scoped; they're an operational catalogue, so
       // only admins publish them (reviewers never manage partners).
@@ -406,6 +425,16 @@ async function findRowScope(entityType: EntityType, id: string): Promise<RowScop
       .where(eq(courses.id, row.courseId))
       .limit(1);
     return { adminOnly: false, languageId: course?.languageId ?? null, createdBy: row.createdBy, updatedBy: row.updatedBy };
+  }
+
+  if (entityType === "interactive_stories") {
+    const [row] = await db
+      .select({ language: interactiveStories.language, createdBy: interactiveStories.createdBy, updatedBy: interactiveStories.updatedBy })
+      .from(interactiveStories)
+      .where(eq(interactiveStories.id, id))
+      .limit(1);
+    if (!row) return null;
+    return { adminOnly: false, languageId: row.language, createdBy: row.createdBy, updatedBy: row.updatedBy };
   }
 
   const table = directLanguageTableFor(entityType);
