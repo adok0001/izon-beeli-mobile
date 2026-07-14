@@ -3,7 +3,6 @@
 import { FileUploadField } from "@/components/media/file-upload-field";
 import { DevicePreview } from "@/components/studio/device-preview";
 import { DictionaryPreviewCard } from "@/components/studio/dictionary-preview-card";
-import { SchedulePublishModal } from "@/components/studio/schedule-publish-modal";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { LocalizedTextInput, type LocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -11,17 +10,14 @@ import { apiFetch } from "@/lib/api";
 import {
   canPublishContent,
   canSubmitForReview,
-  isScheduled,
   publishContent,
-  schedulePublishContent,
-  unschedulePublishContent,
   type ContentStatus,
 } from "@/lib/content-workflow";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { LANGUAGES } from "@mobile/lib/data/languages";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, BookText, CheckCircle2, ChevronDown, Clock, Edit2, Eye, FileJson, ImageIcon, Mic, Plus, Search, Send, Trash2, Upload, Volume2, X, XCircle } from "lucide-react";
+import { AlertTriangle, BookText, CheckCircle2, ChevronDown, Edit2, Eye, FileJson, ImageIcon, Mic, Plus, Search, Send, Trash2, Upload, Volume2, X, XCircle } from "lucide-react";
 import Image from "next/image";
 import React, { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -575,7 +571,6 @@ export default function EducatorDictionaryPage() {
   const [expandedAudio, setExpandedAudio] = useState<string | null>(null);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const [editingContrib, setEditingContrib] = useState<{ id: string; draft: Partial<DictEntry> } | null>(null);
-  const [schedulingEntryId, setSchedulingEntryId] = useState<string | null>(null);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -693,31 +688,6 @@ export default function EducatorDictionaryPage() {
       toast.success("Published");
     },
     onError: (e: Error) => toast.error("Failed to publish", { description: e.message }),
-  });
-
-  const schedulePublishEntry = useMutation({
-    mutationFn: async ({ id, publishAt }: { id: string; publishAt: Date }) => {
-      const token = await getToken();
-      return schedulePublishContent("dictionary_entries", id, publishAt, token ?? undefined);
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
-      toast.success("Publish scheduled");
-      setSchedulingEntryId(null);
-    },
-    onError: (e: Error) => toast.error("Failed to schedule", { description: e.message }),
-  });
-
-  const unschedulePublishEntry = useMutation({
-    mutationFn: async (id: string) => {
-      const token = await getToken();
-      return unschedulePublishContent("dictionary_entries", id, token ?? undefined);
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
-      toast.success("Schedule cancelled");
-    },
-    onError: (e: Error) => toast.error("Failed to unschedule", { description: e.message }),
   });
 
   const deleteEntry = useMutation({
@@ -939,7 +909,7 @@ export default function EducatorDictionaryPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <p className="font-semibold text-neutral-900 dark:text-white">{entry.word}</p>
-                        <StatusPill status={entry.status} publishAt={entry.publishAt} />
+                        <StatusPill status={entry.status} />
                         {isContrib && (
                           <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 border border-brand-300 dark:border-brand-700">
                             Contrib
@@ -1033,26 +1003,6 @@ export default function EducatorDictionaryPage() {
                               <CheckCircle2 className="h-3.5 w-3.5" />
                             </button>
                           )}
-                          {me && canPublishContent(entry.status, entry.createdBy, { isAdmin: me.isAdmin, reviewerRole: me.reviewerRole, userId: me.id }) && (
-                            isScheduled(entry.status, entry.publishAt) ? (
-                              <button
-                                onClick={() => unschedulePublishEntry.mutate(entry.id)}
-                                disabled={unschedulePublishEntry.isPending}
-                                className="p-1.5 rounded-lg text-blue-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                title="Cancel scheduled publish"
-                              >
-                                <Clock className="h-3.5 w-3.5" />
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => setSchedulingEntryId(entry.id)}
-                                className="p-1.5 rounded-lg text-neutral-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                                title="Schedule publish…"
-                              >
-                                <Clock className="h-3.5 w-3.5" />
-                              </button>
-                            )
-                          )}
                           <button onClick={() => setModal({ mode: "edit", entry })}
                             className="p-1.5 rounded-lg text-neutral-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors">
                             <Edit2 className="h-3.5 w-3.5" />
@@ -1120,14 +1070,6 @@ export default function EducatorDictionaryPage() {
           onSave={(id, data) => { editContrib.mutate({ id, data }); setEditingContrib(null); }}
           onClose={() => setEditingContrib(null)}
           saving={editContrib.isPending}
-        />
-      )}
-
-      {schedulingEntryId && (
-        <SchedulePublishModal
-          onClose={() => setSchedulingEntryId(null)}
-          onSchedule={(publishAt) => schedulePublishEntry.mutate({ id: schedulingEntryId, publishAt })}
-          saving={schedulePublishEntry.isPending}
         />
       )}
     </div>

@@ -41,7 +41,7 @@ import { sentencesRouter } from "./routes/sentences.js";
 import { storyArcsRouter } from "./routes/story-arcs.js";
 import { interactiveStoriesRouter } from "./routes/interactive-stories.js";
 import { contentSnapshotRouter } from "./routes/content-snapshot.js";
-import { contentPublishRouter, publishDueScheduled } from "./routes/content-publish.js";
+import { contentPublishRouter } from "./routes/content-publish.js";
 import { adminStatsRouter, adminUsersRouter, purgeExpiredDeletedUsers, usersRouter } from "./routes/users.js";
 import { isPlusGloballyEnabled } from "./middleware/plus-gate.js";
 import { restockPlusFreezes } from "./lib/restock-freezes.js";
@@ -205,19 +205,6 @@ app.post("/internal/send-reengagement", async (c) => {
   }
   const result = await sendReengagementNotifications();
   return c.json(result);
-});
-
-// POST /api/internal/publish-scheduled
-// Called every 15 min by Vercel cron (see vercel.json). Protected by CRON_SECRET.
-// Flips any draft/in_review row whose publishAt has arrived to published —
-// see publishDueScheduled() for why it doesn't re-check the four-eyes guard.
-app.post("/internal/publish-scheduled", async (c) => {
-  const secret = c.req.header("x-cron-secret");
-  if (!secret || secret !== process.env.CRON_SECRET) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-  const results = await publishDueScheduled();
-  return c.json({ published: results.filter((r) => r.result.ok).length, results });
 });
 
 export default app;

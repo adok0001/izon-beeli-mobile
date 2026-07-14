@@ -26,10 +26,6 @@
     {
       "path": "/api/notifications/admin/send-assignment-due",
       "schedule": "0 8 * * *"
-    },
-    {
-      "path": "/api/internal/publish-scheduled",
-      "schedule": "*/15 * * * *"
     }
   ]
 }

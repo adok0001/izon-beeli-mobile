@@ -76,37 +76,3 @@ export async function publishContent(
   return apiFetch(`/content/${entityType}/${id}/publish`, { method: "POST", token });
 }
 
-export async function schedulePublishContent(
-  entityType: PublishableEntityType,
-  id: string,
-  publishAt: Date,
-  token: string | undefined
-): Promise<unknown> {
-  return apiFetch(`/content/${entityType}/${id}/schedule-publish`, {
-    method: "POST",
-    body: JSON.stringify({ publishAt: publishAt.toISOString() }),
-    token,
-  });
-}
-
-export async function unschedulePublishContent(
-  entityType: PublishableEntityType,
-  id: string,
-  token: string | undefined
-): Promise<unknown> {
-  return apiFetch(`/content/${entityType}/${id}/unschedule-publish`, { method: "POST", token });
-}
-
-/** "Scheduled" isn't a real status value (the row is still draft/in_review
- * until the cron flips it) — it's `canPublishContent` true, `publishAt` set,
- * and that date still in the future. Compute it wherever a status pill is
- * rendered instead of adding a 5th enum value. */
-export function isScheduled(status: ContentStatus | undefined, publishAt: string | Date | null | undefined): boolean {
-  if (!status || status === "published" || status === "archived") return false;
-  if (!publishAt) return false;
-  return new Date(publishAt).getTime() > Date.now();
-}
-
-export const SCHEDULED_LABEL = "Scheduled";
-export const SCHEDULED_PILL_CLASS =
-  "bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800";

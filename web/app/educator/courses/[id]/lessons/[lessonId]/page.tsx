@@ -2,7 +2,6 @@
 
 import { DevicePreview } from "@/components/studio/device-preview";
 import { LessonPreviewCard } from "@/components/studio/lesson-preview-card";
-import { SchedulePublishModal } from "@/components/studio/schedule-publish-modal";
 import { StatusPill } from "@/components/ui/status-pill";
 import { apiFetch } from "@/lib/api";
 import { localizeField } from "@/lib/localize";
@@ -10,10 +9,7 @@ import { useUiLanguageStore } from "@/store/ui-language-store";
 import {
   canPublishContent,
   canSubmitForReview,
-  isScheduled,
   publishContent,
-  schedulePublishContent,
-  unschedulePublishContent,
   type ContentStatus,
 } from "@/lib/content-workflow";
 import { useAuth } from "@clerk/nextjs";
@@ -21,7 +17,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     ArrowLeft,
     CheckCircle2,
-    Clock,
     Eye,
     EyeOff,
     GripVertical,
@@ -264,7 +259,6 @@ export default function LessonDetailPage() {
   const [pendingAudioFile, setPendingAudioFile] = useState<File | null>(null);
   const [pendingAudioPreviewUrl, setPendingAudioPreviewUrl] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [schedulingOpen, setSchedulingOpen] = useState(false);
 
   const canRecordAudio =
     typeof window !== "undefined" &&
@@ -443,31 +437,6 @@ export default function LessonDetailPage() {
     onError: (e: Error) => toast.error("Failed to publish", { description: e.message }),
   });
 
-  const schedulePublishLesson = useMutation({
-    mutationFn: async (publishAt: Date) => {
-      const token = await getToken();
-      return schedulePublishContent("lessons", lessonId, publishAt, token ?? undefined);
-    },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["educator-lesson", lessonId] });
-      toast.success("Publish scheduled");
-      setSchedulingOpen(false);
-    },
-    onError: (e: Error) => toast.error("Failed to schedule", { description: e.message }),
-  });
-
-  const unschedulePublishLesson = useMutation({
-    mutationFn: async () => {
-      const token = await getToken();
-      return unschedulePublishContent("lessons", lessonId, token ?? undefined);
-    },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["educator-lesson", lessonId] });
-      toast.success("Schedule cancelled");
-    },
-    onError: (e: Error) => toast.error("Failed to unschedule", { description: e.message }),
-  });
-
   function updateSegment(i: number, updated: Segment) {
     setSegments((prev) => prev.map((s, j) => (j === i ? updated : s)));
     setSegmentsDirty(true);
@@ -616,7 +585,7 @@ export default function LessonDetailPage() {
             <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-neutral-100 dark:bg-white/[0.06] text-neutral-600 dark:text-neutral-300 capitalize">
               {lesson.type}
             </span>
-            <StatusPill status={lesson.status} publishAt={lesson.publishAt} />
+            <StatusPill status={lesson.status} />
             <span className="text-xs text-neutral-500 dark:text-neutral-300">{t("educator.lessonDetail.lessonOrder", { order: lesson.order })}</span>
           </div>
           <h1 className="text-xl font-bold text-neutral-900 dark:text-white">{displayTitle}</h1>
@@ -651,24 +620,6 @@ export default function LessonDetailPage() {
             >
               <CheckCircle2 className="h-3.5 w-3.5" /> Publish
             </button>
-          )}
-          {me && canPublishContent(lesson.status, lesson.createdBy, { isAdmin: me.isAdmin, reviewerRole: me.reviewerRole, userId: me.id }) && (
-            isScheduled(lesson.status, lesson.publishAt) ? (
-              <button
-                onClick={() => unschedulePublishLesson.mutate()}
-                disabled={unschedulePublishLesson.isPending}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 transition-colors disabled:opacity-50"
-              >
-                <Clock className="h-3.5 w-3.5" /> Cancel schedule
-              </button>
-            ) : (
-              <button
-                onClick={() => setSchedulingOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-neutral-200 dark:border-white/[0.08] text-neutral-600 dark:text-neutral-300 bg-white dark:bg-white/[0.04] hover:bg-neutral-50 dark:hover:bg-white/[0.06] transition-colors"
-              >
-                <Clock className="h-3.5 w-3.5" /> Schedule…
-              </button>
-            )
           )}
           <button
             onClick={() => toggleActive.mutate()}
@@ -860,14 +811,6 @@ export default function LessonDetailPage() {
           }}
         />
       </DevicePreview>
-
-      {schedulingOpen && (
-        <SchedulePublishModal
-          onClose={() => setSchedulingOpen(false)}
-          onSchedule={(publishAt) => schedulePublishLesson.mutate(publishAt)}
-          saving={schedulePublishLesson.isPending}
-        />
-      )}
     </div>
   );
 }
