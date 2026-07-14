@@ -62,6 +62,37 @@ export interface LessonWord {
   audioUrl?: AudioSource;
 }
 
+/**
+ * A cultural beat surfaced alongside a lesson — "language and culture together"
+ * as a literal reading position rather than a separate destination.
+ *
+ * Served by `GET /lessons/:id` as `culturalNotes`, authored in Studio. It lived
+ * in the bundled podcast package until that was retired; the shape is unchanged
+ * so the rendering components didn't have to move.
+ */
+export interface CulturalNote {
+  title: LocalizedText;
+  body: LocalizedText;
+  /** Category chips, e.g. ["festivals"]. The note card renders `tags[0]` as its overline. */
+  tags?: string[];
+  /**
+   * Render inline immediately after this transcript segment (0-based index into
+   * the lesson's ordered segments). Omitted = render after the transcript.
+   */
+  afterSegmentIndex?: number;
+}
+
+/** A recurring character in a season. Avatar + hue are authored in Studio, not bundled. */
+export interface SeasonCastMember {
+  castId: string;
+  name: string;
+  role: string;
+  /** Emoji avatar shown on the cast strip and beside transcript speakers. */
+  avatar: string;
+  /** Categorical accent hue (see constants/accent-colors) tinting the avatar circle. */
+  hue: string;
+}
+
 export interface Lesson {
   id: string;
   courseId: string;
@@ -95,6 +126,13 @@ export interface Lesson {
   canDoFr?: string | null;
   /** Key vocabulary with optional tone and gloss. */
   vocab?: LessonWord[];
+  /** Culture notes attached to this lesson in Studio, in display order. */
+  culturalNotes?: CulturalNote[];
+  /**
+   * Cast of the season this lesson is an episode of, if any — gives transcript
+   * speakers their avatar and hue. Empty for standalone lessons.
+   */
+  seasonCast?: SeasonCastMember[];
 }
 
 export interface TranscriptSegment {

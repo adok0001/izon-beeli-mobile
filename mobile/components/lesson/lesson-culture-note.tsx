@@ -1,5 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import type { CulturalNote } from "@/lib/data/podcasts/podcast-types";
+import type { CulturalNote } from "@/types";
 import { useCultural } from "@/lib/hooks/use-cultural";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";

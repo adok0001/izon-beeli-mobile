@@ -1,4 +1,4 @@
-import type { CulturalNote } from "@/lib/data/podcasts/podcast-types";
+import type { CulturalNote } from "@/types";
 
 /**
  * Groups cultural notes by the transcript segment index they should render

@@ -17,8 +17,11 @@ import {
   culturalKeyTerms,
   dictionaryEntries,
   interactiveStories,
+  lessonCulturalContent,
   lessons,
   proverbs,
+  storyArcCast,
+  storyChapters,
   quizQuestions,
   scriptCharacters,
   scripts,
@@ -124,6 +127,76 @@ export async function selectCultural(languageId: string) {
     termsByContentId.set(term.culturalContentId, list);
   }
   return content.map((item) => ({ ...item, keyTerms: termsByContentId.get(item.id) ?? [] }));
+}
+
+/** Collapse the flat `x` / `xFr` column pair into the app's LocalizedText map. */
+function localized(en: string, fr: string | null) {
+  return fr ? { en, fr } : { en };
+}
+
+/**
+ * The recurring cast of the season this lesson belongs to, if any.
+ *
+ * The transcript tints each speaker's avatar by their cast id. That lookup used
+ * to come from a bundled map; serving it with the lesson keeps the screen to a
+ * single fetch, since a lesson has no direct link to its season (it is reached
+ * through story_chapters).
+ */
+export async function selectLessonSeasonCast(lessonId: string) {
+  return db
+    .select({
+      castId: storyArcCast.castId,
+      name: storyArcCast.name,
+      role: storyArcCast.role,
+      avatar: storyArcCast.avatar,
+      hue: storyArcCast.hue,
+    })
+    .from(storyChapters)
+    .innerJoin(storyArcCast, eq(storyArcCast.storyArcId, storyChapters.storyArcId))
+    .where(eq(storyChapters.lessonId, lessonId))
+    .orderBy(asc(storyArcCast.order));
+}
+
+/**
+ * The culture notes an educator attached to a specific lesson, shaped as the
+ * app's `CulturalNote` so the lesson screen can render them inline.
+ *
+ * This read path did not exist until Jul 2026: Studio wrote these rows and
+ * nothing ever served them, so an educator's note could never reach a learner.
+ * The app compensated with a hardcoded bundle map keyed by lesson id, which is
+ * now retired.
+ *
+ * `afterSegmentIndex` anchors a note after a specific transcript segment; null
+ * means unanchored and the app groups it after the final segment.
+ */
+export async function selectLessonCulturalNotes(lessonId: string) {
+  const rows = await db
+    .select({
+      title: culturalContent.title,
+      titleFr: culturalContent.titleFr,
+      description: culturalContent.description,
+      descriptionFr: culturalContent.descriptionFr,
+      category: culturalContent.category,
+      afterSegmentIndex: lessonCulturalContent.afterSegmentIndex,
+    })
+    .from(lessonCulturalContent)
+    .innerJoin(culturalContent, eq(lessonCulturalContent.culturalContentId, culturalContent.id))
+    .where(
+      and(
+        eq(lessonCulturalContent.lessonId, lessonId),
+        eq(culturalContent.status, "published")
+      )
+    )
+    .orderBy(asc(lessonCulturalContent.order));
+
+  return rows.map((r) => ({
+    title: localized(r.title, r.titleFr),
+    body: localized(r.description, r.descriptionFr),
+    // The note card's overline reads tags[0]; the DB models this as a single
+    // `category`, so lift it into the array shape the component expects.
+    tags: [r.category],
+    afterSegmentIndex: r.afterSegmentIndex ?? undefined,
+  }));
 }
 
 export async function selectPublishedCourses(languageId: string) {

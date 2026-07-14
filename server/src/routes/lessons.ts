@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { eq, asc, and, inArray } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { lessons, transcriptSegments, courses } from "../db/schema.js";
+import { selectLessonCulturalNotes, selectLessonSeasonCast } from "../lib/content-selectors.js";
 
 export const lessonsRouter = new Hono();
 
@@ -70,11 +71,15 @@ lessonsRouter.get("/:id", async (c) => {
     return c.json({ error: "Lesson not found" }, 404);
   }
 
-  const segments = await db
-    .select()
-    .from(transcriptSegments)
-    .where(eq(transcriptSegments.lessonId, id))
-    .orderBy(asc(transcriptSegments.order));
+  const [segments, culturalNotes, seasonCast] = await Promise.all([
+    db
+      .select()
+      .from(transcriptSegments)
+      .where(eq(transcriptSegments.lessonId, id))
+      .orderBy(asc(transcriptSegments.order)),
+    selectLessonCulturalNotes(id),
+    selectLessonSeasonCast(id),
+  ]);
 
   return c.json({
     ...lesson,
@@ -88,5 +93,7 @@ lessonsRouter.get("/:id", async (c) => {
       speaker: s.speaker,
       roman: s.roman,
     })),
+    culturalNotes,
+    seasonCast,
   });
 });

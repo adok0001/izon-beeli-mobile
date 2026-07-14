@@ -1,5 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { LEVEL_CEFR } from "@/lib/data/series";
+import { LEVEL_CEFR } from "@/lib/series-presentation";
 import { useCanDoStatements } from "@/lib/hooks/use-progress";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";

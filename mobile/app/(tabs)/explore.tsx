@@ -4,11 +4,13 @@ import { FeaturedHero } from "@/components/explore/featured-hero";
 import { LevelBandRail } from "@/components/explore/level-band-rail";
 import { ProverbOfTheDay } from "@/components/proverb-of-the-day";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { getSeriesMeta } from "@/lib/data/series";
 import { useDiscover } from "@/lib/hooks/use-discover";
 import { useResumeLesson } from "@/lib/hooks/use-resume-lesson";
+import { useStoryArcById } from "@/lib/hooks/use-story-arc";
+import { buildLevelBands } from "@/lib/series-presentation";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
+import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -24,6 +26,7 @@ export default function LibraryScreen() {
   const { all } = useDiscover("all");
   const { resumeState } = useResumeLesson();
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
+  const { uiLanguage } = useUiLanguageStore();
 
   const featuredItem = all.find((i) => i.featured) ?? all[0] ?? null;
   const openStory = (storyId: string) => router.push(`/discover-story/${storyId}` as never);
@@ -33,11 +36,11 @@ export default function LibraryScreen() {
   const series = all.filter((i) => i.type === "podcast" && i.storyId);
   const films = all.filter((i) => i.type === "film");
 
-  // Level bands ride on whichever season is currently promoted — today
-  // that's the one series in the registry (Bou Mie).
+  // Level bands ride on whichever season is currently promoted, built from that
+  // season's companion courses (served with the arc).
   const primaryStoryId = series[0]?.storyId;
-  const seriesMeta = getSeriesMeta(primaryStoryId);
-  const levelBands = seriesMeta?.levelBands ?? [];
+  const { data: primaryArc } = useStoryArcById(primaryStoryId ?? "");
+  const levelBands = buildLevelBands(primaryArc?.companionCourses, uiLanguage, primaryArc?.nativeTitle);
   const openSeriesLevel = (level: string) =>
     router.push({ pathname: "/series/[id]", params: { id: primaryStoryId!, level } });
 
@@ -91,7 +94,7 @@ export default function LibraryScreen() {
         {/* Cultural */}
         <View style={{ marginBottom: 22 }}>
           <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10, paddingHorizontal: 4 }}>
-            <Text style={{ flex: 1, fontSize: 15, fontWeight: "800", color: M.text, letterSpacing: -0.2 }}>Cultural</Text>
+            <Text style={{ flex: 1, fontSize: 15, fontWeight: "800", color: M.text, letterSpacing: -0.2 }}>Culture Notes</Text>
             <Pressable
               onPress={() => router.push(`/cultural/${selectedLanguageId}` as never)}
               hitSlop={8}

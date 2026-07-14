@@ -13,7 +13,37 @@ import {
   uniqueIndex,
   uuid,
   varchar,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
+
+/**
+ * ---------- Glossary: "story" and "culture" each mean several things ----------
+ *
+ * Four tables have overlapping names and no relationship to each other. Read
+ * this before assuming two of them are duplicates — they are not.
+ *
+ *   story_arcs + story_chapters  A SEASON. Holds no teaching content itself: it
+ *                                sequences existing `lessons` and adds narrative
+ *                                glue (intro/outro) between them. A playlist with
+ *                                liner notes. Studio calls this "Season".
+ *
+ *   interactive_stories          A branching CHOOSE-YOUR-PATH GAME. `scenes` is a
+ *                                jsonb graph wired by `choices[].nextSceneId`. No
+ *                                lessons, no transcript, no vocabulary. Unrelated
+ *                                to story_arcs despite the name.
+ *
+ *   culture_items                DISCOVER MEDIA — catalog cards (film | podcast |
+ *                                blog). Metadata plus a pointer outward (audio or
+ *                                content URL). Advertises an experience; does not
+ *                                contain one.
+ *
+ *   cultural_content             CULTURE NOTES — per-language cultural writing,
+ *                                shown in the culture gallery and attached to
+ *                                lessons via `lesson_cultural_content`.
+ *
+ * The chain a learner walks: culture_items (card) -> story_arcs (season) ->
+ * lessons (episode) -> transcript_segments (the actual words).
+ */
 
 // ---------- Enums ----------
 
@@ -340,7 +370,9 @@ export const courses = pgTable(
   "courses",
   {
     id: varchar("id", { length: 64 }).primaryKey(),
-    languageId: varchar("language_id", { length: 64 }).notNull(),
+    languageId: varchar("language_id", { length: 64 })
+      .notNull()
+      .references(() => languages.id),
     title: varchar("title", { length: 300 }).notNull(),
     titleFr: varchar("title_fr", { length: 300 }),
     description: text("description").notNull(),
@@ -349,6 +381,18 @@ export const courses = pgTable(
     lessonsCount: integer("lessons_count").default(0).notNull(),
     order: integer("order").default(0).notNull(),
     courseType: varchar("course_type", { length: 32 }),
+    /**
+     * Set when this is a companion course drilling a season's world (the Series
+     * screen's level bands read from these). Null for ordinary standalone
+     * courses, which is most of them.
+     *
+     * `AnyPgColumn` breaks a circular type inference: courses -> story_arcs
+     * (here) and story_arcs.course_id -> courses.
+     */
+    seasonArcId: varchar("season_arc_id", { length: 64 }).references(
+      (): AnyPgColumn => storyArcs.id,
+      { onDelete: "set null" }
+    ),
     isActive: boolean("is_active").default(true).notNull(),
     status: contentStatusEnum("status").default("published").notNull(),
     publishAt: timestamp("publish_at"),
@@ -364,15 +408,23 @@ export const lessons = pgTable(
   "lessons",
   {
     id: varchar("id", { length: 64 }).primaryKey(),
-    courseId: varchar("course_id", { length: 64 }).notNull(),
+    // RESTRICT (the default): a course delete that cascaded would take every
+    // lesson, transcript and chapter beneath it — the worst blast radius in this
+    // schema. Courses are retired via `isActive`, not deleted.
+    courseId: varchar("course_id", { length: 64 })
+      .notNull()
+      .references(() => courses.id),
     type: varchar("type", { length: 16 }).default("lesson").notNull(),
     title: varchar("title", { length: 300 }).notNull(),
     titleFr: varchar("title_fr", { length: 300 }),
     description: text("description").notNull(),
     descriptionFr: text("description_fr"),
     audioUrl: text("audio_url"),
+    /** Seconds. (Was written as minutes by the podcast converter until Jul 2026.) */
     duration: integer("duration"),
     order: integer("order").default(0).notNull(),
+    /** Episode style for season lessons: "skit" | "immersive_story" | "host_narrated". */
+    style: varchar("style", { length: 24 }),
     artist: varchar("artist", { length: 300 }),
     genre: varchar("genre", { length: 100 }),
     skills: text("skills").array().default([]).notNull(),
@@ -400,7 +452,10 @@ export const transcriptSegments = pgTable(
   "transcript_segments",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    lessonId: varchar("lesson_id", { length: 64 }).notNull(),
+    // Segments are owned parts of a lesson and referenced by nothing else.
+    lessonId: varchar("lesson_id", { length: 64 })
+      .notNull()
+      .references(() => lessons.id, { onDelete: "cascade" }),
     startTime: real("start_time").notNull(),
     endTime: real("end_time").notNull(),
     text: text("text").notNull(),
@@ -433,7 +488,9 @@ export const dictionaryEntries = pgTable(
   "dictionary_entries",
   {
     id: varchar("id", { length: 64 }).primaryKey(),
-    languageId: varchar("language_id", { length: 64 }).notNull(),
+    languageId: varchar("language_id", { length: 64 })
+      .notNull()
+      .references(() => languages.id),
     word: varchar("word", { length: 500 }).notNull(),
     english: varchar("english", { length: 500 }).notNull(),
     french: varchar("french", { length: 500 }),
@@ -522,7 +579,9 @@ export const culturalContent = pgTable(
   "cultural_content",
   {
     id: varchar("id", { length: 64 }).primaryKey(),
-    languageId: varchar("language_id", { length: 64 }).notNull(),
+    languageId: varchar("language_id", { length: 64 })
+      .notNull()
+      .references(() => languages.id),
     category: varchar("category", { length: 64 }).notNull(),
     title: varchar("title", { length: 300 }).notNull(),
     titleFr: varchar("title_fr", { length: 300 }),
@@ -561,7 +620,10 @@ export const culturalKeyTerms = pgTable(
   "cultural_key_terms",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    culturalContentId: varchar("cultural_content_id", { length: 64 }).notNull(),
+    // Key terms are owned by their entry.
+    culturalContentId: varchar("cultural_content_id", { length: 64 })
+      .notNull()
+      .references(() => culturalContent.id, { onDelete: "cascade" }),
     word: varchar("word", { length: 200 }).notNull(),
     english: varchar("english", { length: 200 }).notNull(),
     order: integer("order").default(0).notNull(),
@@ -580,9 +642,21 @@ export const lessonCulturalContent = pgTable(
   "lesson_cultural_content",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    lessonId: varchar("lesson_id", { length: 64 }).notNull(),
-    culturalContentId: varchar("cultural_content_id", { length: 64 }).notNull(),
+    // Cascade on both sides: this is a pure join table, and a row whose lesson or
+    // whose note has been deleted means nothing.
+    lessonId: varchar("lesson_id", { length: 64 })
+      .notNull()
+      .references(() => lessons.id, { onDelete: "cascade" }),
+    culturalContentId: varchar("cultural_content_id", { length: 64 })
+      .notNull()
+      .references(() => culturalContent.id, { onDelete: "cascade" }),
     order: integer("order").default(0).notNull(),
+    /**
+     * Render the note inline, immediately after this transcript segment (0-based
+     * index into the lesson's ordered segments). Null = not anchored; the app
+     * groups unanchored notes after the final segment.
+     */
+    afterSegmentIndex: integer("after_segment_index"),
   },
   (table) => [
     index("lesson_cultural_content_lesson_id_idx").on(table.lessonId),
@@ -596,7 +670,9 @@ export const sentenceTemplates = pgTable(
   "sentence_templates",
   {
     id: varchar("id", { length: 64 }).primaryKey(),
-    languageId: varchar("language_id", { length: 64 }).notNull(),
+    languageId: varchar("language_id", { length: 64 })
+      .notNull()
+      .references(() => languages.id),
     sentence: text("sentence").notNull(),
     answer: varchar("answer", { length: 300 }).notNull(),
     englishSentence: text("english_sentence").notNull(),
@@ -977,15 +1053,22 @@ export const storyArcs = pgTable("story_arcs", {
   id: varchar("id", { length: 64 }).primaryKey(),
   // Null for standalone arcs that aren't attached to a single course (e.g. a
   // season-long narrative spanning a podcast). Real course-bound arcs still
-  // get a unique courseId — one arc per course.
-  courseId: varchar("course_id", { length: 64 }).unique(),
-  // Free-text language slug (e.g. "izon"), same convention as every other
-  // languageId column in this schema — no FK, just an app-enforced value.
-  // Always set on create, whether derived from the course or supplied
-  // directly for standalone arcs.
-  languageId: varchar("language_id", { length: 64 }),
+  // get a unique courseId — one arc per course. SET NULL on course delete: the
+  // season is a narrative in its own right and shouldn't die with the course.
+  courseId: varchar("course_id", { length: 64 })
+    .unique()
+    .references((): AnyPgColumn => courses.id, { onDelete: "set null" }),
+  // Always set on create, whether derived from the course or supplied directly
+  // for standalone arcs — it is what the app filters on.
+  languageId: varchar("language_id", { length: 64 }).references(() => languages.id),
   title: varchar("title", { length: 300 }).notNull(),
   description: text("description").notNull(),
+  // Season "bible" metadata. Lived in mobile's SERIES_REGISTRY until the bundle
+  // was retired; the Series screen reads it from here now.
+  /** Target-language season title, e.g. "Bou Mie" — flavour, shown under the title. */
+  nativeTitle: varchar("native_title", { length: 300 }),
+  /** One-line hook for the season. */
+  logline: text("logline"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   status: contentStatusEnum("status").default("published").notNull(),
@@ -996,12 +1079,47 @@ export const storyArcs = pgTable("story_arcs", {
   publishedAt: timestamp("published_at"),
 });
 
+/**
+ * Recurring characters in a season, shown on the Series screen's cast strip.
+ * `castId` is the stable authored id (e.g. "izon-cast-ebiere") that a
+ * transcript segment's `speaker` refers to.
+ */
+export const storyArcCast = pgTable(
+  "story_arc_cast",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    storyArcId: varchar("story_arc_id", { length: 64 })
+      .notNull()
+      .references(() => storyArcs.id, { onDelete: "cascade" }),
+    castId: varchar("cast_id", { length: 64 }).notNull(),
+    name: varchar("name", { length: 200 }).notNull(),
+    role: varchar("role", { length: 200 }).notNull(),
+    /** Emoji avatar for the cast strip — a character-specific touch, not a semantic icon. */
+    avatar: varchar("avatar", { length: 16 }).notNull(),
+    /** Categorical accent hue tinting the avatar circle (see constants/accent-colors). */
+    hue: varchar("hue", { length: 24 }).notNull(),
+    order: integer("order").default(0).notNull(),
+  },
+  (t) => [
+    index("story_arc_cast_arc_id_idx").on(t.storyArcId),
+    uniqueIndex("story_arc_cast_arc_cast_idx").on(t.storyArcId, t.castId),
+  ]
+);
+
 export const storyChapters = pgTable(
   "story_chapters",
   {
     id: varchar("id", { length: 64 }).primaryKey(),
-    storyArcId: varchar("story_arc_id", { length: 64 }).notNull(),
-    lessonId: varchar("lesson_id", { length: 64 }).notNull(),
+    // Chapters are owned by their season — deleting the season takes them with it.
+    storyArcId: varchar("story_arc_id", { length: 64 })
+      .notNull()
+      .references(() => storyArcs.id, { onDelete: "cascade" }),
+    // Deliberately RESTRICT, not cascade: cascading would silently delete a
+    // chapter (and punch a hole in the episode order) when an educator removes a
+    // single lesson. The educator route returns a 409 instead.
+    lessonId: varchar("lesson_id", { length: 64 })
+      .notNull()
+      .references(() => lessons.id),
     title: varchar("title", { length: 300 }).notNull(),
     narrativeIntro: text("narrative_intro").notNull(),
     narrativeOutro: text("narrative_outro").notNull(),
@@ -1014,7 +1132,9 @@ export const activities = pgTable(
   "activities",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    languageId: varchar("language_id", { length: 64 }).notNull(),
+    languageId: varchar("language_id", { length: 64 })
+      .notNull()
+      .references(() => languages.id),
     type: varchar("type", { length: 32 }).notNull(), // "soundboard" | "placement"
     // soundboard fields
     sentence: text("sentence"),
@@ -1262,7 +1382,29 @@ export const cultureItems = pgTable(
     coverGradientTo: varchar("cover_gradient_to", { length: 16 }).notNull(),
     coverEmoji: varchar("cover_emoji", { length: 16 }).notNull(),
     featured: boolean("featured").default(false).notNull(),
+    /**
+     * @deprecated Legacy polymorphic pointer — it could name EITHER an
+     * interactive story OR a story arc, with nothing recording which, so it
+     * could never be a foreign key (hence the app's "broken story link" badge).
+     * Superseded by `interactiveStoryId` / `seasonArcId` below. Still written by
+     * the API for backwards compatibility with installed app versions; drop the
+     * column by hand once those have aged out. Do NOT alter its type — a
+     * `drizzle-kit push` type change truncates the table.
+     */
     storyId: varchar("story_id", { length: 128 }),
+    /** The branching story this card opens (films). */
+    interactiveStoryId: varchar("interactive_story_id", { length: 64 }).references(
+      () => interactiveStories.id,
+      { onDelete: "set null" }
+    ),
+    /**
+     * The season this card belongs to. For a podcast card this IS the season it
+     * opens; for a film it means "set in this season's world" (the Series
+     * screen's "Also in this world" rail).
+     */
+    seasonArcId: varchar("season_arc_id", { length: 64 }).references(() => storyArcs.id, {
+      onDelete: "set null",
+    }),
     audioUrl: text("audio_url"),
     contentUrl: text("content_url"),
     body: text("body"),

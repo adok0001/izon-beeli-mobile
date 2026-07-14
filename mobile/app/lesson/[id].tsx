@@ -2,11 +2,11 @@ import { AudioPlayer } from "@/components/audio/audio-player";
 import { InteractiveTranscript } from "@/components/audio/interactive-transcript";
 import { LevelUpModal } from "@/components/level-up-modal";
 import { LessonCultureNote } from "@/components/lesson/lesson-culture-note";
-import { getLessonCulturalNotes } from "@/lib/data/podcasts/cultural-notes-map";
 import { LessonHero } from "@/components/lesson/lesson-hero";
 import { LessonMetaPills } from "@/components/lesson/lesson-meta-pills";
 import { LessonListen } from "@/components/lesson/lesson-listen";
 import { LessonObjectives } from "@/components/lesson/lesson-objectives";
+import { LessonSummary } from "@/components/lesson/lesson-summary";
 import { LessonWords } from "@/components/lesson/lesson-words";
 import { ShareModal } from "@/components/share/share-modal";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
@@ -18,7 +18,7 @@ import { getCourseTypeColors, getSkillMeta } from "@/constants/course-colors";
 import { useNextLesson } from "@/lib/hooks/use-next-lesson";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Course } from "@/types";
-import { formatDuration, getLanguageName, BUNDLED_AUDIO } from "@/lib/mock-data";
+import { getLanguageName, BUNDLED_AUDIO } from "@/lib/mock-data";
 import { playFinishSound } from "@/lib/sounds";
 import { hapticHeavy } from "@/lib/haptics";
 import { cancelDailyStreakReminder } from "@/lib/hooks/use-daily-reminder";
@@ -34,8 +34,8 @@ import { useTourStore } from "@/store/tour-store";
 import { useForegroundClaim, useOverlayStore } from "@/store/overlay-store";
 import { localize } from "@/lib/localize";
 import { LinearGradient } from "expo-linear-gradient";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Stack, useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { LoadingScreen } from "@/components/loading-screen";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useIsFocused } from "@react-navigation/native";
@@ -46,7 +46,6 @@ import { useTranslation } from "react-i18next";
 export default function LessonScreen() {
   const M = useMuseumTheme();
   const headerHeight = useHeaderHeight();
-  const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: lesson, isLoading, isError } = useLesson(id ?? "");
   const { loadAndPlay, currentTrackId, isPlaying, togglePlayback } = useAudioStore();
@@ -188,7 +187,10 @@ export default function LessonScreen() {
     analytics.lessonStarted(lesson.id, selectedLanguageId);
   };
 
-  const lessonCulturalNotes = getLessonCulturalNotes(lesson.id);
+  // Authored in Studio, served by GET /lessons/:id. Until Jul 2026 this came
+  // from a bundled map keyed by lesson id, because the API had no read path for
+  // the notes Studio was already writing.
+  const lessonCulturalNotes = lesson.culturalNotes;
   // Notes render inline within the transcript, anchored to the segment they
   // explain — the standalone block below only covers lessons with no
   // transcript to anchor into (falls back to the language's gallery item).
@@ -276,248 +278,20 @@ export default function LessonScreen() {
 
       <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={[]}>
         {showSummary ? (
-          /* ── Post-lesson summary ── */
-          <ScrollView
-            style={{ flex: 1, backgroundColor: M.bg }}
-            contentContainerStyle={{ paddingHorizontal: 22, paddingTop: headerHeight + 16, paddingBottom: 48 }}
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={{ alignItems: "center", marginBottom: 28 }}>
-              <View
-                style={{
-                  width: 72,
-                  height: 72,
-                  borderRadius: 36,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor: M.successBg,
-                  borderWidth: 1.5,
-                  borderColor: M.successBorder,
-                }}
-              >
-                <IconSymbol name="checkmark.circle.fill" size={38} color={M.success} />
-              </View>
-              <Text
-                style={{ marginTop: 14, fontSize: 22, fontWeight: "900", color: M.text, letterSpacing: -0.3 }}
-              >
-                {t("lesson.summary")}
-              </Text>
-            </View>
-
-            <View style={{ flexDirection: "row", gap: 10, marginBottom: 28 }}>
-              {wordCount ? (
-                <View
-                  style={{
-                    flex: 1,
-                    alignItems: "center",
-                    paddingVertical: 16,
-                    borderRadius: 16,
-                    backgroundColor: M.accentGlow,
-                    borderWidth: 1,
-                    borderColor: M.accentBorder,
-                  }}
-                >
-                  <Text style={{ fontSize: 26, fontWeight: "900", color: M.accent }}>{wordCount}</Text>
-                  <Text
-                    style={{ marginTop: 4, fontSize: 10, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase", color: M.muted }}
-                  >
-                    {t("lesson.wordsLearned")}
-                  </Text>
-                </View>
-              ) : null}
-              {lesson.duration ? (
-                <View
-                  style={{
-                    flex: 1,
-                    alignItems: "center",
-                    paddingVertical: 16,
-                    borderRadius: 16,
-                    backgroundColor: M.successBg,
-                    borderWidth: 1,
-                    borderColor: M.successBorder,
-                  }}
-                >
-                  <Text style={{ fontSize: 26, fontWeight: "900", color: M.success }}>
-                    {formatDuration(lesson.duration)}
-                  </Text>
-                  <Text
-                    style={{ marginTop: 4, fontSize: 10, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase", color: M.muted }}
-                  >
-                    {t("lesson.timeSpent")}
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-
-            {canDoText ? (
-              <View
-                style={{
-                  marginBottom: 12,
-                  borderRadius: 16,
-                  padding: 18,
-                  backgroundColor: M.accentGlow,
-                  borderWidth: 1,
-                  borderColor: M.accentBorder,
-                }}
-              >
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                  <IconSymbol name="checkmark.seal.fill" size={14} color={M.accent} />
-                  <Text style={{ fontSize: 10, fontWeight: "800", letterSpacing: 1.4, textTransform: "uppercase", color: M.accent }}>
-                    {canDoLabel}
-                  </Text>
-                </View>
-                <Text style={{ fontSize: 16, lineHeight: 23, fontWeight: "600", color: M.text }}>{canDoText}</Text>
-
-                {canDoSkills.length > 0 ? (
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      gap: 14,
-                      marginTop: 16,
-                      paddingTop: 14,
-                      borderTopWidth: 1,
-                      borderTopColor: M.border,
-                    }}
-                  >
-                    {canDoSkills.map((skill, i) => (
-                      <View key={i} style={{ flex: 1, alignItems: "center" }}>
-                        <Text style={{ fontSize: 20 }}>{skill.icon}</Text>
-                        <Text style={{ marginTop: 4, fontSize: 11, color: M.sub }}>{skill.label}</Text>
-                      </View>
-                    ))}
-                  </View>
-                ) : null}
-
-                {proveItText ? (
-                  <Pressable
-                    onPress={() => router.push({ pathname: "/quiz", params: { courseId: lesson.courseId, lessonId: lesson.id } })}
-                    style={{
-                      marginTop: 14,
-                      flexDirection: "row",
-                      alignItems: "center",
-                      backgroundColor: M.pillBg,
-                      borderWidth: 1,
-                      borderColor: M.border,
-                      borderRadius: 12,
-                      padding: 12,
-                    }}
-                    className="active:opacity-70"
-                    accessibilityRole="button"
-                    accessibilityLabel={`${proveItLabel}: ${proveItText}`}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 10, fontWeight: "800", letterSpacing: 0.8, textTransform: "uppercase", color: M.muted }}>
-                        {proveItLabel}
-                      </Text>
-                      <Text style={{ marginTop: 5, fontSize: 15, fontWeight: "700", color: M.text }}>{proveItText}</Text>
-                    </View>
-                    <IconSymbol name="trophy.fill" size={16} color={M.accent} />
-                  </Pressable>
-                ) : null}
-              </View>
-            ) : null}
-
-            {canDoText ? (
-              <Pressable
-                onPress={() => router.push("/(tabs)/profile")}
-                style={{
-                  marginBottom: 28,
-                  backgroundColor: M.accent,
-                  alignItems: "center",
-                  paddingVertical: 15,
-                  borderRadius: 14,
-                }}
-                className="active:opacity-80"
-                accessibilityRole="button"
-                accessibilityLabel={addToAbilitiesLabel}
-              >
-                <Text style={{ fontSize: 15, fontWeight: "800", color: M.parchment }}>{addToAbilitiesLabel} →</Text>
-              </Pressable>
-            ) : null}
-
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 14 }}>
-              <View style={{ width: 16, height: 1, backgroundColor: `${accentColor}60` }} />
-              <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.8, textTransform: "uppercase", color: M.muted }}>
-                {t("lesson.whatsNext")}
-              </Text>
-              <View style={{ flex: 1, height: 1, backgroundColor: M.border }} />
-            </View>
-
-            <View style={{ gap: 10 }}>
-              {nextLessonData?.lesson && nextLessonData.lesson.id !== lesson.id && (
-                <Pressable
-                  onPress={() => {
-                    setShowSummary(false);
-                    router.replace(`/lesson/${nextLessonData.lesson!.id}`);
-                  }}
-                  style={{ borderRadius: 16, overflow: "hidden" }}
-                  className="active:opacity-75"
-                  accessibilityRole="button"
-                  accessibilityLabel={t("lesson.continueToNext")}
-                >
-                  <LinearGradient
-                    colors={[MUSEUM.accentLight, MUSEUM.accentDark]}
-                    style={{ paddingVertical: 16, alignItems: "center" }}
-                  >
-                    <Text style={{ fontSize: 15, fontWeight: "800", color: M.parchment }}>
-                      {t("lesson.continueToNext")} ›
-                    </Text>
-                  </LinearGradient>
-                </Pressable>
-              )}
-
-              <View style={{ flexDirection: "row", gap: 10 }}>
-                <Pressable
-                  onPress={() => router.push({ pathname: "/quiz", params: { courseId: lesson.courseId, lessonId: lesson.id } })}
-                  style={{
-                    flex: 1, alignItems: "center", paddingVertical: 16, borderRadius: 16,
-                    borderWidth: 1, borderColor: `${accentColor}35`, backgroundColor: `${accentColor}08`,
-                  }}
-                  className="active:opacity-70"
-                  accessibilityRole="button"
-                >
-                  <IconSymbol name="trophy.fill" size={18} color={accentColor} />
-                  <Text style={{ marginTop: 5, fontSize: 12, fontWeight: "700", color: accentColor }}>{t("lesson.takeQuiz")}</Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => router.push({ pathname: "/word-review", params: { lessonId: lesson.id } })}
-                  style={{
-                    flex: 1, alignItems: "center", paddingVertical: 16, borderRadius: 16,
-                    borderWidth: 1, borderColor: M.successBorder, backgroundColor: M.successBg,
-                  }}
-                  className="active:opacity-70"
-                  accessibilityRole="button"
-                >
-                  <IconSymbol name="brain.head.profile" size={18} color={M.success} />
-                  <Text style={{ marginTop: 5, fontSize: 12, fontWeight: "700", color: M.success }}>{t("lesson.reviewWords")}</Text>
-                </Pressable>
-              </View>
-
-              <Pressable
-                onPress={() => router.push("/journal" as any)}
-                style={{
-                  flexDirection: "row", alignItems: "center", gap: 10,
-                  paddingHorizontal: 16, paddingVertical: 14, borderRadius: 16,
-                  borderWidth: 1, borderColor: M.border, backgroundColor: M.card,
-                }}
-                className="active:opacity-70"
-                accessibilityRole="button"
-              >
-                <IconSymbol name="pencil.and.list.clipboard" size={16} color={M.muted} />
-                <Text style={{ fontSize: 14, fontWeight: "600", color: M.sub }}>{t("lesson.writeReflection")}</Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => setShowSummary(false)}
-                style={{ alignItems: "center", paddingVertical: 12 }}
-                accessibilityRole="button"
-              >
-                <Text style={{ fontSize: 13, color: M.muted }}>
-                  {isSong ? t("songs.lyrics") : t("lesson.transcript")}
-                </Text>
-              </Pressable>
-            </View>
-          </ScrollView>
+          <LessonSummary
+            lesson={lesson}
+            wordCount={wordCount}
+            accentColor={accentColor}
+            headerHeight={headerHeight}
+            canDo={{ text: canDoText, label: canDoLabel, skills: canDoSkills, addToAbilitiesLabel }}
+            proveIt={{ text: proveItText, label: proveItLabel }}
+            nextLessonId={
+              nextLessonData?.lesson && nextLessonData.lesson.id !== lesson.id
+                ? nextLessonData.lesson.id
+                : undefined
+            }
+            onDismiss={() => setShowSummary(false)}
+          />
         ) : (
           /* ── Galerie lesson detail ── */
           <ScrollView
@@ -557,6 +331,7 @@ export default function LessonScreen() {
                 transcriptLabel={(isSong ? t("songs.lyrics") : t("lesson.transcript")).toUpperCase()}
                 onFinish={() => trackListen.mutate(lesson.id)}
                 culturalNotes={lessonCulturalNotes}
+                cast={lesson.seasonCast}
               />
             ) : null}
 

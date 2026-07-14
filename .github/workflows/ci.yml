@@ -29,6 +29,55 @@ jobs:
       - working-directory: ./server
         run: npm audit --audit-level=critical
 
+  schema:
+    name: Server — dry-run schema push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: server/package-lock.json
+      - name: Did this PR touch the schema?
+        id: changed
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if git diff --quiet origin/${{ github.base_ref }}...HEAD -- server/src/db/schema.ts; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.changed.outputs.run == 'true'
+        working-directory: ./server
+        run: npm ci
+      # `vercel-build` only pushes when VERCEL_ENV=production, so without this the
+      # first time a schema change meets real data is the PRODUCTION deploy. This
+      # rehearses the push against a Neon branch of prod.
+      #
+      # stdin is closed deliberately: drizzle-kit push PROMPTS on data-loss
+      # statements (truncate-on-type-change, drop column, rename resolution). With
+      # no TTY it aborts, which is what we want — a red CI check instead of a hung
+      # or silently destructive production deploy. Never pass --force here; it
+      # auto-approves the truncate.
+      - name: Preflight + push against Neon branch
+        if: steps.changed.outputs.run == 'true'
+        working-directory: ./server
+        env:
+          DATABASE_URL: ${{ secrets.SHADOW_DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::SHADOW_DATABASE_URL is not set. Point it at a Neon branch of prod;"
+            echo "::error::without it, schema changes are only ever tested on production itself."
+            exit 1
+          fi
+          npm run db:preflight < /dev/null
+          npx drizzle-kit push < /dev/null
+
   web:
     name: Web — build, audit
     runs-on: ubuntu-latest

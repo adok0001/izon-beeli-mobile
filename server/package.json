@@ -1,15 +1,20 @@
 {
   "name": "izon-beeli-server",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "vercel-build": "if [ \"$VERCEL_ENV\" = \"production\" ]; then npm run db:deploy; fi && npm run build",
+    "vercel-build": "if [ \"$VERCEL_ENV\" = \"production\" ]; then npm run db:preflight && npm run db:deploy; fi && npm run build",
     "start": "node dist/index.js",
     "db:push": "drizzle-kit push",
     "db:deploy": "drizzle-kit push",
+    "db:preflight": "tsx src/db/preflight.ts",
+    "db:cleanup-orphans": "tsx src/db/cleanup-orphans.ts",
+    "db:backfill-duration": "tsx src/db/backfill-lesson-duration.ts",
+    "db:guard-content": "tsx src/db/guard-unattested-content.ts",
+    "db:import-izon": "tsx src/seed/import-izon.ts",
     "db:migrate-media": "tsx src/seed/migrate-media-fields.ts",
     "db:studio": "drizzle-kit studio",
     "test": "jest"

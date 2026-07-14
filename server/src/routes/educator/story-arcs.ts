@@ -1,8 +1,8 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
 import { db } from "../../db/index.js";
-import { courses, storyArcs, storyChapters } from "../../db/schema.js";
+import { courses, lessons, storyArcs, storyChapters } from "../../db/schema.js";
 import { AuthEnv } from "../../middleware/auth.js";
 
 export const educatorStoryArcsRouter = new Hono<AuthEnv>();
@@ -189,6 +189,22 @@ educatorStoryArcsRouter.put("/story-arcs/:id/chapters", async (c) => {
   for (const ch of body.chapters) {
     if (!ch.lessonId || !ch.title?.trim() || !ch.narrativeIntro?.trim() || !ch.narrativeOutro?.trim()) {
       return c.json({ error: "Each chapter requires lessonId, title, narrativeIntro, and narrativeOutro" }, 400);
+    }
+  }
+
+  // Every chapter must point at a lesson that exists. Without this the arc
+  // silently stores a dangling lessonId and the season renders a chapter with
+  // no episode behind it.
+  const lessonIds = [...new Set(body.chapters.map((ch) => ch.lessonId))];
+  if (lessonIds.length > 0) {
+    const found = await db
+      .select({ id: lessons.id })
+      .from(lessons)
+      .where(inArray(lessons.id, lessonIds));
+    const foundIds = new Set(found.map((l) => l.id));
+    const missing = lessonIds.filter((lessonId) => !foundIds.has(lessonId));
+    if (missing.length > 0) {
+      return c.json({ error: `No such lesson: ${missing.join(", ")}` }, 400);
     }
   }
 

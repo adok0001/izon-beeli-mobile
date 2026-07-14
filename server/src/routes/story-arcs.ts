@@ -1,7 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index.js";
-import { storyArcs, storyChapters, lessons } from "../db/schema.js";
+import { courses, cultureItems, lessons, storyArcCast, storyArcs, storyChapters } from "../db/schema.js";
 
 export const storyArcsRouter = new Hono();
 
@@ -22,6 +22,7 @@ async function enrichChapters(chapters: ChapterRow[]) {
           duration: lessons.duration,
           isActive: lessons.isActive,
           genre: lessons.genre,
+          style: lessons.style,
         })
         .from(lessons)
         .where(inArray(lessons.id, lessonIds))
@@ -38,11 +39,65 @@ async function enrichChapters(chapters: ChapterRow[]) {
       level,
       lessonDuration: l?.duration ?? null,
       lessonGenre: l?.genre ?? null,
+      // "skit" | "immersive_story" | "host_narrated" — drives the style chip.
+      lessonStyle: l?.style ?? null,
       // A chapter is "playable" only when its lesson is live. Seeded podcast
       // episodes stay isActive:false until native-speaker recording lands.
       lessonIsActive: l?.isActive ?? false,
     };
   });
+}
+
+/**
+ * The season "bible" the Series screen needs: recurring cast, the companion
+ * courses that drill this season's world (level bands are derived from these),
+ * and the films set in it.
+ *
+ * All of this lived in mobile's `SERIES_REGISTRY`, a bundled TS file compiled
+ * into the app. Serving it here is what let that bundle be deleted.
+ */
+async function seasonExtras(arcId: string) {
+  const [cast, companionCourses, films] = await Promise.all([
+    db
+      .select({
+        castId: storyArcCast.castId,
+        name: storyArcCast.name,
+        role: storyArcCast.role,
+        avatar: storyArcCast.avatar,
+        hue: storyArcCast.hue,
+      })
+      .from(storyArcCast)
+      .where(eq(storyArcCast.storyArcId, arcId))
+      .orderBy(storyArcCast.order),
+    db
+      .select({
+        id: courses.id,
+        title: courses.title,
+        level: courses.level,
+        order: courses.order,
+      })
+      .from(courses)
+      .where(and(eq(courses.seasonArcId, arcId), eq(courses.isActive, true)))
+      .orderBy(courses.order),
+    db
+      .select({ id: cultureItems.id, storyId: cultureItems.interactiveStoryId, title: cultureItems.title })
+      .from(cultureItems)
+      .where(
+        and(
+          eq(cultureItems.seasonArcId, arcId),
+          eq(cultureItems.type, "film"),
+          eq(cultureItems.status, "published")
+        )
+      ),
+  ]);
+
+  return {
+    cast,
+    companionCourses,
+    // The Series screen's "Also in this world" rail matches Discover cards on
+    // the interactive story they open.
+    filmStoryIds: films.map((f) => f.storyId).filter((s): s is string => !!s),
+  };
 }
 
 // GET /story-arcs — all arc summaries (public, for mobile to know which courses have a story)
@@ -76,7 +131,11 @@ storyArcsRouter.get("/arc/:id", async (c) => {
     .where(eq(storyChapters.storyArcId, arc.id))
     .orderBy(storyChapters.order);
 
-  return c.json({ ...arc, chapters: await enrichChapters(chapters) });
+  return c.json({
+    ...arc,
+    chapters: await enrichChapters(chapters),
+    ...(await seasonExtras(arc.id)),
+  });
 });
 
 // GET /story-arcs/:courseId — full arc with enriched chapters (public)
@@ -97,5 +156,9 @@ storyArcsRouter.get("/:courseId", async (c) => {
     .where(eq(storyChapters.storyArcId, arc.id))
     .orderBy(storyChapters.order);
 
-  return c.json({ ...arc, chapters: await enrichChapters(chapters) });
+  return c.json({
+    ...arc,
+    chapters: await enrichChapters(chapters),
+    ...(await seasonExtras(arc.id)),
+  });
 });

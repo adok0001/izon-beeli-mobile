@@ -1,4 +1,4 @@
-import type { SeriesLevelBand } from "@/lib/data/series";
+import type { SeriesLevelBand } from "@/lib/series-presentation";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { Pressable, ScrollView, Text, View } from "react-native";
 

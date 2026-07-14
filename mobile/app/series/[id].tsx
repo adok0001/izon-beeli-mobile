@@ -2,15 +2,15 @@ import { DiscoverCard } from "@/components/discover-card";
 import { CourseArtwork } from "@/components/learn/course-artwork";
 import { LoadingScreen } from "@/components/loading-screen";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { getAccent } from "@/constants/accent-colors";
+import { getAccent, type AccentHue } from "@/constants/accent-colors";
 import { useCourses } from "@/lib/hooks/use-courses";
 import { useDiscover } from "@/lib/hooks/use-discover";
-import { useStoryArcById } from "@/lib/hooks/use-story-arc";
-import { getSeriesMeta, styleLabel } from "@/lib/data/series";
+import { useStoryArcById, type SeasonChapter } from "@/lib/hooks/use-story-arc";
+import { styleLabel } from "@/lib/series-presentation";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUiLanguageStore } from "@/store/ui-language-store";
-import type { Course, StoryChapter } from "@/types";
+import type { Course } from "@/types";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
@@ -41,8 +41,7 @@ export default function SeriesScreen() {
   const { data: arc, isLoading } = useStoryArcById(storyId);
   const { all: podcasts } = useDiscover("podcast");
   const { all: allFilms } = useDiscover("film");
-  const meta = getSeriesMeta(storyId);
-  const { data: courses } = useCourses(meta?.languageId ?? "");
+  const { data: courses } = useCourses(arc?.languageId ?? "");
   const [activeLevel, setActiveLevel] = useState<string | null>(levelParam ?? null);
 
   if (isLoading) {
@@ -74,14 +73,18 @@ export default function SeriesScreen() {
   const totalMinutes = chapters.reduce((sum, ch) => sum + (ch.lessonDuration ?? 0), 0);
   const activeCount = chapters.filter((ch) => ch.lessonIsActive).length;
 
+  const cast = arc.cast ?? [];
+
   // "Also in this world" — the films and companion courses that share the
-  // season's cast and threads (declared on the SeriesMeta, empty for series
+  // season's cast and threads (linked to the arc in the CMS, empty for seasons
   // without a mapped world so the section simply doesn't render).
-  const worldFilms = meta?.filmStoryIds?.length
-    ? allFilms.filter((f) => f.storyId && meta.filmStoryIds!.includes(f.storyId))
+  const filmStoryIds = arc.filmStoryIds ?? [];
+  const companionCourseIds = (arc.companionCourses ?? []).map((c) => c.id);
+  const worldFilms = filmStoryIds.length
+    ? allFilms.filter((f) => f.storyId && filmStoryIds.includes(f.storyId))
     : [];
-  const worldCourses = meta?.courseIds?.length
-    ? (courses ?? []).filter((c) => meta.courseIds!.includes(c.id))
+  const worldCourses = companionCourseIds.length
+    ? (courses ?? []).filter((c) => companionCourseIds.includes(c.id))
     : [];
   const openStory = (sid: string) => router.push(`/discover-story/${sid}` as never);
   const openCourse = (courseId: string) =>
@@ -124,13 +127,13 @@ export default function SeriesScreen() {
   const otherLevelsCount = otherGroups.reduce((sum, g) => sum + g.items.length, 0);
   const otherLevelLabels = otherGroups.map((g) => g.label).join(" & ");
 
-  const handleEpisodePress = (ch: StoryChapter) => {
+  const handleEpisodePress = (ch: SeasonChapter) => {
     if (ch.lessonIsActive) router.push(`/lesson/${ch.lessonId}` as never);
   };
 
-  const renderEpisode = (ch: StoryChapter) => {
+  const renderEpisode = (ch: SeasonChapter) => {
     const active = !!ch.lessonIsActive;
-    const style = styleLabel(meta?.styleByLessonId[ch.lessonId]);
+    const style = styleLabel(ch.lessonStyle);
     const runtime = ch.lessonDuration ? `${ch.lessonDuration} min` : null;
     return (
       <Pressable
@@ -214,13 +217,13 @@ export default function SeriesScreen() {
               Audio Drama Series
             </Text>
             <Text style={{ marginTop: 6, fontSize: 30, fontWeight: "800", color: M.parchment }}>
-              {meta?.nativeTitle ?? arc.title}
+              {arc.nativeTitle ?? arc.title}
             </Text>
-            {meta?.nativeTitle ? (
+            {arc.nativeTitle ? (
               <Text style={{ marginTop: 2, fontSize: 15, fontWeight: "600", color: M.textDim }}>{arc.title}</Text>
             ) : null}
-            {meta?.logline ? (
-              <Text style={{ marginTop: 10, fontSize: 14, lineHeight: 20, color: M.textDim }}>{meta.logline}</Text>
+            {arc.logline ? (
+              <Text style={{ marginTop: 10, fontSize: 14, lineHeight: 20, color: M.textDim }}>{arc.logline}</Text>
             ) : null}
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
               <View style={{ borderRadius: 99, paddingHorizontal: 10, paddingVertical: 5, backgroundColor: "rgba(7,8,15,0.4)", borderWidth: 1, borderColor: "rgba(247,242,232,0.2)" }}>
@@ -236,9 +239,9 @@ export default function SeriesScreen() {
                   </Text>
                 </View>
               ) : null}
-              {meta && meta.cast.length > 0 ? (
+              {cast.length > 0 ? (
                 <View style={{ borderRadius: 99, paddingHorizontal: 10, paddingVertical: 5, backgroundColor: "rgba(7,8,15,0.4)", borderWidth: 1, borderColor: "rgba(247,242,232,0.2)" }}>
-                  <Text style={{ fontSize: 11, fontWeight: "600", color: M.parchment }}>{meta.cast.length} cast</Text>
+                  <Text style={{ fontSize: 11, fontWeight: "600", color: M.parchment }}>{cast.length} cast</Text>
                 </View>
               ) : null}
               {activeCount === 0 ? (
@@ -276,16 +279,16 @@ export default function SeriesScreen() {
           ) : null}
 
           {/* Cast strip */}
-          {meta && meta.cast.length > 0 ? (
+          {cast.length > 0 ? (
             <View style={{ marginTop: 18 }}>
               <Text style={{ paddingHorizontal: 20, fontSize: 12, fontWeight: "700", letterSpacing: 0.6, textTransform: "uppercase", color: M.muted }}>
                 The Cast
               </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, gap: 12 }}>
-                {meta.cast.map((c) => {
-                  const accent = getAccent(c.hue);
+                {cast.map((c) => {
+                  const accent = getAccent(c.hue as AccentHue);
                   return (
-                    <View key={c.id} style={{ width: 92, alignItems: "center" }}>
+                    <View key={c.castId} style={{ width: 92, alignItems: "center" }}>
                       <View
                         style={{
                           width: 52,

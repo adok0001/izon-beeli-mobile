@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { asc, eq } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { languages } from "../db/schema.js";
+import { courses, culturalContent, dictionaryEntries, languages } from "../db/schema.js";
 import { adminMiddleware, authMiddleware } from "../middleware/auth.js";
 
 export const languagesRouter = new Hono();
@@ -80,6 +80,26 @@ languagesAdminRouter.delete("/:id", async (c) => {
   const id = c.req.param("id");
   const [existing] = await db.select({ id: languages.id }).from(languages).where(eq(languages.id, id)).limit(1);
   if (!existing) return c.json({ error: "Not found" }, 404);
+
+  // Deleting a language that still owns content would orphan every course,
+  // lesson, transcript and culture note beneath it — the entire library for that
+  // language, from one click. Refuse, and say what is in the way.
+  const blockers: string[] = [];
+  for (const [label, rows] of [
+    ["course", await db.select({ id: courses.id }).from(courses).where(eq(courses.languageId, id)).limit(1)],
+    ["culture note", await db.select({ id: culturalContent.id }).from(culturalContent).where(eq(culturalContent.languageId, id)).limit(1)],
+    ["dictionary entry", await db.select({ id: dictionaryEntries.id }).from(dictionaryEntries).where(eq(dictionaryEntries.languageId, id)).limit(1)],
+  ] as const) {
+    if (rows.length > 0) blockers.push(label);
+  }
+
+  if (blockers.length > 0) {
+    return c.json(
+      { error: `This language still has content (${blockers.join(", ")}). Delete or reassign it before removing the language.` },
+      409,
+    );
+  }
+
   await db.delete(languages).where(eq(languages.id, id));
   return c.json({ success: true });
 });

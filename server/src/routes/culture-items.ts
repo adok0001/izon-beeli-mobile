@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { eq, desc } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { cultureItems } from "../db/schema.js";
+import { cultureItems, interactiveStories, storyArcs } from "../db/schema.js";
 import { AuthEnv, authMiddleware, adminMiddleware } from "../middleware/auth.js";
 
 export const cultureItemsRouter = new Hono();
@@ -55,6 +55,9 @@ cultureItemsAdminRouter.post("/", async (c) => {
   if (!id || !type || !title || !description || !author || !publishedAt || !duration || !coverGradientFrom || !coverGradientTo || !coverEmoji) {
     return c.json({ error: "Missing required fields" }, 400);
   }
+  const storyLink = await resolveStoryLink(body.storyId);
+  if (!storyLink) return c.json(UNKNOWN_STORY, 400);
+
   const [row] = await db.insert(cultureItems).values({
     id,
     type,
@@ -67,7 +70,7 @@ cultureItemsAdminRouter.post("/", async (c) => {
     coverGradientTo,
     coverEmoji,
     featured: body.featured ?? false,
-    storyId: body.storyId ?? null,
+    ...storyLink,
     audioUrl: body.audioUrl ?? null,
     contentUrl: body.contentUrl ?? null,
     body: body.body ?? null,
@@ -94,7 +97,11 @@ cultureItemsAdminRouter.patch("/:id", async (c) => {
   if (body.coverGradientTo !== undefined) updates.coverGradientTo = body.coverGradientTo;
   if (body.coverEmoji !== undefined) updates.coverEmoji = body.coverEmoji;
   if (body.featured !== undefined) updates.featured = body.featured;
-  if ("storyId" in body) updates.storyId = body.storyId ?? null;
+  if ("storyId" in body) {
+    const storyLink = await resolveStoryLink(body.storyId);
+    if (!storyLink) return c.json(UNKNOWN_STORY, 400);
+    Object.assign(updates, storyLink);
+  }
   if ("audioUrl" in body) updates.audioUrl = body.audioUrl ?? null;
   if ("contentUrl" in body) updates.contentUrl = body.contentUrl ?? null;
   if ("body" in body) updates.body = body.body ?? null;
@@ -113,6 +120,46 @@ cultureItemsAdminRouter.delete("/:id", async (c) => {
   return c.json({ success: true });
 });
 
+// ── Story link ────────────────────────────────────────────────────────────────
+
+/**
+ * `storyId` is the API's single field for "the experience this card opens", but
+ * it is polymorphic: it may name an interactive story OR a story arc, and the
+ * legacy column recorded no discriminator — which is why the app ships a "broken
+ * story link" badge and why the web admin's free-text input could write ids that
+ * resolve to nothing.
+ *
+ * Resolve it on write into the typed, foreign-keyed columns. An id that matches
+ * neither table is now a 400 instead of silently-broken data.
+ */
+async function resolveStoryLink(storyId: string | null | undefined) {
+  if (!storyId) {
+    return { storyId: null, interactiveStoryId: null, seasonArcId: null };
+  }
+
+  const [story] = await db
+    .select({ id: interactiveStories.id })
+    .from(interactiveStories)
+    .where(eq(interactiveStories.id, storyId))
+    .limit(1);
+  if (story) {
+    return { storyId, interactiveStoryId: storyId, seasonArcId: null };
+  }
+
+  const [arc] = await db
+    .select({ id: storyArcs.id })
+    .from(storyArcs)
+    .where(eq(storyArcs.id, storyId))
+    .limit(1);
+  if (arc) {
+    return { storyId, interactiveStoryId: null, seasonArcId: storyId };
+  }
+
+  return null;
+}
+
+const UNKNOWN_STORY = { error: "No interactive story or season with that id" } as const;
+
 // ── Serializer ────────────────────────────────────────────────────────────────
 
 function toApi(row: typeof cultureItems.$inferSelect) {
@@ -127,7 +174,11 @@ function toApi(row: typeof cultureItems.$inferSelect) {
     coverGradient: [row.coverGradientFrom, row.coverGradientTo] as [string, string],
     coverEmoji: row.coverEmoji,
     featured: row.featured,
-    storyId: row.storyId ?? undefined,
+    // Collapse the typed columns back into the single `storyId` the app has
+    // always consumed, so installed versions keep working. `storyId` is the
+    // un-migrated fallback for rows the import hasn't touched.
+    storyId: row.interactiveStoryId ?? row.seasonArcId ?? row.storyId ?? undefined,
+    seasonArcId: row.seasonArcId ?? undefined,
     audioUrl: row.audioUrl ?? undefined,
     contentUrl: row.contentUrl ?? undefined,
     body: row.body ?? undefined,

@@ -3,18 +3,13 @@ import { Badge } from "@/components/ui/badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { GLOSS_LANGUAGES, toLocalizedText } from "@/components/ui/localized-text-input";
 import { useStudioAccess } from "@/components/studio/studio-gate";
-import { LessonHero } from "@/components/lesson/lesson-hero";
-import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { useAudioStore } from "@/store/audio-store";
 import {
     canPublishContent,
     canSubmitForReview,
-    EducatorLessonSegment,
     STATUS_LABEL,
     STATUS_TONE,
     useCreateEducatorLesson,
-    useCulturalItems,
     useDeleteEducatorLesson,
     useEducatorCourses,
     useEducatorLessonDetail,
@@ -28,473 +23,24 @@ import { friendlyError } from "@/lib/api";
 import { useToast } from "@/lib/hooks/use-toast";
 import { localize } from "@/lib/localize";
 import { useUiLanguageStore, type UiLanguage } from "@/store/ui-language-store";
-import type { LocalizedText } from "@/types";
 import * as DocumentPicker from "expo-document-picker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { Audio } from "expo-av";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type SegmentEditor = {
-  uid: string;
-  text: string;
-  translation: LocalizedText;
-  startTime: string;
-  endTime: string;
-};
-
-let _segUid = 0;
-const makeSegment = (overrides?: Partial<Omit<SegmentEditor, "uid">>): SegmentEditor => ({
-  uid: `seg-${(_segUid++).toString()}`,
-  text: "",
-  translation: {},
-  startTime: "",
-  endTime: "",
-  ...overrides,
-});
-
-const EMPTY_SEGMENT = (): SegmentEditor => makeSegment();
-
-/** Compact chip row for picking which language's translation to view/edit across all segments. */
-function TranslationLanguagePicker({
-  value,
-  onChange,
-  filledLangs,
-}: Readonly<{ value: UiLanguage; onChange: (lang: UiLanguage) => void; filledLangs: Set<UiLanguage> }>) {
-  const M = useMuseumTheme();
-  return (
-    <View className="mb-3 flex-row flex-wrap gap-2">
-      {GLOSS_LANGUAGES.map((lang) => {
-        const active = value === lang.key;
-        const filled = filledLangs.has(lang.key);
-        return (
-          <Pressable
-            key={lang.key}
-            onPress={() => onChange(lang.key)}
-            className="flex-row items-center gap-1.5 rounded-full border px-3 py-1.5 active:opacity-70"
-            style={{
-              borderColor: active ? M.accentBorder : M.border,
-              backgroundColor: active ? M.accentGlow : "transparent",
-            }}
-          >
-            {filled ? (
-              <IconSymbol name="checkmark.circle.fill" size={11} color={active ? M.accent : M.muted} />
-            ) : null}
-            <Text
-              className="text-xs font-bold"
-              style={{ color: active ? M.accent : M.muted }}
-            >
-              {lang.label}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-}
-
-function SegmentItem({
-  segment,
-  index,
-  total,
-  translationLang,
-  playbackPositionSeconds,
-  onChange,
-  onChangeTranslation,
-  onRemove,
-}: Readonly<{
-  segment: SegmentEditor;
-  index: number;
-  total: number;
-  translationLang: UiLanguage;
-  playbackPositionSeconds: number;
-  onChange: (index: number, key: "text" | "startTime" | "endTime", value: string) => void;
-  onChangeTranslation: (index: number, lang: UiLanguage, value: string) => void;
-  onRemove: (index: number) => void;
-}>) {
-  const M = useMuseumTheme();
-  const stamp = (key: "startTime" | "endTime") =>
-    onChange(index, key, playbackPositionSeconds.toFixed(1));
-  const translationLabel = GLOSS_LANGUAGES.find((l) => l.key === translationLang)?.label ?? translationLang.toUpperCase();
-
-  return (
-    <View
-      className="mb-2 rounded-xl border p-3"
-      style={{ backgroundColor: M.card, borderColor: M.border }}
-    >
-      <TextInput
-        value={segment.text}
-        onChangeText={(v) => onChange(index, "text", v)}
-        placeholder="Segment text"
-        placeholderTextColor={M.muted}
-        className="rounded-lg px-3 py-2 text-sm"
-        style={{ backgroundColor: M.inputBg, color: M.inputText }}
-      />
-      <TextInput
-        value={segment.translation[translationLang] ?? ""}
-        onChangeText={(v) => onChangeTranslation(index, translationLang, v)}
-        placeholder={`Translation (${translationLabel}, optional)`}
-        placeholderTextColor={M.muted}
-        className="mt-2 rounded-lg px-3 py-2 text-sm"
-        style={{ backgroundColor: M.inputBg, color: M.inputText }}
-      />
-      <View className="mt-2 flex-row gap-2">
-        {(["startTime", "endTime"] as const).map((key) => (
-          <View key={key} className="flex-1">
-            <Text
-              className="mb-1 text-[10px] font-semibold uppercase tracking-wide"
-              style={{ color: M.muted }}
-            >
-              {key === "startTime" ? "Start" : "End"}
-            </Text>
-            <View className="flex-row items-center gap-1">
-              <TextInput
-                value={segment[key]}
-                onChangeText={(v) => onChange(index, key, v)}
-                keyboardType="decimal-pad"
-                placeholder="0.0"
-                placeholderTextColor={M.muted}
-                className="flex-1 rounded-lg px-2.5 py-2 text-sm"
-                style={{ backgroundColor: M.inputBg, color: M.inputText }}
-              />
-              <Pressable
-                onPress={() => stamp(key)}
-                hitSlop={4}
-                className="items-center justify-center rounded-lg bg-brand-50 px-2.5 py-2 active:opacity-70 dark:bg-brand-900/30"
-              >
-                <IconSymbol name="record.circle" size={16} color={M.accent} />
-              </Pressable>
-            </View>
-          </View>
-        ))}
-      </View>
-      {total > 1 ? (
-        <Pressable onPress={() => onRemove(index)} className="mt-2 self-end">
-          <Text className="text-xs font-semibold" style={{ color: M.error }}>Remove</Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
-
-function PlaybackButton({ source, onPositionChange }: Readonly<{ source?: string | null; onPositionChange?: (posSeconds: number) => void }>) {
-  const M = useMuseumTheme();
-  const { currentTrackId, isPlaying, isLoading, progress, duration, togglePlayback, loadAndPlay } = useAudioStore();
-
-  const isThisTrack = !!source && currentTrackId === source;
-  const thisIsPlaying = isThisTrack && isPlaying;
-  const thisIsLoading = isThisTrack && isLoading;
-  const positionMs = isThisTrack ? progress * 1000 : 0;
-  const durationMs = isThisTrack ? duration * 1000 : 0;
-  const progressRatio = durationMs > 0 ? positionMs / durationMs : 0;
-
-  useEffect(() => {
-    if (isThisTrack) onPositionChange?.(progress);
-  }, [isThisTrack, progress, onPositionChange]);
-
-  if (!source) return null;
-
-  const handleToggle = async () => {
-    if (!isThisTrack) {
-      await loadAndPlay(source, source, "Lesson Preview");
-    } else {
-      await togglePlayback();
-    }
-  };
-
-  const formatMs = (ms: number) => {
-    const s = Math.floor(ms / 1000);
-    return `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
-  };
-
-  return (
-    <View
-      className="overflow-hidden rounded-xl border"
-      style={{ backgroundColor: M.successBg, borderColor: M.successBorder }}
-    >
-      <Pressable
-        onPress={handleToggle}
-        className="flex-row items-center gap-2 px-3 py-2.5 active:opacity-70"
-      >
-        {thisIsLoading ? (
-          <ActivityIndicator size="small" color={getAccent("teal").solid} />
-        ) : (
-          <IconSymbol
-            name={thisIsPlaying ? "pause.circle.fill" : "play.circle.fill"}
-            size={20}
-            color={getAccent("teal").solid}
-          />
-        )}
-        <Text className="flex-1 text-sm font-semibold" style={{ color: M.success }}>
-          {thisIsPlaying ? "Pause" : "Play audio"}
-        </Text>
-        {durationMs > 0 ? (
-          <Text className="text-xs" style={{ color: M.success }}>
-            {formatMs(positionMs)} / {formatMs(durationMs)}
-          </Text>
-        ) : null}
-      </Pressable>
-      {durationMs > 0 ? (
-        <View className="mx-3 mb-2 h-1 overflow-hidden rounded-full" style={{ backgroundColor: M.successBorder }}>
-          <View
-            className="h-full rounded-full"
-            style={{ width: `${Math.round(progressRatio * 100)}%`, backgroundColor: M.success }}
-          />
-        </View>
-      ) : null}
-    </View>
-  );
-}
-
-function RecordButton({
-  isDisabled,
-  onRecorded,
-}: Readonly<{ isDisabled: boolean; onRecorded: (uri: string) => void }>) {
-  const M = useMuseumTheme();
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [elapsedMs, setElapsedMs] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const stopTimer = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      stopTimer();
-      if (recording) recording.stopAndUnloadAsync().catch(() => {});
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const startRecording = async () => {
-    const { status } = await Audio.requestPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Permission required", "Microphone access is needed to record audio.");
-      return;
-    }
-    await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-    const { recording: rec } = await Audio.Recording.createAsync(
-      Audio.RecordingOptionsPresets.HIGH_QUALITY,
-    );
-    setRecording(rec);
-    setIsRecording(true);
-    setElapsedMs(0);
-    timerRef.current = setInterval(() => setElapsedMs((prev) => prev + 1000), 1000);
-  };
-
-  const stopRecording = async () => {
-    if (!recording) return;
-    stopTimer();
-    await recording.stopAndUnloadAsync();
-    await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
-    const uri = recording.getURI();
-    setRecording(null);
-    setIsRecording(false);
-    if (uri) onRecorded(uri);
-  };
-
-  const formatTime = (ms: number) => {
-    const s = Math.floor(ms / 1000);
-    return `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
-  };
-
-  return (
-    <Pressable
-      onPress={isRecording ? stopRecording : startRecording}
-      disabled={isDisabled && !isRecording}
-      className={`flex-row items-center justify-center rounded-xl py-3 active:opacity-70 disabled:opacity-40 ${
-        isRecording ? "" : "border border-dashed"
-      }`}
-      style={
-        isRecording
-          ? { backgroundColor: M.error }
-          : { backgroundColor: M.errorBg, borderColor: M.errorBorder }
-      }
-    >
-      <IconSymbol
-        name={isRecording ? "stop.circle.fill" : "mic.fill"}
-        size={16}
-        color={isRecording ? M.parchment : M.error}
-      />
-      <Text className="ml-2 text-sm font-semibold" style={{ color: isRecording ? M.parchment : M.error }}>
-        {isRecording ? `Stop  ${formatTime(elapsedMs)}` : "Record audio"}
-      </Text>
-    </Pressable>
-  );
-}
-
-function AudioSection({
-  isEditMode,
-  audioUrl,
-  audioUri,
-  isPending,
-  onReplace,
-  onPick,
-  onRecord,
-  onPositionChange,
-  loadingLabel,
-}: Readonly<{
-  isEditMode: boolean;
-  audioUrl?: string | null;
-  audioUri?: string;
-  isPending: boolean;
-  onReplace: (uri: string) => void;
-  onPick: () => void;
-  onRecord: (uri: string) => void;
-  onPositionChange?: (posSeconds: number) => void;
-  loadingLabel: string;
-}>) {
-  const M = useMuseumTheme();
-  const [recordedUri, setRecordedUri] = useState<string | undefined>(undefined);
-
-  const pickAndReplace = () => {
-    DocumentPicker.getDocumentAsync({ type: ["audio/*"], copyToCacheDirectory: true, multiple: false })
-      .then((r) => { if (!r.canceled && r.assets[0]?.uri) onReplace(r.assets[0].uri); })
-      .catch(() => {});
-  };
-
-  const handleRecorded = (uri: string) => {
-    setRecordedUri(uri);
-    if (isEditMode) {
-      onReplace(uri);
-    } else {
-      onRecord(uri);
-    }
-  };
-
-  const playbackSource = isEditMode ? audioUrl : (audioUri ?? recordedUri);
-  const hasAudio = !!playbackSource;
-
-  let uploadLabel: string;
-  if (isEditMode) {
-    uploadLabel = audioUrl ? "Replace file" : "Upload file";
-  } else {
-    uploadLabel = audioUri ? "Change file" : "Upload file";
-  }
-
-  return (
-    <View className="gap-2">
-      {/* Playback */}
-      {hasAudio ? <PlaybackButton source={playbackSource} onPositionChange={onPositionChange} /> : null}
-
-      {/* Record */}
-      <RecordButton isDisabled={isPending} onRecorded={handleRecorded} />
-
-      {/* Upload / replace file */}
-      <Pressable
-        onPress={isEditMode ? pickAndReplace : onPick}
-        disabled={isPending}
-        className="flex-row items-center justify-center rounded-xl border border-dashed py-3 active:opacity-70 disabled:opacity-40"
-        style={{ backgroundColor: M.inputBg, borderColor: M.border }}
-      >
-        <IconSymbol name="square.and.arrow.up" size={16} color={M.accent} />
-        <Text className="ml-2 text-sm font-semibold text-brand-600 dark:text-brand-400">
-          {isPending ? loadingLabel : uploadLabel}
-        </Text>
-      </Pressable>
-    </View>
-  );
-}
-
-/**
- * en/fr persist through their dedicated DB columns (translation/translationFr).
- * Other languages (pcm/ar/pt) have no dedicated column, so once any of those are
- * filled the whole map is JSON-encoded into `translation` — `localize()` already
- * unpacks that transparently wherever segment translations are read.
- */
-function serializeSegmentTranslation(t: LocalizedText): { translation?: string; translationFr?: string } {
-  const hasExtraLangs = !!(t.pcm?.trim() || t.ar?.trim() || t.pt?.trim());
-  if (hasExtraLangs) return { translation: JSON.stringify(t) };
-  return {
-    translation: t.en?.trim() || undefined,
-    translationFr: t.fr?.trim() || undefined,
-  };
-}
-
-function toSegmentsPayload(source: SegmentEditor[]): EducatorLessonSegment[] {
-  return source
-    .map((seg, i) => ({
-      text: seg.text.trim(),
-      ...serializeSegmentTranslation(seg.translation),
-      startTime: seg.startTime ? Number(seg.startTime) : 0,
-      endTime: seg.endTime ? Number(seg.endTime) : 0,
-      order: i,
-    }))
-    .filter((seg) => seg.text.length > 0);
-}
-
-/** Lets an educator pick which of the language's cultural_content entries
- * surface on this lesson, in tap order. Only meaningful once a lesson exists
- * (edit mode) — a brand-new lesson has no id to attach against yet. */
-function CulturalContentSection({
-  languageId,
-  selectedIds,
-  onChange,
-}: Readonly<{ languageId: string; selectedIds: string[]; onChange: (ids: string[]) => void }>) {
-  const M = useMuseumTheme();
-  const { data: items = [] } = useCulturalItems(languageId);
-
-  const toggle = (id: string) => {
-    onChange(selectedIds.includes(id) ? selectedIds.filter((i) => i !== id) : [...selectedIds, id]);
-  };
-
-  return (
-    <View className="mt-4 px-5">
-      <View className="rounded-2xl p-4" style={{ backgroundColor: M.card, borderWidth: 1, borderColor: M.border }}>
-        <Text className="mb-1 text-xs font-semibold uppercase tracking-[1.2px]" style={{ color: M.muted }}>
-          Cultural Content ({selectedIds.length})
-        </Text>
-        <Text className="mb-3 text-xs" style={{ color: M.sub }}>
-          Attach culture notes from this language&apos;s Cultural gallery to this lesson.
-        </Text>
-        {items.length === 0 ? (
-          <Text className="text-sm" style={{ color: M.sub }}>
-            No cultural content exists yet for this language.
-          </Text>
-        ) : (
-          <View className="flex-row flex-wrap gap-2">
-            {items.map((item) => {
-              const position = selectedIds.indexOf(item.id);
-              const active = position !== -1;
-              return (
-                <Pressable
-                  key={item.id}
-                  onPress={() => toggle(item.id)}
-                  className="flex-row items-center gap-1.5 rounded-full border px-3 py-1.5"
-                  style={
-                    active
-                      ? { backgroundColor: M.accentGlow, borderColor: M.accentBorder }
-                      : { backgroundColor: M.card, borderColor: M.border }
-                  }
-                >
-                  <Text className="text-sm">{item.imageEmoji}</Text>
-                  <Text
-                    className="text-xs font-semibold"
-                    style={{ color: active ? M.accent : M.sub }}
-                  >
-                    {item.title}
-                  </Text>
-                  {active ? (
-                    <View className="ml-0.5 h-4 w-4 items-center justify-center rounded-full" style={{ backgroundColor: M.accent }}>
-                      <Text className="text-[9px] font-bold" style={{ color: M.parchment }}>{position + 1}</Text>
-                    </View>
-                  ) : null}
-                </Pressable>
-              );
-            })}
-          </View>
-        )}
-      </View>
-    </View>
-  );
-}
+import { AudioSection } from "@/components/studio/lesson-audio-section";
+import { CulturalContentSection } from "@/components/studio/lesson-cultural-section";
+import { LessonPreviewSection } from "@/components/studio/lesson-preview-section";
+import {
+  EMPTY_SEGMENT,
+  makeSegment,
+  SegmentItem,
+  TranslationLanguagePicker,
+  toSegmentsPayload,
+  type SegmentEditor,
+} from "@/components/studio/lesson-segment-editor";
 
 export default function EducatorLessonEditScreen() {
   const M = useMuseumTheme();
@@ -516,7 +62,6 @@ export default function EducatorLessonEditScreen() {
   const [culturalContentIds, setCulturalContentIds] = useState<string[]>([]);
   const [translationLang, setTranslationLang] = useState<UiLanguage>(uiLanguage);
   const [playbackPos, setPlaybackPos] = useState(0);
-  const [previewVisible, setPreviewVisible] = useState(false);
 
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
 
@@ -624,7 +169,7 @@ export default function EducatorLessonEditScreen() {
     );
     replaceCulturalContent.mutate(
       { id: lessonId, culturalContentIds },
-      { onError: (err: Error) => toastError("Cultural content failed", friendlyError(err)) },
+      { onError: (err: Error) => toastError("Culture notes failed", friendlyError(err)) },
     );
   };
 
@@ -866,71 +411,12 @@ export default function EducatorLessonEditScreen() {
           ) : null}
 
           {/* Learner Preview */}
-          <View className="mt-4 px-5">
-            <Pressable
-              onPress={() => setPreviewVisible((v) => !v)}
-              className="flex-row items-center justify-between rounded-2xl px-4 py-3 active:opacity-70"
-              style={{ backgroundColor: M.card, borderWidth: 1, borderColor: M.border }}
-            >
-              <View className="flex-row items-center gap-2">
-                <IconSymbol name="eye.fill" size={16} color={M.accent} />
-                <Text className="text-sm font-semibold text-brand-600 dark:text-brand-400">
-                  {t("educator.lessonEdit.previewTitle")}
-                </Text>
-              </View>
-              <IconSymbol
-                name={previewVisible ? "chevron.up" : "chevron.down"}
-                size={14}
-                color={M.muted}
-              />
-            </Pressable>
-            {previewVisible && (
-              <View className="mt-2 overflow-hidden rounded-2xl border" style={{ backgroundColor: M.card, borderColor: M.border }}>
-                <LessonHero
-                  title={title || t("educator.lessonEdit.untitled")}
-                  overline={type ? type.toUpperCase() : "LESSON"}
-                  accentColor={M.accent}
-                />
-                {description ? (
-                  <View className="border-b px-4 pb-4" style={{ borderColor: M.border }}>
-                    <Text className="text-sm" style={{ color: M.sub }}>
-                      {description}
-                    </Text>
-                  </View>
-                ) : null}
-                {segments.some((s) => s.text.trim().length > 0) ? (
-                  <View className="px-4 py-3">
-                    <Text className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: M.muted }}>
-                      {t("review.transcript")}
-                    </Text>
-                    {segments
-                      .filter((s) => s.text.trim().length > 0)
-                      .map((s, i) => {
-                        const previewTranslation = localize(s.translation, uiLanguage);
-                        return (
-                          <View key={s.uid} className={`${i > 0 ? "mt-3" : ""}`}>
-                            <Text className="text-base" style={{ color: M.text }}>
-                              {s.text}
-                            </Text>
-                            {previewTranslation ? (
-                              <Text className="mt-0.5 text-sm" style={{ color: M.sub }}>
-                                {previewTranslation}
-                              </Text>
-                            ) : null}
-                          </View>
-                        );
-                      })}
-                  </View>
-                ) : (
-                  <View className="px-4 py-6 items-center">
-                    <Text className="text-sm" style={{ color: M.muted }}>
-                      {t("educator.lessonEdit.noSegments")}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            )}
-          </View>
+          <LessonPreviewSection
+            title={title}
+            description={description}
+            type={type}
+            segments={segments}
+          />
 
           {/* Actions */}
           <View className="mt-5 gap-2 px-5">

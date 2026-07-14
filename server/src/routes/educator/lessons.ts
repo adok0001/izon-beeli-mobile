@@ -1,9 +1,9 @@
 import { put } from "@vercel/blob";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
 import { db } from "../../db/index.js";
-import { courses, culturalContent, languages, lessonCulturalContent, lessons, transcriptSegments } from "../../db/schema.js";
+import { courses, culturalContent, languages, lessonCulturalContent, lessons, storyArcs, storyChapters, transcriptSegments } from "../../db/schema.js";
 import { AuthEnv } from "../../middleware/auth.js";
 import { stubForCourse, stubForLanguage } from "../../lib/lesson-stubs.js";
 import { recordMediaAsset } from "../upload.js";
@@ -232,7 +232,10 @@ educatorLessonsRouter.get("/lessons/:id", async (c) => {
     .orderBy(transcriptSegments.order);
 
   const attachedCulturalContent = await db
-    .select({ culturalContentId: lessonCulturalContent.culturalContentId })
+    .select({
+      culturalContentId: lessonCulturalContent.culturalContentId,
+      afterSegmentIndex: lessonCulturalContent.afterSegmentIndex,
+    })
     .from(lessonCulturalContent)
     .where(eq(lessonCulturalContent.lessonId, id))
     .orderBy(lessonCulturalContent.order);
@@ -240,7 +243,10 @@ educatorLessonsRouter.get("/lessons/:id", async (c) => {
   return c.json({
     ...lesson,
     segments: segs,
+    // Flat id list kept for older Studio builds; `culturalAttachments` carries
+    // the anchor and is what the PUT round-trips.
     culturalContentIds: attachedCulturalContent.map((r) => r.culturalContentId),
+    culturalAttachments: attachedCulturalContent,
   });
 });
 
@@ -262,15 +268,32 @@ educatorLessonsRouter.put("/lessons/:id/cultural-content", async (c) => {
     return c.json({ error: "Forbidden" }, 403);
   }
 
-  const { culturalContentIds } = await c.req.json<{ culturalContentIds: string[] }>();
+  // Two accepted shapes. The bare `string[]` is the original contract and is
+  // still sent by older Studio builds; the object form adds `afterSegmentIndex`,
+  // which anchors the note inline after a given transcript segment instead of
+  // letting it fall to the end.
+  const { culturalContentIds } = await c.req.json<{
+    culturalContentIds: (string | { culturalContentId: string; afterSegmentIndex?: number | null })[];
+  }>();
 
-  if (culturalContentIds.length > 0) {
+  const attachments = culturalContentIds.map((entry) =>
+    typeof entry === "string"
+      ? { culturalContentId: entry, afterSegmentIndex: null }
+      : { culturalContentId: entry.culturalContentId, afterSegmentIndex: entry.afterSegmentIndex ?? null }
+  );
+
+  if (attachments.some((a) => !a.culturalContentId)) {
+    return c.json({ error: "Each attachment requires a culturalContentId" }, 400);
+  }
+
+  if (attachments.length > 0) {
+    const ids = attachments.map((a) => a.culturalContentId);
     const rows = await db
       .select({ id: culturalContent.id, languageId: culturalContent.languageId })
       .from(culturalContent)
-      .where(inArray(culturalContent.id, culturalContentIds));
+      .where(inArray(culturalContent.id, ids));
     const foundIds = new Set(rows.map((r) => r.id));
-    const missing = culturalContentIds.filter((cid) => !foundIds.has(cid));
+    const missing = ids.filter((cid) => !foundIds.has(cid));
     if (missing.length > 0) {
       return c.json({ error: `Unknown cultural content id(s): ${missing.join(", ")}` }, 400);
     }
@@ -278,21 +301,38 @@ educatorLessonsRouter.put("/lessons/:id/cultural-content", async (c) => {
     if (wrongLanguage.length > 0) {
       return c.json({ error: "Cultural content must be in the lesson's language" }, 400);
     }
+
+    // An anchor past the end of the transcript would silently never render.
+    const [{ count: segmentCount }] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(transcriptSegments)
+      .where(eq(transcriptSegments.lessonId, id));
+
+    const badAnchor = attachments.find(
+      (a) => a.afterSegmentIndex != null && (a.afterSegmentIndex < 0 || a.afterSegmentIndex >= segmentCount)
+    );
+    if (badAnchor) {
+      return c.json(
+        { error: `afterSegmentIndex ${badAnchor.afterSegmentIndex} is out of range — this lesson has ${segmentCount} transcript segment(s)` },
+        400,
+      );
+    }
   }
 
   await db.delete(lessonCulturalContent).where(eq(lessonCulturalContent.lessonId, id));
 
-  if (culturalContentIds.length > 0) {
+  if (attachments.length > 0) {
     await db.insert(lessonCulturalContent).values(
-      culturalContentIds.map((culturalContentId, index) => ({
+      attachments.map((a, index) => ({
         lessonId: id,
-        culturalContentId,
+        culturalContentId: a.culturalContentId,
         order: index,
+        afterSegmentIndex: a.afterSegmentIndex,
       }))
     );
   }
 
-  return c.json({ success: true, count: culturalContentIds.length });
+  return c.json({ success: true, count: attachments.length });
 });
 
 // PUT /educator/lessons/:id/segments — replace all transcript segments
@@ -408,6 +448,26 @@ educatorLessonsRouter.delete("/lessons/:id", async (c) => {
     return c.json({ error: "Forbidden" }, 403);
   }
 
+  // A lesson that a season sequences cannot just vanish — deleting it would
+  // leave a hole in the chapter order and a dangling story_chapters.lesson_id.
+  // Make the educator unpick it from the season first, deliberately.
+  const chapters = await db
+    .select({ order: storyChapters.order, arcTitle: storyArcs.title })
+    .from(storyChapters)
+    .leftJoin(storyArcs, eq(storyChapters.storyArcId, storyArcs.id))
+    .where(eq(storyChapters.lessonId, id));
+
+  if (chapters.length > 0) {
+    const where = chapters
+      .map((ch) => `chapter ${ch.order} of "${ch.arcTitle ?? "an untitled season"}"`)
+      .join(", ");
+    return c.json(
+      { error: `This lesson is ${where}. Remove it from the season before deleting it.` },
+      409,
+    );
+  }
+
+  await db.delete(lessonCulturalContent).where(eq(lessonCulturalContent.lessonId, id));
   await db.delete(transcriptSegments).where(eq(transcriptSegments.lessonId, id));
   await db.delete(lessons).where(eq(lessons.id, id));
 

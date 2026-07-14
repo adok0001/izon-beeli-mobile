@@ -13,7 +13,8 @@ import { InlineWordPopover } from "@/components/audio/inline-word-popover";
 import { CulturalNoteCards } from "@/components/lesson/lesson-culture-note";
 import { MUSEUM, useMuseumTheme } from "@/lib/use-museum-theme";
 import { getAccent } from "@/constants/accent-colors";
-import { getCastAvatar } from "@/lib/data/series";
+import { castAvatarFor } from "@/lib/series-presentation";
+import type { SeasonCastMember } from "@/lib/hooks/use-story-arc";
 import { groupCulturalNotesByAnchor } from "@/lib/lesson-culture-anchor";
 import { fonts } from "@/constants/typography";
 import { localize } from "@/lib/localize";
@@ -21,8 +22,7 @@ import { useAudioStore } from "@/store/audio-store";
 import { useLanguageStore } from "@/store/language-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { hapticTap } from "@/lib/haptics";
-import type { TranscriptSegment } from "@/types";
-import type { CulturalNote } from "@/lib/data/podcasts/podcast-types";
+import type { CulturalNote, TranscriptSegment } from "@/types";
 
 /** Turn a cast id ("izon-cast-mama-seibi" | "SPEAKER_A") into a display name. */
 function speakerLabel(id?: string | null): string | null {
@@ -40,6 +40,12 @@ interface Props {
   maxHeight?: number;
   /** Lesson-specific culture beats, surfaced inline at the segment they explain. */
   culturalNotes?: CulturalNote[];
+  /**
+   * The season's cast (from `GET /story-arcs/arc/:id`), used to give each
+   * speaker their avatar + accent. Speakers outside the cast — and callers with
+   * no season context — fall back to a neutral avatar.
+   */
+  cast?: SeasonCastMember[];
 }
 
 /**
@@ -49,7 +55,7 @@ interface Props {
  * the data is line-timed rather than word-timed). Tapping a line seeks to it; the
  * auto-follow toggle keeps the active line scrolled into view.
  */
-export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 380, culturalNotes }: Props) {
+export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 380, culturalNotes, cast }: Props) {
   const M = useMuseumTheme();
   const { progress, seekTo, currentTrackId, shadowSegment, setShadowLoop } = useAudioStore();
   const { uiLanguage } = useUiLanguageStore();
@@ -177,7 +183,7 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
           // consecutive same-speaker lines into a readable audio-drama script).
           const speaker = speakerLabel(seg.speaker);
           const showSpeaker = !!speaker && seg.speaker !== segments[index - 1]?.speaker;
-          const castAvatar = getCastAvatar(seg.speaker);
+          const castAvatar = castAvatarFor(cast, seg.speaker);
           const castAccent = getAccent(castAvatar.hue);
           const notesHere = notesByAnchor[index];
 

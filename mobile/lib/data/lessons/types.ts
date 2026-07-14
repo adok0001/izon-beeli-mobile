@@ -38,7 +38,7 @@ export interface LessonData {
   descriptionFr?: string;
   /** null = bundled/local audio (app uses BUNDLED_AUDIO map) */
   audioUrl: string | null;
-  /** Duration in minutes; null = not yet timed */
+  /** Duration in seconds; null = not yet timed */
   duration: number | null;
   order: number;
   /** Artist or traditional source (songs only) */

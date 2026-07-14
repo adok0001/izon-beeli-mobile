@@ -11,8 +11,7 @@ import { WordLookupSheet } from "@/components/audio/word-lookup-sheet";
 import { CulturalNoteCards } from "@/components/lesson/lesson-culture-note";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { groupCulturalNotesByAnchor } from "@/lib/lesson-culture-anchor";
-import type { TranscriptSegment } from "@/types";
-import type { CulturalNote } from "@/lib/data/podcasts/podcast-types";
+import type { CulturalNote, TranscriptSegment } from "@/types";
 
 interface Props {
   segments: TranscriptSegment[];
