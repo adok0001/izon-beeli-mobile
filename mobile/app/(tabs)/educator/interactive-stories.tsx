@@ -45,12 +45,21 @@ import { SafeAreaView } from "react-native-safe-area-context";
  * the turn list.
  */
 
+// Sentinel languageId for stories with no single-language scope (e.g. a
+// pan-African culture piece) — admin-only tab, mirrors the server's sentinel.
+const GENERAL_LANGUAGE_ID = "general";
+
 export default function InteractiveStoriesScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
   const { user } = useStudioAccess();
   const { success: toastSuccess, error: toastError } = useToast();
+
+  const languageLabel = useCallback(
+    (id: string) => (id === GENERAL_LANGUAGE_ID ? t("educator.interactiveStoriesEditor.generalLanguageLabel") : getLanguageName(id)),
+    [t]
+  );
 
   // A single stable reference shared by every SceneEditor, instead of a new
   // closure per scene on every render — i18next's generated types don't
@@ -59,7 +68,7 @@ export default function InteractiveStoriesScreen() {
   const sceneT = useCallback((key: string, opts?: Record<string, unknown>) => t(key as any, opts as any) as string, [t]);
 
   const allowedLanguages = useMemo(
-    () => (user.isAdmin ? LANGUAGES.map((l) => l.id) : user.reviewerLanguages),
+    () => (user.isAdmin ? [...LANGUAGES.map((l) => l.id), GENERAL_LANGUAGE_ID] : user.reviewerLanguages),
     [user]
   );
   const [selectedLanguageId, setSelectedLanguageId] = useState<string | null>(null);
@@ -321,7 +330,7 @@ export default function InteractiveStoriesScreen() {
                   }}
                 >
                   <Text style={{ fontSize: 13, fontWeight: "700", color: active ? M.ink : M.sub }}>
-                    {getLanguageName(languageId)}
+                    {languageLabel(languageId)}
                   </Text>
                 </Pressable>
               );
@@ -426,7 +435,7 @@ export default function InteractiveStoriesScreen() {
         {storiesQuery.isPending && <Text style={{ color: M.muted, fontSize: 13 }}>{t("common.loading")}</Text>}
         {storiesQuery.data?.length === 0 && (
           <Text style={{ color: M.muted, fontSize: 13 }}>
-            {t("educator.interactiveStoriesEditor.empty", { language: getLanguageName(activeLanguageId) })}
+            {t("educator.interactiveStoriesEditor.empty", { language: languageLabel(activeLanguageId) })}
           </Text>
         )}
         <View style={{ gap: 10 }}>

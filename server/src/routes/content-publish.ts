@@ -86,7 +86,10 @@ function assertCanPublish(
 ): { ok: true } | { ok: false; status: 403; error: string } {
   if (actor.isAdmin) return { ok: true };
 
-  if (row.languageId && !actor.reviewerLanguages.includes(row.languageId)) {
+  if (!row.languageId) {
+    return { ok: false, status: 403, error: "Forbidden: only admins can publish language-agnostic content" };
+  }
+  if (!actor.reviewerLanguages.includes(row.languageId)) {
     return { ok: false, status: 403, error: "Forbidden: not assigned to this language" };
   }
 

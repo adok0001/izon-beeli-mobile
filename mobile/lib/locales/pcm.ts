@@ -2267,6 +2267,7 @@ export const pcm = {
       turnsCountMany: "{{count}} turns",
     },
     interactiveStoriesEditor: {
+      generalLanguageLabel: "General",
       screenTitle: "Interactive Stories",
       subtitle: "Story wey get branch — na map of scenes wey learner dey waka through by di choice wey e pick.",
       newButton: "New Story",

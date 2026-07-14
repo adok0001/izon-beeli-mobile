@@ -2247,6 +2247,7 @@ export const fr = {
       turnsCountMany: "{{count}} répliques",
     },
     interactiveStoriesEditor: {
+      generalLanguageLabel: "Général",
       screenTitle: "Histoires interactives",
       subtitle: "Récits à embranchements — un graphe de scènes que l'apprenant traverse par ses choix.",
       newButton: "Nouvelle histoire",

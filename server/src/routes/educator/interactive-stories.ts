@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
 import { db } from "../../db/index.js";
@@ -6,6 +6,11 @@ import { interactiveStories, type InteractiveStoryScene } from "../../db/schema.
 import { AuthEnv } from "../../middleware/auth.js";
 
 export const educatorInteractiveStoriesRouter = new Hono<AuthEnv>();
+
+/** Sentinel languageId for stories with no single-language scope (e.g. a
+ * pan-African culture piece) — admin-only, since it doesn't fit any
+ * reviewer's assigned-languages scope. */
+const GENERAL_LANGUAGE_ID = "general";
 
 /**
  * Referential integrity for the scene graph: every narrative scene's
@@ -62,9 +67,17 @@ function toApiStory(row: typeof interactiveStories.$inferSelect) {
 
 // GET /educator/interactive-stories?languageId=
 educatorInteractiveStoriesRouter.get("/interactive-stories", async (c) => {
+  const isAdmin = c.get("isAdmin");
   const reviewerLanguages = (c.get("reviewerLanguages") ?? []) as string[];
   const languageId = c.req.query("languageId");
   if (!languageId) return c.json({ error: "languageId required" }, 400);
+
+  if (languageId === GENERAL_LANGUAGE_ID) {
+    if (!isAdmin) return c.json({ error: "Forbidden" }, 403);
+    const rows = await db.select().from(interactiveStories).where(isNull(interactiveStories.language));
+    return c.json(rows.map(toApiStory));
+  }
+
   if (reviewerLanguages.length > 0 && !reviewerLanguages.includes(languageId)) {
     return c.json({ error: "Not authorised for this language" }, 403);
   }
@@ -77,6 +90,7 @@ educatorInteractiveStoriesRouter.get("/interactive-stories", async (c) => {
 
 // POST /educator/interactive-stories
 educatorInteractiveStoriesRouter.post("/interactive-stories", async (c) => {
+  const isAdmin = c.get("isAdmin");
   const reviewerLanguages = (c.get("reviewerLanguages") ?? []) as string[];
   const body = await c.req.json<{
     languageId: string;
@@ -93,7 +107,10 @@ educatorInteractiveStoriesRouter.post("/interactive-stories", async (c) => {
   if (!body.languageId || !body.title?.trim() || !body.description?.trim()) {
     return c.json({ error: "languageId, title, and description are required" }, 400);
   }
-  if (reviewerLanguages.length > 0 && !reviewerLanguages.includes(body.languageId)) {
+  const isGeneral = body.languageId === GENERAL_LANGUAGE_ID;
+  if (isGeneral) {
+    if (!isAdmin) return c.json({ error: "Forbidden" }, 403);
+  } else if (reviewerLanguages.length > 0 && !reviewerLanguages.includes(body.languageId)) {
     return c.json({ error: "Not authorised for this language" }, 403);
   }
   const scenesError = findScenesError(body.initialSceneId, body.scenes ?? {});
@@ -104,7 +121,7 @@ educatorInteractiveStoriesRouter.post("/interactive-stories", async (c) => {
     .insert(interactiveStories)
     .values({
       id,
-      language: body.languageId,
+      language: isGeneral ? null : body.languageId,
       title: body.title.trim(),
       description: body.description.trim(),
       coverGradientFrom: body.coverGradient?.[0] ?? "#C4862A",
@@ -124,6 +141,7 @@ educatorInteractiveStoriesRouter.post("/interactive-stories", async (c) => {
 
 // PATCH /educator/interactive-stories/:id
 educatorInteractiveStoriesRouter.patch("/interactive-stories/:id", async (c) => {
+  const isAdmin = c.get("isAdmin");
   const reviewerLanguages = (c.get("reviewerLanguages") ?? []) as string[];
   const id = c.req.param("id");
   const [existing] = await db
@@ -136,7 +154,9 @@ educatorInteractiveStoriesRouter.patch("/interactive-stories/:id", async (c) => 
     .where(eq(interactiveStories.id, id))
     .limit(1);
   if (!existing) return c.json({ error: "Not found" }, 404);
-  if (reviewerLanguages.length > 0 && existing.language && !reviewerLanguages.includes(existing.language)) {
+  if (existing.language == null) {
+    if (!isAdmin) return c.json({ error: "Forbidden" }, 403);
+  } else if (reviewerLanguages.length > 0 && !reviewerLanguages.includes(existing.language)) {
     return c.json({ error: "Not authorised for this language" }, 403);
   }
 
@@ -190,6 +210,7 @@ educatorInteractiveStoriesRouter.patch("/interactive-stories/:id", async (c) => 
 
 // DELETE /educator/interactive-stories/:id
 educatorInteractiveStoriesRouter.delete("/interactive-stories/:id", async (c) => {
+  const isAdmin = c.get("isAdmin");
   const reviewerLanguages = (c.get("reviewerLanguages") ?? []) as string[];
   const id = c.req.param("id");
   const [existing] = await db
@@ -198,7 +219,9 @@ educatorInteractiveStoriesRouter.delete("/interactive-stories/:id", async (c) =>
     .where(eq(interactiveStories.id, id))
     .limit(1);
   if (!existing) return c.json({ error: "Not found" }, 404);
-  if (reviewerLanguages.length > 0 && existing.language && !reviewerLanguages.includes(existing.language)) {
+  if (existing.language == null) {
+    if (!isAdmin) return c.json({ error: "Forbidden" }, 403);
+  } else if (reviewerLanguages.length > 0 && !reviewerLanguages.includes(existing.language)) {
     return c.json({ error: "Not authorised for this language" }, 403);
   }
   await db.delete(interactiveStories).where(eq(interactiveStories.id, id));

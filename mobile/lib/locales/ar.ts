@@ -2232,6 +2232,7 @@ export const ar = {
       turnsCountMany: "{{count}} جمل",
     },
     interactiveStoriesEditor: {
+      generalLanguageLabel: "عام",
       screenTitle: "القصص التفاعلية",
       subtitle: "قصص متفرعة — شبكة من المشاهد يتنقّل فيها المتعلم حسب اختياراته.",
       newButton: "قصة جديدة",

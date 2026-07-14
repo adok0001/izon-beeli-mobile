@@ -2307,6 +2307,7 @@ export const en = {
       turnsCountMany: "{{count}} turns",
     },
     interactiveStoriesEditor: {
+      generalLanguageLabel: "General",
       screenTitle: "Interactive Stories",
       subtitle: "Branching narratives — a graph of scenes learners choose their way through.",
       newButton: "New Story",
