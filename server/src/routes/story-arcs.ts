@@ -37,6 +37,7 @@ async function enrichChapters(chapters: ChapterRow[]) {
     return {
       ...ch,
       level,
+      // Seconds, like every other `duration` in this API. Callers format it.
       lessonDuration: l?.duration ?? null,
       lessonGenre: l?.genre ?? null,
       // "skit" | "immersive_story" | "host_narrated" — drives the style chip.

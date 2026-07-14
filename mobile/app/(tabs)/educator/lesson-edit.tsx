@@ -31,8 +31,10 @@ import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, Tex
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AudioSection } from "@/components/studio/lesson-audio-section";
-import { CulturalContentSection } from "@/components/studio/lesson-cultural-section";
+import { clampAttachments, CulturalContentSection } from "@/components/studio/lesson-cultural-section";
 import { LessonPreviewSection } from "@/components/studio/lesson-preview-section";
+import { LessonStylePicker } from "@/components/studio/lesson-style-picker";
+import type { EducatorLessonCulturalAttachment, LessonStyle } from "@/lib/hooks/educator/use-lessons";
 import {
   EMPTY_SEGMENT,
   makeSegment,
@@ -57,9 +59,10 @@ export default function EducatorLessonEditScreen() {
   const [type, setType] = useState("");
   const [artist, setArtist] = useState("");
   const [genre, setGenre] = useState("");
+  const [style, setStyle] = useState<LessonStyle | null>(null);
   const [audioUri, setAudioUri] = useState<string | undefined>(undefined);
   const [segments, setSegments] = useState<SegmentEditor[]>([EMPTY_SEGMENT()]);
-  const [culturalContentIds, setCulturalContentIds] = useState<string[]>([]);
+  const [culturalAttachments, setCulturalAttachments] = useState<EducatorLessonCulturalAttachment[]>([]);
   const [translationLang, setTranslationLang] = useState<UiLanguage>(uiLanguage);
   const [playbackPos, setPlaybackPos] = useState(0);
 
@@ -86,6 +89,7 @@ export default function EducatorLessonEditScreen() {
     setType(lessonDetail.type ?? "");
     setArtist(lessonDetail.artist ?? "");
     setGenre(lessonDetail.genre ?? "");
+    setStyle(lessonDetail.style ?? null);
     setSegments(
       lessonDetail.segments.length > 0
         ? lessonDetail.segments.map((seg) =>
@@ -98,7 +102,11 @@ export default function EducatorLessonEditScreen() {
           )
         : [EMPTY_SEGMENT()],
     );
-    setCulturalContentIds(lessonDetail.culturalContentIds ?? []);
+    // Prefer the anchored form; fall back to the flat id list (unanchored).
+    setCulturalAttachments(
+      lessonDetail.culturalAttachments ??
+        (lessonDetail.culturalContentIds ?? []).map((id) => ({ culturalContentId: id, afterSegmentIndex: null })),
+    );
   }, [lessonDetail, uiLanguage]);
 
   const pickAudio = async () => {
@@ -135,6 +143,7 @@ export default function EducatorLessonEditScreen() {
         type: type.trim() || undefined,
         artist: artist.trim() || undefined,
         genre: genre.trim() || undefined,
+        style,
         audioUri,
         segments: toSegmentsPayload(segments),
       },
@@ -156,20 +165,25 @@ export default function EducatorLessonEditScreen() {
           type: type.trim() || undefined,
           artist: artist.trim() || undefined,
           genre: genre.trim() || undefined,
+          style,
         },
       },
       { onError: (err: Error) => toastError("Save failed", friendlyError(err)) },
     );
+    // Culture-note anchors are validated against the *saved* segment count, so
+    // they only go out once the new transcript has landed.
     replaceSegments.mutate(
       { id: lessonId, segments: toSegmentsPayload(segments) },
       {
-        onSuccess: () => toastSuccess("Saved", "Lesson and segments updated."),
+        onSuccess: () => {
+          toastSuccess("Saved", "Lesson and segments updated.");
+          replaceCulturalContent.mutate(
+            { id: lessonId, attachments: clampAttachments(culturalAttachments, segments) },
+            { onError: (err: Error) => toastError("Culture notes failed", friendlyError(err)) },
+          );
+        },
         onError: (err: Error) => toastError("Segments failed", friendlyError(err)),
       },
-    );
-    replaceCulturalContent.mutate(
-      { id: lessonId, culturalContentIds },
-      { onError: (err: Error) => toastError("Culture notes failed", friendlyError(err)) },
     );
   };
 
@@ -342,6 +356,7 @@ export default function EducatorLessonEditScreen() {
                   style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
                 />
               </View>
+              <LessonStylePicker value={style} onChange={setStyle} />
             </View>
           </View>
 
@@ -405,8 +420,9 @@ export default function EducatorLessonEditScreen() {
           {isEditMode && course ? (
             <CulturalContentSection
               languageId={course.languageId}
-              selectedIds={culturalContentIds}
-              onChange={setCulturalContentIds}
+              attachments={culturalAttachments}
+              segments={segments}
+              onChange={setCulturalAttachments}
             />
           ) : null}
 

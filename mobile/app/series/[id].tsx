@@ -70,7 +70,10 @@ export default function SeriesScreen() {
   const coverEmoji = hero?.coverEmoji ?? "🎙️";
 
   const chapters = [...arc.chapters].sort((a, b) => a.order - b.order);
-  const totalMinutes = chapters.reduce((sum, ch) => sum + (ch.lessonDuration ?? 0), 0);
+  // `lessonDuration` is seconds, like every duration the API serves.
+  const totalMinutes = Math.round(
+    chapters.reduce((sum, ch) => sum + (ch.lessonDuration ?? 0), 0) / 60,
+  );
   const activeCount = chapters.filter((ch) => ch.lessonIsActive).length;
 
   const cast = arc.cast ?? [];
@@ -134,7 +137,7 @@ export default function SeriesScreen() {
   const renderEpisode = (ch: SeasonChapter) => {
     const active = !!ch.lessonIsActive;
     const style = styleLabel(ch.lessonStyle);
-    const runtime = ch.lessonDuration ? `${ch.lessonDuration} min` : null;
+    const runtime = ch.lessonDuration ? `${Math.round(ch.lessonDuration / 60)} min` : null;
     return (
       <Pressable
         key={ch.id}

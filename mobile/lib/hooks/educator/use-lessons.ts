@@ -4,6 +4,9 @@ import type { LocalizedText } from "@/types";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+/** Presentation style of a season episode. Null for ordinary lessons. */
+export type LessonStyle = "skit" | "immersive_story" | "host_narrated";
+
 export interface EducatorLesson {
   id: string;
   courseId: string;
@@ -17,6 +20,7 @@ export interface EducatorLesson {
   order: number;
   artist?: string | null;
   genre?: string | null;
+  style?: LessonStyle | null;
   isActive?: boolean;
   status: ContentStatus;
   createdBy: string | null;
@@ -32,10 +36,22 @@ export interface EducatorLessonSegment {
   order: number;
 }
 
+/**
+ * A culture note attached to a lesson. `afterSegmentIndex` is a 0-based index
+ * into the lesson's ordered transcript segments — the note renders inline right
+ * after that line. Null means unanchored: it falls to the end of the transcript.
+ */
+export interface EducatorLessonCulturalAttachment {
+  culturalContentId: string;
+  afterSegmentIndex: number | null;
+}
+
 export interface EducatorLessonDetail extends EducatorLesson {
   segments: EducatorLessonSegment[];
-  /** Studio-attached cultural_content ids, in display order. */
+  /** Flat id list, kept for callers that only need "which notes". */
   culturalContentIds: string[];
+  /** The same attachments with their anchors — what the editor round-trips. */
+  culturalAttachments?: EducatorLessonCulturalAttachment[];
 }
 
 export interface CreateEducatorLessonInput {
@@ -46,6 +62,8 @@ export interface CreateEducatorLessonInput {
   type?: string;
   artist?: string;
   genre?: string;
+  /** Season episodes only — drives the style chip on the Series screen. */
+  style?: LessonStyle | null;
   duration?: number;
   order?: number;
   audioUri?: string;
@@ -108,6 +126,7 @@ export function useCreateEducatorLesson() {
       if (input.type) formData.append("type", input.type);
       if (input.artist) formData.append("artist", input.artist);
       if (input.genre) formData.append("genre", input.genre);
+      if (input.style) formData.append("style", input.style);
       if (input.duration != null) formData.append("duration", String(input.duration));
       if (input.order != null) formData.append("order", String(input.order));
       formData.append("segments", JSON.stringify(input.segments));
@@ -144,7 +163,9 @@ export function useUpdateEducatorLesson() {
       payload,
     }: {
       id: string;
-      payload: Partial<Pick<EducatorLesson, "title" | "description" | "type" | "artist" | "genre" | "order" | "isActive" | "status">>;
+      payload: Partial<
+        Pick<EducatorLesson, "title" | "description" | "type" | "artist" | "genre" | "style" | "order" | "isActive" | "status">
+      >;
     }) => {
       const token = await getToken();
       return apiFetch<{ success: true }>(`/educator/lessons/${id}`, {
@@ -185,12 +206,14 @@ export function useReplaceEducatorLessonCulturalContent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, culturalContentIds }: { id: string; culturalContentIds: string[] }) => {
+    mutationFn: async ({ id, attachments }: { id: string; attachments: EducatorLessonCulturalAttachment[] }) => {
       const token = await getToken();
+      // The endpoint's `culturalContentIds` key accepts either bare ids or the
+      // object form; we always send objects so the anchor round-trips.
       return apiFetch<{ success: true; count: number }>(`/educator/lessons/${id}/cultural-content`, {
         method: "PUT",
         token,
-        body: JSON.stringify({ culturalContentIds }),
+        body: JSON.stringify({ culturalContentIds: attachments }),
       });
     },
     onSuccess: (_, variables) => {

@@ -2,6 +2,7 @@
 
 import { apiFetch } from "@/lib/api";
 import type { DiscoverItem } from "@/app/(app)/culture/culture-client";
+import type { InteractiveStory } from "@/types";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -37,7 +38,34 @@ const BLANK: DiscoverItem = {
   showNotes: "",
   audioUrl: "",
   storyId: "",
+  seasonArcId: "",
 };
+
+/** Story arcs = seasons (`/story-arcs`). */
+interface StoryArcSummary {
+  id: string;
+  courseId: string | null;
+  title: string;
+}
+
+/**
+ * The two link targets an educator can pick from. Both lists are real rows —
+ * the story/season ids used to be typed by hand here, which is exactly how
+ * orphaned ids got written; the server now rejects an unknown id with a 400.
+ */
+function useStoryLinkOptions() {
+  const { data: stories = [] } = useQuery<InteractiveStory[]>({
+    queryKey: ["admin", "interactive-stories"],
+    queryFn: () => apiFetch<InteractiveStory[]>("/interactive-stories"),
+    staleTime: 60_000,
+  });
+  const { data: seasons = [] } = useQuery<StoryArcSummary[]>({
+    queryKey: ["admin", "story-arcs"],
+    queryFn: () => apiFetch<StoryArcSummary[]>("/story-arcs"),
+    staleTime: 60_000,
+  });
+  return { stories, seasons };
+}
 
 const TYPE_CFG = {
   blog:    { color: "#38bdf8", label: "BLOG",    icon: BookOpen },
@@ -83,6 +111,7 @@ interface DrawerProps {
 
 function EditDrawer({ draft: initial, onSave, onClose, isNew, isSaving }: DrawerProps) {
   const [d, setD] = useState<DiscoverItem>(initial);
+  const { stories, seasons } = useStoryLinkOptions();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -219,11 +248,42 @@ function EditDrawer({ draft: initial, onSave, onClose, isNew, isSaving }: Drawer
             </div>
           )}
 
-          {d.type === "film" && (
-            <div>
-              <label className={labelCls}>Story ID (interactive story — leave blank for synopsis only)</label>
-              <input className={fieldCls} value={d.storyId ?? ""} onChange={(e) => set("storyId", e.target.value)} placeholder="griot-path" />
-            </div>
+          {(d.type === "podcast" || d.type === "film") && (
+            <>
+              <div>
+                <label className={labelCls}>Story — what this card opens</label>
+                <select className={fieldCls} value={d.storyId ?? ""} onChange={(e) => set("storyId", e.target.value)}>
+                  <option value="">No story link (synopsis / detail page only)</option>
+                  <optgroup label="Interactive stories">
+                    {stories.map((s) => (
+                      <option key={s.id} value={s.id}>{s.title} — {s.id}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Seasons">
+                    {seasons.map((a) => (
+                      <option key={a.id} value={a.id}>{a.title} — {a.id}</option>
+                    ))}
+                  </optgroup>
+                </select>
+                <p className="text-[11px] text-neutral-400 mt-1">
+                  A film opens its branching interactive story; a podcast card opens its season.
+                </p>
+              </div>
+
+              <div>
+                <label className={labelCls}>Season — which season this card belongs to</label>
+                <select className={fieldCls} value={d.seasonArcId ?? ""} onChange={(e) => set("seasonArcId", e.target.value)}>
+                  <option value="">No season</option>
+                  {seasons.map((a) => (
+                    <option key={a.id} value={a.id}>{a.title} — {a.id}</option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-neutral-400 mt-1">
+                  Not the same as the story above: that is what the card <em>opens</em>; this is the world it{" "}
+                  <em>belongs to</em> — a film set in a season, or the podcast that <em>is</em> the season.
+                </p>
+              </div>
+            </>
           )}
 
           {d.type === "blog" && (
@@ -333,7 +393,8 @@ function toApiBody(item: DiscoverItem) {
     coverGradientTo: item.coverGradient[1],
     coverEmoji: item.coverEmoji,
     featured: item.featured,
-    storyId: item.storyId ?? null,
+    storyId: item.storyId || null,
+    seasonArcId: item.seasonArcId || null,
     audioUrl: item.audioUrl ?? null,
     contentUrl: item.contentUrl ?? null,
     body: item.body ?? null,

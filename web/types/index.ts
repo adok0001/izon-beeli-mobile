@@ -411,7 +411,10 @@ export interface DiscoverItem {
   featured: boolean;
   audioUrl?: string;
   videoUrl?: string;
+  /** What the card OPENS — an interactive story (films) or, legacy, a season. */
   storyId?: string;
+  /** The season the card BELONGS TO (`culture_items.season_arc_id`). */
+  seasonArcId?: string;
   contentUrl?: string;
   body?: string;
   showNotes?: string;

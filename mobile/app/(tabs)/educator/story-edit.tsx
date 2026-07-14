@@ -3,10 +3,14 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { friendlyError } from "@/lib/api";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { SeasonCastEditor } from "@/components/studio/season-cast-editor";
 import {
   EducatorStoryChapter,
+  type EducatorStoryCastMember,
   useEducatorLessons,
   useEducatorStoryArc,
+  useEducatorStoryArcById,
+  useReplaceStoryCast,
   useReplaceStoryChapters,
   useUpdateStoryArc,
 } from "@/lib/hooks/use-educator-panel";
@@ -16,6 +20,7 @@ import { useUiLanguageStore } from "@/store/ui-language-store";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -45,7 +50,7 @@ function ChapterEditor({
   onChange: (updated: ChapterDraft) => void;
   onDelete: () => void;
   onOpenLesson: (lessonId: string) => void;
-  t: (key: string, opts?: Record<string, unknown>) => string;
+  t: TFunction;
 }>) {
   const M = useMuseumTheme();
   const selectedLesson = lessonOptions.find((l) => l.id === chapter.lessonId);
@@ -53,7 +58,7 @@ function ChapterEditor({
     <View className="mb-4 rounded-2xl border p-4" style={{ backgroundColor: M.card, borderColor: M.border }}>
       <View className="mb-3 flex-row items-center justify-between">
         <Text className="text-xs font-bold uppercase tracking-widest" style={{ color: M.warning }}>
-          {t("educator.story.chapterLabel", { number: index + 1 })}
+          {t("educator.story.chapterLabel", { number: String(index + 1) })}
         </Text>
         <Pressable onPress={onDelete} hitSlop={8}>
           <IconSymbol name="trash" size={16} color={M.error} />
@@ -160,17 +165,25 @@ export default function StoryEditScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
-  const { courseId } = useLocalSearchParams<{ courseId: string }>();
+  const { arcId, courseId } = useLocalSearchParams<{ arcId?: string; courseId?: string }>();
   const { canAccess } = useStudioAccess();
   const { uiLanguage } = useUiLanguageStore();
 
-  const { data: arc, isLoading } = useEducatorStoryArc(courseId, canAccess);
+  // Prefer the arc id: a standalone season (no owning course) can only be
+  // reached that way. courseId is kept for older deep links.
+  const byId = useEducatorStoryArcById(arcId, canAccess && !!arcId);
+  const byCourse = useEducatorStoryArc(courseId, canAccess && !arcId && !!courseId);
+  const { data: arc, isLoading } = arcId ? byId : byCourse;
   const { data: allLessons = [] } = useEducatorLessons(canAccess);
   const updateArc = useUpdateStoryArc();
   const replaceChapters = useReplaceStoryChapters();
+  const replaceCast = useReplaceStoryCast();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [nativeTitle, setNativeTitle] = useState("");
+  const [logline, setLogline] = useState("");
+  const [cast, setCast] = useState<EducatorStoryCastMember[]>([]);
   const [chapters, setChapters] = useState<ChapterDraft[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -178,6 +191,9 @@ export default function StoryEditScreen() {
     if (!arc) return;
     setTitle(arc.title);
     setDescription(arc.description);
+    setNativeTitle(arc.nativeTitle ?? "");
+    setLogline(arc.logline ?? "");
+    setCast(arc.cast ?? []);
     setChapters(
       [...arc.chapters]
         .sort((a, b) => a.order - b.order)
@@ -192,8 +208,10 @@ export default function StoryEditScreen() {
     );
   }, [arc]);
 
-  const courseLessons = allLessons.filter(
-    (l) => arc && l.courseId === arc.courseId
+  // A course-bound season draws its chapters from that course. A standalone one
+  // is a cross-course narrative, so it may pick any lesson in its language.
+  const courseLessons = allLessons.filter((l) =>
+    arc?.courseId ? l.courseId === arc.courseId : l.languageId === arc?.languageId
   );
 
   const addChapter = () => {
@@ -216,18 +234,28 @@ export default function StoryEditScreen() {
 
     for (const [i, ch] of chapters.entries()) {
       if (!ch.lessonId) {
-        toastError(t("educator.story.errorChapterNeedsLesson", { number: i + 1 }));
+        toastError(t("educator.story.errorChapterNeedsLesson", { number: String(i + 1) }));
         return;
       }
       if (!ch.title.trim() || !ch.narrativeIntro.trim() || !ch.narrativeOutro.trim()) {
-        toastError(t("educator.story.errorChapterIncomplete", { number: i + 1 }));
+        toastError(t("educator.story.errorChapterIncomplete", { number: String(i + 1) }));
         return;
       }
     }
 
     setSaving(true);
     try {
-      await updateArc.mutateAsync({ id: arc.id, title: title.trim(), description: description.trim() });
+      await updateArc.mutateAsync({
+        id: arc.id,
+        title: title.trim(),
+        description: description.trim(),
+        nativeTitle: nativeTitle.trim(),
+        logline: logline.trim(),
+      });
+      await replaceCast.mutateAsync({
+        id: arc.id,
+        cast: cast.map((m) => ({ ...m, castId: m.castId.trim(), name: m.name.trim(), role: m.role.trim() })),
+      });
       await replaceChapters.mutateAsync({
         id: arc.id,
         chapters: chapters.map((ch, i) => ({
@@ -339,7 +367,40 @@ export default function StoryEditScreen() {
                 placeholder={t("educator.story.arcDescriptionPlaceholder")}
                 textAlignVertical="top"
               />
+
+              {/* Season "bible" — what the Series screen shows above the episodes. */}
+              <Text className="mb-1 mt-3 text-xs font-semibold uppercase tracking-wider" style={{ color: M.muted }}>
+                {t("educator.story.labelNativeTitle")}
+              </Text>
+              <TextInput
+                value={nativeTitle}
+                onChangeText={setNativeTitle}
+                className="mb-1 rounded-xl border px-3 py-2.5 text-base"
+                style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
+                placeholderTextColor={M.muted}
+                placeholder={t("educator.story.nativeTitlePlaceholder")}
+              />
+              <Text className="mb-3 text-xs" style={{ color: M.sub }}>
+                {t("educator.story.nativeTitleHint")}
+              </Text>
+
+              <Text className="mb-1 text-xs font-semibold uppercase tracking-wider" style={{ color: M.muted }}>
+                {t("educator.story.labelLogline")}
+              </Text>
+              <TextInput
+                value={logline}
+                onChangeText={setLogline}
+                multiline
+                numberOfLines={2}
+                className="rounded-xl border px-3 py-2.5 text-base"
+                style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
+                placeholderTextColor={M.muted}
+                placeholder={t("educator.story.loglinePlaceholder")}
+                textAlignVertical="top"
+              />
             </View>
+
+            <SeasonCastEditor cast={cast} onChange={setCast} />
 
             {/* Chapter list */}
             <View className="mb-3 flex-row items-center justify-between">
@@ -386,7 +447,7 @@ export default function StoryEditScreen() {
                       params: { lessonId, courseId },
                     } as never)
                   }
-                  t={(key, opts) => t(key as any, opts as any) as string}
+                  t={t}
                 />
               ))
             )}

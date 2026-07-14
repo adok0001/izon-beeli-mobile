@@ -16,7 +16,10 @@ export type DiscoverItem = {
   coverGradient: [string, string];
   coverEmoji: string;
   featured: boolean;
+  /** What the card OPENS — an interactive story (films) or, legacy, a season. */
   storyId?: string;
+  /** The season the card BELONGS TO (`culture_items.season_arc_id`). */
+  seasonArcId?: string;
   audioUrl?: string;
   contentUrl?: string;
   body?: string;

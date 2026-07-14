@@ -645,7 +645,14 @@ export interface DiscoverItem {
   featured?: boolean;
   audioUrl?: string;
   videoUrl?: string;
+  /**
+   * Legacy polymorphic link the card OPENS — an interactive story (films) or,
+   * historically, a season. The server serves `interactiveStoryId ?? seasonArcId`
+   * here and resolves a written value into the right typed column.
+   */
   storyId?: string;
+  /** The season this card BELONGS TO (`culture_items.season_arc_id`). */
+  seasonArcId?: string;
   contentUrl?: string;
   body?: string;
   showNotes?: string;

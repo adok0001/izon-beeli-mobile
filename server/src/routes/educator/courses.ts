@@ -1,7 +1,7 @@
 import { eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../../db/index.js";
-import { courses } from "../../db/schema.js";
+import { courses, storyArcs } from "../../db/schema.js";
 import { AuthEnv } from "../../middleware/auth.js";
 
 export const educatorCoursesRouter = new Hono<AuthEnv>();
@@ -12,7 +12,7 @@ educatorCoursesRouter.get("/courses", async (c) => {
   const reviewerLanguages = c.get("reviewerLanguages");
 
   const rows = await db
-    .select({ id: courses.id, title: courses.title, titleFr: courses.titleFr, description: courses.description, descriptionFr: courses.descriptionFr, languageId: courses.languageId, level: courses.level, order: courses.order, courseType: courses.courseType, isActive: courses.isActive })
+    .select({ id: courses.id, title: courses.title, titleFr: courses.titleFr, description: courses.description, descriptionFr: courses.descriptionFr, languageId: courses.languageId, level: courses.level, order: courses.order, courseType: courses.courseType, seasonArcId: courses.seasonArcId, isActive: courses.isActive })
     .from(courses)
     .where(!isAdmin && reviewerLanguages.length > 0 ? inArray(courses.languageId, reviewerLanguages) : undefined)
     .orderBy(courses.languageId, courses.order);
@@ -34,6 +34,8 @@ educatorCoursesRouter.patch("/courses/:id", async (c) => {
     level?: string;
     order?: number;
     courseType?: string | null;
+    /** Companion course for a season — drives the Series screen's level bands. */
+    seasonArcId?: string | null;
   }>();
 
   const [course] = await db.select({ languageId: courses.languageId }).from(courses).where(eq(courses.id, courseId)).limit(1);
@@ -49,6 +51,15 @@ educatorCoursesRouter.patch("/courses/:id", async (c) => {
   if (body.level !== undefined) patch.level = body.level;
   if (body.order !== undefined) patch.order = body.order;
   if (body.courseType !== undefined) patch.courseType = body.courseType;
+
+  if (body.seasonArcId !== undefined) {
+    const seasonArcId = body.seasonArcId || null;
+    if (seasonArcId) {
+      const [arc] = await db.select({ id: storyArcs.id }).from(storyArcs).where(eq(storyArcs.id, seasonArcId)).limit(1);
+      if (!arc) return c.json({ error: "No season with that id" }, 400);
+    }
+    patch.seasonArcId = seasonArcId;
+  }
 
   if (Object.keys(patch).length === 0) return c.json({ error: "No fields to update" }, 400);
 

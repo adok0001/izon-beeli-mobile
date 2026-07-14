@@ -13,6 +13,8 @@ import { getLanguageName } from "@/lib/mock-data";
 import { Stack, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { localize } from "@/lib/localize";
+import { useUiLanguageStore } from "@/store/ui-language-store";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -28,6 +30,7 @@ export default function StoryNewScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
+  const { uiLanguage } = useUiLanguageStore();
   const { user: currentUser, canAccess } = useStudioAccess();
 
   const { data: arcs = [] } = useEducatorStoryArcs(canAccess);
@@ -48,6 +51,8 @@ export default function StoryNewScreen() {
   const [courseId, setCourseId] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [nativeTitle, setNativeTitle] = useState("");
+  const [logline, setLogline] = useState("");
   const [error, setError] = useState("");
 
   const arcCourseIds = useMemo(() => new Set(arcs.map((a) => a.courseId)), [arcs]);
@@ -65,13 +70,23 @@ export default function StoryNewScreen() {
   };
 
   const handleCreate = async () => {
-    if (!courseId) { setError(t("educator.story.errorSelectCourse")); return; }
+    if (!languageId) { setError(t("educator.story.errorSelectLanguage")); return; }
     if (!title.trim()) { setError(t("educator.story.errorTitleRequired")); return; }
     if (!description.trim()) { setError(t("educator.story.errorDescriptionRequired")); return; }
     setError("");
     try {
-      await createArc.mutateAsync({ courseId, languageId, title: title.trim(), description: description.trim() });
-      router.back();
+      // A season may stand alone — a cross-course narrative (a podcast, say) has
+      // no single owning course. The server only needs a languageId then.
+      const { id } = await createArc.mutateAsync({
+        courseId: courseId || undefined,
+        languageId,
+        title: title.trim(),
+        description: description.trim(),
+        nativeTitle: nativeTitle.trim(),
+        logline: logline.trim(),
+      });
+      // Straight into the editor: cast and chapters need the season to exist first.
+      router.replace({ pathname: "/educator/story-edit", params: { arcId: id } } as never);
     } catch (e) {
       setError(friendlyError(e as Error));
     }
@@ -157,14 +172,35 @@ export default function StoryNewScreen() {
               </Text>
               {coursesLoading ? (
                 <Text className="text-sm" style={{ color: M.muted }}>{t("educator.story.loading")}</Text>
-              ) : languageCourses.length === 0 ? (
-                <View className="rounded-xl px-4 py-4" style={{ backgroundColor: M.card, borderWidth: 1, borderColor: M.border }}>
-                  <Text className="text-center text-sm" style={{ color: M.sub }}>
-                    {t("educator.story.allCoursesHaveArc", { language: getLanguageName(languageId) })}
-                  </Text>
-                </View>
               ) : (
                 <View className="gap-2">
+                  {/* A season need not belong to a course: a cross-course narrative
+                      (a podcast season, say) spans several. */}
+                  <Pressable
+                    onPress={() => setCourseId("")}
+                    className="rounded-xl border p-3"
+                    style={
+                      courseId === ""
+                        ? { borderColor: M.warningBorder, backgroundColor: M.warningBg }
+                        : { borderColor: M.border, backgroundColor: M.pillBg }
+                    }
+                  >
+                    <View className="flex-row items-center">
+                      <IconSymbol
+                        name={courseId === "" ? "checkmark.circle.fill" : "circle"}
+                        size={18}
+                        color={courseId === "" ? M.warning : M.border}
+                      />
+                      <View className="ml-2.5 flex-1">
+                        <Text className="text-sm font-semibold" style={{ color: courseId === "" ? M.warning : M.text }}>
+                          {t("educator.story.standaloneOption")}
+                        </Text>
+                        <Text className="mt-0.5 text-xs" style={{ color: M.sub }}>
+                          {t("educator.story.standaloneHint")}
+                        </Text>
+                      </View>
+                    </View>
+                  </Pressable>
                   {languageCourses.map((c) => (
                     <Pressable
                       key={c.id}
@@ -187,11 +223,11 @@ export default function StoryNewScreen() {
                             className="text-sm font-semibold"
                             style={{ color: courseId === c.id ? M.warning : M.text }}
                           >
-                            {c.title}
+                            {localize(c.title, uiLanguage)}
                           </Text>
                           {c.description ? (
                             <Text className="mt-0.5 text-xs" style={{ color: M.muted }} numberOfLines={1}>
-                              {c.description}
+                              {localize(c.description, uiLanguage)}
                             </Text>
                           ) : null}
                         </View>
@@ -236,10 +272,44 @@ export default function StoryNewScreen() {
               />
             </View>
 
+            <View className="mt-5 px-5">
+              <Text className="mb-1.5 text-xs font-semibold uppercase tracking-[1.2px]" style={{ color: M.muted }}>
+                {t("educator.story.labelNativeTitle")}
+              </Text>
+              <TextInput
+                value={nativeTitle}
+                onChangeText={setNativeTitle}
+                placeholder={t("educator.story.nativeTitlePlaceholder")}
+                className="mb-1 rounded-xl border px-4 py-3 text-base"
+                style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
+                placeholderTextColor={M.muted}
+              />
+              <Text className="text-xs" style={{ color: M.sub }}>
+                {t("educator.story.nativeTitleHint")}
+              </Text>
+            </View>
+
+            <View className="mt-5 px-5">
+              <Text className="mb-1.5 text-xs font-semibold uppercase tracking-[1.2px]" style={{ color: M.muted }}>
+                {t("educator.story.labelLogline")}
+              </Text>
+              <TextInput
+                value={logline}
+                onChangeText={setLogline}
+                placeholder={t("educator.story.loglinePlaceholder")}
+                multiline
+                numberOfLines={2}
+                className="rounded-xl border px-4 py-3 text-base"
+                style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
+                placeholderTextColor={M.muted}
+                textAlignVertical="top"
+              />
+            </View>
+
             <View className="mt-8 px-5">
               <Pressable
                 onPress={handleCreate}
-                disabled={createArc.isPending || languageCourses.length === 0}
+                disabled={createArc.isPending || !languageId}
                 className="items-center rounded-xl py-4 active:opacity-80 disabled:opacity-50"
                 style={{ backgroundColor: M.warning }}
               >

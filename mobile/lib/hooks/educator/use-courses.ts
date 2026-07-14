@@ -13,6 +13,8 @@ export interface EducatorCourse {
   level: string;
   order: number;
   courseType?: string | null;
+  /** Season this course companions (`courses.season_arc_id`) — drives the Series screen's level bands. */
+  seasonArcId?: string | null;
   isActive?: boolean;
 }
 
@@ -25,6 +27,8 @@ export interface UpdateEducatorCourseInput {
   level?: string;
   order?: number;
   courseType?: string | null;
+  /** `null` unlinks the course from its season; the server 400s on an unknown id. */
+  seasonArcId?: string | null;
 }
 
 export function useEducatorCourses(enabled = true) {

@@ -42,6 +42,12 @@ type Body = {
   coverEmoji: string;
   featured?: boolean;
   storyId?: string | null;
+  /**
+   * The season this card belongs to. Distinct from `storyId`: a film OPENS its
+   * own interactive story but is SET IN a season's world, and the old single
+   * polymorphic column could not say both.
+   */
+  seasonArcId?: string | null;
   audioUrl?: string | null;
   contentUrl?: string | null;
   body?: string | null;
@@ -57,6 +63,7 @@ cultureItemsAdminRouter.post("/", async (c) => {
   }
   const storyLink = await resolveStoryLink(body.storyId);
   if (!storyLink) return c.json(UNKNOWN_STORY, 400);
+  if (!(await seasonExists(body.seasonArcId))) return c.json(UNKNOWN_SEASON, 400);
 
   const [row] = await db.insert(cultureItems).values({
     id,
@@ -71,6 +78,9 @@ cultureItemsAdminRouter.post("/", async (c) => {
     coverEmoji,
     featured: body.featured ?? false,
     ...storyLink,
+    // An explicit season wins: for a film, storyId names the interactive story it
+    // opens, so the season has to be stated separately.
+    ...(body.seasonArcId !== undefined ? { seasonArcId: body.seasonArcId || null } : {}),
     audioUrl: body.audioUrl ?? null,
     contentUrl: body.contentUrl ?? null,
     body: body.body ?? null,
@@ -101,6 +111,10 @@ cultureItemsAdminRouter.patch("/:id", async (c) => {
     const storyLink = await resolveStoryLink(body.storyId);
     if (!storyLink) return c.json(UNKNOWN_STORY, 400);
     Object.assign(updates, storyLink);
+  }
+  if ("seasonArcId" in body) {
+    if (!(await seasonExists(body.seasonArcId))) return c.json(UNKNOWN_SEASON, 400);
+    updates.seasonArcId = body.seasonArcId || null;
   }
   if ("audioUrl" in body) updates.audioUrl = body.audioUrl ?? null;
   if ("contentUrl" in body) updates.contentUrl = body.contentUrl ?? null;
@@ -157,6 +171,19 @@ async function resolveStoryLink(storyId: string | null | undefined) {
 
   return null;
 }
+
+/** Does this season exist? `null` clears the link. `false` means it doesn't. */
+async function seasonExists(seasonArcId: string | null | undefined) {
+  if (!seasonArcId) return true;
+  const [arc] = await db
+    .select({ id: storyArcs.id })
+    .from(storyArcs)
+    .where(eq(storyArcs.id, seasonArcId))
+    .limit(1);
+  return !!arc;
+}
+
+const UNKNOWN_SEASON = { error: "No season with that id" } as const;
 
 const UNKNOWN_STORY = { error: "No interactive story or season with that id" } as const;
 

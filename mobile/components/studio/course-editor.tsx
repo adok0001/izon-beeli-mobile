@@ -3,9 +3,11 @@ import { LocalizedTextInput, toLocalizedText } from "@/components/ui/localized-t
 import { localize } from "@/lib/localize";
 import { COURSE_EMOJI } from "@/lib/journey";
 import type { EducatorCourse } from "@/lib/hooks/use-educator-panel";
+import { useEducatorStoryArcs } from "@/lib/hooks/educator/use-story-arcs";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { CourseType, LocalizedText } from "@/types";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -35,6 +37,60 @@ export interface CourseEditFields {
   level: string;
   order: number;
   courseType: string | null;
+  /** Season this course drills (`courses.season_arc_id`); `null` = standalone course. */
+  seasonArcId: string | null;
+}
+
+/** Chip row: "None" + every season authored in the course's language. */
+function SeasonPicker({
+  languageId,
+  value,
+  onChange,
+}: Readonly<{ languageId: string; value: string | null; onChange: (v: string | null) => void }>) {
+  const M = useMuseumTheme();
+  const { t } = useTranslation();
+  const { data: arcs = [] } = useEducatorStoryArcs();
+
+  const languageArcs = useMemo(
+    () => arcs.filter((a) => !a.languageId || a.languageId === languageId),
+    [arcs, languageId],
+  );
+
+  const chipStyle = (active: boolean) => ({
+    flexDirection: "row" as const, alignItems: "center" as const, gap: 6,
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, borderWidth: 1,
+    borderColor: active ? M.accent : M.border,
+    backgroundColor: active ? `${M.accent}20` : M.card,
+  });
+
+  return (
+    <View style={{ marginBottom: 14 }}>
+      <Text style={{ fontSize: 11, fontWeight: "600", color: M.muted, marginBottom: 4 }}>
+        {t("admin.courses.seasonLabel")}
+      </Text>
+      <Text style={{ fontSize: 12, color: M.muted, marginBottom: 8 }}>
+        {t("admin.courses.seasonHint")}
+      </Text>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+        <Pressable onPress={() => onChange(null)} style={chipStyle(value === null)}>
+          <Text style={{ fontSize: 12, fontWeight: "700", color: value === null ? M.accent : M.muted }}>
+            {t("admin.courses.seasonNone")}
+          </Text>
+        </Pressable>
+        {languageArcs.map((arc) => {
+          const active = value === arc.id;
+          return (
+            <Pressable key={arc.id} onPress={() => onChange(arc.id)} style={chipStyle(active)}>
+              <Text style={{ fontSize: 12, fontWeight: "700", color: active ? M.accent : M.muted }}>{arc.title}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      {languageArcs.length === 0 && (
+        <Text style={{ fontSize: 12, color: M.muted, marginTop: 6 }}>{t("admin.courses.seasonEmpty")}</Text>
+      )}
+    </View>
+  );
 }
 
 export function CourseEditModal({
@@ -58,6 +114,7 @@ export function CourseEditModal({
   const [level, setLevel] = useState(course.level);
   const [order, setOrder] = useState(String(course.order));
   const [courseType, setCourseType] = useState<string | null>(course.courseType ?? null);
+  const [seasonArcId, setSeasonArcId] = useState<string | null>(course.seasonArcId ?? null);
 
   const canSave = !!(title.en?.trim()) && !!(description.en?.trim());
 
@@ -73,7 +130,7 @@ export function CourseEditModal({
               Edit: {localize(course.title, "en")}
             </Text>
             <Pressable
-              onPress={() => canSave && onSave({ title: title.en ?? "", titleFr: title.fr ?? "", description: description.en ?? "", descriptionFr: description.fr ?? "", level, order: Number(order), courseType })}
+              onPress={() => canSave && onSave({ title: title.en ?? "", titleFr: title.fr ?? "", description: description.en ?? "", descriptionFr: description.fr ?? "", level, order: Number(order), courseType, seasonArcId })}
               disabled={!canSave || saving}
               style={{ paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: canSave ? M.accent : M.border }}
             >
@@ -127,6 +184,8 @@ export function CourseEditModal({
                 );
               })}
             </View>
+            <SeasonPicker languageId={course.languageId} value={seasonArcId} onChange={setSeasonArcId} />
+
             <View style={{ marginBottom: 10 }}>
               <Text style={{ fontSize: 11, fontWeight: "600", color: M.muted, marginBottom: 4 }}>Order</Text>
               <Text style={{ fontSize: 12, color: M.muted, marginBottom: 6 }}>

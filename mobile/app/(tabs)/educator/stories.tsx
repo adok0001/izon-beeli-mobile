@@ -103,14 +103,12 @@ export default function EducatorStoriesScreen() {
     setRefreshing(false);
   }, [refetchArcs, refetchCourses]);
 
+  // Open by arc id, not course id — a standalone season has no owning course, and
+  // looking it up by one is why the editor used to refuse them.
   const handleEdit = (arc: EducatorStoryArc) => {
-    if (!arc.courseId) {
-      toastError(t("educator.story.standaloneEditUnsupported"));
-      return;
-    }
     router.push({
       pathname: "/educator/story-edit",
-      params: { courseId: arc.courseId },
+      params: { arcId: arc.id },
     } as never);
   };
 

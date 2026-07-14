@@ -11,6 +11,9 @@ import { isAudioUpload } from "./_shared.js";
 
 export const educatorLessonsRouter = new Hono<AuthEnv>();
 
+/** How a season episode is told. Null for ordinary lessons. */
+const LESSON_STYLES = ["skit", "immersive_story", "host_narrated"] as const;
+
 // GET /educator/lessons
 educatorLessonsRouter.get("/lessons", async (c) => {
   const isAdmin = c.get("isAdmin");
@@ -32,6 +35,7 @@ educatorLessonsRouter.get("/lessons", async (c) => {
       order: lessons.order,
       artist: lessons.artist,
       genre: lessons.genre,
+      style: lessons.style,
       isActive: lessons.isActive,
       status: lessons.status,
       createdBy: lessons.createdBy,
@@ -58,6 +62,7 @@ educatorLessonsRouter.post("/lessons", async (c) => {
   const type = (formData.get("type") as string) || "lesson";
   const artist = (formData.get("artist") as string)?.trim() || null;
   const genre = (formData.get("genre") as string)?.trim() || null;
+  const style = (formData.get("style") as string)?.trim() || null;
   const durationStr = formData.get("duration") as string | null;
   const duration = durationStr ? parseInt(durationStr, 10) : null;
   const orderStr = formData.get("order") as string | null;
@@ -66,6 +71,9 @@ educatorLessonsRouter.post("/lessons", async (c) => {
 
   if (!languageId || !title || !description) {
     return c.json({ error: "languageId, title, and description are required" }, 400);
+  }
+  if (style && !LESSON_STYLES.includes(style as (typeof LESSON_STYLES)[number])) {
+    return c.json({ error: `style must be one of: ${LESSON_STYLES.join(", ")}` }, 400);
   }
   if (!isAdmin && !reviewerLanguages.includes(languageId)) {
     return c.json({ error: "Forbidden: not assigned to this language" }, 403);
@@ -114,6 +122,7 @@ educatorLessonsRouter.post("/lessons", async (c) => {
     order: isNaN(order) ? 999 : order,
     artist,
     genre,
+    style,
     status: "draft",
     createdBy: userId,
     updatedBy: userId,
@@ -167,12 +176,16 @@ educatorLessonsRouter.patch("/lessons/:id", async (c) => {
   const body = await c.req.json<{
     title?: string; description?: string; type?: string;
     artist?: string | null; genre?: string | null; order?: number; isActive?: boolean;
-    status?: string;
+    status?: string; style?: string | null;
   }>();
 
   if (body.status && !PATCHABLE_LESSON_STATUSES.includes(body.status as (typeof PATCHABLE_LESSON_STATUSES)[number])) {
     // "published" only happens through the guarded POST /content/lessons/:id/publish endpoint.
     return c.json({ error: `status must be one of: ${PATCHABLE_LESSON_STATUSES.join(", ")}` }, 400);
+  }
+
+  if (body.style != null && body.style !== "" && !LESSON_STYLES.includes(body.style as (typeof LESSON_STYLES)[number])) {
+    return c.json({ error: `style must be one of: ${LESSON_STYLES.join(", ")}` }, 400);
   }
 
   const updates: Record<string, unknown> = { updatedBy: userId };
@@ -184,6 +197,9 @@ educatorLessonsRouter.patch("/lessons/:id", async (c) => {
   if (body.order !== undefined) updates.order = body.order;
   if (body.isActive !== undefined) updates.isActive = body.isActive;
   if (body.status !== undefined) updates.status = body.status;
+  // Only meaningful for a season episode; drives the style chip on the Series
+  // screen. Empty clears it.
+  if (body.style !== undefined) updates.style = body.style?.trim() || null;
 
   await db.update(lessons).set(updates).where(eq(lessons.id, id));
   return c.json({ success: true });
@@ -211,6 +227,7 @@ educatorLessonsRouter.get("/lessons/:id", async (c) => {
       order: lessons.order,
       artist: lessons.artist,
       genre: lessons.genre,
+      style: lessons.style,
       isActive: lessons.isActive,
       status: lessons.status,
       createdBy: lessons.createdBy,
