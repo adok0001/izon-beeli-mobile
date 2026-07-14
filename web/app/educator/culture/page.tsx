@@ -314,7 +314,7 @@ function CulturalModal({
       <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-5 border-b border-neutral-200 dark:border-neutral-800">
           <h3 className="font-semibold text-neutral-900 dark:text-white">
-            {initial ? "Edit Cultural Item" : "New Cultural Item"}
+            {initial ? "Edit Culture Note" : "New Culture Note"}
           </h3>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500">
             <X className="h-4 w-4" />
@@ -347,7 +347,7 @@ function CulturalModal({
             </div>
             <div>
               <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Title *</label>
-              <input className={fieldCls} value={form.title} onChange={set("title")} placeholder="Name of the cultural item" />
+              <input className={fieldCls} value={form.title} onChange={set("title")} placeholder="Name of the culture note" />
             </div>
           </div>
           <div>
@@ -356,7 +356,7 @@ function CulturalModal({
           </div>
           <div>
             <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Description *</label>
-            <textarea className={cn(fieldCls, "resize-none")} rows={3} value={form.description} onChange={set("description")} placeholder="Describe this cultural item" />
+            <textarea className={cn(fieldCls, "resize-none")} rows={3} value={form.description} onChange={set("description")} placeholder="Describe this culture note" />
           </div>
           <div>
             <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Description (French)</label>
@@ -505,7 +505,7 @@ export default function EducatorCulturePage() {
       void queryClient.invalidateQueries({ queryKey: ["educator", "cultural"] });
       setCulturalModal(null);
     },
-    onError: () => toast.error("Failed to save cultural item. Please try again."),
+    onError: () => toast.error("Failed to save culture note. Please try again."),
   });
 
   const updateCultural = useMutation({
@@ -517,7 +517,7 @@ export default function EducatorCulturePage() {
       void queryClient.invalidateQueries({ queryKey: ["educator", "cultural"] });
       setCulturalModal(null);
     },
-    onError: () => toast.error("Failed to update cultural item. Please try again."),
+    onError: () => toast.error("Failed to update culture note. Please try again."),
   });
 
   const deleteCultural = useMutation({
@@ -526,7 +526,7 @@ export default function EducatorCulturePage() {
       return apiFetch(`/cultural/admin/${id}`, { method: "DELETE", token: token ?? undefined });
     },
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["educator", "cultural"] }),
-    onError: () => toast.error("Failed to delete cultural item."),
+    onError: () => toast.error("Failed to delete culture note."),
   });
 
   // ── Filtering ──────────────────────────────────────────────────────────────
@@ -559,7 +559,7 @@ export default function EducatorCulturePage() {
             {t("educator.nav.culture")}
           </h2>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            {totalCount} {tab === "proverbs" ? "proverbs" : "cultural items"}
+            {totalCount} {tab === "proverbs" ? "proverbs" : "culture notes"}
           </p>
         </div>
         <button
@@ -570,7 +570,7 @@ export default function EducatorCulturePage() {
           )}
         >
           <Plus className="h-4 w-4" />
-          {tab === "proverbs" ? "New Proverb" : "New Cultural Item"}
+          {tab === "proverbs" ? "New Proverb" : "New Culture Note"}
         </button>
       </div>
 
@@ -597,7 +597,7 @@ export default function EducatorCulturePage() {
                 : "text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800"
             )}
           >
-            <Globe2 className="h-3.5 w-3.5" /> Cultural
+            <Globe2 className="h-3.5 w-3.5" /> Culture Notes
           </button>
         </div>
 
@@ -621,7 +621,7 @@ export default function EducatorCulturePage() {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={tab === "proverbs" ? "Search proverbs…" : "Search cultural items…"}
+            placeholder={tab === "proverbs" ? "Search proverbs…" : "Search culture notes…"}
             className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
           />
         </div>
@@ -754,7 +754,7 @@ export default function EducatorCulturePage() {
                   <td colSpan={4} className="px-4 py-16 text-center">
                     <Globe2 className="h-8 w-8 mx-auto mb-3 text-neutral-300 dark:text-neutral-600" />
                     <p className="text-sm text-neutral-400 dark:text-neutral-500">
-                      {culturalItems.length === 0 ? "No cultural items yet. Add the first one." : "No results match your search."}
+                      {culturalItems.length === 0 ? "No culture notes yet. Add the first one." : "No results match your search."}
                     </p>
                   </td>
                 </tr>

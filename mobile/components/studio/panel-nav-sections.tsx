@@ -275,6 +275,24 @@ export function ExploreSection({ currentUser, open, onToggle }: SectionProps) {
   );
 }
 
+export function StoriesSection({ open, onToggle }: SectionProps) {
+  const router = useRouter();
+
+  return (
+    <SectionShell
+      icon="character.book.closed"
+      label="Stories"
+      meta="Seasons & interactive"
+      open={open}
+      onToggle={onToggle}
+      accent={getAccent("amber").solid}
+    >
+      <SubRow label="Seasons" meta="Narrative chapters threaded through a course" onPress={() => router.push("/educator/stories" as never)} />
+      <SubRow label="Interactive Stories" meta="Branching scenes with choices" onPress={() => router.push("/educator/interactive-stories" as never)} />
+    </SectionShell>
+  );
+}
+
 /** Flat, visually quieter strip of pill links — for items with no single
  * learner screen to mirror, so they don't get forced into the Learn/Explore
  * metaphor. Shared by the educator and admin panel homes. */
@@ -311,8 +329,6 @@ export function ToolsStrip({ currentUser }: Readonly<{ currentUser: CurrentUser 
     { label: "Review", href: "/review" },
     { label: "Proverbs", href: "/educator/proverbs" },
     { label: "Etymology", href: "/educator/etymology" },
-    { label: "Stories", href: "/educator/stories" },
-    { label: "Interactive Stories", href: "/educator/interactive-stories" },
     { label: "Sentences", href: "/educator/sentences" },
     { label: "Scenarios", href: "/educator/scenarios" },
     { label: "Quiz Bank", href: "/educator/quiz-bank" },

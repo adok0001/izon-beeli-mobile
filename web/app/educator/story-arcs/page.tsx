@@ -261,8 +261,8 @@ function StoryArcsEditor() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="text-lg font-bold text-neutral-900 dark:text-white">Story Arcs</h2>
-          <p className="text-sm text-neutral-500">Narrative arcs that thread a course&apos;s lessons into chapters.</p>
+          <h2 className="text-lg font-bold text-neutral-900 dark:text-white">Seasons</h2>
+          <p className="text-sm text-neutral-500">Seasons that thread a course&apos;s lessons into chapters.</p>
         </div>
         <select
           value={activeLanguageId}
@@ -286,7 +286,7 @@ function StoryArcsEditor() {
       {/* Editor form */}
       <div className="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-5 space-y-3">
         <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
-          {editingArcId ? "Edit arc" : "New arc"}
+          {editingArcId ? "Edit season" : "New season"}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Field
@@ -305,7 +305,7 @@ function StoryArcsEditor() {
             onClick={() => saveMutation.mutate()}
             className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
           >
-            {saveMutation.isPending ? "Saving…" : editingArcId ? "Save arc" : "Create draft"}
+            {saveMutation.isPending ? "Saving…" : editingArcId ? "Save season" : "Create draft"}
           </button>
           {editingArcId && (
             <button onClick={resetForm} className="rounded-lg px-4 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.05]">
@@ -368,7 +368,7 @@ function StoryArcsEditor() {
       <div className="space-y-2">
         {arcsQuery.isPending && <p className="text-sm text-neutral-500">Loading…</p>}
         {!arcsQuery.isPending && visibleArcs.length === 0 && (
-          <p className="text-sm text-neutral-500">No story arcs yet for this language.</p>
+          <p className="text-sm text-neutral-500">No seasons yet for this language.</p>
         )}
         {visibleArcs.map((a) => (
           <div key={a.id} className="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-4">

@@ -416,7 +416,7 @@ export default function AdminCulturePage() {
     <div>
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-1">Culture Content</h2>
+          <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-1">Discover Media</h2>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
             Manage blogs, podcasts, and films shown in the Culture tab.
           </p>

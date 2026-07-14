@@ -90,10 +90,10 @@ function StoryArcTab({
       <View className="flex-1 items-center justify-center px-8">
         <IconSymbol name="book.closed.fill" size={48} color={M.border} />
         <Text className="mt-4 text-center text-base font-semibold text-neutral-500 dark:text-neutral-400">
-          No story arcs available
+          No seasons available
         </Text>
         <Text className="mt-1 text-center text-sm text-neutral-400 dark:text-neutral-500">
-          Ask an educator to create story arcs for this language's courses.
+          Ask an educator to create seasons for this language&apos;s courses.
         </Text>
       </View>
     );
@@ -181,7 +181,7 @@ function StoryArcTab({
             className="items-center rounded-xl bg-amber-500 py-4 active:opacity-80 disabled:opacity-50"
           >
             <Text className="text-base font-bold text-white">
-              {assigning ? "Assigning…" : "Assign story arc"}
+              {assigning ? "Assigning…" : "Assign season"}
             </Text>
           </Pressable>
         </View>
@@ -252,7 +252,7 @@ export default function AssignLessonScreen() {
             <Text className="text-base text-neutral-500">{t("classroom.cancel")}</Text>
           </Pressable>
           <Text className="text-base font-semibold text-neutral-900 dark:text-white">
-            {tab === "lessons" ? t("classroom.assignLesson") : "Assign Story Arc"}
+            {tab === "lessons" ? t("classroom.assignLesson") : "Assign Season"}
           </Text>
           {tab === "lessons" ? (
             <Pressable onPress={handleAssignLesson} disabled={!canAssignLesson}>
@@ -286,7 +286,7 @@ export default function AssignLessonScreen() {
                     : "text-neutral-400 dark:text-neutral-500"
                 }`}
               >
-                {t === "lessons" ? "Lessons" : "Story Arc"}
+                {t === "lessons" ? "Lessons" : "Season"}
               </Text>
               {tab === t && (
                 <View className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-blue-500" />

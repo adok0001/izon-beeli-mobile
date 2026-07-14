@@ -109,7 +109,7 @@ export default function DiscoverStoriesAdminPage() {
         <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
           The Discover story layer at a glance. Interactive-story content is authored
           elsewhere, so it is read-only here. Edit Discover cards (and their Story link
-          field) on Culture Content.
+          field) on Discover Media.
         </p>
       </div>
 
@@ -159,7 +159,7 @@ export default function DiscoverStoriesAdminPage() {
 
           {/* Story arcs */}
           <section>
-            <SectionHeader title="Story Arcs" count={arcs.length} />
+            <SectionHeader title="Seasons" count={arcs.length} />
             {arcs.length === 0 ? (
               <p className="text-sm text-neutral-400">None loaded.</p>
             ) : (
