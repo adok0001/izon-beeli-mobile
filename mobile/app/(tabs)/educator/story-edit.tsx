@@ -444,7 +444,10 @@ export default function StoryEditScreen() {
                   onOpenLesson={(lessonId) =>
                     router.push({
                       pathname: "/educator/lesson-edit",
-                      params: { lessonId, courseId },
+                      // The lesson's own courseId, not the screen's — a standalone
+                      // season's courseId param is undefined, and even a course-bound
+                      // season's chapters can reference lessons from other courses.
+                      params: { lessonId, courseId: allLessons.find((l) => l.id === lessonId)?.courseId },
                     } as never)
                   }
                   t={t}
