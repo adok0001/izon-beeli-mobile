@@ -1,86 +1,85 @@
 import { NotificationBanner } from "@/components/notifications/notification-banner";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { getAccent } from "@/constants/accent-colors";
-import { friendlyError } from "@/lib/api";
+import { NewButton, SmallButton } from "@/components/studio/editor-form";
 import { useStudioAccess } from "@/components/studio/studio-gate";
-import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { Badge } from "@/components/ui/badge";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { friendlyError } from "@/lib/api";
+import {
+  canPublishContent,
+  canSubmitForReview,
+  STATUS_LABEL,
+  STATUS_TONE,
+  usePublishContent,
+  type ContentStatus,
+  type WorkflowActor,
+} from "@/lib/hooks/educator/use-content-workflow";
 import {
   EducatorCourse,
   EducatorStoryArc,
   useDeleteStoryArc,
   useEducatorCourses,
   useEducatorStoryArcs,
+  useUpdateStoryArc,
 } from "@/lib/hooks/use-educator-panel";
 import { useToast } from "@/lib/hooks/use-toast";
 import { localize } from "@/lib/localize";
 import { getLanguageName } from "@/lib/mock-data";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUiLanguageStore } from "@/store/ui-language-store";
-import { Stack, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Alert,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import { Alert, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function ArcCard({
   arc,
   courseName,
   languageName,
+  actor,
   onEdit,
   onDelete,
+  onSubmit,
+  onPublish,
 }: Readonly<{
   arc: EducatorStoryArc;
   courseName: string;
   languageName: string;
+  actor: WorkflowActor;
   onEdit: () => void;
   onDelete: () => void;
+  onSubmit: () => void;
+  onPublish: () => void;
 }>) {
   const M = useMuseumTheme();
+  const { t } = useTranslation();
+  const status = arc.status as ContentStatus | undefined;
+
   return (
-    <Pressable
-      onPress={onEdit}
-      className="rounded-2xl border border-neutral-200 bg-white p-4 active:opacity-70 dark:border-neutral-700 dark:bg-neutral-900"
-    >
-      <View className="flex-row items-start">
-        <View className="flex-1">
-          <View className="rounded-full bg-amber-100 self-start px-2 py-0.5 dark:bg-amber-900/30">
-            <Text className="text-xs font-semibold text-amber-700 dark:text-amber-400">
-              {languageName}
-            </Text>
-          </View>
-          <Text className="mt-1.5 text-base font-bold text-neutral-900 dark:text-white">
-            {arc.title}
-          </Text>
-          <Text
-            className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400"
-            numberOfLines={2}
-          >
-            {arc.description}
-          </Text>
-          <Text className="mt-1.5 text-xs text-neutral-400 dark:text-neutral-500">
-            {courseName}
-          </Text>
-        </View>
-        <View className="ml-3 flex-row items-center gap-3">
-          <Pressable
-            onPress={(e) => {
-              e.stopPropagation?.();
-              onDelete();
-            }}
-            hitSlop={8}
-          >
-            <IconSymbol name="trash" size={18} color={M.error} />
-          </Pressable>
-          <IconSymbol name="chevron.right" size={16} color={M.muted} />
-        </View>
+    <View style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 14 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <Text style={{ flex: 1, fontSize: 15, fontWeight: "800", color: M.text }} numberOfLines={1}>
+          {arc.title}
+        </Text>
+        {status && <Badge label={STATUS_LABEL[status]} tone={STATUS_TONE[status]} />}
       </View>
-    </Pressable>
+      <Text style={{ marginTop: 4, fontSize: 13, color: M.sub }} numberOfLines={2}>
+        {arc.description}
+      </Text>
+      <Text style={{ marginTop: 4, fontSize: 12, color: M.muted }}>
+        {languageName} · {courseName}
+      </Text>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+        {canSubmitForReview(status) && (
+          <SmallButton label={t("educator.story.submitButton")} onPress={onSubmit} M={M} />
+        )}
+        {canPublishContent(status, arc.createdBy, actor) && (
+          <SmallButton label={t("educator.story.publishButton")} tone="publish" onPress={onPublish} M={M} />
+        )}
+        <SmallButton label={t("common.edit")} onPress={onEdit} M={M} />
+        <SmallButton label={t("common.delete")} tone="danger" onPress={onDelete} M={M} />
+      </View>
+    </View>
   );
 }
 
@@ -90,11 +89,15 @@ export default function EducatorStoriesScreen() {
   const { t } = useTranslation();
   const { uiLanguage } = useUiLanguageStore();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
-  const { canAccess } = useStudioAccess();
+  const { user, canAccess } = useStudioAccess();
 
   const { data: arcs = [], isLoading: arcsLoading, refetch: refetchArcs } = useEducatorStoryArcs(canAccess);
   const { data: courses = [], isLoading: coursesLoading, refetch: refetchCourses } = useEducatorCourses(canAccess);
   const deleteArc = useDeleteStoryArc();
+  const updateArc = useUpdateStoryArc();
+  const publishArc = usePublishContent("story_arcs", [["educator", "story-arcs"]]);
+
+  const actor: WorkflowActor = { isAdmin: user.isAdmin, reviewerRole: user.reviewerRole, userId: user.id };
 
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
@@ -137,21 +140,25 @@ export default function EducatorStoriesScreen() {
     );
   };
 
+  const handleSubmit = (arc: EducatorStoryArc) => {
+    updateArc.mutate(
+      { id: arc.id, status: "in_review" },
+      {
+        onSuccess: () => toastSuccess(t("educator.story.submitted")),
+        onError: (e: Error) => toastError(t("educator.story.submitFailed"), friendlyError(e)),
+      }
+    );
+  };
+
+  const handlePublish = (arc: EducatorStoryArc) => {
+    publishArc.mutate(arc.id, {
+      onSuccess: () => toastSuccess(t("educator.story.arcPublished")),
+      onError: (e: Error) => toastError(t("educator.story.publishFailed"), friendlyError(e)),
+    });
+  };
+
   return (
     <>
-      <Stack.Screen
-        options={{
-          title: t("educator.story.screenTitle"),
-          headerRight: () => (
-            <Pressable
-              onPress={() => router.push("/educator/story-new" as never)}
-              className="mr-2"
-            >
-              <IconSymbol name="plus.circle.fill" size={22} color={getAccent("amber").solid} />
-            </Pressable>
-          ),
-        }}
-      />
       <NotificationBanner
         visible={toast.visible}
         title={toast.title}
@@ -159,38 +166,45 @@ export default function EducatorStoriesScreen() {
         type={toast.type}
         onDismiss={dismissToast}
       />
-      <SafeAreaView className="flex-1 bg-neutral-50 dark:bg-neutral-950" edges={["top", "bottom"]}>
-        <View className="flex-row items-center justify-between px-5 pb-1 pt-2">
-          <Pressable onPress={() => router.back()} hitSlop={12} className="-ml-1 p-1 active:opacity-60">
-            <IconSymbol name="chevron.left" size={22} color={M.text} />
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 }}>
+          <Pressable onPress={() => router.back()} hitSlop={12} className="active:opacity-60">
+            <IconSymbol name="chevron.left" size={22} color={M.parchment} />
           </Pressable>
-          <Pressable
-            onPress={() => router.push("/educator/story-new" as never)}
-            hitSlop={12}
-            className="p-1 active:opacity-60"
-          >
-            <IconSymbol name="plus.circle.fill" size={22} color={getAccent("amber").solid} />
-          </Pressable>
+          <View>
+            <Text style={{ fontSize: 24, fontWeight: "900", color: M.parchment }}>
+              {t("educator.story.screenTitle")}
+            </Text>
+            <Text style={{ fontSize: 12, color: M.textDim }}>{t("educator.story.screenSubtitle")}</Text>
+          </View>
         </View>
+
         <ScrollView
-          contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+          style={{ flex: 1, backgroundColor: M.card }}
+          contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
         >
+          <NewButton
+            label={t("educator.story.newArcTitle")}
+            onPress={() => router.push("/educator/story-new" as never)}
+            M={M}
+          />
+
           {isLoading ? (
-            <Text className="mt-8 text-center text-sm text-neutral-400">{t("educator.story.loading")}</Text>
+            <Text style={{ color: M.muted, fontSize: 13 }}>{t("educator.story.loading")}</Text>
           ) : arcs.length === 0 ? (
-            <View className="mt-20 items-center">
-              <IconSymbol name="book.closed.fill" size={48} color={M.border} />
-              <Text className="mt-4 text-center text-base font-semibold text-neutral-500 dark:text-neutral-400">
+            <View style={{ alignItems: "center", paddingTop: 32 }}>
+              <IconSymbol name="book.closed.fill" size={40} color={M.border} />
+              <Text style={{ marginTop: 12, fontSize: 15, fontWeight: "700", color: M.text, textAlign: "center" }}>
                 {t("educator.story.noArcsTitle")}
               </Text>
-              <Text className="mt-1 text-center text-sm text-neutral-400 dark:text-neutral-500">
+              <Text style={{ marginTop: 2, fontSize: 13, color: M.muted, textAlign: "center" }}>
                 {t("educator.story.noArcsSubtitle")}
               </Text>
             </View>
           ) : (
-            <View className="gap-3">
+            <View style={{ gap: 10 }}>
               {arcs.map((arc) => {
                 const course: EducatorCourse | undefined = arc.courseId ? courseMap[arc.courseId] : undefined;
                 return (
@@ -199,8 +213,11 @@ export default function EducatorStoriesScreen() {
                     arc={arc}
                     courseName={course ? localize(course.title, uiLanguage) : t("educator.story.standaloneLabel")}
                     languageName={getLanguageName(arc.languageId ?? course?.languageId ?? "")}
+                    actor={actor}
                     onEdit={() => handleEdit(arc)}
                     onDelete={() => handleDelete(arc)}
+                    onSubmit={() => handleSubmit(arc)}
+                    onPublish={() => handlePublish(arc)}
                   />
                 );
               })}

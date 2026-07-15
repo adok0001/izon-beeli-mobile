@@ -129,10 +129,12 @@ export function useUpdateStoryArc() {
       ...fields
     }: {
       id: string;
-      title: string;
-      description: string;
+      title?: string;
+      description?: string;
       nativeTitle?: string | null;
       logline?: string | null;
+      /** Editors may move an arc between draft/in_review/archived; publishing goes through usePublishContent. */
+      status?: string;
     }) => {
       const token = await getToken();
       return apiFetch<{ success: true }>(`/educator/story-arcs/${id}`, {
