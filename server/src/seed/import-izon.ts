@@ -196,11 +196,7 @@ async function importLinks() {
 
   for (const id of bundle.seasonCourseIds) did(`courses.${id}.season_arc_id = ${bundle.arc.id}`);
   for (const l of bundle.cultureItemLinks) {
-    did(
-      `culture_items.${l.id} -> ` +
-        (l.interactiveStoryId ? `interactive_story=${l.interactiveStoryId}, ` : "") +
-        `season=${l.seasonArcId}`,
-    );
+    did(`culture_items.${l.id} -> season=${l.seasonArcId}`);
   }
   if (!APPLY) return;
 
@@ -209,10 +205,12 @@ async function importLinks() {
     .set({ seasonArcId: bundle.arc.id })
     .where(inArray(courses.id, bundle.seasonCourseIds));
 
+  // A film's scene graph lives on its own row now (folded from interactive
+  // stories); links only wire a card to the season it belongs to.
   for (const l of bundle.cultureItemLinks) {
     await db
       .update(cultureItems)
-      .set({ interactiveStoryId: l.interactiveStoryId, seasonArcId: l.seasonArcId })
+      .set({ seasonArcId: l.seasonArcId })
       .where(eq(cultureItems.id, l.id));
   }
 }

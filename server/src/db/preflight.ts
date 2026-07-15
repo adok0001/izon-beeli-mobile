@@ -40,7 +40,6 @@ interface Check {
 /** Every soft link that is (or is about to become) a foreign key. */
 const CHECKS: Check[] = [
   // Batch A — new columns, shipped with their FKs (all-NULL on arrival)
-  { enforced: true, fk: "culture_items.interactive_story_id", child: "culture_items", childKey: "interactive_story_id", parent: "interactive_stories", parentKey: "id" },
   { enforced: true, fk: "culture_items.season_arc_id", child: "culture_items", childKey: "season_arc_id", parent: "story_arcs", parentKey: "id" },
   { enforced: true, fk: "courses.season_arc_id", child: "courses", childKey: "season_arc_id", parent: "story_arcs", parentKey: "id" },
   { enforced: true, fk: "story_arc_cast.story_arc_id", child: "story_arc_cast", childKey: "story_arc_id", parent: "story_arcs", parentKey: "id" },
@@ -65,29 +64,6 @@ const CHECKS: Check[] = [
   { enforced: true, fk: "sentence_templates.language_id", child: "sentence_templates", childKey: "language_id", parent: "languages", parentKey: "id" },
   { enforced: true, fk: "activities.language_id", child: "activities", childKey: "language_id", parent: "languages", parentKey: "id" },
 ];
-
-/**
- * `culture_items.story_id` is the legacy polymorphic pointer: it may name an
- * interactive story OR a story arc, so it can never be a single FK. It is not
- * constrained, but a value resolving in neither table is still a broken link
- * (the app renders a "broken story link" badge for exactly this). Reported as a
- * warning so it can't fail the deploy.
- */
-async function checkLegacyStoryId(verbose: boolean): Promise<number> {
-  const { rows } = await db.execute<{ id: string; story_id: string }>(sql`
-    SELECT ci.id, ci.story_id
-    FROM culture_items ci
-    WHERE ci.story_id IS NOT NULL
-      AND NOT EXISTS (SELECT 1 FROM interactive_stories s WHERE s.id = ci.story_id)
-      AND NOT EXISTS (SELECT 1 FROM story_arcs a WHERE a.id = ci.story_id)
-  `);
-
-  if (rows.length > 0) {
-    console.warn(`  WARN  culture_items.story_id — ${rows.length} row(s) resolve to neither a story nor an arc`);
-    if (verbose) for (const r of rows) console.warn(`          ${r.id} -> "${r.story_id}"`);
-  }
-  return rows.length;
-}
 
 /** Postgres 42P01 (undefined_table) / 42703 (undefined_column), through Drizzle's wrapper. */
 function isMissingRelation(err: unknown): boolean {
@@ -150,8 +126,6 @@ async function main() {
       throw err;
     }
   }
-
-  await checkLegacyStoryId(verbose);
 
   if (blocking > 0) {
     console.error(

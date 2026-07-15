@@ -1326,9 +1326,11 @@ export const scriptCharacters = pgTable(
   (table) => [index("script_characters_script_id_idx").on(table.scriptId)]
 );
 
-// ---------- Interactive (branching) Stories ----------
+// ---------- Interactive (branching) Story scenes ----------
 // Choose-your-path narrative experiences surfaced in Discover. The branching
-// scene graph is stored as jsonb; the app looks each story up by its storyId.
+// scene graph is stored as jsonb on the film row itself (a film IS its story) —
+// see `cultureItems.scenes`. The former standalone `interactive_stories` table
+// was folded into `culture_items`; only this scene-node type remains.
 
 export type InteractiveStoryScene = {
   id: string;
@@ -1340,31 +1342,6 @@ export type InteractiveStoryScene = {
   choices?: { id: string; text: string; nextSceneId: string }[];
   nextSceneId?: string;
 };
-
-export const interactiveStories = pgTable(
-  "interactive_stories",
-  {
-    id: varchar("id", { length: 64 }).primaryKey(),
-    // Display language string (e.g. "Izon"); optional, mirrors the bundle shape.
-    language: varchar("language", { length: 64 }),
-    title: varchar("title", { length: 300 }).notNull(),
-    description: text("description").notNull(),
-    coverGradientFrom: varchar("cover_gradient_from", { length: 16 }).notNull(),
-    coverGradientTo: varchar("cover_gradient_to", { length: 16 }).notNull(),
-    coverEmoji: varchar("cover_emoji", { length: 16 }).notNull(),
-    estimatedMinutes: integer("estimated_minutes").notNull(),
-    author: varchar("author", { length: 200 }).notNull(),
-    initialSceneId: varchar("initial_scene_id", { length: 64 }).notNull(),
-    scenes: jsonb("scenes").$type<Record<string, InteractiveStoryScene>>().notNull(),
-    isActive: boolean("is_active").default(true).notNull(),
-    status: contentStatusEnum("status").default("published").notNull(),
-    publishAt: timestamp("publish_at"),
-    createdBy: uuid("created_by").references(() => users.id),
-    updatedBy: uuid("updated_by").references(() => users.id),
-    publishedBy: uuid("published_by").references(() => users.id),
-    publishedAt: timestamp("published_at"),
-  }
-);
 
 export const cultureItemTypeEnum = pgEnum("culture_item_type", ["film", "podcast", "blog"]);
 
@@ -1382,21 +1359,6 @@ export const cultureItems = pgTable(
     coverGradientTo: varchar("cover_gradient_to", { length: 16 }).notNull(),
     coverEmoji: varchar("cover_emoji", { length: 16 }).notNull(),
     featured: boolean("featured").default(false).notNull(),
-    /**
-     * @deprecated Legacy polymorphic pointer — it could name EITHER an
-     * interactive story OR a story arc, with nothing recording which, so it
-     * could never be a foreign key (hence the app's "broken story link" badge).
-     * Superseded by `interactiveStoryId` / `seasonArcId` below. Still written by
-     * the API for backwards compatibility with installed app versions; drop the
-     * column by hand once those have aged out. Do NOT alter its type — a
-     * `drizzle-kit push` type change truncates the table.
-     */
-    storyId: varchar("story_id", { length: 128 }),
-    /** The branching story this card opens (films). */
-    interactiveStoryId: varchar("interactive_story_id", { length: 64 }).references(
-      () => interactiveStories.id,
-      { onDelete: "set null" }
-    ),
     /**
      * The season this card belongs to. For a podcast card this IS the season it
      * opens; for a film it means "set in this season's world" (the Series

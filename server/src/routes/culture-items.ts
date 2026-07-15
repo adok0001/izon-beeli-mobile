@@ -184,9 +184,8 @@ function toApi(row: typeof cultureItems.$inferSelect) {
         ? row.id
         : undefined
       : row.type === "podcast"
-        ? // A podcast opens its season; fall back to the legacy `storyId` column
-          // for un-migrated rows whose season never moved to `seasonArcId`.
-          row.seasonArcId ?? row.storyId ?? undefined
+        ? // A podcast opens its season.
+          row.seasonArcId ?? undefined
         : undefined;
   return {
     id: row.id,

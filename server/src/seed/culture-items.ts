@@ -15,7 +15,6 @@ const ITEMS = [
     coverGradientTo: "#0D0F1A",
     coverEmoji: "🥁",
     featured: true,
-    storyId: "griot-path",
     audioUrl: null, contentUrl: null, body: null, showNotes: null,
   },
   {
@@ -30,7 +29,6 @@ const ITEMS = [
     coverGradientTo: "#0D0F1A",
     coverEmoji: "🎙️",
     featured: true,
-    storyId: null,
     audioUrl: "https://cdn.beeli.app/podcast/ep-12.mp3",
     contentUrl: "https://beeli.app/podcast/ep-12",
     body: null,
@@ -54,7 +52,6 @@ Recommended for: diaspora learners, anyone who has experienced heritage language
     coverGradientTo: "#0D0F1A",
     coverEmoji: "✍️",
     featured: true,
-    storyId: "writing-systems",
     audioUrl: null,
     contentUrl: "https://beeli.app/film/writing-systems",
     body: null, showNotes: null,
@@ -71,7 +68,7 @@ Recommended for: diaspora learners, anyone who has experienced heritage language
     coverGradientTo: "#0D0F1A",
     coverEmoji: "🗣️",
     featured: false,
-    storyId: null, audioUrl: null,
+    audioUrl: null,
     contentUrl: "https://beeli.app/blog/tonal-languages",
     showNotes: null,
     body: `Every language learner has heard it: "Tonal languages are impossibly hard." Mandarin. Yoruba. Izon. The mere mention triggers a kind of learned helplessness. But this fear rests on a misunderstanding — and once you correct it, tones become one of the most logical features a language can have.
@@ -94,7 +91,6 @@ Three Izon examples make this concrete. *Ọkọ* with a high–low contour mean
     coverGradientTo: "#0D0F1A",
     coverEmoji: "🔬",
     featured: false,
-    storyId: null,
     audioUrl: "https://cdn.beeli.app/podcast/ep-11.mp3",
     contentUrl: "https://beeli.app/podcast/ep-11",
     body: null,
@@ -118,7 +114,7 @@ Timestamps: 00:00 Intro · 08:14 What revitalisation actually means · 22:40 The
     coverGradientTo: "#0D0F1A",
     coverEmoji: "📖",
     featured: false,
-    storyId: null, audioUrl: null,
+    audioUrl: null,
     contentUrl: "https://beeli.app/blog/oral-tradition",
     showNotes: null,
     body: `Before writing systems, there was the voice. Across the African continent, entire libraries of knowledge — genealogies, legal codes, cosmologies, agricultural calendars — were held in the memories of specialist speakers: griots, elders, praise-singers. The oral tradition was not a primitive precursor to literacy. It was a fully realised technology for preserving and transmitting culture across generations.
@@ -141,7 +137,6 @@ For Izon, Twi, Yoruba, or any African language with a living spoken tradition, t
     coverGradientTo: "#0D0F1A",
     coverEmoji: "💼",
     featured: false,
-    storyId: null,
     audioUrl: "https://cdn.beeli.app/podcast/ep-10.mp3",
     contentUrl: "https://beeli.app/podcast/ep-10",
     body: null,
@@ -165,7 +160,7 @@ The conversation also touches on the politics of language in the workplace — w
     coverGradientTo: "#0D0F1A",
     coverEmoji: "🌿",
     featured: false,
-    storyId: null, audioUrl: null, contentUrl: null, body: null,
+    audioUrl: null, contentUrl: null, body: null,
     showNotes: `Voices of the Delta follows one family across three generations in the Niger Delta region. Mama Ebiotu, 74, speaks only Izon. Her son Doubiye, 48, moves fluidly between Izon, Pidgin, and English depending on context. His daughter Tari, 19, studying engineering in Lagos, understands Izon but rarely speaks it by choice.
 
 The film is structured around three conversations: Mama Ebiotu telling a folktale to Tari, with Doubiye translating in real time; a family meal where the three negotiate which language to use; and a final sequence where Tari attempts to tell her grandmother, in Izon, why she left home.
@@ -186,7 +181,7 @@ Voices of the Delta premiered at the Pan-African Film Festival and won the Jury 
     coverGradientTo: "#0D0F1A",
     coverEmoji: "👋",
     featured: false,
-    storyId: null, audioUrl: null,
+    audioUrl: null,
     contentUrl: "https://beeli.app/blog/5-phrases",
     body: null, showNotes: null,
   },
