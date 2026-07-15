@@ -1,4 +1,5 @@
 import { Pressable, Text, View } from "react-native";
+import { DailyGoalRing } from "@/components/learn/daily-goal-ring";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Eyebrow } from "@/components/ui/section-header";
 import { weekStreakDays } from "@/lib/journey";
@@ -10,10 +11,12 @@ const DAY_KEYS = ["learn.weekdaySun", "learn.weekdayMon", "learn.weekdayTue", "l
 
 interface StreakWeekStripProps {
   summary: ProgressSummary | undefined;
+  /** Daily challenges completed today — renders the goal ring when provided. */
+  completedToday?: number;
   onPress?: () => void;
 }
 
-export function StreakWeekStrip({ summary, onPress }: StreakWeekStripProps) {
+export function StreakWeekStrip({ summary, completedToday, onPress }: StreakWeekStripProps) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const today = new Date().getDay();
@@ -37,10 +40,12 @@ export function StreakWeekStrip({ summary, onPress }: StreakWeekStripProps) {
       accessibilityRole="button"
       accessibilityLabel={t("learn.streakDays", { count: summary?.streak ?? 0, defaultValue: "{{count}} day streak" })}
     >
-      <Eyebrow
-        label={`${t("learn.currentStreak", { defaultValue: "Current Streak" })}: ${summary?.streak ?? 0} ${t("learn.dayShort", { defaultValue: "d" })}`}
-        style={{ marginBottom: 10, textAlign: "center" }}
-      />
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+        <Eyebrow
+          label={`${t("learn.currentStreak", { defaultValue: "Current Streak" })}: ${summary?.streak ?? 0} ${t("learn.dayShort", { defaultValue: "d" })}`}
+        />
+        {completedToday !== undefined && <DailyGoalRing completedToday={completedToday} />}
+      </View>
       <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
         {days.map((active, i) => {
           const isToday = i === today;

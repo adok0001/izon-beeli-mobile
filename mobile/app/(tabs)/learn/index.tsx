@@ -189,6 +189,7 @@ export default function LearnScreen() {
           <View style={{ paddingHorizontal: 20 }}>
             <StreakWeekStrip
               summary={summary}
+              completedToday={completedToday}
               onPress={() => {
                 if (summary?.streakBroken && summary.streak > 0) setFreezeModalVisible(true);
               }}
