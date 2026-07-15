@@ -47,6 +47,14 @@ const CULTURAL_CATEGORIES = [
   "clothing",
   "cuisine",
   "greetings_etiquette",
+  "governance_values",
+  "land_livelihood",
+  "kinship",
+  "cosmology",
+  "oral_tradition",
+  "arts_oratory",
+  "numbers_trade",
+  "geography",
 ] as const;
 
 type CulturalCategory = (typeof CULTURAL_CATEGORIES)[number];
