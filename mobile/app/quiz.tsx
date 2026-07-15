@@ -126,14 +126,18 @@ function ActiveView() {
 
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [locked, setLocked] = useState(false);
+  const [renderedIndex, setRenderedIndex] = useState(currentIndex);
   const question = questions[currentIndex];
   const isLastQuestion = currentIndex === questions.length - 1;
 
-  // Reset local state when question changes
-  useEffect(() => {
+  // Reset synchronously when the question changes so the incoming question
+  // never commits a frame with the previous question's `locked` still true —
+  // that stale frame would mark the new correct answer before the user picks.
+  if (renderedIndex !== currentIndex) {
+    setRenderedIndex(currentIndex);
     setSelectedAnswer(null);
     setLocked(false);
-  }, [currentIndex]);
+  }
 
   const handleSelect = useCallback(
     async (answer: string) => {
