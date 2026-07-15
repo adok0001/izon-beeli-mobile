@@ -1405,6 +1405,24 @@ export const cultureItems = pgTable(
     seasonArcId: varchar("season_arc_id", { length: 64 }).references(() => storyArcs.id, {
       onDelete: "set null",
     }),
+    /**
+     * The branching scene graph a film card opens, folded inline (a film IS its
+     * story: its own `id` is the story id). Null for podcast/blog cards and for
+     * story-less "mini-series" films. Superseded the separate `interactive_stories`
+     * table — see `initialSceneId` / `estimatedMinutes` / `language` below.
+     */
+    scenes: jsonb("scenes").$type<Record<string, InteractiveStoryScene>>(),
+    /** Entry scene id for the folded scene graph (films with `scenes`). */
+    initialSceneId: varchar("initial_scene_id", { length: 64 }),
+    /** Estimated read time in minutes for a film's scene graph. */
+    estimatedMinutes: integer("estimated_minutes"),
+    /**
+     * Display language for language-scoped educator review (e.g. "Izon"). Null =
+     * language-agnostic / admin-only "general" bucket, mirroring the old
+     * `interactive_stories.language` semantics. Films are reviewed through the
+     * four-eyes flow scoped by this column.
+     */
+    language: varchar("language", { length: 64 }),
     audioUrl: text("audio_url"),
     contentUrl: text("content_url"),
     body: text("body"),

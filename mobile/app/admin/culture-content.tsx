@@ -1,8 +1,7 @@
-import { EMPTY_FORM, ItemForm, TYPE_CONFIG } from "@/components/studio/culture-item-form";
+import { ItemForm, TYPE_CONFIG } from "@/components/studio/culture-item-form";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
 import { apiFetch } from "@/lib/api";
-import { useInteractiveStories } from "@/lib/hooks/use-discover";
 import { useStoryArcs } from "@/lib/hooks/use-story-arc";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { DiscoverContentType, DiscoverItem } from "@/types";
@@ -37,7 +36,7 @@ export default function CultureContentAdminScreen() {
   const M = useMuseumTheme();
   const { getToken } = useAuth();
   const qc = useQueryClient();
-  const { editId, newStoryId } = useLocalSearchParams<{ editId?: string; newStoryId?: string }>();
+  const { editId } = useLocalSearchParams<{ editId?: string }>();
   const [filter, setFilter] = useState<ContentFilter>("all");
   const [search, setSearch] = useState("");
   const [modalMode, setModalMode] = useState<"create" | "edit" | null>(null);
@@ -54,14 +53,14 @@ export default function CultureContentAdminScreen() {
     placeholderData: [],
   });
 
-  const { data: interactiveStories } = useInteractiveStories();
   const { data: storyArcs } = useStoryArcs();
-  const storyTitleById = useMemo(() => {
+  // Maps a season id → title for the "in season" badge. Films carry their scene
+  // graph inline now (no external story link), so only seasons are resolved here.
+  const seasonTitleById = useMemo(() => {
     const map = new Map<string, string>();
-    (interactiveStories ?? []).forEach((s) => map.set(s.id, s.title));
     (storyArcs ?? []).forEach((a) => map.set(a.id, a.title));
     return map;
-  }, [interactiveStories, storyArcs]);
+  }, [storyArcs]);
 
   useEffect(() => {
     if (!editId) return;
@@ -71,12 +70,6 @@ export default function CultureContentAdminScreen() {
       setModalMode("edit");
     }
   }, [editId, items]);
-
-  useEffect(() => {
-    if (!newStoryId || modalMode) return;
-    setEditTarget({ id: "", ...EMPTY_FORM, type: "film", storyId: newStoryId } as DiscoverItem);
-    setModalMode("create");
-  }, [newStoryId, modalMode]);
 
   const createItem = useMutation({
     mutationFn: (data: Omit<DiscoverItem, "id">) => {
@@ -278,11 +271,11 @@ export default function CultureContentAdminScreen() {
                           {item.coverEmoji} {item.title}
                         </Text>
                         <Text style={{ fontSize: 11, color: M.muted, marginTop: 2 }}>{item.author}</Text>
-                        {(item.type === "film" || item.type === "podcast") && item.storyId && (
-                          storyTitleById.has(item.storyId) ? (
+                        {(item.type === "film" || item.type === "podcast") && item.seasonArcId && (
+                          seasonTitleById.has(item.seasonArcId) ? (
                             <View className="self-start flex-row items-center rounded-full px-2 py-0.5 mt-2" style={{ backgroundColor: M.pillBg, borderWidth: 1, borderColor: M.border }}>
                               <Text style={{ fontSize: 10, fontWeight: "700", color: M.sub }}>
-                                {t("admin.cultureContent.linkedStoryBadge", { title: storyTitleById.get(item.storyId) ?? "" })}
+                                {t("admin.cultureContent.linkedStoryBadge", { title: seasonTitleById.get(item.seasonArcId) ?? "" })}
                               </Text>
                             </View>
                           ) : (

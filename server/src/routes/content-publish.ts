@@ -8,9 +8,9 @@ import {
   contentVersions,
   courses,
   culturalContent,
+  cultureItems,
   dictionaryEntries,
   etymologyEntries,
-  interactiveStories,
   lessons,
   proverbs,
   quizQuestions,
@@ -34,9 +34,11 @@ import { AuthEnv, authMiddleware, reviewerMiddleware } from "../middleware/auth.
  * scoped via their own `language` column (aliased to languageId below, since
  * the column predates this workflow and wasn't named to match); content
  * partners are an operational catalogue with no language scope (admin-only
- * publish). scripts/scriptCharacters/cultureItems carry the same workflow
- * columns but aren't registered here yet — they need a scoping decision
- * before they can reuse this guard.
+ * publish). Film stories live in `cultureItems` (folded from interactive
+ * stories) and publish scoped by their own `language` column under the
+ * `interactive_stories` entity value. scripts/scriptCharacters carry the same
+ * workflow columns but aren't registered here yet — they need a scoping
+ * decision before they can reuse this guard.
  */
 export const contentPublishRouter = new Hono<AuthEnv>();
 contentPublishRouter.use("*", authMiddleware);
@@ -304,14 +306,27 @@ async function publishEntity(entityType: EntityType, id: string, actor: Actor): 
     }
 
     case "interactive_stories": {
-      const [row] = await db.select().from(interactiveStories).where(eq(interactiveStories.id, id)).limit(1);
+      // Interactive stories were folded into `culture_items` (a film IS its
+      // story). The entity value stays `interactive_stories` for client
+      // compatibility, but it publishes the film row scoped by its `language`.
+      const [row] = await db
+        .select()
+        .from(cultureItems)
+        .where(and(eq(cultureItems.id, id), eq(cultureItems.type, "film")))
+        .limit(1);
       if (!row) return NOT_FOUND;
       const guard = assertCanPublish({ languageId: row.language, createdBy: row.createdBy }, actor);
       if (!guard.ok) return guard;
       const [after] = await db
-        .update(interactiveStories)
-        .set({ status: "published", updatedBy: actor.userId, publishedBy: actor.userId, publishedAt: new Date() })
-        .where(eq(interactiveStories.id, id))
+        .update(cultureItems)
+        .set({
+          status: "published",
+          updatedBy: actor.userId,
+          publishedBy: actor.userId,
+          studioPublishedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(cultureItems.id, id))
         .returning();
       await recordPublish(entityType, id, actor.userId, row, after);
       return { ok: true, row: after };

@@ -411,10 +411,19 @@ export interface DiscoverItem {
   featured: boolean;
   audioUrl?: string;
   videoUrl?: string;
-  /** What the card OPENS — an interactive story (films) or, legacy, a season. */
+  /**
+   * The experience the card OPENS. A film IS its story, so this is the film's
+   * own `id` once it has a scene graph; a podcast opens its season. Kept for
+   * compatibility — prefer `scenes` (films) / `seasonArcId` (podcasts).
+   */
   storyId?: string;
   /** The season the card BELONGS TO (`culture_items.season_arc_id`). */
   seasonArcId?: string;
+  /** A film's branching scene graph, folded inline (a film IS its story). */
+  scenes?: Record<string, StoryScene>;
+  initialSceneId?: string;
+  estimatedMinutes?: number;
+  language?: string;
   contentUrl?: string;
   body?: string;
   showNotes?: string;

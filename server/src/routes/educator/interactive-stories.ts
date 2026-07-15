@@ -1,66 +1,47 @@
-import { eq, isNull } from "drizzle-orm";
+import { and, eq, isNotNull, isNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
 import { db } from "../../db/index.js";
-import { interactiveStories, type InteractiveStoryScene } from "../../db/schema.js";
+import { cultureItems, type InteractiveStoryScene } from "../../db/schema.js";
+import { findScenesError } from "../../lib/scene-validation.js";
 import { AuthEnv } from "../../middleware/auth.js";
 
+/**
+ * Film authoring (the branching scene graph). Interactive stories were folded
+ * into `culture_items`: a film IS its story, carrying `scenes` inline. These
+ * routes keep the language-scoped educator four-eyes flow (per-language
+ * reviewers, draft → in_review → published) but now read/write film rows in
+ * `culture_items` (type='film', gated on a scene graph). Route paths are
+ * unchanged so the mobile Studio film editor keeps working.
+ */
 export const educatorInteractiveStoriesRouter = new Hono<AuthEnv>();
 
 /** Sentinel languageId for the admin-only "All" scope: instead of one
- * language, it returns every interactive story across all languages so an
- * admin can review the whole catalogue in one list. Read-only aggregate —
- * you can't create into it. Admin-only, since it spans beyond any single
- * reviewer's assigned-languages scope. */
+ * language, it returns every film story across all languages so an admin can
+ * review the whole catalogue in one list. Read-only aggregate — you can't
+ * create into it. Admin-only, since it spans beyond any single reviewer's
+ * assigned-languages scope. */
 const ALL_LANGUAGE_ID = "all";
 
-/** Sentinel languageId for the admin-only language-agnostic scope: stories
+/** Sentinel languageId for the admin-only language-agnostic scope: films
  * with no single language (e.g. a pan-African culture piece), stored with
  * a null language. Unlike "all" these are a real, creatable bucket. */
 const GENERAL_LANGUAGE_ID = "general";
 
-/**
- * Referential integrity for the scene graph: every narrative scene's
- * nextSceneId and every choice's nextSceneId must resolve to a real scene,
- * and choice scenes must actually offer a choice. Enforced here (not just in
- * the mobile editor) because this endpoint is the trust boundary — a
- * dangling reference that slips through would strand a learner mid-story
- * once published, with nothing else in the pipeline re-checking it.
- */
-function findScenesError(initialSceneId: string, scenes: Record<string, InteractiveStoryScene>): string | null {
-  if (!initialSceneId || !scenes[initialSceneId]) return "initialSceneId must reference an existing scene";
+type FilmRow = typeof cultureItems.$inferSelect;
 
-  for (const [key, scene] of Object.entries(scenes)) {
-    if (!scene.text?.trim()) return `Scene "${key}" needs text`;
-    if (scene.type === "narrative") {
-      if (!scene.nextSceneId || !scenes[scene.nextSceneId]) {
-        return `Narrative scene "${key}" must lead to an existing scene`;
-      }
-    } else if (scene.type === "choice") {
-      if (!scene.choices || scene.choices.length === 0) {
-        return `Choice scene "${key}" needs at least one choice`;
-      }
-      for (const choice of scene.choices) {
-        if (!choice.text?.trim() || !choice.nextSceneId || !scenes[choice.nextSceneId]) {
-          return `A choice in scene "${key}" needs text and must lead to an existing scene`;
-        }
-      }
-    } else if (scene.type !== "conclusion") {
-      return `Scene "${key}" has an unknown type`;
-    }
-  }
-  return null;
-}
+/** Only films that carry a scene graph are "stories" in this flow. */
+const isFilmStory = () => and(eq(cultureItems.type, "film"), isNotNull(cultureItems.scenes));
 
 /** Reconstruct the app-facing InteractiveStory shape (coverGradient tuple). */
-function toApiStory(row: typeof interactiveStories.$inferSelect) {
+function toApiStory(row: FilmRow) {
   return {
     id: row.id,
     title: row.title,
     description: row.description,
     coverGradient: [row.coverGradientFrom, row.coverGradientTo] as [string, string],
     coverEmoji: row.coverEmoji,
-    estimatedMinutes: row.estimatedMinutes,
+    estimatedMinutes: row.estimatedMinutes ?? 5,
     author: row.author,
     language: row.language ?? undefined,
     initialSceneId: row.initialSceneId,
@@ -81,13 +62,16 @@ educatorInteractiveStoriesRouter.get("/interactive-stories", async (c) => {
 
   if (languageId === ALL_LANGUAGE_ID) {
     if (!isAdmin) return c.json({ error: "Forbidden" }, 403);
-    const rows = await db.select().from(interactiveStories);
+    const rows = await db.select().from(cultureItems).where(isFilmStory());
     return c.json(rows.map(toApiStory));
   }
 
   if (languageId === GENERAL_LANGUAGE_ID) {
     if (!isAdmin) return c.json({ error: "Forbidden" }, 403);
-    const rows = await db.select().from(interactiveStories).where(isNull(interactiveStories.language));
+    const rows = await db
+      .select()
+      .from(cultureItems)
+      .where(and(isFilmStory(), isNull(cultureItems.language)));
     return c.json(rows.map(toApiStory));
   }
 
@@ -96,8 +80,8 @@ educatorInteractiveStoriesRouter.get("/interactive-stories", async (c) => {
   }
   const rows = await db
     .select()
-    .from(interactiveStories)
-    .where(eq(interactiveStories.language, languageId));
+    .from(cultureItems)
+    .where(and(isFilmStory(), eq(cultureItems.language, languageId)));
   return c.json(rows.map(toApiStory));
 });
 
@@ -135,18 +119,24 @@ educatorInteractiveStoriesRouter.post("/interactive-stories", async (c) => {
   if (scenesError) return c.json({ error: scenesError }, 400);
 
   const id = `story-${randomUUID()}`;
+  const estimatedMinutes = body.estimatedMinutes || 5;
   const [row] = await db
-    .insert(interactiveStories)
+    .insert(cultureItems)
     .values({
       id,
+      type: "film",
       language: isGeneral ? null : body.languageId,
       title: body.title.trim(),
       description: body.description.trim(),
+      author: body.author?.trim() || "Beeli",
+      // Catalog fields a film card needs; the display date defaults to now and
+      // duration is derived from the story's estimated read time.
+      publishedAt: new Date(),
+      duration: estimatedMinutes * 60,
       coverGradientFrom: body.coverGradient?.[0] ?? "#C4862A",
       coverGradientTo: body.coverGradient?.[1] ?? "#8B5E1F",
       coverEmoji: body.coverEmoji || "📖",
-      estimatedMinutes: body.estimatedMinutes || 5,
-      author: body.author?.trim() || "Beeli",
+      estimatedMinutes,
       initialSceneId: body.initialSceneId,
       scenes: body.scenes as never,
       status: "draft",
@@ -164,12 +154,12 @@ educatorInteractiveStoriesRouter.patch("/interactive-stories/:id", async (c) => 
   const id = c.req.param("id");
   const [existing] = await db
     .select({
-      language: interactiveStories.language,
-      initialSceneId: interactiveStories.initialSceneId,
-      scenes: interactiveStories.scenes,
+      language: cultureItems.language,
+      initialSceneId: cultureItems.initialSceneId,
+      scenes: cultureItems.scenes,
     })
-    .from(interactiveStories)
-    .where(eq(interactiveStories.id, id))
+    .from(cultureItems)
+    .where(and(eq(cultureItems.id, id), eq(cultureItems.type, "film")))
     .limit(1);
   if (!existing) return c.json({ error: "Not found" }, 404);
   if (existing.language == null) {
@@ -191,11 +181,14 @@ educatorInteractiveStoriesRouter.patch("/interactive-stories/:id", async (c) => 
   }>();
 
   if (body.scenes !== undefined || body.initialSceneId !== undefined) {
-    const scenesError = findScenesError(
-      body.initialSceneId ?? existing.initialSceneId,
-      body.scenes ?? existing.scenes
-    );
-    if (scenesError) return c.json({ error: scenesError }, 400);
+    const nextScenes = body.scenes ?? existing.scenes;
+    if (nextScenes) {
+      const scenesError = findScenesError(
+        body.initialSceneId ?? existing.initialSceneId ?? "",
+        nextScenes
+      );
+      if (scenesError) return c.json({ error: scenesError }, 400);
+    }
   }
 
   // Going live only happens through the four-eyes publish endpoint.
@@ -205,7 +198,7 @@ educatorInteractiveStoriesRouter.patch("/interactive-stories/:id", async (c) => 
       : {};
 
   const [row] = await db
-    .update(interactiveStories)
+    .update(cultureItems)
     .set({
       ...(body.title !== undefined ? { title: body.title.trim() } : {}),
       ...(body.description !== undefined ? { description: body.description.trim() } : {}),
@@ -220,7 +213,7 @@ educatorInteractiveStoriesRouter.patch("/interactive-stories/:id", async (c) => 
       ...statusTransition,
       updatedBy: c.get("userId"),
     })
-    .where(eq(interactiveStories.id, id))
+    .where(eq(cultureItems.id, id))
     .returning();
 
   return c.json(toApiStory(row));
@@ -232,9 +225,9 @@ educatorInteractiveStoriesRouter.delete("/interactive-stories/:id", async (c) =>
   const reviewerLanguages = (c.get("reviewerLanguages") ?? []) as string[];
   const id = c.req.param("id");
   const [existing] = await db
-    .select({ language: interactiveStories.language })
-    .from(interactiveStories)
-    .where(eq(interactiveStories.id, id))
+    .select({ language: cultureItems.language })
+    .from(cultureItems)
+    .where(and(eq(cultureItems.id, id), eq(cultureItems.type, "film")))
     .limit(1);
   if (!existing) return c.json({ error: "Not found" }, 404);
   if (existing.language == null) {
@@ -242,6 +235,6 @@ educatorInteractiveStoriesRouter.delete("/interactive-stories/:id", async (c) =>
   } else if (reviewerLanguages.length > 0 && !reviewerLanguages.includes(existing.language)) {
     return c.json({ error: "Not authorised for this language" }, 403);
   }
-  await db.delete(interactiveStories).where(eq(interactiveStories.id, id));
+  await db.delete(cultureItems).where(eq(cultureItems.id, id));
   return c.json({ success: true });
 });

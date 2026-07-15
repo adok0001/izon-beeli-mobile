@@ -1,5 +1,4 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { hasSnapshotInteractiveStory as hasInteractiveStory } from "@/store/content-store";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useAudioStore } from "@/store/audio-store";
 import type { DiscoverItem } from "@/types";
@@ -75,7 +74,13 @@ interface DiscoverCardProps {
 
 export function DiscoverCard({ item, onStoryPress, compact = false }: DiscoverCardProps) {
   const M = useMuseumTheme();
-  const cfg = DISCOVER_TYPE_CONFIG[item.type];
+  const baseCfg = DISCOVER_TYPE_CONFIG[item.type];
+  // A podcast card that opens a season (storyId, no inline audio) IS a Season —
+  // a series of lessons, not a single podcast — so it reads "Season" here.
+  const isSeason = item.type === "podcast" && !!item.storyId && !item.audioUrl;
+  const cfg = isSeason
+    ? { ...baseCfg, label: "SEASON", cta: "View Season", icon: "film.stack" as const }
+    : baseCfg;
   const router = useRouter();
   const { currentTrackId, isPlaying, loadAndPlay, togglePlayback } = useAudioStore();
   const isCurrentPodcast = item.type === "podcast" && currentTrackId === item.id;
@@ -84,10 +89,10 @@ export function DiscoverCard({ item, onStoryPress, compact = false }: DiscoverCa
     // A podcast season (storyId, no inline audio) opens the Series screen.
     if (item.type === "podcast" && item.storyId) {
       router.push(`/series/${item.storyId}` as never);
-    } else if (item.type === "film" && item.storyId && hasInteractiveStory(item.storyId) && onStoryPress) {
-      // Only branching interactive stories go to the story player; grouped
-      // mini-series films (no interactive story) fall through to their detail.
-      onStoryPress(item.storyId);
+    } else if (item.type === "film" && item.scenes && onStoryPress) {
+      // A film IS its story — open the branching player by the film's own id.
+      // Story-less "mini-series" films (no scene graph) fall through to detail.
+      onStoryPress(item.id);
     } else if (item.type === "podcast" && item.audioUrl) {
       if (isCurrentPodcast) {
         togglePlayback();
@@ -281,7 +286,9 @@ export function DiscoverCard({ item, onStoryPress, compact = false }: DiscoverCa
           >
             <IconSymbol
               name={
-                item.type === "podcast"
+                isSeason
+                  ? "chevron.right"
+                  : item.type === "podcast"
                   ? isCurrentPodcast && isPlaying
                     ? "pause.fill"
                     : "play.fill"

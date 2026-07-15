@@ -39,8 +39,9 @@ function HeroCard({
   const router = useRouter();
 
   function handlePress() {
-    if (item.type === "film" && item.storyId) {
-      onStoryPress(item.storyId);
+    if (item.type === "film" && item.scenes) {
+      // A film IS its story — open the branching player by the film's own id.
+      onStoryPress(item.id);
     } else {
       router.push(`/discover-content/${item.id}` as never);
     }

@@ -2,7 +2,6 @@
 
 import { apiFetch } from "@/lib/api";
 import type { DiscoverItem } from "@/app/(app)/culture/culture-client";
-import type { InteractiveStory } from "@/types";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -37,7 +36,6 @@ const BLANK: DiscoverItem = {
   body: "",
   showNotes: "",
   audioUrl: "",
-  storyId: "",
   seasonArcId: "",
 };
 
@@ -49,22 +47,17 @@ interface StoryArcSummary {
 }
 
 /**
- * The two link targets an educator can pick from. Both lists are real rows —
- * the story/season ids used to be typed by hand here, which is exactly how
- * orphaned ids got written; the server now rejects an unknown id with a 400.
+ * The season a card can belong to (real rows — an unknown id is rejected 400).
+ * Films no longer link to a separate story: a film IS its story, carrying its
+ * scene graph inline (authored in the mobile Studio Films flow).
  */
 function useStoryLinkOptions() {
-  const { data: stories = [] } = useQuery<InteractiveStory[]>({
-    queryKey: ["admin", "interactive-stories"],
-    queryFn: () => apiFetch<InteractiveStory[]>("/interactive-stories"),
-    staleTime: 60_000,
-  });
   const { data: seasons = [] } = useQuery<StoryArcSummary[]>({
     queryKey: ["admin", "story-arcs"],
     queryFn: () => apiFetch<StoryArcSummary[]>("/story-arcs"),
     staleTime: 60_000,
   });
-  return { stories, seasons };
+  return { seasons };
 }
 
 const TYPE_CFG = {
@@ -111,7 +104,7 @@ interface DrawerProps {
 
 function EditDrawer({ draft: initial, onSave, onClose, isNew, isSaving }: DrawerProps) {
   const [d, setD] = useState<DiscoverItem>(initial);
-  const { stories, seasons } = useStoryLinkOptions();
+  const { seasons } = useStoryLinkOptions();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -249,41 +242,19 @@ function EditDrawer({ draft: initial, onSave, onClose, isNew, isSaving }: Drawer
           )}
 
           {(d.type === "podcast" || d.type === "film") && (
-            <>
-              <div>
-                <label className={labelCls}>Story — what this card opens</label>
-                <select className={fieldCls} value={d.storyId ?? ""} onChange={(e) => set("storyId", e.target.value)}>
-                  <option value="">No story link (synopsis / detail page only)</option>
-                  <optgroup label="Interactive stories">
-                    {stories.map((s) => (
-                      <option key={s.id} value={s.id}>{s.title} — {s.id}</option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Seasons">
-                    {seasons.map((a) => (
-                      <option key={a.id} value={a.id}>{a.title} — {a.id}</option>
-                    ))}
-                  </optgroup>
-                </select>
-                <p className="text-[11px] text-neutral-400 mt-1">
-                  A film opens its branching interactive story; a podcast card opens its season.
-                </p>
-              </div>
-
-              <div>
-                <label className={labelCls}>Season — which season this card belongs to</label>
-                <select className={fieldCls} value={d.seasonArcId ?? ""} onChange={(e) => set("seasonArcId", e.target.value)}>
-                  <option value="">No season</option>
-                  {seasons.map((a) => (
-                    <option key={a.id} value={a.id}>{a.title} — {a.id}</option>
-                  ))}
-                </select>
-                <p className="text-[11px] text-neutral-400 mt-1">
-                  Not the same as the story above: that is what the card <em>opens</em>; this is the world it{" "}
-                  <em>belongs to</em> — a film set in a season, or the podcast that <em>is</em> the season.
-                </p>
-              </div>
-            </>
+            <div>
+              <label className={labelCls}>Season</label>
+              <select className={fieldCls} value={d.seasonArcId ?? ""} onChange={(e) => set("seasonArcId", e.target.value)}>
+                <option value="">No season</option>
+                {seasons.map((a) => (
+                  <option key={a.id} value={a.id}>{a.title} — {a.id}</option>
+                ))}
+              </select>
+              <p className="text-[11px] text-neutral-400 mt-1">
+                A podcast <em>opens</em> this season; a film is <em>set in</em> its world. A film&apos;s
+                branching scene graph is authored in the mobile Studio Films flow, not here.
+              </p>
+            </div>
           )}
 
           {d.type === "blog" && (
@@ -393,7 +364,6 @@ function toApiBody(item: DiscoverItem) {
     coverGradientTo: item.coverGradient[1],
     coverEmoji: item.coverEmoji,
     featured: item.featured,
-    storyId: item.storyId || null,
     seasonArcId: item.seasonArcId || null,
     audioUrl: item.audioUrl ?? null,
     contentUrl: item.contentUrl ?? null,

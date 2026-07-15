@@ -1,6 +1,5 @@
 import { DISCOVER_TYPE_CONFIG } from "@/components/discover-card";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { hasSnapshotInteractiveStory as hasInteractiveStory } from "@/store/content-store";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { DiscoverItem } from "@/types";
 import { LinearGradient } from "expo-linear-gradient";
@@ -24,8 +23,9 @@ export function FeaturedHero({ item, ctaLabel }: FeaturedHeroProps) {
   function handlePress() {
     if (item.type === "podcast" && item.storyId) {
       router.push(`/series/${item.storyId}` as never);
-    } else if (item.type === "film" && item.storyId && hasInteractiveStory(item.storyId)) {
-      router.push(`/discover-story/${item.storyId}` as never);
+    } else if (item.type === "film" && item.scenes) {
+      // A film IS its story — open the branching player by the film's own id.
+      router.push(`/discover-story/${item.id}` as never);
     } else {
       router.push(`/discover-content/${item.id}` as never);
     }

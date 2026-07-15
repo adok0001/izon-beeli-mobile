@@ -16,15 +16,28 @@ export type DiscoverItem = {
   coverGradient: [string, string];
   coverEmoji: string;
   featured: boolean;
-  /** What the card OPENS — an interactive story (films) or, legacy, a season. */
+  /**
+   * The experience the card OPENS. A film IS its story (its own `id` once it has
+   * a scene graph); a podcast opens its season. Prefer `scenes` / `seasonArcId`.
+   */
   storyId?: string;
   /** The season the card BELONGS TO (`culture_items.season_arc_id`). */
   seasonArcId?: string;
+  /** A film's branching scene graph, folded inline (a film IS its story). */
+  scenes?: Record<string, unknown>;
   audioUrl?: string;
   contentUrl?: string;
   body?: string;
   showNotes?: string;
 };
+
+/** A film opens the branching player by its own id once it carries a scene
+ *  graph; a podcast opens its season via `storyId`. Everything else is detail. */
+function cardHref(item: DiscoverItem): string {
+  if (item.type === "film" && item.scenes) return `/culture/story/${item.id}`;
+  if (item.storyId) return `/culture/story/${item.storyId}`;
+  return `/culture/content/${item.id}`;
+}
 
 export type DiscoverFilter = "all" | "blog" | "podcast" | "film";
 
@@ -34,16 +47,23 @@ const TYPE_CONFIG = {
   film:    { color: "#fb923c", label: "FILM",    cta: "Watch" },
 };
 
+/** A podcast card that opens a season IS a Season (a series of lessons), so it
+ *  reads "Season" rather than "Podcast". */
+function cardConfig(item: DiscoverItem) {
+  const isSeason = item.type === "podcast" && !!item.storyId && !item.audioUrl;
+  return isSeason
+    ? { ...TYPE_CONFIG.podcast, label: "SEASON", cta: "View Season" }
+    : TYPE_CONFIG[item.type];
+}
+
 function formatDuration(seconds: number) {
   if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
   return `${Math.floor(seconds / 3600)}h ${Math.round((seconds % 3600) / 60)}m`;
 }
 
 function HeroCard({ item }: { item: DiscoverItem }) {
-  const cfg = TYPE_CONFIG[item.type];
-  const href = item.storyId
-    ? `/culture/story/${item.storyId}`
-    : `/culture/content/${item.id}`;
+  const cfg = cardConfig(item);
+  const href = cardHref(item);
 
   return (
     <Link
@@ -89,10 +109,8 @@ function HeroCard({ item }: { item: DiscoverItem }) {
 }
 
 function ContentCard({ item }: { item: DiscoverItem }) {
-  const cfg = TYPE_CONFIG[item.type];
-  const href = item.storyId
-    ? `/culture/story/${item.storyId}`
-    : `/culture/content/${item.id}`;
+  const cfg = cardConfig(item);
+  const href = cardHref(item);
   const date = new Date(item.publishedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
   return (

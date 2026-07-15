@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNotNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index.js";
 import { courses, cultureItems, lessons, storyArcCast, storyArcs, storyChapters } from "../db/schema.js";
@@ -81,13 +81,14 @@ async function seasonExtras(arcId: string) {
       .where(and(eq(courses.seasonArcId, arcId), eq(courses.isActive, true)))
       .orderBy(courses.order),
     db
-      .select({ id: cultureItems.id, storyId: cultureItems.interactiveStoryId, title: cultureItems.title })
+      .select({ id: cultureItems.id, title: cultureItems.title })
       .from(cultureItems)
       .where(
         and(
           eq(cultureItems.seasonArcId, arcId),
           eq(cultureItems.type, "film"),
-          eq(cultureItems.status, "published")
+          eq(cultureItems.status, "published"),
+          isNotNull(cultureItems.scenes)
         )
       ),
   ]);
@@ -96,8 +97,8 @@ async function seasonExtras(arcId: string) {
     cast,
     companionCourses,
     // The Series screen's "Also in this world" rail matches Discover cards on
-    // the interactive story they open.
-    filmStoryIds: films.map((f) => f.storyId).filter((s): s is string => !!s),
+    // the film story they open — a film IS its story, so its own id is the story id.
+    filmStoryIds: films.map((f) => f.id),
   };
 }
 

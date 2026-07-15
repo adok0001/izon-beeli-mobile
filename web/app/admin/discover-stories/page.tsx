@@ -1,17 +1,16 @@
 "use client";
 
 /**
- * Admin — Series & Stories overview (read-only).
+ * Admin — Films & Seasons overview (read-only).
  *
- * Web port of the mobile `/admin/discover-stories` screen. Surfaces the Discover
- * "story" layer in one place:
- *   • Interactive stories (`/interactive-stories`) — the branching film experiences.
- *   • Story arcs (`/story-arcs`) — podcast season + course arcs.
- *   • Link health — films whose `storyId` resolves to neither an interactive
- *     story nor an arc, so a broken/plain link is easy to spot.
+ * Surfaces the Discover "story" layer in one place:
+ *   • Films with a story (`/interactive-stories` — now film rows carrying a scene
+ *     graph, since interactive stories were folded into culture_items).
+ *   • Seasons (`/story-arcs`) — with the cards that belong to each.
  *
- * Interactive-story content is DB-backed but authored elsewhere; this screen is
- * strictly read-only.
+ * A film IS its story (its scenes live on the film row), so there is no longer a
+ * separate "broken story link" class to surface. Content is authored elsewhere;
+ * this screen is strictly read-only.
  */
 
 import { apiFetch } from "@/lib/api";
@@ -19,7 +18,7 @@ import { cn } from "@/lib/utils";
 import type { DiscoverItem, InteractiveStory } from "@/types";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Clapperboard, Film, Link2Off } from "lucide-react";
+import { Clapperboard } from "lucide-react";
 
 interface StoryArcSummary {
   id: string;
@@ -91,25 +90,19 @@ export default function DiscoverStoriesAdminPage() {
 
   const isLoading = itemsLoading || storiesLoading || arcsLoading;
 
-  // Mirror the mobile logic exactly.
-  const storyIds = new Set(stories.map((s) => s.id));
-  const arcIds = new Set(arcs.map((a) => a.id));
-  const linkedTo = (id: string) => items.filter((i) => i.storyId === id);
-  const brokenLinks = items.filter(
-    (i) => i.type === "film" && i.storyId && !storyIds.has(i.storyId) && !arcIds.has(i.storyId)
-  );
+  // Cards that belong to a season (films set in its world, podcasts that open it).
+  const cardsInSeason = (arcId: string) => items.filter((i) => i.seasonArcId === arcId);
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 p-6">
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold text-neutral-900 dark:text-white">
           <Clapperboard className="h-6 w-6 text-brand-500" />
-          Series &amp; Stories
+          Films &amp; Seasons
         </h1>
         <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-          The Discover story layer at a glance. Interactive-story content is authored
-          elsewhere, so it is read-only here. Edit Discover cards (and their Story link
-          field) on Discover Media.
+          The Discover story layer at a glance. A film carries its own branching scene
+          graph; content is authored elsewhere, so this screen is read-only.
         </p>
       </div>
 
@@ -119,45 +112,33 @@ export default function DiscoverStoriesAdminPage() {
         </div>
       ) : (
         <>
-          {/* Interactive stories */}
+          {/* Films with a story */}
           <section>
-            <SectionHeader title="Interactive Stories" count={stories.length} />
+            <SectionHeader title="Films with a story" count={stories.length} />
             {stories.length === 0 ? (
               <p className="text-sm text-neutral-400">None loaded.</p>
             ) : (
               <div className="space-y-2.5">
-                {stories.map((s) => {
-                  const links = linkedTo(s.id);
-                  return (
-                    <Card key={s.id}>
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl leading-none">{s.coverEmoji}</span>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-semibold text-neutral-900 dark:text-white">
-                            {s.title}
-                          </p>
-                          <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-                            {s.id} · {Object.keys(s.scenes).length} scenes · {s.author}
-                          </p>
-                        </div>
+                {stories.map((s) => (
+                  <Card key={s.id}>
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl leading-none">{s.coverEmoji}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-neutral-900 dark:text-white">
+                          {s.title}
+                        </p>
+                        <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                          {s.id} · {Object.keys(s.scenes).length} scenes · {s.author}
+                        </p>
                       </div>
-                      <div className="mt-2.5 flex flex-wrap gap-1.5">
-                        {links.length > 0 ? (
-                          links.map((l) => (
-                            <LinkChip key={l.id} label={`▶ ${l.title}`} />
-                          ))
-                        ) : (
-                          <LinkChip label="not linked to any card" tone="warn" />
-                        )}
-                      </div>
-                    </Card>
-                  );
-                })}
+                    </div>
+                  </Card>
+                ))}
               </div>
             )}
           </section>
 
-          {/* Story arcs */}
+          {/* Seasons */}
           <section>
             <SectionHeader title="Seasons" count={arcs.length} />
             {arcs.length === 0 ? (
@@ -165,7 +146,7 @@ export default function DiscoverStoriesAdminPage() {
             ) : (
               <div className="space-y-2.5">
                 {arcs.map((a) => {
-                  const links = linkedTo(a.id);
+                  const links = cardsInSeason(a.id);
                   return (
                     <Card key={a.id}>
                       <p className="font-semibold text-neutral-900 dark:text-white">{a.title}</p>
@@ -182,36 +163,6 @@ export default function DiscoverStoriesAdminPage() {
                     </Card>
                   );
                 })}
-              </div>
-            )}
-          </section>
-
-          {/* Link health */}
-          <section>
-            <SectionHeader title="Broken Film Links" count={brokenLinks.length} />
-            {brokenLinks.length === 0 ? (
-              <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-900/40 dark:bg-emerald-900/20">
-                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <p className="text-sm text-emerald-700 dark:text-emerald-400">
-                  ✓ All links resolve — every film links to a valid interactive story or arc.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2.5">
-                {brokenLinks.map((i) => (
-                  <Card key={i.id}>
-                    <div className="flex items-start gap-2.5">
-                      <Film className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400" />
-                      <div className="min-w-0">
-                        <p className="font-semibold text-neutral-900 dark:text-white">{i.title}</p>
-                        <p className="mt-1 flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400">
-                          <Link2Off className="h-3.5 w-3.5 shrink-0" />
-                          storyId “{i.storyId ?? ""}” matches no interactive story or arc — opens a plain detail page.
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
               </div>
             )}
           </section>

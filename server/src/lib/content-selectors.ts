@@ -3,20 +3,21 @@
  * learning content. Both the public read routes and the offline snapshot
  * exporter call these, so the two can never drift.
  *
- * Publish gating: `courses`, `lessons`, `scripts`, `scriptCharacters`, and
- * `interactiveStories` are filtered on their boolean `isActive` gate.
- * `dictionaryEntries`, `sentenceTemplates`, `proverbs`, and `culturalContent`
- * are filtered on the Beeli Studio `status = 'published'` column (Phase 2).
+ * Publish gating: `courses`, `lessons`, `scripts`, and `scriptCharacters` are
+ * filtered on their boolean `isActive` gate. Film stories (folded into
+ * `culture_items`) are filtered on `scenes IS NOT NULL`. `dictionaryEntries`,
+ * `sentenceTemplates`, `proverbs`, and `culturalContent` are filtered on the
+ * Beeli Studio `status = 'published'` column (Phase 2).
  */
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull } from "drizzle-orm";
 import { db } from "../db/index.js";
 import {
   contributions,
   courses,
+  cultureItems,
   culturalContent,
   culturalKeyTerms,
   dictionaryEntries,
-  interactiveStories,
   lessonCulturalContent,
   lessons,
   proverbs,
@@ -250,17 +251,23 @@ export async function selectScripts(languageId: string) {
   return { scripts: scriptRows, characters };
 }
 
-/** Active interactive stories, optionally scoped to a display language. */
+/**
+ * Film stories, optionally scoped to a display language. Interactive stories
+ * were folded into `culture_items`: a "story" is a film row carrying an inline
+ * scene graph. Gated on `scenes IS NOT NULL` (the film-has-a-story signal) so
+ * the offline player resolves it, replacing the old `interactive_stories.isActive`.
+ */
 export async function selectInteractiveStories(language?: string) {
   const rows = await db
     .select()
-    .from(interactiveStories)
+    .from(cultureItems)
     .where(
       and(
-        eq(interactiveStories.isActive, true),
-        language ? eq(interactiveStories.language, language) : undefined
+        eq(cultureItems.type, "film"),
+        isNotNull(cultureItems.scenes),
+        language ? eq(cultureItems.language, language) : undefined
       )
     )
-    .orderBy(asc(interactiveStories.id));
+    .orderBy(asc(cultureItems.id));
   return rows.map(toApiInteractiveStory);
 }

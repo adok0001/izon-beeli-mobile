@@ -1,19 +1,27 @@
 import { Hono } from "hono";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNotNull } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { interactiveStories } from "../db/schema.js";
+import { cultureItems } from "../db/schema.js";
 
-type InteractiveStoryRow = typeof interactiveStories.$inferSelect;
+/**
+ * Compatibility shim. Interactive stories were folded into `culture_items`: a
+ * film IS its story (its own `id` is the story id; it carries `scenes` inline).
+ * These endpoints keep the old `/interactive-stories` shape so installed app
+ * builds — which resolve a film's story graph from this path and from the
+ * offline snapshot — keep working. A "story" is a film row with a scene graph.
+ */
 
-/** Reconstruct the app-facing InteractiveStory shape (coverGradient tuple). */
-export function toApiInteractiveStory(row: InteractiveStoryRow) {
+type FilmStoryRow = typeof cultureItems.$inferSelect;
+
+/** Reconstruct the app-facing InteractiveStory shape from a film row. */
+export function toApiInteractiveStory(row: FilmStoryRow) {
   return {
     id: row.id,
     title: row.title,
     description: row.description,
     coverGradient: [row.coverGradientFrom, row.coverGradientTo] as [string, string],
     coverEmoji: row.coverEmoji,
-    estimatedMinutes: row.estimatedMinutes,
+    estimatedMinutes: row.estimatedMinutes ?? 0,
     author: row.author,
     language: row.language ?? undefined,
     initialSceneId: row.initialSceneId,
@@ -23,29 +31,30 @@ export function toApiInteractiveStory(row: InteractiveStoryRow) {
 
 export const interactiveStoriesRouter = new Hono();
 
-// GET /api/interactive-stories?languageId=  → list (branching story summaries + graphs)
+// GET /api/interactive-stories?languageId=  → film stories (summaries + graphs)
 interactiveStoriesRouter.get("/", async (c) => {
   const language = c.req.query("languageId") ?? c.req.query("language");
   const rows = await db
     .select()
-    .from(interactiveStories)
+    .from(cultureItems)
     .where(
       and(
-        eq(interactiveStories.isActive, true),
-        language ? eq(interactiveStories.language, language) : undefined
+        eq(cultureItems.type, "film"),
+        isNotNull(cultureItems.scenes),
+        language ? eq(cultureItems.language, language) : undefined
       )
     )
-    .orderBy(asc(interactiveStories.id));
+    .orderBy(asc(cultureItems.id));
   return c.json(rows.map(toApiInteractiveStory));
 });
 
-// GET /api/interactive-stories/story/:id  → single branching story by storyId
+// GET /api/interactive-stories/story/:id  → single film story by its (film) id
 interactiveStoriesRouter.get("/story/:id", async (c) => {
   const id = c.req.param("id");
   const [row] = await db
     .select()
-    .from(interactiveStories)
-    .where(and(eq(interactiveStories.id, id), eq(interactiveStories.isActive, true)))
+    .from(cultureItems)
+    .where(and(eq(cultureItems.id, id), isNotNull(cultureItems.scenes)))
     .limit(1);
   if (!row) return c.json({ error: "Story not found" }, 404);
   return c.json(toApiInteractiveStory(row));

@@ -1,10 +1,9 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
-import { useInteractiveStories } from "@/lib/hooks/use-discover";
 import { useStoryArcs } from "@/lib/hooks/use-story-arc";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { DiscoverContentType, DiscoverItem } from "@/types";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Pressable, ScrollView, Switch, Text, TextInput, View } from "react-native";
 
@@ -81,24 +80,9 @@ export function ItemForm({ initial, onSave, onCancel, saving }: Readonly<ItemFor
   const [contentUrl, setContentUrl] = useState(base.contentUrl ?? "");
   const [body, setBody] = useState(base.body ?? "");
   const [showNotes, setShowNotes] = useState(base.showNotes ?? "");
-  const [storyId, setStoryId] = useState(base.storyId ?? "");
   const [seasonArcId, setSeasonArcId] = useState(base.seasonArcId ?? "");
-  const [storySearch, setStorySearch] = useState("");
 
-  const { data: interactiveStories, isLoading: storiesLoading } = useInteractiveStories();
   const { data: storyArcs, isLoading: arcsLoading } = useStoryArcs();
-
-  const storyOptions = useMemo(() => {
-    const stories = (interactiveStories ?? []).map((s) => ({ id: s.id, title: s.title, kind: "story" as const }));
-    const arcs = (storyArcs ?? []).map((a) => ({ id: a.id, title: a.title, kind: "arc" as const }));
-    return [...stories, ...arcs];
-  }, [interactiveStories, storyArcs]);
-
-  const filteredStoryOptions = useMemo(() => {
-    const q = storySearch.trim().toLowerCase();
-    if (!q) return storyOptions;
-    return storyOptions.filter((o) => o.title.toLowerCase().includes(q) || o.id.toLowerCase().includes(q));
-  }, [storyOptions, storySearch]);
 
   const canSave = title.trim() && description.trim() && author.trim() && coverEmoji.trim();
 
@@ -118,7 +102,6 @@ export function ItemForm({ initial, onSave, onCancel, saving }: Readonly<ItemFor
       contentUrl: contentUrl.trim() || undefined,
       body: body.trim() || undefined,
       showNotes: showNotes.trim() || undefined,
-      storyId: storyId.trim() || undefined,
       seasonArcId: seasonArcId.trim() || undefined,
     });
   }
@@ -136,7 +119,7 @@ export function ItemForm({ initial, onSave, onCancel, saving }: Readonly<ItemFor
 
   const inputClass = "rounded-2xl border px-4 py-3 text-sm";
   const inputStyle = { backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText };
-  const linksLoading = storiesLoading || arcsLoading;
+  const linksLoading = arcsLoading;
 
   return (
     <ScrollView
@@ -300,50 +283,9 @@ export function ItemForm({ initial, onSave, onCancel, saving }: Readonly<ItemFor
 
       {(type === "podcast" || type === "film") && (
         <>
-          {/* What the card OPENS. */}
-          <Field label={t("admin.discoverStories.storyLinkLabel")}>
-            <Text className="text-xs mb-2" style={{ color: M.sub }}>
-              {t("admin.discoverStories.storyLinkHint")}
-            </Text>
-            <TextInput
-              value={storySearch}
-              onChangeText={setStorySearch}
-              placeholder={t("admin.discoverStories.storyLinkPlaceholder")}
-              placeholderTextColor={M.muted}
-              autoCapitalize="none"
-              autoCorrect={false}
-              style={inputStyle}
-              className={`${inputClass} mb-2`}
-            />
-
-            {linksLoading ? (
-              <ActivityIndicator color={M.accent} style={{ marginVertical: 8 }} />
-            ) : (
-              <>
-                <OptionRow
-                  title={t("admin.discoverStories.storyLinkNone")}
-                  selected={!storyId}
-                  onPress={() => setStoryId("")}
-                />
-                {filteredStoryOptions.map((opt) => (
-                  <OptionRow
-                    key={opt.id}
-                    title={opt.title}
-                    subtitle={`${opt.kind === "story" ? t("admin.discoverStories.storyGroupStory") : t("admin.discoverStories.storyGroupArc")} · ${opt.id}`}
-                    selected={storyId === opt.id}
-                    onPress={() => setStoryId(opt.id)}
-                  />
-                ))}
-                {filteredStoryOptions.length === 0 && (
-                  <Text className="text-xs" style={{ color: M.muted }}>
-                    {t("admin.discoverStories.storyLinkNoResults")}
-                  </Text>
-                )}
-              </>
-            )}
-          </Field>
-
-          {/* Which season the card BELONGS TO. */}
+          {/* Which season the card BELONGS TO (podcasts OPEN this season; films
+              are SET IN its world). Films author their scene graph in the
+              language-scoped educator Films flow, not here. */}
           <Field label={t("admin.discoverStories.seasonLinkLabel")}>
             <Text className="text-xs mb-2" style={{ color: M.sub }}>
               {t("admin.discoverStories.seasonLinkHint")}

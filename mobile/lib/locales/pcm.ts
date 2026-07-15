@@ -59,7 +59,7 @@ export const pcm = {
     listeningBoothSub: "Podcasts and audio",
     screeningRoom: "Screening Room",
     screeningRoomKicker: "THE SCREENING ROOM",
-    screeningRoomSub: "Films and interactive",
+    screeningRoomSub: "Films and stories",
     continueWatching: "CONTINUE",
     allContent: "ALL",
     emptyTitle: "Nothing dey here yet",

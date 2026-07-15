@@ -59,7 +59,7 @@ export const fr = {
     listeningBoothSub: "Podcasts & audio",
     screeningRoom: "Salle de projection",
     screeningRoomKicker: "SALLE DE PROJECTION",
-    screeningRoomSub: "Films & interactifs",
+    screeningRoomSub: "Films & récits",
     continueWatching: "REPRENDRE",
     allContent: "TOUT",
     emptyTitle: "Rien ici pour l'instant",

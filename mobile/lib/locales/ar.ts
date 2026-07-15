@@ -59,7 +59,7 @@ export const ar = {
     listeningBoothSub: "بودكاست وصوتيات",
     screeningRoom: "قاعة العرض",
     screeningRoomKicker: "قاعة العرض",
-    screeningRoomSub: "أفلام وتفاعلية",
+    screeningRoomSub: "أفلام وقصص",
     continueWatching: "متابعة",
     allContent: "الكل",
     emptyTitle: "لا يوجد محتوى بعد",

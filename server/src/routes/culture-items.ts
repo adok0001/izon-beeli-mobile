@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 import { eq, desc } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { cultureItems, interactiveStories, storyArcs } from "../db/schema.js";
+import { cultureItems, storyArcs, type InteractiveStoryScene } from "../db/schema.js";
+import { findScenesError } from "../lib/scene-validation.js";
 import { AuthEnv, authMiddleware, adminMiddleware } from "../middleware/auth.js";
 
 export const cultureItemsRouter = new Hono();
@@ -41,13 +42,20 @@ type Body = {
   coverGradientTo: string;
   coverEmoji: string;
   featured?: boolean;
-  storyId?: string | null;
   /**
-   * The season this card belongs to. Distinct from `storyId`: a film OPENS its
-   * own interactive story but is SET IN a season's world, and the old single
-   * polymorphic column could not say both.
+   * The season this card belongs to. For a film it means "set in this season's
+   * world" (the Series screen's "Also in this world" rail); for a podcast it IS
+   * the season the card opens.
    */
   seasonArcId?: string | null;
+  /**
+   * A film's branching scene graph, folded inline (a film IS its story). The
+   * `storyId` link a film used to carry is gone — a film's own `id` is the story id.
+   */
+  scenes?: Record<string, InteractiveStoryScene> | null;
+  initialSceneId?: string | null;
+  estimatedMinutes?: number | null;
+  language?: string | null;
   audioUrl?: string | null;
   contentUrl?: string | null;
   body?: string | null;
@@ -61,10 +69,14 @@ cultureItemsAdminRouter.post("/", async (c) => {
   if (!id || !type || !title || !description || !author || !publishedAt || !duration || !coverGradientFrom || !coverGradientTo || !coverEmoji) {
     return c.json({ error: "Missing required fields" }, 400);
   }
-  const storyLink = await resolveStoryLink(body.storyId);
-  if (!storyLink) return c.json(UNKNOWN_STORY, 400);
+  // A film carries its branching scene graph inline — validate the graph.
+  if (type === "film" && body.scenes) {
+    const scenesError = findScenesError(body.initialSceneId ?? "", body.scenes);
+    if (scenesError) return c.json({ error: scenesError }, 400);
+  }
   if (!(await seasonExists(body.seasonArcId))) return c.json(UNKNOWN_SEASON, 400);
 
+  const isFilm = type === "film";
   const [row] = await db.insert(cultureItems).values({
     id,
     type,
@@ -77,10 +89,11 @@ cultureItemsAdminRouter.post("/", async (c) => {
     coverGradientTo,
     coverEmoji,
     featured: body.featured ?? false,
-    ...storyLink,
-    // An explicit season wins: for a film, storyId names the interactive story it
-    // opens, so the season has to be stated separately.
-    ...(body.seasonArcId !== undefined ? { seasonArcId: body.seasonArcId || null } : {}),
+    seasonArcId: body.seasonArcId || null,
+    scenes: isFilm ? body.scenes ?? null : null,
+    initialSceneId: isFilm ? body.initialSceneId ?? null : null,
+    estimatedMinutes: isFilm ? body.estimatedMinutes ?? null : null,
+    language: body.language ?? null,
     audioUrl: body.audioUrl ?? null,
     contentUrl: body.contentUrl ?? null,
     body: body.body ?? null,
@@ -107,11 +120,21 @@ cultureItemsAdminRouter.patch("/:id", async (c) => {
   if (body.coverGradientTo !== undefined) updates.coverGradientTo = body.coverGradientTo;
   if (body.coverEmoji !== undefined) updates.coverEmoji = body.coverEmoji;
   if (body.featured !== undefined) updates.featured = body.featured;
-  if ("storyId" in body) {
-    const storyLink = await resolveStoryLink(body.storyId);
-    if (!storyLink) return c.json(UNKNOWN_STORY, 400);
-    Object.assign(updates, storyLink);
+  // A film's inline scene graph — revalidate when scenes/initialSceneId change.
+  if ("scenes" in body || "initialSceneId" in body) {
+    const nextScenes = body.scenes ?? existing.scenes;
+    if (nextScenes) {
+      const scenesError = findScenesError(
+        body.initialSceneId ?? existing.initialSceneId ?? "",
+        nextScenes
+      );
+      if (scenesError) return c.json({ error: scenesError }, 400);
+    }
   }
+  if ("scenes" in body) updates.scenes = body.scenes ?? null;
+  if ("initialSceneId" in body) updates.initialSceneId = body.initialSceneId ?? null;
+  if ("estimatedMinutes" in body) updates.estimatedMinutes = body.estimatedMinutes ?? null;
+  if ("language" in body) updates.language = body.language ?? null;
   if ("seasonArcId" in body) {
     if (!(await seasonExists(body.seasonArcId))) return c.json(UNKNOWN_SEASON, 400);
     updates.seasonArcId = body.seasonArcId || null;
@@ -134,43 +157,7 @@ cultureItemsAdminRouter.delete("/:id", async (c) => {
   return c.json({ success: true });
 });
 
-// ── Story link ────────────────────────────────────────────────────────────────
-
-/**
- * `storyId` is the API's single field for "the experience this card opens", but
- * it is polymorphic: it may name an interactive story OR a story arc, and the
- * legacy column recorded no discriminator — which is why the app ships a "broken
- * story link" badge and why the web admin's free-text input could write ids that
- * resolve to nothing.
- *
- * Resolve it on write into the typed, foreign-keyed columns. An id that matches
- * neither table is now a 400 instead of silently-broken data.
- */
-async function resolveStoryLink(storyId: string | null | undefined) {
-  if (!storyId) {
-    return { storyId: null, interactiveStoryId: null, seasonArcId: null };
-  }
-
-  const [story] = await db
-    .select({ id: interactiveStories.id })
-    .from(interactiveStories)
-    .where(eq(interactiveStories.id, storyId))
-    .limit(1);
-  if (story) {
-    return { storyId, interactiveStoryId: storyId, seasonArcId: null };
-  }
-
-  const [arc] = await db
-    .select({ id: storyArcs.id })
-    .from(storyArcs)
-    .where(eq(storyArcs.id, storyId))
-    .limit(1);
-  if (arc) {
-    return { storyId, interactiveStoryId: null, seasonArcId: storyId };
-  }
-
-  return null;
-}
+// ── Season link ────────────────────────────────────────────────────────────────
 
 /** Does this season exist? `null` clears the link. `false` means it doesn't. */
 async function seasonExists(seasonArcId: string | null | undefined) {
@@ -185,11 +172,22 @@ async function seasonExists(seasonArcId: string | null | undefined) {
 
 const UNKNOWN_SEASON = { error: "No season with that id" } as const;
 
-const UNKNOWN_STORY = { error: "No interactive story or season with that id" } as const;
-
 // ── Serializer ────────────────────────────────────────────────────────────────
 
 function toApi(row: typeof cultureItems.$inferSelect) {
+  // The single `storyId` the app has always consumed: a film IS its story (its
+  // own id, once it has a scene graph); a podcast opens its season. Keeps
+  // installed app builds resolving via the /interactive-stories + /series routes.
+  const storyId =
+    row.type === "film"
+      ? row.scenes
+        ? row.id
+        : undefined
+      : row.type === "podcast"
+        ? // A podcast opens its season; fall back to the legacy `storyId` column
+          // for un-migrated rows whose season never moved to `seasonArcId`.
+          row.seasonArcId ?? row.storyId ?? undefined
+        : undefined;
   return {
     id: row.id,
     type: row.type,
@@ -201,11 +199,12 @@ function toApi(row: typeof cultureItems.$inferSelect) {
     coverGradient: [row.coverGradientFrom, row.coverGradientTo] as [string, string],
     coverEmoji: row.coverEmoji,
     featured: row.featured,
-    // Collapse the typed columns back into the single `storyId` the app has
-    // always consumed, so installed versions keep working. `storyId` is the
-    // un-migrated fallback for rows the import hasn't touched.
-    storyId: row.interactiveStoryId ?? row.seasonArcId ?? row.storyId ?? undefined,
+    storyId,
     seasonArcId: row.seasonArcId ?? undefined,
+    scenes: row.scenes ?? undefined,
+    initialSceneId: row.initialSceneId ?? undefined,
+    estimatedMinutes: row.estimatedMinutes ?? undefined,
+    language: row.language ?? undefined,
     audioUrl: row.audioUrl ?? undefined,
     contentUrl: row.contentUrl ?? undefined,
     body: row.body ?? undefined,

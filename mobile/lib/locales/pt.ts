@@ -59,7 +59,7 @@ export const pt = {
     listeningBoothSub: "Podcasts & áudio",
     screeningRoom: "Sala de Projeção",
     screeningRoomKicker: "SALA DE PROJEÇÃO",
-    screeningRoomSub: "Filmes & interativos",
+    screeningRoomSub: "Filmes & histórias",
     continueWatching: "CONTINUAR",
     allContent: "TUDO",
     emptyTitle: "Nada aqui ainda",

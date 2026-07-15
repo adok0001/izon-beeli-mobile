@@ -31,8 +31,8 @@ export default function LibraryScreen() {
   const featuredItem = all.find((i) => i.featured) ?? all[0] ?? null;
   const openStory = (storyId: string) => router.push(`/discover-story/${storyId}` as never);
 
-  // Editorial rails. A podcast season (has storyId) reads as a "series";
-  // podcasts without one are standalone episodes to "listen" to.
+  // Editorial rails. A podcast card that opens a season (has storyId) IS a
+  // Season — a series of lessons; podcasts without one are standalone episodes.
   const series = all.filter((i) => i.type === "podcast" && i.storyId);
   const films = all.filter((i) => i.type === "film");
 
@@ -83,7 +83,7 @@ export default function LibraryScreen() {
         ) : null}
 
         {/* Editorial rails */}
-        <DiscoverRail title="New series" items={series} onSeeAll={() => router.push("/explore/podcast" as never)} onStoryPress={openStory} />
+        <DiscoverRail title="Seasons" items={series} onSeeAll={() => router.push("/explore/podcast" as never)} onStoryPress={openStory} />
         <DiscoverRail title="Films" items={films} onSeeAll={() => router.push("/explore/film" as never)} onStoryPress={openStory} />
 
         {/* By level */}

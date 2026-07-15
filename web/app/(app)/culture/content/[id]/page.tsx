@@ -130,7 +130,7 @@ export default function ContentPage() {
 
       {/* Body */}
       <div className="px-5 md:px-10 max-w-3xl mx-auto pt-5 pb-4">
-        {item.type === "film" && !item.storyId && !item.showNotes ? (
+        {item.type === "film" && !item.scenes && !item.showNotes ? (
           <>
             <p className="mb-4 leading-[26px]" style={{ fontSize: 15, color: "#d4d4d4" }}>
               {item.description}

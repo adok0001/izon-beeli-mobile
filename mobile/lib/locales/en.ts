@@ -59,7 +59,7 @@ export const en = {
     listeningBoothSub: "Podcasts & audio",
     screeningRoom: "Screening Room",
     screeningRoomKicker: "THE SCREENING ROOM",
-    screeningRoomSub: "Films & interactive",
+    screeningRoomSub: "Films & stories",
     continueWatching: "CONTINUE",
     allContent: "ALL",
     emptyTitle: "Nothing here yet",
@@ -2042,7 +2042,7 @@ export const en = {
     },
     discoverStories: {
       seasonLinkLabel: "Season",
-      seasonLinkHint: "Different from the story link: the story link is what the card OPENS (a film's interactive story); the season is the world the card BELONGS TO.",
+      seasonLinkHint: "A podcast OPENS this season (a series of lessons); a film is SET IN its world. A film's own branching story is authored in the Studio Films flow.",
       seasonLinkNone: "No season",
       seasonLinkEmpty: "No seasons authored yet.",
       storyLinkLabel: "Story link",

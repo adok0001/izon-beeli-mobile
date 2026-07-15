@@ -646,13 +646,22 @@ export interface DiscoverItem {
   audioUrl?: string;
   videoUrl?: string;
   /**
-   * Legacy polymorphic link the card OPENS — an interactive story (films) or,
-   * historically, a season. The server serves `interactiveStoryId ?? seasonArcId`
-   * here and resolves a written value into the right typed column.
+   * The experience the card OPENS. A film IS its story, so this is the film's
+   * own `id` once it has a scene graph; a podcast opens its season. Present for
+   * backwards compatibility — prefer `scenes` (films) / `seasonArcId` (podcasts).
    */
   storyId?: string;
   /** The season this card BELONGS TO (`culture_items.season_arc_id`). */
   seasonArcId?: string;
+  /**
+   * A film's branching scene graph, folded inline (a film IS its story). Present
+   * only on `film` cards that open a story; absent for podcasts, blogs, and
+   * story-less "mini-series" films.
+   */
+  scenes?: Record<string, StoryScene>;
+  initialSceneId?: string;
+  estimatedMinutes?: number;
+  language?: string;
   contentUrl?: string;
   body?: string;
   showNotes?: string;
