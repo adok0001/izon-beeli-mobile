@@ -146,7 +146,7 @@ export interface StoryArc {
     description: string;
     chapters: StoryChapter[];
 }
-export type CulturalCategory = "colors" | "naming_ceremonies" | "festivals" | "creation_myths" | "music" | "clothing" | "cuisine" | "greetings_etiquette";
+export type CulturalCategory = "colors" | "naming_ceremonies" | "festivals" | "creation_myths" | "music" | "clothing" | "cuisine" | "greetings_etiquette" | "governance_values" | "land_livelihood" | "kinship" | "cosmology" | "oral_tradition" | "arts_oratory" | "numbers_trade" | "geography";
 export interface CulturalContent {
     id: string;
     languageId: string;

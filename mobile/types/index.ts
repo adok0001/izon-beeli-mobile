@@ -339,7 +339,16 @@ export type CulturalCategory =
   | "music"
   | "clothing"
   | "cuisine"
-  | "greetings_etiquette";
+  | "greetings_etiquette"
+  // Categories carried over from story/course content.
+  | "governance_values"
+  | "land_livelihood"
+  | "kinship"
+  | "cosmology"
+  | "oral_tradition"
+  | "arts_oratory"
+  | "numbers_trade"
+  | "geography";
 
 /** A colour stripe in a cultural reader hero (e.g. the Izon colour symbolism entry). */
 export interface CulturalHeroBand {

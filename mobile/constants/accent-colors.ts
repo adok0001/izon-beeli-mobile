@@ -53,6 +53,15 @@ export const ACCENTS: Record<AccentHue, AccentColor> = {
   fuchsia: hue("217, 70, 239", "#D946EF"),
 };
 
-export function getAccent(h: AccentHue): AccentColor {
-  return ACCENTS[h];
+/** Accent used when a hue is unknown — keeps categorical UI on-brand, never blank. */
+const FALLBACK_HUE: AccentHue = "amber";
+
+/**
+ * Resolve a hue to its palette. Tolerates an unknown, undefined, or null hue —
+ * e.g. a cultural `category` that drifted outside the known set — by falling
+ * back to a default accent, so a bad value degrades gracefully instead of
+ * crashing the screen with `Cannot read property 'bg' of undefined`.
+ */
+export function getAccent(h: AccentHue | undefined | null): AccentColor {
+  return (h ? ACCENTS[h] : undefined) ?? ACCENTS[FALLBACK_HUE];
 }

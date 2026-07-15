@@ -25,6 +25,14 @@ const CATEGORY_HUE: Record<CulturalCategory, AccentHue> = {
   clothing: "teal",
   cuisine: "amber",
   greetings_etiquette: "green",
+  governance_values: "indigo",
+  land_livelihood: "green",
+  kinship: "fuchsia",
+  cosmology: "blue",
+  oral_tradition: "amber",
+  arts_oratory: "pink",
+  numbers_trade: "teal",
+  geography: "sky",
 };
 
 const CATEGORY_EMOJI: Record<CulturalCategory, string> = {
@@ -36,6 +44,14 @@ const CATEGORY_EMOJI: Record<CulturalCategory, string> = {
   clothing: "🧣",
   cuisine: "🍜",
   greetings_etiquette: "👋",
+  governance_values: "⚖️",
+  land_livelihood: "🌾",
+  kinship: "👪",
+  cosmology: "🌌",
+  oral_tradition: "📖",
+  arts_oratory: "🎭",
+  numbers_trade: "🔢",
+  geography: "🗺️",
 };
 
 const CATEGORY_ORDER: CulturalCategory[] = [
@@ -47,6 +63,14 @@ const CATEGORY_ORDER: CulturalCategory[] = [
   "clothing",
   "cuisine",
   "greetings_etiquette",
+  "governance_values",
+  "land_livelihood",
+  "kinship",
+  "cosmology",
+  "oral_tradition",
+  "arts_oratory",
+  "numbers_trade",
+  "geography",
 ];
 
 /** Split a description block into readable paragraphs (~2 sentences each). */
