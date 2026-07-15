@@ -122,7 +122,7 @@ export default function ClassroomScreen() {
             keyExtractor={(item) => item.id}
             contentContainerClassName="px-5 pb-8 pt-4"
             showsVerticalScrollIndicator={false}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
             renderItem={({ item }) => <GroupCard group={item} />}
             ListEmptyComponent={
               <View className="items-center px-8 py-16">

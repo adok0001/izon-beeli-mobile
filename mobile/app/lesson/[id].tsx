@@ -3,6 +3,7 @@ import { InteractiveTranscript } from "@/components/audio/interactive-transcript
 import { LevelUpModal } from "@/components/level-up-modal";
 import { LessonCultureNote } from "@/components/lesson/lesson-culture-note";
 import { LessonHero } from "@/components/lesson/lesson-hero";
+import { MarkCompleteButton } from "@/components/lesson/mark-complete-button";
 import { LessonMetaPills } from "@/components/lesson/lesson-meta-pills";
 import { LessonListen } from "@/components/lesson/lesson-listen";
 import { LessonObjectives } from "@/components/lesson/lesson-objectives";
@@ -424,22 +425,10 @@ export default function LessonScreen() {
 
               {/* Secondary: mark complete */}
               {!completed && (
-                <Pressable
-                  onPress={handleMarkComplete}
-                  style={{
-                    marginTop: 10, flexDirection: "row", alignItems: "center", justifyContent: "center",
-                    gap: 7, paddingVertical: 12, borderRadius: 14,
-                    borderWidth: 1, borderColor: M.successBorder,
-                    backgroundColor: M.successBg,
-                  }}
-                  className="active:opacity-75"
-                  accessibilityRole="button"
-                >
-                  <IconSymbol name="checkmark.circle.fill" size={14} color={M.success} />
-                  <Text style={{ fontSize: 13, fontWeight: "700", color: M.success }}>
-                    {isSong ? t("songs.listened") : t("lesson.markComplete")}
-                  </Text>
-                </Pressable>
+                <MarkCompleteButton
+                  label={isSong ? t("songs.listened") : t("lesson.markComplete")}
+                  onComplete={handleMarkComplete}
+                />
               )}
             </View>
           </ScrollView>

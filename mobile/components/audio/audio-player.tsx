@@ -8,6 +8,7 @@ import {
   type GestureResponderEvent,
 } from "react-native";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { AnimatedProgress } from "@/components/audio/animated-progress";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useAudioStore } from "@/store/audio-store";
 import { formatDuration } from "@/lib/mock-data";
@@ -40,7 +41,7 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
 
   if (!currentTrackId) return null;
 
-  const progressPercent = duration > 0 ? (progress / duration) * 100 : 0;
+  const progressFraction = duration > 0 ? progress / duration : 0;
 
   const cycleSpeed = () => {
     const currentIndex = SPEEDS.indexOf(playbackSpeed);
@@ -110,9 +111,7 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
               accessibilityLabel="Seek audio"
               accessibilityHint="Tap to seek to position"
             >
-              <View style={{ height: 4, borderRadius: 999, backgroundColor: M.border }}>
-                <View style={{ height: 4, borderRadius: 999, backgroundColor: M.accent, width: `${progressPercent}%` }} />
-              </View>
+              <AnimatedProgress fraction={progressFraction} isPlaying={isPlaying} height={4} />
             </Pressable>
             )}
           </View>
@@ -170,9 +169,7 @@ export function AudioPlayer({ compact = false, position = "bottom", onPress }: {
         accessibilityLabel={`Audio progress, ${formatDuration(progress)} of ${formatDuration(duration)}`}
         accessibilityHint="Tap to seek to position"
       >
-        <View style={{ height: 6, borderRadius: 999, backgroundColor: M.border }}>
-          <View style={{ height: 6, borderRadius: 999, backgroundColor: M.accent, width: `${progressPercent}%` }} />
-        </View>
+        <AnimatedProgress fraction={progressFraction} isPlaying={isPlaying} height={6} />
       </Pressable>
 
       <View style={{ marginBottom: 16, flexDirection: "row", justifyContent: "space-between" }}>

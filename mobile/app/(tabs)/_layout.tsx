@@ -3,7 +3,7 @@ import { AudioPlayer } from "@/components/audio/audio-player";
 import { FeatureTourModal } from "@/components/feature-tour-modal";
 import { GlobalSpeedDialFab } from "@/components/global-speed-dial-fab";
 import { HapticTab } from "@/components/haptic-tab";
-import { IconSymbol } from "@/components/ui/icon-symbol";
+import { AnimatedTabIcon } from "@/components/ui/animated-tab-icon";
 import { WelcomeChecklistFab } from "@/components/welcome-checklist-fab";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -42,28 +42,30 @@ function MiniPlayerTabBar(props: BottomTabBarProps) {
   );
 }
 
-function LearnTabIcon({ color }: Readonly<{ color: string }>) {
-  return <IconSymbol size={28} name="book.fill" color={color} />;
+type TabIconProps = Readonly<{ color: string; focused: boolean }>;
+
+function LearnTabIcon({ color, focused }: TabIconProps) {
+  return <AnimatedTabIcon name="book.fill" color={color} focused={focused} />;
 }
 
-function ExploreTabIcon({ color }: Readonly<{ color: string }>) {
-  return <IconSymbol size={28} name="sparkles" color={color} />;
+function ExploreTabIcon({ color, focused }: TabIconProps) {
+  return <AnimatedTabIcon name="sparkles" color={color} focused={focused} />;
 }
 
-function FeedTabIcon({ color }: Readonly<{ color: string }>) {
-  return <IconSymbol size={28} name="newspaper.fill" color={color} />;
+function FeedTabIcon({ color, focused }: TabIconProps) {
+  return <AnimatedTabIcon name="newspaper.fill" color={color} focused={focused} />;
 }
 
-function EducatorTabIcon({ color }: Readonly<{ color: string }>) {
-  return <IconSymbol size={28} name="shield.fill" color={color} />;
+function EducatorTabIcon({ color, focused }: TabIconProps) {
+  return <AnimatedTabIcon name="shield.fill" color={color} focused={focused} />;
 }
 
-function AdminTabIcon({ color }: Readonly<{ color: string }>) {
-  return <IconSymbol size={28} name="gearshape.fill" color={color} />;
+function AdminTabIcon({ color, focused }: TabIconProps) {
+  return <AnimatedTabIcon name="gearshape.fill" color={color} focused={focused} />;
 }
 
-function ProfileTabIcon({ color }: Readonly<{ color: string }>) {
-  return <IconSymbol size={28} name="person.fill" color={color} />;
+function ProfileTabIcon({ color, focused }: TabIconProps) {
+  return <AnimatedTabIcon name="person.fill" color={color} focused={focused} />;
 }
 
 export default function TabLayout() {

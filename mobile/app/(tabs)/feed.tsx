@@ -1,4 +1,5 @@
 import { FeedbackModal } from "@/components/feedback-modal";
+import { LikeButton } from "@/components/feed/like-button";
 import { SignInPrompt, useRequireAuth } from "@/components/sign-in-prompt";
 import { AvatarCircle } from "@/components/ui/avatar-circle";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -460,16 +461,11 @@ function FeedCard({
           paddingHorizontal: 14, paddingVertical: 10, gap: 20,
         }}
       >
-        <Pressable
-          onPress={() => requireAuth(() => toggleLike.mutate(item.id), "common.signInFeedDesc")}
-          style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={liked ? `Unlike, ${item.likes}` : `Like, ${item.likes}`}
-        >
-          <IconSymbol name={liked ? "heart.fill" : "heart"} size={16} color={liked ? M.error : M.muted} />
-          <Text style={{ fontSize: 12, color: M.muted }}>{item.likes}</Text>
-        </Pressable>
+        <LikeButton
+          liked={liked}
+          count={item.likes}
+          onToggle={() => requireAuth(() => toggleLike.mutate(item.id), "common.signInFeedDesc")}
+        />
         <Pressable
           onPress={() => onOpenComments(item.id)}
           style={{ flexDirection: "row", alignItems: "center", gap: 5 }}

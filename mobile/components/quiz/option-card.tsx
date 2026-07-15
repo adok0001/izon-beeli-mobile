@@ -1,9 +1,9 @@
+import { CHECK_LEN, CHECK_PATH, EASE_OUT } from "@/constants/motion";
 import { type MuseumTheme, useMuseumTheme } from "@/lib/use-museum-theme";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import Animated, {
-  Easing,
   interpolate,
   interpolateColor,
   type SharedValue,
@@ -22,15 +22,12 @@ export type OptionState = "default" | "correct" | "incorrect" | "dimmed";
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
-// Stroke-drawn marks inside a 24×24 box. Dash lengths run slightly long so the
-// mark is fully hidden at offset = length and fully drawn at offset = 0.
-const CHECK_PATH = "M5 13 L10 18 L20 7";
-const CHECK_LEN = 24;
+// The cross is local to the verdict badge; the check + ease come from the shared
+// motion constants. Dash length runs slightly long so the mark hides fully.
 const CROSS_PATH = "M6 6 L18 18 M18 6 L6 18";
 const CROSS_LEN = 36;
 
 const BADGE = 24;
-const EASE_OUT = Easing.bezier(0.16, 1, 0.3, 1);
 
 /** The trailing verdict badge — a stroke that draws itself into a ring. */
 function VerdictBadge({

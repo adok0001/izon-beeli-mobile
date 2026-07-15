@@ -815,7 +815,7 @@ export default function ReviewScreen() {
             contentContainerStyle={{ paddingTop: 4, paddingBottom: 24 }}
             showsVerticalScrollIndicator={false}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />
             }
             renderItem={({ item }) => (
               <ContributionCard
@@ -846,7 +846,7 @@ export default function ReviewScreen() {
             contentContainerStyle={{ paddingTop: 4, paddingBottom: 24 }}
             showsVerticalScrollIndicator={false}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />
             }
             renderItem={({ item }) => (
               <LessonContributionCard

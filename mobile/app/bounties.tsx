@@ -118,7 +118,7 @@ export default function BountiesScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32, paddingTop: 16 }}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
           renderItem={({ item }) => (
             <BountyCard bounty={item} isAdmin={!!(currentUser && canManageBounties(currentUser))} onClaim={onClaim} />
           )}

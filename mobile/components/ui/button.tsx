@@ -1,6 +1,10 @@
 import { fonts } from "@/constants/typography";
+import { usePressScale } from "@/hooks/use-press-scale";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { ActivityIndicator, Pressable, Text, View, type StyleProp, type ViewStyle } from "react-native";
+import Animated from "react-native-reanimated";
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 export type ButtonSize = "sm" | "md" | "lg";
@@ -43,6 +47,7 @@ export function Button({
   const M = useMuseumTheme();
   const s = SIZES[size];
   const isDisabled = disabled || loading;
+  const pressScale = usePressScale({ baseOpacity: isDisabled ? 0.5 : 1 });
 
   const palette: Record<ButtonVariant, { bg: string; border: string; text: string }> = {
     primary:   { bg: M.accent,       border: M.accent,       text: "#1A1520" },
@@ -53,13 +58,14 @@ export function Button({
   const c = palette[variant];
 
   return (
-    <Pressable
+    <AnimatedPressable
       onPress={onPress}
+      onPressIn={isDisabled ? undefined : pressScale.onPressIn}
+      onPressOut={pressScale.onPressOut}
       disabled={isDisabled}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled: isDisabled, busy: loading }}
-      className="active:opacity-80"
       style={[
         {
           flexDirection: "row",
@@ -72,9 +78,9 @@ export function Button({
           borderColor: c.border,
           paddingVertical: s.paddingVertical,
           paddingHorizontal: s.paddingHorizontal,
-          opacity: isDisabled ? 0.5 : 1,
           alignSelf: fullWidth ? "stretch" : "flex-start",
         },
+        pressScale.style,
         style,
       ]}
     >
@@ -88,6 +94,6 @@ export function Button({
           </Text>
         </>
       )}
-    </Pressable>
+    </AnimatedPressable>
   );
 }

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { Image } from "expo-image";
+import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 
 const TIPS = [
@@ -40,10 +41,23 @@ interface LoadingScreenProps {
   color?: string;
 }
 
+/** A single shimmering "content row": a thumbnail beside two text lines. */
+function SkeletonRow() {
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+      <Skeleton width={52} height={52} radius={26} />
+      <SkeletonGroup gap={8} style={{ flex: 1 }}>
+        <Skeleton width="70%" height={13} radius={6} />
+        <Skeleton width="45%" height={11} radius={6} />
+      </SkeletonGroup>
+    </View>
+  );
+}
+
 export function LoadingScreen({ showBranding = false, color }: LoadingScreenProps) {
   const M = useMuseumTheme();
   const tip = useMemo(() => TIPS[Math.floor(Math.random() * TIPS.length)], []);
-  const spinnerColor = color ?? M.accent;
+  const accent = color ?? M.accent;
 
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: M.bg, paddingHorizontal: 32 }}>
@@ -56,9 +70,13 @@ export function LoadingScreen({ showBranding = false, color }: LoadingScreenProp
           </Text>
         </>
       )}
-      <ActivityIndicator size="large" color={spinnerColor} />
+      <SkeletonGroup gap={18} style={{ width: "100%", maxWidth: 320 }}>
+        <SkeletonRow />
+        <SkeletonRow />
+        <SkeletonRow />
+      </SkeletonGroup>
       <View style={{ marginTop: 32, borderRadius: 16, backgroundColor: M.card, paddingHorizontal: 20, paddingVertical: 16, borderWidth: 1, borderColor: M.border }}>
-        <Text style={{ marginBottom: 6, fontSize: 10, fontWeight: "600", letterSpacing: 2, textTransform: "uppercase", color: M.accent }}>
+        <Text style={{ marginBottom: 6, fontSize: 10, fontWeight: "600", letterSpacing: 2, textTransform: "uppercase", color: accent }}>
           Tip
         </Text>
         <Text style={{ fontSize: 14, lineHeight: 22, color: M.sub }}>
