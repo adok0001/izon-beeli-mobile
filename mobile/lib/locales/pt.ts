@@ -2248,6 +2248,7 @@ export const pt = {
     },
     interactiveStoriesEditor: {
       generalLanguageLabel: "Geral",
+      generalLanguageHint: "Histórias não vinculadas a um único idioma",
       screenTitle: "Histórias Interativas",
       subtitle: "Narrativas ramificadas — um grafo de cenas que o aluno percorre através das suas escolhas.",
       newButton: "Nova História",

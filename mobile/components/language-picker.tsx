@@ -1,10 +1,9 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { fonts } from "@/constants/typography";
 import { ACTIVE_LANGUAGES, getLanguageName } from "@/lib/mock-data";
-import { getLanguageRegionKey, REGION_KEY_MAP } from "@/lib/data/languages";
+import { getLanguageRegionKey, REGION_KEY_MAP, type LanguageEntry } from "@/lib/data/languages";
 import { MUSEUM, bronze, useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
-import type { Language } from "@/types";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -21,11 +20,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 interface Section {
   title: string;
-  data: Language[];
+  data: LanguageEntry[];
 }
 
-function groupByRegion(languages: Language[]): Section[] {
-  const map = new Map<string, Language[]>();
+function groupByRegion(languages: LanguageEntry[]): Section[] {
+  const map = new Map<string, LanguageEntry[]>();
   for (const lang of languages) {
     const existing = map.get(lang.region) ?? [];
     existing.push(lang);
@@ -193,12 +192,16 @@ export function LanguagePickerModal({
   onSelect,
   onClose,
   allowedIds,
+  pool = ACTIVE_LANGUAGES,
 }: Readonly<{
   visible: boolean;
   selectedId: string;
   onSelect: (id: string) => void;
   onClose: () => void;
   allowedIds?: string[];
+  /** Languages to choose from. Learning UI keeps the default (languages with
+      real content); Studio passes the full authoring set. */
+  pool?: LanguageEntry[];
 }>) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
@@ -208,8 +211,8 @@ export function LanguagePickerModal({
     const query = search.trim().toLowerCase();
     const base =
       allowedIds && allowedIds.length > 0
-        ? ACTIVE_LANGUAGES.filter((l) => allowedIds.includes(l.id))
-        : ACTIVE_LANGUAGES;
+        ? pool.filter((l) => allowedIds.includes(l.id))
+        : pool;
     const filtered = query
       ? base.filter(
           (l) =>
@@ -219,7 +222,7 @@ export function LanguagePickerModal({
         )
       : base;
     return groupByRegion(filtered);
-  }, [search, allowedIds]);
+  }, [search, allowedIds, pool]);
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">

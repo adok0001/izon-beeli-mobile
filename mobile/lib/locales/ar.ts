@@ -2248,6 +2248,7 @@ export const ar = {
     },
     interactiveStoriesEditor: {
       generalLanguageLabel: "عام",
+      generalLanguageHint: "قصص غير مرتبطة بلغة واحدة",
       screenTitle: "القصص التفاعلية",
       subtitle: "قصص متفرعة — شبكة من المشاهد يتنقّل فيها المتعلم حسب اختياراته.",
       newButton: "قصة جديدة",

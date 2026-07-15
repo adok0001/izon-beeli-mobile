@@ -2323,6 +2323,7 @@ export const en = {
     },
     interactiveStoriesEditor: {
       generalLanguageLabel: "General",
+      generalLanguageHint: "Stories not tied to a single language",
       screenTitle: "Interactive Stories",
       subtitle: "Branching narratives — a graph of scenes learners choose their way through.",
       newButton: "New Story",

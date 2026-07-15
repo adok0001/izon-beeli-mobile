@@ -1,3 +1,4 @@
+import { LanguagePickerModal } from "@/components/language-picker";
 import { GhostButton, LabeledInput, NewButton, PrimaryButton, SmallButton } from "@/components/studio/editor-form";
 import {
   emptyScene,
@@ -30,6 +31,7 @@ import {
 import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import type { LanguageEntry } from "@/lib/data/languages";
 import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -71,7 +73,24 @@ export default function InteractiveStoriesScreen() {
     () => (user.isAdmin ? [...LANGUAGES.map((l) => l.id), GENERAL_LANGUAGE_ID] : user.reviewerLanguages),
     [user]
   );
+
+  // The picker's default pool is the learner-facing set (languages with content);
+  // Studio authors for every language, plus the synthetic "general" scope.
+  const languagePool = useMemo<LanguageEntry[]>(
+    () => [
+      {
+        id: GENERAL_LANGUAGE_ID,
+        name: t("educator.interactiveStoriesEditor.generalLanguageLabel"),
+        nativeName: t("educator.interactiveStoriesEditor.generalLanguageHint"),
+        region: t("educator.interactiveStoriesEditor.generalLanguageLabel"),
+      },
+      ...LANGUAGES,
+    ],
+    [t]
+  );
+
   const [selectedLanguageId, setSelectedLanguageId] = useState<string | null>(null);
+  const [languagePickerVisible, setLanguagePickerVisible] = useState(false);
   const activeLanguageId = selectedLanguageId ?? allowedLanguages[0] ?? user.selectedLanguageId ?? "izon";
 
   const [editingId, setEditingId] = useState<string | undefined>(undefined);
@@ -314,29 +333,26 @@ export default function InteractiveStoriesScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
       >
-        {/* Language tabs */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
-          <View style={{ flexDirection: "row", gap: 8 }}>
-            {allowedLanguages.map((languageId) => {
-              const active = languageId === activeLanguageId;
-              return (
-                <Pressable
-                  key={languageId}
-                  onPress={() => { setSelectedLanguageId(languageId); resetForm(); }}
-                  style={{
-                    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
-                    backgroundColor: active ? M.accent : M.bg,
-                    borderWidth: 1, borderColor: active ? M.accent : M.border,
-                  }}
-                >
-                  <Text style={{ fontSize: 13, fontWeight: "700", color: active ? M.ink : M.sub }}>
-                    {languageLabel(languageId)}
-                  </Text>
-                </Pressable>
-              );
-            })}
+        {/* Language scope */}
+        <Pressable
+          onPress={() => setLanguagePickerVisible(true)}
+          accessibilityRole="button"
+          accessibilityLabel={t("languagePicker.title")}
+          className="active:opacity-70"
+          style={{
+            flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+            borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg,
+            paddingHorizontal: 14, paddingVertical: 12, marginBottom: 16,
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <IconSymbol name="globe" size={16} color={M.accent} />
+            <Text style={{ fontSize: 14, fontWeight: "700", color: M.text }}>
+              {languageLabel(activeLanguageId)}
+            </Text>
           </View>
-        </ScrollView>
+          <IconSymbol name="chevron.right" size={14} color={M.muted} />
+        </Pressable>
 
         {!formOpen && (
           <NewButton label={t("educator.interactiveStoriesEditor.newButton")} onPress={() => setFormOpen(true)} M={M} />
@@ -507,6 +523,19 @@ export default function InteractiveStoriesScreen() {
           })}
         </View>
       </ScrollView>
+
+      <LanguagePickerModal
+        visible={languagePickerVisible}
+        selectedId={activeLanguageId}
+        allowedIds={allowedLanguages}
+        pool={languagePool}
+        onSelect={(id) => {
+          setSelectedLanguageId(id);
+          resetForm();
+          setLanguagePickerVisible(false);
+        }}
+        onClose={() => setLanguagePickerVisible(false)}
+      />
     </SafeAreaView>
   );
 }

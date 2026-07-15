@@ -2263,6 +2263,7 @@ export const fr = {
     },
     interactiveStoriesEditor: {
       generalLanguageLabel: "Général",
+      generalLanguageHint: "Récits non rattachés à une langue précise",
       screenTitle: "Histoires interactives",
       subtitle: "Récits à embranchements — un graphe de scènes que l'apprenant traverse par ses choix.",
       newButton: "Nouvelle histoire",

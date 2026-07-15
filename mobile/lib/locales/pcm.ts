@@ -2283,6 +2283,7 @@ export const pcm = {
     },
     interactiveStoriesEditor: {
       generalLanguageLabel: "General",
+      generalLanguageHint: "Story wey no dey tie to one language",
       screenTitle: "Interactive Stories",
       subtitle: "Story wey get branch — na map of scenes wey learner dey waka through by di choice wey e pick.",
       newButton: "New Story",
