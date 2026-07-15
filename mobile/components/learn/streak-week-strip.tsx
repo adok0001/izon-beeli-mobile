@@ -14,9 +14,11 @@ interface StreakWeekStripProps {
   /** Daily challenges completed today — renders the goal ring when provided. */
   completedToday?: number;
   onPress?: () => void;
+  /** Tapping the goal ring — opens the daily-goal modal. */
+  onGoalPress?: () => void;
 }
 
-export function StreakWeekStrip({ summary, completedToday, onPress }: StreakWeekStripProps) {
+export function StreakWeekStrip({ summary, completedToday, onPress, onGoalPress }: StreakWeekStripProps) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const today = new Date().getDay();
@@ -44,7 +46,16 @@ export function StreakWeekStrip({ summary, completedToday, onPress }: StreakWeek
         <Eyebrow
           label={`${t("learn.currentStreak", { defaultValue: "Current Streak" })}: ${summary?.streak ?? 0} ${t("learn.dayShort", { defaultValue: "d" })}`}
         />
-        {completedToday !== undefined && <DailyGoalRing completedToday={completedToday} />}
+        {completedToday !== undefined && (
+          <Pressable
+            onPress={onGoalPress}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={t("learn.dailyGoal", { defaultValue: "Daily goal" })}
+          >
+            <DailyGoalRing completedToday={completedToday} />
+          </Pressable>
+        )}
       </View>
       <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
         {days.map((active, i) => {

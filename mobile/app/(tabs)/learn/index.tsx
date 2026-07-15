@@ -190,6 +190,7 @@ export default function LearnScreen() {
             <StreakWeekStrip
               summary={summary}
               completedToday={completedToday}
+              onGoalPress={() => setGoalModalVisible(true)}
               onPress={() => {
                 if (summary?.streakBroken && summary.streak > 0) setFreezeModalVisible(true);
               }}
