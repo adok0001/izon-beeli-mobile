@@ -2247,7 +2247,10 @@ export const pt = {
       turnsCountMany: "{{count}} falas",
     },
     interactiveStoriesEditor: {
-      generalLanguageLabel: "Geral",
+      allScopeLabel: "Todas",
+      allScopeHint: "Todas as histórias, de todos os idiomas",
+      allScopeAddHint: "Selecione um idioma para adicionar uma história.",
+      generalLanguageLabel: "Sem idioma",
       generalLanguageHint: "Histórias não vinculadas a um único idioma",
       screenTitle: "Histórias Interativas",
       subtitle: "Narrativas ramificadas — um grafo de cenas que o aluno percorre através das suas escolhas.",

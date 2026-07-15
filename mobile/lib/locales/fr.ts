@@ -2262,7 +2262,10 @@ export const fr = {
       turnsCountMany: "{{count}} répliques",
     },
     interactiveStoriesEditor: {
-      generalLanguageLabel: "Général",
+      allScopeLabel: "Toutes",
+      allScopeHint: "Tous les récits, toutes langues confondues",
+      allScopeAddHint: "Choisissez une langue pour ajouter un récit.",
+      generalLanguageLabel: "Sans langue",
       generalLanguageHint: "Récits non rattachés à une langue précise",
       screenTitle: "Histoires interactives",
       subtitle: "Récits à embranchements — un graphe de scènes que l'apprenant traverse par ses choix.",

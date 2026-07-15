@@ -47,8 +47,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
  * the turn list.
  */
 
-// Sentinel languageId for stories with no single-language scope (e.g. a
-// pan-African culture piece) — admin-only tab, mirrors the server's sentinel.
+// Admin-only sentinel languageIds, both mirroring the server. "all" is a
+// read-only aggregate — every story across all languages, no authoring into
+// it. "general" is the language-agnostic bucket (stories tied to no single
+// language, e.g. a pan-African piece) — a real, creatable scope.
+const ALL_LANGUAGE_ID = "all";
 const GENERAL_LANGUAGE_ID = "general";
 
 export default function InteractiveStoriesScreen() {
@@ -59,7 +62,11 @@ export default function InteractiveStoriesScreen() {
   const { success: toastSuccess, error: toastError } = useToast();
 
   const languageLabel = useCallback(
-    (id: string) => (id === GENERAL_LANGUAGE_ID ? t("educator.interactiveStoriesEditor.generalLanguageLabel") : getLanguageName(id)),
+    (id: string) => {
+      if (id === ALL_LANGUAGE_ID) return t("educator.interactiveStoriesEditor.allScopeLabel");
+      if (id === GENERAL_LANGUAGE_ID) return t("educator.interactiveStoriesEditor.generalLanguageLabel");
+      return getLanguageName(id);
+    },
     [t]
   );
 
@@ -70,19 +77,29 @@ export default function InteractiveStoriesScreen() {
   const sceneT = useCallback((key: string, opts?: Record<string, unknown>) => t(key as any, opts as any) as string, [t]);
 
   const allowedLanguages = useMemo(
-    () => (user.isAdmin ? [...LANGUAGES.map((l) => l.id), GENERAL_LANGUAGE_ID] : user.reviewerLanguages),
+    () =>
+      user.isAdmin
+        ? [ALL_LANGUAGE_ID, GENERAL_LANGUAGE_ID, ...LANGUAGES.map((l) => l.id)]
+        : user.reviewerLanguages,
     [user]
   );
 
-  // The picker's default pool is the learner-facing set (languages with content);
-  // Studio authors for every language, plus the synthetic "general" scope.
+  // Studio authors for every language, plus the two admin-only scopes pinned
+  // to the top of the picker: the "All" aggregate and the language-agnostic
+  // bucket.
   const languagePool = useMemo<LanguageEntry[]>(
     () => [
+      {
+        id: ALL_LANGUAGE_ID,
+        name: t("educator.interactiveStoriesEditor.allScopeLabel"),
+        nativeName: t("educator.interactiveStoriesEditor.allScopeHint"),
+        region: t("educator.interactiveStoriesEditor.allScopeLabel"),
+      },
       {
         id: GENERAL_LANGUAGE_ID,
         name: t("educator.interactiveStoriesEditor.generalLanguageLabel"),
         nativeName: t("educator.interactiveStoriesEditor.generalLanguageHint"),
-        region: t("educator.interactiveStoriesEditor.generalLanguageLabel"),
+        region: t("educator.interactiveStoriesEditor.allScopeLabel"),
       },
       ...LANGUAGES,
     ],
@@ -92,6 +109,8 @@ export default function InteractiveStoriesScreen() {
   const [selectedLanguageId, setSelectedLanguageId] = useState<string | null>(null);
   const [languagePickerVisible, setLanguagePickerVisible] = useState(false);
   const activeLanguageId = selectedLanguageId ?? allowedLanguages[0] ?? user.selectedLanguageId ?? "izon";
+  // "All" is a read-only aggregate — no single language to author into.
+  const isAllScope = activeLanguageId === ALL_LANGUAGE_ID;
 
   const [editingId, setEditingId] = useState<string | undefined>(undefined);
   const [title, setTitle] = useState("");
@@ -354,8 +373,13 @@ export default function InteractiveStoriesScreen() {
           <IconSymbol name="chevron.right" size={14} color={M.muted} />
         </Pressable>
 
-        {!formOpen && (
+        {!formOpen && !isAllScope && (
           <NewButton label={t("educator.interactiveStoriesEditor.newButton")} onPress={() => setFormOpen(true)} M={M} />
+        )}
+        {!formOpen && isAllScope && (
+          <Text style={{ fontSize: 12, color: M.muted, marginBottom: 12 }}>
+            {t("educator.interactiveStoriesEditor.allScopeAddHint")}
+          </Text>
         )}
 
         {/* Editor form */}
@@ -469,6 +493,7 @@ export default function InteractiveStoriesScreen() {
                   {story.description}
                 </Text>
                 <Text style={{ marginTop: 4, fontSize: 12, color: M.muted }}>
+                  {isAllScope ? `${story.language ? getLanguageName(story.language) : t("educator.interactiveStoriesEditor.generalLanguageLabel")} · ` : ""}
                   {sceneCount === 1
                     ? t("educator.interactiveStoriesEditor.scenesCountOne", { count: 1 })
                     : t("educator.interactiveStoriesEditor.scenesCountMany", { count: sceneCount })}

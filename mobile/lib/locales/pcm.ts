@@ -2282,7 +2282,10 @@ export const pcm = {
       turnsCountMany: "{{count}} turns",
     },
     interactiveStoriesEditor: {
-      generalLanguageLabel: "General",
+      allScopeLabel: "All",
+      allScopeHint: "Every story, all languages",
+      allScopeAddHint: "Pick one language to add story.",
+      generalLanguageLabel: "No-language",
       generalLanguageHint: "Story wey no dey tie to one language",
       screenTitle: "Interactive Stories",
       subtitle: "Story wey get branch — na map of scenes wey learner dey waka through by di choice wey e pick.",

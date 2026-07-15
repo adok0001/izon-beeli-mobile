@@ -7,9 +7,16 @@ import { AuthEnv } from "../../middleware/auth.js";
 
 export const educatorInteractiveStoriesRouter = new Hono<AuthEnv>();
 
-/** Sentinel languageId for stories with no single-language scope (e.g. a
- * pan-African culture piece) — admin-only, since it doesn't fit any
+/** Sentinel languageId for the admin-only "All" scope: instead of one
+ * language, it returns every interactive story across all languages so an
+ * admin can review the whole catalogue in one list. Read-only aggregate —
+ * you can't create into it. Admin-only, since it spans beyond any single
  * reviewer's assigned-languages scope. */
+const ALL_LANGUAGE_ID = "all";
+
+/** Sentinel languageId for the admin-only language-agnostic scope: stories
+ * with no single language (e.g. a pan-African culture piece), stored with
+ * a null language. Unlike "all" these are a real, creatable bucket. */
 const GENERAL_LANGUAGE_ID = "general";
 
 /**
@@ -72,6 +79,12 @@ educatorInteractiveStoriesRouter.get("/interactive-stories", async (c) => {
   const languageId = c.req.query("languageId");
   if (!languageId) return c.json({ error: "languageId required" }, 400);
 
+  if (languageId === ALL_LANGUAGE_ID) {
+    if (!isAdmin) return c.json({ error: "Forbidden" }, 403);
+    const rows = await db.select().from(interactiveStories);
+    return c.json(rows.map(toApiStory));
+  }
+
   if (languageId === GENERAL_LANGUAGE_ID) {
     if (!isAdmin) return c.json({ error: "Forbidden" }, 403);
     const rows = await db.select().from(interactiveStories).where(isNull(interactiveStories.language));
@@ -106,6 +119,11 @@ educatorInteractiveStoriesRouter.post("/interactive-stories", async (c) => {
 
   if (!body.languageId || !body.title?.trim() || !body.description?.trim()) {
     return c.json({ error: "languageId, title, and description are required" }, 400);
+  }
+  // "All" is a read-only aggregate view, not a home for new stories — a story
+  // must belong to a specific language (or the language-agnostic bucket).
+  if (body.languageId === ALL_LANGUAGE_ID) {
+    return c.json({ error: "Choose a specific language for a new story" }, 400);
   }
   const isGeneral = body.languageId === GENERAL_LANGUAGE_ID;
   if (isGeneral) {

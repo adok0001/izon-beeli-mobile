@@ -2322,7 +2322,10 @@ export const en = {
       turnsCountMany: "{{count}} turns",
     },
     interactiveStoriesEditor: {
-      generalLanguageLabel: "General",
+      allScopeLabel: "All",
+      allScopeHint: "Every story, across all languages",
+      allScopeAddHint: "Select a language to add a story.",
+      generalLanguageLabel: "Language-agnostic",
       generalLanguageHint: "Stories not tied to a single language",
       screenTitle: "Interactive Stories",
       subtitle: "Branching narratives — a graph of scenes learners choose their way through.",

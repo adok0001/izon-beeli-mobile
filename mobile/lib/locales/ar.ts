@@ -2247,7 +2247,10 @@ export const ar = {
       turnsCountMany: "{{count}} جمل",
     },
     interactiveStoriesEditor: {
-      generalLanguageLabel: "عام",
+      allScopeLabel: "الكل",
+      allScopeHint: "كل القصص من جميع اللغات",
+      allScopeAddHint: "اختر لغة لإضافة قصة.",
+      generalLanguageLabel: "بدون لغة محددة",
       generalLanguageHint: "قصص غير مرتبطة بلغة واحدة",
       screenTitle: "القصص التفاعلية",
       subtitle: "قصص متفرعة — شبكة من المشاهد يتنقّل فيها المتعلم حسب اختياراته.",
