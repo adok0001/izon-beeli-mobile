@@ -6,6 +6,7 @@ import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { getSnapshotCourseLevel, useContentStore } from "@/store/content-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { Text, View } from "react-native";
+import Animated, { FadeInDown, ReduceMotion } from "react-native-reanimated";
 
 // Each ability shows the real level it was earned at, resolved from whichever
 // language snapshot has hydrated for that lesson (see content-store.ts); a
@@ -60,8 +61,11 @@ export function CanDoResume() {
           const sourceTitle = localize(s.title, uiLanguage);
           const cefr = cefrForLesson(s.lessonId);
           return (
-            <View
+            <Animated.View
               key={s.lessonId}
+              entering={FadeInDown.duration(360)
+                .delay(80 * i)
+                .reduceMotion(ReduceMotion.System)}
               style={{
                 flexDirection: "row",
                 alignItems: "flex-start",
@@ -101,7 +105,7 @@ export function CanDoResume() {
                   <Text style={{ fontSize: 10, fontWeight: "800", color: M.accent }}>{cefr}</Text>
                 </View>
               ) : null}
-            </View>
+            </Animated.View>
           );
         })}
       </View>

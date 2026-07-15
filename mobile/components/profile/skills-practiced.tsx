@@ -1,12 +1,23 @@
+import { EASE_OUT } from "@/constants/motion";
 import { SKILL_META } from "@/constants/course-colors";
 import { useCompletedLessons } from "@/lib/hooks/use-progress";
 import { localize } from "@/lib/localize";
-import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { type MuseumTheme, useMuseumTheme } from "@/lib/use-museum-theme";
 import { getSnapshotLessonSkills, useContentStore } from "@/store/content-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Text, View } from "react-native";
-import Svg, { Circle, Line, Polygon } from "react-native-svg";
+import Animated, {
+  type SharedValue,
+  useAnimatedProps,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
+import Svg, { Circle, G, Line, Polygon } from "react-native-svg";
+
+const AnimatedG = Animated.createAnimatedComponent(G);
 
 const SKILL_ORDER = Object.keys(SKILL_META) as (keyof typeof SKILL_META)[];
 const N = SKILL_ORDER.length;
@@ -22,6 +33,16 @@ function radarPoint(index: number, value: number): [number, number] {
 
 function polygonPoints(values: number[]): string {
   return values.map((v, i) => radarPoint(i, v).join(",")).join(" ");
+}
+
+/** A single competency bar that fills to its share as the card reveals. */
+function SkillBar({ grow, ratio, M }: Readonly<{ grow: SharedValue<number>; ratio: number; M: MuseumTheme }>) {
+  const fillStyle = useAnimatedStyle(() => ({ width: `${Math.round(ratio * grow.value * 100)}%` }));
+  return (
+    <View style={{ width: 48, height: 4, borderRadius: 2, backgroundColor: M.pillBg, overflow: "hidden" }}>
+      <Animated.View style={[{ height: "100%", borderRadius: 2, backgroundColor: M.accent }, fillStyle]} />
+    </View>
+  );
 }
 
 /**
@@ -51,11 +72,34 @@ export function SkillsPracticed() {
   }, [completed, snapshots]);
 
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  const maxCount = Math.max(1, ...Object.values(counts));
+  const values = SKILL_ORDER.map((skill) => (counts[skill] ?? 0) / maxCount);
+
+  // Reveal choreography: the data web unfolds from the center (a scale+fade of
+  // the whole group about RADAR_CENTER) while the competency bars fill in step.
+  // Scaling a centered group is the reliable way to animate SVG here — animating
+  // Polygon `points` directly is flaky in react-native-svg.
+  const reduceMotion = useReducedMotion();
+  const grow = useSharedValue(0);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      grow.value = 1;
+      return;
+    }
+    grow.value = 0;
+    grow.value = withTiming(1, { duration: 760, easing: EASE_OUT });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [total, reduceMotion]);
+
+  const webProps = useAnimatedProps(() => ({
+    scale: reduceMotion ? 1 : grow.value,
+    opacity: grow.value,
+  }));
+
   if (total === 0) return null;
 
   const label = localize({ en: "Your six skills", fr: "Vos six compétences" }, uiLanguage);
-  const maxCount = Math.max(1, ...Object.values(counts));
-  const values = SKILL_ORDER.map((skill) => (counts[skill] ?? 0) / maxCount);
 
   return (
     <View style={{ paddingHorizontal: 16, marginBottom: 12 }}>
@@ -72,11 +116,13 @@ export function SkillsPracticed() {
               const [x, y] = radarPoint(i, 1);
               return <Line key={i} x1={RADAR_CENTER} y1={RADAR_CENTER} x2={x} y2={y} stroke={M.border} strokeWidth={1} />;
             })}
-            <Polygon points={polygonPoints(values)} fill={M.accentGlow} stroke={M.accent} strokeWidth={2} />
-            {values.map((v, i) => {
-              const [x, y] = radarPoint(i, v);
-              return <Circle key={i} cx={x} cy={y} r={3} fill={M.accent} />;
-            })}
+            <AnimatedG animatedProps={webProps} originX={RADAR_CENTER} originY={RADAR_CENTER}>
+              <Polygon points={polygonPoints(values)} fill={M.accentGlow} stroke={M.accent} strokeWidth={2} />
+              {values.map((v, i) => {
+                const [x, y] = radarPoint(i, v);
+                return <Circle key={i} cx={x} cy={y} r={3} fill={M.accent} />;
+              })}
+            </AnimatedG>
           </Svg>
           <View style={{ flex: 1, gap: 9 }}>
             {SKILL_ORDER.map((skill, i) => {
@@ -85,9 +131,7 @@ export function SkillsPracticed() {
                 <View key={skill} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                   <Text style={{ fontSize: 14 }}>{meta.icon}</Text>
                   <Text style={{ fontSize: 12, color: M.sub, flex: 1 }}>{meta.label}</Text>
-                  <View style={{ width: 48, height: 4, borderRadius: 2, backgroundColor: M.pillBg, overflow: "hidden" }}>
-                    <View style={{ width: `${Math.round(values[i] * 100)}%`, height: "100%", borderRadius: 2, backgroundColor: M.accent }} />
-                  </View>
+                  <SkillBar grow={grow} ratio={values[i]} M={M} />
                 </View>
               );
             })}

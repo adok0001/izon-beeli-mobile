@@ -1,5 +1,7 @@
 import { CanDoResume } from "@/components/profile/can-do-resume";
 import { SkillsPracticed } from "@/components/profile/skills-practiced";
+import { AnimatedCount } from "@/components/ui/animated-count";
+import { EASE_OUT } from "@/constants/motion";
 import { FeedbackModal } from "@/components/feedback-modal";
 import { SignInPrompt, useRequireAuth } from "@/components/sign-in-prompt";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -33,6 +35,13 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from "react-native-reanimated";
 import { getLanguageName } from "@/lib/mock-data";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -67,14 +76,43 @@ function AvatarCircle({ avatar, size, selected, onPress }: Readonly<{
     : circle;
 }
 
-function HeroStat({ value, label }: Readonly<{ value: string; label: string }>) {
+function HeroStat({ value, label }: Readonly<{ value: number; label: string }>) {
   const M = useMuseumTheme();
   return (
     <View style={{ flex: 1, alignItems: "center", paddingVertical: 16 }}>
-      <Text style={{ fontSize: 22, fontWeight: "900", color: M.parchment }}>{value}</Text>
+      <AnimatedCount
+        value={value}
+        style={{ fontSize: 22, fontWeight: "900", color: M.parchment, textAlign: "center" }}
+      />
       <Text style={{ marginTop: 4, fontSize: 9, fontWeight: "800", letterSpacing: 1.2, textTransform: "uppercase", color: M.textDim }}>
         {label}
       </Text>
+    </View>
+  );
+}
+
+/** XP fill that sweeps to its share of the level on mount, then holds. */
+function XpBar({ progress }: Readonly<{ progress: number }>) {
+  const M = useMuseumTheme();
+  const reduceMotion = useReducedMotion();
+  const grow = useSharedValue(0);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      grow.value = 1;
+      return;
+    }
+    grow.value = 0;
+    grow.value = withDelay(160, withTiming(1, { duration: 720, easing: EASE_OUT }));
+  }, [progress, reduceMotion, grow]);
+
+  const fillStyle = useAnimatedStyle(() => ({
+    width: `${Math.round(Math.max(0, Math.min(1, progress)) * grow.value * 100)}%`,
+  }));
+
+  return (
+    <View style={{ height: 4, borderRadius: 2, backgroundColor: M.border, overflow: "hidden" }}>
+      <Animated.View style={[{ height: "100%", borderRadius: 2, backgroundColor: M.accent }, fillStyle]} />
     </View>
   );
 }
@@ -356,9 +394,7 @@ export default function ProfileScreen() {
 
             {/* XP progress */}
             <View style={{ width: "100%", marginTop: 14, marginBottom: 20 }}>
-              <View style={{ height: 4, borderRadius: 2, backgroundColor: M.border, overflow: "hidden" }}>
-                <View style={{ height: "100%", borderRadius: 2, backgroundColor: M.accent, width: `${Math.round(levelInfo.progress * 100)}%` }} />
-              </View>
+              <XpBar progress={levelInfo.progress} />
               <Text style={{ marginTop: 5, fontSize: 9, fontWeight: "600", color: M.textDimDark, textAlign: "right" }}>
                 {levelInfo.currentXP} / {levelInfo.xpForNextLevel} XP
               </Text>
@@ -367,11 +403,11 @@ export default function ProfileScreen() {
 
           {/* Stats row */}
           <View style={{ borderTopWidth: 1, borderTopColor: M.border, flexDirection: "row" }}>
-            <HeroStat value={String(summary?.streak ?? 0)} label="Streak" />
+            <HeroStat value={summary?.streak ?? 0} label="Streak" />
             <StatDivider />
-            <HeroStat value={String(completedCount)} label="Lessons" />
+            <HeroStat value={completedCount} label="Lessons" />
             <StatDivider />
-            <HeroStat value={String(summary?.points ?? 0)} label="Total XP" />
+            <HeroStat value={summary?.points ?? 0} label="Total XP" />
           </View>
         </View>
 
