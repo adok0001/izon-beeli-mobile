@@ -36,7 +36,7 @@ export function SeasonCastEditor({ cast, onChange }: Props) {
   return (
     <View className="mt-4 px-5">
       <View className="mb-2 flex-row items-center justify-between">
-        <Text className="text-xs font-semibold uppercase tracking-[1.2px]" style={{ color: M.muted }}>
+        <Text className="text-xs font-semibold uppercase tracking-[1.5px]" style={{ color: M.muted }}>
           {t("educator.story.castTitle", { count: cast.length })}
         </Text>
         <Pressable onPress={add} className="flex-row items-center gap-1.5 active:opacity-70">

@@ -55,7 +55,7 @@ function ChapterEditor({
   const M = useMuseumTheme();
   const selectedLesson = lessonOptions.find((l) => l.id === chapter.lessonId);
   return (
-    <View className="mb-4 rounded-2xl border p-4" style={{ backgroundColor: M.card, borderColor: M.border }}>
+    <View className="mx-5 mb-4 rounded-2xl border p-4" style={{ backgroundColor: M.card, borderColor: M.border }}>
       <View className="mb-3 flex-row items-center justify-between">
         <Text className="text-xs font-bold uppercase tracking-widest" style={{ color: M.warning }}>
           {t("educator.story.chapterLabel", { number: String(index + 1) })}
@@ -336,12 +336,12 @@ export default function StoryEditScreen() {
           </View>
         ) : (
           <ScrollView
-            contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
+            contentContainerStyle={{ paddingTop: 8, paddingBottom: 48 }}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
             {/* Arc metadata */}
-            <View className="mb-5 rounded-2xl border p-4" style={{ backgroundColor: M.card, borderColor: M.border }}>
+            <View className="mx-5 mb-5 rounded-2xl border p-4" style={{ backgroundColor: M.card, borderColor: M.border }}>
               <Text className="mb-1 text-xs font-semibold uppercase tracking-wider" style={{ color: M.muted }}>
                 {t("educator.story.labelArcTitle")}
               </Text>
@@ -403,23 +403,23 @@ export default function StoryEditScreen() {
             <SeasonCastEditor cast={cast} onChange={setCast} />
 
             {/* Chapter list */}
-            <View className="mb-3 flex-row items-center justify-between">
+            <View className="mx-5 mb-3 flex-row items-center justify-between">
               <Text className="text-xs font-semibold uppercase tracking-[1.5px]" style={{ color: M.muted }}>
                 {t("educator.story.chaptersCount", { count: chapters.length })}
               </Text>
               <Pressable
                 onPress={addChapter}
-                className="flex-row items-center gap-1"
+                className="flex-row items-center gap-1.5 active:opacity-70"
               >
-                <IconSymbol name="plus.circle.fill" size={18} color={M.warning} />
-                <Text className="text-sm font-semibold" style={{ color: M.warning }}>
+                <IconSymbol name="plus.circle.fill" size={16} color={M.accent} />
+                <Text className="text-sm font-bold" style={{ color: M.accent }}>
                   {t("educator.story.addChapter")}
                 </Text>
               </Pressable>
             </View>
 
             {chapters.length === 0 ? (
-              <View className="mb-4 items-center rounded-2xl border border-dashed py-10" style={{ borderColor: M.border }}>
+              <View className="mx-5 mb-4 items-center rounded-2xl border border-dashed py-10" style={{ borderColor: M.border }}>
                 <IconSymbol name="book.pages" size={32} color={M.border} />
                 <Text className="mt-2 text-sm" style={{ color: M.muted }}>
                   {t("educator.story.noChapters")}
@@ -458,7 +458,7 @@ export default function StoryEditScreen() {
             <Pressable
               onPress={handleSave}
               disabled={saving}
-              className="mt-2 items-center rounded-xl py-4 active:opacity-80 disabled:opacity-50"
+              className="mx-5 mt-2 items-center rounded-xl py-4 active:opacity-80 disabled:opacity-50"
               style={{ backgroundColor: M.warning }}
             >
               <Text className="text-base font-bold text-white">
