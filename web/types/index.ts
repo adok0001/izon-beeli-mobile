@@ -216,7 +216,6 @@ export interface CulturalContent {
   titleFr?: string | null;
   description: string;
   descriptionFr?: string | null;
-  imageEmoji: string;
   keyTerms: { word: string; english: string; french?: string | null }[];
 }
 
@@ -407,7 +406,6 @@ export interface DiscoverItem {
   publishedAt: string;
   duration: number;
   coverGradient: [string, string];
-  coverEmoji: string;
   featured: boolean;
   audioUrl?: string;
   videoUrl?: string;
@@ -441,7 +439,6 @@ export interface StoryScene {
   id: string;
   type: StorySceneType;
   gradient: [string, string];
-  backgroundEmoji: string;
   title?: string;
   text: string;
   choices?: StoryChoice[];
@@ -453,7 +450,6 @@ export interface InteractiveStory {
   title: string;
   description: string;
   coverGradient: [string, string];
-  coverEmoji: string;
   estimatedMinutes: number;
   author: string;
   language?: string;

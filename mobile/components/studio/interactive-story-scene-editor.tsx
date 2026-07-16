@@ -20,7 +20,6 @@ export type SceneDraft = {
   type: StorySceneType;
   gradientFrom: string;
   gradientTo: string;
-  backgroundEmoji: string;
   title: string;
   text: string;
   nextSceneId: string;
@@ -51,7 +50,6 @@ export function emptyScene(existingIds: Set<string>): SceneDraft {
     type: "narrative",
     gradientFrom: "#8B5E1F",
     gradientTo: "#C4862A",
-    backgroundEmoji: "📖",
     title: "",
     text: "",
     nextSceneId: "",
@@ -269,13 +267,6 @@ export function SceneEditor({
       />
 
       <View style={{ flexDirection: "row", gap: 8 }}>
-        <View style={{ flex: 1 }}>
-          <LabeledInput
-            label={t("educator.interactiveStoriesEditor.sceneBackgroundEmojiLabel")}
-            value={scene.backgroundEmoji}
-            onChange={(v) => onChange({ ...scene, backgroundEmoji: v })}
-          />
-        </View>
         <View style={{ flex: 1 }}>
           <LabeledInput
             label={t("educator.interactiveStoriesEditor.sceneGradientFromLabel")}

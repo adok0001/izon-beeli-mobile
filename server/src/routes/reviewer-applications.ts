@@ -324,7 +324,7 @@ reviewerApplicationsAdminRouter.patch("/:id", async (c) => {
     tokens.map(({ token }) =>
       sendPush(
         token,
-        status === "approved" ? "Application Approved 🎉" : "Application Update",
+        status === "approved" ? "Application Approved" : "Application Update",
         status === "approved"
           ? "You've been granted reviewer access. Read the Educator Guide to get started."
           : reviewerNote?.trim()
@@ -342,7 +342,7 @@ reviewerApplicationsAdminRouter.patch("/:id", async (c) => {
     const note = reviewerNote?.trim() || null;
     await sendEmail({
       to: { email: applicant.email, name: applicant.name },
-      subject: status === "approved" ? "Reviewer access granted 🎉" : "Reviewer application update",
+      subject: status === "approved" ? "Reviewer access granted" : "Reviewer application update",
       htmlContent: reviewerApplicationStatusEmailHtml(applicant.name, status, note),
       textContent: reviewerApplicationStatusEmailText(applicant.name, status, note),
     });

@@ -6,7 +6,7 @@ import { ComponentProps } from 'react';
 import { OpaqueColorValue, type StyleProp, type TextStyle } from 'react-native';
 
 type IconMapping = Record<SymbolViewProps['name'], ComponentProps<typeof MaterialIcons>['name']>;
-type IconSymbolName = keyof typeof MAPPING;
+export type IconSymbolName = keyof typeof MAPPING;
 
 /**
  * Add your SF Symbols to Material Icons mappings here.
@@ -104,6 +104,30 @@ const MAPPING = {
   'bookmark': 'bookmark-border',
   'bookmark.fill': 'bookmark',
   'flag.fill': 'flag',
+  // Course-type, skill, and culture-category icons (replaced emoji-as-icons).
+  'sunrise.fill': 'wb-twilight',
+  'textformat.abc': 'abc',
+  'basket.fill': 'shopping-basket',
+  'sailboat.fill': 'sailing',
+  'bubble.left.fill': 'chat',
+  'building.2.fill': 'location-city',
+  'music.note': 'music-note',
+  'paintpalette.fill': 'palette',
+  'puzzlepiece.fill': 'extension',
+  'mappin': 'place',
+  'figure.child': 'child-care',
+  'party.popper.fill': 'celebration',
+  'sparkles': 'auto-awesome',
+  'tshirt.fill': 'checkroom',
+  'fork.knife': 'restaurant',
+  'hand.wave.fill': 'waving-hand',
+  'building.columns.fill': 'balance',
+  'person.3.fill': 'family-restroom',
+  'moon.stars.fill': 'nights-stay',
+  'theatermasks.fill': 'theater-comedy',
+  'number.square.fill': 'calculate',
+  'map.fill': 'map',
+  'film.fill': 'movie',
 } as IconMapping;
 
 /**

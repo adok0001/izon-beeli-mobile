@@ -8,6 +8,7 @@ import { fonts } from "@/constants/typography";
 import type { LocalizedText } from "@/types";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { CULTURE_CATEGORY_ICON } from "@/constants/cultural-categories";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { friendlyError } from "@/lib/api";
 import {
@@ -71,7 +72,6 @@ type HeroBandForm = {
 
 type CulturalForm = {
   id?: string;
-  imageEmoji: string;
   title: LocalizedText;
   category: CulturalCategory;
   description: LocalizedText;
@@ -85,7 +85,6 @@ type CulturalForm = {
 };
 
 const EMPTY_CULTURAL: CulturalForm = {
-  imageEmoji: "🌍",
   title: {},
   category: "festivals",
   description: {},
@@ -177,7 +176,6 @@ export default function EducatorCultureScreen() {
   const startEditCultural = (item: CulturalItem) => {
     setCulturalForm({
       id: item.id,
-      imageEmoji: item.imageEmoji,
       title: toLocalizedText(item.title, item.titleFr),
       category: (item.category as CulturalCategory) ?? "festivals",
       description: toLocalizedText(item.description, item.descriptionFr),
@@ -202,7 +200,6 @@ export default function EducatorCultureScreen() {
 
   const submitCultural = () => {
     if (
-      !culturalForm.imageEmoji.trim() ||
       !culturalForm.title.en?.trim() ||
       !culturalForm.description.en?.trim()
     ) {
@@ -237,7 +234,6 @@ export default function EducatorCultureScreen() {
       {
         id: culturalForm.id,
         languageId: activeLanguageId,
-        imageEmoji: culturalForm.imageEmoji.trim(),
         title: titleSer.primary,
         titleFr: titleSer.fr,
         category: culturalForm.category,
@@ -342,17 +338,6 @@ export default function EducatorCultureScreen() {
         </Pressable>
         {culturalFormOpen ? (
         <>
-        <View className="flex-row gap-2 items-center" style={{ marginBottom: 8 }}>
-          <TextInput
-            value={culturalForm.imageEmoji}
-            onChangeText={(imageEmoji) => setCulturalForm((c) => ({ ...c, imageEmoji }))}
-            placeholder="🌍"
-            placeholderTextColor={M.muted}
-            maxLength={8}
-            style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
-            className={`${inputCls} w-16 text-center text-xl`}
-          />
-        </View>
         <LocalizedTextInput
           label={t("educator.culture.titleLabel")}
           value={culturalForm.title}
@@ -705,7 +690,7 @@ export default function EducatorCultureScreen() {
     <View className="mx-5 rounded-2xl border p-3" style={{ backgroundColor: M.card, borderColor: M.border }}>
       <View className="flex-row items-center justify-between">
         <View className="flex-1 flex-row items-center gap-2.5 pr-3">
-          <Text className="text-2xl">{item.imageEmoji}</Text>
+          <IconSymbol name={CULTURE_CATEGORY_ICON[item.category as CulturalCategory]} size={22} color={M.accent} />
           <View className="flex-1">
             <Text className="text-base font-semibold" style={{ color: M.text }}>
               {localize(item.title, "en")}

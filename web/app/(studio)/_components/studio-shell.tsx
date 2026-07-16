@@ -112,12 +112,12 @@ function hasAccess(access: StudioAccess, me: { isAdmin: boolean; isReviewer: boo
  * from the learner-facing UI chrome language, though it shares the same
  * store so a Studio pick also updates the "Retour à l'application" chrome.
  */
-const CONTENT_LANGS: readonly { id: UiLanguage; label: string; flag: string }[] = [
-  { id: "en",  label: "English",   flag: "🇬🇧" },
-  { id: "fr",  label: "Français",  flag: "🇫🇷" },
-  { id: "pcm", label: "Naija",     flag: "🇳🇬" },
-  { id: "ar",  label: "العربية",   flag: "🇸🇦" },
-  { id: "pt",  label: "Português", flag: "🇵🇹" },
+const CONTENT_LANGS: readonly { id: UiLanguage; label: string }[] = [
+  { id: "en",  label: "English"   },
+  { id: "fr",  label: "Français"  },
+  { id: "pcm", label: "Naija"     },
+  { id: "ar",  label: "العربية"   },
+  { id: "pt",  label: "Português" },
 ];
 
 export function StudioShell({
@@ -203,13 +203,13 @@ export function StudioShell({
                 title="Content display language"
               >
                 <Globe2 className="h-3.5 w-3.5" />
-                {CONTENT_LANGS.find((l) => l.id === uiLanguage)?.flag}
+                {CONTENT_LANGS.find((l) => l.id === uiLanguage)?.label}
               </button>
               {langMenuOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setLangMenuOpen(false)} />
                   <div className="absolute right-0 top-full mt-1 z-50 w-40 rounded-xl border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-[#0b0b16] shadow-lg overflow-hidden">
-                    {CONTENT_LANGS.map(({ id, label, flag }) => (
+                    {CONTENT_LANGS.map(({ id, label }) => (
                       <button
                         key={id}
                         onClick={() => { setUiLanguage(id); setLangMenuOpen(false); }}
@@ -220,7 +220,6 @@ export function StudioShell({
                             : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06]"
                         )}
                       >
-                        <span className="leading-none">{flag}</span>
                         {label}
                       </button>
                     ))}

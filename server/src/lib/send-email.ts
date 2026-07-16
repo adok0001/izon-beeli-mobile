@@ -134,7 +134,7 @@ export function wordOfDayEmailText(name: string, word: string, english: string):
 
 export function streakReminderEmailHtml(name: string, streak: number): string {
   const body = `
-    <h2 style="margin:0 0 8px;color:#111827;font-size:20px;">Keep your streak alive! 🔥</h2>
+    <h2 style="margin:0 0 8px;color:#111827;font-size:20px;">Keep your streak alive!</h2>
     <p style="margin:0 0 24px;color:#6b7280;">Hello ${escapeHtml(name)},</p>
     <p style="margin:0 0 16px;color:#374151;font-size:16px;">
       You have a <strong>${streak}-day streak</strong> — don't let it end today!
@@ -174,8 +174,7 @@ export function contributionStatusEmailHtml(name: string, word: string, status: 
   const color = approved ? "#15803d" : "#dc2626";
   const bg = approved ? "#f0fdf4" : "#fef2f2";
   const border = approved ? "#16a34a" : "#dc2626";
-  const emoji = approved ? "🎉" : "📝";
-  const headline = approved ? `Your contribution was approved ${emoji}` : `Contribution update ${emoji}`;
+  const headline = approved ? "Your contribution was approved" : "Contribution update";
 
   const body = `
     <h2 style="margin:0 0 8px;color:#111827;font-size:20px;">${headline}</h2>
@@ -203,8 +202,7 @@ const EDUCATOR_GUIDE_URL = process.env.EDUCATOR_GUIDE_URL ?? "https://beeli.app/
 
 export function reviewerApplicationStatusEmailHtml(name: string, status: "approved" | "rejected", note?: string | null): string {
   const approved = status === "approved";
-  const emoji = approved ? "🎉" : "📝";
-  const headline = approved ? `Reviewer access granted ${emoji}` : `Reviewer application update ${emoji}`;
+  const headline = approved ? "Reviewer access granted" : "Reviewer application update";
   const color = approved ? "#15803d" : "#dc2626";
   const bg = approved ? "#f0fdf4" : "#fef2f2";
   const border = approved ? "#16a34a" : "#dc2626";

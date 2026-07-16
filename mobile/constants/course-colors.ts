@@ -1,3 +1,4 @@
+import type { IconSymbolName } from "@/components/ui/icon-symbol";
 import type { CourseType, Skill } from "@/types";
 
 export interface CourseTypeColors {
@@ -142,7 +143,7 @@ export function getLevelColors(level?: string | null): LevelColors {
 
 export interface SkillMeta {
   label: string;
-  icon: string;
+  icon: IconSymbolName | null;
   badgeBg: string;
   badgeText: string;
 }
@@ -150,37 +151,37 @@ export interface SkillMeta {
 export const SKILL_META: Record<Skill, SkillMeta> = {
   listening: {
     label: "Listening",
-    icon: "🎧",
+    icon: "headphones",
     badgeBg: "bg-cyan-100 dark:bg-cyan-900",
     badgeText: "text-cyan-700 dark:text-cyan-300",
   },
   speaking: {
     label: "Speaking",
-    icon: "🗣️",
+    icon: "mic.fill",
     badgeBg: "bg-red-100 dark:bg-red-900",
     badgeText: "text-red-700 dark:text-red-300",
   },
   reading: {
     label: "Reading",
-    icon: "📖",
+    icon: "book.fill",
     badgeBg: "bg-green-100 dark:bg-green-900",
     badgeText: "text-green-700 dark:text-green-300",
   },
   writing: {
     label: "Writing",
-    icon: "✍️",
+    icon: "pencil",
     badgeBg: "bg-purple-100 dark:bg-purple-900",
     badgeText: "text-purple-700 dark:text-purple-300",
   },
   vocabulary: {
     label: "Vocabulary",
-    icon: "🔤",
+    icon: "textformat.abc",
     badgeBg: "bg-yellow-100 dark:bg-yellow-900",
     badgeText: "text-yellow-700 dark:text-yellow-300",
   },
   grammar: {
     label: "Grammar",
-    icon: "🧩",
+    icon: "puzzlepiece.fill",
     badgeBg: "bg-slate-100 dark:bg-slate-800",
     badgeText: "text-slate-700 dark:text-slate-300",
   },
@@ -188,7 +189,7 @@ export const SKILL_META: Record<Skill, SkillMeta> = {
 
 const FALLBACK_SKILL_META: SkillMeta = {
   label: "",
-  icon: "",
+  icon: null,
   badgeBg: "bg-neutral-100 dark:bg-neutral-700",
   badgeText: "text-neutral-600 dark:text-neutral-300",
 };

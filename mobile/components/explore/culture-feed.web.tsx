@@ -98,17 +98,13 @@ function HeroCard({
           }}
         />
 
-        {/* Background emoji at low opacity */}
-        <Text
-          style={{
-            fontSize: 100,
-            opacity: 0.07,
-            position: "absolute",
-            userSelect: "none" as never,
-          }}
-        >
-          {item.coverEmoji}
-        </Text>
+        {/* Background glyph at low opacity */}
+        <IconSymbol
+          name={cfg.icon}
+          size={100}
+          color={cfg.color}
+          style={{ opacity: 0.07, position: "absolute" }}
+        />
 
         {/* Type badge top-left */}
         <View
@@ -284,7 +280,7 @@ export function CultureFeed({ filter }: { filter: DiscoverFilter }) {
 
       {featured.length === 0 && rest.length === 0 && (
         <View style={{ alignItems: "center", paddingVertical: 80 }}>
-          <Text style={{ fontSize: 36, marginBottom: 16 }}>🎬</Text>
+          <IconSymbol name="film.stack" size={36} color={M.muted} style={{ marginBottom: 16 }} />
           <Text style={{ fontSize: 16, fontWeight: "700", color: M.text, marginBottom: 6 }}>
             {t("culture.emptyTitle")}
           </Text>

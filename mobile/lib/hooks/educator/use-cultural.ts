@@ -30,7 +30,6 @@ export interface CulturalItem {
   titleFr?: string | null;
   description: string;
   descriptionFr?: string | null;
-  imageEmoji: string;
   keyTerms?: CulturalKeyTerm[];
   featured?: boolean;
   headword?: CulturalHeadword | null;
@@ -46,7 +45,6 @@ export interface UpsertCulturalInput {
   titleFr?: string;
   description: string;
   descriptionFr?: string;
-  imageEmoji: string;
   keyTerms?: CulturalKeyTerm[];
   featured?: boolean;
   headword?: CulturalHeadword | null;

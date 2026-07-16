@@ -216,7 +216,7 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
                       borderColor: castAccent.border,
                     }}
                   >
-                    <Text style={{ fontSize: 11 }}>{castAvatar.avatar}</Text>
+                    <Text style={{ fontSize: 10, fontWeight: "800", color: castAccent.solid }}>{castAvatar.initial}</Text>
                   </View>
                   <Text style={{ fontSize: 11, fontWeight: "800", letterSpacing: 0.5, textTransform: "uppercase", color: M.accent }}>
                     {speaker}

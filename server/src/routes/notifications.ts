@@ -338,7 +338,7 @@ notificationsAdminRouter.get("/send-streak-reminder", async (c) => {
 
   const pushMessages: PushMessage[] = pushRows.map((row) => ({
     to: row.token,
-    title: "Keep your streak alive! 🔥",
+    title: "Keep your streak alive!",
     body: `You have a ${row.streak}-day streak. Complete a lesson today to keep it going.`,
     data: { type: "streak_reminder" },
     sound: "default",
@@ -355,7 +355,7 @@ notificationsAdminRouter.get("/send-streak-reminder", async (c) => {
     emailRows.map(async (row) => {
       const ok = await sendEmail({
         to: { email: row.email, name: row.name },
-        subject: "Keep your streak alive! 🔥",
+        subject: "Keep your streak alive!",
         htmlContent: streakReminderEmailHtml(row.name, row.streak),
         textContent: streakReminderEmailText(row.name, row.streak),
       });

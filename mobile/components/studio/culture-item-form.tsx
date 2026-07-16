@@ -21,7 +21,6 @@ export const EMPTY_FORM: Omit<DiscoverItem, "id"> = {
   publishedAt: new Date().toISOString(),
   duration: 360,
   coverGradient: ["#0F2A4A", "#0D0F1A"],
-  coverEmoji: "📖",
   featured: false,
   audioUrl: "",
   contentUrl: "",
@@ -73,7 +72,6 @@ export function ItemForm({ initial, onSave, onCancel, saving }: Readonly<ItemFor
   const [title, setTitle] = useState(base.title);
   const [description, setDescription] = useState(base.description);
   const [author, setAuthor] = useState(base.author);
-  const [coverEmoji, setCoverEmoji] = useState(base.coverEmoji);
   const [duration, setDuration] = useState(String(base.duration));
   const [featured, setFeatured] = useState(base.featured ?? false);
   const [audioUrl, setAudioUrl] = useState(base.audioUrl ?? "");
@@ -84,7 +82,7 @@ export function ItemForm({ initial, onSave, onCancel, saving }: Readonly<ItemFor
 
   const { data: storyArcs, isLoading: arcsLoading } = useStoryArcs();
 
-  const canSave = title.trim() && description.trim() && author.trim() && coverEmoji.trim();
+  const canSave = title.trim() && description.trim() && author.trim();
 
   function handleSave() {
     if (!canSave) return;
@@ -96,7 +94,6 @@ export function ItemForm({ initial, onSave, onCancel, saving }: Readonly<ItemFor
       publishedAt: base.publishedAt ?? new Date().toISOString(),
       duration: parseInt(duration, 10) || 360,
       coverGradient: base.coverGradient,
-      coverEmoji: coverEmoji.trim(),
       featured,
       audioUrl: audioUrl.trim() || undefined,
       contentUrl: contentUrl.trim() || undefined,
@@ -192,20 +189,6 @@ export function ItemForm({ initial, onSave, onCancel, saving }: Readonly<ItemFor
       </Field>
 
       <View className="flex-row gap-3 mb-4">
-        <View className="flex-1">
-          <Text className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: M.muted }}>
-            {t("admin.cultureContent.formCoverEmoji")}
-          </Text>
-          <TextInput
-            value={coverEmoji}
-            onChangeText={setCoverEmoji}
-            placeholder="🎙️"
-            placeholderTextColor={M.muted}
-            maxLength={4}
-            style={inputStyle}
-            className={inputClass}
-          />
-        </View>
         <View className="flex-1">
           <Text className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: M.muted }}>
             {t("admin.cultureContent.formDuration")}

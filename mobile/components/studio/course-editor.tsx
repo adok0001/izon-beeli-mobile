@@ -1,7 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LocalizedTextInput, toLocalizedText } from "@/components/ui/localized-text-input";
 import { localize } from "@/lib/localize";
-import { COURSE_EMOJI } from "@/lib/journey";
+import { COURSE_ICON } from "@/lib/journey";
 import type { EducatorCourse } from "@/lib/hooks/use-educator-panel";
 import { useEducatorStoryArcs } from "@/lib/hooks/educator/use-story-arcs";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -167,7 +167,7 @@ export function CourseEditModal({
                 onPress={() => setCourseType(null)}
                 style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, borderWidth: 1, borderColor: courseType === null ? M.accent : M.border, backgroundColor: courseType === null ? `${M.accent}20` : M.card }}
               >
-                <Text style={{ fontSize: 15 }}>📍</Text>
+                <IconSymbol name="mappin" size={15} color={courseType === null ? M.accent : M.muted} />
                 <Text style={{ fontSize: 12, fontWeight: "700", color: courseType === null ? M.accent : M.muted }}>None</Text>
               </Pressable>
               {COURSE_TYPES.map((ct) => {
@@ -178,7 +178,7 @@ export function CourseEditModal({
                     onPress={() => setCourseType(ct.value)}
                     style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, borderWidth: 1, borderColor: active ? M.accent : M.border, backgroundColor: active ? `${M.accent}20` : M.card }}
                   >
-                    <Text style={{ fontSize: 15 }}>{COURSE_EMOJI[ct.value]}</Text>
+                    <IconSymbol name={COURSE_ICON[ct.value]} size={15} color={active ? M.accent : M.muted} />
                     <Text style={{ fontSize: 12, fontWeight: "700", color: active ? M.accent : M.muted }}>{ct.label}</Text>
                   </Pressable>
                 );

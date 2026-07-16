@@ -8,6 +8,7 @@ import { LessonProgram, type ProgramStep } from "@/components/lesson/lesson-prog
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { isRemoteAudioSource } from "@/lib/downloads";
 import { useLessonDownload } from "@/lib/hooks/use-lesson-download";
+import type { IconSymbolName } from "@/components/ui/icon-symbol";
 import type { JourneyNode } from "@/lib/journey";
 import { localize } from "@/lib/localize";
 import { MUSEUM, useMuseumTheme } from "@/lib/use-museum-theme";
@@ -39,12 +40,13 @@ function buildProgramSteps(
 
 interface MetaPillProps {
   label: string;
+  icon?: IconSymbolName;
   color?: string;
   bg?: string;
   border?: string;
 }
 
-function MetaPill({ label, color, bg, border }: MetaPillProps) {
+function MetaPill({ label, icon, color, bg, border }: MetaPillProps) {
   const M = useMuseumTheme();
   const resolved = { color: color ?? M.sub, bg: bg ?? M.pillBg, border: border ?? M.border };
   return (
@@ -52,6 +54,7 @@ function MetaPill({ label, color, bg, border }: MetaPillProps) {
       style={{
         flexDirection: "row",
         alignItems: "center",
+        gap: 5,
         borderRadius: 999,
         paddingHorizontal: 12,
         paddingVertical: 6,
@@ -60,6 +63,7 @@ function MetaPill({ label, color, bg, border }: MetaPillProps) {
         borderColor: resolved.border,
       }}
     >
+      {icon ? <IconSymbol name={icon} size={12} color={resolved.color} /> : null}
       <Text style={{ fontSize: 11.5, fontWeight: "700", color: resolved.color }}>{label}</Text>
     </View>
   );
@@ -157,7 +161,7 @@ function StatusPill({ status }: { status: JourneyNode["status"] }) {
       />
     );
   }
-  return <MetaPill label={`🔒 ${t("journey.locked", { defaultValue: "Locked" })}`} />;
+  return <MetaPill icon="lock.fill" label={t("journey.locked", { defaultValue: "Locked" })} />;
 }
 
 interface JourneySheetProps {
@@ -227,7 +231,8 @@ export function JourneySheet({ node, areaName, audioUrl, uiLanguage, onClose, on
             />
             {node.wordCount ? (
               <MetaPill
-                label={`📖 ${t("journey.wordCount", {
+                icon="book.fill"
+                label={`${t("journey.wordCount", {
                   count: node.wordCount,
                   defaultValue: `${node.wordCount} mots`,
                 })}`}
@@ -235,7 +240,7 @@ export function JourneySheet({ node, areaName, audioUrl, uiLanguage, onClose, on
             ) : null}
             {node.skills.slice(0, 3).map((skill) => {
               const meta = getSkillMeta(skill);
-              return <MetaPill key={skill} label={`${meta.icon} ${meta.label}`} />;
+              return <MetaPill key={skill} icon={meta.icon ?? undefined} label={meta.label} />;
             })}
             <StatusPill status={node.status} />
             {isRemoteAudioSource(audioUrl) && node.status !== "locked" ? (

@@ -45,9 +45,12 @@ function RoomHero({ type, color }: { type: RoomType; color: string }) {
           overflow: "hidden",
         }}
       >
-        <Text style={{ fontSize: 52, position: "absolute", top: 16, right: 16, opacity: 0.25 }}>
-          {item.coverEmoji}
-        </Text>
+        <IconSymbol
+          name={cfg.icon}
+          size={52}
+          color={cfg.color}
+          style={{ position: "absolute", top: 16, right: 16, opacity: 0.25 }}
+        />
         <View
           style={{
             alignSelf: "flex-start",

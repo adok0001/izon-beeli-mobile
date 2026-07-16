@@ -1,3 +1,4 @@
+import type { IconSymbolName } from "@/components/ui/icon-symbol";
 import { getCourseTypeColors } from "@/constants/course-colors";
 import { BUNDLED_AUDIO } from "@/lib/mock-data";
 import { MUSEUM } from "@/lib/use-museum-theme";
@@ -70,7 +71,7 @@ export interface JourneyArea {
   title: string | LocalizedText;
   /** Localized level ("beginner" | …) used as the area sub-label. */
   level: string;
-  emoji: string;
+  icon: IconSymbolName;
   color: string;
   /** Owning course's type — picks the themed scenery drawn behind the nodes. */
   courseType?: CourseType | null;
@@ -97,27 +98,27 @@ const LABEL_RISE = 92; // how far the cartouche sits above its first node (clear
 const BOTTOM_PAD = 176;
 const AMP_FRAC = 0.26; // horizontal sway as a fraction of map width
 
-/** Emoji per course type — the icon shown in the floating area label. */
-const COURSE_EMOJI: Record<CourseType, string> = {
-  first_words: "🌅",
-  sound_script: "🔤",
-  everyday_life: "🛖",
-  numbers_trade: "🧺",
-  oral_tradition: "🛶",
-  communicative: "💬",
-  contemporary: "🏙️",
-  songs: "🎵",
-  colors: "🎨",
-  house: "🛖",
-  community: "🌅",
-  work: "🧺",
-  modern_life: "🏙️",
-  grammar: "🧩",
-  script: "✍️",
+/** Icon per course type — the glyph shown in the floating area label. */
+const COURSE_ICON: Record<CourseType, IconSymbolName> = {
+  first_words: "sunrise.fill",
+  sound_script: "textformat.abc",
+  everyday_life: "house.fill",
+  numbers_trade: "basket.fill",
+  oral_tradition: "sailboat.fill",
+  communicative: "bubble.left.fill",
+  contemporary: "building.2.fill",
+  songs: "music.note",
+  colors: "paintpalette.fill",
+  house: "house.fill",
+  community: "person.2.fill",
+  work: "basket.fill",
+  modern_life: "building.2.fill",
+  grammar: "puzzlepiece.fill",
+  script: "pencil",
 };
 
-function emojiFor(courseType?: CourseType | null): string {
-  return (courseType && COURSE_EMOJI[courseType]) || "📍";
+function iconFor(courseType?: CourseType | null): IconSymbolName {
+  return (courseType && COURSE_ICON[courseType]) || "mappin";
 }
 
 /**
@@ -217,7 +218,7 @@ function layoutNodes(
         courseId: node.courseId,
         title: course?.title ?? "",
         level: course?.level ?? "",
-        emoji: emojiFor(course?.courseType),
+        icon: iconFor(course?.courseType),
         color: node.areaColor,
         courseType: course?.courseType,
         gloss: glossFor(course?.courseType),
@@ -322,8 +323,8 @@ export function weekStreakDays(
   return result;
 }
 
-/** Map course type to its emoji — exported so CourseArtwork can reuse it. */
-export { COURSE_EMOJI };
+/** Map course type to its icon — exported so CourseArtwork can reuse it. */
+export { COURSE_ICON };
 
 /**
  * A CEFR-style proficiency label derived from how far along the language path

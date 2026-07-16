@@ -115,7 +115,6 @@ async function importCast() {
         set: {
           name: sql`excluded.name`,
           role: sql`excluded.role`,
-          avatar: sql`excluded.avatar`,
           hue: sql`excluded.hue`,
           order: sql`excluded."order"`,
         },
@@ -159,7 +158,6 @@ async function importCulturalNotes() {
         titleFr: n.title.fr ?? null,
         description: n.body.en ?? "",
         descriptionFr: n.body.fr ?? null,
-        imageEmoji: n.imageEmoji,
       })
       .onConflictDoUpdate({
         target: culturalContent.id,
@@ -169,7 +167,6 @@ async function importCulturalNotes() {
           titleFr: sql`excluded.title_fr`,
           description: sql`excluded.description`,
           descriptionFr: sql`excluded.description_fr`,
-          imageEmoji: sql`excluded.image_emoji`,
         },
       });
 

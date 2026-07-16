@@ -73,7 +73,7 @@ export const ShareCardPreview = forwardRef<View, ShareCardData>((props, ref) => 
         {props.template === "achievement" && (
           <>
             <View style={styles.trophyRing}>
-              <Text style={{ fontSize: 26 }}>🏆</Text>
+              <IconSymbol name="trophy.fill" size={26} color={MUSEUM.accent} />
             </View>
             <Text style={{ ...type.h2, color: MUSEUM.parchment }}>{props.title}</Text>
             <Text style={{ ...type.body, color: MUSEUM.textDim, marginTop: 6 }}>{props.detail}</Text>
@@ -114,7 +114,7 @@ export const ShareCardPreview = forwardRef<View, ShareCardData>((props, ref) => 
         {props.template === "cultural" && (
           <>
             <View className="flex-row items-center" style={{ gap: 10 }}>
-              <Text style={{ fontSize: 30 }}>{props.emoji}</Text>
+              <IconSymbol name={props.icon} size={28} color={MUSEUM.accent} />
               <Badge
                 label={props.category.charAt(0).toUpperCase() + props.category.slice(1)}
                 color={MUSEUM.accent}
@@ -132,7 +132,7 @@ export const ShareCardPreview = forwardRef<View, ShareCardData>((props, ref) => 
         {props.template === "lesson" && (
           <>
             <View style={styles.trophyRing}>
-              <Text style={{ fontSize: 26 }}>📖</Text>
+              <IconSymbol name="book.fill" size={26} color={MUSEUM.accent} />
             </View>
             <Text style={{ ...type.h2, color: MUSEUM.parchment }}>{props.title}</Text>
             {props.description ? (

@@ -61,9 +61,7 @@ function RankBadge({ rank }: Readonly<{ rank: number }>) {
       }}
     >
       {rank <= 3 ? (
-        <Text style={{ fontSize: 14, color }}>
-          {rank === 1 ? "🥇" : rank === 2 ? "🥈" : "🥉"}
-        </Text>
+        <IconSymbol name="trophy.fill" size={14} color={color} />
       ) : (
         <Text style={{ fontSize: 11, fontWeight: "700", color: M.muted }}>{rank}</Text>
       )}

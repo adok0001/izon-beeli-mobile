@@ -158,7 +158,6 @@ function FeedbackModal({ onClose }: Readonly<{ onClose: () => void }>) {
 
         {done ? (
           <div className="py-6 text-center">
-            <p className="text-2xl mb-2">🙏</p>
             <p className="font-semibold text-neutral-900 dark:text-white">{t("profile.thanks")}</p>
             <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{t("profile.feedbackHint")}</p>
             <button onClick={onClose} className="mt-4 px-6 py-2 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors">

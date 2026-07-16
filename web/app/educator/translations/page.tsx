@@ -129,7 +129,7 @@ function TranslationQueue() {
         </p>
       )}
       {queueQuery.data?.missing.length === 0 && (
-        <p className="text-sm text-green-600 dark:text-green-400">Every entry has a {locale} gloss. 🎉</p>
+        <p className="text-sm text-green-600 dark:text-green-400">Every entry has a {locale} gloss.</p>
       )}
 
       <div className="space-y-3">

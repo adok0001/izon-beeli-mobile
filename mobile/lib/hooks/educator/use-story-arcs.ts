@@ -22,8 +22,6 @@ export interface EducatorStoryCastMember {
   castId: string;
   name: string;
   role: string;
-  /** Emoji shown on the cast strip. */
-  avatar: string;
   /** Categorical accent tinting the avatar (see constants/accent-colors). */
   hue: string;
 }

@@ -59,7 +59,6 @@ export interface CulturalContentRow {
   titleFr?: string | null;
   description: string;
   descriptionFr?: string | null;
-  imageEmoji: string;
   featured: boolean;
   keyTerms: { word: string; english: string }[];
   [key: string]: unknown;

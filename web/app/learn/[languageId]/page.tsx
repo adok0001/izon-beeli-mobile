@@ -6,6 +6,7 @@ import Script from "next/script";
 import { breadcrumbJsonLd } from "@/lib/structured-data";
 import { getRequestLocale, localeAlternates } from "@/lib/locale-meta";
 import { localizeField } from "@/lib/localize";
+import { BookOpen, Brain, Globe, Headphones, Sprout, type LucideIcon } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api";
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://izon-beeli.com";
@@ -228,7 +229,7 @@ export default async function LearnLanguagePage({
             </>
           ) : (
             <div className="text-center py-16 rounded-2xl border border-dashed border-neutral-200 dark:border-neutral-800">
-              <p className="text-2xl mb-3">🌱</p>
+              <Sprout className="h-7 w-7 mx-auto mb-3 text-brand-600 dark:text-brand-400" strokeWidth={1.5} />
               <h2 className="text-xl font-bold mb-2">{lang.name} is coming soon</h2>
               <p className="text-neutral-500 dark:text-neutral-400 mb-6 max-w-sm mx-auto text-sm">
                 We&apos;re building {lang.name} content. Help us get there faster by contributing words and phrases.
@@ -246,14 +247,14 @@ export default async function LearnLanguagePage({
         {/* Features strip */}
         <section className="border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50">
           <div className="max-w-4xl mx-auto px-6 py-12 grid sm:grid-cols-4 gap-6 text-center">
-            {[
-              { emoji: "🎧", label: "Audio lessons", sub: "Native speaker recordings" },
-              { emoji: "📖", label: "Dictionary", sub: "Growing word bank" },
-              { emoji: "🧠", label: "Spaced repetition", sub: "Never forget a word" },
-              { emoji: "🌍", label: "Community", sub: "Native speaker contributors" },
-            ].map((f) => (
+            {([
+              { icon: Headphones, label: "Audio lessons", sub: "Native speaker recordings" },
+              { icon: BookOpen, label: "Dictionary", sub: "Growing word bank" },
+              { icon: Brain, label: "Spaced repetition", sub: "Never forget a word" },
+              { icon: Globe, label: "Community", sub: "Native speaker contributors" },
+            ] as { icon: LucideIcon; label: string; sub: string }[]).map((f) => (
               <div key={f.label}>
-                <div className="text-2xl mb-1">{f.emoji}</div>
+                <f.icon className="h-6 w-6 mx-auto mb-1.5 text-brand-600 dark:text-brand-400" strokeWidth={1.5} />
                 <p className="font-semibold text-sm text-neutral-900 dark:text-white">{f.label}</p>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400">{f.sub}</p>
               </div>

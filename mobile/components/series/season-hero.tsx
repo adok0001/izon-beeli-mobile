@@ -1,3 +1,4 @@
+import { IconSymbol, type IconSymbolName } from "@/components/ui/icon-symbol";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { LinearGradient } from "expo-linear-gradient";
 import { Text, View } from "react-native";
@@ -28,7 +29,7 @@ export function SeasonHero({
   title,
   nativeTitle,
   logline,
-  coverEmoji,
+  icon,
   gradientTop,
   episodeCount,
   totalMinutes,
@@ -39,7 +40,7 @@ export function SeasonHero({
   title: string;
   nativeTitle?: string | null;
   logline?: string | null;
-  coverEmoji: string;
+  icon: IconSymbolName;
   gradientTop: string;
   episodeCount: number;
   totalMinutes: number;
@@ -50,7 +51,7 @@ export function SeasonHero({
   const M = useMuseumTheme();
   return (
     <LinearGradient colors={[gradientTop, M.ink]} style={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 22, overflow: "hidden" }}>
-      <Text style={{ fontSize: 84, position: "absolute", top: 8, right: 10, opacity: 0.16 }}>{coverEmoji}</Text>
+      <IconSymbol name={icon} size={84} color={M.parchment} style={{ position: "absolute", top: 8, right: 10, opacity: 0.16 }} />
       <Text style={{ fontSize: 11, fontWeight: "700", letterSpacing: 1.5, textTransform: "uppercase", color: M.accent }}>
         Audio Drama Series
       </Text>

@@ -1,4 +1,5 @@
 import { EASE_OUT } from "@/constants/motion";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { SKILL_META } from "@/constants/course-colors";
 import { useCompletedLessons } from "@/lib/hooks/use-progress";
 import { localize } from "@/lib/localize";
@@ -129,7 +130,7 @@ export function SkillsPracticed() {
               const meta = SKILL_META[skill];
               return (
                 <View key={skill} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                  <Text style={{ fontSize: 14 }}>{meta.icon}</Text>
+                  {meta.icon ? <IconSymbol name={meta.icon} size={14} color={M.sub} /> : null}
                   <Text style={{ fontSize: 12, color: M.sub, flex: 1 }}>{meta.label}</Text>
                   <SkillBar grow={grow} ratio={values[i]} M={M} />
                 </View>

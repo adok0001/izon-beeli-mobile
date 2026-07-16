@@ -1,4 +1,5 @@
 import { getAccent, type AccentHue } from "@/constants/accent-colors";
+import { castInitial } from "@/lib/series-presentation";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { ScrollView, Text, View } from "react-native";
 
@@ -6,7 +7,6 @@ export type SeasonCastMember = Readonly<{
   castId: string;
   name: string;
   role: string;
-  avatar: string;
   hue: string;
 }>;
 
@@ -40,7 +40,7 @@ export function SeasonCastStrip({ cast }: Readonly<{ cast: readonly SeasonCastMe
                   borderColor: accent.border,
                 }}
               >
-                <Text style={{ fontSize: 22 }}>{c.avatar}</Text>
+                <Text style={{ fontSize: 20, fontWeight: "800", color: accent.solid }}>{castInitial(c.name)}</Text>
               </View>
               <Text style={{ marginTop: 6, fontSize: 12, fontWeight: "700", color: M.text }} numberOfLines={1}>
                 {c.name}

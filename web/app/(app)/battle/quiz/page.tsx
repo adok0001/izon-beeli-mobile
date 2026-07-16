@@ -91,7 +91,7 @@ function QuestionView() {
 
       {/* Opponent indicator */}
       {opponentAnswered && (
-        <p className="text-xs text-center text-amber-500 font-medium">Opponent answered ⚡</p>
+        <p className="text-xs text-center text-amber-500 font-medium">Opponent answered</p>
       )}
 
       {/* Prompt */}

@@ -51,7 +51,7 @@ export function LibraryTeaser() {
             flexShrink: 0,
           }}
         >
-          <Text style={{ fontSize: 20 }}>{item.coverEmoji}</Text>
+          <IconSymbol name={cfg.icon} size={20} color={cfg.color} />
         </View>
         <View style={{ flex: 1 }}>
           <View

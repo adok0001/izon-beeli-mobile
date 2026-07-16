@@ -75,7 +75,7 @@ export const IMPORT_TYPES: Record<string, ImportTypeConfig> = {
     label: "cultural content",
     jsonOnly: true,
     sampleJson: JSON.stringify(
-      [{ category: "festival", title: "…", description: "…", imageEmoji: "🎉", keyTerms: [{ word: "…", english: "…" }] }],
+      [{ category: "festival", title: "…", description: "…", keyTerms: [{ word: "…", english: "…" }] }],
       null, 2,
     ),
   },

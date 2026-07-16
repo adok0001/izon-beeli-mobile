@@ -20,7 +20,6 @@ export function toApiInteractiveStory(row: FilmStoryRow) {
     title: row.title,
     description: row.description,
     coverGradient: [row.coverGradientFrom, row.coverGradientTo] as [string, string],
-    coverEmoji: row.coverEmoji,
     estimatedMinutes: row.estimatedMinutes ?? 0,
     author: row.author,
     language: row.language ?? undefined,

@@ -79,19 +79,25 @@ export function buildLevelBands(
   }));
 }
 
-const DEFAULT_CAST_AVATAR: { avatar: string; hue: AccentHue } = { avatar: "🙂", hue: "teal" };
+const DEFAULT_CAST_AVATAR: { initial: string; hue: AccentHue } = { initial: "•", hue: "teal" };
+
+/** First letter of a cast member's name, for the initial-in-circle avatar. */
+export function castInitial(name: string): string {
+  const ch = [...name.trim()][0];
+  return ch ? ch.toUpperCase() : "•";
+}
 
 /**
- * Avatar + accent for a speaker id (e.g. a transcript segment's `speaker`),
- * resolved against the season's cast from the API. Speakers outside the cast —
- * or callers with no cast to hand — get a neutral default rather than nothing.
+ * Avatar initial + accent for a speaker id (e.g. a transcript segment's
+ * `speaker`), resolved against the season's cast from the API. Speakers outside
+ * the cast — or callers with no cast to hand — get a neutral default.
  */
 export function castAvatarFor(
   cast: SeasonCastMember[] | undefined,
   castId: string | null | undefined
-): { avatar: string; hue: AccentHue } {
+): { initial: string; hue: AccentHue } {
   if (!castId || !cast?.length) return DEFAULT_CAST_AVATAR;
   const member = cast.find((c) => c.castId === castId);
   if (!member) return DEFAULT_CAST_AVATAR;
-  return { avatar: member.avatar, hue: member.hue as AccentHue };
+  return { initial: castInitial(member.name), hue: member.hue as AccentHue };
 }

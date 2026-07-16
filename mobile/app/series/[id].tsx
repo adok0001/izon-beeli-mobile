@@ -2,6 +2,7 @@ import { DiscoverCard } from "@/components/discover-card";
 import { CourseArtwork } from "@/components/learn/course-artwork";
 import { LoadingScreen } from "@/components/loading-screen";
 import { SeasonCastStrip } from "@/components/series/season-cast-strip";
+import { discoverTypeIcon } from "@/lib/discover-presentation";
 import { SeasonEpisodeRow } from "@/components/series/season-episode-row";
 import { SeasonHero } from "@/components/series/season-hero";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -60,7 +61,7 @@ export default function SeriesScreen() {
 
   const hero = podcasts.find((p) => p.storyId === storyId);
   const gradientTop = hero?.coverGradient?.[0] ?? "#3B1F6E";
-  const coverEmoji = hero?.coverEmoji ?? "🎙️";
+  const heroIcon = hero ? discoverTypeIcon(hero.type) : "headphones";
 
   const chapters = [...arc.chapters].sort((a, b) => a.order - b.order);
   // `lessonDuration` is seconds, like every duration the API serves.
@@ -136,7 +137,7 @@ export default function SeriesScreen() {
             title={arc.title}
             nativeTitle={arc.nativeTitle}
             logline={arc.logline}
-            coverEmoji={coverEmoji}
+            icon={heroIcon}
             gradientTop={gradientTop}
             episodeCount={chapters.length}
             totalMinutes={totalMinutes}

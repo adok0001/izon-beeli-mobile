@@ -1,7 +1,7 @@
 "use client";
 
 import { useMultiplayerStore } from "@/store/multiplayer-store";
-import { Loader2, RotateCcw } from "lucide-react";
+import { Dumbbell, Handshake, Loader2, RotateCcw, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -40,17 +40,19 @@ export default function BattleResultsPage() {
   const xpEarned = iWon ? 100 : 30;
 
   const resultConfig = iWon
-    ? { label: "You Won!", bg: "bg-green-100 dark:bg-green-900/30", text: "text-green-600 dark:text-green-400", icon: "🏆" }
+    ? { label: "You Won!", bg: "bg-green-100 dark:bg-green-900/30", text: "text-green-600 dark:text-green-400", icon: Trophy }
     : isTie
-    ? { label: "It's a Tie!", bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-600 dark:text-amber-400", icon: "🤝" }
-    : { label: "You Lost", bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-600 dark:text-red-400", icon: "💪" };
+    ? { label: "It's a Tie!", bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-600 dark:text-amber-400", icon: Handshake }
+    : { label: "You Lost", bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-600 dark:text-red-400", icon: Dumbbell };
+
+  const ResultIcon = resultConfig.icon;
 
   return (
     <div className="max-w-md mx-auto px-4 py-10 flex flex-col items-center gap-8">
       {/* Result */}
       <div className="flex flex-col items-center gap-2">
-        <div className={`w-24 h-24 rounded-full flex items-center justify-center text-4xl ${resultConfig.bg}`}>
-          {resultConfig.icon}
+        <div className={`w-24 h-24 rounded-full flex items-center justify-center ${resultConfig.bg}`}>
+          <ResultIcon className={`h-10 w-10 ${resultConfig.text}`} />
         </div>
         <p className={`text-3xl font-bold ${resultConfig.text}`}>{resultConfig.label}</p>
         <p className="text-sm text-neutral-500">+{xpEarned} XP earned</p>

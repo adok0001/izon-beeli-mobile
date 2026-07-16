@@ -15,7 +15,6 @@ export const DISCOVER_TYPE_CONFIG = {
     accentBorder: "rgba(56, 189, 248, 0.25)",
     roomKickerKey: "library.readingRoomKicker" as const,
     roomTitleKey: "library.readingRoom" as const,
-    heroGlyph: "📖",
     gradient: ["#0e2a3a", "#0b0d17"] as [string, string],
   },
   podcast: {
@@ -27,7 +26,6 @@ export const DISCOVER_TYPE_CONFIG = {
     accentBorder: "rgba(167, 139, 250, 0.25)",
     roomKickerKey: "library.listeningBoothKicker" as const,
     roomTitleKey: "library.listeningBooth" as const,
-    heroGlyph: "🎙️",
     gradient: ["#241a3a", "#0b0d17"] as [string, string],
   },
   film: {
@@ -39,7 +37,6 @@ export const DISCOVER_TYPE_CONFIG = {
     accentBorder: "rgba(251, 146, 60, 0.25)",
     roomKickerKey: "library.screeningRoomKicker" as const,
     roomTitleKey: "library.screeningRoom" as const,
-    heroGlyph: "🎬",
     gradient: ["#3a1f0e", "#0b0d17"] as [string, string],
   },
 } as const;
@@ -129,7 +126,7 @@ export function DiscoverCard({ item, onStoryPress, compact = false }: DiscoverCa
             backgroundColor: item.coverGradient[0],
           }}
         >
-          <Text style={{ fontSize: 36 }}>{item.coverEmoji}</Text>
+          <IconSymbol name={cfg.icon} size={34} color={cfg.color} />
         </View>
 
         <View style={{ padding: 10 }}>
@@ -215,7 +212,7 @@ export function DiscoverCard({ item, onStoryPress, compact = false }: DiscoverCa
                 <IconSymbol name="play.fill" size={9} color="#fff" />
               </View>
             ) : null}
-            <Text style={{ fontSize: 24 }}>{item.coverEmoji}</Text>
+            <IconSymbol name={cfg.icon} size={22} color={cfg.color} />
           </View>
 
           {/* Content */}

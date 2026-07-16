@@ -675,7 +675,6 @@ export const culturalContent = pgTable(
     titleFr: varchar("title_fr", { length: 300 }),
     description: text("description").notNull(),
     descriptionFr: text("description_fr"),
-    imageEmoji: varchar("image_emoji", { length: 16 }).notNull(),
     /** Surfaced as the "Featured" hero card at the top of the gallery. */
     featured: boolean("featured").default(false).notNull(),
     /** Primary headword shown with an audio button in the reader. */
@@ -1190,8 +1189,6 @@ export const storyArcCast = pgTable(
     castId: varchar("cast_id", { length: 64 }).notNull(),
     name: varchar("name", { length: 200 }).notNull(),
     role: varchar("role", { length: 200 }).notNull(),
-    /** Emoji avatar for the cast strip — a character-specific touch, not a semantic icon. */
-    avatar: varchar("avatar", { length: 16 }).notNull(),
     /** Categorical accent hue tinting the avatar circle (see constants/accent-colors). */
     hue: varchar("hue", { length: 24 }).notNull(),
     order: integer("order").default(0).notNull(),
@@ -1432,7 +1429,6 @@ export type InteractiveStoryScene = {
   id: string;
   type: "narrative" | "choice" | "conclusion";
   gradient: [string, string];
-  backgroundEmoji: string;
   title?: string;
   text: string;
   choices?: { id: string; text: string; nextSceneId: string }[];
@@ -1453,7 +1449,6 @@ export const cultureItems = pgTable(
     duration: integer("duration").notNull(),
     coverGradientFrom: varchar("cover_gradient_from", { length: 16 }).notNull(),
     coverGradientTo: varchar("cover_gradient_to", { length: 16 }).notNull(),
-    coverEmoji: varchar("cover_emoji", { length: 16 }).notNull(),
     featured: boolean("featured").default(false).notNull(),
     /**
      * The season this card belongs to. For a podcast card this IS the season it

@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import Svg, { Circle, Defs, Path, RadialGradient, Stop } from "react-native-svg";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { JourneyNodeView } from "@/components/learn/journey-node";
 import { JourneyScenery } from "@/components/learn/journey-scenery";
 import { JourneySheet } from "@/components/learn/journey-sheet";
@@ -89,7 +90,7 @@ function AreaLabel({
           borderColor: `${area.color}`,
         }}
       >
-        <Text style={{ fontSize: 15 }}>{area.emoji}</Text>
+        <IconSymbol name={area.icon} size={16} color={area.color} />
       </View>
       <Text
         numberOfLines={1}

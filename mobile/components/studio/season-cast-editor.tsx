@@ -24,7 +24,7 @@ export function SeasonCastEditor({ cast, onChange }: Props) {
   };
 
   const add = () => {
-    onChange([...cast, { castId: "", name: "", role: "", avatar: "🙂", hue: "teal" }]);
+    onChange([...cast, { castId: "", name: "", role: "", hue: "teal" }]);
   };
 
   const remove = (index: number) => {
@@ -66,14 +66,6 @@ export function SeasonCastEditor({ cast, onChange }: Props) {
           style={{ backgroundColor: M.card, borderColor: M.border }}
         >
           <View className="flex-row items-center gap-2">
-            <TextInput
-              value={member.avatar}
-              onChangeText={(v) => update(index, "avatar", v)}
-              placeholder="🙂"
-              placeholderTextColor={M.muted}
-              className="w-12 rounded-lg px-2 py-2 text-center text-lg"
-              style={inputStyle}
-            />
             <TextInput
               value={member.name}
               onChangeText={(v) => update(index, "name", v)}

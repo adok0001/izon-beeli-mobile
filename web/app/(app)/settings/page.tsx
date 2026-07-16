@@ -104,11 +104,11 @@ export default function SettingsPage() {
   ];
 
   const UI_LANGS = [
-    { id: "en"  as const, label: "English",    flag: "🇬🇧" },
-    { id: "fr"  as const, label: "Français",   flag: "🇫🇷" },
-    { id: "pcm" as const, label: "Naija",      flag: "🇳🇬" },
-    { id: "ar"  as const, label: "العربية",    flag: "🇸🇦" },
-    { id: "pt"  as const, label: "Português",  flag: "🇵🇹" },
+    { id: "en"  as const, label: "English"    },
+    { id: "fr"  as const, label: "Français"   },
+    { id: "pcm" as const, label: "Naija"      },
+    { id: "ar"  as const, label: "العربية"    },
+    { id: "pt"  as const, label: "Português"  },
   ];
 
   return (
@@ -165,7 +165,7 @@ export default function SettingsPage() {
           {t("settings.uiLanguage")}
         </p>
         <div className="grid grid-cols-3 gap-2">
-          {UI_LANGS.map(({ id, label, flag }) => (
+          {UI_LANGS.map(({ id, label }) => (
             <button
               key={id}
               onClick={() => setUiLanguage(id)}
@@ -176,7 +176,6 @@ export default function SettingsPage() {
                   : "border-neutral-100 dark:border-white/[0.07] text-neutral-600 dark:text-neutral-400 hover:border-amber-400/30 dark:hover:border-amber-500/20"
               )}
             >
-              <span className="text-base leading-none">{flag}</span>
               <span className="truncate">{label}</span>
               {uiLanguage === id && (
                 <span className="ml-auto font-mono text-[9px] text-amber-500">✓</span>

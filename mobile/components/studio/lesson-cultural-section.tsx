@@ -136,7 +136,6 @@ export function CulturalContentSection({
   };
 
   const titleFor = (id: string) => items.find((item) => item.id === id)?.title ?? id;
-  const emojiFor = (id: string) => items.find((item) => item.id === id)?.imageEmoji ?? "";
 
   return (
     <View className="mt-4 px-5">
@@ -167,7 +166,6 @@ export function CulturalContentSection({
                       : { backgroundColor: M.card, borderColor: M.border }
                   }
                 >
-                  <Text className="text-sm">{item.imageEmoji}</Text>
                   <Text
                     className="text-xs font-semibold"
                     style={{ color: active ? M.accent : M.sub }}
@@ -193,7 +191,7 @@ export function CulturalContentSection({
             {attachments.map((attachment) => (
               <View key={attachment.culturalContentId}>
                 <Text className="text-xs font-semibold" style={{ color: M.text }}>
-                  {emojiFor(attachment.culturalContentId)} {titleFor(attachment.culturalContentId)}
+                  {titleFor(attachment.culturalContentId)}
                 </Text>
                 <AnchorPicker
                   value={attachment.afterSegmentIndex}

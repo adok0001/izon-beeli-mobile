@@ -52,7 +52,7 @@ export function DailyReadCard({ entry }: DailyReadCardProps) {
           justifyContent: "center",
         }}
       >
-        <Text style={{ fontSize: 24 }}>📖</Text>
+        <IconSymbol name="book.fill" size={22} color={M.accent} />
       </View>
       <View style={{ flex: 1 }}>
         <Eyebrow

@@ -333,16 +333,6 @@ export default function InteractiveStoryNative() {
                 }}
               >
                 {/* Background emoji */}
-                <Text
-                  style={{
-                    fontSize: 140,
-                    position: "absolute",
-                    opacity: 0.06,
-                  }}
-                  accessibilityElementsHidden
-                >
-                  {scene.backgroundEmoji}
-                </Text>
 
                 {/* Scene counter */}
                 <Text

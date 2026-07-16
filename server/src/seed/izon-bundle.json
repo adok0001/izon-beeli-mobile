@@ -11,7 +11,6 @@
       "castId": "izon-cast-tari",
       "name": "Tari",
       "role": "The Returnee — the learner's surrogate",
-      "avatar": "🧑🏾",
       "hue": "teal",
       "order": 0
     },
@@ -20,7 +19,6 @@
       "castId": "izon-cast-ebiere",
       "name": "Ebiere",
       "role": "The Keeper — grandmother, elder of the compound",
-      "avatar": "👵🏾",
       "hue": "amber",
       "order": 1
     },
@@ -29,7 +27,6 @@
       "castId": "izon-cast-preye",
       "name": "Preye",
       "role": "The Bridge — cousin and peer",
-      "avatar": "👨🏾",
       "hue": "green",
       "order": 2
     },
@@ -38,7 +35,6 @@
       "castId": "izon-cast-timi",
       "name": "Timi",
       "role": "The River-hand — young fisherman cousin",
-      "avatar": "🎣",
       "hue": "blue",
       "order": 3
     },
@@ -47,7 +43,6 @@
       "castId": "izon-cast-seibi",
       "name": "Mama Seibi",
       "role": "The Trader — market woman",
-      "avatar": "🧺",
       "hue": "pink",
       "order": 4
     },
@@ -56,7 +51,6 @@
       "castId": "izon-cast-ere",
       "name": "Uncle Ere",
       "role": "The Elder Fisher — the working river",
-      "avatar": "🛶",
       "hue": "sky",
       "order": 5
     },
@@ -65,7 +59,6 @@
       "castId": "izon-cast-amaokowei",
       "name": "Pa Boma (Amaokowei)",
       "role": "The Chief — ceremonial authority",
-      "avatar": "🧓🏾",
       "hue": "purple",
       "order": 6
     }
@@ -122,7 +115,6 @@
         "en": "In Izon compounds a greeting is unhurried and comes first — before questions, before business. Skipping it, or rushing it, reads as disrespect. An elder is greeted before anyone else present.",
         "fr": "Dans les concessions izon, la salutation est posée et vient en premier — avant les questions, avant les affaires. La bâcler est un manque de respect. On salue l'aîné avant tout le monde."
       },
-      "imageEmoji": "🪶",
       "afterSegmentIndex": 2,
       "order": 0
     },
@@ -139,7 +131,6 @@
         "en": "Isampou and most Izon towns are riverine — you arrive by boat at a wooden jetty, not by road. The creek (bou) is the front door of the community.",
         "fr": "Isampou et la plupart des villes izon sont fluviales — on arrive en bateau à un embarcadère en bois, pas par la route. Le ruisseau (bou) est la porte d'entrée de la communauté."
       },
-      "imageEmoji": "🪶",
       "afterSegmentIndex": 0,
       "order": 1
     },
@@ -156,7 +147,6 @@
         "en": "To refuse food from a host's hand is to refuse the household itself. Even a taste honors it. The iconic Delta meal is banga (palm-nut soup) with starch (cassava) and fresh river fish (endi).",
         "fr": "Refuser la nourriture de la main d'un hôte, c'est refuser le foyer lui-même. Même une bouchée l'honore. Le plat emblématique du Delta est le banga (soupe de noix de palme) avec de l'amidon et du poisson frais."
       },
-      "imageEmoji": "🪶",
       "afterSegmentIndex": 11,
       "order": 0
     },
@@ -173,7 +163,6 @@
         "en": "Izon kinship is wide: cousins are 'brothers/sisters', a mother's friend is an 'aunty', the elder woman is grandmother to every child. Address forms carry the respect, so learning them is learning your place in the house.",
         "fr": "La parenté izon est large : les cousins sont 'frères/sœurs', l'amie d'une mère est une 'tante', l'aînée est la grand-mère de chaque enfant. Les formes d'adresse portent le respect."
       },
-      "imageEmoji": "🪶",
       "afterSegmentIndex": 4,
       "order": 1
     },
@@ -190,7 +179,6 @@
         "en": "Foubai, market day, sets the community's clock. Traders arrive by canoe; the market is as much news-exchange and courtship as commerce. Bargaining is expected and enjoyed — paying the first price marks you as a stranger.",
         "fr": "Foubai, le jour de marché, règle l'horloge de la communauté. Les commerçants arrivent en pirogue ; le marché est autant échange de nouvelles que commerce. Marchander est attendu et apprécié."
       },
-      "imageEmoji": "🪶",
       "afterSegmentIndex": 1,
       "order": 0
     },
@@ -207,7 +195,6 @@
         "en": "Older Delta market pricing is reckoned in akpa, 'bags', historically a unit of ₦200. A price given in 'bags' is a living trace of the base-20 counting mind, even as naira notes change hands.",
         "fr": "L'ancienne tarification du marché du Delta se compte en akpa, 'sacs', historiquement une unité de 200 ₦, trace vivante de l'esprit vigésimal."
       },
-      "imageEmoji": "🪶",
       "afterSegmentIndex": 7,
       "order": 1
     },
@@ -224,7 +211,6 @@
         "en": "Fishing is the spine of Izon economic life; children learn to paddle before they can read. But oil pollution and overfishing have thinned the catch across the Delta, and elders read the water like a diary. This worry threads through the whole season.",
         "fr": "La pêche est la colonne vertébrale de la vie izon ; les enfants pagaient avant de lire. Mais la pollution pétrolière et la surpêche ont réduit les prises dans tout le Delta."
       },
-      "imageEmoji": "🪶",
       "afterSegmentIndex": null,
       "order": 0
     },
@@ -241,7 +227,6 @@
         "en": "Fishers keep quiet near the nets — partly craft, partly respect for the owu (water spirits) believed to move in the deep creeks. Noise scatters fish and, some say, offends what lives below.",
         "fr": "Les pêcheurs se taisent près des filets — par métier et par respect pour les owu (esprits de l'eau) que l'on croit présents dans les ruisseaux profonds."
       },
-      "imageEmoji": "🪶",
       "afterSegmentIndex": null,
       "order": 1
     },
@@ -258,7 +243,6 @@
         "en": "One of the great Izon institutions: a society ('the dancing people') that performs the owu — water spirits of the creeks — through masked dance, each character with its own drum rhythm and steps. It is a bridge between the human and spirit worlds, danced at festivals and funerals. Membership and the sacred details are guarded; this episode stays on the public, celebratory surface.",
         "fr": "L'une des grandes institutions izon : une société ('les danseurs') qui incarne les owu — esprits de l'eau — par la danse masquée, chaque personnage ayant son rythme. Un pont entre le monde humain et le monde des esprits."
       },
-      "imageEmoji": "🪶",
       "afterSegmentIndex": null,
       "order": 0
     },
@@ -275,7 +259,6 @@
         "en": "Izon colour thought groups everything under three: kwa-kwa (red — strength, royalty), pena-pena (white — purity, peace), and dirimo (black — death, secrecy, the unseen). Masquerade cloth and body-art are read, not just admired: colour carries the message.",
         "fr": "La pensée izon des couleurs regroupe tout sous trois : kwa-kwa (rouge), pena-pena (blanc) et dirimo (noir). Les couleurs de la mascarade se lisent : elles portent le message."
       },
-      "imageEmoji": "🪶",
       "afterSegmentIndex": null,
       "order": 1
     },
@@ -292,7 +275,6 @@
         "en": "An Izon marriage is a negotiation and alliance between two warị (houses). Elders speak for each side; the couple is present but the register is communal and formal. There is a bride-price and a sequence of visits — terms and steps vary by clan (Kolokuma, Mein, Gbaramatu…), so specifics must be set by the family's own elders.",
         "fr": "Un mariage izon est une alliance entre deux warị (maisons). Les aînés parlent pour chaque camp ; le couple est présent mais le registre est communautaire et formel. Les termes varient selon le clan."
       },
-      "imageEmoji": "🪶",
       "afterSegmentIndex": null,
       "order": 0
     },
@@ -309,7 +291,6 @@
         "en": "Delta negotiation prizes eloquence and warmth — the same 'sweet mouth' that wins a market price wins a marriage suit. Bluntness offends; a request wrapped in greeting, proverb, and praise is a request that gets a yes.",
         "fr": "La négociation du Delta valorise l'éloquence et la chaleur — la même 'bouche douce' qui gagne un prix au marché gagne une demande en mariage."
       },
-      "imageEmoji": "🪶",
       "afterSegmentIndex": null,
       "order": 1
     },
@@ -326,7 +307,6 @@
         "en": "Disputes go to the amaokowei and the council, not to raised voices. The goal is restored peace (seri) between neighbours who must share the same creek tomorrow — not a winner. A well-placed proverb ends a quarrel because it moves the matter from persons to shared wisdom no one can argue with.",
         "fr": "Les différends vont à l'amaokowei et au conseil, non aux cris. Le but est la paix rétablie (seri) entre voisins qui partageront le même ruisseau demain — non un vainqueur."
       },
-      "imageEmoji": "🪶",
       "afterSegmentIndex": null,
       "order": 0
     },
@@ -343,7 +323,6 @@
         "en": "To deploy the right proverb at the right moment is the mark of a fully-grown speaker. It is impersonal — 'the ancestors say' — so obeying it costs no face. This is the summit of the language, and the whole season has been climbing toward it.",
         "fr": "Placer le bon proverbe au bon moment est la marque d'un locuteur accompli. Il est impersonnel — 'les ancêtres disent' — et s'y plier ne fait perdre la face à personne."
       },
-      "imageEmoji": "🪶",
       "afterSegmentIndex": null,
       "order": 1
     },
@@ -360,7 +339,6 @@
         "en": "In Izon cosmology Woyengi ('Our Mother') descends on lightning to Oporoma, sits on the creation chair, moulds each person from earth, and — uniquely — lets each choose their own gender, gifts, manner of life and death before birth. Fate and free will are tied together. Her most famous telling is the tragedy of Ogboinba, who tried to change the destiny she had chosen.",
         "fr": "Dans la cosmologie izon, Woyengi ('Notre Mère') descend sur la foudre à Oporoma, façonne chaque personne dans la terre et lui laisse choisir son destin avant la naissance. Le destin et le libre arbitre sont liés."
       },
-      "imageEmoji": "🪶",
       "afterSegmentIndex": null,
       "order": 0
     },
@@ -377,7 +355,6 @@
         "en": "Folktales (egberi) are told after dark, never in daytime — daytime telling is said to bring misfortune. The fireside tale is how cosmology, ethics and language are handed down; the listener answers cues to keep the teller company. This is heritage: source the exact wording from a keeper, and credit them.",
         "fr": "Les contes (egberi) se disent après la tombée de la nuit, jamais le jour. Le récit au coin du feu transmet cosmologie, éthique et langue. C'est un patrimoine : sourcez le texte exact auprès d'un gardien, et créditez-le."
       },
-      "imageEmoji": "🪶",
       "afterSegmentIndex": null,
       "order": 1
     },
@@ -394,7 +371,6 @@
         "en": "Pouring libation (gin, water, or palm-wine tipped to the earth) opens any major Izon rite. The pourer calls the ancestors (daubọ) and the water spirits (owuamapu) by name, thanks them, and asks peace and increase for the living. The words are near-scripture — improvised within a fixed frame, and specific to family and clan. They must be sourced from a verified elder or priest; never invented.",
         "fr": "Verser la libation (gin, eau ou vin de palme sur la terre) ouvre tout grand rite izon. Celui qui verse appelle les ancêtres (daubọ) et les esprits (owuamapu) par leur nom. Les paroles sont quasi-scripturaires ; à sourcer auprès d'un aîné ou prêtre vérifié."
       },
-      "imageEmoji": "🪶",
       "afterSegmentIndex": null,
       "order": 0
     },
@@ -411,7 +387,6 @@
         "en": "Seigbein is a festival of remembrance and appeasement for the Owuamapu — the water spirits who taught the people to fish and then withdrew when the waters were fouled. In this finale the season's threads close: the fewer fish (Ep. 4), the masquerade (Ep. 5), and the ancestors' words (Ep. 8) meet at the water's edge.",
         "fr": "Seigbein est une fête de commémoration et d'apaisement pour les Owuamapu — les esprits de l'eau qui enseignèrent la pêche puis se retirèrent. Le final noue les fils de la saison."
       },
-      "imageEmoji": "🪶",
       "afterSegmentIndex": null,
       "order": 1
     },
@@ -428,7 +403,6 @@
         "en": "That an outsider-become-family can rise and speak a few true words at the water is the emotional and pedagogical summit of the series: the learner has arrived. Tari's praise is deliberately SHORT and simple — mastery here is not fluency but the right words, well-placed, before the community.",
         "fr": "Qu'un étranger devenu famille puisse se lever et dire quelques mots justes à l'eau est le sommet de la série : l'apprenant est arrivé. La louange de Tari est volontairement brève."
       },
-      "imageEmoji": "🪶",
       "afterSegmentIndex": null,
       "order": 2
     }

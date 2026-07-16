@@ -219,7 +219,7 @@ export default function CultureContentAdminScreen() {
             <ActivityIndicator className="my-8" color={M.accent} />
           ) : filtered.length === 0 ? (
             <View className="items-center py-16">
-              <Text className="text-3xl mb-3">🎬</Text>
+              <IconSymbol name="film.stack" size={28} color={M.sub} style={{ marginBottom: 12 }} />
               <Text className="text-sm font-semibold" style={{ color: M.sub }}>
                 {items.length === 0 ? t("admin.cultureContent.emptyFirst") : t("admin.cultureContent.emptyNoResults")}
               </Text>
@@ -268,7 +268,7 @@ export default function CultureContentAdminScreen() {
                           style={{ fontSize: 14, fontWeight: "700", color: M.text, lineHeight: 19 }}
                           numberOfLines={2}
                         >
-                          {item.coverEmoji} {item.title}
+                          {item.title}
                         </Text>
                         <Text style={{ fontSize: 11, color: M.muted, marginTop: 2 }}>{item.author}</Text>
                         {(item.type === "film" || item.type === "podcast") && item.seasonArcId && (

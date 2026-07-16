@@ -2,6 +2,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LoadingScreen } from "@/components/loading-screen";
 import { ShareModal } from "@/components/share/share-modal";
 import { getAccent, type AccentHue } from "@/constants/accent-colors";
+import { CULTURE_CATEGORY_ICON as CATEGORY_ICON } from "@/constants/cultural-categories";
 import { LANGUAGES } from "@/lib/data/languages";
 import { useCultural } from "@/lib/hooks/use-cultural";
 import { localize } from "@/lib/localize";
@@ -33,25 +34,6 @@ const CATEGORY_HUE: Record<CulturalCategory, AccentHue> = {
   arts_oratory: "pink",
   numbers_trade: "teal",
   geography: "sky",
-};
-
-const CATEGORY_EMOJI: Record<CulturalCategory, string> = {
-  colors: "🎨",
-  naming_ceremonies: "👶",
-  festivals: "🎉",
-  creation_myths: "🌟",
-  music: "🎵",
-  clothing: "🧣",
-  cuisine: "🍜",
-  greetings_etiquette: "👋",
-  governance_values: "⚖️",
-  land_livelihood: "🌾",
-  kinship: "👪",
-  cosmology: "🌌",
-  oral_tradition: "📖",
-  arts_oratory: "🎭",
-  numbers_trade: "🔢",
-  geography: "🗺️",
 };
 
 const CATEGORY_ORDER: CulturalCategory[] = [
@@ -154,7 +136,7 @@ function ReaderHero({ item, height }: { item: CulturalContent; height: number })
       end={{ x: 1, y: 1 }}
       style={{ height, alignItems: "center", justifyContent: "center" }}
     >
-      <Text style={{ fontSize: 88 }}>{item.imageEmoji || CATEGORY_EMOJI[item.category]}</Text>
+      <IconSymbol name={CATEGORY_ICON[item.category]} size={72} color={accent.solid} />
     </LinearGradient>
   );
 }
@@ -277,7 +259,7 @@ function ReaderOverlay({ item, onClose }: { item: CulturalContent; onClose: () =
           title,
           description: localize(item.description, uiLanguage),
           category: categoryLabel,
-          emoji: item.imageEmoji,
+          icon: CATEGORY_ICON[item.category],
           language: item.languageId,
         }}
       />
@@ -306,7 +288,7 @@ function FeaturedCard({ item, onOpen }: { item: CulturalContent; onOpen: () => v
         </View>
       ) : (
         <LinearGradient colors={[getAccent(CATEGORY_HUE[item.category]).bg, "#0B0D17"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 118, alignItems: "center", justifyContent: "center" }}>
-          <Text style={{ fontSize: 56 }}>{item.imageEmoji || CATEGORY_EMOJI[item.category]}</Text>
+          <IconSymbol name={CATEGORY_ICON[item.category]} size={48} color={getAccent(CATEGORY_HUE[item.category]).solid} />
         </LinearGradient>
       )}
 
@@ -340,7 +322,7 @@ function CulturalRow({ item, onOpen }: { item: CulturalContent; onOpen: () => vo
       style={{ flexDirection: "row", alignItems: "center", gap: 13, borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, padding: 11, marginBottom: 9 }}
     >
       <View style={{ width: 52, height: 52, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: accent.bg, borderWidth: 1, borderColor: accent.border }}>
-        <Text style={{ fontSize: 24 }}>{item.imageEmoji || CATEGORY_EMOJI[item.category]}</Text>
+        <IconSymbol name={CATEGORY_ICON[item.category]} size={24} color={accent.solid} />
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 0.5, textTransform: "uppercase", color: M.muted }}>
@@ -446,10 +428,11 @@ export default function CulturalScreen() {
                   <Pressable
                     key={cat}
                     onPress={() => setSelectedCategory(active ? null : cat)}
-                    style={{ borderRadius: 999, paddingHorizontal: 16, paddingVertical: 8, backgroundColor: active ? M.accent : M.card, borderWidth: 1, borderColor: active ? M.accent : M.border }}
+                    style={{ flexDirection: "row", alignItems: "center", gap: 6, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 8, backgroundColor: active ? M.accent : M.card, borderWidth: 1, borderColor: active ? M.accent : M.border }}
                   >
+                    <IconSymbol name={CATEGORY_ICON[cat]} size={13} color={active ? M.ink : M.sub} />
                     <Text style={{ fontSize: 13, fontWeight: "600", color: active ? M.ink : M.sub }}>
-                      {CATEGORY_EMOJI[cat]} {t(`cultural.categories.${cat}` as const)}
+                      {t(`cultural.categories.${cat}` as const)}
                     </Text>
                   </Pressable>
                 );

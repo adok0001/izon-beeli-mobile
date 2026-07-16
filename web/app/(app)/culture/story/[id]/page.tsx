@@ -228,11 +228,6 @@ export default function StoryPage() {
 
       <FilmstripProgress total={totalScenes} current={sceneIndex} />
 
-      {/* Emoji bg */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
-        <span style={{ fontSize: 160, opacity: 0.06 }}>{scene.backgroundEmoji}</span>
-      </div>
-
       {/* Exit top-left */}
       <button
         onClick={() => router.push("/culture")}

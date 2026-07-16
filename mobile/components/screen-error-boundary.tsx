@@ -1,3 +1,4 @@
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useRouter, type ErrorBoundaryProps } from "expo-router";
 import { useEffect } from "react";
@@ -39,7 +40,7 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
             borderColor: `${M.accent}30`,
           }}
         >
-          <Text style={{ fontSize: 32 }}>⚠️</Text>
+          <IconSymbol name="exclamationmark.triangle.fill" size={32} color={M.warning} />
         </View>
         <Text style={{ fontSize: 18, fontWeight: "800", color: M.text, textAlign: "center" }}>
           This activity hit a snag

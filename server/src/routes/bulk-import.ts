@@ -251,10 +251,9 @@ const culturalImporter: ImporterConfig = {
     if (!str(e.category)) return `Row ${i}: missing category`;
     if (!str(e.title)) return `Row ${i}: missing title`;
     if (!str(e.description)) return `Row ${i}: missing description`;
-    if (!str(e.imageEmoji)) return `Row ${i}: missing imageEmoji`;
     return null;
   },
-  preview: (e) => ({ title: str(e.title), category: str(e.category), imageEmoji: str(e.imageEmoji) }),
+  preview: (e) => ({ title: str(e.title), category: str(e.category) }),
   insert: async (entries, ctx) => {
     const resolved = entries.map((e) => ({ id: str(e.id) || randomUUID(), entry: e }));
     const rows = resolved.map(({ id, entry: e }) => ({
@@ -265,7 +264,6 @@ const culturalImporter: ImporterConfig = {
       titleFr: opt(e.titleFr),
       description: str(e.description),
       descriptionFr: opt(e.descriptionFr),
-      imageEmoji: str(e.imageEmoji),
       featured: e.featured === true,
       headword: (e.headword && typeof e.headword === "object" ? e.headword : null) as CulturalInsert["headword"],
       applications: (Array.isArray(e.applications) ? e.applications : null) as CulturalInsert["applications"],
@@ -281,7 +279,6 @@ const culturalImporter: ImporterConfig = {
           titleFr: sql`excluded.title_fr`,
           description: sql`excluded.description`,
           descriptionFr: sql`excluded.description_fr`,
-          imageEmoji: sql`excluded.image_emoji`,
           featured: sql`excluded.featured`,
           headword: sql`excluded.headword`,
           applications: sql`excluded.applications`,

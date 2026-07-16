@@ -353,19 +353,6 @@ export default function InteractiveStoryWeb() {
           }}
         />
 
-        {/* Background emoji */}
-        <Text
-          style={{
-            fontSize: 160,
-            position: "absolute",
-            opacity: 0.06,
-            userSelect: "none" as never,
-            pointerEvents: "none" as never,
-          }}
-        >
-          {scene.backgroundEmoji}
-        </Text>
-
         {/* Scene counter top-right */}
         <View style={{ position: "absolute", top: 56, right: 20 }}>
           <Text

@@ -107,8 +107,6 @@ export interface SeasonCastMember {
   castId: string;
   name: string;
   role: string;
-  /** Emoji avatar shown on the cast strip and beside transcript speakers. */
-  avatar: string;
   /** Categorical accent hue (see constants/accent-colors) tinting the avatar circle. */
   hue: string;
 }
@@ -391,7 +389,6 @@ export interface CulturalContent {
   description: string | LocalizedText;
   /** @deprecated Use `description` as LocalizedText */
   descriptionFr?: string | null;
-  imageEmoji: string;
   keyTerms: { word: string; gloss?: string | LocalizedText; /** @deprecated Use `gloss` */ english?: string; /** @deprecated Use `gloss` */ french?: string | null }[];
   /** Surfaced as the "Featured" hero card at the top of the gallery. */
   featured?: boolean;
@@ -670,7 +667,6 @@ export interface DiscoverItem {
   /** Seconds for podcast/film; reading seconds for blog */
   duration: number;
   coverGradient: [string, string];
-  coverEmoji: string;
   featured?: boolean;
   audioUrl?: string;
   videoUrl?: string;
@@ -708,7 +704,6 @@ export interface StoryScene {
   id: string;
   type: StorySceneType;
   gradient: [string, string];
-  backgroundEmoji: string;
   title?: string;
   text: string;
   choices?: StoryChoice[];
@@ -720,7 +715,6 @@ export interface InteractiveStory {
   title: string;
   description: string;
   coverGradient: [string, string];
-  coverEmoji: string;
   estimatedMinutes: number;
   author: string;
   language?: string;

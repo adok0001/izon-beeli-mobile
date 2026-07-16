@@ -2,6 +2,7 @@
 
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { useLanguageStore } from "@/store/language-store";
+import { Globe } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -32,7 +33,7 @@ export function OnboardingModal() {
       <div className="w-full max-w-sm bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl p-6 border border-neutral-200 dark:border-neutral-800">
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="text-3xl mb-3">🌍</div>
+          <Globe className="h-8 w-8 mx-auto mb-3 text-brand-600 dark:text-brand-400" strokeWidth={1.5} />
           <h2 className="text-lg font-bold text-neutral-900 dark:text-white">
             {t("onboarding.title", { defaultValue: "Which language do you want to learn?" })}
           </h2>

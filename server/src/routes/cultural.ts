@@ -40,7 +40,6 @@ culturalAdminRouter.post("/", async (c) => {
     titleFr?: string;
     description: string;
     descriptionFr?: string;
-    imageEmoji: string;
     keyTerms?: KeyTermInput[];
     featured?: boolean;
     headword?: HeadwordInput;
@@ -48,9 +47,9 @@ culturalAdminRouter.post("/", async (c) => {
     heroBands?: HeroBandInput[] | null;
   }>(c);
 
-  const { languageId, category, title, description, imageEmoji } = body;
-  if (!languageId || !category || !title || !description || !imageEmoji) {
-    return c.json({ error: "languageId, category, title, description, and imageEmoji are required" }, 400);
+  const { languageId, category, title, description } = body;
+  if (!languageId || !category || !title || !description) {
+    return c.json({ error: "languageId, category, title, and description are required" }, 400);
   }
   if (!isAdmin && !reviewerLanguages.includes(languageId)) {
     return c.json({ error: "Forbidden: not assigned to this language" }, 403);
@@ -67,7 +66,6 @@ culturalAdminRouter.post("/", async (c) => {
       titleFr: body.titleFr ?? null,
       description,
       descriptionFr: body.descriptionFr ?? null,
-      imageEmoji,
       featured: body.featured ?? false,
       headword: body.headword ?? null,
       applications: body.applications ?? null,
@@ -113,7 +111,6 @@ culturalAdminRouter.patch("/:id", async (c) => {
     titleFr: string | null;
     description: string;
     descriptionFr: string | null;
-    imageEmoji: string;
     keyTerms: KeyTermInput[];
     featured: boolean;
     headword: HeadwordInput;

@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { discoverTypeIcon } from "@/lib/discover-presentation";
 import { useDiscover } from "@/lib/hooks/use-discover";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useAudioStore } from "@/store/audio-store";
@@ -67,7 +68,7 @@ export default function DiscoverContentScreen() {
   if (!item) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0F1A", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <Text style={{ fontSize: 32, marginBottom: 16 }}>🎬</Text>
+        <IconSymbol name="film.stack" size={32} color="#5A5D70" style={{ marginBottom: 16 }} />
         <Text style={{ fontSize: 16, fontWeight: "700", color: "#F7F2E8", marginBottom: 8 }}>
           Content not found
         </Text>
@@ -157,18 +158,12 @@ export default function DiscoverContentScreen() {
           }}
         >
           {/* Decorative emoji */}
-          <Text
-            style={{
-              position: "absolute",
-              fontSize: 90,
-              opacity: 0.08,
-              bottom: -10,
-              right: -10,
-              userSelect: "none" as never,
-            }}
-          >
-            {item.coverEmoji}
-          </Text>
+          <IconSymbol
+            name={discoverTypeIcon(item.type)}
+            size={90}
+            color={typeColor}
+            style={{ position: "absolute", opacity: 0.08, bottom: -10, right: -10 }}
+          />
 
           {/* Type badge */}
           <View

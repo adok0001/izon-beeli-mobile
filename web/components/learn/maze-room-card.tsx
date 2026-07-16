@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { localizeField } from "@/lib/localize";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course } from "@/types";
+import { Zap } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState } from "react";
@@ -141,7 +142,7 @@ function XpBadge({ xp, accentTo }: { xp: number; accentTo: string }) {
       className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
       style={{ background: `${accentTo}18`, border: `1px solid ${accentTo}35`, color: accentTo }}
     >
-      ⚡ {xp} XP
+      <Zap className="h-3 w-3" /> {xp} XP
     </span>
   );
 }

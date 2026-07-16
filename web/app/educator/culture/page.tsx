@@ -9,15 +9,24 @@ import { ImportSection } from "@/components/studio/import-panel";
 import { IMPORT_TYPES } from "@/lib/import-types";
 import { LANGUAGES } from "@mobile/lib/data/languages";
 import {
+  Baby,
   ChevronDown,
   ChevronUp,
   Edit2,
   Globe2,
+  Handshake,
+  Music,
+  Palette,
+  PartyPopper,
   Plus,
   Quote,
   Search,
+  Shirt,
+  Sparkles,
   Trash2,
+  UtensilsCrossed,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import React, { useState, useMemo } from "react";
 import { toast } from "sonner";
@@ -48,7 +57,6 @@ interface CulturalItem {
   titleFr?: string | null;
   description: string;
   descriptionFr?: string | null;
-  imageEmoji: string;
   keyTerms?: KeyTerm[];
 }
 
@@ -65,6 +73,22 @@ const CULTURAL_CATEGORIES = [
   "cuisine",
   "greetings_etiquette",
 ] as const;
+
+/** A monochrome lucide mark per culture category (replaces the old image emoji). */
+const CATEGORY_ICON: Record<string, LucideIcon> = {
+  colors: Palette,
+  naming_ceremonies: Baby,
+  festivals: PartyPopper,
+  creation_myths: Sparkles,
+  music: Music,
+  clothing: Shirt,
+  cuisine: UtensilsCrossed,
+  greetings_etiquette: Handshake,
+};
+
+function categoryIcon(category: string): LucideIcon {
+  return CATEGORY_ICON[category] ?? Globe2;
+}
 
 // ── Shared field style ─────────────────────────────────────────────────────────
 
@@ -269,7 +293,6 @@ const EMPTY_CULTURAL: CulturalForm = {
   titleFr: "",
   description: "",
   descriptionFr: "",
-  imageEmoji: "🌍",
   keyTerms: [],
 };
 
@@ -309,7 +332,7 @@ function CulturalModal({
     (l) => LANGUAGES.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.nativeName, region: "Other" }
   );
 
-  const isValid = form.languageId.trim() && form.title.trim() && form.description.trim() && form.category.trim() && form.imageEmoji.trim();
+  const isValid = form.languageId.trim() && form.title.trim() && form.description.trim() && form.category.trim();
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -342,15 +365,9 @@ function CulturalModal({
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-[auto_1fr] gap-3 items-end">
-            <div>
-              <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Emoji *</label>
-              <input className={cn(fieldCls, "w-16 text-center text-xl")} value={form.imageEmoji} onChange={set("imageEmoji")} maxLength={8} />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Title *</label>
-              <input className={fieldCls} value={form.title} onChange={set("title")} placeholder="Name of the culture note" />
-            </div>
+          <div>
+            <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Title *</label>
+            <input className={fieldCls} value={form.title} onChange={set("title")} placeholder="Name of the culture note" />
           </div>
           <div>
             <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Title (French)</label>
@@ -781,7 +798,14 @@ export default function EducatorCulturePage() {
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
-                          <span className="text-xl leading-none">{item.imageEmoji}</span>
+                          {(() => {
+                            const CatIcon = categoryIcon(item.category);
+                            return (
+                              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                                <CatIcon className="h-4 w-4" />
+                              </span>
+                            );
+                          })()}
                           <div>
                             <p className="font-medium text-neutral-900 dark:text-white">{item.title}</p>
                             <p className="text-xs text-neutral-400 dark:text-neutral-500 line-clamp-1 hidden sm:block">{item.description}</p>

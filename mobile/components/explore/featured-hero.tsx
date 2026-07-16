@@ -52,11 +52,12 @@ export function FeaturedHero({ item, ctaLabel }: FeaturedHeroProps) {
         }}
       >
         {/* Background glyph */}
-        <Text
-          style={{ fontSize: 80, position: "absolute", top: 10, right: 12, opacity: 0.18 }}
-        >
-          {item.coverEmoji}
-        </Text>
+        <IconSymbol
+          name={cfg.icon}
+          size={80}
+          color={cfg.color}
+          style={{ position: "absolute", top: 10, right: 12, opacity: 0.18 }}
+        />
 
         {/* Type badge */}
         <View

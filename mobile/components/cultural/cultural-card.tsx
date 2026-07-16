@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { CULTURE_CATEGORY_ICON } from "@/constants/cultural-categories";
 import { ShareModal } from "@/components/share/share-modal";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -27,7 +28,7 @@ export function CulturalCard({ item, onPress }: Props) {
         style={{ marginRight: 12, width: 224, borderRadius: 16, backgroundColor: M.card, padding: 16, borderWidth: 1, borderColor: M.border }}
         className="active:opacity-70"
       >
-        <Text style={{ fontSize: 36 }}>{item.imageEmoji}</Text>
+        <IconSymbol name={CULTURE_CATEGORY_ICON[item.category]} size={30} color={M.accent} />
 
         <View style={{ marginTop: 8, alignSelf: "flex-start", borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 10, paddingVertical: 2, borderWidth: 1, borderColor: M.accentBorder }}>
           <Text style={{ fontSize: 11, fontWeight: "500", color: M.accent }}>
@@ -67,7 +68,7 @@ export function CulturalCard({ item, onPress }: Props) {
           title: localize(item.title, uiLanguage),
           description: localize(item.description, uiLanguage),
           category: categoryLabel,
-          emoji: item.imageEmoji,
+          icon: CULTURE_CATEGORY_ICON[item.category],
           language: item.languageId,
         }}
       />

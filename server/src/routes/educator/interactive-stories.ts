@@ -41,7 +41,6 @@ function toApiStory(row: FilmRow) {
     title: row.title,
     description: row.description,
     coverGradient: [row.coverGradientFrom, row.coverGradientTo] as [string, string],
-    coverEmoji: row.coverEmoji,
     estimatedMinutes: row.estimatedMinutes ?? 5,
     author: row.author,
     language: row.language ?? undefined,
@@ -95,7 +94,6 @@ educatorInteractiveStoriesRouter.post("/interactive-stories", async (c) => {
     title: string;
     description: string;
     coverGradient: [string, string];
-    coverEmoji: string;
     estimatedMinutes: number;
     author: string;
     initialSceneId: string;
@@ -136,7 +134,6 @@ educatorInteractiveStoriesRouter.post("/interactive-stories", async (c) => {
       duration: estimatedMinutes * 60,
       coverGradientFrom: body.coverGradient?.[0] ?? "#C4862A",
       coverGradientTo: body.coverGradient?.[1] ?? "#8B5E1F",
-      coverEmoji: body.coverEmoji || "📖",
       estimatedMinutes,
       initialSceneId: body.initialSceneId,
       scenes: body.scenes as never,
@@ -173,7 +170,6 @@ educatorInteractiveStoriesRouter.patch("/interactive-stories/:id", async (c) => 
     title?: string;
     description?: string;
     coverGradient?: [string, string];
-    coverEmoji?: string;
     estimatedMinutes?: number;
     author?: string;
     initialSceneId?: string;
@@ -206,7 +202,6 @@ educatorInteractiveStoriesRouter.patch("/interactive-stories/:id", async (c) => 
       ...(body.coverGradient !== undefined
         ? { coverGradientFrom: body.coverGradient[0], coverGradientTo: body.coverGradient[1] }
         : {}),
-      ...(body.coverEmoji !== undefined ? { coverEmoji: body.coverEmoji } : {}),
       ...(body.estimatedMinutes !== undefined ? { estimatedMinutes: body.estimatedMinutes } : {}),
       ...(body.author !== undefined ? { author: body.author.trim() } : {}),
       ...(body.initialSceneId !== undefined ? { initialSceneId: body.initialSceneId } : {}),

@@ -149,7 +149,6 @@ export async function selectLessonSeasonCast(lessonId: string) {
       castId: storyArcCast.castId,
       name: storyArcCast.name,
       role: storyArcCast.role,
-      avatar: storyArcCast.avatar,
       hue: storyArcCast.hue,
     })
     .from(storyChapters)

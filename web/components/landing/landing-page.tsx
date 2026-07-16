@@ -50,24 +50,24 @@ const REGION_COLORS: Record<RegionKey, { bg: string; border: string; accent: str
 };
 
 const SOUNDSCAPE_LANGS = [
-  { name: "Yoruba",   region: "West Africa",     regionKey: "west" as RegionKey,     ambient: "City market · Lagos",     flag: "🇳🇬" },
-  { name: "Igbo",     region: "West Africa",     regionKey: "west" as RegionKey,     ambient: "Village drums · Enugu",   flag: "🇳🇬" },
-  { name: "Hausa",    region: "West Africa",     regionKey: "west" as RegionKey,     ambient: "Desert wind · Kano",      flag: "🇳🇬" },
-  { name: "Twi",      region: "West Africa",     regionKey: "west" as RegionKey,     ambient: "Rain on iron roofs",      flag: "🇬🇭" },
-  { name: "Wolof",    region: "West Africa",     regionKey: "west" as RegionKey,     ambient: "Ocean breeze · Dakar",    flag: "🇸🇳" },
-  { name: "Bambara",  region: "West Africa",     regionKey: "west" as RegionKey,     ambient: "River canoe · Mali",      flag: "🇲🇱" },
-  { name: "Fula",     region: "West Africa",     regionKey: "west" as RegionKey,     ambient: "Cattle bells · Sahel",    flag: "🇬🇳" },
-  { name: "Swahili",  region: "East Africa",     regionKey: "east" as RegionKey,     ambient: "Dhow harbour · Mombasa",  flag: "🇰🇪" },
-  { name: "Amharic",  region: "East Africa",     regionKey: "east" as RegionKey,     ambient: "Church bells · Addis",    flag: "🇪🇹" },
-  { name: "Kikuyu",   region: "East Africa",     regionKey: "east" as RegionKey,     ambient: "Tea farm mist",           flag: "🇰🇪" },
-  { name: "Oromo",    region: "East Africa",     regionKey: "east" as RegionKey,     ambient: "Highland plains",         flag: "🇪🇹" },
-  { name: "Zulu",     region: "Southern Africa", regionKey: "southern" as RegionKey, ambient: "Isicathamiya harmonics",  flag: "🇿🇦" },
-  { name: "Shona",    region: "Southern Africa", regionKey: "southern" as RegionKey, ambient: "Mbira in the evening",    flag: "🇿🇼" },
-  { name: "Somali",   region: "Horn of Africa",  regionKey: "horn" as RegionKey,     ambient: "Port wind · Mogadishu",   flag: "🇸🇴" },
-  { name: "Afar",     region: "Horn of Africa",  regionKey: "horn" as RegionKey,     ambient: "Salt lake silence",       flag: "🇩🇯" },
-  { name: "Izon",     region: "Niger Delta",     regionKey: "delta" as RegionKey,    ambient: "Creek water at dusk",     flag: "🇳🇬" },
-  { name: "Itsekiri", region: "Niger Delta",     regionKey: "delta" as RegionKey,    ambient: "Mangrove birds",          flag: "🇳🇬" },
-  { name: "Urhobo",   region: "Niger Delta",     regionKey: "delta" as RegionKey,    ambient: "Udje song circles",       flag: "🇳🇬" },
+  { name: "Yoruba",   region: "West Africa",     regionKey: "west" as RegionKey,     ambient: "City market · Lagos" },
+  { name: "Igbo",     region: "West Africa",     regionKey: "west" as RegionKey,     ambient: "Village drums · Enugu" },
+  { name: "Hausa",    region: "West Africa",     regionKey: "west" as RegionKey,     ambient: "Desert wind · Kano" },
+  { name: "Twi",      region: "West Africa",     regionKey: "west" as RegionKey,     ambient: "Rain on iron roofs" },
+  { name: "Wolof",    region: "West Africa",     regionKey: "west" as RegionKey,     ambient: "Ocean breeze · Dakar" },
+  { name: "Bambara",  region: "West Africa",     regionKey: "west" as RegionKey,     ambient: "River canoe · Mali" },
+  { name: "Fula",     region: "West Africa",     regionKey: "west" as RegionKey,     ambient: "Cattle bells · Sahel" },
+  { name: "Swahili",  region: "East Africa",     regionKey: "east" as RegionKey,     ambient: "Dhow harbour · Mombasa" },
+  { name: "Amharic",  region: "East Africa",     regionKey: "east" as RegionKey,     ambient: "Church bells · Addis" },
+  { name: "Kikuyu",   region: "East Africa",     regionKey: "east" as RegionKey,     ambient: "Tea farm mist" },
+  { name: "Oromo",    region: "East Africa",     regionKey: "east" as RegionKey,     ambient: "Highland plains" },
+  { name: "Zulu",     region: "Southern Africa", regionKey: "southern" as RegionKey, ambient: "Isicathamiya harmonics" },
+  { name: "Shona",    region: "Southern Africa", regionKey: "southern" as RegionKey, ambient: "Mbira in the evening" },
+  { name: "Somali",   region: "Horn of Africa",  regionKey: "horn" as RegionKey,     ambient: "Port wind · Mogadishu" },
+  { name: "Afar",     region: "Horn of Africa",  regionKey: "horn" as RegionKey,     ambient: "Salt lake silence" },
+  { name: "Izon",     region: "Niger Delta",     regionKey: "delta" as RegionKey,    ambient: "Creek water at dusk" },
+  { name: "Itsekiri", region: "Niger Delta",     regionKey: "delta" as RegionKey,    ambient: "Mangrove birds" },
+  { name: "Urhobo",   region: "Niger Delta",     regionKey: "delta" as RegionKey,    ambient: "Udje song circles" },
 ];
 
 const REGION_ORDER: RegionKey[] = ["west", "east", "southern", "horn", "delta"];
@@ -172,7 +172,6 @@ function SoundscapeCard({
 
       <div className="flex items-start justify-between mb-2">
         <span className="text-sm font-semibold text-white">{lang.name}</span>
-        <span className="text-base leading-none">{lang.flag}</span>
       </div>
 
       {/* Waveform — visible on hover */}
@@ -638,7 +637,6 @@ function DraggableWindow() {
               {t("web.landing.previewTranslation")}
             </div>
           </div>
-          <span className="text-2xl select-none">🇳🇬</span>
         </div>
 
         {/* Waveform + word strip */}

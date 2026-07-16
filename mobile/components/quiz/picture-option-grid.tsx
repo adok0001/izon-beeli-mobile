@@ -1,3 +1,4 @@
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { Image, Pressable, Text, View } from "react-native";
 import type { OptionState } from "./option-card";
@@ -56,7 +57,7 @@ export function PictureOptionGrid({ options, optionImages, state, onPress }: Pic
               />
             ) : (
               <View style={{ width: "100%", aspectRatio: 1, alignItems: "center", justifyContent: "center", backgroundColor: M.card }}>
-                <Text style={{ fontSize: 32 }}>🖼️</Text>
+                <IconSymbol name="photo" size={30} color={M.muted} />
               </View>
             )}
             <View style={{ padding: 8 }}>

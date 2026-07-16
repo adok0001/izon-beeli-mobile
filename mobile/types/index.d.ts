@@ -155,7 +155,6 @@ export interface CulturalContent {
     titleFr?: string | null;
     description: string;
     descriptionFr?: string | null;
-    imageEmoji: string;
     keyTerms: {
         word: string;
         english: string;

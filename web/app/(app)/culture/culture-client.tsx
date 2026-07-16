@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
+import { Clapperboard, Mic, PenLine, type LucideIcon } from "lucide-react";
 
 export type DiscoverItem = {
   id: string;
@@ -14,7 +15,6 @@ export type DiscoverItem = {
   publishedAt: string;
   duration: number;
   coverGradient: [string, string];
-  coverEmoji: string;
   featured: boolean;
   /**
    * The experience the card OPENS. A film IS its story (its own `id` once it has
@@ -41,6 +41,13 @@ function cardHref(item: DiscoverItem): string {
 
 export type DiscoverFilter = "all" | "blog" | "podcast" | "film";
 
+/** Each Discover content type maps to a monochrome lucide mark (no cover emoji). */
+export const DISCOVER_TYPE_ICON: Record<DiscoverItem["type"], LucideIcon> = {
+  blog: PenLine,
+  podcast: Mic,
+  film: Clapperboard,
+};
+
 const TYPE_CONFIG = {
   blog:    { color: "#38bdf8", label: "BLOG",    cta: "Read Article" },
   podcast: { color: "#a855f7", label: "PODCAST", cta: "Listen" },
@@ -64,6 +71,7 @@ function formatDuration(seconds: number) {
 function HeroCard({ item }: { item: DiscoverItem }) {
   const cfg = cardConfig(item);
   const href = cardHref(item);
+  const Icon = DISCOVER_TYPE_ICON[item.type];
 
   return (
     <Link
@@ -79,8 +87,8 @@ function HeroCard({ item }: { item: DiscoverItem }) {
           className="absolute inset-0 pointer-events-none"
           style={{ background: `linear-gradient(to bottom, transparent 30%, ${item.coverGradient[1]}dd)` }}
         />
-        <span className="absolute inset-0 flex items-center justify-center text-8xl opacity-[0.07] select-none pointer-events-none">
-          {item.coverEmoji}
+        <span className="absolute inset-0 flex items-center justify-center opacity-[0.07] select-none pointer-events-none">
+          <Icon className="w-28 h-28 text-neutral-50" strokeWidth={1.25} />
         </span>
         <div
           className="absolute top-4 left-5 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[9px] font-black tracking-widest"
@@ -111,6 +119,7 @@ function HeroCard({ item }: { item: DiscoverItem }) {
 function ContentCard({ item }: { item: DiscoverItem }) {
   const cfg = cardConfig(item);
   const href = cardHref(item);
+  const Icon = DISCOVER_TYPE_ICON[item.type];
   const date = new Date(item.publishedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
   return (
@@ -120,10 +129,10 @@ function ContentCard({ item }: { item: DiscoverItem }) {
       style={{ textDecoration: "none", borderLeftWidth: 3, borderLeftColor: cfg.color }}
     >
       <div
-        className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl shrink-0"
+        className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0"
         style={{ background: `linear-gradient(135deg, ${item.coverGradient[0]}, ${item.coverGradient[1]})` }}
       >
-        {item.coverEmoji}
+        <Icon className="w-5 h-5 text-neutral-50/90" />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
@@ -247,7 +256,7 @@ export function CulturePage() {
 
         {!isLoading && items.length === 0 && (
           <div className="flex flex-col items-center py-24 text-center">
-            <span className="text-5xl mb-4">🎬</span>
+            <Clapperboard className="w-12 h-12 mb-4 text-neutral-500" strokeWidth={1.25} />
             <p className="text-base font-bold text-neutral-50 mb-1">Nothing here yet</p>
             <p className="text-sm text-neutral-400">Check back soon for new stories and films.</p>
           </div>

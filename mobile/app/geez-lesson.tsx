@@ -1,4 +1,5 @@
 import { CharacterDetail } from "@/components/geez/character-detail";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { FidelGrid } from "@/components/geez/fidel-grid";
 import { TracingCanvas } from "@/components/geez/tracing-canvas";
 import { LoadingScreen } from "@/components/loading-screen";
@@ -138,7 +139,7 @@ export default function GeezLessonScreen() {
           <View style={{ flex: 1, paddingHorizontal: 20 }}>
             {allLearned ? (
               <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12 }}>
-                <Text style={{ fontSize: 48 }}>🎉</Text>
+                <IconSymbol name="checkmark.seal.fill" size={44} color={M.success} />
                 <Text style={{ fontSize: 20, fontWeight: "700", color: M.text }}>
                   {t("geez.allLearned", { count: TOTAL_CHARS })}
                 </Text>

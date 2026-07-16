@@ -68,7 +68,6 @@ async function arcDetail(arc: { id: string; languageId: string | null }) {
         castId: storyArcCast.castId,
         name: storyArcCast.name,
         role: storyArcCast.role,
-        avatar: storyArcCast.avatar,
         hue: storyArcCast.hue,
       })
       .from(storyArcCast)
@@ -327,15 +326,12 @@ educatorStoryArcsRouter.put("/story-arcs/:id/cast", async (c) => {
   }
 
   const body = await parseJson<{
-    cast: { castId: string; name: string; role: string; avatar: string; hue: string }[];
+    cast: { castId: string; name: string; role: string; hue: string }[];
   }>(c);
 
   for (const member of body.cast) {
     if (!member.castId?.trim() || !member.name?.trim() || !member.role?.trim()) {
       return c.json({ error: "Each cast member requires castId, name, and role" }, 400);
-    }
-    if (!member.avatar?.trim()) {
-      return c.json({ error: `${member.name} needs an avatar emoji` }, 400);
     }
     if (!CAST_HUES.includes(member.hue as (typeof CAST_HUES)[number])) {
       return c.json({ error: `"${member.hue}" is not a valid hue` }, 400);
@@ -359,7 +355,6 @@ educatorStoryArcsRouter.put("/story-arcs/:id/cast", async (c) => {
         castId: member.castId.trim(),
         name: member.name.trim(),
         role: member.role.trim(),
-        avatar: member.avatar.trim(),
         hue: member.hue,
         order: i,
       }))

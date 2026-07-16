@@ -5,6 +5,23 @@ import { notFound } from "next/navigation";
 import Script from "next/script";
 import { breadcrumbJsonLd } from "@/lib/structured-data";
 import { getRequestLocale, localeAlternates } from "@/lib/locale-meta";
+import {
+  BookOpen,
+  Clock,
+  Hand,
+  Hash,
+  HeartPulse,
+  Leaf,
+  MessageSquare,
+  Package,
+  Palette,
+  PawPrint,
+  Tag,
+  UtensilsCrossed,
+  Users,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api";
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://izon-beeli.com";
@@ -19,10 +36,10 @@ interface DictEntry {
   exampleTranslation: string | null;
 }
 
-const CATEGORY_EMOJI: Record<string, string> = {
-  greetings: "👋", numbers: "🔢", family: "👨‍👩‍👧", food: "🍲",
-  body: "🫀", animals: "🐾", time: "⏰", verbs: "⚡",
-  adjectives: "🎨", phrases: "💬", nouns: "📦", nature: "🌿",
+const CATEGORY_ICON: Record<string, LucideIcon> = {
+  greetings: Hand, numbers: Hash, family: Users, food: UtensilsCrossed,
+  body: HeartPulse, animals: PawPrint, time: Clock, verbs: Zap,
+  adjectives: Palette, phrases: MessageSquare, nouns: Package, nature: Leaf,
 };
 
 export function generateStaticParams() {
@@ -163,11 +180,14 @@ export default async function DictionaryLanguagePage({
         {/* Category chips */}
         {categories.length > 0 && (
           <div className="max-w-4xl mx-auto px-6 mb-8 flex flex-wrap gap-2 justify-center">
-            {categories.map((cat) => (
-              <span key={cat} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 capitalize">
-                {CATEGORY_EMOJI[cat] ?? "📝"} {cat}
-              </span>
-            ))}
+            {categories.map((cat) => {
+              const Icon = CATEGORY_ICON[cat] ?? Tag;
+              return (
+                <span key={cat} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 capitalize">
+                  <Icon className="h-3.5 w-3.5" /> {cat}
+                </span>
+              );
+            })}
           </div>
         )}
 
@@ -216,7 +236,7 @@ export default async function DictionaryLanguagePage({
             </>
           ) : (
             <div className="text-center py-16 rounded-2xl border border-dashed border-neutral-200 dark:border-neutral-800">
-              <p className="text-2xl mb-3">📖</p>
+              <BookOpen className="h-7 w-7 mx-auto mb-3 text-neutral-400 dark:text-neutral-500" strokeWidth={1.5} />
               <h2 className="text-xl font-bold mb-2">No entries yet</h2>
               <p className="text-neutral-500 dark:text-neutral-400 mb-6 text-sm max-w-sm mx-auto">
                 Know {lang.name}? Be the first to contribute words to this dictionary.

@@ -122,7 +122,9 @@ export default function DiscoverStoriesAdminPage() {
                 {stories.map((s) => (
                   <Card key={s.id}>
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl leading-none">{s.coverEmoji}</span>
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-brand-500">
+                        <Clapperboard className="h-4 w-4" />
+                      </span>
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-neutral-900 dark:text-white">
                           {s.title}

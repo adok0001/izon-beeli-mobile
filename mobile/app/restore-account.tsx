@@ -1,3 +1,4 @@
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { analytics } from "@/lib/analytics";
 import { apiFetch } from "@/lib/api";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
@@ -64,7 +65,7 @@ export default function RestoreAccountScreen() {
         onDismiss={dismissToast}
       />
       <View className="mb-6 h-16 w-16 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900">
-        <Text className="text-3xl">⚠️</Text>
+        <IconSymbol name="exclamationmark.triangle.fill" size={30} color="#FBBF24" />
       </View>
 
       <Text className="mb-3 text-center text-2xl font-bold text-neutral-900 dark:text-white">

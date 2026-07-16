@@ -1,3 +1,4 @@
+import type { IconSymbolName } from "@/components/ui/icon-symbol";
 import type { AudioSource } from "@/types";
 import type { TFunction } from "i18next";
 import { Share, Platform } from "react-native";
@@ -54,7 +55,7 @@ export type ShareCardData =
       title: string;
       description: string;
       category: string;
-      emoji: string;
+      icon: IconSymbolName;
       language?: string;
     }
   | {
@@ -92,7 +93,7 @@ export function buildShareMessage(data: ShareCardData, t: TFunction): string {
       deepLink = `${SCHEME}adinkra`;
       break;
     case "cultural":
-      msg = `${data.emoji} ${data.title}\n${data.description}${data.language ? `\n\n${t("share.learningWith", { language: data.language })}` : `\n\n${t("share.learningGeneric")}`}`;
+      msg = `${data.title}\n${data.description}${data.language ? `\n\n${t("share.learningWith", { language: data.language })}` : `\n\n${t("share.learningGeneric")}`}`;
       if (data.languageId) deepLink = `${SCHEME}cultural/${data.languageId}`;
       break;
     case "lesson":

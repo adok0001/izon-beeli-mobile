@@ -2,7 +2,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
-import { IconSymbol } from "@/components/ui/icon-symbol";
+import { IconSymbol, type IconSymbolName } from "@/components/ui/icon-symbol";
 import { formatDuration } from "@/lib/mock-data";
 import { MUSEUM, useMuseumTheme } from "@/lib/use-museum-theme";
 import type { Lesson } from "@/types";
@@ -11,7 +11,7 @@ import type { Lesson } from "@/types";
 export interface LessonCanDo {
   text: string;
   label: string;
-  skills: { icon: string; label: string }[];
+  skills: { icon: IconSymbolName | null; label: string }[];
   addToAbilitiesLabel: string;
 }
 
@@ -158,7 +158,7 @@ export function LessonSummary({
             >
               {canDo.skills.map((skill, i) => (
                 <View key={i} style={{ flex: 1, alignItems: "center" }}>
-                  <Text style={{ fontSize: 20 }}>{skill.icon}</Text>
+                  {skill.icon ? <IconSymbol name={skill.icon} size={20} color={M.accent} /> : null}
                   <Text style={{ marginTop: 4, fontSize: 11, color: M.sub }}>{skill.label}</Text>
                 </View>
               ))}

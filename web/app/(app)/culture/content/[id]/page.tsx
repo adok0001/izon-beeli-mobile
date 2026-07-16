@@ -3,7 +3,8 @@
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
-import type { DiscoverItem } from "../../culture-client";
+import { DISCOVER_TYPE_ICON, type DiscoverItem } from "../../culture-client";
+import { Clapperboard } from "lucide-react";
 
 function formatDuration(seconds: number) {
   if (seconds < 3600) return `${Math.round(seconds / 60)} min read`;
@@ -37,7 +38,7 @@ export default function ContentPage() {
   if (isError || !item) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ background: "#07080F" }}>
-        <span className="text-5xl">🎬</span>
+        <Clapperboard className="w-12 h-12" strokeWidth={1.25} style={{ color: "#9A9480" }} />
         <p className="text-base font-bold" style={{ color: "#F7F2E8" }}>Content not found</p>
         <button
           onClick={() => router.push("/culture")}
@@ -51,6 +52,7 @@ export default function ContentPage() {
   }
 
   const cfg = TYPE_CONFIG[item.type];
+  const Icon = DISCOVER_TYPE_ICON[item.type];
   const date = new Date(item.publishedAt).toLocaleDateString("en-GB", {
     day: "numeric",
     month: "long",
@@ -87,8 +89,8 @@ export default function ContentPage() {
           className="absolute inset-0 pointer-events-none"
           style={{ background: `linear-gradient(to bottom, transparent 30%, ${item.coverGradient[1]}ee)` }}
         />
-        <span className="absolute inset-0 flex items-center justify-center text-[90px] opacity-[0.07] select-none pointer-events-none">
-          {item.coverEmoji}
+        <span className="absolute inset-0 flex items-center justify-center opacity-[0.07] select-none pointer-events-none">
+          <Icon className="w-24 h-24 text-neutral-50" strokeWidth={1.25} />
         </span>
         <div
           className="absolute top-4 left-5 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[9px] font-black tracking-widest"

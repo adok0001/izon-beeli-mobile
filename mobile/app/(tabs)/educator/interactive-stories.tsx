@@ -120,7 +120,6 @@ export default function InteractiveStoriesScreen() {
   const [description, setDescription] = useState("");
   const [author, setAuthor] = useState("");
   const [estimatedMinutes, setEstimatedMinutes] = useState("5");
-  const [coverEmoji, setCoverEmoji] = useState("📖");
   const [coverGradientFrom, setCoverGradientFrom] = useState("#8B5E1F");
   const [coverGradientTo, setCoverGradientTo] = useState("#C4862A");
   const [initialSceneId, setInitialSceneId] = useState("");
@@ -153,7 +152,6 @@ export default function InteractiveStoriesScreen() {
     setDescription("");
     setAuthor("");
     setEstimatedMinutes("5");
-    setCoverEmoji("📖");
     setCoverGradientFrom("#8B5E1F");
     setCoverGradientTo("#C4862A");
     setInitialSceneId("");
@@ -167,7 +165,6 @@ export default function InteractiveStoriesScreen() {
     setDescription(story.description);
     setAuthor(story.author);
     setEstimatedMinutes(String(story.estimatedMinutes));
-    setCoverEmoji(story.coverEmoji);
     setCoverGradientFrom(story.coverGradient[0]);
     setCoverGradientTo(story.coverGradient[1]);
     setInitialSceneId(story.initialSceneId);
@@ -178,7 +175,6 @@ export default function InteractiveStoriesScreen() {
         type: scene.type,
         gradientFrom: scene.gradient[0],
         gradientTo: scene.gradient[1],
-        backgroundEmoji: scene.backgroundEmoji,
         title: scene.title ?? "",
         text: scene.text,
         nextSceneId: scene.nextSceneId ?? "",
@@ -287,7 +283,6 @@ export default function InteractiveStoriesScreen() {
         id,
         type: scene.type,
         gradient: [scene.gradientFrom, scene.gradientTo],
-        backgroundEmoji: scene.backgroundEmoji.trim() || "📖",
         title: scene.title.trim() || undefined,
         text: scene.text.trim(),
         ...(scene.type === "choice"
@@ -303,7 +298,6 @@ export default function InteractiveStoriesScreen() {
       description: cleanDescription,
       author: author.trim() || "Beeli",
       estimatedMinutes: Number(estimatedMinutes) || 5,
-      coverEmoji: coverEmoji.trim() || "📖",
       coverGradient: [coverGradientFrom, coverGradientTo] as [string, string],
       initialSceneId,
       scenes: cleanScenes,
@@ -424,9 +418,6 @@ export default function InteractiveStoriesScreen() {
             </View>
             <View style={{ flexDirection: "row", gap: 8 }}>
               <View style={{ flex: 1 }}>
-                <LabeledInput label={t("educator.interactiveStoriesEditor.coverEmojiLabel")} value={coverEmoji} onChange={setCoverEmoji} />
-              </View>
-              <View style={{ flex: 1 }}>
                 <LabeledInput
                   label={t("educator.interactiveStoriesEditor.coverGradientFromLabel")}
                   value={coverGradientFrom}
@@ -503,7 +494,7 @@ export default function InteractiveStoriesScreen() {
               <View key={story.id} style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 14 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                   <Text style={{ flex: 1, fontSize: 15, fontWeight: "800", color: M.text }}>
-                    {story.coverEmoji} {story.title}
+                    {story.title}
                   </Text>
                   {story.status && <Badge label={STATUS_LABEL[story.status as ContentStatus]} tone={STATUS_TONE[story.status as ContentStatus]} />}
                 </View>

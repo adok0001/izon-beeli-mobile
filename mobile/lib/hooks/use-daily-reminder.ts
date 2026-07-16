@@ -57,7 +57,7 @@ async function scheduleEveningReminder(streak: number, dailyGoal?: string | null
 
     const id = await N.scheduleNotificationAsync({
       content: {
-        title: "Keep your streak alive! 🔥",
+        title: "Keep your streak alive!",
         body:
           streak > 0
             ? `You have a ${streak}-day streak. Complete a lesson today to keep it going.`

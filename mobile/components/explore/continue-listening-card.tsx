@@ -1,3 +1,4 @@
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { localize } from "@/lib/localize";
 import { useResumeLesson } from "@/lib/hooks/use-resume-lesson";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -33,7 +34,7 @@ export function ContinueListeningCard() {
     >
       <View style={{ flexDirection: "row", gap: 12 }}>
         <View style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: M.accentGlow, borderWidth: 1, borderColor: M.accentBorder, alignItems: "center", justifyContent: "center" }}>
-          <Text style={{ fontSize: 20 }}>🎧</Text>
+          <IconSymbol name="headphones" size={20} color={M.accent} />
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={{ fontSize: 14, fontWeight: "700", color: M.text }} numberOfLines={1}>

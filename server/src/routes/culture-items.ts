@@ -41,7 +41,6 @@ type Body = {
   duration: number;
   coverGradientFrom: string;
   coverGradientTo: string;
-  coverEmoji: string;
   featured?: boolean;
   /**
    * The season this card belongs to. For a film it means "set in this season's
@@ -66,8 +65,8 @@ type Body = {
 // POST /api/culture-items/admin
 cultureItemsAdminRouter.post("/", async (c) => {
   const body = await parseJson<Body>(c);
-  const { id, type, title, description, author, publishedAt, duration, coverGradientFrom, coverGradientTo, coverEmoji } = body;
-  if (!id || !type || !title || !description || !author || !publishedAt || !duration || !coverGradientFrom || !coverGradientTo || !coverEmoji) {
+  const { id, type, title, description, author, publishedAt, duration, coverGradientFrom, coverGradientTo } = body;
+  if (!id || !type || !title || !description || !author || !publishedAt || !duration || !coverGradientFrom || !coverGradientTo) {
     return c.json({ error: "Missing required fields" }, 400);
   }
   // A film carries its branching scene graph inline — validate the graph.
@@ -88,7 +87,6 @@ cultureItemsAdminRouter.post("/", async (c) => {
     duration,
     coverGradientFrom,
     coverGradientTo,
-    coverEmoji,
     featured: body.featured ?? false,
     seasonArcId: body.seasonArcId || null,
     scenes: isFilm ? body.scenes ?? null : null,
@@ -119,7 +117,6 @@ cultureItemsAdminRouter.patch("/:id", async (c) => {
   if (body.duration !== undefined) updates.duration = body.duration;
   if (body.coverGradientFrom !== undefined) updates.coverGradientFrom = body.coverGradientFrom;
   if (body.coverGradientTo !== undefined) updates.coverGradientTo = body.coverGradientTo;
-  if (body.coverEmoji !== undefined) updates.coverEmoji = body.coverEmoji;
   if (body.featured !== undefined) updates.featured = body.featured;
   // A film's inline scene graph — revalidate when scenes/initialSceneId change.
   if ("scenes" in body || "initialSceneId" in body) {
@@ -197,7 +194,6 @@ function toApi(row: typeof cultureItems.$inferSelect) {
     publishedAt: row.publishedAt.toISOString(),
     duration: row.duration,
     coverGradient: [row.coverGradientFrom, row.coverGradientTo] as [string, string],
-    coverEmoji: row.coverEmoji,
     featured: row.featured,
     storyId,
     seasonArcId: row.seasonArcId ?? undefined,

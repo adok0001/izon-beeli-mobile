@@ -1,4 +1,5 @@
 import { View, Text } from "react-native";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useTranslation } from "react-i18next";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { formatDuration } from "@/lib/mock-data";
@@ -45,8 +46,9 @@ export function LessonMetaPills({ level, wordCount, duration, accentColor }: Les
       ) : null}
       {wordCount ? (
         <Pill>
+          <IconSymbol name="book.fill" size={11} color={M.sub} style={{ marginRight: 4 }} />
           <Text style={{ fontSize: 11.5, fontWeight: "700", color: M.sub }}>
-            {`📖 ${t("lesson.wordsCount", { n: wordCount, defaultValue: `${wordCount} words` })}`}
+            {t("lesson.wordsCount", { n: wordCount, defaultValue: `${wordCount} words` })}
           </Text>
         </Pill>
       ) : null}

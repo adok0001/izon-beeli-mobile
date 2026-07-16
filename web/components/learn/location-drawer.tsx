@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { localizeField } from "@/lib/localize";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course } from "@/types";
-import { ArrowRight, X, Volume2 } from "lucide-react";
+import { ArrowRight, X, Volume2, Zap } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
@@ -136,7 +136,7 @@ export function LocationDrawer({ course, nodeState, onClose, onUnlock }: Readonl
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
               style={{ background: `${colors.ring}15`, border: `1px solid ${colors.ring}30`, color: colors.ring }}
             >
-              ⚡ {estimatedXp} XP
+              <Zap className="h-3 w-3" /> {estimatedXp} XP
             </span>
           </div>
 
@@ -169,10 +169,11 @@ export function LocationDrawer({ course, nodeState, onClose, onUnlock }: Readonl
 
           {/* MindMaze flavour text */}
           <div
-            className="p-3 rounded-xl text-xs text-neutral-500 leading-relaxed"
+            className="flex items-start gap-2 p-3 rounded-xl text-xs text-neutral-500 leading-relaxed"
             style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}
           >
-            🔊 Each location hides a soundscape. Listen carefully — the city will reveal itself.
+            <Volume2 className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+            <span>Each location hides a soundscape. Listen carefully — the city will reveal itself.</span>
           </div>
         </div>
 

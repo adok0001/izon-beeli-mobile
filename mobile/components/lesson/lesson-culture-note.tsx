@@ -1,4 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { CULTURE_CATEGORY_ICON } from "@/constants/cultural-categories";
+import type { CulturalCategory } from "@/types";
 import type { CulturalNote } from "@/types";
 import { useCultural } from "@/lib/hooks/use-cultural";
 import { localize } from "@/lib/localize";
@@ -195,7 +197,7 @@ function CulturalGalleryFallback({ languageId, lessonId }: { languageId: string;
     >
       <NoteHeader label={label} meta={category} />
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-        <Text style={{ fontSize: 30 }}>{item.imageEmoji}</Text>
+        <IconSymbol name={CULTURE_CATEGORY_ICON[item.category as CulturalCategory]} size={26} color={M.accent} />
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 15, fontWeight: "800", color: M.text }} numberOfLines={1}>{title}</Text>
           {description ? (

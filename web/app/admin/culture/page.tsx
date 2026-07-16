@@ -1,7 +1,7 @@
 "use client";
 
 import { apiFetch } from "@/lib/api";
-import type { DiscoverItem } from "@/app/(app)/culture/culture-client";
+import { DISCOVER_TYPE_ICON, type DiscoverItem } from "@/app/(app)/culture/culture-client";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,7 +30,6 @@ const BLANK: DiscoverItem = {
   publishedAt: new Date().toISOString().slice(0, 10) + "T08:00:00Z",
   duration: 300,
   coverGradient: ["#0F2A4A", "#0D0F1A"],
-  coverEmoji: "📝",
   featured: false,
   contentUrl: "",
   body: "",
@@ -193,11 +192,7 @@ function EditDrawer({ draft: initial, onSave, onClose, isNew, isSaving }: Drawer
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label className={labelCls}>Emoji</label>
-              <input className={fieldCls} value={d.coverEmoji} onChange={(e) => set("coverEmoji", e.target.value)} placeholder="🎙️" />
-            </div>
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelCls}>Gradient from</label>
               <div className="flex items-center gap-2">
@@ -290,7 +285,14 @@ function EditDrawer({ draft: initial, onSave, onClose, isNew, isSaving }: Drawer
               className="relative h-20 flex items-end px-3 pb-3"
               style={{ background: `linear-gradient(135deg, ${d.coverGradient[0]}, ${d.coverGradient[1]})` }}
             >
-              <span className="absolute inset-0 flex items-center justify-center text-4xl opacity-[0.07] select-none">{d.coverEmoji}</span>
+              {(() => {
+                const PreviewIcon = DISCOVER_TYPE_ICON[d.type];
+                return (
+                  <span className="absolute inset-0 flex items-center justify-center opacity-[0.07] select-none">
+                    <PreviewIcon className="h-10 w-10 text-white" strokeWidth={1.25} />
+                  </span>
+                );
+              })()}
               <div className="relative z-10">
                 <TypeBadge type={d.type} />
                 <p className="text-xs font-bold text-white mt-1 line-clamp-1">{d.title || "Untitled"}</p>
@@ -362,7 +364,6 @@ function toApiBody(item: DiscoverItem) {
     duration: item.duration,
     coverGradientFrom: item.coverGradient[0],
     coverGradientTo: item.coverGradient[1],
-    coverEmoji: item.coverEmoji,
     featured: item.featured,
     seasonArcId: item.seasonArcId || null,
     audioUrl: item.audioUrl ?? null,

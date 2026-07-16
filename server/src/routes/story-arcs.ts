@@ -64,7 +64,6 @@ async function seasonExtras(arcId: string) {
         castId: storyArcCast.castId,
         name: storyArcCast.name,
         role: storyArcCast.role,
-        avatar: storyArcCast.avatar,
         hue: storyArcCast.hue,
       })
       .from(storyArcCast)

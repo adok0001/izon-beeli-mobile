@@ -246,7 +246,7 @@ export default function RecallBingoScreen() {
         <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["top", "bottom"]}>
           <Stack.Screen options={{ title: "Recall Bingo", headerBackTitle: "Back" }} />
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32 }}>
-            <Text style={{ fontSize: 64, marginBottom: 8 }}>🎉</Text>
+            <IconSymbol name="trophy.fill" size={56} color={M.accent} style={{ marginBottom: 8 }} />
             <Text style={{ fontSize: 32, fontWeight: "900", color: M.accent, marginBottom: 8 }}>BINGO!</Text>
             <Text style={{ fontSize: 15, color: M.sub, textAlign: "center" }}>
               {correctHits} tiles marked · {timeStr}

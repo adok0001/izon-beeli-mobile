@@ -1,7 +1,8 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { Image, Text, View } from "react-native";
+import { Image, View } from "react-native";
 import { getCourseTypeColors } from "@/constants/course-colors";
-import { COURSE_EMOJI } from "@/lib/journey";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { COURSE_ICON } from "@/lib/journey";
 import { CourseScene } from "@/components/learn/journey-scenery";
 import { MUSEUM } from "@/lib/use-museum-theme";
 import type { Course } from "@/types";
@@ -28,7 +29,7 @@ export function CourseArtwork({ course, size = "hero", height }: CourseArtworkPr
   const isHero = size === "hero";
   const resolvedHeight = height ?? (isHero ? HERO_HEIGHT : THUMB_SIZE);
   const accent = accentFor(course);
-  const emoji = (course.courseType && COURSE_EMOJI[course.courseType]) || "📍";
+  const iconName = (course.courseType && COURSE_ICON[course.courseType]) || "mappin";
 
   if (course.imageUrl) {
     return (
@@ -83,7 +84,7 @@ export function CourseArtwork({ course, size = "hero", height }: CourseArtworkPr
           borderColor: `${accent}88`,
         }}
       >
-        <Text style={{ fontSize: isHero ? 28 : 18 }}>{emoji}</Text>
+        <IconSymbol name={iconName} size={isHero ? 30 : 20} color={accent} />
       </View>
     </LinearGradient>
   );
