@@ -3,6 +3,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { friendlyError } from "@/lib/api";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useDirtyTracker, useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import { SeasonCastEditor } from "@/components/studio/season-cast-editor";
 import {
   EducatorStoryChapter,
@@ -186,6 +187,8 @@ export default function StoryEditScreen() {
   const [cast, setCast] = useState<EducatorStoryCastMember[]>([]);
   const [chapters, setChapters] = useState<ChapterDraft[]>([]);
   const [saving, setSaving] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
     if (!arc) return;
@@ -206,7 +209,17 @@ export default function StoryEditScreen() {
           order: ch.order,
         }))
     );
+    setLoaded(true);
   }, [arc]);
+
+  // Baseline only once the arc has populated the form, so an untouched load
+  // doesn't read as dirty. A successful save navigates back, so gate the guard
+  // on `leaving` to let that intentional exit through.
+  const { dirty } = useDirtyTracker({ title, description, nativeTitle, logline, cast, chapters }, loaded);
+  useUnsavedGuard(dirty && !leaving);
+  useEffect(() => {
+    if (leaving) router.back();
+  }, [leaving, router]);
 
   // A course-bound season draws its chapters from that course. A standalone one
   // is a cross-course narrative, so it may pick any lesson in its language.
@@ -267,7 +280,9 @@ export default function StoryEditScreen() {
         })),
       });
       toastSuccess(t("educator.story.arcSaved"));
-      router.back();
+      // Stand the guard down before leaving so the save's own exit doesn't
+      // trip the discard prompt; the effect handles the actual navigation.
+      setLeaving(true);
     } catch (e) {
       toastError(friendlyError(e as Error));
     } finally {

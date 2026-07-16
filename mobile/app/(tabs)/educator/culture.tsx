@@ -4,6 +4,7 @@ import { HeadwordField } from "@/components/educator/headword-field";
 import { LocalizedTextInput, serializeLocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import { fonts } from "@/constants/typography";
 import type { LocalizedText } from "@/types";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
@@ -138,6 +139,8 @@ export default function EducatorCultureScreen() {
   const [culturalForm, setCulturalForm] = useState<CulturalForm>(EMPTY_CULTURAL);
   const [editingCultural, setEditingCultural] = useState(false);
   const [culturalFormOpen, setCulturalFormOpen] = useState(false);
+  // Leaving with the editor panel open risks losing an unsaved culture item.
+  useUnsavedGuard(culturalFormOpen);
 
   const allowedLanguages = currentUser?.isAdmin
     ? LANGUAGES.map((l) => l.id)

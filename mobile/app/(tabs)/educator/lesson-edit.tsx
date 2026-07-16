@@ -4,6 +4,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { GLOSS_LANGUAGES, toLocalizedText } from "@/components/ui/localized-text-input";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useDirtyTracker, useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import {
     canPublishContent,
     canSubmitForReview,
@@ -77,6 +78,13 @@ export default function EducatorLessonEditScreen() {
   const [checks, setChecks] = useState<CheckEditor[]>([]);
   const [translationLang, setTranslationLang] = useState<UiLanguage>(uiLanguage);
   const [playbackPos, setPlaybackPos] = useState(0);
+  // In edit mode the form fills from the fetched lesson; baseline the dirty
+  // tracker only after that so an untouched load isn't flagged. New lessons
+  // start empty and are dirty as soon as anything is typed.
+  const [loaded, setLoaded] = useState(false);
+  // A create or delete navigates back; flip this so that intentional exit
+  // clears the guard instead of raising the discard prompt.
+  const [leaving, setLeaving] = useState(false);
 
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
 
@@ -144,7 +152,23 @@ export default function EducatorLessonEditScreen() {
         afterSegmentIndex: ch.afterSegmentIndex ?? null,
       })),
     );
+    setLoaded(true);
   }, [lessonDetail, uiLanguage]);
+
+  // Guard the whole form. `markSaved` re-baselines after an in-place update
+  // (which stays on the screen); create/delete instead set `leaving`.
+  const { dirty, markSaved } = useDirtyTracker(
+    {
+      title, description, type, artist, genre, style,
+      narrativeIntro, narrativeOutro, canDo, canDoFr,
+      audioUri, segments, culturalAttachments, checks,
+    },
+    isEditMode ? loaded : true,
+  );
+  useUnsavedGuard(dirty && !leaving);
+  useEffect(() => {
+    if (leaving) router.back();
+  }, [leaving, router]);
 
   const pickAudio = async () => {
     const result = await DocumentPicker.getDocumentAsync({
@@ -185,7 +209,7 @@ export default function EducatorLessonEditScreen() {
         segments: toSegmentsPayload(segments),
       },
       {
-        onSuccess: () => router.back(),
+        onSuccess: () => setLeaving(true),
         onError: (err: Error) => toastError("Create failed", friendlyError(err)),
       },
     );
@@ -216,7 +240,10 @@ export default function EducatorLessonEditScreen() {
         checks: toChecksPayload(clampChecks(checks, segments)),
       },
       {
-        onSuccess: () => toastSuccess("Saved", "Lesson, transcript, and notes updated."),
+        onSuccess: () => {
+          markSaved();
+          toastSuccess("Saved", "Lesson, transcript, and notes updated.");
+        },
         onError: (err: Error) => toastError("Save failed", friendlyError(err)),
       },
     );
@@ -265,7 +292,7 @@ export default function EducatorLessonEditScreen() {
           style: "destructive",
           onPress: () => {
             deleteLesson.mutate(lessonId, {
-              onSuccess: () => router.back(),
+              onSuccess: () => setLeaving(true),
               onError: (err: Error) => toastError("Delete failed", friendlyError(err)),
             });
           },

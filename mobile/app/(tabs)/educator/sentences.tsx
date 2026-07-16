@@ -1,6 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import { friendlyError } from "@/lib/api";
 import {
   type EducatorSentenceTemplate,
@@ -92,6 +93,14 @@ export default function SentencesAdminScreen() {
   const deleteScenario = useDeleteScenario();
   const [scenForm, setScenForm] = useState<ScenarioForm>(EMPTY_SCENARIO);
   const [scenEditing, setScenEditing] = useState(false);
+
+  // Both forms live inline on the screen and reset to empty on save, so unsaved
+  // work is exactly a form that has drifted from its empty template (editing an
+  // existing row loads its values, which also counts — leaving would lose them).
+  const formsDirty =
+    JSON.stringify(sentForm) !== JSON.stringify(EMPTY_SENTENCE) ||
+    JSON.stringify(scenForm) !== JSON.stringify(EMPTY_SCENARIO);
+  useUnsavedGuard(formsDirty);
 
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {

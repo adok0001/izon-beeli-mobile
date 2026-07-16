@@ -24,6 +24,7 @@ import { useToast } from "@/lib/hooks/use-toast";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import type { LocalizedText } from "@/types";
 import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
@@ -59,6 +60,8 @@ export default function ScenariosScreen() {
   const [situation, setSituation] = useState("");
   const [turns, setTurns] = useState<TurnDraft[]>([{ ...EMPTY_TURN }]);
   const [formOpen, setFormOpen] = useState(false);
+  // Leaving with the editor panel open risks losing an unsaved scenario.
+  useUnsavedGuard(formOpen);
   const editing = !!editingId;
 
   const scenariosQuery = useEducatorScenarios(activeLanguageId);

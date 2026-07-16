@@ -25,6 +25,7 @@ import { useToast } from "@/lib/hooks/use-toast";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -79,6 +80,8 @@ export default function QuizBankScreen() {
 
   const [form, setForm] = useState<QuizForm>(EMPTY_FORM);
   const [formOpen, setFormOpen] = useState(false);
+  // Leaving with the editor panel open risks losing an unsaved question.
+  useUnsavedGuard(formOpen);
   const [lessonPickerVisible, setLessonPickerVisible] = useState(false);
   const editing = !!form.id;
 

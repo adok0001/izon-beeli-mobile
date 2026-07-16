@@ -24,6 +24,7 @@ import { NotificationBanner } from "@/components/notifications/notification-bann
 import { localize } from "@/lib/localize";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { LocalizedText } from "@/types";
 import { useRouter } from "expo-router";
@@ -74,6 +75,8 @@ export default function ProverbsScreen() {
 
   const [form, setForm] = useState<ProverbForm>(EMPTY_FORM);
   const [formOpen, setFormOpen] = useState(false);
+  // Leaving with the editor panel open risks losing an unsaved entry.
+  useUnsavedGuard(formOpen);
   const editing = !!form.id;
 
   const proverbsQuery = useEducatorProverbs(activeLanguageId);

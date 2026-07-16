@@ -1,4 +1,5 @@
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import { fonts } from "@/constants/typography";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { Badge } from "@/components/ui/badge";
@@ -155,6 +156,8 @@ export default function EducatorDictionaryScreen() {
   }, [refetch]);
   const [coverageOpen, setCoverageOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
+  // Leaving with the editor panel open risks losing an unsaved entry.
+  useUnsavedGuard(formOpen);
   const upsertEntry = useUpsertEducatorDictionary();
   const deleteEntry = useDeleteEducatorDictionaryEntry();
   const submitForReview = useSubmitEducatorDictionaryForReview();

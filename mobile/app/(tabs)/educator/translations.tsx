@@ -12,6 +12,7 @@ import { useToast } from "@/lib/hooks/use-toast";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
@@ -48,6 +49,14 @@ export default function TranslationQueueScreen() {
   }
 
   const missing = queueQuery.data?.missing ?? [];
+
+  // A saved gloss drops its entry from `missing`, so unsaved work is any
+  // still-missing entry that has typed-but-unsaved draft text.
+  const hasUnsavedDrafts = missing.some((entry) => {
+    const draft = drafts[entry.id];
+    return !!draft && (draft.gloss.trim() !== "" || draft.exampleGloss.trim() !== "");
+  });
+  useUnsavedGuard(hasUnsavedDrafts);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>

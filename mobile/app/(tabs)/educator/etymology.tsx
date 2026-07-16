@@ -15,6 +15,7 @@ import {
 import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import { fonts } from "@/constants/typography";
 import type { EtymologyEntry, EtymologyNode, LocalizedText } from "@/types";
 import { Stack, useRouter } from "expo-router";
@@ -134,6 +135,8 @@ export default function EducatorEtymologyScreen() {
   const [form, setForm] = useState<EtymologyForm>(EMPTY_FORM);
   const [editing, setEditing] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
+  // Leaving with the editor panel open risks losing an unsaved entry.
+  useUnsavedGuard(formOpen);
 
   const allowedLanguages = currentUser?.isAdmin
     ? LANGUAGES.map((l) => l.id)

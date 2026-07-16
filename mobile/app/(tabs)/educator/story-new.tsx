@@ -4,6 +4,7 @@ import { useStudioAccess } from "@/components/studio/studio-gate";
 import { friendlyError } from "@/lib/api";
 import { fonts } from "@/constants/typography";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useDirtyTracker, useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import {
   useCreateStoryArc,
   useEducatorCourses,
@@ -11,7 +12,7 @@ import {
 } from "@/lib/hooks/use-educator-panel";
 import { getLanguageName } from "@/lib/mock-data";
 import { Stack, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { localize } from "@/lib/localize";
 import { useUiLanguageStore } from "@/store/ui-language-store";
@@ -55,6 +56,17 @@ export default function StoryNewScreen() {
   const [logline, setLogline] = useState("");
   const [error, setError] = useState("");
 
+  // Guard the half-filled form against an accidental back/swipe. A successful
+  // create navigates straight into the editor, so gate the guard on `createdId`
+  // to let that intentional exit through without a discard prompt.
+  const [createdId, setCreatedId] = useState<string | null>(null);
+  const { dirty } = useDirtyTracker({ courseId, title, description, nativeTitle, logline });
+  useUnsavedGuard(dirty && createdId === null);
+  useEffect(() => {
+    if (createdId === null) return;
+    router.replace({ pathname: "/educator/story-edit", params: { arcId: createdId } } as never);
+  }, [createdId, router]);
+
   const arcCourseIds = useMemo(() => new Set(arcs.map((a) => a.courseId)), [arcs]);
 
   const languageCourses = useMemo(
@@ -85,8 +97,10 @@ export default function StoryNewScreen() {
         nativeTitle: nativeTitle.trim(),
         logline: logline.trim(),
       });
-      // Straight into the editor: cast and chapters need the season to exist first.
-      router.replace({ pathname: "/educator/story-edit", params: { arcId: id } } as never);
+      // Straight into the editor: cast and chapters need the season to exist
+      // first. Flip `createdId` so the guard stands down before the effect
+      // performs the navigation.
+      setCreatedId(id);
     } catch (e) {
       setError(friendlyError(e as Error));
     }

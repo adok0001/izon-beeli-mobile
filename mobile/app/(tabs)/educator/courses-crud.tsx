@@ -8,6 +8,7 @@ import { apiFetch, friendlyError } from "@/lib/api";
 import { useCurrentUser } from "@/lib/hooks/use-current-user";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { confirmDiscardChanges, useDirtyTracker } from "@/lib/studio/use-unsaved-guard";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Stack } from "expo-router";
@@ -132,12 +133,14 @@ function CourseFormModal({
   initial,
   onClose,
   onSave,
+  onDelete,
   saving,
 }: {
   visible: boolean;
   initial?: Partial<AdminCourse>;
   onClose: () => void;
   onSave: (data: Omit<AdminCourse, "lessonsCount">) => void;
+  onDelete?: () => void;
   saving: boolean;
 }) {
   const M = useMuseumTheme();
@@ -155,12 +158,17 @@ function CourseFormModal({
 
   const canSave = id.trim() && !!(title.en?.trim()) && !!(description.en?.trim());
 
+  // The modal is mounted only while open (see call sites), so its baseline is
+  // the values it opened with. Closing while dirty confirms first.
+  const { dirty } = useDirtyTracker({ id, languageId, title, description, level, order });
+  const requestClose = () => (dirty ? confirmDiscardChanges(onClose) : onClose());
+
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={requestClose}>
       <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top", "bottom"]}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
           <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderColor: M.border }}>
-            <Pressable onPress={onClose} style={{ marginRight: 12 }}>
+            <Pressable onPress={requestClose} style={{ marginRight: 12 }}>
               <IconSymbol name="xmark" size={18} color={M.muted} />
             </Pressable>
             <Text style={{ flex: 1, fontSize: 16, fontWeight: "800", color: M.parchment }}>
@@ -195,6 +203,14 @@ function CourseFormModal({
             <Text style={{ fontSize: 11, fontWeight: "600", color: M.muted, marginBottom: 4 }}>{t("admin.courses.formLevel")} *</Text>
             <LevelPicker value={level} onChange={setLevel} />
             <Field label={t("admin.courses.formOrder")} value={order} onChangeText={setOrder} keyboardType="numeric" />
+            {!isNew && onDelete ? (
+              <Pressable
+                onPress={onDelete}
+                style={{ marginTop: 8, borderRadius: 10, paddingVertical: 12, alignItems: "center", backgroundColor: M.error }}
+              >
+                <Text style={{ fontSize: 13, fontWeight: "700", color: "#fff" }}>{t("common.delete")}</Text>
+              </Pressable>
+            ) : null}
           </ScrollView>
         </KeyboardAvoidingView>
         <LanguagePickerModal
@@ -216,6 +232,7 @@ function LessonFormModal({
   initial,
   onClose,
   onSave,
+  onDelete,
   saving,
 }: {
   visible: boolean;
@@ -223,6 +240,7 @@ function LessonFormModal({
   initial?: Partial<AdminLesson>;
   onClose: () => void;
   onSave: (data: Omit<AdminLesson, "courseId">) => void;
+  onDelete?: () => void;
   saving: boolean;
 }) {
   const M = useMuseumTheme();
@@ -238,12 +256,17 @@ function LessonFormModal({
 
   const canSave = id.trim() && !!(title.en?.trim()) && description.trim();
 
+  // Mounted only while open, so the baseline is the opened values; a dirty
+  // close confirms first.
+  const { dirty } = useDirtyTracker({ id, title, description, audioUrl, duration, order });
+  const requestClose = () => (dirty ? confirmDiscardChanges(onClose) : onClose());
+
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={requestClose}>
       <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top", "bottom"]}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
           <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderColor: M.border }}>
-            <Pressable onPress={onClose} style={{ marginRight: 12 }}>
+            <Pressable onPress={requestClose} style={{ marginRight: 12 }}>
               <IconSymbol name="xmark" size={18} color={M.muted} />
             </Pressable>
             <Text style={{ flex: 1, fontSize: 16, fontWeight: "800", color: M.parchment }}>
@@ -266,6 +289,14 @@ function LessonFormModal({
             <Field label={t("admin.courses.formAudioUrl")} value={audioUrl} onChangeText={setAudioUrl} placeholder="https://…/audio.mp3" keyboardType="url" />
             <Field label={t("admin.courses.formDuration") + " (s)"} value={duration} onChangeText={setDuration} keyboardType="numeric" />
             <Field label={t("admin.courses.formOrder")} value={order} onChangeText={setOrder} keyboardType="numeric" />
+            {!isNew && onDelete ? (
+              <Pressable
+                onPress={onDelete}
+                style={{ marginTop: 8, borderRadius: 10, paddingVertical: 12, alignItems: "center", backgroundColor: M.error }}
+              >
+                <Text style={{ fontSize: 13, fontWeight: "700", color: "#fff" }}>{t("common.delete")}</Text>
+              </Pressable>
+            ) : null}
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -365,13 +396,15 @@ function LessonsPanel({ courseId, token }: { courseId: string; token: string | n
         <IconSymbol name="plus.circle" size={14} color={M.accent} />
         <Text style={{ fontSize: 12, color: M.accent, fontWeight: "600" }}>{t("admin.courses.addLesson")}</Text>
       </Pressable>
-      <LessonFormModal
-        visible={addingLesson}
-        courseId={courseId}
-        saving={createLesson.isPending}
-        onClose={() => setAddingLesson(false)}
-        onSave={(data) => createLesson.mutate({ courseId, ...data })}
-      />
+      {addingLesson && (
+        <LessonFormModal
+          visible
+          courseId={courseId}
+          saving={createLesson.isPending}
+          onClose={() => setAddingLesson(false)}
+          onSave={(data) => createLesson.mutate({ courseId, ...data })}
+        />
+      )}
       {editingLesson && (
         <LessonFormModal
           visible
@@ -380,6 +413,16 @@ function LessonsPanel({ courseId, token }: { courseId: string; token: string | n
           saving={updateLesson.isPending}
           onClose={() => setEditingLesson(null)}
           onSave={(data) => updateLesson.mutate({ ...data, id: editingLesson.id })}
+          onDelete={() =>
+            Alert.alert("Confirm", `Delete lesson "${localize(editingLesson.title, "en")}"?`, [
+              { text: t("common.cancel"), style: "cancel" },
+              {
+                text: t("common.delete"),
+                style: "destructive",
+                onPress: () => deleteLesson.mutate(editingLesson.id, { onSuccess: () => setEditingLesson(null) }),
+              },
+            ])
+          }
         />
       )}
     </View>
@@ -561,12 +604,14 @@ export default function AdminCoursesScreen() {
           onSelect={(id) => { setFilterLang(id); setLangPickerVisible(false); }}
         />
 
-        <CourseFormModal
-          visible={addingCourse}
-          saving={createCourse.isPending}
-          onClose={() => setAddingCourse(false)}
-          onSave={(data) => createCourse.mutate(data)}
-        />
+        {addingCourse && (
+          <CourseFormModal
+            visible
+            saving={createCourse.isPending}
+            onClose={() => setAddingCourse(false)}
+            onSave={(data) => createCourse.mutate(data)}
+          />
+        )}
 
         {editingCourse && (
           <CourseFormModal
@@ -575,6 +620,16 @@ export default function AdminCoursesScreen() {
             saving={updateCourse.isPending}
             onClose={() => setEditingCourse(null)}
             onSave={(data) => updateCourse.mutate({ ...data, id: editingCourse.id })}
+            onDelete={() =>
+              Alert.alert("Confirm", `Delete course "${localize(editingCourse.title, "en")}" and all its lessons?`, [
+                { text: t("common.cancel"), style: "cancel" },
+                {
+                  text: t("common.delete"),
+                  style: "destructive",
+                  onPress: () => deleteCourse.mutate(editingCourse.id, { onSuccess: () => setEditingCourse(null) }),
+                },
+              ])
+            }
           />
         )}
       </SafeAreaView>
