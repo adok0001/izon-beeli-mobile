@@ -13,6 +13,8 @@ import { StatusPill } from "@/components/ui/status-pill";
 import type { Language, UserMe } from "@/types";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ImportSection } from "@/components/studio/import-panel";
+import { IMPORT_TYPES } from "@/lib/import-types";
 import { useMemo, useState } from "react";
 
 /**
@@ -218,6 +220,12 @@ function ScenariosEditor() {
           ))}
         </select>
       </div>
+
+      <ImportSection
+        {...IMPORT_TYPES.scenarios}
+        languageId={activeLanguageId}
+        onImported={() => void queryClient.invalidateQueries({ queryKey: ["scenarios", "admin", activeLanguageId] })}
+      />
 
       {error && (
         <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-400">

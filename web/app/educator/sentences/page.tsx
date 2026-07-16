@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { LANGUAGES } from "@mobile/lib/data/languages";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ImportSection } from "@/components/studio/import-panel";
+import { IMPORT_TYPES } from "@/lib/import-types";
 import { Edit2, MessageSquareDiff, Plus, Search, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -370,6 +372,12 @@ export default function EducatorSentencesPage() {
           {t("educator.sentences.newEntry")}
         </button>
       </div>
+
+      <ImportSection
+        {...IMPORT_TYPES.sentences}
+        languageId={effectiveLanguage}
+        onImported={() => void queryClient.invalidateQueries({ queryKey: ["educator", "sentences"] })}
+      />
 
       {/* Filters */}
       <div className="flex gap-3 mb-4 flex-wrap">

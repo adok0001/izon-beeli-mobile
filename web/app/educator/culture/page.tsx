@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ImportSection } from "@/components/studio/import-panel";
+import { IMPORT_TYPES } from "@/lib/import-types";
 import { LANGUAGES } from "@mobile/lib/data/languages";
 import {
   ChevronDown,
@@ -573,6 +575,12 @@ export default function EducatorCulturePage() {
           {tab === "proverbs" ? "New Proverb" : "New Culture Note"}
         </button>
       </div>
+
+      <ImportSection
+        {...(tab === "proverbs" ? IMPORT_TYPES.proverbs : IMPORT_TYPES.cultural)}
+        languageId={effectiveLanguage}
+        onImported={() => void queryClient.invalidateQueries({ queryKey: ["educator", tab === "proverbs" ? "proverbs" : "cultural"] })}
+      />
 
       {/* Tabs + filters */}
       <div className="flex items-center gap-3 mb-5 flex-wrap">

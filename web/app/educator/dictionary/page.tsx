@@ -17,9 +17,11 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { LANGUAGES } from "@mobile/lib/data/languages";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, BookText, CheckCircle2, ChevronDown, Edit2, Eye, FileJson, ImageIcon, Mic, Plus, Search, Send, Trash2, Upload, Volume2, X, XCircle } from "lucide-react";
+import { AlertTriangle, BookText, CheckCircle2, ChevronDown, Edit2, Eye, FileJson, ImageIcon, Mic, Plus, Search, Send, Trash2, Volume2, X, XCircle } from "lucide-react";
 import Image from "next/image";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
+import { ImportPanel } from "@/components/studio/import-panel";
+import { IMPORT_TYPES } from "@/lib/import-types";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
@@ -376,179 +378,6 @@ function CoveragePanel({ coverage, onAddWord }: Readonly<{
   );
 }
 
-// ── Import Panel ──────────────────────────────────────────────────────────────
-
-interface ImportResult {
-  dryRun?: boolean;
-  total?: number;
-  valid?: number;
-  inserted?: number;
-  updated?: number;
-  skipped?: number;
-  errors: { id: string; reason: string }[];
-  preview?: { id: string; word: string; english: string; category: string }[];
-}
-
-function ImportPanel({ languageId }: Readonly<{ languageId: string }>) {
-  const { getToken } = useAuth();
-  const queryClient = useQueryClient();
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [result, setResult] = useState<ImportResult | null>(null);
-  const [parsed, setParsed] = useState<unknown[] | null>(null);
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [running, setRunning] = useState(false);
-
-  const reset = () => { setResult(null); setParsed(null); setFileName(null); };
-
-  const handleFile = async (file: File) => {
-    reset();
-    setFileName(file.name);
-    try {
-      const text = await file.text();
-      const data = JSON.parse(text) as unknown[];
-      if (!Array.isArray(data)) { toast.error("JSON must be an array of entries"); return; }
-      setParsed(data);
-      // Auto dry-run
-      setRunning(true);
-      const token = await getToken();
-      const res = await apiFetch<ImportResult>("/admin/dictionary/import", {
-        method: "POST",
-        body: JSON.stringify({ languageId, entries: data, dryRun: true }),
-        token: token ?? undefined,
-      });
-      setResult(res);
-    } catch (e) {
-      toast.error("Failed to parse file", { description: (e as Error).message });
-    } finally {
-      setRunning(false);
-    }
-  };
-
-  const confirm = async () => {
-    if (!parsed) return;
-    setRunning(true);
-    try {
-      const token = await getToken();
-      const res = await apiFetch<ImportResult>("/admin/dictionary/import", {
-        method: "POST",
-        body: JSON.stringify({ languageId, entries: parsed }),
-        token: token ?? undefined,
-      });
-      setResult(res);
-      void queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
-      toast.success(`Import complete — ${res.inserted} entries added`);
-      setParsed(null);
-    } catch (e) {
-      toast.error("Import failed", { description: (e as Error).message });
-    } finally {
-      setRunning(false);
-    }
-  };
-
-  const downloadErrors = () => {
-    if (!result?.errors.length) return;
-    const blob = new Blob([JSON.stringify(result.errors, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = "import-errors.json"; a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  return (
-    <div className="space-y-5">
-      <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 p-6">
-        <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-1">Bulk Import</h3>
-        <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
-          Upload a JSON array of dictionary entries in Beeli format. A dry-run preview runs automatically before you confirm.
-        </p>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => { reset(); fileRef.current?.click(); }}
-            disabled={running}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors disabled:opacity-50"
-          >
-            <Upload className="h-4 w-4" /> {fileName ? "Replace file" : "Choose JSON file"}
-          </button>
-          {fileName && <span className="text-xs text-neutral-500 truncate max-w-xs">{fileName}</span>}
-        </div>
-        <input ref={fileRef} type="file" accept=".json" className="hidden"
-          onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleFile(f); e.target.value = ""; }} />
-      </div>
-
-      {running && (
-        <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
-          <div className="h-4 w-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-          Processing…
-        </div>
-      )}
-
-      {result && (
-        <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
-          <div className="px-4 py-3 bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-            <span className="text-sm font-semibold text-neutral-900 dark:text-white">
-              {result.dryRun ? "Dry-run preview" : "Import result"}
-            </span>
-            <div className="flex items-center gap-4 text-xs text-neutral-500">
-              {result.dryRun
-                ? <><span className="text-green-600 dark:text-green-400 font-medium">{result.valid} valid</span>
-                   {result.errors.length > 0 && <span className="text-red-500 font-medium">{result.errors.length} errors</span>}</>
-                : <><span className="text-green-600 dark:text-green-400 font-medium">{result.inserted} inserted</span>
-                   {result.skipped && result.skipped > 0 && <span className="text-amber-500 font-medium">{result.skipped} skipped</span>}</>
-              }
-            </div>
-          </div>
-
-          {result.preview && result.preview.length > 0 && (
-            <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
-              {result.preview.map((row) => (
-                <div key={row.id} className="px-4 py-2.5 flex items-center gap-4 text-sm">
-                  <span className="font-semibold text-neutral-900 dark:text-white w-32 truncate">{row.word}</span>
-                  <span className="text-neutral-500 dark:text-neutral-400 flex-1 truncate">{row.english}</span>
-                  <span className="text-[10px] uppercase tracking-wider text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full">{row.category}</span>
-                </div>
-              ))}
-              {(result.total ?? 0) > 5 && (
-                <div className="px-4 py-2 text-xs text-neutral-400 dark:text-neutral-500">
-                  …and {(result.total ?? 0) - 5} more entries
-                </div>
-              )}
-            </div>
-          )}
-
-          {result.errors.length > 0 && (
-            <div className="px-4 py-3 bg-red-50/50 dark:bg-red-900/10 border-t border-neutral-200 dark:border-neutral-800">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-red-600 dark:text-red-400">{result.errors.length} errors</span>
-                <button onClick={downloadErrors} className="text-xs text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 underline">
-                  Download errors JSON
-                </button>
-              </div>
-              <ul className="space-y-1 max-h-32 overflow-y-auto">
-                {result.errors.slice(0, 5).map((e, i) => (
-                  <li key={i} className="text-xs text-red-600 dark:text-red-400">{e.reason}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {result.dryRun && parsed && (
-            <div className="px-4 py-3 border-t border-neutral-200 dark:border-neutral-800 flex items-center gap-3">
-              <button
-                onClick={() => void confirm()}
-                disabled={running || (result.valid ?? 0) === 0}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors disabled:opacity-50"
-              >
-                <Plus className="h-4 w-4" /> Import {result.valid} entries
-              </button>
-              <button onClick={reset} className="text-sm text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300">Cancel</button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 type SortKey = "word" | "english" | "category" | "audio" | "image";
 
 function SortIcon({ col, sortKey, sortDir }: Readonly<{ col: SortKey; sortKey: SortKey; sortDir: "asc" | "desc" }>) {
@@ -844,7 +673,11 @@ export default function EducatorDictionaryPage() {
       )}
 
       {view === "import" ? (
-        <ImportPanel languageId={effectiveLanguage} />
+        <ImportPanel
+          {...IMPORT_TYPES.dictionary}
+          languageId={effectiveLanguage}
+          onImported={() => void queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] })}
+        />
       ) : (
       <>
       <CoveragePanel coverage={coverage} onAddWord={(word) => setModal({ mode: "create", prefillWord: word })} />
