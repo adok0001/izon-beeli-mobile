@@ -1,6 +1,6 @@
 {
   "name": "beelidata",
-  "version": "4.5.3",
+  "version": "4.6.0",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3002",

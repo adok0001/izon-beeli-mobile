@@ -12,6 +12,35 @@ npm run web                                         # Run in browser
 npm run lint                                        # ESLint check
 ```
 
+## Deployment
+
+**Git auto-deploy is DISABLED.** Pushing to `master` does NOT deploy anything. The
+only deploy path is the Vercel CLI, run from the package directory:
+
+```bash
+cd server && vercel --prod --yes    # deploy the API (project: izon-beeli-server)
+cd web    && vercel --prod --yes    # deploy the web app (project: izon-beeli)
+```
+
+Each package is a separate linked Vercel project (`.vercel/project.json`). Mobile
+ships via Expo/EAS, independently.
+
+### Database migrations (drizzle-kit push caveat)
+
+The server's `vercel-build` runs `db:preflight && db:deploy` (`drizzle-kit push`) in
+production, so **additive** schema changes apply automatically on `vercel --prod`.
+But `drizzle-kit push` **refuses DESTRUCTIVE changes in CI** (dropping a table/column
+needs an interactive TTY to confirm data loss; the build has none, so push errors —
+though the deploy still promotes). For any drop:
+
+1. Deploy the code first (`vercel --prod`) so live code no longer reads the target.
+2. Then run an **explicit, non-interactive migration script** (raw SQL via `neon()`,
+   dry-run/`--apply` pattern — see `server/src/seed/migrate-*.ts`) to apply the drop.
+3. Run `npm run db:preflight` to confirm the schema is clean.
+
+Destructive DB steps must be named and authorized explicitly — never fold them into
+a plain "deploy" instruction.
+
 ## Architecture
 
 ### Routing (Expo Router v6 — file-based)
