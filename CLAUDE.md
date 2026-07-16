@@ -19,7 +19,9 @@ only deploy path is the Vercel CLI, run from the package directory:
 
 ```bash
 cd server && vercel --prod --yes    # deploy the API (project: izon-beeli-server)
-cd web    && vercel --prod --yes    # deploy the web app (project: izon-beeli)
+vercel --prod --yes                 # deploy the web app FROM THE REPO ROOT
+                                    # (project: izon-beeli-web, Root Directory=web —
+                                    #  root upload is required for its @mobile/* imports)
 ```
 
 Each package is a separate linked Vercel project (`.vercel/project.json`). Mobile

@@ -1,0 +1,18 @@
+# Root deploys ship the monorepo so web/ can resolve @mobile/* imports.
+# Everything below is native/build/local output the web build never reads —
+# without this the upload blows Vercel's 15k-file limit (mobile/ios alone
+# is ~9k files once a device build has run).
+.git
+.claude
+node_modules
+outputs
+userio-docs
+docs
+mobile/ios
+mobile/android
+mobile/dist
+mobile/.expo
+web/.next
+data/.next
+server/dist
+partykit/.partykit
