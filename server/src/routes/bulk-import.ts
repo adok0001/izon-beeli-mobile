@@ -10,6 +10,7 @@ import {
   scenarios,
   culturalContent,
   culturalKeyTerms,
+  quizQuestions,
 } from "../db/schema.js";
 import { AuthEnv, authMiddleware, reviewerMiddleware } from "../middleware/auth.js";
 
@@ -22,9 +23,6 @@ import { AuthEnv, authMiddleware, reviewerMiddleware } from "../middleware/auth.
  * On CONFLICT we update only content columns, leaving the existing workflow state
  * (status/authorship) untouched — re-importing never silently republishes or
  * downgrades a row.
- *
- * NOTE: `quiz` is intentionally omitted here while quiz-bank.ts / schema.ts are
- * being reworked in a parallel effort. Add a `quiz` config once that lands.
  */
 
 // Mirrors admin-import.ts (kept local to avoid coupling the two files).
@@ -304,12 +302,55 @@ const culturalImporter: ImporterConfig = {
   },
 };
 
-const IMPORTERS: Record<string, ImporterConfig> = {
+// ─── quiz questions ───────────────────────────────────────────────────────────
+const QUIZ_QUESTION_TYPES = new Set(["word-to-english", "english-to-word", "fill-in-the-blank", "listening"]);
+const quizImporter: ImporterConfig = {
+  validate: (e, i) => {
+    if (!QUIZ_QUESTION_TYPES.has(str(e.type))) return `Row ${i}: type must be one of ${[...QUIZ_QUESTION_TYPES].join(", ")}`;
+    if (!str(e.prompt)) return `Row ${i}: missing prompt`;
+    if (!str(e.answer)) return `Row ${i}: missing answer`;
+    return null;
+  },
+  preview: (e) => ({ type: str(e.type), prompt: str(e.prompt), answer: str(e.answer) }),
+  insert: (entries, ctx) => {
+    const rows = entries.map((e) => ({
+      id: str(e.id) || `quiz-${randomUUID()}`,
+      languageId: ctx.languageId,
+      type: str(e.type),
+      prompt: str(e.prompt),
+      answer: str(e.answer),
+      options: strArray(e.options) ?? [],
+      audioUrl: opt(e.audioUrl),
+      explanation: opt(e.explanation),
+      lessonId: opt(e.lessonId),
+      sceneId: opt(e.sceneId),
+      ...ctx.status,
+    }));
+    return inBatches(rows, BATCH, (batch) =>
+      db.insert(quizQuestions).values(batch).onConflictDoUpdate({
+        target: quizQuestions.id,
+        set: {
+          type: sql`excluded.type`,
+          prompt: sql`excluded.prompt`,
+          answer: sql`excluded.answer`,
+          options: sql`excluded.options`,
+          audioUrl: sql`excluded.audio_url`,
+          explanation: sql`excluded.explanation`,
+          lessonId: sql`excluded.lesson_id`,
+          sceneId: sql`excluded.scene_id`,
+        },
+      }).returning({ id: quizQuestions.id }).then((r) => r.length)
+    );
+  },
+};
+
+export const IMPORTERS: Record<string, ImporterConfig> = {
   dictionary: dictionaryImporter,
   sentences: sentenceImporter,
   proverbs: proverbImporter,
   scenarios: scenarioImporter,
   cultural: culturalImporter,
+  quiz: quizImporter,
 };
 
 // ─── router ───────────────────────────────────────────────────────────────────

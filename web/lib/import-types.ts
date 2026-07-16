@@ -79,4 +79,13 @@ export const IMPORT_TYPES: Record<string, ImportTypeConfig> = {
       null, 2,
     ),
   },
+  quiz: {
+    type: "quiz",
+    label: "quiz questions",
+    jsonOnly: true, // options[] doesn't flatten to a CSV grid
+    sampleJson: JSON.stringify(
+      [{ type: "word-to-english", prompt: "kọn", answer: "take", options: ["take", "come", "go", "see"] }],
+      null, 2,
+    ),
+  },
 };
