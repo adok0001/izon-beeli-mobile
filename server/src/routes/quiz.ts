@@ -1,8 +1,8 @@
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
-import { appConfig, dictionaryEntries, lessons, transcriptSegments } from "../db/schema.js";
+import { appConfig, dictionaryEntries, lessons, quizQuestions, transcriptSegments } from "../db/schema.js";
 
 export const quizRouter = new Hono();
 
@@ -143,14 +143,39 @@ quizRouter.get("/questions", async (c) => {
     }
   }
 
+  // Authored questions first: retrieval practice should test what an educator
+  // wrote for THIS lesson; transcript-matched generation only tops up the rest.
+  let authored: { id: string; type: string; prompt: string; correctAnswer: string; options: string[]; audioUrl: string | null; explanation: string | null }[] = [];
+  if (lessonId) {
+    const rows = await db
+      .select()
+      .from(quizQuestions)
+      .where(and(eq(quizQuestions.lessonId, lessonId), eq(quizQuestions.status, "published")));
+    authored = shuffle(rows).slice(0, count).map((q) => ({
+      id: q.id,
+      type: q.type,
+      prompt: q.prompt,
+      correctAnswer: q.answer,
+      options: q.options,
+      audioUrl: q.audioUrl,
+      explanation: q.explanation,
+    }));
+  }
+
+  const remaining = count - authored.length;
+  if (remaining <= 0) return c.json(authored);
+
   if (entries.length < minVocab) {
+    // A fully/partly authored lesson quiz is still a quiz — only 400 when
+    // there's nothing at all to serve.
+    if (authored.length > 0) return c.json(authored);
     return c.json({ error: "Not enough vocabulary for this quiz scope" }, 400);
   }
 
-  const selected = shuffle(entries).slice(0, count);
+  const selected = shuffle(entries).slice(0, remaining);
   const allEnglish = entries.map((e) => e.english);
 
-  const questions = selected.map((entry) => {
+  const generated = selected.map((entry) => {
     const distractors = pickDistractors(entry.english, allEnglish, 3);
     const options = shuffle([entry.english, ...distractors]);
     return {
@@ -162,7 +187,7 @@ quizRouter.get("/questions", async (c) => {
     };
   });
 
-  return c.json(questions);
+  return c.json([...authored, ...generated]);
 });
 
 // POST /api/quiz/submit

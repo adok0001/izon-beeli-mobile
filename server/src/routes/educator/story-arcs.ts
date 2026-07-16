@@ -240,7 +240,7 @@ educatorStoryArcsRouter.put("/story-arcs/:id/chapters", async (c) => {
   const { id } = c.req.param();
 
   const [arc] = await db
-    .select({ languageId: storyArcs.languageId })
+    .select({ languageId: storyArcs.languageId, courseId: storyArcs.courseId })
     .from(storyArcs)
     .where(eq(storyArcs.id, id))
     .limit(1);
@@ -248,6 +248,15 @@ educatorStoryArcsRouter.put("/story-arcs/:id/chapters", async (c) => {
   if (!arc) return c.json({ error: "Not found" }, 404);
   if (!canAccessLanguage(isAdmin, reviewerLanguages, arc.languageId)) {
     return c.json({ error: "Forbidden" }, 403);
+  }
+  // Story fold-in: a course-bound arc's narrative lives ON its lessons
+  // (lessons.narrative_intro/outro) and its order IS the lesson order — bulk
+  // chapter writes only remain for standalone podcast seasons.
+  if (arc.courseId) {
+    return c.json(
+      { error: "This story is bound to a course. Edit narrative and order on the course's lessons instead." },
+      409,
+    );
   }
 
   const body = await parseJson<{

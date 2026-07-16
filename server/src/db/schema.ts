@@ -356,6 +356,62 @@ export const wordBank = pgTable(
   ]
 );
 
+/**
+ * Sentence-level SRS — the review unit is a whole transcript line in context,
+ * NOT a word↔gloss pair. Rows SNAPSHOT the line (text/translation) because
+ * transcript segments are replaced wholesale on lesson save; a segment id
+ * would dangle. Same SM-2 fields as word_bank; the review-session composer
+ * interleaves both banks.
+ */
+export const phraseBank = pgTable(
+  "phrase_bank",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    languageId: varchar("language_id", { length: 64 }).notNull(),
+    lessonId: varchar("lesson_id", { length: 64 }).notNull(),
+    text: text("text").notNull(),
+    translation: text("translation"),
+    /** "bookmark" (learner tapped save) | "completion" (auto-banked on finish) */
+    source: varchar("source", { length: 16 }).default("bookmark").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    // Spaced-repetition fields (SM-2, mirrors word_bank)
+    nextReviewAt: timestamp("next_review_at"),
+    reviewCount: integer("review_count").default(0).notNull(),
+    lastReviewedAt: timestamp("last_reviewed_at"),
+    easeFactor: real("ease_factor").default(2.5).notNull(),
+    interval: integer("interval").default(0).notNull(), // days
+  },
+  (table) => [
+    uniqueIndex("phrase_bank_user_line_idx").on(table.userId, table.lessonId, table.text),
+    index("phrase_bank_user_due_idx").on(table.userId, table.nextReviewAt),
+  ]
+);
+
+/**
+ * Can-do self-checks — the reflective Movement-completion moment. Never a
+ * blocker: the learner rates each lesson's can-do honestly; ratings surface on
+ * the profile. One row per (user, lesson), latest rating wins.
+ */
+export const canDoChecks = pgTable(
+  "can_do_checks",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    lessonId: varchar("lesson_id", { length: 64 })
+      .notNull()
+      .references(() => lessons.id, { onDelete: "cascade" }),
+    /** "yes" | "mostly" | "not_yet" */
+    rating: varchar("rating", { length: 12 }).notNull(),
+    ratedAt: timestamp("rated_at").defaultNow().notNull(),
+  },
+  (table) => [uniqueIndex("can_do_checks_user_lesson_idx").on(table.userId, table.lessonId)]
+);
+
 // ---------- Content Tables ----------
 
 export const languages = pgTable("languages", {
@@ -435,6 +491,11 @@ export const lessons = pgTable(
     // "plain" (published, target-language transcript) | "helper" (includes production cues).
     // null is treated as "plain" by the app.
     transcriptType: varchar("transcript_type", { length: 16 }),
+    // Story fold-in: narrative framing lives ON the lesson for course-bound
+    // stories (standalone podcast seasons keep story_chapters). Both nullable —
+    // an ordinary lesson simply has none.
+    narrativeIntro: text("narrative_intro"),
+    narrativeOutro: text("narrative_outro"),
     // Honest real-world competence statement shown on completion ("You can now …").
     canDo: text("can_do"),
     canDoFr: text("can_do_fr"),
@@ -446,6 +507,33 @@ export const lessons = pgTable(
     publishedAt: timestamp("published_at"),
   },
   (table) => [index("lessons_course_id_idx").on(table.courseId)]
+);
+
+/**
+ * In-lesson checks — low-stakes formative questions that pause the narrative
+ * at a transcript line (the same placement rail cultural notes ride). Distinct
+ * from the quiz bank: these fire DURING input, not after it.
+ */
+export const lessonChecks = pgTable(
+  "lesson_checks",
+  {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    lessonId: varchar("lesson_id", { length: 64 })
+      .notNull()
+      .references(() => lessons.id, { onDelete: "cascade" }),
+    // "predict-next" | "meaning" | "who-said" | "cloze" | "pick-reply"
+    type: varchar("type", { length: 24 }).notNull(),
+    prompt: text("prompt").notNull(),
+    answer: text("answer").notNull(),
+    // Choice options (include the answer). Empty = tap-to-reveal check.
+    options: text("options").array().default([]).notNull(),
+    explanation: text("explanation"),
+    // 0-based transcript segment the check fires after; null = end of lesson.
+    afterSegmentIndex: integer("after_segment_index"),
+    order: integer("order").default(0).notNull(),
+    isActive: boolean("is_active").default(true).notNull(),
+  },
+  (table) => [index("lesson_checks_lesson_id_idx").on(table.lessonId)]
 );
 
 export const transcriptSegments = pgTable(
@@ -732,6 +820,11 @@ export const quizQuestions = pgTable(
     options: text("options").array().default([]).notNull(),
     audioUrl: text("audio_url"),
     explanation: text("explanation"),
+    // Retrieval scoping: which lesson (and scene within its course) this
+    // question tests. Both nullable — a bare question stays language-level.
+    // sceneId is the lesson-scene slug (lessons.scene), not a table reference.
+    lessonId: varchar("lesson_id", { length: 64 }).references(() => lessons.id, { onDelete: "set null" }),
+    sceneId: varchar("scene_id", { length: 64 }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
     status: contentStatusEnum("status").default("draft").notNull(),
@@ -741,7 +834,10 @@ export const quizQuestions = pgTable(
     publishedBy: uuid("published_by").references(() => users.id),
     publishedAt: timestamp("published_at"),
   },
-  (table) => [index("quiz_questions_language_id_idx").on(table.languageId)]
+  (table) => [
+    index("quiz_questions_language_id_idx").on(table.languageId),
+    index("quiz_questions_lesson_id_idx").on(table.lessonId),
+  ]
 );
 
 // ---------- Lesson Contributions ----------

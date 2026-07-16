@@ -6,6 +6,7 @@ import { wordBank, dictionaryEntries } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
 import { awardXP } from "../lib/award-xp.js";
 import { incrementDailyChallenge } from "../lib/daily-challenge.js";
+import { applySM2, RATING_QUALITY } from "../lib/sm2.js";
 import { updateStreak } from "../lib/update-streak.js";
 
 export const wordbankRouter = new Hono<AuthEnv>();
@@ -88,35 +89,7 @@ wordbankRouter.post("/", async (c) => {
   return c.json({ saved: true }, 201);
 });
 
-const RATING_QUALITY: Record<string, 0 | 2 | 4 | 5> = {
-  again: 0,
-  hard: 2,
-  good: 4,
-  easy: 5,
-};
-
-function applySM2(
-  quality: 0 | 2 | 4 | 5,
-  repetitions: number,
-  easeFactor: number,
-  interval: number
-): { repetitions: number; easeFactor: number; interval: number } {
-  let newReps: number;
-  let newInterval: number;
-  if (quality >= 3) {
-    newReps = repetitions + 1;
-    newInterval =
-      repetitions === 0 ? 1 : repetitions === 1 ? 6 : Math.round(interval * easeFactor);
-  } else {
-    newReps = 0;
-    newInterval = 1;
-  }
-  const newEF = Math.max(
-    1.3,
-    easeFactor + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)
-  );
-  return { repetitions: newReps, easeFactor: newEF, interval: newInterval };
-}
+// SM-2 lives in lib/sm2.ts, shared with the phrase bank so both queues age identically.
 
 // POST /api/wordbank/:entryId/review - record review outcome and update schedule
 wordbankRouter.post("/:entryId/review", async (c) => {

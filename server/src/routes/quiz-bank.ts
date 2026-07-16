@@ -3,11 +3,29 @@ import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
-import { quizQuestions } from "../db/schema.js";
+import { courses, lessons, quizQuestions } from "../db/schema.js";
 import { selectQuizQuestions } from "../lib/content-selectors.js";
 import { AuthEnv, authMiddleware, reviewerMiddleware } from "../middleware/auth.js";
 
 const QUESTION_TYPES = ["word-to-english", "english-to-word", "fill-in-the-blank", "listening"];
+
+/**
+ * A question may be scoped to a lesson (retrieval practice tests the scene it
+ * belongs to). The link must resolve and stay within the question's language.
+ * Returns an error string, or null when the link is valid / being cleared.
+ */
+async function validateLessonLink(lessonId: string | null | undefined, languageId: string): Promise<string | null> {
+  if (!lessonId) return null;
+  const [row] = await db
+    .select({ languageId: courses.languageId })
+    .from(lessons)
+    .innerJoin(courses, eq(lessons.courseId, courses.id))
+    .where(eq(lessons.id, lessonId))
+    .limit(1);
+  if (!row) return `Unknown lesson id: ${lessonId}`;
+  if (row.languageId !== languageId) return "Linked lesson must be in the question's language";
+  return null;
+}
 
 export const quizBankRouter = new Hono();
 
@@ -55,6 +73,8 @@ quizBankAdminRouter.post("/", async (c) => {
     options?: string[];
     audioUrl?: string | null;
     explanation?: string | null;
+    lessonId?: string | null;
+    sceneId?: string | null;
   }>(c);
 
   const { languageId, type, prompt, answer } = body;
@@ -67,6 +87,8 @@ quizBankAdminRouter.post("/", async (c) => {
   if (!isAdmin && !reviewerLanguages.includes(languageId)) {
     return c.json({ error: "Forbidden: not assigned to this language" }, 403);
   }
+  const lessonErr = await validateLessonLink(body.lessonId, languageId);
+  if (lessonErr) return c.json({ error: lessonErr }, 400);
 
   const [inserted] = await db
     .insert(quizQuestions)
@@ -79,6 +101,8 @@ quizBankAdminRouter.post("/", async (c) => {
       options: body.options ?? [],
       audioUrl: body.audioUrl ?? null,
       explanation: body.explanation ?? null,
+      lessonId: body.lessonId ?? null,
+      sceneId: body.sceneId ?? null,
       status: "draft",
       createdBy: c.get("userId"),
     })
@@ -106,16 +130,22 @@ quizBankAdminRouter.patch("/:id", async (c) => {
     options: string[];
     audioUrl: string | null;
     explanation: string | null;
+    lessonId: string | null;
+    sceneId: string | null;
     status: string;
   }>>(c);
 
   if (body.type !== undefined && !QUESTION_TYPES.includes(body.type)) {
     return c.json({ error: `type must be one of: ${QUESTION_TYPES.join(", ")}` }, 400);
   }
+  if (body.lessonId !== undefined) {
+    const lessonErr = await validateLessonLink(body.lessonId, existing.languageId);
+    if (lessonErr) return c.json({ error: lessonErr }, 400);
+  }
 
   // Whitelist columns — going live only happens through the four-eyes endpoint.
   const updates: Record<string, unknown> = { updatedBy: c.get("userId"), updatedAt: new Date() };
-  for (const key of ["type", "prompt", "answer", "options", "audioUrl", "explanation"] as const) {
+  for (const key of ["type", "prompt", "answer", "options", "audioUrl", "explanation", "lessonId", "sceneId"] as const) {
     if (body[key] !== undefined) updates[key] = body[key];
   }
   if (body.status !== undefined && ["draft", "in_review", "archived"].includes(body.status)) {

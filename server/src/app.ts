@@ -48,11 +48,14 @@ import { isPlusGloballyEnabled } from "./middleware/plus-gate.js";
 import { restockPlusFreezes } from "./lib/restock-freezes.js";
 import { sendReengagementNotifications } from "./lib/send-reengagement-notifications.js";
 import { wordbankRouter } from "./routes/wordbank.js";
+import { phrasebankRouter } from "./routes/phrasebank.js";
+import { canDoRouter } from "./routes/can-do.js";
 import { activitiesRouter, activitiesAdminRouter } from "./routes/activities.js";
 import { cultureItemsRouter, cultureItemsAdminRouter } from "./routes/culture-items.js";
 import { uploadAdminRouter } from "./routes/upload.js";
 import { partnersRouter, partnersAdminRouter } from "./routes/partners.js";
 import { adminImportRouter } from "./routes/admin-import.js";
+import { bulkImportRouter } from "./routes/bulk-import.js";
 import { publicStatsRouter } from "./routes/public-stats.js";
 import { logger as log } from "./lib/logger.js";
 
@@ -141,6 +144,8 @@ app.route("/feed", feedRouter);
 app.route("/contributions", contributionsRouter);
 app.route("/lesson-contributions", lessonContributionsRouter);
 app.route("/wordbank", wordbankRouter);
+app.route("/phrasebank", phrasebankRouter);
+app.route("/can-do", canDoRouter);
 app.route("/feedback", feedbackRouter);
 app.route("/feedback/admin", feedbackAdminRouter);
 app.route("/multiplayer", multiplayerRouter);
@@ -175,6 +180,9 @@ app.route("/languages/admin", languagesAdminRouter);
 app.route("/english-wordbank/admin", englishWordbankAdminRouter);
 app.route("/quiz-bank/admin", quizBankAdminRouter);
 app.route("/admin/dictionary/import", adminImportRouter);
+// Registry-driven bulk importer (dictionary/sentences/proverbs/scenarios/cultural),
+// role-gated: admin → published, reviewer → in_review. See routes/bulk-import.ts.
+app.route("/import", bulkImportRouter);
 // Mount /admin/config before the /admin catch-all so it isn't shadowed.
 app.route("/admin/config", appConfigAdminRouter);
 app.route("/admin", adminStatsRouter);

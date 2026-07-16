@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { eq, asc, and, inArray } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { lessons, transcriptSegments, courses } from "../db/schema.js";
+import { lessonChecks, lessons, transcriptSegments, courses } from "../db/schema.js";
 import { selectLessonCulturalNotes, selectLessonSeasonCast } from "../lib/content-selectors.js";
 
 export const lessonsRouter = new Hono();
@@ -71,7 +71,7 @@ lessonsRouter.get("/:id", async (c) => {
     return c.json({ error: "Lesson not found" }, 404);
   }
 
-  const [segments, culturalNotes, seasonCast] = await Promise.all([
+  const [segments, culturalNotes, seasonCast, checks] = await Promise.all([
     db
       .select()
       .from(transcriptSegments)
@@ -79,6 +79,21 @@ lessonsRouter.get("/:id", async (c) => {
       .orderBy(asc(transcriptSegments.order)),
     selectLessonCulturalNotes(id),
     selectLessonSeasonCast(id),
+    // In-lesson checks — formative questions anchored between transcript lines.
+    db
+      .select({
+        id: lessonChecks.id,
+        type: lessonChecks.type,
+        prompt: lessonChecks.prompt,
+        answer: lessonChecks.answer,
+        options: lessonChecks.options,
+        explanation: lessonChecks.explanation,
+        afterSegmentIndex: lessonChecks.afterSegmentIndex,
+        order: lessonChecks.order,
+      })
+      .from(lessonChecks)
+      .where(and(eq(lessonChecks.lessonId, id), eq(lessonChecks.isActive, true)))
+      .orderBy(asc(lessonChecks.order)),
   ]);
 
   return c.json({
@@ -95,5 +110,6 @@ lessonsRouter.get("/:id", async (c) => {
     })),
     culturalNotes,
     seasonCast,
+    checks,
   });
 });

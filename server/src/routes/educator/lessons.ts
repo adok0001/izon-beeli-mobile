@@ -4,7 +4,7 @@ import { eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
 import { db } from "../../db/index.js";
-import { courses, culturalContent, languages, lessonCulturalContent, lessons, storyArcs, storyChapters, transcriptSegments } from "../../db/schema.js";
+import { courses, culturalContent, languages, lessonChecks, lessonCulturalContent, lessons, storyArcs, storyChapters, transcriptSegments } from "../../db/schema.js";
 import { AuthEnv } from "../../middleware/auth.js";
 import { stubForCourse, stubForLanguage } from "../../lib/lesson-stubs.js";
 import { recordMediaAsset } from "../upload.js";
@@ -14,6 +14,9 @@ export const educatorLessonsRouter = new Hono<AuthEnv>();
 
 /** How a season episode is told. Null for ordinary lessons. */
 const LESSON_STYLES = ["skit", "immersive_story", "host_narrated"] as const;
+
+/** In-lesson check types — formative questions fired between transcript lines. */
+const CHECK_TYPES = ["predict-next", "meaning", "who-said", "cloze", "pick-reply"] as const;
 
 // GET /educator/lessons
 educatorLessonsRouter.get("/lessons", async (c) => {
@@ -38,6 +41,9 @@ educatorLessonsRouter.get("/lessons", async (c) => {
       genre: lessons.genre,
       style: lessons.style,
       isActive: lessons.isActive,
+      scene: lessons.scene,
+      sceneTitle: lessons.sceneTitle,
+      sceneOrder: lessons.sceneOrder,
       status: lessons.status,
       createdBy: lessons.createdBy,
     })
@@ -178,6 +184,9 @@ educatorLessonsRouter.patch("/lessons/:id", async (c) => {
     title?: string; description?: string; type?: string;
     artist?: string | null; genre?: string | null; order?: number; isActive?: boolean;
     status?: string; style?: string | null;
+    narrativeIntro?: string | null; narrativeOutro?: string | null;
+    canDo?: string | null; canDoFr?: string | null;
+    scene?: string | null; sceneTitle?: string | null; sceneOrder?: number | null;
   }>(c);
 
   if (body.status && !PATCHABLE_LESSON_STATUSES.includes(body.status as (typeof PATCHABLE_LESSON_STATUSES)[number])) {
@@ -201,6 +210,19 @@ educatorLessonsRouter.patch("/lessons/:id", async (c) => {
   // Only meaningful for a season episode; drives the style chip on the Series
   // screen. Empty clears it.
   if (body.style !== undefined) updates.style = body.style?.trim() || null;
+  // Story fold-in narrative framing + can-do statement. Empty clears.
+  if (body.narrativeIntro !== undefined) updates.narrativeIntro = body.narrativeIntro?.trim() || null;
+  if (body.narrativeOutro !== undefined) updates.narrativeOutro = body.narrativeOutro?.trim() || null;
+  if (body.canDo !== undefined) updates.canDo = body.canDo?.trim() || null;
+  if (body.canDoFr !== undefined) updates.canDoFr = body.canDoFr?.trim() || null;
+  // Scene grouping within the course (journey rendering). Clearing scene
+  // clears its title/order with it — a title without a scene is meaningless.
+  if (body.scene !== undefined) {
+    updates.scene = body.scene?.trim() || null;
+    if (!body.scene?.trim()) { updates.sceneTitle = null; updates.sceneOrder = null; }
+  }
+  if (body.sceneTitle !== undefined) updates.sceneTitle = body.sceneTitle?.trim() || null;
+  if (body.sceneOrder !== undefined) updates.sceneOrder = body.sceneOrder;
 
   await db.update(lessons).set(updates).where(eq(lessons.id, id));
   return c.json({ success: true });
@@ -232,6 +254,10 @@ educatorLessonsRouter.get("/lessons/:id", async (c) => {
       isActive: lessons.isActive,
       status: lessons.status,
       createdBy: lessons.createdBy,
+      narrativeIntro: lessons.narrativeIntro,
+      narrativeOutro: lessons.narrativeOutro,
+      canDo: lessons.canDo,
+      canDoFr: lessons.canDoFr,
     })
     .from(lessons)
     .innerJoin(courses, eq(lessons.courseId, courses.id))
@@ -258,6 +284,12 @@ educatorLessonsRouter.get("/lessons/:id", async (c) => {
     .where(eq(lessonCulturalContent.lessonId, id))
     .orderBy(lessonCulturalContent.order);
 
+  const checks = await db
+    .select()
+    .from(lessonChecks)
+    .where(eq(lessonChecks.lessonId, id))
+    .orderBy(lessonChecks.order);
+
   return c.json({
     ...lesson,
     segments: segs,
@@ -265,6 +297,7 @@ educatorLessonsRouter.get("/lessons/:id", async (c) => {
     // the anchor and is what the PUT round-trips.
     culturalContentIds: attachedCulturalContent.map((r) => r.culturalContentId),
     culturalAttachments: attachedCulturalContent,
+    checks,
   });
 });
 
@@ -401,6 +434,238 @@ educatorLessonsRouter.put("/lessons/:id/segments", async (c) => {
   return c.json({ success: true, count: segments.length });
 });
 
+// PUT /educator/lessons/:id/save — atomic lesson save (metadata + segments + notes)
+//
+// Replaces the three-call sequence (PATCH + PUT /segments + PUT /cultural-content)
+// with one transactional round-trip, so a mid-way failure can never leave a
+// lesson half-saved. All validation runs up front (neon-http batches the tx body,
+// which is writes only). Cultural-note anchors are checked against the segments
+// being saved in THIS request — not a previously-persisted count — so the
+// transcript and its anchored notes stay consistent even when both change.
+educatorLessonsRouter.put("/lessons/:id/save", async (c) => {
+  const userId = c.get("userId");
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const { id } = c.req.param();
+
+  const [lesson] = await db
+    .select({ languageId: courses.languageId })
+    .from(lessons)
+    .innerJoin(courses, eq(lessons.courseId, courses.id))
+    .where(eq(lessons.id, id))
+    .limit(1);
+
+  if (!lesson) return c.json({ error: "Not found" }, 404);
+  if (!isAdmin && !reviewerLanguages.includes(lesson.languageId)) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  const body = await c.req.json<{
+    payload?: {
+      title?: string; description?: string; type?: string;
+      artist?: string | null; genre?: string | null; order?: number;
+      isActive?: boolean; status?: string; style?: string | null;
+      narrativeIntro?: string | null; narrativeOutro?: string | null;
+      canDo?: string | null; canDoFr?: string | null;
+      scene?: string | null; sceneTitle?: string | null; sceneOrder?: number | null;
+    };
+    segments?: { text: string; translation?: string; translationFr?: string; startTime: number; endTime: number; order: number }[];
+    attachments?: (string | { culturalContentId: string; afterSegmentIndex?: number | null })[];
+    checks?: { type: string; prompt: string; answer: string; options?: string[]; explanation?: string | null; afterSegmentIndex?: number | null; isActive?: boolean }[];
+  }>();
+
+  const payload = body.payload ?? {};
+  const hasSegments = Array.isArray(body.segments);
+  const segments = body.segments ?? [];
+  const hasAttachments = Array.isArray(body.attachments);
+  const hasChecks = Array.isArray(body.checks);
+  const checks = body.checks ?? [];
+
+  // ── Validate metadata (mirrors PATCH /lessons/:id) ──
+  if (payload.status && !PATCHABLE_LESSON_STATUSES.includes(payload.status as (typeof PATCHABLE_LESSON_STATUSES)[number])) {
+    return c.json({ error: `status must be one of: ${PATCHABLE_LESSON_STATUSES.join(", ")}` }, 400);
+  }
+  if (payload.style != null && payload.style !== "" && !LESSON_STYLES.includes(payload.style as (typeof LESSON_STYLES)[number])) {
+    return c.json({ error: `style must be one of: ${LESSON_STYLES.join(", ")}` }, 400);
+  }
+
+  // ── Validate segments (mirrors PUT /lessons/:id/segments) ──
+  if (hasSegments) {
+    for (const seg of segments) {
+      if (!seg.text?.trim()) return c.json({ error: "Every segment must have text" }, 400);
+      if (seg.endTime < seg.startTime) {
+        return c.json({ error: `Segment "${seg.text.slice(0, 30)}" has endTime before startTime` }, 400);
+      }
+    }
+  }
+
+  // ── Validate cultural attachments (mirrors PUT /lessons/:id/cultural-content) ──
+  let attachments: { culturalContentId: string; afterSegmentIndex: number | null }[] = [];
+  if (hasAttachments) {
+    attachments = body.attachments!.map((entry) =>
+      typeof entry === "string"
+        ? { culturalContentId: entry, afterSegmentIndex: null }
+        : { culturalContentId: entry.culturalContentId, afterSegmentIndex: entry.afterSegmentIndex ?? null }
+    );
+    if (attachments.some((a) => !a.culturalContentId)) {
+      return c.json({ error: "Each attachment requires a culturalContentId" }, 400);
+    }
+    if (attachments.length > 0) {
+      const ids = attachments.map((a) => a.culturalContentId);
+      const rows = await db
+        .select({ id: culturalContent.id, languageId: culturalContent.languageId })
+        .from(culturalContent)
+        .where(inArray(culturalContent.id, ids));
+      const foundIds = new Set(rows.map((r) => r.id));
+      const missing = ids.filter((cid) => !foundIds.has(cid));
+      if (missing.length > 0) {
+        return c.json({ error: `Unknown cultural content id(s): ${missing.join(", ")}` }, 400);
+      }
+      if (rows.some((r) => r.languageId !== lesson.languageId)) {
+        return c.json({ error: "Cultural content must be in the lesson's language" }, 400);
+      }
+
+      // Anchor range: check against the segments saved in this call when the
+      // transcript is included, else against what's already stored.
+      let segmentCount: number;
+      if (hasSegments) {
+        segmentCount = segments.length;
+      } else {
+        const [{ count }] = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(transcriptSegments)
+          .where(eq(transcriptSegments.lessonId, id));
+        segmentCount = count;
+      }
+      const badAnchor = attachments.find(
+        (a) => a.afterSegmentIndex != null && (a.afterSegmentIndex < 0 || a.afterSegmentIndex >= segmentCount)
+      );
+      if (badAnchor) {
+        return c.json(
+          { error: `afterSegmentIndex ${badAnchor.afterSegmentIndex} is out of range — this save has ${segmentCount} transcript segment(s)` },
+          400,
+        );
+      }
+    }
+  }
+
+  // ── Validate in-lesson checks ──
+  if (hasChecks) {
+    let checkSegmentCount: number;
+    if (hasSegments) {
+      checkSegmentCount = segments.length;
+    } else {
+      const [{ count }] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(transcriptSegments)
+        .where(eq(transcriptSegments.lessonId, id));
+      checkSegmentCount = count;
+    }
+    for (const ch of checks) {
+      if (!CHECK_TYPES.includes(ch.type as (typeof CHECK_TYPES)[number])) {
+        return c.json({ error: `check type must be one of: ${CHECK_TYPES.join(", ")}` }, 400);
+      }
+      if (!ch.prompt?.trim() || !ch.answer?.trim()) {
+        return c.json({ error: "Every check requires a prompt and an answer" }, 400);
+      }
+      if (ch.options && ch.options.length > 0 && !ch.options.includes(ch.answer)) {
+        return c.json({ error: `Check "${ch.prompt.slice(0, 30)}" — options must include the answer` }, 400);
+      }
+      if (ch.afterSegmentIndex != null && (ch.afterSegmentIndex < 0 || ch.afterSegmentIndex >= checkSegmentCount)) {
+        return c.json(
+          { error: `check afterSegmentIndex ${ch.afterSegmentIndex} is out of range — this save has ${checkSegmentCount} transcript segment(s)` },
+          400,
+        );
+      }
+    }
+  }
+
+  // ── Build metadata updates (mirrors PATCH) ──
+  const updates: Record<string, unknown> = { updatedBy: userId };
+  if (payload.title !== undefined) updates.title = payload.title.trim();
+  if (payload.description !== undefined) updates.description = payload.description.trim();
+  if (payload.type !== undefined) updates.type = payload.type;
+  if (payload.artist !== undefined) updates.artist = payload.artist?.trim() || null;
+  if (payload.genre !== undefined) updates.genre = payload.genre?.trim() || null;
+  if (payload.order !== undefined) updates.order = payload.order;
+  if (payload.isActive !== undefined) updates.isActive = payload.isActive;
+  if (payload.status !== undefined) updates.status = payload.status;
+  if (payload.style !== undefined) updates.style = payload.style?.trim() || null;
+  if (payload.narrativeIntro !== undefined) updates.narrativeIntro = payload.narrativeIntro?.trim() || null;
+  if (payload.narrativeOutro !== undefined) updates.narrativeOutro = payload.narrativeOutro?.trim() || null;
+  if (payload.canDo !== undefined) updates.canDo = payload.canDo?.trim() || null;
+  if (payload.canDoFr !== undefined) updates.canDoFr = payload.canDoFr?.trim() || null;
+  if (payload.scene !== undefined) {
+    updates.scene = payload.scene?.trim() || null;
+    if (!payload.scene?.trim()) { updates.sceneTitle = null; updates.sceneOrder = null; }
+  }
+  if (payload.sceneTitle !== undefined) updates.sceneTitle = payload.sceneTitle?.trim() || null;
+  if (payload.sceneOrder !== undefined) updates.sceneOrder = payload.sceneOrder;
+
+  // ── One transaction: all writes land, or none do ──
+  await db.transaction(async (tx) => {
+    await tx.update(lessons).set(updates).where(eq(lessons.id, id));
+
+    if (hasSegments) {
+      await tx.delete(transcriptSegments).where(eq(transcriptSegments.lessonId, id));
+      if (segments.length > 0) {
+        await tx.insert(transcriptSegments).values(
+          segments.map((seg, i) => ({
+            lessonId: id,
+            text: seg.text.trim(),
+            translation: seg.translation?.trim() || null,
+            translationFr: seg.translationFr?.trim() || null,
+            startTime: seg.startTime,
+            endTime: seg.endTime,
+            order: seg.order ?? i,
+          }))
+        );
+      }
+    }
+
+    if (hasAttachments) {
+      await tx.delete(lessonCulturalContent).where(eq(lessonCulturalContent.lessonId, id));
+      if (attachments.length > 0) {
+        await tx.insert(lessonCulturalContent).values(
+          attachments.map((a, index) => ({
+            lessonId: id,
+            culturalContentId: a.culturalContentId,
+            order: index,
+            afterSegmentIndex: a.afterSegmentIndex,
+          }))
+        );
+      }
+    }
+
+    if (hasChecks) {
+      await tx.delete(lessonChecks).where(eq(lessonChecks.lessonId, id));
+      if (checks.length > 0) {
+        await tx.insert(lessonChecks).values(
+          checks.map((ch, index) => ({
+            id: `check-${randomUUID()}`,
+            lessonId: id,
+            type: ch.type,
+            prompt: ch.prompt.trim(),
+            answer: ch.answer.trim(),
+            options: ch.options ?? [],
+            explanation: ch.explanation?.trim() || null,
+            afterSegmentIndex: ch.afterSegmentIndex ?? null,
+            order: index,
+            isActive: ch.isActive ?? true,
+          }))
+        );
+      }
+    }
+  });
+
+  return c.json({
+    success: true,
+    segments: hasSegments ? segments.length : undefined,
+    attachments: hasAttachments ? attachments.length : undefined,
+    checks: hasChecks ? checks.length : undefined,
+  });
+});
+
 // POST /educator/lessons/:id/audio — replace audio file
 educatorLessonsRouter.post("/lessons/:id/audio", async (c) => {
   const userId = c.get("userId");
@@ -509,7 +774,7 @@ educatorLessonsRouter.post("/generate-stubs", async (c) => {
   const isAdmin = c.get("isAdmin");
   const reviewerLanguages = c.get("reviewerLanguages");
 
-  const { languageId, courseType } = await c.req.json<{ languageId: string; courseType?: string }>();
+  const { languageId, courseType } = await parseJson<{ languageId: string; courseType?: string }>(c);
   if (!languageId?.trim()) return c.json({ error: "languageId is required" }, 400);
 
   if (!isAdmin && !reviewerLanguages.includes(languageId)) {
