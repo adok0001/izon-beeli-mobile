@@ -219,7 +219,7 @@ export function InteractiveTranscript({ segments, onSegmentPress, culturalNotes,
 
               {notesHere ? (
                 <View style={{ paddingHorizontal: 4 }}>
-                  <CulturalNoteCards languageId={selectedLanguageId} notes={notesHere} />
+                  <CulturalNoteCards notes={notesHere} />
                 </View>
               ) : null}
             </View>

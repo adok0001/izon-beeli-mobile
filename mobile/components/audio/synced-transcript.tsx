@@ -331,7 +331,7 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
               ) : null}
             </Pressable>
               {checksHere ? <LessonCheckCards checks={checksHere} /> : null}
-              {notesHere ? <CulturalNoteCards languageId={selectedLanguageId} notes={notesHere} /> : null}
+              {notesHere ? <CulturalNoteCards notes={notesHere} /> : null}
             </View>
           );
         })}

@@ -27,8 +27,14 @@ export interface NextLessonResponse {
  * @param afterLessonId When set, returns the lesson immediately following this
  * one in path order (unit-aware) instead of the first uncompleted lesson
  * overall — use this for a "Next Lesson" button right after finishing a lesson.
+ * @param options.enabled Pass `false` to skip the fetch — e.g. when a season/
+ * story arc already determines "next" and this course-order result is unused.
  */
-export function useNextLesson(languageId?: string, afterLessonId?: string) {
+export function useNextLesson(
+  languageId?: string,
+  afterLessonId?: string,
+  options?: { enabled?: boolean }
+) {
   const { getToken, isSignedIn } = useAuth();
 
   return useQuery<NextLessonResponse | null>({
@@ -41,6 +47,6 @@ export function useNextLesson(languageId?: string, afterLessonId?: string) {
       const qs = params.toString();
       return apiFetch(`/progress/next-lesson${qs ? `?${qs}` : ""}`, { token: token! });
     },
-    enabled: !!isSignedIn,
+    enabled: (options?.enabled ?? true) && !!isSignedIn,
   });
 }

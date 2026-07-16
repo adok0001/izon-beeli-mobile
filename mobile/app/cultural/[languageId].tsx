@@ -6,6 +6,7 @@ import { CULTURE_CATEGORY_ICON as CATEGORY_ICON } from "@/constants/cultural-cat
 import { LANGUAGES } from "@/lib/data/languages";
 import { useCultural } from "@/lib/hooks/use-cultural";
 import { localize } from "@/lib/localize";
+import { toParagraphs } from "@/lib/text";
 import { glass, useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUiLanguageStore, type UiLanguage } from "@/store/ui-language-store";
 import type { CulturalCategory, CulturalContent } from "@/types";
@@ -54,18 +55,6 @@ const CATEGORY_ORDER: CulturalCategory[] = [
   "numbers_trade",
   "geography",
 ];
-
-/** Split a description block into readable paragraphs (~2 sentences each). */
-function toParagraphs(text: string): string[] {
-  const explicit = text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
-  if (explicit.length > 1) return explicit;
-  const sentences = text.match(/[^.!?]+[.!?]+(\s|$)/g)?.map((s) => s.trim()) ?? [text];
-  const paras: string[] = [];
-  for (let i = 0; i < sentences.length; i += 2) {
-    paras.push(sentences.slice(i, i + 2).join(" "));
-  }
-  return paras;
-}
 
 function termGloss(
   term: CulturalContent["keyTerms"][number],
@@ -345,12 +334,24 @@ export default function CulturalScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { languageId } = useLocalSearchParams<{ languageId: string }>();
+  const { languageId, itemId } = useLocalSearchParams<{ languageId: string; itemId?: string }>();
   const { data: allContent = [], isLoading } = useCultural(languageId ?? "");
   const [selectedCategory, setSelectedCategory] = useState<CulturalCategory | null>(null);
   const [openItem, setOpenItem] = useState<CulturalContent | null>(null);
 
   const language = useMemo(() => LANGUAGES.find((l) => l.id === languageId), [languageId]);
+
+  // Deep-linked straight to one entry (e.g. from a lesson's culture card) —
+  // open its reader as soon as the content is in hand, once per itemId.
+  const openedItemIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!itemId || allContent.length === 0 || openedItemIdRef.current === itemId) return;
+    const match = allContent.find((c) => c.id === itemId);
+    if (match) {
+      openedItemIdRef.current = itemId;
+      setOpenItem(match);
+    }
+  }, [itemId, allContent]);
 
   const availableCategories = useMemo(() => {
     const present = new Set(allContent.map((item) => item.category));

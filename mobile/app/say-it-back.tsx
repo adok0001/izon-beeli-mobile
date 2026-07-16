@@ -5,10 +5,10 @@ import { shuffle } from "@/lib/shuffle";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import type { DictionaryEntry } from "@/lib/dictionary";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Audio } from "expo-av";
 import * as Speech from "expo-speech";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -53,8 +53,22 @@ export { ErrorBoundary } from "@/components/screen-error-boundary";
 export default function SayItBackScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
+  // Seeded from a lesson's "Prove it — say it back" card: one specific line to
+  // produce. Without it, the screen runs its usual shuffled dictionary drill.
+  const { phrase, gloss } = useLocalSearchParams<{ phrase?: string; gloss?: string }>();
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
   const { data: entries = [] } = useDictionary(selectedLanguageId);
+
+  const seededEntry = useMemo<DictionaryEntry>(
+    () => ({
+      id: "prove-it",
+      word: phrase ?? "",
+      english: gloss ?? "",
+      category: "phrases",
+      languageId: selectedLanguageId,
+    }),
+    [phrase, gloss, selectedLanguageId]
+  );
 
   const [words, setWords] = useState<DictionaryEntry[]>([]);
   const [wordIndex, setWordIndex] = useState(0);
@@ -74,11 +88,15 @@ export default function SayItBackScreen() {
   }, []);
 
   useEffect(() => {
+    if (phrase) {
+      setWords([seededEntry]);
+      return;
+    }
     if (entries.length > 0) {
       const pool = shuffle(entries.filter((e) => e.word && e.english));
       setWords(pool);
     }
-  }, [entries]);
+  }, [entries, phrase, seededEntry]);
 
   useEffect(() => () => { playbackSound?.unloadAsync(); }, [playbackSound]);
 
@@ -174,7 +192,7 @@ export default function SayItBackScreen() {
           </Text>
           <View style={{ width: "100%", gap: 10, marginTop: 32 }}>
             <Pressable
-              onPress={() => { setWordIndex(0); setGotIt(0); setTotal(0); setSessionPhase("listen"); setWords(shuffle(entries.filter((e) => e.word && e.english))); }}
+              onPress={() => { setWordIndex(0); setGotIt(0); setTotal(0); setSessionPhase("listen"); setWords(phrase ? [seededEntry] : shuffle(entries.filter((e) => e.word && e.english))); }}
               style={{ borderRadius: 14, paddingVertical: 16, backgroundColor: M.accent, alignItems: "center" }}
             >
               <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>Try Again</Text>

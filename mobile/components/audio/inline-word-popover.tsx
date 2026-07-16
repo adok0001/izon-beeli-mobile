@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { WordPronounceButton } from "@/components/audio/word-pronounce-button";
 import { useWordLookupCard } from "@/lib/hooks/use-word-lookup-card";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -22,7 +23,7 @@ interface Props {
 export function InlineWordPopover({ word, languageId, onClose }: Props) {
   const M = useMuseumTheme();
   const { uiLanguage } = useUiLanguageStore();
-  const { entry, isLoading, gloss, isSaved, save, playAudio, stop } = useWordLookupCard(word, languageId);
+  const { entry, isLoading, gloss, isSaved, save, playAudio, stop, isPlaying: wordAudioPlaying } = useWordLookupCard(word, languageId);
   const isPlaying = useAudioStore((s) => s.isPlaying);
 
   // Unlike WordLookupSheet (mounted for the transcript's lifetime, so its
@@ -49,15 +50,7 @@ export function InlineWordPopover({ word, languageId, onClose }: Props) {
             <Text style={{ fontSize: 18, fontWeight: "800", color: M.text }}>{entry?.word ?? word}</Text>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               {entry?.audioUrl ? (
-                <Pressable
-                  onPress={playAudio}
-                  hitSlop={8}
-                  style={{ width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center", backgroundColor: M.accentGlow, borderWidth: 1, borderColor: M.accentBorder }}
-                  accessibilityRole="button"
-                  accessibilityLabel="Play pronunciation"
-                >
-                  <IconSymbol name="speaker.wave.2.fill" size={12} color={M.accent} />
-                </Pressable>
+                <WordPronounceButton onPress={playAudio} isPlaying={wordAudioPlaying} size={30} />
               ) : null}
               <Pressable onPress={onClose} hitSlop={8} accessibilityRole="button" accessibilityLabel="Close">
                 <IconSymbol name="xmark" size={16} color={M.muted} />

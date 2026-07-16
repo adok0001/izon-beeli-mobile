@@ -15,7 +15,7 @@ export function useWordLookupCard(word: string, languageId: string) {
   const { data: entry, isLoading } = useWordLookup(languageId, word);
   const { data: savedIds } = useWordBank();
   const saveWord = useSaveWord();
-  const { play, stop } = useWordAudio();
+  const { play, stop, isPlaying } = useWordAudio();
 
   const gloss = entry ? localize(entry.translations ?? entry.english, uiLanguage) : "";
   const isSaved = !!entry && (savedIds?.includes(entry.id) ?? false);
@@ -34,5 +34,5 @@ export function useWordLookupCard(word: string, languageId: string) {
     }
   };
 
-  return { entry, isLoading, gloss, isSaved, save, playAudio, stop };
+  return { entry, isLoading, gloss, isSaved, save, playAudio, stop, isPlaying };
 }

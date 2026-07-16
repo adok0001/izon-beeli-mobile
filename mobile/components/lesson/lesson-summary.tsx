@@ -17,8 +17,11 @@ export interface LessonCanDo {
 
 /** The production prompt echoed back at the learner ("say it back"). */
 export interface LessonProveIt {
+  /** The translation shown as the prompt (what the learner must produce). */
   text: string;
   label: string;
+  /** The target-language line to say back — seeds the Say It Back screen. */
+  native: string;
 }
 
 interface Props {
@@ -29,8 +32,10 @@ interface Props {
   headerHeight: number;
   canDo: LessonCanDo;
   proveIt: LessonProveIt;
-  /** Next lesson in the course, if there is one that isn't this lesson. */
+  /** Next lesson in the course/season, if there is one that isn't this lesson. */
   nextLessonId?: string;
+  /** Extra route params to carry into the next lesson (e.g. season origin). */
+  nextLessonParams?: Record<string, string>;
   /** Leave the summary and return to the transcript. */
   onDismiss: () => void;
 }
@@ -47,6 +52,7 @@ export function LessonSummary({
   canDo,
   proveIt,
   nextLessonId,
+  nextLessonParams,
   onDismiss,
 }: Props) {
   const M = useMuseumTheme();
@@ -54,6 +60,12 @@ export function LessonSummary({
   const router = useRouter();
   const isSong = lesson.type === "song";
   const quizTarget = { pathname: "/quiz" as const, params: { courseId: lesson.courseId, lessonId: lesson.id } };
+  // "Prove it — say it back" is a speaking prompt, so it opens the record-and-
+  // compare screen seeded with this lesson's line (not the multiple-choice quiz).
+  const proveItTarget = {
+    pathname: "/say-it-back" as const,
+    params: { phrase: proveIt.native, gloss: proveIt.text },
+  };
 
   return (
     <ScrollView
@@ -165,9 +177,9 @@ export function LessonSummary({
             </View>
           ) : null}
 
-          {proveIt.text ? (
+          {proveIt.text && proveIt.native ? (
             <Pressable
-              onPress={() => router.push(quizTarget)}
+              onPress={() => router.push(proveItTarget)}
               style={{
                 marginTop: 14,
                 flexDirection: "row",
@@ -188,7 +200,7 @@ export function LessonSummary({
                 </Text>
                 <Text style={{ marginTop: 5, fontSize: 15, fontWeight: "700", color: M.text }}>{proveIt.text}</Text>
               </View>
-              <IconSymbol name="trophy.fill" size={16} color={M.accent} />
+              <IconSymbol name="mic.fill" size={16} color={M.accent} />
             </Pressable>
           ) : null}
         </View>
@@ -225,7 +237,7 @@ export function LessonSummary({
           <Pressable
             onPress={() => {
               onDismiss();
-              router.replace(`/lesson/${nextLessonId}`);
+              router.replace({ pathname: "/lesson/[id]", params: { id: nextLessonId, ...(nextLessonParams ?? {}) } });
             }}
             style={{ borderRadius: 16, overflow: "hidden" }}
             className="active:opacity-75"

@@ -125,7 +125,9 @@ export default function SeriesScreen() {
   const otherLevelLabels = otherGroups.map((g) => g.label).join(" & ");
 
   const handleEpisodePress = (ch: SeasonChapter) => {
-    if (ch.lessonIsActive) router.push(`/lesson/${ch.lessonId}` as never);
+    // Carry the season origin so the lesson's "next" advances to the next
+    // episode in this season, not the next lesson in the course path.
+    if (ch.lessonIsActive) router.push({ pathname: "/lesson/[id]", params: { id: ch.lessonId, seasonId: storyId } });
   };
 
   return (

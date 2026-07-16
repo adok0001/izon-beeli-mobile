@@ -71,3 +71,18 @@ export function useStoryArcById(arcId: string) {
     staleTime: 1000 * 60 * 10,
   });
 }
+
+/**
+ * The arc a lesson was opened from, resolved by whichever origin the caller
+ * has: `seasonId` (a Series arc, `/story-arcs/arc/:id`) or `storyCourseId` (a
+ * story arc, `/story-arcs/:courseId`). Only the endpoint differs — both resolve
+ * to the same `StoryChapter` shape — so callers get one normalized `chapters`
+ * list and don't have to know which system the lesson came from. Fetches
+ * nothing when neither origin is set.
+ */
+export function useLessonArc({ seasonId, storyCourseId }: { seasonId?: string; storyCourseId?: string }) {
+  const season = useStoryArcById(seasonId ?? "");
+  const story = useStoryArc(storyCourseId ?? "");
+  const arc = seasonId ? season.data : storyCourseId ? story.data : undefined;
+  return { chapters: arc?.chapters as StoryChapter[] | undefined };
+}

@@ -17,6 +17,7 @@ import { useToast } from "@/lib/hooks/use-toast";
 import { useLesson } from "@/lib/hooks/use-courses";
 import { getCourseTypeColors, getSkillMeta } from "@/constants/course-colors";
 import { useNextLesson } from "@/lib/hooks/use-next-lesson";
+import { useLessonArc } from "@/lib/hooks/use-story-arc";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Course } from "@/types";
 import { getLanguageName, BUNDLED_AUDIO } from "@/lib/mock-data";
@@ -47,7 +48,10 @@ import { useTranslation } from "react-i18next";
 export default function LessonScreen() {
   const M = useMuseumTheme();
   const headerHeight = useHeaderHeight();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // `seasonId` / `storyCourseId` mark that the learner opened this lesson from a
+  // season or story chapter, so "next" follows that arc's chapter order rather
+  // than the course/learn-path order (see the season-aware nextLessonId below).
+  const { id, seasonId, storyCourseId } = useLocalSearchParams<{ id: string; seasonId?: string; storyCourseId?: string }>();
   const { data: lesson, isLoading, isError } = useLesson(id ?? "");
   const { loadAndPlay, currentTrackId, isPlaying, togglePlayback } = useAudioStore();
   const { data: completedLessonIds } = useCompletedLessons();
@@ -72,7 +76,11 @@ export default function LessonScreen() {
 
   const { t } = useTranslation();
   const { toast, success: toastSuccess, dismiss: dismissToast } = useToast();
-  const { data: nextLessonData } = useNextLesson(selectedLanguageId, lesson?.id);
+  // In a season/story context the arc decides "next", so skip the course-order
+  // fetch entirely; otherwise it drives the "Continue to Next Lesson" button.
+  const inSeasonContext = !!(seasonId || storyCourseId);
+  const { data: nextLessonData } = useNextLesson(selectedLanguageId, lesson?.id, { enabled: !inSeasonContext });
+  const { chapters: arcChapters } = useLessonArc({ seasonId, storyCourseId });
   const showTour = useTourStore((s) => s.showTour);
   const hasSeen = useTourStore((s) => s.hasSeen);
   const reviewPrompt = useReviewPrompt();
@@ -170,8 +178,32 @@ export default function LessonScreen() {
   // production prompt alongside the passive "you can now" statement.
   const proveItSegment = lesson.transcript?.find((seg) => seg.text && seg.translation);
   const proveItText = proveItSegment ? localize(proveItSegment.translation ?? "", uiLanguage) : "";
+  // The target-language line the learner says back on Say It Back; `proveItText`
+  // above is its translation, shown as the prompt on the summary card.
+  const proveItNative = proveItSegment?.text ?? "";
   const proveItLabel = localize({ en: "Prove it — say it back", fr: "Prouvez-le — répétez-le" }, uiLanguage);
   const addToAbilitiesLabel = localize({ en: "Add to my abilities", fr: "Ajouter à mes acquis" }, uiLanguage);
+
+  // Context-aware "next": when the learner opened this lesson from a season or
+  // story chapter, advance along that arc's chapter order (skipping any not yet
+  // live) rather than the course/learn-path order the server returns.
+  const seasonNextLessonId = (() => {
+    if (!arcChapters) return undefined;
+    const chapters = [...arcChapters].sort((a, b) => a.order - b.order);
+    const idx = chapters.findIndex((ch) => ch.lessonId === lesson.id);
+    if (idx < 0) return undefined;
+    return chapters.slice(idx + 1).find((ch) => ch.lessonIsActive !== false)?.lessonId;
+  })();
+  const nextLessonParams: Record<string, string> | undefined = seasonId
+    ? { seasonId }
+    : storyCourseId
+      ? { storyCourseId }
+      : undefined;
+  const resolvedNextLessonId = inSeasonContext
+    ? seasonNextLessonId
+    : nextLessonData?.lesson && nextLessonData.lesson.id !== lesson.id
+      ? nextLessonData.lesson.id
+      : undefined;
 
   const handlePlayAudio = async () => {
     if (isCurrentTrack) {
@@ -287,12 +319,9 @@ export default function LessonScreen() {
             accentColor={accentColor}
             headerHeight={headerHeight}
             canDo={{ text: canDoText, label: canDoLabel, skills: canDoSkills, addToAbilitiesLabel }}
-            proveIt={{ text: proveItText, label: proveItLabel }}
-            nextLessonId={
-              nextLessonData?.lesson && nextLessonData.lesson.id !== lesson.id
-                ? nextLessonData.lesson.id
-                : undefined
-            }
+            proveIt={{ text: proveItText, label: proveItLabel, native: proveItNative }}
+            nextLessonId={resolvedNextLessonId}
+            nextLessonParams={nextLessonParams}
             onDismiss={() => setShowSummary(false)}
           />
         ) : (

@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { WordPronounceButton } from "@/components/audio/word-pronounce-button";
 import { useWordLookupCard } from "@/lib/hooks/use-word-lookup-card";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -19,7 +20,7 @@ interface Props {
 export function WordLookupSheet({ word, languageId, onClose }: Props) {
   const M = useMuseumTheme();
   const { uiLanguage } = useUiLanguageStore();
-  const { entry, isLoading, gloss, isSaved, save, playAudio } = useWordLookupCard(word ?? "", languageId);
+  const { entry, isLoading, gloss, isSaved, save, playAudio, isPlaying } = useWordLookupCard(word ?? "", languageId);
 
   const visible = word != null;
   const example = entry?.example ?? "";
@@ -56,15 +57,7 @@ export function WordLookupSheet({ word, languageId, onClose }: Props) {
                   {entry?.word ?? word}
                 </Text>
                 {entry?.audioUrl ? (
-                  <Pressable
-                    onPress={playAudio}
-                    hitSlop={8}
-                    style={{ width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: M.accentGlow, borderWidth: 1, borderColor: M.accentBorder }}
-                    accessibilityRole="button"
-                    accessibilityLabel="Play pronunciation"
-                  >
-                    <IconSymbol name="speaker.wave.2.fill" size={16} color={M.accent} />
-                  </Pressable>
+                  <WordPronounceButton onPress={playAudio} isPlaying={isPlaying} size={40} />
                 ) : null}
               </View>
 

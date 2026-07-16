@@ -76,8 +76,9 @@ export default function StoryScreen() {
     if (!isChapterUnlocked(story.id, chapter.id, story.chapters)) return;
 
     if (completedIds.includes(chapter.id)) {
-      // Already completed -- go directly to lesson
-      router.push(`/lesson/${chapter.lessonId}`);
+      // Already completed -- go directly to lesson (carrying the story origin
+      // so "next" follows the story's chapter order).
+      router.push({ pathname: "/lesson/[id]", params: { id: chapter.lessonId, storyCourseId: courseId ?? "" } });
     } else {
       // Show intro modal
       setSelectedChapter(chapter);
@@ -93,7 +94,7 @@ export default function StoryScreen() {
     completeChapter(story.id, chapterToComplete.id);
     setOutroChapter(chapterToComplete);
 
-    router.push(`/lesson/${chapterToComplete.lessonId}`);
+    router.push({ pathname: "/lesson/[id]", params: { id: chapterToComplete.lessonId, storyCourseId: courseId ?? "" } });
   };
 
   return (
