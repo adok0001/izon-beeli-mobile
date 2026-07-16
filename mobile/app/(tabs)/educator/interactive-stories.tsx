@@ -4,10 +4,11 @@ import {
   emptyScene,
   nextKey,
   retargetSceneId,
-  SceneEditor,
   type SceneDraft,
 } from "@/components/studio/interactive-story-scene-editor";
-import { StoryFlowMap } from "@/components/studio/story-flow-map";
+import { StorySceneMap } from "@/components/studio/story-flow-map";
+import { CoverPicker } from "@/components/studio/cover-picker";
+import { analyzeGraph, type GraphScene } from "@/lib/story-graph";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import { Badge } from "@/components/ui/badge";
@@ -124,7 +125,8 @@ export default function InteractiveStoriesScreen() {
   const [coverGradientTo, setCoverGradientTo] = useState("#C4862A");
   const [initialSceneId, setInitialSceneId] = useState("");
   const [scenes, setScenes] = useState<SceneDraft[]>([]);
-  const [flowMapVisible, setFlowMapVisible] = useState(false);
+  const [mapVisible, setMapVisible] = useState(false);
+  const [sceneErrors, setSceneErrors] = useState<Record<string, string>>({});
   const [formOpen, setFormOpen] = useState(false);
   const editing = !!editingId;
   // Leaving the screen with the editor open risks losing an unsaved story.
@@ -156,7 +158,9 @@ export default function InteractiveStoriesScreen() {
     setCoverGradientTo("#C4862A");
     setInitialSceneId("");
     setScenes([]);
+    setSceneErrors({});
     setFormOpen(false);
+    setMapVisible(false);
   }
 
   function startEdit(story: EducatorInteractiveStory) {
@@ -187,6 +191,13 @@ export default function InteractiveStoriesScreen() {
       }))
     );
     setFormOpen(true);
+    // Opening a story lands on the scene map — the primary authoring surface.
+    setMapVisible(true);
+  }
+
+  function reorderScenes(next: SceneDraft[], nextInitialSceneId: string) {
+    setScenes(next);
+    setInitialSceneId(nextInitialSceneId);
   }
 
   function addScene() {
@@ -197,6 +208,14 @@ export default function InteractiveStoriesScreen() {
   }
 
   function updateScene(index: number, updated: SceneDraft) {
+    const editedKey = scenes[index].key;
+    if (sceneErrors[editedKey]) {
+      setSceneErrors((prev) => {
+        const next = { ...prev };
+        delete next[editedKey];
+        return next;
+      });
+    }
     const previousId = scenes[index].id;
     const renamed = updated.id !== previousId;
     setScenes((prev) => {
@@ -227,54 +246,77 @@ export default function InteractiveStoriesScreen() {
     const cleanDescription = description.trim();
 
     if (!cleanTitle || !cleanDescription) {
+      setSceneErrors({});
       toastError(t("educator.interactiveStoriesEditor.missingFields"), t("educator.interactiveStoriesEditor.missingFieldsDetail"));
       return;
     }
     if (scenes.length === 0) {
+      setSceneErrors({});
       toastError(t("educator.interactiveStoriesEditor.missingScenes"), t("educator.interactiveStoriesEditor.missingScenesDetail"));
       return;
     }
 
+    // Collect EVERY scene's problem in one pass (keyed by draft key) so all
+    // offenders light up on the map at once instead of one toast at a time.
+    const errs: Record<string, string> = {};
     const seenIds = new Set<string>();
-    for (const scene of scenes) {
+    for (const [i, scene] of scenes.entries()) {
       const id = scene.id.trim();
+      if (!id || !scene.text.trim()) {
+        errs[scene.key] = sceneT("educator.interactiveStoriesEditor.incompleteSceneDetail", { number: i + 1 });
+        continue;
+      }
       if (seenIds.has(id)) {
-        toastError(t("educator.interactiveStoriesEditor.duplicateSceneId"), t("educator.interactiveStoriesEditor.duplicateSceneIdDetail", { id }));
-        return;
+        errs[scene.key] = sceneT("educator.interactiveStoriesEditor.duplicateSceneIdDetail", { id });
+        continue;
       }
       seenIds.add(id);
-    }
-
-    for (const [i, scene] of scenes.entries()) {
-      if (!scene.id.trim() || !scene.text.trim()) {
-        toastError(t("educator.interactiveStoriesEditor.incompleteScene"), t("educator.interactiveStoriesEditor.incompleteSceneDetail", { number: i + 1 }));
-        return;
-      }
       if (scene.type === "narrative" && !scene.nextSceneId) {
-        toastError(t("educator.interactiveStoriesEditor.missingSceneLink"), t("educator.interactiveStoriesEditor.missingSceneLinkDetail", { number: i + 1 }));
-        return;
+        errs[scene.key] = sceneT("educator.interactiveStoriesEditor.missingSceneLinkDetail", { number: i + 1 });
+        continue;
       }
       if (scene.type === "choice") {
         if (scene.choices.length === 0) {
-          toastError(t("educator.interactiveStoriesEditor.missingChoices"), t("educator.interactiveStoriesEditor.missingChoicesDetail", { number: i + 1 }));
-          return;
+          errs[scene.key] = sceneT("educator.interactiveStoriesEditor.missingChoicesDetail", { number: i + 1 });
+          continue;
         }
-        for (const [ci, choice] of scene.choices.entries()) {
-          if (!choice.text.trim() || !choice.nextSceneId) {
-            toastError(
-              t("educator.interactiveStoriesEditor.incompleteChoice"),
-              t("educator.interactiveStoriesEditor.incompleteChoiceDetail", { number: ci + 1, scene: i + 1 })
-            );
-            return;
-          }
+        const badChoice = scene.choices.findIndex((c) => !c.text.trim() || !c.nextSceneId);
+        if (badChoice >= 0) {
+          errs[scene.key] = sceneT("educator.interactiveStoriesEditor.incompleteChoiceDetail", { number: badChoice + 1, scene: i + 1 });
+          continue;
         }
       }
     }
 
-    if (!initialSceneId || !seenIds.has(initialSceneId)) {
-      toastError(t("educator.interactiveStoriesEditor.missingOpeningScene"), t("educator.interactiveStoriesEditor.missingOpeningSceneDetail"));
+    // A link that points at a non-existent scene soft-locks the player — flag
+    // the source scene (only if it has no more fundamental error already).
+    const graph = analyzeGraph(scenes as readonly GraphScene[], initialSceneId);
+    for (const edge of graph.dangling) {
+      const source = scenes.find((s) => s.id === edge.from);
+      if (source && !errs[source.key]) {
+        errs[source.key] = sceneT("educator.interactiveStoriesEditor.danglingLinkDetail", {
+          target: edge.to,
+          defaultValue: `Links to a scene that doesn't exist: ${edge.to}`,
+        });
+      }
+    }
+
+    const noOpening = !initialSceneId || !seenIds.has(initialSceneId);
+    setSceneErrors(errs);
+
+    if (Object.keys(errs).length > 0 || noOpening) {
+      setMapVisible(true); // surface the highlighted scenes
+      toastError(
+        noOpening
+          ? t("educator.interactiveStoriesEditor.missingOpeningScene")
+          : t("educator.interactiveStoriesEditor.incompleteScene"),
+        noOpening
+          ? t("educator.interactiveStoriesEditor.missingOpeningSceneDetail")
+          : t("educator.interactiveStoriesEditor.fixHighlighted", { defaultValue: "Fix the highlighted scenes before saving." }),
+      );
       return;
     }
+    setSceneErrors({});
 
     const cleanScenes: Record<string, StoryScene> = {};
     for (const scene of scenes) {
@@ -416,22 +458,15 @@ export default function InteractiveStoriesScreen() {
                 />
               </View>
             </View>
-            <View style={{ flexDirection: "row", gap: 8 }}>
-              <View style={{ flex: 1 }}>
-                <LabeledInput
-                  label={t("educator.interactiveStoriesEditor.coverGradientFromLabel")}
-                  value={coverGradientFrom}
-                  onChange={setCoverGradientFrom}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <LabeledInput
-                  label={t("educator.interactiveStoriesEditor.coverGradientToLabel")}
-                  value={coverGradientTo}
-                  onChange={setCoverGradientTo}
-                />
-              </View>
-            </View>
+            <CoverPicker
+              label={t("educator.interactiveStoriesEditor.coverLabel", { defaultValue: "Cover" })}
+              from={coverGradientFrom}
+              to={coverGradientTo}
+              onChange={(f, tColor) => {
+                setCoverGradientFrom(f);
+                setCoverGradientTo(tColor);
+              }}
+            />
 
             <View>
               <Text style={{ fontSize: 11, fontWeight: "600", color: M.sub, marginBottom: 2 }}>
@@ -445,23 +480,28 @@ export default function InteractiveStoriesScreen() {
             <Text style={{ fontSize: 12, fontWeight: "800", color: M.text, marginTop: 4 }}>
               {t("educator.interactiveStoriesEditor.scenesLabel")}
             </Text>
-            {scenes.map((scene, index) => (
-              <SceneEditor
-                key={scene.key}
-                index={index}
-                scene={scene}
-                sceneOptions={sceneOptionsFor(scene.key)}
-                isOpening={scene.id === initialSceneId && scene.id !== ""}
-                onChange={(updated) => updateScene(index, updated)}
-                onDelete={() => removeScene(index)}
-                onSetOpening={() => setInitialSceneId(scene.id)}
-                M={M}
-                t={sceneT}
-              />
-            ))}
-            <View style={{ marginTop: 2 }}>
-              <GhostButton label={t("educator.interactiveStoriesEditor.addScene")} onPress={addScene} M={M} />
-            </View>
+            <Pressable
+              onPress={() => setMapVisible(true)}
+              className="active:opacity-70"
+              style={{
+                flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+                borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.card,
+                paddingHorizontal: 14, paddingVertical: 14,
+              }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                <IconSymbol name="point.topleft.down.curvedto.point.bottomright.up" size={18} color={M.accent} />
+                <Text style={{ fontSize: 14, fontWeight: "700", color: M.text }}>
+                  {scenes.length === 0
+                    ? t("educator.interactiveStoriesEditor.openMapEmpty", { defaultValue: "Add scenes on the story map" })
+                    : t("educator.interactiveStoriesEditor.openMapCount", {
+                        count: scenes.length,
+                        defaultValue: `Edit ${scenes.length} scenes on the story map`,
+                      })}
+                </Text>
+              </View>
+              <IconSymbol name="chevron.right" size={14} color={M.muted} />
+            </Pressable>
 
             <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
               <PrimaryButton
@@ -469,11 +509,6 @@ export default function InteractiveStoriesScreen() {
                 onPress={handleSave}
                 M={M}
                 disabled={saving}
-              />
-              <GhostButton
-                label={t("educator.interactiveStoriesEditor.map", { defaultValue: "Map" })}
-                onPress={() => setFlowMapVisible(true)}
-                M={M}
               />
               <GhostButton label={t("common.cancel")} onPress={resetForm} M={M} />
             </View>
@@ -571,11 +606,19 @@ export default function InteractiveStoriesScreen() {
         onClose={() => setLanguagePickerVisible(false)}
       />
 
-      <StoryFlowMap
-        visible={flowMapVisible}
+      <StorySceneMap
+        visible={mapVisible}
         scenes={scenes}
         initialSceneId={initialSceneId}
-        onClose={() => setFlowMapVisible(false)}
+        onClose={() => setMapVisible(false)}
+        onChangeScenes={reorderScenes}
+        onChangeScene={updateScene}
+        onDeleteScene={removeScene}
+        onSetOpening={setInitialSceneId}
+        onAddScene={addScene}
+        sceneOptionsFor={sceneOptionsFor}
+        errors={sceneErrors}
+        t={sceneT}
       />
     </SafeAreaView>
   );

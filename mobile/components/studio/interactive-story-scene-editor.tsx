@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { GhostButton, LabeledInput, SmallButton } from "@/components/studio/editor-form";
+import { CoverPicker } from "@/components/studio/cover-picker";
 import type { StorySceneType } from "@/lib/hooks/educator/use-interactive-stories";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useState } from "react";
@@ -175,6 +176,7 @@ export function SceneEditor({
   onChange,
   onDelete,
   onSetOpening,
+  error,
   M,
   t,
 }: Readonly<{
@@ -185,6 +187,7 @@ export function SceneEditor({
   onChange: (updated: SceneDraft) => void;
   onDelete: () => void;
   onSetOpening: () => void;
+  error?: string;
   M: ReturnType<typeof useMuseumTheme>;
   t: (key: string, opts?: Record<string, unknown>) => string;
 }>) {
@@ -210,7 +213,7 @@ export function SceneEditor({
   }
 
   return (
-    <View style={{ borderRadius: 14, borderWidth: 1, borderColor: isOpening ? M.accent : M.border, backgroundColor: M.card, padding: 12, gap: 10 }}>
+    <View style={{ borderRadius: 14, borderWidth: 1, borderColor: error ? M.errorBorder : isOpening ? M.accent : M.border, backgroundColor: M.card, padding: 12, gap: 10 }}>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <Text style={{ fontSize: 11, fontWeight: "700", color: M.sub }}>
@@ -227,6 +230,13 @@ export function SceneEditor({
           </Pressable>
         </View>
       </View>
+
+      {error ? (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+          <IconSymbol name="exclamationmark.triangle.fill" size={12} color={M.error} />
+          <Text style={{ flex: 1, fontSize: 12, fontWeight: "600", color: M.error }}>{error}</Text>
+        </View>
+      ) : null}
 
       {/* Stable id — collapsed behind a chip so authors reach for the title,
           not the id. Editing stays possible (Advanced); the parent retargets
@@ -266,22 +276,13 @@ export function SceneEditor({
         multiline
       />
 
-      <View style={{ flexDirection: "row", gap: 8 }}>
-        <View style={{ flex: 1 }}>
-          <LabeledInput
-            label={t("educator.interactiveStoriesEditor.sceneGradientFromLabel")}
-            value={scene.gradientFrom}
-            onChange={(v) => onChange({ ...scene, gradientFrom: v })}
-          />
-        </View>
-        <View style={{ flex: 1 }}>
-          <LabeledInput
-            label={t("educator.interactiveStoriesEditor.sceneGradientToLabel")}
-            value={scene.gradientTo}
-            onChange={(v) => onChange({ ...scene, gradientTo: v })}
-          />
-        </View>
-      </View>
+      <CoverPicker
+        label={t("educator.interactiveStoriesEditor.sceneGradientLabel", { defaultValue: "Scene gradient" })}
+        from={scene.gradientFrom}
+        to={scene.gradientTo}
+        onChange={(gradientFrom, gradientTo) => onChange({ ...scene, gradientFrom, gradientTo })}
+        compact
+      />
 
       {scene.type === "narrative" && (
         <ScenePicker

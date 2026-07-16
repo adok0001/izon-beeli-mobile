@@ -365,3 +365,120 @@ educatorStoryArcsRouter.put("/story-arcs/:id/cast", async (c) => {
 
   return c.json({ success: true, count: body.cast.length });
 });
+
+// PUT /educator/story-arcs/:id/save — atomic save of the whole season in one
+// round-trip: arc metadata + cast + chapters. Everything is validated up front
+// (neon-http has no interactive transactions — a mid-way validation failure
+// can't roll back), then the writes run inside db.transaction so a save is
+// all-or-nothing rather than the old three-call sequence that could half-apply.
+educatorStoryArcsRouter.put("/story-arcs/:id/save", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const { id } = c.req.param();
+
+  const [arc] = await db
+    .select({ languageId: storyArcs.languageId, courseId: storyArcs.courseId })
+    .from(storyArcs)
+    .where(eq(storyArcs.id, id))
+    .limit(1);
+
+  if (!arc) return c.json({ error: "Not found" }, 404);
+  if (!canAccessLanguage(isAdmin, reviewerLanguages, arc.languageId)) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  const body = await parseJson<{
+    arc: { title: string; description: string; nativeTitle?: string | null; logline?: string | null };
+    cast: { castId: string; name: string; role: string; hue: string }[];
+    chapters: { lessonId: string; title: string; narrativeIntro: string; narrativeOutro: string; order: number }[];
+  }>(c);
+
+  // A course-bound arc's chapters live on its lessons (order = lesson order), so
+  // this bulk save only owns arc metadata + cast for those; chapters are ignored
+  // rather than rejected, matching the /chapters endpoint's fold-in rule.
+  const writeChapters = !arc.courseId;
+
+  // ── Validate everything before any write ──────────────────────────────────
+  if (!body.arc?.title?.trim()) {
+    return c.json({ error: "title is required" }, 400);
+  }
+
+  for (const member of body.cast) {
+    if (!member.castId?.trim() || !member.name?.trim() || !member.role?.trim()) {
+      return c.json({ error: "Each cast member requires castId, name, and role" }, 400);
+    }
+    if (!CAST_HUES.includes(member.hue as (typeof CAST_HUES)[number])) {
+      return c.json({ error: `"${member.hue}" is not a valid hue` }, 400);
+    }
+  }
+  const castIds = body.cast.map((m) => m.castId.trim());
+  const dupCast = castIds.find((castId, i) => castIds.indexOf(castId) !== i);
+  if (dupCast) {
+    return c.json({ error: `Duplicate cast id: ${dupCast}` }, 400);
+  }
+
+  if (writeChapters) {
+    for (const ch of body.chapters) {
+      if (!ch.lessonId || !ch.title?.trim() || !ch.narrativeIntro?.trim() || !ch.narrativeOutro?.trim()) {
+        return c.json({ error: "Each chapter requires lessonId, title, narrativeIntro, and narrativeOutro" }, 400);
+      }
+    }
+    const lessonIds = [...new Set(body.chapters.map((ch) => ch.lessonId))];
+    if (lessonIds.length > 0) {
+      const found = await db.select({ id: lessons.id }).from(lessons).where(inArray(lessons.id, lessonIds));
+      const foundIds = new Set(found.map((l) => l.id));
+      const missing = lessonIds.filter((lessonId) => !foundIds.has(lessonId));
+      if (missing.length > 0) {
+        return c.json({ error: `No such lesson: ${missing.join(", ")}` }, 400);
+      }
+    }
+  }
+
+  // ── Writes — atomic ───────────────────────────────────────────────────────
+  await db.transaction(async (tx) => {
+    await tx
+      .update(storyArcs)
+      .set({
+        title: body.arc.title.trim(),
+        description: body.arc.description?.trim() ?? "",
+        nativeTitle: body.arc.nativeTitle?.trim() || null,
+        logline: body.arc.logline?.trim() || null,
+        updatedAt: new Date(),
+        updatedBy: c.get("userId"),
+      })
+      .where(eq(storyArcs.id, id));
+
+    await tx.delete(storyArcCast).where(eq(storyArcCast.storyArcId, id));
+    if (body.cast.length > 0) {
+      await tx.insert(storyArcCast).values(
+        body.cast.map((member, i) => ({
+          storyArcId: id,
+          castId: member.castId.trim(),
+          name: member.name.trim(),
+          role: member.role.trim(),
+          hue: member.hue,
+          order: i,
+        }))
+      );
+    }
+
+    if (writeChapters) {
+      await tx.delete(storyChapters).where(eq(storyChapters.storyArcId, id));
+      if (body.chapters.length > 0) {
+        await tx.insert(storyChapters).values(
+          body.chapters.map((ch, i) => ({
+            id: `story-ch-${randomUUID()}`,
+            storyArcId: id,
+            lessonId: ch.lessonId,
+            title: ch.title.trim(),
+            narrativeIntro: ch.narrativeIntro.trim(),
+            narrativeOutro: ch.narrativeOutro.trim(),
+            order: ch.order ?? i + 1,
+          }))
+        );
+      }
+    }
+  });
+
+  return c.json({ success: true, chaptersWritten: writeChapters });
+});

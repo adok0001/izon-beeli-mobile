@@ -5,23 +5,23 @@ import { useStudioAccess } from "@/components/studio/studio-gate";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useDirtyTracker, useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import { SeasonCastEditor } from "@/components/studio/season-cast-editor";
+import { ChapterEditor, type ChapterDraft } from "@/components/studio/chapter-editor";
+import { ChapterReorderSheet } from "@/components/studio/chapter-reorder-sheet";
+import { LessonPickerModal } from "@/components/studio/lesson-picker-modal";
+import { SeasonPreviewModal } from "@/components/studio/season-preview-modal";
 import {
-  EducatorStoryChapter,
   type EducatorStoryCastMember,
   useEducatorLessons,
   useEducatorStoryArc,
   useEducatorStoryArcById,
-  useReplaceStoryCast,
-  useReplaceStoryChapters,
-  useUpdateStoryArc,
+  useSaveStoryArc,
 } from "@/lib/hooks/use-educator-panel";
 import { useToast } from "@/lib/hooks/use-toast";
 import { localize } from "@/lib/localize";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { TFunction } from "i18next";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -33,133 +33,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-type ChapterDraft = Omit<EducatorStoryChapter, "id"> & { key: string };
-
-function ChapterEditor({
-  index,
-  chapter,
-  lessonOptions,
-  onChange,
-  onDelete,
-  onOpenLesson,
-  t,
-}: Readonly<{
-  index: number;
-  chapter: ChapterDraft;
-  lessonOptions: { id: string; title: string }[];
-  onChange: (updated: ChapterDraft) => void;
-  onDelete: () => void;
-  onOpenLesson: (lessonId: string) => void;
-  t: TFunction;
-}>) {
-  const M = useMuseumTheme();
-  const selectedLesson = lessonOptions.find((l) => l.id === chapter.lessonId);
-  return (
-    <View className="mx-5 mb-4 rounded-2xl border p-4" style={{ backgroundColor: M.card, borderColor: M.border }}>
-      <View className="mb-3 flex-row items-center justify-between">
-        <Text className="text-xs font-bold uppercase tracking-widest" style={{ color: M.warning }}>
-          {t("educator.story.chapterLabel", { number: String(index + 1) })}
-        </Text>
-        <Pressable onPress={onDelete} hitSlop={8}>
-          <IconSymbol name="trash" size={16} color={M.error} />
-        </Pressable>
-      </View>
-
-      <Text className="mb-1 text-xs font-semibold" style={{ color: M.sub }}>
-        {t("educator.story.chapterTitleLabel")}
-      </Text>
-      <TextInput
-        value={chapter.title}
-        onChangeText={(v) => onChange({ ...chapter, title: v })}
-        placeholder={t("educator.story.chapterTitlePlaceholder")}
-        className="mb-3 rounded-xl border px-3 py-2.5 text-sm"
-        style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
-        placeholderTextColor={M.muted}
-      />
-
-      <Text className="mb-1 text-xs font-semibold" style={{ color: M.sub }}>
-        {t("educator.story.chapterLessonLabel")}
-      </Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        className="mb-3 -mx-4 px-4"
-      >
-        <View className="flex-row gap-2">
-          {lessonOptions.map((l) => (
-            <Pressable
-              key={l.id}
-              onPress={() => onChange({ ...chapter, lessonId: l.id })}
-              className="rounded-lg border px-2.5 py-1.5"
-              style={{
-                backgroundColor: chapter.lessonId === l.id ? M.warningBg : M.pillBg,
-                borderColor: chapter.lessonId === l.id ? M.warningBorder : M.border,
-              }}
-            >
-              <Text
-                className="text-xs font-semibold"
-                style={{ color: chapter.lessonId === l.id ? M.warning : M.sub }}
-                numberOfLines={1}
-              >
-                {l.title}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      </ScrollView>
-
-      {selectedLesson ? (
-        <Pressable
-          onPress={() => onOpenLesson(chapter.lessonId)}
-          className="mb-3 flex-row items-center gap-2.5 rounded-xl border px-3 py-2.5 active:opacity-70"
-          style={{ backgroundColor: M.warningBg, borderColor: M.warningBorder }}
-        >
-          <IconSymbol name="waveform" size={16} color={M.warning} />
-          <View className="flex-1">
-            <Text className="text-xs font-bold" style={{ color: M.text }} numberOfLines={1}>
-              {selectedLesson.title}
-            </Text>
-            <Text className="text-[11px]" style={{ color: M.muted }}>
-              {t("educator.story.openLessonHint")}
-            </Text>
-          </View>
-          <IconSymbol name="chevron.right" size={13} color={M.warning} />
-        </Pressable>
-      ) : null}
-
-      <Text className="mb-1 text-xs font-semibold" style={{ color: M.sub }}>
-        {t("educator.story.chapterNarrativeIntroLabel")}
-      </Text>
-      <TextInput
-        value={chapter.narrativeIntro}
-        onChangeText={(v) => onChange({ ...chapter, narrativeIntro: v })}
-        placeholder={t("educator.story.chapterNarrativeIntroPlaceholder")}
-        multiline
-        numberOfLines={3}
-        className="mb-3 rounded-xl border px-3 py-2.5 text-sm"
-        style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
-        placeholderTextColor={M.muted}
-        textAlignVertical="top"
-      />
-
-      <Text className="mb-1 text-xs font-semibold" style={{ color: M.sub }}>
-        {t("educator.story.chapterNarrativeOutroLabel")}
-      </Text>
-      <TextInput
-        value={chapter.narrativeOutro}
-        onChangeText={(v) => onChange({ ...chapter, narrativeOutro: v })}
-        placeholder={t("educator.story.chapterNarrativeOutroPlaceholder")}
-        multiline
-        numberOfLines={3}
-        className="rounded-xl border px-3 py-2.5 text-sm"
-        style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
-        placeholderTextColor={M.muted}
-        textAlignVertical="top"
-      />
-    </View>
-  );
-}
 
 export default function StoryEditScreen() {
   const M = useMuseumTheme();
@@ -176,9 +49,7 @@ export default function StoryEditScreen() {
   const byCourse = useEducatorStoryArc(courseId, canAccess && !arcId && !!courseId);
   const { data: arc, isLoading } = arcId ? byId : byCourse;
   const { data: allLessons = [] } = useEducatorLessons(canAccess);
-  const updateArc = useUpdateStoryArc();
-  const replaceChapters = useReplaceStoryChapters();
-  const replaceCast = useReplaceStoryCast();
+  const saveArc = useSaveStoryArc();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -189,6 +60,15 @@ export default function StoryEditScreen() {
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [reorderOpen, setReorderOpen] = useState(false);
+  const [lessonPickerFor, setLessonPickerFor] = useState<number | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  // Inline validation: all offending fields highlight at once, view scrolls to
+  // the first. Chapter errors are keyed by draft key so they survive reorders.
+  const [titleError, setTitleError] = useState<string | null>(null);
+  const [chapterErrors, setChapterErrors] = useState<Record<string, string>>({});
+  const scrollRef = useRef<ScrollView>(null);
+  const chapterY = useRef<Record<string, number>>({});
 
   useEffect(() => {
     if (!arc) return;
@@ -226,6 +106,7 @@ export default function StoryEditScreen() {
   const courseLessons = allLessons.filter((l) =>
     arc?.courseId ? l.courseId === arc.courseId : l.languageId === arc?.languageId
   );
+  const lessonOptions = courseLessons.map((l) => ({ id: l.id, title: localize(l.title, uiLanguage) }));
 
   const addChapter = () => {
     setChapters((prev) => [
@@ -243,34 +124,54 @@ export default function StoryEditScreen() {
 
   const handleSave = async () => {
     if (!arc) return;
-    if (!title.trim()) { toastError(t("educator.story.errorTitleRequiredShort")); return; }
 
+    // Collect ALL errors at once rather than bailing on the first, so the
+    // author sees every offending field in one pass.
+    const nextTitleError = !title.trim() ? t("educator.story.errorTitleRequiredShort") : null;
+    const nextChapterErrors: Record<string, string> = {};
     for (const [i, ch] of chapters.entries()) {
       if (!ch.lessonId) {
-        toastError(t("educator.story.errorChapterNeedsLesson", { number: String(i + 1) }));
-        return;
+        nextChapterErrors[ch.key] = t("educator.story.errorChapterNeedsLesson", { number: String(i + 1) });
+      } else if (!ch.title.trim() || !ch.narrativeIntro.trim() || !ch.narrativeOutro.trim()) {
+        nextChapterErrors[ch.key] = t("educator.story.errorChapterIncomplete", { number: String(i + 1) });
       }
-      if (!ch.title.trim() || !ch.narrativeIntro.trim() || !ch.narrativeOutro.trim()) {
-        toastError(t("educator.story.errorChapterIncomplete", { number: String(i + 1) }));
-        return;
+    }
+    const dupCastId = (() => {
+      const seen = new Set<string>();
+      for (const m of cast) {
+        const id = m.castId.trim().toLowerCase();
+        if (id && seen.has(id)) return m.castId.trim();
+        if (id) seen.add(id);
       }
+      return null;
+    })();
+
+    setTitleError(nextTitleError);
+    setChapterErrors(nextChapterErrors);
+
+    if (nextTitleError || Object.keys(nextChapterErrors).length > 0 || dupCastId) {
+      toastError(t("educator.story.errorFixHighlighted", { defaultValue: "Fix the highlighted fields before saving." }));
+      // Scroll to the first offender — the title (top) or the first bad chapter.
+      const firstBadKey = chapters.find((ch) => nextChapterErrors[ch.key])?.key;
+      const y = nextTitleError ? 0 : firstBadKey ? chapterY.current[firstBadKey] ?? 0 : 0;
+      scrollRef.current?.scrollTo({ y: Math.max(0, y - 12), animated: true });
+      return;
     }
 
     setSaving(true);
     try {
-      await updateArc.mutateAsync({
+      // One atomic round-trip — arc + cast + chapters commit together or not at
+      // all, so a failure never leaves a half-saved season. Stay on the screen
+      // on error so the author can retry.
+      await saveArc.mutateAsync({
         id: arc.id,
-        title: title.trim(),
-        description: description.trim(),
-        nativeTitle: nativeTitle.trim(),
-        logline: logline.trim(),
-      });
-      await replaceCast.mutateAsync({
-        id: arc.id,
+        arc: {
+          title: title.trim(),
+          description: description.trim(),
+          nativeTitle: nativeTitle.trim(),
+          logline: logline.trim(),
+        },
         cast: cast.map((m) => ({ ...m, castId: m.castId.trim(), name: m.name.trim(), role: m.role.trim() })),
-      });
-      await replaceChapters.mutateAsync({
-        id: arc.id,
         chapters: chapters.map((ch, i) => ({
           lessonId: ch.lessonId,
           title: ch.title.trim(),
@@ -312,15 +213,18 @@ export default function StoryEditScreen() {
         options={{
           title: arc?.title ?? t("educator.story.screenTitle"),
           headerRight: () => (
-            <Pressable
-              onPress={handleSave}
-              disabled={saving}
-              className="mr-2"
-            >
-              <Text className="text-base font-semibold disabled:opacity-50" style={{ color: M.warning }}>
-                {saving ? t("educator.story.saving") : t("educator.story.saveHeader")}
-              </Text>
-            </Pressable>
+            <View className="mr-2 flex-row items-center gap-4">
+              <Pressable onPress={() => setPreviewOpen(true)} hitSlop={6}>
+                <Text className="text-base font-semibold" style={{ color: M.accent }}>
+                  {t("educator.story.preview", { defaultValue: "Preview" })}
+                </Text>
+              </Pressable>
+              <Pressable onPress={handleSave} disabled={saving}>
+                <Text className="text-base font-semibold disabled:opacity-50" style={{ color: M.warning }}>
+                  {saving ? t("educator.story.saving") : t("educator.story.saveHeader")}
+                </Text>
+              </Pressable>
+            </View>
           ),
         }}
       />
@@ -351,6 +255,7 @@ export default function StoryEditScreen() {
           </View>
         ) : (
           <ScrollView
+            ref={scrollRef}
             contentContainerStyle={{ paddingTop: 8, paddingBottom: 48 }}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
@@ -362,12 +267,17 @@ export default function StoryEditScreen() {
               </Text>
               <TextInput
                 value={title}
-                onChangeText={setTitle}
-                className="mb-3 rounded-xl border px-3 py-2.5 text-base"
-                style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
+                onChangeText={(v) => { setTitle(v); if (titleError) setTitleError(null); }}
+                className="mb-1 rounded-xl border px-3 py-2.5 text-base"
+                style={{ backgroundColor: M.inputBg, borderColor: titleError ? M.errorBorder : M.inputBorder, color: M.inputText }}
                 placeholderTextColor={M.muted}
                 placeholder={t("educator.story.arcTitlePlaceholder")}
               />
+              {titleError ? (
+                <Text className="mb-3 text-xs font-semibold" style={{ color: M.error }}>{titleError}</Text>
+              ) : (
+                <View className="mb-2" />
+              )}
               <Text className="mb-1 text-xs font-semibold uppercase tracking-wider" style={{ color: M.muted }}>
                 {t("educator.story.labelDescription")}
               </Text>
@@ -422,15 +332,28 @@ export default function StoryEditScreen() {
               <Text className="text-xs font-semibold uppercase tracking-[1.5px]" style={{ color: M.muted }}>
                 {t("educator.story.chaptersCount", { count: chapters.length })}
               </Text>
-              <Pressable
-                onPress={addChapter}
-                className="flex-row items-center gap-1.5 active:opacity-70"
-              >
-                <IconSymbol name="plus.circle.fill" size={16} color={M.accent} />
-                <Text className="text-sm font-bold" style={{ color: M.accent }}>
-                  {t("educator.story.addChapter")}
-                </Text>
-              </Pressable>
+              <View className="flex-row items-center gap-4">
+                {chapters.length >= 2 ? (
+                  <Pressable
+                    onPress={() => setReorderOpen(true)}
+                    className="flex-row items-center gap-1.5 active:opacity-70"
+                  >
+                    <IconSymbol name="arrow.up.arrow.down" size={15} color={M.accent} />
+                    <Text className="text-sm font-bold" style={{ color: M.accent }}>
+                      {t("educator.story.reorder", { defaultValue: "Reorder" })}
+                    </Text>
+                  </Pressable>
+                ) : null}
+                <Pressable
+                  onPress={addChapter}
+                  className="flex-row items-center gap-1.5 active:opacity-70"
+                >
+                  <IconSymbol name="plus.circle.fill" size={16} color={M.accent} />
+                  <Text className="text-sm font-bold" style={{ color: M.accent }}>
+                    {t("educator.story.addChapter")}
+                  </Text>
+                </Pressable>
+              </View>
             </View>
 
             {chapters.length === 0 ? (
@@ -442,31 +365,41 @@ export default function StoryEditScreen() {
               </View>
             ) : (
               chapters.map((ch, i) => (
-                <ChapterEditor
+                <View
                   key={ch.key}
-                  index={i}
-                  chapter={ch}
-                  lessonOptions={courseLessons.map((l) => ({
-                    id: l.id,
-                    title: localize(l.title, uiLanguage),
-                  }))}
-                  onChange={(updated) =>
-                    setChapters((prev) =>
-                      prev.map((c, idx) => (idx === i ? updated : c))
-                    )
-                  }
-                  onDelete={() => confirmDeleteChapter(i)}
-                  onOpenLesson={(lessonId) =>
-                    router.push({
-                      pathname: "/educator/lesson-edit",
-                      // The lesson's own courseId, not the screen's — a standalone
-                      // season's courseId param is undefined, and even a course-bound
-                      // season's chapters can reference lessons from other courses.
-                      params: { lessonId, courseId: allLessons.find((l) => l.id === lessonId)?.courseId },
-                    } as never)
-                  }
-                  t={t}
-                />
+                  onLayout={(e) => {
+                    chapterY.current[ch.key] = e.nativeEvent.layout.y;
+                  }}
+                >
+                  <ChapterEditor
+                    index={i}
+                    chapter={ch}
+                    lessonOptions={lessonOptions}
+                    error={chapterErrors[ch.key]}
+                    onChange={(updated) => {
+                      setChapters((prev) => prev.map((c, idx) => (idx === i ? updated : c)));
+                      if (chapterErrors[ch.key]) {
+                        setChapterErrors((prev) => {
+                          const next = { ...prev };
+                          delete next[ch.key];
+                          return next;
+                        });
+                      }
+                    }}
+                    onDelete={() => confirmDeleteChapter(i)}
+                    onPickLesson={() => setLessonPickerFor(i)}
+                    onOpenLesson={(lessonId) =>
+                      router.push({
+                        pathname: "/educator/lesson-edit",
+                        // The lesson's own courseId, not the screen's — a standalone
+                        // season's courseId param is undefined, and even a course-bound
+                        // season's chapters can reference lessons from other courses.
+                        params: { lessonId, courseId: allLessons.find((l) => l.id === lessonId)?.courseId },
+                      } as never)
+                    }
+                    t={t}
+                  />
+                </View>
               ))
             )}
 
@@ -484,6 +417,48 @@ export default function StoryEditScreen() {
         )}
         </KeyboardAvoidingView>
       </SafeAreaView>
+
+      <ChapterReorderSheet
+        visible={reorderOpen}
+        chapters={chapters}
+        lessonTitleFor={(lessonId) => {
+          const l = allLessons.find((x) => x.id === lessonId);
+          return l ? localize(l.title, uiLanguage) : undefined;
+        }}
+        onClose={() => setReorderOpen(false)}
+        onReorder={(reordered) =>
+          setChapters(reordered.map((ch, i) => ({ ...ch, order: i + 1 })))
+        }
+      />
+
+      <LessonPickerModal
+        visible={lessonPickerFor !== null}
+        selectedId={lessonPickerFor !== null ? chapters[lessonPickerFor]?.lessonId ?? "" : ""}
+        lessons={lessonOptions}
+        annotationFor={(lessonId) => {
+          if (lessonPickerFor === null) return undefined;
+          const other = chapters.findIndex((c, i) => i !== lessonPickerFor && c.lessonId === lessonId);
+          return other >= 0
+            ? t("educator.story.lessonUsedInChapter", { number: other + 1, defaultValue: `Already in Ch. ${other + 1}` })
+            : undefined;
+        }}
+        onSelect={(id) => {
+          const idx = lessonPickerFor;
+          if (idx !== null) setChapters((prev) => prev.map((c, i) => (i === idx ? { ...c, lessonId: id } : c)));
+          setLessonPickerFor(null);
+        }}
+        onClose={() => setLessonPickerFor(null)}
+      />
+
+      <SeasonPreviewModal
+        visible={previewOpen}
+        title={title}
+        nativeTitle={nativeTitle}
+        logline={logline}
+        cast={cast}
+        chapters={chapters}
+        onClose={() => setPreviewOpen(false)}
+      />
     </>
   );
 }

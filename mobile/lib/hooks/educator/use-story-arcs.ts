@@ -201,3 +201,38 @@ export function useReplaceStoryChapters() {
     },
   });
 }
+
+/**
+ * Save a whole season — arc metadata + cast + chapters — in one atomic
+ * round-trip (`PUT /story-arcs/:id/save`), replacing the old three-call
+ * sequence that could half-apply on a mid-way failure. The broad
+ * `["educator","story-arcs"]` invalidation already covers the arc/course detail
+ * keys by prefix match, so one invalidate refreshes every view.
+ */
+export function useSaveStoryArc() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      arc,
+      cast,
+      chapters,
+    }: {
+      id: string;
+      arc: { title: string; description: string; nativeTitle?: string | null; logline?: string | null };
+      cast: EducatorStoryCastMember[];
+      chapters: EducatorStoryChapter[];
+    }) => {
+      const token = await getToken();
+      return apiFetch<{ success: true; chaptersWritten: boolean }>(`/educator/story-arcs/${id}/save`, {
+        method: "PUT",
+        token: token ?? undefined,
+        body: JSON.stringify({ arc, cast, chapters }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["educator", "story-arcs"] });
+    },
+  });
+}
