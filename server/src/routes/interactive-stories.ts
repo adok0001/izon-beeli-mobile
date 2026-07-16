@@ -40,6 +40,7 @@ interactiveStoriesRouter.get("/", async (c) => {
       and(
         eq(cultureItems.type, "film"),
         isNotNull(cultureItems.scenes),
+        eq(cultureItems.isActive, true),
         language ? eq(cultureItems.language, language) : undefined
       )
     )
@@ -53,7 +54,7 @@ interactiveStoriesRouter.get("/story/:id", async (c) => {
   const [row] = await db
     .select()
     .from(cultureItems)
-    .where(and(eq(cultureItems.id, id), isNotNull(cultureItems.scenes)))
+    .where(and(eq(cultureItems.id, id), isNotNull(cultureItems.scenes), eq(cultureItems.isActive, true)))
     .limit(1);
   if (!row) return c.json({ error: "Story not found" }, 404);
   return c.json(toApiInteractiveStory(row));

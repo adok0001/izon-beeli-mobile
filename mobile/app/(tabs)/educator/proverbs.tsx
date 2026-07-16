@@ -3,6 +3,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { GhostButton, LabeledInput, NewButton, PrimaryButton, SmallButton } from "@/components/studio/editor-form";
 import { LocalizedTextInput, serializeLocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
 import { useStudioAccess } from "@/components/studio/studio-gate";
+import { ActiveToggle } from "@/components/studio/active-toggle";
 import { friendlyError } from "@/lib/api";
 import {
   canPublishContent,
@@ -244,7 +245,15 @@ export default function ProverbsScreen() {
               </View>
               <Text style={{ marginTop: 4, fontSize: 13, color: M.sub }}>{localize(p.translation, uiLanguage)}</Text>
               <Text style={{ marginTop: 2, fontSize: 12, color: M.muted }}>{localize(p.meaning, uiLanguage)}</Text>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8, marginTop: 12 }}>
+                <ActiveToggle
+                  entityType="proverbs"
+                  id={p.id}
+                  isActive={p.isActive ?? true}
+                  invalidateKeys={[["educator", "proverbs"], ["proverbs"]]}
+                  M={M}
+                  onToast={{ success: toastSuccess, error: toastError }}
+                />
                 {canSubmitForReview(p.status) && (
                   <SmallButton label={t("educator.proverbsEditor.submitButton")} onPress={() =>
                     submitForReview.mutate(p.id, {

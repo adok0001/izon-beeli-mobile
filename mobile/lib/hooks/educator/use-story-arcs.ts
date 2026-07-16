@@ -15,6 +15,7 @@ export interface EducatorStoryArc {
   status?: string;
   createdBy?: string;
   updatedAt?: string;
+  isActive?: boolean;
 }
 
 /** A recurring character. `castId` is what a transcript segment's `speaker` refers to. */

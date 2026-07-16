@@ -1,5 +1,6 @@
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { NewButton, SmallButton } from "@/components/studio/editor-form";
+import { ActiveToggle } from "@/components/studio/active-toggle";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { Badge } from "@/components/ui/badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -41,6 +42,7 @@ function ArcCard({
   onDelete,
   onSubmit,
   onPublish,
+  onToast,
 }: Readonly<{
   arc: EducatorStoryArc;
   courseName: string;
@@ -50,6 +52,7 @@ function ArcCard({
   onDelete: () => void;
   onSubmit: () => void;
   onPublish: () => void;
+  onToast: { success: (title: string, body?: string) => void; error: (title: string, body?: string) => void };
 }>) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
@@ -69,7 +72,15 @@ function ArcCard({
       <Text style={{ marginTop: 4, fontSize: 12, color: M.muted }}>
         {languageName} · {courseName}
       </Text>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8, marginTop: 12 }}>
+        <ActiveToggle
+          entityType="story_arcs"
+          id={arc.id}
+          isActive={arc.isActive ?? true}
+          invalidateKeys={[["educator", "story-arcs"]]}
+          M={M}
+          onToast={onToast}
+        />
         {canSubmitForReview(status) && (
           <SmallButton label={t("educator.story.submitButton")} onPress={onSubmit} M={M} />
         )}
@@ -218,6 +229,7 @@ export default function EducatorStoriesScreen() {
                     onDelete={() => handleDelete(arc)}
                     onSubmit={() => handleSubmit(arc)}
                     onPublish={() => handlePublish(arc)}
+                    onToast={{ success: toastSuccess, error: toastError }}
                   />
                 );
               })}

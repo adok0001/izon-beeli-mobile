@@ -8,6 +8,7 @@ import {
 } from "@/components/studio/interactive-story-scene-editor";
 import { StorySceneMap } from "@/components/studio/story-flow-map";
 import { CoverPicker } from "@/components/studio/cover-picker";
+import { ActiveToggle } from "@/components/studio/active-toggle";
 import { analyzeGraph, type GraphScene } from "@/lib/story-graph";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
@@ -542,7 +543,15 @@ export default function InteractiveStoriesScreen() {
                     ? t("educator.interactiveStoriesEditor.scenesCountOne", { count: 1 })
                     : t("educator.interactiveStoriesEditor.scenesCountMany", { count: sceneCount })}
                 </Text>
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8, marginTop: 12 }}>
+                  <ActiveToggle
+                    entityType="interactive_stories"
+                    id={story.id}
+                    isActive={story.isActive ?? true}
+                    invalidateKeys={[["educator", "interactive-stories", activeLanguageId]]}
+                    M={M}
+                    onToast={{ success: toastSuccess, error: toastError }}
+                  />
                   {canSubmitForReview(story.status) && (
                     <SmallButton
                       label={t("educator.interactiveStoriesEditor.submitButton")}

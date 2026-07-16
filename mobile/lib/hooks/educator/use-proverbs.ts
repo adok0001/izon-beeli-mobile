@@ -16,6 +16,7 @@ export interface Proverb {
   tags?: string[] | null;
   status?: ContentStatus;
   createdBy?: string | null;
+  isActive?: boolean;
 }
 
 export interface UpsertProverbInput {

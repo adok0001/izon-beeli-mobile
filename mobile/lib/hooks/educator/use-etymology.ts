@@ -17,7 +17,8 @@ export function useEtymologyEntries(languageId?: string, enabled = true) {
     queryFn: async () => {
       const token = await getToken();
       const q = languageId ? `?languageId=${encodeURIComponent(languageId)}` : "";
-      return apiFetch<import("@/types").EtymologyEntry[]>(`/etymology${q}`, { token: token ?? undefined });
+      // Admin list: includes inactive entries so the editor can re-activate them.
+      return apiFetch<import("@/types").EtymologyEntry[]>(`/etymology/admin${q}`, { token: token ?? undefined });
     },
     enabled: !!isSignedIn && enabled,
     staleTime: 30_000,

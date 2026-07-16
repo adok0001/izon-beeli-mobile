@@ -87,6 +87,7 @@ async function seasonExtras(arcId: string) {
           eq(cultureItems.seasonArcId, arcId),
           eq(cultureItems.type, "film"),
           eq(cultureItems.status, "published"),
+          eq(cultureItems.isActive, true),
           isNotNull(cultureItems.scenes)
         )
       ),
@@ -106,7 +107,7 @@ storyArcsRouter.get("/", async (c) => {
   const arcs = await db
     .select({ id: storyArcs.id, courseId: storyArcs.courseId, title: storyArcs.title })
     .from(storyArcs)
-    .where(eq(storyArcs.status, "published"))
+    .where(and(eq(storyArcs.status, "published"), eq(storyArcs.isActive, true)))
     .orderBy(storyArcs.courseId);
   return c.json(arcs);
 });
@@ -121,7 +122,7 @@ storyArcsRouter.get("/arc/:id", async (c) => {
   const [arc] = await db
     .select()
     .from(storyArcs)
-    .where(and(eq(storyArcs.id, id), eq(storyArcs.status, "published")))
+    .where(and(eq(storyArcs.id, id), eq(storyArcs.status, "published"), eq(storyArcs.isActive, true)))
     .limit(1);
 
   if (!arc) return c.json({ error: "Not found" }, 404);
@@ -129,7 +130,7 @@ storyArcsRouter.get("/arc/:id", async (c) => {
   const chapters = await db
     .select()
     .from(storyChapters)
-    .where(eq(storyChapters.storyArcId, arc.id))
+    .where(and(eq(storyChapters.storyArcId, arc.id), eq(storyChapters.isActive, true)))
     .orderBy(storyChapters.order);
 
   return c.json({
@@ -146,7 +147,7 @@ storyArcsRouter.get("/:courseId", async (c) => {
   const [arc] = await db
     .select()
     .from(storyArcs)
-    .where(and(eq(storyArcs.courseId, courseId), eq(storyArcs.status, "published")))
+    .where(and(eq(storyArcs.courseId, courseId), eq(storyArcs.status, "published"), eq(storyArcs.isActive, true)))
     .limit(1);
 
   if (!arc) return c.json({ error: "Not found" }, 404);
@@ -154,7 +155,7 @@ storyArcsRouter.get("/:courseId", async (c) => {
   const chapters = await db
     .select()
     .from(storyChapters)
-    .where(eq(storyChapters.storyArcId, arc.id))
+    .where(and(eq(storyChapters.storyArcId, arc.id), eq(storyChapters.isActive, true)))
     .orderBy(storyChapters.order);
 
   return c.json({

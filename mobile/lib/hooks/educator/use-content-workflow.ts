@@ -82,3 +82,43 @@ export function usePublishContent(entityType: PublishableEntityType, invalidateK
     },
   });
 }
+
+/** Entity types accepted by POST /content/:entityType/:id/active.
+ * Keep in sync with ACTIVE_TOGGLE_TYPES in server/src/routes/content-publish.ts.
+ * Distinct from PublishableEntityType: story_chapters/culture_items toggle but
+ * never publish; courses/lessons/content_partners have their own toggles. */
+export type ActiveToggleEntityType =
+  | "dictionary_entries"
+  | "proverbs"
+  | "etymology_entries"
+  | "cultural_content"
+  | "sentence_templates"
+  | "scenarios"
+  | "activities"
+  | "story_arcs"
+  | "story_chapters"
+  | "quiz_questions"
+  | "interactive_stories"
+  | "culture_items";
+
+/** Flips a content row's active/inactive visibility and invalidates the given
+ * query keys on success. Independent of the editorial workflow above — hiding a
+ * row is reversible, so there's no four-eyes gate (see assertCanToggleActive). */
+export function useToggleContentActive(entityType: ActiveToggleEntityType, invalidateKeys: unknown[][]) {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      const token = await getToken();
+      return apiFetch(`/content/${entityType}/${id}/active`, {
+        method: "POST",
+        token: token ?? undefined,
+        body: JSON.stringify({ isActive }),
+      });
+    },
+    onSuccess: () => {
+      invalidateKeys.forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
+    },
+  });
+}

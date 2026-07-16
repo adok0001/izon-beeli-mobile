@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { GhostButton, LabeledInput, NewButton, PrimaryButton, SmallButton } from "@/components/studio/editor-form";
 import { useStudioAccess } from "@/components/studio/studio-gate";
+import { ActiveToggle } from "@/components/studio/active-toggle";
 import { friendlyError } from "@/lib/api";
 import {
   canPublishContent,
@@ -304,7 +305,15 @@ export default function QuizBankScreen() {
               </View>
               <Text style={{ marginTop: 4, fontSize: 13, color: M.sub }}>{q.type}</Text>
               <Text style={{ marginTop: 2, fontSize: 12, color: M.muted }}>{q.answer}</Text>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8, marginTop: 12 }}>
+                <ActiveToggle
+                  entityType="quiz_questions"
+                  id={q.id}
+                  isActive={q.isActive ?? true}
+                  invalidateKeys={[["educator", "quiz-bank", activeLanguageId]]}
+                  M={M}
+                  onToast={{ success: toastSuccess, error: toastError }}
+                />
                 {canSubmitForReview(q.status) && (
                   <SmallButton label={t("educator.quizBankEditor.submitButton")} onPress={() =>
                     submitForReview.mutate(q.id, {

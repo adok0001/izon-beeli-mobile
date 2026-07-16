@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { activities } from "../db/schema.js";
@@ -18,7 +18,7 @@ activitiesRouter.get("/", async (c) => {
   const rows = await db
     .select()
     .from(activities)
-    .where(eq(activities.languageId, languageId));
+    .where(and(eq(activities.languageId, languageId), eq(activities.isActive, true)));
 
   return c.json(rows.map(deserialize));
 });

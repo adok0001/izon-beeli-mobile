@@ -96,6 +96,8 @@ const MAPPING = {
   'repeat.1': 'repeat-one',
   'trash.fill': 'delete',
   'eye.fill': 'visibility',
+  'eye': 'visibility',
+  'eye.slash': 'visibility-off',
   'pencil': 'edit',
   'line.3.horizontal': 'drag-handle',
   'square.grid.2x2': 'grid-view',

@@ -29,6 +29,7 @@ educatorStoryArcsRouter.get("/story-arcs", async (c) => {
       updatedAt: storyArcs.updatedAt,
       status: storyArcs.status,
       createdBy: storyArcs.createdBy,
+      isActive: storyArcs.isActive,
     })
     .from(storyArcs)
     .orderBy(storyArcs.courseId);
@@ -58,6 +59,7 @@ const ARC_COLUMNS = {
   description: storyArcs.description,
   nativeTitle: storyArcs.nativeTitle,
   logline: storyArcs.logline,
+  isActive: storyArcs.isActive,
 } as const;
 
 async function arcDetail(arc: { id: string; languageId: string | null }) {

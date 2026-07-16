@@ -48,6 +48,7 @@ function toApiStory(row: FilmRow) {
     scenes: row.scenes,
     status: row.status,
     createdBy: row.createdBy,
+    isActive: row.isActive,
   };
 }
 

@@ -7,6 +7,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LocalizedTextInput, toLocalizedText } from "@/components/ui/localized-text-input";
 import type { LocalizedText } from "@/types";
 import { useStudioAccess } from "@/components/studio/studio-gate";
+import { ActiveToggle } from "@/components/studio/active-toggle";
 import {
     canPublishContent,
     canSubmitForReview,
@@ -268,7 +269,15 @@ export default function EducatorDictionaryScreen() {
             <Text className="text-base font-semibold" style={{ color: M.text }}>{item.word}</Text>
             <Text className="text-sm" style={{ color: M.sub }}>{item.english}</Text>
           </View>
-          <View className="flex-row gap-2">
+          <View className="flex-row items-center gap-2">
+            <ActiveToggle
+              entityType="dictionary_entries"
+              id={item.id}
+              isActive={item.isActive ?? true}
+              invalidateKeys={[["educator", "dictionary"]]}
+              M={M}
+              onToast={{ success: toastSuccess, error: toastError }}
+            />
             {canSubmitForReview(item.status) ? (
               <Pressable
                 onPress={() => submitForReview.mutate(item.id)}

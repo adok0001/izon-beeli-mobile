@@ -17,6 +17,7 @@ export interface QuizQuestion {
   sceneId?: string | null;
   status?: ContentStatus;
   createdBy?: string | null;
+  isActive?: boolean;
 }
 
 export interface UpsertQuizInput {

@@ -95,7 +95,7 @@ quizRouter.get("/questions", async (c) => {
   const languageEntries = await db
     .select({ id: dictionaryEntries.id, word: dictionaryEntries.word, english: dictionaryEntries.english })
     .from(dictionaryEntries)
-    .where(eq(dictionaryEntries.languageId, languageId));
+    .where(and(eq(dictionaryEntries.languageId, languageId), eq(dictionaryEntries.isActive, true)));
 
   let entries = languageEntries;
 
@@ -150,7 +150,13 @@ quizRouter.get("/questions", async (c) => {
     const rows = await db
       .select()
       .from(quizQuestions)
-      .where(and(eq(quizQuestions.lessonId, lessonId), eq(quizQuestions.status, "published")));
+      .where(
+        and(
+          eq(quizQuestions.lessonId, lessonId),
+          eq(quizQuestions.status, "published"),
+          eq(quizQuestions.isActive, true)
+        )
+      );
     authored = shuffle(rows).slice(0, count).map((q) => ({
       id: q.id,
       type: q.type,

@@ -17,6 +17,7 @@ import {
   useUpsertSentence,
 } from "@/lib/hooks/use-educator-panel";
 import { useToast } from "@/lib/hooks/use-toast";
+import { ActiveToggle } from "@/components/studio/active-toggle";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { Stack } from "expo-router";
 import { useCallback, useState } from "react";
@@ -369,13 +370,23 @@ export default function SentencesAdminScreen() {
                         )}
                       </View>
                     </View>
-                    <View style={{ gap: 6 }}>
-                      <Pressable onPress={() => handleSentEdit(item)} hitSlop={8}>
-                        <IconSymbol name="pencil" size={16} color={M.accent} />
-                      </Pressable>
-                      <Pressable onPress={() => handleSentDelete(item)} hitSlop={8}>
-                        <IconSymbol name="trash" size={16} color={M.error} />
-                      </Pressable>
+                    <View style={{ gap: 6, alignItems: "flex-end" }}>
+                      <ActiveToggle
+                        entityType="sentence_templates"
+                        id={item.id}
+                        isActive={item.isActive ?? true}
+                        invalidateKeys={[["educator", "sentences"], ["sentences"]]}
+                        M={M}
+                        onToast={{ success: toast.success, error: toast.error }}
+                      />
+                      <View style={{ flexDirection: "row", gap: 12 }}>
+                        <Pressable onPress={() => handleSentEdit(item)} hitSlop={8}>
+                          <IconSymbol name="pencil" size={16} color={M.accent} />
+                        </Pressable>
+                        <Pressable onPress={() => handleSentDelete(item)} hitSlop={8}>
+                          <IconSymbol name="trash" size={16} color={M.error} />
+                        </Pressable>
+                      </View>
                     </View>
                   </View>
                 </View>

@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq, desc } from "drizzle-orm";
+import { and, eq, desc } from "drizzle-orm";
 import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { cultureItems, storyArcs, type InteractiveStoryScene } from "../db/schema.js";
@@ -8,19 +8,28 @@ import { AuthEnv, authMiddleware, adminMiddleware } from "../middleware/auth.js"
 
 export const cultureItemsRouter = new Hono();
 
-// GET /api/culture-items
+// GET /api/culture-items — learner discover feed; hides inactive cards.
 cultureItemsRouter.get("/", async (c) => {
   const type = c.req.query("type");
-  const query = db.select().from(cultureItems).orderBy(desc(cultureItems.publishedAt));
-  const rows = type
-    ? await db.select().from(cultureItems).where(eq(cultureItems.type, type as "film" | "podcast" | "blog")).orderBy(desc(cultureItems.publishedAt))
-    : await query;
+  const rows = await db
+    .select()
+    .from(cultureItems)
+    .where(
+      type
+        ? and(eq(cultureItems.isActive, true), eq(cultureItems.type, type as "film" | "podcast" | "blog"))
+        : eq(cultureItems.isActive, true)
+    )
+    .orderBy(desc(cultureItems.publishedAt));
   return c.json(rows.map(toApi));
 });
 
-// GET /api/culture-items/:id
+// GET /api/culture-items/:id — inactive cards read as Not Found to learners.
 cultureItemsRouter.get("/:id", async (c) => {
-  const [row] = await db.select().from(cultureItems).where(eq(cultureItems.id, c.req.param("id"))).limit(1);
+  const [row] = await db
+    .select()
+    .from(cultureItems)
+    .where(and(eq(cultureItems.id, c.req.param("id")), eq(cultureItems.isActive, true)))
+    .limit(1);
   if (!row) return c.json({ error: "Not found" }, 404);
   return c.json(toApi(row));
 });
@@ -30,6 +39,20 @@ cultureItemsRouter.get("/:id", async (c) => {
 export const cultureItemsAdminRouter = new Hono<AuthEnv>();
 cultureItemsAdminRouter.use("*", authMiddleware);
 cultureItemsAdminRouter.use("*", adminMiddleware);
+
+// GET /api/culture-items/admin — editor list. Returns inactive cards too so the
+// Studio culture editor can see and re-activate hidden items.
+cultureItemsAdminRouter.get("/", async (c) => {
+  const type = c.req.query("type");
+  const rows = type
+    ? await db
+        .select()
+        .from(cultureItems)
+        .where(eq(cultureItems.type, type as "film" | "podcast" | "blog"))
+        .orderBy(desc(cultureItems.publishedAt))
+    : await db.select().from(cultureItems).orderBy(desc(cultureItems.publishedAt));
+  return c.json(rows.map(toApi));
+});
 
 type Body = {
   id: string;
@@ -205,5 +228,6 @@ function toApi(row: typeof cultureItems.$inferSelect) {
     contentUrl: row.contentUrl ?? undefined,
     body: row.body ?? undefined,
     showNotes: row.showNotes ?? undefined,
+    isActive: row.isActive,
   };
 }

@@ -1,4 +1,5 @@
 import { ItemForm, TYPE_CONFIG } from "@/components/studio/culture-item-form";
+import { ActiveToggle } from "@/components/studio/active-toggle";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
 import { apiFetch } from "@/lib/api";
@@ -49,7 +50,8 @@ export default function CultureContentAdminScreen() {
 
   const { data: items = [], isLoading } = useQuery<DiscoverItem[]>({
     queryKey: ["culture-items", "admin"],
-    queryFn: () => authedFetch("/culture-items"),
+    // Admin list: includes inactive cards so the editor can re-activate them.
+    queryFn: () => authedFetch("/culture-items/admin"),
     placeholderData: [],
   });
 
@@ -316,6 +318,15 @@ export default function CultureContentAdminScreen() {
                           {item.featured ? t("admin.cultureContent.unfeatureButton") : t("admin.cultureContent.featureButton")}
                         </Text>
                       </Pressable>
+
+                      <ActiveToggle
+                        entityType="culture_items"
+                        id={item.id}
+                        isActive={item.isActive ?? true}
+                        invalidateKeys={[["culture-items"]]}
+                        M={M}
+                        onToast={{ success: () => {}, error: (title, body) => Alert.alert(title, body ?? "") }}
+                      />
 
                       <View style={{ flex: 1 }} />
 

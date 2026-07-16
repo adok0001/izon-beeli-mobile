@@ -10,6 +10,7 @@ export interface EducatorSentenceTemplate {
   englishSentence: string;
   kind: "blank" | "equivalent";
   literalTranslation: string | null;
+  isActive?: boolean;
 }
 
 export interface UpsertSentenceInput {

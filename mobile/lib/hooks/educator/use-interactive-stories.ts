@@ -9,6 +9,7 @@ export type { StoryChoice, StoryScene, StorySceneType } from "@/types";
 export interface EducatorInteractiveStory extends InteractiveStory {
   status?: ContentStatus;
   createdBy?: string | null;
+  isActive?: boolean;
 }
 
 export type UpsertInteractiveStoryInput = Omit<InteractiveStory, "id" | "language"> & { languageId: string };

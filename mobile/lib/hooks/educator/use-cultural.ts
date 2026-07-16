@@ -35,6 +35,7 @@ export interface CulturalItem {
   headword?: CulturalHeadword | null;
   applications?: (LocalizedText | string)[] | null;
   heroBands?: CulturalHeroBand[] | null;
+  isActive?: boolean;
 }
 
 export interface UpsertCulturalInput {
@@ -59,7 +60,8 @@ export function useCulturalItems(languageId?: string, enabled = true) {
     queryFn: async () => {
       const token = await getToken();
       const q = languageId ? `?languageId=${encodeURIComponent(languageId)}` : "";
-      return apiFetch<CulturalItem[]>(`/cultural${q}`, { token: token ?? undefined });
+      // Admin list: includes inactive entries so the editor can re-activate them.
+      return apiFetch<CulturalItem[]>(`/cultural/admin${q}`, { token: token ?? undefined });
     },
     enabled: !!isSignedIn && enabled,
     staleTime: 30_000,

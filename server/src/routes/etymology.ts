@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
@@ -26,9 +26,13 @@ etymologyRouter.get("/", async (c) => {
     return c.json({ error: "languageId too long" }, 400);
   }
 
+  // Learner read: hide entries an editor has deactivated.
   const rows = languageId
-    ? await db.select().from(etymologyEntries).where(eq(etymologyEntries.languageId, languageId))
-    : await db.select().from(etymologyEntries);
+    ? await db
+        .select()
+        .from(etymologyEntries)
+        .where(and(eq(etymologyEntries.languageId, languageId), eq(etymologyEntries.isActive, true)))
+    : await db.select().from(etymologyEntries).where(eq(etymologyEntries.isActive, true));
 
   return c.json(rows.map(parseRow));
 });
@@ -38,6 +42,19 @@ etymologyRouter.get("/", async (c) => {
 export const etymologyAdminRouter = new Hono<AuthEnv>();
 etymologyAdminRouter.use("*", authMiddleware);
 etymologyAdminRouter.use("*", reviewerMiddleware);
+
+// GET /etymology/admin?languageId= — editor list. Unlike the public read, this
+// returns inactive entries too so Studio can see and re-activate hidden rows.
+etymologyAdminRouter.get("/", async (c) => {
+  const languageId = c.req.query("languageId");
+  if (languageId && languageId.length > 64) {
+    return c.json({ error: "languageId too long" }, 400);
+  }
+  const rows = languageId
+    ? await db.select().from(etymologyEntries).where(eq(etymologyEntries.languageId, languageId))
+    : await db.select().from(etymologyEntries);
+  return c.json(rows.map(parseRow));
+});
 
 // POST /etymology/admin
 etymologyAdminRouter.post("/", async (c) => {

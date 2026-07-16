@@ -286,6 +286,7 @@ export interface EtymologyEntry {
   word: string;
   english: string | LocalizedText;
   trail: EtymologyNode[];
+  isActive?: boolean;
 }
 
 // --- Sentence Templates (for fill-in-the-blank) ---
@@ -690,6 +691,8 @@ export interface DiscoverItem {
   contentUrl?: string;
   body?: string;
   showNotes?: string;
+  /** Studio visibility switch; inactive cards are hidden from learners. */
+  isActive?: boolean;
 }
 
 export type StorySceneType = "narrative" | "choice" | "conclusion";

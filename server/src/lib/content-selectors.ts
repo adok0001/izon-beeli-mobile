@@ -8,6 +8,11 @@
  * `culture_items`) are filtered on `scenes IS NOT NULL`. `dictionaryEntries`,
  * `sentenceTemplates`, `proverbs`, and `culturalContent` are filtered on the
  * Beeli Studio `status = 'published'` column (Phase 2).
+ *
+ * Visibility gating: every Studio content type now also carries an `isActive`
+ * boolean (the Studio active/inactive toggle). It is ANDed on top of the
+ * status/scenes gates above so a published row can still be hidden from
+ * learners with one tap without re-entering the review workflow.
  */
 import { and, asc, eq, inArray, isNotNull } from "drizzle-orm";
 import { db } from "../db/index.js";
@@ -41,7 +46,8 @@ export async function selectDictionary(languageId: string) {
     .where(
       and(
         eq(dictionaryEntries.languageId, languageId),
-        eq(dictionaryEntries.status, "published")
+        eq(dictionaryEntries.status, "published"),
+        eq(dictionaryEntries.isActive, true)
       )
     )
     .orderBy(asc(dictionaryEntries.word));
@@ -81,7 +87,8 @@ export async function selectSentences(languageId: string) {
     .where(
       and(
         eq(sentenceTemplates.languageId, languageId),
-        eq(sentenceTemplates.status, "published")
+        eq(sentenceTemplates.status, "published"),
+        eq(sentenceTemplates.isActive, true)
       )
     );
 }
@@ -90,14 +97,26 @@ export async function selectProverbs(languageId: string) {
   return db
     .select()
     .from(proverbs)
-    .where(and(eq(proverbs.languageId, languageId), eq(proverbs.status, "published")));
+    .where(
+      and(
+        eq(proverbs.languageId, languageId),
+        eq(proverbs.status, "published"),
+        eq(proverbs.isActive, true)
+      )
+    );
 }
 
 export async function selectQuizQuestions(languageId: string) {
   return db
     .select()
     .from(quizQuestions)
-    .where(and(eq(quizQuestions.languageId, languageId), eq(quizQuestions.status, "published")))
+    .where(
+      and(
+        eq(quizQuestions.languageId, languageId),
+        eq(quizQuestions.status, "published"),
+        eq(quizQuestions.isActive, true)
+      )
+    )
     .orderBy(asc(quizQuestions.createdAt));
 }
 
@@ -109,7 +128,8 @@ export async function selectCultural(languageId: string) {
     .where(
       and(
         eq(culturalContent.languageId, languageId),
-        eq(culturalContent.status, "published")
+        eq(culturalContent.status, "published"),
+        eq(culturalContent.isActive, true)
       )
     );
   if (content.length === 0) return [];
@@ -184,7 +204,8 @@ export async function selectLessonCulturalNotes(lessonId: string) {
     .where(
       and(
         eq(lessonCulturalContent.lessonId, lessonId),
-        eq(culturalContent.status, "published")
+        eq(culturalContent.status, "published"),
+        eq(culturalContent.isActive, true)
       )
     )
     .orderBy(asc(lessonCulturalContent.order));
@@ -264,6 +285,7 @@ export async function selectInteractiveStories(language?: string) {
       and(
         eq(cultureItems.type, "film"),
         isNotNull(cultureItems.scenes),
+        eq(cultureItems.isActive, true),
         language ? eq(cultureItems.language, language) : undefined
       )
     )

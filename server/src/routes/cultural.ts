@@ -29,6 +29,37 @@ export const culturalAdminRouter = new Hono<AuthEnv>();
 culturalAdminRouter.use("*", authMiddleware);
 culturalAdminRouter.use("*", reviewerMiddleware);
 
+// GET /api/cultural/admin?languageId= — editor list. Returns every row for the
+// language (all statuses, active AND inactive) so Studio can see and re-activate
+// hidden entries; the public read filters both out.
+culturalAdminRouter.get("/", async (c) => {
+  const languageId = c.req.query("languageId");
+  if (!languageId || languageId.length > 64) {
+    return c.json({ error: "Valid languageId query param required" }, 400);
+  }
+
+  const content = await db
+    .select()
+    .from(culturalContent)
+    .where(eq(culturalContent.languageId, languageId));
+  if (content.length === 0) return c.json([]);
+
+  const contentIds = content.map((item) => item.id);
+  const keyTerms = await db
+    .select()
+    .from(culturalKeyTerms)
+    .where(inArray(culturalKeyTerms.culturalContentId, contentIds))
+    .orderBy(asc(culturalKeyTerms.order));
+
+  const termsByContentId = new Map<string, { word: string; english: string }[]>();
+  for (const term of keyTerms) {
+    const list = termsByContentId.get(term.culturalContentId) ?? [];
+    list.push({ word: term.word, english: term.english });
+    termsByContentId.set(term.culturalContentId, list);
+  }
+  return c.json(content.map((item) => ({ ...item, keyTerms: termsByContentId.get(item.id) ?? [] })));
+});
+
 // POST /api/cultural/admin
 culturalAdminRouter.post("/", async (c) => {
   const isAdmin = c.get("isAdmin");

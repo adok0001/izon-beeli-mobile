@@ -7,6 +7,7 @@ import { getAccent } from "@/constants/accent-colors";
 import { friendlyError } from "@/lib/api";
 import { localize } from "@/lib/localize";
 import { useStudioAccess } from "@/components/studio/studio-gate";
+import { ActiveToggle } from "@/components/studio/active-toggle";
 import {
   useDeleteEtymology,
   useEtymologyEntries,
@@ -351,7 +352,15 @@ export default function EducatorEtymologyScreen() {
             {item.trail.map((n) => n.era).join(" → ")}
           </Text>
         </View>
-        <View className="flex-row gap-2">
+        <View className="flex-row items-center gap-2">
+          <ActiveToggle
+            entityType="etymology_entries"
+            id={item.id}
+            isActive={item.isActive ?? true}
+            invalidateKeys={[["etymology"]]}
+            M={M}
+            onToast={{ success: toastSuccess, error: toastError }}
+          />
           <Pressable
             onPress={() => startEdit(item)}
             className="rounded-full p-2"

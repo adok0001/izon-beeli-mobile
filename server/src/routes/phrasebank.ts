@@ -209,7 +209,13 @@ phrasebankRouter.get("/session", async (c) => {
       const entries = await db
         .select({ id: dictionaryEntries.id, word: dictionaryEntries.word, english: dictionaryEntries.english })
         .from(dictionaryEntries)
-        .where(and(inArray(dictionaryEntries.id, ids), eq(dictionaryEntries.languageId, languageId)))
+        .where(
+          and(
+            inArray(dictionaryEntries.id, ids),
+            eq(dictionaryEntries.languageId, languageId),
+            eq(dictionaryEntries.isActive, true)
+          )
+        )
         .limit(wordSlots);
       words = entries;
     }

@@ -11,6 +11,7 @@ import { NotificationBanner } from "@/components/notifications/notification-bann
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { CULTURE_CATEGORY_ICON } from "@/constants/cultural-categories";
 import { useStudioAccess } from "@/components/studio/studio-gate";
+import { ActiveToggle } from "@/components/studio/active-toggle";
 import { friendlyError } from "@/lib/api";
 import {
   CulturalItem,
@@ -707,7 +708,15 @@ export default function EducatorCultureScreen() {
             </Text>
           </View>
         </View>
-        <View className="flex-row gap-2">
+        <View className="flex-row items-center gap-2">
+          <ActiveToggle
+            entityType="cultural_content"
+            id={item.id}
+            isActive={item.isActive ?? true}
+            invalidateKeys={[["cultural"]]}
+            M={M}
+            onToast={{ success: toastSuccess, error: toastError }}
+          />
           <Pressable
             onPress={() => startEditCultural(item)}
             className="rounded-full p-2"

@@ -614,6 +614,9 @@ export const dictionaryEntries = pgTable(
     updatedBy: uuid("updated_by").references(() => users.id),
     publishedBy: uuid("published_by").references(() => users.id),
     publishedAt: timestamp("published_at"),
+    // Studio visibility switch — decoupled from the editorial `status` above.
+    // Inactive rows are hidden from learners but stay editable in Studio.
+    isActive: boolean("is_active").default(true).notNull(),
   },
   (table) => [
     index("dictionary_entries_language_idx").on(table.languageId),
@@ -641,6 +644,7 @@ export const proverbs = pgTable(
     updatedBy: uuid("updated_by").references(() => users.id),
     publishedBy: uuid("published_by").references(() => users.id),
     publishedAt: timestamp("published_at"),
+    isActive: boolean("is_active").default(true).notNull(),
   },
   (table) => [index("proverbs_language_id_idx").on(table.languageId)]
 );
@@ -659,6 +663,7 @@ export const etymologyEntries = pgTable(
     updatedBy: uuid("updated_by").references(() => users.id),
     publishedBy: uuid("published_by").references(() => users.id),
     publishedAt: timestamp("published_at"),
+    isActive: boolean("is_active").default(true).notNull(),
   },
   (table) => [index("etymology_entries_language_id_idx").on(table.languageId)]
 );
@@ -699,6 +704,7 @@ export const culturalContent = pgTable(
     updatedBy: uuid("updated_by").references(() => users.id),
     publishedBy: uuid("published_by").references(() => users.id),
     publishedAt: timestamp("published_at"),
+    isActive: boolean("is_active").default(true).notNull(),
   },
   (table) => [index("cultural_content_language_id_idx").on(table.languageId)]
 );
@@ -773,6 +779,7 @@ export const sentenceTemplates = pgTable(
     updatedBy: uuid("updated_by").references(() => users.id),
     publishedBy: uuid("published_by").references(() => users.id),
     publishedAt: timestamp("published_at"),
+    isActive: boolean("is_active").default(true).notNull(),
   },
   (table) => [index("sentence_templates_language_id_idx").on(table.languageId)]
 );
@@ -794,6 +801,7 @@ export const scenarios = pgTable(
     updatedBy: uuid("updated_by").references(() => users.id),
     publishedBy: uuid("published_by").references(() => users.id),
     publishedAt: timestamp("published_at"),
+    isActive: boolean("is_active").default(true).notNull(),
   },
   (table) => [index("scenarios_language_id_idx").on(table.languageId)]
 );
@@ -832,6 +840,7 @@ export const quizQuestions = pgTable(
     updatedBy: uuid("updated_by").references(() => users.id),
     publishedBy: uuid("published_by").references(() => users.id),
     publishedAt: timestamp("published_at"),
+    isActive: boolean("is_active").default(true).notNull(),
   },
   (table) => [
     index("quiz_questions_language_id_idx").on(table.languageId),
@@ -1172,6 +1181,7 @@ export const storyArcs = pgTable("story_arcs", {
   updatedBy: uuid("updated_by").references(() => users.id),
   publishedBy: uuid("published_by").references(() => users.id),
   publishedAt: timestamp("published_at"),
+  isActive: boolean("is_active").default(true).notNull(),
 });
 
 /**
@@ -1217,6 +1227,9 @@ export const storyChapters = pgTable(
     narrativeIntro: text("narrative_intro").notNull(),
     narrativeOutro: text("narrative_outro").notNull(),
     order: integer("order").default(0).notNull(),
+    // Per-chapter visibility. Also gated by the parent arc's isActive; a hidden
+    // chapter is skipped in the season without disturbing the episode order.
+    isActive: boolean("is_active").default(true).notNull(),
   },
   (t) => [index("story_chapters_arc_id_idx").on(t.storyArcId)]
 );
@@ -1248,6 +1261,7 @@ export const activities = pgTable(
     updatedBy: uuid("updated_by").references(() => users.id),
     publishedBy: uuid("published_by").references(() => users.id),
     publishedAt: timestamp("published_at"),
+    isActive: boolean("is_active").default(true).notNull(),
   },
   (t) => [index("activities_language_id_idx").on(t.languageId)]
 );
@@ -1490,6 +1504,7 @@ export const cultureItems = pgTable(
     // Distinct from `publishedAt` above, which is the content's own display
     // date (e.g. the film's release date), not editorial-workflow state.
     studioPublishedAt: timestamp("studio_published_at"),
+    isActive: boolean("is_active").default(true).notNull(),
   },
   (table) => [index("culture_items_type_idx").on(table.type)]
 );

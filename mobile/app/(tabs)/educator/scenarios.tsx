@@ -3,6 +3,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { GhostButton, LabeledInput, NewButton, PrimaryButton, SmallButton } from "@/components/studio/editor-form";
 import { LocalizedTextInput, serializeLocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
 import { useStudioAccess } from "@/components/studio/studio-gate";
+import { ActiveToggle } from "@/components/studio/active-toggle";
 import { friendlyError } from "@/lib/api";
 import {
   canPublishContent,
@@ -265,7 +266,15 @@ export default function ScenariosScreen() {
                   ? t("educator.scenariosEditor.turnsCountOne", { count: 1 })
                   : t("educator.scenariosEditor.turnsCountMany", { count: s.turns.length })}
               </Text>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8, marginTop: 12 }}>
+                <ActiveToggle
+                  entityType="scenarios"
+                  id={s.id}
+                  isActive={s.isActive ?? true}
+                  invalidateKeys={[["educator", "scenarios", activeLanguageId]]}
+                  M={M}
+                  onToast={{ success: toastSuccess, error: toastError }}
+                />
                 {canSubmitForReview(s.status) && (
                   <SmallButton label={t("educator.scenariosEditor.submitButton")} onPress={() =>
                     update.mutate(

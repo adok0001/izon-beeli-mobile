@@ -18,6 +18,7 @@ export interface EducatorScenario {
   updatedAt: string;
   status?: ContentStatus;
   createdBy?: string | null;
+  isActive?: boolean;
 }
 
 export interface UpsertScenarioInput {

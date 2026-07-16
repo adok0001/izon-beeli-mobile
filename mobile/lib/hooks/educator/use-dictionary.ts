@@ -33,6 +33,7 @@ export interface EducatorDictionaryEntry {
   status?: ContentStatus;
   createdBy?: string | null;
   publishAt?: string | null;
+  isActive?: boolean;
   _source?: "contribution";
 }
 
