@@ -194,6 +194,7 @@ export const pcm = {
     title: "Practice",
     subtitle: "Challenges, words & culture",
     wordReview: "Word Review",
+    phraseReview: "Sentence Review",
     quiz: "Quiz",
     match: "Match",
     multiplayer: "Multiplayer",

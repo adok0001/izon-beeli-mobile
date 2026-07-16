@@ -15,14 +15,16 @@ import { MUSEUM, useMuseumTheme } from "@/lib/use-museum-theme";
 import { getAccent } from "@/constants/accent-colors";
 import { castAvatarFor } from "@/lib/series-presentation";
 import type { SeasonCastMember } from "@/lib/hooks/use-story-arc";
-import { groupCulturalNotesByAnchor } from "@/lib/lesson-culture-anchor";
+import { LessonCheckCards } from "@/components/lesson/lesson-check-card";
+import { groupByAnchor, groupCulturalNotesByAnchor } from "@/lib/lesson-culture-anchor";
+import { useSavePhrase } from "@/lib/hooks/use-phrase-bank";
 import { fonts } from "@/constants/typography";
 import { localize } from "@/lib/localize";
 import { useAudioStore } from "@/store/audio-store";
 import { useLanguageStore } from "@/store/language-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { hapticTap } from "@/lib/haptics";
-import type { CulturalNote, TranscriptSegment } from "@/types";
+import type { CulturalNote, LessonCheck, TranscriptSegment } from "@/types";
 
 /** Turn a cast id ("izon-cast-mama-seibi" | "SPEAKER_A") into a display name. */
 function speakerLabel(id?: string | null): string | null {
@@ -40,6 +42,10 @@ interface Props {
   maxHeight?: number;
   /** Lesson-specific culture beats, surfaced inline at the segment they explain. */
   culturalNotes?: CulturalNote[];
+  /** In-lesson checks, surfaced inline at the segment they fire after. */
+  checks?: LessonCheck[];
+  /** Enables the per-line bookmark that saves a sentence into review. */
+  lessonId?: string;
   /**
    * The season's cast (from `GET /story-arcs/arc/:id`), used to give each
    * speaker their avatar + accent. Speakers outside the cast — and callers with
@@ -55,7 +61,7 @@ interface Props {
  * the data is line-timed rather than word-timed). Tapping a line seeks to it; the
  * auto-follow toggle keeps the active line scrolled into view.
  */
-export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 380, culturalNotes, cast }: Props) {
+export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 380, culturalNotes, checks, lessonId, cast }: Props) {
   const M = useMuseumTheme();
   const { progress, seekTo, currentTrackId, shadowSegment, setShadowLoop } = useAudioStore();
   const { uiLanguage } = useUiLanguageStore();
@@ -65,6 +71,8 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
   const lineY = useRef<Record<number, number>>({});
   const [autoFollow, setAutoFollow] = useState(true);
   const [lookupWord, setLookupWord] = useState<string | null>(null);
+  const savePhrase = useSavePhrase();
+  const [savedLines, setSavedLines] = useState<Set<number>>(new Set());
   // Word tapped on the ACTIVE line — opens inline, in-flow, so looking a word
   // up doesn't cover the transcript or pause playback (see InlineWordPopover).
   const [activeLookupWord, setActiveLookupWord] = useState<string | null>(null);
@@ -77,6 +85,10 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
   const notesByAnchor = useMemo(
     () => groupCulturalNotesByAnchor(culturalNotes, segments.length - 1),
     [culturalNotes, segments.length]
+  );
+  const checksByAnchor = useMemo(
+    () => groupByAnchor(checks, segments.length - 1),
+    [checks, segments.length]
   );
 
   // The active line changed — drop any open inline popover so it doesn't
@@ -186,6 +198,7 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
           const castAvatar = castAvatarFor(cast, seg.speaker);
           const castAccent = getAccent(castAvatar.hue);
           const notesHere = notesByAnchor[index];
+          const checksHere = checksByAnchor[index];
 
           return (
             <View key={seg.id}>
@@ -295,7 +308,29 @@ export function SyncedTranscript({ segments, label = "TRANSCRIPT", maxHeight = 3
                   <IconSymbol name="repeat.1" size={16} color={isLooping ? amber : M.muted} />
                 </Pressable>
               ) : null}
+              {lessonId ? (
+                <Pressable
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    if (savedLines.has(index)) return;
+                    setSavedLines((prev) => new Set(prev).add(index));
+                    savePhrase.mutate({
+                      languageId: selectedLanguageId,
+                      lessonId,
+                      text: seg.text,
+                      translation: localize(seg.translation, uiLanguage) || null,
+                    });
+                  }}
+                  hitSlop={10}
+                  style={{ position: "absolute", right: currentTrackId ? 36 : 12, top: 12 }}
+                  accessibilityRole="button"
+                  accessibilityLabel={savedLines.has(index) ? "Saved to review" : "Save this line to review"}
+                >
+                  <IconSymbol name={savedLines.has(index) ? "bookmark.fill" : "bookmark"} size={15} color={savedLines.has(index) ? M.accent : M.muted} />
+                </Pressable>
+              ) : null}
             </Pressable>
+              {checksHere ? <LessonCheckCards checks={checksHere} /> : null}
               {notesHere ? <CulturalNoteCards languageId={selectedLanguageId} notes={notesHere} /> : null}
             </View>
           );

@@ -1,3 +1,4 @@
+import { CanDoCheck } from "@/components/learn/can-do-check";
 import { JourneyMap } from "@/components/learn/journey-map";
 import { CourseArtwork } from "@/components/learn/course-artwork";
 import { UpNextTeaser } from "@/components/learn/up-next-teaser";
@@ -118,7 +119,10 @@ export default function CourseTreeScreen() {
         </Pressable>
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 11, fontWeight: "700", letterSpacing: 1.2, color: M.accent }}>
-            {t("learn.unitN", { n: unitNumber, defaultValue: "Unit {{n}}" }).toUpperCase()}
+            {(unitNumber === 0
+              ? t("learn.reference", { defaultValue: "Reference" })
+              : t("learn.unitN", { n: unitNumber, defaultValue: "Unit {{n}}" })
+            ).toUpperCase()}
           </Text>
           <Text
             style={{ fontFamily: fonts.heading, fontSize: 16, color: M.parchment, marginTop: 1 }}
@@ -185,7 +189,13 @@ export default function CourseTreeScreen() {
           onRefresh={onRefresh}
           accent={M.accent}
           perCourse
-          footer={upNextTeaser}
+          footer={
+            <>
+              {/* Reflective can-do self-check once the Movement is finished — never a gate. */}
+              <CanDoCheck courseId={courseId} visible={progress.percent === 100} />
+              {upNextTeaser}
+            </>
+          }
         />
       )}
     </SafeAreaView>

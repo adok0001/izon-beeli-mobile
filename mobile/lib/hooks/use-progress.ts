@@ -148,6 +148,13 @@ export function useCompleteLesson(callbacks?: {
         return {};
       }
       const token = await getToken();
+      // Finishing a lesson banks its transcript lines into the sentence-review
+      // queue (fire-and-forget — completion never waits on it).
+      apiFetch("/phrasebank/bank-lesson", {
+        method: "POST",
+        token: token!,
+        body: JSON.stringify({ lessonId }),
+      }).catch(() => null);
       return apiFetch<CompleteLessonResponse>(
         `/progress/${lessonId}/complete`,
         { method: "POST", token: token! }

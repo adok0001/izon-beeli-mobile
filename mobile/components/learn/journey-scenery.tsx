@@ -90,6 +90,7 @@ const SCENE_FOR: Record<CourseType, SceneKind> = {
   oral_tradition: "creek",
   contemporary: "city",
   modern_life: "city",
+  script: "bushes",
 };
 
 /** Placement of each scene relative to its chapter label (fraction of width). */

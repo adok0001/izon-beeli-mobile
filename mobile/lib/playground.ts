@@ -23,6 +23,7 @@ export const GAMES: PlaygroundGame[] = [
   { id: "quiz", i18nKey: "quiz", icon: "graduationcap.fill", color: getAccent("amber").solid, route: "/quiz", category: "quick" },
   { id: "matching-game", i18nKey: "match", icon: "rectangle.grid.2x2", color: getAccent("purple").solid, route: "/matching-game", category: "quick" },
   { id: "word-review", i18nKey: "wordReview", icon: "brain.head.profile", color: getAccent("green").solid, route: "/word-review", category: "quick" },
+  { id: "phrase-review", i18nKey: "phraseReview", icon: "bookmark.fill", color: getAccent("teal").solid, route: "/phrase-review", category: "quick" },
   { id: "dictation", i18nKey: "dictation", icon: "waveform", color: getAccent("sky").solid, route: "/dictation", category: "listening" },
   { id: "say-it-back", i18nKey: "sayItBack", icon: "mic.fill", color: getAccent("rose").solid, route: "/say-it-back", category: "listening" },
   { id: "fill-proverb", i18nKey: "fillProverb", icon: "text.quote", color: getAccent("purple").solid, route: "/fill-proverb", category: "reading" },

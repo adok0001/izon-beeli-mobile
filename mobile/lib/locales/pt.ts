@@ -194,6 +194,7 @@ export const pt = {
     title: "Descobrir",
     subtitle: "Língua, cultura e património vivo",
     wordReview: "Revisão de Palavras",
+    phraseReview: "Revisão de Frases",
     quiz: "Quiz",
     match: "Associação",
     multiplayer: "Multijogador",

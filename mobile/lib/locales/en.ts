@@ -194,6 +194,7 @@ export const en = {
     title: "Discover",
     subtitle: "Language, culture & living heritage",
     wordReview: "Word Review",
+    phraseReview: "Sentence Review",
     quiz: "Quiz",
     match: "Match",
     multiplayer: "Multiplayer",

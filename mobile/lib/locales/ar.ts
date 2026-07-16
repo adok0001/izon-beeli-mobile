@@ -194,6 +194,7 @@ export const ar = {
     title: "اكتشف",
     subtitle: "اللغة والثقافة والتراث الحي",
     wordReview: "مراجعة الكلمات",
+    phraseReview: "مراجعة الجمل",
     quiz: "اختبار",
     match: "مطابقة",
     multiplayer: "متعدّد اللاعبين",

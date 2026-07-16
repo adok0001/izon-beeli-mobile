@@ -192,6 +192,8 @@ export default function LessonScreen() {
   // from a bundled map keyed by lesson id, because the API had no read path for
   // the notes Studio was already writing.
   const lessonCulturalNotes = lesson.culturalNotes;
+  // In-lesson checks ride the same response; older servers omit the field.
+  const lessonChecks = (lesson as typeof lesson & { checks?: import("@/types").LessonCheck[] }).checks;
   // Notes render inline within the transcript, anchored to the segment they
   // explain — the standalone block below only covers lessons with no
   // transcript to anchor into (falls back to the language's gallery item).
@@ -332,6 +334,7 @@ export default function LessonScreen() {
                 transcriptLabel={(isSong ? t("songs.lyrics") : t("lesson.transcript")).toUpperCase()}
                 onFinish={() => trackListen.mutate(lesson.id)}
                 culturalNotes={lessonCulturalNotes}
+                checks={lessonChecks}
                 cast={lesson.seasonCast}
               />
             ) : null}
@@ -372,7 +375,7 @@ export default function LessonScreen() {
                   <View style={{ flex: 1, height: 1, backgroundColor: M.border }} />
                 </View>
                 <View style={{ paddingHorizontal: 4 }}>
-                  <InteractiveTranscript segments={lesson.transcript} culturalNotes={lessonCulturalNotes} />
+                  <InteractiveTranscript segments={lesson.transcript} culturalNotes={lessonCulturalNotes} checks={lessonChecks} lessonId={lesson.id} />
                 </View>
               </View>
             ) : null}

@@ -113,6 +113,7 @@ const COURSE_EMOJI: Record<CourseType, string> = {
   work: "🧺",
   modern_life: "🏙️",
   grammar: "🧩",
+  script: "✍️",
 };
 
 function emojiFor(courseType?: CourseType | null): string {
@@ -139,6 +140,7 @@ const COURSE_GLOSS: Record<CourseType, string> = {
   oral_tradition: "Waterside",
   contemporary: "City",
   modern_life: "City",
+  script: "Script",
 };
 
 function glossFor(courseType?: CourseType | null): string {
@@ -230,14 +232,35 @@ function layoutNodes(
   return { areas, height: y + BOTTOM_PAD };
 }
 
+/**
+ * Reference tracks (Grammar & Structure, Sounds & Script, dictionary-scale
+ * drill shelves) sit OFF the numbered journey path — they support every
+ * Movement rather than being a step on it. Two signals mark one: a reference
+ * courseType, or the order >= 100 convention set by the journey migration.
+ * They stay reachable via the "Explore All Courses" rail below the map.
+ */
+const REFERENCE_COURSE_TYPES = new Set<CourseType>(["grammar", "sound_script", "script"]);
+const REFERENCE_ORDER_THRESHOLD = 100;
+
+export function isReferenceCourse(course: Pick<Course, "courseType" | "order">): boolean {
+  if (course.courseType && REFERENCE_COURSE_TYPES.has(course.courseType)) return true;
+  return course.order != null && course.order >= REFERENCE_ORDER_THRESHOLD;
+}
+
+/** The numbered journey path — every course except the reference tracks. */
+export function pathCourses(courses: Course[]): Course[] {
+  return courses.filter((c) => !isReferenceCourse(c));
+}
+
 export function buildJourney(
   courses: Course[],
   lessons: Lesson[],
   completedIds: Set<string>,
   mapWidth: number
 ): JourneyData {
-  const { nodes, activeIndex } = orderNodes(courses, lessons, completedIds);
-  const { areas, height } = layoutNodes(nodes, courses, mapWidth);
+  const onPath = pathCourses(courses);
+  const { nodes, activeIndex } = orderNodes(onPath, lessons, completedIds);
+  const { areas, height } = layoutNodes(nodes, onPath, mapWidth);
   return { nodes, areas, activeIndex, height };
 }
 
@@ -263,9 +286,15 @@ export function nextCourse(courses: Course[], courseId: string): Course | null {
   return idx >= 0 ? (courses[idx + 1] ?? null) : null;
 }
 
-/** 1-based unit number of `courseId` within the ordered courses list. */
+/**
+ * 1-based unit number of `courseId` within the numbered journey path.
+ * Reference tracks are off the path and return 0 — callers label them
+ * "Reference" instead of "Unit N".
+ */
 export function courseUnitNumber(courses: Course[], courseId: string): number {
-  const idx = courses.findIndex((c) => c.id === courseId);
+  const course = courses.find((c) => c.id === courseId);
+  if (course && isReferenceCourse(course)) return 0;
+  const idx = pathCourses(courses).findIndex((c) => c.id === courseId);
   return idx >= 0 ? idx + 1 : 1;
 }
 

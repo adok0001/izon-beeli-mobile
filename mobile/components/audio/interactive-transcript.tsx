@@ -9,15 +9,21 @@ import { useLanguageStore } from "@/store/language-store";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { WordLookupSheet } from "@/components/audio/word-lookup-sheet";
 import { CulturalNoteCards } from "@/components/lesson/lesson-culture-note";
+import { LessonCheckCards } from "@/components/lesson/lesson-check-card";
+import { useSavePhrase } from "@/lib/hooks/use-phrase-bank";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { groupCulturalNotesByAnchor } from "@/lib/lesson-culture-anchor";
-import type { CulturalNote, TranscriptSegment } from "@/types";
+import { groupByAnchor, groupCulturalNotesByAnchor } from "@/lib/lesson-culture-anchor";
+import type { CulturalNote, LessonCheck, TranscriptSegment } from "@/types";
 
 interface Props {
   segments: TranscriptSegment[];
   onSegmentPress?: (segment: TranscriptSegment) => void;
   /** Lesson-specific culture beats, surfaced inline at the segment they explain. */
   culturalNotes?: CulturalNote[];
+  /** In-lesson checks, surfaced inline at the segment they fire after. */
+  checks?: LessonCheck[];
+  /** Enables the per-line bookmark that saves a sentence into review. */
+  lessonId?: string;
 }
 
 /**
@@ -26,12 +32,14 @@ interface Props {
  * lines with translations and tap-to-look-up words, in Museum styling so it
  * doesn't read as a different, older product from the synced player below.
  */
-export function InteractiveTranscript({ segments, onSegmentPress, culturalNotes }: Props) {
+export function InteractiveTranscript({ segments, onSegmentPress, culturalNotes, checks, lessonId }: Props) {
   const M = useMuseumTheme();
   const { progress, seekTo, currentTrackId, shadowSegment, setShadowLoop } = useAudioStore();
   const { uiLanguage } = useUiLanguageStore();
   const { selectedLanguageId } = useLanguageStore();
   const { data: dictEntries = [] } = useDictionary(selectedLanguageId);
+  const savePhrase = useSavePhrase();
+  const [savedLines, setSavedLines] = useState<Set<number>>(new Set());
   const scrollRef = useRef<ScrollView>(null);
   const [lookupWord, setLookupWord] = useState<string | null>(null);
   // Flag to suppress parent segment-seek when a word was tapped
@@ -47,6 +55,10 @@ export function InteractiveTranscript({ segments, onSegmentPress, culturalNotes 
   const notesByAnchor = useMemo(
     () => groupCulturalNotesByAnchor(culturalNotes, segments.length - 1),
     [culturalNotes, segments.length]
+  );
+  const checksByAnchor = useMemo(
+    () => groupByAnchor(checks, segments.length - 1),
+    [checks, segments.length]
   );
 
   const activeIndex = segments.findIndex(
@@ -113,6 +125,7 @@ export function InteractiveTranscript({ segments, onSegmentPress, culturalNotes 
           const words = segment.text.split(/(\s+)/);
           const isLoopingThisSegment = shadowSegment?.startTime === segment.startTime;
           const notesHere = notesByAnchor[index];
+          const checksHere = checksByAnchor[index];
 
           return (
             <View key={segment.id}>
@@ -180,7 +193,29 @@ export function InteractiveTranscript({ segments, onSegmentPress, culturalNotes 
                     <IconSymbol name="repeat.1" size={16} color={isLoopingThisSegment ? amber : M.muted} />
                   </Pressable>
                 )}
+                {lessonId && (
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      if (savedLines.has(index)) return;
+                      setSavedLines((prev) => new Set(prev).add(index));
+                      savePhrase.mutate({
+                        languageId: selectedLanguageId,
+                        lessonId,
+                        text: segment.text,
+                        translation: localize(segment.translation, uiLanguage) || null,
+                      });
+                    }}
+                    hitSlop={8}
+                    style={{ position: "absolute", right: currentTrackId ? 36 : 12, top: 12 }}
+                    accessibilityLabel={savedLines.has(index) ? "Saved to review" : "Save this line to review"}
+                  >
+                    <IconSymbol name={savedLines.has(index) ? "bookmark.fill" : "bookmark"} size={15} color={savedLines.has(index) ? M.accent : M.muted} />
+                  </Pressable>
+                )}
               </Pressable>
+
+              {checksHere ? <LessonCheckCards checks={checksHere} /> : null}
 
               {notesHere ? (
                 <View style={{ paddingHorizontal: 4 }}>
