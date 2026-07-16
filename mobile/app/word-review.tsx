@@ -1,5 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, friendlyError } from "@/lib/api";
 import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { DictionaryEntry } from "@/lib/dictionary";
@@ -16,7 +16,7 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LoadingScreen } from "@/components/loading-screen";
-import { Pressable, Text, View } from "react-native";
+import { Alert, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLesson } from "@/lib/hooks/use-courses";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
@@ -274,6 +274,7 @@ export default function WordReviewScreen() {
               setTimeout(() => setXpToast(null), 1500);
             }
           },
+          onError: (e) => Alert.alert(t("common.error"), friendlyError(e)),
         }
       );
 

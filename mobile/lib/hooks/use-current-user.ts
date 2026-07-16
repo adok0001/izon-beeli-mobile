@@ -1,7 +1,8 @@
-import { apiFetch } from "@/lib/api";
+import { apiFetch, friendlyError } from "@/lib/api";
 import { useProfileAvatarStore } from "@/store/profile-avatar-store";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Alert } from "react-native";
 
 export type DailyGoal = "casual" | "steady" | "intensive";
 
@@ -62,18 +63,28 @@ export function useUpdateProfileAvatar() {
 
   return useMutation({
     mutationFn: async (profileAvatarId: string) => {
+      const previousId = useProfileAvatarStore.getState().selectedId;
       setSelectedId(profileAvatarId);
-      const token = await getToken();
-      return apiFetch("/users/me", {
-        method: "PATCH",
-        token: token!,
-        body: JSON.stringify({ profileAvatarId }),
-      });
+      try {
+        const token = await getToken();
+        return await apiFetch("/users/me", {
+          method: "PATCH",
+          token: token!,
+          body: JSON.stringify({ profileAvatarId }),
+        });
+      } catch (error) {
+        // Roll back the optimistic local store change before rethrowing.
+        setSelectedId(previousId);
+        throw error;
+      }
     },
     onSuccess: (_data, profileAvatarId) => {
       queryClient.setQueryData<CurrentUser>(["current-user"], (prev) =>
         prev ? { ...prev, profileAvatarId } : prev
       );
+    },
+    onError: (error) => {
+      Alert.alert("", friendlyError(error));
     },
   });
 }
@@ -95,6 +106,11 @@ export function useUpdateDailyGoal() {
       queryClient.setQueryData<CurrentUser>(["current-user"], (prev) =>
         prev ? { ...prev, dailyGoal } : prev
       );
+    },
+    onError: (error) => {
+      Alert.alert("", friendlyError(error));
+      // Restore truth from the server since the local cache was not yet updated.
+      queryClient.invalidateQueries({ queryKey: ["current-user"] });
     },
   });
 }

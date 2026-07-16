@@ -9,6 +9,7 @@ import {
   type TranslationQueueEntry,
 } from "@/lib/hooks/educator/use-translations";
 import { useToast } from "@/lib/hooks/use-toast";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useRouter } from "expo-router";
@@ -20,7 +21,7 @@ export default function TranslationQueueScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
   const { user } = useStudioAccess();
-  const { success: toastSuccess, error: toastError } = useToast();
+  const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
 
   const allowedLanguages = useMemo(
     () => (user.isAdmin ? LANGUAGES.map((l) => l.id) : user.reviewerLanguages),
@@ -50,6 +51,13 @@ export default function TranslationQueueScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
+      <NotificationBanner
+        visible={toast.visible}
+        title={toast.title}
+        body={toast.body}
+        type={toast.type}
+        onDismiss={dismissToast}
+      />
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 }}>
         <Pressable onPress={() => router.back()} hitSlop={12} className="active:opacity-60">
           <IconSymbol name="chevron.left" size={22} color={M.parchment} />

@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { friendlyError } from "@/lib/api";
 import { CATEGORY_LABELS, type DictionaryCategory } from "@/lib/dictionary";
 import {
   useDictionaryCoverage,
@@ -666,7 +667,11 @@ export default function ReviewScreen() {
       Alert.prompt(
         t("review.rejectWordTitle"),
         t("review.rejectWordMsg"),
-        (note) => reviewWord.mutate({ id, action, note: note?.trim() || undefined }),
+        (note) =>
+          reviewWord.mutate(
+            { id, action, note: note?.trim() || undefined },
+            { onError: (e) => Alert.alert(t("common.error"), friendlyError(e)) }
+          ),
         "plain-text",
         "",
         "default"
@@ -677,7 +682,14 @@ export default function ReviewScreen() {
         t("review.approveWordMsg"),
         [
           { text: t("common.cancel"), style: "cancel" },
-          { text: label, onPress: () => reviewWord.mutate({ id, action }) },
+          {
+            text: label,
+            onPress: () =>
+              reviewWord.mutate(
+                { id, action },
+                { onError: (e) => Alert.alert(t("common.error"), friendlyError(e)) }
+              ),
+          },
         ]
       );
     }
@@ -689,7 +701,11 @@ export default function ReviewScreen() {
       Alert.prompt(
         t("review.rejectLessonTitle"),
         t("review.rejectLessonMsg"),
-        (note) => reviewLesson.mutate({ id, action, note: note?.trim() || undefined }),
+        (note) =>
+          reviewLesson.mutate(
+            { id, action, note: note?.trim() || undefined },
+            { onError: (e) => Alert.alert(t("common.error"), friendlyError(e)) }
+          ),
         "plain-text",
         "",
         "default"
@@ -700,7 +716,14 @@ export default function ReviewScreen() {
         t("review.approveLessonMsg"),
         [
           { text: t("common.cancel"), style: "cancel" },
-          { text: label, onPress: () => reviewLesson.mutate({ id, action }) },
+          {
+            text: label,
+            onPress: () =>
+              reviewLesson.mutate(
+                { id, action },
+                { onError: (e) => Alert.alert(t("common.error"), friendlyError(e)) }
+              ),
+          },
         ]
       );
     }

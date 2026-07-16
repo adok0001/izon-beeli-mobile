@@ -9,6 +9,7 @@ import { TodaysGalleryCard } from "@/components/learn/todays-gallery-card";
 import { StreakWeekStrip } from "@/components/learn/streak-week-strip";
 import { Eyebrow } from "@/components/ui/section-header";
 import { LoadingScreen } from "@/components/loading-screen";
+import { QueryErrorState } from "@/components/query-error-state";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { NotificationBell } from "@/components/notifications/notification-center";
 import { StreakFreezeModal } from "@/components/streak-freeze-modal";
@@ -54,11 +55,13 @@ export default function LearnScreen() {
   const {
     data: courses = [],
     isLoading: coursesLoading,
+    isError: coursesError,
     refetch: refetchCourses,
   } = useCourses(selectedLanguageId);
   const {
     data: lessons = [],
     isLoading: lessonsLoading,
+    isError: lessonsError,
     refetch: refetchLessons,
   } = useLanguageLessons(selectedLanguageId);
   const {
@@ -118,6 +121,7 @@ export default function LearnScreen() {
   }, [completedToday]);
 
   const isLoading = coursesLoading || lessonsLoading || progressLoading;
+  const hasError = coursesError || lessonsError;
 
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
@@ -170,6 +174,10 @@ export default function LearnScreen() {
       {isLoading ? (
         <View style={{ flex: 1, backgroundColor: M.bg }}>
           <LoadingScreen />
+        </View>
+      ) : hasError ? (
+        <View style={{ flex: 1, backgroundColor: M.bg }}>
+          <QueryErrorState onRetry={onRefresh} />
         </View>
       ) : (
         <ScrollView

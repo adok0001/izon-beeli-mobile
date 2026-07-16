@@ -298,14 +298,14 @@ export default function ProfileScreen() {
   const { user } = useUser();
   const isGuest = useGuestStore((s) => s.isGuest);
   const exitGuest = useGuestStore((s) => s.exitGuest);
-  const { data: currentUser } = useCurrentUser();
+  const { data: currentUser, isError: currentUserError, refetch: refetchCurrentUser } = useCurrentUser();
   const [feedbackVisible, setFeedbackVisible] = useState(false);
   const [goalPickerVisible, setGoalPickerVisible] = useState(false);
   const [avatarPickerVisible, setAvatarPickerVisible] = useState(false);
   const updateDailyGoal = useUpdateDailyGoal();
   const updateProfileAvatar = useUpdateProfileAvatar();
-  const { data: summary } = useProgressSummary();
-  const { data: config } = useAppConfig();
+  const { data: summary, isError: summaryError, refetch: refetchSummary } = useProgressSummary();
+  const { data: config, isError: configError, refetch: refetchConfig } = useAppConfig();
   const { selectedLanguageId } = useLanguageStore();
   const { t } = useTranslation();
   const showTour = useTourStore((s) => s.showTour);
@@ -324,6 +324,15 @@ export default function ProfileScreen() {
   const displayName = user?.username ?? "Learner";
   const completedCount = summary?.completedCount ?? 0;
   const avatar = PROFILE_AVATARS.find((a) => a.id === avatarId) ?? PROFILE_AVATARS[0];
+  const heroError =
+    (summaryError && !summary) ||
+    (currentUserError && !currentUser) ||
+    (configError && !config);
+  const retryHero = () => {
+    if (summaryError) refetchSummary();
+    if (currentUserError) refetchCurrentUser();
+    if (configError) refetchConfig();
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
@@ -409,6 +418,17 @@ export default function ProfileScreen() {
             <StatDivider />
             <HeroStat value={summary?.points ?? 0} label="Total XP" />
           </View>
+
+          {/* Inline load-failure notice — don't present fabricated zeros as truth */}
+          {heroError ? (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, borderTopWidth: 1, borderTopColor: M.border, paddingHorizontal: 16, paddingVertical: 12 }}>
+              <IconSymbol name="exclamationmark.triangle.fill" size={14} color={M.error} />
+              <Text style={{ flex: 1, fontSize: 12, color: M.textDim }}>{t("common.couldntLoad")}</Text>
+              <Pressable onPress={retryHero} hitSlop={8} accessibilityRole="button" accessibilityLabel={t("common.tryAgain")}>
+                <Text style={{ fontSize: 12, fontWeight: "700", color: M.accent }}>{t("common.tryAgain")}</Text>
+              </Pressable>
+            </View>
+          ) : null}
         </View>
 
         {/* What you can do — honest competence résumé */}

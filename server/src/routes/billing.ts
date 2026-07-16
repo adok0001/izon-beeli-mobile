@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { parseJson } from "../lib/http.js";
 import Stripe from "stripe";
 import { eq, and, count, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
@@ -219,7 +220,7 @@ billingRouter.post("/educator/checkout", async (c) => {
   if (!stripe) return c.json({ error: "Billing not configured" }, 503);
 
   const userId = c.get("userId");
-  const body = await c.req.json<{ priceId: string; orgName: string }>();
+  const body = await parseJson<{ priceId: string; orgName: string }>(c);
 
   if (!body.priceId || !PRICE_IDS[body.priceId]) {
     return c.json({ error: "Invalid price" }, 400);
@@ -288,7 +289,7 @@ billingAdminRouter.use("*", adminMiddleware);
 
 // POST /api/admin/billing/provision — manually provision institution tier
 billingAdminRouter.post("/provision", async (c) => {
-  const body = await c.req.json<{ userId: string; orgName: string }>();
+  const body = await parseJson<{ userId: string; orgName: string }>(c);
 
   const [org] = await db
     .insert(organizations)

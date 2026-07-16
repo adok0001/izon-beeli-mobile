@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { parseJson } from "../lib/http.js";
 import { eq, and, inArray, count, desc } from "drizzle-orm";
 import { db } from "../db/index.js";
 import {
@@ -87,7 +88,7 @@ classroomRouter.get("/groups", async (c) => {
 // POST /api/classroom/groups — create a new group
 classroomRouter.post("/groups", async (c) => {
   const userId = c.get("userId");
-  const body = await c.req.json<{ name: string; languageId: string }>();
+  const body = await parseJson<{ name: string; languageId: string }>(c);
   const { name, languageId } = body;
 
   if (!name?.trim() || !languageId) {
@@ -152,7 +153,7 @@ classroomRouter.post("/groups/:id/join", async (c) => {
 // POST /api/classroom/groups/join-by-code — join via bare invite code
 classroomRouter.post("/groups/join-by-code", async (c) => {
   const userId = c.get("userId");
-  const body = await c.req.json<{ inviteCode: string }>();
+  const body = await parseJson<{ inviteCode: string }>(c);
   const code = body.inviteCode?.trim().toUpperCase();
 
   if (!code) return c.json({ error: "inviteCode is required" }, 400);
@@ -180,7 +181,7 @@ classroomRouter.post("/groups/join-by-code", async (c) => {
 // POST /api/classroom/assignments — assign a lesson to a group
 classroomRouter.post("/assignments", async (c) => {
   const userId = c.get("userId");
-  const body = await c.req.json<{ groupId: string; lessonId: string; dueDate?: string }>();
+  const body = await parseJson<{ groupId: string; lessonId: string; dueDate?: string }>(c);
   const { groupId, lessonId, dueDate } = body;
 
   if (!groupId || !lessonId) {

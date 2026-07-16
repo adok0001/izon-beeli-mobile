@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { eq, asc, inArray } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { culturalContent, culturalKeyTerms } from "../db/schema.js";
 import { selectCultural } from "../lib/content-selectors.js";
@@ -32,7 +33,7 @@ culturalAdminRouter.use("*", reviewerMiddleware);
 culturalAdminRouter.post("/", async (c) => {
   const isAdmin = c.get("isAdmin");
   const reviewerLanguages = c.get("reviewerLanguages");
-  const body = await c.req.json<{
+  const body = await parseJson<{
     languageId: string;
     category: string;
     title: string;
@@ -45,7 +46,7 @@ culturalAdminRouter.post("/", async (c) => {
     headword?: HeadwordInput;
     applications?: unknown[] | null;
     heroBands?: HeroBandInput[] | null;
-  }>();
+  }>(c);
 
   const { languageId, category, title, description, imageEmoji } = body;
   if (!languageId || !category || !title || !description || !imageEmoji) {
@@ -106,7 +107,7 @@ culturalAdminRouter.patch("/:id", async (c) => {
     return c.json({ error: "Forbidden: not assigned to this language" }, 403);
   }
 
-  const body = await c.req.json<Partial<{
+  const body = await parseJson<Partial<{
     category: string;
     title: string;
     titleFr: string | null;
@@ -118,7 +119,7 @@ culturalAdminRouter.patch("/:id", async (c) => {
     headword: HeadwordInput;
     applications: unknown[] | null;
     heroBands: HeroBandInput[] | null;
-  }>>();
+  }>>(c);
 
   const { keyTerms, ...fields } = body;
   const [updated] = await db

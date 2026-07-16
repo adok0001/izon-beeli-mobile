@@ -1,5 +1,6 @@
 import { and, asc, eq, ilike, or } from "drizzle-orm";
 import { Hono } from "hono";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { dictionaryEntries, englishWordbank } from "../db/schema.js";
 import { adminMiddleware, authMiddleware } from "../middleware/auth.js";
@@ -80,13 +81,13 @@ englishWordbankAdminRouter.use("*", authMiddleware, adminMiddleware);
 
 // POST /api/english-wordbank/admin — create a word
 englishWordbankAdminRouter.post("/", async (c) => {
-  const body = await c.req.json<{
+  const body = await parseJson<{
     id: string;
     word: string;
     definition?: string | null;
     category: string;
     posType?: string | null;
-  }>();
+  }>(c);
 
   const id = body.id?.trim();
   if (!id || !body.word?.trim() || !body.category?.trim()) {
@@ -116,7 +117,7 @@ englishWordbankAdminRouter.patch("/:id", async (c) => {
   const [existing] = await db.select().from(englishWordbank).where(eq(englishWordbank.id, id)).limit(1);
   if (!existing) return c.json({ error: "Not found" }, 404);
 
-  const body = await c.req.json<Partial<{ word: string; definition: string | null; category: string; posType: string | null }>>();
+  const body = await parseJson<Partial<{ word: string; definition: string | null; category: string; posType: string | null }>>(c);
   const updates: Record<string, unknown> = {};
   if (body.word !== undefined) updates.word = body.word.trim();
   if (body.category !== undefined) updates.category = body.category.trim();

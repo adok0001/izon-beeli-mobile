@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { parseJson } from "../../lib/http.js";
 import { Hono } from "hono";
 import { db } from "../../db/index.js";
 import { scenarios } from "../../db/schema.js";
@@ -26,11 +27,11 @@ educatorScenariosRouter.get("/scenarios", async (c) => {
 // POST /educator/scenarios
 educatorScenariosRouter.post("/scenarios", async (c) => {
   const reviewerLanguages = (c.get("reviewerLanguages") ?? []) as string[];
-  const body = await c.req.json<{
+  const body = await parseJson<{
     languageId: string;
     situation: string;
     turns: { text: string; translation: string; audioUrl?: string }[];
-  }>();
+  }>(c);
 
   if (!body.languageId || !body.situation?.trim() || !Array.isArray(body.turns) || body.turns.length === 0) {
     return c.json({ error: "languageId, situation, and turns[] are required" }, 400);
@@ -72,11 +73,11 @@ educatorScenariosRouter.patch("/scenarios/:id", async (c) => {
     return c.json({ error: "Not authorised for this language" }, 403);
   }
 
-  const body = await c.req.json<{
+  const body = await parseJson<{
     situation?: string;
     turns?: { text: string; translation: string; audioUrl?: string }[];
     status?: string;
-  }>();
+  }>(c);
 
   if (body.turns) {
     for (const turn of body.turns) {

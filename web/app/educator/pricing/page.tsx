@@ -5,6 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 const STRIPE_PRICE_STARTER = process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER ?? "";
 const STRIPE_PRICE_PRO = process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO ?? "";
@@ -83,7 +84,10 @@ export default function EducatorPricingPage() {
         body: JSON.stringify({ priceId, orgName: orgName.trim() }),
       });
       window.location.href = url;
-    } catch {
+    } catch (e) {
+      toast.error(t("educator.pricing.checkoutFailed"), {
+        description: (e as Error).message,
+      });
       setLoading(null);
     }
   }

@@ -1,6 +1,7 @@
 import { createClerkClient, verifyToken } from "@clerk/backend";
 import { and, asc, count, desc, eq, inArray, isNotNull, isNull, lt } from "drizzle-orm";
 import { Hono } from "hono";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import {
     classroomAssignments,
@@ -88,7 +89,7 @@ usersRouter.post("/sync", async (c) => {
   const clerkId = payload.sub;
   if (!clerkId) return c.json({ error: "Invalid token" }, 401);
 
-  const body = await c.req.json<{ name?: string; email?: string; avatarUrl?: string }>();
+  const body = await parseJson<{ name?: string; email?: string; avatarUrl?: string }>(c);
 
   // Upsert user
   const [existing] = await db
@@ -155,12 +156,12 @@ usersRouter.get("/me", authMiddleware, async (c) => {
 // PATCH /api/users/me - update profile
 usersRouter.patch("/me", authMiddleware, async (c) => {
   const userId = c.get("userId");
-  const body = await c.req.json<{
+  const body = await parseJson<{
     name?: string;
     selectedLanguageId?: string;
     dailyGoal?: string;
     profileAvatarId?: string;
-  }>();
+  }>(c);
 
   await db
     .update(users)
@@ -259,7 +260,7 @@ adminUsersRouter.get("/", async (c) => {
 // PATCH /api/admin/users/:id — toggle isAdmin, set reviewer role, or grant/revoke Plus
 adminUsersRouter.patch("/:id", async (c) => {
   const targetId = c.req.param("id");
-  const body = await c.req.json<{ isAdmin?: boolean; isReviewer?: boolean; reviewerLanguages?: string[]; reviewerRole?: string | null; planTier?: "free" | "plus" }>();
+  const body = await parseJson<{ isAdmin?: boolean; isReviewer?: boolean; reviewerLanguages?: string[]; reviewerRole?: string | null; planTier?: "free" | "plus" }>(c);
 
   const updates: Record<string, unknown> = {};
   if (typeof body.isAdmin === "boolean") updates.isAdmin = body.isAdmin;

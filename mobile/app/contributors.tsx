@@ -1,3 +1,5 @@
+import { LoadingScreen } from "@/components/loading-screen";
+import { QueryErrorState } from "@/components/query-error-state";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
 import {
@@ -77,28 +79,41 @@ function ContributorRow({
 
 export default function ContributorsScreen() {
   const { t } = useTranslation();
-  const { data: contributors } = useContributors();
+  const { data: contributors, isLoading, isError, refetch } = useContributors();
 
   return (
     <>
       <Stack.Screen options={{ title: t("contributors.title") }} />
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
-        <FlatList
-          data={contributors}
-          keyExtractor={(item) => item.id}
-          contentContainerClassName="px-5 pb-8 pt-4"
-          showsVerticalScrollIndicator={false}
-          ListHeaderComponent={
-            <View className="mb-4">
-              <Text className="text-center text-sm text-neutral-500 dark:text-neutral-400">
-                {t("contributors.thankYou")}
-              </Text>
-            </View>
-          }
-          renderItem={({ item, index }) => (
-            <ContributorRow contributor={item} rank={index + 1} />
-          )}
-        />
+        {isLoading ? (
+          <LoadingScreen />
+        ) : isError ? (
+          <QueryErrorState onRetry={refetch} />
+        ) : (
+          <FlatList
+            data={contributors}
+            keyExtractor={(item) => item.id}
+            contentContainerClassName="px-5 pb-8 pt-4"
+            showsVerticalScrollIndicator={false}
+            ListHeaderComponent={
+              <View className="mb-4">
+                <Text className="text-center text-sm text-neutral-500 dark:text-neutral-400">
+                  {t("contributors.thankYou")}
+                </Text>
+              </View>
+            }
+            ListEmptyComponent={
+              <View className="items-center py-16">
+                <Text className="text-center text-sm text-neutral-500 dark:text-neutral-400">
+                  {t("contributors.empty")}
+                </Text>
+              </View>
+            }
+            renderItem={({ item, index }) => (
+              <ContributorRow contributor={item} rank={index + 1} />
+            )}
+          />
+        )}
       </SafeAreaView>
     </>
   );

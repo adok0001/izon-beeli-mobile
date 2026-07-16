@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { asc, eq } from "drizzle-orm";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { courses, culturalContent, dictionaryEntries, languages } from "../db/schema.js";
 import { adminMiddleware, authMiddleware } from "../middleware/auth.js";
@@ -25,13 +26,13 @@ languagesAdminRouter.use("*", authMiddleware, adminMiddleware);
 
 // POST /api/languages/admin — create a language
 languagesAdminRouter.post("/", async (c) => {
-  const body = await c.req.json<{
+  const body = await parseJson<{
     id: string;
     name: string;
     nativeName: string;
     region: string;
     isActive?: boolean;
-  }>();
+  }>(c);
 
   const id = body.id?.trim();
   if (!id || !body.name?.trim() || !body.nativeName?.trim() || !body.region?.trim()) {
@@ -61,9 +62,9 @@ languagesAdminRouter.patch("/:id", async (c) => {
   const [existing] = await db.select().from(languages).where(eq(languages.id, id)).limit(1);
   if (!existing) return c.json({ error: "Not found" }, 404);
 
-  const body = await c.req.json<
+  const body = await parseJson<
     Partial<{ name: string; nativeName: string; region: string; isActive: boolean }>
-  >();
+  >(c);
   const updates: Record<string, unknown> = {};
   for (const key of ["name", "nativeName", "region"] as const) {
     if (body[key] !== undefined) updates[key] = body[key]?.trim();

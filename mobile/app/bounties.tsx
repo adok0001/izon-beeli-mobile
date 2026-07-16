@@ -1,3 +1,4 @@
+import { QueryErrorState } from "@/components/query-error-state";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { SignInPrompt, useRequireAuth } from "@/components/sign-in-prompt";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -84,7 +85,7 @@ export default function BountiesScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { selectedLanguageId } = useLanguageStore();
-  const { data, isLoading, refetch } = useBounties(selectedLanguageId);
+  const { data, isLoading, isError, refetch } = useBounties(selectedLanguageId);
   const { data: currentUser } = useCurrentUser();
   const [refreshing, setRefreshing] = useState(false);
   const { requireAuth, descriptionKey, closePrompt } = useRequireAuth();
@@ -113,6 +114,9 @@ export default function BountiesScreen() {
     <>
       <Stack.Screen options={{ title: t("bounties.title"), headerBackTitle: t("common.goBack") }} />
       <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={[]}>
+        {isError && !isLoading ? (
+          <QueryErrorState onRetry={refetch} />
+        ) : (
         <FlatList
           data={data ?? []}
           keyExtractor={(item) => item.id}
@@ -138,6 +142,7 @@ export default function BountiesScreen() {
             </View>
           }
         />
+        )}
 
         {currentUser && canManageBounties(currentUser) && (
           <Pressable

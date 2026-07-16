@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { courses, lessons, pushTokens, quizResults, userProgress, users } from "../db/schema.js";
 import { awardXP } from "../lib/award-xp.js";
@@ -410,12 +411,12 @@ function parseNonNegInt(value: unknown, fallback: number): number | null {
 // to trip the 7-day milestone on the next lesson; streak 0 + "stale" to test the
 // broken-streak path.
 progressRouter.post("/admin/set-streak", adminMiddleware, async (c) => {
-  const body = await c.req.json<{
+  const body = await parseJson<{
     streak?: number;
     freezes?: number;
     lastActive?: LastActiveToken;
     userId?: string;
-  }>().catch(() => ({}) as Record<string, never>);
+  }>(c).catch(() => ({}) as Record<string, never>);
 
   const targetUserId = body.userId ?? c.get("userId");
   const lastActive: LastActiveToken = body.lastActive ?? "yesterday";

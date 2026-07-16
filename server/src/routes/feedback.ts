@@ -1,5 +1,6 @@
 import { desc, eq } from "drizzle-orm";
 import { Hono } from "hono";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { feedback, users } from "../db/schema.js";
 import { adminMiddleware, authMiddleware, optionalAuthMiddleware, type AuthEnv } from "../middleware/auth.js";
@@ -12,13 +13,13 @@ feedbackRouter.use("*", optionalAuthMiddleware);
 
 feedbackRouter.post("/", async (c) => {
   const userId = c.get("userId") as string | undefined;
-  const body = await c.req.json<{
+  const body = await parseJson<{
     category: string;
     message: string;
     platform?: string;
     osVersion?: string;
     appVersion?: string;
-  }>();
+  }>(c);
 
   const { category, message, platform, osVersion, appVersion } = body;
 

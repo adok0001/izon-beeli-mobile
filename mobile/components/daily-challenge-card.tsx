@@ -1,6 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
-import { ApiError } from "@/lib/api";
+import { ApiError, friendlyError } from "@/lib/api";
 import { useRegenerateDailyChallenges, useTodayChallenges } from "@/lib/hooks/use-daily-challenge";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { ChallengeType, DailyChallenge } from "@/types";
@@ -94,6 +94,8 @@ export function DailyChallengeCards() {
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         Alert.alert("", t("dailyChallenge.refreshBlocked"));
+      } else {
+        Alert.alert(t("common.error"), friendlyError(err));
       }
     } finally {
       setIsRefreshing(false);

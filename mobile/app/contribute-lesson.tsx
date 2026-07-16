@@ -94,12 +94,13 @@ export default function ContributeLessonScreen() {
     try {
       const data = await apiFetch<Course[]>(`/courses?languageId=${langId}`);
       setCourses(data);
-    } catch {
+    } catch (err) {
       setCourses([]);
+      toastError(t("common.error"), friendlyError(err));
     } finally {
       setLoadingCourses(false);
     }
-  }, []);
+  }, [t, toastError]);
 
   const handlePickAudio = async () => {
     try {

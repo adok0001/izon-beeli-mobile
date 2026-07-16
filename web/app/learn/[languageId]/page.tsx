@@ -80,7 +80,8 @@ async function getCourses(languageId: string): Promise<Course[]> {
     });
     if (!res.ok) return [];
     return res.json();
-  } catch {
+  } catch (e) {
+    console.error(`Failed to fetch courses for language "${languageId}":`, e);
     return [];
   }
 }

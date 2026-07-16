@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { eq, desc } from "drizzle-orm";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { cultureItems, storyArcs, type InteractiveStoryScene } from "../db/schema.js";
 import { findScenesError } from "../lib/scene-validation.js";
@@ -64,7 +65,7 @@ type Body = {
 
 // POST /api/culture-items/admin
 cultureItemsAdminRouter.post("/", async (c) => {
-  const body = await c.req.json<Body>();
+  const body = await parseJson<Body>(c);
   const { id, type, title, description, author, publishedAt, duration, coverGradientFrom, coverGradientTo, coverEmoji } = body;
   if (!id || !type || !title || !description || !author || !publishedAt || !duration || !coverGradientFrom || !coverGradientTo || !coverEmoji) {
     return c.json({ error: "Missing required fields" }, 400);
@@ -108,7 +109,7 @@ cultureItemsAdminRouter.patch("/:id", async (c) => {
   const [existing] = await db.select().from(cultureItems).where(eq(cultureItems.id, id)).limit(1);
   if (!existing) return c.json({ error: "Not found" }, 404);
 
-  const body = await c.req.json<Partial<Body & { featured: boolean }>>();
+  const body = await parseJson<Partial<Body & { featured: boolean }>>(c);
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   if (body.type !== undefined) updates.type = body.type;
   if (body.title !== undefined) updates.title = body.title;

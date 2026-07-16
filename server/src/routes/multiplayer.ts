@@ -1,4 +1,5 @@
 import { Hono, type Context } from "hono";
+import { parseJson } from "../lib/http.js";
 import { eq, ne, and, sql, inArray } from "drizzle-orm";
 import { db } from "../db/index.js";
 import {
@@ -182,10 +183,10 @@ multiplayerInternalRouter.post("/sessions/:id/complete", async (c) => {
   }
 
   const sessionId = c.req.param("id");
-  const body = await c.req.json<{
+  const body = await parseJson<{
     players: { id: string; score: number; correctAnswers: number; totalAnswers: number }[];
     winner: string | null;
-  }>();
+  }>(c);
 
   // Update session status
   await db
@@ -243,13 +244,13 @@ multiplayerRouter.use("*", authMiddleware);
 // POST /api/multiplayer/sessions — create a new game session
 multiplayerRouter.post("/sessions", async (c) => {
   const userId = c.get("userId");
-  const body = await c.req.json<{
+  const body = await parseJson<{
     type: "quiz_battle" | "paired_lesson";
     languageId: string;
     courseId?: string;
     lessonId?: string;
     questionCount?: number;
-  }>();
+  }>(c);
 
   const inviteCode = generateInviteCode();
   const partyRoomId = `${body.type}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -281,7 +282,7 @@ multiplayerRouter.post("/sessions", async (c) => {
 // POST /api/multiplayer/sessions/join — join via invite code
 multiplayerRouter.post("/sessions/join", async (c) => {
   const userId = c.get("userId");
-  const body = await c.req.json<{ inviteCode: string }>();
+  const body = await parseJson<{ inviteCode: string }>(c);
 
   const code = body.inviteCode.toUpperCase().trim();
 
@@ -396,11 +397,11 @@ multiplayerRouter.get("/sessions", async (c) => {
 // POST /api/multiplayer/matchmaking/queue — enter matchmaking queue
 multiplayerRouter.post("/matchmaking/queue", async (c) => {
   const userId = c.get("userId");
-  const body = await c.req.json<{
+  const body = await parseJson<{
     type: "quiz_battle" | "paired_lesson";
     languageId: string;
     courseId?: string;
-  }>();
+  }>(c);
 
   // Check if there's another queued player for same type + language
   const [match] = await db

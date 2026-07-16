@@ -8,6 +8,7 @@ import {
   type Language,
 } from "@/lib/hooks/educator/use-admin-languages";
 import { useToast } from "@/lib/hooks/use-toast";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -41,7 +42,7 @@ export default function LanguagesScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
   useStudioAccess();
-  const { success: toastSuccess, error: toastError } = useToast();
+  const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
 
   const [form, setForm] = useState<LanguageForm>(EMPTY_FORM);
 
@@ -90,6 +91,13 @@ export default function LanguagesScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
+      <NotificationBanner
+        visible={toast.visible}
+        title={toast.title}
+        body={toast.body}
+        type={toast.type}
+        onDismiss={dismissToast}
+      />
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 }}>
         <Pressable onPress={() => router.back()} hitSlop={12} className="active:opacity-60">
           <IconSymbol name="chevron.left" size={22} color={M.parchment} />

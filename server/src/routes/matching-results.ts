@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { parseJson } from "../lib/http.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
 import { awardXP } from "../lib/award-xp.js";
 import { incrementDailyChallenge } from "../lib/daily-challenge.js";
@@ -11,12 +12,12 @@ matchingResultsRouter.use("*", authMiddleware);
 // POST /api/matching-results - record a completed matching game
 matchingResultsRouter.post("/", async (c) => {
   const userId = c.get("userId");
-  const body = await c.req.json<{
+  const body = await parseJson<{
     languageId: string;
     accuracy: number;
     totalPairs: number;
     durationMs: number;
-  }>();
+  }>(c);
 
   const xpEarned = Math.max(1, Math.round((body.accuracy / 100) * body.totalPairs * 0.3));
   const [xpResult, streakResult] = await Promise.all([

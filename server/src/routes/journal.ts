@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { parseJson } from "../lib/http.js";
 import { eq, and, desc } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { journalEntries } from "../db/schema.js";
@@ -25,12 +26,12 @@ journalRouter.get("/", async (c) => {
 // POST /api/journal - create entry
 journalRouter.post("/", async (c) => {
   const userId = c.get("userId");
-  const body = await c.req.json<{
+  const body = await parseJson<{
     title: string;
     content: string;
     lessonId?: string;
     isPublic?: boolean;
-  }>();
+  }>(c);
 
   if (!body.title?.trim() || !body.content?.trim()) {
     return c.json({ error: "Title and content are required" }, 400);
@@ -62,7 +63,7 @@ journalRouter.post("/", async (c) => {
 journalRouter.patch("/:id", async (c) => {
   const userId = c.get("userId");
   const id = c.req.param("id");
-  const body = await c.req.json<{ title?: string; content?: string; isPublic?: boolean }>();
+  const body = await parseJson<{ title?: string; content?: string; isPublic?: boolean }>(c);
 
   const [existing] = await db
     .select()

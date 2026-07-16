@@ -1,4 +1,5 @@
 import { eq, inArray } from "drizzle-orm";
+import { parseJson } from "../../lib/http.js";
 import { Hono } from "hono";
 import { db } from "../../db/index.js";
 import { courses, storyArcs } from "../../db/schema.js";
@@ -25,7 +26,7 @@ educatorCoursesRouter.patch("/courses/:id", async (c) => {
   const isAdmin = c.get("isAdmin");
   const reviewerLanguages = c.get("reviewerLanguages");
   const courseId = c.req.param("id");
-  const body = await c.req.json<{
+  const body = await parseJson<{
     isActive?: boolean;
     title?: string;
     titleFr?: string | null;
@@ -36,7 +37,7 @@ educatorCoursesRouter.patch("/courses/:id", async (c) => {
     courseType?: string | null;
     /** Companion course for a season — drives the Series screen's level bands. */
     seasonArcId?: string | null;
-  }>();
+  }>(c);
 
   const [course] = await db.select({ languageId: courses.languageId }).from(courses).where(eq(courses.id, courseId)).limit(1);
   if (!course) return c.json({ error: "Course not found" }, 404);

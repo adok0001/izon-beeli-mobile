@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { asc, eq } from "drizzle-orm";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { appConfig } from "../db/schema.js";
 import { adminMiddleware, authMiddleware } from "../middleware/auth.js";
@@ -20,7 +21,7 @@ appConfigAdminRouter.get("/", async (c) => {
 
 // PATCH /api/admin/config — upsert a config value (create or update a flag)
 appConfigAdminRouter.patch("/", async (c) => {
-  const body = await c.req.json<{ key: string; value: string }>();
+  const body = await parseJson<{ key: string; value: string }>(c);
   const key = body.key?.trim();
   if (!key || typeof body.value !== "string") {
     return c.json({ error: "key and value are required" }, 400);

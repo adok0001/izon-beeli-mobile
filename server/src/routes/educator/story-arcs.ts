@@ -1,4 +1,5 @@
 import { eq, inArray } from "drizzle-orm";
+import { parseJson } from "../../lib/http.js";
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
 import { db } from "../../db/index.js";
@@ -122,14 +123,14 @@ educatorStoryArcsRouter.post("/story-arcs", async (c) => {
   const isAdmin = c.get("isAdmin");
   const reviewerLanguages = c.get("reviewerLanguages");
 
-  const body = await c.req.json<{
+  const body = await parseJson<{
     courseId?: string;
     languageId?: string;
     title: string;
     description: string;
     nativeTitle?: string;
     logline?: string;
-  }>();
+  }>(c);
   const { courseId, title, description } = body;
 
   if (!title?.trim() || !description?.trim()) {
@@ -185,13 +186,13 @@ educatorStoryArcsRouter.put("/story-arcs/:id", async (c) => {
     return c.json({ error: "Forbidden" }, 403);
   }
 
-  const body = await c.req.json<{
+  const body = await parseJson<{
     title?: string;
     description?: string;
     status?: string;
     nativeTitle?: string | null;
     logline?: string | null;
-  }>();
+  }>(c);
   const updates: Record<string, unknown> = { updatedAt: new Date(), updatedBy: c.get("userId") };
   if (body.title !== undefined) updates.title = body.title.trim();
   if (body.description !== undefined) updates.description = body.description.trim();
@@ -249,9 +250,9 @@ educatorStoryArcsRouter.put("/story-arcs/:id/chapters", async (c) => {
     return c.json({ error: "Forbidden" }, 403);
   }
 
-  const body = await c.req.json<{
+  const body = await parseJson<{
     chapters: { id?: string; lessonId: string; title: string; narrativeIntro: string; narrativeOutro: string; order: number }[];
-  }>();
+  }>(c);
 
   for (const ch of body.chapters) {
     if (!ch.lessonId || !ch.title?.trim() || !ch.narrativeIntro?.trim() || !ch.narrativeOutro?.trim()) {
@@ -316,9 +317,9 @@ educatorStoryArcsRouter.put("/story-arcs/:id/cast", async (c) => {
     return c.json({ error: "Forbidden" }, 403);
   }
 
-  const body = await c.req.json<{
+  const body = await parseJson<{
     cast: { castId: string; name: string; role: string; avatar: string; hue: string }[];
-  }>();
+  }>(c);
 
   for (const member of body.cast) {
     if (!member.castId?.trim() || !member.name?.trim() || !member.role?.trim()) {

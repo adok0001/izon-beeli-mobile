@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { parseJson } from "../../lib/http.js";
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
 import { db } from "../../db/index.js";
@@ -27,7 +28,7 @@ educatorSentencesRouter.get("/sentences", async (c) => {
 // POST /educator/sentences
 educatorSentencesRouter.post("/sentences", async (c) => {
   const reviewerLanguages = (c.get("reviewerLanguages") ?? []) as string[];
-  const body = await c.req.json<{
+  const body = await parseJson<{
     id?: string;
     languageId: string;
     sentence: string;
@@ -35,7 +36,7 @@ educatorSentencesRouter.post("/sentences", async (c) => {
     englishSentence: string;
     kind?: "blank" | "equivalent";
     literalTranslation?: string;
-  }>();
+  }>(c);
 
   if (!body.languageId || !body.sentence?.trim() || !body.answer?.trim() || !body.englishSentence?.trim()) {
     return c.json({ error: "languageId, sentence, answer, and englishSentence are required" }, 400);

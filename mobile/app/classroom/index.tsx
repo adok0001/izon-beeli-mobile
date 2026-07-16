@@ -1,5 +1,6 @@
 import { getAccent } from "@/constants/accent-colors";
 import { LoadingScreen } from "@/components/loading-screen";
+import { QueryErrorState } from "@/components/query-error-state";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import {
   View,
@@ -89,7 +90,7 @@ export default function ClassroomScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
-  const { data: groups = [], isLoading, refetch } = useClassroomGroups();
+  const { data: groups = [], isLoading, isError, refetch } = useClassroomGroups();
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
@@ -116,6 +117,8 @@ export default function ClassroomScreen() {
       <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={[]}>
         {isLoading ? (
           <LoadingScreen />
+        ) : isError ? (
+          <QueryErrorState onRetry={refetch} />
         ) : (
           <FlatList
             data={groups}

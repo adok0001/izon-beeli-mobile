@@ -72,7 +72,8 @@ async function getSampleEntries(languageId: string): Promise<DictEntry[]> {
     });
     if (!res.ok) return [];
     return res.json();
-  } catch {
+  } catch (e) {
+    console.error(`Failed to fetch dictionary entries for language "${languageId}":`, e);
     return [];
   }
 }

@@ -21,6 +21,7 @@ import type { AudioSource, FeedItem } from "@/types";
 import { useRouter } from "expo-router";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { LoadingScreen } from "@/components/loading-screen";
+import { QueryErrorState } from "@/components/query-error-state";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -538,7 +539,7 @@ export default function FeedScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<FeedTypeFilter>("all");
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } = useFeed(activeFilter);
+  const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } = useFeed(activeFilter);
   const [commentsItemId, setCommentsItemId] = useState<string | null>(null);
   const [showNewPost, setShowNewPost] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -644,12 +645,22 @@ export default function FeedScreen() {
       <View style={{ flex: 1, backgroundColor: M.card }}>
         {isLoading ? (
           <LoadingScreen />
+        ) : isError ? (
+          <QueryErrorState onRetry={refetch} />
         ) : (
           <FlatList
             data={items}
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32, paddingTop: 12 }}
             ListHeaderComponent={<FeedbackBanner onPress={() => setShowFeedback(true)} />}
+            ListEmptyComponent={
+              <View style={{ alignItems: "center", paddingVertical: 48 }}>
+                <IconSymbol name="newspaper.fill" size={32} color={M.muted} />
+                <Text style={{ marginTop: 10, fontSize: 13, textAlign: "center", color: M.muted }}>
+                  {t("feed.empty")}
+                </Text>
+              </View>
+            }
             renderItem={({ item }) => (
               <FeedCard item={item} onOpenComments={setCommentsItemId} requireAuth={requireAuth} />
             )}

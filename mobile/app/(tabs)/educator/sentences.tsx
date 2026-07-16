@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { friendlyError } from "@/lib/api";
 import {
@@ -223,6 +224,13 @@ export default function SentencesAdminScreen() {
     <>
       <Stack.Screen options={{ title: t("educator.sentences.screenTitle"), headerShown: true }} />
       <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={[]}>
+        <NotificationBanner
+          visible={toast.toast.visible}
+          title={toast.toast.title}
+          body={toast.toast.body}
+          type={toast.toast.type}
+          onDismiss={toast.dismiss}
+        />
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
           {/* Language picker */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}>

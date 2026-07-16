@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { wordChallengeSubmissions } from "../db/schema.js";
 import { authMiddleware, adminMiddleware, type AuthEnv } from "../middleware/auth.js";
@@ -14,11 +15,11 @@ wordChallengeRouter.use("*", authMiddleware);
 // POST /api/word-challenge — submit a sentence for the word of the day
 wordChallengeRouter.post("/", async (c) => {
   const userId = c.get("userId");
-  const body = await c.req.json<{
+  const body = await parseJson<{
     wordId?: string;
     sentence?: string;
     languageId?: string;
-  }>().catch(() => ({} as { wordId?: string; sentence?: string; languageId?: string }));
+  }>(c).catch(() => ({} as { wordId?: string; sentence?: string; languageId?: string }));
 
   const wordId = body.wordId?.trim();
   const sentence = body.sentence?.trim();

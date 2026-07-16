@@ -4,7 +4,7 @@ import { LanguagePickerModal } from "@/components/language-picker";
 import { LocalizedTextInput, toLocalizedText } from "@/components/ui/localized-text-input";
 import { getAccent } from "@/constants/accent-colors";
 import type { LocalizedText } from "@/types";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, friendlyError } from "@/lib/api";
 import { useCurrentUser } from "@/lib/hooks/use-current-user";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -317,6 +317,7 @@ function LessonsPanel({ courseId, token }: { courseId: string; token: string | n
       void qc.invalidateQueries({ queryKey: ["admin", "courses"] });
       setAddingLesson(false);
     },
+    onError: (e) => Alert.alert(t("common.error"), friendlyError(e)),
   });
 
   const updateLesson = useMutation({
@@ -326,6 +327,7 @@ function LessonsPanel({ courseId, token }: { courseId: string; token: string | n
       void qc.invalidateQueries({ queryKey: ["admin", "lessons", courseId] });
       setEditingLesson(null);
     },
+    onError: (e) => Alert.alert(t("common.error"), friendlyError(e)),
   });
 
   const deleteLesson = useMutation({
@@ -335,6 +337,7 @@ function LessonsPanel({ courseId, token }: { courseId: string; token: string | n
       void qc.invalidateQueries({ queryKey: ["admin", "lessons", courseId] });
       void qc.invalidateQueries({ queryKey: ["admin", "courses"] });
     },
+    onError: (e) => Alert.alert(t("common.error"), friendlyError(e)),
   });
 
   return (
@@ -473,18 +476,21 @@ export default function AdminCoursesScreen() {
     mutationFn: (data: Omit<AdminCourse, "lessonsCount">) =>
       apiFetch("/admin/courses", { method: "POST", body: JSON.stringify(data), token: token ?? undefined }),
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ["admin", "courses"] }); setAddingCourse(false); },
+    onError: (e) => Alert.alert(t("common.error"), friendlyError(e)),
   });
 
   const updateCourse = useMutation({
     mutationFn: ({ id, ...data }: Partial<AdminCourse> & { id: string }) =>
       apiFetch(`/admin/courses/${id}`, { method: "PATCH", body: JSON.stringify(data), token: token ?? undefined }),
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ["admin", "courses"] }); setEditingCourse(null); },
+    onError: (e) => Alert.alert(t("common.error"), friendlyError(e)),
   });
 
   const deleteCourse = useMutation({
     mutationFn: (id: string) =>
       apiFetch(`/admin/courses/${id}`, { method: "DELETE", token: token ?? undefined }),
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ["admin", "courses"] }); },
+    onError: (e) => Alert.alert(t("common.error"), friendlyError(e)),
   });
 
   const filtered = !filterLang ? courses : courses.filter((c) => c.languageId === filterLang);

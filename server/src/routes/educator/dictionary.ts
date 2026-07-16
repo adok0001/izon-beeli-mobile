@@ -1,4 +1,5 @@
 import { put } from "@vercel/blob";
+import { parseJson } from "../../lib/http.js";
 import { and, eq, inArray, notInArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
@@ -106,7 +107,7 @@ educatorDictionaryRouter.post("/dictionary", async (c) => {
     audioFile = formData.get("audio") as File | null;
     imageFile = formData.get("image") as File | null;
   } else {
-    fields = await c.req.json<Record<string, string>>();
+    fields = await parseJson<Record<string, string>>(c);
   }
 
   const { languageId, word, category } = fields;
@@ -230,7 +231,7 @@ educatorDictionaryRouter.patch("/dictionary/:id", async (c) => {
     audioFile = formData.get("audio") as File | null;
     imageFile = formData.get("image") as File | null;
   } else {
-    fields = await c.req.json<Record<string, string>>();
+    fields = await parseJson<Record<string, string>>(c);
   }
 
   if (fields.category && !VALID_CATEGORIES.includes(fields.category as (typeof VALID_CATEGORIES)[number])) {

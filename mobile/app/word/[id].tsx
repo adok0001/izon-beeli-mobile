@@ -107,12 +107,16 @@ export default function WordDetailScreen() {
   };
 
   const handlePickImage = async () => {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: ["image/*"],
-      copyToCacheDirectory: true,
-    });
-    if (!result.canceled && result.assets[0]) {
-      setImageUri(result.assets[0].uri);
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ["image/*"],
+        copyToCacheDirectory: true,
+      });
+      if (!result.canceled && result.assets[0]) {
+        setImageUri(result.assets[0].uri);
+      }
+    } catch (err) {
+      toastError(t("common.error"), friendlyError(err));
     }
   };
 

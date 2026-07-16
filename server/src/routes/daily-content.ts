@@ -1,4 +1,5 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
+import { parseJson } from "../lib/http.js";
 import { Hono } from "hono";
 import { db } from "../db/index.js";
 import { appConfig, courses, dictionaryEntries, lessons, proverbs } from "../db/schema.js";
@@ -144,7 +145,7 @@ dailyContentAdminRouter.get("/wotd", async (c) => {
 });
 
 dailyContentAdminRouter.put("/wotd", async (c) => {
-  const { languageId, entryId } = await c.req.json<{ languageId: string; entryId: string }>();
+  const { languageId, entryId } = await parseJson<{ languageId: string; entryId: string }>(c);
   if (!languageId || !entryId) return c.json({ error: "languageId and entryId required" }, 400);
   const [entry] = await db.select({ id: dictionaryEntries.id }).from(dictionaryEntries).where(and(eq(dictionaryEntries.id, entryId), eq(dictionaryEntries.languageId, languageId))).limit(1);
   if (!entry) return c.json({ error: "Entry not found for this language" }, 404);
@@ -173,7 +174,7 @@ dailyContentAdminRouter.get("/potm", async (c) => {
 });
 
 dailyContentAdminRouter.put("/potm", async (c) => {
-  const { languageId, proverbId } = await c.req.json<{ languageId: string; proverbId: string }>();
+  const { languageId, proverbId } = await parseJson<{ languageId: string; proverbId: string }>(c);
   if (!languageId || !proverbId) return c.json({ error: "languageId and proverbId required" }, 400);
   const [proverb] = await db.select({ id: proverbs.id }).from(proverbs).where(and(eq(proverbs.id, proverbId), eq(proverbs.languageId, languageId))).limit(1);
   if (!proverb) return c.json({ error: "Proverb not found for this language" }, 404);
@@ -203,7 +204,7 @@ dailyContentAdminRouter.get("/sotw", async (c) => {
 });
 
 dailyContentAdminRouter.put("/sotw", async (c) => {
-  const { languageId, lessonId } = await c.req.json<{ languageId: string; lessonId: string }>();
+  const { languageId, lessonId } = await parseJson<{ languageId: string; lessonId: string }>(c);
   if (!languageId || !lessonId) return c.json({ error: "languageId and lessonId required" }, 400);
   const [lesson] = await db.select({ id: lessons.id }).from(lessons).where(and(eq(lessons.id, lessonId), eq(lessons.type, "song"))).limit(1);
   if (!lesson) return c.json({ error: "Song not found" }, 404);

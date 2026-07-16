@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { parseJson } from "../lib/http.js";
 import { eq, and, ne } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { pushTokens } from "../db/schema.js";
@@ -10,7 +11,7 @@ pushTokensRouter.use("*", authMiddleware);
 // POST /api/push-tokens — register or update a push token
 pushTokensRouter.post("/", async (c) => {
   const userId = c.get("userId");
-  const body = await c.req.json<{ token: string; platform: "ios" | "android" }>();
+  const body = await parseJson<{ token: string; platform: "ios" | "android" }>(c);
   const { token, platform } = body;
 
   if (!token || !platform || !["ios", "android"].includes(platform)) {
@@ -44,7 +45,7 @@ pushTokensRouter.post("/", async (c) => {
 // DELETE /api/push-tokens — unregister a push token on sign-out
 pushTokensRouter.delete("/", async (c) => {
   const userId = c.get("userId");
-  const body = await c.req.json<{ token: string }>();
+  const body = await parseJson<{ token: string }>(c);
   const { token } = body;
 
   if (!token) {

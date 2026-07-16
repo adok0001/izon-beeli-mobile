@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { proverbs } from "../db/schema.js";
 import { selectProverbs } from "../lib/content-selectors.js";
@@ -45,7 +46,7 @@ proverbsAdminRouter.get("/", async (c) => {
 proverbsAdminRouter.post("/", async (c) => {
   const isAdmin = c.get("isAdmin");
   const reviewerLanguages = c.get("reviewerLanguages");
-  const body = await c.req.json<{
+  const body = await parseJson<{
     languageId: string;
     text: string;
     translation: string;
@@ -55,7 +56,7 @@ proverbsAdminRouter.post("/", async (c) => {
     literal?: string;
     context?: string;
     tags?: string[];
-  }>();
+  }>(c);
 
   const { languageId, text, translation, meaning } = body;
   if (!languageId || !text || !translation || !meaning) {
@@ -98,7 +99,7 @@ proverbsAdminRouter.patch("/:id", async (c) => {
     return c.json({ error: "Forbidden: not assigned to this language" }, 403);
   }
 
-  const body = await c.req.json<Partial<{
+  const body = await parseJson<Partial<{
     text: string;
     translation: string;
     translationFr: string | null;
@@ -108,7 +109,7 @@ proverbsAdminRouter.patch("/:id", async (c) => {
     context: string | null;
     tags: string[] | null;
     status: string;
-  }>>();
+  }>>(c);
 
   // Whitelist columns so a PATCH can't stamp publish fields or set
   // status='published' directly — that must go through the four-eyes endpoint.

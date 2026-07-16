@@ -1,5 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { XpLevelBadge } from "@/components/xp-level-badge";
+import { Pressable } from "react-native";
 import { useChallengeHistory } from "@/lib/hooks/use-daily-challenge";
 import { useStreakCalendar, useWeeklyStats } from "@/lib/hooks/use-dashboard";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
@@ -16,6 +17,21 @@ const TODAY = new Date().toISOString().slice(0, 10);
 function getDayLabel(dateStr: string): string {
   const d = new Date(dateStr);
   return DAYS[d.getDay() === 0 ? 6 : d.getDay() - 1];
+}
+
+/** Compact inline "couldn't load — retry" affordance for a dashboard card. */
+function InlineError({ onRetry }: { onRetry: () => void }) {
+  const M = useMuseumTheme();
+  const { t } = useTranslation();
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 12, backgroundColor: M.card, padding: 14, borderWidth: 1, borderColor: M.border }}>
+      <IconSymbol name="exclamationmark.triangle.fill" size={16} color={M.error} />
+      <Text style={{ flex: 1, fontSize: 13, color: M.sub }}>{t("common.couldntLoad")}</Text>
+      <Pressable onPress={onRetry} hitSlop={8} accessibilityRole="button" accessibilityLabel={t("common.tryAgain")}>
+        <Text style={{ fontSize: 13, fontWeight: "700", color: M.accent }}>{t("common.tryAgain")}</Text>
+      </Pressable>
+    </View>
+  );
 }
 
 function WeeklyBar({ day }: { day: DayActivity }) {
@@ -48,9 +64,9 @@ function WeeklyBar({ day }: { day: DayActivity }) {
 
 export default function DashboardScreen() {
   const M = useMuseumTheme();
-  const { data: summary } = useProgressSummary();
-  const { data: weeklyStats, isLoading: statsLoading } = useWeeklyStats();
-  const { data: calendar, isLoading: calendarLoading } = useStreakCalendar();
+  const { data: summary, isError: summaryError, refetch: refetchSummary } = useProgressSummary();
+  const { data: weeklyStats, isLoading: statsLoading, isError: statsError, refetch: refetchStats } = useWeeklyStats();
+  const { data: calendar, isLoading: calendarLoading, isError: calendarError, refetch: refetchCalendar } = useStreakCalendar();
   const { data: history = [] } = useChallengeHistory();
   const { t } = useTranslation();
 
@@ -72,9 +88,15 @@ export default function DashboardScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* XP / Level */}
-          <View style={{ marginBottom: 24, alignItems: "center", borderRadius: 16, backgroundColor: M.card, paddingVertical: 24, borderWidth: 1, borderColor: M.border }}>
-            <XpLevelBadge points={summary?.points ?? 0} variant="full" />
-          </View>
+          {summaryError && !summary ? (
+            <View style={{ marginBottom: 24 }}>
+              <InlineError onRetry={refetchSummary} />
+            </View>
+          ) : (
+            <View style={{ marginBottom: 24, alignItems: "center", borderRadius: 16, backgroundColor: M.card, paddingVertical: 24, borderWidth: 1, borderColor: M.border }}>
+              <XpLevelBadge points={summary?.points ?? 0} variant="full" />
+            </View>
+          )}
 
           {/* Weekly Activity */}
           <Text style={{ marginBottom: 12, fontSize: 16, fontWeight: "700", color: M.text }}>
@@ -82,6 +104,10 @@ export default function DashboardScreen() {
           </Text>
           {statsLoading ? (
             <ActivityIndicator size="small" color={M.accent} />
+          ) : statsError && !weeklyStats ? (
+            <View style={{ marginBottom: 24 }}>
+              <InlineError onRetry={refetchStats} />
+            </View>
           ) : weeklyStats ? (
             <>
               <View style={{ marginBottom: 16, borderRadius: 16, backgroundColor: M.card, padding: 16, borderWidth: 1, borderColor: M.border }}>
@@ -129,6 +155,8 @@ export default function DashboardScreen() {
           <View style={{ marginBottom: 24, borderRadius: 16, backgroundColor: M.card, padding: 16, borderWidth: 1, borderColor: M.border }}>
             {calendarLoading ? (
               <ActivityIndicator size="small" color={M.accent} />
+            ) : calendarError && !calendar ? (
+              <InlineError onRetry={refetchCalendar} />
             ) : (
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>
                 {calendarDays.map((date) => {

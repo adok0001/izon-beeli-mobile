@@ -1,4 +1,5 @@
 import { put } from "@vercel/blob";
+import { parseJson } from "../../lib/http.js";
 import { eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
@@ -173,11 +174,11 @@ educatorLessonsRouter.patch("/lessons/:id", async (c) => {
     return c.json({ error: "Forbidden" }, 403);
   }
 
-  const body = await c.req.json<{
+  const body = await parseJson<{
     title?: string; description?: string; type?: string;
     artist?: string | null; genre?: string | null; order?: number; isActive?: boolean;
     status?: string; style?: string | null;
-  }>();
+  }>(c);
 
   if (body.status && !PATCHABLE_LESSON_STATUSES.includes(body.status as (typeof PATCHABLE_LESSON_STATUSES)[number])) {
     // "published" only happens through the guarded POST /content/lessons/:id/publish endpoint.
@@ -289,9 +290,9 @@ educatorLessonsRouter.put("/lessons/:id/cultural-content", async (c) => {
   // still sent by older Studio builds; the object form adds `afterSegmentIndex`,
   // which anchors the note inline after a given transcript segment instead of
   // letting it fall to the end.
-  const { culturalContentIds } = await c.req.json<{
+  const { culturalContentIds } = await parseJson<{
     culturalContentIds: (string | { culturalContentId: string; afterSegmentIndex?: number | null })[];
-  }>();
+  }>(c);
 
   const attachments = culturalContentIds.map((entry) =>
     typeof entry === "string"
@@ -370,9 +371,9 @@ educatorLessonsRouter.put("/lessons/:id/segments", async (c) => {
     return c.json({ error: "Forbidden" }, 403);
   }
 
-  const { segments } = await c.req.json<{
+  const { segments } = await parseJson<{
     segments: { text: string; translation?: string; translationFr?: string; startTime: number; endTime: number; order: number }[];
-  }>();
+  }>(c);
 
   for (const seg of segments) {
     if (!seg.text?.trim()) return c.json({ error: "Every segment must have text" }, 400);

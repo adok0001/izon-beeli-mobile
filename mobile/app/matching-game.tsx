@@ -17,7 +17,7 @@ import { getLanguageName } from "@/lib/mock-data";
 import { hapticHeavy } from "@/lib/haptics";
 import { playFinishSound } from "@/lib/sounds";
 import { useTranslation } from "react-i18next";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, friendlyError } from "@/lib/api";
 import { useAuth } from "@clerk/clerk-expo";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -85,8 +85,10 @@ export default function MatchingGameScreen() {
         if (res.streakIncremented && res.streak) {
           onStreakUpdate(res.streak, !!res.streakMilestone);
         }
-      } catch {
-        // non-blocking
+      } catch (err) {
+        // Best-effort save — don't block the results screen, but don't pretend
+        // it succeeded either: log the failure so it isn't fully silent.
+        console.warn("Failed to save matching result:", friendlyError(err));
       }
     };
     post();

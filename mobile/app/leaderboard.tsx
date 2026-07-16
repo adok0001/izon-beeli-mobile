@@ -1,3 +1,4 @@
+import { QueryErrorState } from "@/components/query-error-state";
 import { AvatarCircle } from "@/components/ui/avatar-circle";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -140,7 +141,7 @@ export default function LeaderboardScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
-  const { data, isLoading, refetch, isRefetching } = useLeaderboard();
+  const { data, isLoading, isError, refetch, isRefetching } = useLeaderboard();
 
   const topEntries = data?.filter((e) => e.rank >= 1 && e.rank <= 50) ?? [];
   const currentUserEntry = data?.find((e) => e.isCurrentUser);
@@ -190,7 +191,11 @@ export default function LeaderboardScreen() {
           </View>
         )}
 
-        {!isLoading && topEntries.length === 0 && (
+        {!isLoading && isError && (
+          <QueryErrorState onRetry={refetch} />
+        )}
+
+        {!isLoading && !isError && topEntries.length === 0 && (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
             <IconSymbol name="trophy.fill" size={44} color={M.muted} />
             <Text style={{ fontSize: 13, color: M.muted, textAlign: "center", marginTop: 14 }}>
@@ -199,7 +204,7 @@ export default function LeaderboardScreen() {
           </View>
         )}
 
-        {!isLoading && topEntries.length > 0 && (
+        {!isLoading && !isError && topEntries.length > 0 && (
           <FlatList
             data={topEntries}
             keyExtractor={(item) => item.id}

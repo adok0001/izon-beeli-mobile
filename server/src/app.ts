@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import { HTTPException } from "hono/http-exception";
 
 import { dailyContentAdminRouter, dailyContentRouter } from "./routes/daily-content.js";
 import { billingAdminRouter, billingRouter, billingWebhookRouter } from "./routes/billing.js";
@@ -80,6 +81,11 @@ app.use(
 );
 
 app.onError((err, c) => {
+  // Thrown HTTPExceptions carry a client-safe message and status — surface them
+  // as `{ error }` (the contract all clients read) rather than a generic 500.
+  if (err instanceof HTTPException) {
+    return c.json({ error: err.message || "Request failed" }, err.status);
+  }
   log.error(`[ERROR] ${c.req.method} ${c.req.path}:`, err.message);
   return c.json(
     { error: "Internal server error", ...(isDev ? { detail: err.message } : {}) },

@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { etymologyEntries } from "../db/schema.js";
 import { AuthEnv, authMiddleware, reviewerMiddleware } from "../middleware/auth.js";
@@ -42,12 +43,12 @@ etymologyAdminRouter.use("*", reviewerMiddleware);
 etymologyAdminRouter.post("/", async (c) => {
   const isAdmin = c.get("isAdmin");
   const reviewerLanguages = c.get("reviewerLanguages");
-  const body = await c.req.json<{
+  const body = await parseJson<{
     languageId: string;
     word: string;
     english: string;
     trail: EtymologyNode[];
-  }>();
+  }>(c);
 
   const { languageId, word, english, trail } = body;
   if (!languageId || !word || !english || !Array.isArray(trail) || trail.length === 0) {
@@ -77,7 +78,7 @@ etymologyAdminRouter.patch("/:id", async (c) => {
     return c.json({ error: "Forbidden: not assigned to this language" }, 403);
   }
 
-  const body = await c.req.json<Partial<{ word: string; english: string; trail: EtymologyNode[] }>>();
+  const body = await parseJson<Partial<{ word: string; english: string; trail: EtymologyNode[] }>>(c);
   const updates: Partial<typeof etymologyEntries.$inferInsert> = {};
   if (body.word !== undefined) updates.word = body.word;
   if (body.english !== undefined) updates.english = body.english;

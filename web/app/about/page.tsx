@@ -42,7 +42,8 @@ async function fetchStats(): Promise<PublicStats | null> {
     });
     if (!res.ok) return null;
     return res.json();
-  } catch {
+  } catch (e) {
+    console.error("Failed to fetch public stats:", e);
     return null;
   }
 }
@@ -54,7 +55,8 @@ async function fetchPartners(): Promise<ContentPartner[]> {
     });
     if (!res.ok) return [];
     return res.json();
-  } catch {
+  } catch (e) {
+    console.error("Failed to fetch content partners:", e);
     return [];
   }
 }

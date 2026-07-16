@@ -1,5 +1,6 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { bounties, contributions, users } from "../db/schema.js";
 import { professorMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
@@ -138,7 +139,7 @@ bountiesAdminRouter.get("/:id/submissions", async (c) => {
 bountiesAdminRouter.post("/create", async (c) => {
   const createdBy = c.get("userId");
 
-  const body = await c.req.json<{
+  const body = await parseJson<{
     title: string;
     description: string;
     languageId: string;
@@ -147,7 +148,7 @@ bountiesAdminRouter.post("/create", async (c) => {
     targetCount: number;
     xpReward: number;
     expiresAt?: string;
-  }>();
+  }>(c);
 
   if (
     !body.title?.trim() ||
@@ -200,14 +201,14 @@ bountiesAdminRouter.post("/create", async (c) => {
 // PATCH /api/bounties/admin/:id — update status / fields
 bountiesAdminRouter.patch("/:id", async (c) => {
   const { id } = c.req.param();
-  const body = await c.req.json<{
+  const body = await parseJson<{
     status?: "active" | "completed" | "cancelled";
     title?: string;
     description?: string;
     targetCount?: number;
     xpReward?: number;
     expiresAt?: string | null;
-  }>();
+  }>(c);
 
   const validStatuses = ["active", "completed", "cancelled"];
   if (body.status && !validStatuses.includes(body.status)) {

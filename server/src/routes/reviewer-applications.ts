@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { and, desc, eq, sql } from "drizzle-orm";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { pushTokens, reviewerApplications, users } from "../db/schema.js";
 import { elderMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
@@ -24,12 +25,12 @@ reviewerApplicationsRouter.use("*", authMiddleware);
 reviewerApplicationsRouter.post("/", async (c) => {
   const userId = c.get("userId");
 
-  const body = await c.req.json<{
+  const body = await parseJson<{
     role: string;
     background: string;
     reason: string;
     languages?: string[];
-  }>();
+  }>(c);
 
   const { role, background, reason, languages } = body;
 
@@ -259,11 +260,11 @@ reviewerApplicationsAdminRouter.patch("/:id", async (c) => {
   const reviewerId = c.get("userId");
   const { id } = c.req.param();
 
-  const body = await c.req.json<{
+  const body = await parseJson<{
     status: "approved" | "rejected";
     reviewerNote?: string;
     grantLanguages?: string[]; // languages to grant on approval
-  }>();
+  }>(c);
 
   const { status, reviewerNote, grantLanguages } = body;
 

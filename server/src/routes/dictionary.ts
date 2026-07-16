@@ -2,6 +2,7 @@ import { put } from "@vercel/blob";
 import { and, asc, eq, ilike, notInArray, or, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { contributions, dictionaryEntries, users } from "../db/schema.js";
 import { withTranslations } from "../lib/dictionary-translations.js";
@@ -199,7 +200,7 @@ dictionaryAdminRouter.post("/", async (c) => {
     audioFile = formData.get("audio") as File | null;
     imageFile = formData.get("image") as File | null;
   } else {
-    fields = await c.req.json<Record<string, string>>();
+    fields = await parseJson<Record<string, string>>(c);
   }
 
   const { languageId, word, english, category } = fields;
@@ -284,7 +285,7 @@ dictionaryAdminRouter.patch("/:id", async (c) => {
     audioFile = formData.get("audio") as File | null;
     imageFile = formData.get("image") as File | null;
   } else {
-    fields = await c.req.json<Record<string, string>>();
+    fields = await parseJson<Record<string, string>>(c);
   }
 
   if (fields.category && !VALID_CATEGORIES.includes(fields.category as (typeof VALID_CATEGORIES)[number])) {

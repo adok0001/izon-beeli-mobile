@@ -2,6 +2,7 @@ import { and, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { Hono } from "hono";
 import { verifyToken } from "@clerk/backend";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { comments, contributions, feedItems, likes, users } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
@@ -149,12 +150,12 @@ feedRouter.use("*", authMiddleware);
 // POST /api/feed - create community post
 feedRouter.post("/", async (c) => {
   const userId = c.get("userId");
-  const body = await c.req.json<{
+  const body = await parseJson<{
     title: string;
     description: string;
     type?: string;
     audioUrl?: string;
-  }>();
+  }>(c);
 
   if (!body.title?.trim() || !body.description?.trim()) {
     return c.json({ error: "Title and description required" }, 400);
@@ -237,7 +238,7 @@ feedRouter.post("/:id/like", async (c) => {
 feedRouter.post("/:id/comments", async (c) => {
   const userId = c.get("userId");
   const feedItemId = c.req.param("id");
-  const body = await c.req.json<{ text: string }>();
+  const body = await parseJson<{ text: string }>(c);
 
   if (!body.text?.trim()) {
     return c.json({ error: "Text is required" }, 400);

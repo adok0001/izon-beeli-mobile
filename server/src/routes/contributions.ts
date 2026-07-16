@@ -1,6 +1,7 @@
 import { put } from "@vercel/blob";
 import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { Hono } from "hono";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { bounties, contributions, dictionaryEntries, feedItems, users } from "../db/schema.js";
 import { awardXP, CONTRIBUTION_BASE_XP } from "../lib/award-xp.js";
@@ -122,7 +123,7 @@ contributionsRouter.post("/", async (c) => {
         audioUrl = blob.url;
       } catch (err: unknown) {
         logger.error("Blob upload error:", errMessage(err));
-        return c.json({ error: `Failed to upload audio file: ${errMessage(err)}` }, 500);
+        return c.json({ error: "Failed to upload audio file" }, 500);
       }
     }
 
@@ -137,11 +138,11 @@ contributionsRouter.post("/", async (c) => {
         imageUrl = blob.url;
       } catch (err: unknown) {
         logger.error("Blob upload error:", errMessage(err));
-        return c.json({ error: `Failed to upload image file: ${errMessage(err)}` }, 500);
+        return c.json({ error: "Failed to upload image file" }, 500);
       }
     }
   } else {
-    const body = await c.req.json<{
+    const body = await parseJson<{
       type: string;
       languageId: string;
       word: string;
@@ -152,7 +153,7 @@ contributionsRouter.post("/", async (c) => {
       exampleTranslation?: string;
       dictionaryEntryId?: string;
       bountyId?: string;
-    }>();
+    }>(c);
     type = body.type ?? "";
     languageId = body.languageId ?? "";
     word = body.word ?? "";
@@ -341,7 +342,7 @@ contributionsRouter.post("/", async (c) => {
     return c.json(contribution, 201);
   } catch (err: unknown) {
     logger.error("POST /contributions error:", err);
-    return c.json({ error: errMessage(err) || "Internal server error" }, 500);
+    return c.json({ error: "Internal server error" }, 500);
   }
 });
 
@@ -390,7 +391,7 @@ contributionsRouter.get("/pending", async (c) => {
 // POST /api/contributions/bulk - submit multiple word/phrase entries at once (no audio)
 contributionsRouter.post("/bulk", async (c) => {
   const userId = c.get("userId");
-  const body = await c.req.json<{
+  const body = await parseJson<{
     languageId: string;
     entries: {
       word: string;
@@ -400,7 +401,7 @@ contributionsRouter.post("/bulk", async (c) => {
       example?: string;
       exampleTranslation?: string;
     }[];
-  }>();
+  }>(c);
 
   const { languageId, entries } = body;
 
@@ -462,7 +463,7 @@ contributionsRouter.post("/bulk", async (c) => {
 contributionsRouter.patch("/:id/review", adminMiddleware, async (c) => {
   const reviewerId = c.get("userId");
   const { id } = c.req.param();
-  const body = await c.req.json<{ action: string; note?: string }>();
+  const body = await parseJson<{ action: string; note?: string }>(c);
   const action = body.action;
 
   if (!(VALID_REVIEW_ACTIONS as readonly string[]).includes(action)) {
@@ -670,7 +671,8 @@ contributionsRouter.patch("/:id", async (c) => {
         );
         audioUrl = blob.url;
       } catch (err: unknown) {
-        return c.json({ error: `Failed to upload audio: ${errMessage(err)}` }, 500);
+        logger.error("Blob upload error:", errMessage(err));
+        return c.json({ error: "Failed to upload audio file" }, 500);
       }
     }
 
@@ -684,18 +686,19 @@ contributionsRouter.patch("/:id", async (c) => {
         );
         imageUrl = blob.url;
       } catch (err: unknown) {
-        return c.json({ error: `Failed to upload image: ${errMessage(err)}` }, 500);
+        logger.error("Blob upload error:", errMessage(err));
+        return c.json({ error: "Failed to upload image file" }, 500);
       }
     }
   } else {
-    const body = await c.req.json<{
+    const body = await parseJson<{
       word?: string;
       english?: string;
       pronunciation?: string | null;
       example?: string | null;
       exampleTranslation?: string | null;
       category?: string;
-    }>();
+    }>(c);
     word = body.word;
     english = body.english;
     pronunciation = "pronunciation" in body ? body.pronunciation : undefined;

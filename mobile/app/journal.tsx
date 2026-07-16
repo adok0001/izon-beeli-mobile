@@ -24,6 +24,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { TextInput as TextInputType } from "react-native";
 import { useTranslation } from "react-i18next";
 import { LoadingScreen } from "@/components/loading-screen";
+import { QueryErrorState } from "@/components/query-error-state";
 import {
   Alert,
   Animated,
@@ -231,7 +232,7 @@ function WaveformBars({ color, active }: { color: string; active: boolean }) {
 export default function JournalScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
-  const { data: entries, isLoading, refetch } = useJournal();
+  const { data: entries, isLoading, isError, refetch } = useJournal();
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
@@ -455,6 +456,8 @@ export default function JournalScreen() {
       <View style={{ flex: 1, backgroundColor: M.card }}>
         {isLoading ? (
           <LoadingScreen />
+        ) : isError ? (
+          <QueryErrorState onRetry={refetch} />
         ) : !entries || entries.length === 0 ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
             <View

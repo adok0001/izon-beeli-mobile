@@ -167,7 +167,13 @@ function ContributionRow({ item }: { item: MyContribution }) {
         {
           text: t("myContributions.deleteButton"),
           style: "destructive",
-          onPress: () => deleteContribution.mutate(item.id),
+          onPress: () =>
+            deleteContribution.mutate(item.id, {
+              onError: (err: unknown) => {
+                const message = err instanceof Error ? err.message : "Failed to delete. Please try again.";
+                Alert.alert("Delete failed", message);
+              },
+            }),
         },
       ]
     );

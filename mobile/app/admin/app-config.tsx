@@ -7,6 +7,7 @@ import {
   type ConfigEntry,
 } from "@/lib/hooks/educator/use-app-config";
 import { useToast } from "@/lib/hooks/use-toast";
+import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -21,7 +22,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function AppConfigScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
-  const { success: toastSuccess, error: toastError } = useToast();
+  const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
 
   const configQuery = useAppConfig();
   const upsert = useUpsertConfig();
@@ -50,6 +51,13 @@ export default function AppConfigScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
+      <NotificationBanner
+        visible={toast.visible}
+        title={toast.title}
+        body={toast.body}
+        type={toast.type}
+        onDismiss={dismissToast}
+      />
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 }}>
         <Pressable onPress={() => router.back()} hitSlop={12} className="active:opacity-60">
           <IconSymbol name="chevron.left" size={22} color={M.parchment} />

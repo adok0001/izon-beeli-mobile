@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { eq } from "drizzle-orm";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { activities } from "../db/schema.js";
 import { AuthEnv, authMiddleware, adminMiddleware } from "../middleware/auth.js";
@@ -28,7 +29,7 @@ export const activitiesAdminRouter = new Hono<AuthEnv>();
 activitiesAdminRouter.use("*", authMiddleware, adminMiddleware);
 
 activitiesAdminRouter.post("/", async (c) => {
-  const body = await c.req.json();
+  const body = await parseJson<Record<string, unknown>>(c);
   const [row] = await db
     .insert(activities)
     .values(serialize(body))
@@ -38,7 +39,7 @@ activitiesAdminRouter.post("/", async (c) => {
 
 activitiesAdminRouter.put("/:id", async (c) => {
   const id = c.req.param("id");
-  const body = await c.req.json();
+  const body = await parseJson<Record<string, unknown>>(c);
   const [row] = await db
     .update(activities)
     .set({ ...serialize(body), updatedAt: new Date() })

@@ -1,5 +1,6 @@
 import { eq, and } from "drizzle-orm";
 import { Hono } from "hono";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { appConfig, quizResults, wordProgress } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
@@ -65,14 +66,14 @@ quizResultsRouter.use("*", authMiddleware);
 // POST /api/quiz-results - record a completed quiz attempt
 quizResultsRouter.post("/", async (c) => {
   const userId = c.get("userId");
-  const body = await c.req.json<{
+  const body = await parseJson<{
     languageId: string;
     score: number;
     accuracy: number;
     durationMs: number;
     questionCount: number;
     questions?: { wordId: string; questionType: string; correct: boolean; responseMs?: number }[];
-  }>();
+  }>(c);
 
   const [row] = await db
     .insert(quizResults)

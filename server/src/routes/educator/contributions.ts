@@ -1,4 +1,5 @@
 import { and, eq, inArray } from "drizzle-orm";
+import { parseJson } from "../../lib/http.js";
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
 import { db } from "../../db/index.js";
@@ -88,7 +89,7 @@ async function applyEntryContribution(
 educatorContributionsRouter.post("/contributions/:id/review", async (c) => {
   const reviewerId = c.get("userId");
   const { id } = c.req.param();
-  const { action, note } = await c.req.json<{ action: "approve" | "reject"; note?: string }>();
+  const { action, note } = await parseJson<{ action: "approve" | "reject"; note?: string }>(c);
 
   if (action !== "approve" && action !== "reject") {
     return c.json({ error: "action must be approve or reject" }, 400);
@@ -121,14 +122,14 @@ educatorContributionsRouter.post("/contributions/:id/review", async (c) => {
 
 educatorContributionsRouter.patch("/contributions/:id", async (c) => {
   const { id } = c.req.param();
-  const body = await c.req.json<{
+  const body = await parseJson<{
     word?: string;
     english?: string;
     pronunciation?: string | null;
     example?: string | null;
     exampleTranslation?: string | null;
     category?: string;
-  }>();
+  }>(c);
 
   const [existing] = await db.select({ id: contributions.id }).from(contributions).where(eq(contributions.id, id)).limit(1);
   if (!existing) return c.json({ error: "Not found" }, 404);
@@ -211,7 +212,7 @@ educatorContributionsRouter.post("/lesson-contributions/:id/review", async (c) =
   const isAdmin = c.get("isAdmin");
   const reviewerLanguages = c.get("reviewerLanguages");
   const { id } = c.req.param();
-  const { action, note } = await c.req.json<{ action: "approve" | "reject"; note?: string }>();
+  const { action, note } = await parseJson<{ action: "approve" | "reject"; note?: string }>(c);
 
   if (action !== "approve" && action !== "reject") {
     return c.json({ error: "action must be approve or reject" }, 400);

@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { quizQuestions } from "../db/schema.js";
 import { selectQuizQuestions } from "../lib/content-selectors.js";
@@ -46,7 +47,7 @@ quizBankAdminRouter.get("/", async (c) => {
 quizBankAdminRouter.post("/", async (c) => {
   const isAdmin = c.get("isAdmin");
   const reviewerLanguages = c.get("reviewerLanguages");
-  const body = await c.req.json<{
+  const body = await parseJson<{
     languageId: string;
     type: string;
     prompt: string;
@@ -54,7 +55,7 @@ quizBankAdminRouter.post("/", async (c) => {
     options?: string[];
     audioUrl?: string | null;
     explanation?: string | null;
-  }>();
+  }>(c);
 
   const { languageId, type, prompt, answer } = body;
   if (!languageId || !type || !prompt?.trim() || !answer?.trim()) {
@@ -98,7 +99,7 @@ quizBankAdminRouter.patch("/:id", async (c) => {
     return c.json({ error: "Forbidden: not assigned to this language" }, 403);
   }
 
-  const body = await c.req.json<Partial<{
+  const body = await parseJson<Partial<{
     type: string;
     prompt: string;
     answer: string;
@@ -106,7 +107,7 @@ quizBankAdminRouter.patch("/:id", async (c) => {
     audioUrl: string | null;
     explanation: string | null;
     status: string;
-  }>>();
+  }>>(c);
 
   if (body.type !== undefined && !QUESTION_TYPES.includes(body.type)) {
     return c.json({ error: `type must be one of: ${QUESTION_TYPES.join(", ")}` }, 400);

@@ -1,4 +1,5 @@
 import { and, eq, isNotNull, isNull } from "drizzle-orm";
+import { parseJson } from "../../lib/http.js";
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
 import { db } from "../../db/index.js";
@@ -89,7 +90,7 @@ educatorInteractiveStoriesRouter.get("/interactive-stories", async (c) => {
 educatorInteractiveStoriesRouter.post("/interactive-stories", async (c) => {
   const isAdmin = c.get("isAdmin");
   const reviewerLanguages = (c.get("reviewerLanguages") ?? []) as string[];
-  const body = await c.req.json<{
+  const body = await parseJson<{
     languageId: string;
     title: string;
     description: string;
@@ -99,7 +100,7 @@ educatorInteractiveStoriesRouter.post("/interactive-stories", async (c) => {
     author: string;
     initialSceneId: string;
     scenes: Record<string, InteractiveStoryScene>;
-  }>();
+  }>(c);
 
   if (!body.languageId || !body.title?.trim() || !body.description?.trim()) {
     return c.json({ error: "languageId, title, and description are required" }, 400);
@@ -168,7 +169,7 @@ educatorInteractiveStoriesRouter.patch("/interactive-stories/:id", async (c) => 
     return c.json({ error: "Not authorised for this language" }, 403);
   }
 
-  const body = await c.req.json<{
+  const body = await parseJson<{
     title?: string;
     description?: string;
     coverGradient?: [string, string];
@@ -178,7 +179,7 @@ educatorInteractiveStoriesRouter.patch("/interactive-stories/:id", async (c) => 
     initialSceneId?: string;
     scenes?: Record<string, InteractiveStoryScene>;
     status?: string;
-  }>();
+  }>(c);
 
   if (body.scenes !== undefined || body.initialSceneId !== undefined) {
     const nextScenes = body.scenes ?? existing.scenes;

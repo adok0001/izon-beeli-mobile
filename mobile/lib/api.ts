@@ -70,6 +70,9 @@ export function friendlyError(err: unknown, fallback?: string): string {
     if (err.status === 401 || err.status === 403) return i18n.t("common.permissionDenied");
     if (err.status === 404) return i18n.t("common.notFound");
     if (err.status >= 500) return i18n.t("common.serverError");
+    // Other 4xx (400/409/422…) carry an actionable validation message from our
+    // own API's `{ error }` payload — surface it instead of a generic fallback.
+    if (err.status >= 400 && err.message) return err.message;
   }
   if (isNetworkError(err)) {
     return i18n.t("common.networkError");

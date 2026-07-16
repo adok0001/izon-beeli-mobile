@@ -1,5 +1,6 @@
 import { eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { appConfig, dictionaryEntries, lessons, transcriptSegments } from "../db/schema.js";
 
@@ -166,10 +167,10 @@ quizRouter.get("/questions", async (c) => {
 
 // POST /api/quiz/submit
 quizRouter.post("/submit", async (c) => {
-  const body = await c.req.json<{
+  const body = await parseJson<{
     answers: { questionId: string; selectedAnswer: string; correct: boolean }[];
     languageId: string;
-  }>();
+  }>(c);
 
   const answers = body.answers ?? [];
   const correctCount = answers.filter((a) => a.correct).length;

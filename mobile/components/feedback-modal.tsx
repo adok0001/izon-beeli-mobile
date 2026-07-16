@@ -58,9 +58,13 @@ export function FeedbackModal({ visible, onClose }: FeedbackModalProps) {
     const body = encodeURIComponent(
       `Category: ${category}\n\n${message}\n\n---\nPlatform: ${platform}\nOS: ${osVersion}\nApp: ${appVersion}`
     );
-    await Linking.openURL(
-      `mailto:support@izon-beeli.com?subject=${subject}&body=${body}`
-    );
+    try {
+      await Linking.openURL(
+        `mailto:support@izon-beeli.com?subject=${subject}&body=${body}`
+      );
+    } catch {
+      Alert.alert(t("common.error"), t("feedback.emailUnavailable"));
+    }
   }
 
   async function handleSubmit() {

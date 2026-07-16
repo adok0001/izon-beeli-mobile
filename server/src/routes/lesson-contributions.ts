@@ -2,6 +2,7 @@ import { put } from "@vercel/blob";
 import { randomUUID } from "crypto";
 import { desc, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import {
   courses,
@@ -248,7 +249,7 @@ lessonContributionsRouter.delete("/:id", async (c) => {
 lessonContributionsRouter.patch("/:id/review", adminMiddleware, async (c) => {
   const reviewerId = c.get("userId");
   const { id } = c.req.param();
-  const body = await c.req.json<{ action: string; note?: string }>();
+  const body = await parseJson<{ action: string; note?: string }>(c);
   const action = body.action;
 
   if (!(VALID_REVIEW_ACTIONS as readonly string[]).includes(action)) {

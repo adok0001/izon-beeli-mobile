@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { eq, and, lte, or, isNull, asc } from "drizzle-orm";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { wordBank, dictionaryEntries } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
@@ -55,7 +56,7 @@ wordbankRouter.get("/due", async (c) => {
 // POST /api/wordbank - save a word
 wordbankRouter.post("/", async (c) => {
   const userId = c.get("userId");
-  const body = await c.req.json<{ dictionaryEntryId: string }>();
+  const body = await parseJson<{ dictionaryEntryId: string }>(c);
 
   if (!body.dictionaryEntryId) {
     return c.json({ error: "dictionaryEntryId is required" }, 400);
@@ -121,7 +122,7 @@ function applySM2(
 wordbankRouter.post("/:entryId/review", async (c) => {
   const userId = c.get("userId");
   const entryId = c.req.param("entryId");
-  const body = await c.req.json<{ confidence: "again" | "hard" | "good" | "easy" }>();
+  const body = await parseJson<{ confidence: "again" | "hard" | "good" | "easy" }>(c);
 
   if (!Object.keys(RATING_QUALITY).includes(body.confidence)) {
     return c.json({ error: "confidence must be 'again', 'hard', 'good', or 'easy'" }, 400);

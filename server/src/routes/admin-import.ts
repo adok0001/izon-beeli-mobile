@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { Hono } from "hono";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { dictionaryEntries } from "../db/schema.js";
 import { adminMiddleware, authMiddleware } from "../middleware/auth.js";
@@ -39,11 +40,11 @@ function validateEntry(entry: ImportEntry, index: number): string | null {
 
 // POST /api/admin/dictionary/import
 adminImportRouter.post("/", async (c) => {
-  const body = await c.req.json<{
+  const body = await parseJson<{
     languageId: string;
     entries: ImportEntry[];
     dryRun?: boolean;
-  }>();
+  }>(c);
 
   if (!body.languageId || typeof body.languageId !== "string") {
     return c.json({ error: "languageId is required" }, 400);

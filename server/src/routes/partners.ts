@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
+import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { contentPartners } from "../db/schema.js";
 import { AuthEnv, adminMiddleware, authMiddleware } from "../middleware/auth.js";
@@ -28,7 +29,7 @@ partnersAdminRouter.get("/", async (c) => {
 });
 
 partnersAdminRouter.post("/", async (c) => {
-  const body = await c.req.json<{
+  const body = await parseJson<{
     id: string;
     name: string;
     type: string;
@@ -36,7 +37,7 @@ partnersAdminRouter.post("/", async (c) => {
     url?: string;
     logoUrl?: string;
     languageIds?: string[];
-  }>();
+  }>(c);
 
   if (!body.id || !body.name || !body.type) {
     return c.json({ error: "id, name, and type are required" }, 400);
@@ -79,7 +80,7 @@ partnersAdminRouter.patch("/:id", async (c) => {
   const [existing] = await db.select().from(contentPartners).where(eq(contentPartners.id, id)).limit(1);
   if (!existing) return c.json({ error: "Partner not found" }, 404);
 
-  const body = await c.req.json<Partial<{
+  const body = await parseJson<Partial<{
     name: string;
     type: string;
     region: string | null;
@@ -87,7 +88,7 @@ partnersAdminRouter.patch("/:id", async (c) => {
     logoUrl: string | null;
     languageIds: string[];
     isActive: boolean;
-  }>>();
+  }>>(c);
 
   const updates: Record<string, unknown> = { updatedBy: c.get("userId") };
   for (const key of ["name", "type", "region", "url", "logoUrl", "languageIds", "isActive"] as const) {

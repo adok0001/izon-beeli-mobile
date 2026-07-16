@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { parseJson } from "../lib/http.js";
 import { eq, and, ne, sql, between } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { authMiddleware, adminMiddleware, type AuthEnv } from "../middleware/auth.js";
@@ -56,7 +57,7 @@ notificationsRouter.get("/preferences", async (c) => {
 // PATCH /api/notifications/preferences
 notificationsRouter.patch("/preferences", async (c) => {
   const userId = c.get("userId");
-  const body = await c.req.json<{
+  const body = await parseJson<{
     pushWotdEnabled?: boolean;
     pushStreakReminderEnabled?: boolean;
     emailWotdEnabled?: boolean;
@@ -64,7 +65,7 @@ notificationsRouter.patch("/preferences", async (c) => {
     emailAssignmentDueEnabled?: boolean;
     emailContributionStatusEnabled?: boolean;
     emailReviewerStatusEnabled?: boolean;
-  }>();
+  }>(c);
 
   const patch: Record<string, boolean> = {};
   const boolFields = [
@@ -90,13 +91,13 @@ notificationsRouter.patch("/preferences", async (c) => {
 
 // POST /api/notifications/broadcast — admin-auth-protected broadcast
 notificationsRouter.post("/broadcast", adminMiddleware, async (c) => {
-  const body = await c.req.json<{
+  const body = await parseJson<{
     title: string;
     body: string;
     data?: Record<string, string | number | boolean>;
     languageId?: string;
     audience?: "admins" | "educators";
-  }>();
+  }>(c);
 
   if (!body.title || !body.body) {
     return c.json({ error: "title and body are required" }, 400);
@@ -249,13 +250,13 @@ notificationsAdminRouter.post("/broadcast", async (c) => {
     return c.json({ error: "Forbidden" }, 403);
   }
 
-  const body = await c.req.json<{
+  const body = await parseJson<{
     title: string;
     body: string;
     data?: Record<string, string | number | boolean>;
     languageId?: string;
     audience?: "admins" | "educators";
-  }>();
+  }>(c);
 
   if (!body.title || !body.body) {
     return c.json({ error: "title and body are required" }, 400);
