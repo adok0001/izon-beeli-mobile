@@ -3,6 +3,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { GhostButton, LabeledInput, SmallButton } from "@/components/studio/editor-form";
 import type { StorySceneType } from "@/lib/hooks/educator/use-interactive-stories";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 /**
@@ -189,6 +190,8 @@ export function SceneEditor({
   M: ReturnType<typeof useMuseumTheme>;
   t: (key: string, opts?: Record<string, unknown>) => string;
 }>) {
+  // Advanced disclosure: the stable id starts collapsed to a chip.
+  const [idExpanded, setIdExpanded] = useState(false);
   const typeLabel: Record<StorySceneType, string> = {
     narrative: t("educator.interactiveStoriesEditor.typeNarrative"),
     choice: t("educator.interactiveStoriesEditor.typeChoice"),
@@ -227,11 +230,22 @@ export function SceneEditor({
         </View>
       </View>
 
-      <LabeledInput
-        label={t("educator.interactiveStoriesEditor.sceneIdLabel")}
-        value={scene.id}
-        onChange={(v) => onChange({ ...scene, id: v.trim() })}
-      />
+      {/* Stable id — collapsed behind a chip so authors reach for the title,
+          not the id. Editing stays possible (Advanced); the parent retargets
+          links on rename via retargetSceneId. */}
+      {idExpanded ? (
+        <LabeledInput
+          label={t("educator.interactiveStoriesEditor.sceneIdLabel")}
+          value={scene.id}
+          onChange={(v) => onChange({ ...scene, id: v.trim() })}
+        />
+      ) : (
+        <Pressable onPress={() => setIdExpanded(true)} className="active:opacity-70" style={{ alignSelf: "flex-start" }}>
+          <Text style={{ fontSize: 11, color: M.muted }}>
+            id: <Text style={{ fontWeight: "700", color: M.sub }}>{scene.id || "—"}</Text> · Edit
+          </Text>
+        </Pressable>
+      )}
 
       <ScenePicker
         label={t("educator.interactiveStoriesEditor.sceneTypeLabel")}

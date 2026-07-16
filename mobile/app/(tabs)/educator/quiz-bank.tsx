@@ -18,6 +18,9 @@ import {
   useUpsertQuizQuestion,
   type QuizQuestion,
 } from "@/lib/hooks/educator/use-quiz-bank";
+import { EntityPickerModal } from "@/components/studio/entity-picker-modal";
+import { useEducatorLessons } from "@/lib/hooks/educator/use-lessons";
+import { localize } from "@/lib/localize";
 import { useToast } from "@/lib/hooks/use-toast";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
@@ -44,6 +47,9 @@ type QuizForm = {
   options: string;
   audioUrl: string;
   explanation: string;
+  /** Retrieval scoping — lesson (and scene slug) this question tests. */
+  lessonId: string;
+  sceneId: string;
 };
 
 const EMPTY_FORM: QuizForm = {
@@ -53,6 +59,8 @@ const EMPTY_FORM: QuizForm = {
   options: "",
   audioUrl: "",
   explanation: "",
+  lessonId: "",
+  sceneId: "",
 };
 
 export default function QuizBankScreen() {
@@ -71,7 +79,24 @@ export default function QuizBankScreen() {
 
   const [form, setForm] = useState<QuizForm>(EMPTY_FORM);
   const [formOpen, setFormOpen] = useState(false);
+  const [lessonPickerVisible, setLessonPickerVisible] = useState(false);
   const editing = !!form.id;
+
+  // Lessons in the active language, for linking a question to what it tests.
+  const { data: allLessons = [] } = useEducatorLessons();
+  const lessonPickerItems = useMemo(
+    () =>
+      allLessons
+        .filter((l) => l.languageId === activeLanguageId)
+        .map((l) => ({
+          id: l.id,
+          label: localize(l.title, "en"),
+          sublabel: l.id,
+          section: localize(l.courseTitle, "en"),
+        })),
+    [allLessons, activeLanguageId],
+  );
+  const linkedLesson = allLessons.find((l) => l.id === form.lessonId);
 
   const quizQuery = useEducatorQuizBank(activeLanguageId);
   const { refetch: refetchQuiz } = quizQuery;
@@ -103,6 +128,8 @@ export default function QuizBankScreen() {
       options: (q.options ?? []).join(", "),
       audioUrl: q.audioUrl ?? "",
       explanation: q.explanation ?? "",
+      lessonId: q.lessonId ?? "",
+      sceneId: q.sceneId ?? "",
     });
     setFormOpen(true);
   }
@@ -122,6 +149,9 @@ export default function QuizBankScreen() {
         options: form.options.split(",").map((o) => o.trim()).filter(Boolean),
         audioUrl: form.audioUrl.trim() || undefined,
         explanation: form.explanation.trim() || undefined,
+        // null (not undefined) so clearing an existing link round-trips.
+        lessonId: form.lessonId.trim() || null,
+        sceneId: form.sceneId.trim() || null,
       },
       {
         onSuccess: () => {
@@ -218,6 +248,33 @@ export default function QuizBankScreen() {
             <LabeledInput label={t("educator.quizBankEditor.optionsLabel")} value={form.options} onChange={(v) => setForm({ ...form, options: v })} />
             <LabeledInput label={t("educator.quizBankEditor.audioUrlLabel")} value={form.audioUrl} onChange={(v) => setForm({ ...form, audioUrl: v })} />
             <LabeledInput label={t("educator.quizBankEditor.explanationLabel")} value={form.explanation} onChange={(v) => setForm({ ...form, explanation: v })} />
+            {/* Retrieval scoping — link this question to the lesson it tests */}
+            <View>
+              <Text style={{ fontSize: 11, fontWeight: "600", color: M.sub, marginBottom: 4 }}>
+                {t("educator.quizBankEditor.linkedLesson", { defaultValue: "Linked lesson (what this question tests)" })}
+              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <Pressable
+                  onPress={() => setLessonPickerVisible(true)}
+                  style={{ flex: 1, borderRadius: 10, borderWidth: 1, borderColor: M.inputBorder, backgroundColor: M.inputBg, paddingHorizontal: 12, paddingVertical: 10 }}
+                  className="active:opacity-70"
+                >
+                  <Text style={{ fontSize: 14, color: form.lessonId ? M.inputText : M.muted }} numberOfLines={1}>
+                    {linkedLesson ? localize(linkedLesson.title, "en") : form.lessonId || t("educator.quizBankEditor.noLinkedLesson", { defaultValue: "None — language-level question" })}
+                  </Text>
+                </Pressable>
+                {form.lessonId ? (
+                  <SmallButton label={t("common.clear", { defaultValue: "Clear" })} onPress={() => setForm({ ...form, lessonId: "", sceneId: "" })} M={M} />
+                ) : null}
+              </View>
+            </View>
+            {form.lessonId ? (
+              <LabeledInput
+                label={t("educator.quizBankEditor.sceneLabel", { defaultValue: "Scene slug (optional, e.g. house.kitchen)" })}
+                value={form.sceneId}
+                onChange={(v) => setForm({ ...form, sceneId: v })}
+              />
+            ) : null}
             <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
               <PrimaryButton
                 label={upsert.isPending ? t("educator.quizBankEditor.saving") : editing ? t("common.save") : t("educator.quizBankEditor.createDraft")}
@@ -273,6 +330,18 @@ export default function QuizBankScreen() {
           ))}
         </View>
       </ScrollView>
+
+      <EntityPickerModal
+        visible={lessonPickerVisible}
+        title={t("educator.quizBankEditor.pickLesson", { defaultValue: "Link to a lesson" })}
+        items={lessonPickerItems}
+        selectedId={form.lessonId || undefined}
+        onSelect={(id) => {
+          setForm((prev) => ({ ...prev, lessonId: id }));
+          setLessonPickerVisible(false);
+        }}
+        onClose={() => setLessonPickerVisible(false)}
+      />
     </SafeAreaView>
   );
 }

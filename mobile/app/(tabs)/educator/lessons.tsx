@@ -1,5 +1,6 @@
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { SceneAssignSheet, type SceneOption } from "@/components/studio/scene-assign-sheet";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { fonts } from "@/constants/typography";
 import {
@@ -8,6 +9,14 @@ import {
     useEducatorLessons,
     useUpdateEducatorLesson,
 } from "@/lib/hooks/use-educator-panel";
+import { useSaveEducatorLesson } from "@/lib/hooks/educator/use-lesson-save";
+
+/** Scene columns ride the educator list response; older servers omit them. */
+type SceneLesson = EducatorLesson & {
+  scene?: string | null;
+  sceneTitle?: string | null;
+  sceneOrder?: number | null;
+};
 import { useToast } from "@/lib/hooks/use-toast";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -22,13 +31,15 @@ function LessonRow({
   lesson,
   onPress,
   onToggleActive,
+  onAssignScene,
   onDrag,
   dragging,
   toggling,
 }: Readonly<{
-  lesson: EducatorLesson;
+  lesson: SceneLesson;
   onPress: () => void;
   onToggleActive: () => void;
+  onAssignScene: () => void;
   onDrag: () => void;
   dragging: boolean;
   toggling: boolean;
@@ -99,6 +110,17 @@ function LessonRow({
             {toggling ? "…" : isActive ? "Active" : "Inactive"}
           </Text>
         </Pressable>
+        <Pressable
+          onPress={(e) => { e.stopPropagation?.(); onAssignScene(); }}
+          className="flex-row items-center gap-1.5 rounded-full px-3 py-1"
+          style={{ backgroundColor: lesson.scene ? M.accentGlow : M.pillBg }}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <IconSymbol name="square.grid.2x2" size={12} color={lesson.scene ? M.accent : M.muted} />
+          <Text className="text-xs font-semibold" style={{ color: lesson.scene ? M.accent : M.muted }} numberOfLines={1}>
+            {lesson.sceneTitle ?? lesson.scene ?? "Scene"}
+          </Text>
+        </Pressable>
       </View>
     </Pressable>
   );
@@ -125,9 +147,32 @@ export default function EducatorLessonsScreen() {
 
   const course = courses.find((c) => c.id === courseId);
   const courseLessons = useMemo(
-    () => lessons.filter((l) => l.courseId === courseId).sort((a, b) => a.order - b.order),
+    () => (lessons as SceneLesson[]).filter((l) => l.courseId === courseId).sort((a, b) => a.order - b.order),
     [lessons, courseId],
   );
+
+  // Scene grouping (journey rendering): the course's scenes, derived from its
+  // lessons' scene columns; assignment writes through the atomic lesson save.
+  const saveLesson = useSaveEducatorLesson();
+  const [sceneTarget, setSceneTarget] = useState<SceneLesson | null>(null);
+  const courseScenes = useMemo<SceneOption[]>(() => {
+    const byScene = new Map<string, SceneOption>();
+    for (const l of courseLessons) {
+      if (!l.scene) continue;
+      const existing = byScene.get(l.scene);
+      if (existing) {
+        byScene.set(l.scene, { ...existing, lessonCount: existing.lessonCount + 1 });
+      } else {
+        byScene.set(l.scene, {
+          scene: l.scene,
+          sceneTitle: l.sceneTitle ?? null,
+          sceneOrder: l.sceneOrder ?? null,
+          lessonCount: 1,
+        });
+      }
+    }
+    return Array.from(byScene.values()).sort((a, b) => (a.sceneOrder ?? 999) - (b.sceneOrder ?? 999));
+  }, [courseLessons]);
   const courseTitle = course ? localize(course.title, uiLanguage) : undefined;
   const courseDescription = course ? localize(course.description, uiLanguage) : "";
 
@@ -182,6 +227,7 @@ export default function EducatorLessonsScreen() {
                       params: { lessonId: lesson.id, courseId: lesson.courseId },
                     })
                   }
+                  onAssignScene={() => setSceneTarget(lesson)}
                   onDrag={drag}
                   dragging={isActive}
                   onToggleActive={() =>
@@ -263,6 +309,29 @@ export default function EducatorLessonsScreen() {
             </View>
           }
         />
+
+        {sceneTarget && (
+          <SceneAssignSheet
+            visible
+            lessonTitle={localize(sceneTarget.title, uiLanguage)}
+            currentScene={sceneTarget.scene ?? null}
+            scenes={courseScenes}
+            onClose={() => setSceneTarget(null)}
+            onCommit={(assignment) =>
+              saveLesson.mutate(
+                { id: sceneTarget.id, payload: assignment },
+                {
+                  onSuccess: () =>
+                    toastSuccess(
+                      assignment.scene ? "Scene assigned" : "Scene cleared",
+                      assignment.sceneTitle ?? assignment.scene ?? localize(sceneTarget.title, uiLanguage),
+                    ),
+                  onError: (err: Error) => toastError("Scene failed", err.message),
+                },
+              )
+            }
+          />
+        )}
       </SafeAreaView>
     </>
   );

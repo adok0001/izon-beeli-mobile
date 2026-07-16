@@ -15,10 +15,9 @@ import {
     useEducatorLessonDetail,
     usePublishContent,
     useReplaceEducatorLessonAudio,
-    useReplaceEducatorLessonCulturalContent,
-    useReplaceEducatorLessonSegments,
     useUpdateEducatorLesson,
 } from "@/lib/hooks/use-educator-panel";
+import { useSaveEducatorLesson } from "@/lib/hooks/educator/use-lesson-save";
 import { friendlyError } from "@/lib/api";
 import { useToast } from "@/lib/hooks/use-toast";
 import { localize } from "@/lib/localize";
@@ -31,6 +30,13 @@ import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, Tex
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AudioSection } from "@/components/studio/lesson-audio-section";
+import {
+  clampChecks,
+  LessonChecksSection,
+  toChecksPayload,
+  type CheckEditor,
+  type CheckType,
+} from "@/components/studio/lesson-checks-section";
 import { clampAttachments, CulturalContentSection } from "@/components/studio/lesson-cultural-section";
 import { LessonPreviewSection } from "@/components/studio/lesson-preview-section";
 import { LessonStylePicker } from "@/components/studio/lesson-style-picker";
@@ -60,9 +66,15 @@ export default function EducatorLessonEditScreen() {
   const [artist, setArtist] = useState("");
   const [genre, setGenre] = useState("");
   const [style, setStyle] = useState<LessonStyle | null>(null);
+  // Story fold-in narrative framing + can-do goal (all optional; empty clears).
+  const [narrativeIntro, setNarrativeIntro] = useState("");
+  const [narrativeOutro, setNarrativeOutro] = useState("");
+  const [canDo, setCanDo] = useState("");
+  const [canDoFr, setCanDoFr] = useState("");
   const [audioUri, setAudioUri] = useState<string | undefined>(undefined);
   const [segments, setSegments] = useState<SegmentEditor[]>([EMPTY_SEGMENT()]);
   const [culturalAttachments, setCulturalAttachments] = useState<EducatorLessonCulturalAttachment[]>([]);
+  const [checks, setChecks] = useState<CheckEditor[]>([]);
   const [translationLang, setTranslationLang] = useState<UiLanguage>(uiLanguage);
   const [playbackPos, setPlaybackPos] = useState(0);
 
@@ -73,8 +85,7 @@ export default function EducatorLessonEditScreen() {
 
   const createLesson = useCreateEducatorLesson();
   const updateLesson = useUpdateEducatorLesson();
-  const replaceSegments = useReplaceEducatorLessonSegments();
-  const replaceCulturalContent = useReplaceEducatorLessonCulturalContent();
+  const saveLesson = useSaveEducatorLesson();
   const replaceAudio = useReplaceEducatorLessonAudio();
   const deleteLesson = useDeleteEducatorLesson();
   const publishLesson = usePublishContent("lessons", [["educator", "lesson", lessonId ?? null], ["educator", "lessons"]]);
@@ -90,6 +101,17 @@ export default function EducatorLessonEditScreen() {
     setArtist(lessonDetail.artist ?? "");
     setGenre(lessonDetail.genre ?? "");
     setStyle(lessonDetail.style ?? null);
+    {
+      // Fold-in fields ride the detail response; older servers omit them.
+      const d = lessonDetail as typeof lessonDetail & {
+        narrativeIntro?: string | null; narrativeOutro?: string | null;
+        canDo?: string | null; canDoFr?: string | null;
+      };
+      setNarrativeIntro(d.narrativeIntro ?? "");
+      setNarrativeOutro(d.narrativeOutro ?? "");
+      setCanDo(d.canDo ?? "");
+      setCanDoFr(d.canDoFr ?? "");
+    }
     setSegments(
       lessonDetail.segments.length > 0
         ? lessonDetail.segments.map((seg) =>
@@ -106,6 +128,21 @@ export default function EducatorLessonEditScreen() {
     setCulturalAttachments(
       lessonDetail.culturalAttachments ??
         (lessonDetail.culturalContentIds ?? []).map((id) => ({ culturalContentId: id, afterSegmentIndex: null })),
+    );
+    // In-lesson checks ride the detail response; older servers omit them.
+    const detailChecks = (lessonDetail as typeof lessonDetail & {
+      checks?: { type: string; prompt: string; answer: string; options: string[]; explanation?: string | null; afterSegmentIndex?: number | null }[];
+    }).checks;
+    setChecks(
+      (detailChecks ?? []).map((ch, i) => ({
+        uid: `check-loaded-${i}`,
+        type: ch.type as CheckType,
+        prompt: ch.prompt,
+        answer: ch.answer,
+        options: (ch.options ?? []).join(", "),
+        explanation: ch.explanation ?? "",
+        afterSegmentIndex: ch.afterSegmentIndex ?? null,
+      })),
     );
   }, [lessonDetail, uiLanguage]);
 
@@ -156,7 +193,10 @@ export default function EducatorLessonEditScreen() {
 
   const handleUpdate = () => {
     if (!lessonId) return;
-    updateLesson.mutate(
+    // One transactional save: metadata, transcript, and culture-note anchors
+    // land together or not at all — no half-saved lesson on a mid-way failure.
+    // The server validates note anchors against the segments sent here.
+    saveLesson.mutate(
       {
         id: lessonId,
         payload: {
@@ -166,23 +206,18 @@ export default function EducatorLessonEditScreen() {
           artist: artist.trim() || undefined,
           genre: genre.trim() || undefined,
           style,
+          narrativeIntro: narrativeIntro.trim() || null,
+          narrativeOutro: narrativeOutro.trim() || null,
+          canDo: canDo.trim() || null,
+          canDoFr: canDoFr.trim() || null,
         },
+        segments: toSegmentsPayload(segments),
+        attachments: clampAttachments(culturalAttachments, segments),
+        checks: toChecksPayload(clampChecks(checks, segments)),
       },
-      { onError: (err: Error) => toastError("Save failed", friendlyError(err)) },
-    );
-    // Culture-note anchors are validated against the *saved* segment count, so
-    // they only go out once the new transcript has landed.
-    replaceSegments.mutate(
-      { id: lessonId, segments: toSegmentsPayload(segments) },
       {
-        onSuccess: () => {
-          toastSuccess("Saved", "Lesson and segments updated.");
-          replaceCulturalContent.mutate(
-            { id: lessonId, attachments: clampAttachments(culturalAttachments, segments) },
-            { onError: (err: Error) => toastError("Culture notes failed", friendlyError(err)) },
-          );
-        },
-        onError: (err: Error) => toastError("Segments failed", friendlyError(err)),
+        onSuccess: () => toastSuccess("Saved", "Lesson, transcript, and notes updated."),
+        onError: (err: Error) => toastError("Save failed", friendlyError(err)),
       },
     );
   };
@@ -254,7 +289,7 @@ export default function EducatorLessonEditScreen() {
     GLOSS_LANGUAGES.map((l) => l.key).filter((lang) => segments.some((s) => s.translation[lang]?.trim())),
   );
 
-  const isSaving = createLesson.isPending || updateLesson.isPending || replaceSegments.isPending;
+  const isSaving = createLesson.isPending || updateLesson.isPending || saveLesson.isPending;
 
   const screenTitle = isEditMode ? "Edit Lesson" : "New Lesson";
   const savedLabel = isEditMode ? t("common.save") : "Create Lesson";
@@ -360,6 +395,53 @@ export default function EducatorLessonEditScreen() {
             </View>
           </View>
 
+          {/* Story & Goal — narrative framing (fold-in) + can-do statement */}
+          <View className="mt-4 px-5">
+            <View className="rounded-2xl p-4" style={{ backgroundColor: M.card, borderWidth: 1, borderColor: M.border }}>
+              <Text className="mb-1 text-xs font-semibold uppercase tracking-[1.2px]" style={{ color: M.muted }}>
+                Story &amp; Goal
+              </Text>
+              <Text className="mb-3 text-[11px]" style={{ color: M.muted }}>
+                Optional. Narrative frames this lesson as a story beat; the can-do is the honest
+                &ldquo;you can now &hellip;&rdquo; shown on completion.
+              </Text>
+              <TextInput
+                value={narrativeIntro}
+                onChangeText={setNarrativeIntro}
+                placeholder="Narrative intro — sets the scene before the lesson"
+                placeholderTextColor={M.muted}
+                multiline
+                className="min-h-[56px] rounded-xl border px-3.5 py-2.5 text-sm"
+                style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
+              />
+              <TextInput
+                value={narrativeOutro}
+                onChangeText={setNarrativeOutro}
+                placeholder="Narrative outro — closes the beat after the lesson"
+                placeholderTextColor={M.muted}
+                multiline
+                className="mt-2 min-h-[56px] rounded-xl border px-3.5 py-2.5 text-sm"
+                style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
+              />
+              <TextInput
+                value={canDo}
+                onChangeText={setCanDo}
+                placeholder="Can-do — e.g. Greet an elder and introduce yourself"
+                placeholderTextColor={M.muted}
+                className="mt-2 rounded-xl border px-3.5 py-2.5 text-sm"
+                style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
+              />
+              <TextInput
+                value={canDoFr}
+                onChangeText={setCanDoFr}
+                placeholder="Can-do (français)"
+                placeholderTextColor={M.muted}
+                className="mt-2 rounded-xl border px-3.5 py-2.5 text-sm"
+                style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
+              />
+            </View>
+          </View>
+
           {/* Audio */}
           <View className="mt-4 px-5">
             <View className="rounded-2xl p-4" style={{ backgroundColor: M.card, borderWidth: 1, borderColor: M.border }}>
@@ -424,6 +506,15 @@ export default function EducatorLessonEditScreen() {
               segments={segments}
               onChange={setCulturalAttachments}
             />
+          ) : null}
+
+          {/* In-lesson checks — formative questions on the transcript rail */}
+          {isEditMode ? (
+            <View className="mt-4 px-5">
+              <View className="rounded-2xl p-4" style={{ backgroundColor: M.card, borderWidth: 1, borderColor: M.border }}>
+                <LessonChecksSection checks={checks} segments={segments} onChange={setChecks} />
+              </View>
+            </View>
           ) : null}
 
           {/* Learner Preview */}

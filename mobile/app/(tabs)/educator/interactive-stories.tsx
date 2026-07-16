@@ -7,7 +7,9 @@ import {
   SceneEditor,
   type SceneDraft,
 } from "@/components/studio/interactive-story-scene-editor";
+import { StoryFlowMap } from "@/components/studio/story-flow-map";
 import { useStudioAccess } from "@/components/studio/studio-gate";
+import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import { Badge } from "@/components/ui/badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { friendlyError } from "@/lib/api";
@@ -123,8 +125,11 @@ export default function InteractiveStoriesScreen() {
   const [coverGradientTo, setCoverGradientTo] = useState("#C4862A");
   const [initialSceneId, setInitialSceneId] = useState("");
   const [scenes, setScenes] = useState<SceneDraft[]>([]);
+  const [flowMapVisible, setFlowMapVisible] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const editing = !!editingId;
+  // Leaving the screen with the editor open risks losing an unsaved story.
+  useUnsavedGuard(formOpen);
 
   const storiesQuery = useEducatorInteractiveStories(activeLanguageId);
   const { refetch: refetchStories } = storiesQuery;
@@ -474,6 +479,11 @@ export default function InteractiveStoriesScreen() {
                 M={M}
                 disabled={saving}
               />
+              <GhostButton
+                label={t("educator.interactiveStoriesEditor.map", { defaultValue: "Map" })}
+                onPress={() => setFlowMapVisible(true)}
+                M={M}
+              />
               <GhostButton label={t("common.cancel")} onPress={resetForm} M={M} />
             </View>
           </View>
@@ -568,6 +578,13 @@ export default function InteractiveStoriesScreen() {
           setLanguagePickerVisible(false);
         }}
         onClose={() => setLanguagePickerVisible(false)}
+      />
+
+      <StoryFlowMap
+        visible={flowMapVisible}
+        scenes={scenes}
+        initialSceneId={initialSceneId}
+        onClose={() => setFlowMapVisible(false)}
       />
     </SafeAreaView>
   );

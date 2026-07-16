@@ -12,6 +12,9 @@ export interface QuizQuestion {
   options: string[];
   audioUrl?: string | null;
   explanation?: string | null;
+  /** Retrieval scoping: the lesson (and scene slug) this question tests. */
+  lessonId?: string | null;
+  sceneId?: string | null;
   status?: ContentStatus;
   createdBy?: string | null;
 }
@@ -25,6 +28,8 @@ export interface UpsertQuizInput {
   options?: string[];
   audioUrl?: string | null;
   explanation?: string | null;
+  lessonId?: string | null;
+  sceneId?: string | null;
 }
 
 /** Editor read: all quiz questions (any status) for a language, from the admin route. */

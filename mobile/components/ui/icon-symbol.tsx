@@ -98,6 +98,12 @@ const MAPPING = {
   'eye.fill': 'visibility',
   'pencil': 'edit',
   'line.3.horizontal': 'drag-handle',
+  'square.grid.2x2': 'grid-view',
+  'questionmark.circle.fill': 'help',
+  'arrow.turn.down.right': 'subdirectory-arrow-right',
+  'bookmark': 'bookmark-border',
+  'bookmark.fill': 'bookmark',
+  'flag.fill': 'flag',
 } as IconMapping;
 
 /**

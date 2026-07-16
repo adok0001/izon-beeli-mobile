@@ -47,6 +47,8 @@ export interface Course {
   imageUrl?: string;
   progress?: number; // 0-100
   courseType?: CourseType;
+  /** Path position. Convention: >= 100 marks a reference shelf, off the numbered journey. */
+  order?: number;
 }
 
 export type AudioSource = string | number; // URI string or require() module ID
@@ -80,6 +82,24 @@ export interface CulturalNote {
    * the lesson's ordered segments). Omitted = render after the transcript.
    */
   afterSegmentIndex?: number;
+}
+
+/**
+ * An in-lesson check — a low-stakes formative question that fires between
+ * transcript lines (same placement rail as cultural notes). Options empty =
+ * tap-to-reveal.
+ */
+export interface LessonCheck {
+  id: string;
+  /** "predict-next" | "meaning" | "who-said" | "cloze" | "pick-reply" */
+  type: string;
+  prompt: string;
+  answer: string;
+  options: string[];
+  explanation?: string | null;
+  /** 0-based segment index the check fires after; null/omitted = end. */
+  afterSegmentIndex?: number | null;
+  order: number;
 }
 
 /** A recurring character in a season. Avatar + hue are authored in Studio, not bundled. */

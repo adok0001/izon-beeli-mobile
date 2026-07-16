@@ -41,8 +41,10 @@ function truncate(text: string): string {
   return clean.length > PREVIEW_CHARS ? `${clean.slice(0, PREVIEW_CHARS)}…` : clean;
 }
 
-/** One chip row: "End of lesson" plus one chip per transcript line. */
-function AnchorPicker({
+/** One chip row: "End of lesson" plus one chip per transcript line. Shared by
+ * the culture-note attachments and the in-lesson checks section — both anchor
+ * to the same between-segment rail. */
+export function AnchorPicker({
   value,
   segments,
   onChange,
