@@ -1,9 +1,12 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
+import { useLesson } from "@/lib/hooks/use-courses";
 import { hapticHeavy, hapticSuccess, hapticTap } from "@/lib/haptics";
+import { localize } from "@/lib/localize";
 import { shuffle } from "@/lib/shuffle";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
+import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { DictionaryEntry } from "@/lib/dictionary";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Audio } from "expo-av";
@@ -53,22 +56,29 @@ export { ErrorBoundary } from "@/components/screen-error-boundary";
 export default function SayItBackScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
-  // Seeded from a lesson's "Prove it — say it back" card: one specific line to
-  // produce. Without it, the screen runs its usual shuffled dictionary drill.
-  const { phrase, gloss } = useLocalSearchParams<{ phrase?: string; gloss?: string }>();
+  // Launched from a lesson's "Prove it — say it back" card: drill that lesson's
+  // own sentences instead of the shuffled dictionary. Same listen/record/
+  // compare flow, just lesson-specific content.
+  const { lessonId } = useLocalSearchParams<{ lessonId?: string }>();
+  const { uiLanguage } = useUiLanguageStore();
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
   const { data: entries = [] } = useDictionary(selectedLanguageId);
+  const { data: lesson } = useLesson(lessonId ?? "");
 
-  const seededEntry = useMemo<DictionaryEntry>(
-    () => ({
-      id: "prove-it",
-      word: phrase ?? "",
-      english: gloss ?? "",
-      category: "phrases",
-      languageId: selectedLanguageId,
-    }),
-    [phrase, gloss, selectedLanguageId]
-  );
+  // The lesson's spoken lines (target line + its translation), in order, as
+  // say-it-back items. Empty until the lesson loads or when not lesson-seeded.
+  const lessonSentences = useMemo<DictionaryEntry[]>(() => {
+    if (!lesson?.transcript) return [];
+    return lesson.transcript
+      .filter((seg) => seg.text && seg.translation)
+      .map((seg, i) => ({
+        id: `${lesson.id}-line-${i}`,
+        word: seg.text,
+        english: localize(seg.translation ?? "", uiLanguage),
+        category: "phrases",
+        languageId: selectedLanguageId,
+      }));
+  }, [lesson, uiLanguage, selectedLanguageId]);
 
   const [words, setWords] = useState<DictionaryEntry[]>([]);
   const [wordIndex, setWordIndex] = useState(0);
@@ -88,15 +98,15 @@ export default function SayItBackScreen() {
   }, []);
 
   useEffect(() => {
-    if (phrase) {
-      setWords([seededEntry]);
+    if (lessonId) {
+      if (lessonSentences.length > 0) setWords(lessonSentences);
       return;
     }
     if (entries.length > 0) {
       const pool = shuffle(entries.filter((e) => e.word && e.english));
       setWords(pool);
     }
-  }, [entries, phrase, seededEntry]);
+  }, [entries, lessonId, lessonSentences]);
 
   useEffect(() => () => { playbackSound?.unloadAsync(); }, [playbackSound]);
 
@@ -192,7 +202,7 @@ export default function SayItBackScreen() {
           </Text>
           <View style={{ width: "100%", gap: 10, marginTop: 32 }}>
             <Pressable
-              onPress={() => { setWordIndex(0); setGotIt(0); setTotal(0); setSessionPhase("listen"); setWords(phrase ? [seededEntry] : shuffle(entries.filter((e) => e.word && e.english))); }}
+              onPress={() => { setWordIndex(0); setGotIt(0); setTotal(0); setSessionPhase("listen"); setWords(lessonId ? lessonSentences : shuffle(entries.filter((e) => e.word && e.english))); }}
               style={{ borderRadius: 14, paddingVertical: 16, backgroundColor: M.accent, alignItems: "center" }}
             >
               <Text style={{ fontSize: 15, fontWeight: "700", color: M.ink }}>Try Again</Text>
@@ -212,7 +222,7 @@ export default function SayItBackScreen() {
       <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24 }} showsVerticalScrollIndicator={false}>
         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
           <Text style={{ flex: 1, fontSize: 11, fontWeight: "800", letterSpacing: 1.8, color: M.muted }}>
-            WORD {wordIndex + 1}
+            {lessonId ? "LINE" : "WORD"} {wordIndex + 1}
           </Text>
           {/* Honest framing: the app compares audio; the learner judges. No
               automated pronunciation scoring is implied. */}

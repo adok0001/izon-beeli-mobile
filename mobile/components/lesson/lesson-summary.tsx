@@ -20,8 +20,6 @@ export interface LessonProveIt {
   /** The translation shown as the prompt (what the learner must produce). */
   text: string;
   label: string;
-  /** The target-language line to say back — seeds the Say It Back screen. */
-  native: string;
 }
 
 interface Props {
@@ -61,10 +59,10 @@ export function LessonSummary({
   const isSong = lesson.type === "song";
   const quizTarget = { pathname: "/quiz" as const, params: { courseId: lesson.courseId, lessonId: lesson.id } };
   // "Prove it — say it back" is a speaking prompt, so it opens the record-and-
-  // compare screen seeded with this lesson's line (not the multiple-choice quiz).
+  // compare screen seeded with this lesson's sentences (not the quiz).
   const proveItTarget = {
     pathname: "/say-it-back" as const,
-    params: { phrase: proveIt.native, gloss: proveIt.text },
+    params: { lessonId: lesson.id },
   };
 
   return (
@@ -177,7 +175,7 @@ export function LessonSummary({
             </View>
           ) : null}
 
-          {proveIt.text && proveIt.native ? (
+          {proveIt.text ? (
             <Pressable
               onPress={() => router.push(proveItTarget)}
               style={{

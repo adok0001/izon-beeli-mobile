@@ -178,9 +178,6 @@ export default function LessonScreen() {
   // production prompt alongside the passive "you can now" statement.
   const proveItSegment = lesson.transcript?.find((seg) => seg.text && seg.translation);
   const proveItText = proveItSegment ? localize(proveItSegment.translation ?? "", uiLanguage) : "";
-  // The target-language line the learner says back on Say It Back; `proveItText`
-  // above is its translation, shown as the prompt on the summary card.
-  const proveItNative = proveItSegment?.text ?? "";
   const proveItLabel = localize({ en: "Prove it — say it back", fr: "Prouvez-le — répétez-le" }, uiLanguage);
   const addToAbilitiesLabel = localize({ en: "Add to my abilities", fr: "Ajouter à mes acquis" }, uiLanguage);
 
@@ -319,7 +316,7 @@ export default function LessonScreen() {
             accentColor={accentColor}
             headerHeight={headerHeight}
             canDo={{ text: canDoText, label: canDoLabel, skills: canDoSkills, addToAbilitiesLabel }}
-            proveIt={{ text: proveItText, label: proveItLabel, native: proveItNative }}
+            proveIt={{ text: proveItText, label: proveItLabel }}
             nextLessonId={resolvedNextLessonId}
             nextLessonParams={nextLessonParams}
             onDismiss={() => setShowSummary(false)}
