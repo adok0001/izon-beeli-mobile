@@ -43,24 +43,23 @@ export function AuthLink({
 }: AuthLinkProps) {
   const M = useMuseumTheme();
 
+  const base: ViewStyle = {
+    alignSelf: align === "end" ? "flex-end" : "center",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    // Pull the padding box back over the container edge so an end-aligned link
+    // stays optically flush with the field underline above it. `marginEnd`
+    // rather than `marginRight` so this still resolves to the trailing side
+    // under RTL (ar).
+    marginEnd: align === "end" ? -12 : 0,
+    opacity: disabled ? 0.4 : 1,
+  };
+
   // Must stay a flat object, never an array: under `href` this Pressable is the
   // child of expo-router's `<Link asChild>`, whose Radix Slot merges style with
   // an object spread (`{...slotStyle, ...childStyle}`). Spreading an array there
   // yields `{0: {...}, 1: {...}}` and every rule is silently dropped.
-  const containerStyle = StyleSheet.flatten([
-    {
-      alignSelf: align === "end" ? "flex-end" : "center",
-      paddingVertical: 8,
-      paddingHorizontal: 12,
-      // Pull the padding box back over the container edge so an end-aligned
-      // link stays optically flush with the field underline above it.
-      // `marginEnd` rather than `marginRight` so this still resolves to the
-      // trailing side under RTL (ar).
-      marginEnd: align === "end" ? -12 : 0,
-      opacity: disabled ? 0.4 : 1,
-    },
-    style,
-  ]);
+  const containerStyle = StyleSheet.flatten<ViewStyle>([base, style]);
 
   const body = (
     <Pressable
