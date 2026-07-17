@@ -1,4 +1,4 @@
-import { useWindowDimensions, Pressable, Text, View } from "react-native";
+import { useWindowDimensions, Pressable, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -92,15 +92,17 @@ function CourseHeroCard({ course, completed, total, onContinue, width }: CourseH
   );
 }
 
+const MAX_FEATURED = 5;
+
 /**
- * Picks the single course to feature: the user's active in-progress course if
- * one exists, otherwise a recommended starting course. Recommendation prefers
- * `userLevel` (from first-run onboarding, wired once that signal lands) and
- * falls back to the lowest-order beginner course — the flagship Izon spine's
- * Movement 1 for a brand-new user, since courses are already scoped to the
- * user's selected language.
+ * Picks the courses to feature: the user's active in-progress courses first
+ * (by course order), then recommended courses filling the remaining slots.
+ * Recommendation prefers `userLevel` (from first-run onboarding, wired once
+ * that signal lands) and falls back to beginner courses — the flagship Izon
+ * spine for a brand-new user, since courses are already scoped to the user's
+ * selected language.
  */
-function pickFeaturedCourse(
+function pickFeaturedCourses(
   courses: Course[],
   lessons: Lesson[],
   completedIds: Set<string>,
@@ -110,15 +112,22 @@ function pickFeaturedCourse(
     course,
     prog: courseProgress(lessons, completedIds, course.id),
   }));
+  const byOrder = (a: { course: Course }, b: { course: Course }) =>
+    (a.course.order ?? 0) - (b.course.order ?? 0);
 
-  const inProgress = withProgress.find(({ prog }) => prog.completed > 0 && prog.completed < prog.total);
-  if (inProgress) return inProgress;
+  const inProgress = withProgress
+    .filter(({ prog }) => prog.completed > 0 && prog.completed < prog.total)
+    .sort(byOrder);
 
-  const byOrder = (a: Course, b: Course) => (a.order ?? 0) - (b.order ?? 0);
-  const leveled = userLevel ? courses.filter((c) => c.level === userLevel) : courses.filter((c) => c.level === "beginner");
-  const recommended = [...(leveled.length > 0 ? leveled : courses)].sort(byOrder)[0];
+  const leveled = userLevel
+    ? withProgress.filter(({ course }) => course.level === userLevel)
+    : withProgress.filter(({ course }) => course.level === "beginner");
+  const recommendedPool = [...(leveled.length > 0 ? leveled : withProgress)].sort(byOrder);
 
-  return withProgress.find(({ course }) => course.id === recommended?.id) ?? withProgress[0];
+  const seenIds = new Set<string>();
+  return [...inProgress, ...recommendedPool]
+    .filter(({ course }) => !seenIds.has(course.id) && seenIds.add(course.id))
+    .slice(0, MAX_FEATURED);
 }
 
 interface CourseCarouselProps {
@@ -132,26 +141,34 @@ interface CourseCarouselProps {
 export function CourseCarousel({ courses, lessons, completedIds, userLevel }: CourseCarouselProps) {
   const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
-  const cardWidth = screenWidth - CARD_GUTTER * 2;
+  const nextCardPeek = CARD_GUTTER / 2;
+  const cardWidth = screenWidth - CARD_GUTTER * 2 - nextCardPeek;
 
   if (courses.length === 0) return null;
 
-  const featured = pickFeaturedCourse(courses, lessons, completedIds, userLevel);
-  if (!featured) return null;
-
-  const handleContinue = () => {
-    router.push({ pathname: "/learn/course/[courseId]", params: { courseId: featured.course.id } });
-  };
+  const featured = pickFeaturedCourses(courses, lessons, completedIds, userLevel);
+  if (featured.length === 0) return null;
 
   return (
-    <View style={{ paddingHorizontal: CARD_GUTTER }}>
-      <CourseHeroCard
-        course={featured.course}
-        completed={featured.prog.completed}
-        total={featured.prog.total}
-        onContinue={handleContinue}
-        width={cardWidth}
-      />
-    </View>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      snapToInterval={cardWidth + nextCardPeek}
+      decelerationRate="fast"
+      contentContainerStyle={{ paddingHorizontal: CARD_GUTTER, gap: CARD_GUTTER / 2 }}
+    >
+      {featured.map(({ course, prog }) => (
+        <CourseHeroCard
+          key={course.id}
+          course={course}
+          completed={prog.completed}
+          total={prog.total}
+          onContinue={() =>
+            router.push({ pathname: "/learn/course/[courseId]", params: { courseId: course.id } })
+          }
+          width={cardWidth}
+        />
+      ))}
+    </ScrollView>
   );
 }

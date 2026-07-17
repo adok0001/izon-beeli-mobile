@@ -33,7 +33,7 @@ distinct job:
 
 - **Onboarding + Tour: merged** into one first-run flow.
 - **First-run navigation: edge Prev/Next buttons** (horizontal pager), not a bottom Continue CTA.
-- **Learn Carousel: single featured/recommended course** hero; Explore All becomes the sole catalog.
+- **Learn Carousel: stays a carousel, curated to featured courses** (not one single card, not the full catalog); Explore All becomes the sole full catalog.
 - **Checklist: a "Getting started" card on the Learn home**, auto-hiding when complete.
 - **Contribute word count: floored to the nearest ten.**
 
@@ -94,19 +94,21 @@ auto-launched welcome tour.
 
 ---
 
-## Plan 2 — Learn Carousel → single featured course
+## Plan 2 — Learn Carousel → featured courses
 
 The Carousel and "Explore All Courses" are **confirmed redundant**: both receive the same
 `courses` array and link to the same route — two renderings of one list stacked directly
 on top of each other (`app/(tabs)/learn/index.tsx:210,218`).
 
-- **Carousel collapses to one hero card:** the user's active in-progress course, or — for
-  a new user with no progress — a **recommended starting course**. Keep the existing
+- **Carousel stays a carousel**, but its source list narrows from "all courses" to a
+  **curated featured set** — e.g. the user's active in-progress course(s) plus a small
+  number of recommended/spotlighted courses, not the full catalog. Keep the existing
   Continue CTA + progress-bar treatment (`components/learn/course-carousel.tsx`).
-- **Explore All Courses becomes the sole catalog browser** — the full course list lives
-  here only (`components/learn/explore-all-row.tsx`).
-- **"Recommended" driver:** wire to the **level** chosen in Plan 1 step 2 (fall back to
-  the flagship Izon 10-Movement spine for a brand-new user).
+- **Explore All Courses stays the sole full catalog browser** — the complete course list
+  lives here only (`components/learn/explore-all-row.tsx`).
+- **"Featured" driver:** wire to the **level** chosen in Plan 1 step 2 (fall back to the
+  flagship Izon 10-Movement spine for a brand-new user); active/in-progress courses take
+  priority ordering within the carousel.
 
 ---
 
@@ -175,7 +177,7 @@ and **file contention** (plans that edit the same surface and will merge-conflic
 when logically independent).
 
 - **Logical dependencies:** only one, and it's soft — **Plan 2 → Plan 1**: the carousel's
-  "recommended course for a new user" driver wants the *level* signal from first-run.
+  "featured courses" driver wants the *level* signal from first-run.
   Plan 2 can ship its structure with the flagship-Izon fallback and wire level in later,
   so it does not block.
 - **File contention:** Plans 2, 3, and 4 all edit the Learn tab

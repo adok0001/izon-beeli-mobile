@@ -209,7 +209,7 @@ export default function LearnScreen() {
             />
           </View>
 
-          {/* Featured course — active course in progress, or a recommended starter */}
+          {/* Featured courses — active courses in progress, then recommended starters */}
           {courses.length > 0 && (
             <CourseCarousel
               courses={courses}
