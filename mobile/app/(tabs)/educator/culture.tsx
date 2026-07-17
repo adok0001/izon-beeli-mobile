@@ -5,11 +5,15 @@ import { LocalizedTextInput, serializeLocalizedText, toLocalizedText } from "@/c
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
-import { fonts } from "@/constants/typography";
 import type { LocalizedText } from "@/types";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { CULTURE_CATEGORY_ICON } from "@/constants/cultural-categories";
+import { ActionPill } from "@/components/studio/studio-action-pill";
+import { StudioCard } from "@/components/studio/studio-card";
+import { StudioFilterPills } from "@/components/studio/studio-filter-pills";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
+import { StudioSearchInput } from "@/components/studio/studio-search-input";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { ActiveToggle } from "@/components/studio/active-toggle";
 import { friendlyError } from "@/lib/api";
@@ -22,7 +26,7 @@ import {
 } from "@/lib/hooks/use-educator-panel";
 import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
-import { Stack, useRouter } from "expo-router";
+import { Stack } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -32,7 +36,6 @@ import {
   Platform,
   Pressable,
   RefreshControl,
-  ScrollView,
   Text,
   TextInput,
   View,
@@ -129,7 +132,6 @@ const inputCls = "rounded-xl border px-3.5 py-2.5 text-sm";
 
 export default function EducatorCultureScreen() {
   const M = useMuseumTheme();
-  const router = useRouter();
   const { t } = useTranslation();
   const { user: currentUser, canAccess } = useStudioAccess();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
@@ -287,44 +289,21 @@ export default function EducatorCultureScreen() {
 
   const listHeader = (
     <View>
-      <View className="px-5 pt-4">
-        <Text className="text-2xl" style={{ fontFamily: fonts.heading, color: M.text }}>
-          {t("educator.nav.culture")}
-        </Text>
-        <Text className="mt-1 text-sm" style={{ color: M.sub }}>
-          {t("educator.culture.subtitle")}
-        </Text>
-      </View>
-
       {/* Language selector */}
       <View className="mt-4 px-5">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {allowedLanguages.map((langId) => {
-            const active = langId === activeLanguageId;
-            return (
-              <Pressable
-                key={langId}
-                onPress={() => {
-                  setSelectedLanguageId(langId);
-                  setSearchQuery("");
-                }}
-                className="mr-2 rounded-full px-4 py-2"
-                style={{ backgroundColor: active ? M.accent : M.pillBg }}
-              >
-                <Text
-                  className="text-sm font-semibold"
-                  style={{ color: active ? M.parchment : M.text }}
-                >
-                  {getLanguageName(langId)}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+        <StudioFilterPills
+          options={allowedLanguages.map((langId) => ({ id: langId, label: getLanguageName(langId) }))}
+          value={activeLanguageId}
+          onChange={(langId) => {
+            setSelectedLanguageId(langId);
+            setSearchQuery("");
+          }}
+          scrollable
+        />
       </View>
 
       {/* ── Cultural form ─────────────────────────────────────────────────────── */}
-      <View className="mx-5 mt-4 rounded-2xl border p-4" style={{ backgroundColor: M.card, borderColor: M.border }}>
+      <StudioCard style={{ marginHorizontal: 20, marginTop: 16 }}>
         <Pressable
           onPress={() => setCulturalFormOpen((o) => !o)}
           disabled={editingCultural}
@@ -352,26 +331,16 @@ export default function EducatorCultureScreen() {
         <Text className="mb-2 mt-3 text-xs font-semibold uppercase tracking-wide" style={{ color: M.sub }}>
           {t("educator.culture.categoryLabel")}
         </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {CULTURAL_CATEGORIES.map((cat) => {
-            const active = culturalForm.category === cat;
-            return (
-              <Pressable
-                key={cat}
-                onPress={() => setCulturalForm((c) => ({ ...c, category: cat }))}
-                className="mr-2 rounded-full px-3 py-1.5"
-                style={{ backgroundColor: active ? getAccent("purple").solid : M.card }}
-              >
-                <Text
-                  className="text-xs font-semibold"
-                  style={{ color: active ? "#FFFFFF" : M.sub }}
-                >
-                  {(t as (k: string) => string)(`educator.culture.categories.${cat}`)}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+        <StudioFilterPills
+          options={CULTURAL_CATEGORIES.map((cat) => ({
+            id: cat,
+            label: (t as (k: string) => string)(`educator.culture.categories.${cat}`),
+            color: getAccent("purple").solid,
+          }))}
+          value={culturalForm.category}
+          onChange={(category) => setCulturalForm((c) => ({ ...c, category }))}
+          scrollable
+        />
 
         <LocalizedTextInput
           label={t("educator.culture.descriptionLabel")}
@@ -559,7 +528,7 @@ export default function EducatorCultureScreen() {
               return { ...c, heroBands };
             });
           return (
-            <View key={i} className="mt-2 rounded-xl border p-3" style={{ backgroundColor: M.card, borderColor: M.border }}>
+            <StudioCard key={i} style={{ marginTop: 8 }}>
               <View className="flex-row items-center gap-2">
                 <View
                   className="h-8 w-12 rounded-md border"
@@ -611,7 +580,7 @@ export default function EducatorCultureScreen() {
                   <View className={`h-5 w-5 rounded-full bg-white ${band.dark ? "ml-auto" : ""}`} />
                 </View>
               </Pressable>
-            </View>
+            </StudioCard>
           );
         })}
         {culturalForm.heroBands.some((b) => !(isHex(b.from) && isHex(b.to))) && (
@@ -651,28 +620,15 @@ export default function EducatorCultureScreen() {
         </View>
         </>
         ) : null}
-      </View>
+      </StudioCard>
 
       {/* Search */}
       <View className="mt-5 px-5">
-        <View className="flex-row items-center rounded-xl px-3" style={{ backgroundColor: M.pillBg }}>
-          <IconSymbol name="magnifyingglass" size={16} color={M.muted} />
-          <TextInput
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder={t("educator.culture.searchCultural")}
-            placeholderTextColor={M.muted}
-            autoCapitalize="none"
-            autoCorrect={false}
-            style={{ color: M.text }}
-            className="ml-2 flex-1 py-2.5 text-sm"
-          />
-          {searchQuery.length > 0 && (
-            <Pressable onPress={() => setSearchQuery("")} hitSlop={8}>
-              <IconSymbol name="xmark" size={14} color={M.muted} />
-            </Pressable>
-          )}
-        </View>
+        <StudioSearchInput
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder={t("educator.culture.searchCultural")}
+        />
       </View>
 
       <View className="mt-4 px-5">
@@ -691,7 +647,7 @@ export default function EducatorCultureScreen() {
   // ── renderItem ────────────────────────────────────────────────────────────────
 
   const renderItem = ({ item }: { item: CulturalItem }) => (
-    <View className="mx-5 rounded-2xl border p-3" style={{ backgroundColor: M.card, borderColor: M.border }}>
+    <StudioCard style={{ marginHorizontal: 20 }}>
       <View className="flex-row items-center justify-between">
         <View className="flex-1 flex-row items-center gap-2.5 pr-3">
           <IconSymbol name={CULTURE_CATEGORY_ICON[item.category as CulturalCategory]} size={22} color={M.accent} />
@@ -717,20 +673,8 @@ export default function EducatorCultureScreen() {
             M={M}
             onToast={{ success: toastSuccess, error: toastError }}
           />
-          <Pressable
-            onPress={() => startEditCultural(item)}
-            className="rounded-full p-2"
-            style={{ backgroundColor: M.pillBg }}
-          >
-            <IconSymbol name="gearshape.fill" size={14} color={M.muted} />
-          </Pressable>
-          <Pressable
-            onPress={() => confirmDeleteCultural(item.id)}
-            className="rounded-full p-2"
-            style={{ backgroundColor: M.errorBg }}
-          >
-            <IconSymbol name="xmark.circle.fill" size={14} color={M.error} />
-          </Pressable>
+          <ActionPill icon="pencil" label={t("common.edit")} onPress={() => startEditCultural(item)} />
+          <ActionPill icon="trash.fill" label={t("common.delete")} tone="danger" onPress={() => confirmDeleteCultural(item.id)} />
         </View>
       </View>
       <View className="mt-2 flex-row items-center gap-2">
@@ -745,7 +689,7 @@ export default function EducatorCultureScreen() {
           </Text>
         )}
       </View>
-    </View>
+    </StudioCard>
   );
 
   // ── Empty state ───────────────────────────────────────────────────────────────
@@ -768,13 +712,7 @@ export default function EducatorCultureScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("educator.nav.culture"), headerBackTitle: "Back" }} />
-      <SafeAreaView className="flex-1" style={{ backgroundColor: M.bg }} edges={["top"]}>
-        <View className="flex-row items-center px-5 pb-1 pt-2">
-          <Pressable onPress={() => router.back()} hitSlop={12} className="-ml-1 p-1 active:opacity-60">
-            <IconSymbol name="chevron.left" size={22} color={M.text} />
-          </Pressable>
-        </View>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
+      <SafeAreaView className="flex-1" style={{ backgroundColor: M.ink }} edges={["top"]}>
         <NotificationBanner
           visible={toast.visible}
           title={toast.title}
@@ -782,8 +720,11 @@ export default function EducatorCultureScreen() {
           type={toast.type}
           onDismiss={dismissToast}
         />
+        <StudioScreenHeader title={t("educator.nav.culture")} subtitle={t("educator.culture.subtitle")} />
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         <FlatList
           ref={flatListRef}
+          style={{ flex: 1, backgroundColor: M.card }}
           data={filteredCultural}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}

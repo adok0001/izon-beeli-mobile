@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { GLOSS_LANGUAGES, toLocalizedText } from "@/components/ui/localized-text-input";
 import { useStudioAccess } from "@/components/studio/studio-gate";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useDirtyTracker, useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import {
@@ -327,13 +328,9 @@ export default function EducatorLessonEditScreen() {
     return (
       <>
         <Stack.Screen options={{ title: "Edit Lesson" }} />
-        <SafeAreaView className="flex-1" style={{ backgroundColor: M.bg }} edges={["top"]}>
-          <View className="flex-row items-center px-5 pb-1 pt-2">
-            <Pressable onPress={() => router.back()} hitSlop={12} className="-ml-1 p-1 active:opacity-60">
-              <IconSymbol name="chevron.left" size={22} color={M.text} />
-            </Pressable>
-          </View>
-          <View className="flex-1 items-center justify-center">
+        <SafeAreaView className="flex-1" style={{ backgroundColor: M.ink }} edges={["top"]}>
+          <StudioScreenHeader title={screenTitle} />
+          <View className="flex-1 items-center justify-center" style={{ backgroundColor: M.bg }}>
             <Text className="text-sm" style={{ color: M.sub }}>{t("common.loading")}</Text>
           </View>
         </SafeAreaView>
@@ -346,13 +343,9 @@ export default function EducatorLessonEditScreen() {
       <Stack.Screen
         options={{ title: screenTitle, headerBackTitle: course ? localize(course.title, uiLanguage) : "Lessons" }}
       />
-      <SafeAreaView className="flex-1" style={{ backgroundColor: M.bg }} edges={["top"]}>
-        <View className="flex-row items-center px-5 pb-1 pt-2">
-          <Pressable onPress={() => router.back()} hitSlop={12} className="-ml-1 p-1 active:opacity-60">
-            <IconSymbol name="chevron.left" size={22} color={M.text} />
-          </Pressable>
-        </View>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
+      <SafeAreaView className="flex-1" style={{ backgroundColor: M.ink }} edges={["top"]}>
+        <StudioScreenHeader title={screenTitle} />
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1, backgroundColor: M.bg }}>
         <NotificationBanner
           visible={toast.visible}
           title={toast.title}

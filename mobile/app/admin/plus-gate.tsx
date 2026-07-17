@@ -1,3 +1,5 @@
+import { StudioCard } from "@/components/studio/studio-card";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
 import { ApiError, apiFetch, friendlyError } from "@/lib/api";
@@ -43,27 +45,21 @@ export default function PlusGateScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("admin.nav.billing") }} />
-      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
+        <StudioScreenHeader
+          title={t("admin.nav.billing")}
+          subtitle={t("admin.organizations.plusSectionDesc")}
+        />
+
         <ScrollView
+          style={{ flex: 1, backgroundColor: M.card }}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ padding: 20, paddingBottom: 48 }}
           keyboardShouldPersistTaps="handled"
         >
-          <Text className="text-2xl font-bold text-neutral-900 dark:text-white mb-1">
-            {t("admin.nav.billing")}
-          </Text>
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400 mb-8">
-            {t("admin.organizations.plusSectionDesc")}
-          </Text>
-
           {/* Global toggle */}
-          <View
+          <StudioCard
             style={{
-              backgroundColor: M.card,
-              borderRadius: 16,
-              borderWidth: 1,
-              borderColor: M.border,
-              padding: 16,
               marginBottom: 24,
               flexDirection: "row",
               alignItems: "center",
@@ -105,27 +101,21 @@ export default function PlusGateScreen() {
                 </Text>
               )}
             </Pressable>
-          </View>
+          </StudioCard>
 
           {/* Per-user Plus grant/revoke lives in the comprehensive Users screen */}
-          <Pressable
-            onPress={() => router.push("/admin/users")}
-            style={{
-              flexDirection: "row", alignItems: "center",
-              borderRadius: 16, paddingHorizontal: 14, paddingVertical: 14,
-              backgroundColor: M.card, borderWidth: 1, borderColor: M.border,
-            }}
-            className="active:opacity-70"
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 14, fontWeight: "700", color: M.text }}>
-                {t("admin.overview.manageUsers")}
-              </Text>
-              <Text style={{ marginTop: 2, fontSize: 12, color: M.sub }}>
-                {t("admin.overview.manageUsersDesc")}
-              </Text>
-            </View>
-            <IconSymbol name="chevron.right" size={14} color={M.muted} />
+          <Pressable onPress={() => router.push("/admin/users")} className="active:opacity-70">
+            <StudioCard style={{ flexDirection: "row", alignItems: "center" }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontWeight: "700", color: M.text }}>
+                  {t("admin.overview.manageUsers")}
+                </Text>
+                <Text style={{ marginTop: 2, fontSize: 12, color: M.sub }}>
+                  {t("admin.overview.manageUsersDesc")}
+                </Text>
+              </View>
+              <IconSymbol name="chevron.right" size={14} color={M.muted} />
+            </StudioCard>
           </Pressable>
         </ScrollView>
       </SafeAreaView>

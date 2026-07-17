@@ -3,8 +3,9 @@ import { NotificationBanner } from "@/components/notifications/notification-bann
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { CourseCard, CourseEditModal } from "@/components/studio/course-editor";
 import { CourseGeneratorPanel } from "@/components/studio/course-generator-panel";
+import { StudioCard } from "@/components/studio/studio-card";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import { useStudioAccess } from "@/components/studio/studio-gate";
-import { fonts } from "@/constants/typography";
 import { localize } from "@/lib/localize";
 import {
     EducatorCourse,
@@ -76,12 +77,7 @@ export default function EducatorCoursesScreen() {
   return (
     <>
       <Stack.Screen options={{ title: "Courses", headerBackTitle: "Back" }} />
-      <SafeAreaView className="flex-1" style={{ backgroundColor: M.bg }} edges={["top"]}>
-        <View className="flex-row items-center px-5 pb-1 pt-2">
-          <Pressable onPress={() => router.back()} hitSlop={12} className="-ml-1 p-1 active:opacity-60">
-            <IconSymbol name="chevron.left" size={22} color={M.text} />
-          </Pressable>
-        </View>
+      <SafeAreaView className="flex-1" style={{ backgroundColor: M.ink }} edges={["top"]}>
         <NotificationBanner
           visible={toast.visible}
           title={toast.title}
@@ -89,7 +85,12 @@ export default function EducatorCoursesScreen() {
           type={toast.type}
           onDismiss={dismissToast}
         />
+        <StudioScreenHeader
+          title="Courses"
+          subtitle="Select a language, manage its courses, then add lessons."
+        />
         <DraggableFlatList<EducatorCourse>
+          style={{ flex: 1, backgroundColor: M.bg }}
           data={dragOrder}
           keyExtractor={(course) => course.id}
           onDragEnd={handleDragEnd}
@@ -124,14 +125,6 @@ export default function EducatorCoursesScreen() {
           )}
           ListHeaderComponent={
             <>
-              {/* Header */}
-              <View className="px-5 pt-4">
-                <Text className="text-2xl" style={{ fontFamily: fonts.heading, color: M.text }}>Courses</Text>
-                <Text className="mt-1 text-sm" style={{ color: M.sub }}>
-                  Select a language, manage its courses, then add lessons.
-                </Text>
-              </View>
-
               {/* Language Picker */}
               <View className="mt-4 px-5">
                 <Text className="mb-1.5 text-xs font-semibold uppercase tracking-[1.2px]" style={{ color: M.muted }}>
@@ -171,14 +164,14 @@ export default function EducatorCoursesScreen() {
             </>
           }
           ListEmptyComponent={
-            <View className="mx-5 mt-2 rounded-2xl border px-4 py-6" style={{ backgroundColor: M.card, borderColor: M.border }}>
+            <StudioCard style={{ marginHorizontal: 20, marginTop: 8, alignItems: "center", paddingVertical: 24 }}>
               <Text className="text-center text-sm font-semibold" style={{ color: M.sub }}>
                 No courses yet for {getLanguageName(activeLanguageId)}.
               </Text>
               <Text className="mt-1 text-center text-xs" style={{ color: M.muted }}>
                 Use the actions below to generate a starter set.
               </Text>
-            </View>
+            </StudioCard>
           }
           ListFooterComponent={
             <View className="mt-5 px-5">

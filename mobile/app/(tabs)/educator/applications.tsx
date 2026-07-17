@@ -1,5 +1,8 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
+import { StudioCard } from "@/components/studio/studio-card";
+import { StudioFilterPills } from "@/components/studio/studio-filter-pills";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { getAccent, type AccentHue } from "@/constants/accent-colors";
 import { friendlyError } from "@/lib/api";
@@ -12,7 +15,7 @@ import {
 } from "@/lib/hooks/use-educator-panel";
 import { useToast } from "@/lib/hooks/use-toast";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { Redirect, Stack, useRouter } from "expo-router";
+import { Redirect, Stack } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -188,16 +191,7 @@ function ApplicationCard({
   );
 
   return (
-    <View
-      style={{
-        marginHorizontal: 16,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: M.border,
-        backgroundColor: M.card,
-        padding: 16,
-      }}
-    >
+    <StudioCard style={{ marginHorizontal: 16 }}>
       <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 15, fontWeight: "800", color: M.text }}>
@@ -274,7 +268,7 @@ function ApplicationCard({
           </Pressable>
         </View>
       )}
-    </View>
+    </StudioCard>
   );
 }
 
@@ -296,7 +290,6 @@ function Detail({ label, value, italic }: Readonly<{ label: string; value: strin
 
 export default function ReviewerApplicationsScreen() {
   const M = useMuseumTheme();
-  const router = useRouter();
   const { t } = useTranslation();
   const { user, canAccess } = useStudioAccess();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
@@ -360,35 +353,15 @@ export default function ReviewerApplicationsScreen() {
 
   const listHeader = (
     <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 }}>
-      <Text style={{ fontSize: 24, fontWeight: "800", color: M.text }}>
-        {t("admin.applications.title")}
-      </Text>
-      <Text style={{ marginTop: 4, fontSize: 13, color: M.sub }}>
-        {t("admin.applications.subtitle")}
-      </Text>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
-        {filters.map(({ key, label, count }) => {
-          const active = filter === key;
-          return (
-            <Pressable
-              key={key}
-              onPress={() => setFilter(key)}
-              style={{
-                borderRadius: 999,
-                paddingHorizontal: 14,
-                paddingVertical: 7,
-                backgroundColor: active ? M.text : M.pillBg,
-              }}
-              className="active:opacity-70"
-            >
-              <Text style={{ fontSize: 12, fontWeight: "700", color: active ? M.card : M.sub }}>
-                {label}
-                {count ? ` (${count})` : ""}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      <StudioFilterPills
+        options={filters.map(({ key, label, count }) => ({
+          id: key,
+          label: count ? `${label} (${count})` : label,
+        }))}
+        value={filter}
+        onChange={setFilter}
+        scrollable
+      />
     </View>
   );
 
@@ -414,12 +387,7 @@ export default function ReviewerApplicationsScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("admin.nav.applications"), headerBackTitle: "Back" }} />
-      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["top"]}>
-        <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 }}>
-          <Pressable onPress={() => router.back()} hitSlop={12} style={{ marginLeft: -4, padding: 4 }} className="active:opacity-60">
-            <IconSymbol name="chevron.left" size={22} color={M.text} />
-          </Pressable>
-        </View>
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
         <NotificationBanner
           visible={toast.visible}
           title={toast.title}
@@ -427,7 +395,9 @@ export default function ReviewerApplicationsScreen() {
           type={toast.type}
           onDismiss={dismissToast}
         />
+        <StudioScreenHeader title={t("admin.applications.title")} subtitle={t("admin.applications.subtitle")} />
         <FlatList
+          style={{ flex: 1, backgroundColor: M.card }}
           data={visible}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (

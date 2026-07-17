@@ -1,5 +1,8 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LanguagePickerModal } from "@/components/language-picker";
+import { StudioFilterPills } from "@/components/studio/studio-filter-pills";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
+import { StudioSearchInput } from "@/components/studio/studio-search-input";
 import { apiFetch } from "@/lib/api";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -240,13 +243,14 @@ export default function DailyContentAdminScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("admin.dailyContent.title") }} />
-      <SafeAreaView className="flex-1" style={{ backgroundColor: M.bg }} edges={["top"]}>
-        <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-          <View className="px-5 pt-5 pb-3">
-            <Text className="text-2xl font-bold" style={{ color: M.text }}>{t("admin.dailyContent.title")}</Text>
-            <Text className="mt-1 text-sm" style={{ color: M.sub }}>{t("admin.dailyContent.subtitle")}</Text>
-          </View>
-
+      <SafeAreaView className="flex-1" style={{ backgroundColor: M.ink }} edges={["top"]}>
+        <StudioScreenHeader title={t("admin.dailyContent.title")} subtitle={t("admin.dailyContent.subtitle")} />
+        <ScrollView
+          style={{ flex: 1, backgroundColor: M.bg }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingTop: 16, paddingBottom: 40 }}
+        >
           {/* Language picker */}
           <View className="px-5 mb-4">
             <Pressable
@@ -260,22 +264,12 @@ export default function DailyContentAdminScreen() {
           </View>
 
           {/* Tabs */}
-          <View className="flex-row px-5 gap-2 mb-5">
-            {tabs.map((tab) => {
-              const active = activeTab === tab.key;
-              return (
-                <Pressable
-                  key={tab.key}
-                  onPress={() => { setActiveTab(tab.key); setSearch(""); }}
-                  className="flex-1 items-center rounded-xl py-2.5"
-                  style={{ backgroundColor: active ? M.accent : M.card }}
-                >
-                  <Text className="text-xs font-bold" style={{ color: active ? M.parchment : M.sub }}>
-                    {tab.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
+          <View className="px-5 mb-5">
+            <StudioFilterPills
+              options={tabs.map((tab) => ({ id: tab.key, label: tab.label }))}
+              value={activeTab}
+              onChange={(key) => { setActiveTab(key); setSearch(""); }}
+            />
           </View>
 
           {/* ---- Word of the Day ---- */}
@@ -388,14 +382,9 @@ export default function DailyContentAdminScreen() {
                 </View>
               )}
 
-              <TextInput
-                value={search}
-                onChangeText={setSearch}
-                placeholder={t("admin.dailyContent.wotd.searchPlaceholder")}
-                placeholderTextColor={M.muted}
-                style={inputStyle}
-                className="rounded-2xl border px-4 py-3 text-sm mb-3"
-              />
+              <View className="mb-3">
+                <StudioSearchInput value={search} onChangeText={setSearch} placeholder={t("admin.dailyContent.wotd.searchPlaceholder")} />
+              </View>
 
               {filteredWords.slice(0, 50).map((entry) => {
                 const isSelected = wotdAdmin?.overrideId === entry.id;
@@ -518,14 +507,9 @@ export default function DailyContentAdminScreen() {
                 </View>
               )}
 
-              <TextInput
-                value={search}
-                onChangeText={setSearch}
-                placeholder={t("admin.dailyContent.potm.searchPlaceholder")}
-                placeholderTextColor={M.muted}
-                style={inputStyle}
-                className="rounded-2xl border px-4 py-3 text-sm mb-3"
-              />
+              <View className="mb-3">
+                <StudioSearchInput value={search} onChangeText={setSearch} placeholder={t("admin.dailyContent.potm.searchPlaceholder")} />
+              </View>
 
               {filteredProverbs.slice(0, 50).map((proverb) => {
                 const isSelected = potmAdmin?.overrideId === proverb.id;
@@ -594,14 +578,9 @@ export default function DailyContentAdminScreen() {
                 </View>
               ) : null}
 
-              <TextInput
-                value={search}
-                onChangeText={setSearch}
-                placeholder={t("admin.dailyContent.sotw.searchPlaceholder")}
-                placeholderTextColor={M.muted}
-                style={inputStyle}
-                className="rounded-2xl border px-4 py-3 text-sm mb-3"
-              />
+              <View className="mb-3">
+                <StudioSearchInput value={search} onChangeText={setSearch} placeholder={t("admin.dailyContent.sotw.searchPlaceholder")} />
+              </View>
 
               {filteredSongs.slice(0, 50).map((song) => {
                 const isSelected = sotwAdmin?.overrideId === song.id;

@@ -1,6 +1,8 @@
 import { NotificationBanner } from "@/components/notifications/notification-banner";
-import { NewButton, SmallButton } from "@/components/studio/editor-form";
 import { ActiveToggle } from "@/components/studio/active-toggle";
+import { ActionPill } from "@/components/studio/studio-action-pill";
+import { StudioCard } from "@/components/studio/studio-card";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { Badge } from "@/components/ui/badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -30,7 +32,7 @@ import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { Alert, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function ArcCard({
@@ -59,7 +61,7 @@ function ArcCard({
   const status = arc.status as ContentStatus | undefined;
 
   return (
-    <View style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 14 }}>
+    <StudioCard>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
         <Text style={{ flex: 1, fontSize: 15, fontWeight: "800", color: M.text }} numberOfLines={1}>
           {arc.title}
@@ -82,15 +84,15 @@ function ArcCard({
           onToast={onToast}
         />
         {canSubmitForReview(status) && (
-          <SmallButton label={t("educator.story.submitButton")} onPress={onSubmit} M={M} />
+          <ActionPill label={t("educator.story.submitButton")} onPress={onSubmit} />
         )}
         {canPublishContent(status, arc.createdBy, actor) && (
-          <SmallButton label={t("educator.story.publishButton")} tone="publish" onPress={onPublish} M={M} />
+          <ActionPill icon="checkmark.circle.fill" label={t("educator.story.publishButton")} tone="success" onPress={onPublish} />
         )}
-        <SmallButton label={t("common.edit")} onPress={onEdit} M={M} />
-        <SmallButton label={t("common.delete")} tone="danger" onPress={onDelete} M={M} />
+        <ActionPill icon="pencil" label={t("common.edit")} onPress={onEdit} />
+        <ActionPill icon="trash.fill" label={t("common.delete")} tone="danger" onPress={onDelete} />
       </View>
-    </View>
+    </StudioCard>
   );
 }
 
@@ -178,17 +180,14 @@ export default function EducatorStoriesScreen() {
         onDismiss={dismissToast}
       />
       <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 }}>
-          <Pressable onPress={() => router.back()} hitSlop={12} className="active:opacity-60">
-            <IconSymbol name="chevron.left" size={22} color={M.parchment} />
-          </Pressable>
-          <View>
-            <Text style={{ fontSize: 24, fontWeight: "900", color: M.parchment }}>
-              {t("educator.story.screenTitle")}
-            </Text>
-            <Text style={{ fontSize: 12, color: M.textDim }}>{t("educator.story.screenSubtitle")}</Text>
-          </View>
-        </View>
+        <StudioScreenHeader
+          title={t("educator.story.screenTitle")}
+          subtitle={t("educator.story.screenSubtitle")}
+          action={{
+            label: t("educator.story.newArcTitle"),
+            onPress: () => router.push("/educator/story-new" as never),
+          }}
+        />
 
         <ScrollView
           style={{ flex: 1, backgroundColor: M.card }}
@@ -196,12 +195,6 @@ export default function EducatorStoriesScreen() {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
         >
-          <NewButton
-            label={t("educator.story.newArcTitle")}
-            onPress={() => router.push("/educator/story-new" as never)}
-            M={M}
-          />
-
           {isLoading ? (
             <Text style={{ color: M.muted, fontSize: 13 }}>{t("educator.story.loading")}</Text>
           ) : arcs.length === 0 ? (

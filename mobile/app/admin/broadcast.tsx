@@ -1,11 +1,13 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LanguagePickerModal } from "@/components/language-picker";
+import { StudioCard } from "@/components/studio/studio-card";
+import { StudioFilterPills } from "@/components/studio/studio-filter-pills";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import { apiFetch } from "@/lib/api";
 import { useLanguages } from "@/lib/hooks/use-languages";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { getAccent } from "@/constants/accent-colors";
 import { useAuth } from "@clerk/clerk-expo";
-import { Stack } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -94,178 +96,158 @@ export default function BroadcastScreen() {
   const blue = getAccent("blue").solid;
 
   return (
-    <>
-      <Stack.Screen options={{ title: t("admin.notifications.title") }} />
-      <SafeAreaView className="flex-1" style={{ backgroundColor: M.bg }} edges={["top"]}>
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
-        >
-          <Text className="text-2xl font-bold mb-1" style={{ color: M.text }}>
-            {t("admin.notifications.title")}
-          </Text>
-          <Text className="text-sm mb-6" style={{ color: M.sub }}>
-            {t("admin.notifications.subtitle")}
-          </Text>
-
-          {/* Audience role */}
-          <Text className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: M.muted }}>
-            {t("admin.notifications.audience")}
-          </Text>
-          <View className="flex-row gap-2 mb-3">
-            {ROLE_OPTIONS.map(({ value, label }) => {
-              const active = audience === value;
-              return (
-                <Pressable
-                  key={value}
-                  onPress={() => setAudience(value)}
-                  className="flex-1 items-center rounded-2xl border px-3 py-2.5 active:opacity-70"
-                  style={active
-                    ? { backgroundColor: M.infoBg, borderColor: M.infoBorder }
-                    : { backgroundColor: M.card, borderColor: M.border }}
-                >
-                  <Text className="text-xs font-semibold" style={{ color: active ? blue : M.sub }}>
-                    {label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          {/* Language filter */}
-          <View className="flex-row items-center gap-2">
-            <Pressable
-              onPress={() => setPickerVisible(true)}
-              className="flex-1 flex-row items-center justify-between rounded-2xl border px-4 py-3 active:opacity-70"
-              style={{ backgroundColor: M.card, borderColor: M.border }}
-            >
-              <Text className="text-sm font-semibold" style={{ color: M.text }}>
-                {selectedLanguageName}
-              </Text>
-              <IconSymbol name="chevron.right" size={16} color={M.muted} />
-            </Pressable>
-            {languageId && (
-              <Pressable
-                onPress={() => setLanguageId(null)}
-                hitSlop={8}
-                className="h-10 w-10 items-center justify-center rounded-2xl active:opacity-70"
-                style={{ backgroundColor: M.card }}
-              >
-                <IconSymbol name="xmark" size={16} color={M.muted} />
-              </Pressable>
-            )}
-          </View>
-          <Text className="mt-1.5 text-xs mb-5" style={{ color: M.muted }}>
-            {audience === "admins"
-              ? t("admin.notifications.audienceAdmins", "Only admins will receive this.")
-              : audience === "educators"
-              ? t("admin.notifications.audienceEducators", "Only educators (reviewers) will receive this.")
-              : languageId
-              ? t("admin.notifications.audienceFiltered", { language: selectedLanguageName, defaultValue: "Only {{language}} learners will receive this." })
-              : t("admin.notifications.audienceAll", "No language selected — all users will receive this.")}
-          </Text>
-
-          {/* Title */}
-          <Text className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: M.muted }}>
-            {t("admin.notifications.notifTitle")}
-          </Text>
-          <TextInput
-            value={title}
-            onChangeText={setTitle}
-            placeholder={t("admin.notifications.titlePlaceholder")}
-            placeholderTextColor={M.muted}
-            maxLength={100}
-            style={inputStyle}
-            className="rounded-2xl border px-4 py-3 text-sm mb-5"
+    <SafeAreaView className="flex-1" style={{ backgroundColor: M.ink }} edges={["top"]}>
+      <StudioScreenHeader title={t("admin.notifications.title")} subtitle={t("admin.notifications.subtitle")} />
+      <ScrollView
+        style={{ backgroundColor: M.bg }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+      >
+        {/* Audience role */}
+        <Text className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: M.muted }}>
+          {t("admin.notifications.audience")}
+        </Text>
+        <View className="mb-3">
+          <StudioFilterPills
+            options={ROLE_OPTIONS.map(({ value, label }) => ({ id: value, label }))}
+            value={audience}
+            onChange={setAudience}
           />
+        </View>
 
-          {/* Body */}
-          <Text className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: M.muted }}>
-            {t("admin.notifications.message")}
-          </Text>
-          <TextInput
-            value={body}
-            onChangeText={setBody}
-            placeholder={t("admin.notifications.messagePlaceholder")}
-            placeholderTextColor={M.muted}
-            maxLength={250}
-            multiline
-            numberOfLines={3}
-            textAlignVertical="top"
-            style={inputStyle}
-            className="rounded-2xl border px-4 py-3 text-sm mb-1 min-h-[80px]"
-          />
-          <Text className="text-xs text-right mb-6" style={{ color: M.muted }}>{body.length}/250</Text>
-
-          {/* Icon */}
-          <Text className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: M.muted }}>
-            Icon
-          </Text>
-          <View className="flex-row flex-wrap gap-2 mb-6">
-            {BROADCAST_ICONS.map(({ name, label }) => {
-              const active = selectedIcon === name;
-              return (
-                <Pressable
-                  key={name}
-                  onPress={() => setSelectedIcon(name)}
-                  className="items-center gap-1.5 rounded-2xl px-3 py-2.5 border active:opacity-70"
-                  style={active
-                    ? { backgroundColor: M.infoBg, borderColor: M.infoBorder }
-                    : { backgroundColor: M.card, borderColor: M.border }}
-                >
-                  <IconSymbol
-                    name={name as any}
-                    size={20}
-                    color={active ? blue : M.muted}
-                  />
-                  <Text className="text-[10px] font-medium" style={{ color: active ? blue : M.muted }}>
-                    {label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          {/* Preview */}
-          {(title.trim() || body.trim()) ? (
-            <View className="rounded-2xl px-4 py-4 mb-6" style={{ backgroundColor: M.card }}>
-              <View className="flex-row items-center gap-2 mb-2">
-                <IconSymbol name={selectedIcon as any} size={14} color={M.muted} />
-                <Text className="text-xs font-semibold uppercase tracking-widest" style={{ color: M.muted }}>
-                  {t("admin.notifications.preview")}
-                </Text>
-              </View>
-              <Text className="text-sm font-bold" style={{ color: M.text }}>{title || t("admin.notifications.notifTitle")}</Text>
-              <Text className="text-sm mt-0.5" style={{ color: M.sub }}>{body || t("admin.notifications.message")}</Text>
-            </View>
-          ) : null}
-
-          {/* Send button */}
+        {/* Language filter */}
+        <View className="flex-row items-center gap-2">
           <Pressable
-            onPress={handleSend}
-            disabled={!canSend}
-            className={`flex-row items-center justify-center gap-2 rounded-2xl py-4 ${canSend ? "active:opacity-80" : ""}`}
-            style={{ backgroundColor: canSend ? M.accent : M.border }}
+            onPress={() => setPickerVisible(true)}
+            className="flex-1 flex-row items-center justify-between rounded-2xl border px-4 py-3 active:opacity-70"
+            style={{ backgroundColor: M.card, borderColor: M.border }}
           >
-            {sending ? (
-              <ActivityIndicator size="small" color={M.parchment} />
-            ) : (
-              <IconSymbol name="paperplane.fill" size={16} color={canSend ? M.parchment : M.muted} />
-            )}
-            <Text className="text-base font-bold" style={{ color: canSend ? M.parchment : M.muted }}>
-              {sending ? t("admin.notifications.sending") : t("admin.notifications.send")}
+            <Text className="text-sm font-semibold" style={{ color: M.text }}>
+              {selectedLanguageName}
             </Text>
+            <IconSymbol name="chevron.right" size={16} color={M.muted} />
           </Pressable>
-        </ScrollView>
+          {languageId && (
+            <Pressable
+              onPress={() => setLanguageId(null)}
+              hitSlop={8}
+              className="h-10 w-10 items-center justify-center rounded-2xl active:opacity-70"
+              style={{ backgroundColor: M.card }}
+            >
+              <IconSymbol name="xmark" size={16} color={M.muted} />
+            </Pressable>
+          )}
+        </View>
+        <Text className="mt-1.5 text-xs mb-5" style={{ color: M.muted }}>
+          {audience === "admins"
+            ? t("admin.notifications.audienceAdmins", "Only admins will receive this.")
+            : audience === "educators"
+            ? t("admin.notifications.audienceEducators", "Only educators (reviewers) will receive this.")
+            : languageId
+            ? t("admin.notifications.audienceFiltered", { language: selectedLanguageName, defaultValue: "Only {{language}} learners will receive this." })
+            : t("admin.notifications.audienceAll", "No language selected — all users will receive this.")}
+        </Text>
 
-        <LanguagePickerModal
-          visible={pickerVisible}
-          selectedId={languageId ?? ""}
-          onSelect={(id) => { setLanguageId(id); setPickerVisible(false); }}
-          onClose={() => setPickerVisible(false)}
+        {/* Title */}
+        <Text className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: M.muted }}>
+          {t("admin.notifications.notifTitle")}
+        </Text>
+        <TextInput
+          value={title}
+          onChangeText={setTitle}
+          placeholder={t("admin.notifications.titlePlaceholder")}
+          placeholderTextColor={M.muted}
+          maxLength={100}
+          style={inputStyle}
+          className="rounded-2xl border px-4 py-3 text-sm mb-5"
         />
-      </SafeAreaView>
-    </>
+
+        {/* Body */}
+        <Text className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: M.muted }}>
+          {t("admin.notifications.message")}
+        </Text>
+        <TextInput
+          value={body}
+          onChangeText={setBody}
+          placeholder={t("admin.notifications.messagePlaceholder")}
+          placeholderTextColor={M.muted}
+          maxLength={250}
+          multiline
+          numberOfLines={3}
+          textAlignVertical="top"
+          style={inputStyle}
+          className="rounded-2xl border px-4 py-3 text-sm mb-1 min-h-[80px]"
+        />
+        <Text className="text-xs text-right mb-6" style={{ color: M.muted }}>{body.length}/250</Text>
+
+        {/* Icon */}
+        <Text className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: M.muted }}>
+          Icon
+        </Text>
+        <View className="flex-row flex-wrap gap-2 mb-6">
+          {BROADCAST_ICONS.map(({ name, label }) => {
+            const active = selectedIcon === name;
+            return (
+              <Pressable
+                key={name}
+                onPress={() => setSelectedIcon(name)}
+                className="items-center gap-1.5 rounded-2xl px-3 py-2.5 border active:opacity-70"
+                style={active
+                  ? { backgroundColor: M.infoBg, borderColor: M.infoBorder }
+                  : { backgroundColor: M.card, borderColor: M.border }}
+              >
+                <IconSymbol
+                  name={name as any}
+                  size={20}
+                  color={active ? blue : M.muted}
+                />
+                <Text className="text-[10px] font-medium" style={{ color: active ? blue : M.muted }}>
+                  {label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {/* Preview */}
+        {(title.trim() || body.trim()) ? (
+          <StudioCard style={{ marginBottom: 24 }}>
+            <View className="flex-row items-center gap-2 mb-2">
+              <IconSymbol name={selectedIcon as any} size={14} color={M.muted} />
+              <Text className="text-xs font-semibold uppercase tracking-widest" style={{ color: M.muted }}>
+                {t("admin.notifications.preview")}
+              </Text>
+            </View>
+            <Text className="text-sm font-bold" style={{ color: M.text }}>{title || t("admin.notifications.notifTitle")}</Text>
+            <Text className="text-sm mt-0.5" style={{ color: M.sub }}>{body || t("admin.notifications.message")}</Text>
+          </StudioCard>
+        ) : null}
+
+        {/* Send button */}
+        <Pressable
+          onPress={handleSend}
+          disabled={!canSend}
+          className={`flex-row items-center justify-center gap-2 rounded-2xl py-4 ${canSend ? "active:opacity-80" : ""}`}
+          style={{ backgroundColor: canSend ? M.accent : M.border }}
+        >
+          {sending ? (
+            <ActivityIndicator size="small" color={M.parchment} />
+          ) : (
+            <IconSymbol name="paperplane.fill" size={16} color={canSend ? M.parchment : M.muted} />
+          )}
+          <Text className="text-base font-bold" style={{ color: canSend ? M.parchment : M.muted }}>
+            {sending ? t("admin.notifications.sending") : t("admin.notifications.send")}
+          </Text>
+        </Pressable>
+      </ScrollView>
+
+      <LanguagePickerModal
+        visible={pickerVisible}
+        selectedId={languageId ?? ""}
+        onSelect={(id) => { setLanguageId(id); setPickerVisible(false); }}
+        onClose={() => setPickerVisible(false)}
+      />
+    </SafeAreaView>
   );
 }

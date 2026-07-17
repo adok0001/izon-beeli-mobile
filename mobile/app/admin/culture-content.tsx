@@ -1,5 +1,10 @@
 import { ItemForm, TYPE_CONFIG } from "@/components/studio/culture-item-form";
 import { ActiveToggle } from "@/components/studio/active-toggle";
+import { ActionPill } from "@/components/studio/studio-action-pill";
+import { StudioCard } from "@/components/studio/studio-card";
+import { StudioFilterPills } from "@/components/studio/studio-filter-pills";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
+import { StudioSearchInput } from "@/components/studio/studio-search-input";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
 import { apiFetch } from "@/lib/api";
@@ -18,7 +23,6 @@ import {
   Pressable,
   ScrollView,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -153,69 +157,42 @@ export default function CultureContentAdminScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("admin.cultureContent.title") }} />
-      <SafeAreaView className="flex-1" style={{ backgroundColor: M.bg }} edges={["top"]}>
-        <View className="px-5 pt-5 pb-3">
-          <View className="flex-row items-center justify-between mb-1">
-            <Text className="text-2xl font-bold" style={{ color: M.text }}>{t("admin.cultureContent.title")}</Text>
-            <Pressable
-              onPress={() => { setEditTarget(null); setModalMode("create"); }}
-              className="flex-row items-center gap-1.5 rounded-2xl px-4 py-2 active:opacity-80"
-              style={{ backgroundColor: M.accent }}
-            >
-              <IconSymbol name="plus" size={13} color={M.parchment} />
-              <Text className="text-sm font-bold" style={{ color: M.parchment }}>{t("admin.cultureContent.newButton")}</Text>
-            </Pressable>
-          </View>
-          <Text className="text-sm" style={{ color: M.sub }}>
-            {t("admin.cultureContent.subtitle")}
-          </Text>
-        </View>
+      <SafeAreaView className="flex-1" style={{ backgroundColor: M.ink }} edges={["top"]}>
+        <StudioScreenHeader
+          title={t("admin.cultureContent.title")}
+          subtitle={t("admin.cultureContent.subtitle")}
+          action={{
+            label: t("admin.cultureContent.newButton"),
+            onPress: () => { setEditTarget(null); setModalMode("create"); },
+          }}
+        />
 
         {/* Filter pills */}
-        <View className="flex-row px-5 gap-2 mb-3">
-          {FILTER_OPTIONS.map((opt) => {
-            const active = filter === opt.id;
-            const color =
-              opt.id === "blog" ? getAccent("sky").solid :
-              opt.id === "podcast" ? getAccent("purple").solid :
-              opt.id === "film" ? getAccent("orange").solid : M.accent;
-            const filterLabel = opt.id === "all"
-              ? t("admin.cultureContent.filterAll")
-              : t(`admin.cultureContent.typeLabel.${opt.id}` as const);
-            return (
-              <Pressable
-                key={opt.id}
-                onPress={() => { setFilter(opt.id); setSearch(""); }}
-                className="rounded-xl px-3.5 py-1.5"
-                style={active ? { backgroundColor: `${color}18`, borderWidth: 1, borderColor: `${color}60` } : { backgroundColor: M.card }}
-              >
-                <Text
-                  className="text-xs font-bold"
-                  style={{ color: active ? color : M.sub }}
-                >
-                  {filterLabel}
-                </Text>
-              </Pressable>
-            );
-          })}
+        <View className="px-5 mb-3" style={{ backgroundColor: M.bg, paddingTop: 4 }}>
+          <StudioFilterPills
+            options={FILTER_OPTIONS.map((opt) => ({
+              id: opt.id,
+              label: opt.id === "all" ? t("admin.cultureContent.filterAll") : t(`admin.cultureContent.typeLabel.${opt.id}` as const),
+              color:
+                opt.id === "blog" ? getAccent("sky").solid :
+                opt.id === "podcast" ? getAccent("purple").solid :
+                opt.id === "film" ? getAccent("orange").solid : undefined,
+            }))}
+            value={filter}
+            onChange={(id) => { setFilter(id); setSearch(""); }}
+          />
         </View>
 
         {/* Search */}
-        <View className="px-5 mb-3">
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder={t("admin.cultureContent.searchPlaceholder")}
-            placeholderTextColor={M.muted}
-            style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
-            className="rounded-2xl border px-4 py-2.5 text-sm"
-          />
+        <View className="px-5 mb-3" style={{ backgroundColor: M.bg }}>
+          <StudioSearchInput value={search} onChangeText={setSearch} placeholder={t("admin.cultureContent.searchPlaceholder")} />
         </View>
 
         {/* List */}
         <ScrollView
+          style={{ flex: 1, backgroundColor: M.bg }}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 40 }}
         >
           {isLoading ? (
             <ActivityIndicator className="my-8" color={M.accent} />
@@ -230,20 +207,8 @@ export default function CultureContentAdminScreen() {
             filtered.map((item) => {
               const cfg = TYPE_CONFIG[item.type];
               return (
-                <View
-                  key={item.id}
-                  style={{
-                    borderRadius: 16,
-                    backgroundColor: M.card,
-                    borderWidth: 1,
-                    borderColor: M.border,
-                    borderLeftWidth: 4,
-                    borderLeftColor: cfg.color,
-                    marginBottom: 10,
-                    overflow: "hidden",
-                  }}
-                >
-                  <View style={{ padding: 14 }}>
+                <StudioCard key={item.id} accentColor={cfg.color} style={{ marginBottom: 10 }}>
+                  <View>
                     {/* Header row */}
                     <View className="flex-row items-start justify-between gap-2 mb-1">
                       <View className="flex-1">
@@ -299,25 +264,13 @@ export default function CultureContentAdminScreen() {
                         borderTopWidth: 1, borderTopColor: M.border,
                       }}
                     >
-                      <Pressable
+                      <ActionPill
+                        icon={item.featured ? "star.fill" : "star"}
+                        label={item.featured ? t("admin.cultureContent.unfeatureButton") : t("admin.cultureContent.featureButton")}
+                        tone="accent"
+                        active={item.featured}
                         onPress={() => toggleFeatured.mutate({ id: item.id, featured: !item.featured })}
-                        style={{
-                          flexDirection: "row", alignItems: "center", gap: 5,
-                          borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5,
-                          backgroundColor: item.featured ? `${getAccent("amber").solid}18` : `${M.border}`,
-                          borderWidth: 1,
-                          borderColor: item.featured ? `${getAccent("amber").solid}50` : M.border,
-                        }}
-                      >
-                        <IconSymbol
-                          name={item.featured ? "star.fill" : "star"}
-                          size={11}
-                          color={item.featured ? getAccent("amber").solid : M.muted}
-                        />
-                        <Text style={{ fontSize: 11, fontWeight: "700", color: item.featured ? getAccent("amber").solid : M.muted }}>
-                          {item.featured ? t("admin.cultureContent.unfeatureButton") : t("admin.cultureContent.featureButton")}
-                        </Text>
-                      </Pressable>
+                      />
 
                       <ActiveToggle
                         entityType="culture_items"
@@ -330,34 +283,11 @@ export default function CultureContentAdminScreen() {
 
                       <View style={{ flex: 1 }} />
 
-                      <Pressable
-                        onPress={() => openEdit(item)}
-                        style={{
-                          flexDirection: "row", alignItems: "center", gap: 5,
-                          borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5,
-                          backgroundColor: `${getAccent("sky").solid}18`,
-                          borderWidth: 1, borderColor: `${getAccent("sky").solid}40`,
-                        }}
-                      >
-                        <IconSymbol name="pencil" size={11} color={getAccent("sky").solid} />
-                        <Text style={{ fontSize: 11, fontWeight: "700", color: getAccent("sky").solid }}>{t("admin.cultureContent.editButton")}</Text>
-                      </Pressable>
-
-                      <Pressable
-                        onPress={() => confirmDelete(item)}
-                        style={{
-                          flexDirection: "row", alignItems: "center", gap: 5,
-                          borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5,
-                          backgroundColor: M.errorBg,
-                          borderWidth: 1, borderColor: M.errorBorder,
-                        }}
-                      >
-                        <IconSymbol name="trash" size={11} color={M.error} />
-                        <Text style={{ fontSize: 11, fontWeight: "700", color: M.error }}>{t("admin.cultureContent.deleteButton")}</Text>
-                      </Pressable>
+                      <ActionPill icon="pencil" label={t("admin.cultureContent.editButton")} onPress={() => openEdit(item)} />
+                      <ActionPill icon="trash.fill" label={t("admin.cultureContent.deleteButton")} tone="danger" onPress={() => confirmDelete(item)} />
                     </View>
                   </View>
-                </View>
+                </StudioCard>
               );
             })
           )}

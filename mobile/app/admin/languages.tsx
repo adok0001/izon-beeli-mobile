@@ -1,5 +1,8 @@
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useStudioAccess } from "@/components/studio/studio-gate";
+import { ActionPill, ActiveTogglePill } from "@/components/studio/studio-action-pill";
+import { StudioCard } from "@/components/studio/studio-card";
+import { GhostButton, LabeledInput, PrimaryButton } from "@/components/studio/studio-form";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import { friendlyError } from "@/lib/api";
 import {
   useAdminLanguages,
@@ -10,9 +13,8 @@ import {
 import { useToast } from "@/lib/hooks/use-toast";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Pressable, ScrollView, Switch, Text, TextInput, View } from "react-native";
+import { ScrollView, Switch, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 /**
@@ -40,11 +42,11 @@ const EMPTY_FORM: LanguageForm = {
 
 export default function LanguagesScreen() {
   const M = useMuseumTheme();
-  const router = useRouter();
   useStudioAccess();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
 
   const [form, setForm] = useState<LanguageForm>(EMPTY_FORM);
+  const [formOpen, setFormOpen] = useState(false);
 
   const languagesQuery = useAdminLanguages();
   const upsert = useUpsertLanguage();
@@ -52,6 +54,12 @@ export default function LanguagesScreen() {
 
   function resetForm() {
     setForm(EMPTY_FORM);
+    setFormOpen(false);
+  }
+
+  function openNew() {
+    resetForm();
+    setFormOpen(true);
   }
 
   function startEdit(l: Language) {
@@ -63,6 +71,7 @@ export default function LanguagesScreen() {
       isActive: l.isActive,
       isNew: false,
     });
+    setFormOpen(true);
   }
 
   function handleSave() {
@@ -98,15 +107,11 @@ export default function LanguagesScreen() {
         type={toast.type}
         onDismiss={dismissToast}
       />
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 }}>
-        <Pressable onPress={() => router.back()} hitSlop={12} className="active:opacity-60">
-          <IconSymbol name="chevron.left" size={22} color={M.parchment} />
-        </Pressable>
-        <View>
-          <Text style={{ fontSize: 24, fontWeight: "900", color: M.parchment }}>Languages</Text>
-          <Text style={{ fontSize: 12, color: M.textDim }}>Supported languages and their metadata.</Text>
-        </View>
-      </View>
+      <StudioScreenHeader
+        title="Languages"
+        subtitle="Supported languages and their metadata."
+        action={{ label: "New language", icon: "plus", onPress: openNew }}
+      />
 
       <ScrollView
         style={{ flex: 1, backgroundColor: M.card }}
@@ -114,7 +119,8 @@ export default function LanguagesScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Editor form */}
-        <View style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 16, gap: 10, marginBottom: 20 }}>
+        {formOpen && (
+        <StudioCard style={{ gap: 10, marginBottom: 20 }}>
           <Text style={{ fontSize: 14, fontWeight: "800", color: M.text }}>
             {form.isNew ? "New language" : "Edit language"}
           </Text>
@@ -139,10 +145,11 @@ export default function LanguagesScreen() {
             />
           </View>
           <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
-            <PrimaryButton label={upsert.isPending ? "Saving…" : form.isNew ? "Create" : "Save"} onPress={handleSave} M={M} />
-            {!form.isNew && <GhostButton label="Cancel" onPress={resetForm} M={M} />}
+            <PrimaryButton label={upsert.isPending ? "Saving…" : form.isNew ? "Create" : "Save"} onPress={handleSave} />
+            <GhostButton label="Cancel" onPress={resetForm} />
           </View>
-        </View>
+        </StudioCard>
+        )}
 
         {/* List */}
         {languagesQuery.isPending && <Text style={{ color: M.muted, fontSize: 13 }}>Loading…</Text>}
@@ -151,31 +158,12 @@ export default function LanguagesScreen() {
         )}
         <View style={{ gap: 10 }}>
           {languagesQuery.data?.map((l) => (
-            <View key={l.id} style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 14 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                <Text style={{ fontSize: 15, fontWeight: "800", color: M.text }}>{l.name}</Text>
-                <View
-                  style={{
-                    borderRadius: 999,
-                    paddingHorizontal: 8,
-                    paddingVertical: 2,
-                    backgroundColor: l.isActive ? M.successBg : M.card,
-                    borderWidth: 1,
-                    borderColor: l.isActive ? M.successBorder : M.border,
-                  }}
-                >
-                  <Text style={{ fontSize: 10, fontWeight: "800", color: l.isActive ? M.success : M.muted }}>
-                    {l.isActive ? "ACTIVE" : "INACTIVE"}
-                  </Text>
-                </View>
-              </View>
-              <Text style={{ marginTop: 4, fontSize: 13, color: M.sub }}>
-                {l.nativeName} · {l.region} · {l.id}
-              </Text>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
-                <SmallButton label="Edit" onPress={() => startEdit(l)} M={M} />
-                <SmallButton
-                  label={l.isActive ? "Deactivate" : "Activate"}
+            <StudioCard key={l.id}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                <Text style={{ flex: 1, fontSize: 15, fontWeight: "800", color: M.text }}>{l.name}</Text>
+                <ActiveTogglePill
+                  active={l.isActive}
+                  pending={upsert.isPending}
                   onPress={() =>
                     upsert.mutate(
                       {
@@ -192,65 +180,29 @@ export default function LanguagesScreen() {
                       }
                     )
                   }
-                  M={M}
                 />
-                <SmallButton label="Delete" tone="danger" onPress={() =>
-                  remove.mutate(l.id, {
-                    onSuccess: () => toastSuccess("Deleted"),
-                    onError: (e: Error) => toastError("Delete failed", friendlyError(e)),
-                  })
-                } M={M} />
               </View>
-            </View>
+              <Text style={{ marginTop: 4, fontSize: 13, color: M.sub }}>
+                {l.nativeName} · {l.region} · {l.id}
+              </Text>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+                <ActionPill icon="pencil" label="Edit" onPress={() => startEdit(l)} />
+                <ActionPill
+                  icon="trash.fill"
+                  label="Delete"
+                  tone="danger"
+                  onPress={() =>
+                    remove.mutate(l.id, {
+                      onSuccess: () => toastSuccess("Deleted"),
+                      onError: (e: Error) => toastError("Delete failed", friendlyError(e)),
+                    })
+                  }
+                />
+              </View>
+            </StudioCard>
           ))}
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-}
-
-type M = ReturnType<typeof useMuseumTheme>;
-
-function LabeledInput({ label, value, onChange }: Readonly<{ label: string; value: string; onChange: (v: string) => void }>) {
-  const M = useMuseumTheme();
-  return (
-    <View>
-      <Text style={{ fontSize: 11, fontWeight: "600", color: M.sub, marginBottom: 4 }}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChange}
-        placeholderTextColor={M.inputPlaceholder}
-        style={{
-          borderRadius: 10, borderWidth: 1, borderColor: M.inputBorder,
-          backgroundColor: M.inputBg, color: M.inputText,
-          paddingHorizontal: 12, paddingVertical: 10, fontSize: 14,
-        }}
-      />
-    </View>
-  );
-}
-
-function PrimaryButton({ label, onPress, M }: Readonly<{ label: string; onPress: () => void; M: M }>) {
-  return (
-    <Pressable onPress={onPress} style={{ borderRadius: 12, paddingHorizontal: 16, paddingVertical: 11, backgroundColor: M.accent }} className="active:opacity-80">
-      <Text style={{ fontWeight: "800", color: M.ink, fontSize: 14 }}>{label}</Text>
-    </Pressable>
-  );
-}
-
-function GhostButton({ label, onPress, M }: Readonly<{ label: string; onPress: () => void; M: M }>) {
-  return (
-    <Pressable onPress={onPress} style={{ borderRadius: 12, paddingHorizontal: 16, paddingVertical: 11, backgroundColor: M.bg, borderWidth: 1, borderColor: M.border }} className="active:opacity-70">
-      <Text style={{ fontWeight: "700", color: M.sub, fontSize: 14 }}>{label}</Text>
-    </Pressable>
-  );
-}
-
-function SmallButton({ label, onPress, tone, M }: Readonly<{ label: string; onPress: () => void; tone?: "danger"; M: M }>) {
-  const color = tone === "danger" ? M.error : M.sub;
-  return (
-    <Pressable onPress={onPress} style={{ borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7, backgroundColor: M.card, borderWidth: 1, borderColor: M.border }} className="active:opacity-70">
-      <Text style={{ fontWeight: "700", color, fontSize: 12 }}>{label}</Text>
-    </Pressable>
   );
 }

@@ -1,8 +1,10 @@
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { SceneAssignSheet, type SceneOption } from "@/components/studio/scene-assign-sheet";
+import { ActionPill, ActiveTogglePill } from "@/components/studio/studio-action-pill";
+import { StudioCard } from "@/components/studio/studio-card";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import { useStudioAccess } from "@/components/studio/studio-gate";
-import { fonts } from "@/constants/typography";
 import {
     EducatorLesson,
     useEducatorCourses,
@@ -55,7 +57,7 @@ function LessonRow({
       onLongPress={onDrag}
       delayLongPress={200}
       className="rounded-2xl border p-4 active:opacity-70"
-      style={{ opacity: dragging ? 0.85 : 1, backgroundColor: M.card, borderColor: M.border }}
+      style={{ opacity: dragging ? 0.85 : 1, backgroundColor: M.bg, borderColor: M.border }}
     >
       <View className="flex-row items-center">
         <View className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-900/30">
@@ -91,36 +93,14 @@ function LessonRow({
         <IconSymbol name="chevron.right" size={16} color={M.muted} />
       </View>
       <View className="mt-3 flex-row items-center justify-between border-t pt-3" style={{ borderColor: M.border }}>
-        <Pressable
-          onPress={(e) => { e.stopPropagation?.(); onToggleActive(); }}
-          disabled={toggling}
-          className="flex-row items-center gap-1.5 rounded-full px-3 py-1"
-          style={{ backgroundColor: isActive ? M.successBg : M.pillBg }}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <IconSymbol
-            name={isActive ? "eye" : "eye.slash"}
-            size={12}
-            color={isActive ? M.success : M.muted}
-          />
-          <Text
-            className="text-xs font-semibold"
-            style={{ color: isActive ? M.success : M.muted }}
-          >
-            {toggling ? "…" : isActive ? "Active" : "Inactive"}
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={(e) => { e.stopPropagation?.(); onAssignScene(); }}
-          className="flex-row items-center gap-1.5 rounded-full px-3 py-1"
-          style={{ backgroundColor: lesson.scene ? M.accentGlow : M.pillBg }}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <IconSymbol name="square.grid.2x2" size={12} color={lesson.scene ? M.accent : M.muted} />
-          <Text className="text-xs font-semibold" style={{ color: lesson.scene ? M.accent : M.muted }} numberOfLines={1}>
-            {lesson.sceneTitle ?? lesson.scene ?? "Scene"}
-          </Text>
-        </Pressable>
+        <ActiveTogglePill active={isActive} pending={toggling} onPress={onToggleActive} />
+        <ActionPill
+          icon="square.grid.2x2"
+          label={lesson.sceneTitle ?? lesson.scene ?? "Scene"}
+          tone="accent"
+          active={!!lesson.scene}
+          onPress={onAssignScene}
+        />
       </View>
     </Pressable>
   );
@@ -196,12 +176,7 @@ export default function EducatorLessonsScreen() {
       <Stack.Screen
         options={{ title: courseTitle ?? "Lessons", headerBackTitle: "Courses" }}
       />
-      <SafeAreaView className="flex-1" style={{ backgroundColor: M.bg }} edges={["top"]}>
-        <View className="flex-row items-center px-5 pb-1 pt-2">
-          <Pressable onPress={() => router.back()} hitSlop={12} className="-ml-1 p-1 active:opacity-60">
-            <IconSymbol name="chevron.left" size={22} color={M.text} />
-          </Pressable>
-        </View>
+      <SafeAreaView className="flex-1" style={{ backgroundColor: M.ink }} edges={["top"]}>
         <NotificationBanner
           visible={toast.visible}
           title={toast.title}
@@ -209,10 +184,24 @@ export default function EducatorLessonsScreen() {
           type={toast.type}
           onDismiss={dismissToast}
         />
+        <StudioScreenHeader
+          title={courseTitle ?? "Lessons"}
+          subtitle={courseDescription || undefined}
+          action={{
+            label: "New Lesson",
+            icon: "plus",
+            onPress: () =>
+              router.push({
+                pathname: "/educator/lesson-edit",
+                params: { courseId: courseId ?? "" },
+              }),
+          }}
+        />
         <DraggableFlatList<EducatorLesson>
           data={dragOrder}
           keyExtractor={(lesson) => lesson.id}
           onDragEnd={handleDragEnd}
+          style={{ flex: 1, backgroundColor: M.card }}
           contentContainerStyle={{ paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
@@ -250,40 +239,15 @@ export default function EducatorLessonsScreen() {
           )}
           ListHeaderComponent={
             <>
-              {/* Header */}
-              <View className="px-5 pt-4">
-                <Text className="text-2xl" style={{ fontFamily: fonts.heading, color: M.text }}>
-                  {courseTitle ?? "Lessons"}
-                </Text>
-                {courseDescription ? (
-                  <Text className="mt-1 text-sm" style={{ color: M.sub }}>
-                    {courseDescription}
-                  </Text>
-                ) : null}
-                {course?.courseType ? (
-                  <View className="mt-2 self-start rounded-full px-2.5 py-0.5" style={{ backgroundColor: M.pillBg }}>
+              {course?.courseType ? (
+                <View className="px-5 pt-4">
+                  <View className="self-start rounded-full px-2.5 py-0.5" style={{ backgroundColor: M.pillBg }}>
                     <Text className="text-xs" style={{ color: M.sub }}>
                       {course.courseType}
                     </Text>
                   </View>
-                ) : null}
-              </View>
-
-              {/* New Lesson CTA */}
-              <View className="mt-4 px-5">
-                <Pressable
-                  onPress={() =>
-                    router.push({
-                      pathname: "/educator/lesson-edit",
-                      params: { courseId: courseId ?? "" },
-                    })
-                  }
-                  className="flex-row items-center justify-center rounded-2xl bg-brand-500 py-3.5 active:opacity-80"
-                >
-                  <IconSymbol name="plus" size={16} color={M.parchment} />
-                  <Text className="ml-2 text-sm font-semibold text-white">New Lesson</Text>
-                </Pressable>
-              </View>
+                </View>
+              ) : null}
 
               {/* Lesson List label */}
               <View className="mt-5 px-5">
@@ -299,13 +263,15 @@ export default function EducatorLessonsScreen() {
             </>
           }
           ListEmptyComponent={
-            <View className="mx-5 rounded-2xl border px-4 py-6" style={{ backgroundColor: M.card, borderColor: M.border }}>
-              <Text className="text-center text-sm font-semibold" style={{ color: M.sub }}>
-                No lessons yet in this course.
-              </Text>
-              <Text className="mt-1 text-center text-xs" style={{ color: M.muted }}>
-                Tap &ldquo;New Lesson&rdquo; above to add the first one.
-              </Text>
+            <View className="mx-5 mt-4">
+              <StudioCard>
+                <Text className="text-center text-sm font-semibold" style={{ color: M.sub }}>
+                  No lessons yet in this course.
+                </Text>
+                <Text className="mt-1 text-center text-xs" style={{ color: M.muted }}>
+                  Tap &ldquo;New Lesson&rdquo; above to add the first one.
+                </Text>
+              </StudioCard>
             </View>
           }
         />

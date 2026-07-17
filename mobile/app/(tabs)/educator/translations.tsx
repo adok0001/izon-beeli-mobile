@@ -1,4 +1,3 @@
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { friendlyError } from "@/lib/api";
 import {
@@ -10,17 +9,20 @@ import {
 } from "@/lib/hooks/educator/use-translations";
 import { useToast } from "@/lib/hooks/use-toast";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
+import { ActionPill } from "@/components/studio/studio-action-pill";
+import { StudioCard } from "@/components/studio/studio-card";
+import { StudioFilterPills } from "@/components/studio/studio-filter-pills";
+import { FormInput } from "@/components/studio/studio-form";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
-import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
+import { RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function TranslationQueueScreen() {
   const M = useMuseumTheme();
-  const router = useRouter();
   const { user } = useStudioAccess();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
 
@@ -67,15 +69,7 @@ export default function TranslationQueueScreen() {
         type={toast.type}
         onDismiss={dismissToast}
       />
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 }}>
-        <Pressable onPress={() => router.back()} hitSlop={12} className="active:opacity-60">
-          <IconSymbol name="chevron.left" size={22} color={M.parchment} />
-        </Pressable>
-        <View>
-          <Text style={{ fontSize: 24, fontWeight: "900", color: M.parchment }}>Translations</Text>
-          <Text style={{ fontSize: 12, color: M.textDim }}>Fill in missing glosses per locale.</Text>
-        </View>
-      </View>
+      <StudioScreenHeader title="Translations" subtitle="Fill in missing glosses per locale." />
 
       <ScrollView
         style={{ flex: 1, backgroundColor: M.card }}
@@ -83,46 +77,21 @@ export default function TranslationQueueScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
       >
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
-          <View style={{ flexDirection: "row", gap: 8 }}>
-            {allowedLanguages.map((languageId) => {
-              const active = languageId === activeLanguageId;
-              return (
-                <Pressable
-                  key={languageId}
-                  onPress={() => { setSelectedLanguageId(languageId); setDrafts({}); }}
-                  style={{
-                    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
-                    backgroundColor: active ? M.accent : M.bg,
-                    borderWidth: 1, borderColor: active ? M.accent : M.border,
-                  }}
-                >
-                  <Text style={{ fontSize: 13, fontWeight: "700", color: active ? M.ink : M.sub }}>
-                    {getLanguageName(languageId)}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </ScrollView>
+        <View style={{ marginBottom: 16 }}>
+          <StudioFilterPills
+            options={allowedLanguages.map((languageId) => ({ id: languageId, label: getLanguageName(languageId) }))}
+            value={activeLanguageId}
+            onChange={(languageId) => { setSelectedLanguageId(languageId); setDrafts({}); }}
+            scrollable
+          />
+        </View>
 
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
-          {GLOSS_LOCALES.map((l) => (
-            <Pressable
-              key={l.code}
-              onPress={() => setLocale(l.code)}
-              style={{
-                paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999,
-                backgroundColor: locale === l.code ? M.accent : M.bg,
-                borderWidth: 1, borderColor: locale === l.code ? M.accent : M.border,
-              }}
-              className="active:opacity-70"
-            >
-              <Text style={{ fontSize: 12, fontWeight: "700", color: locale === l.code ? M.ink : M.sub }}>
-                {l.label}
-              </Text>
-            </Pressable>
-          ))}
+        <View style={{ marginBottom: 16 }}>
+          <StudioFilterPills
+            options={GLOSS_LOCALES.map((l) => ({ id: l.code, label: l.label }))}
+            value={locale}
+            onChange={setLocale}
+          />
         </View>
 
         {queueQuery.isPending && <Text style={{ color: M.muted, fontSize: 13 }}>Loading…</Text>}
@@ -141,55 +110,41 @@ export default function TranslationQueueScreen() {
             const needsExampleGloss = !!entry.example;
             const canSave = draft.gloss.trim().length > 0 && (!needsExampleGloss || draft.exampleGloss.trim().length > 0);
             return (
-              <View key={entry.id} style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 14, gap: 8 }}>
+              <StudioCard key={entry.id} style={{ gap: 8 }}>
                 <Text style={{ fontSize: 15, fontWeight: "800", color: M.text }}>{entry.word}</Text>
                 {entry.example && <Text style={{ fontSize: 12, color: M.muted }}>{entry.example}</Text>}
-                <TextInput
+                <FormInput
                   value={draft.gloss}
                   onChangeText={(v) => setDrafts((d) => ({ ...d, [entry.id]: { ...draft, gloss: v } }))}
                   placeholder={`Gloss in ${locale}…`}
-                  placeholderTextColor={M.inputPlaceholder}
                   multiline
-                  style={{
-                    borderRadius: 10, borderWidth: 1, borderColor: M.inputBorder,
-                    backgroundColor: M.inputBg, color: M.inputText,
-                    paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, minHeight: 44,
-                  }}
                 />
                 {needsExampleGloss && (
-                  <TextInput
+                  <FormInput
                     value={draft.exampleGloss}
                     onChangeText={(v) => setDrafts((d) => ({ ...d, [entry.id]: { ...draft, exampleGloss: v } }))}
                     placeholder={`Example translation in ${locale}…`}
-                    placeholderTextColor={M.inputPlaceholder}
                     multiline
-                    style={{
-                      borderRadius: 10, borderWidth: 1, borderColor: M.inputBorder,
-                      backgroundColor: M.inputBg, color: M.inputText,
-                      paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, minHeight: 44,
-                    }}
                   />
                 )}
-                <Pressable
-                  disabled={!canSave || save.isPending}
-                  onPress={() =>
-                    save.mutate(
-                      { entry, locale, gloss: draft.gloss.trim(), exampleGloss: draft.exampleGloss.trim() },
-                      {
-                        onSuccess: () => toastSuccess(`Saved "${entry.word}"`),
-                        onError: (err: Error) => toastError("Save failed", friendlyError(err)),
-                      }
-                    )
-                  }
-                  style={{
-                    alignSelf: "flex-start", borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8,
-                    backgroundColor: M.accent, opacity: !canSave || save.isPending ? 0.4 : 1,
-                  }}
-                  className="active:opacity-80"
-                >
-                  <Text style={{ fontWeight: "800", color: M.ink, fontSize: 13 }}>Save</Text>
-                </Pressable>
-              </View>
+                <View style={{ alignSelf: "flex-start" }}>
+                  <ActionPill
+                    icon="checkmark"
+                    label="Save"
+                    tone="success"
+                    disabled={!canSave || save.isPending}
+                    onPress={() =>
+                      save.mutate(
+                        { entry, locale, gloss: draft.gloss.trim(), exampleGloss: draft.exampleGloss.trim() },
+                        {
+                          onSuccess: () => toastSuccess(`Saved "${entry.word}"`),
+                          onError: (err: Error) => toastError("Save failed", friendlyError(err)),
+                        }
+                      )
+                    }
+                  />
+                </View>
+              </StudioCard>
             );
           })}
         </View>

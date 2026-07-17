@@ -2,6 +2,7 @@ import { NotificationBanner } from "@/components/notifications/notification-bann
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { friendlyError } from "@/lib/api";
 import { useStudioAccess } from "@/components/studio/studio-gate";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useDirtyTracker, useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import { SeasonCastEditor } from "@/components/studio/season-cast-editor";
@@ -235,13 +236,9 @@ export default function StoryEditScreen() {
         type={toast.type}
         onDismiss={dismissToast}
       />
-      <SafeAreaView className="flex-1" style={{ backgroundColor: M.bg }} edges={["top", "bottom"]}>
-        <View className="flex-row items-center px-5 pb-1 pt-2">
-          <Pressable onPress={() => router.back()} hitSlop={12} className="-ml-1 p-1 active:opacity-60">
-            <IconSymbol name="chevron.left" size={22} color={M.text} />
-          </Pressable>
-        </View>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
+      <SafeAreaView className="flex-1" style={{ backgroundColor: M.ink }} edges={["top"]}>
+        <StudioScreenHeader title={arc?.title ?? t("educator.story.screenTitle")} />
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1" style={{ backgroundColor: M.bg }}>
         {isLoading ? (
           <View className="flex-1 items-center justify-center">
             <Text className="text-sm" style={{ color: M.muted }}>{t("educator.story.loading")}</Text>

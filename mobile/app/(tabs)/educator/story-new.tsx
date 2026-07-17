@@ -1,8 +1,8 @@
 import { LanguagePickerModal } from "@/components/language-picker";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useStudioAccess } from "@/components/studio/studio-gate";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import { friendlyError } from "@/lib/api";
-import { fonts } from "@/constants/typography";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useDirtyTracker, useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import {
@@ -124,14 +124,14 @@ export default function StoryNewScreen() {
           ),
         }}
       />
-      <SafeAreaView className="flex-1" style={{ backgroundColor: M.bg }} edges={["top"]}>
-        <View className="flex-row items-center px-5 pb-1 pt-2">
-          <Pressable onPress={() => router.back()} hitSlop={12} className="-ml-1 p-1 active:opacity-60">
-            <IconSymbol name="chevron.left" size={22} color={M.text} />
-          </Pressable>
-        </View>
+      <SafeAreaView className="flex-1" style={{ backgroundColor: M.ink }} edges={["top"]}>
+        <StudioScreenHeader
+          title={t("educator.story.newArcTitle")}
+          subtitle={t("educator.story.newArcSubtitle")}
+        />
         <KeyboardAvoidingView
           className="flex-1"
+          style={{ backgroundColor: M.bg }}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
           <ScrollView
@@ -139,15 +139,6 @@ export default function StoryNewScreen() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <View className="px-5 pt-4">
-              <Text className="text-2xl" style={{ fontFamily: fonts.heading, color: M.text }}>
-                {t("educator.story.newArcTitle")}
-              </Text>
-              <Text className="mt-1 text-sm" style={{ color: M.sub }}>
-                {t("educator.story.newArcSubtitle")}
-              </Text>
-            </View>
-
             {error ? (
               <View className="mx-5 mt-4 rounded-xl px-4 py-3" style={{ backgroundColor: M.errorBg }}>
                 <Text className="text-sm" style={{ color: M.error }}>{error}</Text>

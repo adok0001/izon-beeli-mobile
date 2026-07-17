@@ -1,9 +1,12 @@
 import { Badge } from "@/components/ui/badge";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { GhostButton, LabeledInput, NewButton, PrimaryButton, SmallButton } from "@/components/studio/editor-form";
 import { LocalizedTextInput, serializeLocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { ActiveToggle } from "@/components/studio/active-toggle";
+import { ActionPill } from "@/components/studio/studio-action-pill";
+import { StudioCard } from "@/components/studio/studio-card";
+import { StudioFilterPills } from "@/components/studio/studio-filter-pills";
+import { GhostButton, LabeledInput, PrimaryButton } from "@/components/studio/studio-form";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import { friendlyError } from "@/lib/api";
 import {
   canPublishContent,
@@ -28,10 +31,9 @@ import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { LocalizedText } from "@/types";
-import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 /**
@@ -61,7 +63,6 @@ const EMPTY_FORM: ProverbForm = {
 
 export default function ProverbsScreen() {
   const M = useMuseumTheme();
-  const router = useRouter();
   const { t } = useTranslation();
   const { user } = useStudioAccess();
   const { uiLanguage } = useUiLanguageStore();
@@ -153,15 +154,11 @@ export default function ProverbsScreen() {
         type={toast.type}
         onDismiss={dismissToast}
       />
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 }}>
-        <Pressable onPress={() => router.back()} hitSlop={12} className="active:opacity-60">
-          <IconSymbol name="chevron.left" size={22} color={M.parchment} />
-        </Pressable>
-        <View>
-          <Text style={{ fontSize: 24, fontWeight: "900", color: M.parchment }}>{t("admin.nav.proverbs")}</Text>
-          <Text style={{ fontSize: 12, color: M.textDim }}>{t("educator.proverbsEditor.subtitle")}</Text>
-        </View>
-      </View>
+      <StudioScreenHeader
+        title={t("admin.nav.proverbs")}
+        subtitle={t("educator.proverbsEditor.subtitle")}
+        action={!formOpen ? { label: t("educator.proverbsEditor.newButton"), icon: "plus", onPress: () => setFormOpen(true) } : undefined}
+      />
 
       <ScrollView
         style={{ flex: 1, backgroundColor: M.card }}
@@ -170,36 +167,18 @@ export default function ProverbsScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
       >
         {/* Language tabs */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
-          <View style={{ flexDirection: "row", gap: 8 }}>
-            {allowedLanguages.map((languageId) => {
-              const active = languageId === activeLanguageId;
-              return (
-                <Pressable
-                  key={languageId}
-                  onPress={() => { setSelectedLanguageId(languageId); resetForm(); }}
-                  style={{
-                    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
-                    backgroundColor: active ? M.accent : M.bg,
-                    borderWidth: 1, borderColor: active ? M.accent : M.border,
-                  }}
-                >
-                  <Text style={{ fontSize: 13, fontWeight: "700", color: active ? M.ink : M.sub }}>
-                    {getLanguageName(languageId)}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </ScrollView>
-
-        {!formOpen && (
-          <NewButton label={t("educator.proverbsEditor.newButton")} onPress={() => setFormOpen(true)} M={M} />
-        )}
+        <View style={{ marginBottom: 16 }}>
+          <StudioFilterPills
+            options={allowedLanguages.map((languageId) => ({ id: languageId, label: getLanguageName(languageId) }))}
+            value={activeLanguageId}
+            onChange={(languageId) => { setSelectedLanguageId(languageId); resetForm(); }}
+            scrollable
+          />
+        </View>
 
         {/* Editor form */}
         {formOpen && (
-          <View style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 16, gap: 10, marginBottom: 20 }}>
+          <StudioCard style={{ gap: 10, marginBottom: 20 }}>
             <Text style={{ fontSize: 14, fontWeight: "800", color: M.text }}>
               {editing ? t("educator.proverbsEditor.editTitle") : t("educator.proverbsEditor.newTitle")}
             </Text>
@@ -220,15 +199,16 @@ export default function ProverbsScreen() {
             <LabeledInput label={t("educator.proverbsEditor.contextLabel")} value={form.context} onChange={(v) => setForm({ ...form, context: v })} />
             <LabeledInput label={t("educator.proverbsEditor.tagsLabel")} value={form.tags} onChange={(v) => setForm({ ...form, tags: v })} />
             <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
-              <PrimaryButton
-                label={upsert.isPending ? t("educator.proverbsEditor.saving") : editing ? t("common.save") : t("educator.proverbsEditor.createDraft")}
-                onPress={handleSave}
-                M={M}
-                disabled={upsert.isPending}
-              />
-              <GhostButton label={t("common.cancel")} onPress={resetForm} M={M} />
+              <View style={{ flex: 1 }}>
+                <PrimaryButton
+                  label={upsert.isPending ? t("educator.proverbsEditor.saving") : editing ? t("common.save") : t("educator.proverbsEditor.createDraft")}
+                  onPress={handleSave}
+                  disabled={upsert.isPending}
+                />
+              </View>
+              <GhostButton label={t("common.cancel")} onPress={resetForm} />
             </View>
-          </View>
+          </StudioCard>
         )}
 
         {/* List */}
@@ -238,7 +218,7 @@ export default function ProverbsScreen() {
         )}
         <View style={{ gap: 10 }}>
           {proverbsQuery.data?.map((p) => (
-            <View key={p.id} style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 14 }}>
+            <StudioCard key={p.id}>
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                 <Text style={{ flex: 1, fontSize: 15, fontWeight: "800", color: M.text }}>{p.text}</Text>
                 {p.status && <Badge label={STATUS_LABEL[p.status as ContentStatus]} tone={STATUS_TONE[p.status as ContentStatus]} />}
@@ -255,30 +235,44 @@ export default function ProverbsScreen() {
                   onToast={{ success: toastSuccess, error: toastError }}
                 />
                 {canSubmitForReview(p.status) && (
-                  <SmallButton label={t("educator.proverbsEditor.submitButton")} onPress={() =>
-                    submitForReview.mutate(p.id, {
-                      onSuccess: () => toastSuccess(t("educator.proverbsEditor.submitted")),
-                      onError: (e: Error) => toastError(t("educator.proverbsEditor.submitFailed"), friendlyError(e)),
-                    })
-                  } M={M} />
+                  <ActionPill
+                    icon="paperplane.fill"
+                    label={t("educator.proverbsEditor.submitButton")}
+                    onPress={() =>
+                      submitForReview.mutate(p.id, {
+                        onSuccess: () => toastSuccess(t("educator.proverbsEditor.submitted")),
+                        onError: (e: Error) => toastError(t("educator.proverbsEditor.submitFailed"), friendlyError(e)),
+                      })
+                    }
+                  />
                 )}
                 {canPublishContent(p.status, p.createdBy, actor) && (
-                  <SmallButton label={t("educator.proverbsEditor.publishButton")} tone="publish" onPress={() =>
-                    publish.mutate(p.id, {
-                      onSuccess: () => toastSuccess(t("educator.proverbsEditor.published")),
-                      onError: (e: Error) => toastError(t("educator.proverbsEditor.publishFailed"), friendlyError(e)),
-                    })
-                  } M={M} />
+                  <ActionPill
+                    icon="checkmark.circle.fill"
+                    label={t("educator.proverbsEditor.publishButton")}
+                    tone="success"
+                    onPress={() =>
+                      publish.mutate(p.id, {
+                        onSuccess: () => toastSuccess(t("educator.proverbsEditor.published")),
+                        onError: (e: Error) => toastError(t("educator.proverbsEditor.publishFailed"), friendlyError(e)),
+                      })
+                    }
+                  />
                 )}
-                <SmallButton label={t("common.edit")} onPress={() => startEdit(p)} M={M} />
-                <SmallButton label={t("common.delete")} tone="danger" onPress={() =>
-                  remove.mutate(p.id, {
-                    onSuccess: () => toastSuccess(t("educator.proverbsEditor.deleted")),
-                    onError: (e: Error) => toastError(t("educator.proverbsEditor.deleteFailed"), friendlyError(e)),
-                  })
-                } M={M} />
+                <ActionPill icon="pencil" label={t("common.edit")} onPress={() => startEdit(p)} />
+                <ActionPill
+                  icon="trash.fill"
+                  label={t("common.delete")}
+                  tone="danger"
+                  onPress={() =>
+                    remove.mutate(p.id, {
+                      onSuccess: () => toastSuccess(t("educator.proverbsEditor.deleted")),
+                      onError: (e: Error) => toastError(t("educator.proverbsEditor.deleteFailed"), friendlyError(e)),
+                    })
+                  }
+                />
               </View>
-            </View>
+            </StudioCard>
           ))}
         </View>
       </ScrollView>

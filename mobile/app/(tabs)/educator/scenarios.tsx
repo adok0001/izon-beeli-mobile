@@ -1,9 +1,12 @@
 import { Badge } from "@/components/ui/badge";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { GhostButton, LabeledInput, NewButton, PrimaryButton, SmallButton } from "@/components/studio/editor-form";
 import { LocalizedTextInput, serializeLocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { ActiveToggle } from "@/components/studio/active-toggle";
+import { ActionPill } from "@/components/studio/studio-action-pill";
+import { StudioCard } from "@/components/studio/studio-card";
+import { StudioFilterPills } from "@/components/studio/studio-filter-pills";
+import { GhostButton, LabeledInput, PrimaryButton } from "@/components/studio/studio-form";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import { friendlyError } from "@/lib/api";
 import {
   canPublishContent,
@@ -27,10 +30,9 @@ import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import type { LocalizedText } from "@/types";
-import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 /**
@@ -45,7 +47,6 @@ const EMPTY_TURN: TurnDraft = { text: "", translation: {} };
 
 export default function ScenariosScreen() {
   const M = useMuseumTheme();
-  const router = useRouter();
   const { t } = useTranslation();
   const { user } = useStudioAccess();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
@@ -163,15 +164,11 @@ export default function ScenariosScreen() {
         type={toast.type}
         onDismiss={dismissToast}
       />
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 }}>
-        <Pressable onPress={() => router.back()} hitSlop={12} className="active:opacity-60">
-          <IconSymbol name="chevron.left" size={22} color={M.parchment} />
-        </Pressable>
-        <View>
-          <Text style={{ fontSize: 24, fontWeight: "900", color: M.parchment }}>{t("admin.nav.scenarios")}</Text>
-          <Text style={{ fontSize: 12, color: M.textDim }}>{t("educator.scenariosEditor.subtitle")}</Text>
-        </View>
-      </View>
+      <StudioScreenHeader
+        title={t("admin.nav.scenarios")}
+        subtitle={t("educator.scenariosEditor.subtitle")}
+        action={!formOpen ? { label: t("educator.scenariosEditor.newButton"), icon: "plus", onPress: () => setFormOpen(true) } : undefined}
+      />
 
       <ScrollView
         style={{ flex: 1, backgroundColor: M.card }}
@@ -180,36 +177,18 @@ export default function ScenariosScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
       >
         {/* Language tabs */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
-          <View style={{ flexDirection: "row", gap: 8 }}>
-            {allowedLanguages.map((languageId) => {
-              const active = languageId === activeLanguageId;
-              return (
-                <Pressable
-                  key={languageId}
-                  onPress={() => { setSelectedLanguageId(languageId); resetForm(); }}
-                  style={{
-                    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
-                    backgroundColor: active ? M.accent : M.bg,
-                    borderWidth: 1, borderColor: active ? M.accent : M.border,
-                  }}
-                >
-                  <Text style={{ fontSize: 13, fontWeight: "700", color: active ? M.ink : M.sub }}>
-                    {getLanguageName(languageId)}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </ScrollView>
-
-        {!formOpen && (
-          <NewButton label={t("educator.scenariosEditor.newButton")} onPress={() => setFormOpen(true)} M={M} />
-        )}
+        <View style={{ marginBottom: 16 }}>
+          <StudioFilterPills
+            options={allowedLanguages.map((languageId) => ({ id: languageId, label: getLanguageName(languageId) }))}
+            value={activeLanguageId}
+            onChange={(languageId) => { setSelectedLanguageId(languageId); resetForm(); }}
+            scrollable
+          />
+        </View>
 
         {/* Editor form */}
         {formOpen && (
-          <View style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 16, gap: 10, marginBottom: 20 }}>
+          <StudioCard style={{ gap: 10, marginBottom: 20 }}>
             <Text style={{ fontSize: 14, fontWeight: "800", color: M.text }}>
               {editing ? t("educator.scenariosEditor.editTitle") : t("educator.scenariosEditor.newTitle")}
             </Text>
@@ -217,11 +196,11 @@ export default function ScenariosScreen() {
 
             <Text style={{ fontSize: 12, fontWeight: "800", color: M.text, marginTop: 4 }}>{t("educator.scenariosEditor.turnsLabel")}</Text>
             {turns.map((turn, index) => (
-              <View key={index} style={{ borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, padding: 12, gap: 8 }}>
+              <StudioCard key={index} style={{ gap: 8 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                   <Text style={{ fontSize: 11, fontWeight: "700", color: M.sub }}>{t("educator.scenariosEditor.turnLabel", { number: index + 1 })}</Text>
                   {turns.length > 1 && (
-                    <SmallButton label={t("educator.scenariosEditor.removeTurn")} tone="danger" onPress={() => removeTurn(index)} M={M} />
+                    <ActionPill icon="trash.fill" label={t("educator.scenariosEditor.removeTurn")} tone="danger" onPress={() => removeTurn(index)} />
                   )}
                 </View>
                 <LabeledInput label={t("educator.scenariosEditor.textLabel")} value={turn.text} onChange={(v) => updateTurn(index, { text: v })} />
@@ -231,22 +210,23 @@ export default function ScenariosScreen() {
                   onChange={(translation) => updateTurn(index, { translation })}
                   required
                 />
-              </View>
+              </StudioCard>
             ))}
             <View style={{ marginTop: 2 }}>
-              <GhostButton label={t("educator.scenariosEditor.addTurn")} onPress={addTurn} M={M} />
+              <GhostButton label={t("educator.scenariosEditor.addTurn")} onPress={addTurn} />
             </View>
 
             <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
-              <PrimaryButton
-                label={saving ? t("educator.scenariosEditor.saving") : editing ? t("common.save") : t("educator.scenariosEditor.createDraft")}
-                onPress={handleSave}
-                M={M}
-                disabled={saving}
-              />
-              <GhostButton label={t("common.cancel")} onPress={resetForm} M={M} />
+              <View style={{ flex: 1 }}>
+                <PrimaryButton
+                  label={saving ? t("educator.scenariosEditor.saving") : editing ? t("common.save") : t("educator.scenariosEditor.createDraft")}
+                  onPress={handleSave}
+                  disabled={saving}
+                />
+              </View>
+              <GhostButton label={t("common.cancel")} onPress={resetForm} />
             </View>
-          </View>
+          </StudioCard>
         )}
 
         {/* List */}
@@ -256,7 +236,7 @@ export default function ScenariosScreen() {
         )}
         <View style={{ gap: 10 }}>
           {scenariosQuery.data?.map((s) => (
-            <View key={s.id} style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 14 }}>
+            <StudioCard key={s.id}>
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                 <Text style={{ flex: 1, fontSize: 15, fontWeight: "800", color: M.text }}>{s.situation}</Text>
                 {s.status && <Badge label={STATUS_LABEL[s.status as ContentStatus]} tone={STATUS_TONE[s.status as ContentStatus]} />}
@@ -276,36 +256,50 @@ export default function ScenariosScreen() {
                   onToast={{ success: toastSuccess, error: toastError }}
                 />
                 {canSubmitForReview(s.status) && (
-                  <SmallButton label={t("educator.scenariosEditor.submitButton")} onPress={() =>
-                    update.mutate(
-                      { id: s.id, languageId: activeLanguageId, status: "in_review" },
-                      {
-                        onSuccess: () => toastSuccess(t("educator.scenariosEditor.submitted")),
-                        onError: (e: Error) => toastError(t("educator.scenariosEditor.submitFailed"), friendlyError(e)),
-                      }
-                    )
-                  } M={M} />
+                  <ActionPill
+                    icon="paperplane.fill"
+                    label={t("educator.scenariosEditor.submitButton")}
+                    onPress={() =>
+                      update.mutate(
+                        { id: s.id, languageId: activeLanguageId, status: "in_review" },
+                        {
+                          onSuccess: () => toastSuccess(t("educator.scenariosEditor.submitted")),
+                          onError: (e: Error) => toastError(t("educator.scenariosEditor.submitFailed"), friendlyError(e)),
+                        }
+                      )
+                    }
+                  />
                 )}
                 {canPublishContent(s.status, s.createdBy, actor) && (
-                  <SmallButton label={t("educator.scenariosEditor.publishButton")} tone="publish" onPress={() =>
-                    publish.mutate(s.id, {
-                      onSuccess: () => toastSuccess(t("educator.scenariosEditor.published")),
-                      onError: (e: Error) => toastError(t("educator.scenariosEditor.publishFailed"), friendlyError(e)),
-                    })
-                  } M={M} />
-                )}
-                <SmallButton label={t("common.edit")} onPress={() => startEdit(s)} M={M} />
-                <SmallButton label={t("common.delete")} tone="danger" onPress={() =>
-                  remove.mutate(
-                    { id: s.id, languageId: activeLanguageId },
-                    {
-                      onSuccess: () => toastSuccess(t("educator.scenariosEditor.deleted")),
-                      onError: (e: Error) => toastError(t("educator.scenariosEditor.deleteFailed"), friendlyError(e)),
+                  <ActionPill
+                    icon="checkmark.circle.fill"
+                    label={t("educator.scenariosEditor.publishButton")}
+                    tone="success"
+                    onPress={() =>
+                      publish.mutate(s.id, {
+                        onSuccess: () => toastSuccess(t("educator.scenariosEditor.published")),
+                        onError: (e: Error) => toastError(t("educator.scenariosEditor.publishFailed"), friendlyError(e)),
+                      })
                     }
-                  )
-                } M={M} />
+                  />
+                )}
+                <ActionPill icon="pencil" label={t("common.edit")} onPress={() => startEdit(s)} />
+                <ActionPill
+                  icon="trash.fill"
+                  label={t("common.delete")}
+                  tone="danger"
+                  onPress={() =>
+                    remove.mutate(
+                      { id: s.id, languageId: activeLanguageId },
+                      {
+                        onSuccess: () => toastSuccess(t("educator.scenariosEditor.deleted")),
+                        onError: (e: Error) => toastError(t("educator.scenariosEditor.deleteFailed"), friendlyError(e)),
+                      }
+                    )
+                  }
+                />
               </View>
-            </View>
+            </StudioCard>
           ))}
         </View>
       </ScrollView>

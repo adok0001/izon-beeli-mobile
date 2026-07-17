@@ -1,3 +1,7 @@
+import { StudioCard } from "@/components/studio/studio-card";
+import { StudioFilterPills } from "@/components/studio/studio-filter-pills";
+import { FormField, FormInput, PrimaryButton } from "@/components/studio/studio-form";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent, type AccentHue } from "@/constants/accent-colors";
 import { ApiError, apiFetch, friendlyError } from "@/lib/api";
@@ -94,14 +98,6 @@ const SCENARIO_CONFIGS: Omit<Scenario, "label" | "detail">[] = [
     body: { streak: 0, lastActive: "clear", freezes: 0 },
   },
 ];
-
-function FieldLabel({ label }: { label: string }) {
-  return (
-    <Text className="text-xs font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-2">
-      {label}
-    </Text>
-  );
-}
 
 function Stepper({
   value,
@@ -271,127 +267,69 @@ export default function StreakToolsScreen() {
   }
 
   const accentColor = getAccent("orange").solid;
+  const applyButtonLabel = t("admin.streakTools.custom.applyButton");
 
   return (
     <>
       <Stack.Screen options={{ title: t("admin.streakTools.title") }} />
-      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
+        <StudioScreenHeader title={t("admin.streakTools.title")} subtitle={t("admin.streakTools.subtitle")} />
+
         <ScrollView
+          style={{ flex: 1, backgroundColor: M.card }}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ padding: 20, paddingBottom: 48 }}
           keyboardShouldPersistTaps="handled"
         >
-          <Text className="text-2xl font-bold text-neutral-900 dark:text-white mb-1">
-            {t("admin.streakTools.title")}
-          </Text>
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400 mb-8">
-            {t("admin.streakTools.subtitle")}
-          </Text>
-
           {/* ── Custom override ───────────────────────────────────────── */}
-          <Text className="text-xs font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-4">
+          <Text className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: M.muted }}>
             {t("admin.streakTools.custom.sectionTitle")}
           </Text>
 
-          <View
-            style={{
-              backgroundColor: M.card,
-              borderRadius: 16,
-              borderWidth: 1,
-              borderColor: M.border,
-              padding: 16,
-              marginBottom: 8,
-              gap: 16,
-            }}
-          >
+          <StudioCard style={{ marginBottom: 8, gap: 16 }}>
             {/* Streak */}
-            <View>
-              <FieldLabel label={t("admin.streakTools.custom.streakLabel")} />
+            <FormField label={t("admin.streakTools.custom.streakLabel")}>
               <Stepper
                 value={customStreak}
                 onChange={setCustomStreak}
                 color={accentColor}
                 M={M}
               />
-            </View>
+            </FormField>
 
             {/* Last active */}
-            <View>
-              <FieldLabel label={t("admin.streakTools.custom.lastActiveLabel")} />
-              <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
-                {lastActiveOptions.map(({ value, label }) => {
-                  const active = customLastActive === value;
-                  return (
-                    <Pressable
-                      key={value}
-                      onPress={() => setCustomLastActive(value)}
-                      style={{
-                        paddingHorizontal: 14,
-                        paddingVertical: 8,
-                        borderRadius: 20,
-                        borderWidth: 1.5,
-                        borderColor: active ? accentColor : M.border,
-                        backgroundColor: active ? `${accentColor}18` : "transparent",
-                      }}
-                      className="active:opacity-70"
-                    >
-                      <Text
-                        style={{
-                          fontSize: 13,
-                          fontWeight: active ? "700" : "400",
-                          color: active ? accentColor : M.sub,
-                        }}
-                      >
-                        {label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
+            <FormField label={t("admin.streakTools.custom.lastActiveLabel")}>
+              <StudioFilterPills
+                options={lastActiveOptions.map(({ value, label }) => ({ id: value, label, color: accentColor }))}
+                value={customLastActive}
+                onChange={setCustomLastActive}
+              />
+            </FormField>
 
             {/* Freezes */}
-            <View>
-              <FieldLabel label={t("admin.streakTools.custom.freezesLabel")} />
+            <FormField label={t("admin.streakTools.custom.freezesLabel")} hint={t("admin.streakTools.custom.freezesHint")}>
               <Stepper
                 value={customFreezes}
                 onChange={setCustomFreezes}
                 color={getAccent("sky").solid}
                 M={M}
               />
-              <Text style={{ marginTop: 6, fontSize: 11, color: M.muted }}>
-                {t("admin.streakTools.custom.freezesHint")}
-              </Text>
-            </View>
+            </FormField>
 
             {/* User ID override */}
-            <View>
-              <FieldLabel label={t("admin.streakTools.custom.userIdLabel")} />
-              <TextInput
+            <FormField label={t("admin.streakTools.custom.userIdLabel")} hint={t("admin.streakTools.custom.userIdHint")}>
+              <FormInput
                 value={customUserId}
                 onChangeText={setCustomUserId}
                 placeholder={t("admin.streakTools.custom.userIdPlaceholder")}
-                placeholderTextColor={M.muted}
                 autoCapitalize="none"
-                autoCorrect={false}
-                style={{
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: M.border,
-                  backgroundColor: M.card,
-                  color: M.text,
-                  fontSize: 13,
-                  paddingHorizontal: 14,
-                  paddingVertical: 10,
-                }}
               />
-              <Text style={{ marginTop: 6, fontSize: 11, color: M.muted }}>
-                {t("admin.streakTools.custom.userIdHint")}
-              </Text>
-            </View>
+            </FormField>
 
             {/* Apply button */}
-            <Pressable
+            <PrimaryButton
+              label={pendingKey === "custom" ? `${applyButtonLabel}…` : applyButtonLabel}
+              disabled={pendingKey !== null}
               onPress={() =>
                 apply(
                   {
@@ -403,28 +341,11 @@ export default function StreakToolsScreen() {
                   "custom"
                 )
               }
-              disabled={pendingKey !== null}
-              style={{
-                borderRadius: 14,
-                paddingVertical: 14,
-                alignItems: "center",
-                backgroundColor: accentColor,
-                opacity: pendingKey !== null ? 0.5 : 1,
-              }}
-              className="active:opacity-70"
-            >
-              {pendingKey === "custom" ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <Text style={{ fontSize: 15, fontWeight: "700", color: "#fff" }}>
-                  {t("admin.streakTools.custom.applyButton")}
-                </Text>
-              )}
-            </Pressable>
-          </View>
+            />
+          </StudioCard>
 
           {/* ── Presets ───────────────────────────────────────────────── */}
-          <Text className="text-xs font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mt-8 mb-4">
+          <Text className="text-xs font-semibold uppercase tracking-widest mt-8 mb-4" style={{ color: M.muted }}>
             {t("admin.streakTools.presets.sectionTitle")}
           </Text>
 
@@ -445,46 +366,36 @@ export default function StreakToolsScreen() {
                     )
                   }
                   disabled={pendingKey !== null}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    borderRadius: 16,
-                    paddingHorizontal: 14,
-                    paddingVertical: 14,
-                    backgroundColor: M.card,
-                    borderWidth: 1,
-                    borderColor: M.border,
-                    borderLeftWidth: 4,
-                    borderLeftColor: color,
-                    opacity: pendingKey !== null && !busy ? 0.5 : 1,
-                  }}
+                  style={{ opacity: pendingKey !== null && !busy ? 0.5 : 1 }}
                   className="active:opacity-70"
                 >
-                  <View
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 10,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      backgroundColor: `${color}15`,
-                      marginRight: 12,
-                    }}
-                  >
-                    {busy ? (
-                      <ActivityIndicator size="small" color={color} />
-                    ) : (
-                      <IconSymbol name={scenario.icon as never} size={18} color={color} />
-                    )}
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: "700", color: M.text }}>
-                      {scenario.label}
-                    </Text>
-                    <Text style={{ marginTop: 2, fontSize: 12, color: M.sub }}>
-                      {scenario.detail}
-                    </Text>
-                  </View>
+                  <StudioCard accentColor={color} style={{ flexDirection: "row", alignItems: "center" }}>
+                    <View
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 10,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: `${color}15`,
+                        marginRight: 12,
+                      }}
+                    >
+                      {busy ? (
+                        <ActivityIndicator size="small" color={color} />
+                      ) : (
+                        <IconSymbol name={scenario.icon as never} size={18} color={color} />
+                      )}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 14, fontWeight: "700", color: M.text }}>
+                        {scenario.label}
+                      </Text>
+                      <Text style={{ marginTop: 2, fontSize: 12, color: M.sub }}>
+                        {scenario.detail}
+                      </Text>
+                    </View>
+                  </StudioCard>
                 </Pressable>
               );
             })}

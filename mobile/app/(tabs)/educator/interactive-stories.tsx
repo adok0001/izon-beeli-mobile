@@ -1,5 +1,9 @@
 import { LanguagePickerModal } from "@/components/language-picker";
-import { GhostButton, LabeledInput, NewButton, PrimaryButton, SmallButton } from "@/components/studio/editor-form";
+import { LabeledInput } from "@/components/studio/editor-form";
+import { ActionPill } from "@/components/studio/studio-action-pill";
+import { StudioCard } from "@/components/studio/studio-card";
+import { GhostButton, PrimaryButton } from "@/components/studio/studio-form";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import {
   emptyScene,
   nextKey,
@@ -37,7 +41,6 @@ import { NotificationBanner } from "@/components/notifications/notification-bann
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { LanguageEntry } from "@/lib/data/languages";
-import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
@@ -61,7 +64,6 @@ const GENERAL_LANGUAGE_ID = "general";
 
 export default function InteractiveStoriesScreen() {
   const M = useMuseumTheme();
-  const router = useRouter();
   const { t } = useTranslation();
   const { user } = useStudioAccess();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
@@ -384,17 +386,15 @@ export default function InteractiveStoriesScreen() {
         type={toast.type}
         onDismiss={dismissToast}
       />
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 }}>
-        <Pressable onPress={() => router.back()} hitSlop={12} className="active:opacity-60">
-          <IconSymbol name="chevron.left" size={22} color={M.parchment} />
-        </Pressable>
-        <View>
-          <Text style={{ fontSize: 24, fontWeight: "900", color: M.parchment }}>
-            {t("educator.interactiveStoriesEditor.screenTitle")}
-          </Text>
-          <Text style={{ fontSize: 12, color: M.textDim }}>{t("educator.interactiveStoriesEditor.subtitle")}</Text>
-        </View>
-      </View>
+      <StudioScreenHeader
+        title={t("educator.interactiveStoriesEditor.screenTitle")}
+        subtitle={t("educator.interactiveStoriesEditor.subtitle")}
+        action={
+          !formOpen && !isAllScope
+            ? { label: t("educator.interactiveStoriesEditor.newButton"), icon: "plus", onPress: () => setFormOpen(true) }
+            : undefined
+        }
+      />
 
       <ScrollView
         style={{ flex: 1, backgroundColor: M.card }}
@@ -423,9 +423,6 @@ export default function InteractiveStoriesScreen() {
           <IconSymbol name="chevron.right" size={14} color={M.muted} />
         </Pressable>
 
-        {!formOpen && !isAllScope && (
-          <NewButton label={t("educator.interactiveStoriesEditor.newButton")} onPress={() => setFormOpen(true)} M={M} />
-        )}
         {!formOpen && isAllScope && (
           <Text style={{ fontSize: 12, color: M.muted, marginBottom: 12 }}>
             {t("educator.interactiveStoriesEditor.allScopeAddHint")}
@@ -434,7 +431,7 @@ export default function InteractiveStoriesScreen() {
 
         {/* Editor form */}
         {formOpen && (
-          <View style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 16, gap: 10, marginBottom: 20 }}>
+          <StudioCard style={{ gap: 10, marginBottom: 20 }}>
             <Text style={{ fontSize: 14, fontWeight: "800", color: M.text }}>
               {editing ? t("educator.interactiveStoriesEditor.editTitle") : t("educator.interactiveStoriesEditor.newTitle")}
             </Text>
@@ -505,15 +502,12 @@ export default function InteractiveStoriesScreen() {
             </Pressable>
 
             <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
-              <PrimaryButton
-                label={saveLabel}
-                onPress={handleSave}
-                M={M}
-                disabled={saving}
-              />
-              <GhostButton label={t("common.cancel")} onPress={resetForm} M={M} />
+              <View style={{ flex: 1 }}>
+                <PrimaryButton label={saveLabel} onPress={handleSave} disabled={saving} />
+              </View>
+              <GhostButton label={t("common.cancel")} onPress={resetForm} />
             </View>
-          </View>
+          </StudioCard>
         )}
 
         {/* List */}
@@ -527,7 +521,7 @@ export default function InteractiveStoriesScreen() {
           {storiesQuery.data?.map((story) => {
             const sceneCount = Object.keys(story.scenes).length;
             return (
-              <View key={story.id} style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 14 }}>
+              <StudioCard key={story.id}>
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                   <Text style={{ flex: 1, fontSize: 15, fontWeight: "800", color: M.text }}>
                     {story.title}
@@ -553,8 +547,10 @@ export default function InteractiveStoriesScreen() {
                     onToast={{ success: toastSuccess, error: toastError }}
                   />
                   {canSubmitForReview(story.status) && (
-                    <SmallButton
+                    <ActionPill
+                      icon="paperplane.fill"
                       label={t("educator.interactiveStoriesEditor.submitButton")}
+                      tone="accent"
                       onPress={() =>
                         update.mutate(
                           { id: story.id, languageId: activeLanguageId, status: "in_review" },
@@ -564,24 +560,25 @@ export default function InteractiveStoriesScreen() {
                           }
                         )
                       }
-                      M={M}
                     />
                   )}
                   {canPublishContent(story.status, story.createdBy, actor) && (
-                    <SmallButton
+                    <ActionPill
+                      icon="checkmark.circle.fill"
                       label={t("educator.interactiveStoriesEditor.publishButton")}
-                      tone="publish"
+                      tone="success"
                       onPress={() =>
                         publish.mutate(story.id, {
                           onSuccess: () => toastSuccess(t("educator.interactiveStoriesEditor.published")),
                           onError: (e: Error) => toastError(t("educator.interactiveStoriesEditor.publishFailed"), friendlyError(e)),
                         })
                       }
-                      M={M}
                     />
                   )}
-                  <SmallButton label={t("common.edit")} onPress={() => startEdit(story)} M={M} />
-                  <SmallButton
+                  <View style={{ flex: 1 }} />
+                  <ActionPill icon="pencil" label={t("common.edit")} onPress={() => startEdit(story)} />
+                  <ActionPill
+                    icon="trash.fill"
                     label={t("common.delete")}
                     tone="danger"
                     onPress={() =>
@@ -593,10 +590,9 @@ export default function InteractiveStoriesScreen() {
                         }
                       )
                     }
-                    M={M}
                   />
                 </View>
-              </View>
+              </StudioCard>
             );
           })}
         </View>

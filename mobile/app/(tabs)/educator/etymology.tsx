@@ -1,7 +1,11 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LanguagePickerModal } from "@/components/language-picker";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
-import { LabeledInput, NewButton } from "@/components/studio/editor-form";
+import { LabeledInput } from "@/components/studio/editor-form";
+import { ActionPill } from "@/components/studio/studio-action-pill";
+import { StudioCard } from "@/components/studio/studio-card";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
+import { StudioSearchInput } from "@/components/studio/studio-search-input";
 import { LocalizedTextInput, serializeLocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
 import { getAccent } from "@/constants/accent-colors";
 import { friendlyError } from "@/lib/api";
@@ -17,9 +21,8 @@ import { useToast } from "@/lib/hooks/use-toast";
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
-import { fonts } from "@/constants/typography";
 import type { EtymologyEntry, EtymologyNode, LocalizedText } from "@/types";
-import { Stack, useRouter } from "expo-router";
+import { Stack } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -30,7 +33,6 @@ import {
   Pressable,
   RefreshControl,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -124,7 +126,6 @@ function TrailEditor({
 
 export default function EducatorEtymologyScreen() {
   const M = useMuseumTheme();
-  const router = useRouter();
   const { t } = useTranslation();
   const { user: currentUser, canAccess } = useStudioAccess();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
@@ -226,15 +227,6 @@ export default function EducatorEtymologyScreen() {
 
   const listHeader = (
     <View>
-      <View className="px-5 pt-4">
-        <Text className="text-2xl" style={{ fontFamily: fonts.heading, color: M.text }}>
-          {t("admin.nav.etymology")}
-        </Text>
-        <Text className="mt-1 text-sm" style={{ color: M.sub }}>
-          {t("educator.etymology.subtitle")}
-        </Text>
-      </View>
-
       {/* Language selector */}
       <View className="mt-4 px-5">
         <Pressable
@@ -257,15 +249,10 @@ export default function EducatorEtymologyScreen() {
         </Pressable>
       </View>
 
-      {!formOpen && (
-        <View className="mx-5 mt-4">
-          <NewButton label={t("educator.etymology.newEntry")} onPress={() => setFormOpen(true)} M={M} />
-        </View>
-      )}
-
       {/* Form */}
       {formOpen && (
-        <View className="mx-5 mt-4 rounded-2xl p-4" style={{ backgroundColor: M.card, borderColor: M.border, borderWidth: 1 }}>
+        <View className="mx-5 mt-4">
+        <StudioCard>
           <Text className="mb-3 text-base font-semibold" style={{ color: M.text }}>
             {editing ? t("educator.etymology.editEntry") : t("educator.etymology.newEntry")}
           </Text>
@@ -305,29 +292,13 @@ export default function EducatorEtymologyScreen() {
               </Text>
             </Pressable>
           </View>
+        </StudioCard>
         </View>
       )}
 
       {/* Search */}
       <View className="mt-5 px-5">
-        <View className="flex-row items-center rounded-xl px-3" style={{ backgroundColor: M.inputBg }}>
-          <IconSymbol name="magnifyingglass" size={16} color={M.muted} />
-          <TextInput
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder={t("educator.etymology.searchPlaceholder")}
-            placeholderTextColor={M.muted}
-            autoCapitalize="none"
-            autoCorrect={false}
-            className="ml-2 flex-1 py-2.5 text-sm"
-            style={{ color: M.inputText }}
-          />
-          {searchQuery.length > 0 && (
-            <Pressable onPress={() => setSearchQuery("")} hitSlop={8}>
-              <IconSymbol name="xmark" size={14} color={M.muted} />
-            </Pressable>
-          )}
-        </View>
+        <StudioSearchInput value={searchQuery} onChangeText={setSearchQuery} placeholder={t("educator.etymology.searchPlaceholder")} />
       </View>
 
       <View className="mt-4 px-5">
@@ -343,40 +314,12 @@ export default function EducatorEtymologyScreen() {
   );
 
   const renderItem = ({ item }: { item: EtymologyEntry }) => (
-    <View className="mx-5 rounded-2xl border p-3" style={{ backgroundColor: M.card, borderColor: M.border }}>
-      <View className="flex-row items-start justify-between">
-        <View className="flex-1 pr-3">
-          <Text className="text-base font-bold" style={{ color: M.text }}>{item.word}</Text>
-          <Text className="text-sm" style={{ color: M.sub }}>{localize(item.english, "en")}</Text>
-          <Text className="mt-1 text-xs" style={{ color: M.muted }} numberOfLines={1}>
-            {item.trail.map((n) => n.era).join(" → ")}
-          </Text>
-        </View>
-        <View className="flex-row items-center gap-2">
-          <ActiveToggle
-            entityType="etymology_entries"
-            id={item.id}
-            isActive={item.isActive ?? true}
-            invalidateKeys={[["etymology"]]}
-            M={M}
-            onToast={{ success: toastSuccess, error: toastError }}
-          />
-          <Pressable
-            onPress={() => startEdit(item)}
-            className="rounded-full p-2"
-            style={{ backgroundColor: M.pillBg }}
-          >
-            <IconSymbol name="gearshape.fill" size={14} color={M.muted} />
-          </Pressable>
-          <Pressable
-            onPress={() => confirmDelete(item.id, item.word)}
-            className="rounded-full p-2"
-            style={{ backgroundColor: M.errorBg }}
-          >
-            <IconSymbol name="xmark.circle.fill" size={14} color={M.error} />
-          </Pressable>
-        </View>
-      </View>
+    <StudioCard style={{ marginHorizontal: 20 }}>
+      <Text className="text-base font-bold" style={{ color: M.text }}>{item.word}</Text>
+      <Text className="text-sm" style={{ color: M.sub }}>{localize(item.english, "en")}</Text>
+      <Text className="mt-1 text-xs" style={{ color: M.muted }} numberOfLines={1}>
+        {item.trail.map((n) => n.era).join(" → ")}
+      </Text>
       <View className="mt-2 flex-row flex-wrap gap-1.5">
         {item.trail.map((n, i) => (
           <View key={i} className="rounded-full bg-sky-100 px-2 py-0.5 dark:bg-sky-900/40">
@@ -386,7 +329,26 @@ export default function EducatorEtymologyScreen() {
           </View>
         ))}
       </View>
-    </View>
+      <View
+        style={{
+          flexDirection: "row", alignItems: "center", gap: 8,
+          marginTop: 12, paddingTop: 10,
+          borderTopWidth: 1, borderTopColor: M.border,
+        }}
+      >
+        <ActiveToggle
+          entityType="etymology_entries"
+          id={item.id}
+          isActive={item.isActive ?? true}
+          invalidateKeys={[["etymology"]]}
+          M={M}
+          onToast={{ success: toastSuccess, error: toastError }}
+        />
+        <View style={{ flex: 1 }} />
+        <ActionPill icon="pencil" label={t("common.edit")} onPress={() => startEdit(item)} />
+        <ActionPill icon="trash.fill" label={t("common.delete")} tone="danger" onPress={() => confirmDelete(item.id, item.word)} />
+      </View>
+    </StudioCard>
   );
 
   const listEmpty = (
@@ -407,13 +369,13 @@ export default function EducatorEtymologyScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("admin.nav.etymology"), headerBackTitle: "Back" }} />
-      <SafeAreaView className="flex-1" style={{ backgroundColor: M.bg }} edges={["top"]}>
-        <View className="flex-row items-center px-5 pb-1 pt-2">
-          <Pressable onPress={() => router.back()} hitSlop={12} className="-ml-1 p-1 active:opacity-60">
-            <IconSymbol name="chevron.left" size={22} color={M.text} />
-          </Pressable>
-        </View>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
+      <SafeAreaView className="flex-1" style={{ backgroundColor: M.ink }} edges={["top"]}>
+        <StudioScreenHeader
+          title={t("admin.nav.etymology")}
+          subtitle={t("educator.etymology.subtitle")}
+          action={!formOpen ? { label: t("educator.etymology.newEntry"), icon: "plus", onPress: () => setFormOpen(true) } : undefined}
+        />
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1, backgroundColor: M.card }}>
           <NotificationBanner
             visible={toast.visible}
             title={toast.title}

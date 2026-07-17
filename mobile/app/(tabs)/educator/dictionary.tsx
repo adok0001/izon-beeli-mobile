@@ -1,6 +1,5 @@
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
-import { fonts } from "@/constants/typography";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { Badge } from "@/components/ui/badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -8,6 +7,11 @@ import { LocalizedTextInput, toLocalizedText } from "@/components/ui/localized-t
 import type { LocalizedText } from "@/types";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { ActiveToggle } from "@/components/studio/active-toggle";
+import { ActionPill } from "@/components/studio/studio-action-pill";
+import { StudioCard } from "@/components/studio/studio-card";
+import { StudioFilterPills } from "@/components/studio/studio-filter-pills";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
+import { StudioSearchInput } from "@/components/studio/studio-search-input";
 import {
     canPublishContent,
     canSubmitForReview,
@@ -31,7 +35,7 @@ import { useUiLanguageStore } from "@/store/ui-language-store";
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
+import { Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, RefreshControl, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 /** Educator/admin dictionary rows carry nullable fields; the learner-facing
@@ -61,6 +65,13 @@ function toPreviewEntry(item: EducatorDictionaryEntry): DictionaryEntry {
 }
 
 const CATEGORIES: EducatorDictionaryCategory[] = [...DICTIONARY_CATEGORY_VALUES];
+
+/** "nouns" -> "Nouns" — for filter-pill labels; category values render as-is elsewhere. */
+function capitalize(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+type CategoryFilter = "all" | EducatorDictionaryCategory;
 
 type EditorState = {
   id?: string;
@@ -263,52 +274,11 @@ export default function EducatorDictionaryScreen() {
 
   const renderItem = useCallback(
     ({ item }: { item: EducatorDictionaryEntry }) => (
-      <View className="mx-5 rounded-2xl border p-3" style={{ backgroundColor: M.card, borderColor: M.border }}>
+      <StudioCard style={{ marginHorizontal: 20 }}>
         <View className="flex-row items-center justify-between">
           <View className="flex-1 pr-3">
             <Text className="text-base font-semibold" style={{ color: M.text }}>{item.word}</Text>
             <Text className="text-sm" style={{ color: M.sub }}>{item.english}</Text>
-          </View>
-          <View className="flex-row items-center gap-2">
-            <ActiveToggle
-              entityType="dictionary_entries"
-              id={item.id}
-              isActive={item.isActive ?? true}
-              invalidateKeys={[["educator", "dictionary"]]}
-              M={M}
-              onToast={{ success: toastSuccess, error: toastError }}
-            />
-            {canSubmitForReview(item.status) ? (
-              <Pressable
-                onPress={() => submitForReview.mutate(item.id)}
-                disabled={submitForReview.isPending}
-                className="rounded-full p-2"
-                style={{ backgroundColor: M.warningBg }}
-              >
-                <IconSymbol name="paperplane.fill" size={14} color={M.warning} />
-              </Pressable>
-            ) : null}
-            {currentUser && canPublishContent(item.status, item.createdBy, {
-              isAdmin: currentUser.isAdmin, reviewerRole: currentUser.reviewerRole, userId: currentUser.id,
-            }) ? (
-              <Pressable
-                onPress={() => publishEntry.mutate(item.id)}
-                disabled={publishEntry.isPending}
-                className="rounded-full p-2"
-                style={{ backgroundColor: M.successBg }}
-              >
-                <IconSymbol name="checkmark.circle.fill" size={14} color={M.success} />
-              </Pressable>
-            ) : null}
-            <Pressable onPress={() => openPreview(item)} className="rounded-full p-2" style={{ backgroundColor: M.infoBg }}>
-              <IconSymbol name="eye.fill" size={14} color={M.info} />
-            </Pressable>
-            <Pressable onPress={() => startEdit(item)} className="rounded-full p-2" style={{ backgroundColor: M.pillBg }}>
-              <IconSymbol name="gearshape.fill" size={14} color={M.muted} />
-            </Pressable>
-            <Pressable onPress={() => confirmDelete(item.id)} className="rounded-full p-2" style={{ backgroundColor: M.errorBg }}>
-              <IconSymbol name="xmark.circle.fill" size={14} color={M.error} />
-            </Pressable>
           </View>
         </View>
         <View className="mt-2 flex-row flex-wrap gap-1.5">
@@ -322,38 +292,60 @@ export default function EducatorDictionaryScreen() {
             </View>
           ) : null}
         </View>
-      </View>
+        <View
+          style={{
+            flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 8,
+            marginTop: 12, paddingTop: 10,
+            borderTopWidth: 1, borderTopColor: M.border,
+          }}
+        >
+          <ActiveToggle
+            entityType="dictionary_entries"
+            id={item.id}
+            isActive={item.isActive ?? true}
+            invalidateKeys={[["educator", "dictionary"]]}
+            M={M}
+            onToast={{ success: toastSuccess, error: toastError }}
+          />
+          {canSubmitForReview(item.status) ? (
+            <ActionPill
+              icon="paperplane.fill"
+              label="Submit"
+              tone="accent"
+              disabled={submitForReview.isPending}
+              onPress={() => submitForReview.mutate(item.id)}
+            />
+          ) : null}
+          {currentUser && canPublishContent(item.status, item.createdBy, {
+            isAdmin: currentUser.isAdmin, reviewerRole: currentUser.reviewerRole, userId: currentUser.id,
+          }) ? (
+            <ActionPill
+              icon="checkmark.circle.fill"
+              label="Publish"
+              tone="success"
+              disabled={publishEntry.isPending}
+              onPress={() => publishEntry.mutate(item.id)}
+            />
+          ) : null}
+          <View style={{ flex: 1 }} />
+          <ActionPill icon="eye.fill" label="Preview" onPress={() => openPreview(item)} />
+          <ActionPill icon="pencil" label={t("common.edit")} onPress={() => startEdit(item)} />
+          <ActionPill icon="trash.fill" label={t("common.delete")} tone="danger" onPress={() => confirmDelete(item.id)} />
+        </View>
+      </StudioCard>
     ),
-    [startEdit, confirmDelete, openPreview, submitForReview, publishEntry, currentUser],
+    [startEdit, confirmDelete, openPreview, submitForReview, publishEntry, currentUser, t, M, toastSuccess, toastError],
   );
 
   const listHeader = (
     <View>
-      <View className="px-5 pt-4">
-        <Text className="text-2xl" style={{ fontFamily: fonts.heading, color: M.text }}>{t("educator.nav.dictionary")}</Text>
-        <Text className="mt-1 text-sm" style={{ color: M.sub }}>
-          Create, edit, and maintain reviewed vocabulary.
-        </Text>
-      </View>
-
       <View className="mt-4 px-5">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {allowedLanguages.map((languageId) => {
-            const active = languageId === activeLanguageId;
-            return (
-              <Pressable
-                key={languageId}
-                onPress={() => setSelectedLanguageId(languageId)}
-                className={`mr-2 rounded-full px-4 py-2 ${active ? "bg-brand-500" : ""}`}
-                style={active ? undefined : { backgroundColor: M.pillBg }}
-              >
-                <Text className={`text-sm font-semibold ${active ? "text-white" : ""}`} style={active ? undefined : { color: M.text }}>
-                  {getLanguageName(languageId)}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+        <StudioFilterPills
+          options={allowedLanguages.map((languageId) => ({ id: languageId, label: getLanguageName(languageId) }))}
+          value={activeLanguageId}
+          onChange={setSelectedLanguageId}
+          scrollable
+        />
       </View>
 
       {coverage && coverage.distinctWords > 0 ? (
@@ -428,7 +420,7 @@ export default function EducatorDictionaryScreen() {
       ) : null}
 
       <View className="mt-5 px-5">
-        <View className="rounded-2xl border p-4" style={{ backgroundColor: M.card, borderColor: M.border }}>
+        <StudioCard>
           <Pressable
             onPress={() => setFormOpen((o) => !o)}
             disabled={isEditing}
@@ -515,22 +507,13 @@ export default function EducatorDictionaryScreen() {
             onChange={(dialectalVariants) => setEditor((prev) => ({ ...prev, dialectalVariants }))}
           />
 
-          <View className="mt-3 flex-row flex-wrap gap-2">
-            {CATEGORIES.map((category) => {
-              const active = editor.category === category;
-              return (
-                <Pressable
-                  key={category}
-                  onPress={() => setEditor((prev) => ({ ...prev, category }))}
-                  className={`rounded-full px-3 py-1.5 ${active ? "bg-brand-500" : ""}`}
-                  style={active ? undefined : { backgroundColor: M.inputBg }}
-                >
-                  <Text className={`text-xs font-semibold uppercase ${active ? "text-white" : ""}`} style={active ? undefined : { color: M.sub }}>
-                    {category}
-                  </Text>
-                </Pressable>
-              );
-            })}
+          <View className="mt-3">
+            <StudioFilterPills
+              options={CATEGORIES.map((category) => ({ id: category, label: capitalize(category) }))}
+              value={editor.category}
+              onChange={(category) => setEditor((prev) => ({ ...prev, category }))}
+              scrollable
+            />
           </View>
 
           <View className="mt-4 flex-row gap-2">
@@ -553,58 +536,26 @@ export default function EducatorDictionaryScreen() {
           </View>
           </>
           ) : null}
-        </View>
+        </StudioCard>
       </View>
 
       <View className="mt-5 px-5">
-        <View className="flex-row items-center rounded-xl px-3" style={{ backgroundColor: M.inputBg }}>
-          <IconSymbol name="magnifyingglass" size={16} color={M.muted} />
-          <TextInput
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="Search entries…"
-            placeholderTextColor={M.muted}
-            autoCapitalize="none"
-            autoCorrect={false}
-            returnKeyType="search"
-            className="ml-2 flex-1 py-2.5 text-sm"
-            style={{ color: M.inputText }}
-          />
-          {searchQuery.length > 0 ? (
-            <Pressable onPress={() => setSearchQuery("")} hitSlop={8}>
-              <IconSymbol name="xmark" size={14} color={M.muted} />
-            </Pressable>
-          ) : null}
-        </View>
+        <StudioSearchInput value={searchQuery} onChangeText={setSearchQuery} placeholder="Search entries…" />
       </View>
 
-      <View className="mt-3 pb-1">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 }}>
-          <Pressable
-            onPress={() => setFilterCategory(undefined)}
-            className={`mr-2 rounded-full px-3 py-1.5 ${filterCategory === undefined ? "bg-brand-500" : ""}`}
-            style={filterCategory === undefined ? undefined : { backgroundColor: M.pillBg }}
-          >
-            <Text className={`text-xs font-semibold uppercase ${filterCategory === undefined ? "text-white" : ""}`} style={filterCategory === undefined ? undefined : { color: M.sub }}>
-              All
-            </Text>
-          </Pressable>
-          {CATEGORIES.filter((cat) => entries.some((e) => e.category === cat)).map((category) => {
-            const active = filterCategory === category;
-            return (
-              <Pressable
-                key={category}
-                onPress={() => setFilterCategory(active ? undefined : category)}
-                className={`mr-2 rounded-full px-3 py-1.5 ${active ? "bg-brand-500" : ""}`}
-                style={active ? undefined : { backgroundColor: M.pillBg }}
-              >
-                <Text className={`text-xs font-semibold uppercase ${active ? "text-white" : ""}`} style={active ? undefined : { color: M.sub }}>
-                  {category}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+      <View className="mt-3 px-5 pb-1">
+        <StudioFilterPills
+          options={[
+            { id: "all" as const, label: "All" },
+            ...CATEGORIES.filter((cat) => entries.some((e) => e.category === cat)).map((category) => ({
+              id: category as CategoryFilter,
+              label: capitalize(category),
+            })),
+          ]}
+          value={filterCategory ?? "all"}
+          onChange={(id) => setFilterCategory(id === "all" ? undefined : id)}
+          scrollable
+        />
       </View>
 
       <View className="mt-4 px-5">
@@ -640,13 +591,12 @@ export default function EducatorDictionaryScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("educator.nav.dictionary"), headerBackTitle: "Back" }} />
-      <SafeAreaView className="flex-1" style={{ backgroundColor: M.bg }} edges={["top"]}>
-        <View className="flex-row items-center px-5 pb-1 pt-2">
-          <Pressable onPress={() => router.back()} hitSlop={12} className="-ml-1 p-1 active:opacity-60">
-            <IconSymbol name="chevron.left" size={22} color={M.text} />
-          </Pressable>
-        </View>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
+      <SafeAreaView className="flex-1" style={{ backgroundColor: M.ink }} edges={["top"]}>
+        <StudioScreenHeader
+          title={t("educator.nav.dictionary")}
+          subtitle="Create, edit, and maintain reviewed vocabulary."
+        />
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1, backgroundColor: M.card }}>
         <NotificationBanner
           visible={toast.visible}
           title={toast.title}

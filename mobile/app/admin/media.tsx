@@ -1,5 +1,10 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useStudioAccess } from "@/components/studio/studio-gate";
+import { ActionPill } from "@/components/studio/studio-action-pill";
+import { StudioCard } from "@/components/studio/studio-card";
+import { StudioFilterPills } from "@/components/studio/studio-filter-pills";
+import { StudioSearchInput } from "@/components/studio/studio-search-input";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import { friendlyError } from "@/lib/api";
 import {
   useDeleteMediaAsset,
@@ -12,10 +17,15 @@ import { NotificationBanner } from "@/components/notifications/notification-bann
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
-import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Clipboard, Image, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Clipboard, Image, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const KIND_OPTIONS = [
+  { id: "all" as const, label: "All" },
+  { id: "image" as const, label: "Image" },
+  { id: "audio" as const, label: "Audio" },
+];
 
 /**
  * Studio Mobile — media library. Browse, upload, and reuse every asset
@@ -25,7 +35,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
  */
 export default function MediaLibraryScreen() {
   const M = useMuseumTheme();
-  const router = useRouter();
   useStudioAccess();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
 
@@ -83,15 +92,7 @@ export default function MediaLibraryScreen() {
         type={toast.type}
         onDismiss={dismissToast}
       />
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 }}>
-        <Pressable onPress={() => router.back()} hitSlop={12} className="active:opacity-60">
-          <IconSymbol name="chevron.left" size={22} color={M.parchment} />
-        </Pressable>
-        <View>
-          <Text style={{ fontSize: 24, fontWeight: "900", color: M.parchment }}>Media Library</Text>
-          <Text style={{ fontSize: 12, color: M.textDim }}>Browse and reuse uploaded images and audio.</Text>
-        </View>
-      </View>
+      <StudioScreenHeader title="Media Library" subtitle="Browse and reuse uploaded images and audio." />
 
       <ScrollView
         style={{ flex: 1, backgroundColor: M.card }}
@@ -121,35 +122,12 @@ export default function MediaLibraryScreen() {
           </Pressable>
         </View>
 
-        <TextInput
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Search by filename…"
-          placeholderTextColor={M.inputPlaceholder}
-          style={{
-            borderRadius: 10, borderWidth: 1, borderColor: M.inputBorder,
-            backgroundColor: M.inputBg, color: M.inputText,
-            paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, marginBottom: 10,
-          }}
-        />
+        <View style={{ marginBottom: 10 }}>
+          <StudioSearchInput value={search} onChangeText={setSearch} placeholder="Search by filename…" />
+        </View>
 
-        <View style={{ flexDirection: "row", gap: 6, marginBottom: 16 }}>
-          {(["all", "image", "audio"] as const).map((k) => (
-            <Pressable
-              key={k}
-              onPress={() => setKind(k)}
-              style={{
-                paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999,
-                backgroundColor: kind === k ? M.accent : M.bg,
-                borderWidth: 1, borderColor: kind === k ? M.accent : M.border,
-              }}
-              className="active:opacity-70"
-            >
-              <Text style={{ fontSize: 12, fontWeight: "700", color: kind === k ? M.ink : M.sub, textTransform: "capitalize" }}>
-                {k}
-              </Text>
-            </Pressable>
-          ))}
+        <View style={{ marginBottom: 16 }}>
+          <StudioFilterPills options={KIND_OPTIONS} value={kind} onChange={setKind} />
         </View>
 
         {assetsQuery.isPending && <Text style={{ color: M.muted, fontSize: 13 }}>Loading…</Text>}
@@ -184,7 +162,7 @@ function AssetRow({
   asset, M, onCopy, onDelete,
 }: Readonly<{ asset: MediaAsset; M: M; onCopy: () => void; onDelete: () => void }>) {
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 12 }}>
+    <StudioCard style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
       {asset.kind === "image" ? (
         <Image source={{ uri: asset.url }} style={{ width: 48, height: 48, borderRadius: 8, backgroundColor: M.card }} />
       ) : (
@@ -196,12 +174,8 @@ function AssetRow({
         <Text style={{ fontSize: 13, fontWeight: "700", color: M.text }} numberOfLines={1}>{asset.filename}</Text>
         <Text style={{ fontSize: 11, color: M.muted, marginTop: 2 }}>{asset.kind}</Text>
       </View>
-      <Pressable onPress={onCopy} hitSlop={8} className="active:opacity-70">
-        <IconSymbol name="square.on.square" size={18} color={M.sub} />
-      </Pressable>
-      <Pressable onPress={onDelete} hitSlop={8} className="active:opacity-70">
-        <IconSymbol name="trash.fill" size={18} color={M.error} />
-      </Pressable>
-    </View>
+      <ActionPill icon="square.on.square" label="Copy" onPress={onCopy} />
+      <ActionPill icon="trash.fill" label="Delete" tone="danger" onPress={onDelete} />
+    </StudioCard>
   );
 }

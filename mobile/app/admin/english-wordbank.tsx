@@ -1,5 +1,9 @@
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useStudioAccess } from "@/components/studio/studio-gate";
+import { ActionPill } from "@/components/studio/studio-action-pill";
+import { StudioCard } from "@/components/studio/studio-card";
+import { GhostButton, LabeledInput, PrimaryButton } from "@/components/studio/studio-form";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
+import { StudioSearchInput } from "@/components/studio/studio-search-input";
 import { friendlyError } from "@/lib/api";
 import {
   useDeleteWordbankEntry,
@@ -10,9 +14,8 @@ import {
 import { useToast } from "@/lib/hooks/use-toast";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 /**
@@ -40,12 +43,12 @@ const EMPTY_FORM: WordbankForm = {
 
 export default function EnglishWordbankScreen() {
   const M = useMuseumTheme();
-  const router = useRouter();
   useStudioAccess();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
 
   const [search, setSearch] = useState("");
   const [form, setForm] = useState<WordbankForm>(EMPTY_FORM);
+  const [formOpen, setFormOpen] = useState(false);
 
   const wordbankQuery = useEnglishWordbank(search.trim() || undefined);
   const upsert = useUpsertWordbankEntry();
@@ -53,6 +56,12 @@ export default function EnglishWordbankScreen() {
 
   function resetForm() {
     setForm(EMPTY_FORM);
+    setFormOpen(false);
+  }
+
+  function openNew() {
+    resetForm();
+    setFormOpen(true);
   }
 
   function startEdit(e: WordbankEntry) {
@@ -64,6 +73,7 @@ export default function EnglishWordbankScreen() {
       posType: e.posType ?? "",
       isNew: false,
     });
+    setFormOpen(true);
   }
 
   function handleSave() {
@@ -99,15 +109,11 @@ export default function EnglishWordbankScreen() {
         type={toast.type}
         onDismiss={dismissToast}
       />
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 }}>
-        <Pressable onPress={() => router.back()} hitSlop={12} className="active:opacity-60">
-          <IconSymbol name="chevron.left" size={22} color={M.parchment} />
-        </Pressable>
-        <View>
-          <Text style={{ fontSize: 24, fontWeight: "900", color: M.parchment }}>English wordbank</Text>
-          <Text style={{ fontSize: 12, color: M.textDim }}>Reference English vocabulary entries.</Text>
-        </View>
-      </View>
+      <StudioScreenHeader
+        title="English wordbank"
+        subtitle="Reference English vocabulary entries."
+        action={{ label: "New entry", icon: "plus", onPress: openNew }}
+      />
 
       <ScrollView
         style={{ flex: 1, backgroundColor: M.card }}
@@ -116,21 +122,12 @@ export default function EnglishWordbankScreen() {
       >
         {/* Search */}
         <View style={{ marginBottom: 16 }}>
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Search words…"
-            placeholderTextColor={M.inputPlaceholder}
-            style={{
-              borderRadius: 10, borderWidth: 1, borderColor: M.inputBorder,
-              backgroundColor: M.inputBg, color: M.inputText,
-              paddingHorizontal: 12, paddingVertical: 10, fontSize: 14,
-            }}
-          />
+          <StudioSearchInput value={search} onChangeText={setSearch} placeholder="Search words…" />
         </View>
 
         {/* Editor form */}
-        <View style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 16, gap: 10, marginBottom: 20 }}>
+        {formOpen && (
+        <StudioCard style={{ gap: 10, marginBottom: 20 }}>
           <Text style={{ fontSize: 14, fontWeight: "800", color: M.text }}>
             {form.isNew ? "New entry" : "Edit entry"}
           </Text>
@@ -147,10 +144,11 @@ export default function EnglishWordbankScreen() {
           <LabeledInput label="Category *" value={form.category} onChange={(v) => setForm({ ...form, category: v })} />
           <LabeledInput label="Part of speech" value={form.posType} onChange={(v) => setForm({ ...form, posType: v })} />
           <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
-            <PrimaryButton label={upsert.isPending ? "Saving…" : form.isNew ? "Create" : "Save"} onPress={handleSave} M={M} />
-            {!form.isNew && <GhostButton label="Cancel" onPress={resetForm} M={M} />}
+            <PrimaryButton label={upsert.isPending ? "Saving…" : form.isNew ? "Create" : "Save"} onPress={handleSave} />
+            <GhostButton label="Cancel" onPress={resetForm} />
           </View>
-        </View>
+        </StudioCard>
+        )}
 
         {/* List */}
         {wordbankQuery.isPending && <Text style={{ color: M.muted, fontSize: 13 }}>Loading…</Text>}
@@ -159,7 +157,7 @@ export default function EnglishWordbankScreen() {
         )}
         <View style={{ gap: 10 }}>
           {wordbankQuery.data?.map((e) => (
-            <View key={e.id} style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 14 }}>
+            <StudioCard key={e.id}>
               <Text style={{ fontSize: 15, fontWeight: "800", color: M.text }}>{e.word}</Text>
               <Text style={{ marginTop: 4, fontSize: 13, color: M.sub }}>
                 {e.category}{e.posType ? ` · ${e.posType}` : ""}
@@ -168,64 +166,23 @@ export default function EnglishWordbankScreen() {
                 <Text style={{ marginTop: 2, fontSize: 12, color: M.muted }}>{e.definition}</Text>
               ) : null}
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
-                <SmallButton label="Edit" onPress={() => startEdit(e)} M={M} />
-                <SmallButton label="Delete" tone="danger" onPress={() =>
-                  remove.mutate(e.id, {
-                    onSuccess: () => toastSuccess("Deleted"),
-                    onError: (err: Error) => toastError("Delete failed", friendlyError(err)),
-                  })
-                } M={M} />
+                <ActionPill icon="pencil" label="Edit" onPress={() => startEdit(e)} />
+                <ActionPill
+                  icon="trash.fill"
+                  label="Delete"
+                  tone="danger"
+                  onPress={() =>
+                    remove.mutate(e.id, {
+                      onSuccess: () => toastSuccess("Deleted"),
+                      onError: (err: Error) => toastError("Delete failed", friendlyError(err)),
+                    })
+                  }
+                />
               </View>
-            </View>
+            </StudioCard>
           ))}
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-}
-
-type M = ReturnType<typeof useMuseumTheme>;
-
-function LabeledInput({ label, value, onChange }: Readonly<{ label: string; value: string; onChange: (v: string) => void }>) {
-  const M = useMuseumTheme();
-  return (
-    <View>
-      <Text style={{ fontSize: 11, fontWeight: "600", color: M.sub, marginBottom: 4 }}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChange}
-        placeholderTextColor={M.inputPlaceholder}
-        style={{
-          borderRadius: 10, borderWidth: 1, borderColor: M.inputBorder,
-          backgroundColor: M.inputBg, color: M.inputText,
-          paddingHorizontal: 12, paddingVertical: 10, fontSize: 14,
-        }}
-      />
-    </View>
-  );
-}
-
-function PrimaryButton({ label, onPress, M }: Readonly<{ label: string; onPress: () => void; M: M }>) {
-  return (
-    <Pressable onPress={onPress} style={{ borderRadius: 12, paddingHorizontal: 16, paddingVertical: 11, backgroundColor: M.accent }} className="active:opacity-80">
-      <Text style={{ fontWeight: "800", color: M.ink, fontSize: 14 }}>{label}</Text>
-    </Pressable>
-  );
-}
-
-function GhostButton({ label, onPress, M }: Readonly<{ label: string; onPress: () => void; M: M }>) {
-  return (
-    <Pressable onPress={onPress} style={{ borderRadius: 12, paddingHorizontal: 16, paddingVertical: 11, backgroundColor: M.bg, borderWidth: 1, borderColor: M.border }} className="active:opacity-70">
-      <Text style={{ fontWeight: "700", color: M.sub, fontSize: 14 }}>{label}</Text>
-    </Pressable>
-  );
-}
-
-function SmallButton({ label, onPress, tone, M }: Readonly<{ label: string; onPress: () => void; tone?: "danger"; M: M }>) {
-  const color = tone === "danger" ? M.error : M.sub;
-  return (
-    <Pressable onPress={onPress} style={{ borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7, backgroundColor: M.card, borderWidth: 1, borderColor: M.border }} className="active:opacity-70">
-      <Text style={{ fontWeight: "700", color, fontSize: 12 }}>{label}</Text>
-    </Pressable>
   );
 }

@@ -1,6 +1,9 @@
 import { Badge } from "@/components/ui/badge";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useStudioAccess } from "@/components/studio/studio-gate";
+import { ActionPill } from "@/components/studio/studio-action-pill";
+import { StudioCard } from "@/components/studio/studio-card";
+import { GhostButton, LabeledInput, PrimaryButton } from "@/components/studio/studio-form";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import { friendlyError } from "@/lib/api";
 import {
   canPublishContent,
@@ -19,9 +22,8 @@ import {
 import { useToast } from "@/lib/hooks/use-toast";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 /**
@@ -51,11 +53,11 @@ const EMPTY_FORM: PartnerForm = {
 
 export default function ContentPartnersScreen() {
   const M = useMuseumTheme();
-  const router = useRouter();
   const { user } = useStudioAccess();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
 
   const [form, setForm] = useState<PartnerForm>(EMPTY_FORM);
+  const [formOpen, setFormOpen] = useState(false);
   const editing = !!form.id;
 
   const partnersQuery = useContentPartners();
@@ -68,6 +70,12 @@ export default function ContentPartnersScreen() {
 
   function resetForm() {
     setForm(EMPTY_FORM);
+    setFormOpen(false);
+  }
+
+  function openNew() {
+    resetForm();
+    setFormOpen(true);
   }
 
   function startEdit(p: Partner) {
@@ -80,6 +88,7 @@ export default function ContentPartnersScreen() {
       logoUrl: p.logoUrl ?? "",
       languageIds: (p.languageIds ?? []).join(", "),
     });
+    setFormOpen(true);
   }
 
   function handleSave() {
@@ -121,15 +130,11 @@ export default function ContentPartnersScreen() {
         type={toast.type}
         onDismiss={dismissToast}
       />
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 }}>
-        <Pressable onPress={() => router.back()} hitSlop={12} className="active:opacity-60">
-          <IconSymbol name="chevron.left" size={22} color={M.parchment} />
-        </Pressable>
-        <View>
-          <Text style={{ fontSize: 24, fontWeight: "900", color: M.parchment }}>Content partners</Text>
-          <Text style={{ fontSize: 12, color: M.textDim }}>Universities, research groups, and institutions.</Text>
-        </View>
-      </View>
+      <StudioScreenHeader
+        title="Content partners"
+        subtitle="Universities, research groups, and institutions."
+        action={{ label: "New partner", icon: "plus", onPress: openNew }}
+      />
 
       <ScrollView
         style={{ flex: 1, backgroundColor: M.card }}
@@ -137,7 +142,8 @@ export default function ContentPartnersScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Editor form */}
-        <View style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 16, gap: 10, marginBottom: 20 }}>
+        {formOpen && (
+        <StudioCard style={{ gap: 10, marginBottom: 20 }}>
           <Text style={{ fontSize: 14, fontWeight: "800", color: M.text }}>
             {editing ? "Edit partner" : "New partner"}
           </Text>
@@ -151,10 +157,13 @@ export default function ContentPartnersScreen() {
           <LabeledInput label="Logo URL" value={form.logoUrl} onChange={(v) => setForm({ ...form, logoUrl: v })} />
           <LabeledInput label="Language IDs (comma-separated)" value={form.languageIds} onChange={(v) => setForm({ ...form, languageIds: v })} />
           <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
-            <PrimaryButton label={upsert.isPending ? "Saving…" : editing ? "Save" : "Create partner"} onPress={handleSave} M={M} />
-            {editing && <GhostButton label="Cancel" onPress={resetForm} M={M} />}
+            <View style={{ flex: 1 }}>
+              <PrimaryButton label={upsert.isPending ? "Saving…" : editing ? "Save" : "Create partner"} onPress={handleSave} disabled={upsert.isPending} />
+            </View>
+            <GhostButton label="Cancel" onPress={resetForm} />
           </View>
-        </View>
+        </StudioCard>
+        )}
 
         {/* List */}
         {partnersQuery.isPending && <Text style={{ color: M.muted, fontSize: 13 }}>Loading…</Text>}
@@ -163,7 +172,7 @@ export default function ContentPartnersScreen() {
         )}
         <View style={{ gap: 10 }}>
           {partnersQuery.data?.map((p) => (
-            <View key={p.id} style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 14 }}>
+            <StudioCard key={p.id}>
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                 <Text style={{ flex: 1, fontSize: 15, fontWeight: "800", color: M.text }}>{p.name}</Text>
                 {p.status && <Badge label={STATUS_LABEL[p.status as ContentStatus]} tone={STATUS_TONE[p.status as ContentStatus]} />}
@@ -179,79 +188,45 @@ export default function ContentPartnersScreen() {
               </View>
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
                 {canPublishContent(p.status, p.createdBy, actor) && (
-                  <SmallButton label="Publish" tone="publish" onPress={() =>
-                    publish.mutate(p.id, {
-                      onSuccess: () => toastSuccess("Published"),
-                      onError: (e: Error) => toastError("Publish failed", friendlyError(e)),
-                    })
-                  } M={M} />
+                  <ActionPill
+                    icon="checkmark.circle.fill"
+                    label="Publish"
+                    tone="success"
+                    onPress={() =>
+                      publish.mutate(p.id, {
+                        onSuccess: () => toastSuccess("Published"),
+                        onError: (e: Error) => toastError("Publish failed", friendlyError(e)),
+                      })
+                    }
+                  />
                 )}
-                <SmallButton label={p.isActive ? "Deactivate" : "Activate"} onPress={() =>
-                  toggle.mutate({ id: p.id, isActive: !p.isActive }, {
-                    onSuccess: () => toastSuccess(p.isActive ? "Deactivated" : "Activated"),
-                    onError: (e: Error) => toastError("Failed", friendlyError(e)),
-                  })
-                } M={M} />
-                <SmallButton label="Edit" onPress={() => startEdit(p)} M={M} />
-                <SmallButton label="Delete" tone="danger" onPress={() =>
-                  remove.mutate(p.id, {
-                    onSuccess: () => toastSuccess("Deleted"),
-                    onError: (e: Error) => toastError("Delete failed", friendlyError(e)),
-                  })
-                } M={M} />
+                <ActionPill
+                  icon={p.isActive ? "eye.slash" : "eye"}
+                  label={p.isActive ? "Deactivate" : "Activate"}
+                  onPress={() =>
+                    toggle.mutate({ id: p.id, isActive: !p.isActive }, {
+                      onSuccess: () => toastSuccess(p.isActive ? "Deactivated" : "Activated"),
+                      onError: (e: Error) => toastError("Failed", friendlyError(e)),
+                    })
+                  }
+                />
+                <ActionPill icon="pencil" label="Edit" onPress={() => startEdit(p)} />
+                <ActionPill
+                  icon="trash.fill"
+                  label="Delete"
+                  tone="danger"
+                  onPress={() =>
+                    remove.mutate(p.id, {
+                      onSuccess: () => toastSuccess("Deleted"),
+                      onError: (e: Error) => toastError("Delete failed", friendlyError(e)),
+                    })
+                  }
+                />
               </View>
-            </View>
+            </StudioCard>
           ))}
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-}
-
-type M = ReturnType<typeof useMuseumTheme>;
-
-function LabeledInput({ label, hint, value, onChange }: Readonly<{ label: string; hint?: string; value: string; onChange: (v: string) => void }>) {
-  const M = useMuseumTheme();
-  return (
-    <View>
-      <Text style={{ fontSize: 11, fontWeight: "600", color: M.sub, marginBottom: 4 }}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChange}
-        placeholder={hint}
-        placeholderTextColor={M.inputPlaceholder}
-        autoCapitalize="none"
-        style={{
-          borderRadius: 10, borderWidth: 1, borderColor: M.inputBorder,
-          backgroundColor: M.inputBg, color: M.inputText,
-          paddingHorizontal: 12, paddingVertical: 10, fontSize: 14,
-        }}
-      />
-    </View>
-  );
-}
-
-function PrimaryButton({ label, onPress, M }: Readonly<{ label: string; onPress: () => void; M: M }>) {
-  return (
-    <Pressable onPress={onPress} style={{ borderRadius: 12, paddingHorizontal: 16, paddingVertical: 11, backgroundColor: M.accent }} className="active:opacity-80">
-      <Text style={{ fontWeight: "800", color: M.ink, fontSize: 14 }}>{label}</Text>
-    </Pressable>
-  );
-}
-
-function GhostButton({ label, onPress, M }: Readonly<{ label: string; onPress: () => void; M: M }>) {
-  return (
-    <Pressable onPress={onPress} style={{ borderRadius: 12, paddingHorizontal: 16, paddingVertical: 11, backgroundColor: M.bg, borderWidth: 1, borderColor: M.border }} className="active:opacity-70">
-      <Text style={{ fontWeight: "700", color: M.sub, fontSize: 14 }}>{label}</Text>
-    </Pressable>
-  );
-}
-
-function SmallButton({ label, onPress, tone, M }: Readonly<{ label: string; onPress: () => void; tone?: "publish" | "danger"; M: M }>) {
-  const color = tone === "publish" ? M.success : tone === "danger" ? M.error : M.sub;
-  return (
-    <Pressable onPress={onPress} style={{ borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7, backgroundColor: M.card, borderWidth: 1, borderColor: M.border }} className="active:opacity-70">
-      <Text style={{ fontWeight: "700", color, fontSize: 12 }}>{label}</Text>
-    </Pressable>
   );
 }

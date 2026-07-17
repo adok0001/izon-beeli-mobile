@@ -1,3 +1,8 @@
+import { StudioCard } from "@/components/studio/studio-card";
+import { StudioFilterPills } from "@/components/studio/studio-filter-pills";
+import { FormInput } from "@/components/studio/studio-form";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
+import { StudioSearchInput } from "@/components/studio/studio-search-input";
 import { AccountAvatar } from "@/components/ui/account-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +15,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type ReviewerRole = "teacher" | "professor" | "elder";
@@ -32,31 +37,6 @@ interface AdminUser {
 }
 
 const REVIEWER_ROLES: ReviewerRole[] = ["teacher", "professor", "elder"];
-
-function RolePill({
-  role,
-  selected,
-  label,
-  onPress,
-}: Readonly<{ role: ReviewerRole; selected: boolean; label: string; onPress: () => void }>) {
-  const M = useMuseumTheme();
-  return (
-    <Pressable
-      onPress={onPress}
-      style={{
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderRadius: 999,
-        borderWidth: 1,
-        borderColor: selected ? M.accent : M.border,
-        backgroundColor: selected ? M.accentGlow : "transparent",
-      }}
-      className="active:opacity-70"
-    >
-      <Text style={{ fontSize: 11, fontWeight: "700", color: selected ? M.accent : M.sub }}>{label}</Text>
-    </Pressable>
-  );
-}
 
 function ActionPill({
   icon,
@@ -193,38 +173,25 @@ export default function AdminUsersScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("admin.nav.users") }} />
-      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-900" edges={["top"]}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
+        <StudioScreenHeader
+          title={t("admin.users.title")}
+          subtitle={t("admin.users.registeredCount", { count: users.length })}
+        />
+
         <ScrollView
+          style={{ flex: 1, backgroundColor: M.card }}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ padding: 20, paddingBottom: 48 }}
           keyboardShouldPersistTaps="handled"
         >
-          <Text className="text-2xl font-bold text-neutral-900 dark:text-white mb-1">
-            {t("admin.users.title")}
-          </Text>
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400 mb-6">
-            {t("admin.users.registeredCount", { count: users.length })}
-          </Text>
-
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder={t("admin.users.searchPlaceholder")}
-            placeholderTextColor={M.muted}
-            autoCapitalize="none"
-            autoCorrect={false}
-            style={{
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: M.border,
-              backgroundColor: M.card,
-              color: M.text,
-              fontSize: 14,
-              paddingHorizontal: 14,
-              paddingVertical: 12,
-              marginBottom: 16,
-            }}
-          />
+          <View style={{ marginBottom: 16 }}>
+            <StudioSearchInput
+              value={search}
+              onChangeText={setSearch}
+              placeholder={t("admin.users.searchPlaceholder")}
+            />
+          </View>
 
           {isLoading && <ActivityIndicator size="small" color={M.muted} style={{ marginTop: 8 }} />}
 
@@ -240,17 +207,7 @@ export default function AdminUsersScreen() {
               const reviewerBusy = toggleReviewer.isPending && toggleReviewer.variables?.id === user.id;
 
               return (
-                <View
-                  key={user.id}
-                  style={{
-                    borderRadius: 16,
-                    padding: 14,
-                    backgroundColor: M.card,
-                    borderWidth: 1,
-                    borderColor: M.border,
-                    gap: 10,
-                  }}
-                >
+                <StudioCard key={user.id} style={{ gap: 10 }}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                     <AccountAvatar name={user.name} imageUrl={user.avatarUrl} hasImage={!!user.avatarUrl} size={40} />
                     <View style={{ flex: 1 }}>
@@ -285,34 +242,16 @@ export default function AdminUsersScreen() {
 
                   {editingId === user.id ? (
                     <View style={{ gap: 8, marginTop: 2 }}>
-                      <View style={{ flexDirection: "row", gap: 6 }}>
-                        {REVIEWER_ROLES.map((role) => (
-                          <RolePill
-                            key={role}
-                            role={role}
-                            selected={roleInput === role}
-                            label={roleLabels[role]}
-                            onPress={() => setRoleInput(role)}
-                          />
-                        ))}
-                      </View>
-                      <TextInput
+                      <StudioFilterPills
+                        options={REVIEWER_ROLES.map((role) => ({ id: role, label: roleLabels[role] }))}
+                        value={roleInput}
+                        onChange={setRoleInput}
+                      />
+                      <FormInput
                         value={langInput}
                         onChangeText={setLangInput}
                         placeholder={t("admin.users.languagesPlaceholder")}
-                        placeholderTextColor={M.muted}
                         autoCapitalize="none"
-                        autoCorrect={false}
-                        style={{
-                          borderRadius: 10,
-                          borderWidth: 1,
-                          borderColor: M.border,
-                          backgroundColor: M.bg,
-                          color: M.text,
-                          fontSize: 13,
-                          paddingHorizontal: 12,
-                          paddingVertical: 8,
-                        }}
                       />
                       <View style={{ flexDirection: "row", gap: 8 }}>
                         <Button
@@ -368,7 +307,7 @@ export default function AdminUsersScreen() {
                       />
                     </View>
                   )}
-                </View>
+                </StudioCard>
               );
             })}
           </View>

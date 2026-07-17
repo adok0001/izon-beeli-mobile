@@ -1,8 +1,11 @@
 import { Badge } from "@/components/ui/badge";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { GhostButton, LabeledInput, NewButton, PrimaryButton, SmallButton } from "@/components/studio/editor-form";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { ActiveToggle } from "@/components/studio/active-toggle";
+import { ActionPill } from "@/components/studio/studio-action-pill";
+import { StudioCard } from "@/components/studio/studio-card";
+import { StudioFilterPills } from "@/components/studio/studio-filter-pills";
+import { GhostButton, LabeledInput, PrimaryButton } from "@/components/studio/studio-form";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import { friendlyError } from "@/lib/api";
 import {
   canPublishContent,
@@ -27,7 +30,6 @@ import { NotificationBanner } from "@/components/notifications/notification-bann
 import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
-import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
@@ -67,7 +69,6 @@ const EMPTY_FORM: QuizForm = {
 
 export default function QuizBankScreen() {
   const M = useMuseumTheme();
-  const router = useRouter();
   const { t } = useTranslation();
   const { user } = useStudioAccess();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
@@ -176,15 +177,11 @@ export default function QuizBankScreen() {
         type={toast.type}
         onDismiss={dismissToast}
       />
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 }}>
-        <Pressable onPress={() => router.back()} hitSlop={12} className="active:opacity-60">
-          <IconSymbol name="chevron.left" size={22} color={M.parchment} />
-        </Pressable>
-        <View>
-          <Text style={{ fontSize: 24, fontWeight: "900", color: M.parchment }}>{t("admin.nav.quizBank")}</Text>
-          <Text style={{ fontSize: 12, color: M.textDim }}>{t("educator.quizBankEditor.subtitle")}</Text>
-        </View>
-      </View>
+      <StudioScreenHeader
+        title={t("admin.nav.quizBank")}
+        subtitle={t("educator.quizBankEditor.subtitle")}
+        action={!formOpen ? { label: t("educator.quizBankEditor.newButton"), icon: "plus", onPress: () => setFormOpen(true) } : undefined}
+      />
 
       <ScrollView
         style={{ flex: 1, backgroundColor: M.card }}
@@ -193,59 +190,29 @@ export default function QuizBankScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
       >
         {/* Language tabs */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
-          <View style={{ flexDirection: "row", gap: 8 }}>
-            {allowedLanguages.map((languageId) => {
-              const active = languageId === activeLanguageId;
-              return (
-                <Pressable
-                  key={languageId}
-                  onPress={() => { setSelectedLanguageId(languageId); resetForm(); }}
-                  style={{
-                    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
-                    backgroundColor: active ? M.accent : M.bg,
-                    borderWidth: 1, borderColor: active ? M.accent : M.border,
-                  }}
-                >
-                  <Text style={{ fontSize: 13, fontWeight: "700", color: active ? M.ink : M.sub }}>
-                    {getLanguageName(languageId)}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </ScrollView>
-
-        {!formOpen && (
-          <NewButton label={t("educator.quizBankEditor.newButton")} onPress={() => setFormOpen(true)} M={M} />
-        )}
+        <View style={{ marginBottom: 16 }}>
+          <StudioFilterPills
+            options={allowedLanguages.map((languageId) => ({ id: languageId, label: getLanguageName(languageId) }))}
+            value={activeLanguageId}
+            onChange={(languageId) => { setSelectedLanguageId(languageId); resetForm(); }}
+            scrollable
+          />
+        </View>
 
         {/* Editor form */}
         {formOpen && (
-          <View style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 16, gap: 10, marginBottom: 20 }}>
+          <StudioCard style={{ gap: 10, marginBottom: 20 }}>
             <Text style={{ fontSize: 14, fontWeight: "800", color: M.text }}>
               {editing ? t("educator.quizBankEditor.editTitle") : t("educator.quizBankEditor.newTitle")}
             </Text>
             <View>
               <Text style={{ fontSize: 11, fontWeight: "600", color: M.sub, marginBottom: 4 }}>{t("educator.quizBankEditor.typeLabel")}</Text>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                {QUIZ_TYPES.map((qt) => {
-                  const active = qt === form.type;
-                  return (
-                    <Pressable
-                      key={qt}
-                      onPress={() => setForm({ ...form, type: qt })}
-                      style={{
-                        paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999,
-                        backgroundColor: active ? M.accent : M.card,
-                        borderWidth: 1, borderColor: active ? M.accent : M.border,
-                      }}
-                    >
-                      <Text style={{ fontSize: 12, fontWeight: "700", color: active ? M.ink : M.sub }}>{qt}</Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
+              <StudioFilterPills
+                options={QUIZ_TYPES.map((qt) => ({ id: qt, label: qt }))}
+                value={form.type}
+                onChange={(type) => setForm({ ...form, type })}
+                scrollable
+              />
             </View>
             <LabeledInput label={t("educator.quizBankEditor.promptLabel")} value={form.prompt} onChange={(v) => setForm({ ...form, prompt: v })} />
             <LabeledInput label={t("educator.quizBankEditor.answerLabel")} value={form.answer} onChange={(v) => setForm({ ...form, answer: v })} />
@@ -268,7 +235,11 @@ export default function QuizBankScreen() {
                   </Text>
                 </Pressable>
                 {form.lessonId ? (
-                  <SmallButton label={t("common.clear", { defaultValue: "Clear" })} onPress={() => setForm({ ...form, lessonId: "", sceneId: "" })} M={M} />
+                  <ActionPill
+                    icon="xmark.circle.fill"
+                    label={t("common.clear", { defaultValue: "Clear" })}
+                    onPress={() => setForm({ ...form, lessonId: "", sceneId: "" })}
+                  />
                 ) : null}
               </View>
             </View>
@@ -280,15 +251,16 @@ export default function QuizBankScreen() {
               />
             ) : null}
             <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
-              <PrimaryButton
-                label={upsert.isPending ? t("educator.quizBankEditor.saving") : editing ? t("common.save") : t("educator.quizBankEditor.createDraft")}
-                onPress={handleSave}
-                M={M}
-                disabled={upsert.isPending}
-              />
-              <GhostButton label={t("common.cancel")} onPress={resetForm} M={M} />
+              <View style={{ flex: 1 }}>
+                <PrimaryButton
+                  label={upsert.isPending ? t("educator.quizBankEditor.saving") : editing ? t("common.save") : t("educator.quizBankEditor.createDraft")}
+                  onPress={handleSave}
+                  disabled={upsert.isPending}
+                />
+              </View>
+              <GhostButton label={t("common.cancel")} onPress={resetForm} />
             </View>
-          </View>
+          </StudioCard>
         )}
 
         {/* List */}
@@ -298,7 +270,7 @@ export default function QuizBankScreen() {
         )}
         <View style={{ gap: 10 }}>
           {quizQuery.data?.map((q) => (
-            <View key={q.id} style={{ borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 14 }}>
+            <StudioCard key={q.id}>
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                 <Text style={{ flex: 1, fontSize: 15, fontWeight: "800", color: M.text }}>{q.prompt}</Text>
                 {q.status && <Badge label={STATUS_LABEL[q.status as ContentStatus]} tone={STATUS_TONE[q.status as ContentStatus]} />}
@@ -315,30 +287,44 @@ export default function QuizBankScreen() {
                   onToast={{ success: toastSuccess, error: toastError }}
                 />
                 {canSubmitForReview(q.status) && (
-                  <SmallButton label={t("educator.quizBankEditor.submitButton")} onPress={() =>
-                    submitForReview.mutate(q.id, {
-                      onSuccess: () => toastSuccess(t("educator.quizBankEditor.submitted")),
-                      onError: (e: Error) => toastError(t("educator.quizBankEditor.submitFailed"), friendlyError(e)),
-                    })
-                  } M={M} />
+                  <ActionPill
+                    icon="paperplane.fill"
+                    label={t("educator.quizBankEditor.submitButton")}
+                    onPress={() =>
+                      submitForReview.mutate(q.id, {
+                        onSuccess: () => toastSuccess(t("educator.quizBankEditor.submitted")),
+                        onError: (e: Error) => toastError(t("educator.quizBankEditor.submitFailed"), friendlyError(e)),
+                      })
+                    }
+                  />
                 )}
                 {canPublishContent(q.status, q.createdBy, actor) && (
-                  <SmallButton label={t("educator.quizBankEditor.publishButton")} tone="publish" onPress={() =>
-                    publish.mutate(q.id, {
-                      onSuccess: () => toastSuccess(t("educator.quizBankEditor.published")),
-                      onError: (e: Error) => toastError(t("educator.quizBankEditor.publishFailed"), friendlyError(e)),
-                    })
-                  } M={M} />
+                  <ActionPill
+                    icon="checkmark.circle.fill"
+                    label={t("educator.quizBankEditor.publishButton")}
+                    tone="success"
+                    onPress={() =>
+                      publish.mutate(q.id, {
+                        onSuccess: () => toastSuccess(t("educator.quizBankEditor.published")),
+                        onError: (e: Error) => toastError(t("educator.quizBankEditor.publishFailed"), friendlyError(e)),
+                      })
+                    }
+                  />
                 )}
-                <SmallButton label={t("common.edit")} onPress={() => startEdit(q)} M={M} />
-                <SmallButton label={t("common.delete")} tone="danger" onPress={() =>
-                  remove.mutate(q.id, {
-                    onSuccess: () => toastSuccess(t("educator.quizBankEditor.deleted")),
-                    onError: (e: Error) => toastError(t("educator.quizBankEditor.deleteFailed"), friendlyError(e)),
-                  })
-                } M={M} />
+                <ActionPill icon="pencil" label={t("common.edit")} onPress={() => startEdit(q)} />
+                <ActionPill
+                  icon="trash.fill"
+                  label={t("common.delete")}
+                  tone="danger"
+                  onPress={() =>
+                    remove.mutate(q.id, {
+                      onSuccess: () => toastSuccess(t("educator.quizBankEditor.deleted")),
+                      onError: (e: Error) => toastError(t("educator.quizBankEditor.deleteFailed"), friendlyError(e)),
+                    })
+                  }
+                />
               </View>
-            </View>
+            </StudioCard>
           ))}
         </View>
       </ScrollView>

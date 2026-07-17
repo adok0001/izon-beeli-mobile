@@ -2,7 +2,11 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LanguagePickerModal } from "@/components/language-picker";
 import { LocalizedTextInput, toLocalizedText } from "@/components/ui/localized-text-input";
-import { getAccent } from "@/constants/accent-colors";
+import { ActionPill } from "@/components/studio/studio-action-pill";
+import { StudioCard } from "@/components/studio/studio-card";
+import { StudioFilterPills } from "@/components/studio/studio-filter-pills";
+import { FormField, LabeledInput } from "@/components/studio/studio-form";
+import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import type { LocalizedText } from "@/types";
 import { apiFetch, friendlyError } from "@/lib/api";
 import { useCurrentUser } from "@/lib/hooks/use-current-user";
@@ -22,7 +26,6 @@ import {
   Pressable,
   ScrollView,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -52,79 +55,10 @@ interface AdminLesson {
 
 const LEVELS = ["beginner", "intermediate", "advanced"] as const;
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function Field({
-  label,
-  value,
-  onChangeText,
-  placeholder,
-  multiline,
-  keyboardType,
-  editable = true,
-}: {
-  label: string;
-  value: string;
-  onChangeText: (v: string) => void;
-  placeholder?: string;
-  multiline?: boolean;
-  keyboardType?: "default" | "numeric" | "url";
-  editable?: boolean;
-}) {
-  const M = useMuseumTheme();
-  return (
-    <View style={{ marginBottom: 10 }}>
-      <Text style={{ fontSize: 11, fontWeight: "600", color: M.muted, marginBottom: 4 }}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={M.muted}
-        editable={editable}
-        multiline={multiline}
-        keyboardType={keyboardType}
-        numberOfLines={multiline ? 3 : 1}
-        style={{
-          borderWidth: 1,
-          borderColor: M.border,
-          borderRadius: 10,
-          paddingHorizontal: 12,
-          paddingVertical: 9,
-          color: M.text,
-          backgroundColor: editable ? M.card : M.ink,
-          fontSize: 14,
-          textAlignVertical: multiline ? "top" : "center",
-          minHeight: multiline ? 72 : undefined,
-          opacity: editable ? 1 : 0.5,
-        }}
-      />
-    </View>
-  );
-}
-
-function LevelPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const M = useMuseumTheme();
-  return (
-    <View style={{ flexDirection: "row", gap: 6, marginBottom: 10 }}>
-      {LEVELS.map((l) => (
-        <Pressable
-          key={l}
-          onPress={() => onChange(l)}
-          style={{
-            flex: 1, paddingVertical: 7, borderRadius: 8, alignItems: "center",
-            borderWidth: 1,
-            borderColor: value === l ? M.accent : M.border,
-            backgroundColor: value === l ? `${M.accent}20` : M.card,
-          }}
-        >
-          <Text style={{ fontSize: 11, fontWeight: "700", color: value === l ? M.accent : M.muted, textTransform: "capitalize" }}>
-            {l}
-          </Text>
-        </Pressable>
-      ))}
-    </View>
-  );
-}
+const LEVEL_OPTIONS: { id: string; label: string }[] = LEVELS.map((l) => ({
+  id: l,
+  label: l.charAt(0).toUpperCase() + l.slice(1),
+}));
 
 // ── Course Form Modal ─────────────────────────────────────────────────────────
 
@@ -185,7 +119,17 @@ function CourseFormModal({
             </Pressable>
           </View>
           <ScrollView contentContainerStyle={{ padding: 16 }} keyboardShouldPersistTaps="handled">
-            <Field label={t("admin.courses.formId") + " *"} value={id} onChangeText={setId} placeholder="e.g. izon-beginner-1" editable={isNew} />
+            {isNew ? (
+              <View style={{ marginBottom: 10 }}>
+                <LabeledInput label={`${t("admin.courses.formId")} *`} value={id} onChange={setId} hint="e.g. izon-beginner-1" />
+              </View>
+            ) : (
+              <View style={{ marginBottom: 10 }}>
+                <FormField label={t("admin.courses.formId")}>
+                  <Text style={{ fontSize: 14, color: M.muted }}>{id}</Text>
+                </FormField>
+              </View>
+            )}
             <View style={{ marginBottom: 10 }}>
               <Text style={{ fontSize: 11, fontWeight: "600", color: M.muted, marginBottom: 4 }}>
                 {t("admin.courses.formLanguage")} *
@@ -200,9 +144,13 @@ function CourseFormModal({
             </View>
             <LocalizedTextInput label={t("admin.courses.formTitle")} value={title} onChange={setTitle} required />
             <LocalizedTextInput label={t("admin.courses.formDesc")} value={description} onChange={setDescription} multiline required />
-            <Text style={{ fontSize: 11, fontWeight: "600", color: M.muted, marginBottom: 4 }}>{t("admin.courses.formLevel")} *</Text>
-            <LevelPicker value={level} onChange={setLevel} />
-            <Field label={t("admin.courses.formOrder")} value={order} onChangeText={setOrder} keyboardType="numeric" />
+            <View style={{ marginBottom: 10 }}>
+              <Text style={{ fontSize: 11, fontWeight: "600", color: M.muted, marginBottom: 6 }}>{t("admin.courses.formLevel")} *</Text>
+              <StudioFilterPills options={LEVEL_OPTIONS} value={level} onChange={setLevel} />
+            </View>
+            <View style={{ marginBottom: 10 }}>
+              <LabeledInput label={t("admin.courses.formOrder")} value={order} onChange={setOrder} keyboardType="number-pad" />
+            </View>
             {!isNew && onDelete ? (
               <Pressable
                 onPress={onDelete}
@@ -283,12 +231,30 @@ function LessonFormModal({
             </Pressable>
           </View>
           <ScrollView contentContainerStyle={{ padding: 16 }} keyboardShouldPersistTaps="handled">
-            <Field label={t("admin.courses.formLessonId") + " *"} value={id} onChangeText={setId} placeholder={`${courseId}-lesson-1`} editable={isNew} />
+            {isNew ? (
+              <View style={{ marginBottom: 10 }}>
+                <LabeledInput label={`${t("admin.courses.formLessonId")} *`} value={id} onChange={setId} hint={`${courseId}-lesson-1`} />
+              </View>
+            ) : (
+              <View style={{ marginBottom: 10 }}>
+                <FormField label={t("admin.courses.formLessonId")}>
+                  <Text style={{ fontSize: 14, color: M.muted }}>{id}</Text>
+                </FormField>
+              </View>
+            )}
             <LocalizedTextInput label={t("admin.courses.formTitle")} value={title} onChange={setTitle} required />
-            <Field label={t("admin.courses.formDescEn") + " *"} value={description} onChangeText={setDescription} multiline />
-            <Field label={t("admin.courses.formAudioUrl")} value={audioUrl} onChangeText={setAudioUrl} placeholder="https://…/audio.mp3" keyboardType="url" />
-            <Field label={t("admin.courses.formDuration") + " (s)"} value={duration} onChangeText={setDuration} keyboardType="numeric" />
-            <Field label={t("admin.courses.formOrder")} value={order} onChangeText={setOrder} keyboardType="numeric" />
+            <View style={{ marginBottom: 10 }}>
+              <LabeledInput label={`${t("admin.courses.formDescEn")} *`} value={description} onChange={setDescription} multiline />
+            </View>
+            <View style={{ marginBottom: 10 }}>
+              <LabeledInput label={t("admin.courses.formAudioUrl")} value={audioUrl} onChange={setAudioUrl} hint="https://…/audio.mp3" />
+            </View>
+            <View style={{ marginBottom: 10 }}>
+              <LabeledInput label={`${t("admin.courses.formDuration")} (s)`} value={duration} onChange={setDuration} keyboardType="number-pad" />
+            </View>
+            <View style={{ marginBottom: 10 }}>
+              <LabeledInput label={t("admin.courses.formOrder")} value={order} onChange={setOrder} keyboardType="number-pad" />
+            </View>
             {!isNew && onDelete ? (
               <Pressable
                 onPress={onDelete}
@@ -308,20 +274,19 @@ function LessonFormModal({
 
 function LessonRow({ lesson, onEdit, onDelete }: { lesson: AdminLesson; onEdit: () => void; onDelete: () => void }) {
   const M = useMuseumTheme();
+  const { t } = useTranslation();
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", paddingVertical: 10, paddingHorizontal: 12, backgroundColor: M.card, borderRadius: 10, borderWidth: 1, borderColor: M.border, marginBottom: 6 }}>
+    <StudioCard style={{ flexDirection: "row", alignItems: "center", paddingVertical: 10, paddingHorizontal: 12, marginBottom: 6 }}>
       <IconSymbol name="book" size={14} color={M.muted} style={{ marginRight: 8 }} />
       <Text style={{ flex: 1, fontSize: 13, fontWeight: "600", color: M.text }} numberOfLines={1}>{localize(lesson.title, "en")}</Text>
       {lesson.duration ? (
         <Text style={{ fontSize: 11, color: M.muted, marginRight: 8 }}>{Math.round(lesson.duration / 60)}m</Text>
       ) : null}
-      <Pressable onPress={onEdit} style={{ padding: 4, marginRight: 2 }}>
-        <IconSymbol name="pencil" size={14} color={M.accent} />
-      </Pressable>
-      <Pressable onPress={onDelete} style={{ padding: 4 }}>
-        <IconSymbol name="trash" size={14} color={getAccent("rose").solid} />
-      </Pressable>
-    </View>
+      <View style={{ flexDirection: "row", gap: 6 }}>
+        <ActionPill icon="pencil" label={t("common.edit")} onPress={onEdit} />
+        <ActionPill icon="trash.fill" label={t("common.delete")} tone="danger" onPress={onDelete} />
+      </View>
+    </StudioCard>
   );
 }
 
@@ -454,7 +419,7 @@ function CourseCard({
   const levelColor = LEVEL_COLORS[course.level] ?? M.muted;
 
   return (
-    <View style={{ borderRadius: 14, borderWidth: 1, borderColor: M.border, backgroundColor: M.card, marginBottom: 10, overflow: "hidden" }}>
+    <StudioCard style={{ marginBottom: 10, padding: 0, overflow: "hidden" }}>
       <Pressable
         onPress={() => setExpanded((v) => !v)}
         style={{ flexDirection: "row", alignItems: "center", padding: 14, gap: 10 }}
@@ -474,19 +439,17 @@ function CourseCard({
           <IconSymbol name="list.bullet" size={12} color={M.muted} />
           <Text style={{ fontSize: 11, color: M.muted }}>{course.lessonsCount}</Text>
         </View>
-        <Pressable onPress={onEdit} style={{ padding: 6 }}>
-          <IconSymbol name="pencil" size={14} color={M.accent} />
-        </Pressable>
-        <Pressable onPress={onDelete} style={{ padding: 6 }}>
-          <IconSymbol name="trash" size={14} color={getAccent("rose").solid} />
-        </Pressable>
+        <View style={{ flexDirection: "row", gap: 6 }}>
+          <ActionPill icon="pencil" label={t("common.edit")} onPress={onEdit} />
+          <ActionPill icon="trash.fill" label={t("common.delete")} tone="danger" onPress={onDelete} />
+        </View>
       </Pressable>
       {expanded && (
         <View style={{ paddingHorizontal: 14, paddingBottom: 14 }}>
           <LessonsPanel courseId={course.id} token={token} />
         </View>
       )}
-    </View>
+    </StudioCard>
   );
 }
 
@@ -542,33 +505,23 @@ export default function AdminCoursesScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
-        {/* Header */}
-        <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12, borderBottomWidth: 1, borderColor: M.border }}>
-          <Text style={{ fontSize: 26, fontWeight: "900", color: M.parchment, letterSpacing: -0.5 }}>
-            {t("admin.courses.title")}
-          </Text>
-          <Text style={{ marginTop: 2, fontSize: 12, color: M.textDim }}>
-            {t("admin.courses.totalCount", { count: courses.length })}
-          </Text>
-          <View style={{ flexDirection: "row", alignItems: "center", marginTop: 12, gap: 8 }}>
-            <Pressable
-              onPress={() => setLangPickerVisible(true)}
-              style={{ flex: 1, flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: M.border, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 8, backgroundColor: M.card }}
-            >
-              <Text style={{ flex: 1, fontSize: 13, color: filterLang ? M.text : M.muted }}>{filterLang || "All languages"}</Text>
-              <IconSymbol name="chevron.down" size={12} color={M.muted} />
-            </Pressable>
-            <Pressable
-              onPress={() => setAddingCourse(true)}
-              style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, backgroundColor: M.accent }}
-            >
-              <IconSymbol name="plus" size={14} color="#fff" />
-              <Text style={{ fontSize: 13, fontWeight: "700", color: "#fff" }}>{t("admin.courses.newCourse")}</Text>
-            </Pressable>
-          </View>
+        <StudioScreenHeader
+          title={t("admin.courses.title")}
+          subtitle={t("admin.courses.totalCount", { count: courses.length })}
+          action={{ label: t("admin.courses.newCourse"), icon: "plus", onPress: () => setAddingCourse(true) }}
+        />
+        <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
+          <Pressable
+            onPress={() => setLangPickerVisible(true)}
+            style={{ flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: M.border, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 8, backgroundColor: M.card }}
+          >
+            <Text style={{ flex: 1, fontSize: 13, color: filterLang ? M.text : M.muted }}>{filterLang || "All languages"}</Text>
+            <IconSymbol name="chevron.down" size={12} color={M.muted} />
+          </Pressable>
         </View>
 
         <ScrollView
+          style={{ flex: 1, backgroundColor: M.card }}
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
         >
