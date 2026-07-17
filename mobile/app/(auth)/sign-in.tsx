@@ -96,7 +96,7 @@ export default function SignInScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <AuthHeader title="Beeli" size="compact" />
+          <AuthHeader title={t("auth.signInButton")} size="compact" />
 
           <Animated.View style={formStyle}>
             <AuthErrorBanner message={error || social.error} />
