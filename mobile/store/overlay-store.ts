@@ -1,46 +1,54 @@
 import { useEffect, useId } from "react";
 import { create } from "zustand";
 
-interface PendingStreak {
-  streak: number;
-  isMilestone: boolean;
-}
+export type Celebration =
+  | { type: "streak"; streak: number; isMilestone: boolean }
+  | { type: "achievement"; level: number; title: string };
 
 interface OverlayState {
   /**
-   * Unique ids of screens/overlays currently holding the foreground. The streak
-   * milestone modal stays queued until this list is empty, so it never overtakes
-   * a results screen, a level-up popup, or anything else the learner is still on.
+   * Unique ids of screens/overlays currently holding the foreground. Queued
+   * celebrations stay put until this list is empty, so they never overtake a
+   * results screen or anything else the learner is still on.
    */
   claims: string[];
-  /** A streak milestone waiting to be celebrated once the foreground is clear. */
-  pendingStreak: PendingStreak | null;
+  /**
+   * Celebrations waiting to be shown once the foreground is clear, in the
+   * order they were queued. Only the front of the queue is ever visible, so a
+   * streak milestone and a level-up earned from the same action present one
+   * after another instead of colliding.
+   */
+  queue: Celebration[];
   claim: (id: string) => void;
   release: (id: string) => void;
   showStreak: (streak: number, isMilestone: boolean) => void;
-  dismissStreak: () => void;
+  showAchievement: (level: number, title: string) => void;
+  dismissCurrent: () => void;
 }
 
 /**
  * Coordinates "celebration" overlays so they stack rather than overtake each
- * other. A streak milestone is recorded as `pendingStreak`, but the single
- * app-level {@link StreakCelebrationModal} only surfaces it once every foreground
- * `claim` has been released — i.e. after the learner has cleared their current
- * screen.
+ * other. A streak milestone or level-up is enqueued, but the single app-level
+ * {@link CelebrationHost} only surfaces the front of the queue once every
+ * foreground `claim` has been released — i.e. after the learner has cleared
+ * their current screen — and advances the queue on dismiss.
  */
 export const useOverlayStore = create<OverlayState>((set) => ({
   claims: [],
-  pendingStreak: null,
+  queue: [],
   claim: (id) =>
     set((s) => (s.claims.includes(id) ? s : { claims: [...s.claims, id] })),
   release: (id) => set((s) => ({ claims: s.claims.filter((c) => c !== id) })),
-  showStreak: (streak, isMilestone) => set({ pendingStreak: { streak, isMilestone } }),
-  dismissStreak: () => set({ pendingStreak: null }),
+  showStreak: (streak, isMilestone) =>
+    set((s) => ({ queue: [...s.queue, { type: "streak", streak, isMilestone }] })),
+  showAchievement: (level, title) =>
+    set((s) => ({ queue: [...s.queue, { type: "achievement", level, title }] })),
+  dismissCurrent: () => set((s) => ({ queue: s.queue.slice(1) })),
 }));
 
 /**
- * Holds the foreground (deferring the queued streak milestone modal) for as long
- * as `active` is true. Pass `isMilestonePending && isFocused` so a screen only
+ * Holds the foreground (deferring any queued celebration) for as long as
+ * `active` is true. Pass `isCelebrationPending && isFocused` so a screen only
  * blocks the celebration while the learner is actually looking at it.
  */
 export function useForegroundClaim(active: boolean) {

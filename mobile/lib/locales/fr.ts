@@ -1083,6 +1083,12 @@ export const fr = {
     shareCta: "Montre-le",
     continue: "Continuer",
   },
+  achievementCelebration: {
+    overline: "Succès débloqué",
+    body: "Un nouveau rang dans ta collection. Continue à apprendre pour atteindre le prochain.",
+    shareCta: "Montre-le",
+    continue: "Continuer",
+  },
   proverbs: {
     label: "Proverbe",
     titleSuffix: "Proverbes",

@@ -1081,6 +1081,12 @@ export const ar = {
     shareCta: "اعرضه",
     continue: "متابعة",
   },
+  achievementCelebration: {
+    overline: "تم فتح إنجاز",
+    body: "رتبة جديدة في مجموعتك. واصل التعلم للوصول إلى الرتبة التالية.",
+    shareCta: "اعرضه",
+    continue: "متابعة",
+  },
   proverbs: {
     label: "مثل",
     titleSuffix: "الأمثال",

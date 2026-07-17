@@ -1,5 +1,6 @@
 import { BrandSplash } from "@/components/brand-splash";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { AchievementCelebrationModal } from "@/components/achievement-celebration-modal";
 import { StreakCelebrationModal } from "@/components/streak-celebration-modal";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { analytics, posthogClient } from "@/lib/analytics";
@@ -71,22 +72,23 @@ const MuseumNavigationTheme: Theme = {
   },
 };
 /**
- * App-level host for the streak milestone celebration. The modal is mounted once,
- * above every screen, and only surfaces the queued milestone when no screen or
- * overlay is holding the foreground — so it stacks behind the learner's current
- * screen instead of overtaking it.
+ * App-level host for milestone celebrations (streaks and achievements). Mounted
+ * once, above every screen, it only surfaces the front of the celebration queue
+ * when no screen or overlay is holding the foreground — so it stacks behind the
+ * learner's current screen instead of overtaking it, and shows one celebration
+ * at a time even when several are queued from the same action.
  */
-function StreakCelebrationHost() {
-  const pendingStreak = useOverlayStore((s) => s.pendingStreak);
+function CelebrationHost() {
+  const current = useOverlayStore((s) => s.queue[0] ?? null);
   const busy = useOverlayStore((s) => s.claims.length > 0);
-  const dismissStreak = useOverlayStore((s) => s.dismissStreak);
+  const dismissCurrent = useOverlayStore((s) => s.dismissCurrent);
   const [ready, setReady] = useState(false);
 
   // The foreground clears the instant the learner leaves the screen — but that
   // leave is usually a navigation transition, and a full-screen <Modal> shown
   // mid-transition gets swallowed by RN. Wait for interactions to settle so the
   // celebration reliably presents on the screen they land on.
-  const queued = !!pendingStreak && !busy;
+  const queued = !!current && !busy;
   useEffect(() => {
     if (!queued) {
       setReady(false);
@@ -96,12 +98,24 @@ function StreakCelebrationHost() {
     return () => task.cancel();
   }, [queued]);
 
+  const visible = queued && ready;
+  if (current?.type === "achievement") {
+    return (
+      <AchievementCelebrationModal
+        visible={visible}
+        level={current.level}
+        title={current.title}
+        onDismiss={dismissCurrent}
+      />
+    );
+  }
+
   return (
     <StreakCelebrationModal
-      visible={queued && ready}
-      streak={pendingStreak?.streak ?? 0}
-      isMilestone={pendingStreak?.isMilestone}
-      onDismiss={dismissStreak}
+      visible={visible}
+      streak={current?.type === "streak" ? current.streak : 0}
+      isMilestone={current?.type === "streak" ? current.isMilestone : undefined}
+      onDismiss={dismissCurrent}
     />
   );
 }
@@ -438,7 +452,7 @@ export default function RootLayout() {
                   <Stack.Screen name="restore-account" options={{ headerShown: false }} />
                   <Stack.Screen name="admin" options={{ headerShown: false }} />
                 </Stack>
-                <StreakCelebrationHost />
+                <CelebrationHost />
               </GestureHandlerRootView>
               </PostHogProvider>
               <StatusBar style="light" />

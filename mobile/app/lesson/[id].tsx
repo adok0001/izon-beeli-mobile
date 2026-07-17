@@ -1,6 +1,5 @@
 import { AudioPlayer } from "@/components/audio/audio-player";
 import { InteractiveTranscript } from "@/components/audio/interactive-transcript";
-import { LevelUpModal } from "@/components/level-up-modal";
 import { LessonCultureNote } from "@/components/lesson/lesson-culture-note";
 import { LessonHero } from "@/components/lesson/lesson-hero";
 import { MarkCompleteButton } from "@/components/lesson/mark-complete-button";
@@ -61,7 +60,6 @@ export default function LessonScreen() {
   const courses = queryClient.getQueryData<Course[]>(["courses", selectedLanguageId]);
   const lessonCourse = courses?.find((c) => c.id === lesson?.courseId);
   const typeColors = getCourseTypeColors(lessonCourse?.courseType);
-  const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [shareVisible, setShareVisible] = useState(false);
   const [pendingSummary, setPendingSummary] = useState(false);
@@ -97,21 +95,22 @@ export default function LessonScreen() {
       : null;
   const { isDownloaded, isDownloading, onPress: handleDownloadPress } = useLessonDownload(downloadInput);
 
-  // Queue the milestone celebration; hold the foreground while the lesson stays
-  // in front of the learner so the app-level modal waits until they move on.
+  // Queue milestone celebrations (streak and achievement); hold the foreground
+  // while the lesson stays in front of the learner so the app-level modal
+  // waits until they move on.
   const isFocused = useIsFocused();
-  const pendingStreak = useOverlayStore((s) => s.pendingStreak);
-  const [streakHolding, setStreakHolding] = useState(false);
-  useForegroundClaim(streakHolding && isFocused);
+  const hasQueuedCelebration = useOverlayStore((s) => s.queue.length > 0);
+  const [celebrationHolding, setCelebrationHolding] = useState(false);
+  useForegroundClaim(celebrationHolding && isFocused);
   useEffect(() => {
-    if (!pendingStreak) setStreakHolding(false);
-  }, [pendingStreak]);
+    if (!hasQueuedCelebration) setCelebrationHolding(false);
+  }, [hasQueuedCelebration]);
 
   const handleStreakUpdate = useCallback(
     (streak: number, isMilestone: boolean) => {
       if (isMilestone) {
         useOverlayStore.getState().showStreak(streak, true);
-        setStreakHolding(true);
+        setCelebrationHolding(true);
       } else {
         toastSuccess(t("streak.toastTitle", { count: streak }));
       }
@@ -122,8 +121,9 @@ export default function LessonScreen() {
   const completeLesson = useCompleteLesson({
     onLevelUp: (level, title) => {
       analytics.levelUp(level, title);
-      setLevelUp({ level, title });
       reviewPrompt.onLevelUp(level);
+      useOverlayStore.getState().showAchievement(level, title);
+      setCelebrationHolding(true);
     },
     onStreakUpdate: (streak, isMilestone) => {
       reviewPrompt.onStreakUpdate(streak);
@@ -467,13 +467,6 @@ export default function LessonScreen() {
             mini-bar too; show it only for the summary view to avoid a duplicate. */}
         {isCurrentTrack && (!audioSource || showSummary) && <AudioPlayer />}
       </SafeAreaView>
-
-      <LevelUpModal
-        visible={!!levelUp}
-        level={levelUp?.level ?? 1}
-        title={levelUp?.title ?? ""}
-        onDismiss={() => setLevelUp(null)}
-      />
 
       <NotificationBanner
         visible={toast.visible}

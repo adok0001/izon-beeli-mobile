@@ -1069,6 +1069,12 @@ export const en = {
     shareCta: "Show it off",
     continue: "Continue",
   },
+  achievementCelebration: {
+    overline: "Achievement unlocked",
+    body: "A new rank in your collection. Keep learning to reach the next one.",
+    shareCta: "Show it off",
+    continue: "Continue",
+  },
   proverbs: {
     label: "Proverb",
     titleSuffix: "Proverbs",

@@ -208,7 +208,7 @@ export function useStreakCelebration() {
   const queryClient = useQueryClient();
   const { toast, success: toastSuccess, dismiss: dismissToast } = useToast();
   const isFocused = useIsFocused();
-  const pendingStreak = useOverlayStore((s) => s.pendingStreak);
+  const hasQueued = useOverlayStore((s) => s.queue.length > 0);
   const [holding, setHolding] = useState(false);
 
   // Defer the queued milestone while this screen is the one in front of the user.
@@ -216,8 +216,8 @@ export function useStreakCelebration() {
 
   // Once the milestone has been celebrated (or cleared) elsewhere, stop holding.
   useEffect(() => {
-    if (!pendingStreak) setHolding(false);
-  }, [pendingStreak]);
+    if (!hasQueued) setHolding(false);
+  }, [hasQueued]);
 
   const onStreakUpdate = useCallback(
     (streak: number, isMilestone: boolean) => {
@@ -239,7 +239,7 @@ export function useStreakCelebration() {
   );
 
   const dismissCelebration = useCallback(() => {
-    useOverlayStore.getState().dismissStreak();
+    useOverlayStore.getState().dismissCurrent();
     setHolding(false);
   }, []);
 

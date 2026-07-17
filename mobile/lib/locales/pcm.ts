@@ -1081,6 +1081,12 @@ export const pcm = {
     shareCta: "Show am",
     continue: "Continue",
   },
+  achievementCelebration: {
+    overline: "You unlock achievement",
+    body: "Na new rank dis for your collection. Keep dey learn make you reach the next one.",
+    shareCta: "Show am",
+    continue: "Continue",
+  },
   proverbs: {
     label: "Proverb",
     titleSuffix: "Proverbs",

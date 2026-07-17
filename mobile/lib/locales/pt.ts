@@ -1083,6 +1083,12 @@ export const pt = {
     shareCta: "Mostra isso",
     continue: "Continuar",
   },
+  achievementCelebration: {
+    overline: "Conquista desbloqueada",
+    body: "Um novo patamar na tua coleção. Continua a aprender para alcançar o próximo.",
+    shareCta: "Mostra isso",
+    continue: "Continuar",
+  },
   proverbs: {
     label: "Provérbio",
     titleSuffix: "Provérbios",
