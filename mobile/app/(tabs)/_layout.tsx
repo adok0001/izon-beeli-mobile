@@ -4,7 +4,6 @@ import { FeatureTourModal } from "@/components/feature-tour-modal";
 import { GlobalSpeedDialFab } from "@/components/global-speed-dial-fab";
 import { HapticTab } from "@/components/haptic-tab";
 import { AnimatedTabIcon } from "@/components/ui/animated-tab-icon";
-import { WelcomeChecklistFab } from "@/components/welcome-checklist-fab";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-user";
@@ -187,7 +186,6 @@ export default function TabLayout() {
         />
       </Tabs>
       <FeatureTourModal />
-      <WelcomeChecklistFab />
       <GlobalSpeedDialFab />
     </>
   );
