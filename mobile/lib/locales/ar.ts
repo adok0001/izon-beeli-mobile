@@ -424,6 +424,8 @@ export const ar = {
   auth: {
     emailOrUsername: "البريد الإلكتروني أو اسم المستخدم",
     password: "كلمة المرور",
+    showPassword: "إظهار كلمة المرور",
+    hidePassword: "إخفاء كلمة المرور",
     signInButton: "تسجيل الدخول",
     noAccount: "ليس لديك حساب؟",
     noAccountAction: "سجّل",

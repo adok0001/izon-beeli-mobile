@@ -424,6 +424,8 @@ export const pcm = {
   auth: {
     emailOrUsername: "Email or Username",
     password: "Password",
+    showPassword: "Show password",
+    hidePassword: "Hide password",
     signInButton: "Sign In",
     noAccount: "You never get account?",
     noAccountAction: "Sign Up",

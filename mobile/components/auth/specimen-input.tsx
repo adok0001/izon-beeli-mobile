@@ -1,7 +1,10 @@
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { type } from "@/constants/typography";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useState, type Ref } from "react";
+import { useTranslation } from "react-i18next";
 import {
+  Pressable,
   Text,
   TextInput,
   View,
@@ -57,10 +60,13 @@ export function SpecimenInput({
   large = false,
   ref,
   style,
+  secureTextEntry,
   ...inputProps
 }: SpecimenInputProps) {
   const M = useMuseumTheme();
+  const { t } = useTranslation();
   const [focused, setFocused] = useState(false);
+  const [revealed, setRevealed] = useState(false);
   const lineHeight = useSharedValue(1.5);
 
   const tone = error ? M.error : focused ? M.accent : M.border;
@@ -72,26 +78,41 @@ export function SpecimenInput({
       <Text style={{ ...type.overline, color: focused ? M.accent : M.sub, marginBottom: 8 }}>
         {label.toUpperCase()}
       </Text>
-      <TextInput
-        {...inputProps}
-        ref={ref}
-        onFocus={() => {
-          setFocused(true);
-          lineHeight.value = withTiming(2.5, { duration: 160 });
-        }}
-        onBlur={() => {
-          setFocused(false);
-          lineHeight.value = withTiming(1.5, { duration: 160 });
-        }}
-        placeholderTextColor={M.muted}
-        style={{
-          paddingBottom: 10,
-          fontSize: large ? 26 : 16,
-          letterSpacing: large ? 6 : undefined,
-          fontWeight: large ? "700" : "400",
-          color: M.text,
-        }}
-      />
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <TextInput
+          {...inputProps}
+          secureTextEntry={secureTextEntry && !revealed}
+          ref={ref}
+          onFocus={() => {
+            setFocused(true);
+            lineHeight.value = withTiming(2.5, { duration: 160 });
+          }}
+          onBlur={() => {
+            setFocused(false);
+            lineHeight.value = withTiming(1.5, { duration: 160 });
+          }}
+          placeholderTextColor={M.muted}
+          style={{
+            flex: 1,
+            paddingBottom: 10,
+            fontSize: large ? 26 : 16,
+            letterSpacing: large ? 6 : undefined,
+            fontWeight: large ? "700" : "400",
+            color: M.text,
+          }}
+        />
+        {secureTextEntry ? (
+          <Pressable
+            onPress={() => setRevealed((v) => !v)}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel={revealed ? t("auth.hidePassword") : t("auth.showPassword")}
+            style={{ paddingLeft: 12, paddingBottom: 10 }}
+          >
+            <IconSymbol name={revealed ? "eye.slash" : "eye.fill"} size={20} color={M.sub} />
+          </Pressable>
+        ) : null}
+      </View>
       <Animated.View style={[{ backgroundColor: tone, borderRadius: 1 }, lineStyle]} />
       {hint ? (
         <Text

@@ -392,6 +392,8 @@ export const en = {
   auth: {
     emailOrUsername: "Email or Username",
     password: "Password",
+    showPassword: "Show password",
+    hidePassword: "Hide password",
     signInButton: "Sign In",
     noAccount: "Don't have an account?",
     noAccountAction: "Sign Up",

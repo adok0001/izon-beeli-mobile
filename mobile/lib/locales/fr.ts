@@ -424,6 +424,8 @@ export const fr = {
   auth: {
     emailOrUsername: "E-mail ou nom d'utilisateur",
     password: "Mot de passe",
+    showPassword: "Afficher le mot de passe",
+    hidePassword: "Masquer le mot de passe",
     signInButton: "Se connecter",
     noAccount: "Pas encore de compte ?",
     noAccountAction: "S'inscrire",

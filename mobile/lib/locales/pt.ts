@@ -424,6 +424,8 @@ export const pt = {
   auth: {
     emailOrUsername: "E-mail ou Nome de Utilizador",
     password: "Palavra-passe",
+    showPassword: "Mostrar palavra-passe",
+    hidePassword: "Ocultar palavra-passe",
     signInButton: "Iniciar Sessão",
     noAccount: "Não tem uma conta?",
     noAccountAction: "Registe-se",
