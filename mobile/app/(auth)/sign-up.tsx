@@ -1,5 +1,6 @@
 import { AuthErrorBanner } from "@/components/auth/auth-error-banner";
 import { AuthHeader } from "@/components/auth/auth-header";
+import { AuthLink } from "@/components/auth/auth-link";
 import { AuthDivider, SocialAuthPanel } from "@/components/auth/social-auth-panel";
 import { SpecimenInput } from "@/components/auth/specimen-input";
 import { useAuthReveal } from "@/components/auth/use-auth-reveal";
@@ -9,10 +10,10 @@ import { authErrorMessage } from "@/lib/auth-errors";
 import { completeAuth } from "@/lib/complete-auth";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useClerk, useSignUp } from "@clerk/clerk-expo";
-import { Link, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput } from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, TextInput } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -99,11 +100,7 @@ export default function SignUpScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <AuthHeader
-            title={t("auth.createAccount")}
-            subtitle={t("auth.createAccountSubtitle")}
-            size="compact"
-          />
+          <AuthHeader title={t("auth.createAccount")} size="compact" />
 
           <Animated.View style={formStyle}>
             <AuthErrorBanner message={error || social.error} />
@@ -116,7 +113,6 @@ export default function SignUpScreen() {
 
                 <SpecimenInput
                   label={t("auth.email")}
-                  placeholder={t("auth.email")}
                   value={email}
                   onChangeText={setEmail}
                   autoCapitalize="none"
@@ -131,7 +127,6 @@ export default function SignUpScreen() {
                 <SpecimenInput
                   ref={usernameRef}
                   label={t("auth.username")}
-                  placeholder={t("auth.username")}
                   value={username}
                   onChangeText={setUsername}
                   autoCapitalize="none"
@@ -144,7 +139,6 @@ export default function SignUpScreen() {
                 <SpecimenInput
                   ref={passwordRef}
                   label={t("auth.password")}
-                  placeholder={t("auth.password")}
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
@@ -160,7 +154,6 @@ export default function SignUpScreen() {
                 <SpecimenInput
                   ref={confirmRef}
                   label={t("auth.confirmPassword")}
-                  placeholder={t("auth.confirmPassword")}
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
                   secureTextEntry
@@ -180,21 +173,21 @@ export default function SignUpScreen() {
                 />
               </Animated.View>
             ) : (
-              <Pressable
+              <AuthLink
+                label={t("auth.useEmailInstead")}
                 onPress={onShowEmail}
                 disabled={busy}
-                accessibilityRole="button"
-                style={{ alignItems: "center", marginTop: 22, paddingVertical: 6 }}
-              >
-                <Text style={{ fontSize: 14, color: M.text }}>{t("auth.useEmailInstead")}</Text>
-              </Pressable>
+                style={{ marginTop: 14 }}
+              />
             )}
 
-            <Link href="/(auth)/sign-in" asChild>
-              <Pressable disabled={busy} style={{ alignItems: "center", marginTop: emailExpanded ? 0 : 18 }}>
-                <Text style={{ fontSize: 13, color: M.sub }}>{t("auth.alreadyHaveAccount")}</Text>
-              </Pressable>
-            </Link>
+            <AuthLink
+              prompt={t("auth.alreadyHaveAccount")}
+              label={t("auth.alreadyHaveAccountAction")}
+              href="/(auth)/sign-in"
+              disabled={busy}
+              style={{ marginTop: emailExpanded ? 0 : 10 }}
+            />
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>

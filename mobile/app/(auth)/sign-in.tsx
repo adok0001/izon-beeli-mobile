@@ -1,5 +1,6 @@
 import { AuthErrorBanner } from "@/components/auth/auth-error-banner";
 import { AuthHeader } from "@/components/auth/auth-header";
+import { AuthLink } from "@/components/auth/auth-link";
 import { AuthDivider, SocialAuthPanel } from "@/components/auth/social-auth-panel";
 import { SpecimenInput } from "@/components/auth/specimen-input";
 import { useAuthReveal } from "@/components/auth/use-auth-reveal";
@@ -11,10 +12,10 @@ import { completeAuth } from "@/lib/complete-auth";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useGuestStore } from "@/store/guest-store";
 import { useClerk, useSignIn } from "@clerk/clerk-expo";
-import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput } from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, TextInput } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -95,7 +96,7 @@ export default function SignInScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <AuthHeader title="Beeli" subtitle={t("auth.signInSubtitle")} />
+          <AuthHeader title="Beeli" />
 
           <Animated.View style={formStyle}>
             <AuthErrorBanner message={error || social.error} />
@@ -108,7 +109,6 @@ export default function SignInScreen() {
 
                 <SpecimenInput
                   label={t("auth.emailOrUsername")}
-                  placeholder={t("auth.emailOrUsername")}
                   value={email}
                   onChangeText={setEmail}
                   autoCapitalize="none"
@@ -123,7 +123,6 @@ export default function SignInScreen() {
                 <SpecimenInput
                   ref={passwordRef}
                   label={t("auth.password")}
-                  placeholder={t("auth.password")}
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
@@ -133,11 +132,13 @@ export default function SignInScreen() {
                   returnKeyType="go"
                 />
 
-                <Link href="/(auth)/forgot-password" asChild>
-                  <Pressable disabled={busy} style={{ alignSelf: "flex-end", marginBottom: 24 }}>
-                    <Text style={{ fontSize: 12, color: M.accent }}>{t("auth.forgotPassword")}</Text>
-                  </Pressable>
-                </Link>
+                <AuthLink
+                  label={t("auth.forgotPassword")}
+                  href="/(auth)/forgot-password"
+                  align="end"
+                  disabled={busy}
+                  style={{ marginBottom: 16 }}
+                />
 
                 <Button
                   label={t("auth.signInButton")}
@@ -150,32 +151,29 @@ export default function SignInScreen() {
                 {/* Only the email path needs this: Google and Apple create the
                     account on first use, so offering "sign up" alongside them
                     would just be a third link competing for the same tap. */}
-                <Link href="/(auth)/sign-up" asChild>
-                  <Pressable disabled={busy} style={{ alignItems: "center" }}>
-                    <Text style={{ fontSize: 13, color: M.sub }}>{t("auth.noAccount")}</Text>
-                  </Pressable>
-                </Link>
+                <AuthLink
+                  prompt={t("auth.noAccount")}
+                  label={t("auth.noAccountAction")}
+                  href="/(auth)/sign-up"
+                  disabled={busy}
+                />
               </Animated.View>
             ) : (
-              <Pressable
+              <AuthLink
+                label={t("auth.useEmailInstead")}
                 onPress={onShowEmail}
                 disabled={busy}
-                accessibilityRole="button"
-                style={{ alignItems: "center", marginTop: 22, paddingVertical: 6 }}
-              >
-                <Text style={{ fontSize: 14, color: M.text }}>{t("auth.useEmailInstead")}</Text>
-              </Pressable>
+                style={{ marginTop: 14 }}
+              />
             )}
 
-            <Pressable
+            <AuthLink
+              label={t("auth.continueAsGuest")}
               onPress={onContinueAsGuest}
+              tone="quiet"
               disabled={busy}
-              style={{ alignItems: "center", marginTop: 18 }}
-            >
-              <Text style={{ fontSize: 13, color: M.muted, textDecorationLine: "underline" }}>
-                {t("auth.continueAsGuest")}
-              </Text>
-            </Pressable>
+              style={{ marginTop: 10 }}
+            />
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>

@@ -1,5 +1,6 @@
 import { AuthErrorBanner } from "@/components/auth/auth-error-banner";
 import { AuthHeader } from "@/components/auth/auth-header";
+import { AuthLink } from "@/components/auth/auth-link";
 import { ResendCodeRow } from "@/components/auth/resend-code-row";
 import { SpecimenInput } from "@/components/auth/specimen-input";
 import { useAuthReveal } from "@/components/auth/use-auth-reveal";
@@ -12,7 +13,7 @@ import { useClerk, useSignIn } from "@clerk/clerk-expo";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { KeyboardAvoidingView, Platform, Pressable, Text, TextInput } from "react-native";
+import { KeyboardAvoidingView, Platform, TextInput } from "react-native";
 import Animated from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -118,7 +119,6 @@ export default function ResetPasswordScreen() {
           <SpecimenInput
             ref={passwordRef}
             label={t("auth.newPassword")}
-            placeholder={t("auth.newPassword")}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -135,7 +135,6 @@ export default function ResetPasswordScreen() {
           <SpecimenInput
             ref={confirmRef}
             label={t("auth.confirmPassword")}
-            placeholder={t("auth.confirmPassword")}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
@@ -157,13 +156,12 @@ export default function ResetPasswordScreen() {
 
           {identifier ? <ResendCodeRow state={resend} disabled={loading} /> : null}
 
-          <Pressable
+          <AuthLink
+            label={t("auth.backToSignIn")}
             onPress={() => router.back()}
             disabled={loading}
-            style={{ alignItems: "center", marginTop: 18 }}
-          >
-            <Text style={{ fontSize: 13, color: M.sub }}>{t("auth.backToSignIn")}</Text>
-          </Pressable>
+            style={{ marginTop: 10 }}
+          />
         </Animated.View>
       </KeyboardAvoidingView>
     </SafeAreaView>

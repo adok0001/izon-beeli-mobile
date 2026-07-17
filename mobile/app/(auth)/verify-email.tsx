@@ -1,5 +1,6 @@
 import { AuthErrorBanner } from "@/components/auth/auth-error-banner";
 import { AuthHeader } from "@/components/auth/auth-header";
+import { AuthLink } from "@/components/auth/auth-link";
 import { ResendCodeRow } from "@/components/auth/resend-code-row";
 import { SpecimenInput } from "@/components/auth/specimen-input";
 import { useAuthReveal } from "@/components/auth/use-auth-reveal";
@@ -12,7 +13,7 @@ import { useClerk, useSignUp } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { KeyboardAvoidingView, Platform, Pressable, Text } from "react-native";
+import { KeyboardAvoidingView, Platform } from "react-native";
 import Animated from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -101,13 +102,12 @@ export default function VerifyEmailScreen() {
 
           <ResendCodeRow state={resend} disabled={loading} />
 
-          <Pressable
+          <AuthLink
+            label={t("auth.backToSignUp")}
             onPress={() => router.back()}
             disabled={loading}
-            style={{ alignItems: "center", marginTop: 18 }}
-          >
-            <Text style={{ fontSize: 13, color: M.sub }}>{t("auth.backToSignUp")}</Text>
-          </Pressable>
+            style={{ marginTop: 10 }}
+          />
         </Animated.View>
       </KeyboardAvoidingView>
     </SafeAreaView>

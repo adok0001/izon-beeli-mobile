@@ -1,4 +1,5 @@
 import { AuthHeader } from "@/components/auth/auth-header";
+import { AuthLink } from "@/components/auth/auth-link";
 import { AccountRow } from "@/components/ui/account-row";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import {
@@ -137,11 +138,11 @@ export default function SignBackInScreen() {
           </Pressable>
         </View>
 
-        <Pressable onPress={() => router.push("/(auth)/manage-accounts")} style={{ alignItems: "center" }}>
-          <Text style={{ fontSize: 12, fontWeight: "700", letterSpacing: 1, color: M.muted }}>
-            {t("auth.manageAccounts").toUpperCase()}
-          </Text>
-        </Pressable>
+        <AuthLink
+          label={t("auth.manageAccounts")}
+          onPress={() => router.push("/(auth)/manage-accounts")}
+          tone="quiet"
+        />
       </View>
     </SafeAreaView>
   );

@@ -84,7 +84,6 @@ export default function CompleteProfileScreen() {
 
           <SpecimenInput
             label={t("auth.username")}
-            placeholder={t("auth.username")}
             value={username}
             onChangeText={setUsername}
             autoCapitalize="none"

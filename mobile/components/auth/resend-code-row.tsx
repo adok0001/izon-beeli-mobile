@@ -1,4 +1,5 @@
 import type { UseResendCodeResult } from "@/components/auth/use-resend-code";
+import { type } from "@/constants/typography";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
@@ -15,9 +16,9 @@ export function ResendCodeRow({ state, disabled = false }: { state: UseResendCod
 
   if (justSent) {
     return (
-      <View style={{ alignItems: "center", marginTop: 18, paddingVertical: 6 }}>
+      <View style={{ alignItems: "center", marginTop: 10, paddingVertical: 8 }}>
         <Text
-          style={{ fontSize: 13, color: M.success }}
+          style={{ ...type.caption, color: M.success }}
           accessibilityRole="alert"
           accessibilityLiveRegion="polite"
         >
@@ -33,10 +34,10 @@ export function ResendCodeRow({ state, disabled = false }: { state: UseResendCod
       disabled={disabled || waiting || sending}
       accessibilityRole="button"
       accessibilityState={{ disabled: disabled || waiting || sending, busy: sending }}
-      style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 18, paddingVertical: 6 }}
+      style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 10, paddingVertical: 8 }}
     >
       {sending ? <ActivityIndicator size="small" color={M.muted} /> : null}
-      <Text style={{ fontSize: 13, color: waiting || sending ? M.muted : M.accent }}>
+      <Text style={{ ...type.caption, fontWeight: "600", color: waiting || sending ? M.muted : M.accent }}>
         {sending
           ? t("auth.sendingCode")
           : waiting
