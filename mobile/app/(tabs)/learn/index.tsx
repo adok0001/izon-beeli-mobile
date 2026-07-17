@@ -148,8 +148,8 @@ export default function LearnScreen() {
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <Text style={{ fontFamily: fonts.heading, fontSize: 26, color: M.parchment, flex: 1, marginRight: 12 }} numberOfLines={1}>
             {t(greetingKey(), {
-              defaultValue: greetingKey() === "learn.goodMorning" ? "Good Morning" :
-                greetingKey() === "learn.goodAfternoon" ? "Good Afternoon" : "Good Evening",
+              defaultValue: greetingKey() === "learn.goodMorning" ? "Good morning" :
+                greetingKey() === "learn.goodAfternoon" ? "Good afternoon" : "Good evening",
             })}
             {firstName ? `, ${firstName}` : ""}
           </Text>
