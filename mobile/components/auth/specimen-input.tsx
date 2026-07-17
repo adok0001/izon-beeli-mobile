@@ -1,6 +1,6 @@
 import { type } from "@/constants/typography";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { useState } from "react";
+import { useState, type Ref } from "react";
 import {
   Text,
   TextInput,
@@ -27,6 +27,10 @@ export interface SpecimenInputProps
     | "autoFocus"
     | "maxLength"
     | "textAlign"
+    // iOS-only autofill hints: "oneTimeCode" is what surfaces an emailed code
+    // in the QuickType bar, and "newPassword" triggers the strong-password
+    // suggestion. autoComplete alone covers Android.
+    | "textContentType"
   > {
   label: string;
   /** Draws the underline in the error tone regardless of focus. */
@@ -35,6 +39,8 @@ export interface SpecimenInputProps
   hintTone?: "warning" | "error";
   /** Larger, letter-spaced digits — for OTP-style codes. */
   large?: boolean;
+  /** Forwarded to the inner TextInput, so a form can chain focus field to field. */
+  ref?: Ref<TextInput>;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -49,6 +55,7 @@ export function SpecimenInput({
   hint,
   hintTone = "error",
   large = false,
+  ref,
   style,
   ...inputProps
 }: SpecimenInputProps) {
@@ -67,6 +74,7 @@ export function SpecimenInput({
       </Text>
       <TextInput
         {...inputProps}
+        ref={ref}
         onFocus={() => {
           setFocused(true);
           lineHeight.value = withTiming(2.5, { duration: 160 });

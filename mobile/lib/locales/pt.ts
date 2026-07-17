@@ -477,6 +477,23 @@ export const pt = {
     removeAccount: "Remover",
     removeAccountConfirmTitle: "Remover esta conta?",
     removeAccountConfirmBody: "Terá de iniciar sessão novamente para a usar neste dispositivo.",
+    continueWithGoogle: "Continuar com o Google",
+    continueWithApple: "Continuar com a Apple",
+    or: "ou",
+    useEmailInstead: "Utilizar o e-mail",
+    socialIncomplete:
+      "Não foi possível concluir o início de sessão. Tente novamente ou utilize o seu e-mail.",
+    completeProfileTitle: "Escolha um nome de utilizador",
+    completeProfileSubtitle: "É assim que aparecerá para a comunidade",
+    completeProfileButton: "Continuar",
+    signInIncomplete: "Início de sessão incompleto. Tente novamente.",
+    signUpIncomplete: "Registo incompleto. Tente novamente.",
+    resendCode: "Não recebeu o código? Reenviar",
+    resendIn: "Reenviar em {{seconds}} s",
+    sendingCode: "A enviar…",
+    codeSent: "Novo código enviado",
+    resetPasswordSentTo:
+      "Introduza o código enviado para {{email}} e escolha uma nova palavra-passe",
   },
   welcomeChecklist: {
     title: "Lista de Boas-vindas",

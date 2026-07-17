@@ -2,7 +2,7 @@
   "expo": {
     "name": "Beeli",
     "slug": "izon-beeli-mobile",
-    "version": "5.3.0",
+    "version": "5.4.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "izonbeelimobile",
@@ -12,6 +12,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.izonbeeli.app",
       "appleTeamId": "FWL2W5X58S",
+      "usesAppleSignIn": true,
       "entitlements": {
         "com.apple.security.application-groups": [
           "group.com.izonbeeli.shared"
@@ -54,6 +55,7 @@
         }
       ],
       "expo-secure-store",
+      "expo-apple-authentication",
       "expo-localization",
       [
         "expo-av",

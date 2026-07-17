@@ -3,6 +3,7 @@ import { AuthHeader } from "@/components/auth/auth-header";
 import { SpecimenInput } from "@/components/auth/specimen-input";
 import { useAuthReveal } from "@/components/auth/use-auth-reveal";
 import { Button } from "@/components/ui/button";
+import { authErrorMessage } from "@/lib/auth-errors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useSignIn } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
@@ -33,13 +34,14 @@ export default function ForgotPasswordScreen() {
         strategy: "reset_password_email_code",
         identifier: email.trim(),
       });
-      router.push("/(auth)/reset-password");
-    } catch (err: unknown) {
-      const clerkErr = err as { errors?: { message: string }[] };
-      const message =
-        clerkErr.errors?.[0]?.message ??
-        (err instanceof Error ? err.message : t("common.error"));
-      setError(message);
+      // Carried through so the next screen can name the address it mailed and
+      // re-issue a code without asking for it again.
+      router.push({
+        pathname: "/(auth)/reset-password",
+        params: { identifier: email.trim() },
+      });
+    } catch (err) {
+      setError(authErrorMessage(err, t("common.error")));
     } finally {
       setLoading(false);
     }

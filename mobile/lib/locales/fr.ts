@@ -477,6 +477,23 @@ export const fr = {
     removeAccount: "Retirer",
     removeAccountConfirmTitle: "Retirer ce compte ?",
     removeAccountConfirmBody: "Vous devrez vous reconnecter pour l'utiliser sur cet appareil.",
+    continueWithGoogle: "Continuer avec Google",
+    continueWithApple: "Continuer avec Apple",
+    or: "ou",
+    useEmailInstead: "Utiliser une adresse e-mail",
+    socialIncomplete:
+      "Nous n'avons pas pu finaliser votre connexion. Réessayez ou utilisez votre adresse e-mail.",
+    completeProfileTitle: "Choisissez un nom d'utilisateur",
+    completeProfileSubtitle: "C'est ainsi que la communauté vous verra",
+    completeProfileButton: "Continuer",
+    signInIncomplete: "Connexion incomplète. Veuillez réessayer.",
+    signUpIncomplete: "Inscription incomplète. Veuillez réessayer.",
+    resendCode: "Code non reçu ? Renvoyer",
+    resendIn: "Renvoyer dans {{seconds}} s",
+    sendingCode: "Envoi…",
+    codeSent: "Nouveau code envoyé",
+    resetPasswordSentTo:
+      "Saisissez le code envoyé à {{email}} et choisissez un nouveau mot de passe",
   },
   welcomeChecklist: {
     title: "Liste de bienvenue",
