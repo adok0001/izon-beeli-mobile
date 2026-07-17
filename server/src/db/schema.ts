@@ -1134,10 +1134,15 @@ export const dailyChallenges = pgTable(
 export const dailyChallengeTemplates = pgTable("daily_challenge_templates", {
   id: uuid("id").defaultRandom().primaryKey(),
   challengeType: challengeTypeEnum("challenge_type").notNull(),
-  title: varchar("title", { length: 200 }).notNull(),
+  // `title`/`titleFr` (and `description`/`descriptionFr`) stay as flat legacy
+  // columns for readers that don't know about translations maps yet — same
+  // dual-write pattern as dictionaryEntries.english/french + .translations.
+  title: text("title").notNull(),
   titleFr: varchar("title_fr", { length: 200 }),
+  titleTranslations: jsonb("title_translations").$type<Record<string, string>>(),
   description: text("description").notNull(),
   descriptionFr: text("description_fr"),
+  descriptionTranslations: jsonb("description_translations").$type<Record<string, string>>(),
   xpReward: integer("xp_reward").notNull(),
   targetCasual: integer("target_casual").notNull(),
   targetSteady: integer("target_steady").notNull(),

@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api";
+import type { LocalizedText } from "@/types";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -14,8 +15,10 @@ export interface ChallengeTemplate {
   challengeType: ChallengeType;
   title: string;
   titleFr: string | null;
+  titleTranslations: LocalizedText | null;
   description: string;
   descriptionFr: string | null;
+  descriptionTranslations: LocalizedText | null;
   xpReward: number;
   targetCasual: number;
   targetSteady: number;
@@ -27,10 +30,8 @@ export interface ChallengeTemplate {
 
 export interface CreateChallengeTemplateInput {
   challengeType: ChallengeType;
-  title: string;
-  titleFr?: string;
-  description: string;
-  descriptionFr?: string;
+  titleTranslations: LocalizedText;
+  descriptionTranslations: LocalizedText;
   xpReward: number;
   targetCasual: number;
   targetSteady: number;
@@ -41,10 +42,8 @@ export interface CreateChallengeTemplateInput {
 export interface UpdateChallengeTemplateInput {
   id: string;
   challengeType?: ChallengeType;
-  title?: string;
-  titleFr?: string | null;
-  description?: string;
-  descriptionFr?: string | null;
+  titleTranslations?: LocalizedText;
+  descriptionTranslations?: LocalizedText;
   xpReward?: number;
   targetCasual?: number;
   targetSteady?: number;

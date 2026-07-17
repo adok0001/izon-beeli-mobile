@@ -5,6 +5,7 @@ import { db } from "../db/index.js";
 import { challengeTypeEnum, dailyChallenges, dailyChallengeTemplates } from "../db/schema.js";
 import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
 import { getOrCreateTodayChallenges } from "../lib/daily-challenge.js";
+import { flatToMap, parseMap } from "./educator/_shared.js";
 import { randomInt } from "node:crypto";
 
 export const dailyChallengesRouter = new Hono<AuthEnv>();
@@ -92,8 +93,10 @@ dailyChallengeTemplatesAdminRouter.post("/create", async (c) => {
     challengeType: string;
     title: string;
     titleFr?: string;
+    titleTranslations?: unknown;
     description: string;
     descriptionFr?: string;
+    descriptionTranslations?: unknown;
     xpReward: number;
     targetCasual: number;
     targetSteady: number;
@@ -101,10 +104,16 @@ dailyChallengeTemplatesAdminRouter.post("/create", async (c) => {
     active?: boolean;
   }>(c);
 
+  // Prefer the full translations map; fall back to legacy flat title/titleFr.
+  const titleMap = parseMap(body.titleTranslations) ?? flatToMap(body.title, body.titleFr);
+  const descriptionMap = parseMap(body.descriptionTranslations) ?? flatToMap(body.description, body.descriptionFr);
+  const title = titleMap?.en;
+  const description = descriptionMap?.en;
+
   if (
     !isChallengeType(body.challengeType) ||
-    !body.title?.trim() ||
-    !body.description?.trim() ||
+    !title?.trim() ||
+    !description?.trim() ||
     !body.xpReward ||
     !body.targetCasual ||
     !body.targetSteady ||
@@ -113,13 +122,13 @@ dailyChallengeTemplatesAdminRouter.post("/create", async (c) => {
     return c.json(
       {
         error:
-          "challengeType, title, description, xpReward, targetCasual, targetSteady, and targetIntensive are required",
+          "challengeType, title (English), description (English), xpReward, targetCasual, targetSteady, and targetIntensive are required",
       },
       400
     );
   }
 
-  if (body.title.length > 200 || body.description.length > 2000) {
+  if (title.length > 2000 || description.length > 2000) {
     return c.json({ error: "Field length exceeded" }, 400);
   }
 
@@ -138,10 +147,12 @@ dailyChallengeTemplatesAdminRouter.post("/create", async (c) => {
     .insert(dailyChallengeTemplates)
     .values({
       challengeType: body.challengeType,
-      title: body.title.trim(),
-      titleFr: body.titleFr?.trim() || null,
-      description: body.description.trim(),
-      descriptionFr: body.descriptionFr?.trim() || null,
+      title: title.trim(),
+      titleFr: titleMap?.fr ?? null,
+      titleTranslations: titleMap ?? null,
+      description: description.trim(),
+      descriptionFr: descriptionMap?.fr ?? null,
+      descriptionTranslations: descriptionMap ?? null,
       xpReward: body.xpReward,
       targetCasual: body.targetCasual,
       targetSteady: body.targetSteady,
@@ -160,8 +171,10 @@ dailyChallengeTemplatesAdminRouter.patch("/:id", async (c) => {
     challengeType?: string;
     title?: string;
     titleFr?: string | null;
+    titleTranslations?: unknown;
     description?: string;
     descriptionFr?: string | null;
+    descriptionTranslations?: unknown;
     xpReward?: number;
     targetCasual?: number;
     targetSteady?: number;
@@ -180,12 +193,25 @@ dailyChallengeTemplatesAdminRouter.patch("/:id", async (c) => {
     }
   }
 
+  const titleMap = body.titleTranslations !== undefined || body.title !== undefined || body.titleFr !== undefined
+    ? parseMap(body.titleTranslations) ?? flatToMap(body.title, body.titleFr)
+    : undefined;
+  const descriptionMap = body.descriptionTranslations !== undefined || body.description !== undefined || body.descriptionFr !== undefined
+    ? parseMap(body.descriptionTranslations) ?? flatToMap(body.description, body.descriptionFr)
+    : undefined;
+
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   if (body.challengeType) updates.challengeType = body.challengeType;
-  if (body.title?.trim()) updates.title = body.title.trim();
-  if (body.titleFr !== undefined) updates.titleFr = body.titleFr?.trim() || null;
-  if (body.description?.trim()) updates.description = body.description.trim();
-  if (body.descriptionFr !== undefined) updates.descriptionFr = body.descriptionFr?.trim() || null;
+  if (titleMap?.en?.trim()) {
+    updates.title = titleMap.en.trim();
+    updates.titleFr = titleMap.fr ?? null;
+    updates.titleTranslations = titleMap;
+  }
+  if (descriptionMap?.en?.trim()) {
+    updates.description = descriptionMap.en.trim();
+    updates.descriptionFr = descriptionMap.fr ?? null;
+    updates.descriptionTranslations = descriptionMap;
+  }
   if (body.xpReward != null) updates.xpReward = body.xpReward;
   if (body.targetCasual != null) updates.targetCasual = body.targetCasual;
   if (body.targetSteady != null) updates.targetSteady = body.targetSteady;
