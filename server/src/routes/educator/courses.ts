@@ -2,7 +2,7 @@ import { eq, inArray } from "drizzle-orm";
 import { parseJson } from "../../lib/http.js";
 import { Hono } from "hono";
 import { db } from "../../db/index.js";
-import { courses, storyArcs } from "../../db/schema.js";
+import { courses, lessons, storyArcs, storyChapters } from "../../db/schema.js";
 import { AuthEnv } from "../../middleware/auth.js";
 
 export const educatorCoursesRouter = new Hono<AuthEnv>();
@@ -66,4 +66,44 @@ educatorCoursesRouter.patch("/courses/:id", async (c) => {
 
   await db.update(courses).set(patch).where(eq(courses.id, courseId));
   return c.json({ ok: true });
+});
+
+// DELETE /educator/courses/:id — cascade-deletes the course's lessons (their
+// transcripts/checks/cultural links cascade at the DB level). Blocked if any
+// lesson is sequenced into a season — same guard as a single lesson delete,
+// since a course cascade shouldn't silently punch a hole in a season's order.
+educatorCoursesRouter.delete("/courses/:id", async (c) => {
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const courseId = c.req.param("id");
+
+  const [course] = await db.select({ languageId: courses.languageId }).from(courses).where(eq(courses.id, courseId)).limit(1);
+  if (!course) return c.json({ error: "Course not found" }, 404);
+  if (!isAdmin && !reviewerLanguages.includes(course.languageId)) return c.json({ error: "Forbidden" }, 403);
+
+  const courseLessons = await db.select({ id: lessons.id }).from(lessons).where(eq(lessons.courseId, courseId));
+  const lessonIds = courseLessons.map((l) => l.id);
+
+  if (lessonIds.length > 0) {
+    const chapters = await db
+      .select({ order: storyChapters.order, arcTitle: storyArcs.title })
+      .from(storyChapters)
+      .leftJoin(storyArcs, eq(storyChapters.storyArcId, storyArcs.id))
+      .where(inArray(storyChapters.lessonId, lessonIds));
+
+    if (chapters.length > 0) {
+      const where = chapters
+        .map((ch) => `chapter ${ch.order} of "${ch.arcTitle ?? "an untitled season"}"`)
+        .join(", ");
+      return c.json(
+        { error: `This course has lessons sequenced into a season (${where}). Remove them from the season before deleting the course.` },
+        409,
+      );
+    }
+
+    await db.delete(lessons).where(eq(lessons.courseId, courseId));
+  }
+
+  await db.delete(courses).where(eq(courses.id, courseId));
+  return c.json({ deleted: true, lessonsDeleted: lessonIds.length });
 });

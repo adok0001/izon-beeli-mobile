@@ -81,3 +81,23 @@ export function useUpdateEducatorCourse() {
     },
   });
 }
+
+export function useDeleteEducatorCourse() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const token = await getToken();
+      return apiFetch<{ deleted: true; lessonsDeleted: number }>(`/educator/courses/${id}`, {
+        method: "DELETE",
+        token,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["educator", "courses"] });
+      queryClient.invalidateQueries({ queryKey: ["educator", "lessons"] });
+      queryClient.invalidateQueries({ queryKey: ["educator", "stats"] });
+    },
+  });
+}

@@ -9,6 +9,7 @@ import { useStudioAccess } from "@/components/studio/studio-gate";
 import { localize } from "@/lib/localize";
 import {
     EducatorCourse,
+    useDeleteEducatorCourse,
     useEducatorCourses,
     useToggleCourseActive,
     useUpdateEducatorCourse,
@@ -19,7 +20,7 @@ import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { getLanguageName } from "@/lib/mock-data";
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Pressable, RefreshControl, Text, View } from "react-native";
+import { Alert, Pressable, RefreshControl, Text, View } from "react-native";
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from "react-native-draggable-flatlist";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -37,6 +38,29 @@ export default function EducatorCoursesScreen() {
   const { data: courses = [], refetch: refetchCourses } = useEducatorCourses(canAccess);
   const toggleCourse = useToggleCourseActive();
   const updateCourse = useUpdateEducatorCourse();
+  const deleteCourse = useDeleteEducatorCourse();
+
+  const confirmDeleteCourse = useCallback((course: EducatorCourse) => {
+    Alert.alert(
+      "Delete course",
+      `This permanently deletes "${localize(course.title, "en")}" and all of its lessons. This cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () =>
+            deleteCourse.mutate(course.id, {
+              onSuccess: () => {
+                toastSuccess("Course deleted", localize(course.title, "en"));
+                setEditingCourse(null);
+              },
+              onError: (err: Error) => toastError("Delete failed", friendlyError(err)),
+            }),
+        },
+      ],
+    );
+  }, [deleteCourse, toastSuccess, toastError]);
 
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
@@ -201,12 +225,14 @@ export default function EducatorCoursesScreen() {
             course={editingCourse}
             visible
             saving={updateCourse.isPending}
+            deleting={deleteCourse.isPending}
             onClose={() => setEditingCourse(null)}
             onManageLessons={() => {
               const courseId = editingCourse.id;
               setEditingCourse(null);
               router.push({ pathname: "/educator/lessons", params: { courseId } });
             }}
+            onDelete={() => confirmDeleteCourse(editingCourse)}
             onSave={(fields) =>
               updateCourse.mutate(
                 { id: editingCourse.id, ...fields },

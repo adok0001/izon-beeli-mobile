@@ -99,14 +99,18 @@ export function CourseEditModal({
   onClose,
   onSave,
   onManageLessons,
+  onDelete,
   saving,
+  deleting,
 }: Readonly<{
   course: EducatorCourse;
   visible: boolean;
   onClose: () => void;
   onSave: (fields: CourseEditFields) => void;
   onManageLessons: () => void;
+  onDelete: () => void;
   saving: boolean;
+  deleting: boolean;
 }>) {
   const M = useMuseumTheme();
   const [title, setTitle] = useState<LocalizedText>(() => toLocalizedText(course.title, course.titleFr));
@@ -210,6 +214,23 @@ export function CourseEditModal({
             >
               <Text style={{ fontSize: 14, fontWeight: "700", color: M.text }}>Manage Lessons</Text>
               <IconSymbol name="chevron.right" size={14} color={M.muted} />
+            </Pressable>
+
+            <Pressable
+              onPress={onDelete}
+              disabled={deleting}
+              style={{
+                flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+                borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13, marginTop: 10,
+                backgroundColor: M.errorBg, borderWidth: 1, borderColor: M.errorBorder,
+                opacity: deleting ? 0.5 : 1,
+              }}
+              className="active:opacity-70"
+            >
+              <IconSymbol name="trash.fill" size={14} color={M.error} />
+              <Text style={{ fontSize: 14, fontWeight: "700", color: M.error }}>
+                {deleting ? "Deleting…" : "Delete Course"}
+              </Text>
             </Pressable>
           </ScrollView>
         </KeyboardAvoidingView>
