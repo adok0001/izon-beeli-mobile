@@ -11,7 +11,7 @@ import { contributionsPublicRouter, contributionsRouter } from "./routes/contrib
 import { contributorsRouter } from "./routes/contributors.js";
 import { coursesRouter } from "./routes/courses.js";
 import { culturalAdminRouter, culturalRouter } from "./routes/cultural.js";
-import { dailyChallengesRouter } from "./routes/daily-challenges.js";
+import { dailyChallengesRouter, dailyChallengeTemplatesAdminRouter } from "./routes/daily-challenges.js";
 import { dashboardRouter } from "./routes/dashboard.js";
 import { dictionaryAdminRouter, dictionaryRouter } from "./routes/dictionary.js";
 import { englishWordbankAdminRouter, englishWordbankRouter } from "./routes/english-wordbank.js";
@@ -162,6 +162,7 @@ app.route("/matching-results", matchingResultsRouter);
 app.route("/push-tokens", pushTokensRouter);
 app.route("/classroom", classroomRouter);
 app.route("/daily-challenges", dailyChallengesRouter);
+app.route("/daily-challenges/admin", dailyChallengeTemplatesAdminRouter);
 app.route("/dashboard", dashboardRouter);
 app.route("/notifications", notificationsRouter);
 app.route("/notifications/admin", notificationsAdminRouter);

@@ -23,15 +23,18 @@ matchingResultsRouter.post("/", async (c) => {
   const [xpResult, streakResult] = await Promise.all([
     awardXP(userId, xpEarned, "quiz"),
     updateStreak(userId),
-    incrementDailyChallenge(userId, "complete_quiz").catch(() => {}),
   ]);
+
+  // Sequenced after the base award so the reported total includes any challenge reward.
+  const challenge = await incrementDailyChallenge(userId, "complete_quiz").catch(() => null);
+  const finalXp = challenge?.award ?? xpResult;
 
   return c.json(
     {
-      xpEarned,
-      totalPoints: xpResult.totalPoints,
-      leveledUp: xpResult.leveledUp,
-      newLevel: xpResult.newLevel,
+      xpEarned: xpEarned + (challenge?.xpAwarded ?? 0),
+      totalPoints: finalXp.totalPoints,
+      leveledUp: xpResult.leveledUp || finalXp.leveledUp,
+      newLevel: finalXp.newLevel,
       streak: streakResult.newStreak,
       streakIncremented: streakResult.streakIncremented,
       streakMilestone: streakResult.streakMilestone ?? null,

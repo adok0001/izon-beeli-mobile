@@ -1,5 +1,5 @@
 import { EASE_OUT } from "@/constants/motion";
-import { type MuseumTheme, useMuseumTheme } from "@/lib/use-museum-theme";
+import { bronze, type MuseumTheme, useMuseumTheme } from "@/lib/use-museum-theme";
 import { useEffect } from "react";
 import { Text } from "react-native";
 import Animated, {
@@ -17,7 +17,8 @@ import Svg, { Circle } from "react-native-svg";
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
-const TARGET = 3;
+/** Challenges issued per day — see CHALLENGE_POOL slots on the server. */
+export const GOAL_TARGET = 3;
 const SIZE = 32;
 const STROKE_WIDTH = 3;
 const RADIUS = (SIZE - STROKE_WIDTH) / 2;
@@ -83,7 +84,7 @@ function useGoalRingAnimation(pct: number, M: MuseumTheme) {
 /** Small circular progress ring showing today's completed challenges out of 3. */
 export function DailyGoalRing({ completedToday }: { completedToday: number }) {
   const M = useMuseumTheme();
-  const pct = Math.min(completedToday / TARGET, 1);
+  const pct = Math.min(completedToday / GOAL_TARGET, 1);
   const { arcProps, ringStyle } = useGoalRingAnimation(pct, M);
   const color = pct >= 1 ? M.success : M.accent;
 
@@ -97,7 +98,7 @@ export function DailyGoalRing({ completedToday }: { completedToday: number }) {
       <Svg width={SIZE} height={SIZE} style={{ position: "absolute" }}>
         <Circle
           cx={SIZE / 2} cy={SIZE / 2} r={RADIUS}
-          stroke="rgba(255,255,255,0.1)" strokeWidth={STROKE_WIDTH} fill="none"
+          stroke={bronze(0.38)} strokeWidth={STROKE_WIDTH} fill="none"
         />
         <AnimatedCircle
           cx={SIZE / 2} cy={SIZE / 2} r={RADIUS}
@@ -110,7 +111,7 @@ export function DailyGoalRing({ completedToday }: { completedToday: number }) {
         />
       </Svg>
       <Text style={{ fontSize: 8, fontWeight: "800", color }}>
-        {completedToday}/{TARGET}
+        {completedToday}/{GOAL_TARGET}
       </Text>
     </Animated.View>
   );

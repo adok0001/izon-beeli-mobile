@@ -95,7 +95,8 @@ quizResultsRouter.post("/", async (c) => {
     updateStreak(userId),
   ]);
 
-  await incrementDailyChallenge(userId, "complete_quiz").catch(() => {});
+  const challenge = await incrementDailyChallenge(userId, "complete_quiz").catch(() => null);
+  const finalXp = challenge?.award ?? xpResult;
 
   if (body.questions && body.questions.length > 0) {
     await updateWordProgressLeitner(
@@ -108,11 +109,11 @@ quizResultsRouter.post("/", async (c) => {
   return c.json(
     {
       id: row.id,
-      xpEarned,
-      totalPoints: xpResult.totalPoints,
-      leveledUp: xpResult.leveledUp,
-      newLevel: xpResult.newLevel,
-      newTitle: xpResult.newTitle,
+      xpEarned: xpEarned + (challenge?.xpAwarded ?? 0),
+      totalPoints: finalXp.totalPoints,
+      leveledUp: xpResult.leveledUp || finalXp.leveledUp,
+      newLevel: finalXp.newLevel,
+      newTitle: finalXp.newTitle,
       streak: streakResult.newStreak,
       streakIncremented: streakResult.streakIncremented,
       streakMilestone: streakResult.streakMilestone ?? null,

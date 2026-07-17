@@ -122,15 +122,18 @@ phrasebankRouter.post("/:id/review", async (c) => {
   const [xpResult] = await Promise.all([
     awardXP(userId, 5, "word_review").catch(() => null), // same XP source as word reviews
     updateStreak(userId).catch(() => null),
-    incrementDailyChallenge(userId, "review_words").catch(() => {}),
   ]);
+
+  // Sequenced after the review award so the reported total includes any challenge reward.
+  const challenge = await incrementDailyChallenge(userId, "review_words").catch(() => null);
+  const finalXp = challenge?.award ?? xpResult;
 
   return c.json({
     nextReviewAt: nextReviewAt.toISOString(),
-    xpEarned: 5,
-    totalPoints: xpResult?.totalPoints,
-    leveledUp: xpResult?.leveledUp ?? false,
-    newLevel: xpResult?.newLevel,
+    xpEarned: 5 + (challenge?.xpAwarded ?? 0),
+    totalPoints: finalXp?.totalPoints,
+    leveledUp: (xpResult?.leveledUp ?? false) || (finalXp?.leveledUp ?? false),
+    newLevel: finalXp?.newLevel,
   });
 });
 

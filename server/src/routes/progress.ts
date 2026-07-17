@@ -130,7 +130,10 @@ progressRouter.post("/:lessonId/complete", async (c) => {
   // Award XP (updates points in DB)
   const xpResult = await awardXP(userId, 50, "lesson");
 
-  await incrementDailyChallenge(userId, "complete_lesson").catch(() => {});
+  // Sequenced after the lesson award so the response can report the post-challenge
+  // total; `award` is the later snapshot whenever a challenge completed here.
+  const challenge = await incrementDailyChallenge(userId, "complete_lesson").catch(() => null);
+  const finalXp = challenge?.award ?? xpResult;
 
   // Streak milestone push — fire-and-forget
   if (streakResult.streakMilestone) {
@@ -155,13 +158,13 @@ progressRouter.post("/:lessonId/complete", async (c) => {
 
   return c.json({
     completed: true,
-    pointsEarned: 50,
-    totalPoints: xpResult.totalPoints,
+    pointsEarned: 50 + (challenge?.xpAwarded ?? 0),
+    totalPoints: finalXp.totalPoints,
     streak: streakResult.newStreak,
     streakIncremented: streakResult.streakIncremented,
-    leveledUp: xpResult.leveledUp,
-    newLevel: xpResult.newLevel,
-    newTitle: xpResult.newTitle,
+    leveledUp: xpResult.leveledUp || finalXp.leveledUp,
+    newLevel: finalXp.newLevel,
+    newTitle: finalXp.newTitle,
     streakMilestone: streakResult.streakMilestone,
     freezeGranted: streakResult.freezeGranted,
     freezeCount: streakResult.freezeCount,

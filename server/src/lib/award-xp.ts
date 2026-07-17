@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { feedItems, pushTokens, users } from "../db/schema.js";
 import { getLevelInfo } from "./xp-levels.js";
@@ -6,30 +6,34 @@ import { sendPushBatch, chunk } from "./send-push.js";
 
 export const CONTRIBUTION_BASE_XP = { word: 15, phrase: 20, audio: 25 } as const;
 
+export interface XPAward {
+  totalPoints: number;
+  leveledUp: boolean;
+  newLevel: number;
+  newTitle: string;
+}
+
 export async function awardXP(
   userId: string,
   amount: number,
   _source: "lesson" | "quiz" | "word_review" | "daily_challenge" | "contribution" | "checklist_bonus"
-): Promise<{ totalPoints: number; leveledUp: boolean; newLevel: number; newTitle: string }> {
+): Promise<XPAward> {
+  // Increment in one statement rather than read-modify-write: a single action can
+  // award twice (its own XP, plus the daily challenge it completes), and a
+  // read-then-write would let the second award clobber the first.
   const [user] = await db
-    .select({ points: users.points, name: users.name })
-    .from(users)
+    .update(users)
+    .set({ points: sql`${users.points} + ${amount}` })
     .where(eq(users.id, userId))
-    .limit(1);
+    .returning({ points: users.points, name: users.name });
 
   if (!user) {
     throw new Error(`User ${userId} not found`);
   }
 
-  const oldLevel = getLevelInfo(user.points).level;
-  const newPoints = user.points + amount;
+  const newPoints = user.points;
   const newLevelInfo = getLevelInfo(newPoints);
-  const leveledUp = newLevelInfo.level > oldLevel;
-
-  await db
-    .update(users)
-    .set({ points: newPoints })
-    .where(eq(users.id, userId));
+  const leveledUp = newLevelInfo.level > getLevelInfo(newPoints - amount).level;
 
   if (leveledUp) {
     // Insert achievement feed item

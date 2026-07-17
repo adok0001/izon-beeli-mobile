@@ -1,5 +1,5 @@
 import { Pressable, Text, View } from "react-native";
-import { DailyGoalRing } from "@/components/learn/daily-goal-ring";
+import { DailyGoalRing, GOAL_TARGET } from "@/components/learn/daily-goal-ring";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Eyebrow } from "@/components/ui/section-header";
 import { weekStreakDays } from "@/lib/journey";
@@ -51,9 +51,30 @@ export function StreakWeekStrip({ summary, completedToday, onPress, onGoalPress 
             onPress={onGoalPress}
             hitSlop={10}
             accessibilityRole="button"
-            accessibilityLabel={t("learn.dailyGoal", { defaultValue: "Daily goal" })}
+            accessibilityLabel={`${t("learn.dailyGoal", { defaultValue: "Goal" })}, ${t("learn.goalProgress", { done: completedToday, target: GOAL_TARGET, defaultValue: "{{done}}/{{target}}" })}`}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              flexShrink: 1,
+              gap: 6,
+              paddingLeft: 5,
+              paddingRight: 8,
+              paddingVertical: 4,
+              borderRadius: 999,
+              borderWidth: 1,
+              borderColor: M.accentBorder,
+              backgroundColor: M.accentGlow,
+            }}
+            className="active:opacity-70"
           >
             <DailyGoalRing completedToday={completedToday} />
+            <Text
+              numberOfLines={1}
+              style={{ flexShrink: 1, fontSize: 12, fontWeight: "700", color: M.accent }}
+            >
+              {t("learn.dailyGoal", { defaultValue: "Goal" })}
+            </Text>
+            <IconSymbol name="chevron.right" size={11} color={M.accent} />
           </Pressable>
         )}
       </View>

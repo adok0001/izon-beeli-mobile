@@ -185,6 +185,11 @@ export default function AdminPanelScreen() {
                 onPress={() => router.push("/admin/daily-content")}
               />
               <SubRow
+                label={t("admin.nav.dailyChallenges")}
+                meta="Edit the daily challenge template pool"
+                onPress={() => router.push("/admin/daily-challenges")}
+              />
+              <SubRow
                 label={t("admin.cultureContent.title")}
                 meta={t("admin.cultureContent.subtitle")}
                 onPress={() => router.push("/admin/culture-content")}

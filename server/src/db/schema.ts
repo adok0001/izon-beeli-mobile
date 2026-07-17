@@ -1131,6 +1131,22 @@ export const dailyChallenges = pgTable(
   ]
 );
 
+export const dailyChallengeTemplates = pgTable("daily_challenge_templates", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  challengeType: challengeTypeEnum("challenge_type").notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  titleFr: varchar("title_fr", { length: 200 }),
+  description: text("description").notNull(),
+  descriptionFr: text("description_fr"),
+  xpReward: integer("xp_reward").notNull(),
+  targetCasual: integer("target_casual").notNull(),
+  targetSteady: integer("target_steady").notNull(),
+  targetIntensive: integer("target_intensive").notNull(),
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // ---------- Bounties ----------
 
 export const bounties = pgTable(

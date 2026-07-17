@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { dailyChallenges, users } from "../db/schema.js";
-import { awardXP } from "./award-xp.js";
+import { dailyChallenges, dailyChallengeTemplates, users } from "../db/schema.js";
+import { awardXP, type XPAward } from "./award-xp.js";
 
 type ChallengeType =
   | "complete_quiz"
@@ -12,65 +12,13 @@ type ChallengeType =
 
 type DailyGoal = "casual" | "steady" | "intensive";
 
-interface ChallengeTemplate {
-  challengeType: ChallengeType;
-  title: string;
-  title_fr?: string;
-  description: string;
-  description_fr?: string;
-  xpReward: number;
-  targets: { casual: number; steady: number; intensive: number };
+type ChallengeTemplate = typeof dailyChallengeTemplates.$inferSelect;
+
+function targetFor(tpl: ChallengeTemplate, goal: DailyGoal): number {
+  if (goal === "casual") return tpl.targetCasual;
+  if (goal === "intensive") return tpl.targetIntensive;
+  return tpl.targetSteady;
 }
-
-const CHALLENGE_POOL: ChallengeTemplate[] = [
-  {
-    challengeType: "complete_quiz",
-    title: "Quiz Champion",
-    title_fr: "Champion du Quiz",
-    description: "Complete a quiz session",
-    description_fr: "Terminez une session de quiz",
-    xpReward: 30,
-    targets: { casual: 1, steady: 1, intensive: 2 },
-  },
-  {
-    challengeType: "review_words",
-    title: "Word Reviewer",
-    title_fr: "Réviseur de Mots",
-    description: "Review words from your word bank",
-    description_fr: "Révisez les mots de votre banque de mots",
-    xpReward: 20,
-    targets: { casual: 3, steady: 5, intensive: 10 },
-  },
-  {
-    challengeType: "listen_lesson",
-    title: "Active Listener",
-    title_fr: "Auditeur Actif",
-    description: "Listen to a lesson",
-    description_fr: "Écoutez une leçon",
-    xpReward: 25,
-    targets: { casual: 1, steady: 1, intensive: 2 },
-  },
-  {
-    challengeType: "complete_lesson",
-    title: "Lesson Complete",
-    title_fr: "Leçon Terminée",
-    description: "Mark a lesson as complete",
-    description_fr: "Marquez une leçon comme terminée",
-    xpReward: 35,
-    targets: { casual: 1, steady: 2, intensive: 3 },
-  },
-  {
-    challengeType: "save_words",
-    title: "Word Collector",
-    title_fr: "Collectionneur de Mots",
-    description: "Save new words to your word bank",
-    description_fr: "Enregistrez de nouveaux mots dans votre banque de mots",
-    xpReward: 15,
-    targets: { casual: 2, steady: 3, intensive: 5 },
-  },
-];
-
-const SLOTS = [0, 1, 2] as const;
 
 function hashCode(str: string): number {
   let h = 0;
@@ -80,29 +28,32 @@ function hashCode(str: string): number {
   return Math.abs(h);
 }
 
-/** Pick 3 distinct templates for the day, one per slot. */
+/** Pick up to 3 distinct templates for the day, one per slot, from the active pool. */
 function pickTemplatesForDay(
+  pool: ChallengeTemplate[],
   userId: string,
   date: string,
   seed = 0
-): [ChallengeTemplate, ChallengeTemplate, ChallengeTemplate] {
+): ChallengeTemplate[] {
+  if (pool.length === 0) return [];
+
   const base = hashCode(userId + date + String(seed));
   const picks: ChallengeTemplate[] = [];
   const used = new Set<number>();
+  const slotCount = Math.min(3, pool.length);
 
-  for (let slot = 0; slot < 3; slot++) {
-    let idx = (base + slot * 7) % CHALLENGE_POOL.length;
-    // Ensure no duplicates
+  for (let slot = 0; slot < slotCount; slot++) {
+    let idx = (base + slot * 7) % pool.length;
     let attempts = 0;
-    while (used.has(idx) && attempts < CHALLENGE_POOL.length) {
-      idx = (idx + 1) % CHALLENGE_POOL.length;
+    while (used.has(idx) && attempts < pool.length) {
+      idx = (idx + 1) % pool.length;
       attempts++;
     }
     used.add(idx);
-    picks.push(CHALLENGE_POOL[idx]);
+    picks.push(pool[idx]);
   }
 
-  return picks as [ChallengeTemplate, ChallengeTemplate, ChallengeTemplate];
+  return picks;
 }
 
 export async function getOrCreateTodayChallenges(
@@ -118,7 +69,13 @@ export async function getOrCreateTodayChallenges(
       and(eq(dailyChallenges.userId, userId), eq(dailyChallenges.date, today))
     );
 
-  if (existing.length === 3) return existing;
+  const pool = await db
+    .select()
+    .from(dailyChallengeTemplates)
+    .where(eq(dailyChallengeTemplates.active, true));
+
+  const expectedSlots = Math.min(3, pool.length);
+  if (pool.length === 0 || existing.length >= expectedSlots) return existing;
 
   // Look up goal from user
   const [user] = await db
@@ -128,25 +85,23 @@ export async function getOrCreateTodayChallenges(
     .limit(1);
 
   const goal = (user?.dailyGoal as DailyGoal | null) ?? "steady";
-  const templates = pickTemplatesForDay(userId, today, seed);
+  const templates = pickTemplatesForDay(pool, userId, today, seed);
 
   // Determine which slots are missing and insert only those
   const existingSlots = new Set(existing.map((r) => r.slot));
-  const toInsert = SLOTS.filter((s) => !existingSlots.has(s)).map((slot) => {
-    const tpl = templates[slot];
-    return {
+  const toInsert = templates
+    .map((tpl, slot) => ({ tpl, slot }))
+    .filter(({ slot }) => !existingSlots.has(slot))
+    .map(({ tpl, slot }) => ({
       userId,
       date: today,
       slot,
       challengeType: tpl.challengeType,
       title: tpl.title,
-      title_fr: tpl.title_fr,
       description: tpl.description,
-      description_fr: tpl.description_fr,
-      target: tpl.targets[goal],
+      target: targetFor(tpl, goal),
       xpReward: tpl.xpReward,
-    };
-  });
+    }));
 
   if (toInsert.length > 0) {
     await db.insert(dailyChallenges).values(toInsert).onConflictDoNothing();
@@ -160,11 +115,18 @@ export async function getOrCreateTodayChallenges(
     );
 }
 
+export interface ChallengeIncrement {
+  /** XP awarded for challenges this call completed. */
+  xpAwarded: number;
+  /** Level snapshot after the final award — null when nothing completed. */
+  award: XPAward | null;
+}
+
 export async function incrementDailyChallenge(
   userId: string,
   type: ChallengeType,
   amount = 1
-): Promise<void> {
+): Promise<ChallengeIncrement> {
   const today = new Date().toISOString().slice(0, 10);
 
   const rows = await db
@@ -173,6 +135,9 @@ export async function incrementDailyChallenge(
     .where(
       and(eq(dailyChallenges.userId, userId), eq(dailyChallenges.date, today))
     );
+
+  let xpAwarded = 0;
+  let award: XPAward | null = null;
 
   for (const challenge of rows) {
     if (challenge.completed || challenge.challengeType !== type) continue;
@@ -190,7 +155,13 @@ export async function incrementDailyChallenge(
       .where(eq(dailyChallenges.id, challenge.id));
 
     if (completed) {
-      await awardXP(userId, challenge.xpReward, "daily_challenge").catch(() => {});
+      const result = await awardXP(userId, challenge.xpReward, "daily_challenge").catch(() => null);
+      if (result) {
+        xpAwarded += challenge.xpReward;
+        award = result;
+      }
     }
   }
+
+  return { xpAwarded, award };
 }
