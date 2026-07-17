@@ -1,5 +1,5 @@
 import { analytics } from "@/lib/analytics";
-import { IconSymbol } from "@/components/ui/icon-symbol";
+import { IconSymbol, type IconSymbolName } from "@/components/ui/icon-symbol";
 import { LanguagePicker } from "@/components/ui/language-picker";
 import { LocalizedTextInput } from "@/components/ui/localized-text-input";
 import { getAccent } from "@/constants/accent-colors";
@@ -131,6 +131,14 @@ export default function ContributeScreen() {
   const { data: contributors = [] } = useContributors();
   const totalContributors = contributors.length;
   const totalApproved = contributors.reduce((sum, c) => sum + c.approvedCount, 0);
+  // "+" means "at least N" — floor to the nearest ten so it never overstates.
+  const flooredWords = Math.floor(totalApproved / 10) * 10;
+  const socialProofText =
+    totalApproved === 0
+      ? t("contribute.socialProofZero")
+      : totalApproved < 10
+        ? t("contribute.socialProofExact", { contributors: String(totalContributors), words: String(totalApproved) })
+        : t("contribute.socialProof", { contributors: String(totalContributors), words: flooredWords.toLocaleString() });
 
   const handlePickImage = async () => {
     const result = await DocumentPicker.getDocumentAsync({
@@ -287,24 +295,38 @@ export default function ContributeScreen() {
                   {t("contribute.subtitle")}
                 </Text>
 
-                {totalContributors > 0 && (
-                  <View style={{ marginBottom: 20, flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 12, backgroundColor: M.accentGlow, paddingHorizontal: 16, paddingVertical: 10, borderWidth: 1, borderColor: M.accentBorder }}>
-                    <IconSymbol name="person.2.fill" size={16} color={M.accent} />
-                    <Text style={{ fontSize: 13, color: M.text }}>
-                      {t("contribute.socialProof", {
-                        contributors: totalContributors,
-                        words: totalApproved.toLocaleString(),
-                      })}
-                    </Text>
-                  </View>
-                )}
+                <View style={{ marginBottom: 20, flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 12, backgroundColor: M.accentGlow, paddingHorizontal: 16, paddingVertical: 10, borderWidth: 1, borderColor: M.accentBorder }}>
+                  <IconSymbol name="person.2.fill" size={16} color={M.accent} />
+                  <Text style={{ fontSize: 13, color: M.text }}>
+                    {socialProofText}
+                  </Text>
+                </View>
+
+                <View style={{ marginBottom: 20, borderRadius: 16, backgroundColor: M.card, padding: 16, borderWidth: 1, borderColor: M.border }}>
+                  <Text style={{ marginBottom: 4, fontSize: 15, fontWeight: "700", color: M.text }}>
+                    {t("contribute.explainerTitle")}
+                  </Text>
+                  <Text style={{ marginBottom: 12, fontSize: 13, color: M.sub }}>
+                    {t("contribute.explainerBody")}
+                  </Text>
+                  {([
+                    { icon: "checkmark.seal.fill", text: t("contribute.explainerReview") },
+                    { icon: "trophy.fill", text: t("contribute.explainerXp") },
+                    { icon: "heart.fill", text: t("contribute.explainerPreserve") },
+                  ] satisfies { icon: IconSymbolName; text: string }[]).map((row, i) => (
+                    <View key={i} style={{ flexDirection: "row", alignItems: "center", marginTop: i === 0 ? 0 : 8, gap: 10 }}>
+                      <IconSymbol name={row.icon} size={15} color={M.accent} />
+                      <Text style={{ flex: 1, fontSize: 12.5, color: M.sub }}>{row.text}</Text>
+                    </View>
+                  ))}
+                </View>
 
                 {([
                   { onPress: () => setStep("language"), bg: M.accentGlow, iconBg: M.accent, icon: "character.book.closed", iconColor: M.ink, title: t("contribute.wordOrPhrase"), desc: t("contribute.wordOrPhraseDesc"), chevronColor: M.accent },
                   { onPress: () => router.push("/contribute-bulk"), bg: M.successBg, iconBg: M.success, icon: "list.bullet.clipboard", iconColor: M.ink, title: t("contribute.bulkWords"), desc: t("contribute.bulkWordsDesc"), chevronColor: M.success },
                   { onPress: () => router.push("/contribute-lesson"), bg: getAccent("purple").bg, iconBg: getAccent("purple").solid, icon: "waveform", iconColor: M.parchment, title: t("contribute.fullLesson"), desc: t("contribute.fullLessonDesc"), chevronColor: getAccent("purple").solid },
-                  { onPress: () => router.push("/bounties"), bg: `${M.accent}10`, iconBg: M.accent, icon: "star.fill", iconColor: M.ink, title: t("contribute.activeBounties"), desc: t("contribute.activeBountiesDesc"), chevronColor: M.accent },
-                  { onPress: () => router.push("/reviewer-application"), bg: getAccent("indigo").bg, iconBg: getAccent("indigo").solid, icon: "shield.fill", iconColor: M.parchment, title: "Become a Reviewer", desc: "Apply to review contributions and help maintain content quality.", chevronColor: getAccent("indigo").solid },
+                  { onPress: () => router.push("/bounties"), bg: getAccent("rose").bg, iconBg: getAccent("rose").solid, icon: "star.fill", iconColor: M.ink, title: t("contribute.activeBounties"), desc: t("contribute.activeBountiesDesc"), chevronColor: getAccent("rose").solid },
+                  { onPress: () => router.push("/reviewer-application"), bg: getAccent("sky").bg, iconBg: getAccent("sky").solid, icon: "shield.fill", iconColor: M.ink, title: t("contribute.becomeReviewer"), desc: t("contribute.becomeReviewerDesc"), chevronColor: getAccent("sky").solid },
                 ] as const).map((card, i) => (
                   <Pressable
                     key={i}
@@ -601,7 +623,7 @@ export default function ContributeScreen() {
                       }
                     }}
                     disabled={!word.trim() || !hasEnglish || !category}
-                    style={{ flex: 1, alignItems: "center", borderRadius: 12, paddingVertical: 14, backgroundColor: word.trim() && hasEnglish && category ? M.accent : M.border }}
+                    style={{ flex: 1, alignItems: "center", borderRadius: 12, paddingVertical: 14, backgroundColor: !(word.trim() && hasEnglish && category) ? M.border : selectedEntry ? M.success : M.accent }}
                     className="active:opacity-80"
                   >
                     <Text style={{ fontWeight: "600", color: word.trim() && hasEnglish && category ? M.ink : M.muted }}>
@@ -613,7 +635,7 @@ export default function ContributeScreen() {
                   <Pressable
                     onPress={handleSubmit}
                     disabled={!canSubmit}
-                    style={{ flex: 1, alignItems: "center", borderRadius: 12, paddingVertical: 14, backgroundColor: canSubmit ? M.accent : M.border }}
+                    style={{ flex: 1, alignItems: "center", borderRadius: 12, paddingVertical: 14, backgroundColor: canSubmit ? M.success : M.border }}
                     className="active:opacity-80"
                   >
                     <Text style={{ fontWeight: "600", color: canSubmit ? M.ink : M.muted }}>
