@@ -281,16 +281,6 @@ export function FeatureTourModal() {
             </Text>
             {!isLast && <IconSymbol name={"arrow.right" as never} size={16} color={MUSEUM.ink} />}
           </Pressable>
-
-          <Pressable
-            onPress={dismissTour}
-            accessibilityRole="button"
-            accessibilityLabel={tr("onboarding.skip")}
-            style={{ alignItems: "center", paddingVertical: 8, opacity: isLast ? 0 : 1 }}
-            disabled={isLast}
-          >
-            <Text style={{ fontSize: 13, color: MUSEUM.textDim }}>{tr("onboarding.skip")}</Text>
-          </Pressable>
         </View>
       </View>
     </Modal>

@@ -12,11 +12,12 @@ import { useDailyReminder } from "@/lib/hooks/use-daily-reminder";
 import { useProgressSummary } from "@/lib/hooks/use-progress";
 import { useSyncUser } from "@/lib/hooks/use-sync-user";
 import { useAudioStore } from "@/store/audio-store";
+import { useGuestStore } from "@/store/guest-store";
 import { useLanguageStore } from "@/store/language-store";
 import { useNotificationStore } from "@/store/notification-store";
-import { useTourStore } from "@/store/tour-store";
 import { useWelcomeChecklistStore } from "@/store/welcome-checklist-store";
 import { BottomTabBar, type BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import { useAuth } from "@clerk/clerk-expo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Tabs, useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
@@ -71,20 +72,18 @@ function ProfileTabIcon({ color, focused }: TabIconProps) {
 export default function TabLayout() {
   const router = useRouter();
   const colorScheme = useColorScheme();
+  const { isSignedIn } = useAuth();
+  const isGuest = useGuestStore((s) => s.isGuest);
+  const guestHydrated = useGuestStore((s) => s._hydrated);
   const { selectedLanguageId } = useLanguageStore();
   const { data: summary } = useProgressSummary();
-  const { data: currentUser } = useCurrentUser();
+  const { data: currentUser, isLoading: currentUserLoading } = useCurrentUser();
   useSyncUser();
   useDailyReminder(selectedLanguageId, summary?.streak ?? 0, currentUser?.dailyGoal);
 
   const hydrateNotifications = useNotificationStore((s) => s.hydrate);
   const hydrateChecklist = useWelcomeChecklistStore((s) => s.hydrate);
-  const hasSeenWelcome = useTourStore((s) => s.hasSeen("welcome"));
-  const activeTour = useTourStore((s) => s.activeTour);
-  const startWelcomeTour = useTourStore((s) => s.start);
-  const toursHydrated = useTourStore((s) => s._hydrated);
   const onboardingChecked = useRef(false);
-  const welcomeChecked = useRef(false);
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -92,26 +91,29 @@ export default function TabLayout() {
     hydrateChecklist();
   }, [hydrateNotifications, hydrateChecklist]);
 
-  // One-time onboarding gate: redirect to onboarding if not yet completed
+  // One-time onboarding gate. Signed-in users are gated on the per-user backend
+  // flag (survives device changes); guests have no backend user row yet, so they
+  // fall back to the device-local flag.
   useEffect(() => {
     if (onboardingChecked.current) return;
+
+    if (isGuest) {
+      if (!guestHydrated) return;
+      onboardingChecked.current = true;
+      AsyncStorage.getItem(ONBOARDING_KEY)
+        .then((val) => {
+          if (!val) router.replace("/(onboarding)");
+        })
+        .catch(() => {});
+      return;
+    }
+
+    if (!isSignedIn || currentUserLoading) return;
     onboardingChecked.current = true;
-    AsyncStorage.getItem(ONBOARDING_KEY).then((val) => {
-      if (!val) router.replace("/(onboarding)");
-    }).catch(() => {});
-  }, [router]);
-
-  useEffect(() => {
-    if (!toursHydrated || welcomeChecked.current || activeTour || hasSeenWelcome) return;
-
-    AsyncStorage.getItem(ONBOARDING_KEY)
-      .then((val) => {
-        if (!val || welcomeChecked.current) return;
-        welcomeChecked.current = true;
-        startWelcomeTour();
-      })
-      .catch(() => {});
-  }, [activeTour, hasSeenWelcome, startWelcomeTour, toursHydrated]);
+    if (currentUser && !currentUser.onboardingCompletedAt) {
+      router.replace("/(onboarding)");
+    }
+  }, [isGuest, guestHydrated, isSignedIn, currentUserLoading, currentUser, router]);
 
   return (
     <>

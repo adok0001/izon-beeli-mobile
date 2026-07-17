@@ -8,6 +8,9 @@
  */
 export type LocalizedText = Partial<Record<import("@/store/ui-language-store").UiLanguage, string>>;
 
+/** Self-reported onboarding signal — persisted locally and on the user's backend record. */
+export type UserLevel = "new" | "some_words" | "comfortable";
+
 export type CourseType =
   | "first_words"
   | "sound_script"

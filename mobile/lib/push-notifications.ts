@@ -81,7 +81,26 @@ export function addNotificationTapListener(onTap: (route: string) => void): () =
   }
 }
 
-export async function registerPushToken(authToken: string): Promise<void> {
+/**
+ * Registers the push token only if permission was already granted — never
+ * triggers the OS permission dialog. Safe to call silently on every sign-in
+ * (e.g. to refresh the token on a new device). The interactive ask lives in
+ * requestPushPermissionAndRegister(), fired from the onboarding Reminders
+ * step where it's framed with a value prop first.
+ */
+export function syncPushTokenIfAuthorized(authToken: string): Promise<void> {
+  return registerPushToken(authToken, { requestIfUndetermined: false });
+}
+
+/** Framed, interactive opt-in — fires the OS permission dialog. */
+export async function requestPushPermissionAndRegister(authToken: string): Promise<void> {
+  await registerPushToken(authToken, { requestIfUndetermined: true });
+}
+
+async function registerPushToken(
+  authToken: string,
+  { requestIfUndetermined }: { requestIfUndetermined: boolean }
+): Promise<void> {
   if (!Device.isDevice) return;
   const N = getNotifications();
   if (!N) return;
@@ -90,7 +109,7 @@ export async function registerPushToken(authToken: string): Promise<void> {
     const { status: existingStatus } = await N.getPermissionsAsync();
     let finalStatus = existingStatus;
 
-    if (existingStatus !== "granted") {
+    if (existingStatus !== "granted" && requestIfUndetermined) {
       const { status } = await N.requestPermissionsAsync();
       finalStatus = status;
     }

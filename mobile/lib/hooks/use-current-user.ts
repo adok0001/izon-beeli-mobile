@@ -1,9 +1,11 @@
 import { apiFetch, friendlyError } from "@/lib/api";
 import { useProfileAvatarStore } from "@/store/profile-avatar-store";
+import type { UserLevel } from "@/types";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert } from "react-native";
 
+export type { UserLevel };
 export type DailyGoal = "casual" | "steady" | "intensive";
 
 export interface CurrentUser {
@@ -16,6 +18,8 @@ export interface CurrentUser {
   points: number;
   selectedLanguageId: string | null;
   dailyGoal: DailyGoal;
+  level: UserLevel | null;
+  onboardingCompletedAt: string | null;
   isAdmin: boolean;
   isReviewer: boolean;
   reviewerLanguages: string[];
@@ -111,6 +115,38 @@ export function useUpdateDailyGoal() {
       Alert.alert("", friendlyError(error));
       // Restore truth from the server since the local cache was not yet updated.
       queryClient.invalidateQueries({ queryKey: ["current-user"] });
+    },
+  });
+}
+
+export function useCompleteOnboarding() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: { selectedLanguageId: string; level: UserLevel }) => {
+      const token = await getToken();
+      return apiFetch("/users/me", {
+        method: "PATCH",
+        token: token!,
+        body: JSON.stringify({
+          selectedLanguageId: input.selectedLanguageId,
+          level: input.level,
+          onboardingCompleted: true,
+        }),
+      });
+    },
+    onSuccess: (_data, input) => {
+      queryClient.setQueryData<CurrentUser>(["current-user"], (prev) =>
+        prev
+          ? {
+              ...prev,
+              selectedLanguageId: input.selectedLanguageId,
+              level: input.level,
+              onboardingCompletedAt: new Date().toISOString(),
+            }
+          : prev
+      );
     },
   });
 }

@@ -15,12 +15,13 @@ import {
   addNotificationListener,
   addNotificationTapListener,
   configurePushNotifications,
-  registerPushToken,
+  syncPushTokenIfAuthorized,
 } from "@/lib/push-notifications";
 import { useDownloadsStore } from "@/store/downloads-store";
 import { useGuestProgressStore } from "@/store/guest-progress-store";
 import { useGuestStore } from "@/store/guest-store";
 import { useLanguageStore } from "@/store/language-store";
+import { useLevelStore } from "@/store/level-store";
 import { useContentStore } from "@/store/content-store";
 import { useNotificationStore } from "@/store/notification-store";
 import { useOverlayStore } from "@/store/overlay-store";
@@ -164,7 +165,7 @@ function AuthGate({ children }: Readonly<{ children: React.ReactNode }>) {
   useEffect(() => {
     if (!isSignedIn) return;
     getToken().then((token) => {
-      if (token) registerPushToken(token).catch(() => {});
+      if (token) syncPushTokenIfAuthorized(token).catch(() => {});
     });
   }, [isSignedIn, getToken]);
 
@@ -266,6 +267,7 @@ export default function RootLayout() {
   useWidgetSync();
   const hydrateTheme = useThemeStore((s) => s.hydrate);
   const hydrateLanguage = useLanguageStore((s) => s.hydrate);
+  const hydrateLevel = useLevelStore((s) => s.hydrate);
   const hydrateUiLanguage = useUiLanguageStore((s) => s.hydrate);
   const hydrateTours = useTourStore((s) => s.hydrate);
   const hydrateGuest = useGuestStore((s) => s.hydrate);
@@ -301,6 +303,7 @@ export default function RootLayout() {
     configurePushNotifications();
     hydrateTheme();
     hydrateLanguage();
+    hydrateLevel();
     hydrateUiLanguage();
     hydrateTours();
     hydrateGuest();
@@ -311,6 +314,7 @@ export default function RootLayout() {
   }, [
     hydrateTheme,
     hydrateLanguage,
+    hydrateLevel,
     hydrateUiLanguage,
     hydrateTours,
     hydrateGuest,

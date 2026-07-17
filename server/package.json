@@ -1,6 +1,6 @@
 {
   "name": "izon-beeli-server",
-  "version": "5.4.0",
+  "version": "5.5.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -16,6 +16,7 @@
     "db:guard-content": "tsx src/db/guard-unattested-content.ts",
     "db:import-izon": "tsx src/seed/import-izon.ts",
     "db:migrate-media": "tsx src/seed/migrate-media-fields.ts",
+    "db:seed-daily-challenges": "tsx src/seed/daily-challenge-templates.ts",
     "db:studio": "drizzle-kit studio",
     "test": "jest",
     "lint": "eslint src"

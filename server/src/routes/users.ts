@@ -145,6 +145,8 @@ usersRouter.get("/me", authMiddleware, async (c) => {
     points: user.points,
     selectedLanguageId: user.selectedLanguageId,
     dailyGoal: user.dailyGoal ?? "steady",
+    level: user.level ?? null,
+    onboardingCompletedAt: user.onboardingCompletedAt,
     isAdmin: user.isAdmin,
     isReviewer: user.isReviewer,
     reviewerLanguages: user.reviewerLanguages,
@@ -161,6 +163,8 @@ usersRouter.patch("/me", authMiddleware, async (c) => {
     selectedLanguageId?: string;
     dailyGoal?: string;
     profileAvatarId?: string;
+    level?: string;
+    onboardingCompleted?: boolean;
   }>(c);
 
   await db
@@ -172,6 +176,8 @@ usersRouter.patch("/me", authMiddleware, async (c) => {
         : {}),
       ...(body.dailyGoal ? { dailyGoal: body.dailyGoal } : {}),
       ...(body.profileAvatarId ? { profileAvatarId: body.profileAvatarId } : {}),
+      ...(body.level ? { level: body.level } : {}),
+      ...(body.onboardingCompleted ? { onboardingCompletedAt: new Date() } : {}),
     })
     .where(eq(users.id, userId));
 

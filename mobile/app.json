@@ -2,7 +2,7 @@
   "expo": {
     "name": "Beeli",
     "slug": "izon-beeli-mobile",
-    "version": "5.5.0",
+    "version": "5.6.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "izonbeelimobile",

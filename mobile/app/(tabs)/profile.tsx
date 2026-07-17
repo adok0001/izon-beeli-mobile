@@ -18,7 +18,6 @@ import { useGuestStore } from "@/store/guest-store";
 import { useLanguageStore } from "@/store/language-store";
 import { useProfileAvatarStore } from "@/store/profile-avatar-store";
 import { useTourStore } from "@/store/tour-store";
-import { useWelcomeChecklistStore } from "@/store/welcome-checklist-store";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
@@ -308,8 +307,6 @@ export default function ProfileScreen() {
   const { data: config, isError: configError, refetch: refetchConfig } = useAppConfig();
   const { selectedLanguageId } = useLanguageStore();
   const { t } = useTranslation();
-  const showTour = useTourStore((s) => s.showTour);
-  const resetChecklist = useWelcomeChecklistStore((s) => s.reset);
   const resetTours = useTourStore((s) => s.reset);
   const { selectedId: avatarId, hydrate: hydrateAvatar } = useProfileAvatarStore();
   const { requireAuth, descriptionKey, closePrompt } = useRequireAuth();
@@ -518,7 +515,7 @@ export default function ProfileScreen() {
 
           <SectionLabel label={t("settings.app")} />
           <MenuRow icon="exclamationmark.bubble" label={t("profile.sendFeedback")} onPress={() => setFeedbackVisible(true)} />
-          <MenuRow icon="map.fill" label={t("profile.restartWelcomeTour")} onPress={async () => { await resetChecklist(); await resetTours(); showTour("welcome"); }} />
+          <MenuRow icon="map.fill" label={t("profile.restartWelcomeTour")} onPress={() => resetTours()} />
           <MenuRow icon="arrow.down.circle" label={t("profile.downloads")} onPress={() => router.push("/downloads")} />
           <MenuRow icon="gearshape.fill" label={t("profile.settings")} onPress={() => router.push("/settings")} />
 

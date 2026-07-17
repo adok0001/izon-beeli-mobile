@@ -65,8 +65,8 @@ export const analytics = {
     __sendEvent("plus_cta_tapped", { source }),
   plusPaywallViewed: () => __sendEvent("plus_paywall_viewed"),
   plusSubscribeTapped: () => __sendEvent("plus_subscribe_tapped"),
-  onboardingCompleted: (languageId: string, goal: string) =>
-    __sendEvent("onboarding_completed", { languageId, goal }),
+  onboardingCompleted: (languageId: string, level: string) =>
+    __sendEvent("onboarding_completed", { languageId, level }),
   identify: (userId: string, traits?: Record<string, string>) =>
     posthogClient.identify(userId, traits),
   reset: () => posthogClient.reset(),
