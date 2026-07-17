@@ -67,16 +67,20 @@ EOF
 
 ## Required Version Bump (Before Every Commit)
 
-Before running builds or staging files, bump versions across all app surfaces.
+Before running builds or staging files, bump the version of **each package this commit
+touches** — and only those. Packages carry independent versions and are expected to
+diverge; an untouched package keeps its current version.
 
-- Target files:
-	- `mobile/app.json` -> `expo.version`
-	- `web/package.json` -> `version`
-	- `server/package.json` -> `version`
-	- `partykit/package.json` -> `version`
-	- `data/package.json` -> `version`
-- Use one shared version value across all four files.
-- Do not assume patch by default. Review the actual changes and choose `major`, `minor`, or `patch` using the principles below.
+- Package directory -> version file:
+	- `mobile/**` -> `mobile/app.json` (`expo.version`)
+	- `web/**` -> `web/package.json` (`version`)
+	- `server/**` -> `server/package.json` (`version`)
+	- `partykit/**` -> `partykit/package.json` (`version`)
+	- `data/**` -> `data/package.json` (`version`)
+- A commit that touches no package directory (e.g. `docs/`, root config, `.claude/`) bumps nothing.
+- Do not assume patch by default. Review the actual changes and choose one bump level —
+  `major`, `minor`, or `patch` — using the principles below, then apply that same level to
+  every touched package.
 
 ## Version Bump Decision Principles
 
@@ -105,45 +109,58 @@ Choose `patch` (`x.y.z` -> `x.y.(z+1)`) for backward-compatible fixes and mainte
 - Dependency/config/tooling updates with no user-facing capability change
 - Test/docs-only updates
 
-Tie-breaker rules:
+Tie-breaker rules (applied across the touched packages' changes):
 
 - If uncertain between two levels, choose the higher level.
-- If any package includes a `major` trigger, the shared bump is `major`.
+- If any touched package includes a `major` trigger, the bump level is `major`.
 - If no `major` triggers and at least one `minor` trigger exists, use `minor`.
 - Use `patch` only when all changes match patch criteria.
 
 Decision transparency requirement:
 
 - Before running version bump commands, write a one-line rationale in the commit workflow output:
-  - `Version bump decision: <major|minor|patch> - <reason>`
+  - `Version bump decision: <major|minor|patch> - <touched packages> - <reason>`
+  - e.g. `Version bump decision: patch - mobile - fix greeting casing`
 
-Recommended command flow from repo root:
+Recommended command flow from repo root. Bump **only** the packages this commit touches,
+each on its own independent version line:
 
 ```bash
-cd server && npm version <major|minor|patch> --no-git-tag-version && cd ..
-NEXT_VERSION=$(node -p "require('./server/package.json').version")
-cd web && npm version "$NEXT_VERSION" --no-git-tag-version && cd ..
-cd partykit && npm version "$NEXT_VERSION" --no-git-tag-version && cd ..
-cd data && npm version "$NEXT_VERSION" --no-git-tag-version && cd ..
-node -e "const fs=require('fs');const p='mobile/app.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.expo.version='$NEXT_VERSION';fs.writeFileSync(p,JSON.stringify(j,null,2)+'\\n');"
+BUMP=<major|minor|patch>   # the single level chosen above
+
+# Which package directories does this commit touch? (staged + unstaged + untracked)
+CHANGED=$( { git diff --name-only; git diff --name-only --staged; \
+  git ls-files --others --exclude-standard; } | sort -u )
+touched() { echo "$CHANGED" | grep -qE "^$1/"; }
+
+# npm packages: bump in place, only if touched
+for pkg in server web partykit data; do
+  touched "$pkg" && ( cd "$pkg" && npm version "$BUMP" --no-git-tag-version )
+done
+
+# mobile lives in app.json (expo.version) — increment it by the same level, only if touched
+touched mobile && node -e "const fs=require('fs'),p='mobile/app.json',j=JSON.parse(fs.readFileSync(p,'utf8')),[a,b,c]=j.expo.version.split('.').map(Number),t='$BUMP';j.expo.version=t==='major'?(a+1)+'.0.0':t==='minor'?a+'.'+(b+1)+'.0':a+'.'+b+'.'+(c+1);fs.writeFileSync(p,JSON.stringify(j,null,2)+'\n');"
 ```
 
 If the user explicitly requests a bump type, follow the user request unless it would violate the principles due to a clear breaking change.
 
 ## Version Tagging (After Commit)
 
-When — and only when — the commit changed the shared version value, tag it. This
-anchors release boundaries so `git log vX..vY` and the `app-store-changelog` skill
-can resolve ranges without reverse-engineering commit subjects.
+When — and only when — the commit bumped **`mobile/app.json`** — tag it with that new
+mobile version. The `app-store-changelog` skill reads `mobile/app.json` and resolves
+release ranges via these `v`-prefixed tags (`git describe --tags`), so the tag must
+track the **mobile** version — not server/web/partykit/data, which now version
+independently.
 
-- Create an **annotated, `v`-prefixed** tag on the commit that carries the bump.
+- Create an **annotated, `v`-prefixed** tag carrying the new mobile version.
+- Commits that don't touch `mobile/` create no tag — they still fall inside the next
+  mobile release's range, which is correct.
 - Tag **locally only** — never `git push --tags`. Pushing tags is outward-facing and
   awkward to retract, so leave it to the user's deliberate action.
-- Skip tagging on the vast majority of commits, which share the current version.
 
 ```bash
-# Run only after a commit that bumped the shared version value.
-V=$(node -p "require('./server/package.json').version")
+# Run only after a commit that bumped mobile/app.json.
+V=$(node -p "require('./mobile/app.json').expo.version")
 if [ -z "$(git tag -l "v$V")" ]; then
   git tag -a "v$V" -m "release v$V"   # local only; the user pushes tags deliberately
 fi
@@ -192,10 +209,10 @@ grep -oE "EXPO_PUBLIC_[A-Z_]+" mobile/.env.example | sort -u
 
 1. Run `git status` to see what changed
 2. Run `git diff` to review changes
-3. Bump versions across `mobile/app.json`, `web/package.json`, `server/package.json`, and `partykit/package.json`
+3. Bump the version of each touched package only — untouched packages stay put (see Required Version Bump)
 4. Sync `.env.example` files for any touched package (see above)
 5. Run required build command(s) for changed package(s)
 6. Stage relevant files individually: `git add mobile/...` / `git add web/...` / `git add server/...` / `git add partykit/...` / `git add data/...`
 7. Verify staged changes: `git diff --staged`
 8. Confirm success with `git status`
-9. If this commit bumped the shared version, tag it locally (see Version Tagging)
+9. If this commit bumped `mobile/app.json`, tag it locally with the new mobile version (see Version Tagging)
