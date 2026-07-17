@@ -1,8 +1,7 @@
-import { IconSymbol } from "@/components/ui/icon-symbol";
+import { ContentTeaserCard } from "@/components/ui/section-header";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { Pressable, Text, View } from "react-native";
 
 export function TodaysGalleryCard() {
   const M = useMuseumTheme();
@@ -11,50 +10,16 @@ export function TodaysGalleryCard() {
   const router = useRouter();
 
   return (
-    <View style={{ paddingHorizontal: 20 }}>
-      <Pressable
-        onPress={() => router.push("/today" as never)}
-        style={{
-          borderRadius: 16,
-          backgroundColor: M.card,
-          borderWidth: 1,
-          borderColor: M.border,
-          borderLeftWidth: 3,
-          borderLeftColor: M.accent,
-          padding: 14,
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 12,
-        }}
-        accessibilityRole="button"
-        accessibilityLabel={tr("learn.todaysGallery")}
-        className="active:opacity-70"
-      >
-        <View
-          style={{
-            width: 44,
-            height: 44,
-            borderRadius: 10,
-            backgroundColor: M.accentGlow,
-            borderWidth: 1,
-            borderColor: M.accentBorder,
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          <IconSymbol name="sparkles" size={20} color={M.accent} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 13, fontWeight: "700", color: M.text }}>
-            {tr("learn.todaysGallery")}
-          </Text>
-          <Text style={{ fontSize: 11, color: M.sub, marginTop: 2 }}>
-            {tr("learn.todaysGallerySub")}
-          </Text>
-        </View>
-        <IconSymbol name="chevron.right" size={14} color={M.muted} />
-      </Pressable>
-    </View>
+    <ContentTeaserCard
+      eyebrow={tr("learn.todaysGallery")}
+      icon="sparkles"
+      iconColor={M.accent}
+      iconBackground={M.accentGlow}
+      iconBorderColor={M.accentBorder}
+      accentColor={M.accent}
+      title={tr("learn.todaysGallerySub")}
+      onPress={() => router.push("/today" as never)}
+      accessibilityLabel={tr("learn.todaysGallery")}
+    />
   );
 }

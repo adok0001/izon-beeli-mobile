@@ -1,8 +1,6 @@
-import { Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Eyebrow } from "@/components/ui/section-header";
+import { ContentTeaserCard } from "@/components/ui/section-header";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUiLanguageStore } from "@/store/ui-language-store";
@@ -23,53 +21,18 @@ export function DailyReadCard({ entry }: DailyReadCardProps) {
   const gloss = entry.translations ? localize(entry.translations, uiLanguage) : (typeof entry.english === "string" ? entry.english : localize(entry.english, uiLanguage));
 
   return (
-    <Pressable
+    <ContentTeaserCard
+      eyebrow={t("learn.dailyRead", { defaultValue: "Daily Read" })}
+      eyebrowTone="accent"
+      icon="book.fill"
+      iconColor={M.accent}
+      iconBackground={M.accentGlow}
+      iconBorderColor={M.accentBorder}
+      accentColor={M.accent}
+      title={entry.word}
+      subtitle={gloss || undefined}
       onPress={() => router.push("/word-challenge")}
-      style={{
-        marginHorizontal: 20,
-        borderRadius: 16,
-        backgroundColor: M.card,
-        borderWidth: 1,
-        borderColor: M.border,
-        padding: 16,
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 14,
-      }}
-      className="active:opacity-70"
-      accessibilityRole="button"
       accessibilityLabel={`${t("learn.dailyRead", { defaultValue: "Daily Read" })}: ${entry.word}`}
-    >
-      <View
-        style={{
-          width: 52,
-          height: 52,
-          borderRadius: 12,
-          backgroundColor: M.accentGlow,
-          borderWidth: 1.5,
-          borderColor: M.accentBorder,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <IconSymbol name="book.fill" size={22} color={M.accent} />
-      </View>
-      <View style={{ flex: 1 }}>
-        <Eyebrow
-          label={t("learn.dailyRead", { defaultValue: "Daily Read" })}
-          tone="accent"
-          style={{ marginBottom: 2 }}
-        />
-        <Text style={{ fontSize: 16, fontWeight: "800", color: M.text }} numberOfLines={1}>
-          {entry.word}
-        </Text>
-        {gloss ? (
-          <Text style={{ fontSize: 13, color: M.sub }} numberOfLines={1}>
-            {gloss}
-          </Text>
-        ) : null}
-      </View>
-      <IconSymbol name="chevron.right" size={16} color={M.muted} />
-    </Pressable>
+    />
   );
 }

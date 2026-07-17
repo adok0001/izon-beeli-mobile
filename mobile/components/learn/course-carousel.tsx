@@ -1,5 +1,4 @@
-import { useRef, useState } from "react";
-import { useWindowDimensions, FlatList, Pressable, Text, View } from "react-native";
+import { useWindowDimensions, Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -38,7 +37,11 @@ function CourseHeroCard({ course, completed, total, onContinue, width }: CourseH
         borderColor: M.border,
       }}
       accessibilityRole="button"
-      accessibilityLabel={`${localize(course.title, uiLanguage)}, ${percent}% complete. Continue.`}
+      accessibilityLabel={
+        completed > 0
+          ? `${localize(course.title, uiLanguage)}, ${percent}% complete. Continue.`
+          : `${localize(course.title, uiLanguage)}. Start.`
+      }
     >
       <CourseArtwork course={course} size="hero" />
 
@@ -74,7 +77,11 @@ function CourseHeroCard({ course, completed, total, onContinue, width }: CourseH
         </View>
 
         <Button
-          label={t("learn.continueCta", { defaultValue: "Continue" })}
+          label={
+            completed > 0
+              ? t("learn.continueCta", { defaultValue: "Continue" })
+              : t("learn.startShort", { defaultValue: "Start" })
+          }
           onPress={onContinue}
           variant="primary"
           size="md"
@@ -85,75 +92,66 @@ function CourseHeroCard({ course, completed, total, onContinue, width }: CourseH
   );
 }
 
+/**
+ * Picks the single course to feature: the user's active in-progress course if
+ * one exists, otherwise a recommended starting course. Recommendation prefers
+ * `userLevel` (from first-run onboarding, wired once that signal lands) and
+ * falls back to the lowest-order beginner course — the flagship Izon spine's
+ * Movement 1 for a brand-new user, since courses are already scoped to the
+ * user's selected language.
+ */
+function pickFeaturedCourse(
+  courses: Course[],
+  lessons: Lesson[],
+  completedIds: Set<string>,
+  userLevel?: Course["level"]
+) {
+  const withProgress = courses.map((course) => ({
+    course,
+    prog: courseProgress(lessons, completedIds, course.id),
+  }));
+
+  const inProgress = withProgress.find(({ prog }) => prog.completed > 0 && prog.completed < prog.total);
+  if (inProgress) return inProgress;
+
+  const byOrder = (a: Course, b: Course) => (a.order ?? 0) - (b.order ?? 0);
+  const leveled = userLevel ? courses.filter((c) => c.level === userLevel) : courses.filter((c) => c.level === "beginner");
+  const recommended = [...(leveled.length > 0 ? leveled : courses)].sort(byOrder)[0];
+
+  return withProgress.find(({ course }) => course.id === recommended?.id) ?? withProgress[0];
+}
+
 interface CourseCarouselProps {
   courses: Course[];
   lessons: Lesson[];
   completedIds: Set<string>;
+  /** User's chosen proficiency level from first-run onboarding. Optional until that flow lands. */
+  userLevel?: Course["level"];
 }
 
-export function CourseCarousel({ courses, lessons, completedIds }: CourseCarouselProps) {
-  const { width: screenWidth } = useWindowDimensions();
+export function CourseCarousel({ courses, lessons, completedIds, userLevel }: CourseCarouselProps) {
   const router = useRouter();
-  const [activeIndex, setActiveIndex] = useState(0);
-  const flatListRef = useRef<FlatList<Course>>(null);
-  const M = useMuseumTheme();
-
+  const { width: screenWidth } = useWindowDimensions();
   const cardWidth = screenWidth - CARD_GUTTER * 2;
-
-  const handleContinue = (courseId: string) => {
-    router.push({ pathname: "/learn/course/[courseId]", params: { courseId } });
-  };
-
-  const onScroll = (e: { nativeEvent: { contentOffset: { x: number } } }) => {
-    const idx = Math.round(e.nativeEvent.contentOffset.x / (cardWidth + 16));
-    setActiveIndex(Math.max(0, Math.min(idx, courses.length - 1)));
-  };
 
   if (courses.length === 0) return null;
 
+  const featured = pickFeaturedCourse(courses, lessons, completedIds, userLevel);
+  if (!featured) return null;
+
+  const handleContinue = () => {
+    router.push({ pathname: "/learn/course/[courseId]", params: { courseId: featured.course.id } });
+  };
+
   return (
-    <View style={{ gap: 12 }}>
-      <FlatList
-        ref={flatListRef}
-        data={courses}
-        horizontal
-        pagingEnabled={false}
-        snapToInterval={cardWidth + 16}
-        snapToAlignment="start"
-        decelerationRate="fast"
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: CARD_GUTTER, gap: 16 }}
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-        keyExtractor={(c) => c.id}
-        renderItem={({ item: course }) => {
-          const prog = courseProgress(lessons, completedIds, course.id);
-          return (
-            <CourseHeroCard
-              course={course}
-              completed={prog.completed}
-              total={prog.total}
-              onContinue={() => handleContinue(course.id)}
-              width={cardWidth}
-            />
-          );
-        }}
+    <View style={{ paddingHorizontal: CARD_GUTTER }}>
+      <CourseHeroCard
+        course={featured.course}
+        completed={featured.prog.completed}
+        total={featured.prog.total}
+        onContinue={handleContinue}
+        width={cardWidth}
       />
-      {courses.length > 1 && (
-        <View style={{ flexDirection: "row", justifyContent: "center", gap: 6 }}>
-          {courses.map((_, i) => (
-            <View
-              key={i}
-              style={{
-                width: i === activeIndex ? 18 : 6,
-                height: 6,
-                borderRadius: 3,
-                backgroundColor: i === activeIndex ? M.accent : M.border,
-              }}
-            />
-          ))}
-        </View>
-      )}
     </View>
   );
 }

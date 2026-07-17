@@ -1,4 +1,3 @@
-import { MINI_PLAYER_HEIGHT } from "@/components/audio/audio-player";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useAwardChecklistBonus, useProgressSummary } from "@/lib/hooks/use-progress";
 import { useMyContributions } from "@/lib/hooks/use-contributions";
@@ -11,24 +10,11 @@ import {
     type MobileChecklistAudience,
     type MobileChecklistId,
 } from "@/lib/tours/mobile-checklist-registry";
-import { useAudioStore } from "@/store/audio-store";
-import { useSpeedDialStore } from "@/store/speed-dial-store";
 import { useWelcomeChecklistStore } from "@/store/welcome-checklist-store";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Animated, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import Reanimated, {
-  cancelAnimation,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Animated, Modal, Pressable, Text, View } from "react-native";
 
 interface ChecklistItem {
   id: MobileChecklistId;
@@ -120,10 +106,13 @@ function AllCompleteModal({ visible, onDismiss }: { visible: boolean; onDismiss:
   );
 }
 
-export function WelcomeChecklistFab() {
+/**
+ * "Getting started" card — de-stickied from the old floating FAB. Lives inline
+ * near the top of the Learn tab and auto-hides once every task is complete.
+ */
+export function WelcomeChecklistCard() {
   const M = useMuseumTheme();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
   const [celebrationVisible, setCelebrationVisible] = useState(false);
   const { t } = useTranslation();
@@ -146,52 +135,6 @@ export function WelcomeChecklistFab() {
   const isReviewer = currentUser?.isReviewer ?? false;
 
   const prevPendingRef = useRef<number | null>(null);
-  const flashProgress = useSharedValue(0);
-  const scaleAnim = useSharedValue(1);
-
-  useEffect(() => {
-    if (open) {
-      cancelAnimation(flashProgress);
-      cancelAnimation(scaleAnim);
-      flashProgress.value = withTiming(0, { duration: 150 });
-      scaleAnim.value = withTiming(1, { duration: 150 });
-      return;
-    }
-
-    const PAUSE_MS = 12_000;
-    flashProgress.value = withDelay(
-      3_000,
-      withRepeat(
-        withSequence(
-          withTiming(1, { duration: 450 }),
-          withTiming(0, { duration: 700 }),
-          withTiming(0, { duration: PAUSE_MS }),
-        ),
-        -1,
-        false,
-      ),
-    );
-    scaleAnim.value = withDelay(
-      3_000,
-      withRepeat(
-        withSequence(
-          withTiming(1.12, { duration: 220 }),
-          withTiming(1, { duration: 330 }),
-          withTiming(1, { duration: PAUSE_MS }),
-        ),
-        -1,
-        false,
-      ),
-    );
-  }, [open]);
-
-  const fabScaleStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scaleAnim.value }],
-  }));
-
-  const flashOverlayStyle = useAnimatedStyle(() => ({
-    opacity: flashProgress.value,
-  }));
 
   const visibleItems = useMemo<ChecklistItem[]>(
     () =>
@@ -259,10 +202,7 @@ export function WelcomeChecklistFab() {
     }
   }, [pendingCount, isHydrated, bonusAwarded, markBonusAwarded, awardBonus]);
 
-  const speedDialOpen = useSpeedDialStore((s) => s.open);
-  const currentTrackId = useAudioStore((s) => s.currentTrackId);
-
-  if (!isHydrated) return null;
+  if (!isHydrated || pendingCount === 0) return null;
 
   return (
     <>
@@ -271,120 +211,98 @@ export function WelcomeChecklistFab() {
         onDismiss={() => setCelebrationVisible(false)}
       />
 
-      {pendingCount > 0 && !speedDialOpen && (
-      // bottom offset clears the global speed-dial FAB, which owns the bottom-right slot
-      <View pointerEvents="box-none" style={{ position: "absolute", right: 16, bottom: 136 + insets.bottom + (currentTrackId ? MINI_PLAYER_HEIGHT : 0), zIndex: 60 }}>
-
-      {open ? (
-        <View style={{ marginBottom: 12, width: 320, overflow: "hidden", borderRadius: 16, borderWidth: 1, borderColor: M.border, backgroundColor: M.card }}>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderBottomWidth: 1, borderBottomColor: M.border, paddingHorizontal: 16, paddingVertical: 12 }}>
-            <View>
-              <Text style={{ fontSize: 13, fontWeight: "700", color: M.text }}>{t("welcomeChecklist.title")}</Text>
-              <Text style={{ fontSize: 11, color: M.sub }}>{t("welcomeChecklist.tasksRemaining", { count: pendingCount })}</Text>
+      <View style={{ paddingHorizontal: 20 }}>
+        <View style={{ borderRadius: 16, backgroundColor: M.card, borderWidth: 1, borderColor: M.border, overflow: "hidden" }}>
+          <Pressable
+            onPress={() => setOpen((v) => !v)}
+            style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 14 }}
+            accessibilityRole="button"
+            accessibilityLabel={t("welcomeChecklist.title")}
+            className="active:opacity-70"
+          >
+            <View
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 10,
+                backgroundColor: M.accentGlow,
+                borderWidth: 1,
+                borderColor: M.accentBorder,
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <IconSymbol name="checkmark.circle.fill" size={20} color={M.accent} />
             </View>
-            <Pressable onPress={() => setOpen(false)} hitSlop={8}>
-              <IconSymbol name="xmark" size={16} color={M.muted} />
-            </Pressable>
-          </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 13, fontWeight: "700", color: M.text }}>{t("welcomeChecklist.title")}</Text>
+              <Text style={{ fontSize: 11, color: M.sub, marginTop: 2 }}>
+                {t("welcomeChecklist.tasksRemaining", { count: pendingCount })}
+              </Text>
+            </View>
+            <IconSymbol name={open ? "chevron.up" : "chevron.down"} size={14} color={M.muted} />
+          </Pressable>
 
-          <ScrollView style={{ maxHeight: 384 }} contentContainerStyle={{ padding: 12 }}>
-            {grouped.map((group) => (
-              <View key={group.audience} style={{ marginBottom: 16 }}>
-                <Text style={{ marginBottom: 8, fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
-                  {group.label}
-                </Text>
-                <View style={{ gap: 8 }}>
-                  {group.items.map((item) => {
-                    const done = completedActionIds.includes(item.id);
-                    return (
-                      <View
-                        key={item.id}
-                        style={{ borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, paddingHorizontal: 12, paddingVertical: 10 }}
-                      >
-                        <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
-                          <Pressable
-                            onPress={() => {
-                              if (!done) markCompleted([item.id]);
-                            }}
-                            hitSlop={8}
-                            style={{ marginRight: 8, marginTop: 2 }}
-                          >
-                            <IconSymbol
-                              name={done ? "checkmark.circle.fill" : "circle"}
-                              size={16}
-                              color={done ? M.success : M.muted}
-                            />
-                          </Pressable>
-
-                          <View style={{ flex: 1 }}>
-                            <Text style={{ fontSize: 13, fontWeight: "600", color: M.text }}>{tr(item.titleKey)}</Text>
-                            <Text style={{ marginTop: 2, fontSize: 11, color: M.sub }}>{tr(item.descriptionKey)}</Text>
+          {open && (
+            <View style={{ borderTopWidth: 1, borderTopColor: M.border, padding: 12 }}>
+              {grouped.map((group) => (
+                <View key={group.audience} style={{ marginBottom: 12 }}>
+                  <Text style={{ marginBottom: 8, fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
+                    {group.label}
+                  </Text>
+                  <View style={{ gap: 8 }}>
+                    {group.items.map((item) => {
+                      const done = completedActionIds.includes(item.id);
+                      return (
+                        <View
+                          key={item.id}
+                          style={{ borderRadius: 12, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, paddingHorizontal: 12, paddingVertical: 10 }}
+                        >
+                          <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
                             <Pressable
                               onPress={() => {
                                 if (!done) markCompleted([item.id]);
-                                setOpen(false);
-                                router.push(item.route as any);
                               }}
-                              style={{ marginTop: 8, flexDirection: "row", alignItems: "center" }}
+                              hitSlop={8}
+                              style={{ marginRight: 8, marginTop: 2 }}
                             >
-                              <IconSymbol name={item.icon as any} size={14} color={M.accent} />
-                              <Text style={{ marginLeft: 6, fontSize: 11, fontWeight: "600", color: M.accent }}>{t("welcomeChecklist.openAction")}</Text>
-                              <View style={{ marginLeft: 4 }}>
-                                <IconSymbol name="chevron.right" size={12} color={M.accent} />
-                              </View>
+                              <IconSymbol
+                                name={done ? "checkmark.circle.fill" : "circle"}
+                                size={16}
+                                color={done ? M.success : M.muted}
+                              />
                             </Pressable>
+
+                            <View style={{ flex: 1 }}>
+                              <Text style={{ fontSize: 13, fontWeight: "600", color: M.text }}>{tr(item.titleKey)}</Text>
+                              <Text style={{ marginTop: 2, fontSize: 11, color: M.sub }}>{tr(item.descriptionKey)}</Text>
+                              <Pressable
+                                onPress={() => {
+                                  if (!done) markCompleted([item.id]);
+                                  setOpen(false);
+                                  router.push(item.route as any);
+                                }}
+                                style={{ marginTop: 8, flexDirection: "row", alignItems: "center" }}
+                              >
+                                <IconSymbol name={item.icon as any} size={14} color={M.accent} />
+                                <Text style={{ marginLeft: 6, fontSize: 11, fontWeight: "600", color: M.accent }}>{t("welcomeChecklist.openAction")}</Text>
+                                <View style={{ marginLeft: 4 }}>
+                                  <IconSymbol name="chevron.right" size={12} color={M.accent} />
+                                </View>
+                              </Pressable>
+                            </View>
                           </View>
                         </View>
-                      </View>
-                    );
-                  })}
+                      );
+                    })}
+                  </View>
                 </View>
-              </View>
-            ))}
-          </ScrollView>
+              ))}
+            </View>
+          )}
         </View>
-      ) : null}
-
-      <Reanimated.View style={fabScaleStyle}>
-        <View style={styles.fabShell}>
-          <Pressable
-            onPress={() => setOpen((v) => !v)}
-            style={styles.fabInner}
-          >
-            <Reanimated.View pointerEvents="none" style={[StyleSheet.absoluteFillObject, flashOverlayStyle]}>
-              <LinearGradient
-                colors={["#0a0f2e", "#0c1b5e", "#0d2b7a"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFillObject}
-              />
-            </Reanimated.View>
-            <IconSymbol name="checkmark.circle.fill" size={16} color="#ffffff" />
-            <Text style={{ marginLeft: 8, fontSize: 13, fontWeight: "700", color: "#ffffff" }}>{t("welcomeChecklist.pendingTasks", { count: pendingCount })}</Text>
-          </Pressable>
-        </View>
-      </Reanimated.View>
-    </View>
-      )}
+      </View>
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  fabShell: {
-    borderRadius: 999,
-    overflow: "hidden",
-    backgroundColor: "#C4862A",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  fabInner: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-});

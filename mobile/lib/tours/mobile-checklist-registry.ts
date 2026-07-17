@@ -80,7 +80,7 @@ export const MOBILE_CHECKLIST_REGISTRY = {
     icon: "checkmark.seal.fill",
   },
   adminReviewerApplications: {
-    route: "/review",
+    route: "/admin/users",
     audience: "admin",
     titleKey: "welcomeChecklist.adminReviewerApplicationsTitle",
     descriptionKey: "welcomeChecklist.adminReviewerApplicationsDetail",

@@ -7,6 +7,7 @@ import { ExploreAllRow } from "@/components/learn/explore-all-row";
 import { LibraryTeaser } from "@/components/learn/library-teaser";
 import { TodaysGalleryCard } from "@/components/learn/todays-gallery-card";
 import { StreakWeekStrip } from "@/components/learn/streak-week-strip";
+import { WelcomeChecklistCard } from "@/components/welcome-checklist-fab";
 import { Eyebrow } from "@/components/ui/section-header";
 import { LoadingScreen } from "@/components/loading-screen";
 import { QueryErrorState } from "@/components/query-error-state";
@@ -193,6 +194,9 @@ export default function LearnScreen() {
             />
           }
         >
+          {/* Getting started — de-stickied welcome checklist, auto-hides once complete */}
+          <WelcomeChecklistCard />
+
           {/* Streak week-strip */}
           <View style={{ paddingHorizontal: 20 }}>
             <StreakWeekStrip
@@ -205,12 +209,14 @@ export default function LearnScreen() {
             />
           </View>
 
-          {/* Course carousel */}
+          {/* Featured course — active course in progress, or a recommended starter */}
           {courses.length > 0 && (
             <CourseCarousel
               courses={courses}
               lessons={lessons}
               completedIds={completedIds}
+              // userLevel: wire once first-run "choose your level" ships; falls back
+              // to the flagship Izon starting course until then.
             />
           )}
 

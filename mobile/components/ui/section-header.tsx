@@ -1,6 +1,7 @@
+import { IconSymbol, type IconSymbolName } from "@/components/ui/icon-symbol";
 import { fonts, type } from "@/constants/typography";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { Text, View, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
+import { Pressable, Text, View, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
 
 export interface SectionHeaderProps {
   title: string;
@@ -74,6 +75,98 @@ export function Eyebrow({ label, tone = "muted", style }: EyebrowProps) {
     >
       {label}
     </Text>
+  );
+}
+
+export interface ContentTeaserCardProps {
+  /** External eyebrow shown above the card ("TODAY'S GALLERY", "DAILY READ", ...). */
+  eyebrow: string;
+  eyebrowTone?: "muted" | "accent";
+  icon: IconSymbolName;
+  iconColor: string;
+  iconBackground: string;
+  iconBorderColor?: string;
+  /** Left-accent stripe color. */
+  accentColor: string;
+  title: string;
+  subtitle?: string;
+  /** Optional content rendered above the title (e.g. a type badge chip). */
+  badge?: React.ReactNode;
+  onPress: () => void;
+  accessibilityLabel: string;
+}
+
+/**
+ * Shared Learn-tab content teaser card — unifies Today's Gallery, Daily Read,
+ * and From the Library onto one visual: external eyebrow, left-accent stripe,
+ * 44px icon tile, padding:14, uniform chevron, paddingHorizontal:20 wrapper.
+ */
+export function ContentTeaserCard({
+  eyebrow,
+  eyebrowTone = "muted",
+  icon,
+  iconColor,
+  iconBackground,
+  iconBorderColor,
+  accentColor,
+  title,
+  subtitle,
+  badge,
+  onPress,
+  accessibilityLabel,
+}: ContentTeaserCardProps) {
+  const M = useMuseumTheme();
+
+  return (
+    <View style={{ paddingHorizontal: 20 }}>
+      <Eyebrow label={eyebrow} tone={eyebrowTone} style={{ marginBottom: 8 }} />
+      <Pressable
+        onPress={onPress}
+        style={{
+          borderRadius: 16,
+          backgroundColor: M.card,
+          borderWidth: 1,
+          borderColor: M.border,
+          borderLeftWidth: 3,
+          borderLeftColor: accentColor,
+          padding: 14,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 12,
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        className="active:opacity-70"
+      >
+        <View
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 10,
+            backgroundColor: iconBackground,
+            borderWidth: iconBorderColor ? 1 : 0,
+            borderColor: iconBorderColor,
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <IconSymbol name={icon} size={20} color={iconColor} />
+        </View>
+        <View style={{ flex: 1 }}>
+          {badge}
+          <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: "700", color: M.text }}>
+            {title}
+          </Text>
+          {subtitle ? (
+            <Text numberOfLines={1} style={{ fontSize: 11, color: M.sub, marginTop: 2 }}>
+              {subtitle}
+            </Text>
+          ) : null}
+        </View>
+        <IconSymbol name="chevron.right" size={14} color={M.muted} />
+      </Pressable>
+    </View>
   );
 }
 
