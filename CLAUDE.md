@@ -84,6 +84,23 @@ tab bar) is always dark (the "foyer"); content areas are mode-aware.
 - **Typography:** apply the loaded display font via `constants/typography.ts`
   (`fonts.heading` = PlusJakartaSans, `type` scale). `Akagu` is for indigenous scripts.
 - **Primitives:** reuse `components/ui/{button,badge,section-header,screen-container}`.
+- **Localized text fields:** any translatable text field (title, meaning, description, ...)
+  must use `LocalizedTextInput` (`components/ui/localized-text-input.tsx`) — the anchor
+  language (English) plus progressive "Add translation" disclosure for fr/pcm/ar/pt.
+  Never hardcode a fixed English+French pair of inputs; that anti-pattern doesn't scale
+  past two languages and is exactly what this component replaced. Pair it server-side with
+  a `<field>`/`<field>Fr` legacy pair + a `<field>Translations` jsonb column (see
+  `dictionaryEntries.meaning/meaningFr/translations` or `dailyChallengeTemplates` for the
+  pattern) and the `parseMap`/`flatToMap` helpers in `server/src/routes/educator/_shared.ts`.
+- **Studio (admin/educator) screens:** every list/editor screen under `app/admin/*` and
+  `app/(tabs)/educator/*` composes the shared primitives in `components/studio/`:
+  `StudioScreenHeader` (back chevron + title/subtitle + optional action button),
+  `StudioSearchInput`, `StudioFilterPills` (chip/tab rows), `ActionPill` + `ActiveTogglePill`
+  (`studio-action-pill.tsx` — per-row Edit/Delete/Feature/Activate buttons), `StudioCard`
+  (bordered container, optional left accent bar), and the form primitives in
+  `studio-form.tsx` (`FormField`, `FormInput`, `LabeledInput`, `PrimaryButton`,
+  `GhostButton`). Don't hand-roll a new header row, search box, filter-chip row, or
+  list-card style — every screen doing its own thing is how this drifted before.
 - Dark mode preference handled by `store/theme-store.ts` + `hooks/use-color-scheme.ts`;
   the React Navigation `ThemeProvider` uses the always-dark Museum chrome theme.
 - Tailwind config in `tailwind.config.ts` (exposes `font-heading`), directives in
