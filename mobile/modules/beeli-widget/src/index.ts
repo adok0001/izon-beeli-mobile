@@ -1,6 +1,7 @@
 import { NativeModulesProxy, requireNativeModule } from "expo-modules-core";
 
 export interface WotdContent {
+  id: string;
   word: string;
   pronunciation?: string;
   english: string;
@@ -14,6 +15,7 @@ export interface PotmContent {
 }
 
 export interface SotwContent {
+  id: string;
   title: string;
   languageId: string;
 }

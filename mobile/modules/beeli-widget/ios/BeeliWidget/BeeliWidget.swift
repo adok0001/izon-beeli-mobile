@@ -35,12 +35,14 @@ private extension View {
 
 private struct WotdEntry: TimelineEntry {
   let date: Date
+  let id: String?
   let word: String
   let pronunciation: String?
   let english: String
 }
 
 private struct WotdCodable: Decodable {
+  let id: String?
   let word: String
   let pronunciation: String?
   let english: String
@@ -48,7 +50,7 @@ private struct WotdCodable: Decodable {
 
 private struct WotdProvider: TimelineProvider {
   func placeholder(in context: Context) -> WotdEntry {
-    WotdEntry(date: .now, word: "Ọkọ", pronunciation: "o-kò", english: "husband")
+    WotdEntry(date: .now, id: nil, word: "Ọkọ", pronunciation: "o-kò", english: "husband")
   }
 
   func getSnapshot(in context: Context, completion: @escaping (WotdEntry) -> Void) {
@@ -66,12 +68,12 @@ private struct WotdProvider: TimelineProvider {
     let raw = defaults?.string(forKey: "wotd_content")
     NSLog("[BeeliWidget] wotd raw: %@", raw ?? "nil")
     if let c = readDefaults("wotd_content", as: WotdCodable.self) {
-      return WotdEntry(date: .now, word: c.word, pronunciation: c.pronunciation, english: c.english)
+      return WotdEntry(date: .now, id: c.id, word: c.word, pronunciation: c.pronunciation, english: c.english)
     }
     if let raw = raw {
       NSLog("[BeeliWidget] wotd decode failed for: %@", raw)
     }
-    return WotdEntry(date: .now, word: "—", pronunciation: nil, english: "Open Beeli to load")
+    return WotdEntry(date: .now, id: nil, word: "—", pronunciation: nil, english: "Open Beeli to load")
   }
 }
 
@@ -101,6 +103,7 @@ private struct WotdWidgetView: View {
     .padding(14)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .widgetBackground(WidgetColors.bg)
+    .widgetURL(entry.id.flatMap { URL(string: "izonbeelimobile://word/\($0)") })
   }
 }
 
@@ -122,16 +125,18 @@ private struct PotmEntry: TimelineEntry {
   let date: Date
   let text: String
   let translation: String
+  let languageId: String?
 }
 
 private struct PotmCodable: Decodable {
   let text: String
   let translation: String
+  let languageId: String?
 }
 
 private struct PotmProvider: TimelineProvider {
   func placeholder(in context: Context) -> PotmEntry {
-    PotmEntry(date: .now, text: "Ọmọ tó bá fẹ́ jẹun tán kò gbọdọ̀ jẹ ọbẹ̀ mọ́", translation: "A child that wants to finish eating must not eat soup")
+    PotmEntry(date: .now, text: "Ọmọ tó bá fẹ́ jẹun tán kò gbọdọ̀ jẹ ọbẹ̀ mọ́", translation: "A child that wants to finish eating must not eat soup", languageId: nil)
   }
 
   func getSnapshot(in context: Context, completion: @escaping (PotmEntry) -> Void) {
@@ -150,9 +155,9 @@ private struct PotmProvider: TimelineProvider {
 
   private func entry() -> PotmEntry {
     if let c = readDefaults("potm_content", as: PotmCodable.self) {
-      return PotmEntry(date: .now, text: c.text, translation: c.translation)
+      return PotmEntry(date: .now, text: c.text, translation: c.translation, languageId: c.languageId)
     }
-    return PotmEntry(date: .now, text: "—", translation: "Open Beeli to load")
+    return PotmEntry(date: .now, text: "—", translation: "Open Beeli to load", languageId: nil)
   }
 }
 
@@ -177,6 +182,7 @@ private struct PotmWidgetView: View {
     .padding(14)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .widgetBackground(WidgetColors.bg)
+    .widgetURL(entry.languageId.flatMap { URL(string: "izonbeelimobile://proverbs/\($0)") })
   }
 }
 
@@ -196,16 +202,18 @@ struct BeeliPotmWidget: Widget {
 
 private struct SotwEntry: TimelineEntry {
   let date: Date
+  let id: String?
   let title: String
 }
 
 private struct SotwCodable: Decodable {
+  let id: String?
   let title: String
 }
 
 private struct SotwProvider: TimelineProvider {
   func placeholder(in context: Context) -> SotwEntry {
-    SotwEntry(date: .now, title: "Iye Mi")
+    SotwEntry(date: .now, id: nil, title: "Iye Mi")
   }
 
   func getSnapshot(in context: Context, completion: @escaping (SotwEntry) -> Void) {
@@ -224,9 +232,9 @@ private struct SotwProvider: TimelineProvider {
 
   private func entry() -> SotwEntry {
     if let c = readDefaults("sotw_content", as: SotwCodable.self) {
-      return SotwEntry(date: .now, title: c.title)
+      return SotwEntry(date: .now, id: c.id, title: c.title)
     }
-    return SotwEntry(date: .now, title: "Open Beeli to load")
+    return SotwEntry(date: .now, id: nil, title: "Open Beeli to load")
   }
 }
 
@@ -250,6 +258,7 @@ private struct SotwWidgetView: View {
     .padding(14)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .widgetBackground(WidgetColors.bg)
+    .widgetURL(entry.id.flatMap { URL(string: "izonbeelimobile://lesson/\($0)") })
   }
 }
 

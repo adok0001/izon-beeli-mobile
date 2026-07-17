@@ -25,9 +25,9 @@ async function syncWidgets(languageId: string, uiLanguage: UiLanguage) {
   const encoded = encodeURIComponent(languageId);
 
   const [wotd, potm, sotw] = await Promise.allSettled([
-    apiFetch<{ entry: { word: string; pronunciation?: string; english: string } | null }>(`/daily-content/wotd?languageId=${encoded}`),
+    apiFetch<{ entry: { id: string; word: string; pronunciation?: string; english: string } | null }>(`/daily-content/wotd?languageId=${encoded}`),
     apiFetch<{ proverb: { text: string; translation: string } | null }>(`/daily-content/potm?languageId=${encoded}`),
-    apiFetch<{ lesson: { title: string | LocalizedText } | null }>(`/daily-content/sotw?languageId=${encoded}`),
+    apiFetch<{ lesson: { id: string; title: string | LocalizedText } | null }>(`/daily-content/sotw?languageId=${encoded}`),
   ]);
 
   const nativeAvailable = mod.isNativeModuleLoaded?.() ?? false;
@@ -54,7 +54,7 @@ async function syncWidgets(languageId: string, uiLanguage: UiLanguage) {
   }
 
   if (sotw.status === "fulfilled" && sotw.value.lesson) {
-    mod.writeSotw({ title: localize(sotw.value.lesson.title, uiLanguage, "—"), languageId });
+    mod.writeSotw({ id: sotw.value.lesson.id, title: localize(sotw.value.lesson.title, uiLanguage, "—"), languageId });
     wrote = true;
   } else if (sotw.status === "rejected") {
     console.warn("[WidgetSync] sotw fetch failed:", sotw.reason);
