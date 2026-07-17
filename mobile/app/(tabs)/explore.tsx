@@ -33,7 +33,9 @@ export default function LibraryScreen() {
 
   // Editorial rails. A podcast card that opens a season (has storyId) IS a
   // Season — a series of lessons; podcasts without one are standalone episodes.
+  const reads = all.filter((i) => i.type === "blog");
   const series = all.filter((i) => i.type === "podcast" && i.storyId);
+  const episodes = all.filter((i) => i.type === "podcast" && !i.storyId);
   const films = all.filter((i) => i.type === "film");
 
   // Level bands ride on whichever season is currently promoted, built from that
@@ -83,7 +85,9 @@ export default function LibraryScreen() {
         ) : null}
 
         {/* Editorial rails */}
+        <DiscoverRail title="Reads" items={reads} onSeeAll={() => router.push("/explore/blog" as never)} onStoryPress={openStory} />
         <DiscoverRail title="Seasons" items={series} onSeeAll={() => router.push("/explore/podcast" as never)} onStoryPress={openStory} />
+        <DiscoverRail title="Listen" items={episodes} onSeeAll={() => router.push("/explore/podcast" as never)} onStoryPress={openStory} />
         <DiscoverRail title="Films" items={films} onSeeAll={() => router.push("/explore/film" as never)} onStoryPress={openStory} />
 
         {/* By level */}
