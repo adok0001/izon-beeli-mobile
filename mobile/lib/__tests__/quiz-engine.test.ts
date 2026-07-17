@@ -1,6 +1,6 @@
-import { generateQuiz, generateFocusedQuiz, generateMatchingPairs } from "../quiz-engine";
+import { generateQuiz, generateFocusedQuiz, generateMatchingPairs, generateLessonQuiz } from "../quiz-engine";
 import type { DictionaryEntry } from "../dictionary";
-import type { QuizConfig, SentenceTemplate, MatchingGameConfig } from "@/types";
+import type { QuizConfig, SentenceTemplate, MatchingGameConfig, TranscriptSegment } from "@/types";
 
 // Minimal valid DictionaryEntry factory
 function makeEntry(overrides: Partial<DictionaryEntry> & { word: string; english: string }): DictionaryEntry {
@@ -440,5 +440,137 @@ describe("generateMatchingPairs", () => {
     const pairs = generateMatchingPairs({ ...DEFAULT_MATCHING_CONFIG, pairCount: 8 }, entries);
     const ids = pairs.map((p) => p.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("uses transcript segments when 4+ valid segments are provided", () => {
+    const segments = makeSegments(6);
+    const pairs = generateMatchingPairs({ ...DEFAULT_MATCHING_CONFIG, pairCount: 4 }, [], segments);
+    expect(pairs).toHaveLength(4);
+    // Segment-derived pairs use the segment text as the word side
+    const segWords = new Set(segments.map((s) => s.text));
+    for (const pair of pairs) {
+      expect(segWords.has(pair.word)).toBe(true);
+    }
+  });
+
+  it("falls back to the dictionary pool when fewer than 4 valid segments", () => {
+    const entries = makePool(10).map((e) => ({ ...e, word: `dict-${e.word}` }));
+    const segments = makeSegments(2); // below the 4-segment threshold
+    const pairs = generateMatchingPairs({ ...DEFAULT_MATCHING_CONFIG, pairCount: 4 }, entries, segments);
+    expect(pairs).toHaveLength(4);
+    for (const pair of pairs) {
+      expect(pair.word.startsWith("dict-")).toBe(true);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// generateLessonQuiz
+// ---------------------------------------------------------------------------
+
+// Valid transcript segment factory (text + english translation + timing)
+function makeSegment(overrides: Partial<TranscriptSegment> & { id: string }): TranscriptSegment {
+  return {
+    startTime: 0,
+    endTime: 2,
+    text: `segment ${overrides.id}`,
+    translation: `english ${overrides.id}`,
+    ...overrides,
+  };
+}
+
+function makeSegments(count: number): TranscriptSegment[] {
+  return Array.from({ length: count }, (_, i) =>
+    makeSegment({ id: `s${i}`, startTime: i * 2, endTime: i * 2 + 2, text: `line ${i}`, translation: `meaning ${i}` })
+  );
+}
+
+describe("generateLessonQuiz", () => {
+  const AUDIO = "https://audio/lesson.mp3";
+
+  it("generates segment-listening and context-translate questions from segments", () => {
+    const segments = makeSegments(8);
+    const questions = generateLessonQuiz({ ...DEFAULT_CONFIG, questionCount: 10 }, segments, AUDIO);
+    expect(questions.length).toBeGreaterThan(0);
+    const types = new Set(questions.map((q) => q.type));
+    expect(types.has("segment-listening")).toBe(true);
+    expect(types.has("context-translate")).toBe(true);
+  });
+
+  it("never returns more than questionCount questions", () => {
+    const segments = makeSegments(12);
+    const questions = generateLessonQuiz({ ...DEFAULT_CONFIG, questionCount: 5 }, segments, AUDIO);
+    expect(questions.length).toBeLessThanOrEqual(5);
+  });
+
+  it("omits segment-listening questions when no lesson audio is provided", () => {
+    const segments = makeSegments(8);
+    const questions = generateLessonQuiz({ ...DEFAULT_CONFIG, questionCount: 10 }, segments, undefined);
+    const listening = questions.filter((q) => q.type === "segment-listening");
+    expect(listening).toHaveLength(0);
+    // context-translate does not need audio, so it should still appear
+    expect(questions.map((q) => q.type)).toContain("context-translate");
+  });
+
+  it("keeps the correct answer in options and enforces 4 unique options", () => {
+    const segments = makeSegments(8);
+    const questions = generateLessonQuiz({ ...DEFAULT_CONFIG, questionCount: 10 }, segments, AUDIO);
+    for (const q of questions) {
+      expect(q.options).toContain(q.correctAnswer);
+      expect(q.options).toHaveLength(4);
+      const normalized = q.options.map((o) => o.toLowerCase().trim());
+      expect(new Set(normalized).size).toBe(normalized.length);
+    }
+  });
+
+  it("filters out segments with empty text or missing translation", () => {
+    const segments = [
+      ...makeSegments(5),
+      makeSegment({ id: "blank-text", text: "   ", translation: "has translation" }),
+      makeSegment({ id: "no-translation", text: "has text", translation: "" }),
+    ];
+    const questions = generateLessonQuiz({ ...DEFAULT_CONFIG, questionCount: 20 }, segments, AUDIO);
+    for (const q of questions) {
+      if (q.type === "context-translate") {
+        expect(q.prompt.trim()).not.toBe("");
+        expect(q.correctAnswer.trim()).not.toBe("");
+      }
+    }
+  });
+
+  it("deduplicates segments with identical text (case-insensitive)", () => {
+    const segments = [
+      makeSegment({ id: "a", text: "Hello there", translation: "meaning a" }),
+      makeSegment({ id: "b", text: "hello there", translation: "meaning b" }), // dup text
+      ...makeSegments(5),
+    ];
+    const questions = generateLessonQuiz({ ...DEFAULT_CONFIG, questionCount: 20 }, segments, AUDIO);
+    const contextPrompts = questions.filter((q) => q.type === "context-translate").map((q) => q.prompt.toLowerCase().trim());
+    expect(new Set(contextPrompts).size).toBe(contextPrompts.length);
+  });
+
+  it("falls back to generateQuiz when fewer than 4 valid segments", () => {
+    const entries = makePool(20);
+    const segments = makeSegments(2); // below threshold → dictionary-based quiz
+    const questions = generateLessonQuiz({ ...DEFAULT_CONFIG, questionCount: 5 }, segments, AUDIO, entries);
+    expect(questions.length).toBeGreaterThan(0);
+    // None of the fallback questions are segment-derived types
+    const segmentTypes = questions.filter((q) => q.type === "segment-listening" || q.type === "context-translate");
+    expect(segmentTypes).toHaveLength(0);
+  });
+
+  it("returns empty when segments are insufficient and no dictionary entries are given", () => {
+    const questions = generateLessonQuiz({ ...DEFAULT_CONFIG, questionCount: 5 }, makeSegments(2), AUDIO, []);
+    expect(questions).toHaveLength(0);
+  });
+
+  it("uses the custom translate function for listening prompts", () => {
+    const segments = makeSegments(8);
+    const translate = (key: string) => `TRANSLATED:${key}`;
+    const questions = generateLessonQuiz({ ...DEFAULT_CONFIG, questionCount: 10 }, segments, AUDIO, [], translate);
+    const listening = questions.filter((q) => q.type === "segment-listening");
+    for (const q of listening) {
+      expect(q.prompt).toBe("TRANSLATED:quiz.promptListening");
+    }
   });
 });

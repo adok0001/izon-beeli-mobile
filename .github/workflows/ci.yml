@@ -7,10 +7,12 @@ on:
 
 jobs:
   server:
-    name: Server — build, test, audit
+    name: Server — build, test, lint, audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -28,6 +30,19 @@ jobs:
       # once those bumps land.
       - working-directory: ./server
         run: npm audit --audit-level=critical
+      # Existing `any` usage / 500+ line files are pre-existing debt (tracked,
+      # not blocking). This only fails on NEW violations in files the PR actually
+      # touches, so debt can't grow without surfacing in review.
+      - name: Lint files changed in this PR
+        if: github.event_name == 'pull_request'
+        working-directory: ./server
+        run: |
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- 'server/**/*.ts' | sed 's#^server/##' || true)
+          if [ -z "$CHANGED" ]; then
+            echo "No server .ts files changed."
+            exit 0
+          fi
+          echo "$CHANGED" | xargs npx eslint --max-warnings 0
 
   schema:
     name: Server — dry-run schema push
@@ -79,10 +94,12 @@ jobs:
           npx drizzle-kit push < /dev/null
 
   web:
-    name: Web — build, audit
+    name: Web — build, test, lint, audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -93,7 +110,22 @@ jobs:
       - working-directory: ./web
         run: npm run build
       - working-directory: ./web
+        run: npm test
+      - working-directory: ./web
         run: npm audit --audit-level=high
+      # Existing `any` usage / 500+ line files are pre-existing debt (tracked,
+      # not blocking). This only fails on NEW violations in files the PR actually
+      # touches, so debt can't grow without surfacing in review.
+      - name: Lint files changed in this PR
+        if: github.event_name == 'pull_request'
+        working-directory: ./web
+        run: |
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.ts' '*.tsx' | grep '^web/' | sed 's#^web/##' || true)
+          if [ -z "$CHANGED" ]; then
+            echo "No web .ts/.tsx files changed."
+            exit 0
+          fi
+          echo "$CHANGED" | xargs npx eslint --max-warnings 0
 
   mobile:
     name: Mobile — test, audit, lint changed files

@@ -1,4 +1,62 @@
-# Tech Debt Baseline — 2026-06-30
+# Tech Debt Baseline
+
+Living snapshot. Newest refresh first; older snapshots kept for trend. Future
+audits should diff against the latest numbers rather than re-deriving from
+scratch. Refresh commands are at the bottom.
+
+---
+
+## 2026-07-16 — "fix all recommendations" pass
+
+Second remediation pass, driven by a full-repo tech-debt audit. Dependencies are
+current (Expo 54, React 19, RN 0.81) — no framework-modernization debt. Work done:
+
+**i18n parity (mobile).** The 5 UI-string locales (`lib/locales/*`) had drifted:
+en=2688 keys, with 469 missing across fr/pt/pcm/ar and 116 dead keys. Added a
+canonical-`en` sync tool (`scripts/i18n-sync.ts`), machine-translated every missing
+key (French tutor-grade; fr/pt/pcm/ar flagged for educator review), dropped the dead
+keys, and added a permanent Jest guard (`lib/__tests__/locale-parity.test.ts`). All
+5 locales now at **exact parity** (0 drift), enforced in CI.
+
+**Tests.** Mobile: `generateLessonQuiz` (653-LOC quiz engine) now covered (79 mobile
+tests pass). Web went from **0 → a working `next/jest` runner** (jsdom + `@mobile`
+alias transform) with smoke tests. Test files: **7 → 12**.
+
+**God-component decomposition (web).** The three worst offenders split into
+per-component files + a shared `useForm` reducer (`web/lib/use-form.ts`), zero
+behavior change, all tsc-clean:
+- `app/(app)/contribute/page.tsx`: 1402 → **203**
+- `app/admin/activities/page.tsx`: 1007 → **135**
+- `app/educator/courses/[id]/page.tsx`: 1027 → **320**
+
+**Prevention gates.** The mobile debt gate (`no-explicit-any` + `max-lines:500`,
+warn) was extended to **web** (`eslint.config.mjs`, exempting content-heavy
+landing/marketing) and stood up from scratch on **server** (`eslint.config.js`,
+exempting seed/db CLI scripts). CI (`ci.yml`) now runs `npm test` on web and a
+"lint PR-changed files at --max-warnings 0" step on web + server, mirroring mobile —
+so new `any`/oversized files are blocked without a big-bang cleanup.
+
+### Metrics (working tree)
+
+| Metric | 2026-06-30 | 2026-07-16 | Note |
+|---|---|---|---|
+| Files >500 lines (excl. `lib/data/`, `locales/`, `seed/`, `.d.ts`, tests) | 43 | 43 | 3 web god-files removed offset ~3 files of intervening growth; contribute/activities/courses no longer in the list |
+| `any` usage | 129 | 99 | none added this pass; web stays at 0 |
+| Test files | 7 | 12 | +locale-parity, +web parse-csv, +web status-pill (and content-publish) |
+
+Biggest remaining god-files (next targets): `server/src/db/schema.ts` (1619, mostly
+declarative), `web/components/landing/*` (content-heavy, gate-exempt), `mobile/app/review.tsx`
+(951), `web/app/educator/{dictionary,culture,courses}` (~820–911 — same decomposition
+pattern applies).
+
+**Open architectural item (A1):** the triple-surface authoring duplication
+(`web/app/admin` + `web/app/educator` + mobile Studio) is **not** on any roadmap. A
+consolidation spec was written this pass — see `docs/studio-consolidation-spec.md` —
+but execution is product-gated and deferred.
+
+---
+
+## 2026-06-30 — first baseline
 
 Snapshot taken after the Phase 0–2 remediation pass (commits `761ebc9`
 through `84e47cf`). This is the first measured baseline — there's no prior
