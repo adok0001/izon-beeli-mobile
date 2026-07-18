@@ -24,9 +24,8 @@ import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Pressable, RefreshControl, Text, View } from "react-native";
-import DraggableFlatList, { RenderItemParams, ScaleDecorator } from "react-native-draggable-flatlist";
+import { useCallback, useMemo, useState } from "react";
+import { FlatList, Pressable, RefreshControl, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function LessonRow({
@@ -34,16 +33,24 @@ function LessonRow({
   onPress,
   onToggleActive,
   onAssignScene,
-  onDrag,
-  dragging,
+  reordering,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp,
+  canMoveDown,
+  moving,
   toggling,
 }: Readonly<{
   lesson: SceneLesson;
   onPress: () => void;
   onToggleActive: () => void;
   onAssignScene: () => void;
-  onDrag: () => void;
-  dragging: boolean;
+  reordering: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  moving: boolean;
   toggling: boolean;
 }>) {
   const M = useMuseumTheme();
@@ -53,11 +60,9 @@ function LessonRow({
   const description = localize(lesson.description, uiLanguage);
   return (
     <Pressable
-      onPress={onPress}
-      onLongPress={onDrag}
-      delayLongPress={200}
+      onPress={reordering ? undefined : onPress}
       className="rounded-2xl border p-4 active:opacity-70"
-      style={{ opacity: dragging ? 0.85 : 1, backgroundColor: M.bg, borderColor: M.border }}
+      style={{ backgroundColor: M.bg, borderColor: M.border }}
     >
       <View className="flex-row items-center">
         <View className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-900/30">
@@ -83,25 +88,51 @@ function LessonRow({
             ) : null}
           </View>
         </View>
-        <Pressable
-          onPressIn={onDrag}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          className="ml-2 p-1"
-        >
-          <IconSymbol name="line.3.horizontal" size={16} color={M.muted} />
-        </Pressable>
-        <IconSymbol name="chevron.right" size={16} color={M.muted} />
+        {!reordering && <IconSymbol name="chevron.right" size={16} color={M.muted} />}
       </View>
-      <View className="mt-3 flex-row items-center justify-between border-t pt-3" style={{ borderColor: M.border }}>
-        <ActiveTogglePill active={isActive} pending={toggling} onPress={onToggleActive} />
-        <ActionPill
-          icon="square.grid.2x2"
-          label={lesson.sceneTitle ?? lesson.scene ?? "Scene"}
-          tone="accent"
-          active={!!lesson.scene}
-          onPress={onAssignScene}
-        />
-      </View>
+      {reordering ? (
+        <View className="mt-3 flex-row items-center gap-2 border-t pt-3" style={{ borderColor: M.border }}>
+          <Pressable
+            onPress={onMoveUp}
+            disabled={!canMoveUp || moving}
+            style={{
+              flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5,
+              borderRadius: 999, paddingVertical: 9, borderWidth: 1,
+              backgroundColor: M.pillBg, borderColor: M.border,
+              opacity: !canMoveUp || moving ? 0.4 : 1,
+            }}
+            className="active:opacity-70"
+          >
+            <IconSymbol name="chevron.up" size={13} color={M.text} />
+            <Text style={{ fontSize: 12, fontWeight: "700", color: M.text }}>Move Up</Text>
+          </Pressable>
+          <Pressable
+            onPress={onMoveDown}
+            disabled={!canMoveDown || moving}
+            style={{
+              flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5,
+              borderRadius: 999, paddingVertical: 9, borderWidth: 1,
+              backgroundColor: M.pillBg, borderColor: M.border,
+              opacity: !canMoveDown || moving ? 0.4 : 1,
+            }}
+            className="active:opacity-70"
+          >
+            <IconSymbol name="chevron.down" size={13} color={M.text} />
+            <Text style={{ fontSize: 12, fontWeight: "700", color: M.text }}>Move Down</Text>
+          </Pressable>
+        </View>
+      ) : (
+        <View className="mt-3 flex-row items-center justify-between border-t pt-3" style={{ borderColor: M.border }}>
+          <ActiveTogglePill active={isActive} pending={toggling} onPress={onToggleActive} />
+          <ActionPill
+            icon="square.grid.2x2"
+            label={lesson.sceneTitle ?? lesson.scene ?? "Scene"}
+            tone="accent"
+            active={!!lesson.scene}
+            onPress={onAssignScene}
+          />
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -135,6 +166,7 @@ export default function EducatorLessonsScreen() {
   // lessons' scene columns; assignment writes through the atomic lesson save.
   const saveLesson = useSaveEducatorLesson();
   const [sceneTarget, setSceneTarget] = useState<SceneLesson | null>(null);
+  const [reorderMode, setReorderMode] = useState(false);
   const courseScenes = useMemo<SceneOption[]>(() => {
     const byScene = new Map<string, SceneOption>();
     for (const l of courseLessons) {
@@ -156,19 +188,14 @@ export default function EducatorLessonsScreen() {
   const courseTitle = course ? localize(course.title, uiLanguage) : undefined;
   const courseDescription = course ? localize(course.description, uiLanguage) : "";
 
-  // Local drag order, synced from the server list — DraggableFlatList needs a
-  // controlled `data` array to animate reordering, separate from the
-  // react-query cache it's derived from.
-  const [dragOrder, setDragOrder] = useState<EducatorLesson[]>(courseLessons);
-  useEffect(() => { setDragOrder(courseLessons); }, [courseLessons]);
-
-  const handleDragEnd = ({ data }: { data: EducatorLesson[] }) => {
-    setDragOrder(data);
-    data.forEach((lesson, index) => {
-      if (lesson.order !== index) {
-        updateLesson.mutate({ id: lesson.id, payload: { order: index } });
-      }
-    });
+  // Reordering swaps the two lessons' `order` values directly — courseLessons
+  // re-sorts once the mutation invalidates the list, no local drag state needed.
+  const handleMove = (index: number, direction: -1 | 1) => {
+    const target = courseLessons[index];
+    const neighbor = courseLessons[index + direction];
+    if (!target || !neighbor) return;
+    updateLesson.mutate({ id: target.id, payload: { order: neighbor.order } });
+    updateLesson.mutate({ id: neighbor.id, payload: { order: target.order } });
   };
 
   return (
@@ -197,45 +224,46 @@ export default function EducatorLessonsScreen() {
               }),
           }}
         />
-        <DraggableFlatList<EducatorLesson>
-          data={dragOrder}
+        <FlatList<SceneLesson>
+          data={courseLessons}
           keyExtractor={(lesson) => lesson.id}
-          onDragEnd={handleDragEnd}
           style={{ flex: 1, backgroundColor: M.card }}
           contentContainerStyle={{ paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
-          renderItem={({ item: lesson, drag, isActive }: RenderItemParams<EducatorLesson>) => (
-            <ScaleDecorator>
-              <View className="px-5 py-1">
-                <LessonRow
-                  lesson={lesson}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/educator/lesson-edit",
-                      params: { lessonId: lesson.id, courseId: lesson.courseId },
-                    })
-                  }
-                  onAssignScene={() => setSceneTarget(lesson)}
-                  onDrag={drag}
-                  dragging={isActive}
-                  onToggleActive={() =>
-                    updateLesson.mutate(
-                      { id: lesson.id, payload: { isActive: lesson.isActive === false } },
-                      {
-                        onSuccess: () =>
-                          toastSuccess(
-                            lesson.isActive === false ? "Lesson published" : "Lesson hidden",
-                            localize(lesson.title, uiLanguage),
-                          ),
-                        onError: (err: Error) => toastError("Failed", err.message),
-                      },
-                    )
-                  }
-                  toggling={updateLesson.isPending && updateLesson.variables?.id === lesson.id}
-                />
-              </View>
-            </ScaleDecorator>
+          renderItem={({ item: lesson, index }) => (
+            <View className="px-5 py-1">
+              <LessonRow
+                lesson={lesson}
+                onPress={() =>
+                  router.push({
+                    pathname: "/educator/lesson-edit",
+                    params: { lessonId: lesson.id, courseId: lesson.courseId },
+                  })
+                }
+                onAssignScene={() => setSceneTarget(lesson)}
+                reordering={reorderMode}
+                onMoveUp={() => handleMove(index, -1)}
+                onMoveDown={() => handleMove(index, 1)}
+                canMoveUp={index > 0}
+                canMoveDown={index < courseLessons.length - 1}
+                moving={updateLesson.isPending}
+                onToggleActive={() =>
+                  updateLesson.mutate(
+                    { id: lesson.id, payload: { isActive: lesson.isActive === false } },
+                    {
+                      onSuccess: () =>
+                        toastSuccess(
+                          lesson.isActive === false ? "Lesson published" : "Lesson hidden",
+                          localize(lesson.title, uiLanguage),
+                        ),
+                      onError: (err: Error) => toastError("Failed", err.message),
+                    },
+                  )
+                }
+                toggling={updateLesson.isPending && updateLesson.variables?.id === lesson.id}
+              />
+            </View>
           )}
           ListHeaderComponent={
             <>
@@ -250,14 +278,37 @@ export default function EducatorLessonsScreen() {
               ) : null}
 
               {/* Lesson List label */}
-              <View className="mt-5 px-5">
-                <Text className="mb-1 text-xs font-semibold uppercase tracking-[1.2px]" style={{ color: M.muted }}>
-                  Lessons ({courseLessons.length})
-                </Text>
-                {courseLessons.length > 0 && (
-                  <Text className="text-[11px]" style={{ color: M.muted }}>
-                    Long-press and drag to reorder.
+              <View className="mt-5 flex-row items-center justify-between px-5">
+                <View>
+                  <Text className="mb-1 text-xs font-semibold uppercase tracking-[1.2px]" style={{ color: M.muted }}>
+                    Lessons ({courseLessons.length})
                   </Text>
+                  {reorderMode && (
+                    <Text className="text-[11px]" style={{ color: M.muted }}>
+                      Tap Move Up / Move Down on a lesson to reorder it.
+                    </Text>
+                  )}
+                </View>
+                {courseLessons.length > 0 && (
+                  <Pressable
+                    onPress={() => setReorderMode((v) => !v)}
+                    style={{
+                      flexDirection: "row", alignItems: "center", gap: 5,
+                      borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5,
+                      backgroundColor: reorderMode ? `${M.accent}20` : M.pillBg,
+                      borderWidth: 1, borderColor: reorderMode ? `${M.accent}50` : M.border,
+                    }}
+                    className="active:opacity-70"
+                  >
+                    <IconSymbol
+                      name={reorderMode ? "checkmark" : "arrow.up.arrow.down"}
+                      size={12}
+                      color={reorderMode ? M.accent : M.sub}
+                    />
+                    <Text style={{ fontSize: 11, fontWeight: "700", color: reorderMode ? M.accent : M.sub }}>
+                      {reorderMode ? "Done" : "Reorder"}
+                    </Text>
+                  </Pressable>
                 )}
               </View>
             </>

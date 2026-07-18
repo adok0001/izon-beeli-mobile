@@ -20,6 +20,7 @@ const MAPPING = {
   'chevron.right': 'chevron-right',
   'chevron.up': 'keyboard-arrow-up',
   'chevron.down': 'keyboard-arrow-down',
+  'arrow.up.arrow.down': 'swap-vert',
   'exclamationmark.triangle.fill': 'warning',
   'book.fill': 'menu-book',
   'headphones': 'headphones',
