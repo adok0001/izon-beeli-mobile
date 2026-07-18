@@ -117,36 +117,6 @@ export default function AdminPanelScreen() {
             <StatCard icon="character.book.closed" label={t("admin.stats.dictionaryEntries")} value={adminStats?.dictionaryEntries ?? 0} />
           </View>
 
-          {/* Studio cross-link — admins don't see the Educator tab, so this is
-              the only way back into the Learn/Explore content nav. */}
-          <Pressable
-            onPress={() => router.push("/(tabs)/educator")}
-            style={{
-              marginBottom: 20, borderRadius: 16, padding: 16,
-              backgroundColor: M.accent, flexDirection: "row", alignItems: "center", gap: 14,
-            }}
-            className="active:opacity-80"
-          >
-            <View
-              style={{
-                width: 44, height: 44, borderRadius: 12,
-                alignItems: "center", justifyContent: "center",
-                backgroundColor: "rgba(255,255,255,0.2)",
-              }}
-            >
-              <IconSymbol name="shield.fill" size={22} color={M.parchment} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 15, fontWeight: "800", color: M.parchment }}>
-                {t("educator.panelTitle")}
-              </Text>
-              <Text style={{ marginTop: 2, fontSize: 12, color: `${M.parchment}BF` }}>
-                {t("educator.nav.overview")}
-              </Text>
-            </View>
-            <IconSymbol name="chevron.right" size={16} color={`${M.parchment}B3`} />
-          </Pressable>
-
           {/* Navigation — mirrors the Studio home's Learn/Explore/Tools
               grammar instead of a flat, rainbow-coded action list. */}
           <SectionLabel label={t("admin.overview.quickActions")} />

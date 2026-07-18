@@ -160,12 +160,11 @@ export default function TabLayout() {
           name="educator"
           options={{
             title: t("educator.panelTitle"),
-            href:
-              currentUser &&
-              !currentUser.isAdmin &&
-              canAccessEducatorPanel(currentUser)
-                ? undefined
-                : null,
+            // Admins get their own visible tab too (not just reviewers) so entering
+            // and leaving Educator is always a normal tab switch — routing an admin
+            // through a hidden tab reached only via push let a plain "Admin" tab tap
+            // bypass the editors' unsaved-changes guards and silently drop drafts.
+            href: currentUser && canAccessEducatorPanel(currentUser) ? undefined : null,
             tabBarIcon: EducatorTabIcon,
           }}
         />
