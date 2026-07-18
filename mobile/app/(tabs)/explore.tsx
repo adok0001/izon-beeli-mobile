@@ -1,6 +1,6 @@
 import { ContinueListeningCard } from "@/components/explore/continue-listening-card";
 import { DiscoverRail } from "@/components/explore/discover-rail";
-import { FeaturedHero } from "@/components/explore/featured-hero";
+import { FeaturedHeroCarousel } from "@/components/explore/featured-hero";
 import { LevelBandRail } from "@/components/explore/level-band-rail";
 import { ProverbOfTheDay } from "@/components/proverb-of-the-day";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -28,7 +28,10 @@ export default function LibraryScreen() {
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
   const { uiLanguage } = useUiLanguageStore();
 
-  const featuredItem = all.find((i) => i.featured) ?? all[0] ?? null;
+  // One card per type's featured item — matches what each Room's own hero
+  // shows, instead of Library arbitrarily picking a single item across types.
+  const featuredItems = all.filter((i) => i.featured);
+  const spotlightItems = featuredItems.length > 0 ? featuredItems : all[0] ? [all[0]] : [];
   const openStory = (storyId: string) => router.push(`/discover-story/${storyId}` as never);
 
   // Editorial rails. A podcast card that opens a season (has storyId) IS a
@@ -65,12 +68,9 @@ export default function LibraryScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Spotlight */}
-        {featuredItem ? (
+        {spotlightItems.length > 0 ? (
           <View style={{ marginBottom: 22 }}>
-            <FeaturedHero
-              item={featuredItem}
-              ctaLabel={featuredItem.type === "podcast" && featuredItem.storyId ? "Start Episode 1" : undefined}
-            />
+            <FeaturedHeroCarousel items={spotlightItems} />
           </View>
         ) : null}
 

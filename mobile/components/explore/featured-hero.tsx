@@ -5,15 +5,54 @@ import type { DiscoverItem } from "@/types";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
 
 interface FeaturedHeroProps {
   item: DiscoverItem;
   /** Overrides the type's default CTA copy (e.g. "Start Episode 1" for a season spotlight). */
   ctaLabel?: string;
+  /** Constrains the card to a fixed width (used when riding inside the carousel). */
+  width?: number;
 }
 
-export function FeaturedHero({ item, ctaLabel }: FeaturedHeroProps) {
+// Matches the Library screen's own ScrollView paddingHorizontal so the
+// carousel's negative margin bleeds edge-to-edge without overshooting it.
+const CAROUSEL_GUTTER = 16;
+
+/**
+ * One card per type's featured item, so the Library spotlight always agrees
+ * with each Room's own hero — both read the same per-type `featured` flag
+ * instead of Library picking one arbitrary item across all types.
+ */
+export function FeaturedHeroCarousel({ items }: { items: DiscoverItem[] }) {
+  const { width: screenWidth } = useWindowDimensions();
+  const nextCardPeek = CAROUSEL_GUTTER / 2;
+  const cardWidth = screenWidth - CAROUSEL_GUTTER * 2 - nextCardPeek;
+
+  if (items.length === 0) return null;
+
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      snapToInterval={items.length > 1 ? cardWidth + nextCardPeek : undefined}
+      decelerationRate="fast"
+      contentContainerStyle={{ paddingHorizontal: CAROUSEL_GUTTER, gap: CAROUSEL_GUTTER / 2 }}
+      style={{ marginHorizontal: -CAROUSEL_GUTTER }}
+    >
+      {items.map((item) => (
+        <FeaturedHero
+          key={item.id}
+          item={item}
+          width={cardWidth}
+          ctaLabel={item.type === "podcast" && item.storyId ? "Start Episode 1" : undefined}
+        />
+      ))}
+    </ScrollView>
+  );
+}
+
+export function FeaturedHero({ item, ctaLabel, width }: FeaturedHeroProps) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const tr = (key: string) => t(key as never, { defaultValue: key }) as string;
@@ -41,6 +80,7 @@ export function FeaturedHero({ item, ctaLabel }: FeaturedHeroProps) {
       <LinearGradient
         colors={[item.coverGradient[0], M.ink]}
         style={{
+          width,
           borderRadius: 20,
           padding: 20,
           paddingTop: 28,
