@@ -19,7 +19,6 @@ export interface SpecimenInputProps
     TextInputProps,
     | "value"
     | "onChangeText"
-    | "placeholder"
     | "secureTextEntry"
     | "keyboardType"
     | "autoComplete"
@@ -35,12 +34,15 @@ export interface SpecimenInputProps
     // suggestion. autoComplete alone covers Android.
     | "textContentType"
   > {
+  /** Overline caption above the field, and its accessible name. */
   label: string;
-  /** Draws the underline in the error tone regardless of focus. */
+  /** Visible in-field hint, shown inside the box alongside the label above it. */
+  placeholder: string;
+  /** Draws the border in the error tone regardless of focus. */
   error?: boolean;
   hint?: string;
   hintTone?: "warning" | "error";
-  /** Larger, letter-spaced digits — for OTP-style codes. */
+  /** Larger, letter-spaced, centered digits — for OTP-style codes. */
   large?: boolean;
   /** Forwarded to the inner TextInput, so a form can chain focus field to field. */
   ref?: Ref<TextInput>;
@@ -48,12 +50,14 @@ export interface SpecimenInputProps
 }
 
 /**
- * Museum "specimen label" field: an overline caption above a bronze
- * underline, in place of a boxed SaaS input — the auth flow's own register,
- * distinct from the card-heavy treatment used through the rest of the app.
+ * Museum "filled field": an overline label above a bordered, filled box with
+ * an inline placeholder — the underline "specimen label" register's border
+ * moved off the baseline and onto a full box, with a placeholder added
+ * alongside the label rather than replacing it.
  */
 export function SpecimenInput({
   label,
+  placeholder,
   error = false,
   hint,
   hintTone = "error",
@@ -67,38 +71,52 @@ export function SpecimenInput({
   const { t } = useTranslation();
   const [focused, setFocused] = useState(false);
   const [revealed, setRevealed] = useState(false);
-  const lineHeight = useSharedValue(1.5);
+  const borderWidth = useSharedValue(1.5);
 
-  const tone = error ? M.error : focused ? M.accent : M.border;
+  const tone = error ? M.error : focused ? M.accent : M.inputBorder;
 
-  const lineStyle = useAnimatedStyle(() => ({ height: lineHeight.value }));
+  const boxStyle = useAnimatedStyle(() => ({ borderWidth: borderWidth.value }));
 
   return (
-    <View style={[{ marginBottom: hint ? 20 : 18 }, style]}>
-      <Text style={{ ...type.overline, color: focused ? M.accent : M.sub, marginBottom: 8 }}>
+    <View style={[{ marginBottom: hint ? 22 : 14 }, style]}>
+      <Text style={{ ...type.overline, color: focused ? M.accent : M.sub, marginBottom: 6 }}>
         {label.toUpperCase()}
       </Text>
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
+      <Animated.View
+        style={[
+          {
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: M.inputBg,
+            borderColor: tone,
+            borderRadius: 14,
+            paddingHorizontal: 16,
+            paddingVertical: 13,
+          },
+          boxStyle,
+        ]}
+      >
         <TextInput
           {...inputProps}
+          placeholder={placeholder}
+          accessibilityLabel={label}
           secureTextEntry={secureTextEntry && !revealed}
           ref={ref}
           onFocus={() => {
             setFocused(true);
-            lineHeight.value = withTiming(2.5, { duration: 160 });
+            borderWidth.value = withTiming(2, { duration: 160 });
           }}
           onBlur={() => {
             setFocused(false);
-            lineHeight.value = withTiming(1.5, { duration: 160 });
+            borderWidth.value = withTiming(1.5, { duration: 160 });
           }}
-          placeholderTextColor={M.muted}
+          placeholderTextColor={M.inputPlaceholder}
           style={{
             flex: 1,
-            paddingBottom: 10,
-            fontSize: large ? 26 : 16,
-            letterSpacing: large ? 6 : undefined,
+            fontSize: large ? 22 : 15,
+            letterSpacing: large ? 4 : undefined,
             fontWeight: large ? "700" : "400",
-            color: M.text,
+            color: M.inputText,
           }}
         />
         {secureTextEntry ? (
@@ -107,13 +125,12 @@ export function SpecimenInput({
             hitSlop={12}
             accessibilityRole="button"
             accessibilityLabel={revealed ? t("auth.hidePassword") : t("auth.showPassword")}
-            style={{ paddingLeft: 12, paddingBottom: 10 }}
+            style={{ paddingLeft: 12 }}
           >
             <IconSymbol name={revealed ? "eye.slash" : "eye.fill"} size={20} color={M.sub} />
           </Pressable>
         ) : null}
-      </View>
-      <Animated.View style={[{ backgroundColor: tone, borderRadius: 1 }, lineStyle]} />
+      </Animated.View>
       {hint ? (
         <Text
           style={{

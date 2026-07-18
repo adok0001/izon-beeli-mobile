@@ -1,10 +1,16 @@
 import { AuthErrorBanner } from "@/components/auth/auth-error-banner";
 import { AuthHeader } from "@/components/auth/auth-header";
 import { AuthLink } from "@/components/auth/auth-link";
-import { AuthDivider, SocialAuthPanel } from "@/components/auth/social-auth-panel";
+import {
+  AuthDivider,
+  SocialAuthPanel,
+} from "@/components/auth/social-auth-panel";
 import { SpecimenInput } from "@/components/auth/specimen-input";
 import { useAuthReveal } from "@/components/auth/use-auth-reveal";
-import { useSocialAuth, useWarmUpBrowser } from "@/components/auth/use-social-auth";
+import {
+  useSocialAuth,
+  useWarmUpBrowser,
+} from "@/components/auth/use-social-auth";
 import { Button } from "@/components/ui/button";
 import { analytics } from "@/lib/analytics";
 import { authErrorMessage } from "@/lib/auth-errors";
@@ -15,7 +21,13 @@ import { useClerk, useSignIn } from "@clerk/clerk-expo";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { KeyboardAvoidingView, Platform, ScrollView, TextInput } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TextInput,
+  View,
+} from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -24,7 +36,9 @@ export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
   const clerk = useClerk();
   const router = useRouter();
-  const { identifier: prefillIdentifier } = useLocalSearchParams<{ identifier?: string }>();
+  const { identifier: prefillIdentifier } = useLocalSearchParams<{
+    identifier?: string;
+  }>();
   const [email, setEmail] = useState(prefillIdentifier ?? "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -61,7 +75,10 @@ export default function SignInScreen() {
     setError("");
     setLoading(true);
     try {
-      const result = await signIn.create({ identifier: email.trim(), password });
+      const result = await signIn.create({
+        identifier: email.trim(),
+        password,
+      });
       if (result.status === "complete" && result.createdSessionId) {
         await completeAuth({
           clerk,
@@ -85,96 +102,109 @@ export default function SignInScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.authBg }}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
-            justifyContent: "center",
             paddingHorizontal: 28,
             paddingVertical: 32,
           }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <AuthHeader title={t("auth.signInButton")} size="compact" />
+          <View style={{ flex: 1, justifyContent: "center" }}>
+            <AuthHeader title={t("auth.signInButton")} size="compact" />
 
-          <Animated.View style={formStyle}>
-            <AuthErrorBanner message={error || social.error} />
+            <Animated.View style={formStyle}>
+              <AuthErrorBanner message={error || social.error} />
 
-            <SocialAuthPanel onPress={social.authenticate} pending={social.pending} disabled={loading} />
-
-            {emailExpanded ? (
-              <Animated.View entering={FadeInDown.duration(240)}>
-                <AuthDivider label={t("auth.or")} />
-
-                <SpecimenInput
-                  label={t("auth.emailOrUsername")}
-                  value={email}
-                  onChangeText={setEmail}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  autoComplete="email"
-                  editable={!busy}
-                  autoFocus={!prefillIdentifier}
-                  returnKeyType="next"
-                  onSubmitEditing={() => passwordRef.current?.focus()}
-                />
-
-                <SpecimenInput
-                  ref={passwordRef}
-                  label={t("auth.password")}
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                  autoComplete="password"
-                  editable={!busy}
-                  onSubmitEditing={onSignIn}
-                  returnKeyType="go"
-                />
-
-                <AuthLink
-                  label={t("auth.forgotPassword")}
-                  href="/(auth)/forgot-password"
-                  align="end"
-                  disabled={busy}
-                  style={{ marginBottom: 16 }}
-                />
-
-                <Button
-                  label={t("auth.signInButton")}
-                  onPress={onSignIn}
-                  disabled={!canSubmit || social.pending !== null}
-                  loading={loading}
-                  style={{ marginBottom: 14 }}
-                />
-
-                {/* Only the email path needs this: Google and Apple create the
-                    account on first use, so offering "sign up" alongside them
-                    would just be a third link competing for the same tap. */}
-                <AuthLink
-                  prompt={t("auth.noAccount")}
-                  label={t("auth.noAccountAction")}
-                  href="/(auth)/sign-up"
-                  disabled={busy}
-                />
-              </Animated.View>
-            ) : (
-              <AuthLink
-                label={t("auth.useEmailInstead")}
-                onPress={onShowEmail}
-                disabled={busy}
-                style={{ marginTop: 14 }}
+              <SocialAuthPanel
+                onPress={social.authenticate}
+                pending={social.pending}
+                disabled={loading}
               />
-            )}
+
+              {emailExpanded ? (
+                <Animated.View entering={FadeInDown.duration(240)}>
+                  <AuthDivider label={t("auth.orContinueWithEmail")} />
+
+                  <SpecimenInput
+                    label={t("auth.emailOrUsername")}
+                    placeholder={t("auth.emailOrUsernamePlaceholder")}
+                    value={email}
+                    onChangeText={setEmail}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    autoComplete="email"
+                    editable={!busy}
+                    autoFocus={!prefillIdentifier}
+                    returnKeyType="next"
+                    onSubmitEditing={() => passwordRef.current?.focus()}
+                  />
+
+                  <SpecimenInput
+                    ref={passwordRef}
+                    label={t("auth.password")}
+                    placeholder={t("auth.signInPasswordPlaceholder")}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                    autoComplete="password"
+                    editable={!busy}
+                    onSubmitEditing={onSignIn}
+                    returnKeyType="go"
+                  />
+
+                  <AuthLink
+                    label={t("auth.forgotPassword")}
+                    href="/(auth)/forgot-password"
+                    align="end"
+                    disabled={busy}
+                    style={{ marginBottom: 16 }}
+                  />
+
+                  <Button
+                    label={t("auth.signInButton")}
+                    onPress={onSignIn}
+                    disabled={!canSubmit || social.pending !== null}
+                    loading={loading}
+                  />
+                </Animated.View>
+              ) : (
+                <AuthLink
+                  label={t("auth.useEmailInstead")}
+                  onPress={onShowEmail}
+                  disabled={busy}
+                  style={{ marginTop: 14 }}
+                />
+              )}
+            </Animated.View>
+          </View>
+
+          <View style={{ alignItems: "center", paddingTop: 18 }}>
+            {/* Only the email path needs this: Google and Apple create the
+                account on first use, so offering "sign up" alongside them
+                would just be a third link competing for the same tap. */}
+            {emailExpanded ? (
+              <AuthLink
+                prompt={t("auth.noAccount")}
+                label={t("auth.noAccountAction")}
+                href="/(auth)/sign-up"
+                disabled={busy}
+              />
+            ) : null}
 
             <AuthLink
               label={t("auth.continueAsGuest")}
               onPress={onContinueAsGuest}
               tone="quiet"
               disabled={busy}
-              style={{ marginTop: 10 }}
+              style={{ marginTop: emailExpanded ? 10 : 0 }}
             />
-          </Animated.View>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

@@ -65,6 +65,7 @@ export default function ForgotPasswordScreen() {
 
           <SpecimenInput
             label={t("auth.email")}
+            placeholder={t("auth.emailPlaceholder")}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"

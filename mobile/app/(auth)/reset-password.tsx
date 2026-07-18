@@ -119,6 +119,7 @@ export default function ResetPasswordScreen() {
           <SpecimenInput
             ref={passwordRef}
             label={t("auth.newPassword")}
+            placeholder={t("auth.passwordPlaceholder")}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -135,6 +136,7 @@ export default function ResetPasswordScreen() {
           <SpecimenInput
             ref={confirmRef}
             label={t("auth.confirmPassword")}
+            placeholder={t("auth.confirmPasswordPlaceholder")}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
