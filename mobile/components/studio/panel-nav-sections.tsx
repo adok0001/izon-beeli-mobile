@@ -331,6 +331,7 @@ export function ToolsStrip({ currentUser }: Readonly<{ currentUser: CurrentUser 
     { label: "Etymology", href: "/educator/etymology" },
     { label: "Sentences", href: "/educator/sentences" },
     { label: "Scenarios", href: "/educator/scenarios" },
+    { label: "Scenes", href: "/educator/scenes" },
     { label: "Quiz Bank", href: "/educator/quiz-bank" },
     { label: "Translations", href: "/educator/translations" },
     ...(currentUser.isAdmin ? [{ label: "Media Library", href: "/admin/media" }] : []),

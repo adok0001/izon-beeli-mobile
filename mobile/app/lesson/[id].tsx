@@ -329,7 +329,13 @@ export default function LessonScreen() {
             contentContainerStyle={{ paddingBottom: 48 }}
           >
             {/* Hero scene */}
-            <LessonHero title={lessonTitle} overline={overline} accentColor={accentColor} scene={lesson.scene} />
+            <LessonHero
+              title={lessonTitle}
+              overline={overline}
+              accentColor={accentColor}
+              sceneIllustration={lesson.sceneIllustration}
+              sceneIllustrationUrl={lesson.sceneIllustrationUrl}
+            />
 
             {/* Song artist */}
             {isSong && lesson.artist ? (

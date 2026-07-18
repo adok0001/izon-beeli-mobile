@@ -1,7 +1,7 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { memo } from "react";
 import { View, Text, useWindowDimensions } from "react-native";
-import Svg, { Circle, Ellipse, Path, Rect } from "react-native-svg";
+import { SvgUri } from "react-native-svg";
+import { SceneIllustration, SCENE_KINDS, type SceneKind } from "@/components/learn/journey-scenery";
 import { fonts } from "@/constants/typography";
 import { MUSEUM } from "@/lib/use-museum-theme";
 
@@ -9,47 +9,19 @@ interface LessonHeroProps {
   title: string;
   overline: string;
   accentColor: string;
-  /** Matches `Lesson.scene` — used to pick the scene illustration. Currently only "village" is illustrated; others fall back to the same silhouette. */
-  scene?: string | null;
+  /** Educator-picked background illustration (SceneKind). Unset/unrecognized falls back to "village". */
+  sceneIllustration?: string | null;
+  /** Educator-uploaded custom SVG URL — takes precedence over `sceneIllustration` when set. */
+  sceneIllustrationUrl?: string | null;
 }
 
-/** Village silhouette — the default scene illustration. */
-const VillageScene = memo(function VillageScene({ width, accent }: { width: number; accent: string }) {
-  const h = 120;
-  const cx = width / 2;
-  return (
-    <Svg width={width} height={h} style={{ position: "absolute", bottom: 0 }}>
-      <Rect x={0} y={h - 20} width={width} height={20} fill={`${accent}22`} />
+function resolveSceneKind(value?: string | null): SceneKind {
+  return (SCENE_KINDS as string[]).includes(value ?? "") ? (value as SceneKind) : "village";
+}
 
-      <Path
-        d={`M ${cx - 90} ${h - 20} L ${cx - 90} ${h - 56} L ${cx - 68} ${h - 72} L ${cx - 46} ${h - 56} L ${cx - 46} ${h - 20} Z`}
-        fill={`${accent}44`}
-      />
-      <Path d={`M ${cx - 92} ${h - 54} L ${cx - 68} ${h - 76} L ${cx - 44} ${h - 54} Z`} fill={`${accent}66`} />
-
-      <Path
-        d={`M ${cx - 28} ${h - 20} L ${cx - 28} ${h - 68} L ${cx} ${h - 92} L ${cx + 28} ${h - 68} L ${cx + 28} ${h - 20} Z`}
-        fill={`${accent}55`}
-      />
-      <Path d={`M ${cx - 32} ${h - 66} L ${cx} ${h - 98} L ${cx + 32} ${h - 66} Z`} fill={`${accent}77`} />
-      <Rect x={cx - 9} y={h - 42} width={18} height={22} rx={9} fill={`${accent}99`} />
-
-      <Path
-        d={`M ${cx + 46} ${h - 20} L ${cx + 46} ${h - 52} L ${cx + 68} ${h - 68} L ${cx + 90} ${h - 52} L ${cx + 90} ${h - 20} Z`}
-        fill={`${accent}44`}
-      />
-      <Path d={`M ${cx + 44} ${h - 50} L ${cx + 68} ${h - 72} L ${cx + 92} ${h - 50} Z`} fill={`${accent}66`} />
-
-      <Ellipse cx={cx} cy={22} rx={44} ry={44} fill={`${accent}18`} />
-      <Circle cx={cx} cy={22} r={26} fill={`${accent}44`} />
-      <Circle cx={cx} cy={22} r={16} fill="#FFEFB8" />
-    </Svg>
-  );
-});
-
-export function LessonHero({ title, overline, accentColor, scene: _scene }: LessonHeroProps) {
+export function LessonHero({ title, overline, accentColor, sceneIllustration, sceneIllustrationUrl }: LessonHeroProps) {
   const { width } = useWindowDimensions();
-  // `_scene` accepted for future illustration dispatch (kitchen, market, creek, etc.)
+  const kind = resolveSceneKind(sceneIllustration);
 
   return (
     <View style={{ height: 220, overflow: "hidden", backgroundColor: MUSEUM.inkDeep }}>
@@ -62,7 +34,13 @@ export function LessonHero({ title, overline, accentColor, scene: _scene }: Less
         style={{ position: "absolute", top: 0, left: 0, right: 0, height: 110 }}
       />
 
-      <VillageScene width={width} accent={accentColor} />
+      <View style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 160 }}>
+        {sceneIllustrationUrl ? (
+          <SvgUri uri={sceneIllustrationUrl} width={width} height={160} />
+        ) : (
+          <SceneIllustration kind={kind} width={width} height={160} />
+        )}
+      </View>
 
       <View
         style={{

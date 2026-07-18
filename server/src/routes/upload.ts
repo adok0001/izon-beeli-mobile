@@ -72,6 +72,31 @@ uploadAdminRouter.post("/audio", async (c) => {
   return c.json({ url: blob.url, id: row.id });
 });
 
+// SVGs are hand-authored line art (scene backgrounds), not photos — cap well
+// below the size a legitimate illustration needs, and require the real MIME
+// (not just a ".svg" filename) since nothing else in this pipeline sanitizes
+// the file's contents before it's served back to every learner's device.
+const MAX_SVG_BYTES = 300 * 1024;
+
+uploadAdminRouter.post("/svg", async (c) => {
+  const form = await c.req.formData();
+  const file = form.get("file");
+  if (!file || !(file instanceof File)) {
+    return c.json({ error: "No file provided" }, 400);
+  }
+  if (file.type !== "image/svg+xml") {
+    return c.json({ error: "File must be an SVG (image/svg+xml)" }, 400);
+  }
+  if (file.size > MAX_SVG_BYTES) {
+    return c.json({ error: `SVG must be under ${MAX_SVG_BYTES / 1024}KB` }, 400);
+  }
+  const blob = await put(`activities/svg/${Date.now()}-${file.name}`, file, {
+    access: "public",
+  });
+  const row = await recordUpload("image", file, blob, c.get("userId"));
+  return c.json({ url: blob.url, id: row.id });
+});
+
 // GET /upload/media?kind=image|audio&search=&cursor=<createdAt ISO>
 uploadAdminRouter.get("/media", async (c) => {
   const kind = c.req.query("kind");

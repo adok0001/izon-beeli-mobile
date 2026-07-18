@@ -43,6 +43,8 @@ export function useSaveEducatorLesson() {
         scene?: string | null;
         sceneTitle?: string | null;
         sceneOrder?: number | null;
+        sceneIllustration?: string | null;
+        sceneIllustrationUrl?: string | null;
       };
       segments?: EducatorLessonSegment[];
       attachments?: EducatorLessonCulturalAttachment[];

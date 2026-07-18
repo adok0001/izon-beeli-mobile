@@ -1,6 +1,6 @@
 import { put } from "@vercel/blob";
 import { parseJson } from "../../lib/http.js";
-import { eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
 import { db } from "../../db/index.js";
@@ -44,6 +44,8 @@ educatorLessonsRouter.get("/lessons", async (c) => {
       scene: lessons.scene,
       sceneTitle: lessons.sceneTitle,
       sceneOrder: lessons.sceneOrder,
+      sceneIllustration: lessons.sceneIllustration,
+      sceneIllustrationUrl: lessons.sceneIllustrationUrl,
       status: lessons.status,
       createdBy: lessons.createdBy,
     })
@@ -187,6 +189,7 @@ educatorLessonsRouter.patch("/lessons/:id", async (c) => {
     narrativeIntro?: string | null; narrativeOutro?: string | null;
     canDo?: string | null; canDoFr?: string | null;
     scene?: string | null; sceneTitle?: string | null; sceneOrder?: number | null;
+    sceneIllustration?: string | null; sceneIllustrationUrl?: string | null;
   }>(c);
 
   if (body.status && !PATCHABLE_LESSON_STATUSES.includes(body.status as (typeof PATCHABLE_LESSON_STATUSES)[number])) {
@@ -219,13 +222,82 @@ educatorLessonsRouter.patch("/lessons/:id", async (c) => {
   // clears its title/order with it — a title without a scene is meaningless.
   if (body.scene !== undefined) {
     updates.scene = body.scene?.trim() || null;
-    if (!body.scene?.trim()) { updates.sceneTitle = null; updates.sceneOrder = null; }
+    if (!body.scene?.trim()) {
+      updates.sceneTitle = null; updates.sceneOrder = null;
+      updates.sceneIllustration = null; updates.sceneIllustrationUrl = null;
+    }
   }
   if (body.sceneTitle !== undefined) updates.sceneTitle = body.sceneTitle?.trim() || null;
   if (body.sceneOrder !== undefined) updates.sceneOrder = body.sceneOrder;
+  if (body.sceneIllustration !== undefined) updates.sceneIllustration = body.sceneIllustration?.trim() || null;
+  if (body.sceneIllustrationUrl !== undefined) updates.sceneIllustrationUrl = body.sceneIllustrationUrl?.trim() || null;
 
   await db.update(lessons).set(updates).where(eq(lessons.id, id));
   return c.json({ success: true });
+});
+
+// PATCH /educator/courses/:courseId/scenes/:scene — bulk-update every lesson sharing
+// this scene slug within the course (rename, reorder, or change the background
+// illustration for the whole group at once, instead of drifting per-lesson).
+educatorLessonsRouter.patch("/courses/:courseId/scenes/:scene", async (c) => {
+  const userId = c.get("userId");
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const { courseId, scene } = c.req.param();
+
+  const [course] = await db.select({ languageId: courses.languageId }).from(courses).where(eq(courses.id, courseId)).limit(1);
+  if (!course) return c.json({ error: "Course not found" }, 404);
+  if (!isAdmin && !reviewerLanguages.includes(course.languageId)) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  const body = await parseJson<{
+    sceneTitle?: string | null;
+    sceneOrder?: number | null;
+    sceneIllustration?: string | null;
+    sceneIllustrationUrl?: string | null;
+  }>(c);
+
+  const updates: Record<string, unknown> = { updatedBy: userId };
+  if (body.sceneTitle !== undefined) updates.sceneTitle = body.sceneTitle?.trim() || null;
+  if (body.sceneOrder !== undefined) updates.sceneOrder = body.sceneOrder;
+  if (body.sceneIllustration !== undefined) updates.sceneIllustration = body.sceneIllustration?.trim() || null;
+  if (body.sceneIllustrationUrl !== undefined) updates.sceneIllustrationUrl = body.sceneIllustrationUrl?.trim() || null;
+
+  if (Object.keys(updates).length <= 1) return c.json({ error: "No fields to update" }, 400);
+
+  const result = await db
+    .update(lessons)
+    .set(updates)
+    .where(and(eq(lessons.courseId, courseId), eq(lessons.scene, scene)))
+    .returning({ id: lessons.id });
+
+  if (result.length === 0) return c.json({ error: "Scene not found" }, 404);
+  return c.json({ success: true, updated: result.length });
+});
+
+// DELETE /educator/courses/:courseId/scenes/:scene — ungroup: every lesson in this
+// scene goes back to being a flat course item. No lesson rows are deleted.
+educatorLessonsRouter.delete("/courses/:courseId/scenes/:scene", async (c) => {
+  const userId = c.get("userId");
+  const isAdmin = c.get("isAdmin");
+  const reviewerLanguages = c.get("reviewerLanguages");
+  const { courseId, scene } = c.req.param();
+
+  const [course] = await db.select({ languageId: courses.languageId }).from(courses).where(eq(courses.id, courseId)).limit(1);
+  if (!course) return c.json({ error: "Course not found" }, 404);
+  if (!isAdmin && !reviewerLanguages.includes(course.languageId)) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  const result = await db
+    .update(lessons)
+    .set({ scene: null, sceneTitle: null, sceneOrder: null, sceneIllustration: null, sceneIllustrationUrl: null, updatedBy: userId })
+    .where(and(eq(lessons.courseId, courseId), eq(lessons.scene, scene)))
+    .returning({ id: lessons.id });
+
+  if (result.length === 0) return c.json({ error: "Scene not found" }, 404);
+  return c.json({ success: true, ungrouped: result.length });
 });
 
 // GET /educator/lessons/:id — lesson detail with transcript segments
@@ -468,6 +540,7 @@ educatorLessonsRouter.put("/lessons/:id/save", async (c) => {
       narrativeIntro?: string | null; narrativeOutro?: string | null;
       canDo?: string | null; canDoFr?: string | null;
       scene?: string | null; sceneTitle?: string | null; sceneOrder?: number | null;
+      sceneIllustration?: string | null; sceneIllustrationUrl?: string | null;
     };
     segments?: { text: string; translation?: string; translationFr?: string; startTime: number; endTime: number; order: number }[];
     attachments?: (string | { culturalContentId: string; afterSegmentIndex?: number | null })[];
@@ -597,10 +670,15 @@ educatorLessonsRouter.put("/lessons/:id/save", async (c) => {
   if (payload.canDoFr !== undefined) updates.canDoFr = payload.canDoFr?.trim() || null;
   if (payload.scene !== undefined) {
     updates.scene = payload.scene?.trim() || null;
-    if (!payload.scene?.trim()) { updates.sceneTitle = null; updates.sceneOrder = null; }
+    if (!payload.scene?.trim()) {
+      updates.sceneTitle = null; updates.sceneOrder = null;
+      updates.sceneIllustration = null; updates.sceneIllustrationUrl = null;
+    }
   }
   if (payload.sceneTitle !== undefined) updates.sceneTitle = payload.sceneTitle?.trim() || null;
   if (payload.sceneOrder !== undefined) updates.sceneOrder = payload.sceneOrder;
+  if (payload.sceneIllustration !== undefined) updates.sceneIllustration = payload.sceneIllustration?.trim() || null;
+  if (payload.sceneIllustrationUrl !== undefined) updates.sceneIllustrationUrl = payload.sceneIllustrationUrl?.trim() || null;
 
   // ── One transaction: all writes land, or none do ──
   await db.transaction(async (tx) => {

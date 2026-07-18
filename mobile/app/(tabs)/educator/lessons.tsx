@@ -12,12 +12,15 @@ import {
     useUpdateEducatorLesson,
 } from "@/lib/hooks/use-educator-panel";
 import { useSaveEducatorLesson } from "@/lib/hooks/educator/use-lesson-save";
+import { deriveScenes } from "@/lib/studio/derive-scenes";
 
 /** Scene columns ride the educator list response; older servers omit them. */
 type SceneLesson = EducatorLesson & {
   scene?: string | null;
   sceneTitle?: string | null;
   sceneOrder?: number | null;
+  sceneIllustration?: string | null;
+  sceneIllustrationUrl?: string | null;
 };
 import { useToast } from "@/lib/hooks/use-toast";
 import { localize } from "@/lib/localize";
@@ -167,24 +170,7 @@ export default function EducatorLessonsScreen() {
   const saveLesson = useSaveEducatorLesson();
   const [sceneTarget, setSceneTarget] = useState<SceneLesson | null>(null);
   const [reorderMode, setReorderMode] = useState(false);
-  const courseScenes = useMemo<SceneOption[]>(() => {
-    const byScene = new Map<string, SceneOption>();
-    for (const l of courseLessons) {
-      if (!l.scene) continue;
-      const existing = byScene.get(l.scene);
-      if (existing) {
-        byScene.set(l.scene, { ...existing, lessonCount: existing.lessonCount + 1 });
-      } else {
-        byScene.set(l.scene, {
-          scene: l.scene,
-          sceneTitle: l.sceneTitle ?? null,
-          sceneOrder: l.sceneOrder ?? null,
-          lessonCount: 1,
-        });
-      }
-    }
-    return Array.from(byScene.values()).sort((a, b) => (a.sceneOrder ?? 999) - (b.sceneOrder ?? 999));
-  }, [courseLessons]);
+  const courseScenes = useMemo<SceneOption[]>(() => deriveScenes(courseLessons), [courseLessons]);
   const courseTitle = course ? localize(course.title, uiLanguage) : undefined;
   const courseDescription = course ? localize(course.description, uiLanguage) : "";
 

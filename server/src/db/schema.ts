@@ -490,6 +490,13 @@ export const lessons = pgTable(
     scene: varchar("scene", { length: 64 }),
     sceneTitle: varchar("scene_title", { length: 128 }),
     sceneOrder: integer("scene_order"),
+    // Which hand-drawn background illustration to show behind the lesson hero —
+    // one of the SceneKind values in mobile/components/learn/journey-scenery.tsx
+    // (village, house, kitchen, market, creek, city, bushes). Educator-picked.
+    sceneIllustration: varchar("scene_illustration", { length: 16 }),
+    // Educator-uploaded custom SVG (Vercel Blob URL) — takes precedence over
+    // `sceneIllustration` when set. Null falls back to the built-in illustration.
+    sceneIllustrationUrl: varchar("scene_illustration_url", { length: 500 }),
     // "plain" (published, target-language transcript) | "helper" (includes production cues).
     // null is treated as "plain" by the app.
     transcriptType: varchar("transcript_type", { length: 16 }),

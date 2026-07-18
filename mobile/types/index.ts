@@ -140,6 +140,10 @@ export interface Lesson {
   scene?: string;
   sceneTitle?: string;
   sceneOrder?: number;
+  /** Background illustration key (SceneKind) for the lesson hero, e.g. "kitchen". */
+  sceneIllustration?: string;
+  /** Educator-uploaded custom SVG URL — takes precedence over `sceneIllustration` when set. */
+  sceneIllustrationUrl?: string | null;
   /** What the learner will be able to do after this lesson. */
   objectives?: (string | LocalizedText)[];
   /** Honest real-world competence statement ("You can now …"). */

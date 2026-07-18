@@ -12,6 +12,7 @@ import Svg, {
   Stop,
 } from "react-native-svg";
 import type { JourneyArea } from "@/lib/journey";
+import { MUSEUM } from "@/lib/use-museum-theme";
 import type { CourseType } from "@/types";
 
 /**
@@ -72,7 +73,10 @@ const SCENE = {
   window: "#FFD98A",
 } as const;
 
-type SceneKind = "village" | "bushes" | "house" | "kitchen" | "market" | "creek" | "city";
+export type SceneKind = "village" | "bushes" | "house" | "kitchen" | "market" | "creek" | "city";
+
+/** Every hand-drawn illustration available to pick as a scene's background. */
+export const SCENE_KINDS: SceneKind[] = ["village", "house", "kitchen", "market", "creek", "city", "bushes"];
 
 /** Which scene to draw for each course type. Falls back to leafy bushes. */
 const SCENE_FOR: Record<CourseType, SceneKind> = {
@@ -271,7 +275,7 @@ function CityScene(): ReactNode {
   );
 }
 
-function renderScene(kind: SceneKind, width: number): ReactNode {
+export function renderScene(kind: SceneKind, width: number): ReactNode {
   switch (kind) {
     case "village":
       return <VillageScene />;
@@ -290,34 +294,72 @@ function renderScene(kind: SceneKind, width: number): ReactNode {
   }
 }
 
+// The coordinate canvas the individual scene-drawing functions are authored
+// against (everything except CreekScene ignores the `width` it's passed and
+// draws at fixed pixel coordinates within roughly this box). A thumbnail
+// render uses this as its `viewBox` so the SVG itself scales the full
+// artwork down to fit — cropping to the biggest, most legible corner instead
+// of what a raw small `width` would give: a near-blank sliver.
+const SCENE_CANVAS_WIDTH = 300;
+const SCENE_CANVAS_HEIGHT = 160;
+
+/**
+ * Standalone illustration for a single named scene — the shared primitive
+ * behind CourseScene (keyed by course type), the lesson hero (keyed by an
+ * educator-picked SceneKind), and picker thumbnails (`thumbnail: true`).
+ */
+export function SceneIllustration({
+  kind,
+  width,
+  height = 160,
+  thumbnail = false,
+}: {
+  kind: SceneKind;
+  width: number;
+  height?: number;
+  /** Render the full authored canvas and let the SVG viewBox shrink it to fit `width`x`height` — for small pickers where a hero-sized crop would show barely anything. */
+  thumbnail?: boolean;
+}) {
+  const place = PLACEMENT[kind];
+  const canvasWidth = thumbnail ? SCENE_CANVAS_WIDTH : width;
+  return (
+    <Svg
+      width={width}
+      height={height}
+      viewBox={thumbnail ? `0 0 ${SCENE_CANVAS_WIDTH} ${SCENE_CANVAS_HEIGHT}` : undefined}
+      preserveAspectRatio={thumbnail ? "xMidYMid slice" : undefined}
+      style={thumbnail ? undefined : { position: "absolute", top: 0, left: 0 }}
+      pointerEvents="none"
+    >
+      <Defs>
+        <LinearGradient id="roofG" x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0" stopColor="#E0B97E" />
+          <Stop offset="1" stopColor="#B98A4E" />
+        </LinearGradient>
+        <LinearGradient id="riverG" x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0" stopColor="#5C97A4" />
+          <Stop offset="1" stopColor="#244C58" />
+        </LinearGradient>
+        <RadialGradient id="fireglow" cx="50%" cy="50%" r="50%">
+          <Stop offset="0" stopColor="#FF9A3C" stopOpacity={0.5} />
+          <Stop offset="1" stopColor="#FF9A3C" stopOpacity={0} />
+        </RadialGradient>
+      </Defs>
+      {thumbnail && <Rect x={0} y={0} width={SCENE_CANVAS_WIDTH} height={SCENE_CANVAS_HEIGHT} fill={MUSEUM.inkDeep} />}
+      <G x={canvasWidth * place.x} y={place.top} opacity={place.opacity}>
+        {renderScene(kind, canvasWidth)}
+      </G>
+    </Svg>
+  );
+}
+
 /**
  * Standalone scene for a single course type — exported so CourseArtwork can
  * render it as a hero illustration without needing the full JourneyScenery.
  */
 export function CourseScene({ courseType, width }: { courseType: CourseType | null | undefined; width: number }) {
   const kind = (courseType && SCENE_FOR[courseType]) || "bushes";
-  const place = PLACEMENT[kind];
-  return (
-    <Svg width={width} height={160} style={{ position: "absolute", top: 0, left: 0 }} pointerEvents="none">
-      <Defs>
-        <LinearGradient id={`roofG-cs`} x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor="#E0B97E" />
-          <Stop offset="1" stopColor="#B98A4E" />
-        </LinearGradient>
-        <LinearGradient id={`riverG-cs`} x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor="#5C97A4" />
-          <Stop offset="1" stopColor="#244C58" />
-        </LinearGradient>
-        <RadialGradient id={`fireglow-cs`} cx="50%" cy="50%" r="50%">
-          <Stop offset="0" stopColor="#FF9A3C" stopOpacity={0.5} />
-          <Stop offset="1" stopColor="#FF9A3C" stopOpacity={0} />
-        </RadialGradient>
-      </Defs>
-      <G x={width * place.x} y={place.top} opacity={place.opacity}>
-        {renderScene(kind, width)}
-      </G>
-    </Svg>
-  );
+  return <SceneIllustration kind={kind} width={width} />;
 }
 
 interface JourneySceneryProps {

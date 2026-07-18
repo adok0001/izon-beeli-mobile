@@ -1,5 +1,7 @@
 import { GhostButton, LabeledInput, PrimaryButton } from "@/components/studio/editor-form";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import type { SceneKind } from "@/components/learn/journey-scenery";
+import { SCENE_KIND_LABELS, SceneIllustrationPicker } from "@/components/studio/scene-illustration-picker";
 import { deriveId } from "@/lib/studio/derive-id";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useEffect, useMemo, useState } from "react";
@@ -12,6 +14,10 @@ export type SceneOption = Readonly<{
   /** Display title, e.g. "Kitchen" */
   sceneTitle: string | null;
   sceneOrder: number | null;
+  /** Background illustration key (SceneKind) shown behind lessons in this scene. */
+  sceneIllustration: string | null;
+  /** Educator-uploaded custom SVG URL — takes precedence over `sceneIllustration` when set. */
+  sceneIllustrationUrl: string | null;
   lessonCount: number;
 }>;
 
@@ -35,17 +41,27 @@ export function SceneAssignSheet({
   currentScene: string | null;
   /** The course's existing scenes, in sceneOrder. */
   scenes: SceneOption[];
-  onCommit: (assignment: { scene: string | null; sceneTitle: string | null; sceneOrder: number | null }) => void;
+  onCommit: (assignment: {
+    scene: string | null;
+    sceneTitle: string | null;
+    sceneOrder: number | null;
+    sceneIllustration: string | null;
+    sceneIllustrationUrl: string | null;
+  }) => void;
   onClose: () => void;
 }>) {
   const M = useMuseumTheme();
   const [selected, setSelected] = useState<string | null>(currentScene);
   const [newTitle, setNewTitle] = useState("");
+  const [newIllustration, setNewIllustration] = useState<SceneKind>("village");
+  const [newIllustrationUrl, setNewIllustrationUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (visible) {
       setSelected(currentScene);
       setNewTitle("");
+      setNewIllustration("village");
+      setNewIllustrationUrl(null);
     }
   }, [visible, currentScene]);
 
@@ -58,12 +74,24 @@ export function SceneAssignSheet({
     if (newTitle.trim()) {
       // New scene: slug derived once here, order appended after existing scenes.
       const maxOrder = scenes.reduce((max, s) => Math.max(max, s.sceneOrder ?? 0), 0);
-      onCommit({ scene: newSlug, sceneTitle: newTitle.trim(), sceneOrder: maxOrder + 1 });
+      onCommit({
+        scene: newSlug,
+        sceneTitle: newTitle.trim(),
+        sceneOrder: maxOrder + 1,
+        sceneIllustration: newIllustration,
+        sceneIllustrationUrl: newIllustrationUrl,
+      });
     } else if (selected) {
       const s = scenes.find((sc) => sc.scene === selected);
-      onCommit({ scene: selected, sceneTitle: s?.sceneTitle ?? null, sceneOrder: s?.sceneOrder ?? null });
+      onCommit({
+        scene: selected,
+        sceneTitle: s?.sceneTitle ?? null,
+        sceneOrder: s?.sceneOrder ?? null,
+        sceneIllustration: s?.sceneIllustration ?? null,
+        sceneIllustrationUrl: s?.sceneIllustrationUrl ?? null,
+      });
     } else {
-      onCommit({ scene: null, sceneTitle: null, sceneOrder: null });
+      onCommit({ scene: null, sceneTitle: null, sceneOrder: null, sceneIllustration: null, sceneIllustrationUrl: null });
     }
     onClose();
   };
@@ -110,6 +138,11 @@ export function SceneAssignSheet({
                 </View>
                 <Text style={{ marginTop: 2, fontSize: 11, color: M.muted }}>
                   {s.scene} · {s.lessonCount} lesson{s.lessonCount === 1 ? "" : "s"}
+                  {s.sceneIllustrationUrl
+                    ? " · Custom SVG"
+                    : s.sceneIllustration
+                      ? ` · ${SCENE_KIND_LABELS[s.sceneIllustration as SceneKind] ?? s.sceneIllustration}`
+                      : ""}
                 </Text>
               </Pressable>
             );
@@ -124,6 +157,16 @@ export function SceneAssignSheet({
             {newSlug ? (
               <Text style={{ fontSize: 11, color: M.muted }}>id: {newSlug} · appended after existing scenes</Text>
             ) : null}
+
+            <Text style={{ marginTop: 4, fontSize: 11, fontWeight: "700", letterSpacing: 0.4, textTransform: "uppercase", color: M.muted }}>
+              Background illustration
+            </Text>
+            <SceneIllustrationPicker
+              value={newIllustration}
+              onChange={setNewIllustration}
+              customUrl={newIllustrationUrl}
+              onCustomUrlChange={setNewIllustrationUrl}
+            />
           </View>
         </ScrollView>
 

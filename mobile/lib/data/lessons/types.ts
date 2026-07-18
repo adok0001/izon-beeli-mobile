@@ -55,6 +55,10 @@ export interface LessonData {
   sceneTitle?: string;
   /** Sort order of this scene within its course (lower = first) */
   sceneOrder?: number;
+  /** Background illustration key (SceneKind) for the lesson hero, e.g. "kitchen" */
+  sceneIllustration?: string;
+  /** Educator-uploaded custom SVG URL — takes precedence over `sceneIllustration` when set */
+  sceneIllustrationUrl?: string | null;
   /** How to interpret `transcript`. Defaults to "plain". */
   transcriptType?: TranscriptType;
   /** Honest real-world competence statement ("You can now …"). */
