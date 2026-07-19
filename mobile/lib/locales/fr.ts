@@ -446,6 +446,7 @@ export const fr = {
     passwordsMismatch: "Les mots de passe ne correspondent pas",
     alreadyHaveAccount: "Déjà un compte ?",
     alreadyHaveAccountAction: "Se connecter",
+    getStarted: "Commencer",
     brandSubtitle: "Apprenez les langues africaines de manière interactive",
     forgotPassword: "Mot de passe oublié ?",
     forgotPasswordTitle: "Mot de passe oublié",

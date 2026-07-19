@@ -446,6 +446,7 @@ export const ar = {
     passwordsMismatch: "كلمتا المرور غير متطابقتين",
     alreadyHaveAccount: "لديك حساب بالفعل؟",
     alreadyHaveAccountAction: "سجّل الدخول",
+    getStarted: "ابدأ الآن",
     brandSubtitle: "تعلّم اللغات الأفريقية بشكل تفاعلي",
     forgotPassword: "نسيت كلمة المرور؟",
     forgotPasswordTitle: "نسيت كلمة المرور",

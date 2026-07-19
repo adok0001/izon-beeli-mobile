@@ -414,6 +414,7 @@ export const en = {
     passwordsMismatch: "Passwords do not match",
     alreadyHaveAccount: "Already have an account?",
     alreadyHaveAccountAction: "Sign In",
+    getStarted: "Get Started",
     brandSubtitle: "Learn African languages, interactively",
     forgotPassword: "Forgot password?",
     forgotPasswordTitle: "Forgot Password",

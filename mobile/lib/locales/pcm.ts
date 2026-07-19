@@ -446,6 +446,7 @@ export const pcm = {
     passwordsMismatch: "Password no match",
     alreadyHaveAccount: "You don get account?",
     alreadyHaveAccountAction: "Sign In",
+    getStarted: "Make We Start",
     brandSubtitle: "Learn African languages, interact",
     forgotPassword: "You forget password?",
     forgotPasswordTitle: "Forget Password",

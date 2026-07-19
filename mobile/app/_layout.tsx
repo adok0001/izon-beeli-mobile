@@ -266,7 +266,7 @@ function AuthGate({ children }: Readonly<{ children: React.ReactNode }>) {
       if (!knownAccountsBooted) return;
       if (!inAuthGroup) {
         const knownAccountIds = getCachedKnownAccountIds() ?? [];
-        router.replace(knownAccountIds.length > 0 ? "/(auth)/sign-back-in" : "/(auth)/sign-in");
+        router.replace(knownAccountIds.length > 0 ? "/(auth)/sign-back-in" : "/(auth)/landing");
       }
       return;
     }
