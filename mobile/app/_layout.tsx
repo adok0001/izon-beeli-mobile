@@ -149,7 +149,11 @@ function AuthGate({ children }: Readonly<{ children: React.ReactNode }>) {
   const { t } = useTranslation();
   const router = useRouter();
   const segments = useSegments();
-  const prevSignedIn = useRef<boolean | undefined>(undefined);
+  // Keyed on identity, not just the signed-in boolean — switching between two
+  // already-live sessions (the account switcher's setActive) never flips
+  // isSignedIn, but it does change userId, and the query cache must still be
+  // busted so the new account can't briefly render the previous one's data.
+  const prevIdentity = useRef<string | null | undefined>(undefined);
   const migratingGuestRef = useRef(false);
   const addNotification = useNotificationStore((s) => s.addNotification);
   const isGuest = useGuestStore((s) => s.isGuest);
@@ -240,10 +244,11 @@ function AuthGate({ children }: Readonly<{ children: React.ReactNode }>) {
   useEffect(() => {
     if (!isLoaded || !guestHydrated) return;
 
-    const wasSignedIn = prevSignedIn.current;
-    prevSignedIn.current = isSignedIn;
+    const previous = prevIdentity.current;
+    const current = isSignedIn ? (userId ?? "signed-in") : null;
+    prevIdentity.current = current;
 
-    if (wasSignedIn !== undefined && wasSignedIn !== isSignedIn) {
+    if (previous !== undefined && previous !== current) {
       queryClient.clear();
     }
 
@@ -271,7 +276,7 @@ function AuthGate({ children }: Readonly<{ children: React.ReactNode }>) {
     if (inAuthGroup || !inDeepRoute) {
       router.replace("/(tabs)/learn");
     }
-  }, [isSignedIn, isLoaded, isGuest, guestHydrated, knownAccountsBooted, segments, router, deletionPending]);
+  }, [isSignedIn, isLoaded, isGuest, guestHydrated, knownAccountsBooted, segments, router, deletionPending, userId]);
 
   return <>{children}</>;
 }

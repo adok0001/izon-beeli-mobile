@@ -12,7 +12,7 @@ import { useSessionList } from "@clerk/clerk-expo";
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, Pressable, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ManageAccountsScreen() {
@@ -21,12 +21,13 @@ export default function ManageAccountsScreen() {
   const router = useRouter();
   const { isLoaded: sessionsLoaded, sessions } = useSessionList();
   const [knownAccounts, setKnownAccounts] = useState<KnownAccountSnapshot[]>([]);
+  const [hydrated, setHydrated] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
 
   const refreshKnown = () => getKnownAccounts().then(setKnownAccounts);
 
   useEffect(() => {
-    refreshKnown();
+    refreshKnown().then(() => setHydrated(true));
   }, []);
 
   const rows = useMemo(
@@ -62,10 +63,18 @@ export default function ManageAccountsScreen() {
   };
 
   useEffect(() => {
-    if (sessionsLoaded && rows.length === 0) {
+    if (sessionsLoaded && hydrated && rows.length === 0) {
       router.replace("/(auth)/sign-in");
     }
-  }, [sessionsLoaded, rows.length, router]);
+  }, [sessionsLoaded, hydrated, rows.length, router]);
+
+  if (!sessionsLoaded || !hydrated || rows.length === 0) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.bg, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator size="small" color={M.accent} />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <>

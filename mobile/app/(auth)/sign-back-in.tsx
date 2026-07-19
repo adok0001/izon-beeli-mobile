@@ -95,7 +95,7 @@ export default function SignBackInScreen() {
                 <AccountRow
                   row={row}
                   trailing={
-                    switchingId === row.sessionId ? (
+                    switchingId !== null && switchingId === row.sessionId ? (
                       <ActivityIndicator size="small" color={M.accent} />
                     ) : (
                       <IconSymbol name="chevron.right" size={16} color={M.muted} />
