@@ -238,6 +238,7 @@ export default function WordDetailScreen() {
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel={t("share.shareButton")}
+              style={{ width: 32, height: 32, alignItems: "center", justifyContent: "center" }}
             >
               <IconSymbol name="square.and.arrow.up" size={20} color={M.accent} />
             </Pressable>

@@ -283,6 +283,7 @@ export default function LessonScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={isDownloaded ? t("downloads.removeDownload") : t("downloads.download")}
                   accessibilityState={{ busy: isDownloading }}
+                  style={{ width: 32, height: 32, alignItems: "center", justifyContent: "center" }}
                 >
                   {isDownloading ? (
                     <ActivityIndicator size="small" color={M.parchment} />
@@ -300,6 +301,7 @@ export default function LessonScreen() {
                 hitSlop={8}
                 accessibilityRole="button"
                 accessibilityLabel={t("share.shareButton")}
+                style={{ width: 32, height: 32, alignItems: "center", justifyContent: "center" }}
               >
                 <IconSymbol name="square.and.arrow.up" size={20} color={M.parchment} />
               </Pressable>
