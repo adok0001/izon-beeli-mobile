@@ -229,6 +229,7 @@ export default function SignUpScreen() {
               prompt={t("auth.alreadyHaveAccount")}
               label={t("auth.alreadyHaveAccountAction")}
               href="/(auth)/sign-in"
+              replace
               disabled={busy}
             />
 

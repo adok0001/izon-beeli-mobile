@@ -14,6 +14,10 @@ export interface AuthLinkProps {
   prompt?: string;
   /** Navigates via expo-router. Use `onPress` instead for in-place actions. */
   href?: Href;
+  /** Replace the current screen in history instead of pushing on top of it —
+   *  use for cross-links like sign-in ↔ sign-up so toggling back and forth
+   *  doesn't grow the stack. */
+  replace?: boolean;
   onPress?: () => void;
   tone?: AuthLinkTone;
   disabled?: boolean;
@@ -35,6 +39,7 @@ export function AuthLink({
   label,
   prompt,
   href,
+  replace = false,
   onPress,
   tone = "accent",
   disabled = false,
@@ -83,7 +88,7 @@ export function AuthLink({
   );
 
   return href ? (
-    <Link href={href} asChild>
+    <Link href={href} replace={replace} asChild>
       {body}
     </Link>
   ) : (

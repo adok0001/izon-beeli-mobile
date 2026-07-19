@@ -185,24 +185,20 @@ export default function SignInScreen() {
           </View>
 
           <View style={{ alignItems: "center", paddingTop: 18 }}>
-            {/* Only the email path needs this: Google and Apple create the
-                account on first use, so offering "sign up" alongside them
-                would just be a third link competing for the same tap. */}
-            {emailExpanded ? (
-              <AuthLink
-                prompt={t("auth.noAccount")}
-                label={t("auth.noAccountAction")}
-                href="/(auth)/sign-up"
-                disabled={busy}
-              />
-            ) : null}
+            <AuthLink
+              prompt={t("auth.noAccount")}
+              label={t("auth.noAccountAction")}
+              href="/(auth)/sign-up"
+              replace
+              disabled={busy}
+            />
 
             <AuthLink
               label={t("auth.continueAsGuest")}
               onPress={onContinueAsGuest}
               tone="quiet"
               disabled={busy}
-              style={{ marginTop: emailExpanded ? 10 : 0 }}
+              style={{ marginTop: 10 }}
             />
           </View>
         </ScrollView>
