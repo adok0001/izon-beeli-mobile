@@ -1,30 +1,21 @@
 import { GalleryRoom, PaintingWall, PLAQUE, type Scene } from "@/components/auth/gallery-tour";
 import { Button } from "@/components/ui/button";
 import { analytics } from "@/lib/analytics";
-import { fonts } from "@/constants/typography";
 import { MOBILE_TOUR_REGISTRY } from "@/lib/tours/mobile-tour-registry";
 import { MUSEUM, bronze } from "@/lib/use-museum-theme";
 import { useGuestStore } from "@/store/guest-store";
 import { useRouter } from "expo-router";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Animated,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-  useWindowDimensions,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-} from "react-native";
+import { Animated, Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 /**
  * Pre-auth landing: the same Foyer Tour gallery-walk as `FeatureTourModal`
  * (fed by `MOBILE_TOUR_REGISTRY.welcome`), but as the first screen a
- * signed-out visitor with no known account lands on — ending in "Get
- * Started" / "I already have an account" instead of a dismiss button.
+ * signed-out visitor with no known account lands on — "Get Started" /
+ * "I already have an account" stay pinned below the carousel throughout,
+ * instead of a dismiss button.
  */
 export default function LandingScreen() {
   const router = useRouter();
@@ -34,7 +25,6 @@ export default function LandingScreen() {
 
   const scrollX = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<ScrollView>(null);
-  const [index, setIndex] = useState(0);
 
   const tr = (key: string) => t(key as never) as string;
   const config = MOBILE_TOUR_REGISTRY.welcome;
@@ -56,20 +46,9 @@ export default function LandingScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [t]);
 
-  const isLast = index >= scenes.length - 1;
-
   const onScroll = Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
     useNativeDriver: true,
-    listener: (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const next = Math.round(e.nativeEvent.contentOffset.x / width);
-      if (next !== index) setIndex(next);
-    },
   });
-
-  const advance = () => {
-    if (isLast) return;
-    scrollRef.current?.scrollTo({ x: (index + 1) * width, animated: true });
-  };
 
   const onGetStarted = () => router.push("/(auth)/sign-up");
 
@@ -119,31 +98,8 @@ export default function LandingScreen() {
         <View style={{ paddingHorizontal: 24, paddingBottom: 16, gap: 12 }}>
           <View style={{ height: 1, backgroundColor: bronze(0.18), marginBottom: 8 }} />
 
-          {isLast ? (
-            <>
-              <Button label={t("auth.getStarted")} onPress={onGetStarted} />
-              <Button label={t("auth.alreadyHaveAccountAction")} onPress={onSignIn} variant="secondary" />
-            </>
-          ) : (
-            <Pressable
-              onPress={advance}
-              accessibilityRole="button"
-              accessibilityLabel={tr("onboarding.continue")}
-              className="active:opacity-80"
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                borderRadius: 14,
-                backgroundColor: MUSEUM.accent,
-                paddingVertical: 17,
-              }}
-            >
-              <Text style={{ fontFamily: fonts.heading, fontSize: 16, color: MUSEUM.ink }}>
-                {tr("onboarding.continue")}
-              </Text>
-            </Pressable>
-          )}
+          <Button label={t("auth.getStarted")} onPress={onGetStarted} />
+          <Button label={t("auth.alreadyHaveAccountAction")} onPress={onSignIn} variant="secondary" />
 
           <Pressable onPress={onContinueAsGuest} hitSlop={8} accessibilityRole="button" style={{ alignSelf: "center", paddingVertical: 8 }}>
             <Text style={{ fontSize: 13, fontWeight: "600", color: MUSEUM.textDim }}>
