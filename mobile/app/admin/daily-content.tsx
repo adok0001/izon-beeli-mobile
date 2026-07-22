@@ -1,6 +1,9 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LanguagePickerModal } from "@/components/language-picker";
+import { LocalizedTextInput, serializeLocalizedText } from "@/components/ui/localized-text-input";
+import { StudioCard } from "@/components/studio/studio-card";
 import { StudioFilterPills } from "@/components/studio/studio-filter-pills";
+import { FormField, FormInput, GhostButton, PrimaryButton } from "@/components/studio/studio-form";
 import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import { StudioSearchInput } from "@/components/studio/studio-search-input";
 import { apiFetch } from "@/lib/api";
@@ -29,19 +32,40 @@ import {
   Pressable,
   ScrollView,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { DictionaryEntry } from "@/lib/dictionary";
-import type { Proverb, Lesson } from "@/types";
+import type { LocalizedText, Proverb, Lesson } from "@/types";
 
 type Tab = "wotd" | "potm" | "sotw";
+
+interface NewWordForm {
+  word: string;
+  english: LocalizedText;
+  category: DictCategory;
+  pronunciation: string;
+  example: string;
+  exampleTranslation: LocalizedText;
+}
+
+const EMPTY_WORD: NewWordForm = {
+  word: "", english: {}, category: "nouns", pronunciation: "", example: "", exampleTranslation: {},
+};
+
+interface NewProverbForm {
+  text: string;
+  translation: LocalizedText;
+  meaning: LocalizedText;
+  literal: string;
+  context: string;
+}
+
+const EMPTY_PROVERB: NewProverbForm = { text: "", translation: {}, meaning: {}, literal: "", context: "" };
 
 interface AdminWotd { overrideId: string | null; entry: DictionaryEntry | null; isOverride: boolean }
 interface AdminPotm { overrideId: string | null; proverb: Proverb | null; isOverride: boolean }
 interface AdminSotw { overrideId: string | null; lesson: Lesson | null; isOverride: boolean }
-interface SongsResponse { id: string; title: string; artist: string | null; genre: string | null }[]
 
 function Badge({ pinned }: { pinned: boolean }) {
   const { t } = useTranslation();
@@ -69,9 +93,9 @@ export default function DailyContentAdminScreen() {
   const [activeTab, setActiveTab] = useState<Tab>("wotd");
   const [search, setSearch] = useState("");
   const [showAddWord, setShowAddWord] = useState(false);
-  const [newWord, setNewWord] = useState({ word: "", english: "", french: "", category: "nouns" as DictCategory, pronunciation: "", example: "", exampleTranslation: "", exampleTranslationFr: "" });
+  const [newWord, setNewWord] = useState<NewWordForm>(EMPTY_WORD);
   const [showAddProverb, setShowAddProverb] = useState(false);
-  const [newProverb, setNewProverb] = useState({ text: "", translation: "", meaning: "", translationFr: "", meaningFr: "", literal: "", context: "" });
+  const [newProverb, setNewProverb] = useState<NewProverbForm>(EMPTY_PROVERB);
 
   const langName = languages.find((l) => l.id === languageId)?.name ?? languageId;
 
@@ -148,18 +172,22 @@ export default function DailyContentAdminScreen() {
 
   const createAndPinWotd = useMutation({
     mutationFn: async () => {
+      // Map the localized glosses back onto the legacy `<field>`/`<field>Fr`
+      // column pair — extra languages get JSON-encoded into the primary column.
+      const englishSer = serializeLocalizedText(newWord.english);
+      const exampleTranslationSer = serializeLocalizedText(newWord.exampleTranslation);
       const created = await authedFetch("/dictionary/admin", {
         method: "POST",
         body: JSON.stringify({
           languageId,
           word: newWord.word.trim(),
-          english: newWord.english.trim(),
-          french: newWord.french.trim() || undefined,
+          english: englishSer.primary,
+          french: englishSer.fr,
           category: newWord.category,
           pronunciation: newWord.pronunciation.trim() || undefined,
           example: newWord.example.trim() || undefined,
-          exampleTranslation: newWord.exampleTranslation.trim() || undefined,
-          exampleTranslationFr: newWord.exampleTranslationFr.trim() || undefined,
+          exampleTranslation: exampleTranslationSer.primary || undefined,
+          exampleTranslationFr: exampleTranslationSer.fr,
         }),
       }) as { id: string };
       await authedFetch("/daily-content/admin/wotd", { method: "PUT", body: JSON.stringify({ languageId, entryId: created.id }) });
@@ -168,7 +196,7 @@ export default function DailyContentAdminScreen() {
       qc.invalidateQueries({ queryKey: ["admin-wotd", languageId] });
       qc.invalidateQueries({ queryKey: ["wotd", languageId] });
       qc.invalidateQueries({ queryKey: ["dictionary", languageId] });
-      setNewWord({ word: "", english: "", french: "", category: "nouns", pronunciation: "", example: "", exampleTranslation: "", exampleTranslationFr: "" });
+      setNewWord(EMPTY_WORD);
       setShowAddWord(false);
       Alert.alert(t("admin.dailyContent.wotd.created"));
     },
@@ -190,15 +218,18 @@ export default function DailyContentAdminScreen() {
 
   const createAndPinPotm = useMutation({
     mutationFn: async () => {
+      // Same legacy-pair mapping as the word form: `<field>` + `<field>Fr`.
+      const translationSer = serializeLocalizedText(newProverb.translation);
+      const meaningSer = serializeLocalizedText(newProverb.meaning);
       const created = await authedFetch("/proverbs/admin", {
         method: "POST",
         body: JSON.stringify({
           languageId,
           text: newProverb.text.trim(),
-          translation: newProverb.translation.trim(),
-          meaning: newProverb.meaning.trim(),
-          translationFr: newProverb.translationFr.trim() || undefined,
-          meaningFr: newProverb.meaningFr.trim() || undefined,
+          translation: translationSer.primary,
+          meaning: meaningSer.primary,
+          translationFr: translationSer.fr,
+          meaningFr: meaningSer.fr,
           literal: newProverb.literal.trim() || undefined,
           context: newProverb.context.trim() || undefined,
         }),
@@ -209,7 +240,7 @@ export default function DailyContentAdminScreen() {
       qc.invalidateQueries({ queryKey: ["admin-potm", languageId] });
       qc.invalidateQueries({ queryKey: ["potm", languageId] });
       qc.invalidateQueries({ queryKey: ["proverbs", languageId] });
-      setNewProverb({ text: "", translation: "", meaning: "", translationFr: "", meaningFr: "", literal: "", context: "" });
+      setNewProverb(EMPTY_PROVERB);
       setShowAddProverb(false);
       Alert.alert(t("admin.dailyContent.potm.created"));
     },
@@ -235,8 +266,6 @@ export default function DailyContentAdminScreen() {
     { key: "sotw", label: t("admin.dailyContent.sotw.tab") },
   ];
 
-  const cardStyle = { backgroundColor: M.card, borderColor: M.border };
-  const inputStyle = { backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText };
   const selectedRow = { backgroundColor: M.accentGlow, borderColor: M.accentBorder };
   const plainRow = { backgroundColor: M.card, borderColor: M.border };
 
@@ -256,7 +285,7 @@ export default function DailyContentAdminScreen() {
             <Pressable
               onPress={() => setPickerVisible(true)}
               className="flex-row items-center justify-between rounded-2xl border px-4 py-3 active:opacity-70"
-              style={cardStyle}
+              style={{ backgroundColor: M.card, borderColor: M.border }}
             >
               <Text className="text-sm font-semibold" style={{ color: M.text }}>{langName}</Text>
               <IconSymbol name="chevron.right" size={16} color={M.muted} />
@@ -278,7 +307,7 @@ export default function DailyContentAdminScreen() {
               {wotdLoading ? (
                 <ActivityIndicator className="my-4" color={M.accent} />
               ) : wotdAdmin?.entry ? (
-                <View className="rounded-2xl border p-4 mb-5" style={cardStyle}>
+                <StudioCard style={{ marginBottom: 20 }}>
                   <View className="flex-row items-center justify-between mb-1">
                     <Text className="text-xs font-semibold uppercase tracking-widest" style={{ color: M.muted }}>{t("admin.dailyContent.current")}</Text>
                     <Badge pinned={wotdAdmin.isOverride} />
@@ -304,7 +333,7 @@ export default function DailyContentAdminScreen() {
                       <Text className="text-sm font-semibold" style={{ color: M.error }}>{t("admin.dailyContent.clearOverride")}</Text>
                     </Pressable>
                   )}
-                </View>
+                </StudioCard>
               ) : null}
 
               {/* Add new word */}
@@ -316,70 +345,59 @@ export default function DailyContentAdminScreen() {
                   <Text className="text-sm font-semibold" style={{ color: M.accent }}>{t("admin.dailyContent.wotd.addNewCta")}</Text>
                 </Pressable>
               ) : (
-                <View className="rounded-2xl border p-4 mb-5" style={cardStyle}>
-                  <View className="flex-row items-center justify-between mb-3">
+                <StudioCard style={{ gap: 10, marginBottom: 20 }}>
+                  <View className="flex-row items-center justify-between">
                     <Text className="text-xs font-semibold uppercase tracking-widest" style={{ color: M.muted }}>{t("admin.dailyContent.wotd.addNew")}</Text>
                     <Pressable onPress={() => setShowAddWord(false)} className="active:opacity-70">
                       <IconSymbol name="xmark" size={16} color={M.muted} />
                     </Pressable>
                   </View>
 
-                  <Text className="text-xs font-medium mb-1" style={{ color: M.sub }}>{t("admin.dailyContent.wotd.fieldWord")}</Text>
-                  <TextInput value={newWord.word} onChangeText={(v) => setNewWord((p) => ({ ...p, word: v }))} placeholderTextColor={M.muted} placeholder="e.g. Àkpọ" style={inputStyle} className="rounded-xl border px-3 py-2.5 text-sm mb-3" />
+                  <FormField label={t("admin.dailyContent.wotd.fieldWord")} required>
+                    <FormInput value={newWord.word} onChangeText={(v) => setNewWord((p) => ({ ...p, word: v }))} placeholder="e.g. Àkpọ" />
+                  </FormField>
 
-                  <Text className="text-xs font-medium mb-1" style={{ color: M.sub }}>{t("admin.dailyContent.wotd.fieldEnglish")}</Text>
-                  <TextInput value={newWord.english} onChangeText={(v) => setNewWord((p) => ({ ...p, english: v }))} placeholderTextColor={M.muted} placeholder="e.g. World" style={inputStyle} className="rounded-xl border px-3 py-2.5 text-sm mb-3" />
+                  <LocalizedTextInput
+                    label={t("admin.dailyContent.wotd.fieldEnglish")}
+                    value={newWord.english}
+                    onChange={(english) => setNewWord((p) => ({ ...p, english }))}
+                    required
+                  />
 
-                  <Text className="text-xs font-medium mb-1" style={{ color: M.sub }}>{t("admin.dailyContent.wotd.fieldCategory")}</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-3">
-                    <View className="flex-row gap-2">
-                      {VALID_CATEGORIES.map((cat) => {
-                        const active = newWord.category === cat;
-                        return (
-                          <Pressable
-                            key={cat}
-                            onPress={() => setNewWord((p) => ({ ...p, category: cat }))}
-                            className="rounded-full px-3 py-1.5 active:opacity-70"
-                            style={{ backgroundColor: active ? M.accent : M.border }}
-                          >
-                            <Text className="text-xs font-semibold" style={{ color: active ? M.parchment : M.sub }}>{cat}</Text>
-                          </Pressable>
-                        );
-                      })}
-                    </View>
-                  </ScrollView>
+                  <FormField label={t("admin.dailyContent.wotd.fieldCategory")}>
+                    <StudioFilterPills
+                      options={VALID_CATEGORIES.map((cat) => ({ id: cat, label: cat }))}
+                      value={newWord.category}
+                      onChange={(cat) => setNewWord((p) => ({ ...p, category: cat }))}
+                      scrollable
+                    />
+                  </FormField>
 
-                  <Text className="text-xs font-medium mb-1" style={{ color: M.sub }}>{t("admin.dailyContent.wotd.fieldFrench")}</Text>
-                  <TextInput value={newWord.french} onChangeText={(v) => setNewWord((p) => ({ ...p, french: v }))} placeholderTextColor={M.muted} placeholder="e.g. Monde" style={inputStyle} className="rounded-xl border px-3 py-2.5 text-sm mb-3" />
+                  <FormField label={t("admin.dailyContent.wotd.fieldPronunciation")}>
+                    <FormInput value={newWord.pronunciation} onChangeText={(v) => setNewWord((p) => ({ ...p, pronunciation: v }))} placeholder="e.g. ah-KPO" />
+                  </FormField>
 
-                  <Text className="text-xs font-medium mb-1" style={{ color: M.sub }}>{t("admin.dailyContent.wotd.fieldPronunciation")}</Text>
-                  <TextInput value={newWord.pronunciation} onChangeText={(v) => setNewWord((p) => ({ ...p, pronunciation: v }))} placeholderTextColor={M.muted} placeholder="e.g. ah-KPO" style={inputStyle} className="rounded-xl border px-3 py-2.5 text-sm mb-3" />
+                  <FormField label={t("admin.dailyContent.wotd.fieldExample")}>
+                    <FormInput value={newWord.example} onChangeText={(v) => setNewWord((p) => ({ ...p, example: v }))} multiline />
+                  </FormField>
 
-                  <Text className="text-xs font-medium mb-1" style={{ color: M.sub }}>{t("admin.dailyContent.wotd.fieldExample")}</Text>
-                  <TextInput value={newWord.example} onChangeText={(v) => setNewWord((p) => ({ ...p, example: v }))} placeholderTextColor={M.muted} multiline numberOfLines={2} style={inputStyle} className="rounded-xl border px-3 py-2.5 text-sm mb-3" />
-
-                  <Text className="text-xs font-medium mb-1" style={{ color: M.sub }}>{t("admin.dailyContent.wotd.fieldExampleTranslation")}</Text>
-                  <TextInput value={newWord.exampleTranslation} onChangeText={(v) => setNewWord((p) => ({ ...p, exampleTranslation: v }))} placeholderTextColor={M.muted} style={inputStyle} className="rounded-xl border px-3 py-2.5 text-sm mb-3" />
-
-                  <Text className="text-xs font-medium mb-1" style={{ color: M.sub }}>{t("admin.dailyContent.wotd.fieldExampleTranslationFr")}</Text>
-                  <TextInput value={newWord.exampleTranslationFr} onChangeText={(v) => setNewWord((p) => ({ ...p, exampleTranslationFr: v }))} placeholderTextColor={M.muted} style={inputStyle} className="rounded-xl border px-3 py-2.5 text-sm mb-4" />
+                  <LocalizedTextInput
+                    label={t("admin.dailyContent.wotd.fieldExampleTranslation")}
+                    value={newWord.exampleTranslation}
+                    onChange={(exampleTranslation) => setNewWord((p) => ({ ...p, exampleTranslation }))}
+                  />
 
                   <View className="flex-row gap-3">
-                    <Pressable
-                      onPress={() => createAndPinWotd.mutate()}
-                      disabled={!newWord.word.trim() || !newWord.english.trim() || createAndPinWotd.isPending}
-                      className="flex-1 rounded-xl py-3 items-center active:opacity-70 disabled:opacity-50"
-                      style={{ backgroundColor: M.accent }}
-                    >
-                      <Text className="text-sm font-bold" style={{ color: M.parchment }}>
-                        {createAndPinWotd.isPending ? t("admin.dailyContent.wotd.saving") : t("admin.dailyContent.wotd.saveAndPin")}
-                      </Text>
-                    </Pressable>
-                    <Pressable onPress={() => setShowAddWord(false)} className="rounded-xl border px-4 py-3 items-center active:opacity-70" style={{ borderColor: M.border }}>
-                      <Text className="text-sm font-semibold" style={{ color: M.sub }}>{t("admin.dailyContent.wotd.cancel")}</Text>
-                    </Pressable>
+                    <View style={{ flex: 1 }}>
+                      <PrimaryButton
+                        label={createAndPinWotd.isPending ? t("admin.dailyContent.wotd.saving") : t("admin.dailyContent.wotd.saveAndPin")}
+                        onPress={() => createAndPinWotd.mutate()}
+                        disabled={!newWord.word.trim() || !newWord.english.en?.trim() || createAndPinWotd.isPending}
+                      />
+                    </View>
+                    <GhostButton label={t("admin.dailyContent.wotd.cancel")} onPress={() => setShowAddWord(false)} />
                   </View>
-                </View>
+                </StudioCard>
               )}
 
               <View className="mb-3">
@@ -422,7 +440,7 @@ export default function DailyContentAdminScreen() {
               {potmLoading ? (
                 <ActivityIndicator className="my-4" color={M.accent} />
               ) : potmAdmin?.proverb ? (
-                <View className="rounded-2xl border p-4 mb-5" style={cardStyle}>
+                <StudioCard style={{ marginBottom: 20 }}>
                   <View className="flex-row items-center justify-between mb-1">
                     <Text className="text-xs font-semibold uppercase tracking-widest" style={{ color: M.muted }}>{t("admin.dailyContent.current")}</Text>
                     <Badge pinned={potmAdmin.isOverride} />
@@ -448,7 +466,7 @@ export default function DailyContentAdminScreen() {
                       <Text className="text-sm font-semibold" style={{ color: M.error }}>{t("admin.dailyContent.clearOverride")}</Text>
                     </Pressable>
                   )}
-                </View>
+                </StudioCard>
               ) : null}
 
               {/* Add new proverb */}
@@ -460,51 +478,52 @@ export default function DailyContentAdminScreen() {
                   <Text className="text-sm font-semibold" style={{ color: M.accent }}>{t("admin.dailyContent.potm.addNewCta")}</Text>
                 </Pressable>
               ) : (
-                <View className="rounded-2xl border p-4 mb-5" style={cardStyle}>
-                  <View className="flex-row items-center justify-between mb-3">
+                <StudioCard style={{ gap: 10, marginBottom: 20 }}>
+                  <View className="flex-row items-center justify-between">
                     <Text className="text-xs font-semibold uppercase tracking-widest" style={{ color: M.muted }}>{t("admin.dailyContent.potm.addNew")}</Text>
                     <Pressable onPress={() => setShowAddProverb(false)} className="active:opacity-70">
                       <IconSymbol name="xmark" size={16} color={M.muted} />
                     </Pressable>
                   </View>
 
-                  <Text className="text-xs font-medium mb-1" style={{ color: M.sub }}>{t("admin.dailyContent.potm.fieldText")}</Text>
-                  <TextInput value={newProverb.text} onChangeText={(v) => setNewProverb((p) => ({ ...p, text: v }))} placeholderTextColor={M.muted} multiline numberOfLines={2} style={inputStyle} className="rounded-xl border px-3 py-2.5 text-sm mb-3" />
+                  <FormField label={t("admin.dailyContent.potm.fieldText")} required>
+                    <FormInput value={newProverb.text} onChangeText={(v) => setNewProverb((p) => ({ ...p, text: v }))} multiline />
+                  </FormField>
 
-                  <Text className="text-xs font-medium mb-1" style={{ color: M.sub }}>{t("admin.dailyContent.potm.fieldTranslation")}</Text>
-                  <TextInput value={newProverb.translation} onChangeText={(v) => setNewProverb((p) => ({ ...p, translation: v }))} placeholderTextColor={M.muted} style={inputStyle} className="rounded-xl border px-3 py-2.5 text-sm mb-3" />
+                  <LocalizedTextInput
+                    label={t("admin.dailyContent.potm.fieldTranslation")}
+                    value={newProverb.translation}
+                    onChange={(translation) => setNewProverb((p) => ({ ...p, translation }))}
+                    required
+                  />
 
-                  <Text className="text-xs font-medium mb-1" style={{ color: M.sub }}>{t("admin.dailyContent.potm.fieldMeaning")}</Text>
-                  <TextInput value={newProverb.meaning} onChangeText={(v) => setNewProverb((p) => ({ ...p, meaning: v }))} placeholderTextColor={M.muted} multiline numberOfLines={2} style={inputStyle} className="rounded-xl border px-3 py-2.5 text-sm mb-3" />
+                  <LocalizedTextInput
+                    label={t("admin.dailyContent.potm.fieldMeaning")}
+                    value={newProverb.meaning}
+                    onChange={(meaning) => setNewProverb((p) => ({ ...p, meaning }))}
+                    multiline
+                    required
+                  />
 
-                  <Text className="text-xs font-medium mb-1" style={{ color: M.sub }}>{t("admin.dailyContent.potm.fieldTranslationFr")}</Text>
-                  <TextInput value={newProverb.translationFr} onChangeText={(v) => setNewProverb((p) => ({ ...p, translationFr: v }))} placeholderTextColor={M.muted} style={inputStyle} className="rounded-xl border px-3 py-2.5 text-sm mb-3" />
+                  <FormField label={t("admin.dailyContent.potm.fieldLiteral")}>
+                    <FormInput value={newProverb.literal} onChangeText={(v) => setNewProverb((p) => ({ ...p, literal: v }))} />
+                  </FormField>
 
-                  <Text className="text-xs font-medium mb-1" style={{ color: M.sub }}>{t("admin.dailyContent.potm.fieldMeaningFr")}</Text>
-                  <TextInput value={newProverb.meaningFr} onChangeText={(v) => setNewProverb((p) => ({ ...p, meaningFr: v }))} placeholderTextColor={M.muted} multiline numberOfLines={2} style={inputStyle} className="rounded-xl border px-3 py-2.5 text-sm mb-3" />
-
-                  <Text className="text-xs font-medium mb-1" style={{ color: M.sub }}>{t("admin.dailyContent.potm.fieldLiteral")}</Text>
-                  <TextInput value={newProverb.literal} onChangeText={(v) => setNewProverb((p) => ({ ...p, literal: v }))} placeholderTextColor={M.muted} style={inputStyle} className="rounded-xl border px-3 py-2.5 text-sm mb-3" />
-
-                  <Text className="text-xs font-medium mb-1" style={{ color: M.sub }}>{t("admin.dailyContent.potm.fieldContext")}</Text>
-                  <TextInput value={newProverb.context} onChangeText={(v) => setNewProverb((p) => ({ ...p, context: v }))} placeholderTextColor={M.muted} multiline numberOfLines={2} style={inputStyle} className="rounded-xl border px-3 py-2.5 text-sm mb-4" />
+                  <FormField label={t("admin.dailyContent.potm.fieldContext")}>
+                    <FormInput value={newProverb.context} onChangeText={(v) => setNewProverb((p) => ({ ...p, context: v }))} multiline />
+                  </FormField>
 
                   <View className="flex-row gap-3">
-                    <Pressable
-                      onPress={() => createAndPinPotm.mutate()}
-                      disabled={!newProverb.text.trim() || !newProverb.translation.trim() || !newProverb.meaning.trim() || createAndPinPotm.isPending}
-                      className="flex-1 rounded-xl py-3 items-center active:opacity-70 disabled:opacity-50"
-                      style={{ backgroundColor: M.accent }}
-                    >
-                      <Text className="text-sm font-bold" style={{ color: M.parchment }}>
-                        {createAndPinPotm.isPending ? t("admin.dailyContent.potm.saving") : t("admin.dailyContent.potm.saveAndPin")}
-                      </Text>
-                    </Pressable>
-                    <Pressable onPress={() => setShowAddProverb(false)} className="rounded-xl border px-4 py-3 items-center active:opacity-70" style={{ borderColor: M.border }}>
-                      <Text className="text-sm font-semibold" style={{ color: M.sub }}>{t("admin.dailyContent.potm.cancel")}</Text>
-                    </Pressable>
+                    <View style={{ flex: 1 }}>
+                      <PrimaryButton
+                        label={createAndPinPotm.isPending ? t("admin.dailyContent.potm.saving") : t("admin.dailyContent.potm.saveAndPin")}
+                        onPress={() => createAndPinPotm.mutate()}
+                        disabled={!newProverb.text.trim() || !newProverb.translation.en?.trim() || !newProverb.meaning.en?.trim() || createAndPinPotm.isPending}
+                      />
+                    </View>
+                    <GhostButton label={t("admin.dailyContent.potm.cancel")} onPress={() => setShowAddProverb(false)} />
                   </View>
-                </View>
+                </StudioCard>
               )}
 
               <View className="mb-3">
@@ -547,7 +566,7 @@ export default function DailyContentAdminScreen() {
               {sotwLoading ? (
                 <ActivityIndicator className="my-4" color={M.accent} />
               ) : sotwAdmin?.lesson ? (
-                <View className="rounded-2xl border p-4 mb-5" style={cardStyle}>
+                <StudioCard style={{ marginBottom: 20 }}>
                   <View className="flex-row items-center justify-between mb-1">
                     <Text className="text-xs font-semibold uppercase tracking-widest" style={{ color: M.muted }}>{t("admin.dailyContent.current")}</Text>
                     <Badge pinned={sotwAdmin.isOverride} />
@@ -575,7 +594,7 @@ export default function DailyContentAdminScreen() {
                       <Text className="text-sm font-semibold" style={{ color: M.error }}>{t("admin.dailyContent.clearOverride")}</Text>
                     </Pressable>
                   )}
-                </View>
+                </StudioCard>
               ) : null}
 
               <View className="mb-3">
