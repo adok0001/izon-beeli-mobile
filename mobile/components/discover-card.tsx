@@ -1,40 +1,49 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useAudioStore } from "@/store/audio-store";
 import type { DiscoverItem } from "@/types";
 import { useRouter } from "expo-router";
 import { Platform, Pressable, Text, View } from "react-native";
 
+// Categorical accents per Discover content type — sourced from the shared
+// accent palette so the card, badge, and CTA stay in sync with the system.
+const SKY = getAccent("sky");
+const PURPLE = getAccent("purple");
+const ORANGE = getAccent("orange");
+
 export const DISCOVER_TYPE_CONFIG = {
   blog: {
-    color: "#38bdf8",
+    color: SKY.solid,
     icon: "doc.text.fill" as const,
     label: "BLOG",
     cta: "Read Article",
-    accentDim: "rgba(56, 189, 248, 0.12)",
-    accentBorder: "rgba(56, 189, 248, 0.25)",
+    accentDim: SKY.bg,
+    accentBorder: SKY.border,
     roomKickerKey: "library.readingRoomKicker" as const,
     roomTitleKey: "library.readingRoom" as const,
+    // Intentional decorative two-stop cover gradients (dark hue → near-black);
+    // not design-system surface colors, so they stay as literal palette stops.
     gradient: ["#0e2a3a", "#0b0d17"] as [string, string],
   },
   podcast: {
-    color: "#a78bfa",
+    color: PURPLE.solid,
     icon: "headphones" as const,
     label: "PODCAST",
     cta: "Listen",
-    accentDim: "rgba(167, 139, 250, 0.12)",
-    accentBorder: "rgba(167, 139, 250, 0.25)",
+    accentDim: PURPLE.bg,
+    accentBorder: PURPLE.border,
     roomKickerKey: "library.listeningBoothKicker" as const,
     roomTitleKey: "library.listeningBooth" as const,
     gradient: ["#241a3a", "#0b0d17"] as [string, string],
   },
   film: {
-    color: "#fb923c",
+    color: ORANGE.solid,
     icon: "play.circle.fill" as const,
     label: "FILM",
     cta: "Watch",
-    accentDim: "rgba(251, 146, 60, 0.12)",
-    accentBorder: "rgba(251, 146, 60, 0.25)",
+    accentDim: ORANGE.bg,
+    accentBorder: ORANGE.border,
     roomKickerKey: "library.screeningRoomKicker" as const,
     roomTitleKey: "library.screeningRoom" as const,
     gradient: ["#3a1f0e", "#0b0d17"] as [string, string],
@@ -201,7 +210,7 @@ export function DiscoverCard({ item, onStoryPress, compact = false }: DiscoverCa
                   width: 22,
                   height: 22,
                   borderRadius: 11,
-                  backgroundColor: "rgba(251, 146, 60, 0.9)",
+                  backgroundColor: ORANGE.solid,
                   alignItems: "center",
                   justifyContent: "center",
                   bottom: 4,

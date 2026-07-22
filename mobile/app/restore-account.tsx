@@ -4,6 +4,7 @@ import { apiFetch } from "@/lib/api";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { useToast } from "@/lib/hooks/use-toast";
 import { signOutForgettingAccount } from "@/lib/known-accounts";
+import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useAuth, useClerk } from "@clerk/clerk-expo";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
@@ -22,6 +23,7 @@ export default function RestoreAccountScreen() {
   const { signOut } = useClerk();
   const { getToken, userId } = useAuth();
   const { t } = useTranslation();
+  const M = useMuseumTheme();
   const [loading, setLoading] = useState(false);
   const { toast, error: toastError, dismiss: dismissToast } = useToast();
 
@@ -65,7 +67,7 @@ export default function RestoreAccountScreen() {
         onDismiss={dismissToast}
       />
       <View className="mb-6 h-16 w-16 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900">
-        <IconSymbol name="exclamationmark.triangle.fill" size={30} color="#FBBF24" />
+        <IconSymbol name="exclamationmark.triangle.fill" size={30} color={M.warning} />
       </View>
 
       <Text className="mb-3 text-center text-2xl font-bold text-neutral-900 dark:text-white">

@@ -9,8 +9,14 @@ import { Pressable, Text, TextInput, View } from "react-native";
  * On-brand two-stop gradient presets (dark → bright), tuned to read as cover
  * art on the dark content surface. "Custom" falls back to raw hex entry, so an
  * author is never boxed out of a specific colour.
+ *
+ * Intentional palette definition — these hexes are the source of truth for the
+ * cover-gradient presets, not design-system drift. Several bright stops align
+ * with `ACCENTS` in constants/accent-colors.ts (rose→pink, violet→purple,
+ * indigo, ocean→blue, sky, teal, amber), but the paired dark stops have no
+ * token equivalents, so the pairs are defined together here to stay in tune.
  */
-const GRADIENT_PRESETS: readonly (readonly [string, string])[] = [
+export const GRADIENT_PRESETS: readonly (readonly [string, string])[] = [
   ["#8B5E1F", "#C4862A"], // bronze (default)
   ["#7C2D12", "#F97316"], // ember
   ["#831843", "#EC4899"], // rose

@@ -1,5 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
+import { getAccent } from "@/constants/accent-colors";
 import { apiFetch, friendlyError } from "@/lib/api";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { type CurrentUser, useCurrentUser } from "@/lib/hooks/use-current-user";
@@ -111,10 +112,10 @@ function ReviewerProfileCard({
         className="mt-4 flex-row items-center justify-center gap-1.5 rounded-xl border border-green-300 py-2.5 active:opacity-70 dark:border-green-700"
       >
         {withdrawing ? (
-          <ActivityIndicator size="small" color="#16a34a" />
+          <ActivityIndicator size="small" color={M.success} />
         ) : (
           <>
-            <IconSymbol name="xmark.circle" size={15} color="#15803d" />
+            <IconSymbol name="xmark.circle" size={15} color={M.success} />
             <Text className="text-sm font-semibold text-green-700 dark:text-green-300">
               {t("reviewerApplication.withdrawApplication")}
             </Text>
@@ -153,7 +154,7 @@ function PendingCard({
           <ActivityIndicator size="small" color={M.warning} />
         ) : (
           <>
-            <IconSymbol name="xmark.circle" size={15} color="#d97706" />
+            <IconSymbol name="xmark.circle" size={15} color={M.warning} />
             <Text className="text-sm font-semibold text-amber-700 dark:text-amber-300">
               {t("reviewerApplication.cancelApplication")}
             </Text>
@@ -509,7 +510,7 @@ function ApplicationForm({
           className="mb-2 flex-row items-center gap-2 rounded-xl border-2 border-dashed border-indigo-300 p-3 active:opacity-70 dark:border-indigo-700"
         >
           <View className="h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-900">
-            <IconSymbol name="plus.circle" size={18} color="#6366f1" />
+            <IconSymbol name="plus.circle" size={18} color={getAccent("indigo").solid} />
           </View>
           <Text className="flex-1 text-sm font-medium text-indigo-700 dark:text-indigo-300">
             {t("reviewerApplication.langAddCustom", { name: customLangName })}

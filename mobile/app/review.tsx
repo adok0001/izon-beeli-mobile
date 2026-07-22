@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
 import { friendlyError } from "@/lib/api";
 import { CATEGORY_LABELS, type DictionaryCategory } from "@/lib/dictionary";
 import {
@@ -181,7 +182,7 @@ function ContributionCard({
                   <IconSymbol
                     name={isPlaying ? "pause.fill" : "play.fill"}
                     size={18}
-                    color={isPlaying ? "white" : "#f97316"}
+                    color={isPlaying ? "white" : getAccent("orange").solid}
                   />
                 </Pressable>
               ) : null}

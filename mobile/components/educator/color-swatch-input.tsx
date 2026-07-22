@@ -4,7 +4,10 @@ import { useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
 /** Curated quick-pick palette for cultural colour bands — warm reds, creams, and
- *  deep darks that read well as gradient stops, plus earthy and jewel tones. */
+ *  deep darks that read well as gradient stops, plus earthy and jewel tones.
+ *  Intentional palette definition (content data, not UI chrome): these hexes are
+ *  authored colour-band stops with no equivalents in the Museum tokens or the
+ *  accent/course palettes, so they are deliberately defined here. */
 export const BAND_SWATCHES = [
   "#B5462F", "#7E2C1B", "#C4862A", "#E08A1E", "#8B5E3C", "#6B4423",
   "#F7F2E8", "#EDE3CE", "#FFFFFF", "#2F5D3A", "#4B7A52", "#1E3A5F",
