@@ -576,6 +576,7 @@ export default function FeedScreen() {
                 backgroundColor: `${M.accent}15`,
                 borderWidth: 1, borderColor: `${M.accent}30`,
               }}
+              hitSlop={4}
               accessibilityRole="button"
               accessibilityLabel={t("leaderboard.title")}
             >
@@ -591,6 +592,7 @@ export default function FeedScreen() {
                 backgroundColor: "rgba(96, 165, 250, 0.15)",
                 borderWidth: 1, borderColor: "rgba(96, 165, 250, 0.3)",
               }}
+              hitSlop={4}
               accessibilityRole="button"
               accessibilityLabel="Record audio contribution"
             >
@@ -604,6 +606,7 @@ export default function FeedScreen() {
                 backgroundColor: `${M.accent}20`,
                 borderWidth: 1, borderColor: `${M.accent}40`,
               }}
+              hitSlop={4}
               accessibilityRole="button"
               accessibilityLabel="Create new post"
             >

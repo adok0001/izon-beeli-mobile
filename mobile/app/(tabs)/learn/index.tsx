@@ -158,6 +158,7 @@ export default function LearnScreen() {
             <Pressable
               onPress={() => router.push("/dictionary")}
               style={{ width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: M.accentGlow, borderWidth: 1, borderColor: M.accentBorder }}
+              hitSlop={4}
               accessibilityRole="button"
               accessibilityLabel={t("profile.dictionary")}
               className="active:opacity-70"
