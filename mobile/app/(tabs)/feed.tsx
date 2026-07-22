@@ -1,3 +1,5 @@
+import type { TranslationKey } from "@/lib/locales";
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 import { FeedbackModal } from "@/components/feedback-modal";
 import { LikeButton } from "@/components/feed/like-button";
 import { SignInPrompt, useRequireAuth } from "@/components/sign-in-prompt";
@@ -14,6 +16,7 @@ import {
 } from "@/lib/hooks/use-feed";
 import i18n from "@/lib/i18n";
 import { localize } from "@/lib/localize";
+import { timeAgo } from "@/lib/time-ago";
 import { useAudioStore } from "@/store/audio-store";
 import { useFeedLikesStore } from "@/store/feed-likes-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
@@ -41,21 +44,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 
-function timeAgo(dateStr: string): string {
-  const now = Date.now();
-  const then = new Date(dateStr).getTime();
-  const diffMs = now - then;
-  const diffMins = Math.floor(diffMs / 60000);
-  if (diffMins < 1) return i18n.t("time.justNow");
-  if (diffMins < 60) return i18n.t("time.minutesAgo", { count: diffMins });
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return i18n.t("time.hoursAgo", { count: diffHours });
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays < 7) return i18n.t("time.daysAgo", { count: diffDays });
-  return new Date(dateStr).toLocaleDateString(i18n.language, { month: "short", day: "numeric" });
-}
-
-function useTypeConfig(M: ReturnType<typeof useMuseumTheme>): Record<FeedItem["type"], { icon: string; color: string; label: string }> {
+function useTypeConfig(M: ReturnType<typeof useMuseumTheme>): Record<FeedItem["type"], { icon: IconSymbolName; color: string; label: TranslationKey }> {
   return {
     lesson_completed: { icon: "checkmark.circle.fill", color: M.success, label: "feed.typeLesson" },
     achievement: { icon: "trophy.fill", color: "#C4862A", label: "feed.typeAchievement" },
@@ -128,7 +117,7 @@ function CommentsModal({
   visible: boolean;
   feedItemId: string | null;
   onClose: () => void;
-  requireAuth: (action: () => void, descriptionKey?: string) => void;
+  requireAuth: (action: () => void, descriptionKey?: TranslationKey) => void;
 }>) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
@@ -324,7 +313,7 @@ function FeedCard({
 }: Readonly<{
   item: FeedItem;
   onOpenComments: (id: string) => void;
-  requireAuth: (action: () => void, descriptionKey?: string) => void;
+  requireAuth: (action: () => void, descriptionKey?: TranslationKey) => void;
 }>) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
@@ -367,32 +356,49 @@ function FeedCard({
     >
       {/* Header */}
       <View style={{ flexDirection: "row", alignItems: "center", padding: 14, paddingBottom: 10 }}>
-        {item.profileAvatarId ? (
-          <AvatarCircle avatarId={item.profileAvatarId} size={36} />
-        ) : item.userAvatarUrl ? (
-          <Image
-            source={{ uri: item.userAvatarUrl }}
-            style={{ width: 36, height: 36, borderRadius: 18 }}
-            accessibilityLabel={item.userName}
-          />
-        ) : (
-          <View
-            style={{
-              width: 36, height: 36, borderRadius: 18,
-              alignItems: "center", justifyContent: "center",
-              backgroundColor: `${config.color}15`,
-              borderWidth: 1, borderColor: `${config.color}30`,
-            }}
-          >
-            <Text style={{ fontSize: 13, fontWeight: "800", color: config.color }}>
-              {item.userName.charAt(0)}
-            </Text>
+        {/* Optimistic items have no userId yet, so the author isn't tappable until posted. */}
+        <Pressable
+          onPress={item.userId ? () => router.push(`/user/${item.userId}`) : undefined}
+          disabled={!item.userId}
+          accessibilityRole={item.userId ? "button" : undefined}
+          accessibilityLabel={
+            item.userId ? t("feed.viewProfile", { userName: item.userName }) : undefined
+          }
+          hitSlop={6}
+          style={({ pressed }) => ({
+            flexDirection: "row",
+            alignItems: "center",
+            flex: 1,
+            opacity: pressed && item.userId ? 0.6 : 1,
+          })}
+        >
+          {item.profileAvatarId ? (
+            <AvatarCircle avatarId={item.profileAvatarId} size={36} />
+          ) : item.userAvatarUrl ? (
+            <Image
+              source={{ uri: item.userAvatarUrl }}
+              style={{ width: 36, height: 36, borderRadius: 18 }}
+              accessibilityLabel={item.userName}
+            />
+          ) : (
+            <View
+              style={{
+                width: 36, height: 36, borderRadius: 18,
+                alignItems: "center", justifyContent: "center",
+                backgroundColor: `${config.color}15`,
+                borderWidth: 1, borderColor: `${config.color}30`,
+              }}
+            >
+              <Text style={{ fontSize: 13, fontWeight: "800", color: config.color }}>
+                {item.userName.charAt(0)}
+              </Text>
+            </View>
+          )}
+          <View style={{ marginLeft: 10, flex: 1 }}>
+            <Text style={{ fontSize: 13, fontWeight: "700", color: M.text }}>{item.userName}</Text>
+            <Text style={{ fontSize: 10, color: M.muted }}>{timeAgo(item.createdAt)}</Text>
           </View>
-        )}
-        <View style={{ marginLeft: 10, flex: 1 }}>
-          <Text style={{ fontSize: 13, fontWeight: "700", color: M.text }}>{item.userName}</Text>
-          <Text style={{ fontSize: 10, color: M.muted }}>{timeAgo(item.createdAt)}</Text>
-        </View>
+        </Pressable>
         <View
           style={{
             flexDirection: "row", alignItems: "center", gap: 4,
@@ -400,9 +406,9 @@ function FeedCard({
             backgroundColor: `${config.color}15`,
           }}
         >
-          <IconSymbol name={config.icon as any} size={10} color={config.color} />
+          <IconSymbol name={config.icon} size={10} color={config.color} />
           <Text style={{ fontSize: 9, fontWeight: "700", letterSpacing: 1, color: config.color }}>
-            {t(config.label as any).toUpperCase()}
+            {t(config.label).toUpperCase()}
           </Text>
         </View>
       </View>
@@ -528,7 +534,7 @@ function FeedbackBanner({ onPress }: Readonly<{ onPress: () => void }>) {
   );
 }
 
-const FILTER_OPTIONS: { id: FeedTypeFilter; label: string }[] = [
+const FILTER_OPTIONS: { id: FeedTypeFilter; label: TranslationKey }[] = [
   { id: "all", label: "feed.filterAll" },
   { id: "achievement", label: "feed.filterAchievements" },
   { id: "contribution", label: "feed.filterContributions" },
@@ -628,7 +634,7 @@ export default function FeedScreen() {
                 borderColor: activeFilter === opt.id ? M.accent : M.border,
               }}
               accessibilityRole="button"
-              accessibilityLabel={t(opt.label as any)}
+              accessibilityLabel={t(opt.label)}
               accessibilityState={{ selected: activeFilter === opt.id }}
             >
               <Text
@@ -637,7 +643,7 @@ export default function FeedScreen() {
                   color: activeFilter === opt.id ? M.ink : M.sub,
                 }}
               >
-                {t(opt.label as any)}
+                {t(opt.label)}
               </Text>
             </Pressable>
           ))}

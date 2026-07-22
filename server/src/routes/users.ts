@@ -1,5 +1,5 @@
 import { createClerkClient, verifyToken } from "@clerk/backend";
-import { and, asc, count, desc, eq, inArray, isNotNull, isNull, lt } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
 import { Hono } from "hono";
 import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
@@ -34,6 +34,8 @@ const clerkClient = createClerkClient({
   secretKey: process.env.CLERK_SECRET_KEY!,
 });
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const usersRouter = new Hono<AuthEnv>();
 
 // GET /api/users/leaderboard - public top 100 by points
@@ -66,6 +68,66 @@ usersRouter.get("/leaderboard", async (c) => {
   }));
 
   return c.json(result);
+});
+
+// GET /api/users/:id/public - public profile card for another user.
+// No auth: every field here is already public via /leaderboard and /contributors.
+// Deliberately omits email, Clerk id, role flags and notification settings.
+usersRouter.get("/:id/public", async (c) => {
+  const id = c.req.param("id");
+  if (!UUID_RE.test(id)) return c.json({ error: "Invalid user id" }, 400);
+
+  const [user] = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      avatarUrl: users.avatarUrl,
+      profileAvatarId: users.profileAvatarId,
+      points: users.points,
+      streak: users.streak,
+      selectedLanguageId: users.selectedLanguageId,
+      createdAt: users.createdAt,
+    })
+    .from(users)
+    // Soft-deleted accounts are not browsable.
+    .where(and(eq(users.id, id), isNull(users.deletedAt)))
+    .limit(1);
+
+  if (!user) return c.json({ error: "User not found" }, 404);
+
+  const [[approvedRow], [aheadRow]] = await Promise.all([
+    db
+      .select({ count: count(contributions.id) })
+      .from(contributions)
+      .where(and(eq(contributions.userId, id), eq(contributions.status, "approved"))),
+    // Rank mirrors /leaderboard's ordering: points desc, then earlier signup wins ties.
+    db
+      .select({ count: count(users.id) })
+      .from(users)
+      .where(
+        and(
+          isNull(users.deletedAt),
+          isNotNull(users.name),
+          or(
+            gt(users.points, user.points),
+            and(eq(users.points, user.points), lt(users.createdAt, user.createdAt)),
+          ),
+        ),
+      ),
+  ]);
+
+  return c.json({
+    id: user.id,
+    name: user.name,
+    avatarUrl: user.avatarUrl ?? null,
+    profileAvatarId: user.profileAvatarId ?? null,
+    points: user.points ?? 0,
+    streak: user.streak ?? 0,
+    selectedLanguageId: user.selectedLanguageId ?? null,
+    approvedCount: Number(approvedRow?.count ?? 0),
+    rank: Number(aheadRow?.count ?? 0) + 1,
+    joinedAt: user.createdAt.toISOString(),
+  });
 });
 
 // POST /api/users/sync - sync Clerk profile on app open (called before other auth routes)

@@ -9,9 +9,9 @@ import {
   type ContributorProfile,
 } from "@/lib/hooks/use-contributors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { FlatList, Text, View } from "react-native";
+import { FlatList, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function BadgePill({ badge }: { badge: ContributorBadgeType }) {
@@ -19,7 +19,7 @@ function BadgePill({ badge }: { badge: ContributorBadgeType }) {
   const info = BADGE_LABELS[badge];
   return (
     <View className="mr-1.5 flex-row items-center rounded-full bg-amber-50 px-2 py-0.5 dark:bg-amber-900/30">
-      <IconSymbol name={info.icon as any} size={10} color={M.warning} />
+      <IconSymbol name={info.icon} size={10} color={M.warning} />
       <Text className="ml-1 text-xs text-amber-700 dark:text-amber-400">
         {info.label}
       </Text>
@@ -36,11 +36,17 @@ function ContributorRow({
 }) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
+  const router = useRouter();
   const medalColor =
     rank === 1 ? getAccent("amber").solid : rank === 2 ? M.muted : rank === 3 ? "#cd7f32" : undefined;
 
   return (
-    <View className="mb-2 rounded-xl bg-neutral-50 p-4 dark:bg-neutral-800">
+    <Pressable
+      onPress={() => router.push(`/user/${contributor.id}`)}
+      accessibilityRole="button"
+      className="mb-2 rounded-xl bg-neutral-50 p-4 dark:bg-neutral-800"
+      style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+    >
       <View className="flex-row items-center">
         <View
           className="mr-3 h-10 w-10 items-center justify-center rounded-full"
@@ -73,7 +79,7 @@ function ContributorRow({
           ))}
         </View>
       )}
-    </View>
+    </Pressable>
   );
 }
 

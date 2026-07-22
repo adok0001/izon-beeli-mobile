@@ -10,6 +10,8 @@ import { Alert } from "react-native";
 interface FeedItemResponse {
   id: string;
   type: FeedItem["type"];
+  /** Author's internal user id. Absent on optimistic (not-yet-posted) items. */
+  userId?: string | null;
   title: string;
   titleFr?: string | null;
   description: string;
@@ -49,6 +51,25 @@ export function useFeed(typeFilter?: FeedTypeFilter) {
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     enabled: !!isSignedIn || isGuest,
+  });
+}
+
+/** A single author's posts, for the public profile screen. */
+export function useUserFeed(userId: string | null | undefined) {
+  const { getToken, isSignedIn } = useAuth();
+  const isGuest = useGuestStore((s) => s.isGuest);
+
+  return useInfiniteQuery<FeedPage>({
+    queryKey: ["feed", "by-user", userId],
+    queryFn: async ({ pageParam }) => {
+      const token = isSignedIn ? await getToken() : undefined;
+      const params = new URLSearchParams({ limit: "20", userId: userId! });
+      if (pageParam) params.set("cursor", pageParam as string);
+      return apiFetch<FeedPage>(`/feed?${params}`, { token: token ?? undefined });
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    enabled: (!!isSignedIn || isGuest) && !!userId,
   });
 }
 

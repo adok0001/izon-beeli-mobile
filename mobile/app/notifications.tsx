@@ -1,3 +1,4 @@
+import { isIconSymbolName, type IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 import { View, Text, FlatList, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
@@ -7,24 +8,13 @@ import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useNotificationStore } from "@/store/notification-store";
 import type { InAppNotification, NotificationType } from "@/types";
 import { useTranslation } from "react-i18next";
-import i18n from "@/lib/i18n";
-
-function timeAgo(dateStr: string): string {
-  const diffMs = Date.now() - new Date(dateStr).getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  if (diffMins < 1) return i18n.t("time.justNow");
-  if (diffMins < 60) return i18n.t("time.minutesAgo", { count: diffMins });
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return i18n.t("time.hoursAgo", { count: diffHours });
-  const diffDays = Math.floor(diffHours / 24);
-  return i18n.t("time.daysAgo", { count: diffDays });
-}
+import { timeAgo } from "@/lib/time-ago";
 
 function NotificationRow({ item }: { item: InAppNotification }) {
   const M = useMuseumTheme();
   const markRead = useNotificationStore((s) => s.markRead);
 
-  const TYPE_CONFIG: Record<NotificationType, { icon: string; color: string }> = {
+  const TYPE_CONFIG: Record<NotificationType, { icon: IconSymbolName; color: string }> = {
     word_of_day: { icon: "star.fill", color: getAccent("blue").solid },
     proverb_of_month: { icon: "quote.opening", color: "#C4862A" },
     song_of_week: { icon: "music.note", color: M.success },
@@ -36,7 +26,10 @@ function NotificationRow({ item }: { item: InAppNotification }) {
   };
 
   const config = TYPE_CONFIG[item.type] ?? { icon: "bell.fill", color: M.muted };
-  const iconName = (item.icon ?? config.icon) as any;
+  // item.icon is server-supplied, so it can name a symbol we can't render —
+  // fall back to the type's own icon rather than showing a blank circle.
+  const iconName =
+    item.icon && isIconSymbolName(item.icon) ? item.icon : config.icon;
 
   return (
     <Pressable
@@ -58,7 +51,7 @@ function NotificationRow({ item }: { item: InAppNotification }) {
             )}
           </View>
           <Text style={{ marginTop: 2, fontSize: 13, color: M.sub }}>{item.body}</Text>
-          <Text style={{ marginTop: 4, fontSize: 11, color: M.muted }}>{timeAgo(item.createdAt)}</Text>
+          <Text style={{ marginTop: 4, fontSize: 11, color: M.muted }}>{timeAgo(item.createdAt, { alwaysRelative: true })}</Text>
         </View>
       </View>
     </Pressable>

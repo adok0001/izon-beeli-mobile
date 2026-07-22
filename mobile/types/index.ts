@@ -188,6 +188,8 @@ export interface JournalEntry {
 export interface Comment {
   id: string;
   feedItemId: string;
+  /** Author's internal user id. Absent on optimistic (not-yet-posted) comments. */
+  userId?: string | null;
   userName: string;
   text: string;
   createdAt: string;
@@ -196,6 +198,8 @@ export interface Comment {
 export interface FeedItem {
   id: string;
   type: "lesson_completed" | "achievement" | "contribution" | "community";
+  /** Author's internal user id. Absent on optimistic (not-yet-posted) items. */
+  userId?: string | null;
   title: string | LocalizedText;
   /** @deprecated Use `title` as LocalizedText */
   titleFr?: string | null;

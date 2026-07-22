@@ -71,12 +71,18 @@ function RankBadge({ rank }: Readonly<{ rank: number }>) {
 
 function EntryRow({ entry }: Readonly<{ entry: LeaderboardEntry }>) {
   const M = useMuseumTheme();
+  const router = useRouter();
   const highlighted = entry.isCurrentUser;
   const avatarColor = highlighted ? M.accent : M.sub;
 
   return (
-    <View
-      style={{
+    <Pressable
+      // Your own row goes to the profile tab; everyone else to their public page.
+      onPress={() =>
+        highlighted ? router.push("/(tabs)/profile") : router.push(`/user/${entry.id}`)
+      }
+      accessibilityRole="button"
+      style={({ pressed }) => ({
         flexDirection: "row", alignItems: "center", gap: 12,
         paddingHorizontal: 14, paddingVertical: 12,
         borderRadius: 14, marginBottom: 8,
@@ -85,7 +91,8 @@ function EntryRow({ entry }: Readonly<{ entry: LeaderboardEntry }>) {
         borderColor: highlighted ? `${M.accent}35` : M.border,
         borderLeftWidth: highlighted ? 4 : 1,
         borderLeftColor: highlighted ? M.accent : M.border,
-      }}
+        opacity: pressed ? 0.7 : 1,
+      })}
     >
       <RankBadge rank={entry.rank} />
       <Avatar name={entry.name} avatarUrl={entry.avatarUrl} profileAvatarId={entry.profileAvatarId} color={avatarColor} />
@@ -131,7 +138,7 @@ function EntryRow({ entry }: Readonly<{ entry: LeaderboardEntry }>) {
           </Text>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 

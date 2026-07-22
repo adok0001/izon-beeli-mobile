@@ -9,6 +9,8 @@ import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
 
 const VALID_FEED_TYPES = ["lesson_completed", "achievement", "contribution", "community"] as const;
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 // Public read-only feed router (no auth required)
 export const feedPublicRouter = new Hono();
 
@@ -17,6 +19,7 @@ export const feedPublicRouter = new Hono();
 feedPublicRouter.get("/", async (c) => {
   const cursor = c.req.query("cursor");
   const typeFilter = c.req.query("type");
+  const authorFilter = c.req.query("userId");
   const rawLimit = parseInt(c.req.query("limit") ?? "20");
   const limit = Math.min(Number.isNaN(rawLimit) ? 20 : rawLimit, 50);
 
@@ -31,6 +34,15 @@ feedPublicRouter.get("/", async (c) => {
   if (typeFilter && (VALID_FEED_TYPES as readonly string[]).includes(typeFilter)) {
     conditions.push(eq(feedItems.type, typeFilter as (typeof VALID_FEED_TYPES)[number]));
   }
+  // Used by the public profile screen to list a single author's posts.
+  // Validate the shape first — user_id is a uuid column, so a malformed value
+  // would make Postgres raise rather than return an empty page.
+  if (authorFilter) {
+    if (!UUID_RE.test(authorFilter)) {
+      return c.json({ error: "Invalid userId" }, 400);
+    }
+    conditions.push(eq(feedItems.userId, authorFilter));
+  }
 
   const feedAuthors = alias(users, "feed_authors");
 
@@ -38,6 +50,7 @@ feedPublicRouter.get("/", async (c) => {
     .select({
       id: feedItems.id,
       type: feedItems.type,
+      userId: feedItems.userId,
       title: feedItems.title,
       titleFr: feedItems.titleFr,
       description: feedItems.description,
@@ -99,6 +112,7 @@ feedPublicRouter.get("/", async (c) => {
   const result = page.map((item) => ({
     id: item.id,
     type: item.type,
+    userId: item.userId,
     title: item.title,
     titleFr: item.titleFr ?? null,
     description: item.description,
@@ -135,6 +149,7 @@ feedPublicRouter.get("/:id/comments", async (c) => {
     result.map((r) => ({
       id: r.id,
       feedItemId: r.feedItemId,
+      userId: r.userId,
       userName: r.userName,
       text: r.text,
       createdAt: r.createdAt.toISOString(),
