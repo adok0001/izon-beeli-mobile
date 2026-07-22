@@ -94,7 +94,7 @@ function gatherDictionaryPool(
     word: e.word,
     english: localize(e.english, "en"),
     category: e.category,
-    audioSource: (e as any).audioUrl,
+    audioSource: e.audioUrl,
     example: e.example,
     exampleTranslation: localize(e.exampleTranslation, "en") || undefined,
     exampleAudioUrl: e.exampleAudioUrl ?? undefined,
@@ -274,7 +274,7 @@ function makeSentenceTranslate(
     prompt,
     correctAnswer: englishSentence,
     options: shuffle([englishSentence, ...distractors]),
-    exampleAudioUrl: (template as any).exampleAudioUrl ?? undefined,
+    exampleAudioUrl: template.exampleAudioUrl,
   };
 }
 

@@ -336,8 +336,8 @@ export function useUseFreeze() {
       hapticHeavy();
       queryClient.invalidateQueries({ queryKey: ["progress", "summary"] });
     },
-    onError: (err: any) => {
-      Alert.alert("Error", err?.message ?? "Could not use freeze.");
+    onError: (err) => {
+      Alert.alert("Error", err.message || "Could not use freeze.");
     },
   });
 }

@@ -61,6 +61,18 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Pulls the `{ error: "..." }` message out of an API error response body,
+ * falling back when the body is missing, malformed, or not our shape.
+ */
+export function extractApiErrorMessage(body: unknown, fallback: string): string {
+  if (typeof body === "object" && body !== null && "error" in body) {
+    const { error } = body as { error: unknown };
+    if (typeof error === "string") return error;
+  }
+  return fallback;
+}
+
 export function isNetworkError(err: unknown): boolean {
   return err instanceof Error && err.message === "Network request failed";
 }
@@ -101,8 +113,10 @@ export async function apiFetch<T>(
     } catch {
       body = undefined;
     }
-    const message =
-      (body as any)?.error ?? `API error ${res.status}: ${res.statusText}`;
+    const message = extractApiErrorMessage(
+      body,
+      `API error ${res.status}: ${res.statusText}`
+    );
     throw new ApiError(res.status, message, body);
   }
 
@@ -137,8 +151,10 @@ export async function apiFetchMultipart<T>(
     } catch {
       body = undefined;
     }
-    const message =
-      (body as any)?.error ?? `API error ${res.status}: ${res.statusText}`;
+    const message = extractApiErrorMessage(
+      body,
+      `API error ${res.status}: ${res.statusText}`
+    );
     throw new ApiError(res.status, message, body);
   }
 

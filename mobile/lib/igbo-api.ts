@@ -1,4 +1,4 @@
-import { ApiError } from "./api";
+import { ApiError, extractApiErrorMessage } from "./api";
 
 const IGBO_API_BASE = "https://igboapi.com/api/v1";
 
@@ -13,7 +13,7 @@ async function igboFetch<T>(path: string): Promise<T> {
   if (!res.ok) {
     let body: unknown;
     try { body = await res.json(); } catch { body = undefined; }
-    const message = (body as any)?.error ?? `Igbo API error ${res.status}`;
+    const message = extractApiErrorMessage(body, `Igbo API error ${res.status}`);
     throw new ApiError(res.status, message, body);
   }
   return res.json() as Promise<T>;

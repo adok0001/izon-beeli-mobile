@@ -77,8 +77,8 @@ export function ReviewerApplicationModal({ visible, onClose }: ReviewerApplicati
         t("reviewerApplication.successMessage"),
         [{ text: t("common.done"), onPress: handleClose }]
       );
-    } catch (err: any) {
-      const msg = err?.message?.includes("pending")
+    } catch (err) {
+      const msg = err instanceof Error && err.message.includes("pending")
         ? t("reviewerApplication.alreadyPending")
         : t("reviewerApplication.failedMessage");
       Alert.alert(t("reviewerApplication.failedTitle"), msg);

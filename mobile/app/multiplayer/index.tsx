@@ -132,8 +132,11 @@ export default function MultiplayerHubScreen() {
           languageId: selectedLanguageId,
         },
       });
-    } catch (err: any) {
-      toastError(t("multiplayer.sessionError"), err?.message ?? t("multiplayer.failedCreateSession"));
+    } catch (err) {
+      toastError(
+        t("multiplayer.sessionError"),
+        err instanceof Error && err.message ? err.message : t("multiplayer.failedCreateSession")
+      );
     }
   };
 
@@ -166,8 +169,11 @@ export default function MultiplayerHubScreen() {
           },
         });
       }
-    } catch (err: any) {
-      toastError(t("multiplayer.matchmakingError"), err?.message ?? t("multiplayer.failedJoinMatchmaking"));
+    } catch (err) {
+      toastError(
+        t("multiplayer.matchmakingError"),
+        err instanceof Error && err.message ? err.message : t("multiplayer.failedJoinMatchmaking")
+      );
     }
   };
 

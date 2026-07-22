@@ -1,21 +1,13 @@
 import { create } from "zustand";
-import type { QuizQuestion, MultiplayerPhase } from "@/types";
+import type {
+  MultiplayerChatMessage as ChatMessage,
+  MultiplayerMessage,
+  MultiplayerPhase,
+  MultiplayerPlayerInfo as PlayerInfo,
+  QuizQuestion,
+} from "@/types";
 
 type ConnectionStatus = "disconnected" | "connecting" | "connected" | "reconnecting";
-
-interface PlayerInfo {
-  id: string;
-  name: string;
-  ready?: boolean;
-}
-
-interface ChatMessage {
-  id: string;
-  playerId: string;
-  playerName: string;
-  text: string;
-  timestamp: number;
-}
 
 interface MultiplayerState {
   // Connection
@@ -257,8 +249,16 @@ async function _openSocket(
 
   ws.onmessage = (event) => {
     try {
-      const msg = JSON.parse(event.data);
-      handleMessage(msg, set, get);
+      const parsed: unknown = JSON.parse(String(event.data));
+      // Minimal shape check before narrowing into the protocol union: every
+      // valid server message is an object with a string `type` discriminant.
+      if (
+        typeof parsed === "object" &&
+        parsed !== null &&
+        typeof (parsed as { type?: unknown }).type === "string"
+      ) {
+        handleMessage(parsed as MultiplayerMessage, set, get);
+      }
     } catch {
       // ignore parse errors
     }
@@ -268,7 +268,7 @@ async function _openSocket(
 }
 
 function handleMessage(
-  msg: any,
+  msg: MultiplayerMessage,
   set: (state: Partial<MultiplayerState>) => void,
   get: () => MultiplayerState
 ) {

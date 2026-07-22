@@ -311,6 +311,8 @@ export interface SentenceTemplate {
   kind?: "blank" | "equivalent";
   /** Literal word-for-word gloss (for idioms/equivalents) */
   literalTranslation?: string | LocalizedText | null;
+  /** Audio recording of the full sentence, when available */
+  exampleAudioUrl?: string;
 }
 
 export interface ScenarioTurn {
@@ -594,10 +596,185 @@ export interface GameSessionPlayer {
   finishedAt: string | null;
 }
 
-export interface MultiplayerMessage {
-  type: string;
-  [key: string]: any;
+/** A player as seen in lobby/session messages. */
+export interface MultiplayerPlayerInfo {
+  id: string;
+  name: string;
+  ready?: boolean;
 }
+
+/** Per-player results payload for game_over / lesson_complete. */
+export interface MultiplayerResultPlayer {
+  id: string;
+  name: string;
+  score: number;
+  correctAnswers: number;
+  totalAnswers: number;
+}
+
+/** A chat message broadcast within a paired-lesson session. */
+export interface MultiplayerChatMessage {
+  id: string;
+  playerId: string;
+  playerName: string;
+  text: string;
+  timestamp: number;
+}
+
+// Server → client message protocol (PartyKit room). One interface per `type`,
+// unioned into MultiplayerMessage so handlers can switch-narrow on `type`.
+export interface MpSessionInfoMessage {
+  type: "session_info";
+  sessionId: string;
+  playerId: string;
+}
+
+export interface MpPlayerJoinedMessage {
+  type: "player_joined";
+  player: MultiplayerPlayerInfo;
+}
+
+export interface MpPlayerLeftMessage {
+  type: "player_left";
+  playerId: string;
+}
+
+export interface MpWaitingForReadyMessage {
+  type: "waiting_for_ready";
+  players: MultiplayerPlayerInfo[];
+}
+
+export interface MpCountdownMessage {
+  type: "countdown";
+  seconds: number;
+}
+
+export interface MpQuestionMessage {
+  type: "question";
+  question: QuizQuestion;
+  index: number;
+  total: number;
+}
+
+export interface MpOpponentAnsweredMessage {
+  type: "opponent_answered";
+}
+
+export interface MpAnswerResultMessage {
+  type: "answer_result";
+  correct: boolean;
+  correctAnswer: string;
+  myScore: number;
+  opponentScore: number;
+}
+
+export interface MpGameOverMessage {
+  type: "game_over";
+  winner: string | null;
+  players: MultiplayerResultPlayer[];
+}
+
+export interface MpLessonStartedMessage {
+  type: "lesson_started";
+}
+
+export interface MpYourTurnMessage {
+  type: "your_turn";
+  exercise: QuizQuestion;
+  index: number;
+  total: number;
+  currentTurnPlayer: string;
+}
+
+export interface MpPartnerTurnMessage {
+  type: "partner_turn";
+  exercise: QuizQuestion;
+  index: number;
+  total: number;
+  currentTurnPlayer: string;
+}
+
+export interface MpPartnerAnsweredMessage {
+  type: "partner_answered";
+  correct: boolean;
+  correctAnswer: string;
+}
+
+export interface MpLessonCompleteMessage {
+  type: "lesson_complete";
+  players: MultiplayerResultPlayer[];
+}
+
+export interface MpPartnerRematchMessage {
+  type: "partner_rematch";
+}
+
+export interface MpRematchStartingMessage {
+  type: "rematch_starting";
+}
+
+export interface MpReactionMessage {
+  type: "reaction";
+  emoji?: string;
+  playerId?: string;
+}
+
+export interface MpChatBroadcastMessage {
+  type: "chat";
+  message: MultiplayerChatMessage;
+}
+
+export interface MpChatHistoryMessage {
+  type: "chat_history";
+  messages: MultiplayerChatMessage[];
+}
+
+export interface MpPlayerDisconnectedMessage {
+  type: "player_disconnected";
+}
+
+export interface MpPlayerReconnectedMessage {
+  type: "player_reconnected";
+}
+
+export interface MpOpponentForfeitedMessage {
+  type: "opponent_forfeited";
+}
+
+export interface MpPartnerForfeitedMessage {
+  type: "partner_forfeited";
+}
+
+export interface MpErrorMessage {
+  type: "error";
+  message: string;
+}
+
+export type MultiplayerMessage =
+  | MpSessionInfoMessage
+  | MpPlayerJoinedMessage
+  | MpPlayerLeftMessage
+  | MpWaitingForReadyMessage
+  | MpCountdownMessage
+  | MpQuestionMessage
+  | MpOpponentAnsweredMessage
+  | MpAnswerResultMessage
+  | MpGameOverMessage
+  | MpLessonStartedMessage
+  | MpYourTurnMessage
+  | MpPartnerTurnMessage
+  | MpPartnerAnsweredMessage
+  | MpLessonCompleteMessage
+  | MpPartnerRematchMessage
+  | MpRematchStartingMessage
+  | MpReactionMessage
+  | MpChatBroadcastMessage
+  | MpChatHistoryMessage
+  | MpPlayerDisconnectedMessage
+  | MpPlayerReconnectedMessage
+  | MpOpponentForfeitedMessage
+  | MpPartnerForfeitedMessage
+  | MpErrorMessage;
 
 export type MultiplayerPhase =
   | "lobby"
