@@ -130,7 +130,7 @@ export default function DailyContentAdminScreen() {
   // ---- Content lists ----
   const { data: dictEntries = [] } = useDictionary(languageId);
   const { data: proverbsList = [] } = useProverbs(languageId);
-  const { data: songsList = [] } = useQuery<{ id: string; title: string; artist: string | null; genre: string | null }[]>({
+  const { data: songsList = [] } = useQuery<{ id: string; title: string | LocalizedText; artist: string | null; genre: string | null }[]>({
     queryKey: ["songs", languageId],
     queryFn: () => apiFetch(`/lessons?languageId=${encodeURIComponent(languageId)}&type=song`),
     enabled: !!languageId,
@@ -147,7 +147,7 @@ export default function DailyContentAdminScreen() {
     [proverbsList, q]
   );
   const filteredSongs = useMemo(() =>
-    songsList.filter((s) => s.title.toLowerCase().includes(q) || (s.artist ?? "").toLowerCase().includes(q)),
+    songsList.filter((s) => localize(s.title, "en").toLowerCase().includes(q) || (s.artist ?? "").toLowerCase().includes(q)),
     [songsList, q]
   );
 
@@ -621,7 +621,7 @@ export default function DailyContentAdminScreen() {
                     style={isSelected ? selectedRow : plainRow}
                   >
                     <View className="flex-1 mr-3">
-                      <Text className="text-sm font-semibold" style={{ color: M.text }}>{song.title}</Text>
+                      <Text className="text-sm font-semibold" style={{ color: M.text }}>{localize(song.title, "en")}</Text>
                       {song.artist && (
                         <Text className="text-xs mt-0.5" style={{ color: M.sub }}>{song.artist}</Text>
                       )}
