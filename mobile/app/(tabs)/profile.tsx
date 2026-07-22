@@ -461,6 +461,7 @@ export default function ProfileScreen() {
           <SectionLabel label={t("settings.learning")} />
           <MenuRow icon="chart.bar.fill" label={t("profile.progressDashboard")} onPress={() => router.push("/dashboard")} />
           <MenuRow icon="book.fill" label={t("profile.learning")} detail={getLanguageName(selectedLanguageId)} onPress={() => router.push("/(tabs)/learn")} />
+          <MenuRow icon="pencil.and.list.clipboard" label={t("tabs.journal")} onPress={() => router.push("/journal")} />
           <MenuRow
             icon="target"
             label={t("profile.dailyGoal")}
