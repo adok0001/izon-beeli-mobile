@@ -1,3 +1,4 @@
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 import { analytics } from "@/lib/analytics";
 import { localize } from "@/lib/localize";
 import { WordAudioButton } from "@/components/dictionary/word-audio-button";
@@ -30,7 +31,7 @@ import { canAccessEducatorPanel, useCurrentUser } from "@/lib/hooks/use-current-
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { useIgboSearch } from "@/lib/hooks/use-igbo-search";
 import { useRecentlyViewed } from "@/lib/hooks/use-recently-viewed";
-import { useRemoveWord, useSaveWord, useWordBank } from "@/lib/hooks/use-wordbank";
+import { useRemoveWord, useSaveExternalWord, useSaveWord, useWordBank } from "@/lib/hooks/use-wordbank";
 import { useDictionaryNavStore } from "@/store/dictionary-nav-store";
 import { useLanguageStore } from "@/store/language-store";
 import { Stack, useRouter } from "expo-router";
@@ -74,7 +75,7 @@ function CategoryCard({
   count,
   onPress,
 }: {
-  icon: string;
+  icon: IconSymbolName;
   title: string;
   count: number;
   onPress: () => void;
@@ -112,7 +113,7 @@ function CategoryCard({
           borderColor: M.accentBorder,
         }}
       >
-        <IconSymbol name={icon as any} size={20} color={M.accent} />
+        <IconSymbol name={icon} size={20} color={M.accent} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={{ fontSize: 16, fontWeight: "700", color: M.text }}>{title}</Text>
@@ -148,17 +149,22 @@ function LandingSectionHeader({ title }: { title: string }) {
 function DictWordRow({
   entry,
   saved,
+  savePending,
   onToggle,
   onPress,
 }: {
   entry: DictionaryEntry;
   saved: boolean;
+  /** External entries are adopted server-side on save, so the star can be in flight. */
+  savePending: boolean;
   onToggle: () => void;
   onPress: () => void;
 }) {
   const M = useMuseumTheme();
+  const { t } = useTranslation();
   const pos = derivePos(entry);
   const level = deriveLevel(entry);
+  const isExternal = !!entry.externalSource;
   const definition = ((): string => {
     const eng = localize(entry.english, "en");
     return eng.includes(";") ? eng.split(";").map((m) => m.trim()).filter(Boolean).join(" · ") : eng;
@@ -166,7 +172,11 @@ function DictWordRow({
 
   return (
     <Pressable
-      onPress={onPress}
+      // External entries have a synthetic id that /word/[id] can't resolve, so
+      // the row is inert — everything the API gives us is already shown here.
+      onPress={isExternal ? undefined : onPress}
+      disabled={isExternal}
+      accessibilityHint={isExternal ? t("dictionaryPage.externalEntryHint") : undefined}
       style={{ borderBottomWidth: 1, borderBottomColor: M.border, backgroundColor: M.card, paddingHorizontal: 20, paddingVertical: 14 }}
       className="active:opacity-80"
     >
@@ -178,6 +188,13 @@ function DictWordRow({
             <View style={{ borderRadius: 6, backgroundColor: M.accentGlow, borderWidth: 1, borderColor: M.accentBorder, paddingHorizontal: 6, paddingVertical: 1 }}>
               <Text style={{ fontSize: 10, fontWeight: "800", color: M.accent }}>{level}</Text>
             </View>
+            {isExternal ? (
+              <View style={{ borderRadius: 6, backgroundColor: M.infoBg, borderWidth: 1, borderColor: M.infoBorder, paddingHorizontal: 6, paddingVertical: 1 }}>
+                <Text style={{ fontSize: 10, fontWeight: "800", color: M.info }}>
+                  {t("dictionaryPage.externalSourceBadge")}
+                </Text>
+              </View>
+            ) : null}
           </View>
           {entry.pronunciation && !entry.pronunciation.startsWith("http") ? (
             <Text style={{ marginTop: 2, fontSize: 12, fontStyle: "italic", color: M.muted }}>/{entry.pronunciation}/</Text>
@@ -196,8 +213,18 @@ function DictWordRow({
         </View>
         <View style={{ alignItems: "center", gap: 8 }}>
           <WordAudioButton audioSource={entry.audioUrl} word={entry.word} />
-          <Pressable onPress={onToggle} hitSlop={10} accessibilityRole="button" accessibilityLabel="Toggle save">
-            <IconSymbol name={saved ? "star.fill" : "star"} size={22} color={saved ? M.accent : M.border} />
+          <Pressable
+            onPress={onToggle}
+            disabled={savePending}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel="Toggle save"
+          >
+            {savePending ? (
+              <ActivityIndicator size="small" color={M.accent} />
+            ) : (
+              <IconSymbol name={saved ? "star.fill" : "star"} size={22} color={saved ? M.accent : M.border} />
+            )}
           </Pressable>
         </View>
       </View>
@@ -219,6 +246,7 @@ export default function DictionaryScreen() {
   const { data: localEntries = [], isLoading, refetch } = useDictionary(selectedLanguageId);
   const { data: savedIds } = useWordBank();
   const saveWord = useSaveWord();
+  const saveExternalWord = useSaveExternalWord();
   const removeWord = useRemoveWord();
   const recentIds = useRecentlyViewed();
   const setNavContext = useDictionaryNavStore((s) => s.setContext);
@@ -300,22 +328,41 @@ export default function DictionaryScreen() {
   }, []);
 
   const handleToggle = useCallback(
-    (entryId: string) => {
+    (entry: DictionaryEntry) => {
+      const entryId = entry.id;
       if (savedSet.has(entryId)) {
         removeWord.mutate(entryId);
+        return;
+      }
+      if (entry.externalSource === "igbo-api") {
+        // Not in our dictionary yet — the server adopts the word (as in_review)
+        // and saves the resulting real entry id, so SRS and /word/[id] both work.
+        saveExternalWord.mutate({
+          source: "igbo-api",
+          externalId: entryId.replace(/^igbo-api-/, ""),
+        });
       } else {
         saveWord.mutate(entryId);
-        analytics.wordSaved(entryId, selectedLanguageId);
       }
+      analytics.wordSaved(entryId, selectedLanguageId);
     },
-    [savedSet, removeWord, saveWord, selectedLanguageId]
+    [savedSet, removeWord, saveWord, saveExternalWord, selectedLanguageId]
   );
 
   // Filtered + alphabetized entries for the drilldown list.
-  const { sections, listIds } = useMemo(() => {
-    if (!filter) return { sections: [] as AlphaSection[], listIds: [] as string[] };
+  const { sections, listIds, resultCount } = useMemo(() => {
+    if (!filter) return { sections: [] as AlphaSection[], listIds: [] as string[], resultCount: 0 };
     const filtered = allEntries.filter((e) => matches(e, filter));
-    const searched = query.trim() ? searchDictionary(query, filtered) : filtered;
+    // External entries are only in `allEntries` because the upstream API already
+    // matched them against this exact query — and it matches on diacritics and
+    // definitions in ways our literal substring search does not (searching "nno"
+    // returns "ètù"). Running them through searchDictionary would discard them.
+    const searched = query.trim()
+      ? [
+          ...searchDictionary(query, filtered.filter((e) => !e.externalSource)),
+          ...filtered.filter((e) => e.externalSource),
+        ]
+      : filtered;
     const byLetter = new Map<string, DictionaryEntry[]>();
     for (const e of searched) {
       const letter = (e.word[0] ?? "#").toUpperCase();
@@ -329,11 +376,20 @@ export default function DictionaryScreen() {
         title: letter,
         data: byLetter.get(letter)!.sort((a, b) => a.word.localeCompare(b.word)),
       }));
-    return { sections: out, listIds: searched.map((e) => e.id) };
+    return {
+      sections: out,
+      // External entries are excluded from the nav context only: it drives
+      // prev/next paging on /word/[id], which can't resolve their synthetic ids.
+      listIds: searched.filter((e) => !e.externalSource).map((e) => e.id),
+      // ...but they do count towards what the user sees listed.
+      resultCount: searched.length,
+    };
   }, [filter, allEntries, matches, query]);
 
   const handleWordPress = useCallback(
     (item: DictionaryEntry) => {
+      // Belt-and-braces: the row already disables press for external entries.
+      if (item.externalSource) return;
       setNavContext(listIds, item.id, item.languageId);
       router.push({ pathname: "/word/[id]", params: { id: item.id, languageId: item.languageId } });
     },
@@ -342,11 +398,13 @@ export default function DictionaryScreen() {
 
   // ── Landing ────────────────────────────────────────────────────────────────
   if (!filter) {
-    const quickAccess: { filter: Filter; icon: string }[] = [
+    const quickAccess: { filter: Filter; icon: IconSymbolName }[] = [
       { filter: { kind: "all" }, icon: "book.fill" },
       { filter: { kind: "saved" }, icon: "star.fill" },
       { filter: { kind: "history" }, icon: "clock" },
-      ...(isEducator && count({ kind: "needs_audio" }) > 0 ? [{ filter: { kind: "needs_audio" } as Filter, icon: "mic.fill" }] : []),
+      ...(isEducator && count({ kind: "needs_audio" }) > 0
+        ? [{ filter: { kind: "needs_audio" } as Filter, icon: "mic.fill" as IconSymbolName }]
+        : []),
     ];
     const topics = TOPIC_ORDER.map((topic) => ({ filter: { kind: "topic", topic } as Filter, icon: TOPIC_ICONS[topic] })).filter(
       (x) => count(x.filter) > 0
@@ -354,10 +412,10 @@ export default function DictionaryScreen() {
     const domains = DOMAIN_ORDER.map((domain) => ({ filter: { kind: "domain", domain } as Filter, icon: DOMAIN_ICONS[domain] })).filter(
       (x) => count(x.filter) > 0
     );
-    const partsOfSpeech = POS_ORDER.map((pos) => ({ filter: { kind: "pos", pos } as Filter, icon: "list.bullet" })).filter(
+    const partsOfSpeech = POS_ORDER.map((pos) => ({ filter: { kind: "pos", pos } as Filter, icon: "list.bullet" as IconSymbolName })).filter(
       (x) => count(x.filter) > 0
     );
-    const levels = LEVEL_ORDER.map((level) => ({ filter: { kind: "level", level } as Filter, icon: "graduationcap.fill" })).filter(
+    const levels = LEVEL_ORDER.map((level) => ({ filter: { kind: "level", level } as Filter, icon: "graduationcap.fill" as IconSymbolName })).filter(
       (x) => count(x.filter) > 0
     );
 
@@ -424,7 +482,7 @@ export default function DictionaryScreen() {
               <Text style={{ fontSize: 15, fontWeight: "600", color: M.accent }}>{t("dictionaryPage.browse.back")}</Text>
             </Pressable>
             <View style={{ flex: 1 }} />
-            <Text style={{ fontSize: 13, color: M.muted }}>{t("dictionaryPage.browse.countWords", { count: listIds.length })}</Text>
+            <Text style={{ fontSize: 13, color: M.muted }}>{t("dictionaryPage.browse.countWords", { count: resultCount })}</Text>
           </View>
 
           {/* Search */}
@@ -461,7 +519,13 @@ export default function DictionaryScreen() {
               </View>
             )}
             renderItem={({ item }) => (
-              <DictWordRow entry={item} saved={savedSet.has(item.id)} onToggle={() => handleToggle(item.id)} onPress={() => handleWordPress(item)} />
+              <DictWordRow
+                entry={item}
+                saved={savedSet.has(item.id)}
+                savePending={saveExternalWord.isPending && saveExternalWord.variables?.externalId === item.id.replace(/^igbo-api-/, "")}
+                onToggle={() => handleToggle(item)}
+                onPress={() => handleWordPress(item)}
+              />
             )}
             ListEmptyComponent={
               <View style={{ alignItems: "center", paddingHorizontal: 32, paddingVertical: 64 }}>

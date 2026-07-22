@@ -9,6 +9,7 @@ import { bountiesAdminRouter, bountiesRouter } from "./routes/bounties.js";
 import { classroomRouter } from "./routes/classroom.js";
 import { contributionsPublicRouter, contributionsRouter } from "./routes/contributions.js";
 import { contributorsRouter } from "./routes/contributors.js";
+import { igboRouter } from "./routes/igbo.js";
 import { coursesRouter } from "./routes/courses.js";
 import { culturalAdminRouter, culturalRouter } from "./routes/cultural.js";
 import { dailyChallengesRouter, dailyChallengeTemplatesAdminRouter } from "./routes/daily-challenges.js";
@@ -134,6 +135,7 @@ app.route("/daily-content", dailyContentRouter);
 app.route("/activities", activitiesRouter);
 app.route("/partners", partnersRouter);
 app.route("/public/stats", publicStatsRouter);
+app.route("/igbo", igboRouter); // proxies igboapi.com so the token stays server-side
 app.get("/health", (c) => c.json({ status: "ok" }));
 
 // Authenticated routes

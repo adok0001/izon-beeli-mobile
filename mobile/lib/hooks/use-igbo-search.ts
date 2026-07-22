@@ -2,24 +2,30 @@ import { useQuery } from "@tanstack/react-query";
 import { adaptIgboWord, searchIgboWords } from "@/lib/igbo-api";
 import type { DictionaryEntry } from "@/lib/dictionary";
 
-// Maps Igbo API word class strings to the closest DictionaryCategory.
-// Unmapped classes fall back to "nouns".
 const WORD_CLASS_TO_CATEGORY: Record<string, DictionaryEntry["category"]> = {
-  NNC: "nouns",
+  // Verified against live API payloads. Unmapped classes fall back to "nouns".
+  NNC: "nouns",          // noun, common
   NNO: "nouns",
   NNO2: "nouns",
-  PRN: "pronouns",
+  NM: "nouns",           // proper name, e.g. Nwabụ̄ēzè
+  ND: "adjectives",      // noun descriptor, e.g. nnukwu "large"
+  ADJ: "adjectives",
+  ADV: "adjectives",     // no adverb category; descriptors is the closest fit
+  AV: "verbs",           // active verb, e.g. riju "to eat to fill"
+  AVM: "verbs",
+  MV: "verbs",           // main verb, e.g. bù ibù "be big"
+  PV: "verbs",           // phrasal verb, e.g. jì ụkwụ "trek"
+  ESUF: "verbs",         // extensional suffix — attaches to verbs
   VB: "verbs",
   VBD: "verbs",
   VBG: "verbs",
-  AV: "adjectives",
-  AVM: "adjectives",
-  MV: "verbs",
+  PRN: "pronouns",
+  CD: "numbers",         // cardinal, e.g. ìriàtọ nà otù "thirty one"
+  NUM: "numbers",
   "NNC Mgbe": "time",
   PREP: "phrases",
   CONJ: "phrases",
   INTJ: "greetings",
-  NUM: "numbers",
 };
 
 function toCategory(wordClass?: string): DictionaryEntry["category"] {
@@ -45,6 +51,9 @@ function adaptToEntry(igboWord: Awaited<ReturnType<typeof searchIgboWords>>[numb
     exampleTranslation: adapted.exampleTranslation,
     audioUrl: toAudioSource(adapted.audioUrl),
     nsibidi: adapted.nsibidi || undefined,
+    // Marks the entry as unreviewed third-party data. The UI attributes it and
+    // suppresses save/navigate, both of which are dead ends for a synthetic id.
+    externalSource: "igbo-api",
   };
 }
 

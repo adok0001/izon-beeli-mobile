@@ -1,64 +1,49 @@
-import { ApiError, extractApiErrorMessage } from "./api";
+import { apiFetch } from "./api";
 
-const IGBO_API_BASE = "https://igboapi.com/api/v1";
-
-function igboHeaders(): HeadersInit {
-  const token = process.env.EXPO_PUBLIC_IGBO_API_TOKEN;
-  if (!token) throw new Error("EXPO_PUBLIC_IGBO_API_TOKEN is not set");
-  return { Authorization: `Bearer ${token}` };
-}
-
+/**
+ * Igbo dictionary lookups go through our own server (`/igbo/*`), which proxies
+ * igboapi.com. The upstream token lives in the server env as IGBO_API_TOKEN —
+ * it must never come back here, since EXPO_PUBLIC_* values are inlined into the
+ * app binary at build time.
+ *
+ * The proxy accepts guests, so no auth token is passed. `apiFetch` already
+ * throws the same `ApiError` this module used to throw itself.
+ */
 async function igboFetch<T>(path: string): Promise<T> {
-  const res = await fetch(`${IGBO_API_BASE}${path}`, { headers: igboHeaders() });
-  if (!res.ok) {
-    let body: unknown;
-    try { body = await res.json(); } catch { body = undefined; }
-    const message = extractApiErrorMessage(body, `Igbo API error ${res.status}`);
-    throw new ApiError(res.status, message, body);
-  }
-  return res.json() as Promise<T>;
+  return apiFetch<T>(`/igbo${path}`);
 }
 
 // --- Types ---
 
-export interface IgboApiDefinition {
-  wordClass: string;
-  definitions: string[];
-  nsibidi: string;
-  nsibidiCharacters: string[];
-  igboDefinitions: { igbo: string; nsibidi: string }[];
-}
-
-export interface IgboApiDialect {
-  dialects: string[];
-  pronunciation: string;
-  variations: string[];
-}
-
 export interface IgboApiExample {
-  igbo: string;
-  english: string;
+  igbo?: string;
+  english?: string;
   nsibidi?: string;
-  pronunciations?: { audio: string; speaker: string }[];
+  pronunciations?: { audio?: string; speaker?: string }[] | null;
 }
 
+/**
+ * A word from igboapi.com, as the API actually returns it.
+ *
+ * Every field is optional and defensively typed on purpose — this shape is not
+ * under our control, and an unexpected payload must degrade to a thinner entry
+ * rather than throw inside a React Query `queryFn` (which would blank the whole
+ * result list). An earlier version of this type modelled `definitions` as an
+ * array of objects with nested `definitions`/`wordClass`/`nsibidi`; the API
+ * returns a flat array of strings with `wordClass` and `nsibidi` at the top
+ * level, so the adapter threw on every single lookup.
+ */
 export interface IgboApiWord {
   id: string;
   word: string;
-  definitions: IgboApiDefinition[];
-  dialects?: Record<string, IgboApiDialect>;
-  examples?: IgboApiExample[];
-  pronunciation?: string;
-  attributes?: Record<string, boolean>;
-  frequency?: number;
-}
-
-export interface IgboApiNsibidi {
-  id: string;
-  nsibidi: string;
-  definitions: string[];
-  pronunciation?: string;
+  /** Flat gloss list, e.g. ["to eat to fill; satisfied with meal"]. */
+  definitions?: string[] | null;
   wordClass?: string;
+  nsibidi?: string;
+  /** An audio URL on this API, not a phonetic transcription. */
+  pronunciation?: string;
+  examples?: IgboApiExample[] | null;
+  attributes?: Record<string, boolean>;
 }
 
 // --- Endpoints ---
@@ -68,20 +53,13 @@ export async function searchIgboWords(keyword: string): Promise<IgboApiWord[]> {
 }
 
 export async function getIgboWord(id: string): Promise<IgboApiWord> {
-  return igboFetch<IgboApiWord>(`/words/${id}`);
+  return igboFetch<IgboApiWord>(`/words/${encodeURIComponent(id)}`);
 }
 
 export async function getIgboExamples(wordId: string): Promise<IgboApiExample[]> {
-  return igboFetch<IgboApiExample[]>(`/examples?associatedWordId=${wordId}`);
-}
-
-export async function getNsibidiCharacters(keyword?: string): Promise<IgboApiNsibidi[]> {
-  const query = keyword ? `?keyword=${encodeURIComponent(keyword)}` : "";
-  return igboFetch<IgboApiNsibidi[]>(`/nsibidi${query}`);
-}
-
-export async function getNsibidiCharacter(id: string): Promise<IgboApiNsibidi> {
-  return igboFetch<IgboApiNsibidi>(`/nsibidi/${id}`);
+  return igboFetch<IgboApiExample[]>(
+    `/examples?associatedWordId=${encodeURIComponent(wordId)}`,
+  );
 }
 
 // --- Adapter ---
@@ -101,19 +79,23 @@ export interface IgboApiDictionaryShape {
 }
 
 export function adaptIgboWord(w: IgboApiWord): IgboApiDictionaryShape {
-  const def = w.definitions[0];
-  const example = w.examples?.[0];
-  const audio = example?.pronunciations?.[0]?.audio;
+  const example = w.examples?.[0] ?? undefined;
+
+  // `pronunciation` carries an audio URL rather than a transcription, so route it
+  // to audioUrl and leave the phonetic field empty instead of rendering a link.
+  const pronunciationIsAudio = !!w.pronunciation?.startsWith("http");
 
   return {
     id: `igbo-api-${w.id}`,
     word: w.word,
-    english: def?.definitions[0] ?? "",
-    nsibidi: def?.nsibidi ?? "",
-    pronunciation: w.pronunciation,
+    english: w.definitions?.filter(Boolean).join("; ") ?? "",
+    nsibidi: w.nsibidi || "",
+    pronunciation: pronunciationIsAudio ? undefined : w.pronunciation,
     example: example?.igbo,
     exampleTranslation: example?.english,
-    audioUrl: audio,
-    wordClass: def?.wordClass,
+    audioUrl:
+      example?.pronunciations?.[0]?.audio ??
+      (pronunciationIsAudio ? w.pronunciation : undefined),
+    wordClass: w.wordClass,
   };
 }

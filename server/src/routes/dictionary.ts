@@ -1,20 +1,20 @@
 import { put } from "@vercel/blob";
-import { and, asc, eq, ilike, notInArray, or, sql } from "drizzle-orm";
+import { and, asc, eq, ilike, inArray, notInArray, or, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
 import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
-import { contributions, dictionaryEntries, users } from "../db/schema.js";
+import { contributions, dictionaryEntries, users, wordBank } from "../db/schema.js";
 import { withTranslations } from "../lib/dictionary-translations.js";
 import { LexicalParseError, parseLexicalExtras } from "../lib/lexical-extras.js";
-import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
+import { adminMiddleware, authMiddleware, optionalAuthMiddleware, type AuthEnv } from "../middleware/auth.js";
 import { recordMediaAsset } from "./upload.js";
 
-export const dictionaryRouter = new Hono();
+export const dictionaryRouter = new Hono<AuthEnv>();
 
 // GET /api/dictionary?languageId=&category=&search= (all optional except languageId)
 // Merges dictionary_entries (static) + approved contributions
-dictionaryRouter.get("/", async (c) => {
+dictionaryRouter.get("/", optionalAuthMiddleware, async (c) => {
   const languageId = c.req.query("languageId");
   const category = c.req.query("category");
   const search = c.req.query("search")?.trim();
@@ -23,9 +23,27 @@ dictionaryRouter.get("/", async (c) => {
     return c.json({ error: "Valid languageId query param required" }, 400);
   }
 
+  // A signed-in caller also sees entries they personally adopted from a
+  // third-party API. Those are `in_review`, so they stay out of everyone else's
+  // dictionary, but the owner needs them resolvable for /word/[id], the "Saved"
+  // filter and their review queue.
+  const userId = c.get("userId");
+  const ownSavedIds = userId
+    ? (
+        await db
+          .select({ id: wordBank.dictionaryEntryId })
+          .from(wordBank)
+          .where(eq(wordBank.userId, userId))
+      ).map((r) => r.id)
+    : [];
+
+  const visibility = ownSavedIds.length
+    ? or(eq(dictionaryEntries.status, "published"), inArray(dictionaryEntries.id, ownSavedIds))
+    : eq(dictionaryEntries.status, "published");
+
   const entryConditions = [
     eq(dictionaryEntries.languageId, languageId),
-    eq(dictionaryEntries.status, "published"),
+    visibility,
     category ? eq(dictionaryEntries.category, category) : undefined,
     search
       ? or(

@@ -8,6 +8,7 @@ import { awardXP } from "../lib/award-xp.js";
 import { incrementDailyChallenge } from "../lib/daily-challenge.js";
 import { applySM2, RATING_QUALITY } from "../lib/sm2.js";
 import { updateStreak } from "../lib/update-streak.js";
+import { fetchAndAdaptIgboWord } from "../lib/igbo.js";
 
 export const wordbankRouter = new Hono<AuthEnv>();
 
@@ -87,6 +88,56 @@ wordbankRouter.post("/", async (c) => {
   await incrementDailyChallenge(userId, "save_words").catch(() => {});
 
   return c.json({ saved: true }, 201);
+});
+
+// POST /api/wordbank/external - save a word sourced from a third-party API.
+//
+// Search results from igboapi.com are not in dictionary_entries, so their synthetic
+// ids have nothing for the SRS join in GET /due to match — saving one directly would
+// persist a row that never surfaces for review. This adopts the word first: it is
+// upserted as `in_review`, which keeps it out of the learner-facing dictionary
+// (GET /dictionary filters status = 'published') while making it joinable, visible
+// in Studio for a reviewer, and eligible for the caller's review queue.
+//
+// The word is fetched from upstream by id rather than accepted from the client, so a
+// caller cannot inject arbitrary rows into dictionary_entries.
+wordbankRouter.post("/external", async (c) => {
+  const userId = c.get("userId");
+  const body = await parseJson<{ source?: string; externalId?: string }>(c);
+
+  if (body.source !== "igbo-api") {
+    return c.json({ error: "Unsupported source" }, 400);
+  }
+  const externalId = body.externalId?.trim();
+  if (!externalId || externalId.length > 48) {
+    return c.json({ error: "externalId is required" }, 400);
+  }
+
+  const adapted = await fetchAndAdaptIgboWord(externalId);
+  if (!adapted) {
+    return c.json({ error: "Word not found upstream" }, 404);
+  }
+
+  // Adopt on first save; never downgrade an entry a reviewer has already published.
+  await db
+    .insert(dictionaryEntries)
+    .values({ ...adapted, status: "in_review" })
+    .onConflictDoNothing({ target: dictionaryEntries.id });
+
+  const [existing] = await db
+    .select({ id: wordBank.id })
+    .from(wordBank)
+    .where(and(eq(wordBank.userId, userId), eq(wordBank.dictionaryEntryId, adapted.id)))
+    .limit(1);
+
+  if (existing) {
+    return c.json({ saved: true, alreadyExists: true, dictionaryEntryId: adapted.id });
+  }
+
+  await db.insert(wordBank).values({ userId, dictionaryEntryId: adapted.id });
+  await incrementDailyChallenge(userId, "save_words").catch(() => {});
+
+  return c.json({ saved: true, dictionaryEntryId: adapted.id }, 201);
 });
 
 // SM-2 lives in lib/sm2.ts, shared with the phrase bank so both queues age identically.

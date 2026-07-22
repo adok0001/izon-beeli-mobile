@@ -81,6 +81,46 @@ export function useSaveWord() {
   });
 }
 
+/**
+ * Saves a word that came from a third-party API search result.
+ *
+ * These aren't in Beeli's dictionary, so the server adopts the word first (as
+ * `in_review`) and then saves the resulting real entry id — see
+ * `POST /wordbank/external`. Only the upstream id is sent; the server refetches
+ * the word itself, so nothing here can inject dictionary rows.
+ *
+ * Requires a network round-trip and a signed-in user, so unlike `useSaveWord`
+ * there is no guest or offline path — the adoption has to happen server-side.
+ */
+export function useSaveExternalWord() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  const invalidateDailyChallenges = useInvalidateDailyChallenges();
+
+  return useMutation({
+    mutationFn: async (input: { source: "igbo-api"; externalId: string }) => {
+      const token = await getToken();
+      return apiFetch<{ saved: boolean; dictionaryEntryId: string }>("/wordbank/external", {
+        method: "POST",
+        token: token!,
+        body: JSON.stringify(input),
+      });
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData<string[]>(["wordbank"], (old) =>
+        old ? [...old, data.dictionaryEntryId] : [data.dictionaryEntryId]
+      );
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["wordbank"] });
+      // The adopted entry now exists, so the dictionary listing must refetch for
+      // it to resolve at /word/[id] and appear under "Saved".
+      queryClient.invalidateQueries({ queryKey: ["dictionary"] });
+      invalidateDailyChallenges();
+    },
+  });
+}
+
 export function useWordsDueForReview(languageId?: string | null) {
   const { getToken, isSignedIn } = useAuth();
 

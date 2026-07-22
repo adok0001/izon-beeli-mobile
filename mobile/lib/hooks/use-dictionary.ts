@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@clerk/clerk-expo";
 import { apiFetch, isNetworkError } from "@/lib/api";
 import type { DictionaryEntry } from "@/lib/dictionary";
 import { useIsOffline } from "@/lib/hooks/use-offline";
@@ -56,6 +57,7 @@ export function useWordLookup(languageId: string, word: string) {
 export function useDictionary(languageId: string, category?: string) {
   const isGuest = useGuestStore((s) => s.isGuest);
   const isOffline = useIsOffline();
+  const { getToken, isSignedIn } = useAuth();
 
   return useQuery<DictionaryEntry[]>({
     queryKey: ["dictionary", languageId, category ?? null],
@@ -64,7 +66,14 @@ export function useDictionary(languageId: string, category?: string) {
       const params = new URLSearchParams({ languageId });
       if (category) params.set("category", category);
       try {
-        return await apiFetch<DictionaryEntry[]>(`/dictionary?${params.toString()}`);
+        // The token is optional server-side, but sending it is what surfaces the
+        // caller's own adopted (`in_review`) entries alongside published ones.
+        // Safe to key the cache without the user id: _layout clears the whole
+        // query client whenever the signed-in identity changes.
+        const token = isSignedIn ? await getToken() : undefined;
+        return await apiFetch<DictionaryEntry[]>(`/dictionary?${params.toString()}`, {
+          token: token ?? undefined,
+        });
       } catch (err) {
         if (isNetworkError(err)) return bundledDictionary(languageId, category);
         throw err;
