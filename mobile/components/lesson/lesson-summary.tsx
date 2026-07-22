@@ -281,7 +281,7 @@ export function LessonSummary({
         </View>
 
         <Pressable
-          onPress={() => router.push("/journal")}
+          onPress={() => router.push({ pathname: "/journal", params: { lessonId: lesson.id } })}
           style={{
             flexDirection: "row", alignItems: "center", gap: 10,
             paddingHorizontal: 16, paddingVertical: 14, borderRadius: 16,

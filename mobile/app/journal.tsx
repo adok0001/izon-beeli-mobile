@@ -18,7 +18,7 @@ import {
 import i18n from "@/lib/i18n";
 import { useTourStore } from "@/store/tour-store";
 import type { JournalEntry } from "@/types";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { TextInput as TextInputType } from "react-native";
@@ -232,6 +232,7 @@ function WaveformBars({ color, active }: { color: string; active: boolean }) {
 export default function JournalScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
+  const { lessonId } = useLocalSearchParams<{ lessonId?: string }>();
   const { data: entries, isLoading, isError, refetch } = useJournal();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -313,6 +314,17 @@ export default function JournalScreen() {
     setShowModal(true);
   };
 
+  // Deep link from a lesson: arriving with ?lessonId auto-opens the composer
+  // so the reflection lands attached to that lesson.
+  const autoOpenedForLesson = useRef(false);
+  useEffect(() => {
+    if (lessonId && !autoOpenedForLesson.current) {
+      autoOpenedForLesson.current = true;
+      openNew();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lessonId]);
+
   const openEdit = useCallback(async (entry: JournalEntry) => {
     setEditingId(entry.id);
     setTitle(entry.title);
@@ -354,7 +366,7 @@ export default function JournalScreen() {
         await setRecording(TEMP_RECORDING_ID, voice.uri);
       }
       createEntry.mutate(
-        { title: title.trim(), content: content.trim(), isPublic },
+        { title: title.trim(), content: content.trim(), isPublic, ...(lessonId ? { lessonId } : {}) },
         {
           onSuccess: async ({ entry }) => {
             if (voice.uri) {
@@ -380,7 +392,9 @@ export default function JournalScreen() {
     if (dirty || hasUnsavedRecording) {
       Alert.alert(
         t("journal.discardTitle", { defaultValue: "Discard changes?" }),
-        t("journal.discardBody", { defaultValue: "Your unsaved changes will be lost." }),
+        hasUnsavedRecording
+          ? t("journal.discardRecordingBody", { defaultValue: "Your unsaved recording will be lost." })
+          : t("journal.discardBody", { defaultValue: "Your unsaved changes will be lost." }),
         [
           { text: t("common.cancel"), style: "cancel" },
           {
@@ -495,7 +509,7 @@ export default function JournalScreen() {
               </Text>
             </Pressable>
             <Text style={{ marginTop: 10, fontSize: 11, color: M.muted }}>
-              Your entries are private.
+              {t("journal.privateNotice", { defaultValue: "Your entries are private." })}
             </Text>
           </View>
         ) : (

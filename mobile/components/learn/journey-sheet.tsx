@@ -34,7 +34,7 @@ function buildProgramSteps(
       : []),
     { key: "stepQuiz" as const, onPress: go(() => router.push({ pathname: "/quiz", params: { courseId: node.courseId, lessonId: node.lessonId } })) },
     { key: "stepReview" as const, onPress: go(() => router.push({ pathname: "/word-review", params: { lessonId: node.lessonId } })) },
-    { key: "stepWriteReflection" as const, onPress: go(() => router.push("/journal" as any)) },
+    { key: "stepWriteReflection" as const, onPress: go(() => router.push({ pathname: "/journal", params: { lessonId: node.lessonId } })) },
   ];
 }
 
