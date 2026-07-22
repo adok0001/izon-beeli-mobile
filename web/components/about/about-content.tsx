@@ -4,13 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, BookOpen, Building2, Mic, Globe, Users } from "lucide-react";
 import type { PublicStats, ContentPartner } from "@/app/about/page";
-import { LANGUAGES } from "@mobile/lib/data/languages";
-
-// ── Utilities ──────────────────────────────────────────────────────────────────
-
-function getLanguageName(id: string): string {
-  return LANGUAGES.find((l) => l.id === id)?.name ?? id;
-}
+import { useLanguages } from "@/lib/hooks/use-languages";
 
 function useReveal(threshold = 0.12) {
   const ref = useRef<HTMLDivElement>(null);
@@ -90,10 +84,11 @@ function StatCard({ target, label, icon: Icon, start }: { target: number; label:
 }
 
 function LanguageMilestone({ langId, count, target, percent }: { langId: string; count: number; target: number; percent: number }) {
+  const { data: languages = [] } = useLanguages();
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-sm">
-        <span className="font-medium text-white">{getLanguageName(langId)}</span>
+        <span className="font-medium text-white">{languages.find((l) => l.id === langId)?.name ?? langId}</span>
         <span className="text-neutral-400 tabular-nums">
           {count.toLocaleString()} <span className="text-neutral-600">/ {target.toLocaleString()}</span>
         </span>
@@ -124,6 +119,7 @@ const STANDARDS = [
 
 export function AboutContent({ stats, partners }: { stats: PublicStats | null; partners: ContentPartner[] }) {
   const { ref: statsRef, visible: statsVisible } = useReveal(0.1);
+  const { data: languages = [] } = useLanguages();
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white">
@@ -252,7 +248,7 @@ export function AboutContent({ stats, partners }: { stats: PublicStats | null; p
                       <div className="flex flex-wrap gap-1 mt-3">
                         {partner.languageIds.map((lid) => (
                           <span key={lid} className="text-[10px] text-brand-400 bg-brand-950/40 border border-brand-900 px-1.5 py-0.5 rounded-full">
-                            {getLanguageName(lid)}
+                            {languages.find((l) => l.id === lid)?.name ?? lid}
                           </span>
                         ))}
                       </div>

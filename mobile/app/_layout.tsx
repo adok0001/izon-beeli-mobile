@@ -25,6 +25,7 @@ import { useGuestStore } from "@/store/guest-store";
 import { useLanguageStore } from "@/store/language-store";
 import { useLevelStore } from "@/store/level-store";
 import { useContentStore } from "@/store/content-store";
+import { useLanguagesStore } from "@/store/languages-store";
 import { useNotificationStore } from "@/store/notification-store";
 import { useOverlayStore } from "@/store/overlay-store";
 import { useThemeStore } from "@/store/theme-store";
@@ -301,6 +302,7 @@ export default function RootLayout() {
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
   const enrolledLanguageIds = useLanguageStore((s) => s.enrolledLanguageIds);
   const hydrateContent = useContentStore((s) => s.hydrate);
+  const hydrateLanguages = useLanguagesStore((s) => s.hydrate);
   const [fontsLoaded, fontError] = useFonts({
     PlusJakartaSans_700Bold,
     PlusJakartaSans_600SemiBold,
@@ -334,6 +336,7 @@ export default function RootLayout() {
     hydrateGuestProgress();
     hydrateWriteQueue();
     hydrateDownloads();
+    hydrateLanguages();
     analytics.appOpen();
   }, [
     hydrateTheme,
@@ -345,6 +348,7 @@ export default function RootLayout() {
     hydrateGuestProgress,
     hydrateWriteQueue,
     hydrateDownloads,
+    hydrateLanguages,
   ]);
 
   // Offline/guest content snapshot (dictionary, sentences, proverbs, cultural,

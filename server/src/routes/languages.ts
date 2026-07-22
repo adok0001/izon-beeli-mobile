@@ -9,12 +9,16 @@ export const languagesRouter = new Hono();
 
 // GET /api/languages
 languagesRouter.get("/", async (c) => {
-  const result = await db
-    .select()
-    .from(languages)
-    .orderBy(asc(languages.region), asc(languages.name));
+  const [result, activeCourseLanguages] = await Promise.all([
+    db.select().from(languages).orderBy(asc(languages.region), asc(languages.name)),
+    db
+      .select({ languageId: courses.languageId })
+      .from(courses)
+      .where(eq(courses.isActive, true)),
+  ]);
 
-  return c.json(result);
+  const withContent = new Set(activeCourseLanguages.map((c) => c.languageId));
+  return c.json(result.map((l) => ({ ...l, hasContent: withContent.has(l.id) })));
 });
 
 // ── Admin write routes ────────────────────────────────────────────────────────

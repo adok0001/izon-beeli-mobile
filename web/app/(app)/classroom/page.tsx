@@ -4,7 +4,7 @@ import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { useAuth } from "@clerk/nextjs";
-import { LANGUAGES } from "@mobile/lib/data/languages";
+import { useLanguages } from "@/lib/hooks/use-languages";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronRight, Copy, Loader2, Users, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -50,7 +50,8 @@ function CopyButton({ text }: Readonly<{ text: string }>) {
 
 function GroupCard({ group }: Readonly<{ group: Group }>) {
   const [expanded, setExpanded] = useState(false);
-  const langName = LANGUAGES.find((l) => l.id === group.languageId)?.name ?? group.languageId;
+  const { data: languages = [] } = useLanguages();
+  const langName = languages.find((l) => l.id === group.languageId)?.name ?? group.languageId;
 
   return (
     <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden">

@@ -242,6 +242,8 @@ export interface Language {
   nativeName: string;
   region: string;
   isActive: boolean;
+  /** Has at least one active course — the learner-facing pickers filter to these. */
+  hasContent: boolean;
 }
 
 export type ContributionType = "word" | "phrase" | "audio" | "entry_audio" | "entry_meaning";

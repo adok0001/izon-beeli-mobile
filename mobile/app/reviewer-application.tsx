@@ -6,7 +6,7 @@ import { apiFetch, friendlyError } from "@/lib/api";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { type CurrentUser, useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useToast } from "@/lib/hooks/use-toast";
-import { LANGUAGES } from "@/lib/mock-data";
+import { useLanguages } from "@/store/languages-store";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Stack, useRouter } from "expo-router";
@@ -76,6 +76,7 @@ function ReviewerProfileCard({
 }: Readonly<{ existing: ReviewerApp; currentUser: CurrentUser | null; onWithdraw: () => void; withdrawing: boolean }>) {
   const { t } = useTranslation();
   const M = useMuseumTheme();
+  const languages = useLanguages();
   const roleKey = currentUser?.reviewerRole ?? existing.role;
 
   const roleColors: Record<string, { bg: string; text: string }> = {
@@ -111,7 +112,7 @@ function ReviewerProfileCard({
           </Text>
           <View className="flex-row flex-wrap gap-1.5">
             {existing.languages.map((langId) => {
-              const lang = LANGUAGES.find((l) => l.id === langId);
+              const lang = languages.find((l) => l.id === langId);
               return (
                 <View key={langId} className="rounded-full bg-green-100 px-2.5 py-1 dark:bg-green-900">
                   <Text className="text-xs font-medium text-green-800 dark:text-green-100">
@@ -447,10 +448,11 @@ function ApplicationForm({
   const chipIconColor = isDark ? "#c7d2fe" : "#4338ca";
   const [langSearch, setLangSearch] = useState("");
   const { t } = useTranslation();
+  const languages = useLanguages();
   const [showAllLangs, setShowAllLangs] = useState(false);
   const PAGE = 8;
   const customLangName = langSearch.trim();
-  const filteredLangs = LANGUAGES.filter((lang) => {
+  const filteredLangs = languages.filter((lang) => {
     const q = langSearch.toLowerCase();
     const matchesSearch = !q || lang.name.toLowerCase().includes(q) || lang.nativeName.toLowerCase().includes(q) || lang.region.toLowerCase().includes(q);
     return matchesSearch && !selectedLangs.includes(lang.id);
@@ -458,7 +460,7 @@ function ApplicationForm({
   const isSearching = langSearch.length > 0;
   const visibleLangs = isSearching || showAllLangs ? filteredLangs : filteredLangs.slice(0, PAGE);
   const hiddenCount = filteredLangs.length - PAGE;
-  const isExactMatch = LANGUAGES.some((l) => l.name.toLowerCase() === customLangName.toLowerCase() || l.id.toLowerCase() === customLangName.toLowerCase());
+  const isExactMatch = languages.some((l) => l.name.toLowerCase() === customLangName.toLowerCase() || l.id.toLowerCase() === customLangName.toLowerCase());
 
   return (
     <View>
@@ -538,7 +540,7 @@ function ApplicationForm({
       {selectedLangs.length > 0 && (
         <View className="mb-3 flex-row flex-wrap gap-1.5">
           {selectedLangs.map((id) => {
-            const lang = LANGUAGES.find((l) => l.id === id);
+            const lang = languages.find((l) => l.id === id);
             return (
               <Pressable
                 key={id}

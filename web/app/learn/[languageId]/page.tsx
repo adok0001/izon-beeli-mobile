@@ -1,4 +1,4 @@
-import { LANGUAGES } from "@mobile/lib/data/languages";
+import { getLanguages } from "@/lib/languages";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -34,8 +34,9 @@ const LEVEL_COLOR: Record<string, string> = {
   advanced: "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400",
 };
 
-export function generateStaticParams() {
-  return LANGUAGES.map((l) => ({ languageId: l.id }));
+export async function generateStaticParams() {
+  const languages = await getLanguages();
+  return languages.map((l) => ({ languageId: l.id }));
 }
 
 export async function generateMetadata({
@@ -44,7 +45,8 @@ export async function generateMetadata({
   params: Promise<{ languageId: string }>;
 }): Promise<Metadata> {
   const { languageId } = await params;
-  const lang = LANGUAGES.find((l) => l.id === languageId);
+  const languages = await getLanguages();
+  const lang = languages.find((l) => l.id === languageId);
   if (!lang) return {};
 
   const title = `Learn ${lang.name} Online — Free Audio Lessons`;
@@ -93,7 +95,8 @@ export default async function LearnLanguagePage({
   params: Promise<{ languageId: string }>;
 }) {
   const { languageId } = await params;
-  const lang = LANGUAGES.find((l) => l.id === languageId);
+  const languages = await getLanguages();
+  const lang = languages.find((l) => l.id === languageId);
   if (!lang) notFound();
 
   const courses = await getCourses(languageId);

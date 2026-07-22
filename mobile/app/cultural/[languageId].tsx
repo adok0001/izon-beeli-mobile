@@ -3,7 +3,7 @@ import { LoadingScreen } from "@/components/loading-screen";
 import { ShareModal } from "@/components/share/share-modal";
 import { getAccent, type AccentHue } from "@/constants/accent-colors";
 import { CULTURE_CATEGORY_ICON as CATEGORY_ICON } from "@/constants/cultural-categories";
-import { LANGUAGES } from "@/lib/data/languages";
+import { useLanguages } from "@/store/languages-store";
 import { useCultural } from "@/lib/hooks/use-cultural";
 import { localize } from "@/lib/localize";
 import { toParagraphs } from "@/lib/text";
@@ -338,8 +338,9 @@ export default function CulturalScreen() {
   const { data: allContent = [], isLoading } = useCultural(languageId ?? "");
   const [selectedCategory, setSelectedCategory] = useState<CulturalCategory | null>(null);
   const [openItem, setOpenItem] = useState<CulturalContent | null>(null);
+  const languages = useLanguages();
 
-  const language = useMemo(() => LANGUAGES.find((l) => l.id === languageId), [languageId]);
+  const language = useMemo(() => languages.find((l) => l.id === languageId), [languages, languageId]);
 
   // Deep-linked straight to one entry (e.g. from a lesson's culture card) —
   // open its reader as soon as the content is in hand, once per itemId.

@@ -7,7 +7,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { BookText, CheckCircle2, Edit2, ImageIcon, Mic, Plus, Search, Trash2, Volume2, X, XCircle } from "lucide-react";
-import { LANGUAGES as LANGUAGES_DATA } from "@mobile/lib/data/languages";
+import { useLanguages } from "@/lib/hooks/use-languages";
 import { splitList, type DialectalVariant } from "@mobile/lib/dictionary";
 import Image from "next/image";
 import React, { useMemo, useState } from "react";
@@ -45,10 +45,6 @@ function appendEntryFields(fd: FormData, data: EntryForm): void {
   });
 }
 
-interface Language {
-  id: string;
-  name: string;
-}
 
 const CATEGORIES = [
   "greetings", "numbers", "family", "pronouns", "time", "verbs", "body",
@@ -406,16 +402,9 @@ export default function AdminDictionaryPage() {
     else { setSortKey(key); setSortDir("asc"); }
   };
 
-  const { data: languages = [] } = useQuery<Language[]>({
-    queryKey: ["languages"],
-    queryFn: () => apiFetch<Language[]>("/languages"),
-    staleTime: 60_000,
-  });
+  const { data: languages = [] } = useLanguages();
 
   const effectiveLanguage = selectedLanguage || languages[0]?.id || "";
-  const enrichedLanguages = languages.map(
-    (l) => LANGUAGES_DATA.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.name, region: "Other" },
-  );
 
   const { data: entries = [], isLoading } = useQuery<DictEntry[]>({
     queryKey: ["admin", "dictionary", effectiveLanguage],
@@ -540,7 +529,7 @@ export default function AdminDictionaryPage() {
         <LanguageSelector
           value={effectiveLanguage}
           onChange={(v) => { setSelectedLanguage(v); setCategoryFilter("all"); }}
-          languages={enrichedLanguages}
+          languages={languages}
           allowCustom={false}
           className="w-52"
         />

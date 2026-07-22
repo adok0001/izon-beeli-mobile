@@ -30,7 +30,8 @@ import { friendlyError } from "@/lib/api";
 import { DICTIONARY_CATEGORY_VALUES, splitList, type DialectalVariant, type DictionaryEntry } from "@/lib/dictionary";
 import { useDictionaryCoverage } from "@/lib/hooks/use-contributions";
 import { useToast } from "@/lib/hooks/use-toast";
-import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
+import { getLanguageName } from "@/lib/mock-data";
+import { useLanguages } from "@/store/languages-store";
 import { usePreviewStore } from "@/store/preview-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { Stack, useRouter } from "expo-router";
@@ -145,12 +146,13 @@ export default function EducatorDictionaryScreen() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [filterCategory, setFilterCategory] = useState<EducatorDictionaryCategory | undefined>(undefined);
   const flatListRef = useRef<FlatList>(null);
+  const languages = useLanguages();
 
   const allowedLanguages = useMemo(() => {
     if (!currentUser) return [] as string[];
-    if (currentUser.isAdmin) return LANGUAGES.map((l) => l.id);
+    if (currentUser.isAdmin) return languages.map((l) => l.id);
     return currentUser.reviewerLanguages;
-  }, [currentUser]);
+  }, [currentUser, languages]);
 
   const activeLanguageId = selectedLanguageId ?? allowedLanguages[0] ?? currentUser?.selectedLanguageId ?? "izon";
 

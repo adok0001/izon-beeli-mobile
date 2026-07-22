@@ -1,6 +1,7 @@
 "use client";
 
-import { LANGUAGES, type LanguageEntry } from "@mobile/lib/data/languages";
+import { useLanguages } from "@/lib/hooks/use-languages";
+import type { Language } from "@/types";
 import { ChevronDown, Plus, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -12,7 +13,7 @@ export interface LanguageSelectorProps {
   onChange: (value: string) => void;
   /** Restrict the list to a subset (e.g. educator's scoped languages).
    *  When omitted, the full LANGUAGES list is shown. */
-  languages?: Pick<LanguageEntry, "id" | "name" | "nativeName" | "region">[];
+  languages?: Pick<Language, "id" | "name" | "nativeName" | "region">[];
   placeholder?: string;
   /** Allow typing a name that doesn't appear in the list. Default true. */
   allowCustom?: boolean;
@@ -22,9 +23,9 @@ export interface LanguageSelectorProps {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function groupByRegion(
-  list: Pick<LanguageEntry, "id" | "name" | "nativeName" | "region">[],
-): [string, Pick<LanguageEntry, "id" | "name" | "nativeName" | "region">[]][] {
-  const map = new Map<string, Pick<LanguageEntry, "id" | "name" | "nativeName" | "region">[]>();
+  list: Pick<Language, "id" | "name" | "nativeName" | "region">[],
+): [string, Pick<Language, "id" | "name" | "nativeName" | "region">[]][] {
+  const map = new Map<string, Pick<Language, "id" | "name" | "nativeName" | "region">[]>();
   for (const lang of list) {
     const bucket = map.get(lang.region) ?? [];
     bucket.push(lang);
@@ -43,7 +44,8 @@ export function LanguageSelector({
   allowCustom = true,
   className = "",
 }: LanguageSelectorProps) {
-  const pool = languages ?? LANGUAGES;
+  const { data: allLanguages = [] } = useLanguages();
+  const pool = languages ?? allLanguages;
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -51,9 +53,9 @@ export function LanguageSelector({
 
   // Resolve the display label for the current value
   const selectedLabel = useMemo(() => {
-    const found = pool.find((l) => l.id === value) ?? LANGUAGES.find((l) => l.id === value);
+    const found = pool.find((l) => l.id === value) ?? allLanguages.find((l) => l.id === value);
     return found?.name ?? value ?? "";
-  }, [value, pool]);
+  }, [value, pool, allLanguages]);
 
   // Filter pool by search query
   const q = search.trim().toLowerCase();

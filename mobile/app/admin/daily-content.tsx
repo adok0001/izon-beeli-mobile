@@ -12,7 +12,7 @@ import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { useProverbs } from "@/lib/hooks/use-proverbs";
 import { useCurrentUser } from "@/lib/hooks/use-current-user";
-import { useLanguages } from "@/lib/hooks/use-languages";
+import { useLanguages } from "@/store/languages-store";
 import { useAuth } from "@clerk/clerk-expo";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Stack } from "expo-router";
@@ -85,7 +85,7 @@ export default function DailyContentAdminScreen() {
   const { getToken } = useAuth();
   const qc = useQueryClient();
   const { data: currentUser } = useCurrentUser();
-  const { data: languages = [] } = useLanguages();
+  const languages = useLanguages();
 
   const defaultLang = currentUser?.selectedLanguageId ?? "izon";
   const [languageId, setLanguageId] = useState(defaultLang);

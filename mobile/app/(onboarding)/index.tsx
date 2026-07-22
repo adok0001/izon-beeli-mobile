@@ -7,7 +7,7 @@ import { OptionCard } from "@/components/ui/option-card";
 import { getAccent } from "@/constants/accent-colors";
 import { ONBOARDING_KEY } from "@/lib/constants";
 import { useCompleteOnboarding } from "@/lib/hooks/use-current-user";
-import { ACTIVE_LANGUAGES } from "@/lib/mock-data";
+import { useActiveLanguages } from "@/store/languages-store";
 import { requestPushPermissionAndRegister } from "@/lib/push-notifications";
 import { MOBILE_TOUR_REGISTRY, type TourFeature } from "@/lib/tours/mobile-tour-registry";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -180,10 +180,11 @@ function LanguageStep({
   onApplyContributor,
 }: Readonly<{ selectedLangId: string; onSelect: (id: string) => void; onApplyContributor: () => void }>) {
   const { t } = useTranslation();
+  const activeLanguages = useActiveLanguages();
   return (
     <>
       <StepHeading title={t("onboarding.welcome")} subtitle={t("onboarding.whichLanguage")} />
-      <LanguagePicker value={selectedLangId} onSelect={onSelect} languages={ACTIVE_LANGUAGES} />
+      <LanguagePicker value={selectedLangId} onSelect={onSelect} languages={activeLanguages} />
       <View style={{ paddingHorizontal: 24, paddingBottom: 16, paddingTop: 8 }}>
         <Pressable
           onPress={onApplyContributor}

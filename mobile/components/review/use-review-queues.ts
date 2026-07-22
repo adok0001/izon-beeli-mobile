@@ -1,9 +1,9 @@
-import { ACTIVE_LANGUAGES } from "@/lib/data/languages";
 import {
   usePendingContributions,
   usePendingLessonContributions,
 } from "@/lib/hooks/use-contributions";
 import { useCurrentUser } from "@/lib/hooks/use-current-user";
+import { useActiveLanguages } from "@/store/languages-store";
 import { useMemo } from "react";
 
 export type ReviewTab = "words" | "lessons" | "coverage";
@@ -15,6 +15,7 @@ export type ReviewTab = "words" | "lessons" | "coverage";
  */
 export function useReviewQueues(activeTab: ReviewTab, selectedLang: string | null) {
   const { data: currentUser } = useCurrentUser();
+  const activeLanguages = useActiveLanguages();
   const isAdmin = currentUser?.isAdmin ?? false;
   const canReview = isAdmin || (currentUser?.isReviewer ?? false);
 
@@ -39,8 +40,8 @@ export function useReviewQueues(activeTab: ReviewTab, selectedLang: string | nul
   const visibleLessons = selectedLang ? scopedLessons.filter((c) => c.languageId === selectedLang) : scopedLessons;
 
   const coverageLanguages = useMemo(
-    () => (isAdmin ? ACTIVE_LANGUAGES.map((l) => l.id) : currentUser?.reviewerLanguages ?? []),
-    [isAdmin, currentUser?.reviewerLanguages],
+    () => (isAdmin ? activeLanguages.map((l) => l.id) : currentUser?.reviewerLanguages ?? []),
+    [isAdmin, currentUser?.reviewerLanguages, activeLanguages],
   );
 
   const languageIds = useMemo(() => {

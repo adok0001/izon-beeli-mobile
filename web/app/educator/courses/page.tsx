@@ -6,7 +6,7 @@ import { apiFetch } from "@/lib/api";
 import { localizeField } from "@/lib/localize";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useAuth } from "@clerk/nextjs";
-import { LANGUAGES } from "@mobile/lib/data/languages";
+import { useLanguages } from "@/lib/hooks/use-languages";
 import type { MapNodeConfig } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -568,8 +568,9 @@ export default function EducatorCoursesPage() {
 
   const languages = me?.languages ?? [];
   const effectiveLanguage = selectedLanguage || languages[0]?.id || "";
+  const { data: allLanguages = [] } = useLanguages();
   const enrichedLanguages = languages.map(
-    (l) => LANGUAGES.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.name, region: "Other" }
+    (l) => allLanguages.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.name, region: "Other" }
   );
 
   // Lesson counts per course

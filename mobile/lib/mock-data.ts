@@ -1,7 +1,10 @@
 import type { AudioSource } from "@/types";
 
-// Re-export languages + helper from single source of truth
-export { getLanguageName, LANGUAGES, ACTIVE_LANGUAGES } from "@/lib/data/languages";
+// Re-export the language name lookup from its single source of truth. `LANGUAGES`/
+// `ACTIVE_LANGUAGES` moved to `@/store/languages-store`'s `useLanguages()`/
+// `useActiveLanguages()` — render code needs them reactively now that they're
+// server-backed, not a static bundle.
+export { getLanguageName } from "@/store/languages-store";
 
 // Sound effects
 export const SFX_CORRECT = require("../public/correct.mp3");

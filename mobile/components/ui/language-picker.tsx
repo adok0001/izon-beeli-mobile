@@ -1,5 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import type { LanguageEntry } from "@/lib/data/languages";
+import type { Language } from "@/types";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -14,7 +14,7 @@ export interface LanguagePickerProps {
   onSelect: (id: string) => void;
   /** The pool to choose from — e.g. ACTIVE_LANGUAGES for onboarding, the full
    *  LANGUAGES list for contribution flows. */
-  languages: LanguageEntry[];
+  languages: Language[];
   /** Allow picking a name that isn't in the list. Default true. */
   allowCustom?: boolean;
   /** Optional heading shown above the (pinned) search field. */

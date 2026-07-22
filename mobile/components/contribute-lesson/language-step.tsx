@@ -1,5 +1,5 @@
 import { LanguagePicker } from "@/components/ui/language-picker";
-import { LANGUAGES } from "@/lib/mock-data";
+import { useLanguages } from "@/store/languages-store";
 import { useTranslation } from "react-i18next";
 
 type LanguageStepProps = Readonly<{
@@ -9,12 +9,13 @@ type LanguageStepProps = Readonly<{
 
 export function LanguageStep({ selectedLanguage, onSelect }: LanguageStepProps) {
   const { t } = useTranslation();
+  const languages = useLanguages();
 
   return (
     <LanguagePicker
       value={selectedLanguage ?? ""}
       onSelect={onSelect}
-      languages={LANGUAGES}
+      languages={languages}
       title={t("contribute.whichLanguage")}
       subtitle={t("contribute.chooseLanguageDesc")}
     />

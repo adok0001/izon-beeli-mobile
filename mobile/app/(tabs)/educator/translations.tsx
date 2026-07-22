@@ -14,7 +14,8 @@ import { StudioCard } from "@/components/studio/studio-card";
 import { StudioFilterPills } from "@/components/studio/studio-filter-pills";
 import { FormInput } from "@/components/studio/studio-form";
 import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
-import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
+import { getLanguageName } from "@/lib/mock-data";
+import { useLanguages } from "@/store/languages-store";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import { useCallback, useMemo, useState } from "react";
@@ -25,10 +26,11 @@ export default function TranslationQueueScreen() {
   const M = useMuseumTheme();
   const { user } = useStudioAccess();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
+  const languages = useLanguages();
 
   const allowedLanguages = useMemo(
-    () => (user.isAdmin ? LANGUAGES.map((l) => l.id) : user.reviewerLanguages),
-    [user]
+    () => (user.isAdmin ? languages.map((l) => l.id) : user.reviewerLanguages),
+    [user, languages]
   );
   const [selectedLanguageId, setSelectedLanguageId] = useState<string | null>(null);
   const activeLanguageId = selectedLanguageId ?? allowedLanguages[0] ?? user.selectedLanguageId ?? "izon";

@@ -7,7 +7,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImportSection } from "@/components/studio/import-panel";
 import { IMPORT_TYPES } from "@/lib/import-types";
-import { LANGUAGES } from "@mobile/lib/data/languages";
+import { useLanguages } from "@/lib/hooks/use-languages";
 import {
   Baby,
   ChevronDown,
@@ -197,8 +197,9 @@ function ProverbModal({
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setForm((f) => ({ ...f, [key]: e.target.value }));
 
+  const { data: allLanguages = [] } = useLanguages();
   const enrichedLanguages = languages.map(
-    (l) => LANGUAGES.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.nativeName, region: "Other" }
+    (l) => allLanguages.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.nativeName, region: "Other" }
   );
 
   const isValid = form.languageId.trim() && form.text.trim() && form.translation.trim() && form.meaning.trim();
@@ -328,8 +329,9 @@ function CulturalModal({
   const removeTerm = (i: number) =>
     setForm((f) => ({ ...f, keyTerms: (f.keyTerms ?? []).filter((_, idx) => idx !== i) }));
 
+  const { data: allLanguages = [] } = useLanguages();
   const enrichedLanguages = languages.map(
-    (l) => LANGUAGES.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.nativeName, region: "Other" }
+    (l) => allLanguages.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.nativeName, region: "Other" }
   );
 
   const isValid = form.languageId.trim() && form.title.trim() && form.description.trim() && form.category.trim();
@@ -460,8 +462,9 @@ export default function EducatorCulturePage() {
 
   const languages = me?.languages ?? [];
   const effectiveLanguage = selectedLanguage || languages[0]?.id || "";
+  const { data: allLanguages = [] } = useLanguages();
   const enrichedLanguages = languages.map(
-    (l) => LANGUAGES.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.name, region: "Other" }
+    (l) => allLanguages.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.name, region: "Other" }
   );
 
   const { data: proverbs = [], isLoading: proverbsLoading, isFetching: proverbsFetching } = useQuery<Proverb[]>({

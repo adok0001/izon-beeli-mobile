@@ -24,9 +24,9 @@ import { StudioCard } from "@/components/studio/studio-card";
 import { StudioFilterPills } from "@/components/studio/studio-filter-pills";
 import { FormInput, GhostButton, PrimaryButton } from "@/components/studio/studio-form";
 import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
-import { LANGUAGES } from "@/lib/mock-data";
+import { useLanguages } from "@/store/languages-store";
 import { Stack } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
@@ -80,7 +80,11 @@ export default function SentencesAdminScreen() {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const toast = useToast();
-  const [selectedLanguage, setSelectedLanguage] = useState(LANGUAGES[0]?.id ?? "");
+  const languages = useLanguages();
+  const [selectedLanguage, setSelectedLanguage] = useState("");
+  useEffect(() => {
+    if (!selectedLanguage && languages[0]) setSelectedLanguage(languages[0].id);
+  }, [languages, selectedLanguage]);
   const [tab, setTab] = useState<Tab>("sentences");
 
   // Sentences state
@@ -237,7 +241,7 @@ export default function SentencesAdminScreen() {
           {/* Language picker */}
           <View style={{ paddingHorizontal: 16, paddingVertical: 10 }}>
             <StudioFilterPills
-              options={LANGUAGES.map((lang) => ({ id: lang.id, label: lang.name }))}
+              options={languages.map((lang) => ({ id: lang.id, label: lang.name }))}
               value={selectedLanguage}
               onChange={setSelectedLanguage}
               scrollable

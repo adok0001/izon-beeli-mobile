@@ -13,7 +13,8 @@ import { EducatorCourse, useEducatorStats, useUpdateEducatorCourse } from "@/lib
 import { useToast } from "@/lib/hooks/use-toast";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
+import { getLanguageName } from "@/lib/mock-data";
+import { useLanguages } from "@/store/languages-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -95,11 +96,12 @@ export default function EducatorPanelScreen() {
     await Promise.all([refetchStats(), refetchHealth()]);
     setRefreshing(false);
   }, [refetchStats, refetchHealth]);
+  const languages = useLanguages();
 
   const allowedLanguages = useMemo(() => {
     if (!currentUser) return [] as string[];
-    return currentUser.isAdmin ? LANGUAGES.map((l) => l.id) : currentUser.reviewerLanguages;
-  }, [currentUser]);
+    return currentUser.isAdmin ? languages.map((l) => l.id) : currentUser.reviewerLanguages;
+  }, [currentUser, languages]);
   const activeLanguageId =
     selectedLanguageId ?? allowedLanguages[0] ?? currentUser?.selectedLanguageId ?? "izon";
 

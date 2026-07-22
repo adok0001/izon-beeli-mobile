@@ -1,9 +1,10 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { fonts } from "@/constants/typography";
-import { ACTIVE_LANGUAGES, getLanguageName } from "@/lib/mock-data";
-import { getLanguageRegionKey, getRegionKey, type LanguageEntry } from "@/lib/data/languages";
+import { getLanguageName } from "@/lib/mock-data";
+import { getLanguageRegionKey, getRegionKey, useActiveLanguages } from "@/store/languages-store";
 import { MUSEUM, bronze, useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
+import type { Language } from "@/types";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -20,11 +21,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 interface Section {
   title: string;
-  data: LanguageEntry[];
+  data: Language[];
 }
 
-function groupByRegion(languages: LanguageEntry[]): Section[] {
-  const map = new Map<string, LanguageEntry[]>();
+function groupByRegion(languages: Language[]): Section[] {
+  const map = new Map<string, Language[]>();
   for (const lang of languages) {
     const existing = map.get(lang.region) ?? [];
     existing.push(lang);
@@ -129,7 +130,8 @@ export function LanguageExhibitCard() {
   const M = useMuseumTheme();
   const [visible, setVisible] = useState(false);
   const { selectedLanguageId, setLanguage } = useLanguageStore();
-  const lang = ACTIVE_LANGUAGES.find((l) => l.id === selectedLanguageId);
+  const activeLanguages = useActiveLanguages();
+  const lang = activeLanguages.find((l) => l.id === selectedLanguageId);
   const displayName = lang?.name ?? selectedLanguageId;
   const detail = [lang?.nativeName, lang?.region].filter(Boolean).join(" · ");
 
@@ -192,7 +194,7 @@ export function LanguagePickerModal({
   onSelect,
   onClose,
   allowedIds,
-  pool = ACTIVE_LANGUAGES,
+  pool,
 }: Readonly<{
   visible: boolean;
   selectedId: string;
@@ -201,18 +203,20 @@ export function LanguagePickerModal({
   allowedIds?: string[];
   /** Languages to choose from. Learning UI keeps the default (languages with
       real content); Studio passes the full authoring set. */
-  pool?: LanguageEntry[];
+  pool?: Language[];
 }>) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
+  const activeLanguages = useActiveLanguages();
+  const languagePool = pool ?? activeLanguages;
 
   const sections = useMemo(() => {
     const query = search.trim().toLowerCase();
     const base =
       allowedIds && allowedIds.length > 0
-        ? pool.filter((l) => allowedIds.includes(l.id))
-        : pool;
+        ? languagePool.filter((l) => allowedIds.includes(l.id))
+        : languagePool;
     const filtered = query
       ? base.filter(
           (l) =>
@@ -222,7 +226,7 @@ export function LanguagePickerModal({
         )
       : base;
     return groupByRegion(filtered);
-  }, [search, allowedIds, pool]);
+  }, [search, allowedIds, languagePool]);
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">

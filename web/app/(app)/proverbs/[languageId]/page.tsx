@@ -4,7 +4,7 @@ import { apiFetch } from "@/lib/api";
 import { localizeField } from "@/lib/localize";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Proverb } from "@/types";
-import { LANGUAGES } from "@mobile/lib/data/languages";
+import { useLanguages } from "@/lib/hooks/use-languages";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronLeft, ChevronUp, Quote, Search } from "lucide-react";
 import Link from "next/link";
@@ -82,6 +82,7 @@ export default function ProverbsPage() {
   const { t } = useTranslation();
   const { languageId } = useParams<{ languageId: string }>();
   const [query, setQuery] = useState("");
+  const { data: languages = [] } = useLanguages();
 
   const { data: proverbs = [], isLoading } = useQuery<Proverb[]>({
     queryKey: ["proverbs", languageId],
@@ -90,7 +91,7 @@ export default function ProverbsPage() {
   });
 
   const languageTitle =
-    LANGUAGES.find((l) => l.id === languageId)?.name ??
+    languages.find((l) => l.id === languageId)?.name ??
     ((languageId ?? "").charAt(0).toUpperCase() + (languageId ?? "").slice(1));
 
   const filtered = query.trim()

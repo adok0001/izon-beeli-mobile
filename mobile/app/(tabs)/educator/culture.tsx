@@ -26,7 +26,8 @@ import {
   useUpsertCulturalItem,
 } from "@/lib/hooks/use-educator-panel";
 import { useToast } from "@/lib/hooks/use-toast";
-import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
+import { getLanguageName } from "@/lib/mock-data";
+import { useLanguages } from "@/store/languages-store";
 import { Stack } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -137,6 +138,7 @@ export default function EducatorCultureScreen() {
   const { user: currentUser, canAccess } = useStudioAccess();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
   const flatListRef = useRef<FlatList>(null);
+  const languages = useLanguages();
 
   const [selectedLanguageId, setSelectedLanguageId] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
@@ -147,7 +149,7 @@ export default function EducatorCultureScreen() {
   useUnsavedGuard(culturalFormOpen);
 
   const allowedLanguages = currentUser?.isAdmin
-    ? LANGUAGES.map((l) => l.id)
+    ? languages.map((l) => l.id)
     : (currentUser?.reviewerLanguages ?? []);
 
   const activeLanguageId =

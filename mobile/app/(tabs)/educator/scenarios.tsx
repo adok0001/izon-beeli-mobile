@@ -27,7 +27,8 @@ import {
 } from "@/lib/hooks/educator/use-scenarios";
 import { useToast } from "@/lib/hooks/use-toast";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
-import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
+import { getLanguageName } from "@/lib/mock-data";
+import { useLanguages } from "@/store/languages-store";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import type { LocalizedText } from "@/types";
@@ -51,10 +52,11 @@ export default function ScenariosScreen() {
   const { t } = useTranslation();
   const { user } = useStudioAccess();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
+  const languages = useLanguages();
 
   const allowedLanguages = useMemo(
-    () => (user.isAdmin ? LANGUAGES.map((l) => l.id) : user.reviewerLanguages),
-    [user]
+    () => (user.isAdmin ? languages.map((l) => l.id) : user.reviewerLanguages),
+    [user, languages]
   );
   const [selectedLanguageId, setSelectedLanguageId] = useState<string | null>(null);
   const activeLanguageId = selectedLanguageId ?? allowedLanguages[0] ?? user.selectedLanguageId ?? "izon";

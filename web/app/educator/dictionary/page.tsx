@@ -15,7 +15,7 @@ import {
 } from "@/lib/content-workflow";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
-import { LANGUAGES } from "@mobile/lib/data/languages";
+import { useLanguages } from "@/lib/hooks/use-languages";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, BookText, CheckCircle2, ChevronDown, Edit2, Eye, FileJson, ImageIcon, Mic, Plus, Search, Send, Trash2, Volume2, X, XCircle } from "lucide-react";
 import Image from "next/image";
@@ -127,8 +127,9 @@ function EntryModal({
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
       setForm((f) => ({ ...f, [key]: e.target.value }));
 
+  const { data: allLanguages = [] } = useLanguages();
   const enrichedLanguages = languages.map(
-    (l) => LANGUAGES.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.nativeName, region: "Other" },
+    (l) => allLanguages.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.nativeName, region: "Other" },
   );
 
   const isValid = form.word.trim() && form.translations.en?.trim() && form.languageId.trim();
@@ -418,8 +419,9 @@ export default function EducatorDictionaryPage() {
 
   const languages = me?.languages ?? [];
   const effectiveLanguage = selectedLanguage || languages[0]?.id || "";
+  const { data: allLanguages = [] } = useLanguages();
   const enrichedLanguages = languages.map(
-    (l) => LANGUAGES.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.name, region: "Other" },
+    (l) => allLanguages.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.name, region: "Other" },
   );
 
   const { data: entries = [], isLoading } = useQuery<DictEntry[]>({

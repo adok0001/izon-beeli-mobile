@@ -17,7 +17,7 @@ import { Stack, useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LanguagePicker } from "@/components/ui/language-picker";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
-import { LANGUAGES } from "@/lib/mock-data";
+import { useLanguages } from "@/store/languages-store";
 import { ALL_CATEGORIES, CATEGORY_LABELS, type DictionaryCategory } from "@/lib/dictionary";
 import { useBulkSubmitContribution, type BulkContributionEntry } from "@/lib/hooks/use-contributions";
 import { useToast } from "@/lib/hooks/use-toast";
@@ -39,6 +39,7 @@ export default function ContributeBulkScreen() {
   const router = useRouter();
   const submitBulk = useBulkSubmitContribution();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
+  const languages = useLanguages();
 
   const [step, setStep] = useState<Step>("language");
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
@@ -121,7 +122,7 @@ export default function ContributeBulkScreen() {
 
   const steps: Step[] = ["language", "category", "entries"];
   const stepIndex = steps.indexOf(step);
-  const languageName = LANGUAGES.find((l) => l.id === selectedLanguage)?.name ?? "";
+  const languageName = languages.find((l) => l.id === selectedLanguage)?.name ?? "";
 
   return (
     <>
@@ -157,7 +158,7 @@ export default function ContributeBulkScreen() {
                 setSelectedLanguage(id);
                 setStep("category");
               }}
-              languages={LANGUAGES}
+              languages={languages}
               title={t("contribute.selectLanguage")}
               subtitle={t("contribute.allEntriesLanguageDesc")}
             />

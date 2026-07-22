@@ -6,7 +6,7 @@ import { StudioCard } from "@/components/studio/studio-card";
 import { StudioFilterPills } from "@/components/studio/studio-filter-pills";
 import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import { apiFetch } from "@/lib/api";
-import { useLanguages } from "@/lib/hooks/use-languages";
+import { useLanguages } from "@/store/languages-store";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { getAccent } from "@/constants/accent-colors";
 import { useAuth } from "@clerk/clerk-expo";
@@ -38,7 +38,7 @@ export default function BroadcastScreen() {
   const { t } = useTranslation();
   const M = useMuseumTheme();
   const { getToken } = useAuth();
-  const { data: languages = [] } = useLanguages();
+  const languages = useLanguages();
 
   type Audience = "all" | "admins" | "educators";
 

@@ -19,7 +19,8 @@ import {
   useUpsertEtymology,
 } from "@/lib/hooks/use-educator-panel";
 import { useToast } from "@/lib/hooks/use-toast";
-import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
+import { getLanguageName } from "@/lib/mock-data";
+import { useLanguages } from "@/store/languages-store";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import type { EtymologyEntry, EtymologyNode, LocalizedText } from "@/types";
@@ -131,6 +132,7 @@ export default function EducatorEtymologyScreen() {
   const { user: currentUser, canAccess } = useStudioAccess();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
   const flatListRef = useRef<FlatList>(null);
+  const languages = useLanguages();
 
   const [selectedLanguageId, setSelectedLanguageId] = useState<string | undefined>(undefined);
   const [langPickerVisible, setLangPickerVisible] = useState(false);
@@ -142,7 +144,7 @@ export default function EducatorEtymologyScreen() {
   useUnsavedGuard(formOpen);
 
   const allowedLanguages = currentUser?.isAdmin
-    ? LANGUAGES.map((l) => l.id)
+    ? languages.map((l) => l.id)
     : (currentUser?.reviewerLanguages ?? []);
 
   const activeLanguageId =

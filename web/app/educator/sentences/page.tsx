@@ -4,7 +4,7 @@ import { LanguageSelector } from "@/components/ui/language-selector";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
-import { LANGUAGES } from "@mobile/lib/data/languages";
+import { useLanguages } from "@/lib/hooks/use-languages";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImportSection } from "@/components/studio/import-panel";
 import { IMPORT_TYPES } from "@/lib/import-types";
@@ -117,8 +117,9 @@ function SentenceModal({
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
       setForm((f) => ({ ...f, [key]: e.target.value }));
 
+  const { data: allLanguages = [] } = useLanguages();
   const enrichedLanguages = languages.map(
-    (l) => LANGUAGES.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.nativeName, region: "Other" }
+    (l) => allLanguages.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.nativeName, region: "Other" }
   );
 
   const answerInSentence =
@@ -296,8 +297,9 @@ export default function EducatorSentencesPage() {
 
   const languages = me?.languages ?? [];
   const effectiveLanguage = selectedLanguage || languages[0]?.id || "";
+  const { data: allLanguages = [] } = useLanguages();
   const enrichedLanguages = languages.map(
-    (l) => LANGUAGES.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.name, region: "Other" }
+    (l) => allLanguages.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.name, region: "Other" }
   );
 
   const { data: rows = [], isLoading } = useQuery<SentenceRow[]>({

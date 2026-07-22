@@ -3,7 +3,7 @@
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
-import { LANGUAGES } from "@mobile/lib/data/languages";
+import { useLanguages } from "@/lib/hooks/use-languages";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, CheckCircle2, ChevronLeft, Clock, ExternalLink, Loader2, Plus, Search, X, XCircle } from "lucide-react";
 import { useState } from "react";
@@ -195,12 +195,13 @@ function ReviewerForm({
   error: string | null; pending: boolean; onSubmit: () => void;
 }>) {
   const [langSearch, setLangSearch] = useState("");
+  const { data: languages = [] } = useLanguages();
   const customLangName = langSearch.trim();
-  const filteredLangs = LANGUAGES.filter((lang) => {
+  const filteredLangs = languages.filter((lang) => {
     const q = langSearch.toLowerCase();
     return !q || lang.name.toLowerCase().includes(q) || lang.nativeName.toLowerCase().includes(q) || lang.region.toLowerCase().includes(q);
   });
-  const isExactMatch = LANGUAGES.some((l) => l.name.toLowerCase() === customLangName.toLowerCase() || l.id.toLowerCase() === customLangName.toLowerCase());
+  const isExactMatch = languages.some((l) => l.name.toLowerCase() === customLangName.toLowerCase() || l.id.toLowerCase() === customLangName.toLowerCase());
   const canSubmit = background.trim().length >= 20 && reason.trim().length >= 20 && selectedLangs.length > 0;
   return (
     <div className="space-y-5">
@@ -254,7 +255,7 @@ function ReviewerForm({
         {selectedLangs.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-2">
             {selectedLangs.map((id) => {
-              const lang = LANGUAGES.find((l) => l.id === id);
+              const lang = languages.find((l) => l.id === id);
               return (
                 <span key={id} className="inline-flex items-center gap-1 rounded-full bg-indigo-100 dark:bg-indigo-900/40 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300">
                   {lang?.name ?? id}

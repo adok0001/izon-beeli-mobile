@@ -7,11 +7,9 @@ import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { Globe2, NotebookPen, Pencil, Plus, Trash2, X } from "lucide-react";
-import { LANGUAGES } from "@mobile/lib/data/languages";
+import { useLanguages } from "@/lib/hooks/use-languages";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-
-const LANG_NAME: Record<string, string> = Object.fromEntries(LANGUAGES.map((l) => [l.id, l.name]));
 
 interface WebJournalEntry extends JournalEntry {
   languageId?: string | null;
@@ -34,6 +32,7 @@ function EntryCard({
   isTogglingPublic: boolean;
 }>) {
   const { t } = useTranslation();
+  const { data: languages = [] } = useLanguages();
 
   return (
     <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-5 hover:shadow-sm transition-shadow">
@@ -45,7 +44,7 @@ function EntryCard({
             </h3>
             {entry.languageId && (
               <span className="shrink-0 text-xs bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 rounded-full px-2 py-0.5 font-medium">
-                {LANG_NAME[entry.languageId] ?? entry.languageId}
+                {languages.find((l) => l.id === entry.languageId)?.name ?? entry.languageId}
               </span>
             )}
             {entry.isPublic && (
@@ -258,6 +257,7 @@ export default function JournalPage() {
   const { getToken } = useAuth();
   const qc = useQueryClient();
   const { t } = useTranslation();
+  const { data: languages = [] } = useLanguages();
   const [modalEntry, setModalEntry] = useState<Partial<WebJournalEntry> | null>(null);
   const [filterLang, setFilterLang] = useState("all");
 
@@ -371,7 +371,7 @@ export default function JournalPage() {
                   : "border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:border-brand-400"
               )}
             >
-              {lang === "all" ? "All" : (LANG_NAME[lang] ?? lang)}
+              {lang === "all" ? "All" : (languages.find((l) => l.id === lang)?.name ?? lang)}
             </button>
           ))}
         </div>

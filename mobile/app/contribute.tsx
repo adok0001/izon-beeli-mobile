@@ -23,7 +23,7 @@ import {
 import { useDictionary } from "@/lib/hooks/use-dictionary";
 import { useContributors } from "@/lib/hooks/use-contributors";
 import { useToast } from "@/lib/hooks/use-toast";
-import { LANGUAGES } from "@/lib/mock-data";
+import { useLanguages } from "@/store/languages-store";
 import { wordContributionSchema } from "@/lib/validation";
 import { useContributionStore } from "@/store/contribution-store";
 import * as DocumentPicker from "expo-document-picker";
@@ -48,6 +48,7 @@ export default function ContributeScreen() {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();
+  const languages = useLanguages();
   const params = useLocalSearchParams<{
     languageId?: string;
     category?: string;
@@ -281,7 +282,7 @@ export default function ContributeScreen() {
                 setSelectedLanguage(id);
                 setStep("entry");
               }}
-              languages={LANGUAGES}
+              languages={languages}
               title={t("contribute.selectLanguage")}
               subtitle={t("contribute.selectLanguageDesc")}
             />

@@ -1,4 +1,4 @@
-import { LANGUAGES } from "@mobile/lib/data/languages";
+import { getLanguages } from "@/lib/languages";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -42,8 +42,9 @@ const CATEGORY_ICON: Record<string, LucideIcon> = {
   adjectives: Palette, phrases: MessageSquare, nouns: Package, nature: Leaf,
 };
 
-export function generateStaticParams() {
-  return LANGUAGES.map((l) => ({ languageId: l.id }));
+export async function generateStaticParams() {
+  const languages = await getLanguages();
+  return languages.map((l) => ({ languageId: l.id }));
 }
 
 export async function generateMetadata({
@@ -52,7 +53,8 @@ export async function generateMetadata({
   params: Promise<{ languageId: string }>;
 }): Promise<Metadata> {
   const { languageId } = await params;
-  const lang = LANGUAGES.find((l) => l.id === languageId);
+  const languages = await getLanguages();
+  const lang = languages.find((l) => l.id === languageId);
   if (!lang) return {};
 
   const title = `${lang.name} Dictionary — Words, Translations & Audio`;
@@ -101,7 +103,8 @@ export default async function DictionaryLanguagePage({
   params: Promise<{ languageId: string }>;
 }) {
   const { languageId } = await params;
-  const lang = LANGUAGES.find((l) => l.id === languageId);
+  const languages = await getLanguages();
+  const lang = languages.find((l) => l.id === languageId);
   if (!lang) notFound();
 
   const entries = await getSampleEntries(languageId);

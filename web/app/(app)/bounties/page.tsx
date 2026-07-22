@@ -5,7 +5,7 @@ import { LanguageSelector } from "@/components/ui/language-selector";
 import { useLanguageStore } from "@/store/language-store";
 import { useQuery } from "@tanstack/react-query";
 import { Star } from "lucide-react";
-import { LANGUAGES } from "@mobile/lib/data/languages";
+import { useLanguages } from "@/lib/hooks/use-languages";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 
@@ -26,7 +26,8 @@ interface Bounty {
 
 function BountyCard({ bounty }: Readonly<{ bounty: Bounty }>) {
   const { t } = useTranslation();
-  const langName = LANGUAGES.find((l) => l.id === bounty.languageId)?.name ?? bounty.languageId;
+  const { data: languages = [] } = useLanguages();
+  const langName = languages.find((l) => l.id === bounty.languageId)?.name ?? bounty.languageId;
 
   return (
     <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5">

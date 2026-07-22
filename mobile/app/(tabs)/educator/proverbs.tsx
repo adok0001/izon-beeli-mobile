@@ -26,7 +26,8 @@ import {
 import { useToast } from "@/lib/hooks/use-toast";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { localize } from "@/lib/localize";
-import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
+import { getLanguageName } from "@/lib/mock-data";
+import { useLanguages } from "@/store/languages-store";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import { useUiLanguageStore } from "@/store/ui-language-store";
@@ -67,10 +68,11 @@ export default function ProverbsScreen() {
   const { user } = useStudioAccess();
   const { uiLanguage } = useUiLanguageStore();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
+  const languages = useLanguages();
 
   const allowedLanguages = useMemo(
-    () => (user.isAdmin ? LANGUAGES.map((l) => l.id) : user.reviewerLanguages),
-    [user]
+    () => (user.isAdmin ? languages.map((l) => l.id) : user.reviewerLanguages),
+    [user, languages]
   );
   const [selectedLanguageId, setSelectedLanguageId] = useState<string | null>(null);
   const activeLanguageId = selectedLanguageId ?? allowedLanguages[0] ?? user.selectedLanguageId ?? "izon";

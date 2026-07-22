@@ -1,4 +1,4 @@
-import { LANGUAGES } from "@mobile/lib/data/languages";
+import { getLanguages } from "@/lib/languages";
 import { MetadataRoute } from "next";
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://izon-beeli.com";
@@ -33,8 +33,9 @@ function publicEntry(
   }));
 }
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
+  const languages = await getLanguages();
 
   return [
     // ── Public marketing pages (all locales) ──────────────────────────────────
@@ -73,12 +74,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
 
     // ── Per-language learn pages (all locales) ─────────────────────────────────
-    ...LANGUAGES.flatMap((l) =>
+    ...languages.flatMap((l) =>
       publicEntry(`/learn/${l.id}`, { changeFrequency: "weekly", priority: 0.85 })
     ),
 
     // ── Per-language dictionary pages (all locales) ────────────────────────────
-    ...LANGUAGES.flatMap((l) =>
+    ...languages.flatMap((l) =>
       publicEntry(`/dictionary/${l.id}`, { changeFrequency: "daily", priority: 0.8 })
     ),
   ];

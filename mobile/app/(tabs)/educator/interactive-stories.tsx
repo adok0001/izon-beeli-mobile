@@ -40,9 +40,10 @@ import {
 } from "@/lib/hooks/educator/use-interactive-stories";
 import { useToast } from "@/lib/hooks/use-toast";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
-import { LANGUAGES, getLanguageName } from "@/lib/mock-data";
+import { getLanguageName } from "@/lib/mock-data";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import type { LanguageEntry } from "@/lib/data/languages";
+import { useLanguages } from "@/store/languages-store";
+import type { Language } from "@/types";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
@@ -69,6 +70,7 @@ export default function InteractiveStoriesScreen() {
   const { t } = useTranslation();
   const { user } = useStudioAccess();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
+  const languages = useLanguages();
 
   const languageLabel = useCallback(
     (id: string) => {
@@ -90,31 +92,35 @@ export default function InteractiveStoriesScreen() {
   const allowedLanguages = useMemo(
     () =>
       user.isAdmin
-        ? [ALL_LANGUAGE_ID, GENERAL_LANGUAGE_ID, ...LANGUAGES.map((l) => l.id)]
+        ? [ALL_LANGUAGE_ID, GENERAL_LANGUAGE_ID, ...languages.map((l) => l.id)]
         : user.reviewerLanguages,
-    [user]
+    [user, languages]
   );
 
   // Studio authors for every language, plus the two admin-only scopes pinned
   // to the top of the picker: the "All" aggregate and the language-agnostic
   // bucket.
-  const languagePool = useMemo<LanguageEntry[]>(
+  const languagePool = useMemo<Language[]>(
     () => [
       {
         id: ALL_LANGUAGE_ID,
         name: t("educator.interactiveStoriesEditor.allScopeLabel"),
         nativeName: t("educator.interactiveStoriesEditor.allScopeHint"),
         region: t("educator.interactiveStoriesEditor.allScopeLabel"),
+        isActive: true,
+        hasContent: true,
       },
       {
         id: GENERAL_LANGUAGE_ID,
         name: t("educator.interactiveStoriesEditor.generalLanguageLabel"),
         nativeName: t("educator.interactiveStoriesEditor.generalLanguageHint"),
         region: t("educator.interactiveStoriesEditor.allScopeLabel"),
+        isActive: true,
+        hasContent: true,
       },
-      ...LANGUAGES,
+      ...languages,
     ],
-    [t]
+    [t, languages]
   );
 
   const [selectedLanguageId, setSelectedLanguageId] = useState<string | null>(null);

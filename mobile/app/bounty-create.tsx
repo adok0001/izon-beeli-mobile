@@ -6,7 +6,7 @@ import { canManageBounties, useCurrentUser } from "@/lib/hooks/use-current-user"
 import { useToast } from "@/lib/hooks/use-toast";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { getAccent } from "@/constants/accent-colors";
-import { ACTIVE_LANGUAGES } from "@/lib/mock-data";
+import { useActiveLanguages } from "@/store/languages-store";
 import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -55,6 +55,7 @@ export default function BountyCreateScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
   const { data: currentUser } = useCurrentUser();
+  const activeLanguages = useActiveLanguages();
   const createBounty = useCreateBounty();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
 
@@ -171,7 +172,7 @@ export default function BountyCreateScreen() {
                 showsHorizontalScrollIndicator={false}
                 contentContainerClassName="gap-2"
               >
-                {ACTIVE_LANGUAGES.map((lang) => (
+                {activeLanguages.map((lang) => (
                   <Pressable
                     key={lang.id}
                     onPress={() => setLanguageId(lang.id)}
