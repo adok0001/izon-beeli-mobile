@@ -1,3 +1,4 @@
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 import { WordAudioButton } from "@/components/dictionary/word-audio-button";
 import { SensesPlacard } from "@/components/dictionary/senses-placard";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +19,7 @@ export interface EntryDisplayDerived {
   senses: Sense[];
   hasMultipleSenses: boolean;
   categoryLabel: string;
-  categoryIcon: string;
+  categoryIcon: IconSymbolName;
   displayPronunciation?: string;
   effectiveAudioUrl?: AudioSource;
 }
@@ -170,7 +171,7 @@ export function EntryDetailView({
 
         {/* Category badge */}
         <View style={{ marginTop: 16, flexDirection: "row", alignItems: "center", borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 16, paddingVertical: 6, borderWidth: 1, borderColor: M.accentBorder }}>
-          <IconSymbol name={categoryIcon as never} size={13} color={M.accent} />
+          <IconSymbol name={categoryIcon} size={13} color={M.accent} />
           <Text style={{ marginLeft: 6, fontSize: 11, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: M.accent }}>
             {categoryLabel}
           </Text>

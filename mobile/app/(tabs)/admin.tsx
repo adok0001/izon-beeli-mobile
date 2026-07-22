@@ -1,3 +1,4 @@
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 import { SectionShell, SubRow, ToolsGrid } from "@/components/studio/panel-nav-sections";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
@@ -10,7 +11,7 @@ import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-function StatCard({ icon, label, value }: Readonly<{ icon: string; label: string; value: number }>) {
+function StatCard({ icon, label, value }: Readonly<{ icon: IconSymbolName; label: string; value: number }>) {
   const M = useMuseumTheme();
   return (
     <View
@@ -26,7 +27,7 @@ function StatCard({ icon, label, value }: Readonly<{ icon: string; label: string
           backgroundColor: `${M.accent}15`,
         }}
       >
-        <IconSymbol name={icon as never} size={18} color={M.accent} />
+        <IconSymbol name={icon} size={18} color={M.accent} />
       </View>
       <Text style={{ marginTop: 12, fontSize: 26, fontWeight: "800", color: M.text }}>{value}</Text>
       <Text style={{ marginTop: 3, fontSize: 12, color: M.muted }}>{label}</Text>

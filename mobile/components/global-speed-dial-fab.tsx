@@ -1,3 +1,4 @@
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 import { MINI_PLAYER_HEIGHT } from "@/components/audio/audio-player";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
@@ -29,7 +30,7 @@ function DialAction({
   progress,
   onPress,
 }: {
-  icon: string;
+  icon: IconSymbolName;
   label: string;
   color: string;
   index: number;
@@ -65,7 +66,7 @@ function DialAction({
         accessibilityRole="button"
         accessibilityLabel={label}
       >
-        <IconSymbol name={icon as never} size={19} color={M.ink} />
+        <IconSymbol name={icon} size={19} color={M.ink} />
       </Pressable>
     </Animated.View>
   );

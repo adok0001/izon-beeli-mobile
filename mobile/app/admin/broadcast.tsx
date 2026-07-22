@@ -1,3 +1,5 @@
+import { tWithVars } from "@/lib/i18n-dynamic";
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LanguagePickerModal } from "@/components/language-picker";
 import { StudioCard } from "@/components/studio/studio-card";
@@ -21,7 +23,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const BROADCAST_ICONS: { name: string; label: string }[] = [
+const BROADCAST_ICONS: { name: IconSymbolName; label: string }[] = [
   { name: "bell.fill", label: "General" },
   { name: "star.fill", label: "Featured" },
   { name: "megaphone", label: "Announce" },
@@ -42,7 +44,7 @@ export default function BroadcastScreen() {
 
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [selectedIcon, setSelectedIcon] = useState("bell.fill");
+  const [selectedIcon, setSelectedIcon] = useState<IconSymbolName>("bell.fill");
   const [audience, setAudience] = useState<Audience>("all");
   const [languageId, setLanguageId] = useState<string | null>(null);
   const [pickerVisible, setPickerVisible] = useState(false);
@@ -76,7 +78,7 @@ export default function BroadcastScreen() {
       });
       Alert.alert(
         t("admin.notifications.sent"),
-        t("admin.notifications.success", { sent: result.sent, total: result.total })
+        tWithVars(t, "admin.notifications.success", { sent: result.sent, total: result.total })
       );
       setTitle("");
       setBody("");
@@ -198,7 +200,7 @@ export default function BroadcastScreen() {
                   : { backgroundColor: M.card, borderColor: M.border }}
               >
                 <IconSymbol
-                  name={name as any}
+                  name={name}
                   size={20}
                   color={active ? blue : M.muted}
                 />
@@ -214,7 +216,7 @@ export default function BroadcastScreen() {
         {(title.trim() || body.trim()) ? (
           <StudioCard style={{ marginBottom: 24 }}>
             <View className="flex-row items-center gap-2 mb-2">
-              <IconSymbol name={selectedIcon as any} size={14} color={M.muted} />
+              <IconSymbol name={selectedIcon} size={14} color={M.muted} />
               <Text className="text-xs font-semibold uppercase tracking-widest" style={{ color: M.muted }}>
                 {t("admin.notifications.preview")}
               </Text>

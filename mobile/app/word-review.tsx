@@ -1,3 +1,5 @@
+import { tWithVars } from "@/lib/i18n-dynamic";
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { apiFetch, friendlyError } from "@/lib/api";
 import { getAccent } from "@/constants/accent-colors";
@@ -132,12 +134,14 @@ function ReviewCard({
 
       {face === "answer" && (
         <View style={{ marginTop: 16, flexDirection: "row", gap: 12, paddingBottom: 16 }}>
-          {[
-            { key: "again" as const, icon: "arrow.counterclockwise", color: M.error },
-            { key: "hard" as const, icon: "minus.circle", color: M.accent },
-            { key: "good" as const, icon: "checkmark.circle", color: M.success },
-            { key: "easy" as const, icon: "checkmark.seal.fill", color: getAccent("purple").solid },
-          ].map(({ key, icon, color }) => (
+          {(
+            [
+              { key: "again", icon: "arrow.counterclockwise", color: M.error },
+              { key: "hard", icon: "minus.circle", color: M.accent },
+              { key: "good", icon: "checkmark.circle", color: M.success },
+              { key: "easy", icon: "checkmark.seal.fill", color: getAccent("purple").solid },
+            ] as const satisfies readonly { key: string; icon: IconSymbolName; color: string }[]
+          ).map(({ key, icon, color }) => (
             <Pressable
               key={key}
               onPress={() => onRate(key)}
@@ -145,9 +149,9 @@ function ReviewCard({
               style={{ flex: 1, alignItems: "center", borderRadius: 16, borderWidth: 1, borderColor: `${color}40`, backgroundColor: `${color}15`, paddingVertical: 16 }}
               className="active:opacity-70"
             >
-              <IconSymbol name={icon as any} size={20} color={color} />
+              <IconSymbol name={icon} size={20} color={color} />
               <Text style={{ marginTop: 4, fontSize: 11, fontWeight: "600", color }}>
-                {t(`wordReview.${key}` as any)}
+                {t(`wordReview.${key}`)}
               </Text>
             </Pressable>
           ))}
@@ -338,7 +342,7 @@ export default function WordReviewScreen() {
               return (
                 <View style={{ marginTop: 20, width: "100%", borderRadius: 16, backgroundColor: `${getAccent("purple").solid}15`, padding: 16, borderWidth: 1, borderColor: `${getAccent("purple").solid}30` }}>
                   <Text style={{ marginBottom: 4, textAlign: "center", fontSize: 13, color: getAccent("purple").solid }}>
-                    {t("wordReview.retentionDesc", { avg: avg.toFixed(1), pct: retention })}
+                    {tWithVars(t, "wordReview.retentionDesc", { avg: avg.toFixed(1), pct: retention })}
                   </Text>
                   <View style={{ marginTop: 8, height: 8, overflow: "hidden", borderRadius: 999, backgroundColor: `${getAccent("purple").solid}30` }}>
                     <View style={{ height: 8, borderRadius: 999, backgroundColor: getAccent("purple").solid, width: `${retention}%` }} />
@@ -355,7 +359,7 @@ export default function WordReviewScreen() {
           <>
             <View style={{ marginHorizontal: 20, marginTop: 12 }}>
               <View style={{ marginBottom: 4, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                <Text style={{ fontSize: 11, color: M.sub }}>{t("wordReview.of", { current: currentIndex + 1, total: queue.length })}</Text>
+                <Text style={{ fontSize: 11, color: M.sub }}>{tWithVars(t, "wordReview.of", { current: currentIndex + 1, total: queue.length })}</Text>
                 <Text style={{ fontSize: 11, color: M.sub }}>{t("wordReview.reviewed", { count: uniqueReviewed })}</Text>
               </View>
               <View style={{ height: 6, borderRadius: 999, backgroundColor: M.border }}>

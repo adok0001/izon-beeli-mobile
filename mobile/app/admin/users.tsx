@@ -1,3 +1,4 @@
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 import { StudioCard } from "@/components/studio/studio-card";
 import { StudioFilterPills } from "@/components/studio/studio-filter-pills";
 import { FormInput } from "@/components/studio/studio-form";
@@ -45,7 +46,7 @@ function ActionPill({
   busy,
   disabled,
   onPress,
-}: Readonly<{ icon: string; label: string; color: string; busy?: boolean; disabled?: boolean; onPress: () => void }>) {
+}: Readonly<{ icon: IconSymbolName; label: string; color: string; busy?: boolean; disabled?: boolean; onPress: () => void }>) {
   return (
     <Pressable
       onPress={onPress}
@@ -66,7 +67,7 @@ function ActionPill({
         <ActivityIndicator size="small" color={color} />
       ) : (
         <>
-          <IconSymbol name={icon as never} size={12} color={color} />
+          <IconSymbol name={icon} size={12} color={color} />
           <Text style={{ fontSize: 11, fontWeight: "700", color }}>{label}</Text>
         </>
       )}

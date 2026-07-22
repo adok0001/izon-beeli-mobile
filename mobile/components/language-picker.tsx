@@ -1,7 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { fonts } from "@/constants/typography";
 import { ACTIVE_LANGUAGES, getLanguageName } from "@/lib/mock-data";
-import { getLanguageRegionKey, REGION_KEY_MAP, type LanguageEntry } from "@/lib/data/languages";
+import { getLanguageRegionKey, getRegionKey, type LanguageEntry } from "@/lib/data/languages";
 import { MUSEUM, bronze, useMuseumTheme } from "@/lib/use-museum-theme";
 import { useLanguageStore } from "@/store/language-store";
 import { useMemo, useState } from "react";
@@ -79,7 +79,7 @@ export function EnrolledLanguageBar() {
   const [pickerVisible, setPickerVisible] = useState(false);
 
   const regionKey = getLanguageRegionKey(selectedLanguageId);
-  const region = regionKey ? t(regionKey as never) : "";
+  const region = regionKey ? t(regionKey) : "";
 
   return (
     <View style={{ paddingTop: 14 }}>
@@ -261,15 +261,16 @@ export function LanguagePickerModal({
             keyExtractor={(item) => item.id}
             stickySectionHeadersEnabled
             keyboardShouldPersistTaps="handled"
-            renderSectionHeader={({ section }) => (
-              <View style={{ backgroundColor: M.card, paddingHorizontal: 20, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: M.border }}>
-                <Text style={{ fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
-                  {REGION_KEY_MAP[section.title]
-                    ? t(REGION_KEY_MAP[section.title] as any)
-                    : section.title}
-                </Text>
-              </View>
-            )}
+            renderSectionHeader={({ section }) => {
+              const regionKey = getRegionKey(section.title);
+              return (
+                <View style={{ backgroundColor: M.card, paddingHorizontal: 20, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: M.border }}>
+                  <Text style={{ fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
+                    {regionKey ? t(regionKey) : section.title}
+                  </Text>
+                </View>
+              );
+            }}
             renderItem={({ item }) => {
               const isSelected = item.id === selectedId;
               return (

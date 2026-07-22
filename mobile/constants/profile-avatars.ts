@@ -1,6 +1,7 @@
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 export interface ProfileAvatar {
   id: string;
-  icon: string;
+  icon: IconSymbolName;
   bg: string;
   fg: string;
   label: string;

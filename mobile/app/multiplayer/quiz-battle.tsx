@@ -1,3 +1,4 @@
+import { tWithVars } from "@/lib/i18n-dynamic";
 import { useCallback, useEffect, useState } from "react";
 import { View, Text } from "react-native";
 import { useRouter, Stack } from "expo-router";
@@ -138,7 +139,7 @@ function QuestionView() {
       <View className="flex-1 px-5 pt-4">
         <View className="flex-row items-center justify-between">
           <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-            {t("quiz.questionOf", { current: questionIndex + 1, total: totalQuestions })}
+            {tWithVars(t, "quiz.questionOf", { current: questionIndex + 1, total: totalQuestions })}
           </Text>
           <View className="flex-row items-center gap-3">
             {opponentAnswered && !lastCorrectAnswer && (

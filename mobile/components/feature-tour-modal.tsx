@@ -42,21 +42,20 @@ export function FeatureTourModal() {
   const scrollRef = useRef<ScrollView>(null);
   const [index, setIndex] = useState(0);
 
-  const tr = (key: string) => t(key as never) as string;
   const config = activeTour ? MOBILE_TOUR_REGISTRY[activeTour] : null;
 
   const scenes = useMemo<Scene[]>(() => {
     if (!config) return [];
     const foyer: Scene = {
       icon: config.heroIcon,
-      title: tr(config.titleKey),
-      body: tr(config.subtitleKey),
+      title: t(config.titleKey),
+      body: t(config.subtitleKey),
       plaque: PLAQUE[0],
     };
     const rooms = config.features.map<Scene>((f, i) => ({
       icon: f.icon,
-      title: tr(f.titleKey),
-      body: tr(f.detailKey),
+      title: t(f.titleKey),
+      body: t(f.detailKey),
       plaque: PLAQUE[i + 1] ?? String(i + 1),
     }));
     return [foyer, ...rooms];
@@ -118,7 +117,7 @@ export function FeatureTourModal() {
             onPress={dismissTour}
             hitSlop={10}
             accessibilityRole="button"
-            accessibilityLabel={tr("onboarding.skip")}
+            accessibilityLabel={t("onboarding.skip")}
             style={{
               position: "absolute",
               right: 20,
@@ -133,7 +132,7 @@ export function FeatureTourModal() {
               backgroundColor: glass(0.04),
             }}
           >
-            <IconSymbol name={"xmark" as never} size={15} color={MUSEUM.textDim} />
+            <IconSymbol name={"xmark"} size={15} color={MUSEUM.textDim} />
           </Pressable>
         </View>
 
@@ -157,7 +156,7 @@ export function FeatureTourModal() {
           <Pressable
             onPress={advance}
             accessibilityRole="button"
-            accessibilityLabel={isLast ? tr("onboarding.letsGo") : tr("onboarding.continue")}
+            accessibilityLabel={isLast ? t("onboarding.letsGo") : t("onboarding.continue")}
             className="active:opacity-80"
             style={{
               flexDirection: "row",
@@ -170,9 +169,9 @@ export function FeatureTourModal() {
             }}
           >
             <Text style={{ fontFamily: fonts.heading, fontSize: 16, color: MUSEUM.ink }}>
-              {isLast ? tr("onboarding.letsGo") : tr("onboarding.continue")}
+              {isLast ? t("onboarding.letsGo") : t("onboarding.continue")}
             </Text>
-            {!isLast && <IconSymbol name={"arrow.right" as never} size={16} color={MUSEUM.ink} />}
+            {!isLast && <IconSymbol name={"arrow.right"} size={16} color={MUSEUM.ink} />}
           </Pressable>
         </View>
       </View>

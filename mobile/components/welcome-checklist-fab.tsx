@@ -1,3 +1,6 @@
+import type { TFunction } from "i18next";
+import type { TranslationKey } from "@/lib/locales";
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useAwardChecklistBonus, useProgressSummary } from "@/lib/hooks/use-progress";
 import { useMyContributions } from "@/lib/hooks/use-contributions";
@@ -20,9 +23,9 @@ interface ChecklistItem {
   id: MobileChecklistId;
   route: string;
   audience: MobileChecklistAudience;
-  titleKey: string;
-  descriptionKey: string;
-  icon: string;
+  titleKey: TranslationKey;
+  descriptionKey: TranslationKey;
+  icon: IconSymbolName;
 }
 
 function canSeeAudience(audience: MobileChecklistAudience, isAdmin = false, isReviewer = false) {
@@ -31,7 +34,7 @@ function canSeeAudience(audience: MobileChecklistAudience, isAdmin = false, isRe
   return isReviewer || isAdmin;
 }
 
-function audienceLabel(audience: MobileChecklistAudience, t: (key: string) => string) {
+function audienceLabel(audience: MobileChecklistAudience, t: TFunction) {
   if (audience === "admin") return t("welcomeChecklist.groupAdmin");
   if (audience === "reviewer") return t("welcomeChecklist.groupReviewer");
   return t("welcomeChecklist.groupCore");
@@ -116,7 +119,6 @@ export function WelcomeChecklistCard() {
   const [open, setOpen] = useState(false);
   const [celebrationVisible, setCelebrationVisible] = useState(false);
   const { t } = useTranslation();
-  const tr = (key: string) => t(key as any) as string;
 
   const { data: currentUser } = useCurrentUser();
   const { data: summary } = useProgressSummary();
@@ -158,11 +160,11 @@ export function WelcomeChecklistCard() {
       (["all", "reviewer", "admin"] as const)
         .map((audience) => ({
           audience,
-          label: audienceLabel(audience, tr),
+          label: audienceLabel(audience, t),
           items: visibleItems.filter((item) => item.audience === audience),
         }))
         .filter((group) => group.items.length > 0),
-    [tr, visibleItems]
+    [t, visibleItems]
   );
 
   useEffect(() => {
@@ -275,8 +277,8 @@ export function WelcomeChecklistCard() {
                             </Pressable>
 
                             <View style={{ flex: 1 }}>
-                              <Text style={{ fontSize: 13, fontWeight: "600", color: M.text }}>{tr(item.titleKey)}</Text>
-                              <Text style={{ marginTop: 2, fontSize: 11, color: M.sub }}>{tr(item.descriptionKey)}</Text>
+                              <Text style={{ fontSize: 13, fontWeight: "600", color: M.text }}>{t(item.titleKey)}</Text>
+                              <Text style={{ marginTop: 2, fontSize: 11, color: M.sub }}>{t(item.descriptionKey)}</Text>
                               <Pressable
                                 onPress={() => {
                                   if (!done) markCompleted([item.id]);
@@ -285,7 +287,7 @@ export function WelcomeChecklistCard() {
                                 }}
                                 style={{ marginTop: 8, flexDirection: "row", alignItems: "center" }}
                               >
-                                <IconSymbol name={item.icon as any} size={14} color={M.accent} />
+                                <IconSymbol name={item.icon} size={14} color={M.accent} />
                                 <Text style={{ marginLeft: 6, fontSize: 11, fontWeight: "600", color: M.accent }}>{t("welcomeChecklist.openAction")}</Text>
                                 <View style={{ marginLeft: 4 }}>
                                   <IconSymbol name="chevron.right" size={12} color={M.accent} />

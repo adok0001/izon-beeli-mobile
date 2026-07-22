@@ -1,3 +1,4 @@
+import { tWithVars } from "@/lib/i18n-dynamic";
 import { CharacterDetail } from "@/components/geez/character-detail";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { FidelGrid } from "@/components/geez/fidel-grid";
@@ -116,7 +117,7 @@ export default function GeezLessonScreen() {
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
             <Text style={{ fontSize: 13, color: M.sub }}>{t("geez.progress")}</Text>
             <Text style={{ fontSize: 13, fontWeight: "600", color: M.text }}>
-              {t("geez.learnedCount", { count: learnedCount, total: TOTAL_CHARS })}
+              {tWithVars(t, "geez.learnedCount", { count: learnedCount, total: TOTAL_CHARS })}
             </Text>
           </View>
           <View style={{ marginTop: 8, height: 6, borderRadius: 999, backgroundColor: M.border }}>
@@ -129,7 +130,7 @@ export default function GeezLessonScreen() {
           <TabSegment
             active={tab === "practice"}
             onPress={() => setTab("practice")}
-            label={allLearned ? t("geez.practiceComplete") : t("geez.practiceTab", { remaining: unlearnedChars.length })}
+            label={allLearned ? t("geez.practiceComplete") : tWithVars(t, "geez.practiceTab", { remaining: unlearnedChars.length })}
           />
         </View>
 
@@ -164,7 +165,7 @@ export default function GeezLessonScreen() {
                   </Pressable>
 
                   <Text style={{ fontSize: 11, color: M.muted }}>
-                    {t("geez.remaining", { current: practiceIndex + 1, total: unlearnedChars.length })}
+                    {tWithVars(t, "geez.remaining", { current: practiceIndex + 1, total: unlearnedChars.length })}
                   </Text>
 
                   <Pressable

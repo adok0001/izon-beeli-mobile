@@ -1,3 +1,4 @@
+import { tWithVars } from "@/lib/i18n-dynamic";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useUseFreeze } from "@/lib/hooks/use-progress";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -44,7 +45,7 @@ export function StreakFreezeModal({
             {t("streak.brokenTitle")}
           </Text>
           <Text style={{ marginTop: 8, textAlign: "center", fontSize: 13, color: M.sub }}>
-            {t("streak.brokenMessage", { streak })}
+            {tWithVars(t, "streak.brokenMessage", { streak })}
           </Text>
 
           {freezeCount > 0 ? (

@@ -1,3 +1,4 @@
+import type { TranslationKey } from "@/lib/locales";
 import { SymbolOfTheDay } from "@/components/adinkra/symbol-of-the-day";
 import { CulturalSection } from "@/components/cultural/cultural-section";
 import { FeaturedGameCard } from "@/components/playground/featured-game-card";
@@ -176,9 +177,9 @@ interface ScriptCardConfig {
   hue: AccentHue;
   glyph?: string;
   icon?: ComponentProps<typeof IconSymbol>["name"];
-  kickerKey: string;
-  titleKey: string;
-  subtitleKey: string;
+  kickerKey: TranslationKey;
+  titleKey: TranslationKey;
+  subtitleKey: TranslationKey;
 }
 
 const SCRIPT_CARDS: Record<"geez" | "adinkra" | "nsibidi", ScriptCardConfig> = {
@@ -212,7 +213,6 @@ function ScriptPracticeCard({ config }: { config: ScriptCardConfig }) {
   const M = useMuseumTheme();
   const router = useRouter();
   const { t } = useTranslation();
-  const tr = (key: string) => t(key as never) as string;
   const accent: AccentColor = getAccent(config.hue);
 
   return (
@@ -234,12 +234,12 @@ function ScriptPracticeCard({ config }: { config: ScriptCardConfig }) {
       </View>
       <View style={{ flex: 1 }}>
         <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.5, color: accent.solid }}>
-          {tr(config.kickerKey).toUpperCase()}
+          {t(config.kickerKey).toUpperCase()}
         </Text>
         <Text style={{ fontSize: 13, fontWeight: "700", color: M.text, marginTop: 2 }}>
-          {tr(config.titleKey)}
+          {t(config.titleKey)}
         </Text>
-        <Text style={{ fontSize: 11, color: M.sub, marginTop: 1 }}>{tr(config.subtitleKey)}</Text>
+        <Text style={{ fontSize: 11, color: M.sub, marginTop: 1 }}>{t(config.subtitleKey)}</Text>
       </View>
       <IconSymbol name="chevron.right" size={14} color={accent.solid} />
     </Pressable>

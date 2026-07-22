@@ -1,3 +1,5 @@
+import { tWithVars } from "@/lib/i18n-dynamic";
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 import { StudioCard } from "@/components/studio/studio-card";
 import { StudioFilterPills } from "@/components/studio/studio-filter-pills";
 import { FormField, FormInput, PrimaryButton } from "@/components/studio/studio-form";
@@ -32,7 +34,7 @@ interface SetStreakResult {
 
 interface Scenario {
   key: string;
-  icon: string;
+  icon: IconSymbolName;
   label: string;
   detail: string;
   hue: AccentHue;
@@ -244,12 +246,12 @@ export default function StreakToolsScreen() {
       await queryClient.invalidateQueries({ queryKey: ["progress"] });
       const message =
         result.lastActiveDate !== null
-          ? t("admin.streakTools.successMessage", {
+          ? tWithVars(t, "admin.streakTools.successMessage", {
               streak: result.streak,
               freezeCount: result.freezeCount,
               lastActiveDate: result.lastActiveDate,
             })
-          : t("admin.streakTools.successMessageCleared", {
+          : tWithVars(t, "admin.streakTools.successMessageCleared", {
               streak: result.streak,
               freezeCount: result.freezeCount,
             });
@@ -384,7 +386,7 @@ export default function StreakToolsScreen() {
                       {busy ? (
                         <ActivityIndicator size="small" color={color} />
                       ) : (
-                        <IconSymbol name={scenario.icon as never} size={18} color={color} />
+                        <IconSymbol name={scenario.icon} size={18} color={color} />
                       )}
                     </View>
                     <View style={{ flex: 1 }}>

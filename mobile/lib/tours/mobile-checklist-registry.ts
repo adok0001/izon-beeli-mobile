@@ -1,11 +1,13 @@
+import type { TranslationKey } from "@/lib/locales";
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 export type MobileChecklistAudience = "all" | "reviewer" | "admin";
 
 export interface MobileChecklistItem {
   route: string;
   audience: MobileChecklistAudience;
-  titleKey: string;
-  descriptionKey: string;
-  icon: string;
+  titleKey: TranslationKey;
+  descriptionKey: TranslationKey;
+  icon: IconSymbolName;
 }
 
 export const MOBILE_CHECKLIST_REGISTRY = {

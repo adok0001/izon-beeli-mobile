@@ -180,7 +180,7 @@ export default function GroupDetailScreen() {
                 <Text className="ml-1 text-xs font-mono text-neutral-500 dark:text-neutral-400">
                   {group.inviteCode}
                 </Text>
-                <IconSymbol name="doc.on.doc" size={11} color={M.muted} className="ml-1" />
+                <IconSymbol name="doc.on.doc" size={11} color={M.muted} style={{ marginLeft: 4 }} />
               </Pressable>
             </View>
             {/* Share invite code row */}

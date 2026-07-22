@@ -1,3 +1,4 @@
+import { tWithVars } from "@/lib/i18n-dynamic";
 import { useCallback, useEffect, useState } from "react";
 import { View, Text, Pressable, type LayoutChangeEvent } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -109,7 +110,7 @@ export function MatchingBoard() {
     <View>
       <View style={{ marginBottom: 12, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 4 }}>
         <Text style={{ fontSize: 13, color: M.sub }}>
-          {t("matching.matched", { matched: matchedCount, total: totalPairs })}
+          {tWithVars(t, "matching.matched", { matched: matchedCount, total: totalPairs })}
         </Text>
         <Text style={{ fontSize: 13, color: M.sub }}>
           {t("matching.attempts", { count: attempts })}

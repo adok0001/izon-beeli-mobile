@@ -1,3 +1,4 @@
+import { tWithVars } from "@/lib/i18n-dynamic";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LanguagePickerModal } from "@/components/language-picker";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
@@ -84,7 +85,7 @@ function TrailEditor({
         >
           <View className="flex-row items-center justify-between mb-2">
             <Text className="text-[10px] font-black uppercase tracking-widest" style={{ color: M.muted }}>
-              {t("educator.etymology.nodeLabel", { number: i + 1 })}
+              {tWithVars(t, "educator.etymology.nodeLabel", { number: i + 1 })}
             </Text>
             {trail.length > 1 && (
               <Pressable onPress={() => onChange(trail.filter((_, idx) => idx !== i))} hitSlop={8}>
@@ -304,7 +305,7 @@ export default function EducatorEtymologyScreen() {
       <View className="mt-4 px-5">
         <Text className="mb-2 text-xs font-semibold uppercase tracking-[1.4px]" style={{ color: M.muted }}>
           {filtered.length !== entries.length
-            ? t("educator.etymology.countFiltered", { count: filtered.length, total: entries.length })
+            ? tWithVars(t, "educator.etymology.countFiltered", { count: filtered.length, total: entries.length })
             : filtered.length === 1
               ? t("educator.etymology.countOne", { count: 1 })
               : t("educator.etymology.countMany", { count: filtered.length })}

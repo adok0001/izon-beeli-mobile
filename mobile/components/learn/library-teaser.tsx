@@ -8,7 +8,6 @@ import { Text, View } from "react-native";
 
 export function LibraryTeaser() {
   const { t } = useTranslation();
-  const tr = (key: string) => t(key as never, { defaultValue: key }) as string;
   const router = useRouter();
   const { all } = useDiscover("all");
 
@@ -19,7 +18,7 @@ export function LibraryTeaser() {
 
   return (
     <ContentTeaserCard
-      eyebrow={tr("learn.fromLibrary")}
+      eyebrow={t("learn.fromLibrary")}
       icon={cfg.icon}
       iconColor={cfg.color}
       iconBackground={cfg.accentDim}

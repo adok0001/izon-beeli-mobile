@@ -1,3 +1,4 @@
+import { tWithVars } from "@/lib/i18n-dynamic";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
@@ -372,7 +373,7 @@ export default function EducatorDictionaryScreen() {
                 <Text className="text-sm font-semibold" style={{ color: M.text }}>
                   {coverage.missing.length === 0
                     ? t("review.coverageComplete")
-                    : t("review.coverageSummary", {
+                    : tWithVars(t, "review.coverageSummary", {
                         covered: coverage.coveredWords,
                         total: coverage.distinctWords,
                         percent: Math.round((coverage.coveredWords / coverage.distinctWords) * 100),

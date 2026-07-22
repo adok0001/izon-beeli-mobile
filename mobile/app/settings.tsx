@@ -1,3 +1,5 @@
+import type { TranslationKey } from "@/lib/locales";
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -38,7 +40,7 @@ function SettingsRow({
   value,
   onPress,
 }: {
-  icon: string;
+  icon: IconSymbolName;
   label: string;
   value?: string;
   onPress?: () => void;
@@ -55,7 +57,7 @@ function SettingsRow({
       }}
       className="active:opacity-70"
     >
-      <IconSymbol name={icon as any} size={17} color={M.muted} />
+      <IconSymbol name={icon} size={17} color={M.muted} />
       <Text style={{ marginLeft: 14, flex: 1, fontSize: 14, color: M.text }}>{label}</Text>
       {value && <Text style={{ marginRight: 8, fontSize: 12, color: M.muted }}>{value}</Text>}
       {onPress && <IconSymbol name="chevron.right" size={13} color={M.muted} />}
@@ -71,7 +73,7 @@ function ToggleRow({
   onToggle,
   disabled,
 }: {
-  icon: string;
+  icon: IconSymbolName;
   label: string;
   detail?: string;
   value: boolean;
@@ -87,7 +89,7 @@ function ToggleRow({
         borderBottomWidth: 1, borderBottomColor: M.border,
       }}
     >
-      <IconSymbol name={icon as any} size={17} color={M.muted} />
+      <IconSymbol name={icon} size={17} color={M.muted} />
       <View style={{ marginLeft: 14, flex: 1 }}>
         <Text style={{ fontSize: 14, color: M.text }}>{label}</Text>
         {detail && <Text style={{ fontSize: 11, color: M.muted, marginTop: 2 }}>{detail}</Text>}
@@ -108,6 +110,14 @@ function ToggleRow({
 }
 
 const THEME_OPTIONS = ["system", "light", "dark"] as const;
+
+// A lookup, not a computed `settings.theme${capitalize(opt)}` — string methods
+// return `string`, which destroys the template literal type and forces a cast.
+const THEME_LABEL_KEYS = {
+  system: "settings.themeSystem",
+  light: "settings.themeLight",
+  dark: "settings.themeDark",
+} as const satisfies Record<(typeof THEME_OPTIONS)[number], TranslationKey>;
 const LANG_OPTIONS: UiLanguage[] = ["en", "fr", "pcm", "ar", "pt"];
 const LANG_LABELS: Record<UiLanguage, string> = {
   en: "English",
@@ -252,7 +262,7 @@ export default function SettingsScreen() {
                     color: preference === opt ? M.ink : M.sub,
                   }}
                 >
-                  {t(`settings.theme${opt.charAt(0).toUpperCase() + opt.slice(1)}` as any)}
+                  {t(THEME_LABEL_KEYS[opt])}
                 </Text>
               </Pressable>
             ))}

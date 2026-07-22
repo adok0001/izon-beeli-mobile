@@ -19,7 +19,7 @@ export function CulturalCard({ item, onPress }: Props) {
   const { t } = useTranslation();
   const { uiLanguage } = useUiLanguageStore();
   const [shareVisible, setShareVisible] = useState(false);
-  const categoryLabel = t(`cultural.categories.${item.category}` as any, { defaultValue: item.category });
+  const categoryLabel = t(`cultural.categories.${item.category}`, { defaultValue: item.category });
 
   return (
     <>

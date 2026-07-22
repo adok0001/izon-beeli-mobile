@@ -1,3 +1,5 @@
+import type { TranslationKey } from "@/lib/locales";
+import { tWithVars } from "@/lib/i18n-dynamic";
 import { ListeningQuestion } from "@/components/quiz/listening-question";
 import { OptionCard } from "@/components/quiz/option-card";
 import { PictureOptionGrid } from "@/components/quiz/picture-option-grid";
@@ -101,7 +103,7 @@ function ConfigView({ onStart }: { onStart: (count: number) => void }) {
           >
             <Text style={{ fontSize: 16, fontWeight: "700", color: count === n ? M.ink : M.text }}>{n}</Text>
             <Text style={{ fontSize: 10, color: count === n ? `${M.ink}99` : M.muted }}>
-              {t("quiz.minutesEstimate", { minutes: TIME_ESTIMATE_MINUTES[n] })}
+              {tWithVars(t, "quiz.minutesEstimate", { minutes: TIME_ESTIMATE_MINUTES[n] })}
             </Text>
           </Pressable>
         ))}
@@ -183,7 +185,7 @@ function ActiveView() {
       <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 24 }}>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <Text style={{ fontSize: 13, color: M.sub }}>
-            {t("quiz.questionOf", { current: currentIndex + 1, total: questions.length })}
+            {tWithVars(t, "quiz.questionOf", { current: currentIndex + 1, total: questions.length })}
           </Text>
           {lastAnswerCorrect !== null && locked && (
             <Badge
@@ -385,7 +387,7 @@ function ResultsView({ languageId }: { languageId: string }) {
         </Text>
         {xpResult && (
           <View style={{ marginBottom: 12, flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <Badge label={t("quiz.xpEarned", { xp: xpResult.xpEarned })} tone="accent" />
+            <Badge label={tWithVars(t, "quiz.xpEarned", { xp: xpResult.xpEarned })} tone="accent" />
             {xpResult.leveledUp && (
               <Badge label={t("quiz.leveledUp")} color={purple.solid} bg={purple.bg} border={purple.border} />
             )}
@@ -507,12 +509,12 @@ export default function QuizScreen() {
 
   const languageName = getLanguageName(selectedLanguageId);
   const quizTitle = isFocused
-    ? t("quiz.practiceTitle", { word: params.focusWord })
+    ? tWithVars(t, "quiz.practiceTitle", { word: params.focusWord })
     : t("quiz.quizTitle", { language: languageName });
 
   const makeTq = useCallback(
-    () => (key: string, opts?: Record<string, unknown>) =>
-      t(key as any, { language: languageName, ...opts } as any),
+    () => (key: TranslationKey, opts?: Record<string, unknown>) =>
+      tWithVars(t, key, { language: languageName, ...opts }),
     [t, languageName]
   );
 

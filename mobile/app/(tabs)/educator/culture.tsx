@@ -1,3 +1,4 @@
+import { tWithVars } from "@/lib/i18n-dynamic";
 import { getAccent } from "@/constants/accent-colors";
 import { ColorSwatchInput, isHex } from "@/components/educator/color-swatch-input";
 import { HeadwordField } from "@/components/educator/headword-field";
@@ -634,7 +635,7 @@ export default function EducatorCultureScreen() {
       <View className="mt-4 px-5">
         <Text className="mb-2 text-xs font-semibold uppercase tracking-[1.4px]" style={{ color: M.muted }}>
           {q
-            ? t("educator.culture.culturalCountFiltered", {
+            ? tWithVars(t, "educator.culture.culturalCountFiltered", {
                 count: filteredCultural.length,
                 total: culturalItems.length,
               })

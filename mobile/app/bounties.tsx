@@ -1,3 +1,4 @@
+import { tWithVars } from "@/lib/i18n-dynamic";
 import { QueryErrorState } from "@/components/query-error-state";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { SignInPrompt, useRequireAuth } from "@/components/sign-in-prompt";
@@ -45,7 +46,7 @@ function BountyCard({ bounty, isAdmin, onClaim }: { bounty: Bounty; isAdmin?: bo
         </View>
         <View style={{ borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: M.accentBorder }}>
           <Text style={{ fontSize: 11, fontWeight: "700", color: M.accent }}>
-            {t("bounties.xpBonus", { xp: bounty.xpReward })}
+            {tWithVars(t, "bounties.xpBonus", { xp: bounty.xpReward })}
           </Text>
         </View>
       </View>

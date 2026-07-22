@@ -1,3 +1,4 @@
+import { tWithVars } from "@/lib/i18n-dynamic";
 import { Modal, View, Text, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -33,7 +34,7 @@ export function ChapterIntro({ visible, chapter, onStart, onClose }: Props) {
           </Pressable>
 
           <Text style={{ marginBottom: 4, fontSize: 13, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: M.accent }}>
-            {t("educator.story.chapterLabel", { number: chapter.order })}
+            {tWithVars(t, "educator.story.chapterLabel", { number: chapter.order })}
           </Text>
 
           <Text style={{ marginBottom: 16, fontSize: 22, fontWeight: "700", color: M.text }}>

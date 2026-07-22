@@ -1,3 +1,5 @@
+import type { TranslationKey } from "@/lib/locales";
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 import { CanDoResume } from "@/components/profile/can-do-resume";
 import { SkillsPracticed } from "@/components/profile/skills-practiced";
 import { AnimatedCount } from "@/components/ui/animated-count";
@@ -45,11 +47,19 @@ import { getLanguageName } from "@/lib/mock-data";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
-const GOAL_OPTIONS: { id: DailyGoal; icon: string; labelKey: string; detailKey: string }[] = [
+const GOAL_OPTIONS: { id: DailyGoal; icon: IconSymbolName; labelKey: TranslationKey; detailKey: TranslationKey }[] = [
   { id: "casual",    icon: "leaf.fill",  labelKey: "onboarding.goalCasual",    detailKey: "onboarding.goalCasualDetail"    },
   { id: "steady",    icon: "flame.fill", labelKey: "onboarding.goalSteady",    detailKey: "onboarding.goalSteadyDetail"    },
   { id: "intensive", icon: "bolt.fill",  labelKey: "onboarding.goalIntensive", detailKey: "onboarding.goalIntensiveDetail" },
 ];
+
+// Lookup rather than a computed `onboarding.goal${capitalize(id)}` — string
+// methods return `string`, which breaks the template literal key type.
+const GOAL_LABEL_KEYS = {
+  casual: "onboarding.goalCasual",
+  steady: "onboarding.goalSteady",
+  intensive: "onboarding.goalIntensive",
+} as const satisfies Record<DailyGoal, TranslationKey>;
 
 // ── Atoms ──────────────────────────────────────────────────────────────────
 
@@ -67,7 +77,7 @@ function AvatarCircle({ avatar, size, selected, onPress }: Readonly<{
       shadowColor: avatar.bg, shadowOffset: { width: 0, height: 4 },
       shadowOpacity: selected ? 0.6 : 0, shadowRadius: 10, elevation: selected ? 6 : 0,
     }}>
-      <IconSymbol name={avatar.icon as any} size={size * 0.42} color={avatar.fg} />
+      <IconSymbol name={avatar.icon} size={size * 0.42} color={avatar.fg} />
     </View>
   );
   return onPress
@@ -135,7 +145,7 @@ function SectionLabel({ label }: { label: string }) {
 }
 
 function MenuRow({ icon, label, detail, onPress, danger }: Readonly<{
-  icon: string; label: string; detail?: string; onPress: () => void; danger?: boolean;
+  icon: IconSymbolName; label: string; detail?: string; onPress: () => void; danger?: boolean;
 }>) {
   const M = useMuseumTheme();
   return (
@@ -146,7 +156,7 @@ function MenuRow({ icon, label, detail, onPress, danger }: Readonly<{
       accessibilityLabel={detail ? `${label}: ${detail}` : label}
       className="active:opacity-70"
     >
-      <IconSymbol name={icon as any} size={18} color={danger ? "#f87171" : M.muted} />
+      <IconSymbol name={icon} size={18} color={danger ? "#f87171" : M.muted} />
       <Text style={{ marginLeft: 14, flex: 1, fontSize: 14, color: danger ? "#f87171" : M.text, fontWeight: danger ? "700" : "500" }}>
         {label}
       </Text>
@@ -268,11 +278,11 @@ function GoalPickerModal({ visible, current, onClose, onChange }: Readonly<{
               className="active:opacity-70"
             >
               <View style={{ marginRight: 14, width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", backgroundColor: selected ? M.accent : M.border }}>
-                <IconSymbol name={opt.icon as any} size={18} color={selected ? M.ink : M.sub} />
+                <IconSymbol name={opt.icon} size={18} color={selected ? M.ink : M.sub} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 14, fontWeight: "700", color: selected ? M.accent : M.text }}>{t(opt.labelKey as any)}</Text>
-                <Text style={{ fontSize: 12, color: M.sub, marginTop: 2 }}>{t(opt.detailKey as any)}</Text>
+                <Text style={{ fontSize: 14, fontWeight: "700", color: selected ? M.accent : M.text }}>{t(opt.labelKey)}</Text>
+                <Text style={{ fontSize: 12, color: M.sub, marginTop: 2 }}>{t(opt.detailKey)}</Text>
               </View>
               {selected && <IconSymbol name="checkmark.circle.fill" size={20} color={M.accent} />}
             </Pressable>
@@ -448,7 +458,7 @@ export default function ProfileScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 13, fontWeight: "700", color: indigo.solid }}>Support Beeli</Text>
                 <Text style={{ marginTop: 2, fontSize: 11, color: M.sub, lineHeight: 15 }}>
-                  You've reached {levelInfo.title}. Unlock Plus and keep us growing.
+                  You&apos;ve reached {levelInfo.title}. Unlock Plus and keep us growing.
                 </Text>
               </View>
               <IconSymbol name="chevron.right" size={14} color={indigo.solid} />
@@ -465,7 +475,7 @@ export default function ProfileScreen() {
           <MenuRow
             icon="target"
             label={t("profile.dailyGoal")}
-            detail={currentUser?.dailyGoal ? t(`onboarding.goal${currentUser.dailyGoal.charAt(0).toUpperCase()}${currentUser.dailyGoal.slice(1)}` as any) : undefined}
+            detail={currentUser?.dailyGoal ? t(GOAL_LABEL_KEYS[currentUser.dailyGoal]) : undefined}
             onPress={() => setGoalPickerVisible(true)}
           />
           {currentUser?.isAdmin ? (

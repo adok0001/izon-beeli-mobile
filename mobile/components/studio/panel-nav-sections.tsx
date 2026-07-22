@@ -1,3 +1,4 @@
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 import { CourseArtwork } from "@/components/learn/course-artwork";
 import { CourseGeneratorPanel } from "@/components/studio/course-generator-panel";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -22,7 +23,7 @@ import DraggableFlatList, { RenderItemParams, ScaleDecorator } from "react-nativ
 export function SectionShell({
   icon, label, meta, open, onToggle, accent, children,
 }: Readonly<{
-  icon: string; label: string; meta: string; open: boolean; onToggle: () => void;
+  icon: IconSymbolName; label: string; meta: string; open: boolean; onToggle: () => void;
   accent: string; children: ReactNode;
 }>) {
   const M = useMuseumTheme();
@@ -45,7 +46,7 @@ export function SectionShell({
             backgroundColor: `${accent}15`, marginRight: 12,
           }}
         >
-          <IconSymbol name={icon as never} size={18} color={accent} />
+          <IconSymbol name={icon} size={18} color={accent} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 14, fontWeight: "700", color: M.text }}>{label}</Text>

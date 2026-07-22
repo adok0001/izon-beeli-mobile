@@ -1,3 +1,5 @@
+import type { TranslationKey } from "@/lib/locales";
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 import { getAccent } from "@/constants/accent-colors";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Stack, useRouter } from "expo-router";
@@ -6,9 +8,9 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type Section = {
-  icon: string;
-  titleKey: string;
-  bodyKey: string;
+  icon: IconSymbolName;
+  titleKey: TranslationKey;
+  bodyKey: TranslationKey;
 };
 
 const SECTIONS: Section[] = [
@@ -18,11 +20,11 @@ const SECTIONS: Section[] = [
   { icon: "star.circle.fill", titleKey: "educator.guide.skillsTitle", bodyKey: "educator.guide.skillsBody" },
 ];
 
-function GuideSection({ icon, title, body }: Readonly<{ icon: string; title: string; body: string }>) {
+function GuideSection({ icon, title, body }: Readonly<{ icon: IconSymbolName; title: string; body: string }>) {
   return (
     <View className="mb-4 rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-800">
       <View className="mb-3 h-10 w-10 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/40">
-        <IconSymbol name={icon as never} size={20} color={getAccent("blue").solid} />
+        <IconSymbol name={icon} size={20} color={getAccent("blue").solid} />
       </View>
       <Text className="text-base font-bold text-neutral-900 dark:text-white">{title}</Text>
       <Text className="mt-1 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">{body}</Text>

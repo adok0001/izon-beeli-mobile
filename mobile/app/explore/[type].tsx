@@ -17,7 +17,6 @@ type RoomType = (typeof VALID_TYPES)[number];
 function RoomHero({ type, color }: { type: RoomType; color: string }) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
-  const tr = (key: string) => t(key as never, { defaultValue: key }) as string;
   const { featured } = useDiscover(type);
   const router = useRouter();
   const cfg = DISCOVER_TYPE_CONFIG[type];
@@ -66,7 +65,7 @@ function RoomHero({ type, color }: { type: RoomType; color: string }) {
         >
           <IconSymbol name={cfg.icon} size={10} color={color} />
           <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1, color }}>
-            {tr("library.featuredToday")}
+            {t("library.featuredToday")}
           </Text>
         </View>
         <Text
@@ -87,7 +86,6 @@ function RoomHero({ type, color }: { type: RoomType; color: string }) {
 export default function RoomScreen() {
   const M = useMuseumTheme();
   const { t } = useTranslation();
-  const tr = (key: string) => t(key as never, { defaultValue: key }) as string;
   const router = useRouter();
   const { type } = useLocalSearchParams<{ type: string }>();
 
@@ -119,14 +117,14 @@ export default function RoomScreen() {
         >
           <IconSymbol name="chevron.left" size={14} color={color} />
           <Text style={{ fontSize: 11, fontWeight: "700", letterSpacing: 1, color }}>
-            {tr("explore.title").toUpperCase()}
+            {t("explore.title").toUpperCase()}
           </Text>
         </Pressable>
         <Text style={{ fontSize: 10, fontWeight: "800", letterSpacing: 2, color, marginBottom: 4 }}>
-          {tr(cfg.roomKickerKey)}
+          {t(cfg.roomKickerKey)}
         </Text>
         <Text style={{ fontSize: 28, fontWeight: "900", color: M.parchment, letterSpacing: -0.5 }}>
-          {tr(cfg.roomTitleKey).toUpperCase()}
+          {t(cfg.roomTitleKey).toUpperCase()}
         </Text>
         <View style={{ height: 1, backgroundColor: color, opacity: 0.25, marginTop: 12 }} />
       </View>

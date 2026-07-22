@@ -76,7 +76,7 @@ function GroupCard({ group }: { group: Group }) {
           <Text className="ml-1.5 text-xs font-mono text-neutral-500 dark:text-neutral-400">
             {group.inviteCode}
           </Text>
-          <IconSymbol name="doc.on.doc" size={11} color={M.muted} className="ml-1.5" />
+          <IconSymbol name="doc.on.doc" size={11} color={M.muted} style={{ marginLeft: 6 }} />
         </Pressable>
         <Pressable onPress={handleShareCode} hitSlop={8}>
           <IconSymbol name="square.and.arrow.up" size={16} color={getAccent("blue").solid} />

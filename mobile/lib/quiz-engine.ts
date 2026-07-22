@@ -1,9 +1,10 @@
+import type { TranslationKey } from "@/lib/locales";
 import type { DictionaryEntry } from "@/lib/dictionary";
 import { localize } from "@/lib/localize";
 import type { AudioSource, MatchingGameConfig, MatchingPair, QuestionType, QuizConfig, QuizQuestion, SentenceTemplate, TranscriptSegment } from "@/types";
 
 /** Optional translate function passed from a React component via useTranslation(). */
-export type QuizTranslateFn = (key: string, opts?: Record<string, unknown>) => string;
+export type QuizTranslateFn = (key: TranslationKey, opts?: Record<string, unknown>) => string;
 
 interface QuizPool {
   id: string;

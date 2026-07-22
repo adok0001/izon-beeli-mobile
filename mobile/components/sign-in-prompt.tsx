@@ -1,3 +1,4 @@
+import type { TranslationKey } from "@/lib/locales";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useGuestStore } from "@/store/guest-store";
@@ -13,10 +14,10 @@ import { Modal, Pressable, Text, View } from "react-native";
  */
 export function useRequireAuth() {
   const isGuest = useGuestStore((s) => s.isGuest);
-  const [descriptionKey, setDescriptionKey] = useState<string | null>(null);
+  const [descriptionKey, setDescriptionKey] = useState<TranslationKey | null>(null);
 
   const requireAuth = useCallback(
-    (action: () => void, descriptionKey?: string) => {
+    (action: () => void, descriptionKey?: TranslationKey) => {
       if (isGuest) {
         setDescriptionKey(descriptionKey ?? "common.signInFeedDesc");
         return;
@@ -34,7 +35,7 @@ export function useRequireAuth() {
 export function SignInPrompt({
   descriptionKey,
   onClose,
-}: Readonly<{ descriptionKey: string | null; onClose: () => void }>) {
+}: Readonly<{ descriptionKey: TranslationKey | null; onClose: () => void }>) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const router = useRouter();

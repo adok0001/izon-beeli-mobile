@@ -1,3 +1,4 @@
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 import { analytics } from "@/lib/analytics";
 import { getAccent } from "@/constants/accent-colors";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -37,7 +38,7 @@ function ModeCard({
   title: string;
   subtitle: string;
   color: "blue" | "purple";
-  icon: string;
+  icon: IconSymbolName;
   onQuickPlay: () => void;
   onInvite: () => void;
   loading: boolean;
@@ -61,7 +62,7 @@ function ModeCard({
         <View
           className={`mr-3 h-12 w-12 items-center justify-center rounded-xl ${bg}`}
         >
-          <IconSymbol name={icon as any} size={24} color="#fff" />
+          <IconSymbol name={icon} size={24} color="#fff" />
         </View>
         <View className="flex-1">
           <Text className="text-lg font-bold text-neutral-900 dark:text-white">

@@ -1,3 +1,4 @@
+import { tWithVars } from "@/lib/i18n-dynamic";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { friendlyError } from "@/lib/api";
 import { useRef, useState } from "react";
@@ -107,7 +108,7 @@ export default function ContributeBulkScreen() {
           const label = data.inserted === 1 ? t("contribute.submitEntry") : t("contribute.submitEntries");
           toastSuccess(
             t("contribute.submitted"),
-            t("contribute.submittedBulkDesc", { inserted: data.inserted, label })
+            tWithVars(t, "contribute.submittedBulkDesc", { inserted: data.inserted, label })
           );
           setTimeout(() => router.back(), 1500);
         },

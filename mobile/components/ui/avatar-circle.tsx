@@ -29,7 +29,7 @@ export function AvatarCircle({ avatarId, size, selected, accentColor }: Readonly
         elevation: selected ? 6 : 0,
       }}
     >
-      <IconSymbol name={avatar.icon as any} size={size * 0.42} color={avatar.fg} />
+      <IconSymbol name={avatar.icon} size={size * 0.42} color={avatar.fg} />
     </View>
   );
 }

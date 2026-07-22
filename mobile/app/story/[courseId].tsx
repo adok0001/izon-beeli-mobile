@@ -1,3 +1,4 @@
+import { tWithVars } from "@/lib/i18n-dynamic";
 import { useEffect, useState } from "react";
 import { LoadingScreen } from "@/components/loading-screen";
 import { getAccent } from "@/constants/accent-colors";
@@ -142,7 +143,7 @@ export default function StoryScreen() {
 
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontSize: 10, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: M.muted }}>
-                        {t("educator.story.chapterLabel", { number: chapter.order })}
+                        {tWithVars(t, "educator.story.chapterLabel", { number: chapter.order })}
                       </Text>
                       <Text style={{ fontSize: 16, fontWeight: "700", color: unlocked ? M.text : M.muted }}>
                         {chapter.title}
@@ -184,7 +185,7 @@ export default function StoryScreen() {
             <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.5)" }}>
               <SafeAreaView edges={["bottom"]} style={{ borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: M.card, paddingHorizontal: 24, paddingBottom: 16, paddingTop: 24, borderWidth: 1, borderColor: M.border }}>
                 <Text style={{ marginBottom: 4, fontSize: 13, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: M.success }}>
-                  {t("educator.story.chapterComplete", { number: outroChapter.order })}
+                  {tWithVars(t, "educator.story.chapterComplete", { number: outroChapter.order })}
                 </Text>
                 <Text style={{ marginBottom: 16, fontSize: 24, fontWeight: "700", color: M.text }}>
                   {outroChapter.title}

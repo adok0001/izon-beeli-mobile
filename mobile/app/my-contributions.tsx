@@ -1,3 +1,4 @@
+import type { TranslationKey } from "@/lib/locales";
 import { getAccent } from "@/constants/accent-colors";
 import { WordAudioButton } from "@/components/dictionary/word-audio-button";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -60,7 +61,7 @@ const EDITABLE_TYPES = ["word", "phrase", "entry_meaning", "audio", "entry_audio
 
 function ContributionRow({ item }: { item: MyContribution }) {
   const M = useMuseumTheme();
-  const STATUS_CONFIG = {
+  const STATUS_CONFIG: Record<string, { label: TranslationKey; color: string; bg: string }> = {
     submitted: { label: "myContributions.statusPending", color: M.warning, bg: "bg-amber-100 dark:bg-amber-900" },
     approved: { label: "myContributions.statusApproved", color: M.success, bg: "bg-green-100 dark:bg-green-900" },
     rejected: { label: "myContributions.statusRejected", color: M.error, bg: "bg-red-100 dark:bg-red-900" },
@@ -117,7 +118,7 @@ function ContributionRow({ item }: { item: MyContribution }) {
 
   const config = STATUS_CONFIG[item.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.submitted;
   const categoryLabel = item.category
-    ? t(`dictionaryPage.categoryLabels.${item.category}` as any, { defaultValue: item.category })
+    ? t(`dictionaryPage.categoryLabels.${item.category}`, { defaultValue: item.category })
     : null;
 
   const hasAudio = item.type === "entry_audio" || item.type === "audio" || !!item.audioUrl;
@@ -392,7 +393,7 @@ function ContributionRow({ item }: { item: MyContribution }) {
         <View className="items-end gap-1">
           <View className={`rounded-full px-2.5 py-1 ${config.bg}`}>
             <Text className="text-xs font-semibold" style={{ color: config.color }}>
-              {t(config.label as any)}
+              {t(config.label)}
             </Text>
           </View>
           {item.status === "approved" && item.xpAwarded != null && (

@@ -1,7 +1,13 @@
+/**
+ * Sub-key under `xp.levels.*` in the locale files. A literal union rather than
+ * `string` so `t(`xp.levels.${titleKey}`)` resolves against the real key tree.
+ */
+export type LevelTitleKey = (typeof LEVELS)[number]["titleKey"];
+
 export interface LevelInfo {
   level: number;
   title: string;
-  titleKey: string;
+  titleKey: LevelTitleKey;
   legendNumeral?: string;
   currentXP: number; // XP earned within the current level
   xpForNextLevel: number; // XP needed to finish this level
@@ -9,14 +15,7 @@ export interface LevelInfo {
   progress: number; // 0-1
 }
 
-interface LevelThreshold {
-  level: number;
-  cumulativeXP: number;
-  title: string;
-  titleKey: string;
-}
-
-const LEVELS: LevelThreshold[] = [
+const LEVELS = [
   { level: 1, cumulativeXP: 0, title: "Newcomer", titleKey: "newcomer" },
   { level: 2, cumulativeXP: 100, title: "Explorer", titleKey: "explorer" },
   { level: 3, cumulativeXP: 300, title: "Listener", titleKey: "listener" },
@@ -27,7 +26,7 @@ const LEVELS: LevelThreshold[] = [
   { level: 8, cumulativeXP: 3000, title: "Master", titleKey: "master" },
   { level: 9, cumulativeXP: 4000, title: "Guardian", titleKey: "guardian" },
   { level: 10, cumulativeXP: 5500, title: "Legend", titleKey: "legend" },
-];
+] as const;
 
 const XP_PER_LEGEND_LEVEL = 2000;
 const MAX_BASE_LEVEL = 10;
@@ -57,8 +56,8 @@ export function getLevelInfo(points: number): LevelInfo {
     };
   }
 
-  let currentLevel = LEVELS[0];
-  let nextLevel: LevelThreshold | null = null;
+  let currentLevel: (typeof LEVELS)[number] = LEVELS[0];
+  let nextLevel: (typeof LEVELS)[number] | null = null;
 
   for (let i = 0; i < LEVELS.length; i++) {
     if (totalXP >= LEVELS[i].cumulativeXP) {

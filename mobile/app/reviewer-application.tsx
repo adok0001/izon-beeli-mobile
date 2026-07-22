@@ -1,3 +1,4 @@
+import type { TranslationKey } from "@/lib/locales";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { getAccent } from "@/constants/accent-colors";
@@ -41,6 +42,22 @@ const REVIEWER_ROLES = [
   { id: "elder" },
 ] as const;
 
+type ReviewerRoleId = (typeof REVIEWER_ROLES)[number]["id"];
+
+// Lookups rather than computed `reviewerApplication.role${capitalize(id)}` keys —
+// string methods return `string`, which breaks the template literal key type.
+const ROLE_LABEL_KEYS = {
+  teacher: "reviewerApplication.roleTeacher",
+  professor: "reviewerApplication.roleProfessor",
+  elder: "reviewerApplication.roleElder",
+} as const satisfies Record<ReviewerRoleId, TranslationKey>;
+
+const ROLE_DESC_KEYS = {
+  teacher: "reviewerApplication.roleTeacherDesc",
+  professor: "reviewerApplication.roleProfessorDesc",
+  elder: "reviewerApplication.roleElderDesc",
+} as const satisfies Record<ReviewerRoleId, TranslationKey>;
+
 interface ReviewerApp {
   id: string;
   role: string;
@@ -67,7 +84,7 @@ function ReviewerProfileCard({
     elder: { bg: "bg-teal-100 dark:bg-teal-900", text: "text-teal-800 dark:text-teal-100" },
   };
   const colors = roleColors[roleKey] ?? roleColors.teacher;
-  const roleLabelKey = `reviewerApplication.role${roleKey.charAt(0).toUpperCase()}${roleKey.slice(1)}` as never;
+  const roleLabelKey = ROLE_LABEL_KEYS[roleKey as ReviewerRoleId] ?? ROLE_LABEL_KEYS.teacher;
 
   return (
     <View className="rounded-2xl border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950/30">
@@ -469,12 +486,12 @@ function ApplicationForm({
             <Text className={`text-sm font-bold ${
               role === r.id ? "text-indigo-700 dark:text-indigo-300" : "text-neutral-900 dark:text-white"
             }`}>
-              {t(`reviewerApplication.role${r.id.charAt(0).toUpperCase()}${r.id.slice(1)}` as never)}
+              {t(ROLE_LABEL_KEYS[r.id])}
             </Text>
             <Text className={`mt-0.5 text-xs ${
               role === r.id ? "text-indigo-600 dark:text-indigo-300" : "text-neutral-600 dark:text-neutral-300"
             }`}>
-              {t(`reviewerApplication.role${r.id.charAt(0).toUpperCase()}${r.id.slice(1)}Desc` as never)}
+              {t(ROLE_DESC_KEYS[r.id])}
             </Text>
           </Pressable>
         ))}

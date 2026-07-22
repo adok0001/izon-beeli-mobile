@@ -1,3 +1,4 @@
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { type } from "@/constants/typography";
 import { MUSEUM, bronze, glass } from "@/lib/use-museum-theme";
@@ -15,14 +16,14 @@ import { Animated, Text, View } from "react-native";
 export const PLAQUE = ["✦", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
 
 export interface Scene {
-  icon: string;
+  icon: IconSymbolName;
   title: string;
   body: string;
   plaque: string;
 }
 
 /** The cone of a gallery spotlight: stacked bronze halos behind the glyph. */
-export function PictureLight({ icon }: Readonly<{ icon: string }>) {
+export function PictureLight({ icon }: Readonly<{ icon: IconSymbolName }>) {
   return (
     <View style={{ width: 208, height: 208, alignItems: "center", justifyContent: "center" }}>
       <View style={{ position: "absolute", width: 208, height: 208, borderRadius: 104, backgroundColor: bronze(0.05) }} />
@@ -38,7 +39,7 @@ export function PictureLight({ icon }: Readonly<{ icon: string }>) {
           borderColor: bronze(0.5),
         }}
       />
-      <IconSymbol name={icon as never} size={38} color={MUSEUM.accentLight} />
+      <IconSymbol name={icon} size={38} color={MUSEUM.accentLight} />
     </View>
   );
 }

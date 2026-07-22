@@ -1,3 +1,4 @@
+import type { TranslationKey } from "@/lib/locales";
 // Web keeps the original filter-pill layout and cinematic CultureFeed.
 // The mobile file (explore.tsx) uses the new Library lobby.
 import { CultureFeed } from "@/components/explore/culture-feed";
@@ -16,7 +17,7 @@ export { ErrorBoundary } from "@/components/screen-error-boundary";
 
 type ExploreFilter = "daily" | DiscoverFilter;
 
-const FILTER_OPTIONS: { id: ExploreFilter; labelKey: string }[] = [
+const FILTER_OPTIONS: { id: ExploreFilter; labelKey: TranslationKey }[] = [
   { id: "daily", labelKey: "explore.filterDaily" },
   { id: "all", labelKey: "culture.filterAll" },
   { id: "blog", labelKey: "culture.filterBlog" },
@@ -34,7 +35,6 @@ const TYPE_COLORS: Record<DiscoverFilter, string | null> = {
 export default function ExploreScreenWeb() {
   const M = useMuseumTheme();
   const { t } = useTranslation();
-  const tr = (key: string) => t(key as never) as string;
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<ExploreFilter>("daily");
 
@@ -84,7 +84,7 @@ export default function ExploreScreenWeb() {
                 accessibilityState={{ selected: isActive }}
               >
                 <Text style={{ fontSize: 11, fontWeight: "700", color: isActive ? col : M.sub }}>
-                  {tr(opt.labelKey)}
+                  {t(opt.labelKey)}
                 </Text>
               </Pressable>
             );

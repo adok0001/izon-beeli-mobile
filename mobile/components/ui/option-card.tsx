@@ -1,9 +1,10 @@
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { Pressable, Text, View } from "react-native";
 
 export interface OptionCardProps {
-  icon: string;
+  icon: IconSymbolName;
   label: string;
   detail: string;
   selected: boolean;
@@ -39,7 +40,7 @@ export function OptionCard({ icon, label, detail, selected, onPress }: Readonly<
           backgroundColor: selected ? M.accent : M.border,
         }}
       >
-        <IconSymbol name={icon as never} size={22} color={selected ? M.ink : M.sub} />
+        <IconSymbol name={icon} size={22} color={selected ? M.ink : M.sub} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={{ fontSize: 17, fontWeight: "700", color: selected ? M.accent : M.text }}>{label}</Text>

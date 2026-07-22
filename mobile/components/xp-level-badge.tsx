@@ -1,3 +1,4 @@
+import { tWithVars } from "@/lib/i18n-dynamic";
 import { getLevelInfo } from "@/lib/xp-levels";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useTranslation } from "react-i18next";
@@ -14,13 +15,13 @@ export function XpLevelBadge({ points, variant = "compact" }: XpLevelBadgeProps)
   const info = getLevelInfo(points);
   const translatedTitle = info.legendNumeral
     ? t("xp.levels.legendNumeral", { numeral: info.legendNumeral })
-    : t(`xp.levels.${info.titleKey}` as any);
+    : t(`xp.levels.${info.titleKey}`);
 
   if (variant === "compact") {
     return (
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
         <View style={{ borderRadius: 999, backgroundColor: M.accent, paddingHorizontal: 8, paddingVertical: 2 }}>
-          <Text style={{ fontSize: 12, fontWeight: "700", color: M.ink }}>{t("xp.levelShort", { level: info.level })}</Text>
+          <Text style={{ fontSize: 12, fontWeight: "700", color: M.ink }}>{tWithVars(t, "xp.levelShort", { level: info.level })}</Text>
         </View>
         <View style={{ height: 6, width: 64, overflow: "hidden", borderRadius: 999, backgroundColor: M.border }}>
           <View
@@ -45,7 +46,7 @@ export function XpLevelBadge({ points, variant = "compact" }: XpLevelBadgeProps)
         {translatedTitle}
       </Text>
       <Text style={{ marginTop: 2, fontSize: 12, color: M.sub }}>
-        {t("xp.progressLabel", { current: info.currentXP, needed: info.xpForNextLevel })}
+        {tWithVars(t, "xp.progressLabel", { current: info.currentXP, needed: info.xpForNextLevel })}
       </Text>
       <View style={{ marginTop: 8, height: 8, width: 192, overflow: "hidden", borderRadius: 999, backgroundColor: M.border }}>
         <View
@@ -53,7 +54,7 @@ export function XpLevelBadge({ points, variant = "compact" }: XpLevelBadgeProps)
         />
       </View>
       <Text style={{ marginTop: 4, fontSize: 12, color: M.muted }}>
-        {t("xp.totalXP", { total: info.totalXP })}
+        {tWithVars(t, "xp.totalXP", { total: info.totalXP })}
       </Text>
     </View>
   );

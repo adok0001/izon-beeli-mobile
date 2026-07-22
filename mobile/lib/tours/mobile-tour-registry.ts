@@ -1,11 +1,13 @@
+import type { TranslationKey } from "@/lib/locales";
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 export type TourAudience = "all" | "contributor" | "reviewer" | "admin";
 
 export interface TourFeature {
-  icon: string;
+  icon: IconSymbolName;
   color: string;
   bgColor: string;
-  titleKey: string;
-  detailKey: string;
+  titleKey: TranslationKey;
+  detailKey: TranslationKey;
 }
 
 export interface MobileTourConfig {
@@ -14,8 +16,8 @@ export interface MobileTourConfig {
   heroIcon: string;
   heroColor: string;
   heroBg: string;
-  titleKey: string;
-  subtitleKey: string;
+  titleKey: TranslationKey;
+  subtitleKey: TranslationKey;
   features: TourFeature[];
 }
 

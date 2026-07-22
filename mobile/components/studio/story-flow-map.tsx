@@ -1,3 +1,4 @@
+import type { TranslationKey } from "@/lib/locales";
 import { NewButton } from "@/components/studio/editor-form";
 import { SceneEditor, type SceneDraft } from "@/components/studio/interactive-story-scene-editor";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -49,7 +50,7 @@ export function StorySceneMap({
   sceneOptionsFor: (excludeKey: string) => { id: string; label: string }[];
   /** Per-scene validation messages, keyed by scene draft key. */
   errors?: Record<string, string>;
-  t: (key: string, opts?: Record<string, unknown>) => string;
+  t: (key: TranslationKey, opts?: Record<string, unknown>) => string;
 }>) {
   const M = useMuseumTheme();
   const [mode, setMode] = useState<"map" | "list">("map");

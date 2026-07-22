@@ -1,3 +1,5 @@
+import type { TranslationKey } from "@/lib/locales";
+import { tWithVars } from "@/lib/i18n-dynamic";
 import { LanguagePickerModal } from "@/components/language-picker";
 import { LabeledInput } from "@/components/studio/editor-form";
 import { ActionPill } from "@/components/studio/studio-action-pill";
@@ -78,10 +80,12 @@ export default function InteractiveStoriesScreen() {
   );
 
   // A single stable reference shared by every SceneEditor, instead of a new
-  // closure per scene on every render — i18next's generated types don't
-  // accept a plain interpolation object here (same workaround used by
-  // story-edit.tsx's ChapterEditor).
-  const sceneT = useCallback((key: string, opts?: Record<string, unknown>) => t(key as any, opts as any) as string, [t]);
+  // closure per scene on every render. See tWithVars for why the interpolation
+  // bag needs the loosening (same workaround used by story-edit.tsx).
+  const sceneT = useCallback(
+    (key: TranslationKey, opts?: Record<string, unknown>) => tWithVars(t, key, opts),
+    [t],
+  );
 
   const allowedLanguages = useMemo(
     () =>

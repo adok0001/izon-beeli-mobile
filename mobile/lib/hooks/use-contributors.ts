@@ -1,3 +1,4 @@
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 
@@ -16,7 +17,7 @@ export type ContributorBadgeType =
   | "audio_contributor"
   | "multi_language";
 
-const BADGE_LABELS: Record<ContributorBadgeType, { label: string; icon: string }> = {
+const BADGE_LABELS: Record<ContributorBadgeType, { label: string; icon: IconSymbolName }> = {
   first_contribution: { label: "First Word", icon: "star.fill" },
   ten_words: { label: "10 Words", icon: "flame.fill" },
   fifty_words: { label: "50 Words", icon: "trophy.fill" },

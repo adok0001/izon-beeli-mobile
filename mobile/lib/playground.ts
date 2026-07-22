@@ -1,13 +1,35 @@
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 import { getAccent } from "@/constants/accent-colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
 export type GameCategory = "quick" | "listening" | "reading" | "scripts" | "explore";
 
+/**
+ * Sub-key under `playground.games.*` in the locale files. Kept as a literal union
+ * rather than `string` so `t(`playground.games.${key}.title`)` resolves against the
+ * real key tree — a game added here without matching translations is a build error.
+ */
+export type PlaygroundGameKey =
+  | "speedRound"
+  | "recallBingo"
+  | "quiz"
+  | "match"
+  | "wordReview"
+  | "phraseReview"
+  | "dictation"
+  | "sayItBack"
+  | "fillProverb"
+  | "sentenceBuilder"
+  | "scriptDecode"
+  | "traceSymbol"
+  | "etymologyTrail"
+  | "wordChallenge";
+
 export interface PlaygroundGame {
   id: string;
-  i18nKey: string; // playground.games.<key>
-  icon: string;
+  i18nKey: PlaygroundGameKey; // playground.games.<key>
+  icon: IconSymbolName;
   color: string;
   route: string;
   category: GameCategory;

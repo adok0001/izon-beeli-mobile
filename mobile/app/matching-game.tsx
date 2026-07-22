@@ -1,3 +1,4 @@
+import { tWithVars } from "@/lib/i18n-dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import { useRouter, useLocalSearchParams, Stack } from "expo-router";
@@ -161,10 +162,10 @@ export default function MatchingGameScreen() {
 
             <Text style={{ marginBottom: 8, fontSize: 24, fontWeight: "700", color: M.text }}>{t("matching.allMatched")}</Text>
             <Text style={{ marginBottom: 4, fontSize: 15, color: M.sub }}>
-              {t("matching.pairsAttempts", { total: result.totalPairs, attempts: result.attempts })}
+              {tWithVars(t, "matching.pairsAttempts", { total: result.totalPairs, attempts: result.attempts })}
             </Text>
             <Text style={{ marginBottom: 24, fontSize: 15, color: M.sub }}>
-              {t("matching.time", { time: result.timeElapsed })}
+              {tWithVars(t, "matching.time", { time: result.timeElapsed })}
             </Text>
 
             <View style={{ width: "100%", gap: 12 }}>

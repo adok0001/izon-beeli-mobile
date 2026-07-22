@@ -1,3 +1,4 @@
+import { tWithVars } from "@/lib/i18n-dynamic";
 import { analytics } from "@/lib/analytics";
 import { IconSymbol, type IconSymbolName } from "@/components/ui/icon-symbol";
 import { LanguagePicker } from "@/components/ui/language-picker";
@@ -336,7 +337,7 @@ export default function ContributeScreen() {
                   >
                     <View style={{ flexDirection: "row", alignItems: "center" }}>
                       <View style={{ marginRight: 16, height: 48, width: 48, alignItems: "center", justifyContent: "center", borderRadius: 12, backgroundColor: card.iconBg }}>
-                        <IconSymbol name={card.icon as any} size={24} color={card.iconColor} />
+                        <IconSymbol name={card.icon} size={24} color={card.iconColor} />
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontSize: 15, fontWeight: "700", color: M.text }}>{card.title}</Text>
@@ -366,7 +367,7 @@ export default function ContributeScreen() {
                   >
                     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                       <Text style={{ fontSize: 10, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase", color: M.accent }}>
-                        {t("contribute.activeBountyBanner", { xp: activeBounty.xpReward })}
+                        {tWithVars(t, "contribute.activeBountyBanner", { xp: activeBounty.xpReward })}
                       </Text>
                       <Text style={{ fontSize: 11, color: M.accent }}>
                         {activeBounty.currentCount}/{activeBounty.targetCount}

@@ -26,20 +26,19 @@ export default function LandingScreen() {
   const scrollX = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<ScrollView>(null);
 
-  const tr = (key: string) => t(key as never) as string;
   const config = MOBILE_TOUR_REGISTRY.welcome;
 
   const scenes = useMemo<Scene[]>(() => {
     const foyer: Scene = {
       icon: config.heroIcon,
-      title: tr(config.titleKey),
-      body: tr(config.subtitleKey),
+      title: t(config.titleKey),
+      body: t(config.subtitleKey),
       plaque: PLAQUE[0],
     };
     const rooms = config.features.map<Scene>((f, i) => ({
       icon: f.icon,
-      title: tr(f.titleKey),
-      body: tr(f.detailKey),
+      title: t(f.titleKey),
+      body: t(f.detailKey),
       plaque: PLAQUE[i + 1] ?? String(i + 1),
     }));
     return [foyer, ...rooms];

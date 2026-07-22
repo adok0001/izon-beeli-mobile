@@ -20,13 +20,12 @@ export function FeaturedGameCard({
   const playedToday = usePlaygroundStore((s) => s.playedToday);
   const markPlayed = usePlaygroundStore((s) => s.markPlayed);
   const played = playedToday.includes(game.id);
-  const tr = (key: string) => t(key as never) as string;
 
   // Contextual invitation beats the static catalog description when words are due.
   const invitation =
     dueCount > 0 && (game.id === "speed-round" || game.id === "word-review")
       ? t("playground.dueInvitation", { count: dueCount })
-      : tr(`playground.games.${game.i18nKey}.description`);
+      : t(`playground.games.${game.i18nKey}.description`);
 
   const handlePress = () => {
     hapticTap();
@@ -48,7 +47,7 @@ export function FeaturedGameCard({
       }}
       className="active:opacity-70"
       accessibilityRole="button"
-      accessibilityLabel={tr(`playground.games.${game.i18nKey}.title`)}
+      accessibilityLabel={t(`playground.games.${game.i18nKey}.title`)}
       accessibilityHint={invitation}
     >
       {/* Label strip */}
@@ -85,11 +84,11 @@ export function FeaturedGameCard({
       <View style={{ paddingHorizontal: 16, paddingVertical: 16 }}>
         {/* Icon watermark, cropped bottom-right */}
         <View style={{ position: "absolute", right: -10, bottom: -14, opacity: 0.08 }}>
-          <IconSymbol name={game.icon as never} size={88} color={game.color} />
+          <IconSymbol name={game.icon} size={88} color={game.color} />
         </View>
 
         <Text style={[type.h2, { color: M.text }]}>
-          {tr(`playground.games.${game.i18nKey}.title`)}
+          {t(`playground.games.${game.i18nKey}.title`)}
         </Text>
         <Text style={{ marginTop: 6, fontSize: 13, lineHeight: 19, color: M.sub, paddingRight: 48 }}>
           {invitation}

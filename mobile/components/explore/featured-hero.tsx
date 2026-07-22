@@ -55,7 +55,6 @@ export function FeaturedHeroCarousel({ items }: { items: DiscoverItem[] }) {
 export function FeaturedHero({ item, ctaLabel, width }: FeaturedHeroProps) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
-  const tr = (key: string) => t(key as never, { defaultValue: key }) as string;
   const router = useRouter();
   const cfg = DISCOVER_TYPE_CONFIG[item.type];
 
@@ -115,7 +114,7 @@ export function FeaturedHero({ item, ctaLabel, width }: FeaturedHeroProps) {
         >
           <IconSymbol name={cfg.icon} size={11} color={cfg.color} />
           <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 1.2, color: cfg.color }}>
-            {tr("library.featuredToday")}
+            {t("library.featuredToday")}
           </Text>
         </View>
 

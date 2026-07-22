@@ -1,5 +1,8 @@
-import { SymbolView, SymbolViewProps, SymbolWeight } from 'expo-symbols';
+import { SymbolView, SymbolWeight } from 'expo-symbols';
 import { StyleProp, ViewStyle } from 'react-native';
+import { type IconSymbolName } from './icon-symbol-mapping';
+
+export { isIconSymbolName, type IconSymbolName } from './icon-symbol-mapping';
 
 export function IconSymbol({
   name,
@@ -8,7 +11,9 @@ export function IconSymbol({
   style,
   weight = 'regular',
 }: {
-  name: SymbolViewProps['name'];
+  // Deliberately narrower than expo-symbols' full union: iOS may only use
+  // symbols that Android/web can also render. See ./icon-symbol-mapping.
+  name: IconSymbolName;
   size?: number;
   color: string;
   style?: StyleProp<ViewStyle>;

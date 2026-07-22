@@ -1,3 +1,4 @@
+import type { TranslationKey } from "@/lib/locales";
 import { apiFetch } from "@/lib/api";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useAuth } from "@clerk/clerk-expo";
@@ -18,7 +19,7 @@ import {
 
 type ReviewerRole = "teacher" | "professor" | "elder";
 
-const ROLE_OPTIONS: { value: ReviewerRole; labelKey: string }[] = [
+const ROLE_OPTIONS: { value: ReviewerRole; labelKey: TranslationKey }[] = [
   { value: "teacher", labelKey: "reviewerApplication.roleTeacher" },
   { value: "professor", labelKey: "reviewerApplication.roleProfessor" },
   { value: "elder", labelKey: "reviewerApplication.roleElder" },
@@ -136,7 +137,7 @@ export function ReviewerApplicationModal({ visible, onClose }: ReviewerApplicati
                     active ? "text-white" : "text-neutral-700 dark:text-neutral-300"
                   }`}
                 >
-                  {t(option.labelKey as any)}
+                  {t(option.labelKey)}
                 </Text>
               </Pressable>
             );

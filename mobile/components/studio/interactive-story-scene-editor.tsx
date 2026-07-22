@@ -1,3 +1,4 @@
+import type { TranslationKey } from "@/lib/locales";
 import { Badge } from "@/components/ui/badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { GhostButton, LabeledInput, SmallButton } from "@/components/studio/editor-form";
@@ -141,7 +142,7 @@ function ChoiceEditor({
   onChange: (updated: ChoiceDraft) => void;
   onDelete: () => void;
   M: ReturnType<typeof useMuseumTheme>;
-  t: (key: string, opts?: Record<string, unknown>) => string;
+  t: (key: TranslationKey, opts?: Record<string, unknown>) => string;
 }>) {
   return (
     <View style={{ borderRadius: 10, borderWidth: 1, borderColor: M.border, backgroundColor: M.bg, padding: 10, gap: 8 }}>
@@ -189,7 +190,7 @@ export function SceneEditor({
   onSetOpening: () => void;
   error?: string;
   M: ReturnType<typeof useMuseumTheme>;
-  t: (key: string, opts?: Record<string, unknown>) => string;
+  t: (key: TranslationKey, opts?: Record<string, unknown>) => string;
 }>) {
   // Advanced disclosure: the stable id starts collapsed to a chip.
   const [idExpanded, setIdExpanded] = useState(false);

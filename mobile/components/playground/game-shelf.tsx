@@ -14,7 +14,6 @@ function GameChip({ game, dueCount }: { game: PlaygroundGame; dueCount: number }
   const markPlayed = usePlaygroundStore((s) => s.markPlayed);
   const played = playedToday.includes(game.id);
   const showDue = dueCount > 0 && (game.id === "word-review" || game.id === "speed-round");
-  const tr = (key: string) => t(key as never) as string;
 
   const handlePress = () => {
     hapticTap();
@@ -37,7 +36,7 @@ function GameChip({ game, dueCount }: { game: PlaygroundGame; dueCount: number }
       }}
       className="active:opacity-70"
       accessibilityRole="button"
-      accessibilityLabel={tr(`playground.games.${game.i18nKey}.title`)}
+      accessibilityLabel={t(`playground.games.${game.i18nKey}.title`)}
     >
       <View>
         <View
@@ -47,7 +46,7 @@ function GameChip({ game, dueCount }: { game: PlaygroundGame; dueCount: number }
             backgroundColor: `${game.color}18`,
           }}
         >
-          <IconSymbol name={game.icon as never} size={18} color={game.color} />
+          <IconSymbol name={game.icon} size={18} color={game.color} />
         </View>
         {played && (
           <View style={{ position: "absolute", top: -5, right: -7 }}>
@@ -71,7 +70,7 @@ function GameChip({ game, dueCount }: { game: PlaygroundGame; dueCount: number }
         style={{ marginTop: 8, fontSize: 10, fontWeight: "700", color: M.text, textAlign: "center" }}
         numberOfLines={2}
       >
-        {tr(`playground.games.${game.i18nKey}.title`)}
+        {t(`playground.games.${game.i18nKey}.title`)}
       </Text>
     </Pressable>
   );

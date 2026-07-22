@@ -15,9 +15,8 @@ export function GameCard({ game, dueCount }: { game: PlaygroundGame; dueCount: n
   const played = playedToday.includes(game.id);
   const showDue = !played && dueCount > 0 && (game.id === "word-review" || game.id === "speed-round");
 
-  const tr = (key: string) => t(key as never) as string;
-  const title = tr(`playground.games.${game.i18nKey}.title`);
-  const description = tr(`playground.games.${game.i18nKey}.description`);
+  const title = t(`playground.games.${game.i18nKey}.title`);
+  const description = t(`playground.games.${game.i18nKey}.description`);
 
   const handlePress = () => {
     hapticTap();
@@ -69,7 +68,7 @@ export function GameCard({ game, dueCount }: { game: PlaygroundGame; dueCount: n
 
       {/* Icon */}
       <View style={{ width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: `${game.color}18`, marginBottom: 10 }}>
-        <IconSymbol name={game.icon as never} size={20} color={game.color} />
+        <IconSymbol name={game.icon} size={20} color={game.color} />
       </View>
 
       <Text style={{ fontSize: 13, fontWeight: "800", color: M.text, marginBottom: 3 }}>{title}</Text>

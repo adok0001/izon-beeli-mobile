@@ -1,3 +1,4 @@
+import { tWithVars } from "@/lib/i18n-dynamic";
 import { Badge } from "@/components/ui/badge";
 import { LocalizedTextInput, serializeLocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
 import { useStudioAccess } from "@/components/studio/studio-gate";
@@ -198,7 +199,7 @@ export default function ScenariosScreen() {
             {turns.map((turn, index) => (
               <StudioCard key={index} style={{ gap: 8 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                  <Text style={{ fontSize: 11, fontWeight: "700", color: M.sub }}>{t("educator.scenariosEditor.turnLabel", { number: index + 1 })}</Text>
+                  <Text style={{ fontSize: 11, fontWeight: "700", color: M.sub }}>{tWithVars(t, "educator.scenariosEditor.turnLabel", { number: index + 1 })}</Text>
                   {turns.length > 1 && (
                     <ActionPill icon="trash.fill" label={t("educator.scenariosEditor.removeTurn")} tone="danger" onPress={() => removeTurn(index)} />
                   )}

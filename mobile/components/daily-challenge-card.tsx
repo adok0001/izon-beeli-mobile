@@ -1,3 +1,4 @@
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
 import { ApiError, friendlyError } from "@/lib/api";
@@ -16,7 +17,7 @@ function ChallengeItem({ challenge }: { challenge: DailyChallenge }) {
 
   const CHALLENGE_CONFIG: Record<
     ChallengeType,
-    { icon: string; color: string; route: string }
+    { icon: IconSymbolName; color: string; route: string }
   > = {
     complete_quiz: { icon: "graduationcap.fill", color: M.warning, route: "/quiz" },
     review_words: { icon: "brain.fill", color: getAccent("purple").solid, route: "/word-review" },
@@ -43,7 +44,7 @@ function ChallengeItem({ challenge }: { challenge: DailyChallenge }) {
         <View
           style={{ marginRight: 10, height: 36, width: 36, alignItems: "center", justifyContent: "center", borderRadius: 8, backgroundColor: `${config.color}20` }}
         >
-          <IconSymbol name={config.icon as any} size={17} color={config.color} />
+          <IconSymbol name={config.icon} size={17} color={config.color} />
         </View>
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>

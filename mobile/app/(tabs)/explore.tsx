@@ -21,7 +21,6 @@ export { ErrorBoundary } from "@/components/screen-error-boundary";
 export default function LibraryScreen() {
   const M = useMuseumTheme();
   const { t } = useTranslation();
-  const tr = (key: string) => t(key as never, { defaultValue: key }) as string;
   const router = useRouter();
   const { all } = useDiscover("all");
   const { resumeState } = useResumeLesson();
@@ -54,10 +53,10 @@ export default function LibraryScreen() {
       {/* Foyer header */}
       <View style={{ backgroundColor: M.ink, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 14 }}>
         <Text style={{ fontSize: 9, fontWeight: "800", letterSpacing: 2.5, color: M.accent, marginBottom: 4 }}>
-          {tr("explore.subtitle").toUpperCase()}
+          {t("explore.subtitle").toUpperCase()}
         </Text>
         <Text style={{ fontSize: 32, fontWeight: "900", color: M.parchment, letterSpacing: -0.5 }}>
-          {tr("explore.title").toUpperCase()}
+          {t("explore.title").toUpperCase()}
         </Text>
         <View style={{ height: 1, backgroundColor: M.accent, opacity: 0.25, marginTop: 12 }} />
       </View>
@@ -135,7 +134,7 @@ export default function LibraryScreen() {
           <View style={{ alignItems: "center", paddingVertical: 40 }}>
             <IconSymbol name="books.vertical.fill" size={36} color={M.muted} />
             <Text style={{ marginTop: 12, fontSize: 14, color: M.sub, textAlign: "center" }}>
-              {tr("library.emptyTitle")}
+              {t("library.emptyTitle")}
             </Text>
           </View>
         ) : null}

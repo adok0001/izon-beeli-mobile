@@ -1,3 +1,5 @@
+import { tWithVars } from "@/lib/i18n-dynamic";
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 import { LanguagePickerModal } from "@/components/language-picker";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { CourseEditModal } from "@/components/studio/course-editor";
@@ -22,7 +24,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const ONBOARDING_KEY = "educator_onboarded";
 
-function StatCard({ icon, label, value }: Readonly<{ icon: string; label: string; value: number }>) {
+function StatCard({ icon, label, value }: Readonly<{ icon: IconSymbolName; label: string; value: number }>) {
   const M = useMuseumTheme();
   return (
     <View
@@ -38,7 +40,7 @@ function StatCard({ icon, label, value }: Readonly<{ icon: string; label: string
           backgroundColor: `${M.accent}15`,
         }}
       >
-        <IconSymbol name={icon as never} size={18} color={M.accent} />
+        <IconSymbol name={icon} size={18} color={M.accent} />
       </View>
       <Text style={{ marginTop: 12, fontSize: 26, fontWeight: "800", color: M.text }}>{value}</Text>
       <Text style={{ marginTop: 3, fontSize: 12, color: M.muted }}>{label}</Text>
@@ -178,7 +180,7 @@ export default function EducatorPanelScreen() {
               ))}
             </View>
             <Text style={{ paddingHorizontal: 16, paddingTop: 6, fontSize: 9, fontWeight: "800", letterSpacing: 2, color: getAccent("sky").solid }}>
-              {t("educator.onboarding.stepOf", { step: onboardingStep, total: 3 }).toUpperCase()}
+              {tWithVars(t, "educator.onboarding.stepOf", { step: onboardingStep, total: 3 }).toUpperCase()}
             </Text>
 
             {[1, 2, 3].map((step) => {
@@ -198,7 +200,7 @@ export default function EducatorPanelScreen() {
                 t("educator.onboarding.step2Cta"),
                 t("educator.onboarding.step3Cta"),
               ];
-              const icons = ["book.fill", "waveform", "person.2.fill"];
+              const icons: IconSymbolName[] = ["book.fill", "waveform", "person.2.fill"];
               const onCtaPress = () => {
                 if (step < 3) {
                   router.push("/educator/courses" as any);
@@ -211,7 +213,7 @@ export default function EducatorPanelScreen() {
               return (
                 <View key={step} style={{ padding: 16 }}>
                   <View style={{ width: 40, height: 40, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: getAccent("sky").bg, marginBottom: 10 }}>
-                    <IconSymbol name={icons[step - 1] as never} size={18} color={getAccent("sky").solid} />
+                    <IconSymbol name={icons[step - 1]} size={18} color={getAccent("sky").solid} />
                   </View>
                   <Text style={{ fontSize: 15, fontWeight: "700", color: M.text }}>{titles[step - 1]}</Text>
                   <Text style={{ marginTop: 4, fontSize: 13, color: M.sub }}>{descs[step - 1]}</Text>

@@ -1,3 +1,4 @@
+import type { TranslationKey } from "@/lib/locales";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { apiFetch } from "@/lib/api";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -23,7 +24,7 @@ const platform = Platform.OS;
 const osVersion = String(Platform.Version);
 const appVersion = Constants.expoConfig?.version ?? "unknown";
 
-const CATEGORY_KEYS: { value: FeedbackCategory; labelKey: string }[] = [
+const CATEGORY_KEYS: { value: FeedbackCategory; labelKey: TranslationKey }[] = [
   { value: "bug", labelKey: "feedback.categoryBug" },
   { value: "suggestion", labelKey: "feedback.categorySuggestion" },
   { value: "other", labelKey: "feedback.categoryOther" },
@@ -140,7 +141,7 @@ export function FeedbackModal({ visible, onClose }: FeedbackModalProps) {
                 className="active:opacity-70"
               >
                 <Text style={{ fontSize: 13, fontWeight: "600", color: active ? M.ink : M.textDim }}>
-                  {t(c.labelKey as any)}
+                  {t(c.labelKey)}
                 </Text>
               </Pressable>
             );

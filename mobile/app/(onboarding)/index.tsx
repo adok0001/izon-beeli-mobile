@@ -1,3 +1,5 @@
+import type { TranslationKey } from "@/lib/locales";
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 import { analytics } from "@/lib/analytics";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LanguagePicker } from "@/components/ui/language-picker";
@@ -27,7 +29,7 @@ const BEELI_FEATURES: readonly TourFeature[] = MOBILE_TOUR_REGISTRY.welcome.feat
 const DEFAULT_LANG_ID = "izon";
 const DEFAULT_LEVEL: UserLevel = "new";
 
-const LEVEL_OPTIONS: { id: UserLevel; icon: string; labelKey: string; detailKey: string }[] = [
+const LEVEL_OPTIONS: { id: UserLevel; icon: IconSymbolName; labelKey: TranslationKey; detailKey: TranslationKey }[] = [
   { id: "new", icon: "leaf.fill", labelKey: "onboarding.levelNew", detailKey: "onboarding.levelNewDetail" },
   { id: "some_words", icon: "book.fill", labelKey: "onboarding.levelSomeWords", detailKey: "onboarding.levelSomeWordsDetail" },
   { id: "comfortable", icon: "bubble.left.fill", labelKey: "onboarding.levelComfortable", detailKey: "onboarding.levelComfortableDetail" },
@@ -133,7 +135,7 @@ function EdgeAdvanceButton({
 }
 
 /** Placeholder phone-frame mock — swap each card's icon block for a real screenshot asset. */
-function BeeliScreenshotPlaceholder({ icon }: Readonly<{ icon: string }>) {
+function BeeliScreenshotPlaceholder({ icon }: Readonly<{ icon: IconSymbolName }>) {
   const M = useMuseumTheme();
   return (
     <View
@@ -161,7 +163,7 @@ function BeeliScreenshotPlaceholder({ icon }: Readonly<{ icon: string }>) {
             marginBottom: 20,
           }}
         >
-          <IconSymbol name={icon as never} size={40} color={M.accent} />
+          <IconSymbol name={icon} size={40} color={M.accent} />
         </View>
         <View style={{ height: 10, width: "70%", borderRadius: 5, backgroundColor: M.border, marginBottom: 10 }} />
         <View style={{ height: 10, width: "50%", borderRadius: 5, backgroundColor: M.border }} />
@@ -212,7 +214,6 @@ function LevelStep({
   onSelect,
 }: Readonly<{ selectedLevel: UserLevel | null; onSelect: (level: UserLevel) => void }>) {
   const { t } = useTranslation();
-  const tr = (key: string) => t(key as never) as string;
   return (
     <>
       <StepHeading title={t("onboarding.chooseLevelTitle")} subtitle={t("onboarding.chooseLevelSubtitle")} />
@@ -221,8 +222,8 @@ function LevelStep({
           <OptionCard
             key={opt.id}
             icon={opt.icon}
-            label={tr(opt.labelKey)}
-            detail={tr(opt.detailKey)}
+            label={t(opt.labelKey)}
+            detail={t(opt.detailKey)}
             selected={opt.id === selectedLevel}
             onPress={() => onSelect(opt.id)}
           />
@@ -235,17 +236,16 @@ function LevelStep({
 function BeeliStep({ feature }: Readonly<{ feature: TourFeature }>) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
-  const tr = (key: string) => t(key as never) as string;
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
       <BeeliScreenshotPlaceholder icon={feature.icon} />
       <Text
         style={{ marginTop: 28, fontSize: 24, fontWeight: "900", color: M.text, textAlign: "center", letterSpacing: -0.5 }}
       >
-        {tr(feature.titleKey)}
+        {t(feature.titleKey)}
       </Text>
       <Text style={{ marginTop: 10, fontSize: 15, color: M.sub, textAlign: "center", lineHeight: 22, maxWidth: 320 }}>
-        {tr(feature.detailKey)}
+        {t(feature.detailKey)}
       </Text>
     </View>
   );

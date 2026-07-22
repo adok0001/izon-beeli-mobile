@@ -1,3 +1,4 @@
+import { tWithVars } from "@/lib/i18n-dynamic";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -368,7 +369,7 @@ export default function SentencesAdminScreen() {
                 </Text>
                 {scenForm.turns.map((turn, idx) => (
                   <View key={idx} style={{ marginBottom: 4, borderRadius: 8, borderWidth: 1, borderColor: M.border, padding: 10, gap: 6 }}>
-                    <Text style={{ fontSize: 10, color: M.muted }}>{t("educator.scenarios.turnLabel", { number: idx + 1 })}</Text>
+                    <Text style={{ fontSize: 10, color: M.muted }}>{tWithVars(t, "educator.scenarios.turnLabel", { number: idx + 1 })}</Text>
                     <FormInput
                       placeholder={t("educator.scenarios.nativePlaceholder")}
                       value={turn.text}

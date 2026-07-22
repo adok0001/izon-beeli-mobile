@@ -111,8 +111,15 @@ export function getLanguageName(id: string): string {
   return LANGUAGES.find((l) => l.id === id)?.name ?? id;
 }
 
-/** Maps a raw region string to its i18n key (e.g. "Niger Delta" → "regions.nigerDelta"). */
-export const REGION_KEY_MAP: Record<string, string> = {
+/**
+ * Maps a raw region string to its i18n key (e.g. "Niger Delta" → "regions.nigerDelta").
+ *
+ * `as const` rather than an explicit `Record<string, TranslationKey>`: the web app
+ * compiles this file too, and its `@/*` alias points at its own root, so importing
+ * a mobile-only type here would break that build. The literal types flow to the
+ * mobile call sites anyway, where `t()` validates them.
+ */
+export const REGION_KEY_MAP = {
   "Niger Delta": "regions.nigerDelta",
   Southwest: "regions.southwest",
   Southeast: "regions.southeast",
@@ -122,14 +129,24 @@ export const REGION_KEY_MAP: Record<string, string> = {
   "East Africa": "regions.eastAfrica",
   "North Africa": "regions.northAfrica",
   "Southern Africa": "regions.southernAfrica",
-};
+} as const;
+
+/** The i18n keys REGION_KEY_MAP can yield. */
+export type RegionKey = (typeof REGION_KEY_MAP)[keyof typeof REGION_KEY_MAP];
 
 /** Raw region name for a language id (e.g. "Niger Delta"), or "" if unknown. */
 export function getLanguageRegion(id: string): string {
   return LANGUAGES.find((l) => l.id === id)?.region ?? "";
 }
 
+/** i18n key for a raw region name (e.g. "Niger Delta"), or "" if unknown. */
+export function getRegionKey(region: string): RegionKey | "" {
+  return region in REGION_KEY_MAP
+    ? REGION_KEY_MAP[region as keyof typeof REGION_KEY_MAP]
+    : "";
+}
+
 /** i18n key for a language's region label, or "" if unknown. */
-export function getLanguageRegionKey(id: string): string {
-  return REGION_KEY_MAP[getLanguageRegion(id)] ?? "";
+export function getLanguageRegionKey(id: string): RegionKey | "" {
+  return getRegionKey(getLanguageRegion(id));
 }

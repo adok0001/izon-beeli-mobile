@@ -1,3 +1,4 @@
+import type { IconSymbolName } from "@/components/ui/icon-symbol-mapping";
 /**
  * Dictionary taxonomy — derives the browsable "categories landing" facets from
  * the real dictionary entries. The live `DictionaryEntry` model carries a single
@@ -102,7 +103,7 @@ export const TOPIC_LABELS: Record<Topic, string> = {
   body: "Body Parts",
 };
 
-export const TOPIC_ICONS: Record<Topic, string> = {
+export const TOPIC_ICONS: Record<Topic, IconSymbolName> = {
   people: "person.2.fill",
   food: "flame.fill",
   body: "heart.fill",
@@ -130,7 +131,7 @@ export const DOMAIN_LABELS: Record<Domain, string> = {
   literature: "Literature",
 };
 
-export const DOMAIN_ICONS: Record<Domain, string> = {
+export const DOMAIN_ICONS: Record<Domain, IconSymbolName> = {
   science: "leaf.fill",
   medicine: "cross.case.fill",
   weather: "cloud.sun.fill",

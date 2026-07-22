@@ -39,6 +39,14 @@ export interface DictionaryEntry {
   semanticDomain?: string;
   /** Dialect-specific variant forms. */
   dialectalVariants?: DialectalVariant[];
+  /**
+   * Set when the entry came from a third-party API rather than Beeli's own data,
+   * so the UI can attribute it and withhold actions that only work for reviewed
+   * entries. Its `id` is synthetic and exists in no Beeli table — it cannot be
+   * saved to a wordbank (SRS joins against `dictionary_entries` would never match)
+   * and cannot be opened at `/word/[id]`.
+   */
+  externalSource?: "igbo-api";
 }
 
 export const DICTIONARY_CATEGORY_VALUES = [
@@ -89,9 +97,16 @@ export const CATEGORY_LABELS: Record<DictionaryCategory, string> = {
   adjectives: "Adjectives & Descriptors",
 };
 
-export const CATEGORY_ICONS: Record<DictionaryCategory, string> = {
+/**
+ * `as const satisfies` rather than annotating with `IconSymbolName`: the web app
+ * compiles this file too, and its `@/*` alias points at its own root, so importing
+ * a mobile-only type here would break that build (and pull in expo-symbols). The
+ * `satisfies` still enforces that every category has an icon; the literal values
+ * flow to the mobile call sites, where the `IconSymbol` prop validates them.
+ */
+export const CATEGORY_ICONS = {
   greetings: "hand.thumbsup",
-  numbers: "numbers",
+  numbers: "number.square.fill",
   family: "person.fill",
   pronouns: "person.fill",
   time: "clock",
@@ -110,7 +125,7 @@ export const CATEGORY_ICONS: Record<DictionaryCategory, string> = {
   money: "banknote",
   proverbs: "text.quote",
   adjectives: "tag",
-};
+} as const satisfies Record<DictionaryCategory, string>;
 
 export function searchDictionary(query: string, entries: DictionaryEntry[]): DictionaryEntry[] {
   const q = query.toLowerCase().trim();
