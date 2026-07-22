@@ -9,6 +9,7 @@ import { tokenCache } from "@/lib/auth";
 import { migrateGuestToAccount } from "@/lib/guest-migration";
 import { getCachedKnownAccountIds, getKnownAccounts } from "@/lib/known-accounts";
 import { useSyncUser } from "@/lib/hooks/use-sync-user";
+import { MUSEUM } from "@/lib/use-museum-theme";
 import { useWidgetSync } from "@/lib/hooks/use-widget-sync";
 import { startWriteQueueReplay } from "@/lib/write-queue";
 import "@/lib/i18n";
@@ -63,12 +64,12 @@ const MuseumNavigationTheme: Theme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,
-    primary: "#C4862A",
-    background: "#0D0F1A",
-    card: "#0D0F1A",       // tab bar + header background
-    text: "#F7F2E8",       // header title + tab label
-    border: "#2E3245",
-    notification: "#C4862A",
+    primary: MUSEUM.accent,
+    background: MUSEUM.ink,
+    card: MUSEUM.ink,          // tab bar + header background
+    text: MUSEUM.parchment,    // header title + tab label
+    border: MUSEUM.inkBorder,
+    notification: MUSEUM.accent,
   },
 };
 /**
@@ -216,6 +217,10 @@ function AuthGate({ children }: Readonly<{ children: React.ReactNode }>) {
             t("auth.guestMigrationBody")
           );
         }
+      } catch (error) {
+        // Non-fatal: the reconnect subscription below retries migration, so a
+        // transient failure here must not become an unhandled rejection.
+        console.warn("Guest migration attempt failed", error);
       } finally {
         migratingGuestRef.current = false;
       }
@@ -387,9 +392,9 @@ export default function RootLayout() {
               <GestureHandlerRootView style={{ flex: 1 }}>
                 <Stack
                   screenOptions={{
-                    headerStyle: { backgroundColor: "#0D0F1A" },
-                    headerTintColor: "#F7F2E8",
-                    headerTitleStyle: { color: "#F7F2E8", fontWeight: "700" },
+                    headerStyle: { backgroundColor: MUSEUM.ink },
+                    headerTintColor: MUSEUM.parchment,
+                    headerTitleStyle: { color: MUSEUM.parchment, fontWeight: "700" },
                     headerShadowVisible: false,
                     // Inherited by every screen so the iOS back button never falls
                     // back to the previous route name (e.g. "(tabs)"). Per-screen

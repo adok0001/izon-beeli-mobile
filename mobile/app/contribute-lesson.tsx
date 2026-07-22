@@ -117,11 +117,15 @@ export default function ContributeLessonScreen() {
   };
 
   const handleRecord = async () => {
-    if (store.isRecording) {
-      const uri = await store.stopRecording();
-      if (uri) await store.loadAudio(uri);
-    } else {
-      await store.startRecording();
+    try {
+      if (store.isRecording) {
+        const uri = await store.stopRecording();
+        if (uri) await store.loadAudio(uri);
+      } else {
+        await store.startRecording();
+      }
+    } catch {
+      toastError("Error", "Could not record audio.");
     }
   };
 

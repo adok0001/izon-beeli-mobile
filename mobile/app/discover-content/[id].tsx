@@ -1,7 +1,8 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { getAccent } from "@/constants/accent-colors";
 import { discoverTypeIcon } from "@/lib/discover-presentation";
 import { useDiscover } from "@/lib/hooks/use-discover";
-import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { glass, useMuseumTheme } from "@/lib/use-museum-theme";
 import { useAudioStore } from "@/store/audio-store";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Linking, Platform, Pressable, ScrollView, Text, View } from "react-native";
@@ -9,9 +10,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export { ErrorBoundary } from "@/components/screen-error-boundary";
 
+/** Only web URLs may leave the app — any other scheme (javascript:, file:, tel:, custom app schemes) is silently ignored, matching how link failures are already swallowed below. */
 function openExternal(url: string) {
+  if (!/^https?:\/\//i.test(url.trim())) return;
   if (Platform.OS === "web") {
-    (window as Window).open(url, "_blank");
+    (window as Window).open(url, "_blank", "noopener,noreferrer");
   } else {
     Linking.openURL(url).catch(() => {});
   }
@@ -67,13 +70,13 @@ export default function DiscoverContentScreen() {
 
   if (!item) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0F1A", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <IconSymbol name="film.stack" size={32} color="#5A5D70" style={{ marginBottom: 16 }} />
-        <Text style={{ fontSize: 16, fontWeight: "700", color: "#F7F2E8", marginBottom: 8 }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: M.ink, alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <IconSymbol name="film.stack" size={32} color={M.textDimDark} style={{ marginBottom: 16 }} />
+        <Text style={{ fontSize: 16, fontWeight: "700", color: M.parchment, marginBottom: 8 }}>
           Content not found
         </Text>
-        <Text style={{ fontSize: 13, color: "#9A9480", textAlign: "center", marginBottom: 24 }}>
-          This piece of content couldn't be loaded.
+        <Text style={{ fontSize: 13, color: M.textDim, textAlign: "center", marginBottom: 24 }}>
+          {"This piece of content couldn't be loaded."}
         </Text>
         <Pressable
           onPress={() => router.back()}
@@ -81,21 +84,21 @@ export default function DiscoverContentScreen() {
             borderRadius: 999,
             paddingHorizontal: 20,
             paddingVertical: 10,
-            backgroundColor: "#C4862A",
+            backgroundColor: M.accent,
           }}
         >
-          <Text style={{ fontSize: 13, fontWeight: "700", color: "#0D0F1A" }}>Go back</Text>
+          <Text style={{ fontSize: 13, fontWeight: "700", color: M.ink }}>Go back</Text>
         </Pressable>
       </SafeAreaView>
     );
   }
 
   const TYPE_COLOR: Record<string, string> = {
-    blog: "#38bdf8",
-    podcast: "#a78bfa",
-    film: "#fb923c",
+    blog: getAccent("sky").solid,
+    podcast: getAccent("purple").solid,
+    film: getAccent("orange").solid,
   };
-  const typeColor = TYPE_COLOR[item.type] ?? "#C4862A";
+  const typeColor = TYPE_COLOR[item.type] ?? M.accent;
   const typeLabel = item.type.toUpperCase();
 
   const bodyText =
@@ -117,7 +120,7 @@ export default function DiscoverContentScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0F1A" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }}>
       {/* Back button */}
       <Pressable
         onPress={() => router.back()}
@@ -133,12 +136,12 @@ export default function DiscoverContentScreen() {
           alignItems: "center",
           justifyContent: "center",
           borderWidth: 1,
-          borderColor: "#2E3245",
+          borderColor: M.border,
         }}
         accessibilityRole="button"
         accessibilityLabel="Go back"
       >
-        <IconSymbol name="chevron.left" size={16} color="#F7F2E8" />
+        <IconSymbol name="chevron.left" size={16} color={M.parchment} />
       </Pressable>
 
       <ScrollView
@@ -193,7 +196,7 @@ export default function DiscoverContentScreen() {
               style={{
                 fontSize: 20,
                 fontWeight: "900",
-                color: "#F7F2E8",
+                color: M.parchment,
                 lineHeight: 26,
                 letterSpacing: -0.3,
               }}
@@ -201,7 +204,7 @@ export default function DiscoverContentScreen() {
             >
               {item.title}
             </Text>
-            <Text style={{ fontSize: 12, color: "rgba(247,242,232,0.6)", fontWeight: "600" }}>
+            <Text style={{ fontSize: 12, color: glass(0.6), fontWeight: "600" }}>
               {item.author}
             </Text>
           </View>
@@ -254,7 +257,7 @@ export default function DiscoverContentScreen() {
                 width: 44,
                 height: 44,
                 borderRadius: 22,
-                backgroundColor: "#a78bfa",
+                backgroundColor: getAccent("purple").solid,
                 alignItems: "center",
                 justifyContent: "center",
               }}
@@ -307,7 +310,7 @@ export default function DiscoverContentScreen() {
             <Pressable onPress={() => openExternal(item.contentUrl!)} accessibilityRole="link">
               <Text style={{ fontSize: 12, color: M.muted, textAlign: "center" }}>
                 Also available on the web —{" "}
-                <Text style={{ color: "#C4862A", textDecorationLine: "underline" }}>
+                <Text style={{ color: M.accent, textDecorationLine: "underline" }}>
                   {item.contentUrl.replace(/^https?:\/\//, "")}
                 </Text>
               </Text>
@@ -319,12 +322,12 @@ export default function DiscoverContentScreen() {
             style={{
               borderRadius: 999,
               paddingVertical: 12,
-              backgroundColor: "#C4862A",
+              backgroundColor: M.accent,
               alignItems: "center",
             }}
             accessibilityRole="button"
           >
-            <Text style={{ fontSize: 14, fontWeight: "800", color: "#0D0F1A", letterSpacing: 0.3 }}>
+            <Text style={{ fontSize: 14, fontWeight: "800", color: M.ink, letterSpacing: 0.3 }}>
               Return to Culture
             </Text>
           </Pressable>

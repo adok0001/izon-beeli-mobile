@@ -15,6 +15,7 @@ export const MUSEUM = {
   accent: "#C4862A",
   accentLight: "#D89A3A",
   accentDark: "#A66E1C",
+  inkBorder: "#2E3245",
 } as const;
 
 /** Bronze accent at the given alpha — glows, borders, tinted fills. */
