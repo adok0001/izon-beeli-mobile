@@ -45,7 +45,7 @@ export function StreakFreezeModal({
             {t("streak.brokenTitle")}
           </Text>
           <Text style={{ marginTop: 8, textAlign: "center", fontSize: 13, color: M.sub }}>
-            {tWithVars(t, "streak.brokenMessage", { streak })}
+            {tWithVars(t, "streak.brokenMessage", { count: streak })}
           </Text>
 
           {freezeCount > 0 ? (

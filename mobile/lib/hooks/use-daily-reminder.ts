@@ -59,9 +59,11 @@ async function scheduleEveningReminder(streak: number, dailyGoal?: string | null
       content: {
         title: "Keep your streak alive!",
         body:
-          streak > 0
+          streak > 1
             ? `You have a ${streak}-day streak. Complete a lesson today to keep it going.`
-            : "Complete a lesson today to start your streak!",
+            : streak === 1
+              ? "You practiced yesterday. Complete a lesson today to keep your streak going."
+              : "Complete a lesson today to start your streak!",
         data: { type: "streak_reminder" },
         sound: "default",
       },
