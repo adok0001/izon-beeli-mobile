@@ -8,6 +8,7 @@
  * functions), matching the rest of the snapshot getters' shape.
  */
 import { create } from "zustand";
+import { useShallow } from "zustand/react/shallow";
 import { fetchAndCacheLanguages, readCachedLanguages } from "@/lib/languages-snapshot";
 import type { Language } from "@/types";
 
@@ -42,9 +43,11 @@ export function useLanguages(): Language[] {
   return useLanguagesStore((s) => s.languages);
 }
 
-/** Reactive: languages with real hand-crafted content — used in learner-facing pickers. */
+/** Reactive: languages with real hand-crafted content — used in learner-facing pickers.
+ *  `useShallow` keeps the freshly-`filter`ed array from reading as a new snapshot every
+ *  render, which otherwise trips Zustand's getSnapshot cache into an infinite loop. */
 export function useActiveLanguages(): Language[] {
-  return useLanguagesStore((s) => s.languages.filter((l) => l.hasContent));
+  return useLanguagesStore(useShallow((s) => s.languages.filter((l) => l.hasContent)));
 }
 
 export function getLanguages(): Language[] {
