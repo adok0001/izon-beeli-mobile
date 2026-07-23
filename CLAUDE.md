@@ -101,6 +101,15 @@ tab bar) is always dark (the "foyer"); content areas are mode-aware.
   `studio-form.tsx` (`FormField`, `FormInput`, `LabeledInput`, `PrimaryButton`,
   `GhostButton`). Don't hand-roll a new header row, search box, filter-chip row, or
   list-card style — every screen doing its own thing is how this drifted before.
+- **Pickers are dropdowns, not pill rows.** Any single-value selection (language,
+  course, scene, …) uses `StudioDropdown` (`studio-dropdown.tsx`) — a trigger that
+  opens the searchable `EntityPickerModal` sheet. Reserve `StudioFilterPills` for
+  filter/tab rows (a category filter, a mode toggle), never for picking one entity
+  from a set. On web (Next.js Studio) the equivalent is a native `<select>`.
+- **Sharing/exporting a generated file** (a CSV template, an export) goes through
+  `ShareFileButton` (`share-file-button.tsx`) or the `shareTextFile` helper
+  (`lib/share-file.ts`) — it writes to the cache dir and opens the OS share sheet
+  (with an Expo-web text fallback). Don't re-implement `Share.share({ url })` inline.
 - Dark mode preference handled by `store/theme-store.ts` + `hooks/use-color-scheme.ts`;
   the React Navigation `ThemeProvider` uses the always-dark Museum chrome theme.
 - Tailwind config in `tailwind.config.ts` (exposes `font-heading`), directives in
