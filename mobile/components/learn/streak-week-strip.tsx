@@ -40,7 +40,7 @@ export function StreakWeekStrip({ summary, completedToday, onPress, onGoalPress 
         padding: 16,
       }}
       accessibilityRole="button"
-      accessibilityLabel={t("learn.streakDays", { count: summary?.streak ?? 0, defaultValue: "{{count}} day streak" })}
+      accessibilityLabel={t("learn.streakDays", { count: summary?.streak ?? 0 })}
     >
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
         <Eyebrow
