@@ -33,6 +33,7 @@ import {
   Sun,
   Target,
   Type,
+  Upload,
   UserCheck,
   Users,
   type LucideIcon,
@@ -81,6 +82,7 @@ const AUTHORING_NAV: readonly NavItem[] = [
   { href: "/educator/story-arcs", labelKey: "educator.nav.storyArcs",  icon: BookMarked,        tourId: "educator-nav-story-arcs" },
   { href: "/educator/quiz-bank",  labelKey: "educator.nav.quizBank",   icon: ListChecks,        tourId: "educator-nav-quiz-bank" },
   { href: "/educator/translations", labelKey: "educator.nav.translations", icon: Type,          tourId: "educator-nav-translations" },
+  { href: "/educator/import",     labelKey: "educator.nav.import",     icon: Upload,            tourId: "educator-nav-import" },
 ];
 
 // Operations surfaces — admin only.

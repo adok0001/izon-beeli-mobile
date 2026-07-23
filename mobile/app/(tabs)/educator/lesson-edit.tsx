@@ -22,9 +22,11 @@ import {
 import { useSaveEducatorLesson } from "@/lib/hooks/educator/use-lesson-save";
 import { friendlyError } from "@/lib/api";
 import { useToast } from "@/lib/hooks/use-toast";
+import { parseLessonFile } from "@/lib/lesson-import";
 import { localize } from "@/lib/localize";
 import { useUiLanguageStore, type UiLanguage } from "@/store/ui-language-store";
 import * as DocumentPicker from "expo-document-picker";
+import { File } from "expo-file-system";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -178,6 +180,44 @@ export default function EducatorLessonEditScreen() {
       multiple: false,
     });
     if (!result.canceled) setAudioUri(result.assets[0]?.uri);
+  };
+
+  // Load a lesson CSV (metadata block + --- + transcript grid) into the form.
+  // Non-destructive: it only prefills the fields; the actual overwrite happens
+  // when the educator reviews and hits Save. Speaker/roman columns aren't part
+  // of the editor's segment model, so they're not loaded.
+  const loadFromCsv = async () => {
+    try {
+      const picked = await DocumentPicker.getDocumentAsync({
+        type: ["text/csv", "text/comma-separated-values", "application/vnd.ms-excel", "*/*"],
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+      const asset = picked.canceled ? undefined : picked.assets[0];
+      if (!asset?.uri) return;
+      const { meta, segments: lines } = parseLessonFile(await new File(asset.uri).text());
+
+      if (meta.title) setTitle(meta.title);
+      if (meta.description) setDescription(meta.description);
+      if (meta.type) setType(meta.type);
+      if (meta.artist) setArtist(meta.artist);
+      if (meta.genre) setGenre(meta.genre);
+      if (meta.canDo) setCanDo(meta.canDo);
+      if (meta.narrativeIntro) setNarrativeIntro(meta.narrativeIntro);
+      if (meta.narrativeOutro) setNarrativeOutro(meta.narrativeOutro);
+      if ((["skit", "immersive_story", "host_narrated"] as string[]).includes(meta.style)) {
+        setStyle(meta.style as LessonStyle);
+      }
+
+      const mapped = lines.map((r) => makeSegment({ text: r.text, translation: r.translation ? { en: r.translation } : {} }));
+      setSegments(mapped.length > 0 ? mapped : [EMPTY_SEGMENT()]);
+      toastSuccess(
+        "Loaded from CSV",
+        `Review the ${lines.length} line${lines.length === 1 ? "" : "s"}, then Save to ${isEditMode ? "replace this lesson" : "create the lesson"}.`,
+      );
+    } catch (err) {
+      toastError("Couldn’t read file", friendlyError(err));
+    }
   };
 
   const replaceExistingAudio = async (uri: string) => {
@@ -361,6 +401,21 @@ export default function EducatorLessonEditScreen() {
               <Text className="text-xs" style={{ color: M.muted }}>{localize(course.title, uiLanguage)}</Text>
             </View>
           ) : null}
+
+          {/* Replace/populate the whole lesson from a CSV file (metadata + transcript).
+              Prefills the form only — the overwrite happens on Save. */}
+          <View className="mt-3 px-5">
+            <Pressable
+              onPress={() => void loadFromCsv()}
+              className="flex-row items-center justify-center gap-2 rounded-xl border py-2.5 active:opacity-70"
+              style={{ borderColor: M.border, backgroundColor: M.bg }}
+            >
+              <IconSymbol name="square.and.arrow.up" size={14} color={M.accent} />
+              <Text className="text-sm font-semibold" style={{ color: M.text }}>
+                {isEditMode ? "Replace from CSV" : "Load from CSV"}
+              </Text>
+            </Pressable>
+          </View>
 
           {/* Basic Details */}
           <View className="mt-3 px-5">

@@ -1,7 +1,8 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { sql, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { parseJson } from "../lib/http.js";
+import { slugify } from "../lib/slug.js";
 import { db } from "../db/index.js";
 import {
   dictionaryEntries,
@@ -11,7 +12,9 @@ import {
   culturalContent,
   culturalKeyTerms,
   quizQuestions,
+  courses,
 } from "../db/schema.js";
+import { buildLessonGroup, insertLessonGroups, type LessonGroupInput } from "./lesson-import.js";
 import { AuthEnv, authMiddleware, reviewerMiddleware } from "../middleware/auth.js";
 
 /**
@@ -350,24 +353,79 @@ export const IMPORTERS: Record<string, ImporterConfig> = {
   quiz: quizImporter,
 };
 
+// ─── unified CSV ────────────────────────────────────────────────────────────────
+/**
+ * One spreadsheet, many content types. Each row of the unified CSV carries a
+ * `type` column that routes it to a per-type importer above. Only the flat,
+ * one-row-per-item types are reachable this way — scenarios (multi-turn) and
+ * cultural content (child key terms) don't flatten to a grid and keep their
+ * JSON-only path. This mapper is the whole contract: unified column → the field
+ * name each `ImporterConfig` already expects, so validation/insert are unchanged.
+ * The `type` token (singular, educator-facing) maps to the plural importer key.
+ */
+
+type Mapped = { importerType: string; entry: Entry };
+
+/** Map a unified row to `{ importerType, entry }`, or return an error string. */
+export function mapUnifiedRow(row: Entry, languageId: string): Mapped | { error: string } {
+  const withId = (extra: Entry): Entry => (opt(row.id) ? { id: str(row.id), ...extra } : extra);
+
+  switch (str(row.type).toLowerCase()) {
+    case "dictionary":
+      // Dictionary upserts by id; synthesize a stable one from the word so a
+      // re-imported sheet updates rather than duplicates.
+      return { importerType: "dictionary", entry: {
+        id: opt(row.id) ?? `${languageId}-${slugify(str(row.text))}`,
+        word: str(row.text), english: str(row.english), category: str(row.category),
+        pronunciation: str(row.pronunciation), example: str(row.example),
+        exampleTranslation: str(row.example_english),
+      } };
+    case "sentence": {
+      // `kind` is derived, not asked for: a fill-in-the-blank when the answer
+      // appears in the sentence, an equivalent-phrase drill otherwise.
+      const sentence = str(row.text), answer = str(row.answer);
+      const drill = answer && sentence.toLowerCase().includes(answer.toLowerCase()) ? "blank" : "equivalent";
+      return { importerType: "sentences", entry: withId({ sentence, answer, englishSentence: str(row.english), kind: drill }) };
+    }
+    case "proverb":
+      return { importerType: "proverbs", entry: withId({ text: str(row.text), translation: str(row.english), meaning: str(row.meaning) }) };
+    case "quiz":
+      return { importerType: "quiz", entry: withId({
+        type: str(row.category), prompt: str(row.text), answer: str(row.english),
+        options: str(row.options).split("|").map((o) => o.trim()).filter(Boolean),
+      }) };
+    default:
+      return { error: `unknown type "${str(row.type)}" (use dictionary, sentence, proverb, or quiz)` };
+  }
+}
+
 // ─── router ───────────────────────────────────────────────────────────────────
 export const bulkImportRouter = new Hono<AuthEnv>();
 bulkImportRouter.use("*", authMiddleware);
 bulkImportRouter.use("*", reviewerMiddleware);
 
-// POST /api/import/:type   body: { languageId, entries[], dryRun? }
-bulkImportRouter.post("/:type", async (c) => {
-  const type = c.req.param("type");
-  const config = IMPORTERS[type];
-  if (!config) {
-    return c.json({ error: `Unknown import type "${type}". Supported: ${Object.keys(IMPORTERS).join(", ")}` }, 404);
-  }
+type ImportRequest = {
+  languageId: string;
+  entries: unknown[];
+  dryRun: boolean;
+  isAdmin: boolean;
+  userId: string;
+  /** Only the lessons route uses this — the course the sheet's lessons land in. */
+  courseId?: string;
+};
 
+/**
+ * Shared front door for both import routes: parses the body and enforces the
+ * security-relevant contract (a valid languageId, a non-empty batch, the
+ * reviewer's per-language scope, and the role batch cap) in one place so the two
+ * handlers can't drift. Returns a ready `Response` on rejection.
+ */
+async function readImportRequest(c: Context<AuthEnv>): Promise<ImportRequest | Response> {
   const isAdmin = c.get("isAdmin");
   const reviewerLanguages = c.get("reviewerLanguages");
   const userId = c.get("userId");
 
-  const body = await parseJson<{ languageId: string; entries: unknown[]; dryRun?: boolean }>(c);
+  const body = await parseJson<{ languageId: string; entries: unknown[]; dryRun?: boolean; courseId?: string }>(c);
   if (!body.languageId || typeof body.languageId !== "string") {
     return c.json({ error: "languageId is required" }, 400);
   }
@@ -381,22 +439,139 @@ bulkImportRouter.post("/:type", async (c) => {
   if (body.entries.length > cap) {
     return c.json({ error: `Maximum ${cap} entries per import batch for your role` }, 400);
   }
+  return {
+    languageId: body.languageId,
+    entries: body.entries,
+    dryRun: body.dryRun ?? false,
+    isAdmin,
+    userId,
+    courseId: typeof body.courseId === "string" ? body.courseId : undefined,
+  };
+}
+
+// POST /api/import/lessons   body: { languageId, courseId, entries[], dryRun? }
+// One course (chosen in the UI); each entry is one full lesson — `{ meta, segments }`
+// parsed from one uploaded file, so several files import as several lessons.
+// Registered before "/:type" so the param route can't grab it.
+bulkImportRouter.post("/lessons", async (c) => {
+  const req = await readImportRequest(c);
+  if (req instanceof Response) return req;
+
+  const courseId = req.courseId;
+  if (!courseId) return c.json({ error: "courseId is required (pick a course to import into)" }, 400);
+  const [course] = await db
+    .select({ id: courses.id, languageId: courses.languageId })
+    .from(courses)
+    .where(eq(courses.id, courseId))
+    .limit(1);
+  if (!course) return c.json({ error: `Course "${courseId}" not found` }, 404);
+  if (course.languageId !== req.languageId) {
+    return c.json({ error: "That course belongs to a different language" }, 400);
+  }
+
+  const errors: { id: string; reason: string }[] = [];
+  const groups: LessonGroupInput[] = [];
+  req.entries.forEach((raw, i) => {
+    const file = (raw && typeof raw === "object" ? raw : {}) as { meta?: unknown; segments?: unknown };
+    const { group, errors: fileErrors } = buildLessonGroup(file, courseId, i);
+    if (group) groups.push(group);
+    errors.push(...fileErrors);
+  });
+
+  const resultStatus = req.isAdmin ? "published" : "in_review";
+
+  if (req.dryRun) {
+    return c.json({
+      dryRun: true,
+      total: groups.length,
+      valid: groups.length,
+      errors,
+      resultStatus,
+      preview: groups.slice(0, 5).map((g) => ({ title: g.title, lines: g.segments.length })),
+    });
+  }
+  if (groups.length === 0) {
+    return c.json({ inserted: 0, skipped: errors.length, errors, resultStatus });
+  }
+
+  const inserted = await insertLessonGroups(groups, { courseId, status: statusValues(req.isAdmin, req.userId) });
+  return c.json({ inserted, skipped: errors.length, errors, resultStatus });
+});
+
+// POST /api/import/unified   body: { languageId, entries[], dryRun? }
+// One CSV, mixed content: each row's `type` column routes it to a per-type
+// importer. Registered before "/:type" so it isn't swallowed by the param route.
+bulkImportRouter.post("/unified", async (c) => {
+  const req = await readImportRequest(c);
+  if (req instanceof Response) return req;
+
+  const errors: { id: string; reason: string }[] = [];
+  const grouped: Record<string, Entry[]> = {};
+  const preview: Record<string, unknown>[] = [];
+
+  req.entries.forEach((raw, i) => {
+    const row = (raw && typeof raw === "object" ? raw : {}) as Entry;
+    const mapped = mapUnifiedRow(row, req.languageId);
+    if ("error" in mapped) {
+      errors.push({ id: idOf(row, i), reason: `Row ${i + 1}: ${mapped.error}` });
+      return;
+    }
+    const config = IMPORTERS[mapped.importerType]!;
+    const err = config.validate(mapped.entry, i + 1);
+    if (err) {
+      errors.push({ id: idOf(row, i), reason: err });
+      return;
+    }
+    (grouped[mapped.importerType] ??= []).push(mapped.entry);
+    if (preview.length < 5) preview.push({ type: str(row.type), ...config.preview(mapped.entry) });
+  });
+
+  const valid = Object.values(grouped).reduce((n, rows) => n + rows.length, 0);
+  const resultStatus = req.isAdmin ? "published" : "in_review";
+
+  if (req.dryRun) {
+    return c.json({ dryRun: true, total: req.entries.length, valid, errors, resultStatus, preview });
+  }
+  if (valid === 0) {
+    return c.json({ inserted: 0, skipped: errors.length, errors, resultStatus });
+  }
+
+  // Each importer type targets an independent table; the stateless neon-http
+  // driver has no shared connection to serialize on, so insert them concurrently.
+  const ctx: Ctx = { languageId: req.languageId, status: statusValues(req.isAdmin, req.userId) };
+  const counts = await Promise.all(
+    Object.entries(grouped).map(([importerType, rows]) => IMPORTERS[importerType]!.insert(rows, ctx)),
+  );
+  const inserted = counts.reduce((a, b) => a + b, 0);
+  return c.json({ inserted, skipped: errors.length, errors, resultStatus });
+});
+
+// POST /api/import/:type   body: { languageId, entries[], dryRun? }
+bulkImportRouter.post("/:type", async (c) => {
+  const type = c.req.param("type");
+  const config = IMPORTERS[type];
+  if (!config) {
+    return c.json({ error: `Unknown import type "${type}". Supported: ${Object.keys(IMPORTERS).join(", ")}` }, 404);
+  }
+
+  const req = await readImportRequest(c);
+  if (req instanceof Response) return req;
 
   const errors: { id: string; reason: string }[] = [];
   const valid: Entry[] = [];
-  body.entries.forEach((raw, i) => {
+  req.entries.forEach((raw, i) => {
     const entry = (raw && typeof raw === "object" ? raw : {}) as Entry;
     const err = config.validate(entry, i + 1);
     if (err) errors.push({ id: idOf(entry, i), reason: err });
     else valid.push(entry);
   });
 
-  const resultStatus = isAdmin ? "published" : "in_review";
+  const resultStatus = req.isAdmin ? "published" : "in_review";
 
-  if (body.dryRun) {
+  if (req.dryRun) {
     return c.json({
       dryRun: true,
-      total: body.entries.length,
+      total: req.entries.length,
       valid: valid.length,
       errors,
       resultStatus,
@@ -409,8 +584,8 @@ bulkImportRouter.post("/:type", async (c) => {
   }
 
   const inserted = await config.insert(valid, {
-    languageId: body.languageId,
-    status: statusValues(isAdmin, userId),
+    languageId: req.languageId,
+    status: statusValues(req.isAdmin, req.userId),
   });
 
   return c.json({ inserted, skipped: errors.length, errors, resultStatus });

@@ -2,23 +2,12 @@
 
 import { apiFetch } from "@/lib/api";
 import { parseCsv } from "@/lib/parse-csv";
-import type { ImportTypeConfig } from "@/lib/import-types";
-import { cn } from "@/lib/utils";
+import type { ImportResult, ImportTypeConfig } from "@/lib/import-types";
+import { cn, download } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { ChevronDown, Download, Plus, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-
-interface ImportResult {
-  dryRun?: boolean;
-  total?: number;
-  valid?: number;
-  inserted?: number;
-  skipped?: number;
-  resultStatus?: "published" | "in_review";
-  errors: { id: string; reason: string }[];
-  preview?: Record<string, unknown>[];
-}
 
 interface ImportPanelProps extends ImportTypeConfig {
   languageId: string;
@@ -38,15 +27,6 @@ function csvToEntries(text: string, config: ImportTypeConfig, languageId: string
       return entry;
     })
     .filter((e) => Object.keys(e).length > 0);
-}
-
-function download(name: string, contents: string, mime: string) {
-  const url = URL.createObjectURL(new Blob([contents], { type: mime }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 /**

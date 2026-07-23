@@ -335,6 +335,7 @@ export function ToolsStrip({ currentUser }: Readonly<{ currentUser: CurrentUser 
     { label: "Scenes", href: "/educator/scenes" },
     { label: "Quiz Bank", href: "/educator/quiz-bank" },
     { label: "Translations", href: "/educator/translations" },
+    { label: "Bulk Import", href: "/educator/bulk-import" },
     ...(currentUser.isAdmin ? [{ label: "Media Library", href: "/admin/media" }] : []),
     ...(canManageBounties(currentUser) ? [{ label: "Bounties", href: "/bounties" }] : []),
     ...(canReviewApplications(currentUser) ? [{ label: "Applications", href: "/educator/applications" }] : []),

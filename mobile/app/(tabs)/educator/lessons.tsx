@@ -210,6 +210,18 @@ export default function EducatorLessonsScreen() {
               }),
           }}
         />
+        <View style={{ paddingHorizontal: 16, paddingBottom: 10, flexDirection: "row" }}>
+          <ActionPill
+            icon="square.and.arrow.up"
+            label="Import lessons from CSV"
+            onPress={() =>
+              router.push({
+                pathname: "/educator/bulk-import",
+                params: { mode: "lessons", courseId: courseId ?? "", languageId: course?.languageId ?? "" },
+              })
+            }
+          />
+        </View>
         <FlatList<SceneLesson>
           data={courseLessons}
           keyExtractor={(lesson) => lesson.id}

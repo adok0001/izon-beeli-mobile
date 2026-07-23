@@ -2184,6 +2184,7 @@ export const en = {
       storyArcs: "Seasons",
       quizBank: "Quiz Bank",
       translations: "Translations",
+      import: "Bulk Import",
     },
     sentences: {
       screenTitle: "Sentences & Scenarios",

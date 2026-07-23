@@ -1,5 +1,17 @@
 import { slugify } from "./parse-csv";
 
+/** Shape returned by the server import endpoints (`/import/:type` and `/import/unified`). */
+export interface ImportResult {
+  dryRun?: boolean;
+  total?: number;
+  valid?: number;
+  inserted?: number;
+  skipped?: number;
+  resultStatus?: "published" | "in_review";
+  errors: { id: string; reason: string }[];
+  preview?: Record<string, unknown>[];
+}
+
 /**
  * Per-content-type configuration for the shared Studio <ImportPanel />.
  * Each Studio editor page spreads one of these into the panel. Flat types carry
