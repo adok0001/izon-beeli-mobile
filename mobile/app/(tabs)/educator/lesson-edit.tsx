@@ -131,6 +131,8 @@ export default function EducatorLessonEditScreen() {
               translation: toLocalizedText(seg.translation, seg.translationFr),
               startTime: String(seg.startTime ?? 0),
               endTime: String(seg.endTime ?? 0),
+              speaker: seg.speaker ?? "",
+              roman: seg.roman ?? "",
             }),
           )
         : [EMPTY_SEGMENT()],
@@ -184,8 +186,7 @@ export default function EducatorLessonEditScreen() {
 
   // Load a lesson CSV (metadata block + --- + transcript grid) into the form.
   // Non-destructive: it only prefills the fields; the actual overwrite happens
-  // when the educator reviews and hits Save. Speaker/roman columns aren't part
-  // of the editor's segment model, so they're not loaded.
+  // when the educator reviews and hits Save.
   const loadFromCsv = async () => {
     try {
       const picked = await DocumentPicker.getDocumentAsync({
@@ -209,7 +210,14 @@ export default function EducatorLessonEditScreen() {
         setStyle(meta.style as LessonStyle);
       }
 
-      const mapped = lines.map((r) => makeSegment({ text: r.text, translation: r.translation ? { en: r.translation } : {} }));
+      const mapped = lines.map((r) =>
+        makeSegment({
+          text: r.text,
+          translation: r.translation ? { en: r.translation } : {},
+          speaker: r.speaker ?? "",
+          roman: r.roman ?? "",
+        }),
+      );
       setSegments(mapped.length > 0 ? mapped : [EMPTY_SEGMENT()]);
       toastSuccess(
         "Loaded from CSV",
@@ -343,7 +351,7 @@ export default function EducatorLessonEditScreen() {
   };
 
   const addSegment = () => setSegments((prev) => [...prev, EMPTY_SEGMENT()]);
-  const updateSegment = (index: number, key: "text" | "startTime" | "endTime", value: string) =>
+  const updateSegment = (index: number, key: "text" | "startTime" | "endTime" | "speaker" | "roman", value: string) =>
     setSegments((prev) => prev.map((seg, idx) => (idx === index ? { ...seg, [key]: value } : seg)));
   const updateSegmentTranslation = (index: number, lang: UiLanguage, value: string) =>
     setSegments((prev) =>

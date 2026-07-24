@@ -16,6 +16,10 @@ export type SegmentEditor = {
   translation: LocalizedText;
   startTime: string;
   endTime: string;
+  /** Who speaks this line (audio-drama attribution). Empty = unattributed / narration. */
+  speaker: string;
+  /** Romanized / pronunciation guidance for the learner (never spoken). */
+  roman: string;
 };
 
 let _segUid = 0;
@@ -25,6 +29,8 @@ export const makeSegment = (overrides?: Partial<Omit<SegmentEditor, "uid">>): Se
   translation: {},
   startTime: "",
   endTime: "",
+  speaker: "",
+  roman: "",
   ...overrides,
 });
 
@@ -83,7 +89,7 @@ export function SegmentItem({
   total: number;
   translationLang: UiLanguage;
   playbackPositionSeconds: number;
-  onChange: (index: number, key: "text" | "startTime" | "endTime", value: string) => void;
+  onChange: (index: number, key: "text" | "startTime" | "endTime" | "speaker" | "roman", value: string) => void;
   onChangeTranslation: (index: number, lang: UiLanguage, value: string) => void;
   onRemove: (index: number) => void;
 }>) {
@@ -113,6 +119,24 @@ export function SegmentItem({
         className="mt-2 rounded-lg px-3 py-2 text-sm"
         style={{ backgroundColor: M.inputBg, color: M.inputText }}
       />
+      <View className="mt-2 flex-row gap-2">
+        <TextInput
+          value={segment.speaker}
+          onChangeText={(v) => onChange(index, "speaker", v)}
+          placeholder="Speaker (optional)"
+          placeholderTextColor={M.muted}
+          className="flex-1 rounded-lg px-3 py-2 text-sm"
+          style={{ backgroundColor: M.inputBg, color: M.inputText }}
+        />
+        <TextInput
+          value={segment.roman}
+          onChangeText={(v) => onChange(index, "roman", v)}
+          placeholder="Romanization (optional)"
+          placeholderTextColor={M.muted}
+          className="flex-1 rounded-lg px-3 py-2 text-sm"
+          style={{ backgroundColor: M.inputBg, color: M.inputText }}
+        />
+      </View>
       <View className="mt-2 flex-row gap-2">
         {(["startTime", "endTime"] as const).map((key) => (
           <View key={key} className="flex-1">
@@ -174,6 +198,8 @@ export function toSegmentsPayload(source: SegmentEditor[]): EducatorLessonSegmen
       ...serializeSegmentTranslation(seg.translation),
       startTime: seg.startTime ? Number(seg.startTime) : 0,
       endTime: seg.endTime ? Number(seg.endTime) : 0,
+      speaker: seg.speaker.trim() || undefined,
+      roman: seg.roman.trim() || undefined,
       order: i,
     }))
     .filter((seg) => seg.text.length > 0);

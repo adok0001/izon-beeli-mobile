@@ -88,7 +88,7 @@ educatorLessonsRouter.post("/lessons", async (c) => {
     return c.json({ error: "Forbidden: not assigned to this language" }, 403);
   }
 
-  let segments: { text: string; translation?: string; translationFr?: string; startTime?: number; endTime?: number; order: number }[] = [];
+  let segments: { text: string; translation?: string; translationFr?: string; startTime?: number; endTime?: number; order: number; speaker?: string; roman?: string }[] = [];
   try { segments = JSON.parse(segmentsJson); } catch { /* no segments */ }
 
   // Resolve courseId
@@ -147,6 +147,8 @@ educatorLessonsRouter.post("/lessons", async (c) => {
         startTime: seg.startTime ?? 0,
         endTime: seg.endTime ?? 0,
         order: seg.order,
+        speaker: seg.speaker || null,
+        roman: seg.roman || null,
       }))
     );
   }
@@ -477,7 +479,7 @@ educatorLessonsRouter.put("/lessons/:id/segments", async (c) => {
   }
 
   const { segments } = await parseJson<{
-    segments: { text: string; translation?: string; translationFr?: string; startTime: number; endTime: number; order: number }[];
+    segments: { text: string; translation?: string; translationFr?: string; startTime: number; endTime: number; order: number; speaker?: string; roman?: string }[];
   }>(c);
 
   for (const seg of segments) {
@@ -499,6 +501,8 @@ educatorLessonsRouter.put("/lessons/:id/segments", async (c) => {
         startTime: seg.startTime,
         endTime: seg.endTime,
         order: seg.order ?? i,
+        speaker: seg.speaker?.trim() || null,
+        roman: seg.roman?.trim() || null,
       }))
     );
   }
@@ -542,7 +546,7 @@ educatorLessonsRouter.put("/lessons/:id/save", async (c) => {
       scene?: string | null; sceneTitle?: string | null; sceneOrder?: number | null;
       sceneIllustration?: string | null; sceneIllustrationUrl?: string | null;
     };
-    segments?: { text: string; translation?: string; translationFr?: string; startTime: number; endTime: number; order: number }[];
+    segments?: { text: string; translation?: string; translationFr?: string; startTime: number; endTime: number; order: number; speaker?: string; roman?: string }[];
     attachments?: (string | { culturalContentId: string; afterSegmentIndex?: number | null })[];
     checks?: { type: string; prompt: string; answer: string; options?: string[]; explanation?: string | null; afterSegmentIndex?: number | null; isActive?: boolean }[];
   }>();
@@ -696,6 +700,8 @@ educatorLessonsRouter.put("/lessons/:id/save", async (c) => {
             startTime: seg.startTime,
             endTime: seg.endTime,
             order: seg.order ?? i,
+            speaker: seg.speaker?.trim() || null,
+            roman: seg.roman?.trim() || null,
           }))
         );
       }

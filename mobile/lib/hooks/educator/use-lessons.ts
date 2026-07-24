@@ -34,6 +34,10 @@ export interface EducatorLessonSegment {
   startTime?: number;
   endTime?: number;
   order: number;
+  /** Who speaks this line (audio-drama attribution). Null = unattributed / narration. */
+  speaker?: string | null;
+  /** Romanized / pronunciation guidance for the learner (never spoken). */
+  roman?: string | null;
 }
 
 /**
