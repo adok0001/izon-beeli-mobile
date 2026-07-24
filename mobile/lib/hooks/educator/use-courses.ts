@@ -13,6 +13,10 @@ export interface EducatorCourse {
   level: string;
   order: number;
   courseType?: string | null;
+  /** Free-form emoji override for the course badge; takes priority over the courseType icon. */
+  emoji?: string | null;
+  /** Custom cover photo; takes priority over the courseType-driven gradient scene. */
+  imageUrl?: string | null;
   /** Season this course companions (`courses.season_arc_id`) — drives the Series screen's level bands. */
   seasonArcId?: string | null;
   isActive?: boolean;
@@ -27,6 +31,8 @@ export interface UpdateEducatorCourseInput {
   level?: string;
   order?: number;
   courseType?: string | null;
+  emoji?: string | null;
+  imageUrl?: string | null;
   /** `null` unlinks the course from its season; the server 400s on an unknown id. */
   seasonArcId?: string | null;
 }

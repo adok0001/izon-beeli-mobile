@@ -1,5 +1,5 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { Image, View } from "react-native";
+import { Image, Text, View } from "react-native";
 import { getCourseTypeColors } from "@/constants/course-colors";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { COURSE_ICON } from "@/lib/journey";
@@ -30,6 +30,28 @@ export function CourseArtwork({ course, size = "hero", height }: CourseArtworkPr
   const resolvedHeight = height ?? (isHero ? HERO_HEIGHT : THUMB_SIZE);
   const accent = accentFor(course);
   const iconName = (course.courseType && COURSE_ICON[course.courseType]) || "mappin";
+  const badgeSize = isHero ? 64 : 40;
+
+  const badge = (
+    <View
+      style={{
+        alignItems: "center",
+        justifyContent: "center",
+        width: badgeSize,
+        height: badgeSize,
+        borderRadius: badgeSize / 2,
+        backgroundColor: `${accent}33`,
+        borderWidth: 2,
+        borderColor: `${accent}88`,
+      }}
+    >
+      {course.emoji ? (
+        <Text style={{ fontSize: isHero ? 30 : 20 }}>{course.emoji}</Text>
+      ) : (
+        <IconSymbol name={iconName} size={isHero ? 30 : 20} color={accent} />
+      )}
+    </View>
+  );
 
   if (course.imageUrl) {
     return (
@@ -50,6 +72,9 @@ export function CourseArtwork({ course, size = "hero", height }: CourseArtworkPr
           colors={["transparent", "rgba(0,0,0,0.55)"]}
           style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "60%" }}
         />
+        {course.emoji ? (
+          <View style={{ position: "absolute", left: 12, bottom: 12 }}>{badge}</View>
+        ) : null}
       </View>
     );
   }
@@ -71,21 +96,7 @@ export function CourseArtwork({ course, size = "hero", height }: CourseArtworkPr
       {isHero ? (
         <CourseScene courseType={course.courseType} width={300} />
       ) : null}
-      <View
-        style={{
-          position: "absolute",
-          alignItems: "center",
-          justifyContent: "center",
-          width: isHero ? 64 : 40,
-          height: isHero ? 64 : 40,
-          borderRadius: isHero ? 32 : 20,
-          backgroundColor: `${accent}33`,
-          borderWidth: 2,
-          borderColor: `${accent}88`,
-        }}
-      >
-        <IconSymbol name={iconName} size={isHero ? 30 : 20} color={accent} />
-      </View>
+      <View style={{ position: "absolute" }}>{badge}</View>
     </LinearGradient>
   );
 }

@@ -90,7 +90,11 @@ function AreaLabel({
           borderColor: `${area.color}`,
         }}
       >
-        <IconSymbol name={area.icon} size={16} color={area.color} />
+        {area.emoji ? (
+          <Text style={{ fontSize: 15 }}>{area.emoji}</Text>
+        ) : (
+          <IconSymbol name={area.icon} size={16} color={area.color} />
+        )}
       </View>
       <Text
         numberOfLines={1}

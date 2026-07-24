@@ -72,6 +72,8 @@ export interface JourneyArea {
   /** Localized level ("beginner" | …) used as the area sub-label. */
   level: string;
   icon: IconSymbolName;
+  /** Free-form emoji override for the cartouche badge; takes priority over `icon` when set. */
+  emoji?: string | null;
   color: string;
   /** Owning course's type — picks the themed scenery drawn behind the nodes. */
   courseType?: CourseType | null;
@@ -219,6 +221,7 @@ function layoutNodes(
         title: course?.title ?? "",
         level: course?.level ?? "",
         icon: iconFor(course?.courseType),
+        emoji: course?.emoji,
         color: node.areaColor,
         courseType: course?.courseType,
         gloss: glossFor(course?.courseType),

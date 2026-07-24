@@ -47,7 +47,9 @@ export interface Course {
   language: string;
   level: "beginner" | "intermediate" | "advanced";
   lessonsCount: number;
-  imageUrl?: string;
+  imageUrl?: string | null;
+  /** Free-form emoji override for the course badge; takes priority over the courseType icon. */
+  emoji?: string | null;
   progress?: number; // 0-100
   courseType?: CourseType;
   /** Path position. Convention: >= 100 marks a reference shelf, off the numbered journey. */

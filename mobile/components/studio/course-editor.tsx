@@ -2,13 +2,16 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LocalizedTextInput, toLocalizedText } from "@/components/ui/localized-text-input";
 import { localize } from "@/lib/localize";
 import { COURSE_ICON } from "@/lib/journey";
+import { friendlyError } from "@/lib/api";
 import type { EducatorCourse } from "@/lib/hooks/use-educator-panel";
 import { useEducatorStoryArcs } from "@/lib/hooks/educator/use-story-arcs";
+import { useUploadMediaAsset } from "@/lib/hooks/use-media-assets";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { CourseType, LocalizedText } from "@/types";
+import * as ImagePicker from "expo-image-picker";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const LEVELS = ["beginner", "intermediate", "advanced"] as const;
@@ -37,6 +40,10 @@ export interface CourseEditFields {
   level: string;
   order: number;
   courseType: string | null;
+  /** Free-form emoji override for the course badge; takes priority over the courseType icon. */
+  emoji: string | null;
+  /** Custom cover photo; takes priority over the courseType-driven gradient scene. */
+  imageUrl: string | null;
   /** Season this course drills (`courses.season_arc_id`); `null` = standalone course. */
   seasonArcId: string | null;
 }
@@ -93,6 +100,87 @@ function SeasonPicker({
   );
 }
 
+/** Cover-photo picker: pick from the device library, upload, preview, remove. */
+function CourseImagePicker({
+  imageUrl,
+  onChange,
+}: Readonly<{ imageUrl: string | null; onChange: (url: string | null) => void }>) {
+  const M = useMuseumTheme();
+  const upload = useUploadMediaAsset();
+
+  async function pick() {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Permission needed", "Allow photo library access to set a cover image.");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.8,
+    });
+    if (result.canceled || !result.assets[0]) return;
+    const asset = result.assets[0];
+    const filename = asset.uri.split("/").pop() ?? "image.jpg";
+    const ext = filename.split(".").pop()?.toLowerCase() ?? "jpg";
+    const mimeType = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+    upload.mutate(
+      { uri: asset.uri, kind: "image", filename, mimeType },
+      {
+        onSuccess: (res) => onChange(res.url),
+        onError: (err: Error) => Alert.alert("Upload failed", friendlyError(err, err.message)),
+      },
+    );
+  }
+
+  return (
+    <View style={{ marginBottom: 14 }}>
+      <Text style={{ fontSize: 11, fontWeight: "600", color: M.muted, marginBottom: 4 }}>Cover Image</Text>
+      <Text style={{ fontSize: 12, color: M.muted, marginBottom: 8 }}>
+        Custom photo shown on the course card and map instead of the theme scene.
+      </Text>
+      {imageUrl ? (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+          <Image source={{ uri: imageUrl }} style={{ width: 64, height: 64, borderRadius: 10, backgroundColor: M.card }} />
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            <Pressable
+              onPress={pick}
+              disabled={upload.isPending}
+              style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: M.border, backgroundColor: M.card }}
+            >
+              <Text style={{ fontSize: 12, fontWeight: "700", color: M.text }}>
+                {upload.isPending ? "Uploading…" : "Change"}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => onChange(null)}
+              disabled={upload.isPending}
+              style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: M.errorBorder, backgroundColor: M.errorBg }}
+            >
+              <Text style={{ fontSize: 12, fontWeight: "700", color: M.error }}>Remove</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <Pressable
+          onPress={pick}
+          disabled={upload.isPending}
+          style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 12, borderRadius: 10, borderWidth: 1, borderStyle: "dashed", borderColor: M.border, backgroundColor: M.card }}
+        >
+          {upload.isPending ? (
+            <ActivityIndicator size="small" color={M.accent} />
+          ) : (
+            <IconSymbol name="photo" size={16} color={M.muted} />
+          )}
+          <Text style={{ fontSize: 13, fontWeight: "700", color: M.sub }}>
+            {upload.isPending ? "Uploading…" : "Choose from library"}
+          </Text>
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
 export function CourseEditModal({
   course,
   visible,
@@ -118,6 +206,8 @@ export function CourseEditModal({
   const [level, setLevel] = useState(course.level);
   const [order, setOrder] = useState(String(course.order));
   const [courseType, setCourseType] = useState<string | null>(course.courseType ?? null);
+  const [emoji, setEmoji] = useState(course.emoji ?? "");
+  const [imageUrl, setImageUrl] = useState<string | null>(course.imageUrl ?? null);
   const [seasonArcId, setSeasonArcId] = useState<string | null>(course.seasonArcId ?? null);
 
   const canSave = !!(title.en?.trim()) && !!(description.en?.trim());
@@ -134,7 +224,7 @@ export function CourseEditModal({
               Edit: {localize(course.title, "en")}
             </Text>
             <Pressable
-              onPress={() => canSave && onSave({ title: title.en ?? "", titleFr: title.fr ?? "", description: description.en ?? "", descriptionFr: description.fr ?? "", level, order: Number(order), courseType, seasonArcId })}
+              onPress={() => canSave && onSave({ title: title.en ?? "", titleFr: title.fr ?? "", description: description.en ?? "", descriptionFr: description.fr ?? "", level, order: Number(order), courseType, emoji: emoji.trim() || null, imageUrl, seasonArcId })}
               disabled={!canSave || saving}
               style={{ paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: canSave ? M.accent : M.border }}
             >
@@ -162,9 +252,39 @@ export function CourseEditModal({
                 </Pressable>
               ))}
             </View>
-            <Text style={{ fontSize: 11, fontWeight: "600", color: M.muted, marginBottom: 4 }}>Image / Emoji</Text>
+            <Text style={{ fontSize: 11, fontWeight: "600", color: M.muted, marginBottom: 4 }}>Emoji</Text>
             <Text style={{ fontSize: 12, color: M.muted, marginBottom: 8 }}>
-              Sets the icon and accent color shown on the course card and map.
+              Any emoji, overrides the theme icon on the course card and map badge.
+            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 14 }}>
+              <View
+                style={{
+                  width: 44, height: 44, borderRadius: 10, alignItems: "center", justifyContent: "center",
+                  borderWidth: 1, borderColor: M.border, backgroundColor: M.card,
+                }}
+              >
+                <Text style={{ fontSize: 22 }}>{emoji || "＿"}</Text>
+              </View>
+              <TextInput
+                value={emoji}
+                onChangeText={setEmoji}
+                placeholder="Paste or type an emoji"
+                placeholderTextColor={M.muted}
+                maxLength={32}
+                style={{ flex: 1, borderWidth: 1, borderColor: M.border, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, color: M.text, backgroundColor: M.card, fontSize: 16 }}
+              />
+              {emoji ? (
+                <Pressable onPress={() => setEmoji("")} hitSlop={8}>
+                  <IconSymbol name="xmark.circle.fill" size={20} color={M.muted} />
+                </Pressable>
+              ) : null}
+            </View>
+
+            <CourseImagePicker imageUrl={imageUrl} onChange={setImageUrl} />
+
+            <Text style={{ fontSize: 11, fontWeight: "600", color: M.muted, marginBottom: 4 }}>Theme</Text>
+            <Text style={{ fontSize: 12, color: M.muted, marginBottom: 8 }}>
+              Sets the fallback icon, accent color, and map scenery when no emoji or cover image is set.
             </Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 14 }}>
               <Pressable
@@ -264,6 +384,13 @@ export function CourseCard({
       style={{ opacity: dragging ? 0.85 : 1, backgroundColor: M.card, borderColor: M.border }}
     >
       <View className="flex-row items-center">
+        {course.imageUrl ? (
+          <Image source={{ uri: course.imageUrl }} style={{ width: 40, height: 40, borderRadius: 10, marginRight: 12, backgroundColor: M.bg }} />
+        ) : course.emoji ? (
+          <View style={{ width: 40, height: 40, borderRadius: 10, marginRight: 12, alignItems: "center", justifyContent: "center", backgroundColor: M.bg }}>
+            <Text style={{ fontSize: 20 }}>{course.emoji}</Text>
+          </View>
+        ) : null}
         <View className="flex-1">
           <Text className="text-base font-semibold" style={{ color: M.text }}>{localize(course.title, "en")}</Text>
           {course.description ? (

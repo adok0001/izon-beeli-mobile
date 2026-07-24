@@ -13,7 +13,7 @@ educatorCoursesRouter.get("/courses", async (c) => {
   const reviewerLanguages = c.get("reviewerLanguages");
 
   const rows = await db
-    .select({ id: courses.id, title: courses.title, titleFr: courses.titleFr, description: courses.description, descriptionFr: courses.descriptionFr, languageId: courses.languageId, level: courses.level, order: courses.order, courseType: courses.courseType, seasonArcId: courses.seasonArcId, isActive: courses.isActive })
+    .select({ id: courses.id, title: courses.title, titleFr: courses.titleFr, description: courses.description, descriptionFr: courses.descriptionFr, languageId: courses.languageId, level: courses.level, order: courses.order, courseType: courses.courseType, emoji: courses.emoji, imageUrl: courses.imageUrl, seasonArcId: courses.seasonArcId, isActive: courses.isActive })
     .from(courses)
     .where(!isAdmin && reviewerLanguages.length > 0 ? inArray(courses.languageId, reviewerLanguages) : undefined)
     .orderBy(courses.languageId, courses.order);
@@ -35,6 +35,8 @@ educatorCoursesRouter.patch("/courses/:id", async (c) => {
     level?: string;
     order?: number;
     courseType?: string | null;
+    emoji?: string | null;
+    imageUrl?: string | null;
     /** Companion course for a season — drives the Series screen's level bands. */
     seasonArcId?: string | null;
   }>(c);
@@ -52,6 +54,8 @@ educatorCoursesRouter.patch("/courses/:id", async (c) => {
   if (body.level !== undefined) patch.level = body.level;
   if (body.order !== undefined) patch.order = body.order;
   if (body.courseType !== undefined) patch.courseType = body.courseType;
+  if (body.emoji !== undefined) patch.emoji = body.emoji || null;
+  if (body.imageUrl !== undefined) patch.imageUrl = body.imageUrl || null;
 
   if (body.seasonArcId !== undefined) {
     const seasonArcId = body.seasonArcId || null;

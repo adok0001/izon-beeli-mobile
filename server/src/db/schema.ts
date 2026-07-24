@@ -439,6 +439,13 @@ export const courses = pgTable(
     lessonsCount: integer("lessons_count").default(0).notNull(),
     order: integer("order").default(0).notNull(),
     courseType: varchar("course_type", { length: 32 }),
+    /** Free-form emoji override for the course card/map badge — takes priority
+     * over the courseType-driven icon when set. Not validated as a "real"
+     * emoji; a stray value just renders as literal text. */
+    emoji: varchar("emoji", { length: 32 }),
+    /** Custom cover photo — takes priority over the courseType-driven gradient
+     * scene when set (see mobile CourseArtwork). Uploaded via /upload/image. */
+    imageUrl: text("image_url"),
     /**
      * Set when this is a companion course drilling a season's world (the Series
      * screen's level bands read from these). Null for ordinary standalone
