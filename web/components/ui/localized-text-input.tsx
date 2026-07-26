@@ -229,10 +229,35 @@ function AddLanguagePicker({ remaining, open, onToggle, onPick }: PickerProps) {
   );
 }
 
-/** Build a LocalizedText map from a legacy flat entry's english/french fields. */
-export function toLocalizedText(en?: string | null, fr?: string | null): LocalizedText {
+/**
+ * Build form state for a translatable field. Pass the record's
+ * `<field>Translations` map; the flat `<field>` column is the fallback for rows
+ * written before the map existed.
+ */
+export function toLocalizedText(
+  map?: LocalizedText | null,
+  flat?: string | null,
+): LocalizedText {
+  if (map && Object.values(map).some((v) => v?.trim())) return { ...map };
+  return flat?.trim() ? { en: flat } : {};
+}
+
+/**
+ * Inverse of `toLocalizedText`: trim a field for the wire. Empty glosses are
+ * dropped, and a field with nothing in it serializes to undefined so a PATCH can
+ * tell "not edited" from "cleared".
+ */
+export function serializeLocalizedText(value: LocalizedText): LocalizedText | undefined {
   const out: LocalizedText = {};
-  if (en?.trim()) out.en = en;
-  if (fr?.trim()) out.fr = fr;
-  return out;
+  for (const l of GLOSS_LANGUAGES) {
+    const text = value[l.key]?.trim();
+    if (text) out[l.key] = text;
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
+/** The English projection of a map — what the flat `<field>` column holds. */
+export function projectLocalizedText(value?: LocalizedText): string {
+  if (!value) return "";
+  return value.en ?? Object.values(value).find(Boolean) ?? "";
 }

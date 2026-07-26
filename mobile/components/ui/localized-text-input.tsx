@@ -272,35 +272,43 @@ function AddLanguagePicker({ remaining, open, onToggle, onPick }: PickerProps) {
   );
 }
 
-/** Convert a plain string + optional frString into LocalizedText for initialising form state. */
+/**
+ * Build form state for a translatable field. Pass the record's
+ * `<field>Translations` map; the flat `<field>` column is the fallback for rows
+ * written before the map existed.
+ */
 export function toLocalizedText(
-  en: string | LocalizedText | null | undefined,
-  fr?: string | null,
+  map: LocalizedText | string | null | undefined,
+  flat?: string | LocalizedText | null,
 ): LocalizedText {
-  if (en && typeof en === "object") return en;
-  // Server may serialize LocalizedText as a JSON string — parse it transparently.
-  if (typeof en === "string" && en.startsWith("{")) {
+  if (map && typeof map === "object") return map;
+  if (!map && flat && typeof flat === "object") return flat;
+  // Some older rows stored the map JSON-encoded inside the flat text column.
+  if (typeof map === "string" && map.startsWith("{")) {
     try {
-      const parsed = JSON.parse(en) as LocalizedText;
-      if (fr && !parsed.fr) parsed.fr = fr;
-      return parsed;
+      return JSON.parse(map) as LocalizedText;
     } catch { /* fall through */ }
   }
-  const result: LocalizedText = {};
-  if (en) result.en = en as string;
-  if (fr) result.fr = fr;
-  return result;
+  const en = typeof map === "string" && map ? map : typeof flat === "string" ? flat : undefined;
+  return en ? { en } : {};
 }
 
 /**
- * Inverse of `toLocalizedText` for endpoints that only have `<field>` / `<field>Fr`
- * columns (no pcm/ar/pt columns yet). When only en/fr are filled, writes them to
- * their dedicated columns as before. Once pcm/ar/pt has anything, the whole map is
- * JSON-encoded into `primary` instead — `localize()`/`toLocalizedText()` already
- * unpack that transparently wherever the field is read back.
+ * Inverse of `toLocalizedText`: trim a field for the wire. Empty glosses are
+ * dropped, and a field with nothing in it serializes to undefined so a PATCH can
+ * tell "not edited" from "cleared".
  */
-export function serializeLocalizedText(value: LocalizedText): { primary: string; fr?: string } {
-  const hasExtraLangs = !!(value.pcm?.trim() || value.ar?.trim() || value.pt?.trim());
-  if (hasExtraLangs) return { primary: JSON.stringify(value) };
-  return { primary: value.en?.trim() ?? "", fr: value.fr?.trim() || undefined };
+export function serializeLocalizedText(value: LocalizedText): LocalizedText | undefined {
+  const out: LocalizedText = {};
+  for (const l of GLOSS_LANGUAGES) {
+    const text = value[l.key]?.trim();
+    if (text) out[l.key] = text;
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
+/** The English projection of a map — what the flat `<field>` column holds. */
+export function projectLocalizedText(value: LocalizedText | undefined): string {
+  if (!value) return "";
+  return value.en ?? Object.values(value).find(Boolean) ?? "";
 }

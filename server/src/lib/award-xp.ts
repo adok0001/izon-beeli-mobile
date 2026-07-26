@@ -2,6 +2,7 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { feedItems, pushTokens, users } from "../db/schema.js";
 import { getLevelInfo } from "./xp-levels.js";
+import { mapValues } from "./translations.js";
 import { sendPushBatch, chunk } from "./send-push.js";
 
 export const CONTRIBUTION_BASE_XP = { word: 15, phrase: 20, audio: 25 } as const;
@@ -41,9 +42,19 @@ export async function awardXP(
       userId,
       type: "achievement",
       title: `Reached Level ${newLevelInfo.level}: ${newLevelInfo.title}`,
-      titleFr: `Niveau ${newLevelInfo.level} atteint : ${newLevelInfo.titleFr}`,
+      titleTranslations: mapValues(
+        newLevelInfo.titleTranslations,
+        (t, lang) => lang === "fr"
+          ? `Niveau ${newLevelInfo.level} atteint : ${t}`
+          : `Reached Level ${newLevelInfo.level}: ${t}`,
+      ),
       description: `${user.name} leveled up to ${newLevelInfo.title}!`,
-      descriptionFr: `${user.name} est passé au niveau ${newLevelInfo.titleFr} !`,
+      descriptionTranslations: mapValues(
+        newLevelInfo.titleTranslations,
+        (t, lang) => lang === "fr"
+          ? `${user.name} est passé au niveau ${t} !`
+          : `${user.name} leveled up to ${t}!`,
+      ),
       userName: user.name,
     }).catch(() => {});
 

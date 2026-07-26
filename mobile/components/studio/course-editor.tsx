@@ -1,5 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { LocalizedTextInput, toLocalizedText } from "@/components/ui/localized-text-input";
+import { LocalizedTextInput, serializeLocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
 import { localize } from "@/lib/localize";
 import { COURSE_ICON } from "@/lib/journey";
 import { friendlyError } from "@/lib/api";
@@ -33,10 +33,8 @@ const COURSE_TYPES: { value: CourseType; label: string }[] = [
 ];
 
 export interface CourseEditFields {
-  title: string;
-  titleFr: string;
-  description: string;
-  descriptionFr: string;
+  titleTranslations?: LocalizedText;
+  descriptionTranslations?: LocalizedText;
   level: string;
   order: number;
   courseType: string | null;
@@ -201,8 +199,8 @@ export function CourseEditModal({
   deleting: boolean;
 }>) {
   const M = useMuseumTheme();
-  const [title, setTitle] = useState<LocalizedText>(() => toLocalizedText(course.title, course.titleFr));
-  const [description, setDescription] = useState<LocalizedText>(() => toLocalizedText(course.description, course.descriptionFr));
+  const [title, setTitle] = useState<LocalizedText>(() => toLocalizedText(course.titleTranslations, course.title));
+  const [description, setDescription] = useState<LocalizedText>(() => toLocalizedText(course.descriptionTranslations, course.description));
   const [level, setLevel] = useState(course.level);
   const [order, setOrder] = useState(String(course.order));
   const [courseType, setCourseType] = useState<string | null>(course.courseType ?? null);
@@ -224,7 +222,7 @@ export function CourseEditModal({
               Edit: {localize(course.title, "en")}
             </Text>
             <Pressable
-              onPress={() => canSave && onSave({ title: title.en ?? "", titleFr: title.fr ?? "", description: description.en ?? "", descriptionFr: description.fr ?? "", level, order: Number(order), courseType, emoji: emoji.trim() || null, imageUrl, seasonArcId })}
+              onPress={() => canSave && onSave({ titleTranslations: serializeLocalizedText(title), descriptionTranslations: serializeLocalizedText(description), level, order: Number(order), courseType, emoji: emoji.trim() || null, imageUrl, seasonArcId })}
               disabled={!canSave || saving}
               style={{ paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: canSave ? M.accent : M.border }}
             >

@@ -24,34 +24,7 @@ export const VALID_CATEGORIES = [
   "adjectives",
 ] as const;
 
-/**
- * Normalize an incoming translations map. Accepts an object (JSON body) or a
- * JSON-stringified object (multipart field). Returns a trimmed { lang: text }
- * map, or undefined when there is nothing usable.
- */
-export function parseMap(raw: unknown): Record<string, string> | undefined {
-  let obj: unknown = raw;
-  if (typeof raw === "string") {
-    const s = raw.trim();
-    if (!s) return undefined;
-    try {
-      obj = JSON.parse(s);
-    } catch {
-      return undefined;
-    }
-  }
-  if (typeof obj !== "object" || obj === null) return undefined;
-  const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
-    if (typeof v === "string" && v.trim()) out[k] = v.trim();
-  }
-  return Object.keys(out).length ? out : undefined;
-}
-
-/** Build a translations map from legacy flat english/french fields. */
-export function flatToMap(en?: string | null, fr?: string | null): Record<string, string> | undefined {
-  const out: Record<string, string> = {};
-  if (en?.trim()) out.en = en.trim();
-  if (fr?.trim()) out.fr = fr.trim();
-  return Object.keys(out).length ? out : undefined;
-}
+// Translation-map helpers live in lib/translations.ts now that every content
+// table uses them, not just the dictionary. Re-exported here so the educator
+// routes keep importing their shared surface from one place.
+export { parseMap, toMap, project, hydrate } from "../../lib/translations.js";

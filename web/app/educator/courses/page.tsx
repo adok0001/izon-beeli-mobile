@@ -3,7 +3,8 @@
 import { MapNodeEditor, type NodeDraft } from "@/components/learn/map-node-editor";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { apiFetch } from "@/lib/api";
-import { localizeField } from "@/lib/localize";
+import type { LocalizedText } from "@/components/ui/localized-text-input";
+import { localizePair } from "@/lib/localize";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useAuth } from "@clerk/nextjs";
 import { useLanguages } from "@/lib/hooks/use-languages";
@@ -34,7 +35,9 @@ import { useTranslation } from "react-i18next";
 interface Course {
   id: string;
   title: string;
+  titleTranslations?: LocalizedText | null;
   description: string;
+  descriptionTranslations?: LocalizedText | null;
   languageId: string;
   level: string;
   courseType: string | null;
@@ -412,7 +415,7 @@ function MapNodesTab({
                     </td>
                     <td className="px-4 py-3 text-neutral-500 dark:text-neutral-400 text-xs">{node.zoneName}</td>
                     <td className="px-4 py-3 text-neutral-500 dark:text-neutral-400 text-xs truncate max-w-[160px]">
-                      {linkedCourse ? localizeField(linkedCourse.title, null, uiLanguage) : <span className="text-red-400">{t("educator.coursesPage.mapUnlinked")}</span>}
+                      {linkedCourse ? localizePair(linkedCourse.titleTranslations, linkedCourse.title, uiLanguage) : <span className="text-red-400">{t("educator.coursesPage.mapUnlinked")}</span>}
                     </td>
                     <td className="px-4 py-3 text-neutral-400 dark:text-neutral-600 text-xs font-mono">
                       {node.x}, {node.y}
@@ -600,7 +603,7 @@ export default function EducatorCoursesPage() {
     .sort((a, b) => {
       const sign = sortDir === "asc" ? 1 : -1;
       if (sortKey === "order") return (a.order - b.order) * sign;
-      if (sortKey === "title") return localizeField(a.title, null, uiLanguage).localeCompare(localizeField(b.title, null, uiLanguage)) * sign;
+      if (sortKey === "title") return localizePair(a.titleTranslations, a.title, uiLanguage).localeCompare(localizePair(b.titleTranslations, b.title, uiLanguage)) * sign;
       if (sortKey === "level") return a.level.localeCompare(b.level) * sign;
       if (sortKey === "total") return ((countsByCourse[a.id]?.total ?? 0) - (countsByCourse[b.id]?.total ?? 0)) * sign;
       if (sortKey === "active") return ((countsByCourse[a.id]?.active ?? 0) - (countsByCourse[b.id]?.active ?? 0)) * sign;
@@ -743,7 +746,7 @@ export default function EducatorCoursesPage() {
             <tbody>
               {filtered.map((course, i) => {
                 const counts = countsByCourse[course.id] ?? { total: 0, active: 0 };
-                const localizedTitle = localizeField(course.title, null, uiLanguage);
+                const localizedTitle = localizePair(course.titleTranslations, course.title, uiLanguage);
                 const shortTitle = localizedTitle.includes(" — ")
                   ? localizedTitle.split(" — ").slice(1).join(" — ")
                   : localizedTitle;

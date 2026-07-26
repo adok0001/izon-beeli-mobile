@@ -17,7 +17,7 @@ import { computeCoverage } from "../../lib/dictionary-coverage.js";
 import { withTranslations } from "../../lib/dictionary-translations.js";
 import { LexicalParseError, parseLexicalExtras } from "../../lib/lexical-extras.js";
 import { recordMediaAsset } from "../upload.js";
-import { VALID_CATEGORIES, flatToMap, parseMap } from "./_shared.js";
+import { VALID_CATEGORIES, parseMap, project, toMap } from "./_shared.js";
 
 export const educatorDictionaryRouter = new Hono<AuthEnv>();
 
@@ -74,8 +74,6 @@ educatorDictionaryRouter.get("/dictionary", async (c) => {
 
   const mapped = contribRows.map((r) => ({
     ...r,
-    french: null,
-    exampleTranslationFr: null,
     translations: { en: r.english },
     exampleTranslations: r.exampleTranslation ? { en: r.exampleTranslation } : null,
     _source: "contribution" as const,
@@ -112,11 +110,11 @@ educatorDictionaryRouter.post("/dictionary", async (c) => {
 
   const { languageId, word, category } = fields;
 
-  // Prefer the full translations map; fall back to legacy flat english/french.
+  // Prefer the full translations map; fall back to the flat english field.
   const translations = parseMap((fields as Record<string, unknown>).translations)
-    ?? flatToMap(fields.english, fields.french);
+    ?? toMap(fields.english);
   const exampleTranslations = parseMap((fields as Record<string, unknown>).exampleTranslations)
-    ?? flatToMap(fields.exampleTranslation, fields.exampleTranslationFr);
+    ?? toMap(fields.exampleTranslation);
   const english = translations?.en;
 
   if (!languageId?.trim() || !word?.trim() || !english?.trim()) {
@@ -172,13 +170,11 @@ educatorDictionaryRouter.post("/dictionary", async (c) => {
       languageId: languageId.trim(),
       word: word.trim(),
       english: english.trim(),
-      french: translations?.fr ?? null,
       translations: translations ?? null,
       category: category as (typeof VALID_CATEGORIES)[number],
       pronunciation: fields.pronunciation?.trim() || null,
       example: fields.example?.trim() || null,
       exampleTranslation: exampleTranslations?.en ?? null,
-      exampleTranslationFr: exampleTranslations?.fr ?? null,
       exampleTranslations: exampleTranslations ?? null,
       audioUrl,
       imageUrl,
@@ -251,25 +247,23 @@ educatorDictionaryRouter.patch("/dictionary/:id", async (c) => {
     if (fields[key]?.trim()) updates[key] = fields[key].trim();
   }
 
-  // Translations: write the jsonb map plus the derived flat english/french projection.
-  const translations = parseMap((fields as Record<string, unknown>).translations);
+  // Translations: write the jsonb map plus the derived flat english projection.
+  const translations = parseMap((fields as Record<string, unknown>).translations)
+    ?? toMap(fields.english);
   if (translations) {
     updates.translations = translations;
-    if (translations.en?.trim()) updates.english = translations.en.trim();
-    updates.french = translations.fr ?? null;
-  } else {
-    if ("english" in fields && fields.english?.trim()) updates.english = fields.english.trim();
-    if ("french" in fields) updates.french = fields.french?.trim() || null;
+    updates.english = project(translations);
   }
 
-  const exampleTranslations = parseMap((fields as Record<string, unknown>).exampleTranslations);
+  const exampleTranslations = parseMap((fields as Record<string, unknown>).exampleTranslations)
+    ?? toMap(fields.exampleTranslation);
   if (exampleTranslations) {
     updates.exampleTranslations = exampleTranslations;
-    updates.exampleTranslation = exampleTranslations.en ?? null;
-    updates.exampleTranslationFr = exampleTranslations.fr ?? null;
-  } else {
-    if ("exampleTranslation" in fields) updates.exampleTranslation = fields.exampleTranslation?.trim() || null;
-    if ("exampleTranslationFr" in fields) updates.exampleTranslationFr = fields.exampleTranslationFr?.trim() || null;
+    updates.exampleTranslation = project(exampleTranslations);
+  } else if ("exampleTranslations" in fields || "exampleTranslation" in fields) {
+    // Explicit clear — an empty map or an empty flat field wipes both columns.
+    updates.exampleTranslations = null;
+    updates.exampleTranslation = null;
   }
 
   if ("audioUrl" in fields) updates.audioUrl = fields.audioUrl?.trim() || null;

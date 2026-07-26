@@ -5,6 +5,7 @@ import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { proverbs } from "../db/schema.js";
 import { selectProverbs } from "../lib/content-selectors.js";
+import { applyMap, project, resolveMap, type TranslationMap } from "../lib/translations.js";
 import { AuthEnv, authMiddleware, reviewerMiddleware } from "../middleware/auth.js";
 
 export const proverbsRouter = new Hono();
@@ -50,16 +51,18 @@ proverbsAdminRouter.post("/", async (c) => {
     languageId: string;
     text: string;
     translation: string;
-    translationFr?: string;
+    translations?: TranslationMap;
     meaning: string;
-    meaningFr?: string;
+    meaningTranslations?: TranslationMap;
     literal?: string;
     context?: string;
     tags?: string[];
   }>(c);
 
-  const { languageId, text, translation, meaning } = body;
-  if (!languageId || !text || !translation || !meaning) {
+  const { languageId, text } = body;
+  const translationMap = resolveMap(body.translations, body.translation);
+  const meaningMap = resolveMap(body.meaningTranslations, body.meaning);
+  if (!languageId || !text || !translationMap || !meaningMap) {
     return c.json({ error: "languageId, text, translation, and meaning are required" }, 400);
   }
   if (!isAdmin && !reviewerLanguages.includes(languageId)) {
@@ -72,10 +75,10 @@ proverbsAdminRouter.post("/", async (c) => {
       id: randomUUID(),
       languageId,
       text,
-      translation,
-      translationFr: body.translationFr ?? null,
-      meaning,
-      meaningFr: body.meaningFr ?? null,
+      translation: project(translationMap),
+      translations: translationMap,
+      meaning: project(meaningMap),
+      meaningTranslations: meaningMap,
       literal: body.literal ?? null,
       context: body.context ?? null,
       tags: body.tags ?? null,
@@ -102,9 +105,9 @@ proverbsAdminRouter.patch("/:id", async (c) => {
   const body = await parseJson<Partial<{
     text: string;
     translation: string;
-    translationFr: string | null;
+    translations: TranslationMap;
     meaning: string;
-    meaningFr: string | null;
+    meaningTranslations: TranslationMap;
     literal: string | null;
     context: string | null;
     tags: string[] | null;
@@ -114,9 +117,11 @@ proverbsAdminRouter.patch("/:id", async (c) => {
   // Whitelist columns so a PATCH can't stamp publish fields or set
   // status='published' directly — that must go through the four-eyes endpoint.
   const updates: Record<string, unknown> = { updatedBy: c.get("userId") };
-  for (const key of ["text", "translation", "translationFr", "meaning", "meaningFr", "literal", "context", "tags"] as const) {
+  for (const key of ["text", "literal", "context", "tags"] as const) {
     if (body[key] !== undefined) updates[key] = body[key];
   }
+  applyMap(updates, body, "translation", "translations");
+  applyMap(updates, body, "meaning", "meaningTranslations");
   if (body.status !== undefined && ["draft", "in_review", "archived"].includes(body.status)) {
     updates.status = body.status;
   }

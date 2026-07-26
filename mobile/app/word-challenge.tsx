@@ -192,8 +192,8 @@ export default function WordChallengeScreen() {
               <View style={{ borderRadius: 14, backgroundColor: M.bg, borderWidth: 1, borderColor: M.border, padding: 16 }}>
                 <Text style={{ fontSize: 11, fontWeight: "800", letterSpacing: 1.5, color: M.muted, marginBottom: 6 }}>MEANING</Text>
                 <Text style={{ fontSize: 16, color: M.text, lineHeight: 24 }}>{word.english}</Text>
-                {word.french && uiLanguage === "fr" && (
-                  <Text style={{ fontSize: 14, color: M.sub, marginTop: 4 }}>{word.french}</Text>
+                {uiLanguage !== "en" && !!word.translations?.[uiLanguage] && (
+                  <Text style={{ fontSize: 14, color: M.sub, marginTop: 4 }}>{word.translations[uiLanguage]}</Text>
                 )}
               </View>
               {word.example && (

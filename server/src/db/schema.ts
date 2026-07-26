@@ -239,9 +239,11 @@ export const feedItems = pgTable(
       .notNull(),
     type: feedItemTypeEnum("type").notNull(),
     title: varchar("title", { length: 500 }).notNull(),
-    titleFr: varchar("title_fr", { length: 500 }),
+    /** Full title map { en, fr, pcm, ... }. `title` is the derived en projection. */
+    titleTranslations: jsonb("title_translations").$type<Record<string, string>>(),
     description: text("description").notNull(),
-    descriptionFr: text("description_fr"),
+    /** Full description map; `description` is the derived en projection. */
+    descriptionTranslations: jsonb("description_translations").$type<Record<string, string>>(),
     userName: varchar("user_name", { length: 200 }).notNull(),
     userAvatarUrl: text("user_avatar_url"),
     audioUrl: text("audio_url"),
@@ -432,9 +434,11 @@ export const courses = pgTable(
       .notNull()
       .references(() => languages.id),
     title: varchar("title", { length: 300 }).notNull(),
-    titleFr: varchar("title_fr", { length: 300 }),
+    /** Full title map { en, fr, pcm, ... }. `title` is the derived en projection. */
+    titleTranslations: jsonb("title_translations").$type<Record<string, string>>(),
     description: text("description").notNull(),
-    descriptionFr: text("description_fr"),
+    /** Full description map; `description` is the derived en projection. */
+    descriptionTranslations: jsonb("description_translations").$type<Record<string, string>>(),
     level: varchar("level", { length: 32 }).notNull(),
     lessonsCount: integer("lessons_count").default(0).notNull(),
     order: integer("order").default(0).notNull(),
@@ -481,9 +485,11 @@ export const lessons = pgTable(
       .references(() => courses.id),
     type: varchar("type", { length: 16 }).default("lesson").notNull(),
     title: varchar("title", { length: 300 }).notNull(),
-    titleFr: varchar("title_fr", { length: 300 }),
+    /** Full title map { en, fr, pcm, ... }. `title` is the derived en projection. */
+    titleTranslations: jsonb("title_translations").$type<Record<string, string>>(),
     description: text("description").notNull(),
-    descriptionFr: text("description_fr"),
+    /** Full description map; `description` is the derived en projection. */
+    descriptionTranslations: jsonb("description_translations").$type<Record<string, string>>(),
     audioUrl: text("audio_url"),
     /** Seconds. (Was written as minutes by the podcast converter until Jul 2026.) */
     duration: integer("duration"),
@@ -514,7 +520,8 @@ export const lessons = pgTable(
     narrativeOutro: text("narrative_outro"),
     // Honest real-world competence statement shown on completion ("You can now …").
     canDo: text("can_do"),
-    canDoFr: text("can_do_fr"),
+    /** Full can-do map; `canDo` is the derived en projection. */
+    canDoTranslations: jsonb("can_do_translations").$type<Record<string, string>>(),
     status: contentStatusEnum("status").default("published").notNull(),
     publishAt: timestamp("publish_at"),
     createdBy: uuid("created_by").references(() => users.id),
@@ -564,7 +571,8 @@ export const transcriptSegments = pgTable(
     endTime: real("end_time").notNull(),
     text: text("text").notNull(),
     translation: text("translation"),
-    translationFr: text("translation_fr"),
+    /** Full gloss map { en, fr, pcm, ... }. `translation` is the derived en projection. */
+    translations: jsonb("translations").$type<Record<string, string>>(),
     order: integer("order").default(0).notNull(),
     // Who speaks this line (audio-drama attribution). null = unattributed / narration.
     speaker: varchar("speaker", { length: 64 }),
@@ -597,15 +605,13 @@ export const dictionaryEntries = pgTable(
       .references(() => languages.id),
     word: varchar("word", { length: 500 }).notNull(),
     english: varchar("english", { length: 500 }).notNull(),
-    french: varchar("french", { length: 500 }),
-    /** Full gloss map { en, fr, pcm, ar, pt, ... }. `english`/`french` are kept as a derived projection. */
+    /** Full gloss map { en, fr, pcm, ar, pt, ... }. `english` is the derived en projection. */
     translations: jsonb("translations").$type<Record<string, string>>(),
     category: varchar("category", { length: 64 }).notNull(),
     pronunciation: varchar("pronunciation", { length: 500 }),
     example: text("example"),
     exampleTranslation: text("example_translation"),
-    exampleTranslationFr: text("example_translation_fr"),
-    /** Full example-translation map; `exampleTranslation`/`exampleTranslationFr` are the en/fr projection. */
+    /** Full example-translation map; `exampleTranslation` is the derived en projection. */
     exampleTranslations: jsonb("example_translations").$type<Record<string, string>>(),
     audioUrl: text("audio_url"),
     imageUrl: text("image_url"),
@@ -648,9 +654,11 @@ export const proverbs = pgTable(
     languageId: varchar("language_id", { length: 64 }).notNull(),
     text: text("text").notNull(),
     translation: text("translation").notNull(),
-    translationFr: text("translation_fr"),
+    /** Full gloss map { en, fr, pcm, ... }. `translation` is the derived en projection. */
+    translations: jsonb("translations").$type<Record<string, string>>(),
     meaning: text("meaning").notNull(),
-    meaningFr: text("meaning_fr"),
+    /** Full meaning map; `meaning` is the derived en projection. */
+    meaningTranslations: jsonb("meaning_translations").$type<Record<string, string>>(),
     literal: text("literal"),
     context: text("context"),
     tags: text("tags").array(),
@@ -693,9 +701,11 @@ export const culturalContent = pgTable(
       .references(() => languages.id),
     category: varchar("category", { length: 64 }).notNull(),
     title: varchar("title", { length: 300 }).notNull(),
-    titleFr: varchar("title_fr", { length: 300 }),
+    /** Full title map { en, fr, pcm, ... }. `title` is the derived en projection. */
+    titleTranslations: jsonb("title_translations").$type<Record<string, string>>(),
     description: text("description").notNull(),
-    descriptionFr: text("description_fr"),
+    /** Full description map; `description` is the derived en projection. */
+    descriptionTranslations: jsonb("description_translations").$type<Record<string, string>>(),
     /** Surfaced as the "Featured" hero card at the top of the gallery. */
     featured: boolean("featured").default(false).notNull(),
     /** Primary headword shown with an audio button in the reader. */
@@ -1148,14 +1158,11 @@ export const dailyChallenges = pgTable(
 export const dailyChallengeTemplates = pgTable("daily_challenge_templates", {
   id: uuid("id").defaultRandom().primaryKey(),
   challengeType: challengeTypeEnum("challenge_type").notNull(),
-  // `title`/`titleFr` (and `description`/`descriptionFr`) stay as flat legacy
-  // columns for readers that don't know about translations maps yet — same
-  // dual-write pattern as dictionaryEntries.english/french + .translations.
+  // `title`/`description` stay as flat columns holding the en projection of
+  // their map — same pattern as dictionaryEntries.english + .translations.
   title: text("title").notNull(),
-  titleFr: varchar("title_fr", { length: 200 }),
   titleTranslations: jsonb("title_translations").$type<Record<string, string>>(),
   description: text("description").notNull(),
-  descriptionFr: text("description_fr"),
   descriptionTranslations: jsonb("description_translations").$type<Record<string, string>>(),
   xpReward: integer("xp_reward").notNull(),
   targetCasual: integer("target_casual").notNull(),

@@ -1,3 +1,4 @@
+import type { TranslationMap } from "@/lib/localize";
 export type CourseType =
   | "first_words"
   | "sound_script"
@@ -10,9 +11,11 @@ export type CourseType =
 export interface Course {
   id: string;
   title: string;
-  titleFr?: string | null;
+  /** Full gloss map — the authoritative value; `title` is its English projection. */
+  titleTranslations?: TranslationMap | null;
   description: string;
-  descriptionFr?: string | null;
+  /** Full gloss map — the authoritative value; `description` is its English projection. */
+  descriptionTranslations?: TranslationMap | null;
   language: string;
   level: "beginner" | "intermediate" | "advanced";
   lessonsCount: number;
@@ -39,9 +42,11 @@ export interface Lesson {
   id: string;
   courseId: string;
   title: string;
-  titleFr?: string | null;
+  /** Full gloss map — the authoritative value; `title` is its English projection. */
+  titleTranslations?: TranslationMap | null;
   description: string;
-  descriptionFr?: string | null;
+  /** Full gloss map — the authoritative value; `description` is its English projection. */
+  descriptionTranslations?: TranslationMap | null;
   audioUrl?: AudioSource;
   duration?: number; // seconds
   order: number;
@@ -55,7 +60,8 @@ export interface TranscriptSegment {
   endTime: number; // seconds
   text: string;
   translation?: string | null;
-  translationFr?: string | null;
+  /** Full gloss map — the authoritative value; `translation` is its English projection. */
+  translations?: TranslationMap | null;
 }
 
 export interface JournalEntry {
@@ -159,9 +165,11 @@ export interface Proverb {
   languageId: string;
   text: string;
   translation: string;
-  translationFr?: string | null;
+  /** Full gloss map — the authoritative value; `translation` is its English projection. */
+  translations?: TranslationMap | null;
   meaning: string;
-  meaningFr?: string | null;
+  /** Full gloss map — the authoritative value; `meaning` is its English projection. */
+  meaningTranslations?: TranslationMap | null;
   literal?: string;
   context?: string;
   tags?: string[];
@@ -216,10 +224,12 @@ export interface CulturalContent {
   languageId: string;
   category: CulturalCategory;
   title: string;
-  titleFr?: string | null;
+  /** Full gloss map — the authoritative value; `title` is its English projection. */
+  titleTranslations?: TranslationMap | null;
   description: string;
-  descriptionFr?: string | null;
-  keyTerms: { word: string; english: string; french?: string | null }[];
+  /** Full gloss map — the authoritative value; `description` is its English projection. */
+  descriptionTranslations?: TranslationMap | null;
+  keyTerms: { word: string; english: string }[];
 }
 
 // --- Matching Game ---

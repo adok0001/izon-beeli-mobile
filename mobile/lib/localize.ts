@@ -29,13 +29,16 @@ export function localize(
 }
 
 /**
- * @deprecated Use `localize(field, lang)` where field is a LocalizedText map.
- * Returns the French value when lang is 'fr' and non-empty, otherwise English.
+ * Resolve a `<field>` / `<field>Translations` column pair to one language.
+ *
+ * The map is authoritative; the flat column is the English fallback for records
+ * written before the map existed.
  */
-export function localizeField(
-  en: string,
-  fr: string | null | undefined,
-  lang: UiLanguage
+export function localizePair(
+  map: LocalizedText | null | undefined,
+  flat: string | LocalizedText | null | undefined,
+  lang: UiLanguage,
+  fallback = ""
 ): string {
-  return localize(lang === "fr" && fr ? fr : en, lang);
+  return localize(map ?? flat, lang, fallback);
 }

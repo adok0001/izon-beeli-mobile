@@ -162,9 +162,15 @@ lessonContributionsRouter.post("/", async (c) => {
     userId,
     type: "contribution",
     title: `New lesson: ${title.trim()}`,
-    titleFr: `Nouvelle leçon : ${title.trim()}`,
+    titleTranslations: {
+      en: `New lesson: ${title.trim()}`,
+      fr: `Nouvelle leçon : ${title.trim()}`,
+    },
     description: `Submitted a lesson contribution for ${languageId}`,
-    descriptionFr: `A soumis une contribution de leçon en ${getLanguageNameFr(languageId)}`,
+    descriptionTranslations: {
+      en: `Submitted a lesson contribution for ${languageId}`,
+      fr: `A soumis une contribution de leçon en ${getLanguageNameFr(languageId)}`,
+    },
     userName: user?.name ?? "User",
     userAvatarUrl: user?.avatarUrl,
     audioUrl,

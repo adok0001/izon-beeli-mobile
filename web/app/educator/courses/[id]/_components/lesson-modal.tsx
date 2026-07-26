@@ -1,7 +1,7 @@
 "use client";
 
 import { apiFetch } from "@/lib/api";
-import { localizeField } from "@/lib/localize";
+import { localizePair } from "@/lib/localize";
 import { useForm } from "@/lib/use-form";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useAuth } from "@clerk/nextjs";
@@ -31,8 +31,8 @@ export function LessonModal({
 
   const isEdit = !!lesson;
   const [form, setForm] = useForm({
-    title: lesson ? localizeField(lesson.title, lesson.titleFr, uiLanguage) : "",
-    description: lesson ? localizeField(lesson.description, lesson.descriptionFr, uiLanguage) : "",
+    title: lesson ? localizePair(lesson.titleTranslations, lesson.title, uiLanguage) : "",
+    description: lesson ? localizePair(lesson.descriptionTranslations, lesson.description, uiLanguage) : "",
     type: lesson?.type ?? "lesson",
     artist: lesson?.artist ?? "",
     genre: lesson?.genre ?? "",

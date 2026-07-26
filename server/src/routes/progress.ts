@@ -7,6 +7,7 @@ import { awardXP } from "../lib/award-xp.js";
 import { incrementDailyChallenge } from "../lib/daily-challenge.js";
 import { sendPushBatch, chunk } from "../lib/send-push.js";
 import { updateStreak, diffDaysFromToday } from "../lib/update-streak.js";
+import { toMap } from "../lib/translations.js";
 import { authMiddleware, adminMiddleware, type AuthEnv } from "../middleware/auth.js";
 
 export const progressRouter = new Hono<AuthEnv>();
@@ -79,7 +80,7 @@ progressRouter.get("/can-do", async (c) => {
       lessonId: lessons.id,
       title: lessons.title,
       canDo: lessons.canDo,
-      canDoFr: lessons.canDoFr,
+      canDoTranslations: lessons.canDoTranslations,
       completedAt: userProgress.completedAt,
     })
     .from(userProgress)
@@ -279,7 +280,7 @@ progressRouter.get("/next-lesson", async (c) => {
   // Courses + completed progress in parallel (both only need languageId/userId)
   const [langCourses, completedRows] = await Promise.all([
     db
-      .select({ id: courses.id, title: courses.title, titleFr: courses.titleFr, order: courses.order })
+      .select({ id: courses.id, title: courses.title, titleTranslations: courses.titleTranslations, order: courses.order })
       .from(courses)
       .where(eq(courses.languageId, languageId))
       .orderBy(asc(courses.order)),
@@ -298,9 +299,9 @@ progressRouter.get("/next-lesson", async (c) => {
     .select({
       id: lessons.id,
       title: lessons.title,
-      titleFr: lessons.titleFr,
+      titleTranslations: lessons.titleTranslations,
       description: lessons.description,
-      descriptionFr: lessons.descriptionFr,
+      descriptionTranslations: lessons.descriptionTranslations,
       duration: lessons.duration,
       courseId: lessons.courseId,
       order: lessons.order,
@@ -341,16 +342,16 @@ progressRouter.get("/next-lesson", async (c) => {
     lesson: {
       id: next.id,
       title: next.title,
-      titleFr: next.titleFr ?? null,
+      titleTranslations: next.titleTranslations ?? toMap(next.title) ?? null,
       description: next.description,
-      descriptionFr: next.descriptionFr ?? null,
+      descriptionTranslations: next.descriptionTranslations ?? toMap(next.description) ?? null,
       duration: next.duration,
       courseId: next.courseId,
     },
     course: {
       id: course?.id ?? next.courseId,
       title: course?.title ?? "",
-      titleFr: course?.titleFr ?? null,
+      titleTranslations: course?.titleTranslations ?? toMap(course?.title) ?? null,
     },
     overallProgress: { completed, total },
   });

@@ -1,3 +1,4 @@
+import type { LocalizedText } from "@/types";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -8,9 +9,9 @@ export interface Proverb {
   languageId: string;
   text: string;
   translation: string;
-  translationFr?: string | null;
+  translations?: LocalizedText | null;
   meaning: string;
-  meaningFr?: string | null;
+  meaningTranslations?: LocalizedText | null;
   literal?: string | null;
   context?: string | null;
   tags?: string[] | null;
@@ -23,10 +24,9 @@ export interface UpsertProverbInput {
   id?: string;
   languageId: string;
   text: string;
-  translation: string;
-  translationFr?: string;
-  meaning: string;
-  meaningFr?: string;
+  /** The maps are authoritative — the server derives the flat columns from them. */
+  translations?: LocalizedText;
+  meaningTranslations?: LocalizedText;
   literal?: string;
   context?: string;
   tags?: string[];

@@ -37,7 +37,9 @@ export interface ImportTypeConfig {
 
 const DICT_COLUMNS = ["id", "word", "english", "category", "pronunciation", "example", "exampleTranslation"];
 const SENTENCE_COLUMNS = ["id", "sentence", "answer", "englishSentence", "kind", "literalTranslation"];
-const PROVERB_COLUMNS = ["id", "text", "translation", "translationFr", "meaning", "meaningFr", "literal", "context"];
+// Translatable fields take one column per language: the bare name is English,
+// `<field>:<lang>` adds a gloss. The server folds them into the field's map.
+const PROVERB_COLUMNS = ["id", "text", "translation", "translation:fr", "meaning", "meaning:fr", "literal", "context"];
 
 export const IMPORT_TYPES: Record<string, ImportTypeConfig> = {
   dictionary: {
@@ -71,7 +73,7 @@ export const IMPORT_TYPES: Record<string, ImportTypeConfig> = {
       [{ text: "…", translation: "…", meaning: "The lesson the proverb teaches." }],
       null, 2,
     ),
-    sampleCsv: "text,translation,translationFr,meaning,meaningFr,literal,context\n…,…,,The lesson it teaches.,,,\n",
+    sampleCsv: "text,translation,translation:fr,meaning,meaning:fr,literal,context\n…,…,,The lesson it teaches.,,,\n",
   },
   scenarios: {
     type: "scenarios",

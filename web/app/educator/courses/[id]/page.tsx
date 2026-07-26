@@ -1,7 +1,7 @@
 "use client";
 
 import { apiFetch } from "@/lib/api";
-import { localizeField } from "@/lib/localize";
+import { localizePair } from "@/lib/localize";
 import { useForm } from "@/lib/use-form";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useAuth } from "@clerk/nextjs";
@@ -109,8 +109,8 @@ export default function CourseDetailPage() {
     onError: (e: Error) => toast.error(t("educator.courseDetail.stubsFailed"), { description: e.message }),
   });
 
-  const displayTitle = course ? localizeField(course.title, course.titleFr, uiLanguage) : undefined;
-  const displayDescription = course ? localizeField(course.description, course.descriptionFr, uiLanguage) : undefined;
+  const displayTitle = course ? localizePair(course.titleTranslations, course.title, uiLanguage) : undefined;
+  const displayDescription = course ? localizePair(course.descriptionTranslations, course.description, uiLanguage) : undefined;
   const courseTitle = displayTitle ?? lessons[0]?.courseTitle ?? "Course";
   const levelLabel = course?.level ?? "";
 
@@ -206,7 +206,7 @@ export default function CourseDetailPage() {
                       href={`/educator/courses/${courseId}/lessons/${lesson.id}`}
                       className="font-medium text-neutral-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 flex items-center gap-1 group"
                     >
-                      {localizeField(lesson.title, lesson.titleFr, uiLanguage)}
+                      {localizePair(lesson.titleTranslations, lesson.title, uiLanguage)}
                       <ChevronRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-brand-500" />
                     </Link>
                     {lesson.artist && <p className="text-xs text-neutral-500 dark:text-neutral-300 mt-0.5">{lesson.artist}</p>}

@@ -1,11 +1,12 @@
 "use client";
+import type { LocalizedText } from "@/components/ui/localized-text-input";
 
-import { localizeField } from "@/lib/localize";
+import { localizePair } from "@/lib/localize";
 import { cn } from "@/lib/utils";
 import type { UiLanguage } from "@/store/ui-language-store";
 import type { MapNodeConfig } from "@/types";
 
-type CourseOption = { id: string; title: string; level: string };
+type CourseOption = { id: string; title: string; titleTranslations?: LocalizedText | null; level: string };
 import { MapPin } from "lucide-react";
 import { useRef } from "react";
 
@@ -182,7 +183,7 @@ export function MapNodeEditor({ draft, courses, existingZones, uiLanguage = "en"
           <option value="">— Select a course —</option>
           {courses.map((c) => (
             <option key={c.id} value={c.id}>
-              {localizeField(c.title, null, uiLanguage)} ({c.level})
+              {localizePair(c.titleTranslations, c.title, uiLanguage)} ({c.level})
             </option>
           ))}
         </select>

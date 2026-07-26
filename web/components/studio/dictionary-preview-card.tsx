@@ -7,7 +7,6 @@ export interface PreviewDictionaryEntry {
   word: string;
   translations?: Partial<Record<string, string>>;
   english: string;
-  french?: string | null;
   category: string;
   pronunciation?: string | null;
   example?: string | null;
@@ -36,12 +35,15 @@ export function DictionaryPreviewCard({ entry }: Readonly<{ entry: PreviewDictio
         <p className="mt-2 text-sm italic text-neutral-500 dark:text-neutral-400">/{entry.pronunciation}/</p>
       )}
       <p className="mt-3 text-lg text-neutral-600 dark:text-neutral-300">{englishText}</p>
-      {entry.french && (
-        <p className="mt-1.5 text-sm text-neutral-500 dark:text-neutral-400">
-          <span className="mr-1.5 rounded-full border border-brand-200 bg-brand-50 px-1.5 py-0.5 text-[10px] font-semibold text-brand-600 dark:border-brand-800 dark:bg-brand-900/20 dark:text-brand-400">FR</span>
-          {entry.french}
-        </p>
-      )}
+      {/* Every other gloss the entry carries, each tagged with its language. */}
+      {Object.entries(entry.translations ?? {})
+        .filter(([lang, text]) => lang !== "en" && !!text)
+        .map(([lang, text]) => (
+          <p key={lang} className="mt-1.5 text-sm text-neutral-500 dark:text-neutral-400">
+            <span className="mr-1.5 rounded-full border border-brand-200 bg-brand-50 px-1.5 py-0.5 text-[10px] font-semibold text-brand-600 dark:border-brand-800 dark:bg-brand-900/20 dark:text-brand-400">{lang.toUpperCase()}</span>
+            {text}
+          </p>
+        ))}
 
       <div className="mt-6 flex flex-col items-center">
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-white">

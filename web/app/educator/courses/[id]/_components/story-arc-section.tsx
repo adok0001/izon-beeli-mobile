@@ -1,7 +1,7 @@
 "use client";
 
 import { apiFetch, ApiError } from "@/lib/api";
-import { localizeField } from "@/lib/localize";
+import { localizePair } from "@/lib/localize";
 import { useForm } from "@/lib/use-form";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useAuth } from "@clerk/nextjs";
@@ -288,7 +288,7 @@ export function StoryArcSection({
                     <span className="text-sm font-medium text-neutral-900 dark:text-white truncate">{ch.title}</span>
                   </div>
                   <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
-                    {lesson ? `${lesson.order}. ${localizeField(lesson.title, lesson.titleFr, uiLanguage)}` : ch.lessonId}
+                    {lesson ? `${lesson.order}. ${localizePair(lesson.titleTranslations, lesson.title, uiLanguage)}` : ch.lessonId}
                   </p>
                   <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5 line-clamp-1">{ch.narrativeIntro}</p>
                 </div>

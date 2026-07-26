@@ -33,7 +33,12 @@ const sql = neon(process.env.DATABASE_URL!);
 const MOVEMENTS = [
   { id: "course-izon-mv-arrival",      order: 1,  level: "beginner",     active: true,  title: "Arrival",          titleFr: "L'Arrivée",           desc: "Welcomed as a guest — greetings, names, hospitality.",                          descFr: "Accueilli en invité — salutations, noms, hospitalité." },
   { id: "course-izon-mv-household",    order: 2,  level: "beginner",     active: true,  title: "The Household",    titleFr: "Le Foyer",            desc: "You settle into the compound — family, home, food, daily rhythm.",              descFr: "Vous vous installez dans la concession — famille, maison, nourriture, rythme quotidien." },
-  { id: "course-izon-mv-naming",       order: 3,  level: "beginner",     active: false, title: "The Naming",       titleFr: "La Cérémonie de Nom", desc: "A child is born; you join the naming ceremony. (Awaiting educator authoring.)", descFr: "Un enfant naît ; vous assistez à la cérémonie de nom. (En attente d'un éducateur.)" },
+  // NOTE: the id stays `...-mv-naming` on purpose. Movement 3 was widened from
+  // "The Naming" to "The Village" on 2026-07-25 (the naming ceremony is now its
+  // climax, not its whole content). The upsert below keys on id and updates the
+  // title, so re-running renames the existing row in place — changing the id
+  // would create a second course and orphan the lessons already parented here.
+  { id: "course-izon-mv-naming",       order: 3,  level: "beginner",     active: false, title: "The Village",      titleFr: "Le Village",          desc: "Beyond the compound — the whole community, and the naming that gathers it. (Awaiting educator authoring.)", descFr: "Au-delà de la concession — toute la communauté, et la cérémonie de nom qui la rassemble. (En attente d'un éducateur.)" },
   { id: "course-izon-mv-growing-up",   order: 4,  level: "beginner",     active: true,  title: "Growing Up",       titleFr: "Grandir",             desc: "Childhood around you — the river, the market, first proverbs.",                 descFr: "L'enfance autour de vous — la rivière, le marché, les premiers proverbes." },
   { id: "course-izon-mv-threshold",    order: 5,  level: "intermediate", active: false, title: "The Threshold",    titleFr: "Le Seuil",            desc: "A coming-of-age — initiation, the elder's charge. (Awaiting keeper authoring.)", descFr: "Un rite de passage — initiation, la charge de l'ancien. (En attente d'un gardien.)" },
   { id: "course-izon-mv-working-year", order: 6,  level: "intermediate", active: true,  title: "The Working Year", titleFr: "L'Année de Travail",  desc: "Livelihood across the seasons — fishing, farming, the market.",                 descFr: "Les moyens de subsistance à travers les saisons — pêche, agriculture, marché." },
@@ -144,11 +149,11 @@ async function main() {
     console.log(`  ${m.id.padEnd(30)} #${String(m.order).padStart(2)} ${m.level.padEnd(12)} ${m.active ? "active" : "INACTIVE (gap)"}  ${m.title}`);
     if (APPLY) {
       await sql`
-        INSERT INTO courses (id, language_id, title, title_fr, description, description_fr, level, lessons_count, "order", is_active)
-        VALUES (${m.id}, 'izon', ${m.title}, ${m.titleFr}, ${m.desc}, ${m.descFr}, ${m.level}, 0, ${m.order}, ${m.active})
+        INSERT INTO courses (id, language_id, title, title_translations, description, description_translations, level, lessons_count, "order", is_active)
+        VALUES (${m.id}, 'izon', ${m.title}, ${JSON.stringify({ en: m.title, fr: m.titleFr })}::jsonb, ${m.desc}, ${JSON.stringify({ en: m.desc, fr: m.descFr })}::jsonb, ${m.level}, 0, ${m.order}, ${m.active})
         ON CONFLICT (id) DO UPDATE SET
-          title = excluded.title, title_fr = excluded.title_fr,
-          description = excluded.description, description_fr = excluded.description_fr,
+          title = excluded.title, title_translations = excluded.title_translations,
+          description = excluded.description, description_translations = excluded.description_translations,
           level = excluded.level, "order" = excluded."order"
       `;
     }
@@ -189,7 +194,7 @@ async function main() {
     console.log(`  ${ref.id} -> order ${ref.order}, courseType ${ref.courseType}${ref.title ? `, retitled "${ref.title}"` : ""}`);
     if (APPLY) {
       if (ref.title) {
-        await sql`UPDATE courses SET "order" = ${ref.order}, course_type = ${ref.courseType}, title = ${ref.title}, title_fr = ${ref.titleFr} WHERE id = ${ref.id}`;
+        await sql`UPDATE courses SET "order" = ${ref.order}, course_type = ${ref.courseType}, title = ${ref.title}, title_translations = ${JSON.stringify({ en: ref.title, fr: ref.titleFr })}::jsonb WHERE id = ${ref.id}`;
       } else {
         await sql`UPDATE courses SET "order" = ${ref.order}, course_type = ${ref.courseType} WHERE id = ${ref.id}`;
       }

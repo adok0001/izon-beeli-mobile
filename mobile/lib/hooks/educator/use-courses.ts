@@ -6,9 +6,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 export interface EducatorCourse {
   id: string;
   title: string | LocalizedText;
-  titleFr?: string | null;
+  titleTranslations?: LocalizedText | null;
   description: string | LocalizedText;
-  descriptionFr?: string | null;
+  descriptionTranslations?: LocalizedText | null;
   languageId: string;
   level: string;
   order: number;
@@ -25,9 +25,9 @@ export interface EducatorCourse {
 export interface UpdateEducatorCourseInput {
   id: string;
   title?: string;
-  titleFr?: string | null;
+  titleTranslations?: LocalizedText | null;
   description?: string;
-  descriptionFr?: string | null;
+  descriptionTranslations?: LocalizedText | null;
   level?: string;
   order?: number;
   courseType?: string | null;

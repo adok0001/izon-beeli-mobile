@@ -30,7 +30,7 @@ export interface EducatorLesson {
 export interface EducatorLessonSegment {
   text: string;
   translation?: string | LocalizedText | null;
-  translationFr?: string | null;
+  translations?: LocalizedText | null;
   startTime?: number;
   endTime?: number;
   order: number;

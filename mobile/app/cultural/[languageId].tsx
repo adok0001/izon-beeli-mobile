@@ -60,7 +60,7 @@ function termGloss(
   term: CulturalContent["keyTerms"][number],
   lang: UiLanguage
 ): string {
-  return localize(term.gloss ?? term.english ?? term.french ?? "", lang);
+  return localize(term.gloss ?? term.english ?? "", lang);
 }
 
 /** Lazily loads + plays a remote headword clip; safe no-op when no url. */

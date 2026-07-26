@@ -2,6 +2,7 @@
 
 import { StudioShell } from "@/app/(studio)/_components/studio-shell";
 import { apiFetch } from "@/lib/api";
+import { LocalizedTextInput, serializeLocalizedText, toLocalizedText, type LocalizedText } from "@/components/ui/localized-text-input";
 import {
   canPublishContent,
   canSubmitForReview,
@@ -28,9 +29,9 @@ type Proverb = {
   languageId: string;
   text: string;
   translation: string;
-  translationFr: string | null;
+  translations: LocalizedText | null;
   meaning: string;
-  meaningFr: string | null;
+  meaningTranslations: LocalizedText | null;
   literal: string | null;
   context: string | null;
   tags: string[] | null;
@@ -40,10 +41,8 @@ type Proverb = {
 
 type ProverbForm = {
   text: string;
-  translation: string;
-  translationFr: string;
-  meaning: string;
-  meaningFr: string;
+  translations: LocalizedText;
+  meaningTranslations: LocalizedText;
   literal: string;
   context: string;
   tags: string;
@@ -51,10 +50,8 @@ type ProverbForm = {
 
 const EMPTY_FORM: ProverbForm = {
   text: "",
-  translation: "",
-  translationFr: "",
-  meaning: "",
-  meaningFr: "",
+  translations: {},
+  meaningTranslations: {},
   literal: "",
   context: "",
   tags: "",
@@ -113,10 +110,8 @@ function ProverbsEditor() {
     setEditingId(p.id);
     setForm({
       text: p.text,
-      translation: p.translation,
-      translationFr: p.translationFr ?? "",
-      meaning: p.meaning,
-      meaningFr: p.meaningFr ?? "",
+      translations: toLocalizedText(p.translations, p.translation),
+      meaningTranslations: toLocalizedText(p.meaningTranslations, p.meaning),
       literal: p.literal ?? "",
       context: p.context ?? "",
       tags: (p.tags ?? []).join(", "),
@@ -134,10 +129,8 @@ function ProverbsEditor() {
       const payload = {
         languageId: activeLanguageId,
         text: form.text.trim(),
-        translation: form.translation.trim(),
-        translationFr: form.translationFr.trim() || null,
-        meaning: form.meaning.trim(),
-        meaningFr: form.meaningFr.trim() || null,
+        translations: serializeLocalizedText(form.translations),
+        meaningTranslations: serializeLocalizedText(form.meaningTranslations),
         literal: form.literal.trim() || null,
         context: form.context.trim() || null,
         tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
@@ -193,7 +186,7 @@ function ProverbsEditor() {
     onError: (e: Error) => setError(e.message),
   });
 
-  const canSave = form.text.trim() && form.translation.trim() && form.meaning.trim() && activeLanguageId;
+  const canSave = form.text.trim() && form.translations.en?.trim() && form.meaningTranslations.en?.trim() && activeLanguageId;
 
   return (
     <div className="space-y-6">
@@ -234,14 +227,23 @@ function ProverbsEditor() {
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Field label="Proverb (native)" value={form.text} onChange={(v) => setForm({ ...form, text: v })} required />
-          <Field label="Translation (EN)" value={form.translation} onChange={(v) => setForm({ ...form, translation: v })} required />
-          <Field label="Translation (FR)" value={form.translationFr} onChange={(v) => setForm({ ...form, translationFr: v })} />
-          <Field label="Meaning (EN)" value={form.meaning} onChange={(v) => setForm({ ...form, meaning: v })} required />
-          <Field label="Meaning (FR)" value={form.meaningFr} onChange={(v) => setForm({ ...form, meaningFr: v })} />
           <Field label="Literal" value={form.literal} onChange={(v) => setForm({ ...form, literal: v })} />
           <Field label="Context" value={form.context} onChange={(v) => setForm({ ...form, context: v })} />
           <Field label="Tags (comma-separated)" value={form.tags} onChange={(v) => setForm({ ...form, tags: v })} />
         </div>
+        <LocalizedTextInput
+          label="Translation"
+          required
+          value={form.translations}
+          onChange={(v) => setForm({ ...form, translations: v })}
+        />
+        <LocalizedTextInput
+          label="Meaning"
+          required
+          multiline
+          value={form.meaningTranslations}
+          onChange={(v) => setForm({ ...form, meaningTranslations: v })}
+        />
         <div className="flex items-center gap-2">
           <button
             disabled={!canSave || saveMutation.isPending}

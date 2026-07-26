@@ -30,15 +30,13 @@ interface DictEntry {
   languageId: string;
   word: string;
   english: string;
-  french: string | null;
-  /** Full gloss map; english/french are the legacy flat projection for the table. */
+  /** Full gloss map; `english` is its English projection, kept for the table. */
   translations?: LocalizedText;
   exampleTranslations?: LocalizedText;
   category: string;
   pronunciation: string | null;
   example: string | null;
   exampleTranslation: string | null;
-  exampleTranslationFr: string | null;
   audioUrl: string | null;
   imageUrl: string | null;
   /** Absent on contribution-sourced rows (_source: "contribution") — those use their own approval status. */
@@ -87,14 +85,12 @@ const EMPTY_FORM: EntryForm = {
   languageId: "",
   word: "",
   english: "",
-  french: "",
   translations: {},
   exampleTranslations: {},
   category: "nouns",
   pronunciation: "",
   example: "",
   exampleTranslation: "",
-  exampleTranslationFr: "",
   audioUrl: null,
   imageUrl: null,
 };
@@ -113,10 +109,9 @@ function EntryModal({
       : { ...EMPTY_FORM, languageId: defaultLanguageId, word: prefillWord ?? "" };
     return {
       ...base,
-      // Prefer the full map; synthesize from legacy flat english/french for older entries.
-      translations: initial?.translations ?? toLocalizedText(initial?.english, initial?.french),
-      exampleTranslations:
-        initial?.exampleTranslations ?? toLocalizedText(initial?.exampleTranslation, initial?.exampleTranslationFr),
+      // Prefer the full map; synthesize from the flat column for older entries.
+      translations: toLocalizedText(initial?.translations, initial?.english),
+      exampleTranslations: toLocalizedText(initial?.exampleTranslations, initial?.exampleTranslation),
     };
   });
   const [audioFile, setAudioFile] = useState<File | null>(null);
@@ -219,7 +214,6 @@ function EntryModal({
             word: form.word,
             translations: form.translations,
             english: form.translations.en ?? form.english,
-            french: form.french,
             category: form.category,
             pronunciation: form.pronunciation,
             example: form.example,
@@ -445,10 +439,10 @@ export default function EducatorDictionaryPage() {
   });
 
   const buildBody = (data: EntryForm, audioFile: File | null, imageFile: File | null, isMultipart: boolean) => {
-    // Send the translation maps; the server derives the flat english/french columns.
+    // Send the translation maps; the server derives the flat columns from them.
     const { translations, exampleTranslations } = data;
     const rest: Record<string, unknown> = { ...data };
-    for (const k of ["translations", "exampleTranslations", "english", "french", "exampleTranslation", "exampleTranslationFr"]) {
+    for (const k of ["translations", "exampleTranslations", "english", "exampleTranslation"]) {
       delete rest[k];
     }
     if (isMultipart) {

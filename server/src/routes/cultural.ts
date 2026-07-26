@@ -5,6 +5,7 @@ import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { culturalContent, culturalKeyTerms } from "../db/schema.js";
 import { selectCultural } from "../lib/content-selectors.js";
+import { applyMap, project, resolveMap, type TranslationMap } from "../lib/translations.js";
 import { AuthEnv, authMiddleware, reviewerMiddleware } from "../middleware/auth.js";
 
 export const culturalRouter = new Hono();
@@ -68,9 +69,9 @@ culturalAdminRouter.post("/", async (c) => {
     languageId: string;
     category: string;
     title: string;
-    titleFr?: string;
+    titleTranslations?: TranslationMap;
     description: string;
-    descriptionFr?: string;
+    descriptionTranslations?: TranslationMap;
     keyTerms?: KeyTermInput[];
     featured?: boolean;
     headword?: HeadwordInput;
@@ -78,8 +79,10 @@ culturalAdminRouter.post("/", async (c) => {
     heroBands?: HeroBandInput[] | null;
   }>(c);
 
-  const { languageId, category, title, description } = body;
-  if (!languageId || !category || !title || !description) {
+  const { languageId, category } = body;
+  const titleMap = resolveMap(body.titleTranslations, body.title);
+  const descriptionMap = resolveMap(body.descriptionTranslations, body.description);
+  if (!languageId || !category || !titleMap || !descriptionMap) {
     return c.json({ error: "languageId, category, title, and description are required" }, 400);
   }
   if (!isAdmin && !reviewerLanguages.includes(languageId)) {
@@ -93,10 +96,10 @@ culturalAdminRouter.post("/", async (c) => {
       id,
       languageId,
       category,
-      title,
-      titleFr: body.titleFr ?? null,
-      description,
-      descriptionFr: body.descriptionFr ?? null,
+      title: project(titleMap),
+      titleTranslations: titleMap,
+      description: project(descriptionMap),
+      descriptionTranslations: descriptionMap,
       featured: body.featured ?? false,
       headword: body.headword ?? null,
       applications: body.applications ?? null,
@@ -139,9 +142,9 @@ culturalAdminRouter.patch("/:id", async (c) => {
   const body = await parseJson<Partial<{
     category: string;
     title: string;
-    titleFr: string | null;
+    titleTranslations: TranslationMap;
     description: string;
-    descriptionFr: string | null;
+    descriptionTranslations: TranslationMap;
     keyTerms: KeyTermInput[];
     featured: boolean;
     headword: HeadwordInput;
@@ -149,7 +152,16 @@ culturalAdminRouter.patch("/:id", async (c) => {
     heroBands: HeroBandInput[] | null;
   }>>(c);
 
-  const { keyTerms, ...fields } = body;
+  const { keyTerms, ...rest } = body;
+  const fields: Partial<typeof culturalContent.$inferInsert> = { ...rest };
+  // applyMap is the sole writer of these column pairs — drop the raw values so a
+  // blank title can't slip past it into a notNull column.
+  for (const k of ["title", "titleTranslations", "description", "descriptionTranslations"] as const) {
+    delete fields[k];
+  }
+  applyMap(fields, body, "title", "titleTranslations");
+  applyMap(fields, body, "description", "descriptionTranslations");
+
   const [updated] = await db
     .update(culturalContent)
     .set(fields)

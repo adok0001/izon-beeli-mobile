@@ -185,9 +185,9 @@ export default function EducatorCultureScreen() {
   const startEditCultural = (item: CulturalItem) => {
     setCulturalForm({
       id: item.id,
-      title: toLocalizedText(item.title, item.titleFr),
+      title: toLocalizedText(item.titleTranslations, item.title),
       category: (item.category as CulturalCategory) ?? "festivals",
-      description: toLocalizedText(item.description, item.descriptionFr),
+      description: toLocalizedText(item.descriptionTranslations, item.description),
       keyTerms: item.keyTerms ?? [],
       featured: item.featured ?? false,
       headwordWord: item.headword?.word ?? "",
@@ -237,17 +237,15 @@ export default function EducatorCultureScreen() {
         dark: b.dark,
       }));
 
-    const titleSer = serializeLocalizedText(culturalForm.title);
-    const descriptionSer = serializeLocalizedText(culturalForm.description);
+    const titleTranslations = serializeLocalizedText(culturalForm.title);
+    const descriptionTranslations = serializeLocalizedText(culturalForm.description);
     upsertCultural.mutate(
       {
         id: culturalForm.id,
         languageId: activeLanguageId,
-        title: titleSer.primary,
-        titleFr: titleSer.fr,
+        titleTranslations,
         category: culturalForm.category,
-        description: descriptionSer.primary,
-        descriptionFr: descriptionSer.fr,
+        descriptionTranslations,
         keyTerms: culturalForm.keyTerms.filter((kt) => kt.word.trim() && kt.english.trim()),
         featured: culturalForm.featured,
         headword,

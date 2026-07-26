@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { localizeField } from "@/lib/localize";
+import { localizePair } from "@/lib/localize";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course } from "@/types";
 import { Zap } from "lucide-react";
@@ -158,8 +158,8 @@ export function MazeRoomCard({ course, previewAudioUrl }: Readonly<Props>) {
   const [state, setState] = useState<RoomState>(deriveRoomState(course));
 
   const meta = ROOM_META[course.level] ?? ROOM_META.beginner;
-  const title = localizeField(course.title, course.titleFr, uiLanguage);
-  const description = localizeField(course.description, course.descriptionFr, uiLanguage);
+  const title = localizePair(course.titleTranslations, course.title, uiLanguage);
+  const description = localizePair(course.descriptionTranslations, course.description, uiLanguage);
   const isOpen = state === "open" || state === "complete";
   const estimatedXp = course.lessonsCount * 50;
 

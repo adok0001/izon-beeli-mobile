@@ -1,3 +1,4 @@
+import { localizePair } from "@/lib/localize";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useCourseCanDos, useRateCanDo } from "@/lib/hooks/use-phrase-bank";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -43,7 +44,7 @@ export function CanDoCheck({ courseId, visible }: Readonly<{ courseId: string; v
 
       <View style={{ marginTop: 12, gap: 12 }}>
         {items.map((it) => {
-          const statement = uiLanguage === "fr" && it.canDoFr ? it.canDoFr : it.canDo;
+          const statement = localizePair(it.canDoTranslations, it.canDo, uiLanguage);
           return (
             <View key={it.lessonId}>
               <Text style={{ fontSize: 14, fontWeight: "600", lineHeight: 20, color: M.text }}>{statement}</Text>

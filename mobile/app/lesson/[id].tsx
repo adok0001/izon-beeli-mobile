@@ -33,7 +33,7 @@ import { useLanguageStore } from "@/store/language-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useTourStore } from "@/store/tour-store";
 import { useForegroundClaim, useOverlayStore } from "@/store/overlay-store";
-import { localize } from "@/lib/localize";
+import { localize, localizePair } from "@/lib/localize";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -162,15 +162,9 @@ export default function LessonScreen() {
   const accentColor = typeColors.tickActive ?? M.accent;
   const canDownload = downloadInput !== null;
 
-  // Honest, real-world competence line ("You can now …"). Server sends `canDo`
-  // (en) + `canDoFr`; bundled data may send a LocalizedText map directly.
-  const canDoField =
-    lesson.canDo == null
-      ? null
-      : typeof lesson.canDo === "string"
-        ? { en: lesson.canDo, fr: lesson.canDoFr ?? undefined }
-        : lesson.canDo;
-  const canDoText = canDoField ? localize(canDoField, uiLanguage) : "";
+  // Honest, real-world competence line ("You can now …"). The server sends the
+  // `canDoTranslations` map; bundled data may carry a LocalizedText in `canDo`.
+  const canDoText = localizePair(lesson.canDoTranslations, lesson.canDo, uiLanguage);
   const canDoLabel = localize({ en: "You can now", fr: "Vous savez maintenant" }, uiLanguage);
   const canDoSkills = (lesson.skills ?? []).slice(0, 3).map((skill) => getSkillMeta(skill));
 

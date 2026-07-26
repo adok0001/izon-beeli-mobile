@@ -1,3 +1,4 @@
+import type { LocalizedText } from "@/types";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@clerk/clerk-expo";
 import { useQuery } from "@tanstack/react-query";
@@ -6,16 +7,16 @@ export interface NextLessonResponse {
   lesson?: {
     id: string;
     title: string;
-    titleFr?: string | null;
+    titleTranslations?: LocalizedText | null;
     description: string;
-    descriptionFr?: string | null;
+    descriptionTranslations?: LocalizedText | null;
     duration: number | null;
     courseId: string;
   };
   course?: {
     id: string;
     title: string;
-    titleFr?: string | null;
+    titleTranslations?: LocalizedText | null;
   };
   overallProgress: {
     completed: number;

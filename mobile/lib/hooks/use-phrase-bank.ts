@@ -1,3 +1,4 @@
+import type { LocalizedText } from "@/types";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -83,7 +84,7 @@ export function useReviewPhrase() {
 export interface CanDoItem {
   lessonId: string;
   canDo: string;
-  canDoFr?: string | null;
+  canDoTranslations?: LocalizedText | null;
   rating: "yes" | "mostly" | "not_yet" | null;
 }
 

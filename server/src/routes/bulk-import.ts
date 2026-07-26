@@ -16,6 +16,7 @@ import {
 } from "../db/schema.js";
 import { buildLessonGroup, insertLessonGroups, type LessonGroupInput } from "./lesson-import.js";
 import { AuthEnv, authMiddleware, reviewerMiddleware } from "../middleware/auth.js";
+import { parseMap, project, type TranslationMap } from "../lib/translations.js";
 
 /**
  * Registry-driven bulk importer. One generic `POST /import/:type` handler feeds a
@@ -64,6 +65,36 @@ const opt = (v: unknown): string | null => {
 const strArray = (v: unknown): string[] | undefined =>
   Array.isArray(v) ? (v.filter((x) => typeof x === "string") as string[]) : undefined;
 
+/**
+ * Collect a translatable field into its map. Three input shapes are accepted, in
+ * precedence order:
+ *   `<field>Translations`  a JSON object — how JSON imports carry the full map
+ *   `<field>:<lang>`       one spreadsheet column per language ("meaning:pcm")
+ *   `<field>`              the bare column, taken as English
+ * The per-column form is what CSV templates use: spreadsheets can't hold JSON
+ * comfortably, and one column per language stays readable and diffable.
+ */
+function mapOf(entry: Entry, field: string): TranslationMap | undefined {
+  const explicit = parseMap(entry[`${field}Translations`]);
+  if (explicit) return explicit;
+  const out: TranslationMap = {};
+  const en = str(entry[field]);
+  if (en) out.en = en;
+  for (const [key, value] of Object.entries(entry)) {
+    const [name, lang] = key.split(":");
+    if (name !== field || !lang) continue;
+    const text = str(value);
+    if (text) out[lang.trim()] = text;
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
+/** The `<field>` / `<field>Translations` column pair for an insert row. */
+function mapPair(entry: Entry, field: string, mapKey: string) {
+  const map = mapOf(entry, field);
+  return { [field]: map ? project(map) : null, [mapKey]: map ?? null };
+}
+
 function statusValues(isAdmin: boolean, userId: string): StatusValues {
   return isAdmin
     ? { status: "published", createdBy: userId, publishedBy: userId, publishedAt: new Date() }
@@ -99,11 +130,11 @@ const dictionaryImporter: ImporterConfig = {
       id: str(e.id),
       languageId: ctx.languageId,
       word: str(e.word),
-      english: str(e.english),
+      ...(mapPair(e, "english", "translations") as { english: string; translations: TranslationMap | null }),
       category: str(e.category),
       pronunciation: opt(e.pronunciation),
       example: opt(e.example),
-      exampleTranslation: opt(e.exampleTranslation),
+      ...mapPair(e, "exampleTranslation", "exampleTranslations"),
       audioUrl: opt(e.audioUrl),
       synonyms: strArray(e.synonyms),
       antonyms: strArray(e.antonyms),
@@ -117,10 +148,12 @@ const dictionaryImporter: ImporterConfig = {
         set: {
           word: sql`excluded.word`,
           english: sql`excluded.english`,
+          translations: sql`excluded.translations`,
           category: sql`excluded.category`,
           pronunciation: sql`excluded.pronunciation`,
           example: sql`excluded.example`,
           exampleTranslation: sql`excluded.example_translation`,
+          exampleTranslations: sql`excluded.example_translations`,
           audioUrl: sql`excluded.audio_url`,
           synonyms: sql`excluded.synonyms`,
           antonyms: sql`excluded.antonyms`,
@@ -186,10 +219,8 @@ const proverbImporter: ImporterConfig = {
       id: str(e.id) || randomUUID(),
       languageId: ctx.languageId,
       text: str(e.text),
-      translation: str(e.translation),
-      translationFr: opt(e.translationFr),
-      meaning: str(e.meaning),
-      meaningFr: opt(e.meaningFr),
+      ...(mapPair(e, "translation", "translations") as { translation: string; translations: TranslationMap | null }),
+      ...(mapPair(e, "meaning", "meaningTranslations") as { meaning: string; meaningTranslations: TranslationMap | null }),
       literal: opt(e.literal),
       context: opt(e.context),
       tags: strArray(e.tags) ?? null,
@@ -201,9 +232,9 @@ const proverbImporter: ImporterConfig = {
         set: {
           text: sql`excluded.text`,
           translation: sql`excluded.translation`,
-          translationFr: sql`excluded.translation_fr`,
+          translations: sql`excluded.translations`,
           meaning: sql`excluded.meaning`,
-          meaningFr: sql`excluded.meaning_fr`,
+          meaningTranslations: sql`excluded.meaning_translations`,
           literal: sql`excluded.literal`,
           context: sql`excluded.context`,
           tags: sql`excluded.tags`,
@@ -263,10 +294,8 @@ const culturalImporter: ImporterConfig = {
       id,
       languageId: ctx.languageId,
       category: str(e.category),
-      title: str(e.title),
-      titleFr: opt(e.titleFr),
-      description: str(e.description),
-      descriptionFr: opt(e.descriptionFr),
+      ...(mapPair(e, "title", "titleTranslations") as { title: string; titleTranslations: TranslationMap | null }),
+      ...(mapPair(e, "description", "descriptionTranslations") as { description: string; descriptionTranslations: TranslationMap | null }),
       featured: e.featured === true,
       headword: (e.headword && typeof e.headword === "object" ? e.headword : null) as CulturalInsert["headword"],
       applications: (Array.isArray(e.applications) ? e.applications : null) as CulturalInsert["applications"],
@@ -279,9 +308,9 @@ const culturalImporter: ImporterConfig = {
         set: {
           category: sql`excluded.category`,
           title: sql`excluded.title`,
-          titleFr: sql`excluded.title_fr`,
+          titleTranslations: sql`excluded.title_translations`,
           description: sql`excluded.description`,
-          descriptionFr: sql`excluded.description_fr`,
+          descriptionTranslations: sql`excluded.description_translations`,
           featured: sql`excluded.featured`,
           headword: sql`excluded.headword`,
           applications: sql`excluded.applications`,

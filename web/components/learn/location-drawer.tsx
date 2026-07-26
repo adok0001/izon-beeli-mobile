@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { localizeField } from "@/lib/localize";
+import { localizePair } from "@/lib/localize";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course } from "@/types";
 import { ArrowRight, X, Volume2, Zap } from "lucide-react";
@@ -46,8 +46,8 @@ export function LocationDrawer({ course, nodeState, onClose, onUnlock }: Readonl
 
   const colors = LEVEL_COLORS[course.level as keyof typeof LEVEL_COLORS] ?? LEVEL_COLORS.beginner;
   const badge = LEVEL_BADGE[course.level] ?? LEVEL_BADGE.beginner;
-  const title = localizeField(course.title, course.titleFr, uiLanguage);
-  const description = localizeField(course.description, course.descriptionFr, uiLanguage);
+  const title = localizePair(course.titleTranslations, course.title, uiLanguage);
+  const description = localizePair(course.descriptionTranslations, course.description, uiLanguage);
   const isUnlocked = nodeState === "unlocked" || nodeState === "complete";
   const isListening = nodeState === "listening";
   const isLocked = nodeState === "locked";

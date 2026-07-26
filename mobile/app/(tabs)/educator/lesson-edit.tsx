@@ -1,7 +1,8 @@
+import type { LocalizedText } from "@/types";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { Badge } from "@/components/ui/badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { GLOSS_LANGUAGES, toLocalizedText } from "@/components/ui/localized-text-input";
+import { GLOSS_LANGUAGES, LocalizedTextInput, serializeLocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -73,8 +74,7 @@ export default function EducatorLessonEditScreen() {
   // Story fold-in narrative framing + can-do goal (all optional; empty clears).
   const [narrativeIntro, setNarrativeIntro] = useState("");
   const [narrativeOutro, setNarrativeOutro] = useState("");
-  const [canDo, setCanDo] = useState("");
-  const [canDoFr, setCanDoFr] = useState("");
+  const [canDo, setCanDo] = useState<LocalizedText>({});
   const [audioUri, setAudioUri] = useState<string | undefined>(undefined);
   const [segments, setSegments] = useState<SegmentEditor[]>([EMPTY_SEGMENT()]);
   const [culturalAttachments, setCulturalAttachments] = useState<EducatorLessonCulturalAttachment[]>([]);
@@ -116,19 +116,18 @@ export default function EducatorLessonEditScreen() {
       // Fold-in fields ride the detail response; older servers omit them.
       const d = lessonDetail as typeof lessonDetail & {
         narrativeIntro?: string | null; narrativeOutro?: string | null;
-        canDo?: string | null; canDoFr?: string | null;
+        canDo?: string | null; canDoTranslations?: LocalizedText | null;
       };
       setNarrativeIntro(d.narrativeIntro ?? "");
       setNarrativeOutro(d.narrativeOutro ?? "");
-      setCanDo(d.canDo ?? "");
-      setCanDoFr(d.canDoFr ?? "");
+      setCanDo(toLocalizedText(d.canDoTranslations, d.canDo));
     }
     setSegments(
       lessonDetail.segments.length > 0
         ? lessonDetail.segments.map((seg) =>
             makeSegment({
               text: seg.text,
-              translation: toLocalizedText(seg.translation, seg.translationFr),
+              translation: toLocalizedText(seg.translations, seg.translation),
               startTime: String(seg.startTime ?? 0),
               endTime: String(seg.endTime ?? 0),
               speaker: seg.speaker ?? "",
@@ -165,7 +164,7 @@ export default function EducatorLessonEditScreen() {
   const { dirty, markSaved } = useDirtyTracker(
     {
       title, description, type, artist, genre, style,
-      narrativeIntro, narrativeOutro, canDo, canDoFr,
+      narrativeIntro, narrativeOutro, canDo,
       audioUri, segments, culturalAttachments, checks,
     },
     isEditMode ? loaded : true,
@@ -203,7 +202,7 @@ export default function EducatorLessonEditScreen() {
       if (meta.type) setType(meta.type);
       if (meta.artist) setArtist(meta.artist);
       if (meta.genre) setGenre(meta.genre);
-      if (meta.canDo) setCanDo(meta.canDo);
+      if (meta.canDo) setCanDo(toLocalizedText(null, meta.canDo));
       if (meta.narrativeIntro) setNarrativeIntro(meta.narrativeIntro);
       if (meta.narrativeOutro) setNarrativeOutro(meta.narrativeOutro);
       if ((["skit", "immersive_story", "host_narrated"] as string[]).includes(meta.style)) {
@@ -281,8 +280,7 @@ export default function EducatorLessonEditScreen() {
           style,
           narrativeIntro: narrativeIntro.trim() || null,
           narrativeOutro: narrativeOutro.trim() || null,
-          canDo: canDo.trim() || null,
-          canDoFr: canDoFr.trim() || null,
+          canDoTranslations: serializeLocalizedText(canDo),
         },
         segments: toSegmentsPayload(segments),
         attachments: clampAttachments(culturalAttachments, segments),
@@ -506,21 +504,10 @@ export default function EducatorLessonEditScreen() {
                 className="mt-2 min-h-[56px] rounded-xl border px-3.5 py-2.5 text-sm"
                 style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
               />
-              <TextInput
+              <LocalizedTextInput
+                label="Can-do — e.g. Greet an elder and introduce yourself"
                 value={canDo}
-                onChangeText={setCanDo}
-                placeholder="Can-do — e.g. Greet an elder and introduce yourself"
-                placeholderTextColor={M.muted}
-                className="mt-2 rounded-xl border px-3.5 py-2.5 text-sm"
-                style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
-              />
-              <TextInput
-                value={canDoFr}
-                onChangeText={setCanDoFr}
-                placeholder="Can-do (français)"
-                placeholderTextColor={M.muted}
-                className="mt-2 rounded-xl border px-3.5 py-2.5 text-sm"
-                style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
+                onChange={setCanDo}
               />
             </View>
           </View>

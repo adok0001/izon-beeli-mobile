@@ -3,7 +3,7 @@
  * the gloss-language chip row above it, and the payload serializer.
  */
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { GLOSS_LANGUAGES } from "@/components/ui/localized-text-input";
+import { GLOSS_LANGUAGES, serializeLocalizedText } from "@/components/ui/localized-text-input";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { EducatorLessonSegment } from "@/lib/hooks/use-educator-panel";
 import type { UiLanguage } from "@/store/ui-language-store";
@@ -177,18 +177,11 @@ export function SegmentItem({
 }
 
 /**
- * en/fr persist through their dedicated DB columns (translation/translationFr).
- * Other languages (pcm/ar/pt) have no dedicated column, so once any of those are
- * filled the whole map is JSON-encoded into `translation` — `localize()` already
- * unpacks that transparently wherever segment translations are read.
+ * A segment's gloss persists as the `translations` map; the server derives the
+ * flat `translation` column from it as the English projection.
  */
-export function serializeSegmentTranslation(t: LocalizedText): { translation?: string; translationFr?: string } {
-  const hasExtraLangs = !!(t.pcm?.trim() || t.ar?.trim() || t.pt?.trim());
-  if (hasExtraLangs) return { translation: JSON.stringify(t) };
-  return {
-    translation: t.en?.trim() || undefined,
-    translationFr: t.fr?.trim() || undefined,
-  };
+export function serializeSegmentTranslation(t: LocalizedText): { translations?: LocalizedText } {
+  return { translations: serializeLocalizedText(t) };
 }
 
 export function toSegmentsPayload(source: SegmentEditor[]): EducatorLessonSegment[] {

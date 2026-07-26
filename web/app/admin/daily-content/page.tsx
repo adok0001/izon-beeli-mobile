@@ -1,6 +1,7 @@
 "use client";
 
 import { apiFetch } from "@/lib/api";
+import { LocalizedTextInput, serializeLocalizedText, type LocalizedText } from "@/components/ui/localized-text-input";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -66,7 +67,7 @@ export default function DailyContentAdminPage() {
   const [activeTab, setActiveTab] = useState<Tab>("wotd");
   const [search, setSearch] = useState("");
   const [showAddWord, setShowAddWord] = useState(false);
-  const [newWord, setNewWord] = useState({ word: "", english: "", french: "", category: "nouns" as DictCategory, pronunciation: "", example: "", exampleTranslation: "", exampleTranslationFr: "" });
+  const [newWord, setNewWord] = useState({ word: "", translations: {} as LocalizedText, category: "nouns" as DictCategory, pronunciation: "", example: "", exampleTranslations: {} as LocalizedText });
   async function token() { return (await getToken()) ?? undefined; }
 
   // ---- Admin status ----
@@ -132,13 +133,11 @@ export default function DailyContentAdminPage() {
         body: JSON.stringify({
           languageId,
           word: newWord.word.trim(),
-          english: newWord.english.trim(),
-          french: newWord.french.trim() || undefined,
+          translations: serializeLocalizedText(newWord.translations),
           category: newWord.category,
           pronunciation: newWord.pronunciation.trim() || undefined,
           example: newWord.example.trim() || undefined,
-          exampleTranslation: newWord.exampleTranslation.trim() || undefined,
-          exampleTranslationFr: newWord.exampleTranslationFr.trim() || undefined,
+          exampleTranslations: serializeLocalizedText(newWord.exampleTranslations),
         }),
       });
       await apiFetch("/daily-content/admin/wotd", { token: t, method: "PUT", body: JSON.stringify({ languageId, entryId: created.id }) });
@@ -147,7 +146,7 @@ export default function DailyContentAdminPage() {
       qc.invalidateQueries({ queryKey: ["admin-wotd", languageId] });
       qc.invalidateQueries({ queryKey: ["wotd", languageId] });
       qc.invalidateQueries({ queryKey: ["dictionary", languageId] });
-      setNewWord({ word: "", english: "", french: "", category: "nouns", pronunciation: "", example: "", exampleTranslation: "", exampleTranslationFr: "" });
+      setNewWord({ word: "", translations: {}, category: "nouns", pronunciation: "", example: "", exampleTranslations: {} });
       setShowAddWord(false);
     },
   });
@@ -229,16 +228,16 @@ export default function DailyContentAdminPage() {
                   <p className="text-xs font-semibold uppercase tracking-widest text-neutral-400">{t("admin.dailyContent.wotd.addNew")}</p>
                   <button onClick={() => setShowAddWord(false)} className="text-neutral-400 hover:text-neutral-600"><X className="h-4 w-4" /></button>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldWord")}</label>
-                    <input className={fieldCls} value={newWord.word} onChange={(e) => setNewWord((p) => ({ ...p, word: e.target.value }))} placeholder="e.g. Àkpọ" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldEnglish")}</label>
-                    <input className={fieldCls} value={newWord.english} onChange={(e) => setNewWord((p) => ({ ...p, english: e.target.value }))} placeholder="e.g. World" />
-                  </div>
+                <div>
+                  <label className="block text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldWord")}</label>
+                  <input className={fieldCls} value={newWord.word} onChange={(e) => setNewWord((p) => ({ ...p, word: e.target.value }))} placeholder="e.g. Àkpọ" />
                 </div>
+                <LocalizedTextInput
+                  label={t("admin.dailyContent.wotd.fieldEnglish")}
+                  required
+                  value={newWord.translations}
+                  onChange={(v) => setNewWord((p) => ({ ...p, translations: v }))}
+                />
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldCategory")}</label>
@@ -252,27 +251,18 @@ export default function DailyContentAdminPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldFrench")}</label>
-                  <input className={fieldCls} value={newWord.french} onChange={(e) => setNewWord((p) => ({ ...p, french: e.target.value }))} placeholder="e.g. Monde" />
-                </div>
-                <div>
                   <label className="block text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldExample")}</label>
                   <input className={fieldCls} value={newWord.example} onChange={(e) => setNewWord((p) => ({ ...p, example: e.target.value }))} />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldExampleTranslation")}</label>
-                    <input className={fieldCls} value={newWord.exampleTranslation} onChange={(e) => setNewWord((p) => ({ ...p, exampleTranslation: e.target.value }))} />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldExampleTranslationFr")}</label>
-                    <input className={fieldCls} value={newWord.exampleTranslationFr} onChange={(e) => setNewWord((p) => ({ ...p, exampleTranslationFr: e.target.value }))} />
-                  </div>
-                </div>
+                <LocalizedTextInput
+                  label={t("admin.dailyContent.wotd.fieldExampleTranslation")}
+                  value={newWord.exampleTranslations}
+                  onChange={(v) => setNewWord((p) => ({ ...p, exampleTranslations: v }))}
+                />
                 <div className="flex gap-2 pt-1">
                   <button
                     onClick={() => createAndPinWotd.mutate()}
-                    disabled={!newWord.word.trim() || !newWord.english.trim() || createAndPinWotd.isPending}
+                    disabled={!newWord.word.trim() || !newWord.translations.en?.trim() || createAndPinWotd.isPending}
                     className="flex-1 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 hover:bg-brand-700 transition-colors"
                   >
                     {createAndPinWotd.isPending ? t("admin.dailyContent.wotd.saving") : t("admin.dailyContent.wotd.saveAndPin")}

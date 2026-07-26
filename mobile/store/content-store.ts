@@ -101,7 +101,7 @@ export function getSnapshotLessons(languageId: string) {
       endTime: seg.endTime,
       text: seg.text,
       translation: seg.translation,
-      translationFr: seg.translationFr,
+      translations: seg.translations,
       speaker: seg.speaker,
       roman: seg.roman,
     });

@@ -14,10 +14,8 @@ export interface ChallengeTemplate {
   id: string;
   challengeType: ChallengeType;
   title: string;
-  titleFr: string | null;
   titleTranslations: LocalizedText | null;
   description: string;
-  descriptionFr: string | null;
   descriptionTranslations: LocalizedText | null;
   xpReward: number;
   targetCasual: number;

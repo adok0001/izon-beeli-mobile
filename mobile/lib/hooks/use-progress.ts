@@ -94,7 +94,7 @@ export interface CanDoStatement {
   lessonId: string;
   title: string | LocalizedText;
   canDo: string | null;
-  canDoFr: string | null;
+  canDoTranslations: LocalizedText | null;
   completedAt: string | null;
 }
 

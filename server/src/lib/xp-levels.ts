@@ -1,7 +1,10 @@
+import type { TranslationMap } from "./translations.js";
+
 export interface LevelInfo {
   level: number;
+  /** English projection of `titleTranslations`, for logs and push copy. */
   title: string;
-  titleFr: string;
+  titleTranslations: TranslationMap;
   currentXP: number;
   xpForNextLevel: number;
   totalXP: number;
@@ -12,20 +15,20 @@ interface LevelThreshold {
   level: number;
   cumulativeXP: number;
   title: string;
-  titleFr: string;
+  titleTranslations: TranslationMap;
 }
 
 const LEVELS: LevelThreshold[] = [
-  { level: 1, cumulativeXP: 0, title: "Newcomer", titleFr: "Novice" },
-  { level: 2, cumulativeXP: 100, title: "Explorer", titleFr: "Explorateur" },
-  { level: 3, cumulativeXP: 300, title: "Listener", titleFr: "Auditeur" },
-  { level: 4, cumulativeXP: 600, title: "Speaker", titleFr: "Locuteur" },
-  { level: 5, cumulativeXP: 1000, title: "Scholar", titleFr: "Érudit" },
-  { level: 6, cumulativeXP: 1500, title: "Storyteller", titleFr: "Conteur" },
-  { level: 7, cumulativeXP: 2200, title: "Elder", titleFr: "Ancien" },
-  { level: 8, cumulativeXP: 3000, title: "Master", titleFr: "Maître" },
-  { level: 9, cumulativeXP: 4000, title: "Guardian", titleFr: "Gardien" },
-  { level: 10, cumulativeXP: 5500, title: "Legend", titleFr: "Légende" },
+  { level: 1, cumulativeXP: 0, title: "Newcomer", titleTranslations: { en: "Newcomer", fr: "Novice" } },
+  { level: 2, cumulativeXP: 100, title: "Explorer", titleTranslations: { en: "Explorer", fr: "Explorateur" } },
+  { level: 3, cumulativeXP: 300, title: "Listener", titleTranslations: { en: "Listener", fr: "Auditeur" } },
+  { level: 4, cumulativeXP: 600, title: "Speaker", titleTranslations: { en: "Speaker", fr: "Locuteur" } },
+  { level: 5, cumulativeXP: 1000, title: "Scholar", titleTranslations: { en: "Scholar", fr: "Érudit" } },
+  { level: 6, cumulativeXP: 1500, title: "Storyteller", titleTranslations: { en: "Storyteller", fr: "Conteur" } },
+  { level: 7, cumulativeXP: 2200, title: "Elder", titleTranslations: { en: "Elder", fr: "Ancien" } },
+  { level: 8, cumulativeXP: 3000, title: "Master", titleTranslations: { en: "Master", fr: "Maître" } },
+  { level: 9, cumulativeXP: 4000, title: "Guardian", titleTranslations: { en: "Guardian", fr: "Gardien" } },
+  { level: 10, cumulativeXP: 5500, title: "Legend", titleTranslations: { en: "Legend", fr: "Légende" } },
 ];
 
 const XP_PER_LEGEND_LEVEL = 2000;
@@ -48,7 +51,7 @@ export function getLevelInfo(points: number): LevelInfo {
     return {
       level,
       title,
-      titleFr,
+      titleTranslations: { en: title, fr: titleFr },
       currentXP,
       xpForNextLevel: XP_PER_LEGEND_LEVEL,
       totalXP,
@@ -76,7 +79,7 @@ export function getLevelInfo(points: number): LevelInfo {
   return {
     level: currentLevel.level,
     title: currentLevel.title,
-    titleFr: currentLevel.titleFr,
+    titleTranslations: currentLevel.titleTranslations,
     currentXP: xpIntoLevel,
     xpForNextLevel: xpForLevel,
     totalXP,

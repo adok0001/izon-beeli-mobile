@@ -172,22 +172,18 @@ export default function DailyContentAdminScreen() {
 
   const createAndPinWotd = useMutation({
     mutationFn: async () => {
-      // Map the localized glosses back onto the legacy `<field>`/`<field>Fr`
-      // column pair — extra languages get JSON-encoded into the primary column.
-      const englishSer = serializeLocalizedText(newWord.english);
-      const exampleTranslationSer = serializeLocalizedText(newWord.exampleTranslation);
+      const translations = serializeLocalizedText(newWord.english);
+      const exampleTranslations = serializeLocalizedText(newWord.exampleTranslation);
       const created = await authedFetch("/dictionary/admin", {
         method: "POST",
         body: JSON.stringify({
           languageId,
           word: newWord.word.trim(),
-          english: englishSer.primary,
-          french: englishSer.fr,
+          translations,
           category: newWord.category,
           pronunciation: newWord.pronunciation.trim() || undefined,
           example: newWord.example.trim() || undefined,
-          exampleTranslation: exampleTranslationSer.primary || undefined,
-          exampleTranslationFr: exampleTranslationSer.fr,
+          exampleTranslations,
         }),
       }) as { id: string };
       await authedFetch("/daily-content/admin/wotd", { method: "PUT", body: JSON.stringify({ languageId, entryId: created.id }) });
@@ -218,18 +214,15 @@ export default function DailyContentAdminScreen() {
 
   const createAndPinPotm = useMutation({
     mutationFn: async () => {
-      // Same legacy-pair mapping as the word form: `<field>` + `<field>Fr`.
-      const translationSer = serializeLocalizedText(newProverb.translation);
-      const meaningSer = serializeLocalizedText(newProverb.meaning);
+      const translations = serializeLocalizedText(newProverb.translation);
+      const meaningTranslations = serializeLocalizedText(newProverb.meaning);
       const created = await authedFetch("/proverbs/admin", {
         method: "POST",
         body: JSON.stringify({
           languageId,
           text: newProverb.text.trim(),
-          translation: translationSer.primary,
-          meaning: meaningSer.primary,
-          translationFr: translationSer.fr,
-          meaningFr: meaningSer.fr,
+          translations,
+          meaningTranslations,
           literal: newProverb.literal.trim() || undefined,
           context: newProverb.context.trim() || undefined,
         }),

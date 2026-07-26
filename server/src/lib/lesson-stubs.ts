@@ -6,6 +6,12 @@
  * When the template content changes, keep both files in sync.
  */
 
+import type { TranslationMap } from "./translations.js";
+
+// The template literals below stay in an `x` / `xFr` authoring shape — these are
+// placeholder stubs an educator overwrites in Studio. The builders serialize
+// them into `<field>Translations` maps, which is what the DB and API speak.
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Phrase = { text: string; en: string; fr: string };
@@ -657,9 +663,12 @@ function buildCourses(languageId: string, nativeName: string) {
     id: `course-${languageId}-${def.abbrev}`,
     languageId,
     title: `${nativeName} — ${def.titleEn}`,
-    titleFr: `${nativeName} — ${def.titleFr}`,
+    titleTranslations: {
+      en: `${nativeName} — ${def.titleEn}`,
+      fr: `${nativeName} — ${def.titleFr}`,
+    },
     description: def.descriptionEn,
-    descriptionFr: def.descriptionFr,
+    descriptionTranslations: { en: def.descriptionEn, fr: def.descriptionFr },
     level: def.level,
     lessonsCount: def.lessons.length,
     order: def.order,
@@ -673,7 +682,7 @@ type SegmentRow = {
   endTime: number;
   text: string;
   translation: string | null;
-  translationFr: string | null;
+  translations: TranslationMap;
   order: number;
 };
 
@@ -682,9 +691,9 @@ type LessonRow = {
   courseId: string;
   type: string;
   title: string;
-  titleFr: string;
+  titleTranslations: TranslationMap;
   description: string;
-  descriptionFr: string;
+  descriptionTranslations: TranslationMap;
   audioUrl: null;
   duration: null;
   order: number;
@@ -706,9 +715,9 @@ function buildLessons(languageId: string, def: CourseDef): LessonRow[] {
       courseId,
       type: isSong ? "song" : "lesson",
       title: lesson.title,
-      titleFr: lesson.titleFr,
+      titleTranslations: { en: lesson.title, fr: lesson.titleFr },
       description: lesson.description,
-      descriptionFr: lesson.descriptionFr,
+      descriptionTranslations: { en: lesson.description, fr: lesson.descriptionFr },
       audioUrl: null,
       duration: null,
       order: n,
@@ -721,7 +730,7 @@ function buildLessons(languageId: string, def: CourseDef): LessonRow[] {
         endTime: lesson.isOralOrSong ? 0 : (pi + 1) * 4,
         text: p.text,
         translation: p.en,
-        translationFr: p.fr,
+        translations: { en: p.en, fr: p.fr },
         order: pi,
       })),
     };

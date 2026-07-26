@@ -13,7 +13,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { apiFetch, isNetworkError } from "@/lib/api";
 import type { DictionaryEntry } from "@/lib/dictionary";
-import type { Course, InteractiveStory, Lesson, Proverb, SentenceTemplate } from "@/types";
+import type { Course, InteractiveStory, Lesson, LocalizedText, Proverb, SentenceTemplate } from "@/types";
 
 const VERSION = "v1";
 const PREFIX = `content-snapshot:${VERSION}:`;
@@ -56,9 +56,9 @@ export interface CulturalContentRow {
   languageId: string;
   category: string;
   title: string;
-  titleFr?: string | null;
+  titleTranslations?: LocalizedText | null;
   description: string;
-  descriptionFr?: string | null;
+  descriptionTranslations?: LocalizedText | null;
   featured: boolean;
   keyTerms: { word: string; english: string }[];
   [key: string]: unknown;
@@ -71,7 +71,7 @@ export interface TranscriptSegmentRow {
   endTime: number;
   text: string;
   translation: string | null;
-  translationFr: string | null;
+  translations: LocalizedText | null;
   order: number;
   speaker: string | null;
   roman: string | null;

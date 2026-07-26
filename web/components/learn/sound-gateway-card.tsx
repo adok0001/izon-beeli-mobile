@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { localizeField } from "@/lib/localize";
+import { localizePair } from "@/lib/localize";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course } from "@/types";
 import { ArrowRight, MapPin, Volume2 } from "lucide-react";
@@ -118,8 +118,8 @@ export function SoundGatewayCard({ course, previewAudioUrl }: Readonly<SoundGate
   const [state, setState] = useState<GatewayState>(deriveInitialState(course));
 
   const meta = LEVEL_META[course.level] ?? LEVEL_META.beginner;
-  const title = localizeField(course.title, course.titleFr, uiLanguage);
-  const description = localizeField(course.description, course.descriptionFr, uiLanguage);
+  const title = localizePair(course.titleTranslations, course.title, uiLanguage);
+  const description = localizePair(course.descriptionTranslations, course.description, uiLanguage);
 
   function handleUnlock() {
     if (previewAudioUrl) {

@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/api";
-import type { Comment, FeedItem } from "@/types";
+import type { Comment, FeedItem, LocalizedText } from "@/types";
 import { useFeedLikesStore } from "@/store/feed-likes-store";
 import { useGuestStore } from "@/store/guest-store";
 import { useProfileAvatarStore } from "@/store/profile-avatar-store";
@@ -13,9 +13,9 @@ interface FeedItemResponse {
   /** Author's internal user id. Absent on optimistic (not-yet-posted) items. */
   userId?: string | null;
   title: string;
-  titleFr?: string | null;
+  titleTranslations?: LocalizedText | null;
   description: string;
-  descriptionFr?: string | null;
+  descriptionTranslations?: LocalizedText | null;
   userName: string;
   userAvatarUrl?: string;
   profileAvatarId?: string | null;

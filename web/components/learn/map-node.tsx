@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { localizeField } from "@/lib/localize";
+import { localizePair } from "@/lib/localize";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course } from "@/types";
 
@@ -46,7 +46,7 @@ export function MapNode({
 }: Readonly<MapNodeProps>) {
   const uiLanguage = useUiLanguageStore((s) => s.uiLanguage);
   const colors = LEVEL_COLORS[course.level as keyof typeof LEVEL_COLORS] ?? LEVEL_COLORS.beginner;
-  const title = label ?? localizeField(course.title, course.titleFr, uiLanguage);
+  const title = label ?? localizePair(course.titleTranslations, course.title, uiLanguage);
 
   const isUnlocked = nodeState === "unlocked" || nodeState === "complete";
   const isLocked = nodeState === "locked";

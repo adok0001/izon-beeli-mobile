@@ -6,6 +6,7 @@ import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { contributions, dictionaryEntries, users, wordBank } from "../db/schema.js";
 import { withTranslations } from "../lib/dictionary-translations.js";
+import { parseMap, project, toMap } from "../lib/translations.js";
 import { LexicalParseError, parseLexicalExtras } from "../lib/lexical-extras.js";
 import { adminMiddleware, authMiddleware, optionalAuthMiddleware, type AuthEnv } from "../middleware/auth.js";
 import { recordMediaAsset } from "./upload.js";
@@ -221,7 +222,14 @@ dictionaryAdminRouter.post("/", async (c) => {
     fields = await parseJson<Record<string, string>>(c);
   }
 
-  const { languageId, word, english, category } = fields;
+  const { languageId, word, category } = fields;
+
+  // Prefer the full translations map; fall back to the flat english field.
+  const translations = parseMap((fields as Record<string, unknown>).translations)
+    ?? toMap(fields.english);
+  const exampleTranslations = parseMap((fields as Record<string, unknown>).exampleTranslations)
+    ?? toMap(fields.exampleTranslation);
+  const english = translations?.en;
 
   if (!languageId?.trim() || !word?.trim() || !english?.trim()) {
     return c.json({ error: "languageId, word, and english are required" }, 400);
@@ -268,12 +276,12 @@ dictionaryAdminRouter.post("/", async (c) => {
       languageId: languageId.trim(),
       word: word.trim(),
       english: english.trim(),
-      french: fields.french?.trim() || null,
+      translations: translations ?? null,
       category: category as (typeof VALID_CATEGORIES)[number],
       pronunciation: fields.pronunciation?.trim() || null,
       example: fields.example?.trim() || null,
-      exampleTranslation: fields.exampleTranslation?.trim() || null,
-      exampleTranslationFr: fields.exampleTranslationFr?.trim() || null,
+      exampleTranslation: exampleTranslations?.en ?? null,
+      exampleTranslations: exampleTranslations ?? null,
       audioUrl,
       imageUrl,
       ...extras,
@@ -311,11 +319,29 @@ dictionaryAdminRouter.patch("/:id", async (c) => {
   }
 
   const updates: Partial<typeof dictionaryEntries.$inferInsert> = {};
-  for (const key of ["french", "pronunciation", "example", "exampleTranslation", "exampleTranslationFr"] as const) {
+  for (const key of ["pronunciation", "example"] as const) {
     if (key in fields) updates[key] = fields[key]?.trim() || null;
   }
-  for (const key of ["word", "english", "category"] as const) {
+  for (const key of ["word", "category"] as const) {
     if (fields[key]?.trim()) updates[key] = fields[key].trim();
+  }
+
+  // Translations: write the jsonb map plus the derived flat english projection.
+  const translations = parseMap((fields as Record<string, unknown>).translations)
+    ?? toMap(fields.english);
+  if (translations) {
+    updates.translations = translations;
+    updates.english = project(translations);
+  }
+
+  const exampleTranslations = parseMap((fields as Record<string, unknown>).exampleTranslations)
+    ?? toMap(fields.exampleTranslation);
+  if (exampleTranslations) {
+    updates.exampleTranslations = exampleTranslations;
+    updates.exampleTranslation = project(exampleTranslations);
+  } else if ("exampleTranslations" in fields || "exampleTranslation" in fields) {
+    updates.exampleTranslations = null;
+    updates.exampleTranslation = null;
   }
 
   // Explicit URL overrides take priority; file uploads win if provided

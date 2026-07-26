@@ -10,7 +10,7 @@ import { neon } from "@neondatabase/serverless";
  *   transcript_segments.roman     text         — pronunciation guidance
  *   lessons.transcript_type       varchar(16)  — "plain" | "helper"
  *   lessons.can_do                text         — "you can now …" competence line (en)
- *   lessons.can_do_fr             text         — French of the above
+ *   lessons.can_do_translations   jsonb        — the full { en, fr, … } gloss map
  *
  * All columns are NULLABLE and additive — non-destructive. Uses
  * `ADD COLUMN IF NOT EXISTS`, so re-running is a safe no-op. This mirrors what
@@ -45,8 +45,8 @@ const STATEMENTS: { label: string; run: () => Promise<unknown> }[] = [
     run: () => sql`ALTER TABLE "lessons" ADD COLUMN IF NOT EXISTS "can_do" text`,
   },
   {
-    label: 'lessons.can_do_fr text',
-    run: () => sql`ALTER TABLE "lessons" ADD COLUMN IF NOT EXISTS "can_do_fr" text`,
+    label: 'lessons.can_do_translations jsonb',
+    run: () => sql`ALTER TABLE "lessons" ADD COLUMN IF NOT EXISTS "can_do_translations" jsonb`,
   },
 ];
 

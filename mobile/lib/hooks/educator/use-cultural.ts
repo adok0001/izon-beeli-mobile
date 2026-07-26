@@ -27,9 +27,9 @@ export interface CulturalItem {
   languageId: string;
   category: string;
   title: string;
-  titleFr?: string | null;
+  titleTranslations?: LocalizedText | null;
   description: string;
-  descriptionFr?: string | null;
+  descriptionTranslations?: LocalizedText | null;
   keyTerms?: CulturalKeyTerm[];
   featured?: boolean;
   headword?: CulturalHeadword | null;
@@ -42,10 +42,9 @@ export interface UpsertCulturalInput {
   id?: string;
   languageId: string;
   category: string;
-  title: string;
-  titleFr?: string;
-  description: string;
-  descriptionFr?: string;
+  /** The map is authoritative — the server derives the flat `title` from it. */
+  titleTranslations?: LocalizedText;
+  descriptionTranslations?: LocalizedText;
   keyTerms?: CulturalKeyTerm[];
   featured?: boolean;
   headword?: CulturalHeadword | null;

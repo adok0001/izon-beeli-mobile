@@ -3,7 +3,7 @@
 import { TactileAudioPlayer } from "@/components/lesson/tactile-audio-player";
 import { SecretDiaryTranscript } from "@/components/lesson/secret-diary-transcript";
 import { apiFetch } from "@/lib/api";
-import { localizeField } from "@/lib/localize";
+import { localizePair } from "@/lib/localize";
 import { useAudioStore } from "@/store/audio-store";
 import { useLanguageStore } from "@/store/language-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
@@ -64,8 +64,8 @@ export default function LessonPage({ params }: Readonly<{ params: Promise<{ id: 
 
   const isCurrentLesson = currentLesson?.id === id;
   const isCompleted = completedIds?.includes(id ?? "") ?? lesson?.completed ?? false;
-  const lessonTitle = lesson ? localizeField(lesson.title, lesson.titleFr, uiLanguage) : "";
-  const lessonDescription = lesson ? localizeField(lesson.description ?? "", lesson.descriptionFr, uiLanguage) : "";
+  const lessonTitle = lesson ? localizePair(lesson.titleTranslations, lesson.title, uiLanguage) : "";
+  const lessonDescription = lesson ? localizePair(lesson.descriptionTranslations, lesson.description ?? "", uiLanguage) : "";
 
   const handleSegmentClick = useCallback((startTime: number) => {
     if (!lesson) return;

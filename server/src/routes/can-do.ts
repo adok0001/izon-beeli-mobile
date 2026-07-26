@@ -4,6 +4,7 @@ import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { canDoChecks, lessons } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
+import { toMap } from "../lib/translations.js";
 
 /**
  * Can-do self-checks — the reflective Movement-completion moment. When a
@@ -23,7 +24,7 @@ canDoRouter.get("/course/:courseId", async (c) => {
   const { courseId } = c.req.param();
 
   const rows = await db
-    .select({ lessonId: lessons.id, canDo: lessons.canDo, canDoFr: lessons.canDoFr, order: lessons.order })
+    .select({ lessonId: lessons.id, canDo: lessons.canDo, canDoTranslations: lessons.canDoTranslations, order: lessons.order })
     .from(lessons)
     .where(and(eq(lessons.courseId, courseId), isNotNull(lessons.canDo), eq(lessons.isActive, true)))
     .orderBy(lessons.order);
@@ -40,7 +41,7 @@ canDoRouter.get("/course/:courseId", async (c) => {
     items: rows.map((r) => ({
       lessonId: r.lessonId,
       canDo: r.canDo,
-      canDoFr: r.canDoFr,
+      canDoTranslations: r.canDoTranslations ?? toMap(r.canDo) ?? null,
       rating: ratingByLesson.get(r.lessonId) ?? null,
     })),
   });

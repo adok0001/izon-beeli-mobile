@@ -1,7 +1,7 @@
 "use client";
 
 import { ApiError, apiFetch } from "@/lib/api";
-import { localizeField } from "@/lib/localize";
+import { localizePair } from "@/lib/localize";
 import { cn, formatDuration } from "@/lib/utils";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course, Lesson } from "@/types";
@@ -54,11 +54,11 @@ function LessonRow({ lesson, index }: Readonly<{ lesson: Lesson; index: number }
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate font-semibold text-neutral-900 dark:text-white text-sm leading-snug">
-          {localizeField(lesson.title, lesson.titleFr, uiLanguage)}
+          {localizePair(lesson.titleTranslations, lesson.title, uiLanguage)}
         </p>
         {lesson.description && (
           <p className="mt-0.5 truncate text-xs text-neutral-500 dark:text-neutral-500">
-            {localizeField(lesson.description, lesson.descriptionFr, uiLanguage)}
+            {localizePair(lesson.descriptionTranslations, lesson.description, uiLanguage)}
           </p>
         )}
       </div>
@@ -146,8 +146,8 @@ export default function CoursePage({ params }: Readonly<{ params: Promise<{ id: 
     );
   }
 
-  const localizedTitle = localizeField(course.title, course.titleFr, uiLanguage);
-  const localizedDescription = localizeField(course.description, course.descriptionFr, uiLanguage);
+  const localizedTitle = localizePair(course.titleTranslations, course.title, uiLanguage);
+  const localizedDescription = localizePair(course.descriptionTranslations, course.description, uiLanguage);
   const firstLesson = lessons[0];
   const level = (course.level ?? "beginner") as keyof typeof LEVEL_COLORS;
   const levelColors = LEVEL_COLORS[level] ?? LEVEL_COLORS.beginner;

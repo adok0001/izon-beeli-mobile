@@ -1,7 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { LEVEL_CEFR } from "@/lib/series-presentation";
 import { useCanDoStatements } from "@/lib/hooks/use-progress";
-import { localize } from "@/lib/localize";
+import { localize, localizePair } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { getSnapshotCourseLevel, useContentStore } from "@/store/content-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
@@ -65,7 +65,7 @@ export function CanDoResume() {
         </Pressable>
 
         {expanded && data.map((s, i) => {
-          const text = localize({ en: s.canDo ?? "", fr: s.canDoFr ?? undefined }, uiLanguage);
+          const text = localizePair(s.canDoTranslations, s.canDo, uiLanguage);
           if (!text) return null;
           const sourceTitle = localize(s.title, uiLanguage);
           const cefr = cefrForLesson(s.lessonId);

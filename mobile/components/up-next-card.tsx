@@ -1,6 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useNextLesson } from "@/lib/hooks/use-next-lesson";
-import { localizeField } from "@/lib/localize";
+import { localizePair } from "@/lib/localize";
 import { formatDuration } from "@/lib/mock-data";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useRouter } from "expo-router";
@@ -74,7 +74,7 @@ export function UpNextCard({ languageId }: { languageId?: string }) {
         }}
         className="active:opacity-75"
         accessibilityRole="button"
-        accessibilityLabel={`Up next: ${localizeField(lesson.title, lesson.titleFr, uiLanguage)}, ${progressPct}% complete`}
+        accessibilityLabel={`Up next: ${localizePair(lesson.titleTranslations, lesson.title, uiLanguage)}, ${progressPct}% complete`}
         accessibilityHint="Tap to begin this lesson"
       >
         {/* Main row: play button + lesson info */}
@@ -96,14 +96,14 @@ export function UpNextCard({ languageId }: { languageId?: string }) {
                 {t("learn.upNext")}
               </Text>
               <Text style={{ fontSize: 8, fontWeight: "600", letterSpacing: 1, color: M.muted, textTransform: "uppercase" }}>
-                · {localizeField(course.title, course.titleFr, uiLanguage)}
+                · {localizePair(course.titleTranslations, course.title, uiLanguage)}
               </Text>
             </View>
             <Text
               style={{ fontSize: 15, fontWeight: "800", color: M.text, letterSpacing: -0.3, lineHeight: 20 }}
               numberOfLines={1}
             >
-              {localizeField(lesson.title, lesson.titleFr, uiLanguage)}
+              {localizePair(lesson.titleTranslations, lesson.title, uiLanguage)}
             </Text>
           </View>
 

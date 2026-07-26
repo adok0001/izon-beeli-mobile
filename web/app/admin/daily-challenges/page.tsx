@@ -1,6 +1,7 @@
 "use client";
 
 import { apiFetch } from "@/lib/api";
+import { LocalizedTextInput, serializeLocalizedText, toLocalizedText, type LocalizedText } from "@/components/ui/localized-text-input";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -20,9 +21,9 @@ interface ChallengeTemplate {
   id: string;
   challengeType: ChallengeType;
   title: string;
-  titleFr: string | null;
+  titleTranslations: LocalizedText | null;
   description: string;
-  descriptionFr: string | null;
+  descriptionTranslations: LocalizedText | null;
   xpReward: number;
   targetCasual: number;
   targetSteady: number;
@@ -35,10 +36,9 @@ interface ChallengeTemplate {
 // POST /daily-challenges/admin/create body shape
 interface CreateTemplateInput {
   challengeType: ChallengeType;
-  title: string;
-  titleFr?: string;
-  description: string;
-  descriptionFr?: string;
+  /** The maps are authoritative — the server derives the flat columns from them. */
+  titleTranslations?: LocalizedText;
+  descriptionTranslations?: LocalizedText;
   xpReward: number;
   targetCasual: number;
   targetSteady: number;
@@ -47,18 +47,13 @@ interface CreateTemplateInput {
 }
 
 // PATCH /daily-challenges/admin/:id body shape
-type UpdateTemplateInput = Partial<Omit<CreateTemplateInput, "titleFr" | "descriptionFr">> & {
-  titleFr?: string | null;
-  descriptionFr?: string | null;
-};
+type UpdateTemplateInput = Partial<CreateTemplateInput> & { active?: boolean };
 
 // Editable form draft — a superset used for both create and edit.
 interface TemplateDraft {
   challengeType: ChallengeType;
-  title: string;
-  titleFr: string;
-  description: string;
-  descriptionFr: string;
+  title: LocalizedText;
+  description: LocalizedText;
   xpReward: string;
   targetCasual: string;
   targetSteady: string;
@@ -68,10 +63,8 @@ interface TemplateDraft {
 
 const BLANK_DRAFT: TemplateDraft = {
   challengeType: "complete_quiz",
-  title: "",
-  titleFr: "",
-  description: "",
-  descriptionFr: "",
+  title: {},
+  description: {},
   xpReward: "20",
   targetCasual: "1",
   targetSteady: "2",
@@ -96,10 +89,8 @@ const labelCls =
 function draftFromTemplate(t: ChallengeTemplate): TemplateDraft {
   return {
     challengeType: t.challengeType,
-    title: t.title,
-    titleFr: t.titleFr ?? "",
-    description: t.description,
-    descriptionFr: t.descriptionFr ?? "",
+    title: toLocalizedText(t.titleTranslations, t.title),
+    description: toLocalizedText(t.descriptionTranslations, t.description),
     xpReward: String(t.xpReward),
     targetCasual: String(t.targetCasual),
     targetSteady: String(t.targetSteady),
@@ -140,8 +131,8 @@ function EditDrawer({ draft: initial, isNew, isSaving, error, onClose, onSave }:
   const steady = Number(d.targetSteady);
   const intensive = Number(d.targetIntensive);
   const valid =
-    d.title.trim().length > 0 &&
-    d.description.trim().length > 0 &&
+    !!d.title.en?.trim() &&
+    !!d.description.en?.trim() &&
     Number.isInteger(xp) &&
     xp > 0 &&
     Number.isInteger(casual) &&
@@ -188,55 +179,20 @@ function EditDrawer({ draft: initial, isNew, isSaving, error, onClose, onSave }:
             </select>
           </div>
 
-          <div>
-            <label className={labelCls}>
-              Title <span className="text-red-400">*</span>
-            </label>
-            <input
-              className={fieldCls}
-              value={d.title}
-              maxLength={200}
-              placeholder="e.g. Quiz Champion"
-              onChange={(e) => set("title", e.target.value)}
-            />
-          </div>
+          <LocalizedTextInput
+            label="Title"
+            required
+            value={d.title}
+            onChange={(v) => set("title", v)}
+          />
 
-          <div>
-            <label className={labelCls}>Title (French)</label>
-            <input
-              className={fieldCls}
-              value={d.titleFr}
-              maxLength={200}
-              placeholder="e.g. Champion du Quiz"
-              onChange={(e) => set("titleFr", e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className={labelCls}>
-              Description <span className="text-red-400">*</span>
-            </label>
-            <textarea
-              className={cn(fieldCls, "resize-none")}
-              rows={2}
-              value={d.description}
-              maxLength={2000}
-              placeholder="e.g. Complete a quiz session"
-              onChange={(e) => set("description", e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className={labelCls}>Description (French)</label>
-            <textarea
-              className={cn(fieldCls, "resize-none")}
-              rows={2}
-              value={d.descriptionFr}
-              maxLength={2000}
-              placeholder="e.g. Terminez une session de quiz"
-              onChange={(e) => set("descriptionFr", e.target.value)}
-            />
-          </div>
+          <LocalizedTextInput
+            label="Description"
+            required
+            multiline
+            value={d.description}
+            onChange={(v) => set("description", v)}
+          />
 
           <div>
             <label className={labelCls}>
@@ -363,14 +319,12 @@ export default function AdminDailyChallengesPage() {
       if (id === null) {
         const body: CreateTemplateInput = {
           challengeType: draft.challengeType,
-          title: draft.title.trim(),
-          description: draft.description.trim(),
+          titleTranslations: serializeLocalizedText(draft.title),
+          descriptionTranslations: serializeLocalizedText(draft.description),
           xpReward: Number(draft.xpReward),
           targetCasual: Number(draft.targetCasual),
           targetSteady: Number(draft.targetSteady),
           targetIntensive: Number(draft.targetIntensive),
-          ...(draft.titleFr.trim() ? { titleFr: draft.titleFr.trim() } : {}),
-          ...(draft.descriptionFr.trim() ? { descriptionFr: draft.descriptionFr.trim() } : {}),
         };
         return apiFetch<ChallengeTemplate>("/daily-challenges/admin/create", {
           method: "POST",
@@ -380,10 +334,8 @@ export default function AdminDailyChallengesPage() {
       }
       const body: UpdateTemplateInput = {
         challengeType: draft.challengeType,
-        title: draft.title.trim(),
-        titleFr: draft.titleFr.trim() || null,
-        description: draft.description.trim(),
-        descriptionFr: draft.descriptionFr.trim() || null,
+        titleTranslations: serializeLocalizedText(draft.title),
+        descriptionTranslations: serializeLocalizedText(draft.description),
         xpReward: Number(draft.xpReward),
         targetCasual: Number(draft.targetCasual),
         targetSteady: Number(draft.targetSteady),

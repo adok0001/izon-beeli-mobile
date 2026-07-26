@@ -18,7 +18,7 @@ interface DictionaryWord {
   id: string;
   word: string;
   english: string;
-  french?: string | null;
+  translations?: Partial<Record<string, string>> | null;
   category: string;
   pronunciation?: string | null;
   example?: string | null;
@@ -184,9 +184,11 @@ function WordCard({ word, languageId, isSaved, onSignInRequired }: Readonly<{ wo
             )}
           </div>
           <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-0.5">{word.english}</p>
-          {word.french && (
-            <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5 italic">fr: {word.french}</p>
-          )}
+          {Object.entries(word.translations ?? {})
+            .filter(([lang, text]) => lang !== "en" && !!text)
+            .map(([lang, text]) => (
+              <p key={lang} className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5 italic">{lang}: {text}</p>
+            ))}
 
           {/* Expandable extra content */}
           {expanded && (
@@ -657,7 +659,7 @@ export default function DictionaryPage() {
       !search ||
       w.word.toLowerCase().includes(q) ||
       w.english.toLowerCase().includes(q) ||
-      (w.french ?? "").toLowerCase().includes(q);
+      Object.values(w.translations ?? {}).some((v) => (v ?? "").toLowerCase().includes(q));
     const matchCat = category === "all" || w.category === category;
     return matchSearch && matchCat;
   });

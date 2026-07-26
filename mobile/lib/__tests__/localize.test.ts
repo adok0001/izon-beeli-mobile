@@ -1,4 +1,4 @@
-import { localize, localizeField } from "../localize";
+import { localize, localizePair } from "../localize";
 
 const map = { en: "Hello", fr: "Bonjour", ar: "مرحبا" };
 
@@ -31,16 +31,16 @@ describe("localize", () => {
   });
 });
 
-describe("localizeField (legacy shim)", () => {
-  it("returns french value when lang is fr and fr exists", () => {
-    expect(localizeField("Hello", "Bonjour", "fr")).toBe("Bonjour");
+describe("localizePair", () => {
+  it("prefers the map over the flat column", () => {
+    expect(localizePair({ en: "Hello", fr: "Bonjour" }, "Hi", "fr")).toBe("Bonjour");
   });
 
-  it("returns english value when lang is not fr", () => {
-    expect(localizeField("Hello", "Bonjour", "en")).toBe("Hello");
+  it("falls back to the flat column when the map is absent", () => {
+    expect(localizePair(null, "Hello", "fr")).toBe("Hello");
   });
 
-  it("returns english value when fr is missing", () => {
-    expect(localizeField("Hello", null, "fr")).toBe("Hello");
+  it("falls back to the map's english when the language is missing", () => {
+    expect(localizePair({ en: "Hello" }, "Hello", "fr")).toBe("Hello");
   });
 });

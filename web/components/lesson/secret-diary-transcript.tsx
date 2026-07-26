@@ -1,4 +1,6 @@
 "use client";
+import { localizePair } from "@/lib/localize";
+import type { LocalizedText } from "@/components/ui/localized-text-input";
 
 import { apiFetch } from "@/lib/api";
 import { cn, formatDuration } from "@/lib/utils";
@@ -13,7 +15,7 @@ import { PhoneticBounceBar } from "./phonetic-bounce-bar";
 // ── Types ─────────────────────────────────────────────────────
 
 interface DictionaryEntry {
-  id: string; word: string; english: string; french?: string | null;
+  id: string; word: string; english: string; translations?: LocalizedText | null;
   pronunciation?: string | null; example?: string | null; imageUrl?: string | null;
 }
 
@@ -33,7 +35,7 @@ function WordPopup({ word, languageId, onClose }: Readonly<{ word: string; langu
   if (isLoading) {
     content = <p className="text-xs text-amber-800/60">{t("common.loading")}</p>;
   } else if (match) {
-    const def = uiLanguage === "fr" && match.french ? match.french : match.english;
+    const def = localizePair(match.translations, match.english, uiLanguage);
     content = (
       <>
         {match.imageUrl && (
@@ -97,7 +99,7 @@ function DiarySegment({ seg, index, isActive, languageId, onSegmentClick, isPlay
   segRef: (el: HTMLButtonElement | null) => void;
 }>) {
   const { uiLanguage } = useUiLanguageStore();
-  const translation = uiLanguage === "fr" && seg.translationFr ? seg.translationFr : seg.translation;
+  const translation = localizePair(seg.translations, seg.translation, uiLanguage);
 
   return (
     <button

@@ -3,6 +3,7 @@ import { eq, asc, and, inArray } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { lessonChecks, lessons, transcriptSegments, courses } from "../db/schema.js";
 import { selectLessonCulturalNotes, selectLessonSeasonCast } from "../lib/content-selectors.js";
+import { hydrate, toMap } from "../lib/translations.js";
 
 export const lessonsRouter = new Hono();
 
@@ -97,14 +98,20 @@ lessonsRouter.get("/:id", async (c) => {
   ]);
 
   return c.json({
-    ...lesson,
+    // Lessons written before the map columns existed fall back to their flat English.
+    ...hydrate(
+      lesson,
+      ["title", "titleTranslations"],
+      ["description", "descriptionTranslations"],
+      ["canDo", "canDoTranslations"],
+    ),
     transcript: segments.map((s) => ({
       id: s.id,
       startTime: s.startTime,
       endTime: s.endTime,
       text: s.text,
       translation: s.translation,
-      translationFr: s.translationFr,
+      translations: s.translations ?? toMap(s.translation) ?? null,
       speaker: s.speaker,
       roman: s.roman,
     })),

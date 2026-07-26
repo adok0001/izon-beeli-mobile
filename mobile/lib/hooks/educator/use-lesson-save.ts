@@ -1,3 +1,4 @@
+import type { LocalizedText } from "@/types";
 import { apiFetch } from "@/lib/api";
 import type {
   EducatorLesson,
@@ -38,7 +39,7 @@ export function useSaveEducatorLesson() {
         narrativeOutro?: string | null;
         /** Honest competence statement shown on completion ("You can now …"). */
         canDo?: string | null;
-        canDoFr?: string | null;
+        canDoTranslations?: LocalizedText | null;
         /** Scene grouping within the course (journey rendering). */
         scene?: string | null;
         sceneTitle?: string | null;

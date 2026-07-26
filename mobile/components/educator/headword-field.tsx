@@ -43,14 +43,11 @@ interface Props {
 }
 
 /** Derive an editable gloss map from a dictionary entry, preferring the full
- *  translations map and falling back to the flat english/french projection. */
+ *  translations map and falling back to the flat english projection. */
 function glossFromEntry(entry: EducatorDictionaryEntry): LocalizedText {
   const map = entry.translations ?? undefined;
   if (map && Object.values(map).some((v) => v?.trim())) return { ...map };
-  const out: LocalizedText = {};
-  if (entry.english) out.en = entry.english;
-  if (entry.french) out.fr = entry.french;
-  return out;
+  return entry.english ? { en: entry.english } : {};
 }
 
 const inputStyle = {

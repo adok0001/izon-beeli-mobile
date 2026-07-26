@@ -89,9 +89,13 @@ tab bar) is always dark (the "foyer"); content areas are mode-aware.
   language (English) plus progressive "Add translation" disclosure for fr/pcm/ar/pt.
   Never hardcode a fixed English+French pair of inputs; that anti-pattern doesn't scale
   past two languages and is exactly what this component replaced. Pair it server-side with
-  a `<field>`/`<field>Fr` legacy pair + a `<field>Translations` jsonb column (see
-  `dictionaryEntries.meaning/meaningFr/translations` or `dailyChallengeTemplates` for the
-  pattern) and the `parseMap`/`flatToMap` helpers in `server/src/routes/educator/_shared.ts`.
+  a `<field>Translations` jsonb map column plus a flat `<field>` column holding the
+  English projection (see `dictionaryEntries.english/translations` or `courses.title/
+  titleTranslations`). The `<field>Fr` sidecar columns this replaced are gone — never add
+  one back. Use the helpers in `server/src/lib/translations.ts`: `resolveMap`/`project` on
+  insert, `applyMap` on PATCH, `hydrate`/`toMap` when serving rows that predate the map.
+  Clients resolve a pair with `localizePair(map, flat, lang)` (`lib/localize.ts` in both
+  mobile and web) and serialize with `serializeLocalizedText`.
 - **Studio (admin/educator) screens:** every list/editor screen under `app/admin/*` and
   `app/(tabs)/educator/*` composes the shared primitives in `components/studio/`:
   `StudioScreenHeader` (back chevron + title/subtitle + optional action button),

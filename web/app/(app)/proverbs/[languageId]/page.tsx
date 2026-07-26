@@ -1,7 +1,7 @@
 "use client";
 
 import { apiFetch } from "@/lib/api";
-import { localizeField } from "@/lib/localize";
+import { localizePair } from "@/lib/localize";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Proverb } from "@/types";
 import { useLanguages } from "@/lib/hooks/use-languages";
@@ -35,14 +35,14 @@ function ProverbCard({ proverb }: Readonly<{ proverb: Proverb }>) {
             &ldquo;{proverb.text}&rdquo;
           </p>
           <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            {localizeField(proverb.translation, proverb.translationFr, uiLanguage)}
+            {localizePair(proverb.translations, proverb.translation, uiLanguage)}
           </p>
 
           {expanded && (
             <div className="mt-3 space-y-2">
               <div className="rounded-lg bg-amber-100/60 dark:bg-amber-900/30 px-3 py-2">
                 <p className="text-xs font-medium text-amber-800 dark:text-amber-300">
-                  {localizeField(proverb.meaning, proverb.meaningFr, uiLanguage)}
+                  {localizePair(proverb.meaningTranslations, proverb.meaning, uiLanguage)}
                 </p>
               </div>
               {proverb.literal && proverb.literal !== proverb.translation && (

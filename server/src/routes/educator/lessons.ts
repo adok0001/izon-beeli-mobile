@@ -9,8 +9,15 @@ import { AuthEnv } from "../../middleware/auth.js";
 import { stubForCourse, stubForLanguage } from "../../lib/lesson-stubs.js";
 import { recordMediaAsset } from "../upload.js";
 import { isAudioUpload } from "./_shared.js";
+import { applyMap, project, resolveMap, type TranslationMap } from "../../lib/translations.js";
 
 export const educatorLessonsRouter = new Hono<AuthEnv>();
+
+/** Serialize a segment's gloss into its `translation` / `translations` column pair. */
+function segmentTranslation(seg: { translation?: string; translations?: TranslationMap }) {
+  const map = resolveMap(seg.translations, seg.translation);
+  return { translation: map ? project(map) : null, translations: map ?? null };
+}
 
 /** How a season episode is told. Null for ordinary lessons. */
 const LESSON_STYLES = ["skit", "immersive_story", "host_narrated"] as const;
@@ -30,9 +37,9 @@ educatorLessonsRouter.get("/lessons", async (c) => {
       courseTitle: courses.title,
       languageId: courses.languageId,
       title: lessons.title,
-      titleFr: lessons.titleFr,
+      titleTranslations: lessons.titleTranslations,
       description: lessons.description,
-      descriptionFr: lessons.descriptionFr,
+      descriptionTranslations: lessons.descriptionTranslations,
       type: lessons.type,
       audioUrl: lessons.audioUrl,
       duration: lessons.duration,
@@ -88,7 +95,7 @@ educatorLessonsRouter.post("/lessons", async (c) => {
     return c.json({ error: "Forbidden: not assigned to this language" }, 403);
   }
 
-  let segments: { text: string; translation?: string; translationFr?: string; startTime?: number; endTime?: number; order: number; speaker?: string; roman?: string }[] = [];
+  let segments: { text: string; translation?: string; translations?: TranslationMap; startTime?: number; endTime?: number; order: number; speaker?: string; roman?: string }[] = [];
   try { segments = JSON.parse(segmentsJson); } catch { /* no segments */ }
 
   // Resolve courseId
@@ -142,8 +149,7 @@ educatorLessonsRouter.post("/lessons", async (c) => {
       segments.map((seg) => ({
         lessonId,
         text: seg.text,
-        translation: seg.translation || null,
-        translationFr: seg.translationFr || null,
+        ...segmentTranslation(seg),
         startTime: seg.startTime ?? 0,
         endTime: seg.endTime ?? 0,
         order: seg.order,
@@ -185,11 +191,12 @@ educatorLessonsRouter.patch("/lessons/:id", async (c) => {
   }
 
   const body = await parseJson<{
-    title?: string; description?: string; type?: string;
+    title?: string; titleTranslations?: TranslationMap;
+    description?: string; descriptionTranslations?: TranslationMap; type?: string;
     artist?: string | null; genre?: string | null; order?: number; isActive?: boolean;
     status?: string; style?: string | null;
     narrativeIntro?: string | null; narrativeOutro?: string | null;
-    canDo?: string | null; canDoFr?: string | null;
+    canDo?: string | null; canDoTranslations?: TranslationMap;
     scene?: string | null; sceneTitle?: string | null; sceneOrder?: number | null;
     sceneIllustration?: string | null; sceneIllustrationUrl?: string | null;
   }>(c);
@@ -204,8 +211,8 @@ educatorLessonsRouter.patch("/lessons/:id", async (c) => {
   }
 
   const updates: Record<string, unknown> = { updatedBy: userId };
-  if (body.title !== undefined) updates.title = body.title.trim();
-  if (body.description !== undefined) updates.description = body.description.trim();
+  applyMap(updates, body, "title", "titleTranslations");
+  applyMap(updates, body, "description", "descriptionTranslations");
   if (body.type !== undefined) updates.type = body.type;
   if (body.artist !== undefined) updates.artist = body.artist?.trim() || null;
   if (body.genre !== undefined) updates.genre = body.genre?.trim() || null;
@@ -218,8 +225,7 @@ educatorLessonsRouter.patch("/lessons/:id", async (c) => {
   // Story fold-in narrative framing + can-do statement. Empty clears.
   if (body.narrativeIntro !== undefined) updates.narrativeIntro = body.narrativeIntro?.trim() || null;
   if (body.narrativeOutro !== undefined) updates.narrativeOutro = body.narrativeOutro?.trim() || null;
-  if (body.canDo !== undefined) updates.canDo = body.canDo?.trim() || null;
-  if (body.canDoFr !== undefined) updates.canDoFr = body.canDoFr?.trim() || null;
+  applyMap(updates, body, "canDo", "canDoTranslations", { nullable: true });
   // Scene grouping within the course (journey rendering). Clearing scene
   // clears its title/order with it — a title without a scene is meaningless.
   if (body.scene !== undefined) {
@@ -315,9 +321,9 @@ educatorLessonsRouter.get("/lessons/:id", async (c) => {
       courseTitle: courses.title,
       languageId: courses.languageId,
       title: lessons.title,
-      titleFr: lessons.titleFr,
+      titleTranslations: lessons.titleTranslations,
       description: lessons.description,
-      descriptionFr: lessons.descriptionFr,
+      descriptionTranslations: lessons.descriptionTranslations,
       type: lessons.type,
       audioUrl: lessons.audioUrl,
       duration: lessons.duration,
@@ -331,7 +337,7 @@ educatorLessonsRouter.get("/lessons/:id", async (c) => {
       narrativeIntro: lessons.narrativeIntro,
       narrativeOutro: lessons.narrativeOutro,
       canDo: lessons.canDo,
-      canDoFr: lessons.canDoFr,
+      canDoTranslations: lessons.canDoTranslations,
     })
     .from(lessons)
     .innerJoin(courses, eq(lessons.courseId, courses.id))
@@ -479,7 +485,7 @@ educatorLessonsRouter.put("/lessons/:id/segments", async (c) => {
   }
 
   const { segments } = await parseJson<{
-    segments: { text: string; translation?: string; translationFr?: string; startTime: number; endTime: number; order: number; speaker?: string; roman?: string }[];
+    segments: { text: string; translation?: string; translations?: TranslationMap; startTime: number; endTime: number; order: number; speaker?: string; roman?: string }[];
   }>(c);
 
   for (const seg of segments) {
@@ -496,8 +502,7 @@ educatorLessonsRouter.put("/lessons/:id/segments", async (c) => {
       segments.map((seg, i) => ({
         lessonId: id,
         text: seg.text.trim(),
-        translation: seg.translation?.trim() || null,
-        translationFr: seg.translationFr?.trim() || null,
+        ...segmentTranslation(seg),
         startTime: seg.startTime,
         endTime: seg.endTime,
         order: seg.order ?? i,
@@ -538,15 +543,16 @@ educatorLessonsRouter.put("/lessons/:id/save", async (c) => {
 
   const body = await c.req.json<{
     payload?: {
-      title?: string; description?: string; type?: string;
+      title?: string; titleTranslations?: TranslationMap;
+      description?: string; descriptionTranslations?: TranslationMap; type?: string;
       artist?: string | null; genre?: string | null; order?: number;
       isActive?: boolean; status?: string; style?: string | null;
       narrativeIntro?: string | null; narrativeOutro?: string | null;
-      canDo?: string | null; canDoFr?: string | null;
+      canDo?: string | null; canDoTranslations?: TranslationMap;
       scene?: string | null; sceneTitle?: string | null; sceneOrder?: number | null;
       sceneIllustration?: string | null; sceneIllustrationUrl?: string | null;
     };
-    segments?: { text: string; translation?: string; translationFr?: string; startTime: number; endTime: number; order: number; speaker?: string; roman?: string }[];
+    segments?: { text: string; translation?: string; translations?: TranslationMap; startTime: number; endTime: number; order: number; speaker?: string; roman?: string }[];
     attachments?: (string | { culturalContentId: string; afterSegmentIndex?: number | null })[];
     checks?: { type: string; prompt: string; answer: string; options?: string[]; explanation?: string | null; afterSegmentIndex?: number | null; isActive?: boolean }[];
   }>();
@@ -659,8 +665,8 @@ educatorLessonsRouter.put("/lessons/:id/save", async (c) => {
 
   // ── Build metadata updates (mirrors PATCH) ──
   const updates: Record<string, unknown> = { updatedBy: userId };
-  if (payload.title !== undefined) updates.title = payload.title.trim();
-  if (payload.description !== undefined) updates.description = payload.description.trim();
+  applyMap(updates, payload, "title", "titleTranslations");
+  applyMap(updates, payload, "description", "descriptionTranslations");
   if (payload.type !== undefined) updates.type = payload.type;
   if (payload.artist !== undefined) updates.artist = payload.artist?.trim() || null;
   if (payload.genre !== undefined) updates.genre = payload.genre?.trim() || null;
@@ -670,8 +676,7 @@ educatorLessonsRouter.put("/lessons/:id/save", async (c) => {
   if (payload.style !== undefined) updates.style = payload.style?.trim() || null;
   if (payload.narrativeIntro !== undefined) updates.narrativeIntro = payload.narrativeIntro?.trim() || null;
   if (payload.narrativeOutro !== undefined) updates.narrativeOutro = payload.narrativeOutro?.trim() || null;
-  if (payload.canDo !== undefined) updates.canDo = payload.canDo?.trim() || null;
-  if (payload.canDoFr !== undefined) updates.canDoFr = payload.canDoFr?.trim() || null;
+  applyMap(updates, payload, "canDo", "canDoTranslations", { nullable: true });
   if (payload.scene !== undefined) {
     updates.scene = payload.scene?.trim() || null;
     if (!payload.scene?.trim()) {
@@ -695,8 +700,7 @@ educatorLessonsRouter.put("/lessons/:id/save", async (c) => {
           segments.map((seg, i) => ({
             lessonId: id,
             text: seg.text.trim(),
-            translation: seg.translation?.trim() || null,
-            translationFr: seg.translationFr?.trim() || null,
+            ...segmentTranslation(seg),
             startTime: seg.startTime,
             endTime: seg.endTime,
             order: seg.order ?? i,
@@ -893,9 +897,9 @@ educatorLessonsRouter.post("/generate-stubs", async (c) => {
       id: course.id,
       languageId: course.languageId,
       title: course.title,
-      titleFr: course.titleFr ?? null,
+      titleTranslations: course.titleTranslations,
       description: course.description,
-      descriptionFr: course.descriptionFr ?? null,
+      descriptionTranslations: course.descriptionTranslations,
       level: course.level,
       lessonsCount: course.lessonsCount,
       order: course.order,
@@ -906,8 +910,8 @@ educatorLessonsRouter.post("/generate-stubs", async (c) => {
       const { segments, ...lessonData } = lesson;
       await db.insert(lessons).values({
         id: lessonData.id, courseId: lessonData.courseId, type: lessonData.type,
-        title: lessonData.title, titleFr: lessonData.titleFr,
-        description: lessonData.description, descriptionFr: lessonData.descriptionFr,
+        title: lessonData.title, titleTranslations: lessonData.titleTranslations,
+        description: lessonData.description, descriptionTranslations: lessonData.descriptionTranslations,
         audioUrl: null, duration: null, order: lessonData.order,
         artist: lessonData.artist, genre: lessonData.genre, isActive: false,
       }).onConflictDoNothing();
@@ -916,7 +920,7 @@ educatorLessonsRouter.post("/generate-stubs", async (c) => {
         await db.insert(transcriptSegments).values(
           segments.map((seg) => ({
             lessonId: lessonData.id, startTime: seg.startTime, endTime: seg.endTime,
-            text: seg.text, translation: seg.translation, translationFr: seg.translationFr,
+            text: seg.text, translation: seg.translation, translations: seg.translations,
             order: seg.order,
           }))
         ).onConflictDoNothing();
@@ -944,9 +948,9 @@ educatorLessonsRouter.post("/generate-stubs", async (c) => {
       id: course.id,
       languageId: course.languageId,
       title: course.title,
-      titleFr: course.titleFr ?? null,
+      titleTranslations: course.titleTranslations,
       description: course.description,
-      descriptionFr: course.descriptionFr ?? null,
+      descriptionTranslations: course.descriptionTranslations,
       level: course.level,
       lessonsCount: course.lessonsCount,
       order: course.order,
@@ -958,8 +962,8 @@ educatorLessonsRouter.post("/generate-stubs", async (c) => {
     const { segments, ...lessonData } = lesson;
     await db.insert(lessons).values({
       id: lessonData.id, courseId: lessonData.courseId, type: lessonData.type,
-      title: lessonData.title, titleFr: lessonData.titleFr,
-      description: lessonData.description, descriptionFr: lessonData.descriptionFr,
+      title: lessonData.title, titleTranslations: lessonData.titleTranslations,
+      description: lessonData.description, descriptionTranslations: lessonData.descriptionTranslations,
       audioUrl: null, duration: null, order: lessonData.order,
       artist: lessonData.artist, genre: lessonData.genre, isActive: false,
     }).onConflictDoNothing();
@@ -968,7 +972,7 @@ educatorLessonsRouter.post("/generate-stubs", async (c) => {
       await db.insert(transcriptSegments).values(
         segments.map((seg) => ({
           lessonId: lessonData.id, startTime: seg.startTime, endTime: seg.endTime,
-          text: seg.text, translation: seg.translation, translationFr: seg.translationFr,
+          text: seg.text, translation: seg.translation, translations: seg.translations,
           order: seg.order,
         }))
       ).onConflictDoNothing();

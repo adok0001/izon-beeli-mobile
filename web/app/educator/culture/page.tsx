@@ -1,6 +1,7 @@
 "use client";
 
 import { apiFetch } from "@/lib/api";
+import { LocalizedTextInput, type LocalizedText } from "@/components/ui/localized-text-input";
 import { cn } from "@/lib/utils";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { useAuth } from "@clerk/nextjs";
@@ -39,9 +40,9 @@ interface Proverb {
   languageId: string;
   text: string;
   translation: string;
-  translationFr?: string | null;
+  translations?: LocalizedText | null;
   meaning: string;
-  meaningFr?: string | null;
+  meaningTranslations?: LocalizedText | null;
   literal?: string | null;
   context?: string | null;
   tags?: string[] | null;
@@ -54,9 +55,9 @@ interface CulturalItem {
   languageId: string;
   category: string;
   title: string;
-  titleFr?: string | null;
+  titleTranslations?: LocalizedText | null;
   description: string;
-  descriptionFr?: string | null;
+  descriptionTranslations?: LocalizedText | null;
   keyTerms?: KeyTerm[];
 }
 
@@ -169,9 +170,9 @@ const EMPTY_PROVERB: ProverbForm = {
   languageId: "",
   text: "",
   translation: "",
-  translationFr: "",
+  translations: {},
   meaning: "",
-  meaningFr: "",
+  meaningTranslations: {},
   literal: "",
   context: "",
   tags: [],
@@ -234,24 +235,19 @@ function ProverbModal({
             <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Proverb text *</label>
             <textarea className={cn(fieldCls, "resize-none")} rows={2} value={form.text} onChange={set("text")} placeholder="The proverb in the native language" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">English translation *</label>
-              <input className={fieldCls} value={form.translation} onChange={set("translation")} placeholder="English" />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">French translation</label>
-              <input className={fieldCls} value={form.translationFr ?? ""} onChange={set("translationFr")} placeholder="Français" />
-            </div>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Meaning / explanation *</label>
-            <textarea className={cn(fieldCls, "resize-none")} rows={2} value={form.meaning} onChange={set("meaning")} placeholder="What does this proverb mean?" />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Meaning (French)</label>
-            <textarea className={cn(fieldCls, "resize-none")} rows={2} value={form.meaningFr ?? ""} onChange={set("meaningFr")} placeholder="Explication en français" />
-          </div>
+          <LocalizedTextInput
+            label="Translation"
+            required
+            value={form.translations ?? {}}
+            onChange={(v) => setForm((f) => ({ ...f, translations: v }))}
+          />
+          <LocalizedTextInput
+            label="Meaning / explanation"
+            required
+            multiline
+            value={form.meaningTranslations ?? {}}
+            onChange={(v) => setForm((f) => ({ ...f, meaningTranslations: v }))}
+          />
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Literal translation</label>
@@ -291,9 +287,9 @@ const EMPTY_CULTURAL: CulturalForm = {
   languageId: "",
   category: "festivals",
   title: "",
-  titleFr: "",
+  titleTranslations: {},
   description: "",
-  descriptionFr: "",
+  descriptionTranslations: {},
   keyTerms: [],
 };
 
@@ -367,22 +363,19 @@ function CulturalModal({
               </select>
             </div>
           </div>
-          <div>
-            <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Title *</label>
-            <input className={fieldCls} value={form.title} onChange={set("title")} placeholder="Name of the culture note" />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Title (French)</label>
-            <input className={fieldCls} value={form.titleFr ?? ""} onChange={set("titleFr")} placeholder="Titre en français" />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Description *</label>
-            <textarea className={cn(fieldCls, "resize-none")} rows={3} value={form.description} onChange={set("description")} placeholder="Describe this culture note" />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">Description (French)</label>
-            <textarea className={cn(fieldCls, "resize-none")} rows={3} value={form.descriptionFr ?? ""} onChange={set("descriptionFr")} placeholder="Description en français" />
-          </div>
+          <LocalizedTextInput
+            label="Title"
+            required
+            value={form.titleTranslations ?? {}}
+            onChange={(v) => setForm((f) => ({ ...f, titleTranslations: v }))}
+          />
+          <LocalizedTextInput
+            label="Description"
+            required
+            multiline
+            value={form.descriptionTranslations ?? {}}
+            onChange={(v) => setForm((f) => ({ ...f, descriptionTranslations: v }))}
+          />
 
           {/* Key terms */}
           <div>

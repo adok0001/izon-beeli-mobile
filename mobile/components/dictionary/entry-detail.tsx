@@ -3,6 +3,7 @@ import { WordAudioButton } from "@/components/dictionary/word-audio-button";
 import { SensesPlacard } from "@/components/dictionary/senses-placard";
 import { Badge } from "@/components/ui/badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { GLOSS_LANGUAGES } from "@/components/ui/localized-text-input";
 import { CATEGORY_ICONS, CATEGORY_LABELS, parseSenses, type DictionaryEntry, type Sense } from "@/lib/dictionary";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
@@ -14,6 +15,8 @@ import { Image, Pressable, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 export interface EntryDisplayDerived {
+  /** Which language `englishText` was resolved to — the other glosses list skips it. */
+  uiLanguage: UiLanguage;
   englishText: string;
   exampleTranslationText: string;
   senses: Sense[];
@@ -34,6 +37,7 @@ export function deriveEntryDisplay(entry: DictionaryEntry, uiLanguage: UiLanguag
   const pronunciationIsUrl = typeof entry.pronunciation === "string" && entry.pronunciation.startsWith("http");
 
   return {
+    uiLanguage,
     englishText,
     exampleTranslationText,
     senses,
@@ -109,7 +113,7 @@ export function EntryDetailView({
 }: Readonly<{ entry: DictionaryEntry; derived: EntryDisplayDerived }>) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
-  const { englishText, exampleTranslationText, senses, hasMultipleSenses, categoryLabel, categoryIcon, displayPronunciation, effectiveAudioUrl } = derived;
+  const { uiLanguage, englishText, exampleTranslationText, senses, hasMultipleSenses, categoryLabel, categoryIcon, displayPronunciation, effectiveAudioUrl } = derived;
 
   return (
     <>
@@ -146,18 +150,19 @@ export function EntryDetailView({
           </Text>
         )}
 
-        {!!entry.french && (
-          <View style={{ marginTop: 8, flexDirection: "row", alignItems: "center", gap: 8 }}>
+        {/* Every other gloss the entry carries, each tagged with its language. */}
+        {GLOSS_LANGUAGES.filter((l) => l.key !== uiLanguage && !!entry.translations?.[l.key]).map((l) => (
+          <View key={l.key} style={{ marginTop: 8, flexDirection: "row", alignItems: "center", gap: 8 }}>
             <View style={{ borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: M.accentBorder }}>
               <Text style={{ fontSize: 10, fontWeight: "600", color: M.accent }}>
-                {t("wordDetail.french")}
+                {l.label}
               </Text>
             </View>
             <Text style={{ fontSize: 16, color: M.sub }}>
-              {entry.french}
+              {entry.translations?.[l.key]}
             </Text>
           </View>
-        )}
+        ))}
 
         {/* Audio button */}
         <View style={{ marginTop: 24, alignItems: "center" }}>

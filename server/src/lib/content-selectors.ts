@@ -36,6 +36,7 @@ import {
   users,
 } from "../db/schema.js";
 import { withTranslations } from "./dictionary-translations.js";
+import { toMap } from "./translations.js";
 import { toApiInteractiveStory } from "../routes/interactive-stories.js";
 
 /** Full published dictionary for a language: static entries + approved contributions. */
@@ -150,11 +151,6 @@ export async function selectCultural(languageId: string) {
   return content.map((item) => ({ ...item, keyTerms: termsByContentId.get(item.id) ?? [] }));
 }
 
-/** Collapse the flat `x` / `xFr` column pair into the app's LocalizedText map. */
-function localized(en: string, fr: string | null) {
-  return fr ? { en, fr } : { en };
-}
-
 /**
  * The recurring cast of the season this lesson belongs to, if any.
  *
@@ -193,9 +189,9 @@ export async function selectLessonCulturalNotes(lessonId: string) {
   const rows = await db
     .select({
       title: culturalContent.title,
-      titleFr: culturalContent.titleFr,
+      titleTranslations: culturalContent.titleTranslations,
       description: culturalContent.description,
-      descriptionFr: culturalContent.descriptionFr,
+      descriptionTranslations: culturalContent.descriptionTranslations,
       category: culturalContent.category,
       afterSegmentIndex: lessonCulturalContent.afterSegmentIndex,
     })
@@ -211,8 +207,9 @@ export async function selectLessonCulturalNotes(lessonId: string) {
     .orderBy(asc(lessonCulturalContent.order));
 
   return rows.map((r) => ({
-    title: localized(r.title, r.titleFr),
-    body: localized(r.description, r.descriptionFr),
+    // Rows written before the map columns existed fall back to their flat English.
+    title: r.titleTranslations ?? toMap(r.title) ?? { en: r.title },
+    body: r.descriptionTranslations ?? toMap(r.description) ?? { en: r.description },
     // The note card's overline reads tags[0]; the DB models this as a single
     // `category`, so lift it into the array shape the component expects.
     tags: [r.category],

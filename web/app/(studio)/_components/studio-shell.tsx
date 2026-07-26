@@ -112,7 +112,7 @@ function hasAccess(access: StudioAccess, me: { isAdmin: boolean; isReviewer: boo
 
 /**
  * Which language content fields (title/description, etc.) render in across
- * Studio — drives every `localizeField(...)` call on these pages. Separate
+ * Studio — drives every `localizePair(...)` call on these pages. Separate
  * from the learner-facing UI chrome language, though it shares the same
  * store so a Studio pick also updates the "Retour à l'application" chrome.
  */

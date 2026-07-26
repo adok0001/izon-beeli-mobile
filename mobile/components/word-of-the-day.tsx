@@ -1,7 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useWordOfTheDay } from "@/lib/hooks/use-word-of-the-day";
 import { useSaveWord, useWordBank } from "@/lib/hooks/use-wordbank";
-import { localizeField } from "@/lib/localize";
+import { localizePair } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useRouter } from "expo-router";
@@ -62,7 +62,7 @@ export function WordOfTheDay({ languageId }: Props) {
         )}
 
         <Text style={{ marginTop: 4, fontSize: 15, color: M.text }}>
-          {localizeField(word.english, word.french, uiLanguage)}
+          {localizePair(word.translations, word.english, uiLanguage)}
         </Text>
 
         {word.example && (
@@ -70,7 +70,7 @@ export function WordOfTheDay({ languageId }: Props) {
             <Text style={{ fontSize: 13, color: M.text }}>{word.example}</Text>
             {word.exampleTranslation && (
               <Text style={{ marginTop: 2, fontSize: 12, color: M.sub }}>
-                {localizeField(word.exampleTranslation, word.exampleTranslationFr, uiLanguage)}
+                {localizePair(word.exampleTranslations, word.exampleTranslation, uiLanguage)}
               </Text>
             )}
           </View>

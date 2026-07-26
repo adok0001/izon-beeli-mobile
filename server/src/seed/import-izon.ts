@@ -155,18 +155,18 @@ async function importCulturalNotes() {
         languageId: n.languageId,
         category: n.category,
         title: n.title.en ?? n.id,
-        titleFr: n.title.fr ?? null,
+        titleTranslations: n.title,
         description: n.body.en ?? "",
-        descriptionFr: n.body.fr ?? null,
+        descriptionTranslations: n.body,
       })
       .onConflictDoUpdate({
         target: culturalContent.id,
         set: {
           category: sql`excluded.category`,
           title: sql`excluded.title`,
-          titleFr: sql`excluded.title_fr`,
+          titleTranslations: sql`excluded.title_translations`,
           description: sql`excluded.description`,
-          descriptionFr: sql`excluded.description_fr`,
+          descriptionTranslations: sql`excluded.description_translations`,
         },
       });
 

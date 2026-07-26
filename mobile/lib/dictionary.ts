@@ -13,8 +13,6 @@ export interface DictionaryEntry {
   english: string | LocalizedText;
   /** Full gloss map from the server; falls back to `english` when absent. */
   translations?: LocalizedText;
-  /** @deprecated Use `english` as LocalizedText with key `"fr"` */
-  french?: string;
   category: DictionaryCategory;
   languageId: string;
   pronunciation?: string;
@@ -22,8 +20,6 @@ export interface DictionaryEntry {
   exampleTranslation?: string | LocalizedText;
   /** Full example-translation map from the server; falls back to `exampleTranslation`. */
   exampleTranslations?: LocalizedText;
-  /** @deprecated Use `exampleTranslation` as LocalizedText with key `"fr"` */
-  exampleTranslationFr?: string;
   exampleAudioUrl?: string;
   audioUrl?: import("@/types").AudioSource;
   imageUrl?: string;
@@ -136,7 +132,7 @@ export function searchDictionary(query: string, entries: DictionaryEntry[]): Dic
     return (
       e.word.toLowerCase().includes(q) ||
       eng.toLowerCase().includes(q) ||
-      e.french?.toLowerCase().includes(q) ||
+      Object.values(e.translations ?? {}).some((v) => v.toLowerCase().includes(q)) ||
       e.pronunciation?.toLowerCase().includes(q) ||
       e.example?.toLowerCase().includes(q) ||
       exTr.toLowerCase().includes(q)

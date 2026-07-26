@@ -108,8 +108,8 @@ export default function ProverbsScreen() {
     setForm({
       id: p.id,
       text: p.text,
-      translation: toLocalizedText(p.translation, p.translationFr),
-      meaning: toLocalizedText(p.meaning, p.meaningFr),
+      translation: toLocalizedText(p.translations, p.translation),
+      meaning: toLocalizedText(p.meaningTranslations, p.meaning),
       literal: p.literal ?? "",
       context: p.context ?? "",
       tags: (p.tags ?? []).join(", "),
@@ -122,17 +122,15 @@ export default function ProverbsScreen() {
       toastError(t("educator.proverbsEditor.missingFields"), t("educator.proverbsEditor.missingFieldsDetail"));
       return;
     }
-    const translationSer = serializeLocalizedText(form.translation);
-    const meaningSer = serializeLocalizedText(form.meaning);
+    const translations = serializeLocalizedText(form.translation);
+    const meaningTranslations = serializeLocalizedText(form.meaning);
     upsert.mutate(
       {
         id: form.id,
         languageId: activeLanguageId,
         text: form.text.trim(),
-        translation: translationSer.primary,
-        translationFr: translationSer.fr,
-        meaning: meaningSer.primary,
-        meaningFr: meaningSer.fr,
+        translations,
+        meaningTranslations,
         literal: form.literal.trim() || undefined,
         context: form.context.trim() || undefined,
         tags: form.tags.split(",").map((tag) => tag.trim()).filter(Boolean),

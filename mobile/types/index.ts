@@ -39,11 +39,11 @@ export type Skill =
 export interface Course {
   id: string;
   title: string | LocalizedText;
-  /** @deprecated Use `title` as LocalizedText */
-  titleFr?: string | null;
+  /** Full gloss map — the authoritative value; `title` is its English projection. */
+  titleTranslations?: LocalizedText | null;
   description: string | LocalizedText;
-  /** @deprecated Use `description` as LocalizedText */
-  descriptionFr?: string | null;
+  /** Full gloss map — the authoritative value; `description` is its English projection. */
+  descriptionTranslations?: LocalizedText | null;
   language: string;
   level: "beginner" | "intermediate" | "advanced";
   lessonsCount: number;
@@ -122,11 +122,11 @@ export interface Lesson {
   /** @default "lesson" */
   type?: LessonType | null;
   title: string | LocalizedText;
-  /** @deprecated Use `title` as LocalizedText */
-  titleFr?: string | null;
+  /** Full gloss map — the authoritative value; `title` is its English projection. */
+  titleTranslations?: LocalizedText | null;
   description: string | LocalizedText;
-  /** @deprecated Use `description` as LocalizedText */
-  descriptionFr?: string | null;
+  /** Full gloss map — the authoritative value; `description` is its English projection. */
+  descriptionTranslations?: LocalizedText | null;
   audioUrl?: AudioSource;
   duration?: number; // seconds
   order: number;
@@ -150,7 +150,8 @@ export interface Lesson {
   objectives?: (string | LocalizedText)[];
   /** Honest real-world competence statement ("You can now …"). */
   canDo?: string | LocalizedText | null;
-  canDoFr?: string | null;
+  /** Full gloss map — the authoritative value; `canDo` is its English projection. */
+  canDoTranslations?: LocalizedText | null;
   /** Key vocabulary with optional tone and gloss. */
   vocab?: LessonWord[];
   /** Culture notes attached to this lesson in Studio, in display order. */
@@ -168,8 +169,8 @@ export interface TranscriptSegment {
   endTime: number; // seconds
   text: string;
   translation?: string | LocalizedText | null;
-  /** @deprecated Use `translation` as LocalizedText */
-  translationFr?: string | null;
+  /** Full gloss map — the authoritative value; `translation` is its English projection. */
+  translations?: LocalizedText | null;
   colorHex?: string | null;
   /** Who speaks this line (audio-drama attribution). */
   speaker?: string | null;
@@ -203,11 +204,11 @@ export interface FeedItem {
   /** Author's internal user id. Absent on optimistic (not-yet-posted) items. */
   userId?: string | null;
   title: string | LocalizedText;
-  /** @deprecated Use `title` as LocalizedText */
-  titleFr?: string | null;
+  /** Full gloss map — the authoritative value; `title` is its English projection. */
+  titleTranslations?: LocalizedText | null;
   description: string | LocalizedText;
-  /** @deprecated Use `description` as LocalizedText */
-  descriptionFr?: string | null;
+  /** Full gloss map — the authoritative value; `description` is its English projection. */
+  descriptionTranslations?: LocalizedText | null;
   userName: string;
   userAvatarUrl?: string;
   profileAvatarId?: string | null;
@@ -274,11 +275,11 @@ export interface Proverb {
   languageId: string;
   text: string;
   translation: string | LocalizedText;
-  /** @deprecated Use `translation` as LocalizedText */
-  translationFr?: string | null;
+  /** Full gloss map — the authoritative value; `translation` is its English projection. */
+  translations?: LocalizedText | null;
   meaning: string | LocalizedText;
-  /** @deprecated Use `meaning` as LocalizedText */
-  meaningFr?: string | null;
+  /** Full gloss map — the authoritative value; `meaning` is its English projection. */
+  meaningTranslations?: LocalizedText | null;
   literal?: string;
   context?: string;
   tags?: string[];
@@ -402,12 +403,12 @@ export interface CulturalContent {
   languageId: string;
   category: CulturalCategory;
   title: string | LocalizedText;
-  /** @deprecated Use `title` as LocalizedText */
-  titleFr?: string | null;
+  /** Full gloss map — the authoritative value; `title` is its English projection. */
+  titleTranslations?: LocalizedText | null;
   description: string | LocalizedText;
-  /** @deprecated Use `description` as LocalizedText */
-  descriptionFr?: string | null;
-  keyTerms: { word: string; gloss?: string | LocalizedText; /** @deprecated Use `gloss` */ english?: string; /** @deprecated Use `gloss` */ french?: string | null }[];
+  /** Full gloss map — the authoritative value; `description` is its English projection. */
+  descriptionTranslations?: LocalizedText | null;
+  keyTerms: { word: string; gloss?: string | LocalizedText; /** @deprecated Use `gloss` */ english?: string }[];
   /** Surfaced as the "Featured" hero card at the top of the gallery. */
   featured?: boolean;
   /** Primary headword shown with an audio button in the reader. */

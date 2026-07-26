@@ -1,6 +1,7 @@
 "use client";
 
 import { apiFetch } from "@/lib/api";
+import { LocalizedTextInput, type LocalizedText } from "@/components/ui/localized-text-input";
 import { cn } from "@/lib/utils";
 import { FileUploadField } from "@/components/media/file-upload-field";
 import { useAuth } from "@clerk/nextjs";
@@ -18,12 +19,13 @@ interface DictEntry {
   languageId: string;
   word: string;
   english: string;
-  french: string | null;
+  /** Full gloss map; `english` is its English projection, kept for the table. */
+  translations?: LocalizedText | null;
   category: string;
   pronunciation: string | null;
   example: string | null;
   exampleTranslation: string | null;
-  exampleTranslationFr: string | null;
+  exampleTranslations?: LocalizedText | null;
   audioUrl: string | null;
   imageUrl: string | null;
   synonyms: string[] | null;
@@ -39,6 +41,9 @@ function appendEntryFields(fd: FormData, data: EntryForm): void {
     if (v == null || v === "") return;
     if (Array.isArray(v)) {
       if (v.length > 0) fd.append(k, JSON.stringify(v));
+    } else if (typeof v === "object") {
+      // Translation maps ride as JSON — multipart fields are strings only.
+      if (Object.keys(v).length > 0) fd.append(k, JSON.stringify(v));
     } else {
       fd.append(k, String(v));
     }
@@ -61,12 +66,12 @@ const EMPTY_FORM: EntryForm = {
   languageId: "",
   word: "",
   english: "",
-  french: "",
+  translations: {},
   category: "nouns",
   pronunciation: "",
   example: "",
   exampleTranslation: "",
-  exampleTranslationFr: "",
+  exampleTranslations: {},
   audioUrl: "",
   imageUrl: "",
   synonyms: [],
@@ -127,7 +132,7 @@ function EntryModal({
   const set = (key: keyof EntryForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
-  const isValid = form.word.trim() && form.english.trim() && form.languageId.trim();
+  const isValid = form.word.trim() && form.translations?.en?.trim() && form.languageId.trim();
 
   const handleSave = () =>
     onSave(
@@ -182,27 +187,20 @@ function EntryModal({
               </label>
               <input className={fieldCls} value={form.word} onChange={set("word")} placeholder="Native word" />
             </div>
-            <div>
-              <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">
-                {t("admin.dictionary.fieldEnglish")} *
-              </label>
-              <input className={fieldCls} value={form.english} onChange={set("english")} placeholder="English translation" />
-            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">
-                {t("admin.dictionary.fieldFrench")}
-              </label>
-              <input className={fieldCls} value={form.french ?? ""} onChange={set("french")} placeholder="French translation" />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">
-                {t("admin.dictionary.fieldPronunciation")}
-              </label>
-              <input className={fieldCls} value={form.pronunciation ?? ""} onChange={set("pronunciation")} placeholder="Phonetic pronunciation" />
-            </div>
+          <LocalizedTextInput
+            label={t("admin.dictionary.fieldEnglish")}
+            required
+            value={form.translations ?? {}}
+            onChange={(v) => setForm((f) => ({ ...f, translations: v }))}
+          />
+
+          <div>
+            <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">
+              {t("admin.dictionary.fieldPronunciation")}
+            </label>
+            <input className={fieldCls} value={form.pronunciation ?? ""} onChange={set("pronunciation")} placeholder="Phonetic pronunciation" />
           </div>
 
           <div>
@@ -212,20 +210,12 @@ function EntryModal({
             <textarea className={cn(fieldCls, "resize-none")} rows={2} value={form.example ?? ""} onChange={set("example")} placeholder="Example sentence in native language" />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">
-                {t("admin.dictionary.fieldExampleEn")}
-              </label>
-              <textarea className={cn(fieldCls, "resize-none")} rows={2} value={form.exampleTranslation ?? ""} onChange={set("exampleTranslation")} placeholder="English translation of example" />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">
-                {t("admin.dictionary.fieldExampleFr")}
-              </label>
-              <textarea className={cn(fieldCls, "resize-none")} rows={2} value={form.exampleTranslationFr ?? ""} onChange={set("exampleTranslationFr")} placeholder="French translation of example" />
-            </div>
-          </div>
+          <LocalizedTextInput
+            label={t("admin.dictionary.fieldExampleEn")}
+            multiline
+            value={form.exampleTranslations ?? {}}
+            onChange={(v) => setForm((f) => ({ ...f, exampleTranslations: v }))}
+          />
 
           <div className="grid grid-cols-2 gap-3">
             <div>

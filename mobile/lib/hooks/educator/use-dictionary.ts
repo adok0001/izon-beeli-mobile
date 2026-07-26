@@ -15,13 +15,11 @@ export interface EducatorDictionaryEntry {
   languageId: string;
   word: string;
   english: string;
-  french?: string | null;
   translations?: LocalizedText | null;
   category: EducatorDictionaryCategory;
   pronunciation?: string | null;
   example?: string | null;
   exampleTranslation?: string | null;
-  exampleTranslationFr?: string | null;
   exampleTranslations?: LocalizedText | null;
   audioUrl?: string | null;
   imageUrl?: string | null;
@@ -43,12 +41,10 @@ export interface UpsertEducatorDictionaryInput {
   word: string;
   english: string;
   category: EducatorDictionaryCategory;
-  french?: string;
   translations?: LocalizedText;
   pronunciation?: string;
   example?: string;
   exampleTranslation?: string;
-  exampleTranslationFr?: string;
   exampleTranslations?: LocalizedText;
   synonyms?: string[];
   antonyms?: string[];
@@ -89,11 +85,9 @@ export function useUpsertEducatorDictionary() {
       formData.append("word", input.word);
       formData.append("english", input.english);
       formData.append("category", input.category);
-      if (input.french) formData.append("french", input.french);
       if (input.pronunciation) formData.append("pronunciation", input.pronunciation);
       if (input.example) formData.append("example", input.example);
       if (input.exampleTranslation) formData.append("exampleTranslation", input.exampleTranslation);
-      if (input.exampleTranslationFr) formData.append("exampleTranslationFr", input.exampleTranslationFr);
 
       // Send the full gloss maps as JSON so the server can persist every language,
       // not just the en/fr flat projection above. Drop empty values first.

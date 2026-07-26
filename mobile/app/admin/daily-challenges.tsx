@@ -4,7 +4,7 @@ import { StudioCard } from "@/components/studio/studio-card";
 import { StudioFilterPills } from "@/components/studio/studio-filter-pills";
 import { GhostButton, LabeledInput, PrimaryButton } from "@/components/studio/studio-form";
 import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
-import { LocalizedTextInput } from "@/components/ui/localized-text-input";
+import { LocalizedTextInput, toLocalizedText } from "@/components/ui/localized-text-input";
 import { friendlyError } from "@/lib/api";
 import {
   useAdminChallengeTemplates,
@@ -88,8 +88,8 @@ export default function DailyChallengeTemplatesScreen() {
     setForm({
       id: t.id,
       challengeType: t.challengeType,
-      titleTranslations: t.titleTranslations ?? { en: t.title, fr: t.titleFr ?? undefined },
-      descriptionTranslations: t.descriptionTranslations ?? { en: t.description, fr: t.descriptionFr ?? undefined },
+      titleTranslations: toLocalizedText(t.titleTranslations, t.title),
+      descriptionTranslations: toLocalizedText(t.descriptionTranslations, t.description),
       xpReward: String(t.xpReward),
       targetCasual: String(t.targetCasual),
       targetSteady: String(t.targetSteady),

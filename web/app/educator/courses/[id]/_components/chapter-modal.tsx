@@ -1,6 +1,6 @@
 "use client";
 
-import { localizeField } from "@/lib/localize";
+import { localizePair } from "@/lib/localize";
 import { useForm } from "@/lib/use-form";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import { X } from "lucide-react";
@@ -67,7 +67,7 @@ export function ChapterModal({
               className="w-full rounded-lg border border-neutral-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
             >
               {lessons.map((l) => (
-                <option key={l.id} value={l.id}>{l.order}. {localizeField(l.title, l.titleFr, uiLanguage)}</option>
+                <option key={l.id} value={l.id}>{l.order}. {localizePair(l.titleTranslations, l.title, uiLanguage)}</option>
               ))}
             </select>
           </div>

@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { db } from "../../db/index.js";
 import { courses, lessons, storyArcs, storyChapters } from "../../db/schema.js";
 import { AuthEnv } from "../../middleware/auth.js";
+import { applyMap, hydrate, type TranslationMap } from "../../lib/translations.js";
 
 export const educatorCoursesRouter = new Hono<AuthEnv>();
 
@@ -13,12 +14,13 @@ educatorCoursesRouter.get("/courses", async (c) => {
   const reviewerLanguages = c.get("reviewerLanguages");
 
   const rows = await db
-    .select({ id: courses.id, title: courses.title, titleFr: courses.titleFr, description: courses.description, descriptionFr: courses.descriptionFr, languageId: courses.languageId, level: courses.level, order: courses.order, courseType: courses.courseType, emoji: courses.emoji, imageUrl: courses.imageUrl, seasonArcId: courses.seasonArcId, isActive: courses.isActive })
+    .select({ id: courses.id, title: courses.title, titleTranslations: courses.titleTranslations, description: courses.description, descriptionTranslations: courses.descriptionTranslations, languageId: courses.languageId, level: courses.level, order: courses.order, courseType: courses.courseType, emoji: courses.emoji, imageUrl: courses.imageUrl, seasonArcId: courses.seasonArcId, isActive: courses.isActive })
     .from(courses)
     .where(!isAdmin && reviewerLanguages.length > 0 ? inArray(courses.languageId, reviewerLanguages) : undefined)
     .orderBy(courses.languageId, courses.order);
 
-  return c.json(rows);
+  // Courses written before the map columns existed fall back to their flat English.
+  return c.json(rows.map((r) => hydrate(r, ["title", "titleTranslations"], ["description", "descriptionTranslations"])));
 });
 
 // PATCH /educator/courses/:id
@@ -29,9 +31,9 @@ educatorCoursesRouter.patch("/courses/:id", async (c) => {
   const body = await parseJson<{
     isActive?: boolean;
     title?: string;
-    titleFr?: string | null;
+    titleTranslations?: TranslationMap;
     description?: string;
-    descriptionFr?: string | null;
+    descriptionTranslations?: TranslationMap;
     level?: string;
     order?: number;
     courseType?: string | null;
@@ -47,10 +49,8 @@ educatorCoursesRouter.patch("/courses/:id", async (c) => {
 
   const patch: Record<string, unknown> = {};
   if (body.isActive !== undefined) patch.isActive = body.isActive;
-  if (body.title !== undefined) patch.title = body.title;
-  if (body.titleFr !== undefined) patch.titleFr = body.titleFr;
-  if (body.description !== undefined) patch.description = body.description;
-  if (body.descriptionFr !== undefined) patch.descriptionFr = body.descriptionFr;
+  applyMap(patch, body, "title", "titleTranslations");
+  applyMap(patch, body, "description", "descriptionTranslations");
   if (body.level !== undefined) patch.level = body.level;
   if (body.order !== undefined) patch.order = body.order;
   if (body.courseType !== undefined) patch.courseType = body.courseType;

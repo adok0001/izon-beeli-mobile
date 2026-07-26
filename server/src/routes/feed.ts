@@ -6,6 +6,7 @@ import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { comments, contributions, feedItems, likes, users } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
+import { toMap } from "../lib/translations.js";
 
 const VALID_FEED_TYPES = ["lesson_completed", "achievement", "contribution", "community"] as const;
 
@@ -52,9 +53,9 @@ feedPublicRouter.get("/", async (c) => {
       type: feedItems.type,
       userId: feedItems.userId,
       title: feedItems.title,
-      titleFr: feedItems.titleFr,
+      titleTranslations: feedItems.titleTranslations,
       description: feedItems.description,
-      descriptionFr: feedItems.descriptionFr,
+      descriptionTranslations: feedItems.descriptionTranslations,
       userName: feedItems.userName,
       userAvatarUrl: feedItems.userAvatarUrl,
       authorAvatarUrl: feedAuthors.avatarUrl,
@@ -114,9 +115,9 @@ feedPublicRouter.get("/", async (c) => {
     type: item.type,
     userId: item.userId,
     title: item.title,
-    titleFr: item.titleFr ?? null,
+    titleTranslations: item.titleTranslations ?? toMap(item.title) ?? null,
     description: item.description,
-    descriptionFr: item.descriptionFr ?? null,
+    descriptionTranslations: item.descriptionTranslations ?? toMap(item.description) ?? null,
     userName: item.userName,
     userAvatarUrl: item.userAvatarUrl ?? item.authorAvatarUrl ?? null,
     profileAvatarId: item.profileAvatarId ?? null,
@@ -206,9 +207,9 @@ feedRouter.post("/", async (c) => {
       id: item.id,
       type: item.type,
       title: item.title,
-      titleFr: item.titleFr ?? null,
+      titleTranslations: item.titleTranslations ?? toMap(item.title) ?? null,
       description: item.description,
-      descriptionFr: item.descriptionFr ?? null,
+      descriptionTranslations: item.descriptionTranslations ?? toMap(item.description) ?? null,
       userName: item.userName,
       likes: 0,
       comments: 0,

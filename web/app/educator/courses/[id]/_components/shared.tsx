@@ -1,3 +1,4 @@
+import type { LocalizedText } from "@/components/ui/localized-text-input";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface Lesson {
@@ -6,9 +7,9 @@ export interface Lesson {
   courseTitle: string;
   languageId: string;
   title: string;
-  titleFr: string | null;
+  titleTranslations?: LocalizedText | null;
   description: string;
-  descriptionFr: string | null;
+  descriptionTranslations?: LocalizedText | null;
   type: string;
   audioUrl: string | null;
   duration: number | null;
@@ -21,9 +22,9 @@ export interface Lesson {
 export interface Course {
   id: string;
   title: string;
-  titleFr: string | null;
+  titleTranslations?: LocalizedText | null;
   description: string;
-  descriptionFr: string | null;
+  descriptionTranslations?: LocalizedText | null;
   languageId: string;
   level: string;
   courseType: string | null;

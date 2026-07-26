@@ -5,7 +5,7 @@ import { db } from "../db/index.js";
 import { challengeTypeEnum, dailyChallenges, dailyChallengeTemplates } from "../db/schema.js";
 import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/auth.js";
 import { getOrCreateTodayChallenges } from "../lib/daily-challenge.js";
-import { flatToMap, parseMap } from "./educator/_shared.js";
+import { applyMap, project, resolveMap } from "../lib/translations.js";
 import { randomInt } from "node:crypto";
 
 export const dailyChallengesRouter = new Hono<AuthEnv>();
@@ -92,10 +92,8 @@ dailyChallengeTemplatesAdminRouter.post("/create", async (c) => {
   const body = await parseJson<{
     challengeType: string;
     title: string;
-    titleFr?: string;
     titleTranslations?: unknown;
     description: string;
-    descriptionFr?: string;
     descriptionTranslations?: unknown;
     xpReward: number;
     targetCasual: number;
@@ -104,11 +102,11 @@ dailyChallengeTemplatesAdminRouter.post("/create", async (c) => {
     active?: boolean;
   }>(c);
 
-  // Prefer the full translations map; fall back to legacy flat title/titleFr.
-  const titleMap = parseMap(body.titleTranslations) ?? flatToMap(body.title, body.titleFr);
-  const descriptionMap = parseMap(body.descriptionTranslations) ?? flatToMap(body.description, body.descriptionFr);
-  const title = titleMap?.en;
-  const description = descriptionMap?.en;
+  // Prefer the full translations map; fall back to the flat title/description.
+  const titleMap = resolveMap(body.titleTranslations, body.title);
+  const descriptionMap = resolveMap(body.descriptionTranslations, body.description);
+  const title = titleMap && project(titleMap);
+  const description = descriptionMap && project(descriptionMap);
 
   if (
     !isChallengeType(body.challengeType) ||
@@ -148,10 +146,8 @@ dailyChallengeTemplatesAdminRouter.post("/create", async (c) => {
     .values({
       challengeType: body.challengeType,
       title: title.trim(),
-      titleFr: titleMap?.fr ?? null,
       titleTranslations: titleMap ?? null,
       description: description.trim(),
-      descriptionFr: descriptionMap?.fr ?? null,
       descriptionTranslations: descriptionMap ?? null,
       xpReward: body.xpReward,
       targetCasual: body.targetCasual,
@@ -170,10 +166,8 @@ dailyChallengeTemplatesAdminRouter.patch("/:id", async (c) => {
   const body = await parseJson<{
     challengeType?: string;
     title?: string;
-    titleFr?: string | null;
     titleTranslations?: unknown;
     description?: string;
-    descriptionFr?: string | null;
     descriptionTranslations?: unknown;
     xpReward?: number;
     targetCasual?: number;
@@ -193,25 +187,10 @@ dailyChallengeTemplatesAdminRouter.patch("/:id", async (c) => {
     }
   }
 
-  const titleMap = body.titleTranslations !== undefined || body.title !== undefined || body.titleFr !== undefined
-    ? parseMap(body.titleTranslations) ?? flatToMap(body.title, body.titleFr)
-    : undefined;
-  const descriptionMap = body.descriptionTranslations !== undefined || body.description !== undefined || body.descriptionFr !== undefined
-    ? parseMap(body.descriptionTranslations) ?? flatToMap(body.description, body.descriptionFr)
-    : undefined;
-
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   if (body.challengeType) updates.challengeType = body.challengeType;
-  if (titleMap?.en?.trim()) {
-    updates.title = titleMap.en.trim();
-    updates.titleFr = titleMap.fr ?? null;
-    updates.titleTranslations = titleMap;
-  }
-  if (descriptionMap?.en?.trim()) {
-    updates.description = descriptionMap.en.trim();
-    updates.descriptionFr = descriptionMap.fr ?? null;
-    updates.descriptionTranslations = descriptionMap;
-  }
+  applyMap(updates, body, "title", "titleTranslations");
+  applyMap(updates, body, "description", "descriptionTranslations");
   if (body.xpReward != null) updates.xpReward = body.xpReward;
   if (body.targetCasual != null) updates.targetCasual = body.targetCasual;
   if (body.targetSteady != null) updates.targetSteady = body.targetSteady;

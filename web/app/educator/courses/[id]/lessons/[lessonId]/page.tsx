@@ -1,10 +1,11 @@
 "use client";
+import type { LocalizedText } from "@/components/ui/localized-text-input";
 
 import { DevicePreview } from "@/components/studio/device-preview";
 import { LessonPreviewCard } from "@/components/studio/lesson-preview-card";
 import { StatusPill } from "@/components/ui/status-pill";
 import { apiFetch } from "@/lib/api";
-import { localizeField } from "@/lib/localize";
+import { localizePair } from "@/lib/localize";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import {
   canPublishContent,
@@ -39,6 +40,7 @@ interface Segment {
   id?: string;
   text: string;
   translation: string;
+  translations?: LocalizedText | null;
   startTime: number;
   endTime: number;
   order: number;
@@ -64,7 +66,9 @@ interface LessonDetail {
   courseTitle: string;
   languageId: string;
   title: string;
+  titleTranslations?: LocalizedText | null;
   description: string;
+  descriptionTranslations?: LocalizedText | null;
   type: string;
   audioUrl: string | null;
   duration: number | null;
@@ -174,7 +178,7 @@ function SegmentRow({
 }>) {
   const { t } = useTranslation();
   const { uiLanguage } = useUiLanguageStore();
-  const displayTranslation = localizeField(seg.translation, null, uiLanguage);
+  const displayTranslation = localizePair(seg.translations, seg.translation, uiLanguage);
   return (
     <div className="flex items-start gap-2 group rounded-xl border border-neutral-100 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] p-3 hover:border-neutral-200 dark:hover:border-white/[0.1] transition-colors">
       <div className="flex items-center gap-1 pt-1.5 text-neutral-300 dark:text-neutral-400 select-none shrink-0">
@@ -562,12 +566,11 @@ export default function LessonDetailPage() {
     );
   }
 
-  // This endpoint doesn't expose titleFr/descriptionFr, so any {en,fr} blob
-  // still living in the plain title/description column only surfaces via
-  // localizeField's own unwrapping.
-  const displayTitle = localizeField(lesson.title, null, uiLanguage);
-  const displayDescription = localizeField(lesson.description, null, uiLanguage);
-  const displayCourseTitle = localizeField(lesson.courseTitle, null, uiLanguage);
+  // `courseTitle` is a joined flat column with no map of its own — any {en,fr}
+  // blob still living in it surfaces via localizePair's own unwrapping.
+  const displayTitle = localizePair(lesson.titleTranslations, lesson.title, uiLanguage);
+  const displayDescription = localizePair(lesson.descriptionTranslations, lesson.description, uiLanguage);
+  const displayCourseTitle = localizePair(null, lesson.courseTitle, uiLanguage);
 
   return (
     <div className="max-w-4xl">
@@ -807,7 +810,7 @@ export default function LessonDetailPage() {
             title: displayTitle,
             description: displayDescription,
             type: lesson.type,
-            segments: segments.map((s) => ({ text: s.text, translation: localizeField(s.translation, null, uiLanguage) })),
+            segments: segments.map((s) => ({ text: s.text, translation: localizePair(s.translations, s.translation, uiLanguage) })),
           }}
         />
       </DevicePreview>

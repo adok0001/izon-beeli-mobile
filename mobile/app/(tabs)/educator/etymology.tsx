@@ -7,7 +7,7 @@ import { ActionPill } from "@/components/studio/studio-action-pill";
 import { StudioCard } from "@/components/studio/studio-card";
 import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import { StudioSearchInput } from "@/components/studio/studio-search-input";
-import { LocalizedTextInput, serializeLocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
+import { LocalizedTextInput, projectLocalizedText, serializeLocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
 import { getAccent } from "@/constants/accent-colors";
 import { friendlyError } from "@/lib/api";
 import { localize } from "@/lib/localize";
@@ -200,8 +200,8 @@ export default function EducatorEtymologyScreen() {
         id: form.id,
         languageId: activeLanguageId,
         word: form.word.trim(),
-        english: serializeLocalizedText(form.english).primary,
-        trail: form.trail.map((n) => ({ ...n, note: serializeLocalizedText(toLocalizedText(n.note)).primary })),
+        english: projectLocalizedText(serializeLocalizedText(form.english)),
+        trail: form.trail.map((n) => ({ ...n, note: projectLocalizedText(serializeLocalizedText(toLocalizedText(n.note))) })),
       },
       {
         onSuccess: () => {

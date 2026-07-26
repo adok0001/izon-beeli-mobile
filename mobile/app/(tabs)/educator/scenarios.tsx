@@ -1,6 +1,6 @@
 import { tWithVars } from "@/lib/i18n-dynamic";
 import { Badge } from "@/components/ui/badge";
-import { LocalizedTextInput, serializeLocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
+import { LocalizedTextInput, projectLocalizedText, serializeLocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { ActiveToggle } from "@/components/studio/active-toggle";
 import { ActionPill } from "@/components/studio/studio-action-pill";
@@ -120,7 +120,7 @@ export default function ScenariosScreen() {
     const cleanTurns: ScenarioTurn[] = turns
       .map((turn) => ({ text: turn.text.trim(), translation: turn.translation }))
       .filter((turn) => turn.text && turn.translation.en?.trim())
-      .map((turn) => ({ text: turn.text, translation: serializeLocalizedText(turn.translation).primary }));
+      .map((turn) => ({ text: turn.text, translation: projectLocalizedText(serializeLocalizedText(turn.translation)) }));
 
     if (!cleanSituation) {
       toastError(t("educator.scenariosEditor.missingSituation"), t("educator.scenariosEditor.missingSituationDetail"));
