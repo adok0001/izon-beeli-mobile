@@ -49,7 +49,7 @@ Each Movement = its Bou Mie episode (anchor) + folded topic lessons, grouped by 
 |---|---|:---:|---|:---:|
 | 1 | **Arrival** | A1 | `b1` + fw-1, fw-2, fw-3, cm-2, cm-3 | 🟢 Live |
 | 2 | **The Household** | A1–A2 | `b2` + fw-4, fw-5, fw-8, fw-10, fw-12, cm-4, cm-5, cm-6, cm-9, cm-10, el-3, el-6 | 🟢 Live — over-full, rebalance into M4 |
-| 3 | **The Naming** | A2 | *(no episode)* + scaffold's 6 naming scenes | 🟡 Authoring gap |
+| 3 | **The Village** | A2 | *(no episode)* + scaffold's naming scenes | 🟡 Authoring gap — widened 2026-07-25, see `izon-course-design.md` |
 | 4 | **Growing Up** | A2–B1 | `b3` + cm-1, cm-8, fw-9, `nt`, `sg` (children's) | 🟢 Live |
 | 5 | **The Threshold** | B1 | *(no episode, no lessons)* + scaffold's 5 initiation scenes | 🔴 **The real hole** |
 | 6 | **The Working Year** | B1–B2 | `i1` + el-1, el-2, el-4, el-5, fw-11 | 🟢 Live |
