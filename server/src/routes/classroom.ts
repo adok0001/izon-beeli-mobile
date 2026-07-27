@@ -6,14 +6,29 @@ import {
   classroomGroups,
   classroomMembers,
   classroomAssignments,
+  groupRoleEnum,
   users,
   userProgress,
   lessons,
 } from "../db/schema.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
+import {
+  checkGroupStudentCapacity,
+  type StudentCapacityResult,
+} from "../middleware/educator-gate.js";
 
 export const classroomRouter = new Hono<AuthEnv>();
 classroomRouter.use("*", authMiddleware);
+
+/** 402 body for a join blocked by the owning organization's seat limit. */
+function capacityError(capacity: Extract<StudentCapacityResult, { ok: false }>) {
+  return {
+    error: "student_capacity_exceeded",
+    code: "limit_reached",
+    studentLimit: capacity.studentLimit,
+    studentCount: capacity.studentCount,
+  };
+}
 
 /** Generate a random 6-character alphanumeric invite code */
 function generateInviteCode(): string {
@@ -23,6 +38,42 @@ function generateInviteCode(): string {
     code += chars[Math.floor(Math.random() * chars.length)];
   }
   return code;
+}
+
+type GroupRole = (typeof groupRoleEnum.enumValues)[number];
+type Membership = typeof classroomMembers.$inferSelect;
+
+type MembershipResult =
+  | { ok: true; membership: Membership }
+  | { ok: false; status: 403 | 404; error: string };
+
+/**
+ * Object-level authorization for a classroom group: the caller must be a member
+ * of `groupId`, and — when `role` is given — hold that role. Every handler that
+ * takes a group id from the request (body or path) must go through this before
+ * reading or writing anything scoped to that group.
+ *
+ * Non-members always get the same 404 regardless of whether the group exists,
+ * so the response never confirms a guessed group id.
+ */
+async function requireMembership(
+  groupId: string,
+  userId: string,
+  opts: { role?: GroupRole; forbidden?: string } = {}
+): Promise<MembershipResult> {
+  const [membership] = await db
+    .select()
+    .from(classroomMembers)
+    .where(and(eq(classroomMembers.groupId, groupId), eq(classroomMembers.userId, userId)))
+    .limit(1);
+
+  if (!membership) {
+    return { ok: false, status: 404, error: "Not a member of this group" };
+  }
+  if (opts.role && membership.role !== opts.role) {
+    return { ok: false, status: 403, error: opts.forbidden ?? `Only ${opts.role}s can do that` };
+  }
+  return { ok: true, membership };
 }
 
 // GET /api/classroom/groups — list groups the user belongs to
@@ -131,7 +182,10 @@ classroomRouter.post("/groups/:id/join", async (c) => {
 
   if (!group) return c.json({ error: "Group not found" }, 404);
 
-  if (body.inviteCode && group.inviteCode.toUpperCase() !== body.inviteCode.trim().toUpperCase()) {
+  // The invite code is the only thing gating this group, so it is mandatory —
+  // when it was optional, knowing a group id was enough to walk in.
+  const supplied = body.inviteCode?.trim().toUpperCase();
+  if (!supplied || group.inviteCode.toUpperCase() !== supplied) {
     return c.json({ error: "Invalid invite code" }, 400);
   }
 
@@ -144,7 +198,13 @@ classroomRouter.post("/groups/:id/join", async (c) => {
 
   if (existing) return c.json({ ...group, alreadyMember: true });
 
-  const role = (body.role === "teacher" || body.role === "parent") ? body.role : "student";
+  const capacity = await checkGroupStudentCapacity(id);
+  if (!capacity.ok) return c.json(capacityError(capacity), 402);
+
+  // Never honour a self-declared "teacher": the invite code is shared with the
+  // whole class, so anyone holding it could otherwise promote themselves to
+  // staff. Teachers are made by group creation or by an existing teacher.
+  const role: GroupRole = body.role === "parent" ? "parent" : "student";
   await db.insert(classroomMembers).values({ groupId: id, userId, role });
 
   return c.json(group, 201);
@@ -174,6 +234,9 @@ classroomRouter.post("/groups/join-by-code", async (c) => {
 
   if (existing) return c.json(group);
 
+  const capacity = await checkGroupStudentCapacity(group.id);
+  if (!capacity.ok) return c.json(capacityError(capacity), 402);
+
   await db.insert(classroomMembers).values({ groupId: group.id, userId, role: "student" });
   return c.json(group, 201);
 });
@@ -187,6 +250,12 @@ classroomRouter.post("/assignments", async (c) => {
   if (!groupId || !lessonId) {
     return c.json({ error: "groupId and lessonId are required" }, 400);
   }
+
+  const auth = await requireMembership(groupId, userId, {
+    role: "teacher",
+    forbidden: "Only teachers can create assignments",
+  });
+  if (!auth.ok) return c.json({ error: auth.error }, auth.status);
 
   const [assignment] = await db
     .insert(classroomAssignments)
@@ -203,7 +272,12 @@ classroomRouter.post("/assignments", async (c) => {
 
 // GET /api/classroom/groups/:id/assignments — list assignments for a group
 classroomRouter.get("/groups/:id/assignments", async (c) => {
+  const userId = c.get("userId");
   const { id } = c.req.param();
+
+  // Any role — students need to see the work they've been set.
+  const auth = await requireMembership(id, userId);
+  if (!auth.ok) return c.json({ error: auth.error }, auth.status);
 
   const assignments = await db
     .select()
@@ -216,9 +290,15 @@ classroomRouter.get("/groups/:id/assignments", async (c) => {
 
 // GET /api/classroom/groups/:id/progress — per-member completion stats
 classroomRouter.get("/groups/:id/progress", async (c) => {
+  const userId = c.get("userId");
   const { id } = c.req.param();
 
-  // Get all members of the group
+  const auth = await requireMembership(id, userId);
+  if (!auth.ok) return c.json({ error: auth.error }, auth.status);
+
+  // Only teachers see the whole roster; everyone else sees just their own row.
+  // These are often minors' names, streaks and points — don't hand the class
+  // list to a classmate (or to a parent, who is a member but not staff).
   const members = await db
     .select({
       userId: classroomMembers.userId,
@@ -227,11 +307,15 @@ classroomRouter.get("/groups/:id/progress", async (c) => {
     })
     .from(classroomMembers)
     .leftJoin(users, eq(classroomMembers.userId, users.id))
-    .where(eq(classroomMembers.groupId, id));
+    .where(
+      auth.membership.role === "teacher"
+        ? eq(classroomMembers.groupId, id)
+        : and(eq(classroomMembers.groupId, id), eq(classroomMembers.userId, userId))
+    );
 
   if (members.length === 0) return c.json([]);
 
-  // Fetch progress for all members
+  // Fetch progress for the members we're actually returning
   const memberUserIds = members.map((m) => m.userId);
   const progress = await db
     .select({
@@ -288,16 +372,11 @@ classroomRouter.delete("/groups/:id/leave", async (c) => {
   const userId = c.get("userId");
   const { id } = c.req.param();
 
-  const [membership] = await db
-    .select()
-    .from(classroomMembers)
-    .where(and(eq(classroomMembers.groupId, id), eq(classroomMembers.userId, userId)))
-    .limit(1);
-
-  if (!membership) return c.json({ error: "Not a member of this group" }, 404);
+  const auth = await requireMembership(id, userId);
+  if (!auth.ok) return c.json({ error: auth.error }, auth.status);
 
   // Don't let the last teacher leave without transferring ownership
-  if (membership.role === "teacher") {
+  if (auth.membership.role === "teacher") {
     const teachers = await db
       .select()
       .from(classroomMembers)
@@ -319,16 +398,11 @@ classroomRouter.delete("/groups/:id/members/:memberId", async (c) => {
   const requesterId = c.get("userId");
   const { id, memberId } = c.req.param();
 
-  // Requester must be a teacher
-  const [requesterMembership] = await db
-    .select()
-    .from(classroomMembers)
-    .where(and(eq(classroomMembers.groupId, id), eq(classroomMembers.userId, requesterId)))
-    .limit(1);
-
-  if (!requesterMembership || requesterMembership.role !== "teacher") {
-    return c.json({ error: "Only teachers can remove members" }, 403);
-  }
+  const auth = await requireMembership(id, requesterId, {
+    role: "teacher",
+    forbidden: "Only teachers can remove members",
+  });
+  if (!auth.ok) return c.json({ error: auth.error }, auth.status);
 
   // Can't remove yourself via this endpoint
   if (memberId === requesterId) {
@@ -355,16 +429,11 @@ classroomRouter.delete("/assignments/:id", async (c) => {
 
   if (!assignment) return c.json({ error: "Assignment not found" }, 404);
 
-  // Requester must be a teacher in this group
-  const [membership] = await db
-    .select()
-    .from(classroomMembers)
-    .where(and(eq(classroomMembers.groupId, assignment.groupId), eq(classroomMembers.userId, userId)))
-    .limit(1);
-
-  if (!membership || membership.role !== "teacher") {
-    return c.json({ error: "Only teachers can delete assignments" }, 403);
-  }
+  const auth = await requireMembership(assignment.groupId, userId, {
+    role: "teacher",
+    forbidden: "Only teachers can delete assignments",
+  });
+  if (!auth.ok) return c.json({ error: auth.error }, auth.status);
 
   await db.delete(classroomAssignments).where(eq(classroomAssignments.id, id));
   return c.json({ ok: true });
