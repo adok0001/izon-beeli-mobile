@@ -36,6 +36,10 @@ export const en = {
     networkError: "Check your connection and try again.",
     unknownError: "Something went wrong. Please try again.",
     couldntLoad: "We couldn't load this. Please try again.",
+    classFull: "This class is full. The teacher will need to free up a seat or upgrade the plan.",
+    classFullDetail:
+      "This class is full — {{used}} of {{limit}} seats are in use. The teacher will need to free up a seat or upgrade the plan.",
+    educatorSubscriptionRequired: "This classroom needs an active educator subscription.",
   },
   tabs: {
     learn: "Learn",

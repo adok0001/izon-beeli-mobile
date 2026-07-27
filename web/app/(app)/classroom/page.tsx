@@ -1,6 +1,6 @@
 "use client";
 
-import { apiFetch } from "@/lib/api";
+import { apiErrorMessage, apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { useAuth } from "@clerk/nextjs";
@@ -163,6 +163,7 @@ function CreateGroupModal({ onClose }: Readonly<{ onClose: () => void }>) {
 function JoinGroupModal({ onClose }: Readonly<{ onClose: () => void }>) {
   const { getToken } = useAuth();
   const qc = useQueryClient();
+  const { t } = useTranslation();
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -179,7 +180,7 @@ function JoinGroupModal({ onClose }: Readonly<{ onClose: () => void }>) {
       void qc.invalidateQueries({ queryKey: ["classroom-groups"] });
       onClose();
     },
-    onError: (err: Error) => setError(err.message),
+    onError: (err: Error) => setError(apiErrorMessage(err, t)),
   });
 
   return (

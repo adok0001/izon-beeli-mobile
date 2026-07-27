@@ -1,3 +1,5 @@
+import { apiErrorCopy } from "@mobile/lib/api-error-copy";
+import type { TranslationKey } from "@mobile/lib/locales";
 import { API_BASE_URL } from "./constants";
 
 export class ApiError extends Error {
@@ -10,6 +12,25 @@ export class ApiError extends Error {
     this.status = status;
     this.body = body;
   }
+}
+
+/**
+ * Message to show for a failed request. Machine-readable API codes
+ * (`student_capacity_exceeded`, …) get real copy; anything else falls back to
+ * the server's own message, which for validation errors is already readable.
+ *
+ * Takes `t` rather than importing the i18n instance, so this module stays free
+ * of react-i18next and safe to import from server components.
+ */
+export function apiErrorMessage(
+  err: unknown,
+  t: (key: TranslationKey, params?: Record<string, number>) => string
+): string {
+  if (err instanceof ApiError) {
+    const copy = apiErrorCopy(err.body);
+    if (copy) return t(copy.key, copy.params);
+  }
+  return err instanceof Error ? err.message : String(err);
 }
 
 export async function apiFetch<T>(

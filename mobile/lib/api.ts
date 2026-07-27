@@ -1,4 +1,5 @@
 import i18n from "./i18n";
+import { apiErrorCode, apiErrorCopy } from "./api-error-copy";
 import { QueryClient, focusManager, onlineManager } from "@tanstack/react-query";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -66,11 +67,7 @@ export class ApiError extends Error {
  * falling back when the body is missing, malformed, or not our shape.
  */
 export function extractApiErrorMessage(body: unknown, fallback: string): string {
-  if (typeof body === "object" && body !== null && "error" in body) {
-    const { error } = body as { error: unknown };
-    if (typeof error === "string") return error;
-  }
-  return fallback;
+  return apiErrorCode(body) ?? fallback;
 }
 
 export function isNetworkError(err: unknown): boolean {
@@ -79,6 +76,12 @@ export function isNetworkError(err: unknown): boolean {
 
 export function friendlyError(err: unknown, fallback?: string): string {
   if (err instanceof ApiError) {
+    // Codes we have real copy for win over the status-based branches below: the
+    // raw `error` string is a machine code (`student_capacity_exceeded`), and
+    // showing it verbatim is what the generic 4xx passthrough would otherwise do.
+    const copy = apiErrorCopy(err.body);
+    if (copy) return i18n.t(copy.key, copy.params);
+
     if (err.status === 401 || err.status === 403) return i18n.t("common.permissionDenied");
     if (err.status === 404) return i18n.t("common.notFound");
     if (err.status >= 500) return i18n.t("common.serverError");

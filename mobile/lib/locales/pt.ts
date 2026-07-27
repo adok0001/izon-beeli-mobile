@@ -37,6 +37,10 @@ export const pt = {
     networkError: "Verifique a sua ligação e tente novamente.",
     unknownError: "Algo correu mal. Tente novamente.",
     couldntLoad: "Não foi possível carregar isto. Tente novamente.",
+    classFull: "Esta turma está cheia. O professor terá de libertar um lugar ou atualizar o plano.",
+    classFullDetail:
+      "Esta turma está cheia — {{used}} de {{limit}} lugares estão ocupados. O professor terá de libertar um lugar ou atualizar o plano.",
+    educatorSubscriptionRequired: "Esta turma requer uma subscrição de educador ativa.",
   },
   tabs: {
     learn: "Aprender",

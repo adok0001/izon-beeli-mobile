@@ -37,6 +37,10 @@ export const pcm = {
     networkError: "Check your connection, then try again.",
     unknownError: "Something do wrong. Try again.",
     couldntLoad: "We no fit load am. Abeg try again.",
+    classFull: "This class don full. Teacher go need to free one seat or upgrade the plan.",
+    classFullDetail:
+      "This class don full — {{used}} out of {{limit}} seats don dey used. Teacher go need to free one seat or upgrade the plan.",
+    educatorSubscriptionRequired: "This classroom need active educator subscription.",
   },
   tabs: {
     learn: "Learn",

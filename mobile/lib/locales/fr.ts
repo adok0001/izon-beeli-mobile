@@ -37,6 +37,10 @@ export const fr = {
     networkError: "Vérifiez votre connexion et réessayez.",
     unknownError: "Une erreur est survenue. Veuillez réessayer.",
     couldntLoad: "Impossible de charger ces données. Veuillez réessayer.",
+    classFull: "Cette classe est complète. L'enseignant devra libérer une place ou passer à une formule supérieure.",
+    classFullDetail:
+      "Cette classe est complète — {{used}} places sur {{limit}} sont occupées. L'enseignant devra libérer une place ou passer à une formule supérieure.",
+    educatorSubscriptionRequired: "Cette classe nécessite un abonnement enseignant actif.",
   },
   tabs: {
     learn: "Cours",

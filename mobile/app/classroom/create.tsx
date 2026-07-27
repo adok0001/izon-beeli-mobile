@@ -1,4 +1,4 @@
-import { friendlyError } from "@/lib/api";
+import { ApiError, friendlyError } from "@/lib/api";
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, View, Text, TextInput, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -39,7 +39,15 @@ export default function CreateGroupScreen() {
     if (inviteCode.length < 6) return;
     joinGroup.mutate(inviteCode.trim(), {
       onSuccess: (group) => router.replace(`/classroom/${group.id}`),
-      onError: () => setError(t("classroom.notFound")),
+      // A mistyped code (404) is the common case and gets the specific copy;
+      // anything else — a full class, a dead connection — has its own message
+      // worth showing, so don't flatten every failure into "no group found".
+      onError: (err) =>
+        setError(
+          err instanceof ApiError && err.status === 404
+            ? t("classroom.notFound")
+            : friendlyError(err, t("classroom.notFound"))
+        ),
     });
   };
 
