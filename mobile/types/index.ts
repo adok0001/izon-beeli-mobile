@@ -58,7 +58,19 @@ export interface Course {
 
 export type AudioSource = string | number; // URI string or require() module ID
 
-export type LessonType = "lesson" | "song";
+/**
+ * Every value `lessons.type` may hold. Derived as a const array rather than a
+ * bare union so the Studio picker and the type cannot drift apart — a new kind
+ * of lesson row becomes selectable the moment it is legal.
+ *
+ * `game` rows are the block-closing mini-games. They occupy a real slot on the
+ * journey path (Movement 1's are at orders 5, 10, … 50) but are not lessons: a
+ * learner plays them rather than working through a transcript, and they must be
+ * kept out of lesson lists and completion counts. See `lib/course-path`.
+ */
+export const LESSON_TYPES = ["lesson", "song", "game"] as const;
+
+export type LessonType = (typeof LESSON_TYPES)[number];
 
 export type WordTone = "high" | "rising" | "level" | "falling";
 

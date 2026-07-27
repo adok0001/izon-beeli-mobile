@@ -36,7 +36,7 @@ function shuffle<T>(arr: T[]): T[] {
  * synonym ambiguity — falls back to overlapping candidates if needed to fill slots.
  * Deduplicates case-insensitively so "Run" and "run" don't both appear.
  */
-function pickDistractors(
+export function pickDistractors(
   correct: string,
   pool: string[],
   count: number,

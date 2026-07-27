@@ -12,11 +12,19 @@ import {
 } from "react-native";
 import Svg, { Circle, Defs, Path, RadialGradient, Stop } from "react-native-svg";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { CheckpointNodeView } from "@/components/learn/checkpoint-node";
 import { JourneyNodeView } from "@/components/learn/journey-node";
 import { JourneyScenery } from "@/components/learn/journey-scenery";
 import { JourneySheet } from "@/components/learn/journey-sheet";
 import { MUSEUM, useMuseumTheme } from "@/lib/use-museum-theme";
-import { buildJourney, JOURNEY, type JourneyNode, smoothPath } from "@/lib/journey";
+import {
+  buildJourney,
+  JOURNEY,
+  type JourneyCheckpointNode,
+  type JourneyGate,
+  type JourneyNode,
+  smoothPath,
+} from "@/lib/journey";
 import { localize } from "@/lib/localize";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course, Lesson } from "@/types";
@@ -36,6 +44,8 @@ interface JourneyMapProps {
   lively?: boolean;
   /** The in-path "défi du jour" coin, pinned beside the active node. */
   challenge?: { word: string; done: boolean; onPress: () => void };
+  /** Required checkpoint gates between each run of five lessons. */
+  gate?: JourneyGate;
   /** Per-course screen: the header already shows the unit title, so hide the
    *  redundant floating chapter cartouche. */
   perCourse?: boolean;
@@ -191,6 +201,7 @@ export function JourneyMap({
   footer,
   lively = true,
   challenge,
+  gate,
   perCourse = false,
 }: JourneyMapProps) {
   const M = useMuseumTheme();
@@ -202,22 +213,30 @@ export function JourneyMap({
   const [selected, setSelected] = useState<JourneyNode | null>(null);
 
   const journey = useMemo(
-    () => buildJourney(courses, lessons, completedIds, width),
-    [courses, lessons, completedIds, width]
+    () => buildJourney(courses, lessons, completedIds, width, gate),
+    [courses, lessons, completedIds, width, gate]
   );
 
+  // The trail runs through the checkpoints, so the bronze "travelled" line is
+  // drawn from the interleaved stop list rather than the lesson nodes alone.
   const { fullPath, donePath } = useMemo(() => {
-    const pts = journey.nodes.map((n) => ({ x: n.x, y: n.y }));
-    const doneCount = journey.activeIndex >= 0 ? journey.activeIndex + 1 : pts.length;
+    const pts = journey.trail;
+    const doneCount = journey.trailDoneCount;
     return { fullPath: smoothPath(pts), donePath: smoothPath(pts.slice(0, doneCount)) };
   }, [journey]);
 
-  // Center the active lesson on first paint so learners land where they left off.
+  // Center where the learner left off. When a checkpoint is blocking the path
+  // there's no active lesson at all, so the gate is what they need to see.
   useEffect(() => {
-    if (didCenter.current || journey.activeIndex < 0) return;
+    if (didCenter.current) return;
+    const activeGate = journey.checkpointNodes.find((c) => c.checkpoint.status === "active");
+    const targetY =
+      journey.activeIndex >= 0 ? journey.nodes[journey.activeIndex].y : activeGate?.y;
+    if (targetY === undefined) return;
     didCenter.current = true;
-    const y = journey.nodes[journey.activeIndex].y - 220;
-    requestAnimationFrame(() => scrollRef.current?.scrollTo({ y: Math.max(0, y), animated: false }));
+    requestAnimationFrame(() =>
+      scrollRef.current?.scrollTo({ y: Math.max(0, targetY - 220), animated: false })
+    );
   }, [journey]);
 
   const selectedArea = selected
@@ -230,6 +249,13 @@ export function JourneyMap({
   const handleStart = (node: JourneyNode) => {
     setSelected(null);
     router.push(`/lesson/${node.lessonId}`);
+  };
+
+  // A locked gate is inert on purpose — its own label already says "Locked",
+  // and its five lessons are visible right above it on the path.
+  const handleCheckpointPress = (node: JourneyCheckpointNode) => {
+    if (node.checkpoint.status === "locked") return;
+    router.push(`/checkpoint/${node.checkpoint.id}`);
   };
 
   return (
@@ -304,6 +330,15 @@ export function JourneyMap({
               uiLanguage={uiLanguage}
               lively={lively}
               onPress={setSelected}
+            />
+          ))}
+
+          {journey.checkpointNodes.map((node) => (
+            <CheckpointNodeView
+              key={node.checkpoint.id}
+              node={node}
+              lively={lively}
+              onPress={handleCheckpointPress}
             />
           ))}
 

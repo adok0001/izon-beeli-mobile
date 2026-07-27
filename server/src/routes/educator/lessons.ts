@@ -22,6 +22,23 @@ function segmentTranslation(seg: { translation?: string; translations?: Translat
 /** How a season episode is told. Null for ordinary lessons. */
 const LESSON_STYLES = ["skit", "immersive_story", "host_narrated"] as const;
 
+/**
+ * Every value `lessons.type` may hold. Mirrors `LESSON_TYPES` in
+ * mobile/types/index.ts.
+ *
+ * Validated, not free text, because `type` carries structure: `game` marks a
+ * block-closing mini-game, which holds a slot on the journey path but is kept
+ * out of lesson lists and completion counts (mobile/lib/course-path.ts). A
+ * typo here silently turns a gate into a lesson — or a lesson into a gate —
+ * and nothing downstream would flag it.
+ */
+const LESSON_TYPES = ["lesson", "song", "game"] as const;
+
+/** `undefined` skips the field; `""` and any other value are rejected. */
+function invalidType(type: string | null | undefined): boolean {
+  return type != null && !LESSON_TYPES.includes(type as (typeof LESSON_TYPES)[number]);
+}
+
 /** In-lesson check types — formative questions fired between transcript lines. */
 const CHECK_TYPES = ["predict-next", "meaning", "who-said", "cloze", "pick-reply"] as const;
 
@@ -90,6 +107,9 @@ educatorLessonsRouter.post("/lessons", async (c) => {
   }
   if (style && !LESSON_STYLES.includes(style as (typeof LESSON_STYLES)[number])) {
     return c.json({ error: `style must be one of: ${LESSON_STYLES.join(", ")}` }, 400);
+  }
+  if (invalidType(type)) {
+    return c.json({ error: `type must be one of: ${LESSON_TYPES.join(", ")}` }, 400);
   }
   if (!isAdmin && !reviewerLanguages.includes(languageId)) {
     return c.json({ error: "Forbidden: not assigned to this language" }, 403);
@@ -208,6 +228,10 @@ educatorLessonsRouter.patch("/lessons/:id", async (c) => {
 
   if (body.style != null && body.style !== "" && !LESSON_STYLES.includes(body.style as (typeof LESSON_STYLES)[number])) {
     return c.json({ error: `style must be one of: ${LESSON_STYLES.join(", ")}` }, 400);
+  }
+
+  if (invalidType(body.type)) {
+    return c.json({ error: `type must be one of: ${LESSON_TYPES.join(", ")}` }, 400);
   }
 
   const updates: Record<string, unknown> = { updatedBy: userId };
@@ -570,6 +594,9 @@ educatorLessonsRouter.put("/lessons/:id/save", async (c) => {
   }
   if (payload.style != null && payload.style !== "" && !LESSON_STYLES.includes(payload.style as (typeof LESSON_STYLES)[number])) {
     return c.json({ error: `style must be one of: ${LESSON_STYLES.join(", ")}` }, 400);
+  }
+  if (invalidType(payload.type)) {
+    return c.json({ error: `type must be one of: ${LESSON_TYPES.join(", ")}` }, 400);
   }
 
   // ── Validate segments (mirrors PUT /lessons/:id/segments) ──

@@ -1076,6 +1076,44 @@ export const quizResults = pgTable(
   ]
 );
 
+// ---------- Checkpoint Completions ----------
+// The required mini-game gate between every run of five lessons. Unlike
+// `quizResults` (an append-only score log), this table is the authority for
+// whether the learner may advance — one row per user per cleared checkpoint,
+// so a repeated attempt updates rather than duplicates.
+//
+// `checkpointId` is client-derived as `cp-<anchor lesson id>` (see
+// mobile/lib/checkpoints.ts) — stable across content edits after the anchor,
+// which is why it's a plain varchar rather than an FK.
+
+export const checkpointCompletions = pgTable(
+  "checkpoint_completions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    checkpointId: varchar("checkpoint_id", { length: 96 }).notNull(),
+    languageId: varchar("language_id", { length: 32 }).notNull(),
+    correct: smallint("correct").notNull(),
+    total: smallint("total").notNull(),
+    /** Attempts taken before the pass — surfaces difficulty tuning signal. */
+    attempts: smallint("attempts").default(1).notNull(),
+    /**
+     * Cleared without a round because the covered lessons had too little
+     * vocabulary to build fair questions. Recorded so the path opens rather
+     * than stranding the learner behind a content gap — and flagged so these
+     * are distinguishable from earned clears when tuning content.
+     */
+    waived: boolean("waived").default(false).notNull(),
+    completedAt: timestamp("completed_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("checkpoint_completions_user_cp_idx").on(table.userId, table.checkpointId),
+    index("checkpoint_completions_user_lang_idx").on(table.userId, table.languageId),
+  ]
+);
+
 // ---------- Reviewer Applications ----------
 
 export const reviewerApplicationStatusEnum = pgEnum("reviewer_application_status", [

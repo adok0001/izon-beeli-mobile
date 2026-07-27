@@ -16,6 +16,11 @@ export interface CompletedLessonRecord {
   completedAt: string; // ISO timestamp, replayed during guest->account migration
 }
 
+export interface PassedCheckpointRecord {
+  checkpointId: string;
+  languageId: string;
+}
+
 export interface CompleteLessonResult {
   alreadyCompleted: boolean;
   pointsEarned: number;
@@ -32,6 +37,12 @@ export interface CompleteLessonResult {
 interface PersistedShape {
   completedLessons: CompletedLessonRecord[];
   wordbankIds: string[];
+  /**
+   * Checkpoints cleared locally — the guest mirror of `checkpointCompletions`.
+   * Carries the language because that's what replaying the clear to the server
+   * on sign-up requires.
+   */
+  passedCheckpoints: PassedCheckpointRecord[];
   points: number;
   streak: number;
   lastActiveDate: string | null;
@@ -56,6 +67,7 @@ interface GuestProgressState extends PersistedShape {
   _hydrated: boolean;
   isLessonCompleted: (lessonId: string) => boolean;
   isWordSaved: (dictionaryEntryId: string) => boolean;
+  passCheckpoint: (checkpointId: string, languageId: string) => void;
   completeLesson: (lessonId: string) => CompleteLessonResult;
   trackListen: () => TrackListenResult;
   useFreeze: () => UseFreezeResult;
@@ -112,6 +124,7 @@ function persist(state: PersistedShape) {
 const INITIAL: PersistedShape = {
   completedLessons: [],
   wordbankIds: [],
+  passedCheckpoints: [],
   points: 0,
   streak: 0,
   lastActiveDate: null,
@@ -125,6 +138,17 @@ export const useGuestProgressStore = create<GuestProgressState>((set, get) => ({
 
   isLessonCompleted: (lessonId) => get().completedLessons.some((c) => c.lessonId === lessonId),
   isWordSaved: (dictionaryEntryId) => get().wordbankIds.includes(dictionaryEntryId),
+
+  passCheckpoint: (checkpointId, languageId) => {
+    const state = get();
+    if (state.passedCheckpoints.some((c) => c.checkpointId === checkpointId)) return;
+    const next: PersistedShape = {
+      ...state,
+      passedCheckpoints: [...state.passedCheckpoints, { checkpointId, languageId }],
+    };
+    set(next);
+    persist(next);
+  },
 
   completeLesson: (lessonId) => {
     const state = get();
@@ -259,7 +283,9 @@ export const useGuestProgressStore = create<GuestProgressState>((set, get) => ({
     try {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
-        set({ ...(JSON.parse(stored) as PersistedShape), _hydrated: true });
+        // Spread over INITIAL, not bare: payloads written before a field was
+        // added would otherwise restore it as undefined and crash its readers.
+        set({ ...INITIAL, ...(JSON.parse(stored) as Partial<PersistedShape>), _hydrated: true });
       } else {
         set({ _hydrated: true });
       }

@@ -316,9 +316,12 @@ export function JourneySheet({ node, areaName, audioUrl, uiLanguage, onClose, on
                 borderColor: M.border,
               }}
             >
+              {/* A checkpoint gate is the only thing that locks a lesson, so
+                  name it — "finish the previous lessons" would send the learner
+                  looking for lessons they've already completed. */}
               <Text style={{ fontSize: 13, color: M.muted, textAlign: "center" }}>
-                {t("journey.lockedHint", {
-                  defaultValue: "Finish the previous lessons to unlock this one",
+                {t("journey.gatedHint", {
+                  defaultValue: "Clear the checkpoint before this one to continue",
                 })}
               </Text>
             </View>

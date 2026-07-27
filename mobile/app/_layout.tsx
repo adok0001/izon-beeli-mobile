@@ -423,6 +423,16 @@ export default function RootLayout() {
                   <Stack.Screen name="downloads" options={{ headerBackTitle: "Back" }} />
                   <Stack.Screen name="review" options={{ headerBackTitle: "Back" }} />
                   <Stack.Screen name="quiz" options={{ presentation: "modal", headerShown: true }} />
+                  {/* Registered like the other modals so the screen's own options
+                      apply — unregistered, it fell back to the default header and
+                      showed a Back button that escaped a required gate. */}
+                  <Stack.Screen
+                    name="checkpoint/[id]"
+                    // Blank title rather than none: the screen sets the real one
+                    // ("Warm-up" / "Checkpoint N") from the gate it loads, and an
+                    // unset title falls back to the raw route path for a frame.
+                    options={{ presentation: "modal", headerShown: true, title: "" }}
+                  />
                   <Stack.Screen name="matching-game" options={{ presentation: "modal", headerShown: false }} />
                   <Stack.Screen name="adinkra" options={{ headerBackTitle: "Back" }} />
                   <Stack.Screen name="geez-lesson" options={{ headerBackTitle: "Back" }} />

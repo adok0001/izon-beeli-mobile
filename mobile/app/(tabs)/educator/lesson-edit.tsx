@@ -1,4 +1,5 @@
-import type { LocalizedText } from "@/types";
+import { LESSON_TYPES, type LessonType, type LocalizedText } from "@/types";
+import { StudioDropdown } from "@/components/studio/studio-dropdown";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { Badge } from "@/components/ui/badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -54,6 +55,19 @@ import {
   toSegmentsPayload,
   type SegmentEditor,
 } from "@/components/studio/lesson-segment-editor";
+
+/** What each `lessons.type` value means to an educator choosing one. */
+const TYPE_BLURB: Record<LessonType, string> = {
+  lesson: "A normal lesson with a transcript",
+  song: "A song, listed under Songs",
+  game: "Closes a block — tests the lessons before it, never listed as a lesson",
+};
+
+const LESSON_TYPE_OPTIONS = LESSON_TYPES.map((id) => ({
+  id,
+  label: id[0].toUpperCase() + id.slice(1),
+  sublabel: TYPE_BLURB[id],
+}));
 
 export default function EducatorLessonEditScreen() {
   const M = useMuseumTheme();
@@ -446,14 +460,21 @@ export default function EducatorLessonEditScreen() {
                 className="mt-2 min-h-[64px] rounded-xl border px-3.5 py-2.5 text-sm"
                 style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
               />
-              <TextInput
-                value={type}
-                onChangeText={setType}
-                placeholder="Type (e.g. podcast, song, story)"
-                placeholderTextColor={M.muted}
-                className="mt-2 rounded-xl border px-3.5 py-2.5 text-sm"
-                style={{ backgroundColor: M.inputBg, borderColor: M.inputBorder, color: M.inputText }}
-              />
+              {/* A picker, not a text box: `type` carries structure now. A game
+                  row typed back to "lesson" rejoins the lesson list, enters the
+                  progress denominator, and its gate vanishes from the path —
+                  and the reverse is just as easy to do by accident. */}
+              <View className="mt-2">
+                <StudioDropdown
+                  label="Type"
+                  icon="waveform"
+                  title="Lesson type"
+                  value={type}
+                  options={LESSON_TYPE_OPTIONS}
+                  onChange={setType}
+                  placeholder="Lesson"
+                />
+              </View>
               <View className="mt-2 flex-row gap-2">
                 <TextInput
                   value={artist}

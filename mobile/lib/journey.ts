@@ -1,5 +1,7 @@
 import type { IconSymbolName } from "@/components/ui/icon-symbol";
 import { getCourseTypeColors } from "@/constants/course-colors";
+import { buildPathStops, type Checkpoint } from "@/lib/checkpoints";
+import { contentLessons, isReferenceCourse, pathCourses } from "@/lib/course-path";
 import { BUNDLED_AUDIO } from "@/lib/mock-data";
 import { MUSEUM } from "@/lib/use-museum-theme";
 import type { Course, CourseType, Lesson, LocalizedText } from "@/types";
@@ -38,6 +40,18 @@ export const JOURNEY = {
   discDoneBorder: "#F0D49A",
   discLockedBorder: "#CBBC9F",
 } as const;
+
+/**
+ * Bronze gradient ramp for a stop on the trail, by status. Shared by the round
+ * lesson discs and the diamond checkpoint gates so the two read as the same
+ * material — defined once here rather than as parallel hex tables per component.
+ */
+export const STOP_GRADIENT: Record<NodeStatus, [string, string]> = {
+  done: ["#EFC479", "#A66E1C"],
+  active: ["#F6D08A", "#B5781E"],
+  open: ["#F2D9A0", "#C4862A"],
+  locked: ["#EDE6D6", "#D6CAB2"],
+};
 
 export type NodeStatus = "done" | "active" | "open" | "locked";
 
@@ -83,10 +97,28 @@ export interface JourneyArea {
   y: number;
 }
 
+/** A checkpoint gate laid out as a stop on the trail, between two lesson nodes. */
+export interface JourneyCheckpointNode {
+  checkpoint: Checkpoint;
+  /** Center coordinates in map space. */
+  x: number;
+  y: number;
+}
+
 export interface JourneyData {
   nodes: JourneyNode[];
   areas: JourneyArea[];
-  /** Index into `nodes` of the active lesson, or -1 if every lesson is done. */
+  /** Checkpoint gates positioned between lesson nodes. */
+  checkpointNodes: JourneyCheckpointNode[];
+  /**
+   * Every stop on the trail in walking order — lessons and checkpoints
+   * interleaved — so the drawn path runs *through* the gates rather than
+   * around them.
+   */
+  trail: { x: number; y: number }[];
+  /** How many leading `trail` points are behind the learner (the bronze line). */
+  trailDoneCount: number;
+  /** Index into `nodes` of the active lesson, or -1 if none is startable. */
   activeIndex: number;
   /** Total scrollable height of the map in map space. */
   height: number;
@@ -95,6 +127,7 @@ export interface JourneyData {
 // ── Layout constants (map-space pixels) ──────────────────────────────────────
 const TOP_PAD = 124;
 const STEP = 132; // vertical gap between consecutive nodes
+const CHECKPOINT_STEP = 116; // gap after a checkpoint — slightly tighter than a lesson step
 const AREA_GAP = 108; // node-free band reserved above each new area's cartouche
 const LABEL_RISE = 92; // how far the cartouche sits above its first node (clears the disc + active pennant)
 const BOTTOM_PAD = 176;
@@ -155,9 +188,15 @@ function colorFor(courseType?: CourseType | null): string {
   return tick && tick !== "#737373" ? tick : MUSEUM.accent;
 }
 
-/** Lessons for a course, sorted by `order` then a stable id fallback. */
+/**
+ * Lessons for a course, sorted by `order` then a stable id fallback.
+ *
+ * Game rows are dropped: they hold a slot in the same `order` sequence, but
+ * they are rendered as gates (`checkpointNodes`), so laying one out as a lesson
+ * disc would put a stop on the trail that opens nothing.
+ */
 function lessonsForCourse(courseId: string, lessons: Lesson[]): Lesson[] {
-  return lessons
+  return contentLessons(lessons)
     .filter((l) => l.courseId === courseId)
     .sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
 }
@@ -166,7 +205,8 @@ function lessonsForCourse(courseId: string, lessons: Lesson[]): Lesson[] {
 function orderNodes(
   courses: Course[],
   lessons: Lesson[],
-  completedIds: Set<string>
+  completedIds: Set<string>,
+  gatedIds: Set<string>
 ): { nodes: JourneyNode[]; activeIndex: number } {
   const nodes: JourneyNode[] = [];
   for (const course of courses) {
@@ -192,80 +232,153 @@ function orderNodes(
     });
   }
 
-  // The active node is the first lesson that isn't done — the "you are here"
-  // marker. Every other unfinished lesson stays "open" (unlocked & startable).
-  const activeIndex = nodes.findIndex((n) => n.status !== "done");
+  // Lessons sitting behind an uncleared checkpoint are locked — this is what
+  // makes the gate required rather than advisory. Keyed by id, not index: this
+  // map is often rendered for a single course, where positions are course-local
+  // but gating is defined across the whole path.
+  for (const node of nodes) {
+    if (node.status !== "done" && gatedIds.has(node.lessonId)) node.status = "locked";
+  }
+
+  // The active node is the first lesson that's startable — the "you are here"
+  // marker. When the next lesson is behind an uncleared gate there is no active
+  // lesson at all: the checkpoint itself is what's in front of the learner.
+  const activeIndex = nodes.findIndex((n) => n.status === "open");
   if (activeIndex >= 0) nodes[activeIndex].status = "active";
   return { nodes, activeIndex };
 }
 
-/** Assign serpentine positions and emit the area labels at course boundaries. */
+/**
+ * Assign serpentine positions, emit the area labels at course boundaries, and
+ * drop each checkpoint onto the trail after the lesson it follows.
+ */
 function layoutNodes(
   nodes: JourneyNode[],
   courses: Course[],
-  mapWidth: number
-): { areas: JourneyArea[]; height: number } {
+  mapWidth: number,
+  checkpoints: Checkpoint[]
+): {
+  areas: JourneyArea[];
+  checkpointNodes: JourneyCheckpointNode[];
+  trail: { x: number; y: number }[];
+  trailDoneCount: number;
+  height: number;
+} {
   const courseById = new Map(courses.map((c) => [c.id, c]));
+  const nodeByLessonId = new Map(nodes.map((n) => [n.lessonId, n]));
   const center = mapWidth / 2;
   const amp = mapWidth * AMP_FRAC;
   const areas: JourneyArea[] = [];
+  const checkpointNodes: JourneyCheckpointNode[] = [];
+  const trail: { x: number; y: number }[] = [];
+  let trailDoneCount = 0;
+  // Stops are placed in walking order, so the sway phase has to advance across
+  // lessons *and* checkpoints — otherwise a gate would sit on top of a lesson.
+  let stop = 0;
+
+  const swayX = () => center + amp * Math.sin(stop * 0.9 + 0.6);
+
+  const pushArea = (courseId: string, atY: number) => {
+    const course = courseById.get(courseId);
+    areas.push({
+      courseId,
+      title: course?.title ?? "",
+      level: course?.level ?? "",
+      icon: iconFor(course?.courseType),
+      emoji: course?.emoji,
+      color: colorFor(course?.courseType),
+      courseType: course?.courseType,
+      gloss: glossFor(course?.courseType),
+      y: atY - LABEL_RISE,
+    });
+  };
+
+  // Walk the same ordered stop list the gating rules use, so the map can never
+  // disagree with the model about what sits where — an intro opens its course,
+  // a checkpoint follows its anchor lesson.
+  const stops = buildPathStops(
+    nodes.map((n) => ({ id: n.lessonId, courseId: n.courseId }) as unknown as Lesson),
+    checkpoints
+  );
 
   let y = TOP_PAD;
-  nodes.forEach((node, i) => {
-    const newArea = i === 0 || node.courseId !== nodes[i - 1].courseId;
-    if (newArea) {
-      if (i > 0) y += AREA_GAP;
-      const course = courseById.get(node.courseId);
-      areas.push({
-        courseId: node.courseId,
-        title: course?.title ?? "",
-        level: course?.level ?? "",
-        icon: iconFor(course?.courseType),
-        emoji: course?.emoji,
-        color: node.areaColor,
-        courseType: course?.courseType,
-        gloss: glossFor(course?.courseType),
-        y: y - LABEL_RISE,
-      });
-    }
-    node.x = center + amp * Math.sin(i * 0.9 + 0.6);
-    node.y = y;
-    y += STEP;
-  });
+  let placedLessons = 0;
+  let lastCourseId: string | null = null;
 
-  return { areas, height: y + BOTTOM_PAD };
+  for (const item of stops) {
+    if (item.kind === "gate") {
+      const { checkpoint } = item;
+      // An intro opens a new area, so the cartouche band is reserved before it
+      // rather than before the first lesson.
+      if (checkpoint.kind === "intro" && checkpoint.courseId !== lastCourseId) {
+        if (placedLessons > 0) y += AREA_GAP;
+        lastCourseId = checkpoint.courseId;
+        pushArea(checkpoint.courseId, y);
+      }
+      const x = swayX();
+      checkpointNodes.push({ checkpoint, x, y });
+      trail.push({ x, y });
+      if (checkpoint.status === "done") trailDoneCount = trail.length;
+      stop += 1;
+      y += CHECKPOINT_STEP;
+      continue;
+    }
+
+    const node = nodeByLessonId.get(item.lesson.id);
+    if (!node) continue;
+
+    // A course with no intro (none built) still needs its area label.
+    if (node.courseId !== lastCourseId) {
+      if (placedLessons > 0) y += AREA_GAP;
+      lastCourseId = node.courseId;
+      pushArea(node.courseId, y);
+    }
+
+    node.x = swayX();
+    node.y = y;
+    trail.push({ x: node.x, y: node.y });
+    if (node.status === "done") trailDoneCount = trail.length;
+    stop += 1;
+    placedLessons += 1;
+    y += STEP;
+  }
+
+  return { areas, checkpointNodes, trail, trailDoneCount, height: y + BOTTOM_PAD };
 }
+
+// Course path classification lives in `lib/course-path` so the checkpoint model
+// can use it without pulling in this module's mock-data/API dependency chain.
+export { isReferenceCourse, pathCourses };
 
 /**
- * Reference tracks (Grammar & Structure, Sounds & Script, dictionary-scale
- * drill shelves) sit OFF the numbered journey path — they support every
- * Movement rather than being a step on it. Two signals mark one: a reference
- * courseType, or the order >= 100 convention set by the journey migration.
- * They stay reachable via the "Explore All Courses" rail below the map.
+ * Gating input for the map. Both halves are derived from the *whole* language
+ * path (see `useCheckpoints`), then handed down — the map itself is usually
+ * scoped to one course and can't compute them.
  */
-const REFERENCE_COURSE_TYPES = new Set<CourseType>(["grammar", "sound_script", "script"]);
-const REFERENCE_ORDER_THRESHOLD = 100;
-
-export function isReferenceCourse(course: Pick<Course, "courseType" | "order">): boolean {
-  if (course.courseType && REFERENCE_COURSE_TYPES.has(course.courseType)) return true;
-  return course.order != null && course.order >= REFERENCE_ORDER_THRESHOLD;
+export interface JourneyGate {
+  checkpoints: Checkpoint[];
+  gatedLessonIds: Set<string>;
 }
 
-/** The numbered journey path — every course except the reference tracks. */
-export function pathCourses(courses: Course[]): Course[] {
-  return courses.filter((c) => !isReferenceCourse(c));
-}
+const NO_GATE: JourneyGate = { checkpoints: [], gatedLessonIds: new Set() };
 
 export function buildJourney(
   courses: Course[],
   lessons: Lesson[],
   completedIds: Set<string>,
-  mapWidth: number
+  mapWidth: number,
+  gate: JourneyGate = NO_GATE
 ): JourneyData {
+  const { checkpoints, gatedLessonIds } = gate;
   const onPath = pathCourses(courses);
-  const { nodes, activeIndex } = orderNodes(onPath, lessons, completedIds);
-  const { areas, height } = layoutNodes(nodes, onPath, mapWidth);
-  return { nodes, areas, activeIndex, height };
+  const { nodes, activeIndex } = orderNodes(onPath, lessons, completedIds, gatedLessonIds);
+  const { areas, checkpointNodes, trail, trailDoneCount, height } = layoutNodes(
+    nodes,
+    onPath,
+    mapWidth,
+    checkpoints
+  );
+  return { nodes, areas, checkpointNodes, trail, trailDoneCount, activeIndex, height };
 }
 
 /**
@@ -278,7 +391,9 @@ export function courseProgress(
   completedIds: Set<string>,
   courseId: string
 ): { completed: number; total: number; percent: number } {
-  const courseLessons = lessons.filter((l) => l.courseId === courseId);
+  // Games are excluded from the denominator: there is no completion row for a
+  // game, so counting them would hold every finished course short of 100%.
+  const courseLessons = contentLessons(lessons).filter((l) => l.courseId === courseId);
   const completed = courseLessons.filter((l) => completedIds.has(l.id)).length;
   const total = courseLessons.length;
   return { completed, total, percent: total ? Math.round((completed / total) * 100) : 0 };

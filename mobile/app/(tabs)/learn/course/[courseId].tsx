@@ -5,7 +5,9 @@ import { UpNextTeaser } from "@/components/learn/up-next-teaser";
 import { LoadingScreen } from "@/components/loading-screen";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { fonts } from "@/constants/typography";
+import { contentLessons } from "@/lib/course-path";
 import { isRemoteAudioSource } from "@/lib/downloads";
+import { useCheckpoints } from "@/lib/hooks/use-checkpoints";
 import { useCourseLessons, useCourses } from "@/lib/hooks/use-courses";
 import { usePlusGate } from "@/lib/hooks/use-plus-gate";
 import { useCompletedLessons } from "@/lib/hooks/use-progress";
@@ -30,10 +32,17 @@ export default function CourseTreeScreen() {
   const selectedLanguageId = useLanguageStore((s) => s.selectedLanguageId);
 
   const { data: allCourses = [], refetch: refetchCourses } = useCourses(selectedLanguageId);
-  const { data: lessons = [], isLoading: lessonsLoading, refetch: refetchLessons } = useCourseLessons(courseId);
+  const { data: courseRows = [], isLoading: lessonsLoading, refetch: refetchLessons } = useCourseLessons(courseId);
+  // The block-closing games arrive with the lessons. They belong on the map as
+  // gates, which `buildJourney` draws from `gate` — not in the lesson list or
+  // the progress denominator, where they would be unreachable and uncountable.
+  const lessons = useMemo(() => contentLessons(courseRows), [courseRows]);
   const { data: completedLessonIds, isLoading: progressLoading, refetch: refetchProgress } = useCompletedLessons();
 
   const completedIds = useMemo(() => new Set(completedLessonIds ?? []), [completedLessonIds]);
+  // Checkpoints are positioned across the whole language path, so the gate is
+  // derived globally and handed to this course's slice of the map.
+  const { gate } = useCheckpoints(selectedLanguageId);
 
   const course = allCourses.find((c) => c.id === courseId) ?? null;
   const unitNumber = course ? courseUnitNumber(allCourses, courseId) : 1;
@@ -188,6 +197,7 @@ export default function CourseTreeScreen() {
           refreshing={refreshing}
           onRefresh={onRefresh}
           accent={M.accent}
+          gate={gate}
           perCourse
           footer={
             <>

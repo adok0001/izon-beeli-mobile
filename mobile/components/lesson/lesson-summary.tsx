@@ -34,6 +34,12 @@ interface Props {
   nextLessonId?: string;
   /** Extra route params to carry into the next lesson (e.g. season origin). */
   nextLessonParams?: Record<string, string>;
+  /**
+   * Set when this lesson closes a run of five and its checkpoint is uncleared.
+   * The gate replaces "Continue to next lesson" — the path is closed until it's
+   * passed, so offering the next lesson here would be a dead link.
+   */
+  checkpointId?: string;
   /** Leave the summary and return to the transcript. */
   onDismiss: () => void;
 }
@@ -51,6 +57,7 @@ export function LessonSummary({
   proveIt,
   nextLessonId,
   nextLessonParams,
+  checkpointId,
   onDismiss,
 }: Props) {
   const M = useMuseumTheme();
@@ -231,7 +238,47 @@ export function LessonSummary({
       </View>
 
       <View style={{ gap: 10 }}>
-        {nextLessonId ? (
+        {/* A checkpoint stands between this lesson and the next, so it takes the
+            primary slot — the next lesson isn't reachable until it's cleared. */}
+        {checkpointId ? (
+          <Pressable
+            onPress={() => {
+              onDismiss();
+              router.replace({ pathname: "/checkpoint/[id]", params: { id: checkpointId } });
+            }}
+            style={{ borderRadius: 16, overflow: "hidden" }}
+            className="active:opacity-75"
+            accessibilityRole="button"
+            accessibilityLabel={t("checkpoint.start")}
+          >
+            <LinearGradient
+              colors={[MUSEUM.accentLight, MUSEUM.accentDark]}
+              style={{ paddingVertical: 18, paddingHorizontal: 18 }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <IconSymbol name="flag.fill" size={13} color={M.parchment} />
+                <Text
+                  style={{
+                    fontSize: 10,
+                    fontWeight: "800",
+                    letterSpacing: 1.4,
+                    textTransform: "uppercase",
+                    color: M.parchment,
+                    opacity: 0.85,
+                  }}
+                >
+                  {t("checkpoint.gateEyebrow")}
+                </Text>
+              </View>
+              <Text style={{ fontSize: 17, fontWeight: "800", color: M.parchment }}>
+                {t("checkpoint.gateTitle")} ›
+              </Text>
+              <Text style={{ marginTop: 4, fontSize: 13, lineHeight: 18, color: M.parchment, opacity: 0.85 }}>
+                {t("checkpoint.gateBody")}
+              </Text>
+            </LinearGradient>
+          </Pressable>
+        ) : nextLessonId ? (
           <Pressable
             onPress={() => {
               onDismiss();

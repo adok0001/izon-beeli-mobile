@@ -15,6 +15,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { DueDatePicker } from "@/components/ui/due-date-picker";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { useClassroomGroups, useCreateAssignment, useAssignStoryArc } from "@/lib/hooks/use-classroom";
+import { contentLessons } from "@/lib/course-path";
 import { useCourses, useLanguageLessons } from "@/lib/hooks/use-courses";
 import { useStoryArcs, useStoryArc } from "@/lib/hooks/use-story-arc";
 import { useToast } from "@/lib/hooks/use-toast";
@@ -203,7 +204,10 @@ export default function AssignLessonScreen() {
   const [tab, setTab] = useState<Tab>("lessons");
   const { toast, error: toastError, dismiss: dismissToast } = useToast();
 
-  const { data: allLessons = [], isLoading } = useLanguageLessons(group?.languageId ?? "");
+  const { data: catalog = [], isLoading } = useLanguageLessons(group?.languageId ?? "");
+  // Block-closing games ride in the same catalog response but cannot be
+  // assigned — a learner reaches one by clearing the block in front of it.
+  const allLessons = useMemo(() => contentLessons(catalog), [catalog]);
 
   if (!group) {
     return (

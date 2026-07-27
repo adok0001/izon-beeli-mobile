@@ -7,7 +7,16 @@ export type QueuedWrite =
   | { kind: "completeLesson"; lessonId: string; ts: string }
   | { kind: "trackListen"; lessonId: string; ts: string }
   | { kind: "saveWord"; dictionaryEntryId: string; ts: string }
-  | { kind: "removeWord"; dictionaryEntryId: string; ts: string };
+  | { kind: "removeWord"; dictionaryEntryId: string; ts: string }
+  | {
+      kind: "passCheckpoint";
+      checkpointId: string;
+      languageId: string;
+      correct: number;
+      total: number;
+      waived: boolean;
+      ts: string;
+    };
 
 function dedupeKey(write: QueuedWrite): string {
   switch (write.kind) {
@@ -20,6 +29,8 @@ function dedupeKey(write: QueuedWrite): string {
       // saveWord/removeWord for the same word are mutually exclusive — only the
       // most recent action against a given word needs to survive the queue.
       return `word:${write.dictionaryEntryId}`;
+    case "passCheckpoint":
+      return `passCheckpoint:${write.checkpointId}`;
   }
 }
 

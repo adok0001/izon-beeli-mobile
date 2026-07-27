@@ -1,13 +1,14 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
 import { getCourseTypeColors, getLevelColors } from "@/constants/course-colors";
+import { contentLessons } from "@/lib/course-path";
 import { useCourseLessons } from "@/lib/hooks/use-courses";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Course } from "@/types";
 import { type Href, useRouter } from "expo-router";
-import { memo, useEffect, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Animated, Pressable, Text, View } from "react-native";
 import { animStyle } from "./anim";
@@ -29,7 +30,11 @@ export const CourseCard = memo(function CourseCard({
   const { t } = useTranslation();
   const router = useRouter();
   const { uiLanguage } = useUiLanguageStore();
-  const { data: lessons = [], isLoading: lessonsLoading } = useCourseLessons(course.id);
+  const { data: allRows = [], isLoading: lessonsLoading } = useCourseLessons(course.id);
+  // The catalog carries the block-closing games too; they are not lessons and
+  // a learner can never mark one complete, so counting them would cap this
+  // card's progress below 100%.
+  const lessons = useMemo(() => contentLessons(allRows), [allRows]);
   const completedCount = lessons.filter((l) => completedIds.has(l.id)).length;
   const progressPercent = lessons.length > 0 ? (completedCount / lessons.length) * 100 : 0;
   const [collapsed, setCollapsed] = useState(false);

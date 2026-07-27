@@ -3,7 +3,9 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { SceneAssignSheet, type SceneOption } from "@/components/studio/scene-assign-sheet";
 import { ActionPill, ActiveTogglePill } from "@/components/studio/studio-action-pill";
 import { StudioCard } from "@/components/studio/studio-card";
+import { StudioFilterPills, type StudioFilterOption } from "@/components/studio/studio-filter-pills";
 import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
+import { LESSON_TYPES, type LessonType } from "@/types";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import {
     EducatorLesson,
@@ -13,6 +15,14 @@ import {
 } from "@/lib/hooks/use-educator-panel";
 import { useSaveEducatorLesson } from "@/lib/hooks/educator/use-lesson-save";
 import { deriveScenes } from "@/lib/studio/derive-scenes";
+
+type TypeFilter = "all" | LessonType;
+
+const TYPE_LABEL: Record<LessonType, string> = {
+  lesson: "Lessons",
+  song: "Songs",
+  game: "Games",
+};
 
 /** Scene columns ride the educator list response; older servers omit them. */
 type SceneLesson = EducatorLesson & {
@@ -68,8 +78,10 @@ function LessonRow({
       style={{ backgroundColor: M.bg, borderColor: M.border }}
     >
       <View className="flex-row items-center">
+        {/* A game is a gate, not a recording — the flag matches how it renders
+            on the journey map, so the two read as the same thing. */}
         <View className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-900/30">
-          <IconSymbol name="waveform" size={18} color={M.accent} />
+          <IconSymbol name={lesson.type === "game" ? "flag.fill" : "waveform"} size={18} color={M.accent} />
         </View>
         <View className="flex-1">
           <Text className="text-base font-semibold" style={{ color: M.text }}>{title}</Text>
@@ -165,6 +177,31 @@ export default function EducatorLessonsScreen() {
     [lessons, courseId],
   );
 
+  // Type filter. Offered only when the course actually holds more than one kind
+  // — on the great majority of courses, which are all lessons, the row is noise.
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const typeOptions = useMemo<StudioFilterOption<TypeFilter>[]>(() => {
+    const present = LESSON_TYPES.filter((t) =>
+      courseLessons.some((l) => (l.type ?? "lesson") === t),
+    );
+    if (present.length < 2) return [];
+    return [
+      { id: "all", label: `All (${courseLessons.length})` },
+      ...present.map((t) => ({
+        id: t,
+        label: `${TYPE_LABEL[t]} (${courseLessons.filter((l) => (l.type ?? "lesson") === t).length})`,
+      })),
+    ];
+  }, [courseLessons]);
+
+  const visibleLessons = useMemo(
+    () =>
+      typeFilter === "all"
+        ? courseLessons
+        : courseLessons.filter((l) => (l.type ?? "lesson") === typeFilter),
+    [courseLessons, typeFilter],
+  );
+
   // Scene grouping (journey rendering): the course's scenes, derived from its
   // lessons' scene columns; assignment writes through the atomic lesson save.
   const saveLesson = useSaveEducatorLesson();
@@ -176,13 +213,22 @@ export default function EducatorLessonsScreen() {
 
   // Reordering swaps the two lessons' `order` values directly — courseLessons
   // re-sorts once the mutation invalidates the list, no local drag state needed.
-  const handleMove = (index: number, direction: -1 | 1) => {
+  //
+  // Neighbours are resolved against the WHOLE course, not the rendered rows: a
+  // filtered list's positions are not the course's positions, so moving a game
+  // "up" while filtered to games would otherwise swap it past four lessons and
+  // land it inside the previous block.
+  const handleMove = (lesson: SceneLesson, direction: -1 | 1) => {
+    const index = courseLessons.findIndex((l) => l.id === lesson.id);
     const target = courseLessons[index];
     const neighbor = courseLessons[index + direction];
     if (!target || !neighbor) return;
     updateLesson.mutate({ id: target.id, payload: { order: neighbor.order } });
     updateLesson.mutate({ id: neighbor.id, payload: { order: target.order } });
   };
+
+  /** Position within the course, so the move arrows disable at the real ends. */
+  const positionOf = (lesson: SceneLesson) => courseLessons.findIndex((l) => l.id === lesson.id);
 
   return (
     <>
@@ -223,13 +269,13 @@ export default function EducatorLessonsScreen() {
           />
         </View>
         <FlatList<SceneLesson>
-          data={courseLessons}
+          data={visibleLessons}
           keyExtractor={(lesson) => lesson.id}
           style={{ flex: 1, backgroundColor: M.card }}
           contentContainerStyle={{ paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
-          renderItem={({ item: lesson, index }) => (
+          renderItem={({ item: lesson }) => (
             <View className="px-5 py-1">
               <LessonRow
                 lesson={lesson}
@@ -241,10 +287,10 @@ export default function EducatorLessonsScreen() {
                 }
                 onAssignScene={() => setSceneTarget(lesson)}
                 reordering={reorderMode}
-                onMoveUp={() => handleMove(index, -1)}
-                onMoveDown={() => handleMove(index, 1)}
-                canMoveUp={index > 0}
-                canMoveDown={index < courseLessons.length - 1}
+                onMoveUp={() => handleMove(lesson, -1)}
+                onMoveDown={() => handleMove(lesson, 1)}
+                canMoveUp={positionOf(lesson) > 0}
+                canMoveDown={positionOf(lesson) < courseLessons.length - 1}
                 moving={updateLesson.isPending}
                 onToggleActive={() =>
                   updateLesson.mutate(
@@ -275,11 +321,19 @@ export default function EducatorLessonsScreen() {
                 </View>
               ) : null}
 
+              {typeOptions.length > 0 && (
+                <View className="mt-4 px-5">
+                  <StudioFilterPills options={typeOptions} value={typeFilter} onChange={setTypeFilter} scrollable />
+                </View>
+              )}
+
               {/* Lesson List label */}
               <View className="mt-5 flex-row items-center justify-between px-5">
                 <View>
                   <Text className="mb-1 text-xs font-semibold uppercase tracking-[1.2px]" style={{ color: M.muted }}>
-                    Lessons ({courseLessons.length})
+                    {typeFilter === "all"
+                      ? `Lessons (${courseLessons.length})`
+                      : `${TYPE_LABEL[typeFilter]} (${visibleLessons.length} of ${courseLessons.length})`}
                   </Text>
                   {reorderMode && (
                     <Text className="text-[11px]" style={{ color: M.muted }}>
@@ -315,10 +369,14 @@ export default function EducatorLessonsScreen() {
             <View className="mx-5 mt-4">
               <StudioCard>
                 <Text className="text-center text-sm font-semibold" style={{ color: M.sub }}>
-                  No lessons yet in this course.
+                  {typeFilter === "all"
+                    ? "No lessons yet in this course."
+                    : `No ${TYPE_LABEL[typeFilter].toLowerCase()} in this course.`}
                 </Text>
                 <Text className="mt-1 text-center text-xs" style={{ color: M.muted }}>
-                  Tap &ldquo;New Lesson&rdquo; above to add the first one.
+                  {typeFilter === "all"
+                    ? "Tap “New Lesson” above to add the first one."
+                    : "Clear the filter to see everything in this course."}
                 </Text>
               </StudioCard>
             </View>

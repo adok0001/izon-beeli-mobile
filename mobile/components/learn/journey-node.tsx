@@ -9,19 +9,12 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { ActiveFlag, NodeGlyph } from "@/components/learn/journey-icons";
-import { JOURNEY, type JourneyNode, type NodeStatus } from "@/lib/journey";
+import { JOURNEY, STOP_GRADIENT, type JourneyNode, type NodeStatus } from "@/lib/journey";
 import { localize } from "@/lib/localize";
 import type { UiLanguage } from "@/store/ui-language-store";
 
 const DISC = 64;
 const WRAP = 124;
-
-const DISC_GRADIENT: Record<NodeStatus, [string, string]> = {
-  done: ["#EFC479", "#A66E1C"],
-  active: ["#F6D08A", "#B5781E"],
-  open: ["#F2D9A0", "#C4862A"],
-  locked: ["#EDE6D6", "#D6CAB2"],
-};
 
 const DISC_BORDER: Record<NodeStatus, { color: string; width: number }> = {
   done: { color: JOURNEY.discDoneBorder, width: 2 },
@@ -119,7 +112,7 @@ export const JourneyNodeView = memo(function JourneyNodeView({
         )}
         <Animated.View style={status === "active" ? bob : undefined}>
           <LinearGradient
-            colors={DISC_GRADIENT[status]}
+            colors={STOP_GRADIENT[status]}
             start={{ x: 0.3, y: 0.2 }}
             end={{ x: 1, y: 1 }}
             style={{

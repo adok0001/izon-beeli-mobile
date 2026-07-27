@@ -6,6 +6,7 @@ import { MarkCompleteButton } from "@/components/lesson/mark-complete-button";
 import { LessonMetaPills } from "@/components/lesson/lesson-meta-pills";
 import { LessonListen } from "@/components/lesson/lesson-listen";
 import { LessonObjectives } from "@/components/lesson/lesson-objectives";
+import { LessonGateBlock } from "@/components/lesson/lesson-gate-block";
 import { LessonSummary } from "@/components/lesson/lesson-summary";
 import { LessonWords } from "@/components/lesson/lesson-words";
 import { ShareModal } from "@/components/share/share-modal";
@@ -15,6 +16,8 @@ import { useCompletedLessons, useCompleteLesson, useTrackListen } from "@/lib/ho
 import { useToast } from "@/lib/hooks/use-toast";
 import { useLesson } from "@/lib/hooks/use-courses";
 import { getCourseTypeColors, getSkillMeta } from "@/constants/course-colors";
+import { useCheckpoints } from "@/lib/hooks/use-checkpoints";
+import { blockingCheckpoint, checkpointAfterLesson } from "@/lib/checkpoints";
 import { useNextLesson } from "@/lib/hooks/use-next-lesson";
 import { useLessonArc } from "@/lib/hooks/use-story-arc";
 import { useQueryClient } from "@tanstack/react-query";
@@ -79,6 +82,23 @@ export default function LessonScreen() {
   const inSeasonContext = !!(seasonId || storyCourseId);
   const { data: nextLessonData } = useNextLesson(selectedLanguageId, lesson?.id, { enabled: !inSeasonContext });
   const { chapters: arcChapters } = useLessonArc({ seasonId, storyCourseId });
+  const { checkpoints, orderedLessons, isLoading: gateLoading } = useCheckpoints(selectedLanguageId);
+
+  // Enforce the checkpoint gate here rather than in each surface that links to
+  // a lesson. A dozen entry points push straight to `/lesson/<id>` — the map,
+  // "Jump Back In", Up Next, downloads, classroom assignments, deep links —
+  // and all of them land on this screen. Teaching each one about checkpoints
+  // would leave the next one to be written unguarded.
+  //
+  // This *renders* a blocked state rather than redirecting. An auto-redirect
+  // here bounced against the checkpoint screen's own "continue" navigation and
+  // looped forever whenever the gate data was momentarily stale. A screen the
+  // learner has to tap out of can't loop. Held until the gate data has actually
+  // loaded, so a cold open doesn't flash a block that isn't real.
+  const gatedBy =
+    lesson && !gateLoading
+      ? blockingCheckpoint(lesson.id, orderedLessons, checkpoints)
+      : undefined;
   const showTour = useTourStore((s) => s.showTour);
   const hasSeen = useTourStore((s) => s.hasSeen);
   const reviewPrompt = useReviewPrompt();
@@ -153,6 +173,24 @@ export default function LessonScreen() {
     );
   }
 
+  // Behind an uncleared gate. Rendered as a stop, not a redirect — the learner
+  // taps through to the gate or backs out, and either way nothing bounces.
+  if (gatedBy) {
+    return (
+      <>
+        <Stack.Screen
+          options={{
+            title: gatedBy.kind === "intro" ? t("checkpoint.introNodeLabel") : t("checkpoint.title"),
+            headerStyle: { backgroundColor: M.ink },
+            headerTintColor: M.parchment,
+            headerBackTitle: t("common.back"),
+          }}
+        />
+        <LessonGateBlock gate={gatedBy} />
+      </>
+    );
+  }
+
   const audioSource = lessonAudioSource;
   const isCurrentTrack = currentTrackId === lesson.id;
   const completed = completedLessonIds?.includes(lesson.id) ?? false;
@@ -195,6 +233,14 @@ export default function LessonScreen() {
     : nextLessonData?.lesson && nextLessonData.lesson.id !== lesson.id
       ? nextLessonData.lesson.id
       : undefined;
+
+  // The checkpoint gate belongs to the journey path. Inside a season or story
+  // arc the chapter order governs what comes next, so a path gate there would
+  // send the learner somewhere the arc didn't intend — the gate still stands on
+  // the path itself, where the map enforces it.
+  const pendingCheckpoint = inSeasonContext
+    ? undefined
+    : checkpointAfterLesson(lesson.id, checkpoints);
 
   const handlePlayAudio = async () => {
     if (isCurrentTrack) {
@@ -315,6 +361,7 @@ export default function LessonScreen() {
             proveIt={{ text: proveItText, label: proveItLabel }}
             nextLessonId={resolvedNextLessonId}
             nextLessonParams={nextLessonParams}
+            checkpointId={pendingCheckpoint?.id}
             onDismiss={() => setShowSummary(false)}
           />
         ) : (

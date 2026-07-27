@@ -22,6 +22,19 @@ async function replayOne(write: QueuedWrite, token: string): Promise<void> {
     case "removeWord":
       await apiFetch(`/wordbank/${write.dictionaryEntryId}`, { method: "DELETE", token });
       return;
+    case "passCheckpoint":
+      await apiFetch("/checkpoints", {
+        method: "POST",
+        token,
+        body: JSON.stringify({
+          checkpointId: write.checkpointId,
+          languageId: write.languageId,
+          correct: write.correct,
+          total: write.total,
+          waived: write.waived,
+        }),
+      });
+      return;
   }
 }
 

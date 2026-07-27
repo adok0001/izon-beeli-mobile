@@ -17,15 +17,29 @@ type GetToken = () => Promise<string | null>;
  * resumes via the normal write-queue replay on the next reconnect.
  */
 export async function migrateGuestToAccount(getToken: GetToken): Promise<boolean> {
-  const { completedLessons, wordbankIds } = useGuestProgressStore.getState();
+  const { completedLessons, wordbankIds, passedCheckpoints } = useGuestProgressStore.getState();
 
-  if (completedLessons.length > 0 || wordbankIds.length > 0) {
+  if (completedLessons.length > 0 || wordbankIds.length > 0 || passedCheckpoints.length > 0) {
     const enqueue = useWriteQueueStore.getState().enqueue;
     for (const { lessonId, completedAt } of completedLessons) {
       enqueue({ kind: "completeLesson", lessonId, ts: completedAt });
     }
     for (const dictionaryEntryId of wordbankIds) {
       enqueue({ kind: "saveWord", dictionaryEntryId, ts: new Date().toISOString() });
+    }
+    // Checkpoint clears must replay too, or signing up re-locks every gate the
+    // guest already earned. The score isn't kept locally, so they replay as
+    // waived: the path reopens without retroactively paying XP.
+    for (const { checkpointId, languageId } of passedCheckpoints) {
+      enqueue({
+        kind: "passCheckpoint",
+        checkpointId,
+        languageId,
+        correct: 0,
+        total: 0,
+        waived: true,
+        ts: new Date().toISOString(),
+      });
     }
 
     // The sign-in transition also (re-)arms the connectivity-driven replay

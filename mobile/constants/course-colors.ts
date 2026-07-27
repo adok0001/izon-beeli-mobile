@@ -17,7 +17,10 @@ export interface LevelColors {
   badgeText: string;
 }
 
-export const COURSE_TYPE_COLORS: Record<CourseType, CourseTypeColors> = {
+// Partial by design: the reference/structural course types (grammar, house,
+// work, community, modern_life, script) have no palette of their own and fall
+// through to FALLBACK_COURSE_TYPE_COLORS via getCourseTypeColors below.
+export const COURSE_TYPE_COLORS: Partial<Record<CourseType, CourseTypeColors>> = {
   first_words: {
     headerBg: "bg-amber-50 dark:bg-amber-950",
     badgeBg: "bg-amber-100 dark:bg-amber-900",
