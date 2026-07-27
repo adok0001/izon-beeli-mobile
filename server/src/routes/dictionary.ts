@@ -123,7 +123,7 @@ const VALID_CATEGORIES = [
   "greetings", "numbers", "family", "pronouns", "time", "verbs", "body",
   "market", "occupations", "nouns", "phrases", "food", "possessives",
   "ordinals", "commands", "animals", "phonetics", "money", "proverbs",
-  "adjectives",
+  "adjectives", "ideophones", "adverbs",
 ] as const;
 
 export const dictionaryAdminRouter = new Hono<AuthEnv>();

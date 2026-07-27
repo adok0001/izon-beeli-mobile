@@ -71,6 +71,7 @@ const CATEGORIES = [
   "greetings", "numbers", "family", "pronouns", "time", "verbs", "body",
   "market", "occupations", "nouns", "phrases", "food", "possessives",
   "ordinals", "commands", "animals", "phonetics", "money", "proverbs",
+  "adjectives", "ideophones", "adverbs",
 ] as const;
 
 const fieldCls =
