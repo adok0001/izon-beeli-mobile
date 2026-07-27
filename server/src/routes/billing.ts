@@ -331,3 +331,40 @@ billingAdminRouter.get("/organizations", async (c) => {
 
   return c.json(orgs);
 });
+
+// GET /api/admin/billing/over-capacity — orgs sitting above their seat limit
+//
+// Seat checks on the join paths are check-then-insert, and neon-http has no
+// transactions, so concurrent joins can overshoot a limit by a seat or two.
+// Rather than lock, reconcile: this reports the drift so it can be chased or
+// upsold. Institution orgs (null studentLimit) drop out naturally, since
+// `count > NULL` is NULL.
+billingAdminRouter.get("/over-capacity", async (c) => {
+  const rows = await db
+    .select({
+      organizationId: organizations.id,
+      name: organizations.name,
+      plan: organizationSubscriptions.plan,
+      status: organizationSubscriptions.status,
+      studentLimit: organizationSubscriptions.studentLimit,
+      studentCount: count(classroomMembers.id),
+    })
+    .from(organizations)
+    .innerJoin(
+      organizationSubscriptions,
+      eq(organizationSubscriptions.organizationId, organizations.id)
+    )
+    .leftJoin(users, eq(users.organizationId, organizations.id))
+    .leftJoin(classroomGroups, eq(classroomGroups.createdBy, users.id))
+    .leftJoin(classroomMembers, eq(classroomMembers.groupId, classroomGroups.id))
+    .groupBy(
+      organizations.id,
+      organizations.name,
+      organizationSubscriptions.plan,
+      organizationSubscriptions.status,
+      organizationSubscriptions.studentLimit
+    )
+    .having(sql`count(${classroomMembers.id}) > ${organizationSubscriptions.studentLimit}`);
+
+  return c.json(rows);
+});
