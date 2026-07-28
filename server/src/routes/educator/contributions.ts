@@ -14,6 +14,8 @@ import {
   transcriptSegments,
   users,
 } from "../../db/schema.js";
+import { logger } from "../../lib/logger.js";
+import { mergeSense } from "../../lib/senses.js";
 import { AuthEnv } from "../../middleware/auth.js";
 
 export const educatorContributionsRouter = new Hono<AuthEnv>();
@@ -77,9 +79,12 @@ async function applyEntryContribution(
   }
   if (type === "entry_meaning" && contrib.english) {
     const [entry] = await db.select({ english: dictionaryEntries.english }).from(dictionaryEntries).where(eq(dictionaryEntries.id, entryId)).limit(1);
-    if (entry) {
-      const merged = entry.english.includes(contrib.english) ? entry.english : `${entry.english}; ${contrib.english}`;
+    const merged = entry && mergeSense(entry.english, contrib.english);
+    if (merged) {
       await db.update(dictionaryEntries).set({ english: merged }).where(eq(dictionaryEntries.id, entryId));
+    } else if (entry) {
+      // Already a sense, or the gloss has no room left — see mergeSense.
+      logger.warn(`Contribution for ${entryId}: meaning not merged`);
     }
   }
 }

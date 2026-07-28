@@ -10,6 +10,7 @@ import { adminMiddleware, authMiddleware, type AuthEnv } from "../middleware/aut
 import { updateStreak } from "../lib/update-streak.js";
 import { errMessage } from "../lib/errors.js";
 import { logger } from "../lib/logger.js";
+import { mergeSense } from "../lib/senses.js";
 import {
   sendEmail,
   contributionStatusEmailHtml,
@@ -523,14 +524,18 @@ contributionsRouter.patch("/:id/review", adminMiddleware, async (c) => {
           .from(dictionaryEntries)
           .where(eq(dictionaryEntries.id, existing.dictionaryEntryId))
           .limit(1);
-        if (entry) {
-          const updatedEnglish = entry.english.includes(existing.english)
-            ? entry.english
-            : `${entry.english}; ${existing.english}`;
+        const merged = entry && mergeSense(entry.english, existing.english);
+        if (merged) {
           await db
             .update(dictionaryEntries)
-            .set({ english: updatedEnglish })
+            .set({ english: merged })
             .where(eq(dictionaryEntries.id, existing.dictionaryEntryId));
+        } else if (entry) {
+          // Already a sense, or the gloss has no room left. Approval and XP
+          // still stand — the contributor did the work either way.
+          logger.warn(
+            `Contribution ${existing.id}: meaning not merged into ${existing.dictionaryEntryId}`,
+          );
         }
       }
     }
