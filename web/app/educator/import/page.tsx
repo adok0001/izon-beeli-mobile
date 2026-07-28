@@ -1,6 +1,7 @@
 "use client";
 
 import { apiFetch } from "@/lib/api";
+import { DictionaryEditPanel } from "@/components/studio/dictionary-edit-panel";
 import { LessonImportPanel } from "@/components/studio/lesson-import-panel";
 import { UnifiedImportPanel } from "@/components/studio/unified-import-panel";
 import { cn } from "@/lib/utils";
@@ -15,7 +16,13 @@ interface EducatorMe {
   languages: { id: string; name: string; nativeName: string }[];
 }
 
-type Mode = "content" | "lessons";
+type Mode = "content" | "lessons" | "edit";
+
+const MODE_BLURB: Record<Mode, React.ReactNode> = {
+  content: <>Fill one spreadsheet, upload it here. Rows go to your language’s dictionary, sentence drills, proverbs and quiz bank based on each row’s <code>type</code>.</>,
+  lessons: <>Upload a spreadsheet of transcript lines. Rows sharing a title become one lesson, all placed in the course you pick.</>,
+  edit: <>Export the words you want to correct, fix them in a spreadsheet, and upload the same sheet back. Rows are matched on <code>id</code>, so this can only change what is already there.</>,
+};
 
 export default function EducatorImportPage() {
   const { getToken } = useAuth();
@@ -37,16 +44,12 @@ export default function EducatorImportPage() {
     <div className="max-w-3xl">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-1">Bulk import</h2>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">
-          {mode === "content"
-            ? <>Fill one spreadsheet, upload it here. Rows go to your language’s dictionary, sentence drills, proverbs and quiz bank based on each row’s <code>type</code>.</>
-            : <>Upload a spreadsheet of transcript lines. Rows sharing a title become one lesson, all placed in the course you pick.</>}
-        </p>
+        <p className="text-sm text-neutral-500 dark:text-neutral-400">{MODE_BLURB[mode]}</p>
       </div>
 
       {/* Mode toggle */}
       <div className="mb-6 inline-flex rounded-lg border border-neutral-200 dark:border-neutral-800 p-0.5 bg-neutral-50 dark:bg-neutral-900">
-        {(["content", "lessons"] as const).map((m) => (
+        {(["content", "lessons", "edit"] as const).map((m) => (
           <button
             key={m}
             onClick={() => setMode(m)}
@@ -79,9 +82,9 @@ export default function EducatorImportPage() {
       )}
 
       {activeLanguage ? (
-        mode === "content"
-          ? <UnifiedImportPanel key={activeLanguage} languageId={activeLanguage} />
-          : <LessonImportPanel key={activeLanguage} languageId={activeLanguage} />
+        mode === "content" ? <UnifiedImportPanel key={activeLanguage} languageId={activeLanguage} />
+        : mode === "lessons" ? <LessonImportPanel key={activeLanguage} languageId={activeLanguage} />
+        : <DictionaryEditPanel key={activeLanguage} languageId={activeLanguage} />
       ) : (
         <p className="text-sm text-neutral-500 dark:text-neutral-400">No language assigned to your account yet.</p>
       )}

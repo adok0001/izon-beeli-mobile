@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/api";
-import type { UnifiedImportResult } from "@/lib/hooks/educator/use-unified-import";
+import type { ImportResult } from "@/lib/import-result";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -23,7 +23,7 @@ export function useLessonImport() {
   return useMutation({
     mutationFn: async ({ languageId, courseId, entries, dryRun }: LessonImportInput) => {
       const token = await getToken();
-      return apiFetch<UnifiedImportResult>("/import/lessons", {
+      return apiFetch<ImportResult>("/import/lessons", {
         method: "POST",
         body: JSON.stringify({ languageId, courseId, entries, dryRun }),
         token: token ?? undefined,

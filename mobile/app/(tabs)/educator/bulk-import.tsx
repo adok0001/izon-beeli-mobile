@@ -9,9 +9,13 @@ import { useStudioAccess } from "@/components/studio/studio-gate";
 import { GhostButton, PrimaryButton } from "@/components/studio/studio-form";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { friendlyError } from "@/lib/api";
+import { ALL_CATEGORIES, CATEGORY_LABELS } from "@/lib/dictionary";
+import { EDIT_FIELD_GUIDE, parseEditCsv } from "@/lib/edit-import";
 import { useEducatorCourses } from "@/lib/hooks/educator/use-courses";
+import { useDictionaryEdit, useDictionaryExport } from "@/lib/hooks/educator/use-dictionary-edit";
 import { useLessonImport } from "@/lib/hooks/educator/use-lesson-import";
-import { useUnifiedImport, type UnifiedImportResult } from "@/lib/hooks/educator/use-unified-import";
+import { type ImportResult } from "@/lib/import-result";
+import { useUnifiedImport } from "@/lib/hooks/educator/use-unified-import";
 import { useToast } from "@/lib/hooks/use-toast";
 import { LESSON_LINE_GUIDE, LESSON_META_GUIDE, LESSON_TEMPLATE_CSV, parseLessonFile } from "@/lib/lesson-import";
 import { localize } from "@/lib/localize";
@@ -26,23 +30,81 @@ import { useMemo, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type Mode = "content" | "lessons";
+type Mode = "content" | "lessons" | "edit";
 
-const MODE_META: Record<Mode, { unit: string; sampleFile: string; template: string; guide: { label: string; uses: string }[] }> = {
+interface ModeMeta {
+  label: string;
+  unit: string;
+  /** Verb on the confirm button — inserts import, edits apply. */
+  confirmLabel: string;
+  title: string;
+  blurb: string;
+  buttonLabel: string;
+  /** True when the picker accepts several files (one lesson per file). */
+  multiple: boolean;
+  emptyFile: { title: string; body: string };
+  /** Omitted in edit mode: the sheet comes from an export, not from a blank template. */
+  sample?: { fileName: string; csv: string };
+  guide: { label: string; uses: string }[];
+  /** Footer note explaining what happens to the uploaded rows, per role. */
+  footer: (isAdmin: boolean) => string;
+}
+
+/**
+ * Everything that differs between the three modes, as data. The screen reads
+ * `meta.*` instead of branching on `mode` at a dozen render sites — the shape
+ * that made adding a third mode a matter of one more entry here.
+ */
+const MODE_META: Record<Mode, ModeMeta> = {
   content: {
+    label: "Content",
     unit: "rows",
-    sampleFile: "beeli-content-template.csv",
-    template: UNIFIED_TEMPLATE_CSV,
+    confirmLabel: "Import",
+    title: "How the sheet works",
+    blurb:
+      "Each row’s type column decides where it lands. Fill only the columns that type uses. This mode only adds — to correct a word that already exists, use Edit.",
+    buttonLabel: "Choose CSV file",
+    multiple: false,
+    emptyFile: { title: "Nothing to import", body: "No rows found — every row needs a `type`." },
+    sample: { fileName: "beeli-content-template.csv", csv: UNIFIED_TEMPLATE_CSV },
     guide: UNIFIED_FIELD_GUIDE.map((g) => ({ label: g.type, uses: g.uses })),
+    footer: (isAdmin) => isAdmin
+      ? "As an admin, imported rows publish live."
+      : "Imported rows are staged for review before going live.",
   },
   lessons: {
+    label: "Lessons",
     unit: "lessons",
-    sampleFile: "beeli-lesson-template.csv",
-    template: LESSON_TEMPLATE_CSV,
+    confirmLabel: "Import",
+    title: "How the sheet works",
+    blurb:
+      "One file is one full lesson: a metadata block, a --- line, then the transcript grid. Pick several files to import several lessons into the course above.",
+    buttonLabel: "Choose CSV file(s)",
+    multiple: true,
+    emptyFile: { title: "Nothing to import", body: "No lesson found in that file." },
+    sample: { fileName: "beeli-lesson-template.csv", csv: LESSON_TEMPLATE_CSV },
     guide: [
       ...LESSON_META_GUIDE.map((g) => ({ label: g.key, uses: g.uses })),
       ...LESSON_LINE_GUIDE.map((g) => ({ label: g.column, uses: `line — ${g.uses}` })),
     ],
+    footer: (isAdmin) => isAdmin
+      ? "As an admin, imported lessons publish live."
+      : "Imported lessons are staged for review before going live.",
+  },
+  edit: {
+    label: "Edit",
+    unit: "words",
+    confirmLabel: "Apply",
+    title: "2 · How editing works",
+    blurb:
+      "Export the words you want to fix, change them in a spreadsheet, and upload the same sheet back. Rows are matched on id — an id that isn’t already in this language is an error, so this mode can never create a word by accident.",
+    buttonLabel: "Upload edited CSV",
+    multiple: false,
+    emptyFile: { title: "Nothing to change", body: "No rows found — every row needs its `id` column." },
+    guide: EDIT_FIELD_GUIDE,
+    footer: (isAdmin) => isAdmin
+      ? "As an admin, your corrections stay live — a published word keeps its status."
+      : "Editing a published word sends it back for review, so it leaves the app until an admin approves it.",
   },
 };
 
@@ -52,12 +114,16 @@ export default function BulkImportScreen() {
   const languages = useLanguages();
   const unifiedImport = useUnifiedImport();
   const lessonImport = useLessonImport();
+  const dictionaryEdit = useDictionaryEdit();
+  const dictionaryExport = useDictionaryExport();
   const { data: allCourses } = useEducatorCourses();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
 
-  // Deep-link from a course's lesson list preselects lessons mode + that course.
+  // Deep-link from a course's lesson list preselects a mode (+ that course).
   const params = useLocalSearchParams<{ mode?: string; courseId?: string; languageId?: string }>();
-  const [mode, setMode] = useState<Mode>(params.mode === "lessons" ? "lessons" : "content");
+  const [mode, setMode] = useState<Mode>(
+    params.mode && params.mode in MODE_META ? (params.mode as Mode) : "content",
+  );
   const meta = MODE_META[mode];
 
   const allowedLanguages = useMemo(() => {
@@ -77,41 +143,52 @@ export default function BulkImportScreen() {
 
   const [fileName, setFileName] = useState<string | null>(null);
   const [entries, setEntries] = useState<unknown[] | null>(null);
-  const [result, setResult] = useState<UnifiedImportResult | null>(null);
+  const [result, setResult] = useState<ImportResult | null>(null);
   const [showTemplate, setShowTemplate] = useState(false);
 
-  const reset = () => { setFileName(null); setEntries(null); setResult(null); };
-  const busy = unifiedImport.isPending || lessonImport.isPending;
+  const [exportCategory, setExportCategory] = useState("");
 
-  const submit = (payload: unknown[], dryRun: boolean) =>
-    mode === "content"
-      ? unifiedImport.mutateAsync({ languageId: activeLanguageId, entries: payload as Record<string, string>[], dryRun })
-      : lessonImport.mutateAsync({ languageId: activeLanguageId, courseId: activeCourseId, entries: payload, dryRun });
+  const reset = () => { setFileName(null); setEntries(null); setResult(null); };
+  const busy = unifiedImport.isPending || lessonImport.isPending || dictionaryEdit.isPending;
+
+  const submit = (payload: unknown[], dryRun: boolean) => {
+    const rows = payload as Record<string, string>[];
+    switch (mode) {
+      case "content":
+        return unifiedImport.mutateAsync({ languageId: activeLanguageId, entries: rows, dryRun });
+      case "edit":
+        return dictionaryEdit.mutateAsync({ languageId: activeLanguageId, entries: rows, dryRun });
+      case "lessons":
+        return lessonImport.mutateAsync({ languageId: activeLanguageId, courseId: activeCourseId, entries: payload, dryRun });
+    }
+  };
+
+  /** Parse the picked file(s) into the payload this mode submits. */
+  const parseAssets = async (assets: { uri: string; name: string }[]): Promise<unknown[]> => {
+    if (mode === "lessons") {
+      return Promise.all(assets.map((a) => new File(a.uri).text().then(parseLessonFile)));
+    }
+    const text = await new File(assets[0].uri).text();
+    return mode === "edit" ? parseEditCsv(text) : parseUnifiedCsv(text);
+  };
 
   const pickFile = async () => {
     try {
-      // Content is one flat CSV; lessons are one-file-per-lesson, so allow many.
       const picked = await DocumentPicker.getDocumentAsync({
         type: ["text/csv", "text/comma-separated-values", "application/vnd.ms-excel", "*/*"],
         copyToCacheDirectory: true,
-        multiple: mode === "lessons",
+        multiple: meta.multiple,
       });
       const assets = picked.canceled ? [] : picked.assets;
       if (assets.length === 0) return;
       reset();
 
-      let payload: unknown[];
-      if (mode === "content") {
-        payload = parseUnifiedCsv(await new File(assets[0].uri).text());
-        if (payload.length === 0) {
-          toastError("Nothing to import", "No rows found — every row needs a `type`.");
-          return;
-        }
-        setFileName(assets[0].name);
-      } else {
-        payload = await Promise.all(assets.map((a) => new File(a.uri).text().then(parseLessonFile)));
-        setFileName(assets.length === 1 ? assets[0].name : `${assets.length} files`);
+      const payload = await parseAssets(assets);
+      if (payload.length === 0) {
+        toastError(meta.emptyFile.title, meta.emptyFile.body);
+        return;
       }
+      setFileName(assets.length > 1 ? `${assets.length} files` : assets[0].name);
       setEntries(payload);
       setResult(await submit(payload, true));
     } catch (err) {
@@ -119,13 +196,34 @@ export default function BulkImportScreen() {
     }
   };
 
+  const exportCsv = async () => {
+    const data = await dictionaryExport.mutateAsync({
+      languageId: activeLanguageId,
+      category: exportCategory || undefined,
+    });
+    if (data.truncated) {
+      toastError(
+        "Export cut short",
+        `${data.totalCount} words match — you can upload ${data.cap} at a time, so only the first ${data.rowCount} are in this file. Pick a category to narrow it.`,
+      );
+    }
+    return data.csv;
+  };
+
   const confirm = async () => {
     if (!entries) return;
     try {
       const res = await submit(entries, false);
       setResult(res);
-      const where = res.resultStatus === "in_review" ? "staged for review" : "published live";
-      toastSuccess("Import complete", `Imported ${res.inserted} ${meta.unit} — ${where}.`);
+      if (res.mode === "edit") {
+        const pending = res.unpublished
+          ? ` ${res.unpublished} went back for review.`
+          : "";
+        toastSuccess("Changes applied", `Updated ${res.updated} ${meta.unit}.${pending}`);
+      } else {
+        const where = res.resultStatus === "in_review" ? "staged for review" : "published live";
+        toastSuccess("Import complete", `Imported ${res.inserted} ${meta.unit} — ${where}.`);
+      }
       setEntries(null);
     } catch (err) {
       toastError("Import failed", friendlyError(err));
@@ -151,7 +249,7 @@ export default function BulkImportScreen() {
         showsVerticalScrollIndicator={false}
       >
         <StudioFilterPills
-          options={[{ id: "content", label: "Content" }, { id: "lessons", label: "Lessons" }]}
+          options={(Object.keys(MODE_META) as Mode[]).map((m) => ({ id: m, label: MODE_META[m].label }))}
           value={mode}
           onChange={(m) => { setMode(m as Mode); reset(); setShowTemplate(false); }}
         />
@@ -185,14 +283,42 @@ export default function BulkImportScreen() {
           )
         )}
 
+        {/* Step 1 of edit mode: get the sheet to correct. */}
+        {mode === "edit" && (
+          <StudioCard accentColor={M.accent}>
+            <Text style={{ fontSize: 14, fontWeight: "800", color: M.text, marginBottom: 6 }}>1 · Export the words to fix</Text>
+            <Text style={{ fontSize: 12, color: M.sub, marginBottom: 12, lineHeight: 18 }}>
+              Pick a category — an export bigger than one upload can carry is cut short, and the whole
+              dictionary is far bigger than that.
+            </Text>
+            <View style={{ marginBottom: 12 }}>
+              <StudioDropdown
+                label="Category"
+                icon="tag"
+                title="Filter the export"
+                value={exportCategory}
+                options={[
+                  { id: "", label: "All categories" },
+                  ...ALL_CATEGORIES.map((c) => ({ id: c, label: CATEGORY_LABELS[c] })),
+                ]}
+                onChange={setExportCategory}
+              />
+            </View>
+            <ShareFileButton
+              label="Export CSV"
+              fileName={`beeli-${activeLanguageId}-${exportCategory || "dictionary"}.csv`}
+              contents={exportCsv}
+              busy={dictionaryExport.isPending}
+              message="Beeli dictionary export"
+              onError={(e) => toastError("Couldn’t export", friendlyError(e))}
+            />
+          </StudioCard>
+        )}
+
         {/* Format guide */}
         <StudioCard>
-          <Text style={{ fontSize: 14, fontWeight: "800", color: M.text, marginBottom: 6 }}>How the sheet works</Text>
-          <Text style={{ fontSize: 12, color: M.sub, marginBottom: 12, lineHeight: 18 }}>
-            {mode === "content"
-              ? "Each row’s type column decides where it lands. Fill only the columns that type uses. Re-uploading updates rows instead of duplicating them."
-              : "One file is one full lesson: a metadata block, a --- line, then the transcript grid. Pick several files to import several lessons into the course above."}
-          </Text>
+          <Text style={{ fontSize: 14, fontWeight: "800", color: M.text, marginBottom: 6 }}>{meta.title}</Text>
+          <Text style={{ fontSize: 12, color: M.sub, marginBottom: 12, lineHeight: 18 }}>{meta.blurb}</Text>
           {meta.guide.map((g) => (
             <View key={g.label} style={{ marginBottom: 8 }}>
               <Text style={{ fontSize: 12, fontWeight: "800", color: M.accent }}>{g.label}</Text>
@@ -200,32 +326,36 @@ export default function BulkImportScreen() {
             </View>
           ))}
 
-          <View style={{ flexDirection: "row", gap: 10 }}>
-            <View style={{ flex: 1 }}>
-              <GhostButton label={showTemplate ? "Hide template" : "Show template"} onPress={() => setShowTemplate((s) => !s)} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <ShareFileButton
-                label="Download sample"
-                fileName={meta.sampleFile}
-                contents={meta.template}
-                message="Beeli import template"
-                onError={(e) => toastError("Couldn’t export sample", friendlyError(e))}
-              />
-            </View>
-          </View>
-          {showTemplate && (
-            <View style={{ marginTop: 10, borderRadius: 10, backgroundColor: M.bg, borderWidth: 1, borderColor: M.border, padding: 10 }}>
-              <Text selectable style={{ fontSize: 11, color: M.sub, fontFamily: "Menlo" }}>
-                {meta.template.trim()}
-              </Text>
-            </View>
+          {meta.sample && (
+            <>
+              <View style={{ flexDirection: "row", gap: 10 }}>
+                <View style={{ flex: 1 }}>
+                  <GhostButton label={showTemplate ? "Hide template" : "Show template"} onPress={() => setShowTemplate((s) => !s)} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <ShareFileButton
+                    label="Download sample"
+                    fileName={meta.sample.fileName}
+                    contents={meta.sample.csv}
+                    message="Beeli import template"
+                    onError={(e) => toastError("Couldn’t export sample", friendlyError(e))}
+                  />
+                </View>
+              </View>
+              {showTemplate && (
+                <View style={{ marginTop: 10, borderRadius: 10, backgroundColor: M.bg, borderWidth: 1, borderColor: M.border, padding: 10 }}>
+                  <Text selectable style={{ fontSize: 11, color: M.sub, fontFamily: "Menlo" }}>
+                    {meta.sample.csv.trim()}
+                  </Text>
+                </View>
+              )}
+            </>
           )}
         </StudioCard>
 
         {/* Pick file */}
         <PrimaryButton
-          label={busy ? "Working…" : fileName ? "Choose different file(s)" : mode === "lessons" ? "Choose CSV file(s)" : "Choose CSV file"}
+          label={busy ? "Working…" : fileName ? "Choose different file(s)" : meta.buttonLabel}
           onPress={() => void pickFile()}
           disabled={busy || needsCourse}
         />
@@ -241,6 +371,7 @@ export default function BulkImportScreen() {
             result={result}
             unit={meta.unit}
             busy={busy}
+            confirmLabel={meta.confirmLabel}
             onConfirm={entries ? () => void confirm() : undefined}
             onCancel={reset}
           />
@@ -249,9 +380,7 @@ export default function BulkImportScreen() {
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 4 }}>
           <IconSymbol name="info.circle" size={13} color={M.muted} />
           <Text style={{ flex: 1, fontSize: 11, color: M.muted, lineHeight: 16 }}>
-            {currentUser?.isAdmin
-              ? `As an admin, imported ${meta.unit} publish live.`
-              : `Imported ${meta.unit} are staged for review before going live.`}
+            {meta.footer(currentUser?.isAdmin ?? false)}
           </Text>
         </View>
       </ScrollView>

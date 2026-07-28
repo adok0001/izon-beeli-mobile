@@ -1,68 +1,14 @@
 /**
- * Quote-aware CSV parser shared by the Studio bulk-import panels.
+ * Quote-aware CSV parsing for the Studio bulk-import panels.
  *
- * Handles the cases the old naive `split(",")` in the contribute page could not:
- * double-quoted fields, commas inside quotes (e.g. `"Ama, fun kọn bo!"`), escaped
- * quotes (`""`), and CRLF line endings. Returns one object per data row, keyed by
- * the (trimmed) header names, so callers can map columns to entry fields.
+ * This used to be a byte-identical copy of mobile's parser. It isn't any more:
+ * the web bundle already pulls `@mobile/lib/unified-import` in through
+ * `@mobile/lib/edit-import`, so a second copy shipped the same code twice and
+ * meant every parser fix (the BOM strip, most recently) had to be written
+ * twice. Re-exported here so the existing `@/lib/parse-csv` call sites are
+ * untouched.
  */
-export function parseCsv(text: string): Record<string, string>[] {
-  const rows = parseRows(text);
-  if (rows.length === 0) return [];
-  const header = rows[0].map((h) => h.trim());
-  return rows
-    .slice(1)
-    .filter((r) => r.some((v) => v.trim() !== "")) // drop blank lines
-    .map((r) => {
-      const obj: Record<string, string> = {};
-      header.forEach((h, i) => {
-        obj[h] = (r[i] ?? "").trim();
-      });
-      return obj;
-    });
-}
-
-/** Tokenize CSV text into a matrix of raw string cells. */
-function parseRows(text: string): string[][] {
-  const src = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let field = "";
-  let inQuotes = false;
-
-  for (let i = 0; i < src.length; i++) {
-    const ch = src[i];
-    if (inQuotes) {
-      if (ch === '"') {
-        if (src[i + 1] === '"') {
-          field += '"';
-          i++;
-        } else {
-          inQuotes = false;
-        }
-      } else {
-        field += ch;
-      }
-    } else if (ch === '"') {
-      inQuotes = true;
-    } else if (ch === ",") {
-      row.push(field);
-      field = "";
-    } else if (ch === "\n") {
-      row.push(field);
-      rows.push(row);
-      row = [];
-      field = "";
-    } else {
-      field += ch;
-    }
-  }
-  if (field !== "" || row.length > 0) {
-    row.push(field);
-    rows.push(row);
-  }
-  return rows;
-}
+export { parseCsv } from "@mobile/lib/unified-import";
 
 /**
  * Derive a stable, collision-resistant slug from a word — used to synthesize a

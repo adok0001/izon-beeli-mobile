@@ -2,17 +2,7 @@ import { apiFetch } from "@/lib/api";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-/** Shape returned by the server `/import/unified` endpoint (dry-run and real run). */
-export interface UnifiedImportResult {
-  dryRun?: boolean;
-  total?: number;
-  valid?: number;
-  inserted?: number;
-  skipped?: number;
-  resultStatus?: "published" | "in_review";
-  errors: { id: string; reason: string }[];
-  preview?: Record<string, unknown>[];
-}
+import type { ImportResult } from "@/lib/import-result";
 
 export interface UnifiedImportInput {
   languageId: string;
@@ -32,7 +22,7 @@ export function useUnifiedImport() {
   return useMutation({
     mutationFn: async ({ languageId, entries, dryRun }: UnifiedImportInput) => {
       const token = await getToken();
-      return apiFetch<UnifiedImportResult>("/import/unified", {
+      return apiFetch<ImportResult>("/import/unified", {
         method: "POST",
         body: JSON.stringify({ languageId, entries, dryRun }),
         token: token ?? undefined,

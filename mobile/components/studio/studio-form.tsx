@@ -109,14 +109,20 @@ export function PrimaryButton({
   );
 }
 
-export function GhostButton({ label, onPress }: Readonly<{ label: string; onPress: () => void }>) {
+export function GhostButton({
+  label,
+  onPress,
+  disabled,
+}: Readonly<{ label: string; onPress: () => void; disabled?: boolean }>) {
   const M = useMuseumTheme();
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
       style={{
         borderRadius: 12, paddingHorizontal: 16, paddingVertical: 11,
         backgroundColor: M.bg, borderWidth: 1, borderColor: M.border,
+        opacity: disabled ? 0.5 : 1,
       }}
       className="active:opacity-70"
     >

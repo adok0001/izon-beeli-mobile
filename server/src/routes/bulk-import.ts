@@ -1,8 +1,7 @@
-import { Hono, type Context } from "hono";
+import { Hono } from "hono";
 import { sql, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { isDictionaryCategory } from "../lib/dictionary-categories.js";
-import { parseJson } from "../lib/http.js";
 import { slugify } from "../lib/slug.js";
 import { db } from "../db/index.js";
 import {
@@ -18,6 +17,8 @@ import {
 import { buildLessonGroup, insertLessonGroups, type LessonGroupInput } from "./lesson-import.js";
 import { AuthEnv, authMiddleware, reviewerMiddleware } from "../middleware/auth.js";
 import { parseMap, project, type TranslationMap } from "../lib/translations.js";
+import { readImportRequest } from "./import-request.js";
+import { bulkEditRouter } from "./bulk-edit.js";
 
 /**
  * Registry-driven bulk importer. One generic `POST /import/:type` handler feeds a
@@ -110,6 +111,18 @@ async function inBatches<T>(items: T[], size: number, fn: (batch: T[]) => Promis
 const BATCH = 500;
 
 // ─── dictionary ───────────────────────────────────────────────────────────────
+/**
+ * Keep a column the CSV can't carry instead of nulling it on conflict.
+ *
+ * Drizzle emits `default` (→ NULL) for an `undefined` value, so a plain
+ * `excluded.<col>` in the SET list wipes every column the unified sheet has no
+ * header for. `coalesce` falls back to the row already in the table, which
+ * costs no extra round trip and — unlike reading the rows first — has no
+ * read-then-write race.
+ */
+const keepIfAbsent = (column: string) =>
+  sql.raw(`coalesce(excluded.${column}, dictionary_entries.${column})`);
+
 const dictionaryImporter: ImporterConfig = {
   validate: (e, i) => {
     if (!str(e.id)) return `Row ${i}: missing id (dictionary entries require an explicit id)`;
@@ -149,10 +162,11 @@ const dictionaryImporter: ImporterConfig = {
           exampleTranslation: sql`excluded.example_translation`,
           exampleTranslations: sql`excluded.example_translations`,
           audioUrl: sql`excluded.audio_url`,
-          synonyms: sql`excluded.synonyms`,
-          antonyms: sql`excluded.antonyms`,
-          semanticDomain: sql`excluded.semantic_domain`,
-          dialectalVariants: sql`excluded.dialectal_variants`,
+          // No unified-CSV column carries these — keep what's already stored.
+          synonyms: keepIfAbsent("synonyms"),
+          antonyms: keepIfAbsent("antonyms"),
+          semanticDomain: keepIfAbsent("semantic_domain"),
+          dialectalVariants: keepIfAbsent("dialectal_variants"),
         },
       }).returning({ id: dictionaryEntries.id }).then((r) => r.length)
     );
@@ -427,50 +441,9 @@ export const bulkImportRouter = new Hono<AuthEnv>();
 bulkImportRouter.use("*", authMiddleware);
 bulkImportRouter.use("*", reviewerMiddleware);
 
-type ImportRequest = {
-  languageId: string;
-  entries: unknown[];
-  dryRun: boolean;
-  isAdmin: boolean;
-  userId: string;
-  /** Only the lessons route uses this — the course the sheet's lessons land in. */
-  courseId?: string;
-};
-
-/**
- * Shared front door for both import routes: parses the body and enforces the
- * security-relevant contract (a valid languageId, a non-empty batch, the
- * reviewer's per-language scope, and the role batch cap) in one place so the two
- * handlers can't drift. Returns a ready `Response` on rejection.
- */
-async function readImportRequest(c: Context<AuthEnv>): Promise<ImportRequest | Response> {
-  const isAdmin = c.get("isAdmin");
-  const reviewerLanguages = c.get("reviewerLanguages");
-  const userId = c.get("userId");
-
-  const body = await parseJson<{ languageId: string; entries: unknown[]; dryRun?: boolean; courseId?: string }>(c);
-  if (!body.languageId || typeof body.languageId !== "string") {
-    return c.json({ error: "languageId is required" }, 400);
-  }
-  if (!Array.isArray(body.entries) || body.entries.length === 0) {
-    return c.json({ error: "entries must be a non-empty array" }, 400);
-  }
-  if (!isAdmin && !reviewerLanguages.includes(body.languageId)) {
-    return c.json({ error: "Forbidden: not assigned to this language" }, 403);
-  }
-  const cap = isAdmin ? 5000 : 100;
-  if (body.entries.length > cap) {
-    return c.json({ error: `Maximum ${cap} entries per import batch for your role` }, 400);
-  }
-  return {
-    languageId: body.languageId,
-    entries: body.entries,
-    dryRun: body.dryRun ?? false,
-    isAdmin,
-    userId,
-    courseId: typeof body.courseId === "string" ? body.courseId : undefined,
-  };
-}
+// Edit mode (`GET /export`, `POST /edit`). Registered before the "/:type"
+// catch-all below so the param route can't swallow "/edit".
+bulkImportRouter.route("/", bulkEditRouter);
 
 // POST /api/import/lessons   body: { languageId, courseId, entries[], dryRun? }
 // One course (chosen in the UI); each entry is one full lesson — `{ meta, segments }`

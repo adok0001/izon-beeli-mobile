@@ -71,9 +71,16 @@ export function parseUnifiedCsv(text: string): Record<string, string>[] {
   return parseCsv(text).filter((row) => (row.type ?? "").trim() !== "");
 }
 
-/** Tokenize CSV text into a matrix of raw string cells. */
+/**
+ * Tokenize CSV text into a matrix of raw string cells.
+ *
+ * The leading U+FEFF is stripped before anything else: Excel writes a BOM on
+ * Save-As, which is exactly what an educator does to a downloaded export, and
+ * without this the first header reads as "﻿id" so every row fails on a
+ * missing id.
+ */
 function tokenize(text: string): string[][] {
-  const src = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const src = text.replace(/^﻿/, "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
   const rows: string[][] = [];
   let row: string[] = [];
   let field = "";

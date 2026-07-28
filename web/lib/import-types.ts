@@ -1,16 +1,9 @@
 import { slugify } from "./parse-csv";
 
-/** Shape returned by the server import endpoints (`/import/:type` and `/import/unified`). */
-export interface ImportResult {
-  dryRun?: boolean;
-  total?: number;
-  valid?: number;
-  inserted?: number;
-  skipped?: number;
-  resultStatus?: "published" | "in_review";
-  errors: { id: string; reason: string }[];
-  preview?: Record<string, unknown>[];
-}
+// The result shape is defined once, in `@mobile/lib/import-result`, and
+// re-exported here so the existing `@/lib/import-types` call sites are
+// untouched. It used to be a hand-maintained copy on each side.
+export type { ImportResult } from "@mobile/lib/import-result";
 
 /**
  * Per-content-type configuration for the shared Studio <ImportPanel />.
