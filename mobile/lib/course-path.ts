@@ -12,13 +12,25 @@ import type { Course, CourseType, Lesson } from "@/types";
 
 /**
  * Reference tracks (Grammar & Structure, Sounds & Script, dictionary-scale
- * drill shelves) sit OFF the numbered journey path — they support every
- * Movement rather than being a step on it. Two signals mark one: a reference
- * courseType, or the order >= 100 convention set by the journey migration.
+ * drill shelves, the Old Stories and Songs shelves) sit OFF the numbered
+ * journey path — they support every Movement rather than being a step on it.
  * They stay reachable via the "Explore All Courses" rail below the map.
+ *
+ * `order` runs in bands, and the threshold is what separates journey from shelf:
+ *
+ *   1–10    the ten Movements, Arrival → The Keeper — the whole journey
+ *   20, 21  the Old Stories and Songs shelves — feeder content folded into the
+ *           Movements, not steps of their own (mobile/docs/izon-course-plan.md)
+ *   23      the dictionary drill shelf
+ *   100+    reference tracks from the original journey migration
+ *
+ * The threshold was 100, which knew only "Movement" and "reference". That put
+ * `course-izon-dc` — 343 auto-generated "Dictionary A–Z" rows at order 23 with
+ * courseType `communicative` — ON the path, where it contributed 78% of the
+ * journey map's nodes. 20 puts everything above the Movement band on a shelf.
  */
 const REFERENCE_COURSE_TYPES = new Set<CourseType>(["grammar", "sound_script", "script"]);
-const REFERENCE_ORDER_THRESHOLD = 100;
+const REFERENCE_ORDER_THRESHOLD = 20;
 
 export function isReferenceCourse(course: Pick<Course, "courseType" | "order">): boolean {
   if (course.courseType && REFERENCE_COURSE_TYPES.has(course.courseType)) return true;
