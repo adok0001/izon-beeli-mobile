@@ -1,4 +1,5 @@
 import { eq, inArray } from "drizzle-orm";
+import type { BatchItem } from "drizzle-orm/batch";
 import { parseJson } from "../../lib/http.js";
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
@@ -371,7 +372,7 @@ educatorStoryArcsRouter.put("/story-arcs/:id/cast", async (c) => {
 // PUT /educator/story-arcs/:id/save — atomic save of the whole season in one
 // round-trip: arc metadata + cast + chapters. Everything is validated up front
 // (neon-http has no interactive transactions — a mid-way validation failure
-// can't roll back), then the writes run inside db.transaction so a save is
+// can't roll back), then the writes run inside db.batch so a save is
 // all-or-nothing rather than the old three-call sequence that could half-apply.
 educatorStoryArcsRouter.put("/story-arcs/:id/save", async (c) => {
   const isAdmin = c.get("isAdmin");
@@ -437,8 +438,13 @@ educatorStoryArcsRouter.put("/story-arcs/:id/save", async (c) => {
   }
 
   // ── Writes — atomic ───────────────────────────────────────────────────────
-  await db.transaction(async (tx) => {
-    await tx
+  //
+  // `db.batch()`, not `db.transaction()`: the neon-http driver throws on the
+  // latter before running anything, so this save previously failed outright.
+  // Batch sends the statements as one request and Neon runs them in a single
+  // transaction. Every read and validation happens above, so pure writes here.
+  const ops: BatchItem<"pg">[] = [
+    db
       .update(storyArcs)
       .set({
         title: body.arc.title.trim(),
@@ -448,11 +454,13 @@ educatorStoryArcsRouter.put("/story-arcs/:id/save", async (c) => {
         updatedAt: new Date(),
         updatedBy: c.get("userId"),
       })
-      .where(eq(storyArcs.id, id));
+      .where(eq(storyArcs.id, id)),
+    db.delete(storyArcCast).where(eq(storyArcCast.storyArcId, id)),
+  ];
 
-    await tx.delete(storyArcCast).where(eq(storyArcCast.storyArcId, id));
-    if (body.cast.length > 0) {
-      await tx.insert(storyArcCast).values(
+  if (body.cast.length > 0) {
+    ops.push(
+      db.insert(storyArcCast).values(
         body.cast.map((member, i) => ({
           storyArcId: id,
           castId: member.castId.trim(),
@@ -461,13 +469,15 @@ educatorStoryArcsRouter.put("/story-arcs/:id/save", async (c) => {
           hue: member.hue,
           order: i,
         }))
-      );
-    }
+      )
+    );
+  }
 
-    if (writeChapters) {
-      await tx.delete(storyChapters).where(eq(storyChapters.storyArcId, id));
-      if (body.chapters.length > 0) {
-        await tx.insert(storyChapters).values(
+  if (writeChapters) {
+    ops.push(db.delete(storyChapters).where(eq(storyChapters.storyArcId, id)));
+    if (body.chapters.length > 0) {
+      ops.push(
+        db.insert(storyChapters).values(
           body.chapters.map((ch, i) => ({
             id: `story-ch-${randomUUID()}`,
             storyArcId: id,
@@ -477,10 +487,13 @@ educatorStoryArcsRouter.put("/story-arcs/:id/save", async (c) => {
             narrativeOutro: ch.narrativeOutro.trim(),
             order: ch.order ?? i + 1,
           }))
-        );
-      }
+        )
+      );
     }
-  });
+  }
+
+  // Non-empty by construction — the arc update and cast delete are always present.
+  await db.batch(ops as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
 
   return c.json({ success: true, chaptersWritten: writeChapters });
 });

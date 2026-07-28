@@ -1,6 +1,7 @@
 import { put } from "@vercel/blob";
 import { parseJson } from "../../lib/http.js";
 import { and, eq, inArray, sql } from "drizzle-orm";
+import type { BatchItem } from "drizzle-orm/batch";
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
 import { db } from "../../db/index.js";
@@ -717,13 +718,21 @@ educatorLessonsRouter.put("/lessons/:id/save", async (c) => {
   if (payload.sceneIllustrationUrl !== undefined) updates.sceneIllustrationUrl = payload.sceneIllustrationUrl?.trim() || null;
 
   // ── One transaction: all writes land, or none do ──
-  await db.transaction(async (tx) => {
-    await tx.update(lessons).set(updates).where(eq(lessons.id, id));
+  //
+  // `db.transaction()` is NOT available on the neon-http driver — it throws
+  // "No transactions support in neon-http driver" before running a statement,
+  // so every save through this path used to fail outright. `db.batch()` is the
+  // supported equivalent: the statements are sent as one request and Neon runs
+  // them in a single transaction. It cannot read-then-branch mid-transaction,
+  // which is fine here — every read and every validation happens above, and
+  // this block is pure writes.
+  const ops: BatchItem<"pg">[] = [db.update(lessons).set(updates).where(eq(lessons.id, id))];
 
-    if (hasSegments) {
-      await tx.delete(transcriptSegments).where(eq(transcriptSegments.lessonId, id));
-      if (segments.length > 0) {
-        await tx.insert(transcriptSegments).values(
+  if (hasSegments) {
+    ops.push(db.delete(transcriptSegments).where(eq(transcriptSegments.lessonId, id)));
+    if (segments.length > 0) {
+      ops.push(
+        db.insert(transcriptSegments).values(
           segments.map((seg, i) => ({
             lessonId: id,
             text: seg.text.trim(),
@@ -734,28 +743,32 @@ educatorLessonsRouter.put("/lessons/:id/save", async (c) => {
             speaker: seg.speaker?.trim() || null,
             roman: seg.roman?.trim() || null,
           }))
-        );
-      }
+        )
+      );
     }
+  }
 
-    if (hasAttachments) {
-      await tx.delete(lessonCulturalContent).where(eq(lessonCulturalContent.lessonId, id));
-      if (attachments.length > 0) {
-        await tx.insert(lessonCulturalContent).values(
+  if (hasAttachments) {
+    ops.push(db.delete(lessonCulturalContent).where(eq(lessonCulturalContent.lessonId, id)));
+    if (attachments.length > 0) {
+      ops.push(
+        db.insert(lessonCulturalContent).values(
           attachments.map((a, index) => ({
             lessonId: id,
             culturalContentId: a.culturalContentId,
             order: index,
             afterSegmentIndex: a.afterSegmentIndex,
           }))
-        );
-      }
+        )
+      );
     }
+  }
 
-    if (hasChecks) {
-      await tx.delete(lessonChecks).where(eq(lessonChecks.lessonId, id));
-      if (checks.length > 0) {
-        await tx.insert(lessonChecks).values(
+  if (hasChecks) {
+    ops.push(db.delete(lessonChecks).where(eq(lessonChecks.lessonId, id)));
+    if (checks.length > 0) {
+      ops.push(
+        db.insert(lessonChecks).values(
           checks.map((ch, index) => ({
             id: `check-${randomUUID()}`,
             lessonId: id,
@@ -768,10 +781,13 @@ educatorLessonsRouter.put("/lessons/:id/save", async (c) => {
             order: index,
             isActive: ch.isActive ?? true,
           }))
-        );
-      }
+        )
+      );
     }
-  });
+  }
+
+  // Non-empty by construction — the lesson update above is always present.
+  await db.batch(ops as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
 
   return c.json({
     success: true,

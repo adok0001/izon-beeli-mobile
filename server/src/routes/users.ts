@@ -1,5 +1,6 @@
 import { createClerkClient, verifyToken } from "@clerk/backend";
 import { and, asc, count, desc, eq, gt, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
+import type { BatchItem } from "drizzle-orm/batch";
 import { Hono } from "hono";
 import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
@@ -408,57 +409,77 @@ export async function purgeExpiredDeletedUsers(): Promise<number> {
 
   const expiredIds = expired.map((u) => u.id);
 
-  await db.transaction(async (tx) => {
-    await tx.delete(matchmakingQueue).where(inArray(matchmakingQueue.userId, expiredIds));
-    await tx.delete(gameSessionPlayers).where(inArray(gameSessionPlayers.userId, expiredIds));
+  // The neon-http driver has no `db.transaction()` — it throws before running a
+  // statement, so this cron previously failed on every run. `db.batch()` is the
+  // supported equivalent (one request, one Neon-side transaction), but it cannot
+  // read-then-branch mid-batch. So the three lookups that decide *what* to
+  // delete are hoisted above it, and only the deletes are batched.
+  //
+  // Hoisting is safe here in a way it would not be for an editor save: rows can
+  // only leave these sets between the read and the batch (nothing re-attaches
+  // itself to an account already past its 30-day deletion window), and deleting
+  // an already-deleted row is a no-op. A partial failure is also recoverable —
+  // the job re-runs daily against the same criteria.
+  const [ownedSessions, userLessonContribIds, userFeedItemIds] = await Promise.all([
+    db.select({ id: gameSessions.id }).from(gameSessions)
+      .where(inArray(gameSessions.createdBy, expiredIds)),
+    db.select({ id: lessonContributions.id }).from(lessonContributions)
+      .where(inArray(lessonContributions.userId, expiredIds)),
+    db.select({ id: feedItems.id }).from(feedItems)
+      .where(inArray(feedItems.userId, expiredIds)),
+  ]);
 
-    const ownedSessions = await tx
-      .select({ id: gameSessions.id })
-      .from(gameSessions)
-      .where(inArray(gameSessions.createdBy, expiredIds));
-    if (ownedSessions.length > 0) {
-      const sessionIds = ownedSessions.map((s) => s.id);
-      await tx.delete(gameSessionPlayers).where(inArray(gameSessionPlayers.sessionId, sessionIds));
-      await tx.delete(gameSessions).where(inArray(gameSessions.id, sessionIds));
-    }
+  const sessionIds = ownedSessions.map((s) => s.id);
+  const contribIds = userLessonContribIds.map((r) => r.id);
+  const feedIds = userFeedItemIds.map((r) => r.id);
 
-    await tx.delete(classroomAssignments).where(inArray(classroomAssignments.assignedBy, expiredIds));
-    await tx.delete(classroomMembers).where(inArray(classroomMembers.userId, expiredIds));
-    await tx.delete(classroomGroups).where(inArray(classroomGroups.createdBy, expiredIds));
-    await tx.delete(quizResults).where(inArray(quizResults.userId, expiredIds));
+  const ops: BatchItem<"pg">[] = [
+    db.delete(matchmakingQueue).where(inArray(matchmakingQueue.userId, expiredIds)),
+    db.delete(gameSessionPlayers).where(inArray(gameSessionPlayers.userId, expiredIds)),
+  ];
 
-    const userLessonContribIds = await tx
-      .select({ id: lessonContributions.id })
-      .from(lessonContributions)
-      .where(inArray(lessonContributions.userId, expiredIds));
-    if (userLessonContribIds.length > 0) {
-      const ids = userLessonContribIds.map((r) => r.id);
-      await tx.delete(lessonContributionSegments).where(
-        inArray(lessonContributionSegments.lessonContributionId, ids)
-      );
-    }
-    await tx.delete(lessonContributions).where(inArray(lessonContributions.userId, expiredIds));
-    await tx.delete(contributions).where(inArray(contributions.userId, expiredIds));
-    await tx.delete(wordBank).where(inArray(wordBank.userId, expiredIds));
-    await tx.delete(dailyChallenges).where(inArray(dailyChallenges.userId, expiredIds));
-    await tx.delete(likes).where(inArray(likes.userId, expiredIds));
-    await tx.delete(comments).where(inArray(comments.userId, expiredIds));
+  if (sessionIds.length > 0) {
+    ops.push(db.delete(gameSessionPlayers).where(inArray(gameSessionPlayers.sessionId, sessionIds)));
+    ops.push(db.delete(gameSessions).where(inArray(gameSessions.id, sessionIds)));
+  }
 
-    const userFeedItemIds = await tx
-      .select({ id: feedItems.id })
-      .from(feedItems)
-      .where(inArray(feedItems.userId, expiredIds));
-    if (userFeedItemIds.length > 0) {
-      const ids = userFeedItemIds.map((r) => r.id);
-      await tx.delete(likes).where(inArray(likes.feedItemId, ids));
-      await tx.delete(comments).where(inArray(comments.feedItemId, ids));
-    }
-    await tx.delete(feedItems).where(inArray(feedItems.userId, expiredIds));
-    await tx.delete(journalEntries).where(inArray(journalEntries.userId, expiredIds));
-    await tx.delete(userProgress).where(inArray(userProgress.userId, expiredIds));
-    await tx.delete(feedback).where(inArray(feedback.userId, expiredIds));
-    await tx.delete(users).where(inArray(users.id, expiredIds));
-  });
+  ops.push(
+    db.delete(classroomAssignments).where(inArray(classroomAssignments.assignedBy, expiredIds)),
+    db.delete(classroomMembers).where(inArray(classroomMembers.userId, expiredIds)),
+    db.delete(classroomGroups).where(inArray(classroomGroups.createdBy, expiredIds)),
+    db.delete(quizResults).where(inArray(quizResults.userId, expiredIds))
+  );
+
+  if (contribIds.length > 0) {
+    ops.push(
+      db.delete(lessonContributionSegments)
+        .where(inArray(lessonContributionSegments.lessonContributionId, contribIds))
+    );
+  }
+
+  ops.push(
+    db.delete(lessonContributions).where(inArray(lessonContributions.userId, expiredIds)),
+    db.delete(contributions).where(inArray(contributions.userId, expiredIds)),
+    db.delete(wordBank).where(inArray(wordBank.userId, expiredIds)),
+    db.delete(dailyChallenges).where(inArray(dailyChallenges.userId, expiredIds)),
+    db.delete(likes).where(inArray(likes.userId, expiredIds)),
+    db.delete(comments).where(inArray(comments.userId, expiredIds))
+  );
+
+  if (feedIds.length > 0) {
+    ops.push(db.delete(likes).where(inArray(likes.feedItemId, feedIds)));
+    ops.push(db.delete(comments).where(inArray(comments.feedItemId, feedIds)));
+  }
+
+  ops.push(
+    db.delete(feedItems).where(inArray(feedItems.userId, expiredIds)),
+    db.delete(journalEntries).where(inArray(journalEntries.userId, expiredIds)),
+    db.delete(userProgress).where(inArray(userProgress.userId, expiredIds)),
+    db.delete(feedback).where(inArray(feedback.userId, expiredIds)),
+    db.delete(users).where(inArray(users.id, expiredIds))
+  );
+
+  await db.batch(ops as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
 
   // Delete Clerk accounts after DB transaction succeeds
   const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY! });
