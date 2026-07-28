@@ -53,6 +53,35 @@ contentSnapshotRouter.get("/snapshot", async (c) => {
     lessons: lessonsBundle,
   };
 
-  const version = createHash("sha1").update(JSON.stringify(payload)).digest("hex").slice(0, 16);
+  const serialized = JSON.stringify(payload);
+  const version = createHash("sha1").update(serialized).digest("hex").slice(0, 16);
+  const etag = `"${version}"`;
+
+  // The response already told clients to revalidate; until now it gave them
+  // nothing to revalidate *with*, so every "has anything changed?" poll paid a
+  // full multi-table read, a full serialization, and a full transfer to answer
+  // "no" — which is the answer roughly six times in seven.
+  c.header("ETag", etag);
+  c.header("Cache-Control", "public, max-age=0, must-revalidate");
+
+  if (etagMatches(c.req.header("If-None-Match"), etag)) {
+    return c.body(null, 304);
+  }
+
   return c.json({ version, ...payload });
 });
+
+/**
+ * RFC 9110 If-None-Match: a comma-separated list, `*` matches anything, and a
+ * weak validator (`W/"…"`) compares equal to its strong form for this purpose —
+ * we only ever emit strong tags, but proxies may weaken them in transit.
+ */
+function etagMatches(header: string | undefined, etag: string): boolean {
+  if (!header) return false;
+  const strip = (t: string) => t.trim().replace(/^W\//, "");
+  const target = strip(etag);
+  return header.split(",").some((t) => {
+    const candidate = strip(t);
+    return candidate === "*" || candidate === target;
+  });
+}
