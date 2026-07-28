@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { contributions, dictionaryEntries, users, wordBank } from "../db/schema.js";
+import { CATEGORY_ERROR, isDictionaryCategory } from "../lib/dictionary-categories.js";
 import { withTranslations } from "../lib/dictionary-translations.js";
 import { parseMap, project, toMap } from "../lib/translations.js";
 import { LexicalParseError, parseLexicalExtras } from "../lib/lexical-extras.js";
@@ -119,13 +120,6 @@ dictionaryRouter.get("/", optionalAuthMiddleware, async (c) => {
 
 // ── Admin CRUD ─────────────────────────────────────────────────────────────────
 
-const VALID_CATEGORIES = [
-  "greetings", "numbers", "family", "pronouns", "time", "verbs", "body",
-  "market", "occupations", "nouns", "phrases", "food", "possessives",
-  "ordinals", "commands", "animals", "phonetics", "money", "proverbs",
-  "adjectives", "ideophones", "adverbs",
-] as const;
-
 export const dictionaryAdminRouter = new Hono<AuthEnv>();
 dictionaryAdminRouter.use("*", authMiddleware);
 dictionaryAdminRouter.use("*", adminMiddleware);
@@ -234,8 +228,8 @@ dictionaryAdminRouter.post("/", async (c) => {
   if (!languageId?.trim() || !word?.trim() || !english?.trim()) {
     return c.json({ error: "languageId, word, and english are required" }, 400);
   }
-  if (!VALID_CATEGORIES.includes(category as (typeof VALID_CATEGORIES)[number])) {
-    return c.json({ error: `category must be one of: ${VALID_CATEGORIES.join(", ")}` }, 400);
+  if (!isDictionaryCategory(category)) {
+    return c.json({ error: CATEGORY_ERROR }, 400);
   }
 
   let audioUrl = fields.audioUrl?.trim() || null;
@@ -277,7 +271,7 @@ dictionaryAdminRouter.post("/", async (c) => {
       word: word.trim(),
       english: english.trim(),
       translations: translations ?? null,
-      category: category as (typeof VALID_CATEGORIES)[number],
+      category,
       pronunciation: fields.pronunciation?.trim() || null,
       example: fields.example?.trim() || null,
       exampleTranslation: exampleTranslations?.en ?? null,
@@ -314,8 +308,8 @@ dictionaryAdminRouter.patch("/:id", async (c) => {
     fields = await parseJson<Record<string, string>>(c);
   }
 
-  if (fields.category && !VALID_CATEGORIES.includes(fields.category as (typeof VALID_CATEGORIES)[number])) {
-    return c.json({ error: `category must be one of: ${VALID_CATEGORIES.join(", ")}` }, 400);
+  if (fields.category && !isDictionaryCategory(fields.category)) {
+    return c.json({ error: CATEGORY_ERROR }, 400);
   }
 
   const updates: Partial<typeof dictionaryEntries.$inferInsert> = {};

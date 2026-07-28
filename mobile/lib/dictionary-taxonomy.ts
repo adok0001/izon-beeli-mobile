@@ -10,12 +10,15 @@ import { localize } from "@/lib/localize";
 import type { DictionaryCategory, DictionaryEntry } from "@/lib/dictionary";
 
 // ── Part of speech ───────────────────────────────────────────────────────────
-export type PartOfSpeech = "noun" | "verb" | "adjective" | "pronoun" | "numeral" | "phrase";
+export type PartOfSpeech =
+  | "noun" | "verb" | "adjective" | "adverb" | "ideophone" | "pronoun" | "numeral" | "phrase";
 
 const POS_BY_CATEGORY: Partial<Record<DictionaryCategory, PartOfSpeech>> = {
   verbs: "verb",
   commands: "verb",
   adjectives: "adjective",
+  adverbs: "adverb",
+  ideophones: "ideophone",
   pronouns: "pronoun",
   possessives: "pronoun",
   numbers: "numeral",
@@ -25,12 +28,16 @@ const POS_BY_CATEGORY: Partial<Record<DictionaryCategory, PartOfSpeech>> = {
   proverbs: "phrase",
 };
 
-export const POS_ORDER: PartOfSpeech[] = ["noun", "verb", "adjective", "pronoun", "numeral", "phrase"];
+export const POS_ORDER: PartOfSpeech[] = [
+  "noun", "verb", "adjective", "adverb", "ideophone", "pronoun", "numeral", "phrase",
+];
 
 export const POS_LABELS: Record<PartOfSpeech, string> = {
   noun: "Noun",
   verb: "Verb",
   adjective: "Adjective",
+  adverb: "Adverb",
+  ideophone: "Ideophone",
   pronoun: "Pronoun",
   numeral: "Numeral",
   phrase: "Phrase",
@@ -41,6 +48,8 @@ export const POS_ABBR: Record<PartOfSpeech, string> = {
   noun: "n.",
   verb: "v.",
   adjective: "adj.",
+  adverb: "adv.",
+  ideophone: "ideo.",
   pronoun: "pron.",
   numeral: "num.",
   phrase: "phr.",
@@ -79,8 +88,12 @@ const LEVEL_BY_CATEGORY: Record<DictionaryCategory, CefrLevel> = {
   phrases: "B1",
   money: "B1",
   adjectives: "B1",
+  adverbs: "B1",
   proverbs: "B2",
   phonetics: "B2",
+  // Sound-symbolic words carry a lot of nuance and rarely map onto a single
+  // English gloss, so they sit alongside the other figurative material.
+  ideophones: "B2",
 };
 
 export function deriveLevel(entry: DictionaryEntry): CefrLevel {

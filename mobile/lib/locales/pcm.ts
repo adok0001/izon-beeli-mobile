@@ -1233,6 +1233,8 @@ export const pcm = {
       money: "Money & Currency",
       proverbs: "Proverbs & Sayings",
       adjectives: "Adjectives & Descriptors",
+      ideophones: "Sound Words",
+      adverbs: "Adverbs & Modifiers",
     },
     contribute: "Contribute",
     contributeTitle: "Add word",

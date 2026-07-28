@@ -17,7 +17,7 @@ import { computeCoverage } from "../../lib/dictionary-coverage.js";
 import { withTranslations } from "../../lib/dictionary-translations.js";
 import { LexicalParseError, parseLexicalExtras } from "../../lib/lexical-extras.js";
 import { recordMediaAsset } from "../upload.js";
-import { VALID_CATEGORIES, parseMap, project, toMap } from "./_shared.js";
+import { CATEGORY_ERROR, isDictionaryCategory, parseMap, project, toMap } from "./_shared.js";
 
 export const educatorDictionaryRouter = new Hono<AuthEnv>();
 
@@ -120,8 +120,8 @@ educatorDictionaryRouter.post("/dictionary", async (c) => {
   if (!languageId?.trim() || !word?.trim() || !english?.trim()) {
     return c.json({ error: "languageId, word, and english are required" }, 400);
   }
-  if (!VALID_CATEGORIES.includes(category as (typeof VALID_CATEGORIES)[number])) {
-    return c.json({ error: `category must be one of: ${VALID_CATEGORIES.join(", ")}` }, 400);
+  if (!isDictionaryCategory(category)) {
+    return c.json({ error: CATEGORY_ERROR }, 400);
   }
   if (!isAdmin && !reviewerLanguages.includes(languageId)) {
     return c.json({ error: "Forbidden: not assigned to this language" }, 403);
@@ -171,7 +171,7 @@ educatorDictionaryRouter.post("/dictionary", async (c) => {
       word: word.trim(),
       english: english.trim(),
       translations: translations ?? null,
-      category: category as (typeof VALID_CATEGORIES)[number],
+      category,
       pronunciation: fields.pronunciation?.trim() || null,
       example: fields.example?.trim() || null,
       exampleTranslation: exampleTranslations?.en ?? null,
@@ -230,8 +230,8 @@ educatorDictionaryRouter.patch("/dictionary/:id", async (c) => {
     fields = await parseJson<Record<string, string>>(c);
   }
 
-  if (fields.category && !VALID_CATEGORIES.includes(fields.category as (typeof VALID_CATEGORIES)[number])) {
-    return c.json({ error: `category must be one of: ${VALID_CATEGORIES.join(", ")}` }, 400);
+  if (fields.category && !isDictionaryCategory(fields.category)) {
+    return c.json({ error: CATEGORY_ERROR }, 400);
   }
   if (fields.status && !PATCHABLE_STATUSES.includes(fields.status as (typeof PATCHABLE_STATUSES)[number])) {
     // "published" only happens through the guarded POST /content/dictionary_entries/:id/publish endpoint.

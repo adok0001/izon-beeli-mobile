@@ -1,6 +1,7 @@
 "use client";
 
 import { apiFetch } from "@/lib/api";
+import { ALL_CATEGORIES, type DictionaryCategory } from "@mobile/lib/dictionary";
 import { LocalizedTextInput, serializeLocalizedText, type LocalizedText } from "@/components/ui/localized-text-input";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { useAuth } from "@clerk/nextjs";
@@ -8,15 +9,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Music, BookOpen, Star, X, Plus } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-
-const VALID_CATEGORIES = [
-  "greetings", "numbers", "family", "pronouns", "time", "verbs", "body",
-  "market", "occupations", "nouns", "phrases", "food", "possessives",
-  "ordinals", "commands", "animals", "phonetics", "money", "proverbs",
-  "adjectives", "ideophones", "adverbs",
-] as const;
-
-type DictCategory = typeof VALID_CATEGORIES[number];
 
 interface DictEntry { id: string; word: string; english: string; pronunciation: string | null }
 interface Proverb { id: string; text: string; translation: string }
@@ -68,7 +60,7 @@ export default function DailyContentAdminPage() {
   const [activeTab, setActiveTab] = useState<Tab>("wotd");
   const [search, setSearch] = useState("");
   const [showAddWord, setShowAddWord] = useState(false);
-  const [newWord, setNewWord] = useState({ word: "", translations: {} as LocalizedText, category: "nouns" as DictCategory, pronunciation: "", example: "", exampleTranslations: {} as LocalizedText });
+  const [newWord, setNewWord] = useState({ word: "", translations: {} as LocalizedText, category: "nouns" as DictionaryCategory, pronunciation: "", example: "", exampleTranslations: {} as LocalizedText });
   async function token() { return (await getToken()) ?? undefined; }
 
   // ---- Admin status ----
@@ -242,8 +234,8 @@ export default function DailyContentAdminPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-neutral-500 mb-1">{t("admin.dailyContent.wotd.fieldCategory")}</label>
-                    <select className={fieldCls} value={newWord.category} onChange={(e) => setNewWord((p) => ({ ...p, category: e.target.value as DictCategory }))}>
-                      {VALID_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                    <select className={fieldCls} value={newWord.category} onChange={(e) => setNewWord((p) => ({ ...p, category: e.target.value as DictionaryCategory }))}>
+                      {ALL_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
                   <div>

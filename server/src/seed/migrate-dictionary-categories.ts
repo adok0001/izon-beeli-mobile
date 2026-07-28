@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { neon } from "@neondatabase/serverless";
+import { DICTIONARY_CATEGORIES } from "../lib/dictionary-categories.js";
 
 /**
  * One-off data fix: dictionary_entries created via the old mobile educator panel
@@ -8,8 +9,13 @@ import { neon } from "@neondatabase/serverless";
  * and the now-corrected educator route). Those rows mis-render and fail to save.
  *
  * This maps the unambiguous singular values to their canonical plural equivalents.
- * Values with no canonical equivalent (adverb, color, nature, place, other) are
- * left untouched and reported, since the right target is a content decision.
+ * Values with no canonical equivalent (color, place, other) are left untouched and
+ * reported, since the right target is a content decision.
+ *
+ * Note: "adverbs" has since been added to the canonical set, so any rows still
+ * sitting on the singular "adverb" now have an obvious target. Adding
+ * `adverb: "adverbs"` to MAPPING below is a one-line change — left out on purpose
+ * so re-categorising live rows stays an explicit, authorized decision.
  *
  * Idempotent: re-running is a no-op once categories are already plural.
  *
@@ -19,14 +25,7 @@ import { neon } from "@neondatabase/serverless";
 
 const sql = neon(process.env.DATABASE_URL!);
 
-// Canonical plural categories — must match VALID_CATEGORIES in the routes and
-// DICTIONARY_CATEGORY_VALUES in the mobile app.
-const CANONICAL = new Set([
-  "greetings", "numbers", "family", "pronouns", "time", "verbs", "body",
-  "market", "occupations", "nouns", "phrases", "food", "possessives",
-  "ordinals", "commands", "animals", "phonetics", "money", "proverbs",
-  "adjectives",
-]);
+const CANONICAL: ReadonlySet<string> = new Set(DICTIONARY_CATEGORIES);
 
 // Unambiguous singular -> plural mappings.
 const MAPPING: Record<string, string> = {

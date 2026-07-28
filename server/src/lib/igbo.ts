@@ -6,6 +6,7 @@
  * client historically sent `Authorization: Bearer`, which the upstream rejects
  * with a 400 — Igbo lookups had never actually returned results.
  */
+import type { DictionaryCategory } from "./dictionary-categories.js";
 
 const IGBO_API_BASE = "https://igboapi.com/api/v1";
 const CACHE_TTL_MS = 10 * 60 * 1000;
@@ -103,7 +104,7 @@ export interface IgboApiWord {
  * Igbo API word classes → Beeli dictionary categories. Mirrors
  * mobile/lib/hooks/use-igbo-search.ts; unmapped classes fall back to "nouns".
  */
-const WORD_CLASS_TO_CATEGORY: Record<string, string> = {
+const WORD_CLASS_TO_CATEGORY: Record<string, DictionaryCategory> = {
   // Verified against live API payloads. Unmapped classes fall back to "nouns".
   NNC: "nouns",          // noun, common
   NNO: "nouns",
@@ -111,7 +112,9 @@ const WORD_CLASS_TO_CATEGORY: Record<string, string> = {
   NM: "nouns",           // proper name, e.g. Nwabụ̄ēzè
   ND: "adjectives",      // noun descriptor, e.g. nnukwu "large"
   ADJ: "adjectives",
-  ADV: "adjectives",     // no adverb category; descriptors is the closest fit
+  // "adverbs" now exists as a category, but remapping ADV would recategorise
+  // previously imported rows inconsistently — left as a deliberate decision.
+  ADV: "adjectives",
   AV: "verbs",           // active verb, e.g. riju "to eat to fill"
   AVM: "verbs",
   MV: "verbs",           // main verb, e.g. bù ibù "be big"

@@ -19,14 +19,6 @@ import { Stack } from "expo-router";
 import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
-const VALID_CATEGORIES = [
-  "greetings", "numbers", "family", "pronouns", "time", "verbs", "body",
-  "market", "occupations", "nouns", "phrases", "food", "possessives",
-  "ordinals", "commands", "animals", "phonetics", "money", "proverbs",
-  "adjectives", "ideophones", "adverbs",
-] as const;
-
-type DictCategory = typeof VALID_CATEGORIES[number];
 import {
   ActivityIndicator,
   Alert,
@@ -36,7 +28,11 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import type { DictionaryEntry } from "@/lib/dictionary";
+import {
+  ALL_CATEGORIES,
+  type DictionaryCategory,
+  type DictionaryEntry,
+} from "@/lib/dictionary";
 import type { LocalizedText, Proverb, Lesson } from "@/types";
 
 type Tab = "wotd" | "potm" | "sotw";
@@ -44,7 +40,7 @@ type Tab = "wotd" | "potm" | "sotw";
 interface NewWordForm {
   word: string;
   english: LocalizedText;
-  category: DictCategory;
+  category: DictionaryCategory;
   pronunciation: string;
   example: string;
   exampleTranslation: LocalizedText;
@@ -360,7 +356,7 @@ export default function DailyContentAdminScreen() {
 
                   <FormField label={t("admin.dailyContent.wotd.fieldCategory")}>
                     <StudioFilterPills
-                      options={VALID_CATEGORIES.map((cat) => ({ id: cat, label: cat }))}
+                      options={ALL_CATEGORIES.map((cat) => ({ id: cat, label: cat }))}
                       value={newWord.category}
                       onChange={(cat) => setNewWord((p) => ({ ...p, category: cat }))}
                       scrollable

@@ -1233,6 +1233,8 @@ export const pt = {
       money: "Dinheiro e Moeda",
       proverbs: "Provérbios e Ditados",
       adjectives: "Adjetivos e Qualificativos",
+      ideophones: "Ideofones e Palavras Expressivas",
+      adverbs: "Advérbios e Modificadores",
     },
     contribute: "Contribuir",
     contributeTitle: "Adicionar uma palavra",

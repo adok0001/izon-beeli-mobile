@@ -1233,6 +1233,8 @@ export const ar = {
       money: "المال والعملة",
       proverbs: "الأمثال والأقوال",
       adjectives: "الصفات والأوصاف",
+      ideophones: "الكلمات التعبيرية الصوتية",
+      adverbs: "الظروف والمُحدِّدات",
     },
     contribute: "ساهم",
     contributeTitle: "أضف كلمة",

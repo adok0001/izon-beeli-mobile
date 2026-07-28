@@ -1,6 +1,7 @@
 "use client";
 
 import { apiFetch } from "@/lib/api";
+import { ALL_CATEGORIES } from "@mobile/lib/dictionary";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -50,13 +51,6 @@ interface PendingLesson {
   submitterName?: string | null;
   createdAt: string;
 }
-
-const CATEGORIES = [
-  "greetings", "numbers", "family", "pronouns", "time", "verbs", "body",
-  "market", "occupations", "nouns", "phrases", "food", "possessives",
-  "ordinals", "commands", "animals", "phonetics", "money", "proverbs",
-  "adjectives", "ideophones", "adverbs",
-] as const;
 
 function TypeBadge({ type }: Readonly<{ type: string }>) {
   const styles: Record<string, string> = {
@@ -169,7 +163,7 @@ function ContributionCard({
             <div>
               <label className="text-xs font-medium text-neutral-500 mb-1 block">Category</label>
               <select className={fieldCls} value={draft.category} onChange={(e) => setDraft((d) => ({ ...d, category: e.target.value }))}>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                {ALL_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
           </div>

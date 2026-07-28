@@ -9,7 +9,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { BookText, CheckCircle2, Edit2, ImageIcon, Mic, Plus, Search, Trash2, Volume2, X, XCircle } from "lucide-react";
 import { useLanguages } from "@/lib/hooks/use-languages";
-import { splitList, type DialectalVariant } from "@mobile/lib/dictionary";
+import { ALL_CATEGORIES, splitList, type DialectalVariant } from "@mobile/lib/dictionary";
 import Image from "next/image";
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -50,13 +50,6 @@ function appendEntryFields(fd: FormData, data: EntryForm): void {
   });
 }
 
-
-const CATEGORIES = [
-  "greetings", "numbers", "family", "pronouns", "time", "verbs", "body",
-  "market", "occupations", "nouns", "phrases", "food", "possessives",
-  "ordinals", "commands", "animals", "phonetics", "money", "proverbs",
-  "adjectives", "ideophones", "adverbs",
-] as const;
 
 const fieldCls =
   "w-full rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm px-3 py-2 text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40";
@@ -176,7 +169,7 @@ function EntryModal({
                 {t("admin.dictionary.fieldCategory")} *
               </label>
               <select className={fieldCls} value={form.category} onChange={set("category")}>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                {ALL_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
           </div>
@@ -346,7 +339,7 @@ function ContribEditModal({
             <div>
               <label className="text-xs font-medium text-neutral-500 mb-1 block">Category</label>
               <select className={fieldCls} value={draft.category ?? "nouns"} onChange={set("category")}>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                {ALL_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
           </div>

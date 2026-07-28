@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { Hono } from "hono";
+import { isDictionaryCategory } from "../lib/dictionary-categories.js";
 import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { dictionaryEntries } from "../db/schema.js";
@@ -8,13 +9,6 @@ import { adminMiddleware, authMiddleware } from "../middleware/auth.js";
 export const adminImportRouter = new Hono();
 
 adminImportRouter.use("*", authMiddleware, adminMiddleware);
-
-const VALID_CATEGORIES = new Set([
-  "greetings", "numbers", "family", "pronouns", "time", "verbs", "body",
-  "market", "occupations", "nouns", "phrases", "food", "possessives",
-  "ordinals", "commands", "animals", "phonetics", "money", "proverbs", "adjectives",
-  "ideophones", "adverbs",
-]);
 
 interface ImportEntry {
   id: string;
@@ -35,7 +29,7 @@ function validateEntry(entry: ImportEntry, index: number): string | null {
   if (!entry.id || typeof entry.id !== "string") return `Row ${index}: missing id`;
   if (!entry.word || typeof entry.word !== "string") return `Row ${index}: missing word`;
   if (!entry.english || typeof entry.english !== "string") return `Row ${index}: missing english`;
-  if (!VALID_CATEGORIES.has(entry.category)) return `Row ${index} (${entry.id}): invalid category "${entry.category}"`;
+  if (!isDictionaryCategory(entry.category)) return `Row ${index} (${entry.id}): invalid category "${entry.category}"`;
   return null;
 }
 

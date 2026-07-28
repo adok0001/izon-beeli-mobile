@@ -45,6 +45,19 @@ export interface DictionaryEntry {
   externalSource?: "igbo-api";
 }
 
+/**
+ * The canonical dictionary categories, stored on `dictionary_entries.category`.
+ *
+ * This is the single source of truth for every client — mobile imports it via
+ * `@/lib/dictionary`, the Next.js Studio via `@mobile/lib/dictionary`. Never
+ * redeclare this list in a screen; import it (or `ALL_CATEGORIES`) instead.
+ *
+ * The server keeps its own copy in `server/src/lib/dictionary-categories.ts`
+ * because it deploys from `server/` alone and cannot reach `mobile/` at build
+ * time. That copy is not free-floating: `dictionary-categories.test.ts` reads
+ * this file from disk and fails if the two lists diverge, so adding a category
+ * here without adding it there breaks the server test suite.
+ */
 export const DICTIONARY_CATEGORY_VALUES = [
   "greetings",
   "numbers",
@@ -66,6 +79,8 @@ export const DICTIONARY_CATEGORY_VALUES = [
   "money",
   "proverbs",
   "adjectives",
+  "ideophones",
+  "adverbs",
 ] as const;
 
 export type DictionaryCategory = (typeof DICTIONARY_CATEGORY_VALUES)[number];
@@ -91,6 +106,8 @@ export const CATEGORY_LABELS: Record<DictionaryCategory, string> = {
   money: "Money & Currency",
   proverbs: "Proverbs & Sayings",
   adjectives: "Adjectives & Descriptors",
+  ideophones: "Ideophones & Sound Words",
+  adverbs: "Adverbs & Modifiers",
 };
 
 /**
@@ -121,6 +138,8 @@ export const CATEGORY_ICONS = {
   money: "banknote",
   proverbs: "text.quote",
   adjectives: "tag",
+  ideophones: "waveform",
+  adverbs: "bolt.fill",
 } as const satisfies Record<DictionaryCategory, string>;
 
 export function searchDictionary(query: string, entries: DictionaryEntry[]): DictionaryEntry[] {
@@ -185,4 +204,5 @@ export function parseSenses(raw: string): Sense[] {
     });
 }
 
-export const ALL_CATEGORIES: DictionaryCategory[] = Object.keys(CATEGORY_LABELS) as DictionaryCategory[];
+/** Mutable copy of {@link DICTIONARY_CATEGORY_VALUES} for `.map`/`.filter` call sites. */
+export const ALL_CATEGORIES: DictionaryCategory[] = [...DICTIONARY_CATEGORY_VALUES];

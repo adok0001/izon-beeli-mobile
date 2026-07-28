@@ -7,6 +7,7 @@ import { LanguageSelector } from "@/components/ui/language-selector";
 import { LocalizedTextInput, type LocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
 import { StatusPill } from "@/components/ui/status-pill";
 import { apiFetch } from "@/lib/api";
+import { ALL_CATEGORIES } from "@mobile/lib/dictionary";
 import {
   canPublishContent,
   canSubmitForReview,
@@ -66,13 +67,6 @@ interface CoverageReport {
   coveredWords: number;
   missing: { word: string; count: number; lessons: { id: string; title: string }[] }[];
 }
-
-const CATEGORIES = [
-  "greetings", "numbers", "family", "pronouns", "time", "verbs", "body",
-  "market", "occupations", "nouns", "phrases", "food", "possessives",
-  "ordinals", "commands", "animals", "phonetics", "money", "proverbs",
-  "adjectives", "ideophones", "adverbs",
-] as const;
 
 const fieldCls =
   "w-full rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm px-3 py-2 text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40";
@@ -153,7 +147,7 @@ function EntryModal({
             <div>
               <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.dictionary.fieldCategory")} *</label>
               <select className={fieldCls} value={form.category} onChange={set("category")}>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                {ALL_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
           </div>
@@ -274,7 +268,7 @@ function ContribEditModal({
             <div>
               <label className="text-xs font-medium text-neutral-500 mb-1 block">Category</label>
               <select className={fieldCls} value={draft.category ?? "nouns"} onChange={set("category")}>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                {ALL_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
           </div>

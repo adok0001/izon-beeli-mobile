@@ -14,17 +14,9 @@ export function isAudioUpload(file: File): boolean {
   return /\.(mp3|wav|m4a|aac|ogg|oga|webm|mp4|mpeg)$/i.test(file.name);
 }
 
-// Canonical dictionary categories — must match the admin route (dictionary.ts),
-// the web/mobile editors, and CATEGORY_LABELS in mobile/lib/dictionary.ts. These
-// are stored on dictionary_entries.category and drive label/icon lookup in the app.
-export const VALID_CATEGORIES = [
-  "greetings", "numbers", "family", "pronouns", "time", "verbs", "body",
-  "market", "occupations", "nouns", "phrases", "food", "possessives",
-  "ordinals", "commands", "animals", "phonetics", "money", "proverbs",
-  "adjectives", "ideophones", "adverbs",
-] as const;
-
-// Translation-map helpers live in lib/translations.ts now that every content
-// table uses them, not just the dictionary. Re-exported here so the educator
-// routes keep importing their shared surface from one place.
+// Translation-map helpers live in lib/translations.ts, and the dictionary
+// categories in lib/dictionary-categories.ts, now that both are shared with the
+// admin and import routes rather than being educator-specific. Re-exported here
+// so the educator routes keep importing their shared surface from one place.
 export { parseMap, toMap, project, hydrate } from "../../lib/translations.js";
+export { CATEGORY_ERROR, isDictionaryCategory } from "../../lib/dictionary-categories.js";

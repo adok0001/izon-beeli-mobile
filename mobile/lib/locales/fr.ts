@@ -1233,6 +1233,8 @@ export const fr = {
       money: "Argent & monnaie",
       proverbs: "Proverbes & dictons",
       adjectives: "Adjectifs & descripteurs",
+      ideophones: "Idéophones & mots expressifs",
+      adverbs: "Adverbes & modificateurs",
     },
     contribute: "Contribuer",
     contributeTitle: "Ajouter un mot",

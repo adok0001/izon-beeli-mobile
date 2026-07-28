@@ -1221,6 +1221,8 @@ export const en = {
       money: "Money & Currency",
       proverbs: "Proverbs & Sayings",
       adjectives: "Adjectives & Descriptors",
+      ideophones: "Ideophones & Sound Words",
+      adverbs: "Adverbs & Modifiers",
     },
     contribute: "Contribute",
     contributeTitle: "Add a word",

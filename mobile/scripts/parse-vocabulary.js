@@ -18,15 +18,25 @@
  *     submission_id,approved_date,learners_exposed
  */
 
+/* global __dirname */
 const fs = require("fs");
 const path = require("path");
 
-const VALID_CATEGORIES = [
-  "greetings", "numbers", "family", "pronouns", "time", "verbs",
-  "body", "market", "occupations", "nouns", "phrases", "food",
-  "possessives", "ordinals", "commands", "animals", "phonetics", "money",
-  "proverbs",
-];
+/**
+ * Read the canonical category list out of lib/dictionary.ts rather than keeping
+ * a literal here. This script is plain CJS (run via `node`), so it can't import
+ * the TS module — but a stale copy is worse: unknown categories are silently
+ * rewritten to "nouns" below, so a list that lags behind mis-files every row in
+ * the categories it is missing.
+ */
+function readValidCategories() {
+  const source = fs.readFileSync(path.join(__dirname, "../lib/dictionary.ts"), "utf8");
+  const block = /export const DICTIONARY_CATEGORY_VALUES = \[([\s\S]*?)\] as const;/.exec(source);
+  if (!block) throw new Error("Could not find DICTIONARY_CATEGORY_VALUES in lib/dictionary.ts");
+  return [...block[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+}
+
+const VALID_CATEGORIES = readValidCategories();
 
 function parseArgs(args) {
   const opts = { language: "izon", startId: 1 };

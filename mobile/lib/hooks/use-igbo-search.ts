@@ -10,7 +10,9 @@ const WORD_CLASS_TO_CATEGORY: Record<string, DictionaryEntry["category"]> = {
   NM: "nouns",           // proper name, e.g. Nwabụ̄ēzè
   ND: "adjectives",      // noun descriptor, e.g. nnukwu "large"
   ADJ: "adjectives",
-  ADV: "adjectives",     // no adverb category; descriptors is the closest fit
+  // "adverbs" now exists as a category, but remapping ADV would recategorise
+  // previously imported rows inconsistently — left as a deliberate decision.
+  ADV: "adjectives",
   AV: "verbs",           // active verb, e.g. riju "to eat to fill"
   AVM: "verbs",
   MV: "verbs",           // main verb, e.g. bù ibù "be big"

@@ -1,6 +1,7 @@
 import { Hono, type Context } from "hono";
 import { sql, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
+import { isDictionaryCategory } from "../lib/dictionary-categories.js";
 import { parseJson } from "../lib/http.js";
 import { slugify } from "../lib/slug.js";
 import { db } from "../db/index.js";
@@ -28,14 +29,6 @@ import { parseMap, project, type TranslationMap } from "../lib/translations.js";
  * (status/authorship) untouched — re-importing never silently republishes or
  * downgrades a row.
  */
-
-// Mirrors admin-import.ts (kept local to avoid coupling the two files).
-const VALID_CATEGORIES = new Set([
-  "greetings", "numbers", "family", "pronouns", "time", "verbs", "body",
-  "market", "occupations", "nouns", "phrases", "food", "possessives",
-  "ordinals", "commands", "animals", "phonetics", "money", "proverbs", "adjectives",
-  "ideophones", "adverbs",
-]);
 
 type Entry = Record<string, unknown>;
 
@@ -122,7 +115,7 @@ const dictionaryImporter: ImporterConfig = {
     if (!str(e.id)) return `Row ${i}: missing id (dictionary entries require an explicit id)`;
     if (!str(e.word)) return `Row ${i}: missing word`;
     if (!str(e.english)) return `Row ${i}: missing english`;
-    if (!VALID_CATEGORIES.has(str(e.category))) return `Row ${i} (${str(e.id)}): invalid category "${str(e.category)}"`;
+    if (!isDictionaryCategory(str(e.category))) return `Row ${i} (${str(e.id)}): invalid category "${str(e.category)}"`;
     return null;
   },
   preview: (e) => ({ id: str(e.id), word: str(e.word), english: str(e.english), category: str(e.category) }),
