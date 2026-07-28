@@ -1,13 +1,13 @@
 import { apiFetch, apiFetchMultipart } from "@/lib/api";
-import type { DialectalVariant, DictionaryCategory } from "@/lib/dictionary";
+import type { DialectalVariant, DictionaryCategory, DictionaryEntry } from "@/lib/dictionary";
 import type { ContentStatus } from "@/lib/hooks/educator/use-content-workflow";
 import type { LocalizedText } from "@/types";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-// Single source of truth for dictionary categories. These are stored on the entry
-// and drive CATEGORY_LABELS / CATEGORY_ICONS lookup, and must match the server's
-// VALID_CATEGORIES — so reuse the canonical list rather than redeclaring it here.
+// Alias of the canonical category union in lib/dictionary.ts, which is where the
+// list itself lives (and which the server mirrors in lib/dictionary-categories.ts,
+// guarded by a test). Reuse it rather than redeclaring the values here.
 export type EducatorDictionaryCategory = DictionaryCategory;
 
 export interface EducatorDictionaryEntry {
@@ -138,6 +138,94 @@ export function useUpsertEducatorDictionary() {
       queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
       queryClient.invalidateQueries({ queryKey: ["dictionary"] });
       queryClient.invalidateQueries({ queryKey: ["dictionary-coverage"] });
+    },
+  });
+}
+
+/** Educator/admin dictionary rows carry nullable fields; the learner-facing
+ * DictionaryEntry type (shared with the real word screen) doesn't — bridge the
+ * two so a Studio preview can reuse the exact same renderer. */
+export function toPreviewEntry(item: EducatorDictionaryEntry): DictionaryEntry {
+  return {
+    id: item.id,
+    word: item.word,
+    english: item.english,
+    translations: item.translations ?? undefined,
+    category: item.category,
+    languageId: item.languageId,
+    pronunciation: item.pronunciation ?? undefined,
+    example: item.example ?? undefined,
+    exampleTranslation: item.exampleTranslation ?? undefined,
+    exampleTranslations: item.exampleTranslations ?? undefined,
+    audioUrl: item.audioUrl ?? undefined,
+    imageUrl: item.imageUrl ?? undefined,
+    synonyms: item.synonyms ?? undefined,
+    antonyms: item.antonyms ?? undefined,
+    semanticDomain: item.semanticDomain ?? undefined,
+    dialectalVariants: item.dialectalVariants ?? undefined,
+  };
+}
+
+export interface PatchEducatorDictionaryFields {
+  word?: string;
+  pronunciation?: string;
+  example?: string;
+  translations?: LocalizedText;
+  exampleTranslations?: LocalizedText;
+  audioUrl?: string;
+  exampleAudioUrl?: string;
+}
+
+/**
+ * Single-field partial PATCH for the replica editor. The server's PATCH route
+ * already applies only the keys it receives, so one field at a time is safe.
+ *
+ * Deliberately does NOT invalidate the query the editing screen renders from —
+ * the caller updates its own copy from the returned row instead. Invalidating
+ * mid-edit is what made the first replica editor drop keystrokes: the refetch
+ * re-rendered the entry and tore the open input out from under the user.
+ */
+export function usePatchEducatorDictionaryField() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...fields }: PatchEducatorDictionaryFields & { id: string }) => {
+      const token = await getToken();
+      return apiFetch<EducatorDictionaryEntry>(`/educator/dictionary/${id}`, {
+        method: "PATCH",
+        token: token ?? undefined,
+        body: JSON.stringify(fields),
+      });
+    },
+    onSuccess: () => {
+      // Refresh the list surfaces sitting behind the editor, not the editor itself.
+      queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
+      queryClient.invalidateQueries({ queryKey: ["dictionary"] });
+    },
+  });
+}
+
+/** Multipart sibling of {@link usePatchEducatorDictionaryField} for recorded or
+ * picked audio files, which can't ride along in a JSON body. */
+export function usePatchEducatorDictionaryAudio() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, field, uri }: { id: string; field: "audio" | "exampleAudio"; uri: string }) => {
+      const token = await getToken();
+      const formData = new FormData();
+      const name = uri.split("/").pop() ?? "audio.m4a";
+      formData.append(field, { uri, type: "audio/m4a", name } as never);
+      return apiFetchMultipart<EducatorDictionaryEntry>(`/educator/dictionary/${id}`, formData, {
+        method: "PATCH",
+        token,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["educator", "dictionary"] });
+      queryClient.invalidateQueries({ queryKey: ["dictionary"] });
     },
   });
 }

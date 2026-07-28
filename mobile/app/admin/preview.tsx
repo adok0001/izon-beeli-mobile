@@ -1,12 +1,23 @@
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
-import { deriveEntryDisplay, EntryDetailView } from "@/components/dictionary/entry-detail";
+import { deriveEntryDisplay, EntryDetailView, type EntryDetailEdit } from "@/components/dictionary/entry-detail";
+import { ReplicaEditModeProvider } from "@/components/studio/replica/replica-edit-mode";
+import type { AudioAssetSaveInput } from "@/components/studio/replica/audio-asset-sheet";
 import { LessonHero } from "@/components/lesson/lesson-hero";
 import { LessonMetaPills } from "@/components/lesson/lesson-meta-pills";
 import { LessonWords } from "@/components/lesson/lesson-words";
 import { LessonObjectives } from "@/components/lesson/lesson-objectives";
 import { usePreviewStore } from "@/store/preview-store";
+import { friendlyError } from "@/lib/api";
+import {
+  toPreviewEntry,
+  usePatchEducatorDictionaryAudio,
+  usePatchEducatorDictionaryField,
+  type PatchEducatorDictionaryFields,
+} from "@/lib/hooks/use-educator-panel";
+import { useToast } from "@/lib/hooks/use-toast";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
+import { useCallback, useMemo } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -19,11 +30,60 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function PreviewScreen() {
   const M = useMuseumTheme();
   useStudioAccess();
-  const { payload } = usePreviewStore();
+  const { payload, updateDictionaryEntry } = usePreviewStore();
+  const { error: toastError } = useToast();
+  const patchField = usePatchEducatorDictionaryField();
+  const patchAudio = usePatchEducatorDictionaryAudio();
+
+  const entryId = payload?.kind === "dictionary" ? payload.entry.id : null;
+  const canEditEntry = payload?.kind === "dictionary" && !!payload.editable;
+
+  /** One PATCH, then swap the returned row into the preview so the replica
+   * reflects the save without refetching (and re-mounting) underneath it. */
+  const saveFields = useCallback(
+    async (fields: PatchEducatorDictionaryFields) => {
+      if (!entryId) return;
+      const updated = await patchField.mutateAsync({ id: entryId, ...fields });
+      updateDictionaryEntry(toPreviewEntry(updated));
+    },
+    [entryId, patchField, updateDictionaryEntry]
+  );
+
+  const saveAudio = useCallback(
+    async (input: AudioAssetSaveInput) => {
+      if (!entryId) return;
+      if (input.kind === "url") {
+        await saveFields({ audioUrl: input.url });
+        return;
+      }
+      const updated = await patchAudio.mutateAsync({ id: entryId, field: "audio", uri: input.uri });
+      updateDictionaryEntry(toPreviewEntry(updated));
+    },
+    [entryId, patchAudio, saveFields, updateDictionaryEntry]
+  );
+
+  const edit: EntryDetailEdit | undefined = useMemo(
+    () =>
+      canEditEntry
+        ? {
+            onSaveWord: (word) => saveFields({ word }),
+            onSavePronunciation: (pronunciation) => saveFields({ pronunciation }),
+            onSaveTranslations: (translations) => saveFields({ translations }),
+            onSaveExample: (example) => saveFields({ example }),
+            onSaveExampleTranslations: (exampleTranslations) => saveFields({ exampleTranslations }),
+            onSaveAudio: saveAudio,
+            onError: (err) => toastError("Save failed", friendlyError(err)),
+          }
+        : undefined,
+    [canEditEntry, saveFields, saveAudio, toastError]
+  );
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: M.ink }} edges={["top"]}>
-      <StudioScreenHeader title="Preview" subtitle="Draft — not yet published" />
+      <StudioScreenHeader
+        title="Preview"
+        subtitle={canEditEntry ? "Draft — tap any field to edit" : "Draft — not yet published"}
+      />
 
       <View style={{ flex: 1, backgroundColor: M.bg }}>
         {!payload && (
@@ -35,9 +95,15 @@ export default function PreviewScreen() {
         )}
 
         {payload?.kind === "dictionary" && (
-          <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-            <EntryDetailView entry={payload.entry} derived={deriveEntryDisplay(payload.entry, payload.uiLanguage)} />
-          </ScrollView>
+          <ReplicaEditModeProvider canEdit={canEditEntry}>
+            <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+              <EntryDetailView
+                entry={payload.entry}
+                derived={deriveEntryDisplay(payload.entry, payload.uiLanguage)}
+                edit={edit}
+              />
+            </ScrollView>
+          </ReplicaEditModeProvider>
         )}
 
         {payload?.kind === "lesson" && (

@@ -3,12 +3,14 @@ import { WordAudioButton } from "@/components/dictionary/word-audio-button";
 import { SensesPlacard } from "@/components/dictionary/senses-placard";
 import { Badge } from "@/components/ui/badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { GLOSS_LANGUAGES } from "@/components/ui/localized-text-input";
+import { GLOSS_LANGUAGES, toLocalizedText } from "@/components/ui/localized-text-input";
+import type { AudioAssetSaveInput } from "@/components/studio/replica/audio-asset-sheet";
+import { ReplicaField, ReplicaPlaceholder } from "@/components/studio/replica/replica-field";
 import { CATEGORY_ICONS, CATEGORY_LABELS, parseSenses, type DictionaryEntry, type Sense } from "@/lib/dictionary";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { type UiLanguage } from "@/store/ui-language-store";
-import type { AudioSource } from "@/types";
+import type { AudioSource, LocalizedText } from "@/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Audio } from "expo-av";
 import { Image, Pressable, Text, View } from "react-native";
@@ -102,18 +104,53 @@ function BadgeRow({ label, items, color }: { label: string; items: string[]; col
 }
 
 /**
+ * Save handlers that turn this view into a tap-to-edit replica for Studio.
+ * Grouped into one object because they travel together — the view is either
+ * editable or it isn't.
+ */
+export interface EntryDetailEdit {
+  onSaveWord: (word: string) => Promise<unknown>;
+  onSavePronunciation: (pronunciation: string) => Promise<unknown>;
+  onSaveTranslations: (translations: LocalizedText) => Promise<unknown>;
+  onSaveExample: (example: string) => Promise<unknown>;
+  onSaveExampleTranslations: (translations: LocalizedText) => Promise<unknown>;
+  onSaveAudio: (input: AudioAssetSaveInput) => Promise<unknown>;
+  onError?: (error: Error) => void;
+}
+
+/**
  * The learner-facing hero + example + lexical-detail sections of a dictionary
  * entry — everything that doesn't depend on live app state (save/practice
  * buttons, prev/next nav, contribution flows, related-words). Shared by the
  * real word screen (app/word/[id].tsx) and the Studio draft preview, so a
  * reviewer previewing an unpublished entry sees exactly what will ship.
+ *
+ * Passing `edit` additionally makes the content fields tappable for Studio.
+ * Without it — the learner path — nothing about the render changes, and the
+ * `ReplicaField` wrappers below pass their children straight through.
  */
 export function EntryDetailView({
-  entry, derived,
-}: Readonly<{ entry: DictionaryEntry; derived: EntryDisplayDerived }>) {
+  entry, derived, edit,
+}: Readonly<{ entry: DictionaryEntry; derived: EntryDisplayDerived; edit?: EntryDetailEdit }>) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const { uiLanguage, englishText, exampleTranslationText, senses, hasMultipleSenses, categoryLabel, categoryIcon, displayPronunciation, effectiveAudioUrl } = derived;
+
+  // In edit mode an absent optional field still needs somewhere to tap, so it
+  // renders a muted stand-in where the real value will appear.
+  const meaningNode = hasMultipleSenses ? (
+    <View style={{ marginTop: 12, flexDirection: "row", alignItems: "center", gap: 8 }}>
+      <View style={{ height: 1, width: 16, backgroundColor: M.accentBorder }} />
+      <Text style={{ fontSize: 11, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.accent }}>
+        {t("wordDetail.senseCount", { count: senses.length })}
+      </Text>
+      <View style={{ height: 1, width: 16, backgroundColor: M.accentBorder }} />
+    </View>
+  ) : (
+    <Text style={{ marginTop: 12, textAlign: "center", fontSize: 20, color: M.sub }}>
+      {englishText}
+    </Text>
+  );
 
   return (
     <>
@@ -126,29 +163,51 @@ export function EntryDetailView({
             resizeMode="cover"
           />
         )}
-        <Text style={{ textAlign: "center", fontSize: 60, fontWeight: "700", color: M.text }}>
-          {entry.word}
-        </Text>
-
-        {displayPronunciation && (
-          <Text style={{ marginTop: 8, fontSize: 16, fontStyle: "italic", color: M.sub }}>
-            /{displayPronunciation}/
+        <ReplicaField
+          variant="text"
+          label="Word"
+          value={entry.word}
+          disabled={!edit}
+          onSave={edit?.onSaveWord ?? (async () => {})}
+          onError={edit?.onError}
+        >
+          <Text style={{ textAlign: "center", fontSize: 60, fontWeight: "700", color: M.text }}>
+            {entry.word}
           </Text>
+        </ReplicaField>
+
+        {(displayPronunciation || edit) && (
+          <ReplicaField
+            variant="text"
+            label="Pronunciation"
+            value={displayPronunciation ?? ""}
+            placeholder="e.g. tam-a-ra"
+            disabled={!edit}
+            onSave={edit?.onSavePronunciation ?? (async () => {})}
+            onError={edit?.onError}
+          >
+            {displayPronunciation ? (
+              <Text style={{ marginTop: 8, fontSize: 16, fontStyle: "italic", color: M.sub }}>
+                /{displayPronunciation}/
+              </Text>
+            ) : (
+              <View style={{ marginTop: 8 }}>
+                <ReplicaPlaceholder text="Add pronunciation" />
+              </View>
+            )}
+          </ReplicaField>
         )}
 
-        {hasMultipleSenses ? (
-          <View style={{ marginTop: 12, flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <View style={{ height: 1, width: 16, backgroundColor: M.accentBorder }} />
-            <Text style={{ fontSize: 11, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.accent }}>
-              {t("wordDetail.senseCount", { count: senses.length })}
-            </Text>
-            <View style={{ height: 1, width: 16, backgroundColor: M.accentBorder }} />
-          </View>
-        ) : (
-          <Text style={{ marginTop: 12, textAlign: "center", fontSize: 20, color: M.sub }}>
-            {englishText}
-          </Text>
-        )}
+        <ReplicaField
+          variant="localized-text"
+          label="Meaning"
+          value={toLocalizedText(entry.translations, entry.english)}
+          disabled={!edit}
+          onSave={edit?.onSaveTranslations ?? (async () => {})}
+          onError={edit?.onError}
+        >
+          {meaningNode}
+        </ReplicaField>
 
         {/* Every other gloss the entry carries, each tagged with its language. */}
         {GLOSS_LANGUAGES.filter((l) => l.key !== uiLanguage && !!entry.translations?.[l.key]).map((l) => (
@@ -169,9 +228,22 @@ export function EntryDetailView({
           <View style={{ height: 64, width: 64, alignItems: "center", justifyContent: "center", borderRadius: 32, backgroundColor: M.accent }}>
             <WordAudioButton audioSource={effectiveAudioUrl} word={entry.word} size={28} />
           </View>
-          <Text style={{ marginTop: 8, fontSize: 11, fontWeight: "600", color: M.accent }}>
-            {effectiveAudioUrl ? t("wordDetail.hearPronunciation") : t("wordDetail.textToSpeech")}
-          </Text>
+          {/* The caption carries the edit affordance, not the button — nesting a
+              Pressable inside the play button would swallow the play tap. */}
+          <ReplicaField
+            variant="audio-asset"
+            label="Pronunciation audio"
+            /* AudioSource also covers bundled require() ids, which have no URL
+               for the sheet to play back — only pass a real remote URI. */
+            value={typeof effectiveAudioUrl === "string" ? effectiveAudioUrl : undefined}
+            disabled={!edit}
+            onSave={edit?.onSaveAudio ?? (async () => {})}
+            onError={edit?.onError}
+          >
+            <Text style={{ marginTop: 8, fontSize: 11, fontWeight: "600", color: M.accent }}>
+              {effectiveAudioUrl ? t("wordDetail.hearPronunciation") : t("wordDetail.textToSpeech")}
+            </Text>
+          </ReplicaField>
         </View>
 
         {/* Category badge */}
@@ -189,23 +261,55 @@ export function EntryDetailView({
       {hasMultipleSenses && <SensesPlacard senses={senses} />}
 
       {/* Example sentence */}
-      {entry.example && (
+      {(entry.example || edit) && (
         <View style={{ marginHorizontal: 20, marginTop: 20, borderRadius: 12, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 16, borderWidth: 1, borderColor: M.border }}>
           <Text style={{ marginBottom: 6, fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
             {t("wordDetail.example")}
           </Text>
           <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
-            <Text style={{ flex: 1, fontSize: 16, color: M.text }}>
-              {entry.example}
-            </Text>
+            <View style={{ flex: 1 }}>
+              <ReplicaField
+                variant="multiline"
+                label="Example sentence"
+                value={entry.example ?? ""}
+                placeholder="A sentence using this word"
+                disabled={!edit}
+                onSave={edit?.onSaveExample ?? (async () => {})}
+                onError={edit?.onError}
+              >
+                {entry.example ? (
+                  <Text style={{ fontSize: 16, color: M.text }}>
+                    {entry.example}
+                  </Text>
+                ) : (
+                  <ReplicaPlaceholder text="Add an example sentence" />
+                )}
+              </ReplicaField>
+            </View>
             {entry.exampleAudioUrl && (
               <InlineAudioButton audioUrl={entry.exampleAudioUrl} />
             )}
           </View>
-          {exampleTranslationText && (
-            <Text style={{ marginTop: 6, fontSize: 13, color: M.sub }}>
-              {exampleTranslationText}
-            </Text>
+          {(exampleTranslationText || edit) && (
+            <View style={{ marginTop: 6 }}>
+              <ReplicaField
+                variant="localized-text"
+                label="Example translation"
+                multiline
+                value={toLocalizedText(entry.exampleTranslations, entry.exampleTranslation)}
+                disabled={!edit}
+                onSave={edit?.onSaveExampleTranslations ?? (async () => {})}
+                onError={edit?.onError}
+              >
+                {exampleTranslationText ? (
+                  <Text style={{ fontSize: 13, color: M.sub }}>
+                    {exampleTranslationText}
+                  </Text>
+                ) : (
+                  <ReplicaPlaceholder text="Add a translation" />
+                )}
+              </ReplicaField>
+            </View>
           )}
         </View>
       )}

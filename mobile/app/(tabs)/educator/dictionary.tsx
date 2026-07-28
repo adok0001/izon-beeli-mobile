@@ -4,13 +4,13 @@ import { useUnsavedGuard } from "@/lib/studio/use-unsaved-guard";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
 import { Badge } from "@/components/ui/badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { LocalizedTextInput, toLocalizedText } from "@/components/ui/localized-text-input";
+import { LocalizedTextInput } from "@/components/ui/localized-text-input";
 import type { LocalizedText } from "@/types";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { ActiveToggle } from "@/components/studio/active-toggle";
 import { ActionPill } from "@/components/studio/studio-action-pill";
 import { StudioCard } from "@/components/studio/studio-card";
-import { StudioFilterPills } from "@/components/studio/studio-filter-pills";
+import { StudioDropdown } from "@/components/studio/studio-dropdown";
 import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import { StudioSearchInput } from "@/components/studio/studio-search-input";
 import {
@@ -23,11 +23,12 @@ import {
     useDeleteEducatorDictionaryEntry,
     useEducatorDictionary,
     usePublishContent,
+    toPreviewEntry,
     useSubmitEducatorDictionaryForReview,
     useUpsertEducatorDictionary,
 } from "@/lib/hooks/use-educator-panel";
 import { friendlyError } from "@/lib/api";
-import { DICTIONARY_CATEGORY_VALUES, splitList, type DialectalVariant, type DictionaryEntry } from "@/lib/dictionary";
+import { DICTIONARY_CATEGORY_VALUES, splitList, type DialectalVariant } from "@/lib/dictionary";
 import { useDictionaryCoverage } from "@/lib/hooks/use-contributions";
 import { useToast } from "@/lib/hooks/use-toast";
 import { getLanguageName } from "@/lib/mock-data";
@@ -40,30 +41,6 @@ import { useTranslation } from "react-i18next";
 import { Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, RefreshControl, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-/** Educator/admin dictionary rows carry nullable fields; the learner-facing
- * DictionaryEntry type (shared with the real word screen) doesn't — bridge
- * the two so the Studio preview can reuse the exact same renderer. */
-function toPreviewEntry(item: EducatorDictionaryEntry): DictionaryEntry {
-  return {
-    id: item.id,
-    word: item.word,
-    english: item.english,
-    translations: item.translations ?? undefined,
-    category: item.category,
-    languageId: item.languageId,
-    pronunciation: item.pronunciation ?? undefined,
-    example: item.example ?? undefined,
-    exampleTranslation: item.exampleTranslation ?? undefined,
-    exampleTranslations: item.exampleTranslations ?? undefined,
-    audioUrl: item.audioUrl ?? undefined,
-    imageUrl: item.imageUrl ?? undefined,
-    synonyms: item.synonyms ?? undefined,
-    antonyms: item.antonyms ?? undefined,
-    semanticDomain: item.semanticDomain ?? undefined,
-    dialectalVariants: item.dialectalVariants ?? undefined,
-  };
-}
-
 const CATEGORIES: EducatorDictionaryCategory[] = [...DICTIONARY_CATEGORY_VALUES];
 
 /** "nouns" -> "Nouns" — for filter-pill labels; category values render as-is elsewhere. */
@@ -71,7 +48,6 @@ function capitalize(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-type CategoryFilter = "all" | EducatorDictionaryCategory;
 
 type EditorState = {
   id?: string;
@@ -140,7 +116,6 @@ export default function EducatorDictionaryScreen() {
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
   const [selectedLanguageId, setSelectedLanguageId] = useState<string | undefined>(undefined);
   const [editor, setEditor] = useState<EditorState>(EMPTY_EDITOR);
-  const [isEditing, setIsEditing] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [filterCategory, setFilterCategory] = useState<EducatorDictionaryCategory | undefined>(undefined);
   const flatListRef = useRef<FlatList>(null);
@@ -175,34 +150,15 @@ export default function EducatorDictionaryScreen() {
   const deleteEntry = useDeleteEducatorDictionaryEntry();
   const submitForReview = useSubmitEducatorDictionaryForReview();
   const publishEntry = usePublishContent("dictionary_entries", [["educator", "dictionary"]]);
+  // Create-only: existing entries are edited on the replica screen, so the form
+  // never enters an "update" mode.
   let saveButtonLabel = "Create";
-  if (isEditing) saveButtonLabel = t("common.save");
   if (upsertEntry.isPending) saveButtonLabel = t("common.loading");
 
   const resetEditor = () => {
     setEditor(EMPTY_EDITOR);
-    setIsEditing(false);
     setFormOpen(false);
   };
-
-  const startEdit = useCallback((entry: EducatorDictionaryEntry) => {
-    setEditor({
-      id: entry.id,
-      word: entry.word,
-      translations: toLocalizedText(entry.translations, entry.english),
-      category: entry.category,
-      pronunciation: entry.pronunciation ?? "",
-      example: entry.example ?? "",
-      exampleTranslations: toLocalizedText(entry.exampleTranslations, entry.exampleTranslation),
-      synonyms: (entry.synonyms ?? []).join(", "),
-      antonyms: (entry.antonyms ?? []).join(", "),
-      semanticDomain: entry.semanticDomain ?? "",
-      dialectalVariants: entry.dialectalVariants ?? [],
-    });
-    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-    setIsEditing(true);
-    setFormOpen(true);
-  }, []);
 
   const submit = () => {
     const english = editor.translations.en?.trim() ?? "";
@@ -230,7 +186,7 @@ export default function EducatorDictionaryScreen() {
       {
         onSuccess: () => {
           resetEditor();
-          toastSuccess(isEditing ? "Entry updated" : "Entry created", `"${editor.word}" saved to dictionary.`);
+          toastSuccess("Entry created", `"${editor.word}" saved to dictionary.`);
         },
         onError: (err: Error) => toastError("Save failed", friendlyError(err, err.message)),
       },
@@ -253,7 +209,14 @@ export default function EducatorDictionaryScreen() {
   }, [deleteEntry, toastSuccess, toastError, t]);
 
   const openPreview = useCallback((item: EducatorDictionaryEntry) => {
-    setPreview({ kind: "dictionary", entry: toPreviewEntry(item), uiLanguage });
+    setPreview({
+      kind: "dictionary",
+      entry: toPreviewEntry(item),
+      uiLanguage,
+      // Contribution-sourced rows aren't `dictionary_entries` rows, so the
+      // PATCH the replica editor issues would 404 on them.
+      editable: !item._source,
+    });
     router.push("/admin/preview" as never);
   }, [setPreview, uiLanguage, router]);
 
@@ -323,23 +286,26 @@ export default function EducatorDictionaryScreen() {
             />
           ) : null}
           <View style={{ flex: 1 }} />
-          <ActionPill icon="eye.fill" label="Preview" onPress={() => openPreview(item)} />
-          <ActionPill icon="pencil" label={t("common.edit")} onPress={() => startEdit(item)} />
+          {/* Editing an existing entry happens on the replica screen, not by
+              prefilling the create form — one way in, and it shows the educator
+              what a learner sees. The form below is now create-only. */}
+          <ActionPill icon="pencil" label={t("common.edit")} onPress={() => openPreview(item)} />
           <ActionPill icon="trash.fill" label={t("common.delete")} tone="danger" onPress={() => confirmDelete(item.id)} />
         </View>
       </StudioCard>
     ),
-    [startEdit, confirmDelete, openPreview, submitForReview, publishEntry, currentUser, t, M, toastSuccess, toastError],
+    [confirmDelete, openPreview, submitForReview, publishEntry, currentUser, t, M, toastSuccess, toastError],
   );
 
   const listHeader = (
     <View>
       <View className="mt-4 px-5">
-        <StudioFilterPills
-          options={allowedLanguages.map((languageId) => ({ id: languageId, label: getLanguageName(languageId) }))}
+        <StudioDropdown
+          label="Language"
+          icon="globe"
           value={activeLanguageId}
+          options={allowedLanguages.map((languageId) => ({ id: languageId, label: getLanguageName(languageId) }))}
           onChange={setSelectedLanguageId}
-          scrollable
         />
       </View>
 
@@ -390,7 +356,6 @@ export default function EducatorDictionaryScreen() {
                     key={m.word}
                     onPress={() => {
                       setEditor({ ...EMPTY_EDITOR, word: m.word });
-                      setIsEditing(false);
                       setFormOpen(true);
                       flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
                     }}
@@ -418,15 +383,12 @@ export default function EducatorDictionaryScreen() {
         <StudioCard>
           <Pressable
             onPress={() => setFormOpen((o) => !o)}
-            disabled={isEditing}
             className="flex-row items-center justify-between"
           >
             <Text className="text-base font-semibold" style={{ color: M.text }}>
-              {isEditing ? "Edit Entry" : "New Entry"}
+              New Entry
             </Text>
-            {!isEditing ? (
-              <IconSymbol name={formOpen ? "chevron.up" : "chevron.down"} size={14} color={M.muted} />
-            ) : null}
+            <IconSymbol name={formOpen ? "chevron.up" : "chevron.down"} size={14} color={M.muted} />
           </Pressable>
 
           {formOpen ? (
@@ -503,11 +465,12 @@ export default function EducatorDictionaryScreen() {
           />
 
           <View className="mt-3">
-            <StudioFilterPills
-              options={CATEGORIES.map((category) => ({ id: category, label: capitalize(category) }))}
+            <StudioDropdown
+              label="Category"
+              icon="square.grid.2x2"
               value={editor.category}
-              onChange={(category) => setEditor((prev) => ({ ...prev, category }))}
-              scrollable
+              options={CATEGORIES.map((category) => ({ id: category as string, label: capitalize(category) }))}
+              onChange={(category) => setEditor((prev) => ({ ...prev, category: category as EducatorDictionaryCategory }))}
             />
           </View>
 
@@ -519,15 +482,13 @@ export default function EducatorDictionaryScreen() {
             >
               <Text className="text-center font-semibold text-white">{saveButtonLabel}</Text>
             </Pressable>
-            {isEditing ? (
-              <Pressable
-                onPress={resetEditor}
-                className="rounded-xl px-4 py-3 active:opacity-80"
-                style={{ backgroundColor: M.pillBg }}
-              >
-                <Text className="font-semibold" style={{ color: M.text }}>{t("common.cancel")}</Text>
-              </Pressable>
-            ) : null}
+            <Pressable
+              onPress={resetEditor}
+              className="rounded-xl px-4 py-3 active:opacity-80"
+              style={{ backgroundColor: M.pillBg }}
+            >
+              <Text className="font-semibold" style={{ color: M.text }}>{t("common.cancel")}</Text>
+            </Pressable>
           </View>
           </>
           ) : null}
@@ -539,17 +500,19 @@ export default function EducatorDictionaryScreen() {
       </View>
 
       <View className="mt-3 px-5 pb-1">
-        <StudioFilterPills
+        <StudioDropdown
+          label="Category"
+          icon="square.grid.2x2"
+          value={filterCategory ?? "all"}
           options={[
-            { id: "all" as const, label: "All" },
+            { id: "all", label: `All categories (${entries.length})` },
             ...CATEGORIES.filter((cat) => entries.some((e) => e.category === cat)).map((category) => ({
-              id: category as CategoryFilter,
+              id: category as string,
               label: capitalize(category),
+              annotation: String(entries.filter((e) => e.category === category).length),
             })),
           ]}
-          value={filterCategory ?? "all"}
-          onChange={(id) => setFilterCategory(id === "all" ? undefined : id)}
-          scrollable
+          onChange={(id) => setFilterCategory(id === "all" ? undefined : (id as EducatorDictionaryCategory))}
         />
       </View>
 
