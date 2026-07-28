@@ -58,3 +58,34 @@ export function headwordId(languageId: string, word: string): string {
   const stem = slugify(word).slice(0, 40) || "entry";
   return `${languageId}-${stem}-${fnv1a(word)}`;
 }
+
+/**
+ * The identity key of a corpus sentence: NFC, whitespace collapsed, trimmed.
+ *
+ * Case and punctuation stay significant. `Bo!` and `Bo?` are different sentences
+ * with different intonation and different audio, so they must not collapse onto
+ * one row that one recording then has to serve.
+ */
+export function normalizeSentence(text: string): string {
+  return text.normalize("NFC").replace(/\s+/g, " ").trim();
+}
+
+/**
+ * The id of a sentence in the shared corpus.
+ *
+ * Unlike `headwordId` there is no readable stem — a sentence is too long to
+ * slug usefully, and unlike a headword nobody hand-writes these ids in a sheet.
+ * What matters is that adding a sentence that already exists upserts onto the
+ * same row, which is what lets a dictionary example, a drill and a lesson line
+ * share one text and therefore one recording.
+ *
+ * Deliberately exact, not fuzzy: near-match detection ("did you mean this
+ * existing sentence?") belongs in the editor, where a human can judge it, not in
+ * a key that silently merges two rows.
+ *
+ * The language prefix is capped so the whole id fits `varchar(64)`; real
+ * language ids are short ("izon", "igbo") and nowhere near the bound.
+ */
+export function sentenceId(languageId: string, text: string): string {
+  return `${languageId.slice(0, 54)}-s-${fnv1a(normalizeSentence(text))}`;
+}

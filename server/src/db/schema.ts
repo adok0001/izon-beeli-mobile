@@ -578,8 +578,20 @@ export const transcriptSegments = pgTable(
     speaker: varchar("speaker", { length: 64 }),
     // Romanized / pronunciation guidance for the learner (never spoken).
     roman: text("roman"),
+    /**
+     * Set only when this line was deliberately promoted into the shared corpus
+     * so another surface could reuse it. Never backfilled in bulk: segments are
+     * replaced wholesale on lesson save, so a promoted sentence has to outlive
+     * its segment. The FK points segment → sentence and deleting segments never
+     * touches `sentences` — the same lifetime trap `phrase_bank` avoids by
+     * snapshotting text instead of referencing it.
+     */
+    sentenceId: varchar("sentence_id", { length: 64 }).references(() => sentences.id),
   },
-  (table) => [index("transcript_segments_lesson_id_idx").on(table.lessonId)]
+  (table) => [
+    index("transcript_segments_lesson_id_idx").on(table.lessonId),
+    index("transcript_segments_sentence_idx").on(table.sentenceId),
+  ]
 );
 
 export const englishWordbank = pgTable(
@@ -644,6 +656,103 @@ export const dictionaryEntries = pgTable(
     index("dictionary_entries_language_idx").on(table.languageId),
     index("dictionary_entries_lang_cat_idx").on(table.languageId, table.category),
     index("dictionary_entries_english_word_idx").on(table.englishWordId),
+  ]
+);
+
+// ---------- Shared sentence corpus ----------
+
+/**
+ * Every sentence in the product, written once.
+ *
+ * A dictionary usage example, a fill-in-the-blank drill and a lesson transcript
+ * line were three separate copies of the same text, so the same sentence got
+ * corrected three times and recorded zero times (0 of 12,299 entries have
+ * example audio). They point here instead, which means one correction and one
+ * recording reach every surface that uses it.
+ *
+ * The deliberate consequence: editing a shared sentence from the dictionary also
+ * changes the lesson that uses it. The editor warns with a "used in N places"
+ * badge before the edit (`GET /sentence-corpus/:id/usage`). Edits do not fork —
+ * forking decays the corpus back into per-surface copies and loses exactly the
+ * record-once property this exists for.
+ */
+export const sentences = pgTable(
+  "sentences",
+  {
+    /** `sentenceId()` in lib/slug.ts — a hash of the text, so re-adding upserts. */
+    id: varchar("id", { length: 64 }).primaryKey(),
+    languageId: varchar("language_id", { length: 64 })
+      .notNull()
+      .references(() => languages.id),
+    text: text("text").notNull(),
+    /** Full gloss map { en, fr, pcm, ... }. `translation` is the derived en projection. */
+    translation: text("translation"),
+    translations: jsonb("translations").$type<Record<string, string>>(),
+    /** Literal word-for-word gloss, for idioms whose translation hides the structure. */
+    literal: text("literal"),
+    /** Romanization / pronunciation guidance for the learner, never spoken. */
+    roman: text("roman"),
+    audioUrl: text("audio_url"),
+    status: contentStatusEnum("status").default("published").notNull(),
+    createdBy: uuid("created_by").references(() => users.id),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    publishedBy: uuid("published_by").references(() => users.id),
+    publishedAt: timestamp("published_at"),
+    isActive: boolean("is_active").default(true).notNull(),
+  },
+  (table) => [index("sentences_language_idx").on(table.languageId)]
+);
+
+/**
+ * One distinct meaning of a headword.
+ *
+ * `dictionary_entries.english` held all of them in one `;`-delimited
+ * varchar(500) — 18,405 senses across 12,299 entries, 82 of which overflowed the
+ * cap and spilled into the `example` column. It stays, permanently, as the flat
+ * projection of these rows (`projectSenses` in lib/senses.ts), the same way it
+ * is already the projection of `translations`: it is the search field, the quiz
+ * answer and the notification body, and roughly 120 read sites keep working.
+ */
+export const dictionarySenses = pgTable(
+  "dictionary_senses",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    entryId: varchar("entry_id", { length: 64 })
+      .notNull()
+      .references(() => dictionaryEntries.id, { onDelete: "cascade" }),
+    order: integer("order").notNull(),
+    /** `text`, not varchar — escaping the 500-char cap is half the point. */
+    gloss: text("gloss").notNull(),
+    glossTranslations: jsonb("gloss_translations").$type<Record<string, string>>(),
+    /** Parenthetical disambiguation: "of humans", "traditional counting". */
+    note: varchar("note", { length: 200 }),
+  },
+  (table) => [index("dictionary_senses_entry_idx").on(table.entryId, table.order)]
+);
+
+/** A sense's usage examples — a pointer into the corpus, never a copy of the text. */
+export const dictionaryExamples = pgTable(
+  "dictionary_examples",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    senseId: uuid("sense_id")
+      .notNull()
+      .references(() => dictionarySenses.id, { onDelete: "cascade" }),
+    /** No cascade: deleting a sentence still cited elsewhere must fail loudly. */
+    sentenceId: varchar("sentence_id", { length: 64 })
+      .notNull()
+      .references(() => sentences.id),
+    order: integer("order").notNull(),
+    /**
+     * The backfilled example was authored against the whole entry, not a sense,
+     * so it was attached to sense 1. Right for the 9,235 single-sense entries,
+     * a guess for the 222 multi-sense ones — this marks them for an educator.
+     */
+    needsSenseReview: boolean("needs_sense_review").default(false).notNull(),
+  },
+  (table) => [
+    index("dictionary_examples_sense_idx").on(table.senseId, table.order),
+    index("dictionary_examples_sentence_idx").on(table.sentenceId),
   ]
 );
 
@@ -785,6 +894,16 @@ export const lessonCulturalContent = pgTable(
 
 export const sentenceKindEnum = pgEnum("sentence_kind", ["blank", "equivalent"]);
 
+/**
+ * A drill *over* a sentence — the question, not the text.
+ *
+ * `answer` and `kind` are notNull, so every row here is by definition a quiz
+ * item; there was no way to store a sentence that wasn't one. That is why the
+ * corpus had to be a new table rather than this one widened.
+ *
+ * `sentence`, `englishSentence` and `literalTranslation` are superseded by
+ * `sentenceId` and dropped in a later, separately-authorized migration.
+ */
 export const sentenceTemplates = pgTable(
   "sentence_templates",
   {
@@ -799,6 +918,8 @@ export const sentenceTemplates = pgTable(
     kind: sentenceKindEnum("kind").default("blank").notNull(),
     /** Literal gloss of the sentence (e.g. "wake up well" for an idiom). Null for regular templates. */
     literalTranslation: text("literal_translation"),
+    /** The corpus row this drill questions. Nullable until the backfill runs. */
+    sentenceId: varchar("sentence_id", { length: 64 }).references(() => sentences.id),
     status: contentStatusEnum("status").default("published").notNull(),
     publishAt: timestamp("publish_at"),
     createdBy: uuid("created_by").references(() => users.id),
@@ -807,7 +928,10 @@ export const sentenceTemplates = pgTable(
     publishedAt: timestamp("published_at"),
     isActive: boolean("is_active").default(true).notNull(),
   },
-  (table) => [index("sentence_templates_language_id_idx").on(table.languageId)]
+  (table) => [
+    index("sentence_templates_language_id_idx").on(table.languageId),
+    index("sentence_templates_sentence_idx").on(table.sentenceId),
+  ]
 );
 
 // ---------- Scenarios ----------

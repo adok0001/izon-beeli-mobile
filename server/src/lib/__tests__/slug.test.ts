@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import ts from "typescript";
-import { headwordId, slugify } from "../slug.js";
+import { headwordId, normalizeSentence, sentenceId, slugify } from "../slug.js";
 
 /**
  * `headwordId` is what makes a dictionary CSV re-import idempotent, and it is
@@ -76,5 +76,37 @@ describe("headwordId", () => {
     for (const word of [...COLLAPSING, "kọn", "Bo okpu kọn.", "…", "ọ".repeat(200)]) {
       expect(webHeadwordId("izon", word)).toBe(headwordId("izon", word));
     }
+  });
+});
+
+describe("sentenceId", () => {
+  it("folds the formatting whitespace a paste or a CSV cell introduces", () => {
+    expect(sentenceId("izon", "  Bịsá   bàra\nkị  ")).toBe(sentenceId("izon", "Bịsá bàra kị"));
+  });
+
+  it("ignores Unicode normalization form", () => {
+    const s = "Bịsá bàra kị";
+    expect(sentenceId("izon", s.normalize("NFC"))).toBe(sentenceId("izon", s.normalize("NFD")));
+  });
+
+  it("keeps punctuation significant — different intonation, different recording", () => {
+    expect(sentenceId("izon", "Bo!")).not.toBe(sentenceId("izon", "Bo?"));
+  });
+
+  it("keeps case significant", () => {
+    expect(sentenceId("izon", "Bo")).not.toBe(sentenceId("izon", "bo"));
+  });
+
+  it("scopes sentences by language", () => {
+    expect(sentenceId("izon", "Bo")).not.toBe(sentenceId("igbo", "Bo"));
+  });
+
+  it("stays inside the varchar(64) id column for any length of sentence", () => {
+    expect(sentenceId("izon", "ọ".repeat(5000)).length).toBeLessThanOrEqual(64);
+    expect(sentenceId("x".repeat(120), "Bo").length).toBeLessThanOrEqual(64);
+  });
+
+  it("normalizes to the text actually stored, so the id matches the row", () => {
+    expect(normalizeSentence("  Bịsá   bàra\nkị  ")).toBe("Bịsá bàra kị");
   });
 });
