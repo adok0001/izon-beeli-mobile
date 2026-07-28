@@ -346,12 +346,36 @@ classroomRouter.get("/groups/:id/progress", async (c) => {
     .where(eq(classroomAssignments.groupId, id));
 
   const now = new Date();
-  const overdueCount = assignments.filter(
-    (a) => a.dueDate && new Date(a.dueDate) < now
-  ).length;
+  const overdueLessonIds = assignments
+    .filter((a) => a.dueDate && new Date(a.dueDate) < now)
+    .map((a) => a.lessonId);
+
+  // Which of the overdue lessons each member has actually finished. Without
+  // this the overdue count is a group-level number stamped onto every row, so a
+  // student who has done everything looks identical to one who has done none —
+  // worse than useless in the teacher's primary view, because it reads as
+  // actionable.
+  const completedAssigned = overdueLessonIds.length
+    ? await db
+        .select({ userId: userProgress.userId, lessonId: userProgress.lessonId })
+        .from(userProgress)
+        .where(
+          and(
+            inArray(userProgress.userId, memberUserIds),
+            inArray(userProgress.lessonId, overdueLessonIds),
+            eq(userProgress.completed, true)
+          )
+        )
+    : [];
+
+  const completedByUser = completedAssigned.reduce<Record<string, Set<string>>>((acc, row) => {
+    (acc[row.userId] ??= new Set()).add(row.lessonId);
+    return acc;
+  }, {});
 
   const result = members.map((m) => {
     const p = progressByUser[m.userId];
+    const done = completedByUser[m.userId];
     return {
       userId: m.userId,
       name: m.name ?? "User",
@@ -360,7 +384,7 @@ classroomRouter.get("/groups/:id/progress", async (c) => {
       streak: p?.streak ?? 0,
       points: p?.points ?? 0,
       assignedCount: assignments.length,
-      overdueLessons: overdueCount,
+      overdueLessons: overdueLessonIds.filter((lid) => !done?.has(lid)).length,
     };
   });
 
