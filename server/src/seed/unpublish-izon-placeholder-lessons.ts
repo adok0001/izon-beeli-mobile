@@ -11,10 +11,10 @@ import { neon } from "@neondatabase/serverless";
  *   npx tsx src/seed/unpublish-izon-placeholder-lessons.ts --apply  # write
  *
  * BOTH columns move, and `is_active` is the one that matters: every lesson
- * route filters on `is_active` (lessons.ts:22/43/68) and NO route reads
- * `lessons.status`. Setting status alone would leave all eleven fully visible
- * while looking, in Studio, like they had been withdrawn. `status='draft'` is
- * set too so the workflow state matches reality rather than claiming published.
+ * route filters on `is_active` and no route reads `lessons.status`, by design.
+ * Setting status alone would leave all eleven fully visible while looking, in
+ * Studio, like they had been withdrawn. `status='draft'` is set too so the
+ * workflow state matches reality rather than claiming published.
  *
  * Transcript rows are deliberately KEPT: the bracketed English is the brief for
  * whoever authors the real lines. Verified safe to withdraw — none of the

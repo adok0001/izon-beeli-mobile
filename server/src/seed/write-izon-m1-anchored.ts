@@ -13,10 +13,11 @@ import { M1_ANCHORED } from "../../../.claude/skills/design-course/scaffold/m1-a
  * live lesson already carried. Every line's provenance is in the source file's
  * `src`; it rides into the DB so a reviewer can trace any claim.
  *
- * LANDS INACTIVE AND DRAFT. `is_active` is what actually gates learner
- * visibility — no lesson route reads `lessons.status` (lessons.ts:22/43/68) —
- * so both are set. 80 lines still have no Ịzọn and 1 more is blocked on tone;
- * none of that should reach a learner until it is resolved.
+ * LANDS INACTIVE AND DRAFT. `is_active` is what gates learner visibility — no
+ * lesson route reads `lessons.status`, by design — so `is_active = false` is the
+ * part that matters here; `status` is set alongside it only so Studio reads
+ * honestly. 80 lines still have no Ịzọn and 1 more is blocked on tone; none of
+ * that should reach a learner until it is resolved.
  *
  * Idempotent: lesson ids are deterministic, the upsert only moves content
  * columns, and each lesson's transcript is replaced wholesale — the same
