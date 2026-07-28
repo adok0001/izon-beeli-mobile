@@ -169,6 +169,7 @@ export function toPreviewEntry(item: EducatorDictionaryEntry): DictionaryEntry {
 export interface PatchEducatorDictionaryFields {
   word?: string;
   pronunciation?: string;
+  category?: string;
   example?: string;
   translations?: LocalizedText;
   exampleTranslations?: LocalizedText;

@@ -69,6 +69,7 @@ export default function PreviewScreen() {
             onSaveWord: (word) => saveFields({ word }),
             onSavePronunciation: (pronunciation) => saveFields({ pronunciation }),
             onSaveTranslations: (translations) => saveFields({ translations }),
+            onSaveCategory: (category) => saveFields({ category }),
             onSaveExample: (example) => saveFields({ example }),
             onSaveExampleTranslations: (exampleTranslations) => saveFields({ exampleTranslations }),
             onSaveAudio: saveAudio,

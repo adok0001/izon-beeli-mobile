@@ -5,8 +5,15 @@ import { Badge } from "@/components/ui/badge";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { GLOSS_LANGUAGES, toLocalizedText } from "@/components/ui/localized-text-input";
 import type { AudioAssetSaveInput } from "@/components/studio/replica/audio-asset-sheet";
-import { ReplicaField, ReplicaPlaceholder } from "@/components/studio/replica/replica-field";
-import { CATEGORY_ICONS, CATEGORY_LABELS, parseSenses, type DictionaryEntry, type Sense } from "@/lib/dictionary";
+import { ReplicaField, ReplicaPlaceholder, type ReplicaChoice } from "@/components/studio/replica/replica-field";
+import {
+  CATEGORY_ICONS,
+  CATEGORY_LABELS,
+  DICTIONARY_CATEGORY_VALUES,
+  parseSenses,
+  type DictionaryEntry,
+  type Sense,
+} from "@/lib/dictionary";
 import { localize } from "@/lib/localize";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { type UiLanguage } from "@/store/ui-language-store";
@@ -112,11 +119,19 @@ export interface EntryDetailEdit {
   onSaveWord: (word: string) => Promise<unknown>;
   onSavePronunciation: (pronunciation: string) => Promise<unknown>;
   onSaveTranslations: (translations: LocalizedText) => Promise<unknown>;
+  onSaveCategory: (category: string) => Promise<unknown>;
   onSaveExample: (example: string) => Promise<unknown>;
   onSaveExampleTranslations: (translations: LocalizedText) => Promise<unknown>;
   onSaveAudio: (input: AudioAssetSaveInput) => Promise<unknown>;
   onError?: (error: Error) => void;
 }
+
+/** The closed category set, in the canonical order, for the picker sheet. */
+const CATEGORY_CHOICES: readonly ReplicaChoice[] = DICTIONARY_CATEGORY_VALUES.map((value) => ({
+  value,
+  label: CATEGORY_LABELS[value],
+  icon: CATEGORY_ICONS[value],
+}));
 
 /**
  * The learner-facing hero + example + lexical-detail sections of a dictionary
@@ -247,11 +262,23 @@ export function EntryDetailView({
         </View>
 
         {/* Category badge */}
-        <View style={{ marginTop: 16, flexDirection: "row", alignItems: "center", borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 16, paddingVertical: 6, borderWidth: 1, borderColor: M.accentBorder }}>
-          <IconSymbol name={categoryIcon} size={13} color={M.accent} />
-          <Text style={{ marginLeft: 6, fontSize: 11, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: M.accent }}>
-            {categoryLabel}
-          </Text>
+        <View style={{ marginTop: 16 }}>
+          <ReplicaField
+            variant="choice"
+            label="Category"
+            value={entry.category}
+            options={CATEGORY_CHOICES}
+            disabled={!edit}
+            onSave={edit?.onSaveCategory ?? (async () => {})}
+            onError={edit?.onError}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center", borderRadius: 999, backgroundColor: M.accentGlow, paddingHorizontal: 16, paddingVertical: 6, borderWidth: 1, borderColor: M.accentBorder }}>
+              <IconSymbol name={categoryIcon} size={13} color={M.accent} />
+              <Text style={{ marginLeft: 6, fontSize: 11, fontWeight: "600", letterSpacing: 1, textTransform: "uppercase", color: M.accent }}>
+                {categoryLabel}
+              </Text>
+            </View>
+          </ReplicaField>
         </View>
       </View>
 

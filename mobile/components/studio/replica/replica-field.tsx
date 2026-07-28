@@ -1,4 +1,4 @@
-import { IconSymbol } from "@/components/ui/icon-symbol";
+import { IconSymbol, type IconSymbolName } from "@/components/ui/icon-symbol";
 import { LocalizedTextInput } from "@/components/ui/localized-text-input";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import type { LocalizedText } from "@/types";
@@ -43,7 +43,25 @@ interface AudioAssetVariantProps extends CommonProps {
   onSave: (input: AudioAssetSaveInput) => Promise<unknown>;
 }
 
-type ReplicaFieldProps = TextVariantProps | LocalizedTextVariantProps | AudioAssetVariantProps;
+/** One selectable option in the `choice` variant. */
+export interface ReplicaChoice {
+  value: string;
+  label: string;
+  icon?: IconSymbolName;
+}
+
+interface ChoiceVariantProps extends CommonProps {
+  variant: "choice";
+  value: string;
+  options: readonly ReplicaChoice[];
+  onSave: (value: string) => Promise<unknown>;
+}
+
+type ReplicaFieldProps =
+  | TextVariantProps
+  | LocalizedTextVariantProps
+  | AudioAssetVariantProps
+  | ChoiceVariantProps;
 
 /** Drops empty strings so `{en: "x", fr: ""}` and `{en: "x"}` compare equal. */
 function normalizeMap(map: LocalizedText): LocalizedText {
@@ -248,6 +266,87 @@ function LocalizedField(props: LocalizedTextVariantProps) {
   );
 }
 
+/**
+ * Single-value picker for a fixed, closed set (the dictionary categories).
+ *
+ * The house rule is that a picker is a dropdown opening `EntityPickerModal`, but
+ * a replica field is already *inside* a modal by the time the user is choosing —
+ * stacking a second Modal on iOS gives you a sheet that dismisses its parent.
+ * So the options render as a list in the sheet the field already owns. The set
+ * is closed and short enough to browse, which is what makes that trade fine
+ * here; a picker over an open-ended entity list still belongs in the dropdown.
+ */
+function ChoiceField(props: ChoiceVariantProps) {
+  const M = useMuseumTheme();
+  const { state, run } = useFieldSave(props.onError);
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState(props.value);
+
+  const openSheet = () => {
+    setDraft(props.value);
+    setOpen(true);
+  };
+
+  return (
+    <>
+      <EditableWrapper state={state} label={props.label} onPress={openSheet}>
+        {props.children}
+      </EditableWrapper>
+      <ReplicaFieldSheet
+        visible={open}
+        title={props.label}
+        saving={state === "saving"}
+        dirty={draft !== props.value}
+        onCancel={() => setOpen(false)}
+        onSave={async () => {
+          const ok = await run(() => props.onSave(draft));
+          if (ok) setOpen(false);
+        }}
+      >
+        <View style={{ gap: 6 }}>
+          {props.options.map((option) => {
+            const selected = option.value === draft;
+            return (
+              <Pressable
+                key={option.value}
+                onPress={() => setDraft(option.value)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected }}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 10,
+                  borderRadius: 10,
+                  borderWidth: 1,
+                  borderColor: selected ? M.accent : M.border,
+                  backgroundColor: selected ? M.accentGlow : M.bg,
+                  paddingHorizontal: 12,
+                  paddingVertical: 11,
+                }}
+              >
+                {option.icon && (
+                  <IconSymbol name={option.icon} size={15} color={selected ? M.accent : M.muted} />
+                )}
+                <Text
+                  style={{
+                    flex: 1,
+                    fontSize: 14,
+                    fontWeight: selected ? "700" : "500",
+                    color: selected ? M.accent : M.text,
+                  }}
+                >
+                  {option.label}
+                </Text>
+                {selected && <IconSymbol name="checkmark" size={14} color={M.accent} />}
+              </Pressable>
+            );
+          })}
+        </View>
+      </ReplicaFieldSheet>
+    </>
+  );
+}
+
 function AudioField(props: AudioAssetVariantProps) {
   const { state, run } = useFieldSave(props.onError);
   const [open, setOpen] = useState(false);
@@ -294,6 +393,8 @@ export function ReplicaField(props: ReplicaFieldProps) {
       return <LocalizedField {...props} />;
     case "audio-asset":
       return <AudioField {...props} />;
+    case "choice":
+      return <ChoiceField {...props} />;
   }
 }
 
