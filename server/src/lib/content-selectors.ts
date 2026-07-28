@@ -4,17 +4,23 @@
  * exporter call these, so the two can never drift.
  *
  * Publish gating: `courses`, `lessons`, `scripts`, and `scriptCharacters` are
- * filtered on their boolean `isActive` gate. Film stories (folded into
+ * filtered on their boolean `isActive` gate — the Studio active/inactive toggle
+ * is the whole publish decision for them, by design. Film stories (folded into
  * `culture_items`) are filtered on `scenes IS NOT NULL`. `dictionaryEntries`,
  * `sentenceTemplates`, `proverbs`, and `culturalContent` are filtered on the
  * Beeli Studio `status = 'published'` column (Phase 2).
+ *
+ * Lessons deliberately do NOT consult `lessons.status`. They carry the workflow
+ * columns, but the Studio lesson list presents one control — the active toggle,
+ * labelled "Lesson published" / "Lesson hidden" — so `isActive` is the switch
+ * an educator actually operates. Gate new lesson visibility with `isActive`.
  *
  * Visibility gating: every Studio content type now also carries an `isActive`
  * boolean (the Studio active/inactive toggle). It is ANDed on top of the
  * status/scenes gates above so a published row can still be hidden from
  * learners with one tap without re-entering the review workflow.
  */
-import { and, asc, eq, inArray, isNotNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import { db } from "../db/index.js";
 import {
   contributions,
@@ -69,7 +75,18 @@ export async function selectDictionary(languageId: string) {
     })
     .from(contributions)
     .leftJoin(users, eq(contributions.userId, users.id))
-    .where(and(eq(contributions.languageId, languageId), eq(contributions.status, "approved")))
+    .where(
+      and(
+        eq(contributions.languageId, languageId),
+        eq(contributions.status, "approved"),
+        // Standalone contributions only. The `entry_*` enrichment types are
+        // merged into their target dictionary entry on approval (see the
+        // approve handler in routes/contributions.ts), so serving them here as
+        // well would emit the same headword twice — once enriched, once as a
+        // partial pseudo-entry beside it.
+        isNull(contributions.dictionaryEntryId)
+      )
+    )
     .orderBy(contributions.word);
 
   const contribsWithMap = approvedContribs.map((r) => ({
