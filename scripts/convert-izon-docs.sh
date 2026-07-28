@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Convert all Izon lesson notes (PDF + DOCX) + the dictionary PDF to plain text
-# in scripts/.cache/izon-docs-text/ so the audit script can ingest them.
+# in scripts/.cache/izon-docs-text/, so a note can be read and diffed as text.
+# See .claude/skills/update-lesson-content/SKILL.md, which is the consumer.
 set -euo pipefail
 SRC="/Users/tamaraadokeme/Projects/beeli/userio-docs"
 OUT="/Users/tamaraadokeme/Projects/beeli/scripts/.cache/izon-docs-text"

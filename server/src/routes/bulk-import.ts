@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { sql, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { isDictionaryCategory } from "../lib/dictionary-categories.js";
-import { slugify } from "../lib/slug.js";
+import { headwordId } from "../lib/slug.js";
 import { db } from "../db/index.js";
 import {
   dictionaryEntries,
@@ -100,6 +100,38 @@ function idOf(entry: Entry, index: number): string {
   return str(entry.id) || `row-${index + 1}`;
 }
 
+/**
+ * Tracks the ids claimed so far in one request, so a repeat becomes a per-row
+ * error instead of a failed insert.
+ *
+ * `onConflictDoUpdate` cannot absorb this. Postgres raises 21000 — "ON CONFLICT
+ * DO UPDATE command cannot affect row a second time" — for any statement whose
+ * own rows collide on the arbiter index, and nothing here caught it: the request
+ * 500'd with no row identified, and since `inBatches` commits BATCH rows at a
+ * time with no enclosing transaction (neon-http has none), earlier chunks had
+ * already landed. Duplicates that straddled a chunk boundary didn't even raise —
+ * the later row silently overwrote the earlier one, so whether an educator got a
+ * crash or lost a definition depended on where in the sheet the rows fell.
+ *
+ * Rows with no id are skipped: those get one at insert time (`randomUUID`) and
+ * can't collide. `scope` separates content types in the unified sheet, where a
+ * proverb and a dictionary entry land in different tables and may legitimately
+ * carry the same id.
+ */
+function idTracker(): (id: string, rowNumber: number, scope?: string) => string | null {
+  const claimed = new Map<string, number>();
+  return (id, rowNumber, scope = "") => {
+    if (!id) return null;
+    const key = `${scope} ${id}`;
+    const first = claimed.get(key);
+    if (first !== undefined) {
+      return `Row ${rowNumber}: duplicate id "${id}" (row ${first} already uses it) — one row would overwrite the other. If these are senses of the same word, put them in ONE row separated by semicolons ("old; ancient; former"). If they are different words that happen to share a spelling, add an "id" column and give each its own id.`;
+    }
+    claimed.set(key, rowNumber);
+    return null;
+  };
+}
+
 /** Run `fn` over `items` in fixed-size batches, summing the returned counts. */
 async function inBatches<T>(items: T[], size: number, fn: (batch: T[]) => Promise<number>): Promise<number> {
   let total = 0;
@@ -123,13 +155,34 @@ const BATCH = 500;
 const keepIfAbsent = (column: string) =>
   sql.raw(`coalesce(excluded.${column}, dictionary_entries.${column})`);
 
+/**
+ * Length guard for the varchar-bounded columns.
+ *
+ * Overflow is a live risk rather than a theoretical one: the way to record
+ * several senses of a word is to put them in one `english` field separated by
+ * semicolons, so the field grows with the lexicography. The longest Izon gloss
+ * is already 498 of the 500 characters available, and 39 entries sit within 20.
+ * Without this check Postgres raises 22001 and the whole batch 500s with no row
+ * named — the same shape of failure duplicate ids used to cause.
+ */
+function tooLong(value: string, max: number, field: string, row: number): string | null {
+  return value.length > max
+    ? `Row ${row}: ${field} is ${value.length} characters, over the ${max} limit. Trim it, or move the long tail into the example column (which has no limit).`
+    : null;
+}
+
 const dictionaryImporter: ImporterConfig = {
   validate: (e, i) => {
     if (!str(e.id)) return `Row ${i}: missing id (dictionary entries require an explicit id)`;
     if (!str(e.word)) return `Row ${i}: missing word`;
     if (!str(e.english)) return `Row ${i}: missing english`;
     if (!isDictionaryCategory(str(e.category))) return `Row ${i} (${str(e.id)}): invalid category "${str(e.category)}"`;
-    return null;
+    return (
+      tooLong(str(e.id), 64, "id", i) ??
+      tooLong(str(e.word), 500, "word", i) ??
+      tooLong(str(e.english), 500, "english", i) ??
+      tooLong(str(e.pronunciation), 500, "pronunciation", i)
+    );
   },
   preview: (e) => ({ id: str(e.id), word: str(e.word), english: str(e.english), category: str(e.category) }),
   insert: (entries, ctx) => {
@@ -409,10 +462,11 @@ export function mapUnifiedRow(row: Entry, languageId: string): Mapped | { error:
 
   switch (str(row.type).toLowerCase()) {
     case "dictionary":
-      // Dictionary upserts by id; synthesize a stable one from the word so a
-      // re-imported sheet updates rather than duplicates.
+      // Dictionary upserts by id; synthesize a stable one from the headword so a
+      // re-imported sheet updates rather than duplicates. See `headwordId` for
+      // why the readable slug alone can't be the identity.
       return { importerType: "dictionary", entry: {
-        id: opt(row.id) ?? `${languageId}-${slugify(str(row.text))}`,
+        id: opt(row.id) ?? headwordId(languageId, str(row.text)),
         word: str(row.text), english: str(row.english), category: str(row.category),
         pronunciation: str(row.pronunciation), example: str(row.example),
         exampleTranslation: str(row.example_english),
@@ -467,11 +521,17 @@ bulkImportRouter.post("/lessons", async (c) => {
 
   const errors: { id: string; reason: string }[] = [];
   const groups: LessonGroupInput[] = [];
+  const claimId = idTracker();
   req.entries.forEach((raw, i) => {
     const file = (raw && typeof raw === "object" ? raw : {}) as { meta?: unknown; segments?: unknown };
     const { group, errors: fileErrors } = buildLessonGroup(file, courseId, i);
-    if (group) groups.push(group);
     errors.push(...fileErrors);
+    if (!group) return;
+    // Lesson ids come from `${courseId}-${slugify(title)}`, so two uploaded files
+    // whose titles differ only in case or punctuation land on one id.
+    const duplicate = claimId(group.id, i + 1);
+    if (duplicate) errors.push({ id: group.id, reason: duplicate });
+    else groups.push(group);
   });
 
   const resultStatus = req.isAdmin ? "published" : "in_review";
@@ -504,6 +564,7 @@ bulkImportRouter.post("/unified", async (c) => {
   const errors: { id: string; reason: string }[] = [];
   const grouped: Record<string, Entry[]> = {};
   const preview: Record<string, unknown>[] = [];
+  const claimId = idTracker();
 
   req.entries.forEach((raw, i) => {
     const row = (raw && typeof raw === "object" ? raw : {}) as Entry;
@@ -516,6 +577,11 @@ bulkImportRouter.post("/unified", async (c) => {
     const err = config.validate(mapped.entry, i + 1);
     if (err) {
       errors.push({ id: idOf(row, i), reason: err });
+      return;
+    }
+    const duplicate = claimId(str(mapped.entry.id), i + 1, mapped.importerType);
+    if (duplicate) {
+      errors.push({ id: idOf(mapped.entry, i), reason: duplicate });
       return;
     }
     (grouped[mapped.importerType] ??= []).push(mapped.entry);
@@ -555,9 +621,10 @@ bulkImportRouter.post("/:type", async (c) => {
 
   const errors: { id: string; reason: string }[] = [];
   const valid: Entry[] = [];
+  const claimId = idTracker();
   req.entries.forEach((raw, i) => {
     const entry = (raw && typeof raw === "object" ? raw : {}) as Entry;
-    const err = config.validate(entry, i + 1);
+    const err = config.validate(entry, i + 1) ?? claimId(str(entry.id), i + 1);
     if (err) errors.push({ id: idOf(entry, i), reason: err });
     else valid.push(entry);
   });

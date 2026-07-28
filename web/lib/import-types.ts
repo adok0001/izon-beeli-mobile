@@ -1,4 +1,4 @@
-import { slugify } from "./parse-csv";
+import { headwordId } from "./parse-csv";
 
 // The result shape is defined once, in `@mobile/lib/import-result`, and
 // re-exported here so the existing `@/lib/import-types` call sites are
@@ -39,9 +39,9 @@ export const IMPORT_TYPES: Record<string, ImportTypeConfig> = {
     type: "dictionary",
     label: "dictionary entries",
     csvColumns: DICT_COLUMNS,
-    // Dictionary upserts by id; derive a deterministic one from the word when the
-    // sheet has no id column so re-imports update rather than duplicate.
-    synthesizeId: (row, languageId) => row.id?.trim() || `${languageId}-${slugify(row.word)}`,
+    // Dictionary upserts by id; derive a deterministic one from the headword when
+    // the sheet has no id column so re-imports update rather than duplicate.
+    synthesizeId: (row, languageId) => row.id?.trim() || headwordId(languageId, row.word ?? ""),
     sampleJson: JSON.stringify(
       [{ id: "izon-verb-kon", word: "kọn", english: "take", category: "verbs", example: "Bo okpu kọn.", exampleTranslation: "Come and take the sugarcane." }],
       null, 2,

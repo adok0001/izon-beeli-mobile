@@ -11,10 +11,12 @@
 export { parseCsv } from "@mobile/lib/unified-import";
 
 /**
- * Derive a stable, collision-resistant slug from a word — used to synthesize a
- * deterministic id for CSV dictionary rows that omit an explicit id, so
- * re-importing the same sheet upserts instead of duplicating. Subdot vowels
- * (ẹ/ị/ọ/ụ) decompose to their base letter under NFKD.
+ * Readable slug for a word. Subdot vowels (ẹ/ị/ọ/ụ) decompose to their base
+ * letter under NFKD, so the result stays ASCII.
+ *
+ * Lossy by design — it folds case and drops the very marks Izon uses to tell
+ * words apart. It is a display stem, not an identity; use `headwordId` to
+ * synthesize anything that upserts.
  */
 export function slugify(s: string): string {
   return s
@@ -24,4 +26,29 @@ export function slugify(s: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 48);
+}
+
+/** FNV-1a (32-bit), base36 — mirrors `fnv1a` in `server/src/lib/slug.ts`. */
+function fnv1a(s: string): string {
+  let h = 0x811c9dc5;
+  const src = s.normalize("NFC"); // an NFD sheet and an NFC sheet must agree
+  for (let i = 0; i < src.length; i++) {
+    h ^= src.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(36).padStart(7, "0").slice(0, 7);
+}
+
+/**
+ * The id a dictionary row gets when the sheet supplies none. MUST match
+ * `headwordId` in `server/src/lib/slug.ts` — this panel synthesizes ids client
+ * side, so any drift between the two silently splits one entry into two rows.
+ *
+ * Identity rides on a hash of the exact headword rather than on the slug, which
+ * would merge distinct words (Keni / kèní / Kẹnị all slug to `keni`). Only the
+ * headword feeds the hash, so correcting a gloss still updates in place.
+ */
+export function headwordId(languageId: string, word: string): string {
+  const stem = slugify(word).slice(0, 40) || "entry";
+  return `${languageId}-${stem}-${fnv1a(word)}`;
 }

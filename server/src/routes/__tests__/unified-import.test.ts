@@ -18,13 +18,40 @@ describe("mapUnifiedRow", () => {
     expect(out).toEqual({
       importerType: "dictionary",
       entry: expect.objectContaining({
-        id: "izon-kon", // subdot ọ decomposes to o
+        id: expect.stringMatching(/^izon-kon-[0-9a-z]+$/), // readable stem, subdot ọ → o
         word: "kọn",
         english: "take",
         category: "verbs",
         example: "Bo okpu kọn.",
       }),
     });
+  });
+
+  it("gives words that differ only by diacritic or case distinct ids", () => {
+    // The live Izon corpus has 1,042 such groups (Keni / kèní / Kẹnị, Angọ /
+    // ango). A slug-only id merged them, so importing one overwrote the other.
+    const idFor = (word: string) => {
+      const out = mapUnifiedRow({ type: "dictionary", text: word, english: "…", category: "nouns" }, LANG);
+      return "entry" in out ? (out.entry.id as string) : "";
+    };
+    const ids = ["Keni", "kèní", "Kẹnị", "keni"].map(idFor);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("synthesizes the same id for the same word, so a re-import updates in place", () => {
+    const idFor = (english: string) => {
+      const out = mapUnifiedRow({ type: "dictionary", text: "kọn", english, category: "verbs" }, LANG);
+      return "entry" in out ? out.entry.id : "";
+    };
+    // Correcting the gloss must not fork the entry — only the headword feeds the id.
+    expect(idFor("take")).toBe(idFor("take, carry"));
+  });
+
+  it("ignores Unicode normalization form when deriving the id", () => {
+    // A sheet authored on macOS arrives NFD; the same word from Windows is NFC.
+    const nfc = mapUnifiedRow({ type: "dictionary", text: "kọn".normalize("NFC"), english: "take", category: "verbs" }, LANG);
+    const nfd = mapUnifiedRow({ type: "dictionary", text: "kọn".normalize("NFD"), english: "take", category: "verbs" }, LANG);
+    expect("entry" in nfc && nfc.entry.id).toBe("entry" in nfd ? nfd.entry.id : "");
   });
 
   it("keeps an explicit id when the row provides one", () => {

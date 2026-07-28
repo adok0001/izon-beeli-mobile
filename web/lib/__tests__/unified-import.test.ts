@@ -8,7 +8,9 @@ describe("unified-import", () => {
 
   it("template round-trips into one row per content type", () => {
     const rows = parseUnifiedCsv(UNIFIED_TEMPLATE_CSV);
-    expect(rows.map((r) => r.type)).toEqual(["dictionary", "sentence", "proverb", "quiz"]);
+    // Two dictionary rows: a plain entry, and one demonstrating the
+    // semicolon-separated-senses convention.
+    expect(rows.map((r) => r.type)).toEqual(["dictionary", "dictionary", "sentence", "proverb", "quiz"]);
   });
 
   it("drops rows with no type (stray blank lines)", () => {
