@@ -171,22 +171,43 @@ export interface Sense {
   note?: string;
 }
 
+/** Combining diacritics — see the `;` rule in {@link parseSenses}. */
+const COMBINING_MARK = /[̀-ͯ]/;
+
+/**
+ * A trailing `(…)` is a disambiguation only when whitespace separates it from
+ * the gloss. Abutting the previous word it is inflectional morphology that
+ * belongs *in* the gloss — `"corrugated iron sheet(s)"`, `"guerrilla war(fare)"`,
+ * `"handcuff(s)"` — and lifting it out produced the gloss "corrugated iron
+ * sheet" with the note "s". Requiring the space costs ~20 senses whose note
+ * stays inline (lossless, just flatter), and saves 15 from being mangled.
+ */
+const TRAILING_NOTE = /^(.*\S)\s+\(([^()]*)\)$/;
+
 /**
  * Parse a `;`-delimited English field into discrete senses.
  *
  * Splits only on semicolons at parenthesis depth 0, so a note that itself
  * contains a semicolon — e.g. `"And (conjunction; consonant phoneme m)"` —
- * stays intact as one sense. A trailing `(…)` on each sense is lifted into
- * `note` so the UI can present it as a separate disambiguation tag.
+ * stays intact as one sense.
  */
 export function parseSenses(raw: string): Sense[] {
   const parts: string[] = [];
+  const chars = [...raw];
   let depth = 0;
   let current = "";
-  for (const ch of raw) {
+  for (let i = 0; i < chars.length; i += 1) {
+    const ch = chars[i];
     if (ch === "(") depth += 1;
     else if (ch === ")") depth = Math.max(0, depth - 1);
     if (ch === ";" && depth === 0) {
+      // 15 corpus entries carry a combining mark typed *after* its semicolon
+      // (`bịdẹ́ àbaaraí;̣ B. hang…` for `…àbaaraị́;`). Splitting on the `;` would
+      // orphan the mark at the head of the next sense, where it renders on
+      // whatever letter follows. Pull it back onto the sense it belongs to.
+      while (i + 1 < chars.length && COMBINING_MARK.test(chars[i + 1])) {
+        current += chars[(i += 1)];
+      }
       parts.push(current);
       current = "";
     } else {
@@ -199,9 +220,30 @@ export function parseSenses(raw: string): Sense[] {
     .map((p) => p.trim())
     .filter(Boolean)
     .map((p) => {
-      const match = p.match(/^(.*?)\s*\(([^()]*)\)\s*$/);
-      return match ? { text: match[1].trim(), note: match[2].trim() } : { text: p };
+      const match = p.match(TRAILING_NOTE);
+      return match ? { text: match[1], note: match[2].trim() } : { text: p };
     });
+}
+
+/**
+ * The flat `english` column a sense list projects back to — the inverse of
+ * {@link parseSenses}, and what keeps ~120 read sites working unchanged once
+ * senses live in their own rows.
+ *
+ * Round-trips byte-identically over 99.34% of the live corpus; the remainder
+ * differs only by whitespace the parser normalizes (a space before a `;`, an
+ * empty trailing sense).
+ */
+export function projectSenses(senses: Sense[]): string {
+  return senses
+    .map((s) => {
+      const text = s.text.trim();
+      const note = s.note?.trim();
+      if (!note) return text;
+      return text ? `${text} (${note})` : `(${note})`;
+    })
+    .filter(Boolean)
+    .join("; ");
 }
 
 /** Mutable copy of {@link DICTIONARY_CATEGORY_VALUES} for `.map`/`.filter` call sites. */
