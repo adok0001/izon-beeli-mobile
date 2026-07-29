@@ -75,3 +75,4 @@ partykit/.env
 *.swp
 .vercel
 server/tmp/
+server/backups/
