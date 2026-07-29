@@ -8,6 +8,7 @@ import {
   isLossyGloss,
   mergeSense,
   parseSenses,
+  quizSense,
   projectSenses,
   type Sense,
 } from "../senses.js";
@@ -24,7 +25,11 @@ import {
  */
 const MOBILE_DICTIONARY = join(__dirname, "../../../../mobile/lib/dictionary.ts");
 
-function loadMobile(): { parseSenses: (raw: string) => Sense[]; projectSenses: (s: Sense[]) => string } {
+function loadMobile(): {
+  parseSenses: (raw: string) => Sense[];
+  projectSenses: (s: Sense[]) => string;
+  quizSense: (english: string) => unknown;
+} {
   const { outputText } = ts.transpileModule(readFileSync(MOBILE_DICTIONARY, "utf8"), {
     compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
   });
@@ -94,7 +99,33 @@ describe("parseSenses", () => {
     for (const raw of CORPUS) {
       expect(mobile.parseSenses(raw)).toEqual(parseSenses(raw));
       expect(mobile.projectSenses(parseSenses(raw))).toBe(projectSenses(parseSenses(raw)));
+      // The quiz answer must be the same on both sides: the app grades a
+      // learner's tap against what the API generated the question from.
+      expect(mobile.quizSense(raw)).toEqual(quizSense(raw));
     }
+  });
+});
+
+describe("quizSense", () => {
+  it("asks about the primary sense, not the whole column", () => {
+    expect(quizSense("way; road; path")).toEqual({
+      answer: "way",
+      siblings: ["way", "road", "path"],
+      senseCount: 3,
+    });
+  });
+
+  it("keeps a disambiguating note on the sense it belongs to", () => {
+    expect(quizSense("bag; belly (of humans)")?.siblings).toEqual(["bag", "belly (of humans)"]);
+  });
+
+  it("leaves a single-sense entry untouched", () => {
+    expect(quizSense("take")).toEqual({ answer: "take", siblings: ["take"], senseCount: 1 });
+  });
+
+  it("returns null for a gloss with no senses at all", () => {
+    expect(quizSense("   ")).toBeNull();
+    expect(quizSense(";;")).toBeNull();
   });
 });
 

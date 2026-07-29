@@ -1,6 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { parseJson } from "../lib/http.js";
+import { quizSense } from "../lib/senses.js";
 import { db } from "../db/index.js";
 import { appConfig, dictionaryEntries, lessons, quizQuestions, transcriptSegments } from "../db/schema.js";
 
@@ -35,9 +36,16 @@ function normalizeForMatch(value: string): string {
     .trim();
 }
 
-function pickDistractors(correct: string, pool: string[], n: number): string[] {
+/**
+ * `exclude` holds answers that are ALSO correct — the sibling senses of the
+ * headword being asked about. Unlike the token-overlap heuristic it is never
+ * relaxed to fill a slot: offering "road" when the answer is "way" and the word
+ * means both gives the question two right answers.
+ */
+function pickDistractors(correct: string, pool: string[], n: number, exclude: string[] = []): string[] {
   const correctNorm = correct.toLowerCase().trim();
   const correctTokens = new Set(correctNorm.split(/\s+/).filter((t) => t.length > 2));
+  const banned = new Set(exclude.map((e) => e.toLowerCase().trim()));
   function hasOverlap(s: string) {
     if (correctTokens.size === 0) return false;
     return s.toLowerCase().trim().split(/\s+/).some((t) => t.length > 2 && correctTokens.has(t));
@@ -47,13 +55,13 @@ function pickDistractors(correct: string, pool: string[], n: number): string[] {
   for (const s of shuffle(pool)) {
     if (result.length >= n) break;
     const norm = s.toLowerCase().trim();
-    if (!seen.has(norm) && !hasOverlap(s)) { seen.add(norm); result.push(s); }
+    if (!seen.has(norm) && !banned.has(norm) && !hasOverlap(s)) { seen.add(norm); result.push(s); }
   }
   if (result.length < n) {
     for (const s of shuffle(pool)) {
       if (result.length >= n) break;
       const norm = s.toLowerCase().trim();
-      if (!seen.has(norm)) { seen.add(norm); result.push(s); }
+      if (!seen.has(norm) && !banned.has(norm)) { seen.add(norm); result.push(s); }
     }
   }
   return result;
@@ -178,19 +186,26 @@ quizRouter.get("/questions", async (c) => {
     return c.json({ error: "Not enough vocabulary for this quiz scope" }, 400);
   }
 
-  const selected = shuffle(entries).slice(0, remaining);
-  const allEnglish = entries.map((e) => e.english);
+  // Quiz on one sense. `english` holds every meaning of the headword in one
+  // `;`-delimited string, so using it whole made "what does sụ́ọ mean?" expect
+  // all 18 of its senses as a single option. See lib/senses.ts.
+  const senses = new Map(entries.map((e) => [e.id, quizSense(e.english)]));
+  const askable = entries.filter((e) => senses.get(e.id));
+  const selected = shuffle(askable).slice(0, remaining);
+  const allEnglish = askable.map((e) => senses.get(e.id)!.answer);
 
-  const generated = selected.map((entry) => {
-    const distractors = pickDistractors(entry.english, allEnglish, 3);
-    const options = shuffle([entry.english, ...distractors]);
-    return {
+  const generated = selected.flatMap((entry) => {
+    const sense = senses.get(entry.id)!;
+    const distractors = pickDistractors(sense.answer, allEnglish, 3, sense.siblings);
+    // Rather than show a sibling sense as a wrong answer, drop the question.
+    if (distractors.length < 3) return [];
+    return [{
       id: entry.id,
       type: "word-to-english" as const,
       prompt: entry.word,
-      correctAnswer: entry.english,
-      options,
-    };
+      correctAnswer: sense.answer,
+      options: shuffle([sense.answer, ...distractors]),
+    }];
   });
 
   return c.json([...authored, ...generated]);

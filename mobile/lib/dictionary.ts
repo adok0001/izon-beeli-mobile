@@ -246,5 +246,44 @@ export function projectSenses(senses: Sense[]): string {
     .join("; ");
 }
 
+/** An entry reduced to the single sense a quiz question is about. */
+export interface QuizSense {
+  /** The one gloss that is the correct answer, note included. */
+  answer: string;
+  /**
+   * Every gloss of this entry, `answer` among them. None of the others may be
+   * offered as a distractor: a sibling sense is *also* a correct translation of
+   * the headword, so showing one makes the question unanswerable.
+   */
+  siblings: string[];
+  /** How many senses the entry has, so the UI can say which one it is asking about. */
+  senseCount: number;
+}
+
+/**
+ * Reduce an entry's gloss column to one askable sense.
+ *
+ * Quizzes used to set the whole `;`-delimited column as the correct answer, so
+ * "what does *sụ́ọ* mean?" expected *"enter; come in; open; begin; …"* — 18 senses
+ * as a single option. That is not a question anyone can answer, and it made the
+ * distractor pool a set of paragraphs.
+ *
+ * Sense 1 is the one asked about. Nothing yet records which sense of a headword
+ * is the most common, and until something does, the first is the best available
+ * proxy for the primary meaning — picking a later sense because it happens to
+ * carry a disambiguating note would quiz the obscure reading of a word instead
+ * of the everyday one. When sense ranking exists, this function is the only
+ * place that changes.
+ */
+export function quizSense(english: string): QuizSense | null {
+  const senses = parseSenses(english);
+  if (senses.length === 0) return null;
+  return {
+    answer: projectSenses([senses[0]]),
+    siblings: senses.map((s) => projectSenses([s])),
+    senseCount: senses.length,
+  };
+}
+
 /** Mutable copy of {@link DICTIONARY_CATEGORY_VALUES} for `.map`/`.filter` call sites. */
 export const ALL_CATEGORIES: DictionaryCategory[] = [...DICTIONARY_CATEGORY_VALUES];

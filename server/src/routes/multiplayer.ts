@@ -1,5 +1,6 @@
 import { Hono, type Context } from "hono";
 import { parseJson } from "../lib/http.js";
+import { quizSense } from "../lib/senses.js";
 import { eq, ne, and, sql, inArray } from "drizzle-orm";
 import { db } from "../db/index.js";
 import {
@@ -30,8 +31,14 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-function pickDistractors(correct: string, pool: string[], count: number): string[] {
-  return shuffle(pool.filter((s) => s !== correct)).slice(0, count);
+/**
+ * `exclude` holds the sibling senses of the headword being asked about. They are
+ * also correct translations, so offering one gives the question two right
+ * answers. Compared case-insensitively, unlike the plain `!==` this replaced.
+ */
+function pickDistractors(correct: string, pool: string[], count: number, exclude: string[] = []): string[] {
+  const banned = new Set([correct, ...exclude].map((s) => s.toLowerCase().trim()));
+  return shuffle(pool.filter((s) => !banned.has(s.toLowerCase().trim()))).slice(0, count);
 }
 
 // Internal API key auth for PartyKit server-to-server calls
@@ -66,9 +73,21 @@ multiplayerInternalRouter.get("/quiz-questions", async (c) => {
     return c.json({ error: "Not enough dictionary entries" }, 400);
   }
 
-  const allWords = entries.map((e) => e.word);
-  const allEnglish = entries.map((e) => e.english);
-  const shuffled = shuffle(entries);
+  // Quiz on one sense. `english` holds every meaning of the headword in one
+  // `;`-delimited string, so using it whole made the correct answer a list.
+  // See lib/senses.ts.
+  const askable = entries.flatMap((e) => {
+    const sense = quizSense(e.english);
+    return sense ? [{ word: e.word, english: sense.answer, siblings: sense.siblings }] : [];
+  });
+
+  if (askable.length < 4) {
+    return c.json({ error: "Not enough dictionary entries" }, 400);
+  }
+
+  const allWords = askable.map((e) => e.word);
+  const allEnglish = askable.map((e) => e.english);
+  const shuffled = shuffle(askable);
 
   const types = ["word-to-english", "english-to-word", "fill-in-the-blank", "listening"];
   const questions = [];
@@ -81,7 +100,7 @@ multiplayerInternalRouter.get("/quiz-questions", async (c) => {
     let q = null;
     switch (type) {
       case "word-to-english": {
-        const distractors = pickDistractors(entry.english, allEnglish, 3);
+        const distractors = pickDistractors(entry.english, allEnglish, 3, entry.siblings);
         if (distractors.length >= 3) {
           q = {
             id: `q-${Math.random().toString(36).slice(2, 9)}`,
@@ -120,7 +139,7 @@ multiplayerInternalRouter.get("/quiz-questions", async (c) => {
         break;
       }
       case "listening": {
-        const distractors = pickDistractors(entry.english, allEnglish, 3);
+        const distractors = pickDistractors(entry.english, allEnglish, 3, entry.siblings);
         if (distractors.length >= 3) {
           q = {
             id: `q-${Math.random().toString(36).slice(2, 9)}`,

@@ -1,5 +1,5 @@
 import type { TranslationKey } from "@/lib/locales";
-import type { DictionaryEntry } from "@/lib/dictionary";
+import { quizSense, type DictionaryEntry } from "@/lib/dictionary";
 import { localize } from "@/lib/localize";
 import type { AudioSource, MatchingGameConfig, MatchingPair, QuestionType, QuizConfig, QuizQuestion, SentenceTemplate, TranscriptSegment } from "@/types";
 
@@ -9,7 +9,12 @@ export type QuizTranslateFn = (key: TranslationKey, opts?: Record<string, unknow
 interface QuizPool {
   id: string;
   word: string;
+  /** ONE sense of the headword — see `quizSense`, not the whole gloss column. */
   english: string;
+  /** The entry's other senses, which are also correct and so can't be distractors. */
+  siblingSenses?: string[];
+  /** Senses this headword has. >1 means `english` is one reading of several. */
+  senseCount?: number;
   category?: string;
   audioSource?: AudioSource;
   example?: string;
@@ -29,9 +34,22 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+export interface DistractorOptions {
+  /** Tried first — e.g. same-category items, which make for harder options. */
+  preferred?: string[];
+  /**
+   * Answers that are ALSO correct and must never be offered. The sibling senses
+   * of the headword being asked about: if `bára` means "way; road" and the
+   * question asks for "way", offering "road" gives the question two right
+   * answers. Unlike the token-overlap heuristic below, this exclusion is never
+   * relaxed to fill a slot — a wrong-but-plausible option is a bad question, a
+   * second correct option is a broken one.
+   */
+  exclude?: string[];
+}
+
 /**
  * Picks `count` distractors from `pool`, excluding the correct answer.
- * Prefers `preferred` (e.g. same-category items) before falling back to the full pool.
  * Rejects candidates whose normalised tokens overlap with the correct answer to avoid
  * synonym ambiguity — falls back to overlapping candidates if needed to fill slots.
  * Deduplicates case-insensitively so "Run" and "run" don't both appear.
@@ -40,16 +58,18 @@ export function pickDistractors(
   correct: string,
   pool: string[],
   count: number,
-  preferred?: string[]
+  { preferred, exclude }: DistractorOptions = {}
 ): string[] {
-  const correctNorm = correct.toLowerCase().trim();
+  const norm = (s: string) => s.toLowerCase().trim();
+  const correctNorm = norm(correct);
   const correctTokens = new Set(
     correctNorm.split(/\s+/).filter((t) => t.length > 2)
   );
+  const banned = new Set((exclude ?? []).map(norm));
 
   function hasTokenOverlap(s: string): boolean {
     if (correctTokens.size === 0) return false;
-    return s.toLowerCase().trim().split(/\s+/).some((t) => t.length > 2 && correctTokens.has(t));
+    return norm(s).split(/\s+/).some((t) => t.length > 2 && correctTokens.has(t));
   }
 
   const seen = new Set<string>([correctNorm]);
@@ -58,21 +78,22 @@ export function pickDistractors(
   for (const source of [preferred ?? [], pool]) {
     for (const s of shuffle(source)) {
       if (result.length >= count) break;
-      const norm = s.toLowerCase().trim();
-      if (!seen.has(norm) && !hasTokenOverlap(s)) {
-        seen.add(norm);
+      const n = norm(s);
+      if (!seen.has(n) && !banned.has(n) && !hasTokenOverlap(s)) {
+        seen.add(n);
         result.push(s);
       }
     }
   }
 
-  // Relax overlap filter using only the full pool to fill remaining slots
+  // Relax overlap filter using only the full pool to fill remaining slots.
+  // `banned` stays enforced — see DistractorOptions.exclude.
   if (result.length < count) {
     for (const s of shuffle(pool)) {
       if (result.length >= count) break;
-      const norm = s.toLowerCase().trim();
-      if (!seen.has(norm)) {
-        seen.add(norm);
+      const n = norm(s);
+      if (!seen.has(n) && !banned.has(n)) {
+        seen.add(n);
         result.push(s);
       }
     }
@@ -90,18 +111,25 @@ function gatherDictionaryPool(
     ? entries.filter((e) => e.category === category)
     : entries;
 
-  return filtered.map((e) => ({
-    id: e.id,
-    word: e.word,
-    english: localize(e.english, "en"),
-    category: e.category,
-    audioSource: e.audioUrl,
-    example: e.example,
-    exampleTranslation: localize(e.exampleTranslation, "en") || undefined,
-    exampleAudioUrl: e.exampleAudioUrl ?? undefined,
-    imageUrl: e.imageUrl ?? undefined,
-    box: wordProgress?.get(e.id) ?? 1,
-  }));
+  return filtered.flatMap((e) => {
+    const sense = quizSense(localize(e.english, "en"));
+    // An entry whose gloss column is empty can't be quizzed on at all.
+    if (!sense) return [];
+    return [{
+      id: e.id,
+      word: e.word,
+      english: sense.answer,
+      siblingSenses: sense.siblings,
+      senseCount: sense.senseCount,
+      category: e.category,
+      audioSource: e.audioUrl,
+      example: e.example,
+      exampleTranslation: localize(e.exampleTranslation, "en") || undefined,
+      exampleAudioUrl: e.exampleAudioUrl ?? undefined,
+      imageUrl: e.imageUrl ?? undefined,
+      box: wordProgress?.get(e.id) ?? 1,
+    }];
+  });
 }
 
 /**
@@ -136,7 +164,10 @@ function makeWordToEnglish(
   translate?: QuizTranslateFn,
   preferredEnglish?: string[]
 ): QuizQuestion | null {
-  const distractors = pickDistractors(item.english, allEnglish, 3, preferredEnglish);
+  const distractors = pickDistractors(item.english, allEnglish, 3, {
+    preferred: preferredEnglish,
+    exclude: item.siblingSenses,
+  });
   if (distractors.length < 3) return null;
   return {
     id: `q-${Math.random().toString(36).slice(2, 9)}`,
@@ -158,7 +189,7 @@ function makeEnglishToWord(
   translate?: QuizTranslateFn,
   preferredWords?: string[]
 ): QuizQuestion | null {
-  const distractors = pickDistractors(item.word, allWords, 3, preferredWords);
+  const distractors = pickDistractors(item.word, allWords, 3, { preferred: preferredWords });
   if (distractors.length < 3) return null;
   return {
     id: `q-${Math.random().toString(36).slice(2, 9)}`,
@@ -181,7 +212,7 @@ function makeFillInTheBlank(
   translate?: QuizTranslateFn,
   preferredWords?: string[]
 ): QuizQuestion | null {
-  const distractors = pickDistractors(item.word, allWords, 3, preferredWords);
+  const distractors = pickDistractors(item.word, allWords, 3, { preferred: preferredWords });
   if (distractors.length < 3) return null;
 
   const template = sentences?.find(
@@ -241,7 +272,10 @@ function makeListening(
   preferredEnglish?: string[]
 ): QuizQuestion | null {
   if (!item.audioSource) return null; // listening requires audio
-  const distractors = pickDistractors(item.english, allEnglish, 3, preferredEnglish);
+  const distractors = pickDistractors(item.english, allEnglish, 3, {
+    preferred: preferredEnglish,
+    exclude: item.siblingSenses,
+  });
   if (distractors.length < 3) return null;
   return {
     id: `q-${Math.random().toString(36).slice(2, 9)}`,
@@ -286,7 +320,7 @@ function makePictureToWord(
   preferredWords?: string[]
 ): QuizQuestion | null {
   if (!item.imageUrl) return null;
-  const distractors = pickDistractors(item.word, allWords, 3, preferredWords);
+  const distractors = pickDistractors(item.word, allWords, 3, { preferred: preferredWords });
   if (distractors.length < 3) return null;
   return {
     id: `q-${Math.random().toString(36).slice(2, 9)}`,

@@ -1,4 +1,5 @@
-import { generateQuiz, generateFocusedQuiz, generateMatchingPairs, generateLessonQuiz } from "../quiz-engine";
+import { generateQuiz, generateFocusedQuiz, generateMatchingPairs, generateLessonQuiz, pickDistractors } from "../quiz-engine";
+import { quizSense } from "../dictionary";
 import type { DictionaryEntry } from "../dictionary";
 import type { QuizConfig, SentenceTemplate, MatchingGameConfig, TranscriptSegment } from "@/types";
 
@@ -572,5 +573,116 @@ describe("generateLessonQuiz", () => {
     for (const q of listening) {
       expect(q.prompt).toBe("TRANSLATED:quiz.promptListening");
     }
+  });
+});
+
+
+// ---------------------------------------------------------------------------
+// Sense-level quizzing
+// ---------------------------------------------------------------------------
+
+describe("quizSense", () => {
+  it("reduces a multi-sense column to its primary sense", () => {
+    // Quizzes used to set the whole column as the answer, so "what does bára
+    // mean?" expected "way; road; path" as one option.
+    expect(quizSense("way; road; path")).toEqual({
+      answer: "way",
+      siblings: ["way", "road", "path"],
+      senseCount: 3,
+    });
+  });
+
+  it("keeps a disambiguating note attached to its sense", () => {
+    expect(quizSense("bag; belly (of humans)")).toEqual({
+      answer: "bag",
+      siblings: ["bag", "belly (of humans)"],
+      senseCount: 2,
+    });
+  });
+
+  it("leaves a single-sense entry exactly as it was", () => {
+    expect(quizSense("take")).toEqual({ answer: "take", siblings: ["take"], senseCount: 1 });
+  });
+
+  it("returns null for an empty gloss rather than an unanswerable question", () => {
+    expect(quizSense("   ")).toBeNull();
+    expect(quizSense(";;")).toBeNull();
+  });
+});
+
+describe("pickDistractors exclusions", () => {
+  const POOL = ["road", "path", "fish", "water", "house", "fire"];
+
+  it("never offers an excluded answer, even when it would fill a slot", () => {
+    // "road" and "path" are sibling senses of the same headword, so both are
+    // correct — a question offering either has two right answers.
+    for (let run = 0; run < 50; run++) {
+      const picked = pickDistractors("way", POOL, 3, { exclude: ["way", "road", "path"] });
+      expect(picked).not.toContain("road");
+      expect(picked).not.toContain("path");
+      expect(picked).toHaveLength(3);
+    }
+  });
+
+  it("holds the exclusion even when doing so means returning fewer than asked", () => {
+    // Only "fish" is left once the siblings are barred; the caller drops the
+    // question rather than showing a second correct answer.
+    const picked = pickDistractors("way", ["road", "path", "fish"], 3, {
+      exclude: ["way", "road", "path"],
+    });
+    expect(picked).toEqual(["fish"]);
+  });
+
+  it("matches exclusions case-insensitively", () => {
+    const picked = pickDistractors("way", ["Road", "PATH", "fish"], 3, {
+      exclude: ["road", "path"],
+    });
+    expect(picked).toEqual(["fish"]);
+  });
+
+  it("still prefers the preferred pool", () => {
+    const picked = pickDistractors("way", ["fish", "water"], 2, { preferred: ["house", "fire"] });
+    expect(picked.sort()).toEqual(["fire", "house"]);
+  });
+});
+
+describe("generateQuiz with multi-sense entries", () => {
+  const MULTI = "way; road; path";
+
+  function pool(): DictionaryEntry[] {
+    return [
+      makeEntry({ word: "bára", english: MULTI, id: "bara" }),
+      ...Array.from({ length: 30 }, (_, i) =>
+        makeEntry({ word: `word${i}`, english: `english${i}`, id: `w${i}` })
+      ),
+    ];
+  }
+
+  it("never puts two correct answers in one set of options", () => {
+    const seen: string[] = [];
+    for (let run = 0; run < 30; run++) {
+      for (const q of generateQuiz({ ...DEFAULT_CONFIG, questionCount: 31 }, pool())) {
+        if (q.wordId !== "bara") continue;
+        seen.push(q.type);
+        // Whichever question type came up, no option may be a sibling sense.
+        expect(q.options.filter((o) => ["way", "road", "path"].includes(o)).length).toBeLessThan(2);
+      }
+    }
+    expect(seen.length).toBeGreaterThan(0);
+  });
+
+  it("never shows the raw semicolon column as an option", () => {
+    for (let run = 0; run < 30; run++) {
+      for (const q of generateQuiz({ ...DEFAULT_CONFIG, questionCount: 31 }, pool())) {
+        for (const option of q.options) expect(option).not.toBe(MULTI);
+      }
+    }
+  });
+
+  it("drops an entry with an empty gloss instead of quizzing on it", () => {
+    const entries = [makeEntry({ word: "ghost", english: "  ", id: "ghost" }), ...makePool(20)];
+    const questions = generateQuiz({ ...DEFAULT_CONFIG, questionCount: 21 }, entries);
+    expect(questions.find((q) => q.wordId === "ghost")).toBeUndefined();
+    expect(questions.length).toBeGreaterThan(0);
   });
 });
