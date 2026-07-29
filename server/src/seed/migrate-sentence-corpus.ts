@@ -1,4 +1,6 @@
 import "dotenv/config";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { neon } from "@neondatabase/serverless";
 import { isGlossOverflow, isLossyGloss, parseSenses, projectSenses } from "../lib/senses.js";
 import { normalizeSentence, sentenceId } from "../lib/slug.js";
@@ -12,7 +14,11 @@ import { normalizeSentence, sentenceId } from "../lib/slug.js";
  * a normal `vercel --prod`; this runs afterwards, by hand.
  *
  *   npx tsx src/seed/migrate-sentence-corpus.ts          # report only
+ *   npx tsx src/seed/migrate-sentence-corpus.ts --csv    # + review sheets
  *   npx tsx src/seed/migrate-sentence-corpus.ts --apply  # write
+ *
+ * `--csv` writes exactly what `--apply` would insert, so the sheets an educator
+ * reviews and the rows that eventually land come from one code path.
  *
  * Purely additive — it inserts, and never updates or deletes an existing
  * column. `dictionary_entries.english` is left exactly as it is; nothing reads
@@ -34,6 +40,7 @@ const CHUNK = 200;
 type Entry = {
   id: string;
   language_id: string;
+  word: string;
   english: string;
   example: string | null;
   example_translation: string | null;
@@ -80,11 +87,30 @@ function collect(drafts: Map<string, Draft>, draft: Draft): void {
   drafts.set(draft.id, seen ? mergeDraft(seen, draft) : draft);
 }
 
+/**
+ * RFC 4180 quoting, always — Izon glosses are full of commas, semicolons and
+ * embedded quotes, and a sheet that only quotes when it thinks it must is a
+ * sheet that eventually splits a gloss down the middle.
+ */
+function csv(rows: (string | number | boolean | null)[][]): string {
+  return rows
+    .map((r) => r.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","))
+    .join("\r\n");
+}
+
+function writeCsv(dir: string, name: string, rows: (string | number | boolean | null)[][]): void {
+  const path = join(dir, name);
+  // BOM so Excel opens the subdots and tone marks as UTF-8 rather than mojibake.
+  writeFileSync(path, `﻿${csv(rows)}\r\n`, "utf8");
+  console.log(`  ${name}  (${rows.length - 1} rows)`);
+}
+
 async function run() {
   const apply = process.argv.includes("--apply");
+  const writeSheets = process.argv.includes("--csv");
 
   const entries = (await sql`
-    select id, language_id, english, example, example_translation,
+    select id, language_id, word, english, example, example_translation,
            example_translations, example_audio_url
     from dictionary_entries
     order by id
@@ -97,14 +123,28 @@ async function run() {
   `) as Template[];
 
   const drafts = new Map<string, Draft>();
-  const senseRows: { entryId: string; order: number; gloss: string; note: string | null }[] = [];
-  const exampleRows: { entryId: string; sentenceId: string; needsReview: boolean }[] = [];
+  const senseRows: {
+    entryId: string;
+    word: string;
+    order: number;
+    gloss: string;
+    note: string | null;
+  }[] = [];
+  const exampleRows: {
+    entryId: string;
+    word: string;
+    gloss: string;
+    sentenceId: string;
+    text: string;
+    translation: string | null;
+    needsReview: boolean;
+  }[] = [];
 
-  const overflow: string[] = [];
+  const overflow: { id: string; word: string; english: string; example: string }[] = [];
   const lossy: { id: string; before: string; after: string }[] = [];
   const overNote: string[] = [];
+  const normalizedRows: { id: string; word: string; before: string; after: string }[] = [];
   let senseCount = 0;
-  let normalized = 0;
 
   for (const e of entries) {
     const senses = parseSenses(e.english);
@@ -117,6 +157,7 @@ async function run() {
       if (s.note && s.note.length > 200) overNote.push(e.id);
       senseRows.push({
         entryId: e.id,
+        word: e.word,
         order: i,
         gloss: s.text,
         note: s.note ? s.note.slice(0, 200) : null,
@@ -127,12 +168,14 @@ async function run() {
     // silently rewrite a gloss.
     const back = projectSenses(senses);
     if (isLossyGloss(e.english)) lossy.push({ id: e.id, before: e.english, after: back });
-    else if (back !== e.english) normalized += 1;
+    else if (back !== e.english) {
+      normalizedRows.push({ id: e.id, word: e.word, before: e.english, after: back });
+    }
 
     const example = e.example?.trim();
     if (!example) continue;
     if (isGlossOverflow(e.english, example)) {
-      overflow.push(e.id);
+      overflow.push({ id: e.id, word: e.word, english: e.english, example });
       continue;
     }
 
@@ -146,7 +189,15 @@ async function run() {
       literal: null,
       audioUrl: e.example_audio_url,
     });
-    exampleRows.push({ entryId: e.id, sentenceId: id, needsReview: senses.length > 1 });
+    exampleRows.push({
+      entryId: e.id,
+      word: e.word,
+      gloss: senses[0].text,
+      sentenceId: id,
+      text: normalizeSentence(example),
+      translation: e.example_translation?.trim() || null,
+      needsReview: senses.length > 1,
+    });
   }
 
   const templateLinks: { id: string; sentenceId: string }[] = [];
@@ -177,7 +228,7 @@ async function run() {
     "→ distinct corpus sentences": drafts.size,
     "  collapsed by dedupe": exampleRows.length + templateLinks.length - drafts.size,
     "gloss overflow, skipped": overflow.length,
-    "glosses whitespace-normalized": normalized,
+    "glosses whitespace-normalized": normalizedRows.length,
   });
 
   if (overflow.length > 0) {
@@ -185,7 +236,7 @@ async function run() {
       `\n⚠️  ${overflow.length} entries whose \`example\` is overflowed gloss text, not an` +
         "\n    example. Left in place for an educator to re-split in Studio:",
     );
-    console.log("   ", overflow.slice(0, 20).join(", ") + (overflow.length > 20 ? ", …" : ""));
+    console.log("   ", overflow.slice(0, 20).map((o) => o.id).join(", ") + (overflow.length > 20 ? ", …" : ""));
   }
 
   if (overNote.length > 0) {
@@ -203,8 +254,63 @@ async function run() {
     }
   }
 
+  if (writeSheets) {
+    const dir = join(process.cwd(), "tmp", "sentence-corpus");
+    mkdirSync(dir, { recursive: true });
+    console.log(`\nReview sheets → ${dir}`);
+
+    // Which surfaces each sentence came from — the "used in N places" badge,
+    // computed here so a reviewer can see the shared ones before they exist.
+    const usedBy = new Map<string, string[]>();
+    for (const r of exampleRows) usedBy.set(r.sentenceId, [...(usedBy.get(r.sentenceId) ?? []), `dictionary:${r.word}`]);
+    for (const l of templateLinks) usedBy.set(l.sentenceId, [...(usedBy.get(l.sentenceId) ?? []), `drill:${l.id}`]);
+
+    writeCsv(dir, "sentences.csv", [
+      ["id", "language", "text", "translation", "literal", "audio_url", "used_in", "used_by"],
+      ...[...drafts.values()].map((d) => {
+        const uses = usedBy.get(d.id) ?? [];
+        return [d.id, d.languageId, d.text, d.translation, d.literal, d.audioUrl, uses.length, uses.join(" | ")];
+      }),
+    ]);
+
+    writeCsv(dir, "senses.csv", [
+      ["entry_id", "word", "sense_no", "gloss", "note"],
+      ...senseRows.map((r) => [r.entryId, r.word, r.order + 1, r.gloss, r.note]),
+    ]);
+
+    writeCsv(dir, "examples.csv", [
+      ["entry_id", "word", "attached_to_sense", "sentence_id", "sentence", "translation", "sense_is_a_guess"],
+      ...exampleRows.map((r) => [r.entryId, r.word, r.gloss, r.sentenceId, r.text, r.translation, r.needsReview]),
+    ]);
+
+    // The two sheets that actually need a decision, not just a skim.
+    writeCsv(dir, "review-sense-guess.csv", [
+      ["entry_id", "word", "all_senses", "guessed_sense", "sentence", "translation"],
+      ...exampleRows
+        .filter((r) => r.needsReview)
+        .map((r) => {
+          const all = senseRows.filter((s) => s.entryId === r.entryId).map((s) => s.gloss);
+          return [r.entryId, r.word, all.join(" | "), r.gloss, r.text, r.translation];
+        }),
+    ]);
+
+    writeCsv(dir, "review-gloss-overflow.csv", [
+      ["entry_id", "word", "english_truncated_at_500", "example_column_holding_the_rest"],
+      ...overflow.map((o) => [o.id, o.word, o.english, o.example]),
+    ]);
+
+    writeCsv(dir, "review-gloss-normalized.csv", [
+      ["entry_id", "word", "before", "after"],
+      ...normalizedRows.map((n) => [n.id, n.word, n.before, n.after]),
+    ]);
+  }
+
   if (!apply) {
-    console.log("\nDry run only. Re-run with --apply to write.");
+    console.log(
+      writeSheets
+        ? "\nNothing written to the database. Re-run with --apply once the sheets check out."
+        : "\nDry run only. Re-run with --csv for review sheets, or --apply to write.",
+    );
     process.exit(0);
   }
 

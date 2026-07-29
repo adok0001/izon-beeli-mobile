@@ -74,3 +74,4 @@ build/
 partykit/.env
 *.swp
 .vercel
+server/tmp/
