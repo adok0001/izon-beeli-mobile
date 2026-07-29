@@ -109,16 +109,27 @@ async function run() {
   const apply = process.argv.includes("--apply");
   const writeSheets = process.argv.includes("--csv");
 
+  // Live content only. 6,268 Izon entries are inactive drafts awaiting an
+  // editorial pass; exploding them into senses now would fill the corpus with
+  // rows nobody has approved, and they carry every one of the 82 glosses that
+  // overflowed their column. They join in a later pass, once they go live —
+  // the migration is idempotent, so re-running then picks them up.
   const entries = (await sql`
     select id, language_id, word, english, example, example_translation,
            example_translations, example_audio_url
     from dictionary_entries
+    where is_active = true
     order by id
   `) as Entry[];
+
+  const [{ n: skippedEntries }] = (await sql`
+    select count(*)::int as n from dictionary_entries where is_active = false
+  `) as { n: number }[];
 
   const templates = (await sql`
     select id, language_id, sentence, english_sentence, literal_translation
     from sentence_templates
+    where is_active = true
     order by id
   `) as Template[];
 
@@ -220,7 +231,8 @@ async function run() {
   const needingReview = exampleRows.filter((r) => r.needsReview).length;
   console.log("\n── Sentence corpus backfill ─────────────────────────────");
   console.table({
-    "dictionary entries": entries.length,
+    "active dictionary entries": entries.length,
+    "inactive, deferred to a later pass": skippedEntries,
     "→ sense rows": senseCount,
     "usage examples promoted": exampleRows.length,
     "  of those, sense-1 is a guess": needingReview,
