@@ -255,9 +255,8 @@ async function run() {
   }
 
   if (writeSheets) {
-    const dir = join(process.cwd(), "tmp", "sentence-corpus");
+    const dir = join(process.cwd(), "tmp");
     mkdirSync(dir, { recursive: true });
-    console.log(`\nReview sheets → ${dir}`);
 
     // Which surfaces each sentence came from — the "used in N places" badge,
     // computed here so a reviewer can see the shared ones before they exist.
@@ -265,43 +264,43 @@ async function run() {
     for (const r of exampleRows) usedBy.set(r.sentenceId, [...(usedBy.get(r.sentenceId) ?? []), `dictionary:${r.word}`]);
     for (const l of templateLinks) usedBy.set(l.sentenceId, [...(usedBy.get(l.sentenceId) ?? []), `drill:${l.id}`]);
 
-    writeCsv(dir, "sentences.csv", [
-      ["id", "language", "text", "translation", "literal", "audio_url", "used_in", "used_by"],
-      ...[...drafts.values()].map((d) => {
-        const uses = usedBy.get(d.id) ?? [];
-        return [d.id, d.languageId, d.text, d.translation, d.literal, d.audioUrl, uses.length, uses.join(" | ")];
+    // One row per sense — the grain of the thing being reviewed. Everything else
+    // is derivable from it: the corpus is the distinct sentence_ids, the example
+    // table is the rows that have one. Splitting those out into their own sheets
+    // just made a reviewer join them back by hand.
+    const byEntry = new Map<string, typeof exampleRows>();
+    for (const r of exampleRows) byEntry.set(r.entryId, [...(byEntry.get(r.entryId) ?? []), r]);
+    const overflowIds = new Map(overflow.map((o) => [o.id, o]));
+    const normalizedIds = new Map(normalizedRows.map((n) => [n.id, n]));
+
+    writeCsv(dir, "sentence-corpus-review.csv", [
+      [
+        "decision", "entry_id", "word", "sense_no", "gloss", "note",
+        "example", "example_translation", "sentence_id", "shared_with",
+        "gloss_before_cleanup", "overflow_text",
+      ],
+      ...senseRows.map((s) => {
+        const first = s.order === 0;
+        const ex = first ? byEntry.get(s.entryId)?.[0] : undefined;
+        const shared = ex ? (usedBy.get(ex.sentenceId) ?? []) : [];
+        const norm = first ? normalizedIds.get(s.entryId) : undefined;
+        // One column says what a human has to do with the row, so the sheet
+        // filters down to the ~300 rows that need a decision.
+        const decision = first && overflowIds.has(s.entryId)
+          ? "gloss overflowed 500 chars — needs re-splitting"
+          : ex?.needsReview
+            ? "which sense does this example belong to?"
+            : norm
+              ? "check the cleanup"
+              : "";
+        return [
+          decision, s.entryId, s.word, s.order + 1, s.gloss, s.note,
+          ex?.text ?? "", ex?.translation ?? "", ex?.sentenceId ?? "",
+          shared.length > 1 ? shared.join(" | ") : "",
+          norm?.before ?? "",
+          first ? overflowIds.get(s.entryId)?.example ?? "" : "",
+        ];
       }),
-    ]);
-
-    writeCsv(dir, "senses.csv", [
-      ["entry_id", "word", "sense_no", "gloss", "note"],
-      ...senseRows.map((r) => [r.entryId, r.word, r.order + 1, r.gloss, r.note]),
-    ]);
-
-    writeCsv(dir, "examples.csv", [
-      ["entry_id", "word", "attached_to_sense", "sentence_id", "sentence", "translation", "sense_is_a_guess"],
-      ...exampleRows.map((r) => [r.entryId, r.word, r.gloss, r.sentenceId, r.text, r.translation, r.needsReview]),
-    ]);
-
-    // The two sheets that actually need a decision, not just a skim.
-    writeCsv(dir, "review-sense-guess.csv", [
-      ["entry_id", "word", "all_senses", "guessed_sense", "sentence", "translation"],
-      ...exampleRows
-        .filter((r) => r.needsReview)
-        .map((r) => {
-          const all = senseRows.filter((s) => s.entryId === r.entryId).map((s) => s.gloss);
-          return [r.entryId, r.word, all.join(" | "), r.gloss, r.text, r.translation];
-        }),
-    ]);
-
-    writeCsv(dir, "review-gloss-overflow.csv", [
-      ["entry_id", "word", "english_truncated_at_500", "example_column_holding_the_rest"],
-      ...overflow.map((o) => [o.id, o.word, o.english, o.example]),
-    ]);
-
-    writeCsv(dir, "review-gloss-normalized.csv", [
-      ["entry_id", "word", "before", "after"],
-      ...normalizedRows.map((n) => [n.id, n.word, n.before, n.after]),
     ]);
   }
 
