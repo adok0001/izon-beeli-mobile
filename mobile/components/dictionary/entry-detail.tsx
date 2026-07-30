@@ -12,6 +12,7 @@ import {
   DICTIONARY_CATEGORY_VALUES,
   parseSenses,
   scopeToSense,
+  type SenseScope,
   type DictionaryEntry,
   type Sense,
 } from "@/lib/dictionary";
@@ -125,6 +126,33 @@ export interface EntryDetailEdit {
   onSaveExampleTranslations: (translations: LocalizedText) => Promise<unknown>;
   onSaveAudio: (input: AudioAssetSaveInput) => Promise<unknown>;
   onError?: (error: Error) => void;
+  /**
+   * The entry's senses with their own examples, when the corpus has them.
+   *
+   * Supplying these switches the example editor from the whole-word
+   * `dictionary_entries.example` column to per-sense rows — which is what lets
+   * the preview scope to a sense the way the learner's screen does. Absent (an
+   * entry the backfill has not reached, or a draft with no id yet), the editor
+   * falls back to the single column so there is always somewhere to type.
+   */
+  senses?: EditableSenseInput[];
+  /** Create or replace the example on one sense. */
+  onSaveSenseExample?: (input: { senseId: string; exampleId?: string; text: string }) => Promise<unknown>;
+  onSaveSenseExampleTranslations?: (input: { exampleId: string; translations: LocalizedText }) => Promise<unknown>;
+}
+
+/** The shape `EntryDetailEdit.senses` needs — a subset of the Studio hook's type. */
+export interface EditableSenseInput {
+  id: string;
+  order: number;
+  examples: {
+    id: string;
+    text: string;
+    translation?: string | null;
+    translations?: LocalizedText | null;
+    audioUrl?: string | null;
+    needsSenseReview: boolean;
+  }[];
 }
 
 /** The closed category set, in the canonical order, for the picker sheet. */
@@ -164,17 +192,45 @@ export function EntryDetailView({
   const { uiLanguage, englishText, exampleTranslationText, senses, hasMultipleSenses, categoryLabel, categoryIcon, displayPronunciation, effectiveAudioUrl } = derived;
 
   /**
-   * Scope the example to the selected sense — but never while editing.
+   * The sense row the example editor writes to, when the corpus has one.
    *
-   * The editable column is whole-word, so a scoped editor would let someone read
-   * "no example" under sense 3, type one, and silently overwrite sense 1's. Until
-   * `dictionary_examples` gives each sense its own row to write to, the Studio
-   * preview edits the entry as a whole.
+   * Scoping used to be disabled while editing: the only writable column was
+   * whole-word, so a scoped editor would have let someone read "no example"
+   * under sense 3, type one, and silently overwrite sense 1's. With per-sense
+   * rows there is somewhere real to write, so the preview now scopes exactly
+   * like the learner's screen — and only falls back to the whole-word column for
+   * an entry the backfill has not reached.
    */
-  const scope = edit ? scopeToSense(entry) : scopeToSense(entry, selectedSense);
-  const scopedExampleTranslation = edit
-    ? exampleTranslationText
-    : localize(scope.exampleTranslations ?? scope.exampleTranslation, uiLanguage);
+  const senseRow = edit?.senses?.find((sn) => sn.order === (selectedSense ?? 0));
+  const perSenseEditing = !!edit?.onSaveSenseExample && !!senseRow;
+  const senseExample = senseRow?.examples[0];
+
+  const scope: SenseScope = perSenseEditing
+    ? {
+        example: senseExample?.text,
+        exampleTranslation: senseExample?.translation ?? undefined,
+        exampleTranslations: senseExample?.translations ?? undefined,
+        exampleAudioUrl: senseExample?.audioUrl ?? undefined,
+      }
+    : edit
+      ? scopeToSense(entry)
+      : scopeToSense(entry, selectedSense);
+
+  const scopedExampleTranslation =
+    edit && !perSenseEditing
+      ? exampleTranslationText
+      : localize(scope.exampleTranslations ?? scope.exampleTranslation, uiLanguage);
+
+  /** Writes to the sense row when there is one, else the whole-word column. */
+  const saveExample = perSenseEditing
+    ? (text: string) =>
+        edit!.onSaveSenseExample!({ senseId: senseRow!.id, exampleId: senseExample?.id, text })
+    : edit?.onSaveExample ?? (async () => {});
+
+  const saveExampleTranslations = perSenseEditing && senseExample
+    ? (translations: LocalizedText) =>
+        edit!.onSaveSenseExampleTranslations!({ exampleId: senseExample.id, translations })
+    : edit?.onSaveExampleTranslations ?? (async () => {});
 
   // In edit mode an absent optional field still needs somewhere to tap, so it
   // renders a muted stand-in where the real value will appear.
@@ -318,7 +374,7 @@ export function EntryDetailView({
       {(scope.example || edit || (hasMultipleSenses && selectedSense !== undefined)) && (
         <View style={{ marginHorizontal: 20, marginTop: 20, borderRadius: 12, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 16, borderWidth: 1, borderColor: M.border }}>
           <Text style={{ marginBottom: 6, fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
-            {hasMultipleSenses && selectedSense !== undefined && !edit
+            {hasMultipleSenses && selectedSense !== undefined && (!edit || perSenseEditing)
               ? t("wordDetail.exampleForSense", { n: String(selectedSense + 1) })
               : t("wordDetail.example")}
           </Text>
@@ -330,7 +386,7 @@ export function EntryDetailView({
                 value={scope.example ?? ""}
                 placeholder="A sentence using this word"
                 disabled={!edit}
-                onSave={edit?.onSaveExample ?? (async () => {})}
+                onSave={saveExample}
                 onError={edit?.onError}
               >
                 {scope.example ? (
@@ -358,7 +414,7 @@ export function EntryDetailView({
                 multiline
                 value={toLocalizedText(scope.exampleTranslations, scope.exampleTranslation)}
                 disabled={!edit}
-                onSave={edit?.onSaveExampleTranslations ?? (async () => {})}
+                onSave={saveExampleTranslations}
                 onError={edit?.onError}
               >
                 {scopedExampleTranslation ? (

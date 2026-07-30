@@ -7,6 +7,11 @@ import { LessonHero } from "@/components/lesson/lesson-hero";
 import { LessonMetaPills } from "@/components/lesson/lesson-meta-pills";
 import { LessonWords } from "@/components/lesson/lesson-words";
 import { LessonObjectives } from "@/components/lesson/lesson-objectives";
+import {
+  useAddSenseExample,
+  useSenseExamples,
+  useUpdateSenseExample,
+} from "@/lib/hooks/educator/use-sense-examples";
 import { usePreviewStore } from "@/store/preview-store";
 import { friendlyError } from "@/lib/api";
 import {
@@ -17,7 +22,7 @@ import {
 } from "@/lib/hooks/use-educator-panel";
 import { useToast } from "@/lib/hooks/use-toast";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -37,6 +42,12 @@ export default function PreviewScreen() {
 
   const entryId = payload?.kind === "dictionary" ? payload.entry.id : null;
   const canEditEntry = payload?.kind === "dictionary" && !!payload.editable;
+
+  /** Which sense the preview is scoped to — mirrors the learner's word screen. */
+  const [selectedSense, setSelectedSense] = useState(0);
+  const { data: senses } = useSenseExamples(entryId ?? undefined);
+  const addExample = useAddSenseExample(entryId ?? undefined);
+  const updateExample = useUpdateSenseExample(entryId ?? undefined);
 
   /** One PATCH, then swap the returned row into the preview so the replica
    * reflects the save without refetching (and re-mounting) underneath it. */
@@ -74,9 +85,19 @@ export default function PreviewScreen() {
             onSaveExampleTranslations: (exampleTranslations) => saveFields({ exampleTranslations }),
             onSaveAudio: saveAudio,
             onError: (err) => toastError("Save failed", friendlyError(err)),
+            senses,
+            // Editing existing text patches the shared corpus row, so the change
+            // reaches every drill and lesson line citing it. Adding a first
+            // example creates the citation.
+            onSaveSenseExample: ({ senseId, exampleId, text }) =>
+              exampleId
+                ? updateExample.mutateAsync({ exampleId, text })
+                : addExample.mutateAsync({ senseId, text }),
+            onSaveSenseExampleTranslations: ({ exampleId, translations }) =>
+              updateExample.mutateAsync({ exampleId, translations }),
           }
         : undefined,
-    [canEditEntry, saveFields, saveAudio, toastError]
+    [canEditEntry, saveFields, saveAudio, toastError, senses, addExample, updateExample]
   );
 
   return (
@@ -102,6 +123,8 @@ export default function PreviewScreen() {
                 entry={payload.entry}
                 derived={deriveEntryDisplay(payload.entry, payload.uiLanguage)}
                 edit={edit}
+                selectedSense={selectedSense}
+                onSelectSense={setSelectedSense}
               />
             </ScrollView>
           </ReplicaEditModeProvider>
