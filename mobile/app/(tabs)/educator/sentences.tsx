@@ -21,12 +21,14 @@ import { useToast } from "@/lib/hooks/use-toast";
 import { ActiveToggle } from "@/components/studio/active-toggle";
 import { ActionPill } from "@/components/studio/studio-action-pill";
 import { StudioCard } from "@/components/studio/studio-card";
+import { StudioDropdown } from "@/components/studio/studio-dropdown";
 import { StudioFilterPills } from "@/components/studio/studio-filter-pills";
+import { useStudioAccess } from "@/components/studio/studio-gate";
 import { FormInput, GhostButton, PrimaryButton } from "@/components/studio/studio-form";
 import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
 import { useLanguages } from "@/store/languages-store";
 import { Stack } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Alert,
@@ -80,11 +82,29 @@ export default function SentencesAdminScreen() {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const toast = useToast();
+  const { user: currentUser } = useStudioAccess();
   const languages = useLanguages();
+
+  /**
+   * Only the languages this user may actually edit. The picker offered every
+   * language regardless of assignment, so a reviewer could select one, see its
+   * drills, and have every write come back 403. Same rule as bulk-import.
+   */
+  const allowedLanguages = useMemo(() => {
+    if (!currentUser) return [];
+    return currentUser.isAdmin
+      ? languages
+      : languages.filter((l) => currentUser.reviewerLanguages.includes(l.id));
+  }, [currentUser, languages]);
+
   const [selectedLanguage, setSelectedLanguage] = useState("");
   useEffect(() => {
-    if (!selectedLanguage && languages[0]) setSelectedLanguage(languages[0].id);
-  }, [languages, selectedLanguage]);
+    // Also re-seeds when the selection falls outside what this user may edit.
+    if (allowedLanguages.length === 0) return;
+    if (!allowedLanguages.some((l) => l.id === selectedLanguage)) {
+      setSelectedLanguage(allowedLanguages[0].id);
+    }
+  }, [allowedLanguages, selectedLanguage]);
   const [tab, setTab] = useState<Tab>("sentences");
 
   // Sentences state
@@ -238,15 +258,19 @@ export default function SentencesAdminScreen() {
         />
         <StudioScreenHeader title={t("educator.sentences.screenTitle")} />
         <KeyboardAvoidingView style={{ flex: 1, backgroundColor: M.card }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-          {/* Language picker */}
-          <View style={{ paddingHorizontal: 16, paddingVertical: 10 }}>
-            <StudioFilterPills
-              options={languages.map((lang) => ({ id: lang.id, label: lang.name }))}
-              value={selectedLanguage}
-              onChange={setSelectedLanguage}
-              scrollable
-            />
-          </View>
+          {/* Language picker — a dropdown, not a pill row: pills are for
+              filter/tab rows, dropdowns for picking one value. */}
+          {allowedLanguages.length > 1 && (
+            <View style={{ paddingHorizontal: 16, paddingVertical: 10 }}>
+              <StudioDropdown
+                label="Language"
+                icon="globe.fill"
+                value={selectedLanguage}
+                options={allowedLanguages.map((lang) => ({ id: lang.id, label: lang.name }))}
+                onChange={setSelectedLanguage}
+              />
+            </View>
+          )}
 
           {/* Tab switcher */}
           <View style={{ paddingHorizontal: 16, marginBottom: 12 }}>
