@@ -753,7 +753,7 @@ export default function EducatorDictionaryScreen() {
           renderItem={renderItem}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 24 }}
+          contentContainerStyle={{ paddingBottom: 40 }}
           ItemSeparatorComponent={() => <View className="h-2" />}
           ListHeaderComponent={listHeader}
           ListEmptyComponent={listEmpty}
