@@ -750,7 +750,6 @@ export const dictionarySenses = pgTable(
     note: varchar("note", { length: 200 }),
   },
   (table) => [
-    index("dictionary_senses_entry_idx").on(table.entryId, table.order),
     /**
      * A sense's id has to survive a re-run of the backfill, because a re-run is
      * how entries join the corpus as they go live. The first version deleted and

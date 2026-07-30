@@ -1,6 +1,6 @@
 {
   "name": "izon-beeli-server",
-  "version": "7.13.0",
+  "version": "7.14.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -20,6 +20,7 @@
     "db:note-status": "tsx src/seed/note-status.ts",
     "db:migrate-media": "tsx src/seed/migrate-media-fields.ts",
     "db:migrate-translations": "tsx src/seed/migrate-translations-maps.ts",
+    "db:migrate-sentence-corpus-schema": "tsx src/seed/migrate-sentence-corpus-schema.ts",
     "db:migrate-sentence-corpus": "tsx src/seed/migrate-sentence-corpus.ts",
     "db:drop-inactive-dictionary": "tsx src/seed/migrate-drop-inactive-dictionary.ts",
     "db:drop-fr-columns": "tsx src/seed/migrate-drop-fr-columns.ts",
