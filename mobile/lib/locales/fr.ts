@@ -1498,6 +1498,8 @@ export const fr = {
     showSense: "Afficher « {{sense}} »",
     exampleForSense: "Exemple · sens {{n}}",
     noExampleForSense: "Pas encore d’exemple pour ce sens",
+    removeExample: "Retirer cet exemple",
+    sentenceSharedWarning: "Utilisée dans {{n}} endroits — les modifications s’appliquent partout",
   },
   contribute: {
     title: "Contribuer",

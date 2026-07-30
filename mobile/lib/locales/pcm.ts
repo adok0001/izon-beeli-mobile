@@ -1498,6 +1498,8 @@ export const pcm = {
     showSense: "Show “{{sense}}”",
     exampleForSense: "Example · meaning {{n}}",
     noExampleForSense: "No example for dis meaning yet",
+    removeExample: "Remove dis example",
+    sentenceSharedWarning: "Dem use am for {{n}} places — any change go show everywhere",
   },
   contribute: {
     title: "Contribute",

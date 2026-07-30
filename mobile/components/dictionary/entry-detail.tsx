@@ -139,6 +139,12 @@ export interface EntryDetailEdit {
   /** Create or replace the example on one sense. */
   onSaveSenseExample?: (input: { senseId: string; exampleId?: string; text: string }) => Promise<unknown>;
   onSaveSenseExampleTranslations?: (input: { exampleId: string; translations: LocalizedText }) => Promise<unknown>;
+  /**
+   * Remove this sense's citation of a sentence. The sentence itself stays in the
+   * corpus — it may be cited elsewhere, and a recorded sentence is worth keeping
+   * even when nothing cites it.
+   */
+  onDeleteSenseExample?: (input: { exampleId: string; usedIn: number }) => void;
 }
 
 /** The shape `EntryDetailEdit.senses` needs — a subset of the Studio hook's type. */
@@ -152,6 +158,8 @@ export interface EditableSenseInput {
     translations?: LocalizedText | null;
     audioUrl?: string | null;
     needsSenseReview: boolean;
+    /** Citations across dictionary, drills and lessons — 1 when only used here. */
+    usedIn: number;
   }[];
 }
 
@@ -231,6 +239,13 @@ export function EntryDetailView({
     ? (translations: LocalizedText) =>
         edit!.onSaveSenseExampleTranslations!({ exampleId: senseExample.id, translations })
     : edit?.onSaveExampleTranslations ?? (async () => {});
+
+  const deleteExample =
+    perSenseEditing && senseExample && edit?.onDeleteSenseExample
+      ? () => edit.onDeleteSenseExample!({ exampleId: senseExample.id, usedIn: senseExample.usedIn })
+      : undefined;
+  /** Only worth saying when it is more than just here. */
+  const sharedCount = perSenseEditing && senseExample && senseExample.usedIn > 1 ? senseExample.usedIn : 0;
 
   // In edit mode an absent optional field still needs somewhere to tap, so it
   // renders a muted stand-in where the real value will appear.
@@ -378,6 +393,24 @@ export function EntryDetailView({
               ? t("wordDetail.exampleForSense", { n: String(selectedSense + 1) })
               : t("wordDetail.example")}
           </Text>
+          {sharedCount > 0 && (
+            <View
+              style={{
+                alignSelf: "flex-start",
+                marginBottom: 8,
+                borderRadius: 6,
+                backgroundColor: M.warningBg,
+                borderWidth: 1,
+                borderColor: M.warningBorder,
+                paddingHorizontal: 8,
+                paddingVertical: 3,
+              }}
+            >
+              <Text style={{ fontSize: 10, fontWeight: "600", color: M.warning }}>
+                {t("wordDetail.sentenceSharedWarning", { n: String(sharedCount) })}
+              </Text>
+            </View>
+          )}
           <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
             <View style={{ flex: 1 }}>
               <ReplicaField
@@ -426,6 +459,19 @@ export function EntryDetailView({
                 )}
               </ReplicaField>
             </View>
+          )}
+          {!!deleteExample && (
+            <Pressable
+              onPress={deleteExample}
+              accessibilityRole="button"
+              accessibilityLabel={t("wordDetail.removeExample")}
+              style={{ alignSelf: "flex-start", marginTop: 12, flexDirection: "row", alignItems: "center", gap: 6 }}
+            >
+              <IconSymbol name="trash" size={13} color={M.error} />
+              <Text style={{ fontSize: 12, fontWeight: "600", color: M.error }}>
+                {t("wordDetail.removeExample")}
+              </Text>
+            </Pressable>
           )}
         </View>
       )}

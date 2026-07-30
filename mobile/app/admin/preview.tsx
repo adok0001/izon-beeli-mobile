@@ -9,6 +9,7 @@ import { LessonWords } from "@/components/lesson/lesson-words";
 import { LessonObjectives } from "@/components/lesson/lesson-objectives";
 import {
   useAddSenseExample,
+  useDeleteSenseExample,
   useSenseExamples,
   useUpdateSenseExample,
 } from "@/lib/hooks/educator/use-sense-examples";
@@ -23,7 +24,7 @@ import {
 import { useToast } from "@/lib/hooks/use-toast";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { useCallback, useMemo, useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { Alert, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 /**
@@ -36,7 +37,7 @@ export default function PreviewScreen() {
   const M = useMuseumTheme();
   useStudioAccess();
   const { payload, updateDictionaryEntry } = usePreviewStore();
-  const { error: toastError } = useToast();
+  const { error: toastError, success: toastSuccess } = useToast();
   const patchField = usePatchEducatorDictionaryField();
   const patchAudio = usePatchEducatorDictionaryAudio();
 
@@ -48,6 +49,37 @@ export default function PreviewScreen() {
   const { data: senses } = useSenseExamples(entryId ?? undefined);
   const addExample = useAddSenseExample(entryId ?? undefined);
   const updateExample = useUpdateSenseExample(entryId ?? undefined);
+  const deleteExample = useDeleteSenseExample(entryId ?? undefined);
+
+  /**
+   * Only the citation goes. The sentence stays in the corpus — it may be cited by
+   * a drill or a lesson line, and even unused it may already carry a recording,
+   * which is the asset the whole corpus exists to protect. The confirm says so,
+   * because "delete" otherwise reads as destroying the sentence.
+   */
+  const confirmDeleteExample = useCallback(
+    ({ exampleId, usedIn }: { exampleId: string; usedIn: number }) => {
+      Alert.alert(
+        "Remove this example?",
+        usedIn > 1
+          ? `The sentence is used in ${usedIn} places. It stays in the corpus and the other ${usedIn - 1} keep it — only this sense stops citing it.`
+          : "The sentence stays in the corpus, along with any recording. Only this sense stops citing it.",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Remove",
+            style: "destructive",
+            onPress: () =>
+              deleteExample.mutate(exampleId, {
+                onSuccess: () => toastSuccess("Example removed"),
+                onError: (err: Error) => toastError("Remove failed", friendlyError(err)),
+              }),
+          },
+        ],
+      );
+    },
+    [deleteExample, toastError, toastSuccess],
+  );
 
   /** One PATCH, then swap the returned row into the preview so the replica
    * reflects the save without refetching (and re-mounting) underneath it. */
@@ -95,9 +127,10 @@ export default function PreviewScreen() {
                 : addExample.mutateAsync({ senseId, text }),
             onSaveSenseExampleTranslations: ({ exampleId, translations }) =>
               updateExample.mutateAsync({ exampleId, translations }),
+            onDeleteSenseExample: confirmDeleteExample,
           }
         : undefined,
-    [canEditEntry, saveFields, saveAudio, toastError, senses, addExample, updateExample]
+    [canEditEntry, saveFields, saveAudio, toastError, senses, addExample, updateExample, confirmDeleteExample]
   );
 
   return (

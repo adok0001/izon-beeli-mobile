@@ -1487,6 +1487,8 @@ export const en = {
     showSense: "Show “{{sense}}”",
     exampleForSense: "Example · sense {{n}}",
     noExampleForSense: "No example for this sense yet",
+    removeExample: "Remove this example",
+    sentenceSharedWarning: "Used in {{n}} places — edits apply everywhere",
   },
   contribute: {
     // Landing

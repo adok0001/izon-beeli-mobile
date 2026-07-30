@@ -1498,6 +1498,8 @@ export const ar = {
     showSense: "إظهار «{{sense}}»",
     exampleForSense: "مثال · المعنى {{n}}",
     noExampleForSense: "لا يوجد مثال لهذا المعنى بعد",
+    removeExample: "إزالة هذا المثال",
+    sentenceSharedWarning: "مستخدمة في {{n}} مواضع — التعديلات تسري على الكل",
   },
   contribute: {
     title: "ساهم",

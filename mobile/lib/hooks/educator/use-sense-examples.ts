@@ -20,6 +20,12 @@ export interface SenseExample {
   translation?: string | null;
   translations?: LocalizedText | null;
   audioUrl?: string | null;
+  /**
+   * How many places cite this sentence — dictionary examples, drills and lesson
+   * lines together. Above 1 the editor warns before an edit, because the corpus
+   * shares the text deliberately: one correction reaches every citer.
+   */
+  usedIn: number;
 }
 
 export interface EditableSense {
