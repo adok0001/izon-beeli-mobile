@@ -636,7 +636,7 @@ export default function EducatorDictionaryScreen() {
         />
       </View>
 
-      <View className="mt-4 px-5 flex-row items-center justify-between">
+      <View className="mt-4 mb-3 px-5 flex-row items-center justify-between">
         <Text className="text-xs font-semibold uppercase tracking-[1.4px]" style={{ color: M.muted }}>
           {isFiltered ? `Entries (${filteredEntries.length} of ${entries.length})` : `Entries (${entries.length})`}
         </Text>
