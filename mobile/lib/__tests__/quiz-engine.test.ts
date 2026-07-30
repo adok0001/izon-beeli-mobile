@@ -1,5 +1,6 @@
 import { generateQuiz, generateFocusedQuiz, generateMatchingPairs, generateLessonQuiz, pickDistractors } from "../quiz-engine";
 import { quizSense } from "../dictionary";
+import type { SenseProgress } from "../dictionary";
 import type { DictionaryEntry } from "../dictionary";
 import type { QuizConfig, SentenceTemplate, MatchingGameConfig, TranscriptSegment } from "@/types";
 
@@ -589,6 +590,7 @@ describe("quizSense", () => {
       answer: "way",
       siblings: ["way", "road", "path"],
       senseCount: 3,
+      senseIndex: 0,
     });
   });
 
@@ -597,11 +599,17 @@ describe("quizSense", () => {
       answer: "bag",
       siblings: ["bag", "belly (of humans)"],
       senseCount: 2,
+      senseIndex: 0,
     });
   });
 
   it("leaves a single-sense entry exactly as it was", () => {
-    expect(quizSense("take")).toEqual({ answer: "take", siblings: ["take"], senseCount: 1 });
+    expect(quizSense("take")).toEqual({
+      answer: "take",
+      siblings: ["take"],
+      senseCount: 1,
+      senseIndex: 0,
+    });
   });
 
   it("returns null for an empty gloss rather than an unanswerable question", () => {
@@ -717,5 +725,53 @@ describe("generateFocusedQuiz with a multi-sense word", () => {
 
   it("returns nothing for a word with no usable gloss", () => {
     expect(generateFocusedQuiz("ghost", "  ", undefined, makePool(20))).toEqual([]);
+  });
+});
+
+describe("progressive sense gating", () => {
+  const NAMA = "animal; beast; meat; beef";
+  const progress = (mastered: number[], hasExample: number[]): SenseProgress => ({
+    mastered: new Set(mastered),
+    hasExample: new Set(hasExample),
+  });
+
+  it("stays on sense 1 while it is unmastered", () => {
+    expect(quizSense(NAMA, progress([], [1, 2, 3]))?.answer).toBe("animal");
+  });
+
+  it("advances to the next sense once the one before it is mastered", () => {
+    expect(quizSense(NAMA, progress([0], [1, 2, 3]))?.answer).toBe("beast");
+    expect(quizSense(NAMA, progress([0, 1], [1, 2, 3]))?.answer).toBe("meat");
+  });
+
+  it("reports which sense it landed on, so a schedule can key on it", () => {
+    expect(quizSense(NAMA, progress([0, 1], [1, 2, 3]))?.senseIndex).toBe(2);
+  });
+
+  it("refuses to advance to a sense with no example to disambiguate it", () => {
+    // "what does nama mean?" expecting "beast" is unfair when "animal" is
+    // equally correct and nothing tells the learner which was wanted.
+    expect(quizSense(NAMA, progress([0], []))?.answer).toBe("animal");
+    expect(quizSense(NAMA, progress([0], []))?.senseIndex).toBe(0);
+  });
+
+  it("stops at a gap rather than skipping over an unaskable sense", () => {
+    // Sense 2 has no example, so sense 3 stays locked even though it has one.
+    expect(quizSense(NAMA, progress([0], [2, 3]))?.answer).toBe("animal");
+  });
+
+  it("keeps the last qualifying sense reviewable once all are mastered", () => {
+    const q = quizSense(NAMA, progress([0, 1, 2, 3], [1, 2, 3]));
+    expect(q?.answer).toBe("beef");
+    expect(q?.senseIndex).toBe(3);
+  });
+
+  it("ignores progress entirely for a single-sense entry", () => {
+    expect(quizSense("take", progress([0], []))?.answer).toBe("take");
+  });
+
+  it("behaves as before when no progress is supplied", () => {
+    expect(quizSense(NAMA)?.answer).toBe("animal");
+    expect(quizSense(NAMA)?.senseIndex).toBe(0);
   });
 });

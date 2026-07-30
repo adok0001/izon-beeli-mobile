@@ -258,6 +258,8 @@ export interface QuizSense {
   siblings: string[];
   /** How many senses the entry has, so the UI can say which one it is asking about. */
   senseCount: number;
+  /** Which sense this is, 0-based — what a review schedule keys on. */
+  senseIndex: number;
 }
 
 /**
@@ -275,14 +277,60 @@ export interface QuizSense {
  * of the everyday one. When sense ranking exists, this function is the only
  * place that changes.
  */
-export function quizSense(english: string): QuizSense | null {
+export function quizSense(english: string, progress?: SenseProgress): QuizSense | null {
   const senses = parseSenses(english);
   if (senses.length === 0) return null;
+  const index = pickSenseIndex(senses.length, progress);
   return {
-    answer: projectSenses([senses[0]]),
+    answer: projectSenses([senses[index]]),
     siblings: senses.map((s) => projectSenses([s])),
     senseCount: senses.length,
+    senseIndex: index,
   };
+}
+
+/** What the learner has already got through, for {@link quizSense}. */
+export interface SenseProgress {
+  /** Sense positions the learner has mastered, 0-based. */
+  mastered: ReadonlySet<number>;
+  /**
+   * Sense positions that have a usage example to disambiguate them.
+   *
+   * A sense past the first can't be asked about without context: "what does
+   * *nama* mean?" expecting "meat" is unfair when "animal" is equally correct
+   * and the learner has no way to know which was wanted. The sense's own example
+   * sentence is what makes the question answerable, which is what
+   * `dictionary_examples` holds — one example per sense.
+   *
+   * Until those rows exist and are served, this is empty for every entry, so a
+   * multi-sense word stays on sense 1. That is deliberate: showing sense 3
+   * without context would be a worse question than the one this replaced.
+   */
+  hasExample: ReadonlySet<number>;
+}
+
+/**
+ * Which sense to ask about: the lowest one the learner hasn't mastered.
+ *
+ * Senses unlock in order, the same way the journey gates lessons. Sense 1 is
+ * always askable — it needs no disambiguation, being the primary meaning. A
+ * later sense is only offered once the ones before it are mastered AND it has an
+ * example to disambiguate it; otherwise the word stays on the last sense that
+ * qualifies, which keeps the question fair at the cost of not advancing.
+ *
+ * Once every qualifying sense is mastered, it cycles back to the highest one so
+ * the word stays reviewable rather than dropping out of rotation.
+ */
+function pickSenseIndex(count: number, progress?: SenseProgress): number {
+  if (count === 1 || !progress) return 0;
+  let best = 0;
+  for (let i = 0; i < count; i += 1) {
+    const askable = i === 0 || progress.hasExample.has(i);
+    if (!askable) break; // senses unlock in order — a gap stops the walk
+    if (!progress.mastered.has(i)) return i;
+    best = i;
+  }
+  return best;
 }
 
 /** Mutable copy of {@link DICTIONARY_CATEGORY_VALUES} for `.map`/`.filter` call sites. */
