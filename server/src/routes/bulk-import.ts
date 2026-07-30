@@ -576,8 +576,19 @@ bulkImportRouter.post("/lessons", async (c) => {
     return c.json({ inserted: 0, skipped: errors.length, errors, resultStatus });
   }
 
-  const inserted = await insertLessonGroups(groups, { courseId, status: statusValues(req.isAdmin, req.userId) });
-  return c.json({ inserted, skipped: errors.length, errors, resultStatus });
+  const { inserted, repositioned } = await insertLessonGroups(groups, {
+    courseId,
+    status: statusValues(req.isAdmin, req.userId),
+  });
+  // Surfaced rather than silent: a check whose segment is gone was moved to the
+  // end of its lesson, and an educator needs to know to reposition it.
+  return c.json({
+    inserted,
+    skipped: errors.length,
+    errors,
+    resultStatus,
+    ...(repositioned > 0 ? { repositionedChecks: repositioned } : {}),
+  });
 });
 
 // POST /api/import/unified   body: { languageId, entries[], dryRun? }

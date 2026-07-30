@@ -71,3 +71,84 @@ describe("buildLessonGroup", () => {
     expect(lessonImportId("a".repeat(60), "A Very Long Lesson Title That Keeps Going").length).toBeLessThanOrEqual(64);
   });
 });
+
+describe("buildLessonGroup — in-lesson checks", () => {
+  const SEGMENTS = [
+    { text: "Nene! Baidẹ!", translation: "Grandmother! Good morning!" },
+    { text: "Tau! Bo dẹkị.", translation: "Grandchild! Come in." },
+  ];
+  const build = (checks?: unknown) =>
+    buildLessonGroup(
+      { meta: { title: "A Visit", description: "Greetings" }, segments: SEGMENTS, ...(checks !== undefined ? { checks } : {}) },
+      COURSE,
+      0,
+    );
+
+  it("distinguishes an absent checks key from an empty list", () => {
+    // null means "leave whatever is on the lesson"; [] means "remove them".
+    expect(build().group?.checks).toBeNull();
+    expect(build([]).group?.checks).toEqual([]);
+  });
+
+  it("accepts a well-formed check and numbers it", () => {
+    const { group, errors } = build([
+      { type: "meaning", prompt: "What does Baidẹ mean?", answer: "Good morning", options: ["Good morning", "Goodbye"], afterSegmentIndex: 0 },
+    ]);
+    expect(errors).toEqual([]);
+    expect(group?.checks).toEqual([
+      {
+        type: "meaning",
+        prompt: "What does Baidẹ mean?",
+        answer: "Good morning",
+        options: ["Good morning", "Goodbye"],
+        explanation: null,
+        afterSegmentIndex: 0,
+        order: 0,
+      },
+    ]);
+  });
+
+  it("rejects an unknown check type", () => {
+    const { group, errors } = build([{ type: "guess-the-vibe", prompt: "p", answer: "a" }]);
+    expect(group).toBeNull();
+    expect(errors[0].reason).toContain("type must be one of");
+  });
+
+  it("requires a prompt and an answer", () => {
+    expect(build([{ type: "meaning", prompt: "", answer: "a" }]).errors[0].reason).toContain("prompt and an answer");
+  });
+
+  it("rejects options that do not contain the answer", () => {
+    const { errors } = build([{ type: "meaning", prompt: "p", answer: "a", options: ["x", "y"] }]);
+    expect(errors[0].reason).toContain("options must include the answer");
+  });
+
+  it("validates afterSegmentIndex against THIS file's transcript", () => {
+    // The import replaces the transcript, so an index is only meaningful
+    // against the lines in the same file — 2 here, so 2 is already past the end.
+    expect(build([{ type: "meaning", prompt: "p", answer: "a", afterSegmentIndex: 2 }]).errors[0].reason)
+      .toContain("out of range");
+    expect(build([{ type: "meaning", prompt: "p", answer: "a", afterSegmentIndex: -1 }]).errors[0].reason)
+      .toContain("out of range");
+    expect(build([{ type: "meaning", prompt: "p", answer: "a", afterSegmentIndex: 1 }]).errors).toEqual([]);
+  });
+
+  it("treats a blank afterSegmentIndex as end-of-lesson", () => {
+    expect(build([{ type: "meaning", prompt: "p", answer: "a", afterSegmentIndex: "" }]).group?.checks?.[0].afterSegmentIndex).toBeNull();
+    expect(build([{ type: "meaning", prompt: "p", answer: "a" }]).group?.checks?.[0].afterSegmentIndex).toBeNull();
+  });
+
+  it("keeps a tap-to-reveal check, which has no options", () => {
+    const { group, errors } = build([{ type: "predict-next", prompt: "What comes next?", answer: "Bo dẹkị" }]);
+    expect(errors).toEqual([]);
+    expect(group?.checks?.[0].options).toEqual([]);
+  });
+
+  it("reports every bad check, not just the first", () => {
+    const { errors } = build([
+      { type: "nope", prompt: "p", answer: "a" },
+      { type: "meaning", prompt: "", answer: "a" },
+    ]);
+    expect(errors).toHaveLength(2);
+  });
+});

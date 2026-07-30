@@ -1,6 +1,7 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, gte, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { courses, lessons, transcriptSegments } from "../db/schema.js";
+import { courses, lessonChecks, lessons, transcriptSegments } from "../db/schema.js";
+import { randomUUID } from "node:crypto";
 import { slugify } from "../lib/slug.js";
 
 /**
@@ -25,14 +26,42 @@ const intOr = (v: unknown, fallback: number | null): number | null => {
   const n = parseInt(str(v), 10);
   return Number.isNaN(n) ? fallback : n;
 };
+const strArray = (v: unknown): string[] | undefined =>
+  Array.isArray(v) ? (v.filter((x) => typeof x === "string") as string[]) : undefined;
+/**
+ * A 0-based index that may arrive as a JSON number or a spreadsheet string.
+ * `null` for absent/blank (meaning end of lesson); `NaN` for unparseable, which
+ * the caller reports rather than silently treating as end-of-lesson — `str()`
+ * yields "" for a number, so routing this through it read every numeric 0 as blank.
+ */
+const indexOf = (v: unknown): number | null => {
+  if (v == null) return null;
+  if (typeof v === "number") return Number.isInteger(v) ? v : NaN;
+  const t = str(v);
+  return t === "" ? null : parseInt(t, 10);
+};
 
 const LESSON_STYLES = ["skit", "immersive_story", "host_narrated"] as const;
+
+/** In-lesson check kinds. Shared with the educator editor so the two agree. */
+export const CHECK_TYPES = ["predict-next", "meaning", "who-said", "cloze", "pick-reply"] as const;
 
 export interface LessonSegmentInput {
   text: string;
   translation: string | null;
   roman: string | null;
   speaker: string | null;
+  order: number;
+}
+
+export interface LessonCheckInput {
+  type: string;
+  prompt: string;
+  answer: string;
+  options: string[];
+  explanation: string | null;
+  /** 0-based segment the check fires after; null = end of lesson. */
+  afterSegmentIndex: number | null;
   order: number;
 }
 
@@ -50,12 +79,19 @@ export interface LessonGroupInput {
   narrativeOutro: string | null;
   canDo: string | null;
   segments: LessonSegmentInput[];
+  /**
+   * `null` when the file has no `checks` key at all, which is different from an
+   * empty list: absent means "leave whatever is there", `[]` means "remove them".
+   * Same distinction the educator editor draws with `hasChecks`.
+   */
+  checks: LessonCheckInput[] | null;
 }
 
 /** A single uploaded lesson file, parsed client-side into metadata + lines. */
 export interface LessonFileInput {
   meta?: unknown;
   segments?: unknown;
+  checks?: unknown;
 }
 
 /** Stable, length-bounded lesson id derived from its course + title. */
@@ -106,6 +142,54 @@ export function buildLessonGroup(
     errors.push({ id: ref, reason: `Lesson "${ref}": no transcript lines (add rows after the --- separator)` });
   }
 
+  // Checks are validated against THIS file's transcript, since the import
+  // replaces it wholesale — an index that was valid against the old lesson means
+  // nothing once the segments are gone.
+  let checks: LessonCheckInput[] | null = null;
+  if (file.checks !== undefined) {
+    checks = [];
+    const rawChecks = Array.isArray(file.checks) ? file.checks : [];
+    rawChecks.forEach((raw, i) => {
+      const row = (raw && typeof raw === "object" ? raw : {}) as Meta;
+      const type = str(row.type);
+      const prompt = str(row.prompt);
+      const answer = str(row.answer);
+      const label = `Lesson "${ref}" check ${i + 1}`;
+
+      if (!CHECK_TYPES.includes(type as (typeof CHECK_TYPES)[number])) {
+        errors.push({ id: ref, reason: `${label}: type must be one of ${CHECK_TYPES.join(", ")}` });
+        return;
+      }
+      if (!prompt || !answer) {
+        errors.push({ id: ref, reason: `${label}: needs both a prompt and an answer` });
+        return;
+      }
+      // JSON files carry an array; a CSV cell carries "a|b", the same pipe form
+      // the unified sheet uses for quiz options.
+      const options = (strArray(row.options) ?? str(row.options).split("|"))
+        .map((o) => o.trim())
+        .filter(Boolean);
+      if (options.length > 0 && !options.includes(answer)) {
+        errors.push({ id: ref, reason: `${label}: options must include the answer` });
+        return;
+      }
+      const after = indexOf(row.afterSegmentIndex);
+      if (after != null && (Number.isNaN(after) || after < 0 || after >= segments.length)) {
+        errors.push({
+          id: ref,
+          reason: `${label}: afterSegmentIndex ${String(row.afterSegmentIndex)} is out of range — this file has ${segments.length} transcript line(s)`,
+        });
+        return;
+      }
+      checks!.push({
+        type, prompt, answer, options,
+        explanation: opt(row.explanation),
+        afterSegmentIndex: after,
+        order: checks!.length,
+      });
+    });
+  }
+
   if (errors.length > 0) return { group: null, errors };
 
   return {
@@ -123,6 +207,7 @@ export function buildLessonGroup(
       narrativeOutro: opt(meta.narrativeOutro),
       canDo: opt(meta.canDo),
       segments,
+      checks,
     },
     errors: [],
   };
@@ -144,7 +229,10 @@ type StatusValues = {
 export async function insertLessonGroups(
   groups: LessonGroupInput[],
   ctx: { courseId: string; status: StatusValues },
-): Promise<number> {
+): Promise<{ inserted: number; repositioned: number }> {
+  /** Existing checks moved to the end because the new transcript is shorter. */
+  let repositioned = 0;
+
   for (const group of groups) {
     await db
       .insert(lessons)
@@ -197,6 +285,48 @@ export async function insertLessonGroups(
         })),
       );
     }
+
+    if (group.checks !== null) {
+      // Supplied: replace wholesale, like the transcript. Ids are regenerated
+      // because a check has no stable natural key — it is defined by its position
+      // in a transcript that this import just replaced.
+      await db.delete(lessonChecks).where(eq(lessonChecks.lessonId, group.id));
+      if (group.checks.length > 0) {
+        await db.insert(lessonChecks).values(
+          group.checks.map((ch) => ({
+            id: `check-${randomUUID()}`,
+            lessonId: group.id,
+            type: ch.type,
+            prompt: ch.prompt,
+            answer: ch.answer,
+            options: ch.options,
+            explanation: ch.explanation,
+            afterSegmentIndex: ch.afterSegmentIndex,
+            order: ch.order,
+          })),
+        );
+      }
+    } else {
+      /**
+       * Not supplied, so existing checks stay — but the transcript they were
+       * positioned against has just been replaced. Any `afterSegmentIndex` now
+       * past the end would point into a transcript that no longer exists, and a
+       * check that never fires is invisible breakage. Move those to the end of
+       * the lesson, which is what `null` means, and count them so the import
+       * result can say it happened.
+       */
+      const orphaned = await db
+        .update(lessonChecks)
+        .set({ afterSegmentIndex: null })
+        .where(
+          and(
+            eq(lessonChecks.lessonId, group.id),
+            gte(lessonChecks.afterSegmentIndex, group.segments.length),
+          ),
+        )
+        .returning({ id: lessonChecks.id });
+      repositioned += orphaned.length;
+    }
   }
 
   const [row] = await db
@@ -205,5 +335,5 @@ export async function insertLessonGroups(
     .where(eq(lessons.courseId, ctx.courseId));
   await db.update(courses).set({ lessonsCount: row?.count ?? 0 }).where(eq(courses.id, ctx.courseId));
 
-  return groups.length;
+  return { inserted: groups.length, repositioned };
 }

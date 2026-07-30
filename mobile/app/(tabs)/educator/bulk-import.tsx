@@ -17,7 +17,7 @@ import { useLessonImport } from "@/lib/hooks/educator/use-lesson-import";
 import { type ImportResult } from "@/lib/import-result";
 import { useUnifiedImport } from "@/lib/hooks/educator/use-unified-import";
 import { useToast } from "@/lib/hooks/use-toast";
-import { LESSON_LINE_GUIDE, LESSON_META_GUIDE, LESSON_TEMPLATE_CSV, parseLessonFile } from "@/lib/lesson-import";
+import { LESSON_CHECK_GUIDE, LESSON_LINE_GUIDE, LESSON_META_GUIDE, LESSON_TEMPLATE_CSV, parseLessonFile } from "@/lib/lesson-import";
 import { localize } from "@/lib/localize";
 import { getLanguageName } from "@/lib/mock-data";
 import { UNIFIED_FIELD_GUIDE, UNIFIED_TEMPLATE_CSV, parseUnifiedCsv } from "@/lib/unified-import";
@@ -86,6 +86,7 @@ const MODE_META: Record<Mode, ModeMeta> = {
     guide: [
       ...LESSON_META_GUIDE.map((g) => ({ label: g.key, uses: g.uses })),
       ...LESSON_LINE_GUIDE.map((g) => ({ label: g.column, uses: `line — ${g.uses}` })),
+      ...LESSON_CHECK_GUIDE.map((g) => ({ label: g.column, uses: `check — ${g.uses}` })),
     ],
     footer: (isAdmin) => isAdmin
       ? "As an admin, imported lessons publish live."

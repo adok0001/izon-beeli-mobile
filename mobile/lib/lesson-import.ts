@@ -29,6 +29,20 @@ export const LESSON_LINE_GUIDE: { column: string; uses: string }[] = [
 
 export const LESSON_LINE_COLUMNS = ["text", "translation", "speaker", "roman"] as const;
 
+/** In-lesson check columns, in an optional third section after a second `---`. */
+export const LESSON_CHECK_COLUMNS = [
+  "type", "prompt", "answer", "options", "explanation", "afterSegmentIndex",
+] as const;
+
+export const LESSON_CHECK_GUIDE: { column: string; uses: string }[] = [
+  { column: "type", uses: "predict-next, meaning, who-said, cloze or pick-reply" },
+  { column: "prompt", uses: "the question the learner sees" },
+  { column: "answer", uses: "the correct answer; must also appear in options when options are given" },
+  { column: "options", uses: "choices separated by | (pipe). Leave empty for a tap-to-reveal check" },
+  { column: "explanation", uses: "optional note shown after answering" },
+  { column: "afterSegmentIndex", uses: "0-based transcript line the check follows. Empty = end of lesson" },
+];
+
 /** Starter template — one lesson: metadata block, `---`, then two transcript lines. */
 export const LESSON_TEMPLATE_CSV = [
   "title,A Visit to Grandmother's House",
@@ -40,25 +54,38 @@ export const LESSON_TEMPLATE_CSV = [
   LESSON_LINE_COLUMNS.join(","),
   "Nene! Baidẹ!,Grandmother! Good morning!,Child,",
   "Tau! Bo dẹkị.,Grandchild! Come in.,Nene,",
+  "---",
+  LESSON_CHECK_COLUMNS.join(","),
+  "meaning,What does Baidẹ mean?,Good morning,Good morning|Good night|Goodbye,,0",
   "",
 ].join("\n");
 
 export interface ParsedLessonFile {
   meta: Record<string, string>;
   segments: Record<string, string>[];
+  /**
+   * Absent when the file has no checks section at all — which the server reads
+   * as "leave this lesson's existing checks alone". A present-but-empty section
+   * means "remove them", so the two cases must stay distinguishable.
+   */
+  checks?: Record<string, string>[];
 }
 
 /**
- * Parse one lesson file into `{ meta, segments }`. The metadata block (before the
- * `---` line) is `key,value` per row — split at the FIRST comma so values may
- * contain commas without quoting. The transcript grid (after `---`) is ordinary
- * CSV. A missing `---` yields empty segments, which the server flags.
+ * Parse one lesson file into `{ meta, segments, checks? }`. Sections are divided
+ * by `---` lines: metadata, then the transcript grid, then an optional checks
+ * grid. The metadata block is `key,value` per row — split at the FIRST comma so
+ * values may contain commas without quoting. The grids are ordinary CSV. A
+ * missing first `---` yields empty segments, which the server flags.
  */
 export function parseLessonFile(text: string): ParsedLessonFile {
   const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
-  const sep = lines.findIndex((l) => l.split(",")[0].trim() === "---");
+  const isSep = (l: string) => l.split(",")[0].trim() === "---";
+  const sep = lines.findIndex(isSep);
+  const second = sep >= 0 ? lines.findIndex((l, i) => i > sep && isSep(l)) : -1;
   const metaLines = sep >= 0 ? lines.slice(0, sep) : lines;
-  const gridLines = sep >= 0 ? lines.slice(sep + 1) : [];
+  const gridLines = sep >= 0 ? lines.slice(sep + 1, second >= 0 ? second : undefined) : [];
+  const checkLines = second >= 0 ? lines.slice(second + 1) : [];
 
   const meta: Record<string, string> = {};
   for (const line of metaLines) {
@@ -72,5 +99,7 @@ export function parseLessonFile(text: string): ParsedLessonFile {
   }
 
   const segments = parseCsv(gridLines.join("\n")).filter((r) => (r.text ?? "").trim() !== "");
-  return { meta, segments };
+  if (second < 0) return { meta, segments };
+  const checks = parseCsv(checkLines.join("\n")).filter((r) => (r.prompt ?? "").trim() !== "");
+  return { meta, segments, checks };
 }

@@ -7,6 +7,7 @@ import { randomUUID } from "node:crypto";
 import { db } from "../../db/index.js";
 import { courses, culturalContent, languages, lessonChecks, lessonCulturalContent, lessons, storyArcs, storyChapters, transcriptSegments } from "../../db/schema.js";
 import { AuthEnv } from "../../middleware/auth.js";
+import { CHECK_TYPES } from "../lesson-import.js";
 import { stubForCourse, stubForLanguage } from "../../lib/lesson-stubs.js";
 import { recordMediaAsset } from "../upload.js";
 import { isAudioUpload } from "./_shared.js";
@@ -41,7 +42,7 @@ function invalidType(type: string | null | undefined): boolean {
 }
 
 /** In-lesson check types — formative questions fired between transcript lines. */
-const CHECK_TYPES = ["predict-next", "meaning", "who-said", "cloze", "pick-reply"] as const;
+
 
 // GET /educator/lessons
 educatorLessonsRouter.get("/lessons", async (c) => {
