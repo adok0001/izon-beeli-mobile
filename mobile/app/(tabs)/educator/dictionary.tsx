@@ -9,6 +9,7 @@ import type { LocalizedText } from "@/types";
 import { useStudioAccess } from "@/components/studio/studio-gate";
 import { ActiveToggle } from "@/components/studio/active-toggle";
 import { ActionPill } from "@/components/studio/studio-action-pill";
+import { EntityPickerModal } from "@/components/studio/entity-picker-modal";
 import { StudioCard } from "@/components/studio/studio-card";
 import { StudioDropdown } from "@/components/studio/studio-dropdown";
 import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
@@ -22,14 +23,18 @@ import {
     STATUS_TONE,
     useDeleteEducatorDictionaryEntry,
     useEducatorDictionary,
+    usePatchEducatorDictionaryField,
     usePublishContent,
     toPreviewEntry,
     useSubmitEducatorDictionaryForReview,
+    useToggleContentActive,
     useUpsertEducatorDictionary,
 } from "@/lib/hooks/use-educator-panel";
 import { friendlyError } from "@/lib/api";
 import { DICTIONARY_CATEGORY_VALUES, splitList, type DialectalVariant } from "@/lib/dictionary";
 import { useDictionaryCoverage } from "@/lib/hooks/use-contributions";
+import { useDictionaryExport } from "@/lib/hooks/educator/use-dictionary-edit";
+import { shareTextFile } from "@/lib/share-file";
 import { useToast } from "@/lib/hooks/use-toast";
 import { getLanguageName } from "@/lib/mock-data";
 import { useLanguages } from "@/store/languages-store";
@@ -132,6 +137,8 @@ export default function EducatorDictionaryScreen() {
   useEffect(() => {
     setSearchQuery("");
     setFilterCategory(undefined);
+    setSelectMode(false);
+    setSelectedIds(new Set());
   }, [activeLanguageId]);
 
   const { data: entries = [], isLoading, refetch } = useEducatorDictionary(activeLanguageId, undefined, canAccess);
@@ -150,6 +157,88 @@ export default function EducatorDictionaryScreen() {
   const deleteEntry = useDeleteEducatorDictionaryEntry();
   const submitForReview = useSubmitEducatorDictionaryForReview();
   const publishEntry = usePublishContent("dictionary_entries", [["educator", "dictionary"]]);
+  const toggleActive = useToggleContentActive("dictionary_entries", [["educator", "dictionary"]]);
+  const patchField = usePatchEducatorDictionaryField();
+  const dictionaryExport = useDictionaryExport();
+
+  // Checkbox multi-select — a lighter-weight alternative to the CSV round trip
+  // above for actions that don't need a spreadsheet: delete, active toggle,
+  // recategorize, or a scoped export of just what's checked.
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkCategoryPickerOpen, setBulkCategoryPickerOpen] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+  const toggleSelectMode = () => {
+    setSelectMode((v) => !v);
+    setSelectedIds(new Set());
+  };
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+    setSelectMode(false);
+  };
+
+  const runBulk = async (label: string, ids: string[], run: (id: string) => Promise<unknown>) => {
+    setBulkBusy(true);
+    const results = await Promise.allSettled(ids.map(run));
+    setBulkBusy(false);
+    const failed = results.filter((r) => r.status === "rejected").length;
+    const ok = ids.length - failed;
+    if (failed === 0) {
+      toastSuccess(label, `${ok} ${ok === 1 ? "entry" : "entries"} updated.`);
+    } else {
+      toastError(label, `${ok} succeeded, ${failed} failed.`);
+    }
+    clearSelection();
+  };
+
+  const bulkDelete = () => {
+    const ids = [...selectedIds];
+    Alert.alert(
+      "Delete entries",
+      `This will permanently delete ${ids.length} ${ids.length === 1 ? "entry" : "entries"}.`,
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("common.delete"),
+          style: "destructive",
+          onPress: () => void runBulk("Entries deleted", ids, (id) => deleteEntry.mutateAsync(id)),
+        },
+      ],
+    );
+  };
+
+  const bulkSetActive = (isActive: boolean) => {
+    void runBulk(
+      isActive ? "Entries activated" : "Entries deactivated",
+      [...selectedIds],
+      (id) => toggleActive.mutateAsync({ id, isActive }),
+    );
+  };
+
+  const bulkSetCategory = (category: string) => {
+    setBulkCategoryPickerOpen(false);
+    void runBulk("Category changed", [...selectedIds], (id) => patchField.mutateAsync({ id, category }));
+  };
+
+  const bulkExportCsv = async () => {
+    const ids = [...selectedIds];
+    try {
+      const data = await dictionaryExport.mutateAsync({ languageId: activeLanguageId, ids });
+      await shareTextFile(`beeli-${activeLanguageId}-selected.csv`, data.csv, "Beeli dictionary export");
+    } catch (err) {
+      toastError("Couldn’t export", friendlyError(err));
+    }
+  };
   // Create-only: existing entries are edited on the replica screen, so the form
   // never enters an "update" mode.
   let saveButtonLabel = "Create";
@@ -231,70 +320,101 @@ export default function EducatorDictionaryScreen() {
   const isFiltered = searchQuery.trim().length > 0 || filterCategory !== undefined;
 
   const renderItem = useCallback(
-    ({ item }: { item: EducatorDictionaryEntry }) => (
-      <StudioCard style={{ marginHorizontal: 20 }}>
+    ({ item }: { item: EducatorDictionaryEntry }) => {
+      const checked = selectedIds.has(item.id);
+      const card = (
         <View className="flex-row items-center justify-between">
+          {selectMode && (
+            <IconSymbol
+              name={checked ? "checkmark.circle.fill" : "circle"}
+              size={20}
+              color={checked ? M.accent : M.muted}
+              style={{ marginRight: 10 }}
+            />
+          )}
           <View className="flex-1 pr-3">
             <Text className="text-base font-semibold" style={{ color: M.text }}>{item.word}</Text>
             <Text className="text-sm" style={{ color: M.sub }}>{item.english}</Text>
           </View>
         </View>
-        <View className="mt-2 flex-row flex-wrap gap-1.5">
-          <View className="rounded-full px-2 py-1" style={{ backgroundColor: M.pillBg }}>
-            <Text className="text-[10px] font-semibold uppercase" style={{ color: M.sub }}>{item.category}</Text>
-          </View>
-          {item.status ? <Badge label={STATUS_LABEL[item.status]} tone={STATUS_TONE[item.status]} /> : null}
-          {item._source === "contribution" ? (
-            <View className="rounded-full px-2 py-1" style={{ backgroundColor: M.warningBg }}>
-              <Text className="text-[10px] font-semibold uppercase" style={{ color: M.warning }}>contribution</Text>
+      );
+
+      if (selectMode) {
+        return (
+          <StudioCard style={{ marginHorizontal: 20 }}>
+            <Pressable onPress={() => toggleSelected(item.id)}>
+              {card}
+              <View className="mt-2 flex-row flex-wrap gap-1.5">
+                <View className="rounded-full px-2 py-1" style={{ backgroundColor: M.pillBg }}>
+                  <Text className="text-[10px] font-semibold uppercase" style={{ color: M.sub }}>{item.category}</Text>
+                </View>
+                {item.status ? <Badge label={STATUS_LABEL[item.status]} tone={STATUS_TONE[item.status]} /> : null}
+              </View>
+            </Pressable>
+          </StudioCard>
+        );
+      }
+
+      return (
+        <StudioCard style={{ marginHorizontal: 20 }}>
+          {card}
+          <View className="mt-2 flex-row flex-wrap gap-1.5">
+            <View className="rounded-full px-2 py-1" style={{ backgroundColor: M.pillBg }}>
+              <Text className="text-[10px] font-semibold uppercase" style={{ color: M.sub }}>{item.category}</Text>
             </View>
-          ) : null}
-        </View>
-        <View
-          style={{
-            flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 8,
-            marginTop: 12, paddingTop: 10,
-            borderTopWidth: 1, borderTopColor: M.border,
-          }}
-        >
-          <ActiveToggle
-            entityType="dictionary_entries"
-            id={item.id}
-            isActive={item.isActive ?? true}
-            invalidateKeys={[["educator", "dictionary"]]}
-            M={M}
-            onToast={{ success: toastSuccess, error: toastError }}
-          />
-          {canSubmitForReview(item.status) ? (
-            <ActionPill
-              icon="paperplane.fill"
-              label="Submit"
-              tone="accent"
-              disabled={submitForReview.isPending}
-              onPress={() => submitForReview.mutate(item.id)}
+            {item.status ? <Badge label={STATUS_LABEL[item.status]} tone={STATUS_TONE[item.status]} /> : null}
+            {item._source === "contribution" ? (
+              <View className="rounded-full px-2 py-1" style={{ backgroundColor: M.warningBg }}>
+                <Text className="text-[10px] font-semibold uppercase" style={{ color: M.warning }}>contribution</Text>
+              </View>
+            ) : null}
+          </View>
+          <View
+            style={{
+              flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 8,
+              marginTop: 12, paddingTop: 10,
+              borderTopWidth: 1, borderTopColor: M.border,
+            }}
+          >
+            <ActiveToggle
+              entityType="dictionary_entries"
+              id={item.id}
+              isActive={item.isActive ?? true}
+              invalidateKeys={[["educator", "dictionary"]]}
+              M={M}
+              onToast={{ success: toastSuccess, error: toastError }}
             />
-          ) : null}
-          {currentUser && canPublishContent(item.status, item.createdBy, {
-            isAdmin: currentUser.isAdmin, reviewerRole: currentUser.reviewerRole, userId: currentUser.id,
-          }) ? (
-            <ActionPill
-              icon="checkmark.circle.fill"
-              label="Publish"
-              tone="success"
-              disabled={publishEntry.isPending}
-              onPress={() => publishEntry.mutate(item.id)}
-            />
-          ) : null}
-          <View style={{ flex: 1 }} />
-          {/* Editing an existing entry happens on the replica screen, not by
-              prefilling the create form — one way in, and it shows the educator
-              what a learner sees. The form below is now create-only. */}
-          <ActionPill icon="pencil" label={t("common.edit")} onPress={() => openPreview(item)} />
-          <ActionPill icon="trash.fill" label={t("common.delete")} tone="danger" onPress={() => confirmDelete(item.id)} />
-        </View>
-      </StudioCard>
-    ),
-    [confirmDelete, openPreview, submitForReview, publishEntry, currentUser, t, M, toastSuccess, toastError],
+            {canSubmitForReview(item.status) ? (
+              <ActionPill
+                icon="paperplane.fill"
+                label="Submit"
+                tone="accent"
+                disabled={submitForReview.isPending}
+                onPress={() => submitForReview.mutate(item.id)}
+              />
+            ) : null}
+            {currentUser && canPublishContent(item.status, item.createdBy, {
+              isAdmin: currentUser.isAdmin, reviewerRole: currentUser.reviewerRole, userId: currentUser.id,
+            }) ? (
+              <ActionPill
+                icon="checkmark.circle.fill"
+                label="Publish"
+                tone="success"
+                disabled={publishEntry.isPending}
+                onPress={() => publishEntry.mutate(item.id)}
+              />
+            ) : null}
+            <View style={{ flex: 1 }} />
+            {/* Editing an existing entry happens on the replica screen, not by
+                prefilling the create form — one way in, and it shows the educator
+                what a learner sees. The form below is now create-only. */}
+            <ActionPill icon="pencil" label={t("common.edit")} onPress={() => openPreview(item)} />
+            <ActionPill icon="trash.fill" label={t("common.delete")} tone="danger" onPress={() => confirmDelete(item.id)} />
+          </View>
+        </StudioCard>
+      );
+    },
+    [confirmDelete, openPreview, submitForReview, publishEntry, currentUser, t, M, toastSuccess, toastError, selectMode, selectedIds],
   );
 
   const listHeader = (
@@ -516,10 +636,20 @@ export default function EducatorDictionaryScreen() {
         />
       </View>
 
-      <View className="mt-4 px-5">
-        <Text className="mb-2 text-xs font-semibold uppercase tracking-[1.4px]" style={{ color: M.muted }}>
+      <View className="mt-4 px-5 flex-row items-center justify-between">
+        <Text className="text-xs font-semibold uppercase tracking-[1.4px]" style={{ color: M.muted }}>
           {isFiltered ? `Entries (${filteredEntries.length} of ${entries.length})` : `Entries (${entries.length})`}
         </Text>
+        <View className="flex-row items-center gap-4">
+          {selectMode && (
+            <Pressable onPress={() => setSelectedIds(new Set(filteredEntries.map((e) => e.id)))}>
+              <Text className="text-xs font-bold" style={{ color: M.accent }}>Select all</Text>
+            </Pressable>
+          )}
+          <Pressable onPress={toggleSelectMode}>
+            <Text className="text-xs font-bold" style={{ color: M.accent }}>{selectMode ? "Cancel" : "Select"}</Text>
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -563,6 +693,46 @@ export default function EducatorDictionaryScreen() {
               }),
           }}
         />
+        {selectMode && (
+          <View style={{ paddingHorizontal: 16, paddingVertical: 10, backgroundColor: M.card, borderBottomWidth: 1, borderBottomColor: M.border }}>
+            <Text style={{ fontSize: 13, fontWeight: "800", color: M.text, marginBottom: 8 }}>
+              {selectedIds.size} selected
+            </Text>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              <ActionPill
+                icon="square.and.arrow.up"
+                label="Export"
+                disabled={selectedIds.size === 0 || bulkBusy}
+                onPress={() => void bulkExportCsv()}
+              />
+              <ActionPill
+                icon="square.grid.2x2"
+                label="Category"
+                disabled={selectedIds.size === 0 || bulkBusy}
+                onPress={() => setBulkCategoryPickerOpen(true)}
+              />
+              <ActionPill
+                icon="eye"
+                label="Activate"
+                disabled={selectedIds.size === 0 || bulkBusy}
+                onPress={() => bulkSetActive(true)}
+              />
+              <ActionPill
+                icon="eye.slash"
+                label="Deactivate"
+                disabled={selectedIds.size === 0 || bulkBusy}
+                onPress={() => bulkSetActive(false)}
+              />
+              <ActionPill
+                icon="trash.fill"
+                label="Delete"
+                tone="danger"
+                disabled={selectedIds.size === 0 || bulkBusy}
+                onPress={bulkDelete}
+              />
+            </View>
+          </View>
+        )}
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1, backgroundColor: M.card }}>
         <NotificationBanner
           visible={toast.visible}
@@ -585,6 +755,14 @@ export default function EducatorDictionaryScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={M.accent} colors={[M.accent]} />}
         />
         </KeyboardAvoidingView>
+
+        <EntityPickerModal
+          visible={bulkCategoryPickerOpen}
+          title="Change category"
+          items={CATEGORIES.map((category) => ({ id: category as string, label: capitalize(category) }))}
+          onSelect={bulkSetCategory}
+          onClose={() => setBulkCategoryPickerOpen(false)}
+        />
       </SafeAreaView>
     </>
   );

@@ -8,6 +8,8 @@ export interface DictionaryExportInput {
   languageId: string;
   category?: string;
   status?: string;
+  /** Export exactly these entries (the Studio checkbox picker) — takes precedence over category/status. */
+  ids?: string[];
 }
 
 export interface DictionaryEditInput {
@@ -27,11 +29,15 @@ export function useDictionaryExport() {
   const { getToken } = useAuth();
 
   return useMutation({
-    mutationFn: async ({ languageId, category, status }: DictionaryExportInput) => {
+    mutationFn: async ({ languageId, category, status, ids }: DictionaryExportInput) => {
       const token = await getToken();
       const query = new URLSearchParams({ languageId, type: "dictionary" });
-      if (category) query.set("category", category);
-      if (status) query.set("status", status);
+      if (ids?.length) {
+        query.set("ids", ids.join(","));
+      } else {
+        if (category) query.set("category", category);
+        if (status) query.set("status", status);
+      }
       const data = await apiFetch<DictionaryExport>(`/import/export?${query}`, { token: token ?? undefined });
       return { ...data, csv: buildEditCsv(data.rows, data.columns) };
     },

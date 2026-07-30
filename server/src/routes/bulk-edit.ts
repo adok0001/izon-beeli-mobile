@@ -116,13 +116,20 @@ bulkEditRouter.get("/export", async (c) => {
   const requested = Number(c.req.query("limit"));
   const limit = Number.isFinite(requested) && requested > 0 ? Math.min(requested, cap) : cap;
 
+  // An explicit id list (the Studio checkbox picker) is a stronger filter than
+  // category/status — a caller who already knows exactly which rows they want
+  // isn't also narrowing by category, so ids wins outright rather than ANDing.
+  const idsParam = c.req.query("ids");
+  const ids = idsParam ? idsParam.split(",").map((s) => s.trim()).filter(Boolean) : undefined;
   const category = c.req.query("category");
   const status = c.req.query("status");
-  const where = and(
-    eq(dictionaryEntries.languageId, languageId),
-    category ? eq(dictionaryEntries.category, category) : undefined,
-    status ? eq(dictionaryEntries.status, status as Row["status"]) : undefined,
-  );
+  const where = ids?.length
+    ? and(eq(dictionaryEntries.languageId, languageId), inArray(dictionaryEntries.id, ids))
+    : and(
+        eq(dictionaryEntries.languageId, languageId),
+        category ? eq(dictionaryEntries.category, category) : undefined,
+        status ? eq(dictionaryEntries.status, status as Row["status"]) : undefined,
+      );
 
   // `count(*) over ()` is evaluated before LIMIT, so the full match count rides
   // along on the page itself — one round trip and one scan instead of two.
