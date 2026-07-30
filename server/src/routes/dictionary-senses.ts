@@ -1,5 +1,5 @@
 import { Hono, type Context } from "hono";
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import {
@@ -146,6 +146,29 @@ dictionarySensesRouter.get("/", async (c) => {
     .where(eq(dictionarySenses.entryId, auth.entry!.id))
     .orderBy(asc(dictionarySenses.order), asc(dictionaryExamples.order));
 
+  /**
+   * How many places cite each sentence, in three grouped queries rather than one
+   * per example. The editor shows this beside the field *before* an edit, because
+   * correcting a shared sentence corrects it everywhere at once.
+   */
+  const cited = [...new Set(rows.map((r) => r.sentenceId).filter((id): id is string => !!id))];
+  const usage = new Map<string, number>();
+  if (cited.length > 0) {
+    const tally = (rows: { id: string | null; n: number }[]) => {
+      for (const r of rows) if (r.id) usage.set(r.id, (usage.get(r.id) ?? 0) + r.n);
+    };
+    const n = sql<number>`count(*)::int`;
+    const [a, b, d] = await Promise.all([
+      db.select({ id: dictionaryExamples.sentenceId, n }).from(dictionaryExamples)
+        .where(inArray(dictionaryExamples.sentenceId, cited)).groupBy(dictionaryExamples.sentenceId),
+      db.select({ id: sentenceTemplates.sentenceId, n }).from(sentenceTemplates)
+        .where(inArray(sentenceTemplates.sentenceId, cited)).groupBy(sentenceTemplates.sentenceId),
+      db.select({ id: transcriptSegments.sentenceId, n }).from(transcriptSegments)
+        .where(inArray(transcriptSegments.sentenceId, cited)).groupBy(transcriptSegments.sentenceId),
+    ]);
+    tally(a); tally(b); tally(d);
+  }
+
   // A sense with no examples still has to appear — an empty slot is what tells
   // an educator there is something to fill in.
   const bySense = new Map<string, Record<string, unknown>>();
@@ -163,6 +186,8 @@ dictionarySensesRouter.get("/", async (c) => {
       translation: r.translation,
       translations: r.translations,
       audioUrl: r.audioUrl,
+      /** Total citations of this sentence across dictionary, drills and lessons. */
+      usedIn: usage.get(r.sentenceId) ?? 1,
     });
   }
 
