@@ -18,8 +18,9 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { useLanguages } from "@/lib/hooks/use-languages";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, BookText, CheckCircle2, ChevronDown, Edit2, Eye, FileJson, ImageIcon, Mic, Plus, Search, Send, Trash2, Volume2, X, XCircle } from "lucide-react";
+import { AlertTriangle, BookText, CheckCircle2, ChevronDown, Edit2, Eye, FileEdit, FileJson, ImageIcon, Mic, Plus, Search, Send, Trash2, Volume2, X, XCircle } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import React, { useMemo, useState } from "react";
 import { ImportPanel } from "@/components/studio/import-panel";
 import { IMPORT_TYPES } from "@/lib/import-types";
@@ -609,12 +610,27 @@ export default function EducatorDictionaryPage() {
             </button>
           </div>
           {view === "entries" && (
-            <button
-              onClick={() => setModal({ mode: "create" })}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors"
-            >
-              <Plus className="h-4 w-4" />{t("admin.dictionary.newEntry")}
-            </button>
+            <>
+              <Link
+                href={{
+                  pathname: "/educator/import",
+                  query: {
+                    mode: "edit",
+                    languageId: effectiveLanguage,
+                    ...(categoryFilter !== "all" ? { category: categoryFilter } : {}),
+                  },
+                }}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+              >
+                <FileEdit className="h-4 w-4" /> Bulk edit
+              </Link>
+              <button
+                onClick={() => setModal({ mode: "create" })}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors"
+              >
+                <Plus className="h-4 w-4" />{t("admin.dictionary.newEntry")}
+              </button>
+            </>
           )}
         </div>
       </div>

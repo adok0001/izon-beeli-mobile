@@ -7,6 +7,7 @@ import { UnifiedImportPanel } from "@/components/studio/unified-import-panel";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 interface EducatorMe {
@@ -26,8 +27,15 @@ const MODE_BLURB: Record<Mode, React.ReactNode> = {
 
 export default function EducatorImportPage() {
   const { getToken } = useAuth();
-  const [languageId, setLanguageId] = useState("");
-  const [mode, setMode] = useState<Mode>("content");
+  const searchParams = useSearchParams();
+  // A deep link (e.g. the dictionary page's "Bulk edit" button) can land here
+  // with a mode and its scoping params preselected.
+  const initialMode = searchParams.get("mode");
+  const initialCategory = searchParams.get("category") ?? undefined;
+  const [languageId, setLanguageId] = useState(searchParams.get("languageId") ?? "");
+  const [mode, setMode] = useState<Mode>(
+    initialMode === "content" || initialMode === "lessons" || initialMode === "edit" ? initialMode : "content",
+  );
 
   const { data: me } = useQuery<EducatorMe>({
     queryKey: ["educator", "me"],
@@ -84,7 +92,7 @@ export default function EducatorImportPage() {
       {activeLanguage ? (
         mode === "content" ? <UnifiedImportPanel key={activeLanguage} languageId={activeLanguage} />
         : mode === "lessons" ? <LessonImportPanel key={activeLanguage} languageId={activeLanguage} />
-        : <DictionaryEditPanel key={activeLanguage} languageId={activeLanguage} />
+        : <DictionaryEditPanel key={activeLanguage} languageId={activeLanguage} initialCategory={initialCategory} />
       ) : (
         <p className="text-sm text-neutral-500 dark:text-neutral-400">No language assigned to your account yet.</p>
       )}

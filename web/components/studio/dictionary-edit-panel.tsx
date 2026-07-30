@@ -25,10 +25,13 @@ import { toast } from "sonner";
  * it's an insert path that happens to accept ids, and teaching one component two
  * opposite blank-cell meanings is how this gets confusing.
  */
-export function DictionaryEditPanel({ languageId }: Readonly<{ languageId: string }>) {
+export function DictionaryEditPanel({
+  languageId,
+  initialCategory,
+}: Readonly<{ languageId: string; initialCategory?: string }>) {
   const { getToken } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState(initialCategory ?? "");
   const [result, setResult] = useState<ImportResult | null>(null);
   const [rows, setRows] = useState<Record<string, string>[] | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);

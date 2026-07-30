@@ -553,6 +553,15 @@ export default function EducatorDictionaryScreen() {
         <StudioScreenHeader
           title={t("educator.nav.dictionary")}
           subtitle="Create, edit, and maintain reviewed vocabulary."
+          action={{
+            label: "Bulk edit",
+            icon: "square.and.pencil",
+            onPress: () =>
+              router.push({
+                pathname: "/educator/bulk-import",
+                params: { mode: "edit", languageId: activeLanguageId, category: filterCategory ?? "" },
+              }),
+          }}
         />
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1, backgroundColor: M.card }}>
         <NotificationBanner

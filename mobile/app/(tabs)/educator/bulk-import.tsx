@@ -119,8 +119,9 @@ export default function BulkImportScreen() {
   const { data: allCourses } = useEducatorCourses();
   const { toast, success: toastSuccess, error: toastError, dismiss: dismissToast } = useToast();
 
-  // Deep-link from a course's lesson list preselects a mode (+ that course).
-  const params = useLocalSearchParams<{ mode?: string; courseId?: string; languageId?: string }>();
+  // Deep-link from a course's lesson list (or the dictionary screen) preselects
+  // a mode plus that mode's scoping param — course for lessons, category for edit.
+  const params = useLocalSearchParams<{ mode?: string; courseId?: string; languageId?: string; category?: string }>();
   const [mode, setMode] = useState<Mode>(
     params.mode && params.mode in MODE_META ? (params.mode as Mode) : "content",
   );
@@ -146,7 +147,7 @@ export default function BulkImportScreen() {
   const [result, setResult] = useState<ImportResult | null>(null);
   const [showTemplate, setShowTemplate] = useState(false);
 
-  const [exportCategory, setExportCategory] = useState("");
+  const [exportCategory, setExportCategory] = useState(params.category ?? "");
 
   const reset = () => { setFileName(null); setEntries(null); setResult(null); };
   const busy = unifiedImport.isPending || lessonImport.isPending || dictionaryEdit.isPending;
