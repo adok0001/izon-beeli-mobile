@@ -112,6 +112,7 @@ describe("quizSense", () => {
       answer: "way",
       siblings: ["way", "road", "path"],
       senseCount: 3,
+      senseIndex: 0,
     });
   });
 
@@ -120,7 +121,12 @@ describe("quizSense", () => {
   });
 
   it("leaves a single-sense entry untouched", () => {
-    expect(quizSense("take")).toEqual({ answer: "take", siblings: ["take"], senseCount: 1 });
+    expect(quizSense("take")).toEqual({
+      answer: "take",
+      siblings: ["take"],
+      senseCount: 1,
+      senseIndex: 0,
+    });
   });
 
   it("returns null for a gloss with no senses at all", () => {

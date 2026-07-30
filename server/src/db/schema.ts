@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -343,6 +343,19 @@ export const wordBank = pgTable(
       .references(() => users.id)
       .notNull(),
     dictionaryEntryId: varchar("dictionary_entry_id", { length: 64 }).notNull(),
+    /**
+     * Which sense of the headword this schedule is for. Null means the whole
+     * word, which is what every row written before senses existed means.
+     *
+     * A word-level schedule cannot express what a learner actually knows once a
+     * headword has several meanings: answering "animal" for `nama` graduated
+     * "beast", "meat" and "beef" along with it, and stretched their review
+     * interval on the strength of a meaning that was never tested.
+     *
+     * Cascades: a sense that no longer exists has no reviewable content, so its
+     * schedule goes with it. The word-level row is a separate record and stays.
+     */
+    senseId: uuid("sense_id").references(() => dictionarySenses.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     // Spaced-repetition review fields
     nextReviewAt: timestamp("next_review_at"),
@@ -353,10 +366,19 @@ export const wordBank = pgTable(
     interval: integer("interval").default(0).notNull(), // days
   },
   (table) => [
-    uniqueIndex("word_bank_user_entry_idx").on(
-      table.userId,
-      table.dictionaryEntryId
-    ),
+    /**
+     * Two partial indexes rather than one over all three columns, because
+     * Postgres treats NULLs as distinct: a plain unique index including
+     * `sense_id` would let a user accumulate unlimited word-level rows for the
+     * same headword — the exact duplicate this index exists to prevent, and a
+     * bug that would only have surfaced once senses shipped.
+     */
+    uniqueIndex("word_bank_user_entry_idx")
+      .on(table.userId, table.dictionaryEntryId)
+      .where(sql`${table.senseId} is null`),
+    uniqueIndex("word_bank_user_entry_sense_idx")
+      .on(table.userId, table.dictionaryEntryId, table.senseId)
+      .where(sql`${table.senseId} is not null`),
   ]
 );
 
@@ -727,7 +749,21 @@ export const dictionarySenses = pgTable(
     /** Parenthetical disambiguation: "of humans", "traditional counting". */
     note: varchar("note", { length: 200 }),
   },
-  (table) => [index("dictionary_senses_entry_idx").on(table.entryId, table.order)]
+  (table) => [
+    index("dictionary_senses_entry_idx").on(table.entryId, table.order),
+    /**
+     * A sense's id has to survive a re-run of the backfill, because a re-run is
+     * how entries join the corpus as they go live. The first version deleted and
+     * re-inserted every row, handing out fresh `defaultRandom()` uuids each
+     * time — which would orphan every learner's sense-level review record on
+     * the next pass. `(entry_id, order)` gives the backfill something to upsert
+     * on, so a sense keeps its id and its progress.
+     *
+     * Position rather than gloss text on purpose: correcting a typo in "animal"
+     * must not read as a different sense and reset the learner.
+     */
+    uniqueIndex("dictionary_senses_entry_order_idx").on(table.entryId, table.order),
+  ]
 );
 
 /** A sense's usage examples — a pointer into the corpus, never a copy of the text. */
@@ -753,6 +789,13 @@ export const dictionaryExamples = pgTable(
   (table) => [
     index("dictionary_examples_sense_idx").on(table.senseId, table.order),
     index("dictionary_examples_sentence_idx").on(table.sentenceId),
+    /**
+     * Citing the same sentence on the same sense twice is meaningless, and the
+     * backfill needs something to upsert on: sense rows now persist across runs
+     * instead of being deleted and re-created, so without this the examples
+     * would accumulate a duplicate set on every pass.
+     */
+    uniqueIndex("dictionary_examples_sense_sentence_idx").on(table.senseId, table.sentenceId),
   ]
 );
 

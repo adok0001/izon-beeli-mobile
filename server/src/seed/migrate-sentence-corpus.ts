@@ -351,11 +351,11 @@ async function run() {
 
   // Senses are rewritten per entry, so a re-run converges rather than doubling.
   // `dictionary_examples` cascades off `dictionary_senses`, so it clears with it.
+  // Upsert on (entry_id, order) rather than delete-and-reinsert, so a sense
+  // keeps its uuid across runs. Re-running is how entries join the corpus as
+  // they go live, and `word_bank.sense_id` points at these ids — regenerating
+  // them would orphan every learner's sense-level review schedule on each pass.
   console.log("Writing senses…");
-  const entryIds = [...new Set(senseRows.map((r) => r.entryId))];
-  for (let i = 0; i < entryIds.length; i += CHUNK) {
-    await sql`delete from dictionary_senses where entry_id = any(${entryIds.slice(i, i + CHUNK)})`;
-  }
   for (let i = 0; i < senseRows.length; i += CHUNK) {
     const chunk = senseRows.slice(i, i + CHUNK);
     await sql`
@@ -366,8 +366,29 @@ async function run() {
         ${chunk.map((r) => r.gloss)}::text[],
         ${chunk.map((r) => r.note)}::varchar[]
       )
+      on conflict (entry_id, "order") do update
+        set gloss = excluded.gloss, note = excluded.note
     `;
   }
+
+  // An edited gloss can yield FEWER senses than last run. Those trailing rows
+  // have no gloss left to carry, so they go — taking their examples (cascade)
+  // and their review schedules with them.
+  const senseCounts = new Map<string, number>();
+  for (const r of senseRows) senseCounts.set(r.entryId, Math.max(senseCounts.get(r.entryId) ?? 0, r.order + 1));
+  const entryIds = [...senseCounts.keys()];
+  let pruned = 0;
+  for (let i = 0; i < entryIds.length; i += CHUNK) {
+    const chunk = entryIds.slice(i, i + CHUNK);
+    const gone = (await sql`
+      delete from dictionary_senses s
+      using unnest(${chunk}::varchar[], ${chunk.map((id) => senseCounts.get(id)!)}::int[]) as v(entry_id, kept)
+      where s.entry_id = v.entry_id and s."order" >= v.kept
+      returning s.id
+    `) as { id: string }[];
+    pruned += gone.length;
+  }
+  if (pruned > 0) console.log(`  pruned ${pruned} senses an edited gloss no longer has.`);
   console.log(`  ${senseRows.length} senses.`);
 
   console.log("Writing examples…");
@@ -382,6 +403,8 @@ async function run() {
         ${chunk.map((r) => r.needsReview)}::boolean[]
       ) as v(entry_id, sentence_id, needs_review)
       join dictionary_senses s on s.entry_id = v.entry_id and s."order" = 0
+      on conflict (sense_id, sentence_id) do update
+        set needs_sense_review = excluded.needs_sense_review
     `;
   }
   console.log(`  ${exampleRows.length} examples.`);

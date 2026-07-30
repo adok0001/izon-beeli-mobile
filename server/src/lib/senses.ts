@@ -134,6 +134,8 @@ export interface QuizSense {
   siblings: string[];
   /** How many senses the entry has, so the UI can say which one it is asking about. */
   senseCount: number;
+  /** Which sense this is, 0-based — what `word_bank.sense_id` keys on. */
+  senseIndex: number;
 }
 
 /**
@@ -149,7 +151,10 @@ export interface QuizSense {
  * proxy for the primary meaning. When sense ranking exists, this function is the
  * only place that changes.
  *
- * Mirrors `quizSense` in `mobile/lib/dictionary.ts` — the parity test covers it.
+ * Mirrors `quizSense` in `mobile/lib/dictionary.ts`, which additionally takes the
+ * learner's progress and walks to the lowest unmastered sense. The API has no
+ * learner context on these endpoints, so it always serves sense 1 — the parity
+ * test compares the no-progress case, which must agree.
  */
 export function quizSense(english: string): QuizSense | null {
   const senses = parseSenses(english);
@@ -158,6 +163,7 @@ export function quizSense(english: string): QuizSense | null {
     answer: projectSenses([senses[0]]),
     siblings: senses.map((s) => projectSenses([s])),
     senseCount: senses.length,
+    senseIndex: 0,
   };
 }
 
