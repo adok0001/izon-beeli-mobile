@@ -640,15 +640,20 @@ export default function EducatorDictionaryScreen() {
         <Text className="text-xs font-semibold uppercase tracking-[1.4px]" style={{ color: M.muted }}>
           {isFiltered ? `Entries (${filteredEntries.length} of ${entries.length})` : `Entries (${entries.length})`}
         </Text>
-        <View className="flex-row items-center gap-4">
+        <View className="flex-row items-center gap-2">
           {selectMode && (
-            <Pressable onPress={() => setSelectedIds(new Set(filteredEntries.map((e) => e.id)))}>
-              <Text className="text-xs font-bold" style={{ color: M.accent }}>Select all</Text>
-            </Pressable>
+            <ActionPill
+              icon="checkmark.circle.fill"
+              label="Select all"
+              onPress={() => setSelectedIds(new Set(filteredEntries.map((e) => e.id)))}
+            />
           )}
-          <Pressable onPress={toggleSelectMode}>
-            <Text className="text-xs font-bold" style={{ color: M.accent }}>{selectMode ? "Cancel" : "Select"}</Text>
-          </Pressable>
+          <ActionPill
+            icon={selectMode ? "xmark.circle" : "checkmark.circle"}
+            label={selectMode ? "Cancel" : "Select"}
+            tone={selectMode ? "danger" : "accent"}
+            onPress={toggleSelectMode}
+          />
         </View>
       </View>
     </View>
