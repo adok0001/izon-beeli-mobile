@@ -23,15 +23,18 @@ const RAIL_X = GUTTER / 2 - 0.5; // centre the 1px rail under the numerals
 
 export function SensesPlacard({
   senses,
-  onPractice,
+  selectedIndex,
+  onSelect,
 }: {
   senses: Sense[];
+  /** The sense the page is scoped to. Its row is marked as current. */
+  selectedIndex?: number;
   /**
-   * Practise one sense. When set, each row becomes tappable — the one case where
-   * "which meaning does this learner want?" has a direct answer instead of being
-   * inferred from progress. Omitted (the Studio preview), rows stay inert.
+   * Select a sense, scoping the page to it — the one case where "which meaning
+   * does this learner want?" has a direct answer instead of being inferred from
+   * progress. Omitted (the Studio preview), rows stay inert.
    */
-  onPractice?: (index: number) => void;
+  onSelect?: (index: number) => void;
 }) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
@@ -78,7 +81,8 @@ export function SensesPlacard({
             index={i}
             sense={sense}
             primary={i === 0}
-            onPractice={onPractice && (() => onPractice(i))}
+            selected={selectedIndex === i}
+            onSelect={onSelect && (() => onSelect(i))}
           />
         ))}
       </View>
@@ -90,38 +94,44 @@ function SenseRow({
   index,
   sense,
   primary,
-  onPractice,
+  selected,
+  onSelect,
 }: {
   index: number;
   sense: Sense;
   primary: boolean;
-  onPractice?: () => void;
+  selected: boolean;
+  onSelect?: () => void;
 }) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const [pressed, setPressed] = useState(false);
+  // With no selection (the preview, or a page not yet scoped) the first sense
+  // reads as the headword reading; with one, the selected sense is what's current.
+  const current = onSelect ? selected : primary;
 
   // Inert unless a handler is supplied — Pressable with no onPress would still
   // read as interactive to a screen reader.
-  const Row = onPractice ? Pressable : View;
+  const Row = onSelect ? Pressable : View;
 
   return (
     <Row
-      onPress={onPractice}
-      onPressIn={onPractice && (() => setPressed(true))}
-      onPressOut={onPractice && (() => setPressed(false))}
-      accessibilityRole={onPractice ? "button" : undefined}
+      onPress={onSelect}
+      onPressIn={onSelect && (() => setPressed(true))}
+      onPressOut={onSelect && (() => setPressed(false))}
+      accessibilityRole={onSelect ? "radio" : undefined}
+      accessibilityState={onSelect ? { selected } : undefined}
       accessibilityLabel={
-        onPractice ? t("wordDetail.practiceSense", { sense: sense.text }) : undefined
+        onSelect ? t("wordDetail.showSense", { sense: sense.text }) : undefined
       }
       style={{
         flexDirection: "row",
         paddingVertical: 10,
-        // Bleed the highlight past the card's padding so a tapped row reads as
-        // a full-width band rather than a floating rectangle.
+        // Bleed the highlight past the card's padding so a selected or tapped row
+        // reads as a full-width band rather than a floating rectangle.
         marginHorizontal: -18,
         paddingHorizontal: 18,
-        backgroundColor: pressed ? M.accentGlow : "transparent",
+        backgroundColor: selected || pressed ? M.accentGlow : "transparent",
       }}
     >
       {/* Numeral threaded onto the rail — card-bg disc breaks the line */}
@@ -133,16 +143,16 @@ function SenseRow({
             borderRadius: 13,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: primary ? M.accent : M.card,
+            backgroundColor: current ? M.accent : M.card,
             borderWidth: 1,
-            borderColor: primary ? M.accent : M.accentBorder,
+            borderColor: current ? M.accent : M.accentBorder,
           }}
         >
           <Text
             style={{
               fontFamily: fonts.heading,
               fontSize: 13,
-              color: primary ? M.ink : M.accent,
+              color: current ? M.ink : M.accent,
             }}
           >
             {index + 1}
@@ -182,10 +192,15 @@ function SenseRow({
         )}
       </View>
 
-      {/* Affordance: a chevron only where tapping does something */}
-      {!!onPractice && (
+      {/* Affordance: only where tapping does something. A check on the sense
+          being shown, a chevron on the ones you can switch to. */}
+      {!!onSelect && (
         <View style={{ justifyContent: "center", paddingLeft: 8 }}>
-          <IconSymbol name="chevron.right" size={14} color={M.muted} />
+          <IconSymbol
+            name={selected ? "checkmark" : "chevron.right"}
+            size={14}
+            color={selected ? M.accent : M.muted}
+          />
         </View>
       )}
     </Row>

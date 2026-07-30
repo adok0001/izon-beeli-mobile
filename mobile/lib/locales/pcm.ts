@@ -1495,7 +1495,9 @@ export const pcm = {
     contributeExpand: "Help improve this word",
     senses: "Meanings",
     senseCount: "{{count}} meanings",
-    practiceSense: "Practice “{{sense}}”",
+    showSense: "Show “{{sense}}”",
+    exampleForSense: "Example · meaning {{n}}",
+    noExampleForSense: "No example for dis meaning yet",
   },
   contribute: {
     title: "Contribute",

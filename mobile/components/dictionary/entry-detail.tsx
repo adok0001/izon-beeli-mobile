@@ -11,6 +11,7 @@ import {
   CATEGORY_LABELS,
   DICTIONARY_CATEGORY_VALUES,
   parseSenses,
+  scopeToSense,
   type DictionaryEntry,
   type Sense,
 } from "@/lib/dictionary";
@@ -145,21 +146,35 @@ const CATEGORY_CHOICES: readonly ReplicaChoice[] = DICTIONARY_CATEGORY_VALUES.ma
  * `ReplicaField` wrappers below pass their children straight through.
  */
 export function EntryDetailView({
-  entry, derived, edit, onPracticeSense,
+  entry, derived, edit, selectedSense, onSelectSense,
 }: Readonly<{
   entry: DictionaryEntry;
   derived: EntryDisplayDerived;
   edit?: EntryDetailEdit;
   /**
-   * Practise one sense of a multi-sense word. Only the live word screen passes
-   * this — the Studio draft preview has no learner to quiz, so its senses stay
-   * inert rather than offering an action that would go nowhere.
+   * Which sense the page is showing. Set together with `onSelectSense` by the
+   * live word screen; the Studio draft preview passes neither, so its senses stay
+   * inert and its example stays whole-word — see the note on scoping below.
    */
-  onPracticeSense?: (senseIndex: number) => void;
+  selectedSense?: number;
+  onSelectSense?: (senseIndex: number) => void;
 }>) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const { uiLanguage, englishText, exampleTranslationText, senses, hasMultipleSenses, categoryLabel, categoryIcon, displayPronunciation, effectiveAudioUrl } = derived;
+
+  /**
+   * Scope the example to the selected sense — but never while editing.
+   *
+   * The editable column is whole-word, so a scoped editor would let someone read
+   * "no example" under sense 3, type one, and silently overwrite sense 1's. Until
+   * `dictionary_examples` gives each sense its own row to write to, the Studio
+   * preview edits the entry as a whole.
+   */
+  const scope = edit ? scopeToSense(entry) : scopeToSense(entry, selectedSense);
+  const scopedExampleTranslation = edit
+    ? exampleTranslationText
+    : localize(scope.exampleTranslations ?? scope.exampleTranslation, uiLanguage);
 
   // In edit mode an absent optional field still needs somewhere to tap, so it
   // renders a muted stand-in where the real value will appear.
@@ -295,52 +310,60 @@ export function EntryDetailView({
       <View style={{ marginHorizontal: 20, height: 1, backgroundColor: M.border }} />
 
       {/* Senses — the lexicon plate (only when the word carries several readings) */}
-      {hasMultipleSenses && <SensesPlacard senses={senses} onPractice={onPracticeSense} />}
+      {hasMultipleSenses && (
+        <SensesPlacard senses={senses} selectedIndex={selectedSense} onSelect={onSelectSense} />
+      )}
 
-      {/* Example sentence */}
-      {(entry.example || edit) && (
+      {/* Example sentence — scoped to the selected sense (see `scope` above) */}
+      {(scope.example || edit || (hasMultipleSenses && selectedSense !== undefined)) && (
         <View style={{ marginHorizontal: 20, marginTop: 20, borderRadius: 12, backgroundColor: M.card, paddingHorizontal: 16, paddingVertical: 16, borderWidth: 1, borderColor: M.border }}>
           <Text style={{ marginBottom: 6, fontSize: 10, fontWeight: "600", letterSpacing: 1.5, textTransform: "uppercase", color: M.muted }}>
-            {t("wordDetail.example")}
+            {hasMultipleSenses && selectedSense !== undefined && !edit
+              ? t("wordDetail.exampleForSense", { n: String(selectedSense + 1) })
+              : t("wordDetail.example")}
           </Text>
           <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
             <View style={{ flex: 1 }}>
               <ReplicaField
                 variant="multiline"
                 label="Example sentence"
-                value={entry.example ?? ""}
+                value={scope.example ?? ""}
                 placeholder="A sentence using this word"
                 disabled={!edit}
                 onSave={edit?.onSaveExample ?? (async () => {})}
                 onError={edit?.onError}
               >
-                {entry.example ? (
+                {scope.example ? (
                   <Text style={{ fontSize: 16, color: M.text }}>
-                    {entry.example}
+                    {scope.example}
                   </Text>
-                ) : (
+                ) : edit ? (
                   <ReplicaPlaceholder text="Add an example sentence" />
+                ) : (
+                  <Text style={{ fontSize: 14, fontStyle: "italic", color: M.muted }}>
+                    {t("wordDetail.noExampleForSense")}
+                  </Text>
                 )}
               </ReplicaField>
             </View>
-            {entry.exampleAudioUrl && (
-              <InlineAudioButton audioUrl={entry.exampleAudioUrl} />
+            {scope.exampleAudioUrl && (
+              <InlineAudioButton audioUrl={scope.exampleAudioUrl} />
             )}
           </View>
-          {(exampleTranslationText || edit) && (
+          {(scopedExampleTranslation || edit) && (
             <View style={{ marginTop: 6 }}>
               <ReplicaField
                 variant="localized-text"
                 label="Example translation"
                 multiline
-                value={toLocalizedText(entry.exampleTranslations, entry.exampleTranslation)}
+                value={toLocalizedText(scope.exampleTranslations, scope.exampleTranslation)}
                 disabled={!edit}
                 onSave={edit?.onSaveExampleTranslations ?? (async () => {})}
                 onError={edit?.onError}
               >
-                {exampleTranslationText ? (
+                {scopedExampleTranslation ? (
                   <Text style={{ fontSize: 13, color: M.sub }}>
-                    {exampleTranslationText}
+                    {scopedExampleTranslation}
                   </Text>
                 ) : (
                   <ReplicaPlaceholder text="Add a translation" />

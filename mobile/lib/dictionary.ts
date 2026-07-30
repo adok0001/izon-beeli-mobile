@@ -246,6 +246,39 @@ export function projectSenses(senses: Sense[]): string {
     .join("; ");
 }
 
+/** The example material belonging to one sense of an entry. */
+export interface SenseScope {
+  example?: string;
+  exampleTranslation?: string | LocalizedText;
+  exampleTranslations?: LocalizedText;
+  exampleAudioUrl?: string;
+}
+
+/**
+ * The example material for one sense.
+ *
+ * `dictionary_entries` carries a single example column for the whole headword,
+ * so today only the first sense can own it — which is exactly the assumption the
+ * corpus backfill makes when it attaches every existing example to sense 1 and
+ * flags 137 of them as a guess. Later senses come back empty rather than
+ * borrowing sense 1's sentence: showing "Ọka fẹịn!" under the *maize* reading
+ * when it was written for *corn* would be a quiet mistranslation, and an empty
+ * slot is what makes the gap visible to the educator who can fill it.
+ *
+ * This is the seam `dictionary_examples` plugs into — one example per sense,
+ * pointing into the shared corpus. When those rows are served, this function
+ * reads them and nothing above it changes.
+ */
+export function scopeToSense(entry: DictionaryEntry, senseIndex?: number): SenseScope {
+  if (senseIndex !== undefined && senseIndex > 0) return {};
+  return {
+    example: entry.example,
+    exampleTranslation: entry.exampleTranslation,
+    exampleTranslations: entry.exampleTranslations,
+    exampleAudioUrl: entry.exampleAudioUrl,
+  };
+}
+
 /** An entry reduced to the single sense a quiz question is about. */
 export interface QuizSense {
   /** The one gloss that is the correct answer, note included. */

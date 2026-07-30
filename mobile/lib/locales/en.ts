@@ -1484,7 +1484,9 @@ export const en = {
     contributeExpand: "Help improve this word",
     senses: "Senses",
     senseCount: "{{count}} senses",
-    practiceSense: "Practise “{{sense}}”",
+    showSense: "Show “{{sense}}”",
+    exampleForSense: "Example · sense {{n}}",
+    noExampleForSense: "No example for this sense yet",
   },
   contribute: {
     // Landing

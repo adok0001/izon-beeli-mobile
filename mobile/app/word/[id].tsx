@@ -62,6 +62,13 @@ export default function WordDetailScreen() {
     playRecording,
     stopPlayback,
   } = useContributionStore();
+  /**
+   * Which sense the page is scoped to. Defaults to the primary reading, so a
+   * multi-sense word always reads as "you are looking at one meaning" rather
+   * than at an undifferentiated list — and the example, its audio and the
+   * Practice button all follow the selection.
+   */
+  const [selectedSense, setSelectedSense] = useState(0);
   const [showMeaningInput, setShowMeaningInput] = useState(false);
   const [newMeaning, setNewMeaning] = useState("");
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -198,7 +205,7 @@ export default function WordDetailScreen() {
     });
   };
 
-  const handlePractice = () => startPractice();
+  const handlePractice = () => startPractice(selectedSense);
 
   const navigateTo = (targetId: string) => {
     router.replace({
@@ -267,7 +274,12 @@ export default function WordDetailScreen() {
           contentContainerStyle={{ paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
         >
-          <EntryDetailView entry={entry} derived={derived} onPracticeSense={startPractice} />
+          <EntryDetailView
+            entry={entry}
+            derived={derived}
+            selectedSense={derived.hasMultipleSenses ? selectedSense : undefined}
+            onSelectSense={setSelectedSense}
+          />
 
           {/* Lessons that use this word */}
           {lessonMatches.length > 0 && (

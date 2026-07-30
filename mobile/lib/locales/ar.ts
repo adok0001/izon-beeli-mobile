@@ -1495,7 +1495,9 @@ export const ar = {
     contributeExpand: "ساعد في تحسين هذه الكلمة",
     senses: "المعاني",
     senseCount: "{{count}} معانٍ",
-    practiceSense: "تدرّب على «{{sense}}»",
+    showSense: "إظهار «{{sense}}»",
+    exampleForSense: "مثال · المعنى {{n}}",
+    noExampleForSense: "لا يوجد مثال لهذا المعنى بعد",
   },
   contribute: {
     title: "ساهم",
