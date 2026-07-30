@@ -1,4 +1,4 @@
-import type { TranslationKey } from "./locales";
+import type { TranslationKey } from "./locales/keys";
 
 /**
  * Friendly copy for the machine-readable `{ error: "..." }` codes our API returns.

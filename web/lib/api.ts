@@ -1,5 +1,5 @@
 import { apiErrorCopy } from "@mobile/lib/api-error-copy";
-import type { TranslationKey } from "@mobile/lib/locales";
+import type { TranslationKey } from "@mobile/lib/locales/keys";
 import { API_BASE_URL } from "./constants";
 
 export class ApiError extends Error {
