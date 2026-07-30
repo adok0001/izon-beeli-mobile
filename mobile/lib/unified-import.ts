@@ -31,9 +31,9 @@ export type UnifiedRowType = (typeof UNIFIED_ROW_TYPES)[number];
 
 /** Which columns each row type reads, and what each one means — shown in the UI. */
 export const UNIFIED_FIELD_GUIDE: { type: UnifiedRowType; uses: string }[] = [
-  { type: "dictionary", uses: "text = word · english = meaning; separate several senses of the same word with semicolons · category (required) · pronunciation, example, example_english (optional) · add an id column only to give two words that share a spelling separate entries" },
+  { type: "dictionary", uses: "text = word · english = meaning; separate several senses of the same word with semicolons · category (required) · pronunciation, example, example_english (optional) · add english:fr, english:pcm, english:ar or english:pt (and the same on example_english) to fill the other languages · add an id column only to give two words that share a spelling separate entries" },
   { type: "sentence", uses: "text = full sentence · english = its translation · answer = the word to blank out (fill-in-the-blank is detected automatically)" },
-  { type: "proverb", uses: "text = the proverb · english = its translation · meaning = the lesson it teaches" },
+  { type: "proverb", uses: "text = the proverb · english = its translation · meaning = the lesson it teaches · add english:fr, meaning:pcm and so on to fill the other languages" },
   { type: "quiz", uses: "text = prompt · english = correct answer · category = question type (word-to-english, english-to-word, fill-in-the-blank, listening) · options = choices separated by | (pipe)" },
 ];
 

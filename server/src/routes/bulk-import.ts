@@ -457,6 +457,28 @@ export const IMPORTERS: Record<string, ImporterConfig> = {
 type Mapped = { importerType: string; entry: Entry };
 
 /** Map a unified row to `{ importerType, entry }`, or return an error string. */
+/**
+ * Carry `<column>:<lang>` sidecars across the unified column names into the
+ * per-type field names `mapOf` looks for.
+ *
+ * `mapUnifiedRow` rebuilds each row as a fresh entry with fixed field names, so
+ * anything not named explicitly is dropped — which silently discarded every
+ * `english:fr` an educator put in a unified sheet, even though the per-type
+ * importers have supported the form all along. The unified column and the target
+ * field are not always the same word (`example_english` → `exampleTranslation`,
+ * a proverb's `english` → `translation`), hence the mapping.
+ */
+function carryLocales(row: Entry, cols: Record<string, string>): Entry {
+  const out: Entry = {};
+  for (const [key, value] of Object.entries(row)) {
+    const [name, lang] = key.split(":");
+    if (!lang) continue;
+    const field = cols[name];
+    if (field) out[`${field}:${lang.trim()}`] = value;
+  }
+  return out;
+}
+
 export function mapUnifiedRow(row: Entry, languageId: string): Mapped | { error: string } {
   const withId = (extra: Entry): Entry => (opt(row.id) ? { id: str(row.id), ...extra } : extra);
 
@@ -470,6 +492,7 @@ export function mapUnifiedRow(row: Entry, languageId: string): Mapped | { error:
         word: str(row.text), english: str(row.english), category: str(row.category),
         pronunciation: str(row.pronunciation), example: str(row.example),
         exampleTranslation: str(row.example_english),
+        ...carryLocales(row, { english: "english", example_english: "exampleTranslation" }),
       } };
     case "sentence": {
       // `kind` is derived, not asked for: a fill-in-the-blank when the answer
@@ -479,7 +502,10 @@ export function mapUnifiedRow(row: Entry, languageId: string): Mapped | { error:
       return { importerType: "sentences", entry: withId({ sentence, answer, englishSentence: str(row.english), kind: drill }) };
     }
     case "proverb":
-      return { importerType: "proverbs", entry: withId({ text: str(row.text), translation: str(row.english), meaning: str(row.meaning) }) };
+      return { importerType: "proverbs", entry: withId({
+        text: str(row.text), translation: str(row.english), meaning: str(row.meaning),
+        ...carryLocales(row, { english: "translation", meaning: "meaning" }),
+      }) };
     case "quiz":
       return { importerType: "quiz", entry: withId({
         type: str(row.category), prompt: str(row.text), answer: str(row.english),

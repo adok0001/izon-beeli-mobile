@@ -96,3 +96,61 @@ describe("mapUnifiedRow", () => {
     expect("error" in out && out.error).toMatch(/unknown type "scenario"/);
   });
 });
+
+describe("mapUnifiedRow translation columns", () => {
+  it("carries english:<lang> onto a dictionary entry", () => {
+    // These were silently dropped: mapUnifiedRow rebuilds the row with fixed
+    // field names, so anything unnamed never reached mapOf.
+    const mapped = mapUnifiedRow(
+      { type: "dictionary", text: "kọn", english: "take", category: "verbs", "english:fr": "prendre", "english:pt": "pegar" },
+      "izon",
+    );
+    expect("error" in mapped).toBe(false);
+    if ("error" in mapped) return;
+    expect(mapped.entry["english:fr"]).toBe("prendre");
+    expect(mapped.entry["english:pt"]).toBe("pegar");
+  });
+
+  it("renames example_english:<lang> to the field mapOf looks for", () => {
+    const mapped = mapUnifiedRow(
+      { type: "dictionary", text: "kọn", english: "take", category: "verbs", "example_english:fr": "Viens prendre la canne." },
+      "izon",
+    );
+    if ("error" in mapped) throw new Error(mapped.error);
+    expect(mapped.entry["exampleTranslation:fr"]).toBe("Viens prendre la canne.");
+    expect(mapped.entry["example_english:fr"]).toBeUndefined();
+  });
+
+  it("maps a proverb's english:<lang> onto translation, not english", () => {
+    const mapped = mapUnifiedRow(
+      { type: "proverb", text: "…", english: "…", meaning: "lesson", "english:fr": "trad", "meaning:pcm": "wetin e mean" },
+      "izon",
+    );
+    if ("error" in mapped) throw new Error(mapped.error);
+    expect(mapped.entry["translation:fr"]).toBe("trad");
+    expect(mapped.entry["meaning:pcm"]).toBe("wetin e mean");
+  });
+
+  it("ignores a sidecar on a column the type does not localize", () => {
+    const mapped = mapUnifiedRow(
+      { type: "dictionary", text: "kọn", english: "take", category: "verbs", "category:fr": "verbes" },
+      "izon",
+    );
+    if ("error" in mapped) throw new Error(mapped.error);
+    expect(Object.keys(mapped.entry).some((k) => k.includes(":"))).toBe(false);
+  });
+
+  it("leaves a plain sheet with no locale columns unchanged", () => {
+    const mapped = mapUnifiedRow({ type: "dictionary", text: "kọn", english: "take", category: "verbs" }, "izon");
+    if ("error" in mapped) throw new Error(mapped.error);
+    expect(mapped.entry).toEqual({
+      id: expect.any(String),
+      word: "kọn",
+      english: "take",
+      category: "verbs",
+      pronunciation: "",
+      example: "",
+      exampleTranslation: "",
+    });
+  });
+});
