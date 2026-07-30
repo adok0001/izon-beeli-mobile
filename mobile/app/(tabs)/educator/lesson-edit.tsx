@@ -37,7 +37,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AudioSection } from "@/components/studio/lesson-audio-section";
 import {
+  CHECK_TYPES,
   clampChecks,
+  emptyCheck,
   LessonChecksSection,
   toChecksPayload,
   type CheckEditor,
@@ -209,7 +211,7 @@ export default function EducatorLessonEditScreen() {
       });
       const asset = picked.canceled ? undefined : picked.assets[0];
       if (!asset?.uri) return;
-      const { meta, segments: lines } = parseLessonFile(await new File(asset.uri).text());
+      const { meta, segments: lines, checks: fileChecks } = parseLessonFile(await new File(asset.uri).text());
 
       if (meta.title) setTitle(meta.title);
       if (meta.description) setDescription(meta.description);
@@ -231,7 +233,31 @@ export default function EducatorLessonEditScreen() {
           roman: r.roman ?? "",
         }),
       );
-      setSegments(mapped.length > 0 ? mapped : [EMPTY_SEGMENT()]);
+      const nextSegments = mapped.length > 0 ? mapped : [EMPTY_SEGMENT()];
+      setSegments(nextSegments);
+
+      // Absent means the file has no checks section, so whatever is already in
+      // the editor stays; a present-but-empty section clears it. Same
+      // distinction the bulk importer draws.
+      if (fileChecks) {
+        setChecks(
+          clampChecks(
+            fileChecks.map((row) => ({
+              ...emptyCheck(),
+              type: (CHECK_TYPES as readonly string[]).includes(row.type) ? (row.type as CheckType) : "meaning",
+              prompt: row.prompt ?? "",
+              answer: row.answer ?? "",
+              // The file separates options with `|` like the unified sheet; this
+              // field is comma-separated, and `toChecksPayload` splits on comma —
+              // pasting the raw cell would save "a|b" as one option.
+              options: (row.options ?? "").split("|").map((o) => o.trim()).filter(Boolean).join(", "),
+              explanation: row.explanation ?? "",
+              afterSegmentIndex: row.afterSegmentIndex?.trim() ? Number(row.afterSegmentIndex) : null,
+            })),
+            nextSegments,
+          ),
+        );
+      }
       toastSuccess(
         "Loaded from CSV",
         `Review the ${lines.length} line${lines.length === 1 ? "" : "s"}, then Save to ${isEditMode ? "replace this lesson" : "create the lesson"}.`,
