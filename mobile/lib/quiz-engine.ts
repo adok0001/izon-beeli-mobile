@@ -544,15 +544,30 @@ export function generateFocusedQuiz(
   entries: DictionaryEntry[] = [],
   translate?: QuizTranslateFn
 ): QuizQuestion[] {
+  // `english` arrives as the whole gloss column straight off the word-detail
+  // screen, so this path needs the same reduction `gatherDictionaryPool` does —
+  // otherwise practising a word asks for all of its meanings at once.
+  const sense = quizSense(english);
+  if (!sense) return [];
+
   const pool = gatherDictionaryPool(entries);
+  const norm = (s: string) => s.toLowerCase().trim();
+  const siblings = new Set(sense.siblings.map(norm));
   // Filter out the focus word itself from distractor lists
-  const distWords = pool.map((p) => p.word).filter((w) => w.toLowerCase().trim() !== word.toLowerCase().trim());
-  const distEnglish = pool.map((p) => p.english).filter((e) => e.toLowerCase().trim() !== english.toLowerCase().trim());
+  const distWords = pool.map((p) => p.word).filter((w) => norm(w) !== norm(word));
+  const distEnglish = pool.map((p) => p.english).filter((e) => !siblings.has(norm(e)));
 
   // Need at least 3 distractors for each question
   if (distWords.length < 3 || distEnglish.length < 3) return [];
 
-  const focus: QuizPool = { id: "", word, english, audioSource };
+  const focus: QuizPool = {
+    id: "",
+    word,
+    english: sense.answer,
+    siblingSenses: sense.siblings,
+    senseCount: sense.senseCount,
+    audioSource,
+  };
   const questions: QuizQuestion[] = [];
 
   const q1 = makeWordToEnglish(focus, distEnglish, translate);

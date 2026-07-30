@@ -686,3 +686,36 @@ describe("generateQuiz with multi-sense entries", () => {
     expect(questions.length).toBeGreaterThan(0);
   });
 });
+
+describe("generateFocusedQuiz with a multi-sense word", () => {
+  // The Practice button on a word-detail screen passes the whole gloss column.
+  const NAMA = "animal; beast; meat; beef";
+
+  it("asks about one sense, not every meaning of the practised word", () => {
+    const questions = generateFocusedQuiz("nama", NAMA, undefined, makePool(20));
+    expect(questions.length).toBeGreaterThan(0);
+    const wordToEnglish = questions.find((q) => q.type === "word-to-english");
+    expect(wordToEnglish!.correctAnswer).toBe("animal");
+    expect(wordToEnglish!.correctAnswer).not.toContain(";");
+  });
+
+  it("never offers another sense of the practised word as a wrong answer", () => {
+    const entries = [
+      makeEntry({ word: "x", english: "beast", id: "x" }),
+      makeEntry({ word: "y", english: "meat", id: "y" }),
+      makeEntry({ word: "z", english: "beef", id: "z" }),
+      ...makePool(20),
+    ];
+    for (let run = 0; run < 40; run++) {
+      for (const q of generateFocusedQuiz("nama", NAMA, undefined, entries)) {
+        for (const sibling of ["beast", "meat", "beef"]) {
+          expect(q.options).not.toContain(sibling);
+        }
+      }
+    }
+  });
+
+  it("returns nothing for a word with no usable gloss", () => {
+    expect(generateFocusedQuiz("ghost", "  ", undefined, makePool(20))).toEqual([]);
+  });
+});
