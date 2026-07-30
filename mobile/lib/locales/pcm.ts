@@ -1495,6 +1495,7 @@ export const pcm = {
     contributeExpand: "Help improve this word",
     senses: "Meanings",
     senseCount: "{{count}} meanings",
+    practiceSense: "Practice “{{sense}}”",
   },
   contribute: {
     title: "Contribute",

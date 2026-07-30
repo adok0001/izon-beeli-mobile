@@ -242,33 +242,33 @@ describe("generateFocusedQuiz", () => {
   const distractor_entries = makePool(20);
 
   it("returns up to 3 questions for a valid focus word", () => {
-    const questions = generateFocusedQuiz("myword", "myenglish", undefined, distractor_entries);
+    const questions = generateFocusedQuiz({ word: "myword", english: "myenglish" }, distractor_entries);
     expect(questions.length).toBeGreaterThan(0);
     expect(questions.length).toBeLessThanOrEqual(3);
   });
 
   it("always includes a word-to-english question", () => {
-    const questions = generateFocusedQuiz("myword", "myenglish", undefined, distractor_entries);
+    const questions = generateFocusedQuiz({ word: "myword", english: "myenglish" }, distractor_entries);
     expect(questions.map((q) => q.type)).toContain("word-to-english");
   });
 
   it("always includes an english-to-word question", () => {
-    const questions = generateFocusedQuiz("myword", "myenglish", undefined, distractor_entries);
+    const questions = generateFocusedQuiz({ word: "myword", english: "myenglish" }, distractor_entries);
     expect(questions.map((q) => q.type)).toContain("english-to-word");
   });
 
   it("includes a listening question when audio is provided", () => {
-    const questions = generateFocusedQuiz("myword", "myenglish", "https://audio/myword.mp3", distractor_entries);
+    const questions = generateFocusedQuiz({ word: "myword", english: "myenglish", audioSource: "https://audio/myword.mp3" }, distractor_entries);
     expect(questions.map((q) => q.type)).toContain("listening");
   });
 
   it("includes a fill-in-the-blank question when no audio is provided", () => {
-    const questions = generateFocusedQuiz("myword", "myenglish", undefined, distractor_entries);
+    const questions = generateFocusedQuiz({ word: "myword", english: "myenglish" }, distractor_entries);
     expect(questions.map((q) => q.type)).toContain("fill-in-the-blank");
   });
 
   it("correct answer is always in the options", () => {
-    const questions = generateFocusedQuiz("myword", "myenglish", "https://audio/myword.mp3", distractor_entries);
+    const questions = generateFocusedQuiz({ word: "myword", english: "myenglish", audioSource: "https://audio/myword.mp3" }, distractor_entries);
     for (const q of questions) {
       expect(q.options).toContain(q.correctAnswer);
     }
@@ -276,17 +276,17 @@ describe("generateFocusedQuiz", () => {
 
   it("returns empty array when there are fewer than 3 distractors", () => {
     const smallPool = makePool(2);
-    const questions = generateFocusedQuiz("myword", "myenglish", undefined, smallPool);
+    const questions = generateFocusedQuiz({ word: "myword", english: "myenglish" }, smallPool);
     expect(questions).toHaveLength(0);
   });
 
   it("returns empty array when entries is empty", () => {
-    const questions = generateFocusedQuiz("myword", "myenglish", undefined, []);
+    const questions = generateFocusedQuiz({ word: "myword", english: "myenglish" }, []);
     expect(questions).toHaveLength(0);
   });
 
   it("the focus word is not used as a distractor", () => {
-    const questions = generateFocusedQuiz("word0", "english0", undefined, distractor_entries);
+    const questions = generateFocusedQuiz({ word: "word0", english: "english0" }, distractor_entries);
     for (const q of questions) {
       const otherOptions = q.options.filter(
         (o) => o.toLowerCase().trim() !== q.correctAnswer.toLowerCase().trim()
@@ -700,7 +700,7 @@ describe("generateFocusedQuiz with a multi-sense word", () => {
   const NAMA = "animal; beast; meat; beef";
 
   it("asks about one sense, not every meaning of the practised word", () => {
-    const questions = generateFocusedQuiz("nama", NAMA, undefined, makePool(20));
+    const questions = generateFocusedQuiz({ word: "nama", english: NAMA }, makePool(20));
     expect(questions.length).toBeGreaterThan(0);
     const wordToEnglish = questions.find((q) => q.type === "word-to-english");
     expect(wordToEnglish!.correctAnswer).toBe("animal");
@@ -715,7 +715,7 @@ describe("generateFocusedQuiz with a multi-sense word", () => {
       ...makePool(20),
     ];
     for (let run = 0; run < 40; run++) {
-      for (const q of generateFocusedQuiz("nama", NAMA, undefined, entries)) {
+      for (const q of generateFocusedQuiz({ word: "nama", english: NAMA }, entries)) {
         for (const sibling of ["beast", "meat", "beef"]) {
           expect(q.options).not.toContain(sibling);
         }
@@ -724,7 +724,7 @@ describe("generateFocusedQuiz with a multi-sense word", () => {
   });
 
   it("returns nothing for a word with no usable gloss", () => {
-    expect(generateFocusedQuiz("ghost", "  ", undefined, makePool(20))).toEqual([]);
+    expect(generateFocusedQuiz({ word: "ghost", english: "  " }, makePool(20))).toEqual([]);
   });
 });
 
@@ -773,5 +773,54 @@ describe("progressive sense gating", () => {
   it("behaves as before when no progress is supplied", () => {
     expect(quizSense(NAMA)?.answer).toBe("animal");
     expect(quizSense(NAMA)?.senseIndex).toBe(0);
+  });
+});
+
+describe("practising a tapped sense", () => {
+  const NAMA = "animal; beast; meat; beef";
+
+  it("asks about the sense the learner tapped, not the primary one", () => {
+    const q = generateFocusedQuiz(
+      { word: "nama", english: NAMA, senseIndex: 2 },
+      makePool(20)
+    ).find((x) => x.type === "word-to-english");
+    expect(q!.correctAnswer).toBe("meat");
+  });
+
+  it("bypasses the example gate, because the learner just read the sense", () => {
+    // Progressive gating would refuse sense 3 with no example to disambiguate
+    // it. An explicit tap is the disambiguation.
+    const q = generateFocusedQuiz(
+      { word: "nama", english: NAMA, senseIndex: 3 },
+      makePool(20)
+    ).find((x) => x.type === "word-to-english");
+    expect(q!.correctAnswer).toBe("beef");
+  });
+
+  it("still bars the other senses from the options", () => {
+    const entries = [
+      makeEntry({ word: "a", english: "animal", id: "a" }),
+      makeEntry({ word: "b", english: "beast", id: "b" }),
+      makeEntry({ word: "c", english: "beef", id: "c" }),
+      ...makePool(20),
+    ];
+    for (let run = 0; run < 40; run++) {
+      for (const q of generateFocusedQuiz({ word: "nama", english: NAMA, senseIndex: 2 }, entries)) {
+        for (const sibling of ["animal", "beast", "beef"]) {
+          expect(q.options).not.toContain(sibling);
+        }
+      }
+    }
+  });
+
+  it("returns nothing for a sense index the word does not have", () => {
+    expect(generateFocusedQuiz({ word: "nama", english: NAMA, senseIndex: 9 }, makePool(20))).toEqual([]);
+    expect(generateFocusedQuiz({ word: "nama", english: NAMA, senseIndex: -1 }, makePool(20))).toEqual([]);
+  });
+
+  it("falls back to the primary sense when no index is given", () => {
+    const q = generateFocusedQuiz({ word: "nama", english: NAMA }, makePool(20))
+      .find((x) => x.type === "word-to-english");
+    expect(q!.correctAnswer).toBe("animal");
   });
 });

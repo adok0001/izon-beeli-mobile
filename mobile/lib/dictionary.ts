@@ -280,7 +280,24 @@ export interface QuizSense {
 export function quizSense(english: string, progress?: SenseProgress): QuizSense | null {
   const senses = parseSenses(english);
   if (senses.length === 0) return null;
-  const index = pickSenseIndex(senses.length, progress);
+  return senseAt(english, pickSenseIndex(senses.length, progress));
+}
+
+/**
+ * The sense at a given position, for when the learner has picked one.
+ *
+ * Tapping a sense on the word-detail screen is the one case where "which sense
+ * does this learner need?" has a direct answer, so it bypasses the progressive
+ * gating entirely — including the requirement that a later sense have an example.
+ * The learner just read the sense they tapped; that *is* the disambiguation.
+ *
+ * `siblings` still carries every sense, so the other meanings stay barred from
+ * the distractors. Quizzing "meat" while offering "animal" as a wrong answer
+ * would be broken however the sense got chosen.
+ */
+export function senseAt(english: string, index: number): QuizSense | null {
+  const senses = parseSenses(english);
+  if (index < 0 || index >= senses.length) return null;
   return {
     answer: projectSenses([senses[index]]),
     siblings: senses.map((s) => projectSenses([s])),

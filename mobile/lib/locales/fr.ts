@@ -1495,6 +1495,7 @@ export const fr = {
     contributeExpand: "Améliorer ce mot",
     senses: "Sens",
     senseCount: "{{count}} sens",
+    practiceSense: "Réviser « {{sense}} »",
   },
   contribute: {
     title: "Contribuer",

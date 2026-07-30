@@ -1,6 +1,8 @@
-import { View, Text } from "react-native";
+import { useState } from "react";
+import { Pressable, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import type { Sense } from "@/lib/dictionary";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useMuseumTheme } from "@/lib/use-museum-theme";
 import { fonts, type } from "@/constants/typography";
 
@@ -19,7 +21,18 @@ import { fonts, type } from "@/constants/typography";
 const GUTTER = 34; // numeral column width
 const RAIL_X = GUTTER / 2 - 0.5; // centre the 1px rail under the numerals
 
-export function SensesPlacard({ senses }: { senses: Sense[] }) {
+export function SensesPlacard({
+  senses,
+  onPractice,
+}: {
+  senses: Sense[];
+  /**
+   * Practise one sense. When set, each row becomes tappable — the one case where
+   * "which meaning does this learner want?" has a direct answer instead of being
+   * inferred from progress. Omitted (the Studio preview), rows stay inert.
+   */
+  onPractice?: (index: number) => void;
+}) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
 
@@ -60,17 +73,57 @@ export function SensesPlacard({ senses }: { senses: Sense[] }) {
           }}
         />
         {senses.map((sense, i) => (
-          <SenseRow key={i} index={i} sense={sense} primary={i === 0} />
+          <SenseRow
+            key={i}
+            index={i}
+            sense={sense}
+            primary={i === 0}
+            onPractice={onPractice && (() => onPractice(i))}
+          />
         ))}
       </View>
     </View>
   );
 }
 
-function SenseRow({ index, sense, primary }: { index: number; sense: Sense; primary: boolean }) {
+function SenseRow({
+  index,
+  sense,
+  primary,
+  onPractice,
+}: {
+  index: number;
+  sense: Sense;
+  primary: boolean;
+  onPractice?: () => void;
+}) {
   const M = useMuseumTheme();
+  const { t } = useTranslation();
+  const [pressed, setPressed] = useState(false);
+
+  // Inert unless a handler is supplied — Pressable with no onPress would still
+  // read as interactive to a screen reader.
+  const Row = onPractice ? Pressable : View;
+
   return (
-    <View style={{ flexDirection: "row", paddingVertical: 10 }}>
+    <Row
+      onPress={onPractice}
+      onPressIn={onPractice && (() => setPressed(true))}
+      onPressOut={onPractice && (() => setPressed(false))}
+      accessibilityRole={onPractice ? "button" : undefined}
+      accessibilityLabel={
+        onPractice ? t("wordDetail.practiceSense", { sense: sense.text }) : undefined
+      }
+      style={{
+        flexDirection: "row",
+        paddingVertical: 10,
+        // Bleed the highlight past the card's padding so a tapped row reads as
+        // a full-width band rather than a floating rectangle.
+        marginHorizontal: -18,
+        paddingHorizontal: 18,
+        backgroundColor: pressed ? M.accentGlow : "transparent",
+      }}
+    >
       {/* Numeral threaded onto the rail — card-bg disc breaks the line */}
       <View style={{ width: GUTTER, alignItems: "center" }}>
         <View
@@ -128,6 +181,13 @@ function SenseRow({ index, sense, primary }: { index: number; sense: Sense; prim
           </View>
         )}
       </View>
-    </View>
+
+      {/* Affordance: a chevron only where tapping does something */}
+      {!!onPractice && (
+        <View style={{ justifyContent: "center", paddingLeft: 8 }}>
+          <IconSymbol name="chevron.right" size={14} color={M.muted} />
+        </View>
+      )}
+    </Row>
   );
 }

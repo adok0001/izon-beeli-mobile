@@ -178,7 +178,13 @@ export default function WordDetailScreen() {
     }
   };
 
-  const handlePractice = () => {
+  /**
+   * `senseIndex` is set when the learner tapped a specific sense on the placard
+   * rather than the word's Practice button. `focusEnglish` stays the whole gloss
+   * column either way: the quiz needs every sense to keep the others out of the
+   * distractors, and sends only the index of the one to ask about.
+   */
+  const startPractice = (senseIndex?: number) => {
     if (!entry) return;
     const audio = earlyDerived?.effectiveAudioUrl;
     router.push({
@@ -187,9 +193,12 @@ export default function WordDetailScreen() {
         focusWord: entry.word,
         focusEnglish: englishText,
         ...(typeof audio === "string" && audio ? { focusAudio: audio } : {}),
+        ...(senseIndex !== undefined ? { focusSense: String(senseIndex) } : {}),
       },
     });
   };
+
+  const handlePractice = () => startPractice();
 
   const navigateTo = (targetId: string) => {
     router.replace({
@@ -258,7 +267,7 @@ export default function WordDetailScreen() {
           contentContainerStyle={{ paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
         >
-          <EntryDetailView entry={entry} derived={derived} />
+          <EntryDetailView entry={entry} derived={derived} onPracticeSense={startPractice} />
 
           {/* Lessons that use this word */}
           {lessonMatches.length > 0 && (

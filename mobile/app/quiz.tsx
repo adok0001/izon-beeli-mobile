@@ -479,6 +479,8 @@ export default function QuizScreen() {
     focusWord?: string;
     focusEnglish?: string;
     focusAudio?: string;
+    /** Index of the sense the learner tapped, when practising one specifically. */
+    focusSense?: string;
     focusLanguageId?: string;
     lessonId?: string;
   }>();
@@ -529,9 +531,14 @@ export default function QuizScreen() {
 
     if (isFocused) {
       const questions = generateFocusedQuiz(
-        params.focusWord!,
-        params.focusEnglish!,
-        params.focusAudio || undefined,
+        {
+          word: params.focusWord!,
+          english: params.focusEnglish!,
+          audioSource: params.focusAudio || undefined,
+          // Set when the learner tapped a specific sense rather than the
+          // word's Practice button.
+          senseIndex: params.focusSense ? Number(params.focusSense) : undefined,
+        },
         focusEntries,
         tq
       );

@@ -1,5 +1,5 @@
 import type { TranslationKey } from "@/lib/locales";
-import { quizSense, type DictionaryEntry } from "@/lib/dictionary";
+import { quizSense, senseAt, type DictionaryEntry } from "@/lib/dictionary";
 import { localize } from "@/lib/localize";
 import type { AudioSource, MatchingGameConfig, MatchingPair, QuestionType, QuizConfig, QuizQuestion, SentenceTemplate, TranscriptSegment } from "@/types";
 
@@ -537,17 +537,28 @@ export function generateQuiz(
  * Generates a focused 3-question mini-quiz about a single specific word.
  * The target word is always the subject; other dictionary entries supply distractors.
  */
+/** The word being practised. `english` is its whole gloss column. */
+export interface QuizFocus {
+  word: string;
+  english: string;
+  audioSource?: AudioSource;
+  /**
+   * Practise this sense specifically — set when the learner tapped one on the
+   * word-detail screen. Omitted, the primary sense is used.
+   */
+  senseIndex?: number;
+}
+
 export function generateFocusedQuiz(
-  word: string,
-  english: string,
-  audioSource: AudioSource | undefined,
+  focusWord: QuizFocus,
   entries: DictionaryEntry[] = [],
   translate?: QuizTranslateFn
 ): QuizQuestion[] {
+  const { word, english, audioSource, senseIndex } = focusWord;
   // `english` arrives as the whole gloss column straight off the word-detail
   // screen, so this path needs the same reduction `gatherDictionaryPool` does —
   // otherwise practising a word asks for all of its meanings at once.
-  const sense = quizSense(english);
+  const sense = senseIndex === undefined ? quizSense(english) : senseAt(english, senseIndex);
   if (!sense) return [];
 
   const pool = gatherDictionaryPool(entries);

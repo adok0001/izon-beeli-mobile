@@ -145,8 +145,18 @@ const CATEGORY_CHOICES: readonly ReplicaChoice[] = DICTIONARY_CATEGORY_VALUES.ma
  * `ReplicaField` wrappers below pass their children straight through.
  */
 export function EntryDetailView({
-  entry, derived, edit,
-}: Readonly<{ entry: DictionaryEntry; derived: EntryDisplayDerived; edit?: EntryDetailEdit }>) {
+  entry, derived, edit, onPracticeSense,
+}: Readonly<{
+  entry: DictionaryEntry;
+  derived: EntryDisplayDerived;
+  edit?: EntryDetailEdit;
+  /**
+   * Practise one sense of a multi-sense word. Only the live word screen passes
+   * this — the Studio draft preview has no learner to quiz, so its senses stay
+   * inert rather than offering an action that would go nowhere.
+   */
+  onPracticeSense?: (senseIndex: number) => void;
+}>) {
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const { uiLanguage, englishText, exampleTranslationText, senses, hasMultipleSenses, categoryLabel, categoryIcon, displayPronunciation, effectiveAudioUrl } = derived;
@@ -285,7 +295,7 @@ export function EntryDetailView({
       <View style={{ marginHorizontal: 20, height: 1, backgroundColor: M.border }} />
 
       {/* Senses — the lexicon plate (only when the word carries several readings) */}
-      {hasMultipleSenses && <SensesPlacard senses={senses} />}
+      {hasMultipleSenses && <SensesPlacard senses={senses} onPractice={onPracticeSense} />}
 
       {/* Example sentence */}
       {(entry.example || edit) && (

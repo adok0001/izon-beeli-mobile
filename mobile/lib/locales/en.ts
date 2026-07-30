@@ -1484,6 +1484,7 @@ export const en = {
     contributeExpand: "Help improve this word",
     senses: "Senses",
     senseCount: "{{count}} senses",
+    practiceSense: "Practise “{{sense}}”",
   },
   contribute: {
     // Landing
