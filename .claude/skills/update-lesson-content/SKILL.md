@@ -397,9 +397,10 @@ convention — see Step 8.
 
 ## Step 6 — Assign categories
 
-The server's `VALID_CATEGORIES` is the only authority
-(`server/src/routes/bulk-import.ts`) — an unlisted category fails the whole
-batch:
+The server's `DICTIONARY_CATEGORIES` is the only authority
+(`server/src/lib/dictionary-categories.ts`, which every write and import route
+validates against via its `isDictionaryCategory()` guard) — an unlisted category
+fails the whole batch:
 
 ```
 greetings numbers family pronouns time verbs body market occupations nouns
@@ -413,7 +414,7 @@ wrong-but-valid category passes validation and is never flagged again. If a word
 genuinely resists classification, leave it out of the sheet and list it for the
 owner rather than guessing.
 
-**`VALID_CATEGORIES` says what is *legal*, not what the table already *uses*.**
+**`DICTIONARY_CATEGORIES` says what is *legal*, not what the table already *uses*.**
 Check two or three semantic neighbours before assigning, because the conventions
 aren't guessable: `endi` (fish) is filed under `animals`, but `ede`/`edemefu`
 (crayfish) are under `food`.
