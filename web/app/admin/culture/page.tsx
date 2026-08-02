@@ -382,9 +382,14 @@ export default function AdminCulturePage() {
   const [deleting, setDeleting] = useState<DiscoverItem | null>(null);
   const [savedFlash, setSavedFlash] = useState(false);
 
+  // The public /culture-items list is active-only; the admin variant also
+  // returns deactivated cards so they can be seen and re-activated here.
   const { data: items = [], isLoading } = useQuery<DiscoverItem[]>({
     queryKey: ["culture-items-admin"],
-    queryFn: () => apiFetch<DiscoverItem[]>("/culture-items"),
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch<DiscoverItem[]>("/culture-items/admin", { token: token ?? undefined });
+    },
     staleTime: 0,
   });
 

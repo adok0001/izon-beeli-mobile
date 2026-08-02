@@ -11,21 +11,29 @@ import { IMPORT_TYPES } from "@/lib/import-types";
 import { useLanguages } from "@/lib/hooks/use-languages";
 import {
   Baby,
+  BookOpen,
   ChevronDown,
   ChevronUp,
+  Coins,
   Edit2,
   Globe2,
   Handshake,
+  Map,
+  Mic,
+  MoonStar,
   Music,
   Palette,
   PartyPopper,
   Plus,
   Quote,
+  Scale,
   Search,
   Shirt,
   Sparkles,
   Trash2,
+  Users,
   UtensilsCrossed,
+  Wheat,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -73,6 +81,14 @@ const CULTURAL_CATEGORIES = [
   "clothing",
   "cuisine",
   "greetings_etiquette",
+  "governance_values",
+  "land_livelihood",
+  "kinship",
+  "cosmology",
+  "oral_tradition",
+  "arts_oratory",
+  "numbers_trade",
+  "geography",
 ] as const;
 
 /** A monochrome lucide mark per culture category (replaces the old image emoji). */
@@ -85,6 +101,14 @@ const CATEGORY_ICON: Record<string, LucideIcon> = {
   clothing: Shirt,
   cuisine: UtensilsCrossed,
   greetings_etiquette: Handshake,
+  governance_values: Scale,
+  land_livelihood: Wheat,
+  kinship: Users,
+  cosmology: MoonStar,
+  oral_tradition: BookOpen,
+  arts_oratory: Mic,
+  numbers_trade: Coins,
+  geography: Map,
 };
 
 function categoryIcon(category: string): LucideIcon {
@@ -460,16 +484,24 @@ export default function EducatorCulturePage() {
     (l) => allLanguages.find((lang) => lang.id === l.id) ?? { id: l.id, name: l.name, nativeName: l.name, region: "Other" }
   );
 
+  // List via the /admin variants: the public endpoints serve published+active
+  // rows only, so a freshly created draft would vanish from this very screen.
   const { data: proverbs = [], isLoading: proverbsLoading, isFetching: proverbsFetching } = useQuery<Proverb[]>({
     queryKey: ["educator", "proverbs", effectiveLanguage],
-    queryFn: () => apiFetch<Proverb[]>(`/proverbs?languageId=${encodeURIComponent(effectiveLanguage)}`),
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch<Proverb[]>(`/proverbs/admin?languageId=${encodeURIComponent(effectiveLanguage)}`, { token: token ?? undefined });
+    },
     enabled: !!effectiveLanguage && tab === "proverbs",
     staleTime: 30_000,
   });
 
   const { data: culturalItems = [], isLoading: culturalLoading, isFetching: culturalFetching } = useQuery<CulturalItem[]>({
     queryKey: ["educator", "cultural", effectiveLanguage],
-    queryFn: () => apiFetch<CulturalItem[]>(`/cultural?languageId=${encodeURIComponent(effectiveLanguage)}`),
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch<CulturalItem[]>(`/cultural/admin?languageId=${encodeURIComponent(effectiveLanguage)}`, { token: token ?? undefined });
+    },
     enabled: !!effectiveLanguage && tab === "cultural",
     staleTime: 30_000,
   });

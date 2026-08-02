@@ -31,7 +31,9 @@ export interface Course {
   order: number;
 }
 
-export const LESSON_TYPES = ["lesson", "story", "music", "pronunciation"] as const;
+// The server validates lesson `type` against this exact list (`server/src/routes/
+// educator/lessons.ts`); `game` marks a block-closing gate on the journey path.
+export { LESSON_TYPES } from "@mobile/types";
 
 /** The ten Movement course types `stubForCourse` scaffolds (server
  * `lib/lesson-stubs.ts`) — the only values /educator/generate-stubs accepts.
