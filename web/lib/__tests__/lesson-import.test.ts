@@ -25,4 +25,41 @@ describe("parseLessonFile", () => {
     expect(meta.title).toBe("T");
     expect(segments).toEqual([]);
   });
+
+  it("extracts a checks section after a second --- instead of swallowing it into the transcript", () => {
+    const parsed = parseLessonFile(
+      [
+        "title,T", "description,d",
+        "---",
+        "text,translation,speaker,roman",
+        "Nene! Baidẹ!,Grandmother!,Child,",
+        "Tau!,Grandchild!,Nene,",
+        "---",
+        "type,prompt,answer,options,explanation,afterSegmentIndex",
+        "meaning,What does Baidẹ mean?,Good morning,Good morning|Goodbye,,0",
+      ].join("\n"),
+    );
+    expect(parsed.segments.map((s) => s.text)).toEqual(["Nene! Baidẹ!", "Tau!"]);
+    expect(parsed.checks).toEqual([
+      {
+        type: "meaning",
+        prompt: "What does Baidẹ mean?",
+        answer: "Good morning",
+        options: "Good morning|Goodbye",
+        explanation: "",
+        afterSegmentIndex: "0",
+      },
+    ]);
+  });
+
+  it("omits `checks` when there is no third section, so the server leaves existing checks alone", () => {
+    const parsed = parseLessonFile("title,T\ndescription,d\n---\ntext\na");
+    expect("checks" in parsed).toBe(false);
+  });
+
+  it("ships a template whose checks row round-trips", () => {
+    const parsed = parseLessonFile(LESSON_TEMPLATE_CSV);
+    expect(parsed.checks).toHaveLength(1);
+    expect(parsed.checks?.[0].type).toBe("meaning");
+  });
 });
