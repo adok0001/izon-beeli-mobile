@@ -33,6 +33,33 @@ export interface Course {
 
 export const LESSON_TYPES = ["lesson", "story", "music", "pronunciation"] as const;
 
+/** The ten Movement course types `stubForCourse` scaffolds (server
+ * `lib/lesson-stubs.ts`) — the only values /educator/generate-stubs accepts.
+ * Labels match the mobile Studio generator panel. */
+export const MOVEMENT_COURSE_TYPES = [
+  { type: "mv_arrival", label: "Arrival" },
+  { type: "mv_household", label: "The Household" },
+  { type: "mv_village", label: "The Village" },
+  { type: "mv_growing_up", label: "Growing Up" },
+  { type: "mv_threshold", label: "The Threshold" },
+  { type: "mv_working_year", label: "The Working Year" },
+  { type: "mv_union", label: "The Union" },
+  { type: "mv_assembly", label: "The Assembly" },
+  { type: "mv_elders_voice", label: "The Elder's Voice" },
+  { type: "mv_keeper", label: "The Keeper" },
+] as const;
+
+const MOVEMENT_LABELS: Record<string, string> = Object.fromEntries(
+  MOVEMENT_COURSE_TYPES.map((m) => [m.type, m.label]),
+);
+
+/** Human label for a course type: Movement title for `mv_*`, otherwise the
+ * snake_case value spaced out (legacy types like `first_words`). */
+export function courseTypeLabel(courseType: string | null | undefined): string {
+  if (!courseType) return "";
+  return MOVEMENT_LABELS[courseType] ?? courseType.replace(/_/g, " ");
+}
+
 // ─── Story Arc Types ──────────────────────────────────────────────────────────
 
 export interface StoryChapterDraft {

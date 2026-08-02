@@ -9,6 +9,7 @@ import { useUiLanguageStore } from "@/store/ui-language-store";
 import { useAuth } from "@clerk/nextjs";
 import { useLanguages } from "@/lib/hooks/use-languages";
 import type { MapNodeConfig } from "@/types";
+import { courseTypeLabel, MOVEMENT_COURSE_TYPES } from "./[id]/_components/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     ArrowUpDown,
@@ -57,17 +58,8 @@ interface EducatorMe {
   languages: { id: string; name: string }[];
 }
 
-// Stub course types available for generation
-const STUB_COURSE_TYPES = [
-  { type: "first_words",    label: "First Words" },
-  { type: "sound_script",   label: "Sounds & Script" },
-  { type: "numbers_trade",  label: "Counting & Trade" },
-  { type: "communicative",  label: "Speaking Well" },
-  { type: "oral_tradition", label: "Oral Tradition" },
-  { type: "songs",          label: "Songs & Sing-Along" },
-  { type: "everyday_life",  label: "Everyday Life" },
-  { type: "contemporary",   label: "Contemporary World" },
-] as const;
+// Stub course types available for generation — the ten Movements.
+const STUB_COURSE_TYPES = MOVEMENT_COURSE_TYPES;
 
 type SortKey = "order" | "title" | "level" | "total" | "active";
 type LevelFilter = "all" | "beginner" | "intermediate" | "advanced";
@@ -764,7 +756,7 @@ export default function EducatorCoursesPage() {
                         <ChevronRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-brand-500" />
                       </Link>
                       {course.courseType && (
-                        <p className="text-xs text-neutral-400 mt-0.5 capitalize">{course.courseType.replace(/_/g, " ")}</p>
+                        <p className="text-xs text-neutral-400 mt-0.5 capitalize">{courseTypeLabel(course.courseType)}</p>
                       )}
                     </td>
                     <td className="px-4 py-3">

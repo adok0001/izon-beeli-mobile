@@ -24,7 +24,7 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { LessonModal } from "./_components/lesson-modal";
 import { StoryArcSection } from "./_components/story-arc-section";
-import { fmtDuration, type Course, type Lesson } from "./_components/shared";
+import { courseTypeLabel, fmtDuration, type Course, type Lesson } from "./_components/shared";
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -135,7 +135,7 @@ export default function CourseDetailPage() {
             )}
             {course?.courseType && (
               <span className="text-xs text-neutral-500 dark:text-neutral-300 capitalize">
-                {course.courseType.replace(/_/g, " ")}
+                {courseTypeLabel(course.courseType)}
               </span>
             )}
           </div>
