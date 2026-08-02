@@ -1,8 +1,20 @@
-# Beeli Brand Voice
+# Beeli — release copy conventions
+
+Project override for the global `app-store-changelog` skill. Everything here wins over
+the skill's generic defaults.
+
+## Product and version
+
+- The app is **Beeli** — never "Izon Beeli", "izon-beeli-mobile", or the repo name.
+- Current version lives in `mobile/app.json` (`expo.version`).
+- Version bumps are tagged annotated and `v`-prefixed by the `git-commit` skill; those
+  tags are the reliable range boundaries.
 
 ## Who Beeli is for
 
-Beeli serves African language learners — primarily the diaspora reconnecting with their heritage language, and curious learners starting from zero. The core community is Izon and Igbo speakers and learners, with more languages planned.
+Beeli serves African language learners — primarily the diaspora reconnecting with their
+heritage language, and curious learners starting from zero. The core community is Izon and
+Igbo speakers and learners, with more languages planned.
 
 ## Tone
 
@@ -27,13 +39,11 @@ Beeli serves African language learners — primarily the diaspora reconnecting w
 - Don't use superlatives without substance ("the best", "world-class").
 - Don't reference internal systems by name (Clerk, Supabase, PostHog, Expo).
 
-## App Store–specific constraints
+## Feature accuracy
 
-- App Store "What's New": plain text only, no markdown, no bullet symbols. Prose paragraphs. 4000 char limit.
-- App Store "Promotional Text": plain text, no line breaks, **170 characters max**. Updatable without resubmission. Lead with the release's biggest change.
-- App Store long description: 4000 characters, plain prose.
-- Play Store long description: 4000 characters, supports basic HTML but plain prose preferred.
-- Play Store short description: 80 characters max.
+- **Izon** and **Igbo** are the primary languages. Be accurate — do not invent language support.
+- Nsịbịdị script is an Igbo-specific feature; frame it in that context.
+- The leaderboard, widgets, and quiz engine are confirmed user-facing features as of v1.28.5.
 
 ## Example brand-aligned sentences
 
