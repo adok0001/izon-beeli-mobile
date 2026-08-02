@@ -12,6 +12,17 @@ import Link from "next/link";
 import { use } from "react";
 import { useTranslation } from "react-i18next";
 
+// `/lessons?courseId=` serves block-closing mini-games alongside lessons
+// (mobile/lib/course-path.ts). They aren't playable lessons, so every surface
+// that lists or counts lessons filters them out — mirror mobile's
+// `contentLessons` here. The web `Lesson` type doesn't carry `type` yet, so
+// extend it locally.
+type LessonRowData = Lesson & { type?: string };
+
+function contentLessons(lessons: LessonRowData[]): LessonRowData[] {
+  return lessons.filter((l) => l.type !== "game");
+}
+
 // ── Window chrome (Poolsuite-style) ──────────────────────────────────────────
 
 function WindowTitleBar({ title }: { title: string }) {
@@ -116,14 +127,15 @@ export default function CoursePage({ params }: Readonly<{ params: Promise<{ id: 
     },
   });
 
-  const { data: lessons = [], isLoading: lessonsLoading } = useQuery<Lesson[]>({
+  const { data: lessonRows = [], isLoading: lessonsLoading } = useQuery<LessonRowData[]>({
     queryKey: ["course-lessons", id],
     queryFn: async () => {
       const token = await getToken();
-      return apiFetch<Lesson[]>(`/lessons?courseId=${id}`, { token: token ?? undefined });
+      return apiFetch<LessonRowData[]>(`/lessons?courseId=${id}`, { token: token ?? undefined });
     },
     enabled: !!course,
   });
+  const lessons = contentLessons(lessonRows);
 
   const notFound = error instanceof ApiError && error.status === 404;
 

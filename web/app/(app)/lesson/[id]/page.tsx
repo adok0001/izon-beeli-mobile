@@ -16,7 +16,10 @@ import { use, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 // ── Types ────────────────────────────────────────────────────
-interface LessonDetail extends Lesson { transcript: TranscriptSegment[]; }
+// `type` distinguishes real lessons from block-closing mini-game rows, which
+// `/lessons/:id` serves alike (mobile/lib/course-path.ts). The web `Lesson`
+// type doesn't carry it yet, so declare it here.
+interface LessonDetail extends Lesson { transcript: TranscriptSegment[]; type?: string; }
 interface CompletionResult {
   completed: boolean; pointsEarned: number; totalPoints: number;
   streak: number; leveledUp: boolean; newLevel?: number; newTitle?: string;
@@ -89,6 +92,19 @@ export default function LessonPage({ params }: Readonly<{ params: Promise<{ id: 
         <BookText className="h-12 w-12 text-neutral-300 dark:text-neutral-600" />
         <p className="text-neutral-600 dark:text-neutral-400">{t("lesson.notFound")}</p>
         <Link href="/learn" className="text-sm text-brand-600 dark:text-brand-400 underline">{t("common.goBack")}</Link>
+      </div>
+    );
+  }
+
+  // Block-closing mini-game rows aren't playable lessons — mobile never lists
+  // them, and completing one here would award XP mobile never would. If one is
+  // opened directly by URL, show the missing-content notice instead.
+  if (lesson.type === "game") {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center gap-4 px-6">
+        <BookText className="h-12 w-12 text-neutral-300 dark:text-neutral-600" />
+        <p className="text-neutral-600 dark:text-neutral-400">{t("lesson.gameGateNotice")}</p>
+        <Link href={`/course/${lesson.courseId}`} className="text-sm text-brand-600 dark:text-brand-400 underline">{t("common.goBack")}</Link>
       </div>
     );
   }
