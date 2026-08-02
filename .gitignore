@@ -4,7 +4,9 @@ userio-*
 .claude/settings.local.json
 .claude/**/.DS_Store
 .claude/worktrees/
-.claude/skills/design-course/
+# the design-course skill is tracked; its 11MB working directory is not
+.claude/skills/design-course/scaffold/
+.claude/skills/design-course/node_modules/
 mobile/.claude/
 scripts/.cache/
 scripts/android-testers.txt
