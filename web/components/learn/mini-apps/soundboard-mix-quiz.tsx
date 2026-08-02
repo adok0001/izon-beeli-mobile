@@ -59,8 +59,8 @@ export function VerticalFader({
     <div className="relative flex items-center justify-center" style={{ width: 24, height: 88 }}>
       {/* Track bg */}
       <div
-        className="absolute rounded-full"
-        style={{ width: 3, height: 80, background: "rgba(255,255,255,0.07)" }}
+        className="absolute rounded-full bg-neutral-200 dark:bg-white/[0.07]"
+        style={{ width: 3, height: 80 }}
       />
       {/* Filled track */}
       <div
@@ -75,12 +75,11 @@ export function VerticalFader({
       />
       {/* Thumb knob */}
       <div
-        className="absolute rounded-sm border border-white/20 shadow-md"
+        className="absolute rounded-sm border shadow-md border-neutral-400 dark:border-white/20 bg-neutral-300 dark:bg-[linear-gradient(180deg,rgba(255,255,255,0.18)_0%,rgba(255,255,255,0.06)_100%)]"
         style={{
           width: 14,
           height: 6,
           bottom: `calc(${(level / 100) * 80}px - 3px)`,
-          background: "linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 100%)",
           transition: "bottom 70ms ease",
           pointerEvents: "none",
         }}
@@ -127,7 +126,7 @@ function ChannelStrip({
         "flex flex-col items-center gap-2 px-3 py-4 rounded-xl border transition-all duration-300",
         isNearTarget
           ? "border-emerald-500/40 bg-emerald-500/[0.05]"
-          : "border-white/[0.07] bg-white/[0.02]"
+          : "border-neutral-200 dark:border-white/[0.07] bg-neutral-50 dark:bg-white/[0.02]"
       )}
       style={{ minWidth: 68 }}
     >
@@ -191,9 +190,8 @@ export function SoundboardMixQuiz({
 
   return (
     <div
-      className="relative rounded-2xl overflow-hidden border border-white/[0.07] p-6"
+      className="relative rounded-2xl overflow-hidden border p-6 border-neutral-200 dark:border-white/[0.07] bg-white dark:bg-[radial-gradient(ellipse_at_20%_0%,#0a1020_0%,#05060e_70%)]"
       style={{
-        background: "radial-gradient(ellipse at 20% 0%, #0a1020 0%, #05060e 70%)",
         boxShadow: allCorrect ? "0 0 40px -10px rgba(52,211,153,0.2)" : "none",
         transition: "box-shadow 600ms ease",
       }}
@@ -201,18 +199,18 @@ export function SoundboardMixQuiz({
       {/* Header */}
       <div className="mb-5">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-[9px] font-mono uppercase tracking-[0.3em] text-neutral-600">
+          <span className="text-[9px] font-mono uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-600">
             Soundboard Quiz
           </span>
-          <div className="flex-1 h-px bg-white/[0.04]" />
-          <span className="text-[9px] font-mono text-neutral-700 uppercase tracking-widest">
+          <div className="flex-1 h-px bg-neutral-200 dark:bg-white/[0.04]" />
+          <span className="text-[9px] font-mono text-neutral-400 dark:text-neutral-700 uppercase tracking-widest">
             {targetWord}
           </span>
         </div>
-        <p className="text-sm text-neutral-400 font-mono leading-relaxed">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400 font-mono leading-relaxed">
           &ldquo;{sentence}&rdquo;
         </p>
-        <p className="text-[11px] text-neutral-600 mt-1.5">
+        <p className="text-[11px] text-neutral-500 dark:text-neutral-600 mt-1.5">
           Bring the voice channel up — push background noise down.
         </p>
       </div>
@@ -241,7 +239,7 @@ export function SoundboardMixQuiz({
             Identified
           </p>
           <p
-            className="text-2xl font-bold tracking-tight text-emerald-300"
+            className="text-2xl font-bold tracking-tight text-emerald-700 dark:text-emerald-300"
             style={{ textShadow: "0 0 20px rgba(52,211,153,0.55)" }}
           >
             {targetWordNative}

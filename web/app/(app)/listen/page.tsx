@@ -120,7 +120,7 @@ function MiniAppCard({
     <div className={cn(
       "rounded-2xl border overflow-hidden transition-all duration-200",
       open
-        ? "border-white/[0.1] dark:bg-white/[0.015]"
+        ? "border-neutral-200 dark:border-white/[0.1] bg-white dark:bg-white/[0.015]"
         : "border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900"
     )}>
       <button

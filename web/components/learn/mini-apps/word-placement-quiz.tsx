@@ -53,14 +53,14 @@ function TokenChip({
         "group relative flex items-center gap-2 px-3 py-2 rounded-xl border select-none",
         "transition-all duration-200",
         isPlaced
-          ? "opacity-20 pointer-events-none border-white/[0.05] bg-white/[0.02]"
+          ? "opacity-20 pointer-events-none border-neutral-200 dark:border-white/[0.05] bg-neutral-100 dark:bg-white/[0.02]"
           : isDragging
           ? "scale-95 opacity-60 border-blue-400/50 bg-blue-500/[0.08] cursor-grabbing"
-          : "border-white/[0.12] bg-white/[0.04] hover:border-white/[0.22] hover:bg-white/[0.07] cursor-grab"
+          : "border-neutral-200 dark:border-white/[0.12] bg-neutral-50 dark:bg-white/[0.04] hover:border-neutral-300 dark:hover:border-white/[0.22] hover:bg-neutral-100 dark:hover:bg-white/[0.07] cursor-grab"
       )}
     >
-      <span className="text-sm font-bold text-white/90">{token.word}</span>
-      <span className="text-[10px] text-neutral-600">{token.translation}</span>
+      <span className="text-sm font-bold text-neutral-900 dark:text-white/90">{token.word}</span>
+      <span className="text-[10px] text-neutral-500 dark:text-neutral-600">{token.translation}</span>
       {token.audioUrl && !isPlaced && (
         <button
           type="button"
@@ -68,7 +68,7 @@ function TokenChip({
           aria-label={`Pronounce ${token.word}`}
           className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
         >
-          <Volume2 className="h-3 w-3 text-neutral-500 hover:text-neutral-300 transition-colors" />
+          <Volume2 className="h-3 w-3 text-neutral-400 hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300 transition-colors" />
         </button>
       )}
     </div>
@@ -193,17 +193,14 @@ export function WordPlacementQuiz({
         }
       `}</style>
 
-      <div
-        className="rounded-2xl overflow-hidden border border-white/[0.07]"
-        style={{ background: "#05060e" }}
-      >
+      <div className="rounded-2xl overflow-hidden border border-neutral-200 dark:border-white/[0.07] bg-white dark:bg-[#05060e]">
         {/* Header */}
-        <div className="flex items-center gap-2 px-5 pt-4 pb-3 border-b border-white/[0.05]">
-          <span className="text-[9px] font-mono uppercase tracking-[0.3em] text-neutral-600">
+        <div className="flex items-center gap-2 px-5 pt-4 pb-3 border-b border-neutral-200 dark:border-white/[0.05]">
+          <span className="text-[9px] font-mono uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-600">
             Word Placement
           </span>
-          <div className="flex-1 h-px bg-white/[0.04]" />
-          <span className="text-[9px] font-mono tabular-nums text-neutral-700">
+          <div className="flex-1 h-px bg-neutral-200 dark:bg-white/[0.04]" />
+          <span className="text-[9px] font-mono tabular-nums text-neutral-400 dark:text-neutral-700">
             {correctZones.size} / {zones.length}
           </span>
         </div>
@@ -232,7 +229,7 @@ export function WordPlacementQuiz({
           ))}
         </div>
 
-        <p className="text-[11px] text-neutral-600 text-center mt-3 font-mono px-4">
+        <p className="text-[11px] text-neutral-500 dark:text-neutral-600 text-center mt-3 font-mono px-4">
           Drag each word token onto its matching element in the scene
         </p>
 
@@ -259,7 +256,7 @@ export function WordPlacementQuiz({
               : "opacity-0 pointer-events-none border-transparent"
           )}
         >
-          <p className="text-sm font-semibold text-emerald-300">Scene complete</p>
+          <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">Scene complete</p>
           <p className="text-[11px] text-neutral-500 mt-0.5">All words placed correctly</p>
         </div>
       </div>
