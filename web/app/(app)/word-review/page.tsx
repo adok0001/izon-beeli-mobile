@@ -4,7 +4,7 @@ import { apiFetch } from "@/lib/api";
 import { useLanguageStore } from "@/store/language-store";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CheckCircle2, RotateCcw, X } from "lucide-react";
+import { Check, CheckCircle2, RotateCcw, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -33,7 +33,7 @@ function ReviewCard({
   isPending,
 }: Readonly<{
   entry: DictEntry;
-  onRate: (confidence: "easy" | "hard" | "again") => void;
+  onRate: (confidence: "easy" | "good" | "hard" | "again") => void;
   isPending: boolean;
 }>) {
   const { t } = useTranslation();
@@ -46,7 +46,8 @@ function ReviewCard({
       if (face === "answer" && !isPending) {
         if (e.key === "1") onRate("again");
         if (e.key === "2") onRate("hard");
-        if (e.key === "3") onRate("easy");
+        if (e.key === "3") onRate("good");
+        if (e.key === "4") onRate("easy");
       }
     };
     window.addEventListener("keydown", handleKey);
@@ -103,7 +104,7 @@ function ReviewCard({
 
       {/* Rating buttons — only after reveal */}
       {face === "answer" && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-3">
           <button
             type="button"
             onClick={() => onRate("again")}
@@ -126,13 +127,23 @@ function ReviewCard({
           </button>
           <button
             type="button"
+            onClick={() => onRate("good")}
+            disabled={isPending}
+            className="flex flex-col items-center gap-1.5 py-4 rounded-2xl border-2 border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/30 hover:bg-sky-100 dark:hover:bg-sky-950/50 transition-colors disabled:opacity-50"
+          >
+            <Check className="h-5 w-5 text-sky-500" />
+            <span className="text-xs font-semibold text-sky-600 dark:text-sky-400">{t("wordReview.good")}</span>
+            <span className="text-[10px] text-sky-400 dark:text-sky-600 font-mono">3</span>
+          </button>
+          <button
+            type="button"
             onClick={() => onRate("easy")}
             disabled={isPending}
             className="flex flex-col items-center gap-1.5 py-4 rounded-2xl border-2 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/30 hover:bg-green-100 dark:hover:bg-green-950/50 transition-colors disabled:opacity-50"
           >
             <CheckCircle2 className="h-5 w-5 text-green-500" />
             <span className="text-xs font-semibold text-green-600 dark:text-green-400">{t("wordReview.easy")}</span>
-            <span className="text-[10px] text-green-400 dark:text-green-600 font-mono">3</span>
+            <span className="text-[10px] text-green-400 dark:text-green-600 font-mono">4</span>
           </button>
         </div>
       )}
@@ -149,7 +160,9 @@ export default function WordReviewPage() {
     queryKey: ["wordbank-due", selectedLanguageId],
     queryFn: async () => {
       const token = await getToken();
-      return apiFetch<DueEntry[]>("/wordbank/due", { token: token ?? undefined });
+      // Scope to the selected language: unscoped due entries would be silently
+      // dropped by the join against the selected language's dictionary below.
+      return apiFetch<DueEntry[]>(`/wordbank/due?languageId=${encodeURIComponent(selectedLanguageId)}`, { token: token ?? undefined });
     },
   });
 
@@ -160,7 +173,7 @@ export default function WordReviewPage() {
   });
 
   const reviewMutation = useMutation({
-    mutationFn: async ({ id, confidence }: { id: string; confidence: "easy" | "hard" | "again" }) => {
+    mutationFn: async ({ id, confidence }: { id: string; confidence: "easy" | "good" | "hard" | "again" }) => {
       const token = await getToken();
       return apiFetch(`/wordbank/${id}/review`, {
         method: "POST",
@@ -193,7 +206,7 @@ export default function WordReviewPage() {
   const isFinished = queue !== null && currentIndex >= queue.length;
 
   const handleRate = useCallback(
-    (confidence: "easy" | "hard" | "again") => {
+    (confidence: "easy" | "good" | "hard" | "again") => {
       if (!currentEntry) return;
       reviewMutation.mutate({ id: currentEntry.id, confidence });
       setReviewed((n) => n + 1);
