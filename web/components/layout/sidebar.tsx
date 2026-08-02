@@ -34,7 +34,7 @@ const ADMIN_NAV = [
   { href: "/admin",         labelKey: "admin.nav.overview", icon: BarChart2,     exact: true },
   { href: "/admin/review",  labelKey: "admin.nav.review",   icon: ClipboardList, exact: false },
   { href: "/admin/users",   labelKey: "admin.nav.users",    icon: Users,         exact: false },
-  { href: "/admin/courses", labelKey: "admin.nav.courses",  icon: BookOpen,      exact: false },
+  { href: "/educator/courses", labelKey: "admin.nav.courses", icon: BookOpen,     exact: false },
 ] as const;
 
 const EDUCATOR_NAV = [

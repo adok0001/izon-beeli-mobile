@@ -195,15 +195,8 @@ export default function BattlePage() {
           onInvite={() => handleInvite("quiz_battle")}
           loading={joinMatchmaking.isPending && joinMatchmaking.variables?.type === "quiz_battle"}
         />
-        <ModeCard
-          title={t("multiplayer.pairedLesson")}
-          subtitle={t("multiplayer.pairedLessonSubtitle")}
-          color="purple"
-          icon={Users}
-          onQuickPlay={() => handleQuickPlay("paired_lesson")}
-          onInvite={() => handleInvite("paired_lesson")}
-          loading={joinMatchmaking.isPending && joinMatchmaking.variables?.type === "paired_lesson"}
-        />
+        {/* Paired Lesson is mobile-only for now: web has no paired-lesson
+            screen, and the lobby routes every session to the quiz UI. */}
       </div>
 
       {/* Join with code */}
