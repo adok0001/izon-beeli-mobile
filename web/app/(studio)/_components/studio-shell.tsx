@@ -85,17 +85,23 @@ const AUTHORING_NAV: readonly NavItem[] = [
   { href: "/educator/import",     labelKey: "educator.nav.import",     icon: Upload,            tourId: "educator-nav-import" },
 ];
 
+// Role-gated ops surfaces — the API admits specific reviewer roles beyond
+// admins (`elderMiddleware` for applications, `professorMiddleware` for
+// bounties), so these pages live under the reviewer-accessible `/educator`
+// group and their nav entries appear per-role (see navItems below). Each
+// page re-checks the role via `useStudioRoleGate`.
+const APPLICATIONS_ITEM: NavItem = { href: "/educator/applications", labelKey: "admin.nav.applications", icon: UserCheck, tourId: "admin-nav-applications" };
+const BOUNTIES_ITEM: NavItem =     { href: "/educator/bounties",     labelKey: "admin.nav.bounties",     icon: Target,    tourId: "admin-nav-bounties" };
+
 // Operations surfaces — admin only.
 const OPS_NAV: readonly NavItem[] = [
   { href: "/admin/users",         labelKey: "admin.nav.users",         icon: Users,        tourId: "admin-nav-users" },
-  { href: "/admin/applications",  labelKey: "admin.nav.applications",  icon: UserCheck,    tourId: "admin-nav-applications" },
   { href: "/admin/organizations", labelKey: "admin.nav.billing",       icon: CreditCard,   tourId: "admin-nav-billing" },
   { href: "/admin/feedback",      labelKey: "admin.nav.feedback",      icon: MessageSquare, tourId: "admin-nav-feedback" },
   { href: "/admin/notifications", labelKey: "admin.nav.notifications", icon: Bell,         tourId: "admin-nav-notifications" },
   { href: "/admin/daily-content", labelKey: "admin.nav.dailyContent",  icon: Sun,          tourId: "admin-nav-daily-content" },
   { href: "/admin/activities",    labelKey: "admin.nav.activities",    icon: Gamepad2,     tourId: "admin-nav-activities" },
   { href: "/admin/quiz",          labelKey: "admin.nav.quiz",          icon: BrainCircuit, tourId: "admin-nav-quiz" },
-  { href: "/admin/bounties",      labelKey: "admin.nav.bounties",      icon: Target,       tourId: "admin-nav-bounties" },
   { href: "/admin/daily-challenges", labelKey: "admin.nav.dailyChallenges", icon: CalendarCheck, tourId: "admin-nav-daily-challenges" },
   { href: "/admin/discover-stories", labelKey: "admin.nav.discoverStories", icon: Clapperboard, tourId: "admin-nav-discover-stories" },
   { href: "/admin/streak-tools",  labelKey: "admin.nav.streakTools",   icon: Flame,        tourId: "admin-nav-streak-tools" },
@@ -168,7 +174,19 @@ export function StudioShell({
     exact: true,
     tourId: me.isAdmin ? "admin-nav-overview" : "educator-nav-overview",
   };
-  const navItems: NavItem[] = [overview, ...AUTHORING_NAV, ...(me.isAdmin ? OPS_NAV : [])].map(
+  // Mirror the server middleware (and mobile's canReviewApplications /
+  // canManageBounties): applications = admin | elder; bounties = admin |
+  // professor | elder.
+  const canReviewApplications = me.isAdmin || me.reviewerRole === "elder";
+  const canManageBounties =
+    me.isAdmin || me.reviewerRole === "professor" || me.reviewerRole === "elder";
+  const navItems: NavItem[] = [
+    overview,
+    ...AUTHORING_NAV,
+    ...(canManageBounties ? [BOUNTIES_ITEM] : []),
+    ...(canReviewApplications ? [APPLICATIONS_ITEM] : []),
+    ...(me.isAdmin ? OPS_NAV : []),
+  ].map(
     (item) => ({ ...item, href: me.isAdmin && item.adminHref ? item.adminHref : item.href })
   );
 
