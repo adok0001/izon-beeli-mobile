@@ -22,7 +22,7 @@ interface BulkRow {
 
 let rowIdSeq = 1;
 function newRow(): BulkRow {
-  return { id: rowIdSeq++, word: "", english: "", category: "other", pronunciation: "", example: "", exampleTranslation: "" };
+  return { id: rowIdSeq++, word: "", english: "", category: "nouns", pronunciation: "", example: "", exampleTranslation: "" };
 }
 
 function parseCsv(text: string): BulkRow[] {
@@ -36,7 +36,7 @@ function parseCsv(text: string): BulkRow[] {
       id: rowIdSeq++,
       word: get("word"),
       english: get("english"),
-      category: CATEGORIES.includes(cat) ? cat : "other",
+      category: CATEGORIES.includes(cat) ? cat : "nouns",
       pronunciation: get("pronunciation"),
       example: get("example"),
       exampleTranslation: get("exampletranslation"),
@@ -103,10 +103,9 @@ export function BulkFlow({ onDone }: Readonly<{ onDone: () => void }>) {
   const submit = useMutation({
     mutationFn: async () => {
       const token = await getToken();
-      const words = rows
+      const entries = rows
         .filter((r) => r.word.trim() && r.english.trim())
         .map((r) => ({
-          languageId: langId,
           word: r.word.trim(),
           english: r.english.trim(),
           category: r.category,
@@ -116,7 +115,7 @@ export function BulkFlow({ onDone }: Readonly<{ onDone: () => void }>) {
         }));
       return apiFetch("/contributions/bulk", {
         method: "POST",
-        body: JSON.stringify({ words }),
+        body: JSON.stringify({ languageId: langId, entries }),
         token: token ?? undefined,
       });
     },

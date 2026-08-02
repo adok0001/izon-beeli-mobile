@@ -12,7 +12,7 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/ui/empty-state";
-import type { DialectalVariant } from "@mobile/lib/dictionary";
+import { ALL_CATEGORIES, type DialectalVariant } from "@mobile/lib/dictionary";
 
 interface DictionaryWord {
   id: string;
@@ -30,10 +30,7 @@ interface DictionaryWord {
   dialectalVariants?: DialectalVariant[] | null;
 }
 
-const CATEGORIES = [
-  "greetings", "family", "numbers", "food", "body", "animals",
-  "nature", "colors", "time", "verbs", "adjectives", "other",
-];
+const CATEGORIES = ALL_CATEGORIES;
 
 // ── Sign-in modal ─────────────────────────────────────────────────────────────
 
@@ -364,7 +361,7 @@ function ContributeModal({
 
   const [word, setWord] = useState("");
   const [english, setEnglish] = useState("");
-  const [category, setCategory] = useState("other");
+  const [category, setCategory] = useState<string>("nouns");
   const [pronunciation, setPronunciation] = useState("");
   const [example, setExample] = useState("");
   const [exampleTranslation, setExampleTranslation] = useState("");
@@ -413,28 +410,29 @@ function ContributeModal({
   const submit = useMutation({
     mutationFn: async () => {
       const token = await getToken();
-      let audioUrl: string | undefined;
+      const body: Record<string, unknown> = {
+        type: "word",
+        languageId,
+        word: word.trim(),
+        english: english.trim(),
+        category,
+        pronunciation: pronunciation.trim() || undefined,
+        example: example.trim() || undefined,
+        exampleTranslation: exampleTranslation.trim() || undefined,
+      };
+
+      // The server only accepts audio as a multipart file part; a JSON
+      // `audioUrl` field is silently dropped.
       if (audioBlob) {
-        audioUrl = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(audioBlob);
-        });
+        const form = new FormData();
+        Object.entries(body).forEach(([k, v]) => { if (v !== undefined) form.append(k, String(v)); });
+        form.append("audio", audioBlob, "recording.webm");
+        return apiFetch("/contributions", { method: "POST", body: form, token: token ?? undefined });
       }
+
       return apiFetch("/contributions", {
         method: "POST",
-        body: JSON.stringify({
-          type: "word",
-          languageId,
-          word: word.trim(),
-          english: english.trim(),
-          category,
-          pronunciation: pronunciation.trim() || undefined,
-          example: example.trim() || undefined,
-          exampleTranslation: exampleTranslation.trim() || undefined,
-          audioUrl,
-        }),
+        body: JSON.stringify(body),
         token: token ?? undefined,
       });
     },

@@ -44,7 +44,7 @@ export function WordFlow({
     langId: initialLangId ?? selectedLanguageId,
     word: "",
     english: "",
-    category: initialCategory ?? "other",
+    category: initialCategory ?? "nouns",
     pronunciation: "",
     example: "",
     exampleTranslation: "",

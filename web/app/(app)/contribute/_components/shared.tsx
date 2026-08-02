@@ -7,11 +7,8 @@ import { useTranslation } from "react-i18next";
 
 // ── Shared types ────────────────────────────────────────────────────────────
 
-export const CATEGORIES = [
-  "greetings", "family", "numbers", "food", "body", "animals",
-  "nature", "colors", "time", "verbs", "adjectives", "other",
-] as const;
-export type Category = (typeof CATEGORIES)[number];
+export { ALL_CATEGORIES as CATEGORIES } from "@mobile/lib/dictionary";
+export type { DictionaryCategory as Category } from "@mobile/lib/dictionary";
 
 export interface Course { id: string; title: string; languageId: string; }
 export interface Bounty { id: string; title: string; description: string; languageId: string; category?: string; reward: number; progressPercent: number; }
