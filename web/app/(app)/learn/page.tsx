@@ -1,19 +1,17 @@
 "use client";
 
 import { MazeRoomCard } from "@/components/learn/maze-room-card";
-import { SoundMap } from "@/components/learn/sound-map";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { apiFetch } from "@/lib/api";
 import { useMe } from "@/lib/hooks/use-me";
-import { generateIzonDefaults } from "@/lib/izon-map-defaults";
 import { useLanguageStore } from "@/store/language-store";
-import type { Course, MapNodeConfig } from "@/types";
+import type { Course } from "@/types";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Flame, LayoutGrid, Map, Star, Zap } from "lucide-react";
+import { ArrowRight, Flame, Star, Zap } from "lucide-react";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -140,13 +138,10 @@ function CarouselSection({ level, courses }: Readonly<{ level: Level; courses: C
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-type ViewMode = "grid" | "map";
-
 export default function LearnPage() {
   const { getToken } = useAuth();
   const { selectedLanguageId, setLanguage } = useLanguageStore();
   const { t } = useTranslation();
-  const [view, setView] = useState<ViewMode>("grid");
 
   const { data: me } = useMe();
 
@@ -157,18 +152,6 @@ export default function LearnPage() {
       return apiFetch<Course[]>(`/courses?languageId=${selectedLanguageId}`, { token: token ?? undefined });
     },
   });
-
-  const { data: rawMapNodes = [] } = useQuery<MapNodeConfig[]>({
-    queryKey: ["map-nodes", selectedLanguageId],
-    queryFn: async () => {
-      const token = await getToken();
-      return apiFetch<MapNodeConfig[]>(`/map-nodes?languageId=${selectedLanguageId}`, { token: token ?? undefined });
-    },
-    enabled: view === "map",
-  });
-
-  const mapNodes: MapNodeConfig[] =
-    rawMapNodes.length > 0 ? rawMapNodes : generateIzonDefaults(allCourses);
 
   const coursesByLevel = LEVEL_ORDER.reduce<Record<Level, Course[]>>(
     (acc, level) => { acc[level] = allCourses.filter((c) => c.level === level); return acc; },
@@ -213,34 +196,6 @@ export default function LearnPage() {
                 </div>
               </>
             )}
-
-            {/* View toggle */}
-            <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-neutral-100 dark:bg-white/[0.06] border border-neutral-200 dark:border-white/[0.08]">
-              <button
-                type="button"
-                onClick={() => setView("grid")}
-                aria-label="Grid view"
-                className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 ${
-                  view === "grid"
-                    ? "bg-white dark:bg-white/[0.12] text-neutral-800 dark:text-white shadow-sm"
-                    : "text-neutral-400 dark:text-neutral-600 hover:text-neutral-600 dark:hover:text-neutral-400"
-                }`}
-              >
-                <LayoutGrid className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setView("map")}
-                aria-label="Map view"
-                className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 ${
-                  view === "map"
-                    ? "bg-white dark:bg-white/[0.12] text-neutral-800 dark:text-white shadow-sm"
-                    : "text-neutral-400 dark:text-neutral-600 hover:text-neutral-600 dark:hover:text-neutral-400"
-                }`}
-              >
-                <Map className="h-3.5 w-3.5" />
-              </button>
-            </div>
           </div>
         </div>
 
@@ -259,19 +214,7 @@ export default function LearnPage() {
         <BountyTeaser languageId={selectedLanguageId} />
       </div>
 
-      {/* ── Sound map ── */}
-      {view === "map" && !isLoading && allCourses.length === 0 && (
-        <div className="max-w-4xl mx-auto px-4">
-          <EmptyState variant="courses" title={t("learn.emptyTitle")} description={t("learn.emptyDescription")} />
-        </div>
-      )}
-      {view === "map" && !isLoading && allCourses.length > 0 && (
-        <div className="max-w-5xl mx-auto px-4">
-          <SoundMap courses={allCourses} mapNodes={mapNodes} />
-        </div>
-      )}
-
-      {view === "grid" && (isLoading ? (
+      {isLoading ? (
         <div className="space-y-10">
           {LEVEL_ORDER.map((level) => (
             <div key={level}>
@@ -303,7 +246,7 @@ export default function LearnPage() {
             <CarouselSection key={level} level={level} courses={coursesByLevel[level]} />
           ))}
         </div>
-      ))}
+      )}
     </div>
   );
 }
