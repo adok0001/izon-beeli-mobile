@@ -18,6 +18,17 @@ interface OrgRow {
   currentPeriodEnd?: string | null;
 }
 
+// Row shape of GET /admin/billing/over-capacity (server/src/routes/billing.ts)
+// — orgs whose enrolled-student count has drifted above their plan's seat limit.
+interface OverCapacityRow {
+  organizationId: string;
+  name: string;
+  plan: "starter" | "pro" | "institution" | null;
+  status: "active" | "past_due" | "canceled" | null;
+  studentLimit: number | null;
+  studentCount: number;
+}
+
 const PLAN_LABELS: Record<string, string> = {
   starter: "Starter",
   pro: "Pro",
@@ -42,6 +53,14 @@ export default function AdminOrganizationsPage() {
     queryFn: async () => {
       const token = await getToken();
       return apiFetch("/admin/billing/organizations", { token: token ?? undefined });
+    },
+  });
+
+  const { data: overCapacity } = useQuery<OverCapacityRow[]>({
+    queryKey: ["admin", "billing", "over-capacity"],
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch("/admin/billing/over-capacity", { token: token ?? undefined });
     },
   });
 
@@ -148,6 +167,56 @@ export default function AdminOrganizationsPage() {
           </button>
         </div>
       </div>
+
+      {/* Over-capacity report — orgs whose student count drifted past their seat limit */}
+      {overCapacity !== undefined && (
+        overCapacity.length === 0 ? (
+          <p className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400 mb-8">
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+            {t("admin.organizations.overCapacityAllClear")}
+          </p>
+        ) : (
+          <div className="bg-white dark:bg-neutral-900 border border-amber-300 dark:border-amber-700 rounded-2xl overflow-hidden mb-8">
+            <div className="px-5 py-4 border-b border-neutral-200 dark:border-neutral-800">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                  {t("admin.organizations.overCapacityTitle")}
+                </h2>
+              </div>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                {t("admin.organizations.overCapacityDesc")}
+              </p>
+            </div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-neutral-200 dark:border-neutral-800 text-left">
+                  <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wide">{t("admin.organizations.colOrganization")}</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wide">{t("admin.organizations.colPlan")}</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wide">{t("admin.organizations.colSeatLimit")}</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wide">{t("admin.organizations.colStudents")}</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wide">{t("admin.organizations.colOverage")}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                {overCapacity.map((row) => (
+                  <tr key={row.organizationId} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+                    <td className="px-5 py-3 font-medium text-neutral-900 dark:text-neutral-100">{row.name}</td>
+                    <td className="px-5 py-3 text-neutral-600 dark:text-neutral-400">
+                      {row.plan ? PLAN_LABELS[row.plan] : "—"}
+                    </td>
+                    <td className="px-5 py-3 text-neutral-600 dark:text-neutral-400">{row.studentLimit ?? "—"}</td>
+                    <td className="px-5 py-3 text-neutral-600 dark:text-neutral-400">{row.studentCount}</td>
+                    <td className="px-5 py-3 font-medium text-amber-600 dark:text-amber-400">
+                      {row.studentLimit === null ? "—" : `+${row.studentCount - row.studentLimit}`}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      )}
 
       {/* Organizations table */}
       {isLoading ? (
