@@ -36,8 +36,10 @@ The learner arrives a stranger and becomes a keeper of tradition. It is the
 `server/src/db/schema.ts` — the level exists only in design documents like this
 one. It never appears in a lesson `title`, `description`, `canDo`, or transcript.
 
-**Movement 3 is "The Village" but its course id is `-mv-naming`** — a historical
-artifact. Use the id; don't rename it.
+**Movement 3's id was `-mv-naming` until 2026-08-02** — a leftover from when the
+Movement was "The Naming". It is `-mv-village` now, matching every other language
+scaffolded from `lesson-stubs.ts`. Always resolve ids with `db:list-lessons`
+rather than from memory; the suffixes are not all guessable from the titles.
 
 **The heritage crown (Movements 9–10).** Mastery in these cultures is the ability
 to give a blessing, tell a folktale, deploy a proverb at the right moment, pour

@@ -33,12 +33,15 @@ const sql = neon(process.env.DATABASE_URL!);
 const MOVEMENTS = [
   { id: "course-izon-mv-arrival",      order: 1,  level: "beginner",     active: true,  title: "Arrival",          titleFr: "L'Arrivée",           desc: "Welcomed as a guest — greetings, names, hospitality.",                          descFr: "Accueilli en invité — salutations, noms, hospitalité." },
   { id: "course-izon-mv-household",    order: 2,  level: "beginner",     active: true,  title: "The Household",    titleFr: "Le Foyer",            desc: "You settle into the compound — family, home, food, daily rhythm.",              descFr: "Vous vous installez dans la concession — famille, maison, nourriture, rythme quotidien." },
-  // NOTE: the id stays `...-mv-naming` on purpose. Movement 3 was widened from
-  // "The Naming" to "The Village" on 2026-07-25 (the naming ceremony is now its
-  // climax, not its whole content). The upsert below keys on id and updates the
-  // title, so re-running renames the existing row in place — changing the id
-  // would create a second course and orphan the lessons already parented here.
-  { id: "course-izon-mv-naming",       order: 3,  level: "beginner",     active: false, title: "The Village",      titleFr: "Le Village",          desc: "Beyond the compound — the whole community, and the naming that gathers it. (Awaiting educator authoring.)", descFr: "Au-delà de la concession — toute la communauté, et la cérémonie de nom qui la rassemble. (En attente d'un éducateur.)" },
+  // NOTE: this id was `...-mv-naming` until 2026-08-02. Movement 3 had been
+  // widened from "The Naming" to "The Village" on 2026-07-25 (the naming
+  // ceremony is its climax, not its whole content), but the id was left alone
+  // because renaming it would have orphaned lessons parented to it. The course
+  // was still empty and inactive, so `rename-movement-3-to-village.ts` renamed
+  // it once nothing referenced it. Keep this in step with `lib/lesson-stubs.ts`,
+  // which scaffolds new languages as `mv-village`: the upsert below keys on id,
+  // so reverting this string would recreate the old course beside the new one.
+  { id: "course-izon-mv-village",      order: 3,  level: "beginner",     active: false, title: "The Village",      titleFr: "Le Village",          desc: "Beyond the compound — the whole community, and the naming that gathers it. (Awaiting educator authoring.)", descFr: "Au-delà de la concession — toute la communauté, et la cérémonie de nom qui la rassemble. (En attente d'un éducateur.)" },
   { id: "course-izon-mv-growing-up",   order: 4,  level: "beginner",     active: true,  title: "Growing Up",       titleFr: "Grandir",             desc: "Childhood around you — the river, the market, first proverbs.",                 descFr: "L'enfance autour de vous — la rivière, le marché, les premiers proverbes." },
   { id: "course-izon-mv-threshold",    order: 5,  level: "intermediate", active: false, title: "The Threshold",    titleFr: "Le Seuil",            desc: "A coming-of-age — initiation, the elder's charge. (Awaiting keeper authoring.)", descFr: "Un rite de passage — initiation, la charge de l'ancien. (En attente d'un gardien.)" },
   { id: "course-izon-mv-working-year", order: 6,  level: "intermediate", active: true,  title: "The Working Year", titleFr: "L'Année de Travail",  desc: "Livelihood across the seasons — fishing, farming, the market.",                 descFr: "Les moyens de subsistance à travers les saisons — pêche, agriculture, marché." },

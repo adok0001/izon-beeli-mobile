@@ -533,7 +533,8 @@ combined (119)**. Verify with `db:list-lessons izon`; these counts move.
 `course-izon-cl`, `course-izon-bm-fw`, `course-izon-bm-el`, `course-izon-bm-ot`.
 
 **Awaiting staffing — real Movements, but inactive and empty:**
-`course-izon-mv-naming` (The Village, M3 — awaiting an educator) and
+`course-izon-mv-village` (The Village, M3 — awaiting an educator; this id was
+`course-izon-mv-naming` until 2026-08-02) and
 `course-izon-mv-threshold` (The Threshold, M5 — awaiting a keeper). Don't place
 content into either without saying so.
 
