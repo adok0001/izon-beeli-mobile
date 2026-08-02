@@ -26,7 +26,17 @@ export type CourseType =
   | "work"
   | "modern_life"
   | "grammar"
-  | "script";
+  | "script"
+  | "mv_arrival"
+  | "mv_household"
+  | "mv_village"
+  | "mv_growing_up"
+  | "mv_threshold"
+  | "mv_working_year"
+  | "mv_union"
+  | "mv_assembly"
+  | "mv_elders_voice"
+  | "mv_keeper";
 
 export type Skill =
   | "listening"

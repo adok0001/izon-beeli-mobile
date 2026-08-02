@@ -95,6 +95,16 @@ const SCENE_FOR: Record<CourseType, SceneKind> = {
   contemporary: "city",
   modern_life: "city",
   script: "bushes",
+  mv_arrival: "village",
+  mv_household: "house",
+  mv_village: "market",
+  mv_growing_up: "creek",
+  mv_threshold: "bushes",
+  mv_working_year: "market",
+  mv_union: "house",
+  mv_assembly: "city",
+  mv_elders_voice: "village",
+  mv_keeper: "bushes",
 };
 
 /** Placement of each scene relative to its chapter label (fraction of width). */

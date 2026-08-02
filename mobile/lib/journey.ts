@@ -150,6 +150,16 @@ const COURSE_ICON: Record<CourseType, IconSymbolName> = {
   modern_life: "building.2.fill",
   grammar: "puzzlepiece.fill",
   script: "pencil",
+  mv_arrival: "hand.wave.fill",
+  mv_household: "house.fill",
+  mv_village: "person.2.fill",
+  mv_growing_up: "figure.child",
+  mv_threshold: "moon.stars.fill",
+  mv_working_year: "basket.fill",
+  mv_union: "party.popper.fill",
+  mv_assembly: "building.columns.fill",
+  mv_elders_voice: "megaphone",
+  mv_keeper: "flame.fill",
 };
 
 function iconFor(courseType?: CourseType | null): IconSymbolName {
@@ -177,6 +187,16 @@ const COURSE_GLOSS: Record<CourseType, string> = {
   contemporary: "City",
   modern_life: "City",
   script: "Script",
+  mv_arrival: "Arrival",
+  mv_household: "House",
+  mv_village: "Village",
+  mv_growing_up: "Waterside",
+  mv_threshold: "Threshold",
+  mv_working_year: "Market",
+  mv_union: "Union",
+  mv_assembly: "Assembly",
+  mv_elders_voice: "Oratory",
+  mv_keeper: "Keeper",
 };
 
 function glossFor(courseType?: CourseType | null): string {

@@ -10,18 +10,16 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 type CourseActionMode = "new" | "generate";
 
 const STUB_TYPES: { value: EducatorStubCourseType; label: string }[] = [
-  { value: "first-words", label: "First Words" },
-  { value: "sound-script", label: "Sound & Script" },
-  { value: "numbers-trade", label: "Numbers & Trade" },
-  { value: "daily-life", label: "Daily Life" },
-  { value: "verbs-grammar", label: "Verbs & Grammar" },
-  { value: "culture-proverbs", label: "Culture & Proverbs" },
-  { value: "songs-stories", label: "Songs & Stories" },
-  { value: "market-travel", label: "Market & Travel" },
-  { value: "community-ceremony", label: "Community & Ceremony" },
-  { value: "children-home", label: "Children & Home" },
-  { value: "pro-level", label: "Pro Level" },
-  { value: "special-topic", label: "Special Topic" },
+  { value: "mv_arrival", label: "Arrival" },
+  { value: "mv_household", label: "The Household" },
+  { value: "mv_village", label: "The Village" },
+  { value: "mv_growing_up", label: "Growing Up" },
+  { value: "mv_threshold", label: "The Threshold" },
+  { value: "mv_working_year", label: "The Working Year" },
+  { value: "mv_union", label: "The Union" },
+  { value: "mv_assembly", label: "The Assembly" },
+  { value: "mv_elders_voice", label: "The Elder's Voice" },
+  { value: "mv_keeper", label: "The Keeper" },
 ];
 
 /** The "Add Courses" action panel — starter-set/one-type stub generation.
@@ -40,7 +38,7 @@ export function CourseGeneratorPanel({
   const M = useMuseumTheme();
   const { t } = useTranslation();
   const [courseActionMode, setCourseActionMode] = useState<CourseActionMode>("generate");
-  const [selectedStubType, setSelectedStubType] = useState<EducatorStubCourseType>("first-words");
+  const [selectedStubType, setSelectedStubType] = useState<EducatorStubCourseType>("mv_arrival");
   const generateStubs = useGenerateEducatorStubs();
 
   const hasCoursesForLanguage = languageCourses.length > 0;
@@ -56,7 +54,7 @@ export function CourseGeneratorPanel({
 
   const effectiveStubType = missingStubTypes.some((s) => s.value === selectedStubType)
     ? selectedStubType
-    : (missingStubTypes[0]?.value ?? "first-words");
+    : (missingStubTypes[0]?.value ?? "mv_arrival");
 
   const effectiveStubLabel =
     STUB_TYPES.find((s) => s.value === effectiveStubType)?.label ?? effectiveStubType;

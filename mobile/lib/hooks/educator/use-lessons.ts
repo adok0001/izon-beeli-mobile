@@ -75,18 +75,16 @@ export interface CreateEducatorLessonInput {
 }
 
 export type EducatorStubCourseType =
-  | "first-words"
-  | "sound-script"
-  | "numbers-trade"
-  | "daily-life"
-  | "verbs-grammar"
-  | "culture-proverbs"
-  | "songs-stories"
-  | "market-travel"
-  | "community-ceremony"
-  | "children-home"
-  | "pro-level"
-  | "special-topic";
+  | "mv_arrival"
+  | "mv_household"
+  | "mv_village"
+  | "mv_growing_up"
+  | "mv_threshold"
+  | "mv_working_year"
+  | "mv_union"
+  | "mv_assembly"
+  | "mv_elders_voice"
+  | "mv_keeper";
 
 export function useEducatorLessons(enabled = true) {
   const { getToken, isSignedIn } = useAuth();
