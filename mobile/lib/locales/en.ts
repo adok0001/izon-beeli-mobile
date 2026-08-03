@@ -581,6 +581,7 @@ export const en = {
   },
   lesson: {
     culture: "Culture",
+    youCanNow: "You can now",
     title: "Lesson",
     notFound: "Lesson not found",
     gameGateNotice: "This is a game checkpoint, not a lesson — play it from the course path.",
@@ -2821,6 +2822,27 @@ export const en = {
       beginChapter: "Begin Chapter",
       noStoryAvailable: "No season available for this course.",
     },
+    storyArcs: {
+      editSeason: "Edit season",
+      seasonCreated: "Season created",
+      attachmentLocked: "A season's course is chosen when it's created and can't be moved here.",
+      remove: "Remove",
+      moveUp: "Move up",
+      moveDown: "Move down",
+      chapterVisible: "Visible",
+      chapterHidden: "Hidden",
+      courseBoundNotice:
+        "This season is bound to a course, so its narrative and episode order live on the course's lessons. Edit them there — chapter changes made here are not saved.",
+      openCourse: "Open course",
+      saveCast: "Save cast",
+      castSaved: "Cast saved",
+      castMember: "Character {{number}}",
+      castIdLabel: "Cast ID",
+      castNameLabel: "Name",
+      castRoleLabel: "Role",
+      castHueLabel: "Avatar colour",
+      errorCastIncomplete: "Every character needs an ID, a name, and a role.",
+    },
     billing: {
       title: "Billing",
       labelOrganization: "Organization",
@@ -3117,5 +3139,16 @@ export const en = {
   dailyChallenge: {
     refresh: "New challenges",
     refreshBlocked: "All challenges are complete — come back tomorrow!",
+  },
+  studio: {
+    activeToggle: {
+      statusActive: "Active",
+      statusInactive: "Inactive",
+      activate: "Activate — show to learners",
+      deactivate: "Deactivate — hide from learners",
+      shown: "Now visible to learners",
+      hidden: "Hidden from learners",
+      failed: "Failed to update visibility",
+    },
   },
 } as const;

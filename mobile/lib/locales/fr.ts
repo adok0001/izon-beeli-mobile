@@ -612,6 +612,7 @@ export const fr = {
   },
   lesson: {
     culture: "Culture",
+    youCanNow: "Vous savez maintenant",
     title: "Leçon",
     notFound: "Leçon introuvable",
     gameGateNotice: "Ceci est un point de contrôle ludique, pas une leçon — jouez-y depuis le parcours du cours.",
@@ -2822,6 +2823,26 @@ export const fr = {
       beginChapter: "Commencer le chapitre",
       noStoryAvailable: "Aucune saison disponible pour ce cours.",
     },
+    storyArcs: {
+      editSeason: "Modifier la saison",
+      seasonCreated: "Saison créée",
+      attachmentLocked: "Le cours d'une saison est choisi à sa création et ne peut pas être changé ici.",
+      remove: "Retirer",
+      moveUp: "Monter",
+      moveDown: "Descendre",
+      chapterVisible: "Visible",
+      chapterHidden: "Masqué",
+      courseBoundNotice: "Cette saison est liée à un cours : son récit et l'ordre des épisodes vivent dans les leçons du cours. Modifiez-les là-bas — les changements de chapitre faits ici ne sont pas enregistrés.",
+      openCourse: "Ouvrir le cours",
+      saveCast: "Enregistrer les personnages",
+      castSaved: "Personnages enregistrés",
+      castMember: "Personnage {{number}}",
+      castIdLabel: "Identifiant du personnage",
+      castNameLabel: "Nom",
+      castRoleLabel: "Rôle",
+      castHueLabel: "Couleur de l'avatar",
+      errorCastIncomplete: "Chaque personnage doit avoir un identifiant, un nom et un rôle.",
+    },
     billing: {
       title: "Facturation",
       labelOrganization: "Organisation",
@@ -3118,5 +3139,16 @@ export const fr = {
   dailyChallenge: {
     refresh: "Nouveaux défis",
     refreshBlocked: "Tous les défis sont terminés — revenez demain !",
+  },
+  studio: {
+    activeToggle: {
+      statusActive: "Actif",
+      statusInactive: "Inactif",
+      activate: "Activer — montrer aux apprenants",
+      deactivate: "Désactiver — masquer aux apprenants",
+      shown: "Désormais visible par les apprenants",
+      hidden: "Masqué aux apprenants",
+      failed: "Échec de la mise à jour de la visibilité",
+    },
   },
 } as const;

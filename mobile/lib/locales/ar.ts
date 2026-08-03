@@ -612,6 +612,7 @@ export const ar = {
   },
   lesson: {
     culture: "ثقافة",
+    youCanNow: "يمكنك الآن",
     title: "الدرس",
     notFound: "الدرس غير موجود",
     gameGateNotice: "هذه نقطة تفتيش على شكل لعبة وليست درسًا — العبها من مسار الدورة.",
@@ -2822,6 +2823,26 @@ export const ar = {
       beginChapter: "ابدأ الفصل",
       noStoryAvailable: "لا يوجد موسم متاح لهذه الدورة.",
     },
+    storyArcs: {
+      editSeason: "تعديل الموسم",
+      seasonCreated: "تم إنشاء الموسم",
+      attachmentLocked: "يُختار مقرر الموسم عند إنشائه ولا يمكن تغييره من هنا.",
+      remove: "إزالة",
+      moveUp: "تحريك لأعلى",
+      moveDown: "تحريك لأسفل",
+      chapterVisible: "ظاهر",
+      chapterHidden: "مخفي",
+      courseBoundNotice: "هذا الموسم مرتبط بمقرر، لذا يعيش سرده وترتيب حلقاته في دروس المقرر. عدّلها هناك — تغييرات الفصول هنا لا تُحفظ.",
+      openCourse: "فتح المقرر",
+      saveCast: "حفظ الشخصيات",
+      castSaved: "تم حفظ الشخصيات",
+      castMember: "الشخصية {{number}}",
+      castIdLabel: "معرّف الشخصية",
+      castNameLabel: "الاسم",
+      castRoleLabel: "الدور",
+      castHueLabel: "لون الصورة الرمزية",
+      errorCastIncomplete: "كل شخصية تحتاج إلى معرّف واسم ودور.",
+    },
     billing: {
       title: "الفوترة",
       labelOrganization: "المؤسّسة",
@@ -3118,5 +3139,16 @@ export const ar = {
   dailyChallenge: {
     refresh: "تحديات جديدة",
     refreshBlocked: "اكتملت جميع التحديات — عُد غداً!",
+  },
+  studio: {
+    activeToggle: {
+      statusActive: "نشط",
+      statusInactive: "غير نشط",
+      activate: "تفعيل — إظهاره للمتعلمين",
+      deactivate: "إيقاف — إخفاؤه عن المتعلمين",
+      shown: "أصبح ظاهرًا للمتعلمين",
+      hidden: "أُخفي عن المتعلمين",
+      failed: "تعذّر تحديث الظهور",
+    },
   },
 } as const;

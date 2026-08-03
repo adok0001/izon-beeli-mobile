@@ -612,6 +612,7 @@ export const pt = {
   },
   lesson: {
     culture: "Cultura",
+    youCanNow: "Agora você consegue",
     title: "Lição",
     notFound: "Lição não encontrada",
     gameGateNotice: "Este é um checkpoint de jogo, não uma lição — jogue-o a partir do percurso do curso.",
@@ -2822,6 +2823,26 @@ export const pt = {
       beginChapter: "Começar Capítulo",
       noStoryAvailable: "Não há temporada disponível para este curso.",
     },
+    storyArcs: {
+      editSeason: "Editar temporada",
+      seasonCreated: "Temporada criada",
+      attachmentLocked: "O curso de uma temporada é escolhido na criação e não pode ser alterado aqui.",
+      remove: "Remover",
+      moveUp: "Mover para cima",
+      moveDown: "Mover para baixo",
+      chapterVisible: "Visível",
+      chapterHidden: "Oculto",
+      courseBoundNotice: "Esta temporada está vinculada a um curso, portanto a narrativa e a ordem dos episódios ficam nas lições do curso. Edite-as lá — alterações de capítulo feitas aqui não são salvas.",
+      openCourse: "Abrir curso",
+      saveCast: "Salvar elenco",
+      castSaved: "Elenco salvo",
+      castMember: "Personagem {{number}}",
+      castIdLabel: "ID do personagem",
+      castNameLabel: "Nome",
+      castRoleLabel: "Papel",
+      castHueLabel: "Cor do avatar",
+      errorCastIncomplete: "Cada personagem precisa de um ID, um nome e um papel.",
+    },
     billing: {
       title: "Faturação",
       labelOrganization: "Organização",
@@ -3118,5 +3139,16 @@ export const pt = {
   dailyChallenge: {
     refresh: "Novos desafios",
     refreshBlocked: "Todos os desafios estão concluídos — volte amanhã!",
+  },
+  studio: {
+    activeToggle: {
+      statusActive: "Ativo",
+      statusInactive: "Inativo",
+      activate: "Ativar — mostrar aos alunos",
+      deactivate: "Desativar — ocultar dos alunos",
+      shown: "Agora visível para os alunos",
+      hidden: "Oculto dos alunos",
+      failed: "Falha ao atualizar a visibilidade",
+    },
   },
 } as const;

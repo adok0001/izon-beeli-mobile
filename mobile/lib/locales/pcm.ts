@@ -612,6 +612,7 @@ export const pcm = {
   },
   lesson: {
     culture: "Culture",
+    youCanNow: "Now you fit",
     title: "Lesson",
     notFound: "Lesson no dey",
     gameGateNotice: "Dis one na game checkpoint, no be lesson — play am from the course path.",
@@ -2822,6 +2823,26 @@ export const pcm = {
       beginChapter: "Begin Chapter",
       noStoryAvailable: "No season available for this course.",
     },
+    storyArcs: {
+      editSeason: "Edit season",
+      seasonCreated: "Season don create",
+      attachmentLocked: "Na when you create season you dey pick im course; you no fit change am here.",
+      remove: "Remove",
+      moveUp: "Move up",
+      moveDown: "Move down",
+      chapterVisible: "Visible",
+      chapterHidden: "Hidden",
+      courseBoundNotice: "Dis season dey tied to one course, so im story and episode order dey inside the course lessons. Edit dem for there — chapter change wey you do here no dey save.",
+      openCourse: "Open course",
+      saveCast: "Save cast",
+      castSaved: "Character dem don save",
+      castMember: "Character {{number}}",
+      castIdLabel: "Cast ID",
+      castNameLabel: "Name",
+      castRoleLabel: "Role",
+      castHueLabel: "Avatar colour",
+      errorCastIncomplete: "Every character need ID, name, and role.",
+    },
     billing: {
       title: "Billing",
       labelOrganization: "Organization",
@@ -3118,5 +3139,16 @@ export const pcm = {
   dailyChallenge: {
     refresh: "New challenges",
     refreshBlocked: "You don finish all challenges — come back tomorrow!",
+  },
+  studio: {
+    activeToggle: {
+      statusActive: "Active",
+      statusInactive: "Inactive",
+      activate: "Activate — make learners see am",
+      deactivate: "Deactivate — hide am from learners",
+      shown: "Learners fit see am now",
+      hidden: "E don hide from learners",
+      failed: "E no fit update visibility",
+    },
   },
 } as const;
