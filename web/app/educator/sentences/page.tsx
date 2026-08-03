@@ -1,5 +1,6 @@
 "use client";
 
+import { ActiveToggle } from "@/components/studio/active-toggle";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,7 @@ interface SentenceRow {
   englishSentence: string;
   kind: "blank" | "equivalent";
   literalTranslation: string | null;
+  isActive?: boolean;
 }
 
 interface ScopedLanguage {
@@ -448,7 +450,7 @@ export default function EducatorSentencesPage() {
               key={row.id}
               className={cn(
                 "group bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 px-4 py-3.5 flex items-start gap-4 transition-opacity",
-                isDeleting && "opacity-40"
+                (isDeleting || row.isActive === false) && "opacity-40"
               )}
             >
               {/* Kind badge */}
@@ -478,6 +480,13 @@ export default function EducatorSentencesPage() {
               </div>
 
               {/* Actions */}
+              <ActiveToggle
+                entityType="sentence_templates"
+                id={row.id}
+                isActive={row.isActive}
+                invalidateKeys={[["educator", "sentences"]]}
+                className="mt-0.5 shrink-0"
+              />
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={() => setModal({ mode: "edit", entry: row })}

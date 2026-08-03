@@ -1,5 +1,6 @@
 "use client";
 
+import { ActiveToggle } from "@/components/studio/active-toggle";
 import { apiFetch } from "@/lib/api";
 import { DISCOVER_TYPE_ICON, type DiscoverItem } from "@/app/(app)/culture/culture-client";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,10 @@ import {
 import { useEffect, useRef, useState } from "react";
 
 // ---------- types ----------
+
+/** The admin list also carries the visibility flag the learner-facing
+ * DiscoverItem shape has no use for (`/culture-items/admin` → toApi). */
+type AdminDiscoverItem = DiscoverItem & { isActive?: boolean };
 
 const BLANK: DiscoverItem = {
   id: "",
@@ -384,11 +389,11 @@ export default function AdminCulturePage() {
 
   // The public /culture-items list is active-only; the admin variant also
   // returns deactivated cards so they can be seen and re-activated here.
-  const { data: items = [], isLoading } = useQuery<DiscoverItem[]>({
+  const { data: items = [], isLoading } = useQuery<AdminDiscoverItem[]>({
     queryKey: ["culture-items-admin"],
     queryFn: async () => {
       const token = await getToken();
-      return apiFetch<DiscoverItem[]>("/culture-items/admin", { token: token ?? undefined });
+      return apiFetch<AdminDiscoverItem[]>("/culture-items/admin", { token: token ?? undefined });
     },
     staleTime: 0,
   });
@@ -509,6 +514,7 @@ export default function AdminCulturePage() {
                 <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide text-neutral-500 hidden md:table-cell">Author</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide text-neutral-500 hidden md:table-cell">Duration</th>
                 <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wide text-neutral-500">Featured</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wide text-neutral-500">Visible</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wide text-neutral-500">Actions</th>
               </tr>
             </thead>
@@ -518,7 +524,8 @@ export default function AdminCulturePage() {
                   key={item.id}
                   className={cn(
                     "border-b border-neutral-100 dark:border-neutral-800/60 last:border-0 transition-colors",
-                    idx % 2 === 0 ? "bg-white dark:bg-transparent" : "bg-neutral-50/50 dark:bg-neutral-900/30"
+                    idx % 2 === 0 ? "bg-white dark:bg-transparent" : "bg-neutral-50/50 dark:bg-neutral-900/30",
+                    item.isActive === false && "opacity-50"
                   )}
                 >
                   <td className="px-4 py-3"><TypeBadge type={item.type} /></td>
@@ -539,6 +546,14 @@ export default function AdminCulturePage() {
                         style={{ fill: item.featured ? "#f59e0b" : "none", color: item.featured ? "#f59e0b" : "#d4d4d4" }}
                       />
                     </button>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <ActiveToggle
+                      entityType="culture_items"
+                      id={item.id}
+                      isActive={item.isActive}
+                      invalidateKeys={[["culture-items-admin"], ["culture-items"]]}
+                    />
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
@@ -573,7 +588,7 @@ export default function AdminCulturePage() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-sm text-neutral-400">
+                  <td colSpan={7} className="px-4 py-12 text-center text-sm text-neutral-400">
                     No items match this filter.
                   </td>
                 </tr>

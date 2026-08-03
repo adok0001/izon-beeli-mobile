@@ -1,5 +1,6 @@
 "use client";
 
+import { ActiveToggle } from "@/components/studio/active-toggle";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
@@ -20,6 +21,7 @@ interface EtymologyEntry {
   word: string;
   english: string;
   trail: EtymologyNode[];
+  isActive?: boolean;
 }
 
 const BLANK_ENTRY: Omit<EtymologyEntry, "id"> = {
@@ -197,11 +199,13 @@ export default function EtymologyPage() {
   const [drawer, setDrawer] = useState<{ entry: EtymologyEntry | null; isNew: boolean } | null>(null);
   const [langFilter, setLangFilter] = useState("all");
 
+  // The public /etymology read is active-only, so a deactivated entry would drop
+  // out of this editor entirely. The admin variant returns inactive rows too.
   const { data: entries = [], isLoading } = useQuery<EtymologyEntry[]>({
     queryKey: ["etymology-admin"],
     queryFn: async () => {
       const token = await getToken();
-      return apiFetch<EtymologyEntry[]>("/etymology", { token: token ?? undefined });
+      return apiFetch<EtymologyEntry[]>("/etymology/admin", { token: token ?? undefined });
     },
   });
 
@@ -273,7 +277,10 @@ export default function EtymologyPage() {
           {visible.map((entry) => (
             <div
               key={entry.id}
-              className="rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-4 flex items-start justify-between gap-4"
+              className={cn(
+                "rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-4 flex items-start justify-between gap-4",
+                entry.isActive === false && "opacity-50"
+              )}
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-2 mb-1">
@@ -287,6 +294,12 @@ export default function EtymologyPage() {
                 <p className="text-xs text-neutral-400">{entry.trail.length} era{entry.trail.length !== 1 ? "s" : ""}: {entry.trail.map((n) => n.era).join(" → ")}</p>
               </div>
               <div className="flex items-center gap-1 shrink-0">
+                <ActiveToggle
+                  entityType="etymology_entries"
+                  id={entry.id}
+                  isActive={entry.isActive}
+                  invalidateKeys={[["etymology-admin"]]}
+                />
                 <button
                   onClick={() => setDrawer({ entry, isNew: false })}
                   className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"

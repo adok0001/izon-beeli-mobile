@@ -1,5 +1,6 @@
 "use client";
 
+import { ActiveToggle } from "@/components/studio/active-toggle";
 import { apiFetch } from "@/lib/api";
 import { LocalizedTextInput, type LocalizedText } from "@/components/ui/localized-text-input";
 import { cn } from "@/lib/utils";
@@ -54,6 +55,7 @@ interface Proverb {
   literal?: string | null;
   context?: string | null;
   tags?: string[] | null;
+  isActive?: boolean;
 }
 
 interface KeyTerm { word: string; english: string; }
@@ -67,6 +69,7 @@ interface CulturalItem {
   description: string;
   descriptionTranslations?: LocalizedText | null;
   keyTerms?: KeyTerm[];
+  isActive?: boolean;
 }
 
 interface ScopedLanguage { id: string; name: string; nativeName: string; }
@@ -718,7 +721,7 @@ export default function EducatorCulturePage() {
                     <tr
                       className={cn(
                         "border-b border-neutral-100 dark:border-neutral-800 last:border-0 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors cursor-pointer",
-                        isDeleting && "opacity-40"
+                        (isDeleting || proverb.isActive === false) && "opacity-40"
                       )}
                       onClick={() => setExpandedId(isOpen ? null : proverb.id)}
                     >
@@ -741,6 +744,12 @@ export default function EducatorCulturePage() {
                       </td>
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-1 justify-end">
+                          <ActiveToggle
+                            entityType="proverbs"
+                            id={proverb.id}
+                            isActive={proverb.isActive}
+                            invalidateKeys={[["educator", "proverbs"]]}
+                          />
                           <button
                             onClick={() => setExpandedId(isOpen ? null : proverb.id)}
                             className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
@@ -820,7 +829,7 @@ export default function EducatorCulturePage() {
                     <tr
                       className={cn(
                         "border-b border-neutral-100 dark:border-neutral-800 last:border-0 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors cursor-pointer",
-                        isDeleting && "opacity-40"
+                        (isDeleting || item.isActive === false) && "opacity-40"
                       )}
                       onClick={() => setExpandedId(isOpen ? null : item.id)}
                     >
@@ -853,6 +862,12 @@ export default function EducatorCulturePage() {
                       </td>
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-1 justify-end">
+                          <ActiveToggle
+                            entityType="cultural_content"
+                            id={item.id}
+                            isActive={item.isActive}
+                            invalidateKeys={[["educator", "cultural"]]}
+                          />
                           <button
                             onClick={() => setExpandedId(isOpen ? null : item.id)}
                             className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"

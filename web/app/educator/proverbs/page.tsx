@@ -10,6 +10,7 @@ import {
   type ContentStatus,
 } from "@/lib/content-workflow";
 import { useMe } from "@/lib/hooks/use-me";
+import { ActiveToggle } from "@/components/studio/active-toggle";
 import { StatusPill } from "@/components/ui/status-pill";
 import type { Language, UserMe } from "@/types";
 import { useAuth } from "@clerk/nextjs";
@@ -35,6 +36,7 @@ type Proverb = {
   literal: string | null;
   context: string | null;
   tags: string[] | null;
+  isActive?: boolean;
   status?: ContentStatus;
   createdBy?: string | null;
 };
@@ -265,7 +267,12 @@ function ProverbsEditor() {
         {proverbsQuery.isPending && <p className="text-sm text-neutral-500">Loading…</p>}
         {proverbsQuery.data?.length === 0 && <p className="text-sm text-neutral-500">No proverbs yet for this language.</p>}
         {proverbsQuery.data?.map((p) => (
-          <div key={p.id} className="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-4">
+          <div
+            key={p.id}
+            className={`rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-4 ${
+              p.isActive === false ? "opacity-50" : ""
+            }`}
+          >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
@@ -276,6 +283,12 @@ function ProverbsEditor() {
                 <p className="text-xs text-neutral-500 mt-1">{p.meaning}</p>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
+                <ActiveToggle
+                  entityType="proverbs"
+                  id={p.id}
+                  isActive={p.isActive}
+                  invalidateKeys={[["proverbs", "admin", activeLanguageId]]}
+                />
                 {canSubmitForReview(p.status) && (
                   <ActionButton onClick={() => submitMutation.mutate(p.id)}>Submit</ActionButton>
                 )}

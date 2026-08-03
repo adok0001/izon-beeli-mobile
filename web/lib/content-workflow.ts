@@ -66,7 +66,8 @@ export type PublishableEntityType =
   | "lessons"
   | "story_arcs"
   | "content_partners"
-  | "quiz_questions";
+  | "quiz_questions"
+  | "interactive_stories";
 
 export async function publishContent(
   entityType: PublishableEntityType,
@@ -74,5 +75,39 @@ export async function publishContent(
   token: string | undefined
 ): Promise<unknown> {
   return apiFetch(`/content/${entityType}/${id}/publish`, { method: "POST", token });
+}
+
+/** Entity types accepted by POST /content/:entityType/:id/active.
+ * Keep in sync with ACTIVE_TOGGLE_TYPES in server/src/routes/content-publish.ts.
+ * Distinct from PublishableEntityType: story_chapters and culture_items toggle
+ * but never publish; courses/lessons/content_partners have their own toggles. */
+export type ActiveToggleEntityType =
+  | "dictionary_entries"
+  | "proverbs"
+  | "etymology_entries"
+  | "cultural_content"
+  | "sentence_templates"
+  | "scenarios"
+  | "activities"
+  | "story_arcs"
+  | "story_chapters"
+  | "quiz_questions"
+  | "interactive_stories"
+  | "culture_items";
+
+/** Flip a row's learner visibility. Independent of the editorial workflow above:
+ * hiding a row is reversible, so the server applies no four-eyes gate — only the
+ * language scope check. */
+export async function setContentActive(
+  entityType: ActiveToggleEntityType,
+  id: string,
+  isActive: boolean,
+  token: string | undefined
+): Promise<unknown> {
+  return apiFetch(`/content/${entityType}/${id}/active`, {
+    method: "POST",
+    token,
+    body: JSON.stringify({ isActive }),
+  });
 }
 

@@ -9,6 +9,7 @@ import {
   type ContentStatus,
 } from "@/lib/content-workflow";
 import { useMe } from "@/lib/hooks/use-me";
+import { ActiveToggle } from "@/components/studio/active-toggle";
 import { StatusPill } from "@/components/ui/status-pill";
 import type { Language, UserMe } from "@/types";
 import { useAuth } from "@clerk/nextjs";
@@ -32,6 +33,7 @@ type QuizQuestionEntity = {
   options: string[];
   audioUrl: string | null;
   explanation: string | null;
+  isActive?: boolean;
   status?: ContentStatus;
   createdBy?: string | null;
 };
@@ -268,7 +270,12 @@ function QuizBankEditor() {
         {questionsQuery.isPending && <p className="text-sm text-neutral-500">Loading…</p>}
         {questionsQuery.data?.length === 0 && <p className="text-sm text-neutral-500">No questions yet for this language.</p>}
         {questionsQuery.data?.map((q) => (
-          <div key={q.id} className="rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-4">
+          <div
+            key={q.id}
+            className={`rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-4 ${
+              q.isActive === false ? "opacity-50" : ""
+            }`}
+          >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
@@ -279,6 +286,12 @@ function QuizBankEditor() {
                 <p className="text-xs text-neutral-500 mt-1">{q.type}</p>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
+                <ActiveToggle
+                  entityType="quiz_questions"
+                  id={q.id}
+                  isActive={q.isActive}
+                  invalidateKeys={[["quiz-bank", "admin", activeLanguageId]]}
+                />
                 {canSubmitForReview(q.status) && (
                   <ActionButton onClick={() => submitMutation.mutate(q.id)}>Submit</ActionButton>
                 )}
