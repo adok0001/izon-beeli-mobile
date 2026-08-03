@@ -1,6 +1,6 @@
 "use client";
 
-import { MazeRoomCard } from "@/components/learn/maze-room-card";
+import { JourneyPath } from "@/components/learn/journey-path";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { apiFetch } from "@/lib/api";
@@ -11,22 +11,12 @@ import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Flame, Star, Zap } from "lucide-react";
 import Link from "next/link";
-import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface Bounty { id: string; title: string; xpReward: number; }
 interface DueEntry { dictionaryEntryId: string; }
-
-const LEVEL_ORDER = ["beginner", "intermediate", "advanced"] as const;
-type Level = (typeof LEVEL_ORDER)[number];
-
-const LEVEL_META: Record<Level, { label: string; bar: string; stripe: string; badge: string }> = {
-  beginner:     { label: "Beginner Wing",     bar: "from-emerald-500 to-emerald-400", stripe: "bg-emerald-500", badge: "text-emerald-400 border-emerald-500/30 bg-emerald-500/10" },
-  intermediate: { label: "Intermediate Wing", bar: "from-blue-500 to-blue-400",       stripe: "bg-blue-500",    badge: "text-blue-400 border-blue-500/30 bg-blue-500/10" },
-  advanced:     { label: "Advanced Wing",     bar: "from-violet-500 to-violet-400",   stripe: "bg-violet-500",  badge: "text-violet-400 border-violet-500/30 bg-violet-500/10" },
-};
 
 // ── Banners ───────────────────────────────────────────────────────────────────
 
@@ -59,80 +49,18 @@ function BountyTeaser({ languageId }: Readonly<{ languageId: string }>) {
 }
 
 
-// ── Skeleton card ─────────────────────────────────────────────────────────────
+// ── Skeleton ──────────────────────────────────────────────────────────────────
 
-function SkeletonCard() {
+function SkeletonStep() {
   return (
-    <div className="w-64 shrink-0 rounded-2xl border border-neutral-100 dark:border-white/[0.06] overflow-hidden bg-white dark:bg-[#0d0d18]">
-      <div className="h-[3px] bg-neutral-200 dark:bg-white/10" />
-      <div className="p-5 space-y-3">
-        <div className="skeleton h-5 w-20 rounded-full" />
-        <div className="skeleton h-5 w-44 rounded-lg" />
-        <div className="skeleton h-3 w-full rounded mt-1" />
-        <div className="skeleton h-3 w-3/4 rounded" />
-        <div className="skeleton h-[3px] w-full rounded-full mt-6" />
+    <li className="relative pl-14">
+      <span className="absolute left-0 top-1 h-10 w-10 rounded-full border-2 border-neutral-200 dark:border-white/[0.08]" />
+      <div className="rounded-2xl border border-neutral-100 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] p-4 space-y-2">
+        <div className="skeleton h-3 w-24 rounded" />
+        <div className="skeleton h-4 w-48 rounded" />
+        <div className="skeleton h-3 w-full rounded" />
       </div>
-    </div>
-  );
-}
-
-// ── Gallery wing ──────────────────────────────────────────────────────────────
-
-function CarouselSection({ level, courses }: Readonly<{ level: Level; courses: Course[] }>) {
-  const { t } = useTranslation();
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const meta = LEVEL_META[level];
-
-  const scroll = (dir: "left" | "right") => {
-    scrollRef.current?.scrollBy({ left: dir === "right" ? 280 : -280, behavior: "smooth" });
-  };
-
-  return (
-    <div>
-      {/* Wing header */}
-      <div className="flex items-center gap-3 px-4 mb-5">
-        <div className={`w-[3px] h-4 rounded-full ${meta.stripe}`} />
-        <h2 className="text-[11px] font-bold uppercase tracking-[0.26em] text-neutral-500 dark:text-neutral-500">
-          {meta.label}
-        </h2>
-        <div className="flex-1 h-px bg-neutral-100 dark:bg-white/[0.05]" />
-        <span className="text-[10px] text-neutral-400 dark:text-neutral-600 uppercase tracking-wide">
-          {courses.length} {courses.length === 1 ? t("learn.courseCount_one", { defaultValue: "course" }) : t("learn.courseCount_other", { defaultValue: "courses" })}
-        </span>
-        <div className="flex items-center gap-0.5 ml-1">
-          <button
-            type="button"
-            onClick={() => scroll("left")}
-            aria-label="Scroll left"
-            className="w-7 h-7 rounded-full flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-white/[0.07] transition-colors text-base"
-          >
-            ‹
-          </button>
-          <button
-            type="button"
-            onClick={() => scroll("right")}
-            aria-label="Scroll right"
-            className="w-7 h-7 rounded-full flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-white/[0.07] transition-colors text-base"
-          >
-            ›
-          </button>
-        </div>
-      </div>
-
-      {/* Carousel */}
-      <div className="relative -mx-4">
-        <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-neutral-50 dark:from-[#07070f] to-transparent z-10 pointer-events-none" />
-        <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-neutral-50 dark:from-[#07070f] to-transparent z-10 pointer-events-none" />
-        <div ref={scrollRef} className="overflow-x-auto scrollbar-hide">
-          <div className="flex gap-4 px-4 pb-2">
-            {courses.map((course) => (
-              <MazeRoomCard key={course.id} course={course} />
-            ))}
-            <div className="w-4 shrink-0" />
-          </div>
-        </div>
-      </div>
-    </div>
+    </li>
   );
 }
 
@@ -152,12 +80,6 @@ export default function LearnPage() {
       return apiFetch<Course[]>(`/courses?languageId=${selectedLanguageId}`, { token: token ?? undefined });
     },
   });
-
-  const coursesByLevel = LEVEL_ORDER.reduce<Record<Level, Course[]>>(
-    (acc, level) => { acc[level] = allCourses.filter((c) => c.level === level); return acc; },
-    { beginner: [], intermediate: [], advanced: [] }
-  );
-  const activeLevels = LEVEL_ORDER.filter((l) => coursesByLevel[l].length > 0);
 
   return (
     <div className="py-8 space-y-10">
@@ -215,22 +137,10 @@ export default function LearnPage() {
       </div>
 
       {isLoading ? (
-        <div className="space-y-10">
-          {LEVEL_ORDER.map((level) => (
-            <div key={level}>
-              <div className="flex items-center gap-3 px-4 mb-5">
-                <div className={`w-[3px] h-4 rounded-full ${LEVEL_META[level].stripe}`} />
-                <div className="skeleton h-3 w-28 rounded" />
-                <div className="flex-1 h-px bg-neutral-100 dark:bg-white/[0.05]" />
-              </div>
-              <div className="overflow-x-auto scrollbar-hide -mx-4">
-                <div className="flex gap-4 px-4 pb-2">
-                  {[1, 2, 3].map((k) => <SkeletonCard key={k} />)}
-                  <div className="w-4 shrink-0" />
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className="mx-auto max-w-4xl px-4">
+          <ol className="space-y-3">
+            {[1, 2, 3, 4].map((k) => <SkeletonStep key={k} />)}
+          </ol>
         </div>
       ) : allCourses.length === 0 ? (
         <div className="max-w-4xl mx-auto px-4">
@@ -241,11 +151,7 @@ export default function LearnPage() {
           />
         </div>
       ) : (
-        <div className="space-y-10">
-          {activeLevels.map((level) => (
-            <CarouselSection key={level} level={level} courses={coursesByLevel[level]} />
-          ))}
-        </div>
+        <JourneyPath courses={allCourses} />
       )}
     </div>
   );

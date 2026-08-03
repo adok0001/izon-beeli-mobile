@@ -40,6 +40,8 @@ export interface Course {
   imageUrl?: string;
   progress?: number; // 0-100
   courseType?: CourseType;
+  /** Path position. Convention: >= 20 marks a reference shelf, off the numbered journey. */
+  order?: number;
 }
 
 export type AudioSource = string | number; // URI string or require() module ID
