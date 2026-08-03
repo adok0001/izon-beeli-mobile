@@ -128,11 +128,24 @@ function DiarySegment({ seg, index, isActive, languageId, onSegmentClick, isPlay
           {formatDuration(seg.startTime)}
         </span>
         <div className="flex-1">
+          {seg.speaker && (
+            <p className={cn(
+              "mb-0.5 text-[11px] font-semibold uppercase tracking-wide",
+              isActive ? "text-amber-700" : "text-amber-800/45",
+            )}>
+              {seg.speaker}
+            </p>
+          )}
           <p className={cn("text-sm leading-relaxed flex flex-wrap", isActive ? "text-amber-950" : "text-amber-900/75")}>
             {seg.text.split(" ").map((word, wi) => (
               <ClickableWord key={`${seg.id}-${wi}`} word={word} languageId={languageId} isActive={isActive} />
             ))}
           </p>
+          {seg.roman && (
+            <p className={cn("mt-0.5 text-xs font-mono", isActive ? "text-amber-800/70" : "text-amber-800/40")}>
+              {seg.roman}
+            </p>
+          )}
           {translation && (
             <p className={cn("mt-0.5 text-xs italic", isActive ? "text-amber-700" : "text-amber-800/40")}>{translation}</p>
           )}

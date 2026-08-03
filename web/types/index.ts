@@ -68,6 +68,10 @@ export interface TranscriptSegment {
   translation?: string | null;
   /** Full gloss map — the authoritative value; `translation` is its English projection. */
   translations?: TranslationMap | null;
+  /** Who speaks this line (audio-drama attribution). null = narration. */
+  speaker?: string | null;
+  /** Romanized pronunciation guidance for the learner — never spoken. */
+  roman?: string | null;
 }
 
 export interface JournalEntry {
