@@ -60,6 +60,10 @@ export interface Lesson {
   order: number;
   completed?: boolean;
   transcript?: TranscriptSegment[];
+  /** Honest real-world competence statement ("You can now …"). */
+  canDo?: string | null;
+  /** Full gloss map — the authoritative value; `canDo` is its English projection. */
+  canDoTranslations?: TranslationMap | null;
 }
 
 export interface TranscriptSegment {

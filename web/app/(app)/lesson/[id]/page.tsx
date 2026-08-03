@@ -8,9 +8,11 @@ import { useAudioStore } from "@/store/audio-store";
 import { useLanguageStore } from "@/store/language-store";
 import { useUiLanguageStore } from "@/store/ui-language-store";
 import type { Lesson, TranscriptSegment } from "@/types";
+import type { TranslationMap } from "@/lib/localize";
+import type { UiLanguage } from "@/lib/ui-language";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, BookOpen, BookText, CheckCircle2, Trophy, Volume2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, BookText, CheckCircle2, Sparkles, Trophy, Volume2 } from "lucide-react";
 import Link from "next/link";
 import { use, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -19,10 +21,90 @@ import { useTranslation } from "react-i18next";
 // `type` distinguishes real lessons from block-closing mini-game rows, which
 // `/lessons/:id` serves alike (mobile/lib/course-path.ts). The web `Lesson`
 // type doesn't carry it yet, so declare it here.
-interface LessonDetail extends Lesson { transcript: TranscriptSegment[]; type?: string; }
+type LessonRow = Lesson & { type?: string };
+
+/**
+ * A culture beat attached to this lesson in Studio. Join-derived rather than a
+ * lesson column, so it rides on the detail response only — see
+ * `selectLessonCulturalNotes` (server/src/lib/content-selectors.ts). Both text
+ * fields arrive as full gloss maps, never as flat strings.
+ */
+interface LessonCulturalNote {
+  title: TranslationMap;
+  body: TranslationMap;
+  /** Category chips; the card renders `tags[0]` as its overline. */
+  tags?: string[];
+}
+
+interface LessonDetail extends LessonRow {
+  transcript: TranscriptSegment[];
+  culturalNotes?: LessonCulturalNote[];
+}
 interface CompletionResult {
   completed: boolean; pointsEarned: number; totalPoints: number;
   streak: number; leveledUp: boolean; newLevel?: number; newTitle?: string;
+}
+
+// ── Action row ───────────────────────────────────────────────
+// Shared by the audio and no-audio headers so the two branches can't drift.
+function LessonActions({ lesson, nextLesson, completion }: Readonly<{
+  lesson: LessonDetail;
+  nextLesson: LessonRow | null;
+  completion: { isCompleted: boolean; isPending: boolean; onComplete: () => void };
+}>) {
+  const { t } = useTranslation();
+  const pill = "flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors";
+
+  return (
+    <div className="flex items-center gap-2 justify-end flex-wrap">
+      {!completion.isCompleted && (
+        <button
+          onClick={completion.onComplete} disabled={completion.isPending}
+          className={`${pill} border-green-500 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 disabled:opacity-60`}
+        >
+          <CheckCircle2 className="h-3.5 w-3.5" />{t("lesson.markComplete")}
+        </button>
+      )}
+      {nextLesson && (
+        <Link
+          href={`/lesson/${nextLesson.id}`}
+          className={`${pill} border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/[0.04]`}
+        >
+          {t("lesson.continueToNext")}<ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      )}
+      <Link
+        href={`/quiz?courseId=${lesson.courseId}&lessonId=${lesson.id}`}
+        className={`${pill} border-brand-500 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20`}
+      >
+        <Trophy className="h-3.5 w-3.5" />{t("lesson.practice")}
+      </Link>
+    </div>
+  );
+}
+
+// ── Culture note ─────────────────────────────────────────────
+// Bodies run long, so each note is a collapsed disclosure — the transcript
+// stays the page's centre of gravity until the learner opens one.
+function CultureNoteCard({ note, uiLanguage }: Readonly<{ note: LessonCulturalNote; uiLanguage: UiLanguage }>) {
+  const { t } = useTranslation();
+  const title = localizePair(note.title, null, uiLanguage);
+  const body = localizePair(note.body, null, uiLanguage);
+  const tag = note.tags?.[0]?.replaceAll("_", " ");
+  if (!title && !body) return null;
+
+  return (
+    <details className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-white/[0.03] px-4 py-3">
+      <summary className="flex items-center gap-2 cursor-pointer list-none">
+        <Sparkles className="h-3.5 w-3.5 shrink-0 text-brand-500 dark:text-brand-400" />
+        <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-brand-600 dark:text-brand-400">
+          {t("lesson.culture")}{tag ? <span className="text-neutral-400 dark:text-neutral-500">{`  ·  ${tag}`}</span> : null}
+        </span>
+        <span className="ml-auto min-w-0 truncate text-xs font-medium text-neutral-700 dark:text-neutral-200">{title}</span>
+      </summary>
+      <p className="mt-2 text-sm leading-relaxed whitespace-pre-line text-neutral-600 dark:text-neutral-300">{body}</p>
+    </details>
+  );
 }
 
 // ── Main page ────────────────────────────────────────────────
@@ -52,6 +134,19 @@ export default function LessonPage({ params }: Readonly<{ params: Promise<{ id: 
     staleTime: 60_000,
   });
 
+  // Siblings, purely to resolve "next lesson". Shares the course page's query
+  // key, so arriving from the course path is a cache hit rather than a fetch.
+  const courseId = lesson?.courseId;
+  const { data: courseLessons = [] } = useQuery<LessonRow[]>({
+    queryKey: ["course-lessons", courseId],
+    queryFn: async () => {
+      const token = await getToken();
+      return apiFetch<LessonRow[]>(`/lessons?courseId=${courseId}`, { token: token ?? undefined });
+    },
+    enabled: !!courseId,
+    staleTime: 60_000,
+  });
+
   const complete = useMutation({
     mutationFn: async () => {
       const token = await getToken();
@@ -69,6 +164,13 @@ export default function LessonPage({ params }: Readonly<{ params: Promise<{ id: 
   const isCompleted = completedIds?.includes(id ?? "") ?? lesson?.completed ?? false;
   const lessonTitle = lesson ? localizePair(lesson.titleTranslations, lesson.title, uiLanguage) : "";
   const lessonDescription = lesson ? localizePair(lesson.descriptionTranslations, lesson.description ?? "", uiLanguage) : "";
+  const canDo = lesson ? localizePair(lesson.canDoTranslations, lesson.canDo, uiLanguage) : "";
+
+  // Mini-game rows aren't playable, so "next" skips them exactly as the course
+  // path does. The endpoint already orders by `order`, so position is the order.
+  const playable = courseLessons.filter((l) => l.type !== "game");
+  const currentIndex = playable.findIndex((l) => l.id === id);
+  const nextLesson = currentIndex >= 0 ? playable[currentIndex + 1] ?? null : null;
 
   const handleSegmentClick = useCallback((startTime: number) => {
     if (!lesson) return;
@@ -110,6 +212,13 @@ export default function LessonPage({ params }: Readonly<{ params: Promise<{ id: 
   }
 
   const hasAudio = !!lesson.audioUrl;
+  const actions = (
+    <LessonActions
+      lesson={lesson}
+      nextLesson={nextLesson}
+      completion={{ isCompleted, isPending: complete.isPending, onComplete: () => complete.mutate() }}
+    />
+  );
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -134,22 +243,7 @@ export default function LessonPage({ params }: Readonly<{ params: Promise<{ id: 
         {hasAudio && (
           <div className="space-y-2">
             <TactileAudioPlayer lesson={lesson} />
-            <div className="flex items-center gap-2 justify-end flex-wrap">
-              {!isCompleted && (
-                <button
-                  onClick={() => complete.mutate()} disabled={complete.isPending}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-green-500 text-green-600 dark:text-green-400 text-sm font-medium hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors disabled:opacity-60"
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5" />{t("lesson.markComplete")}
-                </button>
-              )}
-              <Link
-                href={`/quiz?courseId=${lesson.courseId}&lessonId=${lesson.id}`}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-brand-500 text-brand-600 dark:text-brand-400 text-sm font-medium hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors"
-              >
-                <Trophy className="h-3.5 w-3.5" />{t("lesson.practice")}
-              </Link>
-            </div>
+            {actions}
           </div>
         )}
 
@@ -158,22 +252,7 @@ export default function LessonPage({ params }: Readonly<{ params: Promise<{ id: 
             <span className="flex items-center gap-1.5 text-sm text-neutral-400 dark:text-neutral-500">
               <Volume2 className="h-4 w-4" />{t("lesson.noAudio")}
             </span>
-            <div className="ml-auto flex items-center gap-2">
-              {!isCompleted && (
-                <button
-                  onClick={() => complete.mutate()} disabled={complete.isPending}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-green-500 text-green-600 dark:text-green-400 text-sm font-medium hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors disabled:opacity-60"
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5" />{t("lesson.markComplete")}
-                </button>
-              )}
-              <Link
-                href={`/quiz?courseId=${lesson.courseId}&lessonId=${lesson.id}`}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-brand-500 text-brand-600 dark:text-brand-400 text-sm font-medium hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors"
-              >
-                <Trophy className="h-3.5 w-3.5" />{t("lesson.practice")}
-              </Link>
-            </div>
+            <div className="ml-auto">{actions}</div>
           </div>
         )}
       </div>
@@ -190,6 +269,17 @@ export default function LessonPage({ params }: Readonly<{ params: Promise<{ id: 
             </p>
           </div>
           <button onClick={() => setCompletionBanner(null)} className="text-green-400 hover:text-green-600 text-xs">✕</button>
+        </div>
+      )}
+
+      {/* Can-do — the competence this lesson is actually for. Stated up front so
+          the learner knows what "done" means before they get there. */}
+      {canDo && (
+        <div className="shrink-0 mx-5 mt-3 rounded-xl border border-brand-200 dark:border-brand-900/60 bg-brand-50 dark:bg-brand-900/20 px-4 py-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-brand-600 dark:text-brand-400">
+            {t("lesson.youCanNow", { defaultValue: "You can now" })}
+          </p>
+          <p className="mt-1 text-sm font-medium leading-relaxed text-neutral-800 dark:text-neutral-100">{canDo}</p>
         </div>
       )}
 
@@ -213,6 +303,15 @@ export default function LessonPage({ params }: Readonly<{ params: Promise<{ id: 
           </div>
         )}
       </div>
+
+      {/* Culture notes — collapsed so they never crowd out the transcript. */}
+      {lesson.culturalNotes && lesson.culturalNotes.length > 0 && (
+        <div className="shrink-0 max-h-56 overflow-y-auto border-t border-neutral-200 dark:border-neutral-800 px-5 py-3 space-y-2">
+          {lesson.culturalNotes.map((note, i) => (
+            <CultureNoteCard key={i} note={note} uiLanguage={uiLanguage} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
