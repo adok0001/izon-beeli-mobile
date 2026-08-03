@@ -2287,6 +2287,7 @@ export const ar = {
       quizBank: "بنك الاختبارات",
       translations: "الترجمات",
       import: "Bulk Import",
+      toolsSection: "الأدوات",
     },
     sentences: {
       screenTitle: "الجمل والسيناريوهات",

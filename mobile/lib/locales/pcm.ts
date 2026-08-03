@@ -2287,6 +2287,7 @@ export const pcm = {
       quizBank: "Quiz Bank",
       translations: "Translations",
       import: "Bulk Import",
+      toolsSection: "Tools",
     },
     sentences: {
       screenTitle: "Sentence & Scenario",

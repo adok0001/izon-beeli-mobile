@@ -2287,6 +2287,7 @@ export const pt = {
       quizBank: "Banco de quiz",
       translations: "Traduções",
       import: "Bulk Import",
+      toolsSection: "Ferramentas",
     },
     sentences: {
       screenTitle: "Frases e cenários",

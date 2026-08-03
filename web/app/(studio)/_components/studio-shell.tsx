@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 /**
@@ -69,21 +69,43 @@ type NavItem = {
   tourId?: string;
 };
 
-// Authoring surfaces — shown to any reviewer (and admins).
-const AUTHORING_NAV: readonly NavItem[] = [
+// Nav is grouped Learn / Explore / Tools to mirror mobile Studio's IA
+// (mobile/components/studio/panel-nav-sections.tsx): Learn holds course-shaped
+// authoring, Explore mirrors the learner Explore tab's reference surfaces, and
+// everything without a learner screen to mirror lands in Tools.
+
+// Learn — course authoring plus the stories threaded through courses.
+const LEARN_NAV: readonly NavItem[] = [
+  { href: "/educator/courses",    labelKey: "educator.nav.lessons",    icon: BookOpen,   tourId: "educator-nav-courses" },
+  { href: "/educator/story-arcs", labelKey: "educator.nav.storyArcs",  icon: BookMarked, tourId: "educator-nav-story-arcs" },
+];
+
+// Explore — reviewer-facing reference & culture surfaces.
+const EXPLORE_NAV: readonly NavItem[] = [
+  { href: "/educator/dictionary", adminHref: "/admin/dictionary", labelKey: "educator.nav.dictionary", icon: BookText, tourId: "educator-nav-dictionary" },
+  { href: "/educator/culture",    adminHref: "/admin/culture",    labelKey: "educator.nav.culture",    icon: Globe2,   tourId: "educator-nav-culture" },
+];
+
+// Explore — admin-only Discover/Today surfaces (mobile's "Discover" and
+// "Today" rows under Explore).
+const EXPLORE_ADMIN_NAV: readonly NavItem[] = [
+  { href: "/admin/discover-stories", labelKey: "admin.nav.discoverStories", icon: Clapperboard, tourId: "admin-nav-discover-stories" },
+  { href: "/admin/daily-content",    labelKey: "admin.nav.dailyContent",    icon: Sun,          tourId: "admin-nav-daily-content" },
+];
+
+// Tools — reviewer-facing, in mobile's ToolsStrip order.
+const TOOLS_NAV: readonly NavItem[] = [
   { href: "/educator/review",     adminHref: "/admin/review",     labelKey: "educator.nav.review",     icon: ClipboardList,     tourId: "educator-nav-review" },
-  { href: "/educator/dictionary", adminHref: "/admin/dictionary", labelKey: "educator.nav.dictionary", icon: BookText,          tourId: "educator-nav-dictionary" },
-  { href: "/educator/courses",    labelKey: "educator.nav.lessons",    icon: BookOpen,          tourId: "educator-nav-courses" },
-  { href: "/educator/sentences",  labelKey: "educator.nav.sentences",  icon: MessageSquareDiff, tourId: "educator-nav-sentences" },
-  { href: "/educator/culture",    adminHref: "/admin/culture",    labelKey: "educator.nav.culture",    icon: Globe2,            tourId: "educator-nav-culture" },
-  { href: "/educator/etymology",  labelKey: "admin.nav.etymology",     icon: Landmark,          tourId: "educator-nav-etymology" },
   { href: "/educator/proverbs",   labelKey: "educator.nav.proverbs",   icon: Quote,             tourId: "educator-nav-proverbs" },
+  { href: "/educator/etymology",  labelKey: "admin.nav.etymology",     icon: Landmark,          tourId: "educator-nav-etymology" },
+  { href: "/educator/sentences",  labelKey: "educator.nav.sentences",  icon: MessageSquareDiff, tourId: "educator-nav-sentences" },
   { href: "/educator/scenarios",  labelKey: "educator.nav.scenarios",  icon: MessagesSquare,    tourId: "educator-nav-scenarios" },
-  { href: "/educator/story-arcs", labelKey: "educator.nav.storyArcs",  icon: BookMarked,        tourId: "educator-nav-story-arcs" },
   { href: "/educator/quiz-bank",  labelKey: "educator.nav.quizBank",   icon: ListChecks,        tourId: "educator-nav-quiz-bank" },
   { href: "/educator/translations", labelKey: "educator.nav.translations", icon: Type,          tourId: "educator-nav-translations" },
   { href: "/educator/import",     labelKey: "educator.nav.import",     icon: Upload,            tourId: "educator-nav-import" },
 ];
+
+const MEDIA_ITEM: NavItem = { href: "/admin/media", labelKey: "admin.nav.media", icon: Images, tourId: "admin-nav-media" };
 
 // Role-gated ops surfaces — the API admits specific reviewer roles beyond
 // admins (`elderMiddleware` for applications, `professorMiddleware` for
@@ -93,23 +115,22 @@ const AUTHORING_NAV: readonly NavItem[] = [
 const APPLICATIONS_ITEM: NavItem = { href: "/educator/applications", labelKey: "admin.nav.applications", icon: UserCheck, tourId: "admin-nav-applications" };
 const BOUNTIES_ITEM: NavItem =     { href: "/educator/bounties",     labelKey: "admin.nav.bounties",     icon: Target,    tourId: "admin-nav-bounties" };
 
-// Operations surfaces — admin only.
-const OPS_NAV: readonly NavItem[] = [
+// Operations surfaces — admin only, rendered at the tail of Tools. (Daily
+// content, Discover stories, and Media moved to their mobile-mirrored slots
+// above.)
+const TOOLS_ADMIN_NAV: readonly NavItem[] = [
   { href: "/admin/users",         labelKey: "admin.nav.users",         icon: Users,        tourId: "admin-nav-users" },
   { href: "/admin/organizations", labelKey: "admin.nav.billing",       icon: CreditCard,   tourId: "admin-nav-billing" },
   { href: "/admin/feedback",      labelKey: "admin.nav.feedback",      icon: MessageSquare, tourId: "admin-nav-feedback" },
   { href: "/admin/notifications", labelKey: "admin.nav.notifications", icon: Bell,         tourId: "admin-nav-notifications" },
-  { href: "/admin/daily-content", labelKey: "admin.nav.dailyContent",  icon: Sun,          tourId: "admin-nav-daily-content" },
   { href: "/admin/activities",    labelKey: "admin.nav.activities",    icon: Gamepad2,     tourId: "admin-nav-activities" },
   { href: "/admin/quiz",          labelKey: "admin.nav.quiz",          icon: BrainCircuit, tourId: "admin-nav-quiz" },
   { href: "/admin/daily-challenges", labelKey: "admin.nav.dailyChallenges", icon: CalendarCheck, tourId: "admin-nav-daily-challenges" },
-  { href: "/admin/discover-stories", labelKey: "admin.nav.discoverStories", icon: Clapperboard, tourId: "admin-nav-discover-stories" },
   { href: "/admin/streak-tools",  labelKey: "admin.nav.streakTools",   icon: Flame,        tourId: "admin-nav-streak-tools" },
   { href: "/admin/languages",     labelKey: "admin.nav.languages",     icon: Languages,    tourId: "admin-nav-languages" },
   { href: "/admin/content-partners", labelKey: "admin.nav.contentPartners", icon: Handshake, tourId: "admin-nav-content-partners" },
   { href: "/admin/english-wordbank", labelKey: "admin.nav.englishWordbank", icon: SpellCheck, tourId: "admin-nav-english-wordbank" },
   { href: "/admin/app-config",    labelKey: "admin.nav.appConfig",     icon: Flag,         tourId: "admin-nav-app-config" },
-  { href: "/admin/media",         labelKey: "admin.nav.media",        icon: Images,       tourId: "admin-nav-media" },
 ];
 
 function hasAccess(access: StudioAccess, me: { isAdmin: boolean; isReviewer: boolean }): boolean {
@@ -180,15 +201,52 @@ export function StudioShell({
   const canReviewApplications = me.isAdmin || me.reviewerRole === "elder";
   const canManageBounties =
     me.isAdmin || me.reviewerRole === "professor" || me.reviewerRole === "elder";
-  const navItems: NavItem[] = [
-    overview,
-    ...AUTHORING_NAV,
-    ...(canManageBounties ? [BOUNTIES_ITEM] : []),
-    ...(canReviewApplications ? [APPLICATIONS_ITEM] : []),
-    ...(me.isAdmin ? OPS_NAV : []),
-  ].map(
-    (item) => ({ ...item, href: me.isAdmin && item.adminHref ? item.adminHref : item.href })
-  );
+  const withRoleHref = (item: NavItem): NavItem => ({
+    ...item,
+    href: me.isAdmin && item.adminHref ? item.adminHref : item.href,
+  });
+  // Learn / Explore / Tools sections mirroring mobile Studio's IA. The three
+  // labels reuse mobile locale keys where they exist (web i18n loads mobile's
+  // locale files); "Tools" has no mobile key, hence the defaultValue.
+  const navSections: { key: string; label: string; items: NavItem[] }[] = [
+    { key: "learn", label: t("tabs.learn"), items: LEARN_NAV.map(withRoleHref) },
+    {
+      key: "explore",
+      label: t("common.exploreSection"),
+      items: [...EXPLORE_NAV, ...(me.isAdmin ? EXPLORE_ADMIN_NAV : [])].map(withRoleHref),
+    },
+    {
+      key: "tools",
+      label: t("educator.nav.toolsSection", { defaultValue: "Tools" }),
+      items: [
+        ...TOOLS_NAV,
+        ...(me.isAdmin ? [MEDIA_ITEM] : []),
+        ...(canManageBounties ? [BOUNTIES_ITEM] : []),
+        ...(canReviewApplications ? [APPLICATIONS_ITEM] : []),
+        ...(me.isAdmin ? TOOLS_ADMIN_NAV : []),
+      ].map(withRoleHref),
+    },
+  ];
+
+  const renderNavLink = ({ href, labelKey, icon: Icon, exact, tourId }: NavItem) => {
+    const active = exact ? pathname === href : pathname.startsWith(href);
+    return (
+      <Link
+        key={href}
+        href={href}
+        data-tour={tourId}
+        className={cn(
+          "flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold border-b-2 -mb-px whitespace-nowrap transition-all",
+          active
+            ? "border-brand-500 text-brand-600 dark:text-brand-400"
+            : "border-transparent text-neutral-500 dark:text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-700"
+        )}
+      >
+        <Icon className="h-3.5 w-3.5" />
+        {t(labelKey)}
+      </Link>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-[#07070f]">
@@ -254,26 +312,22 @@ export function StudioShell({
             </Link>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto px-6 pb-0 flex gap-0.5 overflow-x-auto scrollbar-hide">
-          {navItems.map(({ href, labelKey, icon: Icon, exact, tourId }) => {
-            const active = exact ? pathname === href : pathname.startsWith(href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                data-tour={tourId}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold border-b-2 -mb-px whitespace-nowrap transition-all",
-                  active
-                    ? "border-brand-500 text-brand-600 dark:text-brand-400"
-                    : "border-transparent text-neutral-500 dark:text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-700"
-                )}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {t(labelKey)}
-              </Link>
-            );
-          })}
+        <div className="max-w-7xl mx-auto px-6 pb-0 flex items-stretch gap-0.5 overflow-x-auto scrollbar-hide">
+          {renderNavLink(withRoleHref(overview))}
+          {navSections.map(
+            (section) =>
+              section.items.length > 0 && (
+                <Fragment key={section.key}>
+                  <span
+                    aria-hidden
+                    className="flex items-center pl-4 pr-1.5 py-2.5 text-[10px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-600 whitespace-nowrap select-none"
+                  >
+                    {section.label}
+                  </span>
+                  {section.items.map(renderNavLink)}
+                </Fragment>
+              )
+          )}
         </div>
       </header>
       <main className="max-w-7xl mx-auto px-6 py-8">{children}</main>
