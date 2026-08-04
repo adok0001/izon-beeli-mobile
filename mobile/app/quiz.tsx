@@ -30,6 +30,7 @@ import type { QuizQuestion } from "@/types";
 import { useAuth } from "@clerk/clerk-expo";
 import { useQueryClient } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { useCheckpointGameClear } from "@/lib/hooks/use-checkpoints";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
@@ -308,6 +309,13 @@ function ResultsView({ languageId }: { languageId: string }) {
   const queryClient = useQueryClient();
   const invalidateDailyChallenges = useInvalidateDailyChallenges();
   const result = getResult();
+  // Opened from a checkpoint gate: reaching results clears the gate.
+  const { recordClear } = useCheckpointGameClear();
+  useEffect(() => {
+    recordClear(result.correctCount, result.totalQuestions);
+    // Results are final once this view mounts; fire exactly once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const startTime = useQuizStore((s) => s.startTime);
   const [xpResult, setXpResult] = useState<{ xpEarned: number; leveledUp: boolean } | null>(null);
   const purple = getAccent("purple");

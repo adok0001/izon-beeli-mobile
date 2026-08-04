@@ -15,6 +15,7 @@ import type { AudioSource } from "@/types";
 import { useQueries } from "@tanstack/react-query";
 import { Audio } from "expo-av";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { useCheckpointGameClear } from "@/lib/hooks/use-checkpoints";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LoadingScreen } from "@/components/loading-screen";
@@ -253,6 +254,13 @@ export default function WordReviewScreen() {
 
   const currentEntry = queue[currentIndex];
   const isFinished = queueBuilt && currentIndex >= queue.length;
+
+  // Opened from a checkpoint gate: finishing the review queue clears the gate.
+  const { recordClear } = useCheckpointGameClear();
+  useEffect(() => {
+    if (isFinished && queue.length > 0) recordClear(queue.length, queue.length);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFinished, queue.length]);
 
   const handleRate = useCallback(
     (confidence: "again" | "hard" | "good" | "easy") => {

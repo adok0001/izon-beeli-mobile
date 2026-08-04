@@ -215,6 +215,12 @@ export const en = {
     sheetBody: "Prove what you've learned across the last five lessons to open the next stretch of the path.",
     sheetLockedBody: "Finish all five lessons in this stretch to unlock the checkpoint.",
     start: "Start checkpoint",
+    // Game gates — a block whose gate runs a playground mini-game.
+    gameNodeLabel: "Game {{n}}",
+    gameGateBody: "This gate is a mini-game. Clear it to open the next stretch of the path.",
+    gameClearedBody: "Cleared — play again any time.",
+    playGame: "Play {{game}}",
+    playAgain: "Play again",
     // Lesson summary interstitial
     gateEyebrow: "Checkpoint ahead",
     introEyebrow: "Warm-up",

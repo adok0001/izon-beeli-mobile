@@ -1,4 +1,5 @@
 import { tWithVars } from "@/lib/i18n-dynamic";
+import { useCheckpointGameClear } from "@/lib/hooks/use-checkpoints";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import { useRouter, useLocalSearchParams, Stack } from "expo-router";
@@ -114,6 +115,14 @@ export default function MatchingGameScreen() {
   }, [selectedLanguageId, params.courseId, params.lessonId, lessonData, dictionaryEntries, startGame]);
 
   const result = phase === "results" ? getResult() : null;
+
+  // Opened from a checkpoint gate: matching every pair clears the gate.
+  const { recordClear } = useCheckpointGameClear();
+  useEffect(() => {
+    if (phase === "results" && result) recordClear(result.totalPairs, result.totalPairs);
+    // Ref-guarded inside the hook.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, result]);
 
   const headerLeft = useCallback(
     () => (

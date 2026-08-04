@@ -13,7 +13,9 @@ import { useGuestProgressStore } from "@/store/guest-progress-store";
 import { useGuestStore } from "@/store/guest-store";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useLocalSearchParams } from "expo-router";
+import { useCallback, useMemo, useRef } from "react";
+import { useLanguageStore } from "@/store/language-store";
 import type { Course, Lesson } from "@/types";
 
 // Stable empties — `= []` in a destructure mints a new array every render while
@@ -205,3 +207,32 @@ export function usePassCheckpoint() {
   });
 }
 
+/**
+ * Pass-back for a gate that launched a playground mini-game.
+ *
+ * A game opened from /checkpoint/[id] receives a `checkpointId` param; nothing
+ * else about the game changes. Call `recordClear(correct, total)` when the run
+ * finishes — it is a no-op without the param, so the playground entry points
+ * are untouched. Ref-guarded: one POST per screen visit, matching the gate's
+ * own recording discipline.
+ */
+export function useCheckpointGameClear() {
+  const { checkpointId } = useLocalSearchParams<{ checkpointId?: string }>();
+  const { selectedLanguageId } = useLanguageStore();
+  const passCheckpoint = usePassCheckpoint();
+  const recorded = useRef(false);
+
+  const recordClear = useCallback(
+    (correct: number, total: number) => {
+      if (!checkpointId || recorded.current) return;
+      recorded.current = true;
+      passCheckpoint.mutate({ checkpointId, languageId: selectedLanguageId, correct, total, attempts: 1 });
+    },
+    // `passCheckpoint` is recreated each render; the ref guard makes this fire
+    // once, so it stays out of the dependency list (same pattern as the gate).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [checkpointId, selectedLanguageId],
+  );
+
+  return { isCheckpointRun: !!checkpointId, recordClear };
+}

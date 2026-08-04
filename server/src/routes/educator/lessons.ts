@@ -42,15 +42,21 @@ function invalidType(type: string | null | undefined): boolean {
 }
 
 /**
- * Playground mini-games a `type: "game"` row may point its gate at.
+ * Playground mini-games a `type: "game"` row may point its gate at — the full
+ * playground roster (mirrors GAMES in mobile/lib/playground.ts; keep in sync).
  *
- * Only games that accept a `courseId` / `lessonId` scope are listed — the rest
- * draw on the whole language, so a gate running one would test material the
- * learner has not reached. Mirrors `SCOPED_GAME_IDS` in
- * mobile/app/(tabs)/educator/lesson-edit.tsx; widen both together as each game
- * learns to read the scope params.
+ * Two behaviours at the gate, decided client-side: the four scope-aware games
+ * (quiz, matching-game, word-review, say-it-back) record a real score on
+ * finish; every other game clears the gate on launch, like a waiver — the rest
+ * draw on the whole language and several have no finish state, so requiring a
+ * "win" would soft-lock the path.
  */
-const SCOPED_GAME_KEYS: string[] = ["quiz", "matching-game", "word-review", "say-it-back"];
+const SCOPED_GAME_KEYS: string[] = [
+  "speed-round", "recall-bingo", "quiz", "matching-game", "word-review",
+  "phrase-review", "dictation", "say-it-back", "fill-proverb",
+  "sentence-builder", "script-decode", "trace-symbol", "etymology-trail",
+  "word-challenge",
+];
 
 /** In-lesson check types — formative questions fired between transcript lines. */
 

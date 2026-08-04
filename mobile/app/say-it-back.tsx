@@ -11,6 +11,7 @@ import type { DictionaryEntry } from "@/lib/dictionary";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Audio } from "expo-av";
 import * as Speech from "expo-speech";
+import { useCheckpointGameClear } from "@/lib/hooks/use-checkpoints";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -111,6 +112,13 @@ export default function SayItBackScreen() {
   useEffect(() => () => { playbackSound?.unloadAsync(); }, [playbackSound]);
 
   const currentWord = words[wordIndex];
+
+  // Opened from a checkpoint gate: reaching the summary clears the gate.
+  const { recordClear } = useCheckpointGameClear();
+  useEffect(() => {
+    if (words.length > 0 && wordIndex >= words.length) recordClear(gotIt, total);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [words.length, wordIndex]);
 
   const playNative = useCallback(async () => {
     if (!currentWord) return;

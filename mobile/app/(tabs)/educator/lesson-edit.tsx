@@ -73,18 +73,19 @@ const LESSON_TYPE_OPTIONS = LESSON_TYPES.map((id) => ({
 }));
 
 /**
- * Only games that can be narrowed to a block are offered. The rest of the
- * playground draws on the whole language, so pointing a gate at one would test
- * material the learner has not reached — worse than the gate's own round.
- * Widen this list as each game learns to read `courseId` / `lessonId`.
- * Mirrors SCOPED_GAME_KEYS in server/src/routes/educator/lessons.ts.
+ * Every playground game is offerable. The four scope-aware ones narrow to this
+ * block's material and score the gate on finish; the rest draw on the whole
+ * language and clear the gate on launch (played = cleared, no score). Mirrors
+ * SCOPED_GAME_KEYS in server/src/routes/educator/lessons.ts.
  */
-const SCOPED_GAME_IDS = ["quiz", "matching-game", "word-review", "say-it-back"];
+const SCORED_GAME_IDS = ["quiz", "matching-game", "word-review", "say-it-back"];
 
-const GAME_KEY_OPTIONS = GAMES.filter((g) => SCOPED_GAME_IDS.includes(g.id)).map((g) => ({
+const GAME_KEY_OPTIONS = GAMES.map((g) => ({
   id: g.id,
   label: g.id.replace(/-/g, " ").replace(/^./, (ch) => ch.toUpperCase()),
-  sublabel: `Runs ${g.id} scoped to this block's lessons`,
+  sublabel: SCORED_GAME_IDS.includes(g.id)
+    ? "Scoped to this block — finishing it scores and clears the gate"
+    : "Whole-language game — opening it clears the gate, no score",
 }));
 
 export default function EducatorLessonEditScreen() {

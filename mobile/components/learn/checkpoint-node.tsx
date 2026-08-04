@@ -59,7 +59,7 @@ function ReadyHalo({ lively }: { lively: boolean }) {
 }
 
 /** Flag (cleared / ready) or padlock (locked), counter-rotated upright. */
-function GateGlyph({ status }: { status: JourneyCheckpointNode["checkpoint"]["status"] }) {
+function GateGlyph({ status, isGame }: { status: JourneyCheckpointNode["checkpoint"]["status"]; isGame: boolean }) {
   if (status === "locked") {
     return (
       <Svg viewBox="0 0 24 24" width={22} height={22} fill="none">
@@ -75,7 +75,8 @@ function GateGlyph({ status }: { status: JourneyCheckpointNode["checkpoint"]["st
       </Svg>
     );
   }
-  return <IconSymbol name="flag.fill" size={22} color="#fff" />;
+  // A gate that runs a mini-game wears the controller so the map says so.
+  return <IconSymbol name={isGame ? "gamecontroller.fill" : "flag.fill"} size={22} color="#fff" />;
 }
 
 export const CheckpointNodeView = memo(function CheckpointNodeView({
@@ -95,7 +96,9 @@ export const CheckpointNodeView = memo(function CheckpointNodeView({
   const label =
     checkpoint.kind === "intro"
       ? t("checkpoint.introNodeLabel")
-      : tWithVars(t, "checkpoint.nodeLabel", { n: checkpoint.ordinal });
+      : checkpoint.gameKey
+        ? tWithVars(t, "checkpoint.gameNodeLabel", { n: checkpoint.ordinal })
+        : tWithVars(t, "checkpoint.nodeLabel", { n: checkpoint.ordinal });
   const stateLabel =
     status === "done" ? t("checkpoint.mapDone") : locked ? t("checkpoint.mapLocked") : t("checkpoint.mapReady");
 
@@ -136,7 +139,7 @@ export const CheckpointNodeView = memo(function CheckpointNodeView({
         >
           {/* Counter-rotate so the glyph sits upright inside the diamond. */}
           <View style={{ transform: [{ rotate: "-45deg" }] }}>
-            <GateGlyph status={status} />
+            <GateGlyph status={status} isGame={!!checkpoint.gameKey && checkpoint.kind === "checkpoint"} />
           </View>
         </LinearGradient>
       </View>

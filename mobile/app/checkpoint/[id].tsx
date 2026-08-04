@@ -6,6 +6,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { getAccent } from "@/constants/accent-colors";
 import type { DictionaryEntry } from "@/lib/dictionary";
 import { buildCheckpointRound, isCorrectAnswer, type CheckpointQuestion } from "@/lib/checkpoint-rounds";
+import { GAMES } from "@/lib/playground";
 import { anchorLessonIdFrom, findCheckpoint, isPassingScore, isScored, lessonAfterCheckpoint } from "@/lib/checkpoints";
 import { hapticError, hapticHeavy, hapticSuccess } from "@/lib/haptics";
 import { useCheckpointLessons, useCheckpoints, usePassCheckpoint } from "@/lib/hooks/use-checkpoints";
@@ -91,6 +92,15 @@ export default function CheckpointScreen() {
   const total = questions.length;
   const question: CheckpointQuestion | undefined = questions[index];
   const kind = checkpoint?.kind ?? "checkpoint";
+  // The playground mini-game this gate runs instead of its built-in round.
+  // Unknown keys resolve to undefined and fall back to the round, so a stale
+  // gameKey can never brick a gate.
+  const gate_game = checkpoint?.gameKey ? GAMES.find((g) => g.id === checkpoint.gameKey) : undefined;
+  // The four scope-aware games record a scored clear themselves on finish
+  // (useCheckpointGameClear). Every other game clears on launch below — they
+  // draw on the whole language and several never "finish", so requiring a win
+  // would soft-lock the gate.
+  const gameIsScored = !!gate_game && ["quiz", "matching-game", "word-review", "say-it-back"].includes(gate_game.id);
   const passed = isPassingScore(correctCount, total, kind);
   const nextLesson = checkpoint ? lessonAfterCheckpoint(checkpoint, orderedLessons) : undefined;
 
@@ -286,6 +296,88 @@ export default function CheckpointScreen() {
             >
               <Text style={{ fontSize: 15, fontWeight: "800", color: M.ink }}>{t("checkpoint.backToPath")}</Text>
             </Pressable>
+          </View>
+        </SafeAreaView>
+      </>
+    );
+  }
+
+  // ── Game gate ──────────────────────────────────────────────────────────
+  // This gate runs a playground mini-game instead of the built-in round. The
+  // game records the clear itself (useCheckpointGameClear reads the
+  // `checkpointId` param), so this screen only launches it. Placed before the
+  // empty-round waiver: a game gate never builds a round, so `total === 0`
+  // here is expected, not a content gap.
+  if (gate_game && kind === "checkpoint") {
+    const cleared = checkpoint.status === "done";
+    const gameLabel = t(`playground.games.${gate_game.i18nKey}.title`);
+    return (
+      <>
+        <Stack.Screen options={screenOptions} />
+        <SafeAreaView style={{ flex: 1, backgroundColor: M.bg }} edges={["bottom"]}>
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+            <View
+              style={{
+                width: 96, height: 96, borderRadius: 24, alignItems: "center", justifyContent: "center",
+                backgroundColor: M.accentGlow, borderWidth: 2, borderColor: M.accent,
+                transform: [{ rotate: "45deg" }],
+              }}
+            >
+              <View style={{ transform: [{ rotate: "-45deg" }] }}>
+                <IconSymbol name={gate_game.icon} size={40} color={M.accent} />
+              </View>
+            </View>
+            <Text style={{ marginTop: 28, fontSize: 22, fontWeight: "800", color: M.text, textAlign: "center" }}>
+              {gameLabel}
+            </Text>
+            <Text style={{ marginTop: 10, fontSize: 14, color: M.sub, textAlign: "center", lineHeight: 20 }}>
+              {cleared ? t("checkpoint.gameClearedBody") : t("checkpoint.gameGateBody")}
+            </Text>
+            <Pressable
+              onPress={() => {
+                // Unscored games clear the gate on launch — a waiver-style
+                // clear (opens the path, no XP), ref-guarded like the round's.
+                if (!gameIsScored && checkpoint.status !== "done" && !recorded.current) {
+                  recorded.current = true;
+                  passCheckpoint.mutate({
+                    checkpointId: checkpoint.id,
+                    languageId: selectedLanguageId,
+                    correct: 0,
+                    total: 0,
+                    attempts: 1,
+                    waived: true,
+                  });
+                }
+                // The game row's transcript is the block's held-back vocab —
+                // but eight of M1's ten rows are still empty, and a scoped game
+                // pointed at an empty lesson has nothing to build from. Only
+                // narrow to the row when it actually carries lines; otherwise
+                // the game falls back to its course/dictionary pool.
+                const gameRow = lessons.find((l) => l.id === checkpoint.gameLessonId);
+                const rowHasVocab = (gameRow?.transcript?.length ?? 0) > 0;
+                router.push({
+                  pathname: gate_game.route as never,
+                  params: {
+                    ...(rowHasVocab ? { lessonId: checkpoint.gameLessonId } : {}),
+                    courseId: checkpoint.courseId,
+                    ...(gameIsScored ? { checkpointId: checkpoint.id } : {}),
+                  } as never,
+                });
+              }}
+              style={{ marginTop: 28, borderRadius: 14, paddingVertical: 15, paddingHorizontal: 40, backgroundColor: accent.solid }}
+              className="active:opacity-80"
+              accessibilityRole="button"
+              accessibilityLabel={tWithVars(t, "checkpoint.playGame", { game: gameLabel })}
+            >
+              <Text style={{ fontSize: 15, fontWeight: "800", color: M.ink }}>
+                {cleared ? t("checkpoint.playAgain") : tWithVars(t, "checkpoint.playGame", { game: gameLabel })}
+              </Text>
+            </Pressable>
+            {cleared && (
+              <Pressable onPress={handleContinue} style={{ marginTop: 14 }} accessibilityRole="button">
+                <Text style={{ fontSize: 14, fontWeight: "600", color: M.sub }}>{t("checkpoint.backToPath")}</Text>
+              </Pressable>
+            )}
           </View>
         </SafeAreaView>
       </>
