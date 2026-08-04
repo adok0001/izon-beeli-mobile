@@ -32,7 +32,7 @@ export function useSaveEducatorLesson() {
     }: {
       id: string;
       payload: Partial<
-        Pick<EducatorLesson, "title" | "description" | "type" | "artist" | "genre" | "style" | "order" | "isActive" | "status">
+        Pick<EducatorLesson, "title" | "description" | "type" | "gameKey" | "artist" | "genre" | "style" | "order" | "isActive" | "status">
       > & {
         /** Story fold-in narrative framing (course-bound stories). Empty clears. */
         narrativeIntro?: string | null;

@@ -41,6 +41,17 @@ function invalidType(type: string | null | undefined): boolean {
   return type != null && !LESSON_TYPES.includes(type as (typeof LESSON_TYPES)[number]);
 }
 
+/**
+ * Playground mini-games a `type: "game"` row may point its gate at.
+ *
+ * Only games that accept a `courseId` / `lessonId` scope are listed — the rest
+ * draw on the whole language, so a gate running one would test material the
+ * learner has not reached. Mirrors `SCOPED_GAME_IDS` in
+ * mobile/app/(tabs)/educator/lesson-edit.tsx; widen both together as each game
+ * learns to read the scope params.
+ */
+const SCOPED_GAME_KEYS: string[] = ["quiz", "matching-game", "word-review", "say-it-back"];
+
 /** In-lesson check types — formative questions fired between transcript lines. */
 
 
@@ -60,6 +71,7 @@ educatorLessonsRouter.get("/lessons", async (c) => {
       description: lessons.description,
       descriptionTranslations: lessons.descriptionTranslations,
       type: lessons.type,
+      gameKey: lessons.gameKey,
       audioUrl: lessons.audioUrl,
       duration: lessons.duration,
       order: lessons.order,
@@ -215,6 +227,7 @@ educatorLessonsRouter.patch("/lessons/:id", async (c) => {
   const body = await parseJson<{
     title?: string; titleTranslations?: TranslationMap;
     description?: string; descriptionTranslations?: TranslationMap; type?: string;
+    gameKey?: string | null;
     artist?: string | null; genre?: string | null; order?: number; isActive?: boolean;
     status?: string; style?: string | null;
     narrativeIntro?: string | null; narrativeOutro?: string | null;
@@ -240,6 +253,15 @@ educatorLessonsRouter.patch("/lessons/:id", async (c) => {
   applyMap(updates, body, "title", "titleTranslations");
   applyMap(updates, body, "description", "descriptionTranslations");
   if (body.type !== undefined) updates.type = body.type;
+  // Which playground mini-game a game row's gate runs. Validated against the
+  // same id list the app ships, so a typo can't silently produce a dead gate.
+  if (body.gameKey !== undefined) {
+    const key = body.gameKey?.trim() || null;
+    if (key && !SCOPED_GAME_KEYS.includes(key)) {
+      return c.json({ error: `gameKey must be one of: ${SCOPED_GAME_KEYS.join(", ")}` }, 400);
+    }
+    updates.gameKey = key;
+  }
   if (body.artist !== undefined) updates.artist = body.artist?.trim() || null;
   if (body.genre !== undefined) updates.genre = body.genre?.trim() || null;
   if (body.order !== undefined) updates.order = body.order;
@@ -351,6 +373,7 @@ educatorLessonsRouter.get("/lessons/:id", async (c) => {
       description: lessons.description,
       descriptionTranslations: lessons.descriptionTranslations,
       type: lessons.type,
+      gameKey: lessons.gameKey,
       audioUrl: lessons.audioUrl,
       duration: lessons.duration,
       order: lessons.order,

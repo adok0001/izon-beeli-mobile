@@ -506,6 +506,12 @@ export const lessons = pgTable(
       .notNull()
       .references(() => courses.id),
     type: varchar("type", { length: 16 }).default("lesson").notNull(),
+    // Which playground mini-game a `type: "game"` row runs when its block's gate
+    // is opened — one of the ids in mobile/lib/playground.ts (`matching-game`,
+    // `quiz`, `word-review`, `say-it-back`, …). Null falls back to the gate's own
+    // rotating recall/listen/build/match round, which is what every gate did
+    // before this column existed. Ignored on rows that are not games.
+    gameKey: varchar("game_key", { length: 32 }),
     title: varchar("title", { length: 300 }).notNull(),
     /** Full title map { en, fr, pcm, ... }. `title` is the derived en projection. */
     titleTranslations: jsonb("title_translations").$type<Record<string, string>>(),

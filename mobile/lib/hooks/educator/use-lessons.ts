@@ -15,6 +15,8 @@ export interface EducatorLesson {
   title: string | LocalizedText;
   description: string | LocalizedText;
   type: string;
+  /** `type: "game"` rows only — which playground mini-game this gate runs. */
+  gameKey?: string | null;
   audioUrl?: string | null;
   duration?: number | null;
   order: number;
@@ -166,7 +168,7 @@ export function useUpdateEducatorLesson() {
     }: {
       id: string;
       payload: Partial<
-        Pick<EducatorLesson, "title" | "description" | "type" | "artist" | "genre" | "style" | "order" | "isActive" | "status">
+        Pick<EducatorLesson, "title" | "description" | "type" | "gameKey" | "artist" | "genre" | "style" | "order" | "isActive" | "status">
       >;
     }) => {
       const token = await getToken();

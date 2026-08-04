@@ -143,6 +143,12 @@ export interface Lesson {
   courseId: string;
   /** @default "lesson" */
   type?: LessonType | null;
+  /**
+   * `type: "game"` rows only — which playground mini-game this block's gate runs
+   * (an id from `lib/playground.ts`). Null falls back to the gate's own rotating
+   * recall/listen/build/match round.
+   */
+  gameKey?: string | null;
   title: string | LocalizedText;
   /** Full gloss map — the authoritative value; `title` is its English projection. */
   titleTranslations?: LocalizedText | null;

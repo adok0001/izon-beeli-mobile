@@ -69,6 +69,12 @@ export interface Checkpoint {
    * transcripts precisely so the closing game could draw on them.
    */
   gameLessonId?: string;
+  /**
+   * The playground mini-game this gate runs instead of its built-in round, taken
+   * from the game row's `gameKey`. Absent means no game row, or one that names
+   * none — either way the gate falls back to `format`.
+   */
+  gameKey?: string;
   format: CheckpointFormat;
   status: CheckpointStatus;
 }
@@ -248,6 +254,9 @@ export function buildCheckpoints(
         lessonIds: covered.map((l) => l.id),
         anchorLessonId: anchor.id,
         ...(game ? { gameLessonId: game.id } : {}),
+        // `format` is still assigned even when a game takes over, so the cursor
+        // keeps rotating and the fallback is ready if the key is later cleared.
+        ...(game?.gameKey ? { gameKey: game.gameKey } : {}),
         format: nextFormat(),
         status: passedCheckpointIds.has(id)
           ? "done"

@@ -1,3 +1,4 @@
+import { GAMES } from "@/lib/playground";
 import { LESSON_TYPES, type LessonType, type LocalizedText } from "@/types";
 import { StudioDropdown } from "@/components/studio/studio-dropdown";
 import { NotificationBanner } from "@/components/notifications/notification-banner";
@@ -71,6 +72,21 @@ const LESSON_TYPE_OPTIONS = LESSON_TYPES.map((id) => ({
   sublabel: TYPE_BLURB[id],
 }));
 
+/**
+ * Only games that can be narrowed to a block are offered. The rest of the
+ * playground draws on the whole language, so pointing a gate at one would test
+ * material the learner has not reached — worse than the gate's own round.
+ * Widen this list as each game learns to read `courseId` / `lessonId`.
+ * Mirrors SCOPED_GAME_KEYS in server/src/routes/educator/lessons.ts.
+ */
+const SCOPED_GAME_IDS = ["quiz", "matching-game", "word-review", "say-it-back"];
+
+const GAME_KEY_OPTIONS = GAMES.filter((g) => SCOPED_GAME_IDS.includes(g.id)).map((g) => ({
+  id: g.id,
+  label: g.id.replace(/-/g, " ").replace(/^./, (ch) => ch.toUpperCase()),
+  sublabel: `Runs ${g.id} scoped to this block's lessons`,
+}));
+
 export default function EducatorLessonEditScreen() {
   const M = useMuseumTheme();
   const router = useRouter();
@@ -84,6 +100,7 @@ export default function EducatorLessonEditScreen() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState("");
+  const [gameKey, setGameKey] = useState("");
   const [artist, setArtist] = useState("");
   const [genre, setGenre] = useState("");
   const [style, setStyle] = useState<LessonStyle | null>(null);
@@ -125,6 +142,7 @@ export default function EducatorLessonEditScreen() {
     setTitle(localize(lessonDetail.title, uiLanguage));
     setDescription(localize(lessonDetail.description, uiLanguage));
     setType(lessonDetail.type ?? "");
+    setGameKey(lessonDetail.gameKey ?? "");
     setArtist(lessonDetail.artist ?? "");
     setGenre(lessonDetail.genre ?? "");
     setStyle(lessonDetail.style ?? null);
@@ -179,7 +197,7 @@ export default function EducatorLessonEditScreen() {
   // (which stays on the screen); create/delete instead set `leaving`.
   const { dirty, markSaved } = useDirtyTracker(
     {
-      title, description, type, artist, genre, style,
+      title, description, type, gameKey, artist, genre, style,
       narrativeIntro, narrativeOutro, canDo,
       audioUri, segments, culturalAttachments, checks,
     },
@@ -216,6 +234,7 @@ export default function EducatorLessonEditScreen() {
       if (meta.title) setTitle(meta.title);
       if (meta.description) setDescription(meta.description);
       if (meta.type) setType(meta.type);
+      if (meta.gameKey) setGameKey(meta.gameKey);
       if (meta.artist) setArtist(meta.artist);
       if (meta.genre) setGenre(meta.genre);
       if (meta.canDo) setCanDo(toLocalizedText(null, meta.canDo));
@@ -315,6 +334,7 @@ export default function EducatorLessonEditScreen() {
           title: title.trim(),
           description: description.trim(),
           type: type.trim() || undefined,
+          gameKey: type === "game" ? gameKey.trim() || null : null,
           artist: artist.trim() || undefined,
           genre: genre.trim() || undefined,
           style,
@@ -501,6 +521,22 @@ export default function EducatorLessonEditScreen() {
                   placeholder="Lesson"
                 />
               </View>
+              {/* Games only. Which playground mini-game this block's gate runs;
+                  left unset, the gate keeps its own rotating round. Hidden on
+                  ordinary lessons because the column is ignored there. */}
+              {type === "game" && (
+                <View className="mt-2">
+                  <StudioDropdown
+                    label="Mini-game"
+                    icon="gamecontroller.fill"
+                    title="Which game closes this block"
+                    value={gameKey}
+                    options={GAME_KEY_OPTIONS}
+                    onChange={setGameKey}
+                    placeholder="Gate's own round"
+                  />
+                </View>
+              )}
               <View className="mt-2 flex-row gap-2">
                 <TextInput
                   value={artist}
