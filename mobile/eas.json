@@ -14,6 +14,7 @@
     },
     "development": {
       "extends": "base",
+      "channel": "development",
       "developmentClient": true,
       "distribution": "internal",
       "environment": "development",
@@ -24,6 +25,7 @@
     },
     "preview": {
       "extends": "base",
+      "channel": "preview",
       "distribution": "internal",
       "environment": "preview",
       "ios": {
@@ -32,6 +34,7 @@
     },
     "production": {
       "extends": "base",
+      "channel": "production",
       "environment": "production",
       "ios": {
         "image": "macos-sequoia-15.6-xcode-26.2",
@@ -41,6 +44,7 @@
     },
     "development-simulator": {
       "extends": "base",
+      "channel": "development",
       "developmentClient": true,
       "distribution": "internal",
       "environment": "development",
