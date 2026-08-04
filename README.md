@@ -2,19 +2,19 @@
 
 Beeli is a language-learning platform focused on Izon and other African languages. It combines guided lessons, audio playback, quizzes, journaling, social learning, community contributions, classroom tools, and real-time multiplayer.
 
-This repository is a monorepo containing the mobile app, two web apps, the API server, and the real-time multiplayer workers.
+This repository is a monorepo containing the mobile app, the web app, the API server, and the real-time multiplayer workers.
 
 ## Repository layout
 
 ```text
 mobile/        Expo + React Native app (iOS, Android, web)
 web/           Next.js consumer web companion app
-data/          Next.js org/educator content dashboard
 server/        Hono + Drizzle API (progress, content, feed, contributions, multiplayer)
 partykit/      Real-time multiplayer workers
-docs/          Build and troubleshooting docs
-userio-docs/   Product and planning docs
+docs/          Engineering, product, and content reference docs
+userio-docs/   Izon source corpus — tutor lesson notes, dictionaries (gitignored)
 scripts/       Repo-level scripts
+data/          Unmaintained prototype dashboard — superseded by Beeli Studio
 ```
 
 Each workspace has its own `package.json` and is installed and run independently (there is no root `package.json`).
@@ -53,10 +53,12 @@ A Next.js 15 web companion: audio-first lessons, interactive transcripts with in
 dictionary popups, a persistent audio bar, course browsing, and gamified learning.
 Uses its own purple "gradient/glow" design system (kept separate from the mobile "Museum" system).
 
-### `data/` — Next.js content dashboard (`beelidata`)
+### `data/` — unmaintained prototype
 
-An organization/project dashboard where educators personalize language content.
-Org- and project-scoped routes back the educator content workflow.
+An org/project dashboard prototype from June 2026. It was never deployed and is
+superseded by **Beeli Studio** — the educator/admin console that lives in the mobile
+app (`mobile/app/(tabs)/educator/*`) and in `web/app/admin/*` + `web/app/educator/*`.
+Kept only as reference; do not build on it.
 
 ### `server/` — Hono API (`izon-beeli-server`)
 
@@ -113,8 +115,7 @@ PARTYKIT_API_KEY=...
 ALLOWED_ORIGINS=http://localhost:8081,http://localhost:19006
 ```
 
-The `web/` and `data/` apps each read their own Clerk and API configuration; see their
-respective `.env.local` files.
+The `web/` app reads its own Clerk and API configuration; see its `.env.local` file.
 
 ## Getting started
 
@@ -206,9 +207,9 @@ cd data && npm run dev     # educator dashboard on http://localhost:3002
 - `npm run dev` — local PartyKit server
 - `npm run deploy` — deploy PartyKit workers
 
-### `web/` and `data/`
+### `web/`
 
-- `npm run dev` — Next.js dev server (ports 3001 and 3002 respectively)
+- `npm run dev` — Next.js dev server (port 3001)
 - `npm run build` / `npm run start` — production build and run
 - `npm run lint` — Next.js lint
 
@@ -346,7 +347,7 @@ The backend currently includes routes for:
 - The mobile app uses Expo Router file-based routing with typed routes and NativeWind classes
 - Prefer shared hooks in `mobile/lib/hooks/` for server data access; use Zustand only for local UI/session state
 - The mobile "Museum" design system and the `web/` "gradient/glow" system are separate — do not mix them
-- Educators personalize content through the `data/` dashboard, not by editing files directly
+- Educators personalize content through **Beeli Studio** (the educator/admin console in the mobile app and on web), never by editing files directly
 - Some classroom and contributor areas still mix production-backed and mock-backed behavior, so validate flows before extending them
 
 ## Documentation

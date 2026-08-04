@@ -1,7 +1,7 @@
 # Izon Flagship Course — Canonical Plan
 
 **Status:** Locked (design) · **Date:** 2026-07-15 · **Scope:** Izon (Ịzọn) flagship — course structure + pedagogy layer.
-**Supersedes:** `mobile/scripts/out/izon-lesson-classification.md` (the place-remap proposal — retired, see §1).
+**Supersedes:** the `izon-lesson-classification` place-remap proposal — retired, see §1 (document deleted 2026-08-04).
 
 ---
 

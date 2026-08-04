@@ -1,14 +1,17 @@
 # Beeli — 2027 Roadmap
 
 **Flagship:** Izon (Ijaw)  
-**Goal date:** 31 December 2027  
-**Current date:** June 2026
+**Goal date:** 31 December 2027
 
 ---
 
 ## Targets
 
-| Credential | Current | Target |
+> **Baseline as of 2026-06-20.** The left column is a *snapshot*, not a live figure —
+> it has not been re-measured since. Re-run the counts against production before
+> quoting any of it externally.
+
+| Credential | Baseline (2026-06-20) | Target |
 |---|---|---|
 | Izon dictionary entries | ~402 | 22,000+ |
 | Yoruba entries | ~96 | 10,000+ |
