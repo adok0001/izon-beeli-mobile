@@ -42,6 +42,7 @@ englishWordbankRouter.get("/", async (c) => {
       languageId: dictionaryEntries.languageId,
       word: dictionaryEntries.word,
       pronunciation: dictionaryEntries.pronunciation,
+      tone: dictionaryEntries.tone,
       audioUrl: dictionaryEntries.audioUrl,
     })
     .from(dictionaryEntries)
@@ -61,10 +62,13 @@ englishWordbankRouter.get("/", async (c) => {
 
   const result = entries.map((entry) => {
     const trans = byWordId.get(entry.id) ?? [];
-    const byLang: Record<string, { word: string; pronunciation?: string | null; audioUrl?: string | null }[]> = {};
+    const byLang: Record<
+      string,
+      { word: string; pronunciation?: string | null; tone?: string | null; audioUrl?: string | null }[]
+    > = {};
     for (const t of trans) {
       if (!byLang[t.languageId]) byLang[t.languageId] = [];
-      byLang[t.languageId].push({ word: t.word, pronunciation: t.pronunciation, audioUrl: t.audioUrl });
+      byLang[t.languageId].push({ word: t.word, pronunciation: t.pronunciation, tone: t.tone, audioUrl: t.audioUrl });
     }
     return { ...entry, translations: byLang };
   });

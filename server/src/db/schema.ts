@@ -649,6 +649,15 @@ export const dictionaryEntries = pgTable(
     translations: jsonb("translations").$type<Record<string, string>>(),
     category: varchar("category", { length: 64 }).notNull(),
     pronunciation: varchar("pronunciation", { length: 500 }),
+    /**
+     * Lexical tone on the headword — one of `WORD_TONES` (lib/word-tones.ts).
+     *
+     * Structured where `pronunciation` is free text, so tone can be filtered,
+     * drilled and checked. Nullable and it stays that way: null means "not
+     * recorded" (most rows predate the column, and a non-tonal language never
+     * needs one), never "level".
+     */
+    tone: varchar("tone", { length: 16 }),
     example: text("example"),
     exampleTranslation: text("example_translation"),
     /** Full example-translation map; `exampleTranslation` is the derived en projection. */

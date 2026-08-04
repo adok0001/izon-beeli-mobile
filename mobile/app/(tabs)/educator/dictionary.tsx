@@ -10,6 +10,7 @@ import { useStudioAccess } from "@/components/studio/studio-gate";
 import { ActiveToggle } from "@/components/studio/active-toggle";
 import { ActionPill } from "@/components/studio/studio-action-pill";
 import { EntityPickerModal } from "@/components/studio/entity-picker-modal";
+import { ShareFileButton } from "@/components/studio/share-file-button";
 import { StudioCard } from "@/components/studio/studio-card";
 import { StudioDropdown } from "@/components/studio/studio-dropdown";
 import { StudioScreenHeader } from "@/components/studio/studio-screen-header";
@@ -31,7 +32,15 @@ import {
     useUpsertEducatorDictionary,
 } from "@/lib/hooks/use-educator-panel";
 import { friendlyError } from "@/lib/api";
-import { DICTIONARY_CATEGORY_VALUES, splitList, type DialectalVariant } from "@/lib/dictionary";
+import { buildMissingWordsCsv, missingWordsFilename } from "@/lib/coverage-export";
+import {
+    DICTIONARY_CATEGORY_VALUES,
+    splitList,
+    TONE_LABELS,
+    WORD_TONE_VALUES,
+    type DialectalVariant,
+    type WordTone,
+} from "@/lib/dictionary";
 import { useDictionaryCoverage } from "@/lib/hooks/use-contributions";
 import { useDictionaryExport } from "@/lib/hooks/educator/use-dictionary-edit";
 import { shareTextFile } from "@/lib/share-file";
@@ -60,6 +69,8 @@ type EditorState = {
   translations: LocalizedText;
   category: EducatorDictionaryCategory;
   pronunciation: string;
+  /** Lexical tone; empty means "not recorded" — never assume "level". */
+  tone: WordTone | "";
   example: string;
   exampleTranslations: LocalizedText;
   /** Comma-separated in-language synonyms. */
@@ -75,6 +86,7 @@ const EMPTY_EDITOR: EditorState = {
   translations: {},
   category: "nouns",
   pronunciation: "",
+  tone: "",
   example: "",
   exampleTranslations: {},
   synonyms: "",
@@ -265,6 +277,7 @@ export default function EducatorDictionaryScreen() {
         translations: editor.translations,
         category: editor.category,
         pronunciation: editor.pronunciation.trim() || undefined,
+        tone: editor.tone || undefined,
         example: editor.example.trim() || undefined,
         exampleTranslations: editor.exampleTranslations,
         synonyms: splitList(editor.synonyms),
@@ -469,6 +482,24 @@ export default function EducatorDictionaryScreen() {
                 <IconSymbol name={coverageOpen ? "chevron.up" : "chevron.down"} size={14} color={M.muted} />
               ) : null}
             </Pressable>
+            {/* The chip list below caps at 40 — the CSV is how an educator gets
+                the whole gap, pre-shaped for the dictionary importer. */}
+            {coverage.missing.length > 0 ? (
+              <View className="mt-3">
+                <ShareFileButton
+                  label={t("educator.dictionary.exportMissing", { defaultValue: "Export missing words (CSV)" })}
+                  fileName={missingWordsFilename(activeLanguageId, new Date().toISOString())}
+                  contents={() => Promise.resolve(buildMissingWordsCsv(coverage.missing))}
+                  message={t("educator.dictionary.exportMissingMessage", { defaultValue: "Beeli missing words" })}
+                  onError={(e) =>
+                    toastError(
+                      t("educator.dictionary.exportMissingFailed", { defaultValue: "Couldn’t export missing words" }),
+                      friendlyError(e),
+                    )
+                  }
+                />
+              </View>
+            ) : null}
             {coverageOpen && coverage.missing.length > 0 ? (
               <View className="mt-3 flex-row flex-wrap gap-2">
                 {coverage.missing.slice(0, 40).map((m) => (
@@ -537,6 +568,20 @@ export default function EducatorDictionaryScreen() {
             className="mt-2 rounded-xl px-3.5 py-2.5 text-sm"
             style={{ backgroundColor: M.inputBg, color: M.inputText }}
           />
+          {/* Structured counterpart to the free-text pronunciation above.
+              Optional: "" is stored as absent, never coerced to "level". */}
+          <View className="mt-2">
+            <StudioDropdown
+              label={t("admin.dictionary.fieldTone", { defaultValue: "Tone" })}
+              icon="waveform"
+              value={editor.tone}
+              options={[
+                { id: "", label: t("admin.dictionary.toneNotRecorded", { defaultValue: "Not recorded" }) },
+                ...WORD_TONE_VALUES.map((tone) => ({ id: tone as string, label: TONE_LABELS[tone] })),
+              ]}
+              onChange={(tone) => setEditor((prev) => ({ ...prev, tone: tone as WordTone | "" }))}
+            />
+          </View>
           <TextInput
             value={editor.example}
             onChangeText={(example) => setEditor((prev) => ({ ...prev, example }))}

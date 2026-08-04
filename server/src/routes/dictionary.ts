@@ -6,6 +6,7 @@ import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { contributions, dictionaryEntries, users, wordBank } from "../db/schema.js";
 import { CATEGORY_ERROR, isDictionaryCategory } from "../lib/dictionary-categories.js";
+import { TONE_ERROR, isValidToneInput, normalizeTone } from "../lib/word-tones.js";
 import { withTranslations } from "../lib/dictionary-translations.js";
 import { parseMap, project, toMap } from "../lib/translations.js";
 import { LexicalParseError, parseLexicalExtras } from "../lib/lexical-extras.js";
@@ -231,6 +232,11 @@ dictionaryAdminRouter.post("/", async (c) => {
   if (!isDictionaryCategory(category)) {
     return c.json({ error: CATEGORY_ERROR }, 400);
   }
+  // Optional: an absent or empty tone is "not recorded", only a present-and-
+  // unknown value is an error.
+  if (!isValidToneInput(fields.tone)) {
+    return c.json({ error: TONE_ERROR }, 400);
+  }
 
   let audioUrl = fields.audioUrl?.trim() || null;
   let imageUrl = fields.imageUrl?.trim() || null;
@@ -273,6 +279,7 @@ dictionaryAdminRouter.post("/", async (c) => {
       translations: translations ?? null,
       category,
       pronunciation: fields.pronunciation?.trim() || null,
+      tone: normalizeTone(fields.tone),
       example: fields.example?.trim() || null,
       exampleTranslation: exampleTranslations?.en ?? null,
       exampleTranslations: exampleTranslations ?? null,
@@ -311,11 +318,16 @@ dictionaryAdminRouter.patch("/:id", async (c) => {
   if (fields.category && !isDictionaryCategory(fields.category)) {
     return c.json({ error: CATEGORY_ERROR }, 400);
   }
+  if ("tone" in fields && !isValidToneInput(fields.tone)) {
+    return c.json({ error: TONE_ERROR }, 400);
+  }
 
   const updates: Partial<typeof dictionaryEntries.$inferInsert> = {};
   for (const key of ["pronunciation", "example"] as const) {
     if (key in fields) updates[key] = fields[key]?.trim() || null;
   }
+  // Sent-and-empty clears the column; not sent leaves it untouched.
+  if ("tone" in fields) updates.tone = normalizeTone(fields.tone);
   for (const key of ["word", "category"] as const) {
     if (fields[key]?.trim()) updates[key] = fields[key].trim();
   }

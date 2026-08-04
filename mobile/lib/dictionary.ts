@@ -16,6 +16,8 @@ export interface DictionaryEntry {
   category: DictionaryCategory;
   languageId: string;
   pronunciation?: string;
+  /** Lexical tone. Absent = not recorded, never "level" — see {@link WORD_TONE_VALUES}. */
+  tone?: WordTone | null;
   example?: string;
   exampleTranslation?: string | LocalizedText;
   /** Full example-translation map from the server; falls back to `exampleTranslation`. */
@@ -84,6 +86,34 @@ export const DICTIONARY_CATEGORY_VALUES = [
 ] as const;
 
 export type DictionaryCategory = (typeof DICTIONARY_CATEGORY_VALUES)[number];
+
+/**
+ * Lexical tone on a headword.
+ *
+ * Several of the languages here are tonal — Izon most of all, where the written
+ * form is routinely ambiguous without it (the corpus carries `⚠ TONE REQUIRED`
+ * notes for exactly this). `pronunciation` is free text and cannot be filtered,
+ * drilled or checked; this is the structured field, so a quiz can ask about tone
+ * and an educator can see at a glance which headwords still lack it.
+ *
+ * Optional everywhere: most entries predate the column, and a non-tonal language
+ * never needs it. Absent means "not recorded", never "level".
+ */
+export const WORD_TONE_VALUES = ["high", "rising", "level", "falling"] as const;
+
+export type WordTone = (typeof WORD_TONE_VALUES)[number];
+
+export const TONE_LABELS: Record<WordTone, string> = {
+  high: "High",
+  rising: "Rising",
+  level: "Level",
+  falling: "Falling",
+};
+
+/** Narrowing guard for untrusted input (CSV cells, request bodies). */
+export function isWordTone(value: unknown): value is WordTone {
+  return typeof value === "string" && (WORD_TONE_VALUES as readonly string[]).includes(value);
+}
 
 export const CATEGORY_LABELS: Record<DictionaryCategory, string> = {
   greetings: "Greetings & Courtesies",

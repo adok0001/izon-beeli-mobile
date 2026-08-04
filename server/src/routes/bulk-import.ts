@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { sql, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { isDictionaryCategory } from "../lib/dictionary-categories.js";
+import { TONE_ERROR, isValidToneInput, normalizeTone } from "../lib/word-tones.js";
 import { headwordId } from "../lib/slug.js";
 import { db } from "../db/index.js";
 import {
@@ -177,6 +178,8 @@ const dictionaryImporter: ImporterConfig = {
     if (!str(e.word)) return `Row ${i}: missing word`;
     if (!str(e.english)) return `Row ${i}: missing english`;
     if (!isDictionaryCategory(str(e.category))) return `Row ${i} (${str(e.id)}): invalid category "${str(e.category)}"`;
+    // Tone is optional — a sheet with no tone column, or a blank cell, is fine.
+    if (!isValidToneInput(e.tone)) return `Row ${i} (${str(e.id)}): ${TONE_ERROR}`;
     return (
       tooLong(str(e.id), 64, "id", i) ??
       tooLong(str(e.word), 500, "word", i) ??
@@ -193,6 +196,7 @@ const dictionaryImporter: ImporterConfig = {
       ...(mapPair(e, "english", "translations") as { english: string; translations: TranslationMap | null }),
       category: str(e.category),
       pronunciation: opt(e.pronunciation),
+      tone: normalizeTone(e.tone),
       example: opt(e.example),
       ...mapPair(e, "exampleTranslation", "exampleTranslations"),
       audioUrl: opt(e.audioUrl),
@@ -215,6 +219,10 @@ const dictionaryImporter: ImporterConfig = {
           exampleTranslation: sql`excluded.example_translation`,
           exampleTranslations: sql`excluded.example_translations`,
           audioUrl: sql`excluded.audio_url`,
+          // `tone` is optional and most sheets predate the column, so a re-import
+          // must not null out a tone somebody recorded in Studio. An import can
+          // therefore set a tone but never clear one — clearing is an editor job.
+          tone: keepIfAbsent("tone"),
           // No unified-CSV column carries these — keep what's already stored.
           synonyms: keepIfAbsent("synonyms"),
           antonyms: keepIfAbsent("antonyms"),
@@ -490,7 +498,7 @@ export function mapUnifiedRow(row: Entry, languageId: string): Mapped | { error:
       return { importerType: "dictionary", entry: {
         id: opt(row.id) ?? headwordId(languageId, str(row.text)),
         word: str(row.text), english: str(row.english), category: str(row.category),
-        pronunciation: str(row.pronunciation), example: str(row.example),
+        pronunciation: str(row.pronunciation), tone: str(row.tone), example: str(row.example),
         exampleTranslation: str(row.example_english),
         ...carryLocales(row, { english: "english", example_english: "exampleTranslation" }),
       } };

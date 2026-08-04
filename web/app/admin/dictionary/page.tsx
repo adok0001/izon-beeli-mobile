@@ -9,7 +9,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { BookText, CheckCircle2, Edit2, FileEdit, ImageIcon, Mic, Plus, Search, Trash2, Volume2, X, XCircle } from "lucide-react";
 import { useLanguages } from "@/lib/hooks/use-languages";
-import { ALL_CATEGORIES, splitList, type DialectalVariant } from "@mobile/lib/dictionary";
+import { ALL_CATEGORIES, splitList, type DialectalVariant, type WordTone } from "@mobile/lib/dictionary";
+import { ToneSelect } from "@/components/studio/tone-select";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useMemo, useState } from "react";
@@ -24,6 +25,8 @@ interface DictEntry {
   translations?: LocalizedText | null;
   category: string;
   pronunciation: string | null;
+  /** Structured lexical tone; null means "not recorded", never "level". */
+  tone: WordTone | null;
   example: string | null;
   exampleTranslation: string | null;
   exampleTranslations?: LocalizedText | null;
@@ -64,6 +67,7 @@ const EMPTY_FORM: EntryForm = {
   translations: {},
   category: "nouns",
   pronunciation: "",
+  tone: null,
   example: "",
   exampleTranslation: "",
   exampleTranslations: {},
@@ -191,11 +195,14 @@ function EntryModal({
             onChange={(v) => setForm((f) => ({ ...f, translations: v }))}
           />
 
-          <div>
-            <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">
-              {t("admin.dictionary.fieldPronunciation")}
-            </label>
-            <input className={fieldCls} value={form.pronunciation ?? ""} onChange={set("pronunciation")} placeholder="Phonetic pronunciation" />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">
+                {t("admin.dictionary.fieldPronunciation")}
+              </label>
+              <input className={fieldCls} value={form.pronunciation ?? ""} onChange={set("pronunciation")} placeholder="Phonetic pronunciation" />
+            </div>
+            <ToneSelect className={fieldCls} value={form.tone} onChange={(tone) => setForm((f) => ({ ...f, tone }))} />
           </div>
 
           <div>

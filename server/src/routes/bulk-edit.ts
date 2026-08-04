@@ -5,6 +5,7 @@ import { auditLog, dictionaryEntries } from "../db/schema.js";
 import { AuthEnv } from "../middleware/auth.js";
 import { withTranslations } from "../lib/dictionary-translations.js";
 import { isDictionaryCategory } from "../lib/dictionary-categories.js";
+import { TONE_ERROR, isWordTone } from "../lib/word-tones.js";
 import { GLOSS_LOCALES } from "./educator/dictionary.js";
 import type { TranslationMap } from "../lib/translations.js";
 import {
@@ -56,6 +57,7 @@ function editColumns(): string[] {
     ...gloss("english"),
     "category",
     "pronunciation",
+    "tone",
     "example",
     ...gloss("exampleTranslation"),
     "semanticDomain",
@@ -73,6 +75,7 @@ function toExportRow(raw: Row): Record<string, string> {
     word: row.word,
     category: row.category,
     pronunciation: row.pronunciation ?? "",
+    tone: row.tone ?? "",
     example: row.example ?? "",
     semanticDomain: row.semanticDomain ?? "",
     status: row.status,
@@ -161,6 +164,7 @@ interface MergedValues {
   translations: TranslationMap | null;
   category: string;
   pronunciation: string | null;
+  tone: string | null;
   example: string | null;
   exampleTranslation: string | null;
   exampleTranslations: TranslationMap | null;
@@ -199,6 +203,12 @@ function mergeRow(
   const exampleMap = mergeGlossMap(hydrated.exampleTranslations ?? {}, cells, "exampleTranslation", GLOSS_LOCALES);
   const example = projectMap(exampleMap);
 
+  // Tone is optional, so a blank or cleared (`--`) cell is a legitimate "not
+  // recorded" — only a value that is present and unknown is an error. `?? null`
+  // covers a stored row read before the column existed.
+  const tone = mergeScalar(hydrated.tone ?? null, cells.tone);
+  if (tone !== null && !isWordTone(tone)) return { error: TONE_ERROR };
+
   const merged: MergedValues = {
     id: current.id,
     word: word.value,
@@ -206,6 +216,7 @@ function mergeRow(
     translations: gloss.map,
     category: category.value,
     pronunciation: mergeScalar(hydrated.pronunciation, cells.pronunciation),
+    tone,
     example: mergeScalar(hydrated.example, cells.example),
     exampleTranslation: example.flat,
     exampleTranslations: example.map,
@@ -229,6 +240,7 @@ function mergeRow(
       translations: hydrated.translations,
       category: hydrated.category,
       pronunciation: hydrated.pronunciation,
+      tone: hydrated.tone,
       example: hydrated.example,
       exampleTranslation: hydrated.exampleTranslation,
       exampleTranslations: hydrated.exampleTranslations,
@@ -273,7 +285,8 @@ async function applyEdits(rows: MergedRow[], languageId: string, actorId: string
         (r) => sql`(
           ${r.id}::varchar, ${r.word}::varchar, ${r.english}::varchar,
           ${r.translations === null ? null : JSON.stringify(r.translations)}::jsonb,
-          ${r.category}::varchar, ${r.pronunciation}::varchar, ${r.example}::text,
+          ${r.category}::varchar, ${r.pronunciation}::varchar, ${r.tone}::varchar,
+          ${r.example}::text,
           ${r.exampleTranslation}::text,
           ${r.exampleTranslations === null ? null : JSON.stringify(r.exampleTranslations)}::jsonb,
           ${r.semanticDomain}::varchar, ${r.unpublish}::boolean
@@ -289,6 +302,7 @@ async function applyEdits(rows: MergedRow[], languageId: string, actorId: string
         translations = v.translations,
         category = v.category,
         pronunciation = v.pronunciation,
+        tone = v.tone,
         example = v.example,
         example_translation = v.example_translation,
         example_translations = v.example_translations,
@@ -298,7 +312,7 @@ async function applyEdits(rows: MergedRow[], languageId: string, actorId: string
         published_by = CASE WHEN v.unpublish THEN NULL ELSE d.published_by END,
         published_at = CASE WHEN v.unpublish THEN NULL ELSE d.published_at END
       FROM (VALUES ${values}) AS v(
-        id, word, english, translations, category, pronunciation,
+        id, word, english, translations, category, pronunciation, tone,
         example, example_translation, example_translations, semantic_domain, unpublish
       )
       WHERE d.id = v.id AND d.language_id = ${languageId}

@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { isDictionaryCategory } from "../lib/dictionary-categories.js";
+import { TONE_ERROR, isValidToneInput, normalizeTone } from "../lib/word-tones.js";
 import { parseJson } from "../lib/http.js";
 import { db } from "../db/index.js";
 import { dictionaryEntries } from "../db/schema.js";
@@ -16,6 +17,7 @@ interface ImportEntry {
   english: string;
   category: string;
   pronunciation?: string;
+  tone?: string;
   example?: string;
   exampleTranslation?: string;
   audioUrl?: string;
@@ -30,6 +32,8 @@ function validateEntry(entry: ImportEntry, index: number): string | null {
   if (!entry.word || typeof entry.word !== "string") return `Row ${index}: missing word`;
   if (!entry.english || typeof entry.english !== "string") return `Row ${index}: missing english`;
   if (!isDictionaryCategory(entry.category)) return `Row ${index} (${entry.id}): invalid category "${entry.category}"`;
+  // Tone is optional — only a present-and-unknown value is rejected.
+  if (!isValidToneInput(entry.tone)) return `Row ${index} (${entry.id}): ${TONE_ERROR}`;
   return null;
 }
 
@@ -85,6 +89,7 @@ adminImportRouter.post("/", async (c) => {
     english: e.english,
     category: e.category,
     pronunciation: e.pronunciation,
+    tone: normalizeTone(e.tone),
     example: e.example,
     exampleTranslation: e.exampleTranslation,
     audioUrl: e.audioUrl,
@@ -111,6 +116,7 @@ adminImportRouter.post("/", async (c) => {
           english: sql`excluded.english`,
           category: sql`excluded.category`,
           pronunciation: sql`excluded.pronunciation`,
+          tone: sql`excluded.tone`,
           example: sql`excluded.example`,
           exampleTranslation: sql`excluded.example_translation`,
           audioUrl: sql`excluded.audio_url`,

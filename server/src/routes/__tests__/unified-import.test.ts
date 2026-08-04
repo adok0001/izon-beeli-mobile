@@ -149,6 +149,7 @@ describe("mapUnifiedRow translation columns", () => {
       english: "take",
       category: "verbs",
       pronunciation: "",
+      tone: "",
       example: "",
       exampleTranslation: "",
     });

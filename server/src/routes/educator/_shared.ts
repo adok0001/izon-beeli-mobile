@@ -20,3 +20,4 @@ export function isAudioUpload(file: File): boolean {
 // so the educator routes keep importing their shared surface from one place.
 export { parseMap, toMap, project, hydrate } from "../../lib/translations.js";
 export { CATEGORY_ERROR, isDictionaryCategory } from "../../lib/dictionary-categories.js";
+export { TONE_ERROR, isValidToneInput, normalizeTone } from "../../lib/word-tones.js";

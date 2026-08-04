@@ -17,7 +17,16 @@ import { computeCoverage } from "../../lib/dictionary-coverage.js";
 import { withTranslations } from "../../lib/dictionary-translations.js";
 import { LexicalParseError, parseLexicalExtras } from "../../lib/lexical-extras.js";
 import { recordMediaAsset } from "../upload.js";
-import { CATEGORY_ERROR, isDictionaryCategory, parseMap, project, toMap } from "./_shared.js";
+import {
+  CATEGORY_ERROR,
+  TONE_ERROR,
+  isDictionaryCategory,
+  isValidToneInput,
+  normalizeTone,
+  parseMap,
+  project,
+  toMap,
+} from "./_shared.js";
 
 export const educatorDictionaryRouter = new Hono<AuthEnv>();
 
@@ -123,6 +132,11 @@ educatorDictionaryRouter.post("/dictionary", async (c) => {
   if (!isDictionaryCategory(category)) {
     return c.json({ error: CATEGORY_ERROR }, 400);
   }
+  // Optional: an absent or empty tone is "not recorded", only a present-and-
+  // unknown value is an error.
+  if (!isValidToneInput(fields.tone)) {
+    return c.json({ error: TONE_ERROR }, 400);
+  }
   if (!isAdmin && !reviewerLanguages.includes(languageId)) {
     return c.json({ error: "Forbidden: not assigned to this language" }, 403);
   }
@@ -173,6 +187,7 @@ educatorDictionaryRouter.post("/dictionary", async (c) => {
       translations: translations ?? null,
       category,
       pronunciation: fields.pronunciation?.trim() || null,
+      tone: normalizeTone(fields.tone),
       example: fields.example?.trim() || null,
       exampleTranslation: exampleTranslations?.en ?? null,
       exampleTranslations: exampleTranslations ?? null,
@@ -233,6 +248,9 @@ educatorDictionaryRouter.patch("/dictionary/:id", async (c) => {
   if (fields.category && !isDictionaryCategory(fields.category)) {
     return c.json({ error: CATEGORY_ERROR }, 400);
   }
+  if ("tone" in fields && !isValidToneInput(fields.tone)) {
+    return c.json({ error: TONE_ERROR }, 400);
+  }
   if (fields.status && !PATCHABLE_STATUSES.includes(fields.status as (typeof PATCHABLE_STATUSES)[number])) {
     // "published" only happens through the guarded POST /content/dictionary_entries/:id/publish endpoint.
     return c.json({ error: `status must be one of: ${PATCHABLE_STATUSES.join(", ")}` }, 400);
@@ -243,6 +261,8 @@ educatorDictionaryRouter.patch("/dictionary/:id", async (c) => {
   for (const key of ["pronunciation", "example"] as const) {
     if (key in fields) updates[key] = fields[key]?.trim() || null;
   }
+  // Sent-and-empty clears the column; not sent leaves it untouched.
+  if ("tone" in fields) updates.tone = normalizeTone(fields.tone);
   for (const key of ["word", "category"] as const) {
     if (fields[key]?.trim()) updates[key] = fields[key].trim();
   }

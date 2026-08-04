@@ -7,18 +7,20 @@ import { LanguageSelector } from "@/components/ui/language-selector";
 import { LocalizedTextInput, type LocalizedText, toLocalizedText } from "@/components/ui/localized-text-input";
 import { StatusPill } from "@/components/ui/status-pill";
 import { apiFetch } from "@/lib/api";
-import { ALL_CATEGORIES } from "@mobile/lib/dictionary";
+import { ALL_CATEGORIES, type WordTone } from "@mobile/lib/dictionary";
+import { buildMissingWordsCsv, missingWordsFilename } from "@mobile/lib/coverage-export";
+import { ToneSelect } from "@/components/studio/tone-select";
 import {
   canPublishContent,
   canSubmitForReview,
   publishContent,
   type ContentStatus,
 } from "@/lib/content-workflow";
-import { cn } from "@/lib/utils";
+import { cn, download } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { useLanguages } from "@/lib/hooks/use-languages";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, BookText, CheckCircle2, ChevronDown, Edit2, Eye, FileEdit, FileJson, ImageIcon, Mic, Plus, Search, Send, Trash2, Volume2, X, XCircle } from "lucide-react";
+import { AlertTriangle, BookText, CheckCircle2, ChevronDown, Download, Edit2, Eye, FileEdit, FileJson, ImageIcon, Mic, Plus, Search, Send, Trash2, Volume2, X, XCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useMemo, useState } from "react";
@@ -37,6 +39,8 @@ interface DictEntry {
   exampleTranslations?: LocalizedText;
   category: string;
   pronunciation: string | null;
+  /** Structured lexical tone; null means "not recorded", never "level". */
+  tone: WordTone | null;
   example: string | null;
   exampleTranslation: string | null;
   audioUrl: string | null;
@@ -85,6 +89,7 @@ const EMPTY_FORM: EntryForm = {
   exampleTranslations: {},
   category: "nouns",
   pronunciation: "",
+  tone: null,
   example: "",
   exampleTranslation: "",
   audioUrl: null,
@@ -152,7 +157,7 @@ function EntryModal({
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.dictionary.fieldWord")} *</label>
               <input className={fieldCls} value={form.word} onChange={set("word")} placeholder="Native word" />
@@ -161,6 +166,7 @@ function EntryModal({
               <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1 block">{t("admin.dictionary.fieldPronunciation")}</label>
               <input className={fieldCls} value={form.pronunciation ?? ""} onChange={set("pronunciation")} placeholder="Phonetic pronunciation" />
             </div>
+            <ToneSelect className={fieldCls} value={form.tone} onChange={(tone) => setForm((f) => ({ ...f, tone }))} />
           </div>
           <LocalizedTextInput
             label={t("admin.dictionary.fieldMeaning")}
@@ -303,11 +309,20 @@ function CoveragePanel({ coverage, onAddWord }: Readonly<{
   coverage: CoverageReport | undefined;
   onAddWord: (word: string) => void;
 }>) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   if (!coverage || coverage.distinctWords === 0) return null;
 
   const pct = Math.round((coverage.coveredWords / coverage.distinctWords) * 100);
   const complete = coverage.missing.length === 0;
+
+  // The sheet's leading columns are the dictionary importer's, so an educator can
+  // fill in the glosses offline and upload it straight back through Import.
+  const downloadMissing = () => download(
+    missingWordsFilename(coverage.languageId, new Date().toISOString()),
+    buildMissingWordsCsv(coverage.missing),
+    "text/csv",
+  );
 
   return (
     <div className={cn(
@@ -316,30 +331,40 @@ function CoveragePanel({ coverage, onAddWord }: Readonly<{
         ? "border-green-200 dark:border-green-900 bg-green-50/50 dark:bg-green-900/10"
         : "border-amber-200 dark:border-amber-900 bg-amber-50/50 dark:bg-amber-900/10"
     )}>
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
-        disabled={complete}
-      >
-        <div className="flex items-center gap-2.5 min-w-0">
-          {complete
-            ? <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600 dark:text-green-400" />
-            : <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />}
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-neutral-900 dark:text-white">
-              {complete
-                ? "All lesson transcript words have dictionary entries"
-                : `${coverage.missing.length} lesson transcript words missing from the dictionary`}
-            </p>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">
-              {coverage.coveredWords}/{coverage.distinctWords} transcript words covered ({pct}%) across {coverage.lessonCount} lessons
-            </p>
+      <div className="flex items-center gap-2 px-4 py-3">
+        <button
+          onClick={() => setOpen((o) => !o)}
+          className="flex-1 min-w-0 flex items-center justify-between gap-3 text-left"
+          disabled={complete}
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            {complete
+              ? <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600 dark:text-green-400" />
+              : <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />}
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-neutral-900 dark:text-white">
+                {complete
+                  ? "All lesson transcript words have dictionary entries"
+                  : `${coverage.missing.length} lesson transcript words missing from the dictionary`}
+              </p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                {coverage.coveredWords}/{coverage.distinctWords} transcript words covered ({pct}%) across {coverage.lessonCount} lessons
+              </p>
+            </div>
           </div>
-        </div>
-        {!complete && (
-          <ChevronDown className={cn("h-4 w-4 shrink-0 text-neutral-400 transition-transform", open && "rotate-180")} />
-        )}
-      </button>
+          {!complete && (
+            <ChevronDown className={cn("h-4 w-4 shrink-0 text-neutral-400 transition-transform", open && "rotate-180")} />
+          )}
+        </button>
+        <button
+          onClick={downloadMissing}
+          disabled={complete}
+          className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-neutral-800 border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/30 disabled:opacity-40 disabled:hover:bg-white dark:disabled:hover:bg-neutral-800 transition-colors"
+        >
+          <Download className="h-3.5 w-3.5" />
+          {t("educator.dictionary.downloadMissingWords", { defaultValue: "Download missing words (CSV)" })}
+        </button>
+      </div>
       {open && !complete && (
         <div className="px-4 pb-4 max-h-72 overflow-y-auto">
           <table className="w-full text-sm">

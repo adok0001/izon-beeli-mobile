@@ -174,6 +174,7 @@ export const MAX_LENGTHS: Record<string, number> = {
   english: 500,
   category: 64,
   pronunciation: 500,
+  tone: 16,
   semanticDomain: 200,
 };
 

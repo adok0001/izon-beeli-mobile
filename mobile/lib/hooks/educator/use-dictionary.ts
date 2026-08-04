@@ -1,5 +1,5 @@
 import { apiFetch, apiFetchMultipart } from "@/lib/api";
-import type { DialectalVariant, DictionaryCategory, DictionaryEntry } from "@/lib/dictionary";
+import type { DialectalVariant, DictionaryCategory, DictionaryEntry, WordTone } from "@/lib/dictionary";
 import type { ContentStatus } from "@/lib/hooks/educator/use-content-workflow";
 import type { LocalizedText } from "@/types";
 import { useAuth } from "@clerk/clerk-expo";
@@ -18,6 +18,8 @@ export interface EducatorDictionaryEntry {
   translations?: LocalizedText | null;
   category: EducatorDictionaryCategory;
   pronunciation?: string | null;
+  /** Lexical tone. Null/absent means "not recorded", never "level". */
+  tone?: WordTone | null;
   example?: string | null;
   exampleTranslation?: string | null;
   exampleTranslations?: LocalizedText | null;
@@ -43,6 +45,8 @@ export interface UpsertEducatorDictionaryInput {
   category: EducatorDictionaryCategory;
   translations?: LocalizedText;
   pronunciation?: string;
+  /** Omit when the educator hasn't recorded a tone — absent, not "level". */
+  tone?: WordTone;
   example?: string;
   exampleTranslation?: string;
   exampleTranslations?: LocalizedText;
@@ -86,6 +90,7 @@ export function useUpsertEducatorDictionary() {
       formData.append("english", input.english);
       formData.append("category", input.category);
       if (input.pronunciation) formData.append("pronunciation", input.pronunciation);
+      if (input.tone) formData.append("tone", input.tone);
       if (input.example) formData.append("example", input.example);
       if (input.exampleTranslation) formData.append("exampleTranslation", input.exampleTranslation);
 
@@ -169,6 +174,7 @@ export function toPreviewEntry(item: EducatorDictionaryEntry): DictionaryEntry {
 export interface PatchEducatorDictionaryFields {
   word?: string;
   pronunciation?: string;
+  tone?: WordTone;
   category?: string;
   example?: string;
   translations?: LocalizedText;

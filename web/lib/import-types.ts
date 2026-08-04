@@ -28,7 +28,7 @@ export interface ImportTypeConfig {
   sampleCsv?: string;
 }
 
-const DICT_COLUMNS = ["id", "word", "english", "category", "pronunciation", "example", "exampleTranslation"];
+const DICT_COLUMNS = ["id", "word", "english", "category", "pronunciation", "tone", "example", "exampleTranslation"];
 const SENTENCE_COLUMNS = ["id", "sentence", "answer", "englishSentence", "kind", "literalTranslation"];
 // Translatable fields take one column per language: the bare name is English,
 // `<field>:<lang>` adds a gloss. The server folds them into the field's map.
@@ -46,7 +46,7 @@ export const IMPORT_TYPES: Record<string, ImportTypeConfig> = {
       [{ id: "izon-verb-kon", word: "kọn", english: "take", category: "verbs", example: "Bo okpu kọn.", exampleTranslation: "Come and take the sugarcane." }],
       null, 2,
     ),
-    sampleCsv: "word,english,category,pronunciation,example,exampleTranslation\nkọn,take,verbs,,Bo okpu kọn.,Come and take the sugarcane.\n",
+    sampleCsv: "word,english,category,pronunciation,tone,example,exampleTranslation\nkọn,take,verbs,,high,Bo okpu kọn.,Come and take the sugarcane.\n",
   },
   sentences: {
     type: "sentences",
