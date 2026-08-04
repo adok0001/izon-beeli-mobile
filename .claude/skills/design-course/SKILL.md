@@ -1,6 +1,6 @@
 ---
 name: design-course
-description: "Sketch a language's culture and grammar, propose a Movement structure for it, and generate import CSV templates for an educator to fill. Use when the user says 'create lessons for [language]', 'design a course for [language]', 'what would a [language] course look like', 'build the world for [language]', or names a language and asks where to start. Produces English templates and an instruction sheet — never target-language content. For turning existing tutor notes into import CSVs, use update-lesson-content instead."
+description: "Generate English-only lesson briefs — CSV templates with the target-language column left blank — for a speaker to fill, plus a Movement structure and culture sketch to place them in. Use when the user says 'create lessons for [language]', 'design a course for [language]', 'what would a [language] course look like', 'build the world for [language]', or names a language and asks where to start. Surveys the existing catalogue first and recommends which lessons to update and where new ones belong. The blank column IS the product: never supply target-language content, and never report placeholder lines as a gap. Does not create courses or restructure the catalogue. For turning existing tutor notes into import CSVs, use update-lesson-content instead."
 ---
 
 # Design Course
@@ -12,11 +12,84 @@ Movement structure that fits, and CSV templates an educator can fill in.
 for a speaker. That is the whole design — it is what makes the skill safe to run
 on any of the 70+ languages, including ones nobody here speaks.
 
+## The output is the placeholder. Read this before anything else.
+
+**A lesson whose every transcript line is bracketed English is this skill
+working. It is a finished brief, not an unfinished lesson.** The English, the
+setting, the `canDo` and the speaker labels are the deliverable; the missing
+target language is the point, not a defect.
+
+This gets inverted constantly, so state it as a rule:
+
+- **Never report placeholder density as a deficit.** "M6 is 48% real Ịzọn" is the
+  wrong sentence. Those 37 bracketed lines are 37 completed briefs waiting on
+  speaker time. Reporting them as a gap tells the owner their content is broken
+  when it is finished and queued.
+- **Never treat existing English scaffolds as debt to clear.** They are not work
+  outstanding on this skill's side. Filling them is a speaker's evening, and
+  nothing this skill can do makes it happen faster.
+- **The measure of a run is how many well-briefed lines a speaker can sit down
+  and fill.** Not coverage, not percentage authored, not lessons published. A
+  Movement with 600 briefed blank lines is ahead of one with 40 finished lessons
+  and nowhere to go next.
+
+The corollary: when the owner asks where the work is, look for **Movements with
+nothing in them at all** — no lessons, no placeholders, no brief. That is this
+skill's hole. A Movement full of bracketed English is already served.
+
+## What this skill does not do
+
+Staying out of these is as much the job as producing the templates:
+
+- **It does not supply target-language content.** Not a greeting, not a proverb,
+  not a cast name, not a place name. Ever. See `references/world-architecture.md`.
+- **It does not create courses.** The Movements already exist. Work either
+  proposes a *new lesson inside an existing Movement* or *updates an existing
+  lesson* — never a new course, and never a retired course shell as a target.
+- **It does not restructure the catalogue** — no re-parenting lessons between
+  Movements, no re-levelling, no migrations. Those need their own authorised
+  script. Surveying the catalogue to decide what to write is not only allowed,
+  it is required — see Step 0.
+- **It produces at most two kinds of file**: one content CSV and one CSV per
+  lesson. No companion question sheets, no placement maps as separate documents.
+
 The sketch is general knowledge, offered quickly and openly as approximate. It is
 a starting point for a conversation, not research. Don't hedge it into
 uselessness, and don't dress it up as authority either.
 
 ---
+
+## Step 0 — Survey what already exists
+
+**Do this first, every run.** You cannot propose a lesson without knowing what is
+already there, and the whole point of the survey is to end with a recommendation.
+
+```bash
+cd server && npm run db:list-lessons -- izon
+cd server && npm run db:list-lessons -- izon --course course-izon-mv-village
+```
+
+Read the transcripts of anything that looks close to what you were about to
+write. Then say, per Movement, which of three things applies:
+
+| Finding | Recommendation |
+|---|---|
+| A lesson covers this and its English is good | **Nothing to do.** Say so and move on |
+| A lesson covers this but its English is wrong for the culture | **Update it** — same title, rewritten brief. Re-import replaces the transcript wholesale |
+| Nothing covers this | **New lesson** — name it and the Movement it belongs to |
+
+Two rules for reading the results:
+
+- **Judge a lesson by its English brief, not by how much target language it
+  holds.** A lesson of pure bracketed English with a sharp `canDo` and a real
+  setting is in good shape. One with fluent target language and a vague brief is
+  not. See *The output is the placeholder* above.
+- **A Movement with no lessons outranks a Movement with many blanks.** Empty is
+  this skill's hole; briefed-but-unfilled is somebody else's queue.
+
+The survey is a means, not a deliverable. If it has not produced a list of the
+form *update X · add Y to Movement Z · leave W alone*, it is not finished — and
+it should be a short list in chat, never a separate document.
 
 ## Step 1 — Sketch the language
 
@@ -34,9 +107,13 @@ Three or four sentences, no more:
 Say plainly that this is from general knowledge and may be wrong in places. The
 user corrects it; that exchange is the point of the step.
 
-**Don't research this.** No corpus mining, no database queries, no dictionary
-lookups. If you happen to know the repo has material for the language, mention it
-in one line and move on.
+**Don't research this.** No corpus mining, no dictionary lookups, no reading up
+on the culture. If you happen to know the repo has material for the language,
+mention it in one line and move on.
+
+This is about the *sketch* only — the culture and grammar paragraph. It does not
+countermand Step 0, which reads the catalogue on every run. Look up what lessons
+exist; don't look up what the language is like.
 
 ## Step 2 — Propose a Movement structure
 
@@ -205,7 +282,17 @@ repo. Alongside the CSVs, as `userio-docs/<lang>-templates-README.md`:
 ## Hand off
 
 Say what was written, how many rows per file, which episodes were skipped and
-why, and what still needs a speaker. Don't write to the database, don't deploy.
+why, and how many lines are now briefed and ready for a speaker. Don't write to
+the database, don't deploy.
+
+**Report the count as an achievement, not a shortfall.** "312 lines briefed and
+ready to fill, 41 of them needing the speaker's own words — the rest pre-filled
+from the dictionary for review" is the shape. Not "312 lines still missing
+Ịzọn." Same number, and only one of them is true to what happened.
+
+**Then name the next empty Movement.** The owner's next decision is where to
+point the following run, and the answer is whichever Movement has no brief at
+all — not whichever has the most blanks.
 
 ## Files
 
