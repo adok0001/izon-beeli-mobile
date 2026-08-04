@@ -180,7 +180,24 @@ export interface Lesson {
   canDo?: string | LocalizedText | null;
   /** Full gloss map — the authoritative value; `canDo` is its English projection. */
   canDoTranslations?: LocalizedText | null;
-  /** Key vocabulary with optional tone and gloss. */
+  /**
+   * Key vocabulary with optional tone and gloss.
+   *
+   * Never served by the API, and deliberately so — there is no lesson-scoped
+   * vocabulary table and there will not be one. A per-lesson word list would
+   * fork the corpus the same way per-surface sentence copies did before
+   * `sentences` unified them: the dictionary is the single source, and tone now
+   * lives on the entry (`WORD_TONE_VALUES` in `lib/dictionary.ts`) rather than
+   * here. Lessons relate to words through the transcript, and Studio closes the
+   * gap by exporting transcript words that have no entry yet
+   * (`lib/coverage-export.ts` → `GET /educator/dictionary-coverage`).
+   *
+   * The field stays because two callers still populate it locally: Studio's
+   * device preview builds its payload from editor draft state
+   * (`app/admin/preview.tsx`), and `lib/checkpoint-rounds.ts` reads it when
+   * present. Both work without it — treat it as an optional local override,
+   * not a gap waiting on the server.
+   */
   vocab?: LessonWord[];
   /** Culture notes attached to this lesson in Studio, in display order. */
   culturalNotes?: CulturalNote[];
