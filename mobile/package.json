@@ -1,7 +1,7 @@
 {
   "name": "izon-beeli-mobile",
   "main": "expo-router/entry",
-  "version": "1.19.8",
+  "version": "1.19.9",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
@@ -10,7 +10,6 @@
     "lint": "expo lint",
     "test": "jest",
     "dev:server": "cd server && npm run dev",
-    "eas-build-post-install": "bash scripts/eas-build-pre-build.sh",
     "distribute:android": "bash ../scripts/distribute-android.sh"
   },
   "jest": {
