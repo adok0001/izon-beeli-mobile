@@ -70,6 +70,8 @@ export interface LessonGroupInput {
   title: string;
   description: string;
   type: string;
+  /** `type: "game"` gates only — which playground mini-game the gate runs. */
+  gameKey: string | null;
   style: string | null;
   artist: string | null;
   genre: string | null;
@@ -198,6 +200,7 @@ export function buildLessonGroup(
       title,
       description,
       type: str(meta.type) || "lesson",
+      gameKey: opt(meta.gameKey),
       style: style ?? null,
       artist: opt(meta.artist),
       genre: opt(meta.genre),
@@ -240,6 +243,7 @@ export async function insertLessonGroups(
         id: group.id,
         courseId: ctx.courseId,
         type: group.type,
+        gameKey: group.gameKey,
         title: group.title,
         description: group.description,
         style: group.style,
@@ -259,6 +263,11 @@ export async function insertLessonGroups(
           title: sql`excluded.title`,
           description: sql`excluded.description`,
           type: sql`excluded.type`,
+          // A sheet with no gameKey column must not unlink a gate from its game,
+          // so keep the stored value when the import doesn't name one. Copying a
+          // Movement into another course is the case that needed this: on a fresh
+          // insert there is nothing to fall back to, and the gate arrived dead.
+          gameKey: sql`coalesce(excluded.game_key, lessons.game_key)`,
           style: sql`excluded.style`,
           artist: sql`excluded.artist`,
           genre: sql`excluded.genre`,

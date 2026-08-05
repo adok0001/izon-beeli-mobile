@@ -20,6 +20,8 @@ import { AuthEnv, authMiddleware, reviewerMiddleware } from "../middleware/auth.
 import { parseMap, project, type TranslationMap } from "../lib/translations.js";
 import { readImportRequest } from "./import-request.js";
 import { bulkEditRouter } from "./bulk-edit.js";
+import { contentExportRouter } from "./content-export.js";
+import { lessonExportRouter } from "./lesson-export.js";
 
 /**
  * Registry-driven bulk importer. One generic `POST /import/:type` handler feeds a
@@ -152,9 +154,16 @@ const BATCH = 500;
  * header for. `coalesce` falls back to the row already in the table, which
  * costs no extra round trip and — unlike reading the rows first — has no
  * read-then-write race.
+ *
+ * Every importer reachable from the unified sheet needs this, not just the
+ * dictionary: `GET /import/content-export` makes "export, edit, re-upload" a
+ * routine action, and each such column is one an educator would silently lose
+ * on the way back in — a proverb's `literal`, a quiz question's `lessonId`.
+ * The trade is that an import can set these fields but never clear one;
+ * clearing stays an editor job, as it already was for `tone`.
  */
-const keepIfAbsent = (column: string) =>
-  sql.raw(`coalesce(excluded.${column}, dictionary_entries.${column})`);
+const keepIfAbsent = (table: string, column: string) =>
+  sql.raw(`coalesce(excluded.${column}, ${table}.${column})`);
 
 /**
  * Length guard for the varchar-bounded columns.
@@ -218,16 +227,16 @@ const dictionaryImporter: ImporterConfig = {
           example: sql`excluded.example`,
           exampleTranslation: sql`excluded.example_translation`,
           exampleTranslations: sql`excluded.example_translations`,
-          audioUrl: sql`excluded.audio_url`,
           // `tone` is optional and most sheets predate the column, so a re-import
           // must not null out a tone somebody recorded in Studio. An import can
           // therefore set a tone but never clear one — clearing is an editor job.
-          tone: keepIfAbsent("tone"),
+          tone: keepIfAbsent("dictionary_entries", "tone"),
           // No unified-CSV column carries these — keep what's already stored.
-          synonyms: keepIfAbsent("synonyms"),
-          antonyms: keepIfAbsent("antonyms"),
-          semanticDomain: keepIfAbsent("semantic_domain"),
-          dialectalVariants: keepIfAbsent("dialectal_variants"),
+          audioUrl: keepIfAbsent("dictionary_entries", "audio_url"),
+          synonyms: keepIfAbsent("dictionary_entries", "synonyms"),
+          antonyms: keepIfAbsent("dictionary_entries", "antonyms"),
+          semanticDomain: keepIfAbsent("dictionary_entries", "semantic_domain"),
+          dialectalVariants: keepIfAbsent("dictionary_entries", "dialectal_variants"),
         },
       }).returning({ id: dictionaryEntries.id }).then((r) => r.length)
     );
@@ -267,7 +276,8 @@ const sentenceImporter: ImporterConfig = {
           answer: sql`excluded.answer`,
           englishSentence: sql`excluded.english_sentence`,
           kind: sql`excluded.kind`,
-          literalTranslation: sql`excluded.literal_translation`,
+          // No unified-CSV column carries this — keep what's already stored.
+          literalTranslation: keepIfAbsent("sentence_templates", "literal_translation"),
         },
       }).returning({ id: sentenceTemplates.id }).then((r) => r.length)
     );
@@ -304,9 +314,10 @@ const proverbImporter: ImporterConfig = {
           translations: sql`excluded.translations`,
           meaning: sql`excluded.meaning`,
           meaningTranslations: sql`excluded.meaning_translations`,
-          literal: sql`excluded.literal`,
-          context: sql`excluded.context`,
-          tags: sql`excluded.tags`,
+          // No unified-CSV column carries these — keep what's already stored.
+          literal: keepIfAbsent("proverbs", "literal"),
+          context: keepIfAbsent("proverbs", "context"),
+          tags: keepIfAbsent("proverbs", "tags"),
         },
       }).returning({ id: proverbs.id }).then((r) => r.length)
     );
@@ -432,10 +443,13 @@ const quizImporter: ImporterConfig = {
           prompt: sql`excluded.prompt`,
           answer: sql`excluded.answer`,
           options: sql`excluded.options`,
-          audioUrl: sql`excluded.audio_url`,
-          explanation: sql`excluded.explanation`,
-          lessonId: sql`excluded.lesson_id`,
-          sceneId: sql`excluded.scene_id`,
+          // No unified-CSV column carries these — keep what's already stored.
+          // `lessonId`/`sceneId` are the worst of them: wiping one unlinks a
+          // question from the lesson it tests.
+          audioUrl: keepIfAbsent("quiz_questions", "audio_url"),
+          explanation: keepIfAbsent("quiz_questions", "explanation"),
+          lessonId: keepIfAbsent("quiz_questions", "lesson_id"),
+          sceneId: keepIfAbsent("quiz_questions", "scene_id"),
         },
       }).returning({ id: quizQuestions.id }).then((r) => r.length)
     );
@@ -503,10 +517,14 @@ export function mapUnifiedRow(row: Entry, languageId: string): Mapped | { error:
         ...carryLocales(row, { english: "english", example_english: "exampleTranslation" }),
       } };
     case "sentence": {
-      // `kind` is derived, not asked for: a fill-in-the-blank when the answer
-      // appears in the sentence, an equivalent-phrase drill otherwise.
+      // `kind` is derived rather than asked for: a fill-in-the-blank when the
+      // answer appears in the sentence, an equivalent-phrase drill otherwise.
+      // Derived only as a *default*, though — an export carries the stored kind,
+      // and an "equivalent" drill whose answer happens to appear in its sentence
+      // would flip to "blank" on re-upload if the column were ignored.
       const sentence = str(row.text), answer = str(row.answer);
-      const drill = answer && sentence.toLowerCase().includes(answer.toLowerCase()) ? "blank" : "equivalent";
+      const drill = str(row.kind)
+        || (answer && sentence.toLowerCase().includes(answer.toLowerCase()) ? "blank" : "equivalent");
       return { importerType: "sentences", entry: withId({ sentence, answer, englishSentence: str(row.english), kind: drill }) };
     }
     case "proverb":
@@ -529,9 +547,12 @@ export const bulkImportRouter = new Hono<AuthEnv>();
 bulkImportRouter.use("*", authMiddleware);
 bulkImportRouter.use("*", reviewerMiddleware);
 
-// Edit mode (`GET /export`, `POST /edit`). Registered before the "/:type"
-// catch-all below so the param route can't swallow "/edit".
+// Edit mode (`GET /export`, `POST /edit`) and the unified content export
+// (`GET /content-export`). Both registered before the "/:type" catch-all below
+// so the param route can't swallow their paths.
 bulkImportRouter.route("/", bulkEditRouter);
+bulkImportRouter.route("/", contentExportRouter);
+bulkImportRouter.route("/", lessonExportRouter);
 
 // POST /api/import/lessons   body: { languageId, courseId, entries[], dryRun? }
 // One course (chosen in the UI); each entry is one full lesson — `{ meta, segments }`

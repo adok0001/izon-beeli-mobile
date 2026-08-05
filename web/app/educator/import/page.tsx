@@ -20,7 +20,7 @@ interface EducatorMe {
 type Mode = "content" | "lessons" | "edit";
 
 const MODE_BLURB: Record<Mode, React.ReactNode> = {
-  content: <>Fill one spreadsheet, upload it here. Rows go to your language’s dictionary, sentence drills, proverbs and quiz bank based on each row’s <code>type</code>.</>,
+  content: <>Fill one spreadsheet, upload it here. Rows go to your language’s dictionary, sentence drills, proverbs and quiz bank based on each row’s <code>type</code>. Export first to correct what is already there.</>,
   lessons: <>Upload a spreadsheet of transcript lines. Rows sharing a title become one lesson, all placed in the course you pick.</>,
   edit: <>Export the words you want to correct, fix them in a spreadsheet, and upload the same sheet back. Rows are matched on <code>id</code>, so this can only change what is already there.</>,
 };
@@ -51,7 +51,7 @@ export default function EducatorImportPage() {
   return (
     <div className="max-w-3xl">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-1">Bulk import</h2>
+        <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-1">Bulk actions</h2>
         <p className="text-sm text-neutral-500 dark:text-neutral-400">{MODE_BLURB[mode]}</p>
       </div>
 

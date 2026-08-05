@@ -5,7 +5,7 @@ import { ImportResultView } from "@/components/studio/import-result-view";
 import type { ImportResult } from "@/lib/import-types";
 import { download } from "@/lib/utils";
 import { buildEditCsv, EDIT_FIELD_GUIDE, parseEditCsv } from "@mobile/lib/edit-import";
-import type { DictionaryExport } from "@mobile/lib/import-result";
+import type { CsvExport } from "@mobile/lib/import-result";
 import { ALL_CATEGORIES, CATEGORY_LABELS } from "@mobile/lib/dictionary";
 import { useAuth } from "@clerk/nextjs";
 import { Download, Upload } from "lucide-react";
@@ -54,7 +54,7 @@ export function DictionaryEditPanel({
       const query = new URLSearchParams({ languageId, type: "dictionary" });
       if (category) query.set("category", category);
       const token = await getToken();
-      const data = await apiFetch<DictionaryExport>(`/import/export?${query}`, { token: token ?? undefined });
+      const data = await apiFetch<CsvExport>(`/import/export?${query}`, { token: token ?? undefined });
       if (data.rowCount === 0) { toast.error("Nothing to export for that filter"); return; }
       download(`beeli-${languageId}-${category || "dictionary"}.csv`, buildEditCsv(data.rows, data.columns), "text/csv");
       if (data.truncated) {

@@ -1,6 +1,6 @@
 import { apiFetch } from "@/lib/api";
 import { buildEditCsv } from "@/lib/edit-import";
-import type { DictionaryExport, ImportResult } from "@/lib/import-result";
+import type { CsvExport, ImportResult } from "@/lib/import-result";
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -38,7 +38,7 @@ export function useDictionaryExport() {
         if (category) query.set("category", category);
         if (status) query.set("status", status);
       }
-      const data = await apiFetch<DictionaryExport>(`/import/export?${query}`, { token: token ?? undefined });
+      const data = await apiFetch<CsvExport>(`/import/export?${query}`, { token: token ?? undefined });
       return { ...data, csv: buildEditCsv(data.rows, data.columns) };
     },
   });

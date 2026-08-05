@@ -5,11 +5,17 @@
 // like `@/lib/import-types` and `@/lib/parse-csv`.
 export {
   LESSON_META_GUIDE,
+  LESSON_META_COLUMNS,
   LESSON_LINE_GUIDE,
   LESSON_LINE_COLUMNS,
   LESSON_CHECK_COLUMNS,
   LESSON_CHECK_GUIDE,
+  LESSON_SEPARATOR,
   LESSON_TEMPLATE_CSV,
   parseLessonFile,
+  parseLessonFiles,
+  buildLessonFile,
+  buildLessonsFile,
+  lessonExportFilename,
 } from "@mobile/lib/lesson-import";
-export type { ParsedLessonFile } from "@mobile/lib/lesson-import";
+export type { ExportedLesson, ParsedLessonFile } from "@mobile/lib/lesson-import";

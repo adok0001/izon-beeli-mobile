@@ -46,8 +46,12 @@ export interface ImportResult {
   diff?: EditDiffRow[];
 }
 
-/** What `GET /import/export` hands back — plain values, serialized client-side. */
-export interface DictionaryExport {
+/**
+ * What an export endpoint hands back — plain values, serialized client-side.
+ * Shared by `GET /import/export` (the id-matched dictionary edit sheet) and
+ * `GET /import/content-export` (the unified content sheet).
+ */
+export interface CsvExport {
   columns: string[];
   rows: Record<string, string>[];
   rowCount: number;

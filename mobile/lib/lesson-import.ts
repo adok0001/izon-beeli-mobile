@@ -1,23 +1,48 @@
+import { toCsv } from "./edit-import";
 import { parseCsv } from "./unified-import";
 
 /**
- * Lesson bulk-import contract — the mobile mirror of `web/lib/lesson-import.ts`.
- * One file is one full lesson: a metadata block (key,value rows), a `---`
- * separator, then the transcript grid. The educator can pick several files; each
- * parses to one `{ meta, segments }` lesson, imported into the picked course.
- * Keep in sync with the web copy.
+ * Lesson bulk-import contract. Web re-exports this module (`@mobile/lib/lesson-import`);
+ * there is no second copy to keep in sync.
+ *
+ * One lesson is a metadata block (key,value rows), a `---` separator, the
+ * transcript grid, and an optional second `---` plus a checks grid.
+ *
+ * A file may hold **several lessons**, separated by a `===` line. That is what
+ * makes the round trip work: export a whole Movement, fix it in one spreadsheet,
+ * upload that same one file. A file with no `===` parses as exactly one lesson,
+ * so every sheet written before this still imports unchanged.
+ *
+ * The separator also closes a silent failure. Before it existed, a second lesson
+ * appended to a file was not an error — `parseLessonFile` treats everything after
+ * the second `---` as the checks grid, so the extra lesson's metadata was read as
+ * malformed check rows and dropped without a word.
  */
+
+/** Divides one lesson from the next within a single file. */
+export const LESSON_SEPARATOR = "===";
 
 /** Lesson metadata fields read from the block above the `---`. */
 export const LESSON_META_GUIDE: { key: string; uses: string }[] = [
   { key: "title", uses: "the lesson's title (required)" },
   { key: "description", uses: "a short description of the lesson (required)" },
+  { key: "type", uses: "lesson, song, or game (optional, defaults to lesson)" },
+  { key: "gameKey", uses: "which playground mini-game a game gate runs, e.g. matching-game (game rows only)" },
   { key: "style", uses: "skit, immersive_story, or host_narrated (optional)" },
   { key: "artist", uses: "performer/host credit (optional)" },
   { key: "genre", uses: "optional" },
   { key: "duration", uses: "length in seconds (optional)" },
+  { key: "order", uses: "position within the course (optional)" },
   { key: "canDo", uses: "the real-world skill the learner gains (optional)" },
+  { key: "narrativeIntro", uses: "text shown before the lesson starts (optional)" },
+  { key: "narrativeOutro", uses: "text shown after it ends (optional)" },
 ];
+
+/** Metadata keys an export writes, in order. */
+export const LESSON_META_COLUMNS = [
+  "title", "description", "type", "gameKey", "style", "artist",
+  "genre", "duration", "order", "canDo", "narrativeIntro", "narrativeOutro",
+] as const;
 
 /** Transcript-grid columns, below the `---`. */
 export const LESSON_LINE_GUIDE: { column: string; uses: string }[] = [
@@ -102,4 +127,93 @@ export function parseLessonFile(text: string): ParsedLessonFile {
   if (second < 0) return { meta, segments };
   const checks = parseCsv(checkLines.join("\n")).filter((r) => (r.prompt ?? "").trim() !== "");
   return { meta, segments, checks };
+}
+
+/**
+ * Parse an uploaded file into every lesson it holds.
+ *
+ * This is what callers should use: one uploaded file may now carry a whole
+ * Movement. Splitting happens *before* `parseLessonFile`, so each chunk sees
+ * exactly the single-lesson format it has always parsed — the section logic is
+ * untouched. A file with no `===` yields one lesson, identical to before.
+ *
+ * Blank chunks (a trailing separator, a stray blank line between lessons) are
+ * dropped rather than reported: they are formatting, not content. A chunk with
+ * real text but no title still comes through, so the server names it in the
+ * error list instead of the file disappearing silently.
+ */
+export function parseLessonFiles(text: string): ParsedLessonFile[] {
+  const isSeparator = (line: string) => line.split(",")[0].trim() === LESSON_SEPARATOR;
+  const chunks: string[][] = [[]];
+  for (const line of text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n")) {
+    if (isSeparator(line)) chunks.push([]);
+    else chunks[chunks.length - 1].push(line);
+  }
+  return chunks
+    .filter((lines) => lines.some((l) => l.trim() !== ""))
+    .map((lines) => parseLessonFile(lines.join("\n")));
+}
+
+// ─── serialize ────────────────────────────────────────────────────────────────
+
+/**
+ * One `key,value` metadata row. `parseLessonFile` splits at the FIRST comma, so
+ * a value may hold commas unquoted; it strips a surrounding quote pair, so a
+ * value that already starts with one has to be quoted to survive. Newlines are
+ * collapsed to spaces because the metadata block is parsed line by line — a
+ * value containing one could not be read back at all.
+ */
+function metaRow(key: string, value: string): string {
+  const flat = value.replace(/[\r\n]+/g, " ").trim();
+  const needsQuotes = flat.startsWith('"');
+  return `${key},${needsQuotes ? `"${flat.replace(/"/g, '""')}"` : flat}`;
+}
+
+/** A lesson in the shape `GET /import/lesson-export` returns. */
+export interface ExportedLesson {
+  id: string;
+  meta: Record<string, string>;
+  segments: Record<string, string>[];
+  checks: Record<string, string>[];
+}
+
+/** What `GET /import/lesson-export` hands back — plain cells, serialized client-side. */
+export interface LessonExport {
+  lessons: ExportedLesson[];
+  lessonCount: number;
+  totalCount: number;
+  /** True when the course held more lessons than the role may upload back. */
+  truncated: boolean;
+  cap: number;
+}
+
+/**
+ * Serialize one lesson into the file format.
+ *
+ * The checks section is omitted when the lesson has none — deliberately. An
+ * empty section means "delete this lesson's checks", so writing one would let a
+ * stale export wipe checks somebody added in Studio after it was downloaded.
+ * Omitting the section means "leave them alone", which is the safe reading of a
+ * lesson that had none when it was exported.
+ */
+export function buildLessonFile(lesson: ExportedLesson): string {
+  const lines = LESSON_META_COLUMNS
+    .filter((key) => (lesson.meta[key] ?? "").trim() !== "")
+    .map((key) => metaRow(key, lesson.meta[key]));
+
+  lines.push("---", toCsv(lesson.segments, LESSON_LINE_COLUMNS).trimEnd());
+  if (lesson.checks.length > 0) {
+    lines.push("---", toCsv(lesson.checks, LESSON_CHECK_COLUMNS).trimEnd());
+  }
+  return lines.join("\n");
+}
+
+/** Serialize several lessons into one uploadable file, `===` between them. */
+export function buildLessonsFile(lessons: readonly ExportedLesson[]): string {
+  return `${lessons.map(buildLessonFile).join(`\n${LESSON_SEPARATOR}\n`)}\n`;
+}
+
+/** `beeli-mv_arrival-lessons.csv` — the course, so downloads don't collide. */
+export function lessonExportFilename(courseId: string): string {
+  return `beeli-${courseId}-lessons.csv`;
 }
